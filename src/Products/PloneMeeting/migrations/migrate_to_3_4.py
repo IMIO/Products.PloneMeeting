@@ -467,8 +467,8 @@ class Migrate_To_3_4(Migrator):
     def _updateAdvices(self):
         '''The 'comment' is always available in the adviceIndex now,
            even on still not given advices.'''
-        logger.info('Updating advices...')
-        self.tool._updateAllAdvices()
+        logger.info('Updating advices (all localRoles)...')
+        self.tool.updateAllLocalRoles(meta_type=('MeetingItem', ))
         logger.info('Done.')
 
     def _initNewHTMLFields(self):

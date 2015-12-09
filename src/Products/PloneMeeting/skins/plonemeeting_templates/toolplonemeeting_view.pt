@@ -229,32 +229,9 @@
             </form>
           </td>
           <td>
-            <form name="updateAllAdvicesForm" action="updateAllAdvicesAction">
-            <input class="context" type="submit" name="updateAllAdvices"
-                   value="pm_update_all_advices" i18n:attributes="value"/>&nbsp;&nbsp;
-            </form>
-          </td>
-        </tr>
-        <tr>
-            <td colspan="3">&nbsp;</td>
-        </tr>
-        <tr>
-          <td>
-            <form name="updatePowerObserversForm" action="updatePowerObservers">
-            <input class="context" type="submit" name="updatePowerObservers"
-                   value="pm_update_powerobservers" i18n:attributes="value"/>&nbsp;&nbsp;
-            </form>
-          </td>
-          <td>
-            <form name="updateBudgetImpactEditorsForm" action="updateBudgetImpactEditors">
-            <input class="context" type="submit" name="updateBudgetImpactEditors"
-                   value="pm_update_budgetimpacteditors" i18n:attributes="value"/>&nbsp;&nbsp;
-            </form>
-          </td>
-          <td>
-            <form name="updateCopyGroupsForm" action="updateCopyGroups">
-            <input class="context" type="submit" name="updateCopyGroups"
-                   value="pm_update_copygroups" i18n:attributes="value"/>&nbsp;&nbsp;
+            <form name="updateAllLocalRolesForm" action="updateAllLocalRoles">
+            <input class="context" type="submit" name="updateAllLocalRoles"
+                   value="pm_update_all_local_roles" i18n:attributes="value"/>&nbsp;&nbsp;
             </form>
           </td>
         </tr>

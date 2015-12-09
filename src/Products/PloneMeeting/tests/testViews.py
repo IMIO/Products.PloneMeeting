@@ -25,6 +25,9 @@
 from DateTime import DateTime
 from AccessControl import Unauthorized
 from Products.Five import zcml
+from plone import api
+from plone.app.textfield.value import RichTextValue
+from plone.dexterity.utils import createContentInContainer
 from Products.statusmessages.interfaces import IStatusMessage
 
 from Products import PloneMeeting as products_plonemeeting
@@ -212,6 +215,107 @@ class testViews(PloneMeetingTestCase):
                           SAMPLE_ERROR_MESSAGE)
         # cleanUp zmcl.load_config because it impact other tests
         zcml.cleanUp()
+
+    def test_pm_UpdateDelayAwareAdvices(self):
+        '''
+          Test that the maintenance task updating delay-aware advices works...
+          This is supposed to update delay-aware advices that are still addable/editable.
+        '''
+        # this view is only available to Managers (protected by 'Manage portal' permission)
+        self.changeUser('pmManager')
+        self.assertRaises(Unauthorized, self.portal.restrictedTraverse, '@@update-delay-aware-advices')
+        # create different items having relevant advices :
+        # item1 : no advice
+        # item2 : one optional advice, one automatic advice, none delay-aware
+        # item3 : one delay-aware advice
+        catalog = api.portal.get_tool('portal_catalog')
+        self.changeUser('admin')
+        self.meetingConfig.setCustomAdvisers(
+            [{'row_id': 'unique_id_123',
+              'group': 'vendors',
+              'gives_auto_advice_on': '',
+              'for_item_created_from': '2012/01/01',
+              'for_item_created_until': '',
+              'delay': '5',
+              'delay_label': ''},
+             {'row_id': 'unique_id_456',
+              'group': 'vendors',
+              'gives_auto_advice_on': 'here/getBudgetRelated',
+              'for_item_created_from': '2012/01/01',
+              'for_item_created_until': '',
+              'delay': '',
+              'delay_label': ''}, ])
+        query = self.portal.restrictedTraverse('@@update-delay-aware-advices')._computeQuery()
+        query['meta_type'] = 'MeetingItem'
+
+        self.changeUser('pmManager')
+        # no advice
+        self.create('MeetingItem')
+        # if we use the query, it will return nothing for now...
+        self.assertTrue(not catalog(**query))
+
+        # no delay-aware advice
+        itemWithNonDelayAwareAdvices = self.create('MeetingItem', **{'budgetRelated': True})
+        # the automatic advice has been added
+        self.assertTrue(itemWithNonDelayAwareAdvices.adviceIndex['vendors']['optional'] is False)
+        itemWithNonDelayAwareAdvices.setOptionalAdvisers(('developers', ))
+        itemWithNonDelayAwareAdvices.at_post_edit_script()
+        self.assertTrue(itemWithNonDelayAwareAdvices.adviceIndex['developers']['optional'] is True)
+
+        # one delay-aware advice addable
+        itemWithDelayAwareAdvice = self.create('MeetingItem')
+        itemWithDelayAwareAdvice.setOptionalAdvisers(('vendors__rowid__unique_id_123', ))
+        itemWithDelayAwareAdvice.at_post_edit_script()
+        self.proposeItem(itemWithDelayAwareAdvice)
+        self.assertTrue(itemWithDelayAwareAdvice.adviceIndex['vendors']['advice_addable'])
+        # this time the element is returned
+        self.assertTrue(len(catalog(**query)) == 1)
+        self.assertTrue(catalog(**query)[0].UID == itemWithDelayAwareAdvice.UID())
+        # if item3 is no more giveable, the query will not return it anymore
+        self.validateItem(itemWithDelayAwareAdvice)
+        self.assertTrue(not itemWithDelayAwareAdvice.adviceIndex['vendors']['advice_addable'])
+        self.assertTrue(not catalog(**query))
+        # back to proposed, add it
+        self.backToState(itemWithDelayAwareAdvice, self.WF_STATE_NAME_MAPPINGS['proposed'])
+        createContentInContainer(itemWithDelayAwareAdvice,
+                                 'meetingadvice',
+                                 **{'advice_group': 'vendors',
+                                    'advice_type': u'positive',
+                                    'advice_comment': RichTextValue(u'My comment')})
+        self.assertTrue(not itemWithDelayAwareAdvice.adviceIndex['vendors']['advice_addable'])
+        self.assertTrue(itemWithDelayAwareAdvice.adviceIndex['vendors']['advice_editable'])
+        # an editable item will found by the query
+        self.assertTrue(len(catalog(**query)) == 1)
+        self.assertTrue(catalog(**query)[0].UID == itemWithDelayAwareAdvice.UID())
+        # makes it no more editable
+        self.backToState(itemWithDelayAwareAdvice, self.WF_STATE_NAME_MAPPINGS['itemcreated'])
+        self.assertTrue(not itemWithDelayAwareAdvice.adviceIndex['vendors']['advice_editable'])
+        self.assertTrue(not catalog(**query))
+
+    def test_pm_UpdateDelayAwareAdvicesUpdateAllAdvices(self):
+        """Test the _updateAllAdvices method that update every advices.
+           It is used to update every delay aware advices every night."""
+        cfg = self.meetingConfig
+        cfg.setItemAdviceStates(('itemcreated', ))
+        cfg.setItemAdviceEditStates(('itemcreated', ))
+        # create items and ask advice
+        self.changeUser('pmCreator1')
+        item1 = self.create('MeetingItem')
+        item1.setOptionalAdvisers(('developers', ))
+        item1.at_post_edit_script()
+        item2 = self.create('MeetingItem')
+        item2.setOptionalAdvisers(('developers', ))
+        self.proposeItem(item2)
+        self.assertTrue('developers_advisers' in item1.__ac_local_roles__)
+        self.assertFalse('developers_advisers' in item2.__ac_local_roles__)
+
+        # change configuration, _updateAllAdvices then check again
+        self.changeUser('siteadmin')
+        cfg.setItemAdviceStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+        cfg.setItemAdviceEditStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+        self.portal.restrictedTraverse('@@update-delay-aware-advices')._updateAllAdvices()
+        self.assertFalse('developers_advisers' in item1.__ac_local_roles__)
+        self.assertTrue('developers_advisers' in item2.__ac_local_roles__)
 
 
 def test_suite():

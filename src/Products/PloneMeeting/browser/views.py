@@ -32,8 +32,10 @@ from plone.memoize.view import memoize_contextless
 from Products.Five import BrowserView
 from Products.CMFCore.utils import getToolByName
 from Products.CMFCore.WorkflowCore import WorkflowException
+from plone import api
 from eea.facetednavigation.interfaces import ICriteria
 from collective.documentgenerator.helper.archetypes import ATDocumentGenerationHelperView
+from Products.PloneMeeting import logger
 from Products.PloneMeeting.config import ADVICE_STATES_ALIVE
 from Products.PloneMeeting.browser.itemchangeorder import _is_integer
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
@@ -342,9 +344,8 @@ class UpdateDelayAwareAdvicesView(BrowserView):
       It will also update the indexAdvisers portal_catalog index.
     """
     def __call__(self):
-        tool = getToolByName(self.context, 'portal_plonemeeting')
         query = self._computeQuery()
-        tool._updateAllAdvices(query=query)
+        self._updateAllAdvices(query=query)
 
     def _computeQuery(self):
         '''
@@ -369,6 +370,24 @@ class UpdateDelayAwareAdvicesView(BrowserView):
         query = {}
         query['indexAdvisers'] = indexAdvisers
         return query
+
+    def _updateAllAdvices(self, query={}):
+        '''Update adviceIndex for every items.
+           If a p_query is given, it will be used by the portal_catalog query
+           we do to restrict update of advices to some subsets of items...'''
+        catalog = api.portal.get_tool('portal_catalog')
+        if 'meta_type' not in query:
+            query['meta_type'] = 'MeetingItem'
+        brains = catalog(**query)
+        numberOfBrains = len(brains)
+        i = 1
+        for brain in brains:
+            item = brain.getObject()
+            logger.info('%d/%d Updating adviceIndex of item at %s' % (i,
+                                                                      numberOfBrains,
+                                                                      '/'.join(item.getPhysicalPath())))
+            i = i + 1
+            item.updateLocalRoles()
 
 
 class DeleteHistoryEventView(BrowserView):

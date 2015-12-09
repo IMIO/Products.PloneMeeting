@@ -1733,84 +1733,28 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             self.plone_utils.addPortalMessage('Done.')
         return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 
-    security.declarePublic('updateAllAdvicesAction')
+    security.declarePublic('updateAllLocalRoles')
 
-    def updateAllAdvicesAction(self):
-        '''UI action that calls _updateAllAdvices.'''
-        if not self.isManager(self, realManagers=True):
-            raise Unauthorized
-        self._updateAllAdvices()
-        self.plone_utils.addPortalMessage('Done.')
-        return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
-
-    def _updateAllAdvices(self, query={}):
-        '''Update adviceIndex for every items.
-           If a p_query is given, it will be used by the portal_catalog query
-           we do to restrict update of advices to some subsets of items...'''
-        catalog = api.portal.get_tool('portal_catalog')
-        if 'meta_type' not in query:
-            query['meta_type'] = 'MeetingItem'
-        brains = catalog(**query)
-        numberOfBrains = len(brains)
-        i = 1
-        for brain in brains:
-            item = brain.getObject()
-            logger.info('%d/%d Updating adviceIndex of item at %s' % (i,
-                                                                      numberOfBrains,
-                                                                      '/'.join(item.getPhysicalPath())))
-            i = i + 1
-            item.updateLocalRoles()
-            # Update security as local_roles are set by updateAdvices
-            item.reindexObject(idxs=['allowedRolesAndUsers', 'indexAdvisers', ])
-
-    security.declarePublic('updatePowerObservers')
-
-    def updatePowerObservers(self):
-        '''Update local_roles regarging the RestrictedPowerObservers
-           and PowerObservers for every meetings and items.'''
+    def updateAllLocalRoles(self, meta_type=('Meeting', 'MeetingItem')):
+        '''Update local_roles on Meeting and MeetingItem,
+           this is used to reflect configuration changes regarding powerObservers,
+           budgetImpactEditors, copyGroups and advices.'''
         if not self.isManager(self, realManagers=True):
             raise Unauthorized
         catalog = api.portal.get_tool('portal_catalog')
-        brains = catalog(meta_type=('Meeting', 'MeetingItem'))
+        brains = catalog(meta_type=meta_type)
         numberOfBrains = len(brains)
         i = 1
         for brain in brains:
             itemOrMeeting = brain.getObject()
-            logger.info('%d/%d Updating restricted power observers and power observers of %s at %s' %
+            logger.info('%d/%d Updating local roles of %s at %s' %
                         (i,
                          numberOfBrains,
                          brain.portal_type,
                          '/'.join(itemOrMeeting.getPhysicalPath())))
             i = i + 1
             itemOrMeeting.updateLocalRoles()
-            # Update security
-            itemOrMeeting.reindexObject(idxs=['allowedRolesAndUsers', ])
-        self.plone_utils.addPortalMessage('Done.')
-        return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 
-    security.declarePublic('updateBudgetImpactEditors')
-
-    def updateBudgetImpactEditors(self):
-        '''Update local_roles regarging the BudgetImpactEditors for every items.'''
-        if not self.isManager(self, realManagers=True):
-            raise Unauthorized
-        for b in self.portal_catalog(meta_type=('MeetingItem')):
-            obj = b.getObject()
-            obj.updateLocalRoles()
-        self.plone_utils.addPortalMessage('Done.')
-        return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
-
-    security.declarePublic('updateCopyGroups')
-
-    def updateCopyGroups(self):
-        '''Update local_roles regarging the copyGroups for every items.'''
-        if not self.isManager(self, realManagers=True):
-            raise Unauthorized
-        for b in self.portal_catalog(meta_type=('MeetingItem', )):
-            obj = b.getObject()
-            obj.updateLocalRoles()
-            # Update security
-            obj.reindexObject(idxs=['allowedRolesAndUsers', ])
         self.plone_utils.addPortalMessage('Done.')
         return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 

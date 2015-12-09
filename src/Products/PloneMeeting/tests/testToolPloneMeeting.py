@@ -26,7 +26,6 @@ from DateTime import DateTime
 from AccessControl import Unauthorized
 
 from Products.CMFCore.permissions import ManagePortal
-from Products.CMFCore.utils import getToolByName
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.interfaces import IDexterityContent
 from plone.dexterity.utils import createContentInContainer
@@ -438,79 +437,6 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # the MFT now should be the given subType otherMCCorrespondences
         self.assertTrue(annex.getMeetingFileType() == subTypeMC1Correspondence.split('__filetype__')[1])
 
-    def test_pm_UpdateDelayAwareAdvices(self):
-        '''
-          Test that the maintenance task updating delay-aware advices works...
-          This is supposed to update delay-aware advices that are still addable/editable.
-        '''
-        # create different items having relevant advices :
-        # item1 : no advice
-        # item2 : one optional advice, one automatic advice, none delay-aware
-        # item3 : one delay-aware advice
-        catalog = getToolByName(self.portal, 'portal_catalog')
-        self.changeUser('admin')
-        self.meetingConfig.setCustomAdvisers(
-            [{'row_id': 'unique_id_123',
-              'group': 'vendors',
-              'gives_auto_advice_on': '',
-              'for_item_created_from': '2012/01/01',
-              'for_item_created_until': '',
-              'delay': '5',
-              'delay_label': ''},
-             {'row_id': 'unique_id_456',
-              'group': 'vendors',
-              'gives_auto_advice_on': 'here/getBudgetRelated',
-              'for_item_created_from': '2012/01/01',
-              'for_item_created_until': '',
-              'delay': '',
-              'delay_label': ''}, ])
-        query = self.portal.restrictedTraverse('@@update-delay-aware-advices')._computeQuery()
-        query['meta_type'] = 'MeetingItem'
-
-        self.changeUser('pmManager')
-        # no advice
-        self.create('MeetingItem')
-        # if we use the query, it will return nothing for now...
-        self.assertTrue(not catalog(**query))
-
-        # no delay-aware advice
-        itemWithNonDelayAwareAdvices = self.create('MeetingItem', **{'budgetRelated': True})
-        # the automatic advice has been added
-        self.assertTrue(itemWithNonDelayAwareAdvices.adviceIndex['vendors']['optional'] is False)
-        itemWithNonDelayAwareAdvices.setOptionalAdvisers(('developers', ))
-        itemWithNonDelayAwareAdvices.at_post_edit_script()
-        self.assertTrue(itemWithNonDelayAwareAdvices.adviceIndex['developers']['optional'] is True)
-
-        # one delay-aware advice addable
-        itemWithDelayAwareAdvice = self.create('MeetingItem')
-        itemWithDelayAwareAdvice.setOptionalAdvisers(('vendors__rowid__unique_id_123', ))
-        itemWithDelayAwareAdvice.at_post_edit_script()
-        self.proposeItem(itemWithDelayAwareAdvice)
-        self.assertTrue(itemWithDelayAwareAdvice.adviceIndex['vendors']['advice_addable'])
-        # this time the element is returned
-        self.assertTrue(len(catalog(**query)) == 1)
-        self.assertTrue(catalog(**query)[0].UID == itemWithDelayAwareAdvice.UID())
-        # if item3 is no more giveable, the query will not return it anymore
-        self.validateItem(itemWithDelayAwareAdvice)
-        self.assertTrue(not itemWithDelayAwareAdvice.adviceIndex['vendors']['advice_addable'])
-        self.assertTrue(not catalog(**query))
-        # back to proposed, add it
-        self.backToState(itemWithDelayAwareAdvice, self.WF_STATE_NAME_MAPPINGS['proposed'])
-        createContentInContainer(itemWithDelayAwareAdvice,
-                                 'meetingadvice',
-                                 **{'advice_group': 'vendors',
-                                    'advice_type': u'positive',
-                                    'advice_comment': RichTextValue(u'My comment')})
-        self.assertTrue(not itemWithDelayAwareAdvice.adviceIndex['vendors']['advice_addable'])
-        self.assertTrue(itemWithDelayAwareAdvice.adviceIndex['vendors']['advice_editable'])
-        # an editable item will found by the query
-        self.assertTrue(len(catalog(**query)) == 1)
-        self.assertTrue(catalog(**query)[0].UID == itemWithDelayAwareAdvice.UID())
-        # makes it no more editable
-        self.backToState(itemWithDelayAwareAdvice, self.WF_STATE_NAME_MAPPINGS['itemcreated'])
-        self.assertTrue(not itemWithDelayAwareAdvice.adviceIndex['vendors']['advice_editable'])
-        self.assertTrue(not catalog(**query))
-
     def test_pm_GetGroupsForUser(self):
         '''getGroupsForUser check in with Plone subgroups a user is and
            returns corresponding MeetingGroups.'''
@@ -558,14 +484,14 @@ class testToolPloneMeeting(PloneMeetingTestCase):
                         set([group for group in pmManagerGroups if group not in globalGroups]))
 
     def test_pm_UpdateCopyGroups(self):
-        """Test the updateCopyGroups method that update every items when configuration changed.
+        """Test the updateAllLocalRoles method that update every items when configuration changed.
            First set copy groups may view items in state 'itemcreated' then change to 'proposed'."""
         self.meetingConfig.setSelectableCopyGroups(('developers_reviewers', 'vendors_reviewers'))
         self.meetingConfig.setUseCopies(True)
         self.meetingConfig.setItemCopyGroupsStates(('itemcreated', ))
         # only available to 'Managers'
         self.changeUser('pmCreator1')
-        self.assertRaises(Unauthorized, self.tool.updateCopyGroups)
+        self.assertRaises(Unauthorized, self.tool.updateAllLocalRoles)
         item1 = self.create('MeetingItem')
         item1.setCopyGroups(('vendors_reviewers',))
         item1.at_post_edit_script()
@@ -576,10 +502,10 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertTrue('vendors_reviewers' in item1.__ac_local_roles__)
         self.assertFalse('vendors_reviewers' in item2.__ac_local_roles__)
 
-        # change configuration, updateCopyGroups then check again
+        # change configuration, updateAllLocalRoles then check again
         self.changeUser('siteadmin')
         self.meetingConfig.setItemCopyGroupsStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
-        self.tool.updateCopyGroups()
+        self.tool.updateAllLocalRoles()
         self.assertFalse('vendors_reviewers' in item1.__ac_local_roles__)
         self.assertTrue('vendors_reviewers' in item2.__ac_local_roles__)
 
@@ -590,7 +516,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         cfg.setItemBudgetInfosStates(('itemcreated', ))
         # only available to 'Managers'
         self.changeUser('pmCreator1')
-        self.assertRaises(Unauthorized, self.tool.updateBudgetImpactEditors)
+        self.assertRaises(Unauthorized, self.tool.updateAllLocalRoles)
         item1 = self.create('MeetingItem')
         item1.at_post_edit_script()
         item2 = self.create('MeetingItem')
@@ -599,15 +525,15 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertTrue('%s_budgetimpacteditors' % cfg.getId() in item1.__ac_local_roles__)
         self.assertFalse('%s_budgetimpacteditors' % cfg.getId() in item2.__ac_local_roles__)
 
-        # change configuration, updateBudgetImpactEditors then check again
+        # change configuration, updateAllLocalRoles then check again
         self.changeUser('siteadmin')
         cfg.setItemBudgetInfosStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
-        self.tool.updateBudgetImpactEditors()
+        self.tool.updateAllLocalRoles()
         self.assertFalse('%s_budgetimpacteditors' % cfg.getId() in item1.__ac_local_roles__)
         self.assertTrue('%s_budgetimpacteditors' % cfg.getId() in item2.__ac_local_roles__)
 
     def test_pm_UpdatePowerObservers(self):
-        """Test the updatePowerObservers method that update every items when configuration changed.
+        """Test the updateAllLocalRoles method that update every items when configuration changed.
            First set (restricted) power observers may view in state 'itemcreated' then change to 'proposed'."""
         cfg = self.meetingConfig
         cfg.setItemPowerObserversStates(('itemcreated', ))
@@ -616,7 +542,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         cfg.setMeetingRestrictedPowerObserversStates(('closed', ))
         # only available to 'Managers'
         self.changeUser('pmManager')
-        self.assertRaises(Unauthorized, self.tool.updatePowerObservers)
+        self.assertRaises(Unauthorized, self.tool.updateAllLocalRoles)
         item1 = self.create('MeetingItem')
         item1.at_post_edit_script()
         item2 = self.create('MeetingItem')
@@ -630,46 +556,19 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertTrue('%s_restrictedpowerobservers' % cfg.getId() in item2.__ac_local_roles__)
         self.assertFalse('%s_restrictedpowerobservers' % cfg.getId() in meeting.__ac_local_roles__)
 
-        # change configuration, updatePowerObservers then check again
+        # change configuration, updateAllLocalRoles then check again
         self.changeUser('siteadmin')
         cfg.setItemPowerObserversStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
         cfg.setMeetingPowerObserversStates(('closed', ))
         cfg.setItemRestrictedPowerObserversStates(('itemcreated', ))
         cfg.setMeetingRestrictedPowerObserversStates(('created', ))
-        self.tool.updatePowerObservers()
+        self.tool.updateAllLocalRoles()
         self.assertFalse('%s_powerobservers' % cfg.getId() in item1.__ac_local_roles__)
         self.assertTrue('%s_powerobservers' % cfg.getId() in item2.__ac_local_roles__)
         self.assertFalse('%s_powerobservers' % cfg.getId() in meeting.__ac_local_roles__)
         self.assertTrue('%s_restrictedpowerobservers' % cfg.getId() in item1.__ac_local_roles__)
         self.assertFalse('%s_restrictedpowerobservers' % cfg.getId() in item2.__ac_local_roles__)
         self.assertTrue('%s_restrictedpowerobservers' % cfg.getId() in meeting.__ac_local_roles__)
-
-    def test_pm_UpdateAllAdvicesAction(self):
-        """Test the updateAllAdvicesAction (calling _updateAllAdvices method) action that update every advices.
-           It is also used to update every delay aware advice every night."""
-        cfg = self.meetingConfig
-        cfg.setItemAdviceStates(('itemcreated', ))
-        cfg.setItemAdviceEditStates(('itemcreated', ))
-        # only available to 'Managers'
-        self.changeUser('pmCreator1')
-        self.assertRaises(Unauthorized, self.tool.updateAllAdvicesAction)
-        # create items and ask advice
-        item1 = self.create('MeetingItem')
-        item1.setOptionalAdvisers(('developers', ))
-        item1.at_post_edit_script()
-        item2 = self.create('MeetingItem')
-        item2.setOptionalAdvisers(('developers', ))
-        self.proposeItem(item2)
-        self.assertTrue('developers_advisers' in item1.__ac_local_roles__)
-        self.assertFalse('developers_advisers' in item2.__ac_local_roles__)
-
-        # change configuration, updateAllAdvicesAction then check again
-        self.changeUser('siteadmin')
-        cfg.setItemAdviceStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
-        cfg.setItemAdviceEditStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
-        self.tool.updateAllAdvicesAction()
-        self.assertFalse('developers_advisers' in item1.__ac_local_roles__)
-        self.assertTrue('developers_advisers' in item2.__ac_local_roles__)
 
     def test_pm_ReindexAnnexes(self):
         """Test the reindexAnnexes that will reindex every annexes on items.
