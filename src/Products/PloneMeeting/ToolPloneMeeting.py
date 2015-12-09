@@ -13,6 +13,7 @@ __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
 <g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""
 __docformat__ = 'plaintext'
 
+import time
 from AccessControl import ClassSecurityInfo
 from zope.interface import implements
 import interfaces
@@ -1741,6 +1742,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            budgetImpactEditors, copyGroups and advices.'''
         if not self.isManager(self, realManagers=True):
             raise Unauthorized
+
+        startTime = time.time()
         catalog = api.portal.get_tool('portal_catalog')
         brains = catalog(meta_type=meta_type)
         numberOfBrains = len(brains)
@@ -1755,6 +1758,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             i = i + 1
             itemOrMeeting.updateLocalRoles()
 
+        seconds = time.time() - startTime
+        logger.info('updateAllLocalRoles finished in %.2f seconds(s) (about %d minutes).' % (seconds, seconds/60))
         self.plone_utils.addPortalMessage('Done.')
         return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 
