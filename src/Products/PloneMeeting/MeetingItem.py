@@ -88,19 +88,35 @@ from Products.PloneMeeting.config import RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
 from Products.PloneMeeting.model.adaptations import RETURN_TO_PROPOSING_GROUP_MAPPINGS
 from Products.PloneMeeting.Meeting import Meeting
-from Products.PloneMeeting.interfaces import IMeetingItemWorkflowConditions, \
-    IMeetingItemWorkflowActions, IAnnexable
-from Products.PloneMeeting.utils import \
-    getWorkflowAdapter, getCustomAdapter, fieldIsEmpty, \
-    getCurrentMeetingObject, checkPermission, sendMail, sendMailIfRelevant, \
-    getMeetingUsers, getFieldContent, getFieldVersion, \
-    getLastEvent, rememberPreviousData, addDataChange, hasHistory, getHistory, \
-    setFieldFromAjax, transformAllRichTextFields, signatureNotAlone,\
-    forceHTMLContentTypeForEmptyRichFields, workday, networkdays, cleanMemoize, \
-    toHTMLStrikedContent, _storedItemNumber_to_itemNumber
+from Products.PloneMeeting.interfaces import IAnnexable
+from Products.PloneMeeting.interfaces import IMeetingItemWorkflowActions
+from Products.PloneMeeting.interfaces import IMeetingItemWorkflowConditions
+from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
+from Products.PloneMeeting.utils import addDataChange
 from Products.PloneMeeting.utils import AdvicesUpdatedEvent
+from Products.PloneMeeting.utils import checkPermission
+from Products.PloneMeeting.utils import fieldIsEmpty
+from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
+from Products.PloneMeeting.utils import getCustomAdapter
+from Products.PloneMeeting.utils import getCurrentMeetingObject
+from Products.PloneMeeting.utils import getFieldContent
+from Products.PloneMeeting.utils import getFieldVersion
+from Products.PloneMeeting.utils import getHistory
+from Products.PloneMeeting.utils import getLastEvent
+from Products.PloneMeeting.utils import getMeetingUsers
+from Products.PloneMeeting.utils import getWorkflowAdapter
+from Products.PloneMeeting.utils import hasHistory
 from Products.PloneMeeting.utils import ItemDuplicatedEvent
 from Products.PloneMeeting.utils import ItemLocalRolesUpdatedEvent
+from Products.PloneMeeting.utils import networkdays
+from Products.PloneMeeting.utils import rememberPreviousData
+from Products.PloneMeeting.utils import sendMail
+from Products.PloneMeeting.utils import sendMailIfRelevant
+from Products.PloneMeeting.utils import setFieldFromAjax
+from Products.PloneMeeting.utils import signatureNotAlone
+from Products.PloneMeeting.utils import toHTMLStrikedContent
+from Products.PloneMeeting.utils import transformAllRichTextFields
+from Products.PloneMeeting.utils import workday
 
 import logging
 logger = logging.getLogger('PloneMeeting')
@@ -1792,6 +1808,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         continue
                     removedItem = removedItemBrains[0]._unrestrictedGetObject()
                     removedItem.getField('manuallyLinkedItems').set(removedItem, [], **kwargs)
+
+            # save newUids, newLinkedUids and removedUids in the REQUEST
+            # so it can be used by seubmethods like subscribers
+            self.REQUEST.set('manuallyLinkedItems_newUids', newUids)
+            self.REQUEST.set('manuallyLinkedItems_newLinkedUids', newLinkedUids)
+            self.REQUEST.set('manuallyLinkedItems_removedUids', removedUids)
 
         self.getField('manuallyLinkedItems').set(self, valueToStore, **kwargs)
 
