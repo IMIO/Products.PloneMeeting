@@ -4266,6 +4266,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Updates the local roles of this item, regarding the proposing
            group.'''
         # remove every localRoles then recompute
+        old_local_roles = self.__ac_local_roles__.copy()
         self.__ac_local_roles__.clear()
         # add 'Owner' local role
         self.manage_addLocalRoles(self.owner_info()['id'], ('Owner',))
@@ -4304,10 +4305,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # actually it could be enough to do in in the onItemTransition but as it is
         # always done after updateLocalRoles, we do it here as it is trivial
         self._updateBudgetImpactEditorsLocalRoles()
+        # notify that localRoles have been updated
+        notify(ItemLocalRolesUpdatedEvent(self, old_local_roles))
         # reindex relevant indexes
         self.reindexObjectSecurity()
-        # notify that localRoles have been updated
-        notify(ItemLocalRolesUpdatedEvent(self))
 
     def _updateCopyGroupsLocalRoles(self):
         '''Give the 'Reader' local role to the copy groups
