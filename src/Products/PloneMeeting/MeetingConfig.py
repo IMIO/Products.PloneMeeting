@@ -1979,6 +1979,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         """Informations used to create DashboardCollections in the searches."""
         itemType = self.getItemTypeName()
         meetingType = self.getMeetingTypeName()
+        # compute states to use in the searchlivingitems collection
+        wfTool = api.portal.get_tool('portal_workflow')
+        itemWF = wfTool.getWorkflowsFor(itemType)[0]
+        livingItemStates = [state for state in itemWF.states if state not in self.getItemDecidedStates()]
         infos = OrderedDict(
             [
                 # My items
@@ -2005,6 +2009,23 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         {'i': 'CompoundCriterion',
                          'o': 'plone.app.querystring.operation.compound.is',
                          'v': 'items-of-my-groups'},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'tal_condition': "python: tool.getGroupsForUser()",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Living items, items in the current flow, by default every states but decidedStates
+                ('searchlivingitems', {
+                    'subFolderId': 'searches_items',
+                    'query':
+                    [
+                        {'i': 'portal_type',
+                         'o': 'plone.app.querystring.operation.selection.is',
+                         'v': [itemType, ]},
+                        {'i': 'review_state',
+                         'o': 'plone.app.querystring.operation.selection.is',
+                         'v': livingItemStates}
                     ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
