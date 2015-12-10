@@ -128,8 +128,12 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   (copyGroups, powerObservers, advices, ...). This way we added a ItemLocalRolesUpdatedEvent to which
   a plugin may subscribe to adapt localRoles if needed. Do not call MeetingItem._updateAdvices directly,
   it is now a submethod of MeetingItem.updateLocalRoles
+- Added caching for ToolPloneMeeting.userIsAmong
+- ToolPloneMeeting.getGroupsForUser parameter 'suffix' is now 'suffixes' and receives
+  a list of suffixes to consider when getting MeetingGroups the user is in
 - Added Collection to 'search living items', returning every items supposed to be 'living', so items for which
   the workflow is not finished.  By default, it displays items that are not in the MeetingConfig.itemDecidedStates
+
 
 3.3 (2015-02-27)
 ----------------
@@ -171,8 +175,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   adviser using a TAL expression (column 'Available on') and added a way to specify in that
   two or more custom advisers are linked together (column 'Is linked to previous row?')
 - Added caching for MeetingConfg.getFileTypes, MeetingConfig.getCategories,
-  ToolPloneMeeting.getGroupsForUser, ToolPloneMeeting.userIsAmong,
-  IAnnexable.getAnnexesToPrint
+  ToolPloneMeeting.getGroupsForUser, IAnnexable.getAnnexesToPrint
 - Link between a MeetingFile and a MeetingFileType is no more a Reference
 - Added possibility to define sub-meetingFileTypes so a single MeetingFileType can have
   several subtypes displayed in the UI under the same icon

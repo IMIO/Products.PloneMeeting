@@ -23,8 +23,10 @@
 #
 
 import logging
+from DateTime import DateTime
 
 from zope.component import getAdapter
+from Products.CMFCore.permissions import ModifyPortalContent
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 from eea.facetednavigation.interfaces import ICriteria
@@ -32,6 +34,8 @@ from collective.compoundcriterion.interfaces import ICompoundCriterionFilter
 from collective.eeafaceted.collectionwidget.widgets.widget import CollectionWidget
 
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
+
 from Products.PloneMeeting.config import MEETINGREVIEWERS
 from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
 
@@ -590,6 +594,64 @@ class testSearches(PloneMeetingTestCase):
         self.changeUser('pmReviewerLevel1')
         self.failUnless(len(collection.getQuery()) == 1)
         self.failUnless(collection.getQuery()[0].UID == item2.UID())
+
+    def test_pm_SearchItemsToCorrect(self):
+        '''Test the 'items-to-correct' CompoundCriterion adapter.  This should return
+           a list of items in state 'returned_to_proposing_group' the current user is able to edit.'''
+        # specify that copyGroups can see the item when it is proposed
+        cfg = self.meetingConfig
+        itemTypeName = cfg.getItemTypeName()
+
+        self.changeUser('siteadmin')
+        # first test the generated query
+        adapter = getAdapter(cfg,
+                             ICompoundCriterionFilter,
+                             name='items-to-correct')
+        # wfAdaptation 'return_to_proposing_group' is not enabled
+        self.assertEquals(adapter.query,
+                          {'review_state': {'query': ['unknown_review_state']}})
+        cfg.setWorkflowAdaptations('return_to_proposing_group')
+        performWorkflowAdaptations(self.portal, cfg, pm_logger)
+
+        # normally this search is not available to users that are not able to correct items
+        # nevertheless, if a user is in not able to edit items to correct, the special
+        # query 'return nothing' is returned
+        self.assertEquals(adapter.query,
+                          {'review_state': {'query': ['unknown_review_state']}})
+        self.changeUser('pmManager')
+        self.assertEquals(adapter.query,
+                          {'getProposingGroup': {'query': ['developers']},
+                           'portal_type': {'query': itemTypeName},
+                           'review_state': {'query': ['returned_to_proposing_group']}})
+
+        # it returns only items the current user is able to correct
+        # create an item for developers and one for vendors and 'return' it to proposingGroup
+        self.create('Meeting', date=DateTime())
+        developersItem = self.create('MeetingItem')
+        self.assertEquals(developersItem.getProposingGroup(), 'developers')
+        self.presentItem(developersItem)
+        self.changeUser('pmCreator2')
+        vendorsItem = self.create('MeetingItem')
+        self.assertEquals(vendorsItem.getProposingGroup(), 'vendors')
+        self.changeUser('pmManager')
+        self.presentItem(vendorsItem)
+        collection = cfg.searches.searches_items.searchitemstocorrect
+        self.failIf(collection.getQuery())
+        self.do(developersItem, 'return_to_proposing_group')
+        self.do(vendorsItem, 'return_to_proposing_group')
+
+        # pmManager may only edit developersItem
+        self.assertTrue(self.hasPermission(ModifyPortalContent, developersItem))
+        res = collection.getQuery()
+        self.failUnless(len(res) == 1)
+        self.failUnless(res[0].UID == developersItem.UID())
+
+        # pmCreator2 may only edit vendorsItem
+        self.changeUser('pmCreator2')
+        self.assertTrue(self.hasPermission(ModifyPortalContent, vendorsItem))
+        res = collection.getQuery()
+        self.failUnless(len(res) == 1)
+        self.failUnless(res[0].UID == vendorsItem.UID())
 
 
 def test_suite():

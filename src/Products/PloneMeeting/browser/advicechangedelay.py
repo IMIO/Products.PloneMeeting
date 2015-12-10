@@ -99,7 +99,8 @@ class AdviceDelaysView(BrowserView):
         tool = getToolByName(self.context, 'portal_plonemeeting')
         # MeetingManagers and advisers of the group
         # can access the delay changes history
-        if tool.isManager(self.context) or adviceId in [group.getId() for group in tool.getGroupsForUser(suffix='advisers')]:
+        userAdviserGroupIds = [group.getId() for group in tool.getGroupsForUser(suffixes=['advisers'])]
+        if tool.isManager(self.context) or adviceId in userAdviserGroupIds:
             return True
         else:
             return False

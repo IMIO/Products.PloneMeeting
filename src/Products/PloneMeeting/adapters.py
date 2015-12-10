@@ -21,6 +21,7 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import getToolByName
 from Products.MimetypesRegistry.common import MimeTypeException
 from Products.CMFPlone.utils import safe_unicode
+from plone import api
 
 from collective.documentviewer.settings import GlobalSettings
 from eea.facetednavigation.criteria.handler import Criteria as eeaCriteria
@@ -32,6 +33,7 @@ from imio.history.adapters import ImioWfHistoryAdapter
 from imio.prettylink.adapters import PrettyLinkAdapter
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import MEETINGREVIEWERS
+from Products.PloneMeeting.config import MEETINGROLES
 from Products.PloneMeeting.interfaces import IMeeting
 from Products.PloneMeeting.utils import checkPermission
 from Products.PloneMeeting.utils import getCurrentMeetingObject
@@ -39,6 +41,9 @@ from Products.PloneMeeting.utils import getCurrentMeetingObject
 CONTENT_TYPE_NOT_FOUND = 'The content_type for MeetingFile at %s was not found in mimetypes_registry!'
 FILE_EXTENSION_NOT_FOUND = 'The extension used by MeetingFile at %s does not correspond to ' \
     'an extension available in the mimetype %s found in mimetypes_registry!'
+
+# this catalog query will find nothing, used in CompoundCriterion adapters when necessary
+FIND_NOTHING_QUERY = {'review_state': {'query': ['unknown_review_state', ]}, }
 
 
 class AnnexableAdapter(object):
@@ -788,7 +793,7 @@ class ItemsToValidateOfHighestHierarchicLevelAdapter(CompoundCriterionBaseAdapte
         if not highestReviewerLevel:
             # in this case, we do not want to display a result
             # we return an unknown review_state
-            return {'review_state': {'query': ['unknown_review_state', ]}, }
+            return FIND_NOTHING_QUERY
         for groupId in groupIds:
             if groupId.endswith('_%s' % highestReviewerLevel):
                 # append group name without suffix
@@ -855,7 +860,7 @@ class ItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(CompoundCriterio
         if not reviewProcessInfos:
             # in this case, we do not want to display a result
             # we return an unknown review_state
-            return {'review_state': {'query': ['unknown_review_state', ]}, }
+            return FIND_NOTHING_QUERY
 
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 'reviewProcessInfo': {'query': reviewProcessInfos}, }
@@ -888,10 +893,33 @@ class ItemsToValidateOfMyReviewerGroupsAdapter(CompoundCriterionBaseAdapter):
         if not reviewProcessInfos:
             # in this case, we do not want to display a result
             # we return an unknown review_state
-            return {'review_state': {'query': ['unknown_review_state', ]}, }
+            return FIND_NOTHING_QUERY
 
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 'reviewProcessInfo': {'query': reviewProcessInfos}, }
+
+
+class ItemsToCorrectAdapter(CompoundCriterionBaseAdapter):
+
+    @property
+    def query(self):
+        '''Queries all items that current user may correct.'''
+        # get the state 'returned_to_proposing_group' and check what roles are able edit
+        # so we will get groups suffixes linked to these roles and find relevant proposingGroups
+        wfTool = api.portal.get_tool('portal_workflow')
+        itemWF = wfTool.getWorkflowsFor(self.cfg.getItemTypeName())[0]
+        if 'returned_to_proposing_group' in itemWF.states:
+            roles = itemWF.states['returned_to_proposing_group'].permission_roles[ModifyPortalContent]
+            suffixes = [suffix for suffix, role in MEETINGROLES.items() if role in roles]
+            userGroupIds = [mGroup.getId() for mGroup in self.tool.getGroupsForUser(suffixes=suffixes)]
+            if not userGroupIds:
+                return FIND_NOTHING_QUERY
+            # Create query parameters
+            return {'portal_type': {'query': self.cfg.getItemTypeName()},
+                    'review_state': {'query': ['returned_to_proposing_group', ]},
+                    'getProposingGroup': {'query': userGroupIds}, }
+
+        return FIND_NOTHING_QUERY
 
 
 class ItemsToAdviceAdapter(CompoundCriterionBaseAdapter):
@@ -899,7 +927,7 @@ class ItemsToAdviceAdapter(CompoundCriterionBaseAdapter):
     @property
     def query(self):
         '''Queries all items for which the current user must give an advice.'''
-        groups = self.tool.getGroupsForUser(suffix='advisers')
+        groups = self.tool.getGroupsForUser(suffixes=['advisers'])
         # Add a '_advice_not_given' at the end of every group id: we want "not given" advices.
         # this search will return 'not delay-aware' and 'delay-aware' advices
         groupIds = [g.getId() + '_advice_not_given' for g in groups] + \
@@ -917,7 +945,7 @@ class ItemsToAdviceWithoutDelayAdapter(CompoundCriterionBaseAdapter):
     @property
     def query(self):
         '''Queries all items for which the current user must give an advice without delay.'''
-        groups = self.tool.getGroupsForUser(suffix='advisers')
+        groups = self.tool.getGroupsForUser(suffixes=['advisers'])
         # Add a '_advice_not_given' at the end of every group id: we want "not given" advices.
         # this search will only return 'not delay-aware' advices
         groupIds = [g.getId() + '_advice_not_given' for g in groups] + \
@@ -934,7 +962,7 @@ class ItemsToAdviceWithDelayAdapter(CompoundCriterionBaseAdapter):
     def query(self):
         '''Queries all items for which the current user must give an advice with delay.'''
 
-        groups = self.tool.getGroupsForUser(suffix='advisers')
+        groups = self.tool.getGroupsForUser(suffixes=['advisers'])
         # Add a '_advice_not_given' at the end of every group id: we want "not given" advices.
         # this search will only return 'delay-aware' advices
         groupIds = ['delay__' + g.getId() + '_advice_not_given' for g in groups] + \
@@ -950,7 +978,7 @@ class ItemsToAdviceWithExceededDelayAdapter(CompoundCriterionBaseAdapter):
     @property
     def query(self):
         '''Queries all items for which the current user must give an advice with exceeded delay.'''
-        groups = self.tool.getGroupsForUser(suffix='advisers')
+        groups = self.tool.getGroupsForUser(suffixes=['advisers'])
         # Add a '_delay_exceeded' at the end of every group id: we want "not given" advices.
         # this search will only return 'delay-aware' advices for wich delay is exceeded
         groupIds = ['delay__' + g.getId() + '_advice_delay_exceeded' for g in groups]
@@ -965,7 +993,7 @@ class AdvisedItemsAdapter(CompoundCriterionBaseAdapter):
     @property
     def query(self):
         '''Queries items for which an advice has been given.'''
-        groups = self.tool.getGroupsForUser(suffix='advisers')
+        groups = self.tool.getGroupsForUser(suffixes=['advisers'])
         # advised items are items that has an advice in a particular review_state
         # just append every available meetingadvice state: we want "given" advices.
         # this search will return every advices
@@ -987,7 +1015,7 @@ class AdvisedItemsWithDelayAdapter(CompoundCriterionBaseAdapter):
     @property
     def query(self):
         '''Queries items for which an advice has been given with delay.'''
-        groups = self.tool.getGroupsForUser(suffix='advisers')
+        groups = self.tool.getGroupsForUser(suffixes=['advisers'])
         # advised items are items that has an advice in a particular review_state
         # just append every available meetingadvice state: we want "given" advices.
         # this search will only return 'delay-aware' advices

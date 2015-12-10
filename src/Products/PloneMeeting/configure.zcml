@@ -89,6 +89,10 @@
            provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
            name="items-to-validate-of-my-reviewer-groups" />
   <adapter for="*"
+           factory="Products.PloneMeeting.adapters.ItemsToCorrectAdapter"
+           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+           name="items-to-correct" />
+  <adapter for="*"
            factory="Products.PloneMeeting.adapters.ItemsToAdviceAdapter"
            provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
            name="items-to-advice" />

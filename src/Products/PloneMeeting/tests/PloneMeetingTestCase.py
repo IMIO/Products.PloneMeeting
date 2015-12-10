@@ -222,7 +222,7 @@ class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
         if objectType == 'MeetingItem':
             if not 'proposingGroup' in attrs.keys():
                 cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.getGroupsForUser')
-                proposingGroup = self.tool.getGroupsForUser(suffix="creators")
+                proposingGroup = self.tool.getGroupsForUser(suffixes=['creators'])
                 if len(proposingGroup):
                     attrs.update({'proposingGroup': proposingGroup[0].id})
         obj = getattr(folder, folder.invokeFactory(contentType, **attrs))

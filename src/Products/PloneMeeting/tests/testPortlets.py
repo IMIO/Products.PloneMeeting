@@ -90,7 +90,7 @@ class testPortlets(PloneMeetingTestCase):
         # item has been created with a filled proposing group
         # and privacy is still ok
         self.assertTrue(newItem2.getId() in folder.objectIds())
-        userGroups = self.tool.getGroupsForUser(suffix="creators")
+        userGroups = self.tool.getGroupsForUser(suffixes=['creators'])
         self.assertTrue(newItem2.getProposingGroup() == userGroups[0].getId())
         self.assertTrue(newItem2.getPrivacy() == itemTemplate.getPrivacy())
 

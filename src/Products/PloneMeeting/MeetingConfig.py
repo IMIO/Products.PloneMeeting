@@ -2211,12 +2211,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'subFolderId': 'searches_items',
                     'query':
                     [
-                        {'i': 'portal_type',
-                         'o': 'plone.app.querystring.operation.selection.is',
-                         'v': [itemType, ]},
-                        {'i': 'review_state',
-                         'o': 'plone.app.querystring.operation.selection.is',
-                         'v': ['returned_to_proposing_group']}
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'items-to-correct'},
                     ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
@@ -4482,7 +4479,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             membershipTool = getToolByName(self, 'portal_membership')
             member = membershipTool.getAuthenticatedMember()
             memberGroups = [group.getId() for group in
-                            tool.getGroupsForUser(member.getId(), suffix="creators")]
+                            tool.getGroupsForUser(member.getId(), suffixes=['creators'])]
             query['templateUsingGroups'] = ('__nothing_selected__', '__folder_in_itemtemplates__', ) + \
                 tuple(memberGroups)
         return query

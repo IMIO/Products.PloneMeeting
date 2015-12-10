@@ -3347,7 +3347,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if not cfg.getUseAdvices():
             return ([], [])
         # Logged user must be an adviser
-        meetingGroups = tool.getGroupsForUser(suffix='advisers')
+        meetingGroups = tool.getGroupsForUser(suffixes=['advisers'])
         if not meetingGroups:
             return ([], [])
         # Produce the lists of groups to which the user belongs and for which,
@@ -3486,7 +3486,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # in case current user is a PowerAdviser, we need
         # to display advices on the item view
         tool = getToolByName(self, 'portal_plonemeeting')
-        userAdviserGroupIds = set([group.getId() for group in tool.getGroupsForUser(suffix='advisers')])
+        userAdviserGroupIds = set([group.getId() for group in tool.getGroupsForUser(suffixes=['advisers'])])
         cfg = tool.getMeetingConfig(self)
         powerAdviserGroupIds = set(cfg.getPowerAdvisersGroups())
         return bool(userAdviserGroupIds.intersection(powerAdviserGroupIds))

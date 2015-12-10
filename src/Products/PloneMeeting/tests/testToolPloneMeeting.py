@@ -454,7 +454,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
                         ['developers', 'vendors'])
         # check the 'suffix' parameter, it will check that user is in a Plone group of that suffix
         # here, 'pmManager' is only in the '_creators' or 'developers'
-        self.assertTrue([mGroup.getId() for mGroup in self.tool.getGroupsForUser(suffix='reviewers')] ==
+        self.assertTrue([mGroup.getId() for mGroup in self.tool.getGroupsForUser(suffixes=['reviewers'])] ==
                         ['developers'])
         # check the 'omittedSuffixes' parameter, it will not consider Plone group having that suffix
         # here, if we omit the 'advisers' suffix, the 'vendors' MeetingGroup will not be returned

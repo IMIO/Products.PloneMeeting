@@ -483,21 +483,22 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 res.append(meetingConfig)
         return res
 
-    def getGroupsForUser_cachekey(method, self, userId=None, active=True, suffix=None, zope=False, omittedSuffixes=[]):
+    def getGroupsForUser_cachekey(method, self, userId=None, active=True, suffixes=[], zope=False, omittedSuffixes=[]):
         '''cachekey method for self.getGroupsForUser.'''
         # we only recompute if param or REQUEST changed
-        return (str(self.REQUEST._debug), userId, active, suffix, zope, omittedSuffixes)
+        return (str(self.REQUEST._debug), userId, active, suffixes, zope, omittedSuffixes)
 
     security.declarePublic('getGroupsForUser')
 
     @ram.cache(getGroupsForUser_cachekey)
-    def getGroupsForUser(self, userId=None, active=True, suffix=None, zope=False, omittedSuffixes=[]):
+    def getGroupsForUser(self, userId=None, active=True, suffixes=[], zope=False, omittedSuffixes=[]):
         '''Gets the groups p_userId belongs to. If p_userId is None, we use the
            authenticated user. If active is True, we select only active
-           MeetingGroups. If p_suffix is not None, we select only groups having
-           a particular p_suffix. If p_zope is False, we return MeetingGroups;
+           MeetingGroups. If p_suffixes is not empty, we select only groups having
+           at least one of p_suffixes. If p_zope is False, we return MeetingGroups;
            else, we return Zope/Plone groups. If p_omittedSuffixes, we do not consider
            groups the user is in using those suffixes.'''
+        # formerl
         res = []
         user = self.getUser(userId)
         groupIds = user.getGroups()
@@ -507,7 +508,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             mGroups = self.objectValues('MeetingGroup')
         for mGroup in mGroups:
             for gSuffix in MEETING_GROUP_SUFFIXES:
-                if suffix and (suffix != gSuffix):
+                if suffixes and (gSuffix not in suffixes):
                     continue
                 if gSuffix in omittedSuffixes:
                     continue
@@ -534,7 +535,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         """
         res = []
         if onlySelectable:
-            userMeetingGroups = self.getGroupsForUser(userId=userId, suffix="creators")
+            userMeetingGroups = self.getGroupsForUser(userId=userId, suffixes=['creators', ])
             for group in userMeetingGroups:
                 res.append((group.id, group.getName()))
         else:
@@ -1352,7 +1353,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             # Change the proposing group if the item owner does not belong to
             # the defined proposing group, except if p_keepProposingGroup is True
             if not keepProposingGroup:
-                userGroups = self.getGroupsForUser(userId=newOwnerId, suffix="creators")
+                userGroups = self.getGroupsForUser(userId=newOwnerId, suffixes=['creators', ])
                 if newItem.getProposingGroup(True) not in userGroups:
                     if userGroups:
                         newItem.setProposingGroup(userGroups[0].getId())

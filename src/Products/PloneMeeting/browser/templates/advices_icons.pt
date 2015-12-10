@@ -45,7 +45,7 @@
               <li tal:repeat="advice python:advicesByType[adviceType]">
                 <fieldset tal:define="tool python: portal.portal_plonemeeting;
                                       mGroup python: getattr(tool, advice['id']);
-                                      memberIsAdviserForGroup python:  advice['id'] in [group.getId() for group in tool.getGroupsForUser(suffix='advisers')];
+                                      memberIsAdviserForGroup python:  advice['id'] in [group.getId() for group in tool.getGroupsForUser(suffixes=['advisers'])];
                                       obj python: advice.get('advice_id', None) and getattr(context, advice['advice_id']) or None;
                                       mayEdit python: (advicesToEdit and advice['id'] in advicesToEdit) or (isRealManager and not adviceType == 'not_given');
                                       customMessageInfos python: context.adapted().getCustomAdviceMessageFor(advice);
