@@ -67,6 +67,7 @@ from imio.helpers.cache import cleanVocabularyCacheFor
 from imio.helpers.security import is_develop_environment
 from imio.helpers.security import generate_password
 from imio.prettylink.interfaces import IPrettyLink
+from Products.PloneMeeting import logger
 from Products.PloneMeeting import PloneMeetingError
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import ADD_CONTENT_PERMISSIONS
@@ -89,9 +90,6 @@ from Products.PloneMeeting.profiles import PloneMeetingConfiguration
 from Products.PloneMeeting.utils import getCustomAdapter, \
     monthsIds, weekdaysIds, getCustomSchemaFields, workday
 from Products.PloneMeeting.model.adaptations import performModelAdaptations, performWorkflowAdaptations
-
-import logging
-logger = logging.getLogger('PloneMeeting')
 
 # Some constants ---------------------------------------------------------------
 MEETING_CONFIG_ERROR = 'A validation error occurred while instantiating ' \
@@ -544,8 +542,14 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 res.append((group.id, group.getName()))
         return res
 
+    def userIsAmong_cachekey(method, self, suffix, onlyActive=True):
+        '''cachekey method for self.userIsAmong.'''
+        # we only recompute if param or REQUEST changed
+        return (str(self.REQUEST._debug), suffix, onlyActive)
+
     security.declarePublic('userIsAmong')
 
+    @ram.cache(userIsAmong_cachekey)
     def userIsAmong(self, suffix, onlyActive=True):
         '''Check if the currently logged user is in a p_suffix-related Plone
            group.

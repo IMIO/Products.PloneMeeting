@@ -25,6 +25,7 @@
 from OFS.ObjectManager import BeforeDeleteException
 from zope.i18n import translate
 from Products.CMFCore.utils import getToolByName
+from imio.helpers.cache import cleanRamCacheFor
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 
@@ -234,6 +235,8 @@ class testMeetingGroup(PloneMeetingTestCase):
         self.assertTrue('developers' not in item.listProposingGroups())
         self.assertTrue('developers_reviewers' not in item.listCopyGroups())
         self.assertTrue('developers' not in item.listOptionalAdvisers())
+        # userIsAmong is ram.cached
+        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.userIsAmong')
         self.assertTrue(not self.tool.userIsAmong('creators'))
 
     def test_pm_UpdatePloneGroupTitle(self):
