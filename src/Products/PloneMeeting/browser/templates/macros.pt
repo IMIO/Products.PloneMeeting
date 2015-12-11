@@ -823,7 +823,11 @@ The name is form.button.cancel because it correspond to the overlay close select
 <tal:comment replace="nothing">Macro used to display additional informations coming from obj schema
 non metadata fields.  We receive 'obj' and 'excludedFields' that is a list of fields not to display information of.
 This works for an AT and for a DX.</tal:comment>
-  <tal:dx condition="python: obj.meta_type.startswith('Dexterity')">
+<tal:defines define="isDexterity python: obj.getTypeInfo().meta_type == 'Dexterity FTI';">
+  <tal:dx condition="isDexterity">
+    <tal:comment replace="nothing">Need to patch url for links to downloadable files to work...</tal:comment>
+    <tal:patch_url define="oldURL context/REQUEST/getURL;
+                           dummy python: context.REQUEST.set('URL', obj.absolute_url() + '/view')">
     <tal:loop
         define="view python: obj.restrictedTraverse('view');
                 dummy python: view.update();"
@@ -834,14 +838,17 @@ This works for an AT and for a DX.</tal:comment>
           <div tal:content="structure widget/render" />
         </div>
     </tal:loop>
+    <tal:unpatch_url define="dummy python: context.REQUEST.set('URL', oldURL)" />
+    </tal:patch_url>
   </tal:dx>
-  <tal:at condition="python: not obj.meta_type.startswith('Dexterity')">
+  <tal:at condition="not: isDexterity">
     <tal:loop
         repeat="field python: obj.Schema().filterFields(isMetadata=False)">
         <span class="discreet"
               tal:condition="python: not field.getName() in excludedFields and (field.getAccessor(obj)() or field.type == 'boolean')">
-          <metal:field use-macro="context/widgets/field/macros/view" />
+          <metal:field use-macro="obj/widgets/field/macros/view" />
         </span>
     </tal:loop>
   </tal:at>
+</tal:defines>
 </metal:additionalInformations>
