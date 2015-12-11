@@ -20,7 +20,7 @@
 # 02110-1301, USA.
 #
 
-import unittest2
+import unittest
 import os.path
 from AccessControl.SecurityManagement import getSecurityManager
 from ZPublisher.HTTPRequest import FileUpload
@@ -66,7 +66,7 @@ class TestFile:
         self.headers = None
 
 
-class PloneMeetingTestCase(unittest2.TestCase, PloneMeetingTestingHelpers):
+class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
     '''Base class for defining PloneMeeting test cases.'''
 
     # Some default content
