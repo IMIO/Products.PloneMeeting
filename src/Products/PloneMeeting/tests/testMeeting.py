@@ -1124,7 +1124,8 @@ class testMeeting(PloneMeetingTestCase):
         self.changeUser('pmManager')
         # create first cfg2 meeting
         self.setMeetingConfig(cfg2Id)
-        meetingCfg2 = self.create('Meeting', date=DateTime('2015/12/14'))
+        # create a meeting with date in the future
+        meetingCfg2 = self.create('Meeting', date=DateTime() + 1)
         # then continue with cfg1
         self.setMeetingConfig(cfgId)
         item1 = self.create('MeetingItem')
