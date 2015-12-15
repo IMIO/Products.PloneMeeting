@@ -1114,28 +1114,28 @@ class Meeting(BaseContent, BrowserDefaultMixin):
             label = 'pre_date_after_meeting_date'
             return translate(label, domain='PloneMeeting', context=self.REQUEST)
 
-    def getItems_cachekey(method, self, uids=[], listType=None, ordered=False, useCatalog=False, **kwargs):
+    def getItems_cachekey(method, self, uids=[], listTypes=[], ordered=False, useCatalog=False, **kwargs):
         '''cachekey method for self.getItems.'''
-        return (self, str(self.REQUEST._debug), uids, listType, ordered, useCatalog, kwargs, self.modified())
+        return (self, str(self.REQUEST._debug), uids, listTypes, ordered, useCatalog, kwargs, self.modified())
 
     security.declarePublic('getItems')
 
     @ram.cache(getItems_cachekey)
-    def getItems(self, uids=[], listType=None, ordered=False, useCatalog=False, **kwargs):
+    def getItems(self, uids=[], listTypes=[], ordered=False, useCatalog=False, **kwargs):
         '''Overrides the Meeting.items accessor.
            Items can be filtered depending on :
            - list of given p_uids;
-           - given p_listType;
+           - given p_listTypes;
            - returned ordered (by getItemNumber) if p_ordered is True.
         '''
         if useCatalog:
             # execute the query using the portal_catalog
             catalog = getToolByName(self, 'portal_catalog')
             catalog_query = self.getRawQuery()
-            if listType:
+            if listTypes:
                 catalog_query.append({'i': 'listType',
                                       'o': 'plone.app.querystring.operation.selection.is',
-                                      'v': listType},)
+                                      'v': listTypes},)
             if uids:
                 catalog_query.append({'i': 'UID',
                                       'o': 'plone.app.querystring.operation.selection.is',
@@ -1154,8 +1154,8 @@ class Meeting(BaseContent, BrowserDefaultMixin):
                     if item.UID() in uids and member.has_permission(View, item):
                         keptItems.append(item)
                 res = keptItems
-            if listType:
-                res = [item for item in res if item.getListType() == listType]
+            if listTypes:
+                res = [item for item in res if item.getListType() in listTypes]
             if ordered:
                 # Sort items according to item number
                 res.sort(key=lambda x: x.getItemNumber())
@@ -1166,10 +1166,10 @@ class Meeting(BaseContent, BrowserDefaultMixin):
     def getItemsInOrder(self, late=False, uids=[]):
         """Deprecated, use Meeting.getItems instead."""
         logger.warn('Meeting.getItemsInOrder is deprecated, use Meeting.getItems(ordered=True) instead.')
-        listType = late and 'late' or 'normal'
+        listTypes = late and ['late'] or ['normal']
         if '' in uids:
             uids.remove('')
-        return self.getItems(uids=uids, listType=listType, ordered=True)
+        return self.getItems(uids=uids, listTypes=listTypes, ordered=True)
 
     security.declarePublic('getItemByNumber')
 

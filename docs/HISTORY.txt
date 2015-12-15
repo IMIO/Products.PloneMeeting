@@ -20,7 +20,6 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - MeetingFiles title is now indexed in items's SearchableText so it is possible to do a search on an annex
   title directly in the 'Search' field available on every dashboard searches (my items, all items, ...)
 - Moved MeetingConfig.searchXXX searches to collective.compoundcriterion compatible search adapter
-- Removed Meeting.getAllItems and Meeting.getItemsInOrder, we now only use Meeting.getItems with relevant parameters
 - Indexed the meetingUID and meetingDate on items so we are able to add a sortable 'meeting' column
 - Moved 'history' functionnalities (highlight, displayed as table, ...) to imio.history and rely on it
 - Moved the item title colorization and leading icons to imio.prettylink and rely on it.
@@ -67,6 +66,10 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Adapted the 'move item to position number' on the meeting view to move an item to an exact position and no
   more the 'position before the entered number'
 - Added possibility to display the item reference in the item dashboards
+- Removed Meeting.getAllItems and deprecated Meeting.getItemsInOrder that must be replaced by Meeting.getItems.
+  Meeting.getItems does not receive a 'late=True/False' parameter anymore as we may have more than 'normal/late' for
+  MeetingItem.listType, but receives now a list of listTypes that is by default empty ([]) meaning that it will
+  return every items of the meeting
 - Added MeetingItem.listType attribute that defines the fact that the item is 'normal' or 'late'.  Also added
   a 'on_list_type' item insertion method into a meeting.  These 'list types' are defined in the MeetingConfig, default
   listTypes ('normal' and 'late') may not be removed but other types of list may be added and order may be changed.

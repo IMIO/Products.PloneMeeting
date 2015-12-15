@@ -1412,8 +1412,8 @@ class testMeeting(PloneMeetingTestCase):
         # we removed 3 items
         self.assertTrue(len(meeting.getItems(uids=itemUids)) == 4)
         # we can specify the listType
-        self.assertTrue(len(meeting.getItems(listType='normal')) == 7)
-        self.assertTrue(len(meeting.getItems(listType='late')) == 0)
+        self.assertTrue(len(meeting.getItems(listTypes=['normal'])) == 7)
+        self.assertTrue(len(meeting.getItems(listTypes=['late'])) == 0)
 
         # can also use catalog
         brainsInOrder = meeting.getItems(ordered=True, useCatalog=True)
@@ -1425,8 +1425,8 @@ class testMeeting(PloneMeetingTestCase):
                           [100, 200, 300, 400, 500, 600, 700])
         self.assertTrue(len(meeting.getItems(uids=itemUids, useCatalog=True)) == 4)
         # we can specify the listType
-        self.assertTrue(len(meeting.getItems(listType='normal', useCatalog=True)) == 7)
-        self.assertTrue(len(meeting.getItems(listType='late', useCatalog=True)) == 0)
+        self.assertTrue(len(meeting.getItems(listTypes=['normal'], useCatalog=True)) == 7)
+        self.assertTrue(len(meeting.getItems(listTypes=['late'], useCatalog=True)) == 0)
 
     def test_pm_GetItemByNumber(self):
         '''Test the Meeting.getItemByNumber method.'''
