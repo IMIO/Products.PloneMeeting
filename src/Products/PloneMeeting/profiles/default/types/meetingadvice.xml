@@ -3,7 +3,7 @@
    xmlns:i18n="http://xml.zope.org/namespaces/i18n">
  <property name="title" i18n:translate="">MeetingAdvice</property>
  <property name="description" i18n:translate=""></property>
- <property name="icon_expr"></property>
+ <property name="icon_expr">string:${portal_url}/meetingadvice.png</property>
  <property name="factory">meetingadvice</property>
  <property name="add_view_expr">string:${folder_url}/++add++meetingadvice</property>
  <property name="link_target"></property>
