@@ -493,6 +493,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.adviceStyle = 'standard'
         self.defaultAdviceHiddenDuringRedaction = False
         self.transitionReinitializingDelays = ''
+        self.historizeItemDataWhenAdviceIsGiven = True
         self.customAdvisers = []
 
         # Votes parameters -----------------------------------------------------

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from AccessControl import Unauthorized
+from persistent.list import PersistentList
 from zope.interface import implements, Interface
 from zope import schema
 from zope.i18n import translate
@@ -14,10 +15,11 @@ from plone.dexterity.content import Container
 from plone.dexterity.schema import DexteritySchemaPolicy
 from plone.directives import form
 
-from Products.CMFCore.utils import getToolByName
+from plone import api
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.utils import getHistory
 from Products.PloneMeeting.utils import getLastEvent
+from Products.PloneMeeting.utils import isModifiedSinceLastVersion
 
 
 class IMeetingAdvice(Interface):
@@ -77,7 +79,7 @@ class IMeetingAdvice(Interface):
 
 @form.default_value(field=IMeetingAdvice['advice_type'])
 def advice_typeDefaultValue(data):
-    tool = getToolByName(data.context, 'portal_plonemeeting')
+    tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(data.context)
     return cfg and cfg.getDefaultAdviceType() or ''
 
@@ -87,7 +89,7 @@ def advice_hide_during_redactionDefaultValue(data):
     published = data.context.REQUEST.get('PUBLISHED')
     if not published:
         return False
-    tool = getToolByName(data.context, 'portal_plonemeeting')
+    tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(data.context)
     return cfg.getDefaultAdviceHiddenDuringRedaction()
 
@@ -105,7 +107,7 @@ class MeetingAdvice(Container):
         # to him but for which he knows the url to access to...
         parent = self.getParentNode()
         if self.advice_group in parent.adviceIndex and parent.adviceIndex[self.advice_group]['isConfidential']:
-            tool = getToolByName(self, 'portal_plonemeeting')
+            tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self)
             isPowerObserver = tool.isPowerObserverForCfg(cfg)
             isRestrictedPowerObserver = tool.isPowerObserverForCfg(cfg, isRestricted=True)
@@ -128,12 +130,12 @@ class MeetingAdvice(Container):
 
     def queryState(self):
         '''In what state am I ?'''
-        wfTool = getToolByName(self, 'portal_workflow')
+        wfTool = api.portal.get_tool('portal_workflow')
         return wfTool.getInfoFor(self, 'review_state')
 
     def numberOfAnnexes(self):
         '''Return the number of viewable annexes.'''
-        catalog = getToolByName(self, 'portal_catalog')
+        catalog = api.portal.get_tool('portal_catalog')
         return len(catalog(Type='MeetingFile', path='/'.join(self.getPhysicalPath())))
 
     def _updateAdviceRowId(self):
@@ -148,7 +150,7 @@ class MeetingAdvice(Container):
             row_id = adviceInfo['row_id']
         else:
             # check if it is actually a power adviser adding a not asked advice
-            tool = getToolByName(item, 'portal_plonemeeting')
+            tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(item)
             if self.advice_group in cfg.getPowerAdvisersGroups():
                 row_id = ''
@@ -173,6 +175,32 @@ class MeetingAdvice(Container):
             else:
                 return modified
 
+    def versionate_if_relevant(self, comment):
+        """Versionate if self was never versioned or
+           if it was modified since last version."""
+        # only historize advice if it was modified since last historization
+        if isModifiedSinceLastVersion(self):
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(self)
+            # create the historized_item_data before versioning, then removes it after
+            # it will still exist on the versioned object
+            self.historized_item_data = PersistentList()
+            item = self.getParentNode()
+            if cfg.getHistorizeItemDataWhenAdviceIsGiven():
+                # compute 'historized_item_data', save every active RichText fields
+                usedItemAttrs = cfg.getUsedItemAttributes()
+                self.historized_item_data.append({'field_name': 'title',
+                                                  'field_content': item.Title()})
+                for field in item.Schema().fields():
+                    fieldName = field.getName()
+                    if field.widget.getName() == 'RichWidget' and \
+                       (fieldName in usedItemAttrs or not field.optional):
+                        self.historized_item_data.append({'field_name': fieldName,
+                                                          'field_content': field.get(item)})
+            pr = api.portal.get_tool('portal_repository')
+            pr.save(obj=self, comment=comment)
+            delattr(self, 'historized_item_data')
+
 
 class MeetingAdviceSchemaPolicy(DexteritySchemaPolicy):
     """ """
@@ -187,7 +215,7 @@ class AdviceGroupVocabulary(object):
     def __call__(self, context):
         """"""
         terms = []
-        tool = getToolByName(context, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
 
         # take into account groups for wich user can add an advice
         # while adding an advice, the context is his parent, aka a MeetingItem

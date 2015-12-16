@@ -791,7 +791,8 @@
           <td tal:define="field python:here.getField('transitionReinitializingDelays')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td>
+          <td tal:define="field python:here.getField('historizeItemDataWhenAdviceIsGiven')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
         </tr>
         <tr valign="top">

@@ -25,8 +25,8 @@
     </h1>
 
     <div tal:replace="structure provider:plone.belowcontenttitle" />
-    <tal:comment replace="nothing">XXX added by PloneMeeting, link back to the item.</tal:comment>
 
+    <tal:comment replace="nothing">XXX added by PloneMeeting, link back to the item.</tal:comment>
     <p>
       <metal:backToItem use-macro='here/@@pm-macros/backToItem' />
     </p>
@@ -234,9 +234,24 @@
 
         </tal:noversionview>
 
+        <tal:comment replace="nothing">XXX added by PloneMeeting, data of the item when advice was given.</tal:comment>
+        <tal:defines define="infos python: getattr(vdata.object, 'historized_item_data', []);
+                             item context/getParentNode;
+                             itemSchema item/Schema;"
+                     i18n:domain="PloneMeeting">
+          <h1 class="documentFirstHeading" i18n:translate="">Data of the item when advice was given</h1>
+          <tal:loop repeat="data infos">
+            <fieldset class="field">
+                <legend i18n:translate="" tal:content="python: itemSchema[data['field_name']].widget.label_msgid">Field name</legend>
+                <div tal:content="structure data/field_content"></div>
+            </fieldset>
+          </tal:loop>
+          <tal:nodata condition="not: infos" i18n:translate="">No historized data for this advice.</tal:nodata>
+        </tal:defines>
       </tal:block>
 
     </div>
+
   </div>
   </metal:main>
 </html>

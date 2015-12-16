@@ -546,6 +546,7 @@ schema = Schema((
         allowable_content_types=('text/html',),
         default_output_type="text/x-html-safe",
         accessor="Description",
+        optional=False,
     ),
     TextField(
         name='detailedDescription',
@@ -766,6 +767,7 @@ schema = Schema((
         searchable=True,
         allowable_content_types=('text/html',),
         default_output_type="text/x-html-safe",
+        optional=False,
         write_permission="PloneMeeting: Write decision",
     ),
     BooleanField(
@@ -4260,8 +4262,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declareProtected('Modify portal content', 'updateLocalRoles')
 
     def updateLocalRoles(self, **kwargs):
-        '''Updates the local roles of this item, regarding the proposing
-           group.'''
+        '''Updates the local roles of this item, regarding :
+           - the proposing group;
+           - copyGroups;
+           - advices;
+           - power observers;
+           - budget impact editors;
+           - then call a subscriber 'after local roles updated'.'''
         # remove every localRoles then recompute
         old_local_roles = self.__ac_local_roles__.copy()
         self.__ac_local_roles__.clear()

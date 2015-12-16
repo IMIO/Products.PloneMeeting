@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from zope.component import getMultiAdapter
 from zope.i18n import translate
 from AccessControl import Unauthorized

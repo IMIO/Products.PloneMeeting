@@ -77,8 +77,8 @@ class ChangeAdviceAskedAgainView(BrowserView):
             # we are about to set advice to 'asked_again'
             if not parent.adapted().mayAskAdviceAgain(self.context):
                 raise Unauthorized
-            # historize the given advice
-            pr.save(obj=self.context, comment='advice_asked_again_and_historized_comments')
+            # historize the given advice if it was modified since last version
+            self.context.versionate_if_relevant(comment='advice_asked_again_and_historized_comments')
             # now we may change advice_type to 'asked_again'
             self.context.advice_type = 'asked_again'
             # and we may also set 'advice_hide_during_redaction' to the default

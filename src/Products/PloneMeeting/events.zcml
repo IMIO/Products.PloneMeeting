@@ -72,6 +72,9 @@
   <subscriber for=".content.advice.IMeetingAdvice
                    zope.container.interfaces.IObjectRemovedEvent"
               handler=".events.onAdviceRemoved"/>
+  <subscriber for=".content.advice.IMeetingAdvice
+                   Products.DCWorkflow.interfaces.IAfterTransitionEvent"
+              handler=".events.onAdviceTransition"/>
 
   <!-- if 'auto-conversion' is enabled in collective.documentviewer, convert MeetingFiles upon creation -->
   <subscriber for=".interfaces.IMeetingFile

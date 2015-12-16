@@ -41,6 +41,7 @@ from Products.CMFCore.permissions import AddPortalContent
 from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
+from plone import api
 from Products.PloneMeeting.config import AddAdvice
 from Products.PloneMeeting.config import ADVICE_STATES_ALIVE
 from Products.PloneMeeting.config import ADVICE_STATES_ENDED
@@ -1584,7 +1585,12 @@ class testAdvices(PloneMeetingTestCase):
         self.assertFalse(item.adapted().mayBackToPreviousAdvice(advice))
         # send advice back to creator so advice may be asked_again
         self.changeUser('pmCreator1')
+        # never historized
+        pr = api.portal.get_tool('portal_repository')
+        self.assertFalse(pr.getHistoryMetadata(advice))
         self.backToState(item, 'itemcreated')
+        # advice was historized
+        self.assertEquals(pr.getHistoryMetadata(advice)._available, [0])
         self.assertTrue(item.adapted().mayAskAdviceAgain(advice))
         self.assertFalse(item.adapted().mayBackToPreviousAdvice(advice))
         # for now 'advice_hide_during_redaction' is False
@@ -1595,7 +1601,8 @@ class testAdvices(PloneMeetingTestCase):
         self.assertFalse('asked_again' in vocab)
         # right, ask advice again
         changeView()
-        # advice is asked_again and previous advice was historized
+        # advice was not hsitorized again because it was not modified
+        self.assertEquals(pr.getHistoryMetadata(advice)._available, [0])
         self.assertTrue(advice.advice_type == 'asked_again')
         # now it is available in vocabulary
         vocab = factory(advice)
@@ -1611,15 +1618,91 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(cfg.getDefaultAdviceHiddenDuringRedaction())
         self.assertTrue(advice.advice_hide_during_redaction)
         changeView()
+        # when going back to previous version, a new version is done
+        self.assertEquals(pr.getHistoryMetadata(advice)._available, [0, 1])
         self.assertTrue(advice.advice_type == 'negative')
         # advice was automatically shown
         self.assertFalse(advice.advice_hide_during_redaction)
         # ok, ask_again and send it again to 'pmReviewer2', he will be able to edit it
+        # but before, edit the advice so it is historized again
+        notify(ObjectModifiedEvent(advice))
         changeView()
+        # this time a new version has been saved
+        self.assertEquals(pr.getHistoryMetadata(advice)._available, [0, 1, 2])
         self.assertTrue(advice.advice_type == 'asked_again')
         self.proposeItem(item)
         self.changeUser('pmReviewer2')
         self.assertTrue(self.hasPermission(ModifyPortalContent, advice))
+
+    def test_pm_ItemDataSavedWhenAdviceGiven(self):
+        """When an advice is given, it is versioned and relevant item infos are saved.
+           Moreover, advice is only versioned if it was modified."""
+        cfg = self.meetingConfig
+        # item data are saved if cfg.historizeItemDataWhenAdviceIsGiven
+        self.assertTrue(cfg.getHistorizeItemDataWhenAdviceIsGiven())
+        # activate item field 'motivation'
+        cfg.setUsedItemAttributes(cfg.getUsedItemAttributes() + ('motivation', ))
+        cfg.setItemAdviceStates([self.WF_STATE_NAME_MAPPINGS['proposed'], ])
+        cfg.setItemAdviceEditStates([self.WF_STATE_NAME_MAPPINGS['proposed'], ])
+        cfg.setItemAdviceViewStates([self.WF_STATE_NAME_MAPPINGS['proposed'], ])
+        # set that default value of field 'advice_hide_during_redaction' will be True
+        cfg.setDefaultAdviceHiddenDuringRedaction(True)
+        self.changeUser('pmCreator1')
+        # create an item and ask the advice of group 'vendors'
+        data = {
+            'title': 'Item to advice',
+            'category': 'maintenance',
+            'optionalAdvisers': ('vendors', 'developers', ),
+            'description': '<p>Item description</p>',
+        }
+        item = self.create('MeetingItem', **data)
+        item.setMotivation('<p>Item motivation</p>')
+        item.setDecision('<p>Item decision</p>')
+        self.proposeItem(item)
+        # give advice
+        self.changeUser('pmReviewer2')
+        advice = createContentInContainer(item,
+                                          'meetingadvice',
+                                          **{'advice_group': 'vendors',
+                                             'advice_type': u'negative',
+                                             'advice_hide_during_redaction': False,
+                                             'advice_comment': RichTextValue(u'My comment')})
+        # advice is versioned when it is given, aka transition giveAdvice has been triggered
+        pr = api.portal.get_tool('portal_repository')
+        self.assertFalse(pr.getHistoryMetadata(advice))
+        self.changeUser('pmReviewer1')
+        self.validateItem(item)
+        h_metadata = pr.getHistoryMetadata(advice)
+        self.assertTrue(h_metadata)
+        # first version, item data was historized on it
+        self.assertEquals(h_metadata._available, [0])
+        previous = pr.retrieve(advice, 0).object
+        self.assertEquals(previous.historized_item_data,
+                          [{'field_name': 'title', 'field_content': 'Item to advice'},
+                           {'field_name': 'description', 'field_content': '<p>Item description</p>'},
+                           {'field_name': 'motivation', 'field_content': '<p>Item motivation</p>'},
+                           {'field_name': 'decision', 'field_content': '<p>Item decision</p>'}])
+        # when giving advice for a second time, if advice is not edited, it is not versioned uselessly
+        self.backToState(item, self.WF_STATE_NAME_MAPPINGS['proposed'])
+        self.assertEquals(advice.queryState(), 'advice_under_edit')
+        self.validateItem(item)
+        self.assertEquals(advice.queryState(), 'advice_given')
+        h_metadata = pr.getHistoryMetadata(advice)
+        self.assertEquals(h_metadata._available, [0])
+
+        # come back to 'proposed' and edit advice
+        item.setDecision('<p>Another decision</p>')
+        self.backToState(item, self.WF_STATE_NAME_MAPPINGS['proposed'])
+        notify(ObjectModifiedEvent(advice))
+        self.validateItem(item)
+        h_metadata = pr.getHistoryMetadata(advice)
+        self.assertEquals(h_metadata._available, [0, 1])
+        previous = pr.retrieve(advice, 1).object
+        self.assertEquals(previous.historized_item_data,
+                          [{'field_name': 'title', 'field_content': 'Item to advice'},
+                           {'field_name': 'description', 'field_content': '<p>Item description</p>'},
+                           {'field_name': 'motivation', 'field_content': '<p>Item motivation</p>'},
+                           {'field_name': 'decision', 'field_content': '<p>Another decision</p>'}])
 
 
 def test_suite():

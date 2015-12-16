@@ -1336,6 +1336,18 @@ def _storedItemNumber_to_itemNumber(number, forceShowDecimal=True):
 # ------------------------------------------------------------------------------
 
 
+def isModifiedSinceLastVersion(obj):
+    """Check if given p_obj was modified since last version (versioning)."""
+    pr = api.portal.get_tool('portal_repository')
+    history_metadata = pr.getHistoryMetadata(obj)
+    modified = True
+    if history_metadata and history_metadata._available:
+        previous = pr.retrieve(obj, (history_metadata.nextVersionId-1)).object
+        if previous.modified() == obj.modified():
+            modified = False
+    return modified
+
+
 # taken from http://mscerts.programming4.us/fr/639402.aspx
 # adapted to fit our needs
 

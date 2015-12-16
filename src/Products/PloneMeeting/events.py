@@ -357,6 +357,17 @@ def onAdviceRemoved(advice, event):
         logger.info('Removal of advice at %s raised TypeError.' % advice.absolute_url_path())
 
 
+def onAdviceTransition(advice, event):
+    '''Called whenever a transition has been fired on an advice.'''
+    if not event.transition or (advice != event.object):
+        return
+
+    # in transition 'giveAdvice', historize the advice
+    # and save item's relevant data if MeetingConfig.historizeItemDataWhenAdviceIsGiven
+    if event.transition.id == 'giveAdvice':
+        advice.versionate_if_relevant('advice_given_was_modified_historized_comments')
+
+
 def onAnnexAdded(annex, event):
     '''When an annex is added, we need to update item modification date and SearchableText.'''
     item = annex.getParent()

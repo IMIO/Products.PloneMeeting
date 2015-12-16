@@ -1507,6 +1507,19 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
+    BooleanField(
+        name='historizeItemDataWhenAdviceIsGiven',
+        default=defValues.historizeItemDataWhenAdviceIsGiven,
+        widget=BooleanField._properties['widget'](
+            description="HistorizeItemDataWhenAdviceIsGiven",
+            description_msgid="historize_item_data_when_advice_is_given_descr",
+            label='Historizeitemdatawhenadviceisgiven',
+            label_msgid='PloneMeeting_label_historizeItemDataWhenAdviceIsGiven',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        write_permission="PloneMeeting: Write risky config",
+    ),
     DataGridField(
         name='customAdvisers',
         widget=DataGridField._properties['widget'](

@@ -60,9 +60,11 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - In MeetingItem.sendAdviceToGiveMailIfRelevant, added an adaptable call to a method _sendAdviceToGiveToGroup
   that make it possible to check if the mail must be sent to a given groupId or not.  This makes it possible
   to bypass some groups when sending the 'advice to give' notification
-- Added possibility to ask an advice several times and historize previously given one, we rely now on
-  plone.app.versioningbehavior to display a historized version, moreover versioned advice is directly
-  previewable in the @@historyview popup
+- When an advice is given (when the 'give_advice' transition is triggered), it is automatically versioned,
+  we rely now on plone.app.versioningbehavior to display a historized version, moreover versioned advice is
+  directly previewable in the @@historyview popup
+- Added possibility to ask an advice several times, if it was never historized or if advice was modified
+  since last historization, it is historized again
 - Adapted the 'move item to position number' on the meeting view to move an item to an exact position and no
   more the 'position before the entered number'
 - Added possibility to display the item reference in the item dashboards
@@ -136,7 +138,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   a list of suffixes to consider when getting MeetingGroups the user is in
 - Added Collection to 'search living items', returning every items supposed to be 'living', so items for which
   the workflow is not finished.  By default, it displays items that are not in the MeetingConfig.itemDecidedStates
-
+- Added parameter MeetingConfig.historizeItemDataWhenAdviceIsGiven, True by default, this will historize
+  relevant item data (title and enabled rich text fields) when an advice transition 'give_advice' is triggered,
+  this way we may still know what was the state of the item when the advice was given in case item content changes
 
 3.3 (2015-02-27)
 ----------------

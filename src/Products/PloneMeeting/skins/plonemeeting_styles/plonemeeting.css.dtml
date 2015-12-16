@@ -172,6 +172,10 @@ tr.even table.advices td {
 #content table.no-style-table.advices {
     margin-bottom: 0;
 }
+/* avoid background of parent table (list of items) being used for advices popup table */
+#content table.no-style-table.advices tr td {
+    background-color: transparent;
+}
 
 /* reduce space between sentence 'query result show only items you can see' and the navigation widget on items listings */
 #content-core > div#queryResult {
@@ -1248,7 +1252,7 @@ div.advice_popup_label {
 }
 div.advice_popup_actions {
     float: right;
-    max-width: 100px;
+    max-width: 110px;
 }
 
 /* hide some elements on the versions_history_form */
