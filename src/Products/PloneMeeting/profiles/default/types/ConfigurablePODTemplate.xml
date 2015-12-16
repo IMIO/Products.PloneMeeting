@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<object name="ConfigurablePODTemplate" meta_type="Dexterity FTI" i18n:domain="collective.documentgenerator"
+   xmlns:i18n="http://xml.zope.org/namespaces/i18n">
+    <property name="schema"></property>
+    <property name="model_source">
+        &lt;model xmlns:security="http://namespaces.plone.org/supermodel/security" xmlns:marshal="http://namespaces.plone.org/supermodel/marshal" xmlns:form="http://namespaces.plone.org/supermodel/form" xmlns="http://namespaces.plone.org/supermodel/schema" xmlns:i18n="http://xml.zope.org/namespaces/i18n" i18n:domain="collective.documentgenerator"&gt;
+          &lt;schema based-on="collective.documentgenerator.content.pod_template.IConfigurablePODTemplate"&gt;
+            &lt;field name="mailing_lists" type="zope.schema.Text"&gt;
+              &lt;title i18n:translate=""&gt;mailing_lists&lt;/title&gt;
+              &lt;description i18n:translate=""&gt;mailing_lists_descr&lt;/description&gt;
+              &lt;required&gt;False&lt;/required&gt;
+            &lt;/field&gt;
+          &lt;/schema&gt;
+        &lt;/model&gt;
+    </property>
+</object>

@@ -565,9 +565,7 @@ legend .pmLanguage {top: -0.3em; right: 5px;}
 .pmDropdown a:hover {
     text-decoration: underline;
 }
-.pmDropdown.podTemplateSendmail {
-    right: 10px;
-}
+
 .pmDropdown.podTemplateSendmail > div {
     padding-right: 50px;
 }

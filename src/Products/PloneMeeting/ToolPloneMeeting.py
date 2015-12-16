@@ -53,7 +53,6 @@ from zExceptions import NotFound
 from ZODB.POSException import ConflictError
 from zope.annotation.interfaces import IAnnotations
 from zope.i18n import translate
-from eea.facetednavigation.interfaces import IFacetedNavigable
 from plone.memoize import ram
 from plone import api
 from Products.ZCatalog.Catalog import AbstractCatalogBrain
@@ -61,6 +60,8 @@ from Products.CMFCore.utils import _checkPermission
 from Products.CMFCore.permissions import View
 from Products.CMFPlone.utils import safe_unicode
 from Products.ATContentTypes import permission as ATCTPermissions
+from collective.behavior.talcondition.utils import _evaluateExpression
+from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.dashboard.utils import enableFacetedDashboardFor
 from imio.helpers.cache import cleanVocabularyCacheFor
@@ -1786,6 +1787,30 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         self.REQUEST.set('enablingFacetedDashboard', True)
         enableFacetedDashboardFor(obj, xmlpath)
         self.REQUEST.set('enablingFacetedDashboard', False)
+
+    def getAvailableMailingLists(self, obj, template_uid):
+        '''Gets the names of the (currently active) mailing lists defined for
+           this template.'''
+        res = []
+        catalog = api.portal.get_tool('portal_catalog')
+        pod_template = catalog(UID=template_uid)[0].getObject()
+        mailing_lists = pod_template.mailing_lists and pod_template.mailing_lists.strip()
+        if not mailing_lists:
+            return res
+        for line in mailing_lists.split('\n'):
+            name, expression, userIds = line.split(';')
+            member = api.user.get_current()
+            cfg = self.getMeetingConfig(obj)
+            data = {'obj': obj,
+                    'member': member,
+                    'tool': self,
+                    'cfg': cfg}
+            if _evaluateExpression(obj,
+                                   expression,
+                                   roles_bypassing_expression=[],
+                                   extra_expr_ctx=data):
+                res.append(name.strip())
+        return res
 
 
 registerType(ToolPloneMeeting, PROJECTNAME)

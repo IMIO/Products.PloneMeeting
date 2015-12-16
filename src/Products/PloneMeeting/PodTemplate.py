@@ -337,42 +337,6 @@ class PodTemplate(BaseContent, BrowserDefaultMixin):
             logger.warn(DELETE_TEMP_DOC_ERROR % str(oe))
         return res
 
-    security.declarePrivate('sendDocument')
-    def sendDocument(self, obj, doc, mailingList):
-        '''Sends, by email, a p_doc, generated from p_self, to some
-           p_mailingList.'''
-        member = self.portal_membership.getAuthenticatedMember()
-        tool = obj.portal_plonemeeting
-        # Preamble: ensure that the mailingList is really active.
-        if mailingList not in self.getAvailableMailingLists(obj, member):
-            raise Exception(self.BAD_MAILINGLIST)
-        # Retrieve mailing list recipients
-        recipients = []
-        for line in self.getMailingLists().strip().split('\n'):
-            name, condition, userIds = line.split(';')
-            if name != mailingList:
-                continue
-            for userId in userIds.strip().split(','):
-                recipient = tool.getMailRecipient(userId.strip())
-                if not recipient:
-                    continue
-                recipients.append(recipient)
-        if not recipients:
-            raise Exception(self.BAD_MAILINGLIST)
-        # Send the mail with the document as attachment
-        docName = '%s.%s' % (self._getFileName(obj), self.getPodFormat())
-        # generate event name depending on obj type
-        eventName = obj.meta_type == 'Meeting' and 'podMeetingByMail' or 'podItemByMail'
-        sendMail(recipients,
-                 obj,
-                 eventName,
-                 attachments=[(docName, doc)],
-                 mapping={'podTemplateTitle': self.Title()})
-        # Return to the referer page.
-        msg = self.translate('pt_mailing_sent', domain='PloneMeeting')
-        obj.plone_utils.addPortalMessage(msg)
-        return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
-
     security.declarePrivate('listFreezeEvents')
     def listFreezeEvents(self):
         meetingConfig = self.getParentNode()

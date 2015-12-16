@@ -7,8 +7,10 @@
 # GNU General Public License (GPL)
 #
 
+from AccessControl import Unauthorized
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from zope.annotation import IAnnotations
+from zope.i18n import translate
 from plone import api
 from plone.app.content.browser.foldercontents import FolderContentsView
 from plone.app.controlpanel.overview import OverviewControlPanel
@@ -38,6 +40,7 @@ from Products.PloneMeeting import utils as pm_utils
 from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.interfaces import IMeeting
 from Products.PloneMeeting.utils import getCurrentMeetingObject
+from Products.PloneMeeting.utils import sendMail
 
 
 class PMFolderContentsView(FolderContentsView):
@@ -149,8 +152,19 @@ class PMConfigActionsPanelViewlet(ActionsPanelViewlet):
                                                                   showActions=False)
 
 
-class PMDocumentGeneratorLinksViewlet(IDDocumentGeneratorLinksViewlet):
+class BaseGeneratorLinksViewlet():
+    """ """
+    def getAvailableMailingLists(self, template_uid):
+        '''Gets the names of the (currently active) mailing lists defined for
+           this template.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        return tool.getAvailableMailingLists(self.context, template_uid)
+
+
+class PMDocumentGeneratorLinksViewlet(IDDocumentGeneratorLinksViewlet, BaseGeneratorLinksViewlet):
     """Override the 'generatelinks' viewlet to restrict templates by MeetingConfig."""
+
+    render = ViewPageTemplateFile('templates/generationlinks.pt')
 
     def available(self):
         """
@@ -181,8 +195,10 @@ class PMDocumentGeneratorLinksViewlet(IDDocumentGeneratorLinksViewlet):
         return pod_templates
 
 
-class PMDashboardDocumentGeneratorLinksViewlet(IDDashboardDocumentGeneratorLinksViewlet):
+class PMDashboardDocumentGeneratorLinksViewlet(IDDashboardDocumentGeneratorLinksViewlet, BaseGeneratorLinksViewlet):
     """ """
+
+    render = ViewPageTemplateFile('templates/generationlinks.pt')
 
     def get_all_pod_templates(self):
         tool = getToolByName(self.context, 'portal_plonemeeting')
@@ -607,7 +623,8 @@ class ConfigActionsPanelView(ActionsPanelView):
 
 
 class PMDocumentGenerationView(IDDocumentGenerationView):
-    """Redefine the DocumentGenerationView to extend context available in the template."""
+    """Redefine the DocumentGenerationView to extend context available in the template
+       and to handle POD templates sent to mailing lists."""
 
     def get_base_generation_context(self):
         """ """
@@ -634,3 +651,63 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
         generation_context = super(PMDocumentGenerationView, self)._get_generation_context(helper_view)
         generation_context['itemUids'] = generation_context['uids']
         return generation_context
+
+    def generate_and_download_doc(self, pod_template, output_format):
+        """ """
+        generated_template = super(PMDocumentGenerationView, self).generate_and_download_doc(pod_template,
+                                                                                             output_format)
+        # check if we have to send this generated POD template or to render it
+        if self.request.get('mailinglist_name'):
+            return self._sendPodTemplate(generated_template)
+        else:
+            return generated_template
+
+    def _get_filename(self, pod_template):
+        '''Returns a valid, clean fileName for the document generated from
+           p_self for p_pod_template.'''
+        # to avoid long filename problems, only take 120 first characters
+        res = u'%s-%s' % (self.context.Title()[0:100],
+                          pod_template.Title()[0:20])
+        plone_utils = api.portal.get_tool('plone_utils')
+        return plone_utils.normalizeString(res)
+
+    def _sendPodTemplate(self, rendered_template):
+        '''Sends, by email, a p_rendered_template.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        # Preamble: ensure that the mailingList is really active.
+        mailinglist_name = self.request.get('mailinglist_name')
+        if mailinglist_name not in tool.getAvailableMailingLists(self.context,
+                                                                 template_uid=self.request.get('template_uid')):
+            raise Unauthorized
+        # Retrieve mailing list recipients
+        recipients = []
+        pod_template = self.get_pod_template(self.request.get('template_uid'))
+        mailing_lists = pod_template.mailing_lists and pod_template.mailing_lists.strip()
+        for line in mailing_lists.split('\n'):
+            name, condition, userIds = line.split(';')
+            if name != mailinglist_name:
+                continue
+            for userId in userIds.strip().split(','):
+                # recipient may either be a userId having an email address or an email address directly
+                recipient = tool.getMailRecipient(userId.strip()) or ('@' in userId and userId)
+                if not recipient:
+                    continue
+                recipients.append(recipient)
+        if not recipients:
+            raise Exception(self.BAD_MAILINGLIST)
+        # Send the mail with the document as attachment
+        docName = '%s.%s' % (self._get_filename(pod_template), self.get_generation_format())
+        # generate event name depending on obj type
+        eventName = self.context.meta_type == 'Meeting' and 'podMeetingByMail' or 'podItemByMail'
+        sendMail(recipients,
+                 self.context,
+                 eventName,
+                 attachments=[(docName, rendered_template)],
+                 mapping={'podTemplateTitle': pod_template.Title()})
+        # Return to the referer page.
+        msg = translate('pt_mailing_sent',
+                        domain='PloneMeeting',
+                        context=self.request)
+        plone_utils = api.portal.get_tool('plone_utils')
+        plone_utils.addPortalMessage(msg)
+        return self.request.RESPONSE.redirect(self.request['HTTP_REFERER'])

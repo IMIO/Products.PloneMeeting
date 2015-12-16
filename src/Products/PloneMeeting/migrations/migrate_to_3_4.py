@@ -399,6 +399,7 @@ class Migrate_To_3_4(Migrator):
                             'enabled': wft.getInfoFor(template, 'review_state') == 'active' and True or False,
                             'pod_formats': [template.getPodFormat(), ],
                             'tal_condition': condition,
+                            'mailing_lists': template.getMailingLists()
                             }
                     # remove the old template before creating the new so we can use the same id
                     templatesFolder.manage_delObjects(ids=[templateId, ])

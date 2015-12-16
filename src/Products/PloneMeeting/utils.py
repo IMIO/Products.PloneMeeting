@@ -49,6 +49,7 @@ from Products.CMFCore.utils import getToolByName
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.MailHost.MailHost import MailHostError
 from Products.CMFCore.permissions import View, AccessContentsInformation, ModifyPortalContent, DeleteObjects
+from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting import PloneMeetingError
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import HISTORY_COMMENT_NOT_VIEWABLE
@@ -258,12 +259,12 @@ ENCODING_ERROR = 'Encoding error while sending mail: %s.'
 MAILHOST_ERROR = 'Error with the MailServer while sending mail: %s.'
 
 
-def _getEmailAddress(name, email, encoding='utf-8'):
+def _getEmailAddress(name, email):
     '''Creates a full email address from a p_name and p_email.'''
     res = email
     if name:
-        res = name.decode(encoding) + ' <%s>' % email
-    return res.encode(encoding)
+        res = safe_unicode(name) + ' <%s>' % email
+    return safe_unicode(res)
 
 
 def _sendMail(obj, body, recipients, fromAddress, subject, format,
@@ -318,13 +319,12 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
     mailMode = cfg.getMailMode()
     if mailMode == 'deactivated':
         return
-    enc = obj.portal_properties.site_properties.getProperty('default_charset')
     # Compute user name
     pms = obj.portal_membership
     userName = pms.getAuthenticatedMember().getId()
     userInfo = pms.getMemberById(userName)
     if userInfo and userInfo.getProperty('fullname'):
-        userName = userInfo.getProperty('fullname').decode(enc)
+        userName = safe_unicode(userInfo.getProperty('fullname'))
     # Compute list of MeetingGroups for this user
     userGroups = ', '.join([g.Title() for g in tool.getGroupsForUser()])
     # Create the message parts
@@ -335,25 +335,25 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         # we need every mappings to be unicode
         for elt in mapping:
             if not isinstance(mapping[elt], unicode):
-                mapping[elt] = unicode(mapping[elt], enc)
+                mapping[elt] = safe_unicode(mapping[elt])
         translationMapping = mapping
     else:
         translationMapping = {}
     translationMapping.update({
-        'portalUrl': portalUrl, 'portalTitle': portal.Title().decode(enc),
-        'objectTitle': obj.Title().decode(enc), 'objectUrl': obj.absolute_url(),
+        'portalUrl': portalUrl, 'portalTitle': safe_unicode(portal.Title()),
+        'objectTitle': safe_unicode(obj.Title()), 'objectUrl': obj.absolute_url(),
         'meetingTitle': '', 'meetingLongTitle': '', 'itemTitle': '', 'user': userName,
         'objectDavUrl': obj.absolute_url_path(), 'groups': userGroups,
-        'meetingConfigTitle': cfg.Title().decode(enc),
+        'meetingConfigTitle': safe_unicode(cfg.Title()),
     })
     if obj.meta_type == 'Meeting':
-        translationMapping['meetingTitle'] = obj.Title().decode(enc)
+        translationMapping['meetingTitle'] = safe_unicode(obj.Title())
         translationMapping['meetingLongTitle'] = tool.formatMeetingDate(obj, prefixed=True)
         translationMapping['meetingState'] = translate(obj.queryState(),
                                                        domain='plone',
                                                        context=obj.REQUEST)
     elif obj.meta_type == 'MeetingItem':
-        translationMapping['itemTitle'] = obj.Title().decode(enc)
+        translationMapping['itemTitle'] = safe_unicode(obj.Title())
         translationMapping['itemState'] = translate(obj.queryState(),
                                                     domain='plone',
                                                     context=obj.REQUEST)
@@ -361,12 +361,12 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         translationMapping['lastAnnexTypeTitle'] = ''
         lastAnnex = IAnnexable(obj).getLastInsertedAnnex()
         if lastAnnex:
-            translationMapping['lastAnnexTitle'] = lastAnnex.Title().decode(enc)
+            translationMapping['lastAnnexTitle'] = safe_unicode(lastAnnex.Title())
             translationMapping['lastAnnexTypeTitle'] = \
-                lastAnnex.getMeetingFileType(theData=True)['name'].decode(enc)
+                safe_unicode(lastAnnex.getMeetingFileType(theData=True)['name'])
         meeting = obj.getMeeting(brain=True)
         if meeting:
-            translationMapping['meetingTitle'] = meeting.Title().decode(enc)
+            translationMapping['meetingTitle'] = safe_unicode(meeting.Title())
             translationMapping['meetingLongTitle'] = tool.formatMeetingDate(meeting, prefixed=True)
             translationMapping['itemNumber'] = obj.getItemNumber(
                 relativeTo='meeting')
@@ -374,8 +374,8 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
     # translationMapping, that may also define custom mail subject and body.
     customRes = obj.adapted().getSpecificMailContext(event, translationMapping)
     if customRes:
-        subject = customRes[0].encode(enc)
-        body = customRes[1].encode(enc)
+        subject = safe_unicode(customRes[0])
+        body = safe_unicode(customRes[1])
     else:
         subjectLabel = u'%s_mail_subject' % event
         subject = translate(subjectLabel,
@@ -396,7 +396,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
                                 domain=d,
                                 mapping=translationMapping,
                                 context=obj.REQUEST)
-        subject = subject.encode(enc)
+        subject = safe_unicode(subject)
         bodyLabel = u'%s_mail_body' % event
         body = translate(bodyLabel,
                          domain=d,
@@ -416,15 +416,15 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
                              domain=d,
                              mapping=translationMapping,
                              context=obj.REQUEST)
-        body = body.encode(enc)
+        body = safe_unicode(body)
     adminFromAddress = _getEmailAddress(
         portal.getProperty('email_from_name'),
-        portal.getProperty('email_from_address'), enc)
+        safe_unicode(portal.getProperty('email_from_address'))
+        )
     fromAddress = adminFromAddress
     if tool.getFunctionalAdminEmail():
         fromAddress = _getEmailAddress(tool.getFunctionalAdminName(),
-                                       tool.getFunctionalAdminEmail(),
-                                       enc)
+                                       tool.getFunctionalAdminEmail())
     if not recipients:
         recipients = [adminFromAddress]
     if mailMode == 'test':
