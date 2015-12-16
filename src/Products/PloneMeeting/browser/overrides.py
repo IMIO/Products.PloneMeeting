@@ -35,6 +35,7 @@ from imio.history.browser.views import IHDocumentBylineViewlet
 
 from Products.CMFCore.utils import getToolByName
 from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFPlone.utils import safe_unicode
 from Products.CPUtils.Extensions.utils import check_zope_admin
 from Products.PloneMeeting import utils as pm_utils
 from Products.PloneMeeting.interfaces import IAnnexable
@@ -666,7 +667,7 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
         '''Returns a valid, clean fileName for the document generated from
            p_self for p_pod_template.'''
         # to avoid long filename problems, only take 120 first characters
-        res = u'%s-%s' % (self.context.Title()[0:100],
+        res = '%s-%s' % (self.context.Title()[0:100],
                           pod_template.Title()[0:20])
         plone_utils = api.portal.get_tool('plone_utils')
         return plone_utils.normalizeString(res)
@@ -675,7 +676,7 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
         '''Sends, by email, a p_rendered_template.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         # Preamble: ensure that the mailingList is really active.
-        mailinglist_name = self.request.get('mailinglist_name')
+        mailinglist_name = safe_unicode(self.request.get('mailinglist_name'))
         if mailinglist_name not in tool.getAvailableMailingLists(self.context,
                                                                  template_uid=self.request.get('template_uid')):
             raise Unauthorized

@@ -1805,10 +1805,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     'member': member,
                     'tool': self,
                     'cfg': cfg}
-            if _evaluateExpression(obj,
-                                   expression,
-                                   roles_bypassing_expression=[],
-                                   extra_expr_ctx=data):
+            if not expression or _evaluateExpression(obj,
+                                                     expression,
+                                                     roles_bypassing_expression=[],
+                                                     extra_expr_ctx=data):
                 res.append(name.strip())
         return res
 
