@@ -26,6 +26,7 @@ from zope.event import notify
 from zope.i18n import translate
 from zope.lifecycleevent import IObjectRemovedEvent
 from Products.CMFCore.utils import getToolByName
+from plone import api
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
@@ -91,7 +92,9 @@ def onItemTransition(item, event):
     else:
         action = 'do%s%s' % (transitionId[0].upper(), transitionId[1:])
     # check if we need to send the item to another meetingConfig
-    if item.queryState() in item.adapted().itemPositiveDecidedStates():
+    tool = api.portal.get_tool('portal_plonemeeting')
+    cfg = tool.getMeetingConfig(item)
+    if item.queryState() in cfg.getItemAutoSentToOtherMCStates():
         otherMCs = item.getOtherMeetingConfigsClonableTo()
         for otherMC in otherMCs:
             # if already cloned to another MC, pass.  This could be the case

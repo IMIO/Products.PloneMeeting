@@ -45,6 +45,7 @@ from zope.annotation.interfaces import IAnnotations
 from zope.component import getMultiAdapter
 from zope.event import notify
 from zope.i18n import translate
+from plone import api
 from plone.memoize import ram
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.Expression import Expression, createExprContext
@@ -3978,7 +3979,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # the field is correctly displayed while editing/viewing it
         copyGroups = self.getCopyGroups()
         if copyGroups:
-            copyGroupsInVocab = [group[0] for group in res]
+            copyGroupsInVocab = [copyGroup[0] for copyGroup in res]
             for groupId in copyGroups:
                 if not groupId in copyGroupsInVocab:
                     group = self.portal_groups.getGroupById(groupId)
@@ -4080,6 +4081,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return newItem
 
     security.declarePublic('cloneToOtherMeetingConfig')
+
     def cloneToOtherMeetingConfig(self, destMeetingConfigId):
         '''Sends this meetingItem to another meetingConfig whose id is
            p_destMeetingConfigId. The cloned item is set in its initial state,
@@ -4218,32 +4220,38 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            cloned to another meetingConfigFolder.'''
         return SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY + destMeetingConfigId
 
-    security.declarePublic('itemPositiveDecidedStates')
-    def itemPositiveDecidedStates(self):
-        '''See doc in interfaces.py.'''
-        return ('accepted', )
-
     security.declarePublic('mayCloneToOtherMeetingConfig')
     def mayCloneToOtherMeetingConfig(self, destMeetingConfigId):
         '''Checks that we can clone the item to another meetingConfigFolder.
            These are light checks as this could be called several times. This
            method can be adapted.'''
-        # Check that the item is in the correct state and that it has not
-        # already be cloned to this other meetingConfig.
         item = self.getSelf()
-        if not item.queryState() in item.adapted().itemPositiveDecidedStates() or not \
-           destMeetingConfigId in item.getOtherMeetingConfigsClonableTo() or \
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(item)
+
+        # item must be sendable and not already sent
+        if destMeetingConfigId not in item.getOtherMeetingConfigsClonableTo() or \
            item._checkAlreadyClonedToOtherMC(destMeetingConfigId):
             return False
+
+        # Regarding item state, the item has to be :
+        # - current state in itemAutoSentToOtherMCStates and
+        #   user must have 'Modify portal content' or be a MeetingManager;
+        # - current state in itemManualSentToOtherMCStates and
+        #   user must have 'Modify portal content'.
+        item_state = item.queryState()
+        if not ((item_state in cfg.getItemAutoSentToOtherMCStates() and
+                (checkPermission(ModifyPortalContent, item) or tool.isManager(item))) or
+                (item_state in cfg.getItemManualSentToOtherMCStates() and
+                 checkPermission(ModifyPortalContent, item))):
+            return False
+
         # Can not clone an item to the same meetingConfig as the original item,
         # or if the given destMeetingConfigId is not clonable to.
-        cfg = item.portal_plonemeeting.getMeetingConfig(item)
         if (cfg.getId() == destMeetingConfigId) or \
            not destMeetingConfigId in [mctct['meeting_config'] for mctct in cfg.getMeetingConfigsToCloneTo()]:
             return False
-        # The member must have necessary roles
-        if not item.portal_plonemeeting.isManager(item):
-            return False
+
         return True
 
     def _checkAlreadyClonedToOtherMC(self, destMeetingConfigId):

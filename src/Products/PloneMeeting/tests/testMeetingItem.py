@@ -294,8 +294,9 @@ class testMeetingItem(PloneMeetingTestCase):
         '''Test the send an item to another meetingConfig functionnality'''
         # Activate the functionnality
         self.changeUser('admin')
-        self.meetingConfig.setUseGroupsAsCategories(False)
-        meetingConfigId = self.meetingConfig.getId()
+        cfg = self.meetingConfig
+        cfg.setUseGroupsAsCategories(False)
+        meetingConfigId = cfg.getId()
         otherMeetingConfigId = self.meetingConfig2.getId()
         # the item is sendable if it is 'accepted', the user is a MeetingManager,
         # the destMeetingConfig is selected in the MeetingItem.otherMeetingConfigsClonableTo
@@ -339,17 +340,17 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failIf(item.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
         # if not activated in the config, it is not sendable anymore
         self.changeUser('admin')
-        self.meetingConfig.setMeetingConfigsToCloneTo(())
-        self.meetingConfig.at_post_edit_script()
+        cfg.setMeetingConfigsToCloneTo(())
+        cfg.at_post_edit_script()
         self.changeUser('pmManager')
         self.failIf(item.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
         self.assertTrue(not item.isClonableToOtherMeetingConfigs())
 
         # ok, activate it and send it!
         self.changeUser('admin')
-        self.meetingConfig.setMeetingConfigsToCloneTo(({'meeting_config': otherMeetingConfigId,
-                                                        'trigger_workflow_transitions_until': '__nothing__'}, ))
-        self.meetingConfig.at_post_edit_script()
+        cfg.setMeetingConfigsToCloneTo(({'meeting_config': otherMeetingConfigId,
+                                         'trigger_workflow_transitions_until': '__nothing__'}, ))
+        cfg.at_post_edit_script()
         self.assertTrue(item.isClonableToOtherMeetingConfigs())
         self.changeUser('pmManager')
         self.failUnless(item.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
@@ -419,7 +420,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # now check that the item is sent to another meetingConfig for each
         # item.itemPositiveDecidedStates() state
         # by default, the only positive state is 'accepted'
-        for state in item.adapted().itemPositiveDecidedStates():
+        for state in cfg.getItemAutoSentToOtherMCStates():
             # do this as 'Manager' in case 'MeetingManager' can not delete the item in used item workflow
             self.changeUser('admin')
             self.portal.restrictedTraverse('@@delete_givenuid')(newUID)
@@ -834,6 +835,42 @@ class testMeetingItem(PloneMeetingTestCase):
         originalItem.cloneToOtherMeetingConfig(self.meetingConfig2.getId())
         newItem = originalItem.getBRefs('ItemPredecessor')[0].getObject()
         self.assertTrue(newItem.getCategory() == catIdOfMC2Mapped)
+
+    def test_pm_SendItemToOtherMCManually(self):
+        '''An item may be sent automatically or manually to another MC
+           depending on what is defined in the MeetingConfig.'''
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        cfg2Id = cfg2.getId()
+        cfg2.setUseGroupsAsCategories(True)
+        cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
+                                         'trigger_workflow_transitions_until': '%s.%s' %
+                                         (self.meetingConfig2.getId(), 'validate')},))
+        cfg.setItemManualSentToOtherMCStates((self.WF_STATE_NAME_MAPPINGS['proposed'],
+                                              'validated'))
+
+        # an 'itemcreated' item may not be send
+        self.changeUser('pmCreator1')
+        self.tool.getPloneMeetingFolder(cfg2Id)
+        item = self.create('MeetingItem')
+        item.setDecision('<p>My decision</p>', mimetype='text/html')
+        item.setOtherMeetingConfigsClonableTo((cfg2Id,))
+        self.assertFalse(item.mayCloneToOtherMeetingConfig(cfg2Id))
+        self.proposeItem(item)
+        # not sendable because not editable
+        self.assertFalse(self.hasPermission(ModifyPortalContent, item))
+        # sendable because editable and in itemManualSentToOtherMCStates
+        self.changeUser('pmReviewer1')
+        self.assertTrue(self.hasPermission(ModifyPortalContent, item))
+        self.assertTrue(item.queryState() in cfg.getItemManualSentToOtherMCStates())
+        self.assertTrue(item.mayCloneToOtherMeetingConfig(cfg2Id))
+        # if we send it, every other things works like if it was sent automatically
+        # sent item has been automatically validated
+        # send it as 'pmManager' so clonedItem may be 'validated'
+        self.changeUser('pmManager')
+        item.cloneToOtherMeetingConfig(cfg2Id)
+        clonedItem = item.getItemClonedToOtherMC(cfg2Id)
+        self.assertEquals(clonedItem.queryState(), 'validated')
 
     def test_pm_AddAutoCopyGroups(self):
         '''Test the functionnality of automatically adding some copyGroups depending on
@@ -2074,7 +2111,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # keepWithNext applies a different class for lists
         item.setMotivation('<p>My motivation</p><ul><li>Art 1</li><li>Art 2</li></ul>')
         self.assertTrue(item.getDeliberation(keepWithNext=True) ==
-                        '<p class="pmParaKeepWithNext">My motivation</p>\n<ul class="">\n  '
+                        '<p class="pmParaKeepWithNext">My motivation</p>\n<ul>\n  '
                         '<li class="podItemKeepWithNext">Art 1</li>\n  '
                         '<li class="podItemKeepWithNext">Art 2</li>\n</ul>\n'
                         '<p class="pmParaKeepWithNext">My decision</p>\n')
@@ -2717,6 +2754,139 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(getFieldVersion(item, 'decision', None) ==
                         '<p>Text before space</p>\n<p>\xc2\xa0</p>\n<p>Text after space</p>\n'
                         '<p class="highlightBlankRow" title="Blank line">\xc2\xa0</p>\n')
+
+    def test_pm_Completeness(self):
+        '''Test the item-completeness view and relevant methods in MeetingItem.'''
+        # completeness widget is disabled for items of the config
+        cfg = self.meetingConfig
+        self.changeUser('admin')
+        recurringItem = cfg.getItems(recurring=True)[0]
+        templateItem = cfg.getItems(recurring=False)[0]
+        self.assertFalse(recurringItem.adapted().mayEvaluateCompleteness())
+        self.assertFalse(templateItem.adapted().mayEvaluateCompleteness())
+        self.assertFalse(recurringItem.adapted().mayAskCompletenessEvalAgain())
+        self.assertFalse(templateItem.adapted().mayAskCompletenessEvalAgain())
+
+        # by default, a MeetingMember can not evaluate completeness
+        # user must have role ITEM_COMPLETENESS_EVALUATORS, like MeetingManager
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.assertTrue(item.getCompleteness() == 'completeness_not_yet_evaluated')
+        # item completeness history is empty
+        self.assertTrue(not item.completeness_changes_history)
+        itemCompletenessView = item.restrictedTraverse('item-completeness')
+        changeCompletenessView = item.restrictedTraverse('change-item-completeness')
+        self.assertFalse(item.adapted().mayEvaluateCompleteness())
+        self.assertFalse(itemCompletenessView.listSelectableCompleteness())
+
+        # a MeetingReviewer may evaluate completeness if he is able the edit the item
+        self.proposeItem(item)
+        self.changeUser('pmReviewer1')
+        self.assertTrue(item.adapted().mayEvaluateCompleteness())
+        selectableCompleness = itemCompletenessView.listSelectableCompleteness()
+        self.assertTrue(selectableCompleness)
+        # can not 'ask evaluation again' as not in 'completeness_incomplete'
+        self.assertFalse(item.adapted().mayAskCompletenessEvalAgain())
+
+        # may not evaluate if may not edit
+        self.validateItem(item)
+        self.assertFalse(item.adapted().mayEvaluateCompleteness())
+        self.assertFalse(itemCompletenessView.listSelectableCompleteness())
+
+        # as pmManager, may ask evaluation again if it is 'completeness_incomplete'
+        self.changeUser('pmManager')
+        self.assertTrue(item.adapted().mayEvaluateCompleteness())
+        self.assertFalse(item.adapted().mayAskCompletenessEvalAgain())
+        self.request['new_completeness_value'] = 'completeness_incomplete'
+        self.request.form['form.submitted'] = True
+        self.assertEquals(self.request.RESPONSE.status, 200)
+        changeCompletenessView()
+        self.assertTrue(item.getCompleteness() == 'completeness_incomplete')
+        self.assertTrue(item.adapted().mayEvaluateCompleteness())
+        self.assertTrue(item.adapted().mayAskCompletenessEvalAgain())
+        self.assertTrue(item.completeness_changes_history and
+                        item.completeness_changes_history[0]['action'] == 'completeness_incomplete')
+        # user was redirected to the item view
+        self.assertEquals(self.request.RESPONSE.status, 302)
+        self.assertEquals(self.request.RESPONSE.getHeader('location'),
+                          item.absolute_url())
+
+        # ask evaluation again
+        self.backToState(item, 'itemcreated')
+        self.changeUser('pmCreator1')
+        self.request['new_completeness_value'] = 'completeness_evaluation_asked_again'
+        changeCompletenessView()
+        self.assertTrue(item.getCompleteness() == 'completeness_evaluation_asked_again')
+        # trying to change completeness if he can not will raise Unauthorized
+        self.assertFalse(item.adapted().mayEvaluateCompleteness())
+        self.request['new_completeness_value'] = 'completeness_complete'
+        self.assertRaises(Unauthorized, changeCompletenessView)
+
+    def test_pm_Emergency(self):
+        '''Test the item-emergency view and relevant methods in MeetingItem.'''
+        # emergency widget is disabled for items of the config
+        cfg = self.meetingConfig
+        self.changeUser('admin')
+        recurringItem = cfg.getItems(recurring=True)[0]
+        templateItem = cfg.getItems(recurring=False)[0]
+        self.assertFalse(recurringItem.adapted().mayAskEmergency())
+        self.assertFalse(templateItem.adapted().mayAskEmergency())
+        # by default, every user able to edit the item may ask emergency
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.assertTrue(item.getEmergency() == 'no_emergency')
+        self.assertTrue(item.adapted().mayAskEmergency())
+        # only MeetingManager may accept/refuse emergency
+        self.assertFalse(item.adapted().mayAcceptOrRefuseEmergency())
+        # item emergency history is empty
+        self.assertTrue(not item.emergency_changes_history)
+        itemEmergencyView = item.restrictedTraverse('item-emergency')
+        changeEmergencyView = item.restrictedTraverse('change-item-emergency')
+        # ask emergency
+        self.assertTrue(itemEmergencyView.listSelectableEmergencies().keys() == ['emergency_asked'])
+        self.request['new_emergency_value'] = 'emergency_asked'
+        self.request.form['form.submitted'] = True
+        changeEmergencyView()
+        self.assertTrue(item.getEmergency() == 'emergency_asked')
+        # history was updated
+        self.assertTrue(item.emergency_changes_history and
+                        item.emergency_changes_history[0]['action'] == 'emergency_asked')
+        # when asked, asker can do nothing else but back to 'no_emergency'
+        self.assertTrue(itemEmergencyView.listSelectableEmergencies().keys() == ['no_emergency'])
+        self.assertFalse(item.adapted().mayAcceptOrRefuseEmergency())
+        self.validateItem(item)
+        # no more editable, can do nothing
+        self.assertFalse(itemEmergencyView.listSelectableEmergencies().keys())
+
+        # MeetingManager may accept/refuse emergency
+        self.changeUser('pmManager')
+        self.assertTrue(item.adapted().mayAskEmergency())
+        self.assertTrue(item.adapted().mayAcceptOrRefuseEmergency())
+        # accept emergency
+        self.request['new_emergency_value'] = 'emergency_accepted'
+        changeEmergencyView()
+        self.assertTrue(item.getEmergency() == 'emergency_accepted')
+        # 'emergency_accepted' no more selectable
+        self.assertTrue(not 'emergency_accepted' in itemEmergencyView.listSelectableEmergencies())
+        # history was updated
+        self.assertTrue(item.emergency_changes_history and
+                        item.emergency_changes_history[1]['action'] == 'emergency_accepted')
+
+        # trying to change emergency if can not will raise Unauthorized
+        self.changeUser('pmCreator1')
+        self.assertFalse(item.adapted().mayAskEmergency())
+        self.assertFalse(item.adapted().mayAcceptOrRefuseEmergency())
+
+    def test_pm_ItemStrikedAssembly(self):
+        """Test use of utils.toHTMLStrikedContent for itemAssembly."""
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.setItemAssembly('Simple assembly')
+        self.assertEquals(item.getStrikedItemAssembly(),
+                          '<p class="mltAssembly">Simple assembly</p>')
+        item.setItemAssembly('Assembly with [[striked]] part')
+        self.assertEquals(item.getStrikedItemAssembly(),
+                          '<p class="mltAssembly">Assembly with <strike>striked</strike> part</p>')
 
 
 def test_suite():

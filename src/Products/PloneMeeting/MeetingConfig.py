@@ -46,6 +46,8 @@ from Products.CMFCore.ActionInformation import Action
 from Products.CMFCore.Expression import Expression, createExprContext
 from Products.CMFCore.utils import getToolByName
 from Products.CMFPlone import PloneMessageFactory
+from imio.helpers.cache import cleanRamCache
+from imio.helpers.cache import cleanVocabularyCacheFor
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import *
 from Products.PloneMeeting.utils import getInterface, getCustomAdapter, \
@@ -657,6 +659,40 @@ schema = Schema((
         columns=('meeting_config', 'trigger_workflow_transitions_until', ),
         allow_empty_rows=False,
     ),
+    LinesField(
+        name='itemAutoSentToOtherMCStates',
+        widget=MultiSelectionWidget(
+            description="ItemAutoSentToOtherMCStates",
+            description_msgid="item_auto_sent_to_other_mc_states_descr",
+            format="checkbox",
+            label='Itemautosenttoothermcstates',
+            label_msgid='PloneMeeting_label_itemAutoSentToOtherMCStates',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="data",
+        multiValued=1,
+        vocabulary='listItemStates',
+        default=defValues.itemAutoSentToOtherMCStates,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
+        name='itemManualSentToOtherMCStates',
+        widget=MultiSelectionWidget(
+            description="ItemManualSentToOtherMCStates",
+            description_msgid="item_manual_sent_to_other_mc_states_descr",
+            format="checkbox",
+            label='Itemmanualsenttoothermcstates',
+            label_msgid='PloneMeeting_label_itemManualSentToOtherMCStates',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="data",
+        multiValued=1,
+        vocabulary='listItemStates',
+        default=defValues.itemManualSentToOtherMCStates,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
     StringField(
         name='itemWorkflow',
         widget=SelectionWidget(
@@ -846,7 +882,7 @@ schema = Schema((
     LinesField(
         name='meetingPresentItemWhenNoCurrentMeetingStates',
         widget=MultiSelectionWidget(
-            description="meetingPresentItemWhenNoCurrentMeetingStates",
+            description="MeetingPresentItemWhenNoCurrentMeetingStates",
             description_msgid="meeting_present_item_when_no_current_meeting_states_descr",
             label='Meetingpresentitemwhennocurrentmeetingstates',
             label_msgid='PloneMeeting_label_meetingPresentItemWhenNoCurrentMeetingStates',
@@ -3150,9 +3186,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         self.createMeetingManagersGroup()
         self.adapted().onEdit(isCreated=True)  # Call sub-product code if any
 
+    security.declarePrivate('at_post_edit_script')
     def at_post_edit_script(self):
         '''Updates the workflows for items and meetings, and the
            item/meeting/decisionTopicStates.'''
+        # invalidateAll ram.cache
+        cleanRamCache()
+        # invalidate cache for every vocabularies
+        cleanVocabularyCacheFor()
         s = self.portal_workflow.setChainForPortalTypes
         # Update meeting item workflow
         s([self.getItemTypeName()], self.getItemWorkflow())

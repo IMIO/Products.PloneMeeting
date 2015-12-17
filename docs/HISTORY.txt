@@ -171,6 +171,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Removed properties 'meetingRole' and 'meetingGroupId' from Plone groups created when adding
   a MeetingGroup, we use MEETINGROLES and MEETING_GROUP_SUFFIXES now
 - Highlight lines that are empty at the end of a rich text field on the meeting and item view
+- Added possibility to manually clone an item to another config.  It is now possible to define states in
+  which an item may be sent manually and states in which an item will be sent automatically
 
 3.2.0.1 (2014-03-06)
 --------------------

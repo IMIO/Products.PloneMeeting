@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2008 by PloneGov
+# Copyright (c) 2015 by Imio.be
 #
 # GNU General Public License (GPL)
 #
@@ -229,6 +229,7 @@ class MeetingConfigDescriptor(Descriptor):
                          'workflowAdaptations', 'transitionsToConfirm', 'transitionsForPresentingAnItem',
                          'onTransitionFieldTransforms', 'onMeetingTransitionItemTransitionToTrigger',
                          'meetingPresentItemWhenNoCurrentMeetingStates',
+                         'itemAutoSentToOtherMCStates', 'itemManualSentToOtherMCStates',
                          'mailItemEvents', 'mailMeetingEvents', 'usedAdviceTypes', 'itemAdviceStates',
                          'itemDecidedStates', 'itemAdviceEditStates', 'itemAdviceViewStates', 'itemBudgetInfosStates',
                          'powerAdvisersGroups', 'itemPowerObserversStates', 'meetingPowerObserversStates',
@@ -384,6 +385,8 @@ class MeetingConfigDescriptor(Descriptor):
         self.onTransitionFieldTransforms = []
         self.onMeetingTransitionItemTransitionToTrigger = []
         self.meetingPresentItemWhenNoCurrentMeetingStates = []
+        self.itemAutoSentToOtherMCStates = ['accepted', ]
+        self.itemManualSentToOtherMCStates = []
         self.useCopies = False
         self.selectableCopyGroups = []
         self.itemCopyGroupsStates = ['accepted', 'refused', 'delayed', ]
