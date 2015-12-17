@@ -214,6 +214,7 @@ ITEM_INSERT_METHODS = (  # Items are inserted:
 NOT_ENCODED_VOTE_VALUE = 'not_yet'
 NOT_CONSULTABLE_VOTE_VALUE = 'not_consultable'
 NOT_GIVEN_ADVICE_VALUE = 'not_given'
+ADVICE_GIVEN_HISTORIZED_COMMENT = 'advice_given_was_modified_historized_comments'
 
 # value displayed in the object history table if a comment is not viewable
 HISTORY_COMMENT_NOT_VIEWABLE = "<span class='discreet'>Access to this comment is restricted.</span>"

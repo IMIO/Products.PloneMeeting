@@ -1640,8 +1640,8 @@ class testAdvices(PloneMeetingTestCase):
         cfg = self.meetingConfig
         # item data are saved if cfg.historizeItemDataWhenAdviceIsGiven
         self.assertTrue(cfg.getHistorizeItemDataWhenAdviceIsGiven())
-        # activate item field 'motivation'
-        cfg.setUsedItemAttributes(cfg.getUsedItemAttributes() + ('motivation', ))
+        # make sure we know what item rich text fields are enabled
+        cfg.setUsedItemAttributes(('detailedDescription', 'motivation', ))
         cfg.setItemAdviceStates([self.WF_STATE_NAME_MAPPINGS['proposed'], ])
         cfg.setItemAdviceEditStates([self.WF_STATE_NAME_MAPPINGS['proposed'], ])
         cfg.setItemAdviceViewStates([self.WF_STATE_NAME_MAPPINGS['proposed'], ])
@@ -1656,6 +1656,7 @@ class testAdvices(PloneMeetingTestCase):
             'description': '<p>Item description</p>',
         }
         item = self.create('MeetingItem', **data)
+        item.setDetailedDescription('<p>Item detailed description</p>')
         item.setMotivation('<p>Item motivation</p>')
         item.setDecision('<p>Item decision</p>')
         self.proposeItem(item)
@@ -1680,6 +1681,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEquals(previous.historized_item_data,
                           [{'field_name': 'title', 'field_content': 'Item to advice'},
                            {'field_name': 'description', 'field_content': '<p>Item description</p>'},
+                           {'field_name': 'detailedDescription', 'field_content': '<p>Item detailed description</p>'},
                            {'field_name': 'motivation', 'field_content': '<p>Item motivation</p>'},
                            {'field_name': 'decision', 'field_content': '<p>Item decision</p>'}])
         # when giving advice for a second time, if advice is not edited, it is not versioned uselessly
@@ -1701,6 +1703,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEquals(previous.historized_item_data,
                           [{'field_name': 'title', 'field_content': 'Item to advice'},
                            {'field_name': 'description', 'field_content': '<p>Item description</p>'},
+                           {'field_name': 'detailedDescription', 'field_content': '<p>Item detailed description</p>'},
                            {'field_name': 'motivation', 'field_content': '<p>Item motivation</p>'},
                            {'field_name': 'decision', 'field_content': '<p>Another decision</p>'}])
 

@@ -32,6 +32,7 @@ from plone import api
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.cache import cleanVocabularyCacheFor
 from Products.PloneMeeting import PMMessageFactory as _
+from Products.PloneMeeting.config import ADVICE_GIVEN_HISTORIZED_COMMENT
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 from Products.PloneMeeting.interfaces import IAnnexable
@@ -365,7 +366,7 @@ def onAdviceTransition(advice, event):
     # in transition 'giveAdvice', historize the advice
     # and save item's relevant data if MeetingConfig.historizeItemDataWhenAdviceIsGiven
     if event.transition.id == 'giveAdvice':
-        advice.versionate_if_relevant('advice_given_was_modified_historized_comments')
+        advice.versionate_if_relevant(ADVICE_GIVEN_HISTORIZED_COMMENT)
 
 
 def onAnnexAdded(annex, event):
