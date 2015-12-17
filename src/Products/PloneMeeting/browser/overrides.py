@@ -668,7 +668,7 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
            p_self for p_pod_template.'''
         # to avoid long filename problems, only take 120 first characters
         res = '%s-%s' % (self.context.Title()[0:100],
-                          pod_template.Title()[0:20])
+                         pod_template.Title()[0:20])
         plone_utils = api.portal.get_tool('plone_utils')
         return plone_utils.normalizeString(res)
 
