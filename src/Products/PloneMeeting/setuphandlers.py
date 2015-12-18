@@ -16,15 +16,11 @@ __docformat__ = 'plaintext'
 
 import logging
 logger = logging.getLogger('PloneMeeting: setuphandlers')
-from Products.PloneMeeting.config import PROJECTNAME
-from Products.PloneMeeting.config import DEPENDENCIES
-import os
-from Products.CMFCore.utils import getToolByName
-import transaction
 ##code-section HEAD
 from zope.component import queryUtility
 from zope.i18n import translate
 from Products.CMFPlacefulWorkflow.PlacefulWorkflowTool import WorkflowPolicyConfig_id
+from plone import api
 from Products.cron4plone.browser.configlets.cron_configuration import ICronConfiguration
 from Products.CPUtils.Extensions.utils import configure_ckeditor
 from Products.PloneMeeting import PMMessageFactory as _
@@ -65,6 +61,7 @@ indexInfos = {
     'toDiscuss': ('BooleanIndex', {}),
     'privacy': ('FieldIndex', {}),
     'listType': ('FieldIndex', {}),
+    'HasAnnexesToPrint': ('FieldIndex', {}),
     # Meeting-related indexes
     'getDate': ('DateIndex', {}),
     # MeetingFile-related indexes
@@ -85,21 +82,24 @@ transformsToDisable = ['word_to_html', 'pdf_to_html', 'pdf_to_text']
 # would be indexed. We only want to index MeetingUser.usages.
 ##/code-section HEAD
 
+
 def isNotPloneMeetingProfile(context):
     return context.readDataFile("PloneMeeting_marker.txt") is None
 
+
 def setupHideToolsFromNavigation(context):
     """hide tools"""
-    if isNotPloneMeetingProfile(context): return
+    if isNotPloneMeetingProfile(context):
+        return
     # uncatalog tools
     site = context.getSite()
     toolnames = ['portal_plonemeeting']
-    portalProperties = getToolByName(site, 'portal_properties')
+    portalProperties = api.portal.get_tool('portal_properties')
     navtreeProperties = getattr(portalProperties, 'navtree_properties')
     if navtreeProperties.hasProperty('idsNotToList'):
         for toolname in toolnames:
             try:
-                portal[toolname].unindexObject()
+                site[toolname].unindexObject()
             except:
                 pass
             current = list(navtreeProperties.getProperty('idsNotToList') or [])
@@ -108,18 +108,17 @@ def setupHideToolsFromNavigation(context):
                 kwargs = {'idsNotToList': current}
                 navtreeProperties.manage_changeProperties(**kwargs)
 
+
 def setupCatalogMultiplex(context):
     """ Configure CatalogMultiplex.
 
     explicit add classes (meta_types) be indexed in catalogs (white)
     or removed from indexing in a catalog (black)
     """
-    if isNotPloneMeetingProfile(context): return
-    site = context.getSite()
-    #dd#
-    muliplexed = ['ToolPloneMeeting', 'MeetingCategory', 'MeetingConfig', 'MeetingFileType', 'MeetingGroup', 'PodTemplate', 'MeetingUser']
+    if isNotPloneMeetingProfile(context):
+        return
 
-    atool = getToolByName(site, 'archetype_tool')
+    atool = api.portal.get_tool('archetype_tool')
     catalogmap = {}
     catalogmap['ToolPloneMeeting'] = {}
     catalogmap['ToolPloneMeeting']['black'] = ['portal_catalog']
@@ -140,8 +139,8 @@ def setupCatalogMultiplex(context):
         current_catalogs = set([c.id for c in atool.getCatalogsByType(meta_type)])
         if 'white' in submap:
             for catalog in submap['white']:
-                if getToolByName(site, catalog, None) is None:
-                    raise AttributeError, 'Catalog "%s" does not exist!' % catalog
+                if api.portal.get_tool(catalog) is None:
+                    raise AttributeError('Catalog "%s" does not exist!' % catalog)
                 current_catalogs.update([catalog])
         if 'black' in submap:
             for catalog in submap['black']:
@@ -150,13 +149,14 @@ def setupCatalogMultiplex(context):
         atool.setCatalogsByType(meta_type, list(current_catalogs))
 
 
-
 def updateRoleMappings(context):
     """after workflow changed update the roles mapping. this is like pressing
     the button 'Update Security Setting' and portal_workflow"""
-    if isNotPloneMeetingProfile(context): return
-    wft = getToolByName(context.getSite(), 'portal_workflow')
+    if isNotPloneMeetingProfile(context):
+        return
+    wft = api.portal.get_tool('portal_workflow')
     wft.updateRoleMappings()
+
 
 def postInstall(context):
     """Called at the end of the setup process. """
@@ -178,7 +178,7 @@ def postInstall(context):
     portalType.manage_changeProperties(view_methods=available_views)
 
     # Make sure folder "Members" is private
-    wft = getToolByName(site, 'portal_workflow')
+    wft = api.portal.get_tool('portal_workflow')
     if hasattr(site, 'Members') and not wft.getInfoFor(site.Members, 'review_state') == 'private':
         wft.doActionFor(site.Members, 'retract')
 
@@ -193,8 +193,7 @@ def postInstall(context):
             'portal_plonemeeting_policy',
             workflow_policy_type='default_workflow_policy (Simple Policy)',
             duplicate_id='empty')
-        site.portal_plonemeeting.manage_addProduct[\
-            'CMFPlacefulWorkflow'].manage_addWorkflowPolicyConfig()
+        site.portal_plonemeeting.manage_addProduct['CMFPlacefulWorkflow'].manage_addWorkflowPolicyConfig()
 
     pol = ppw.portal_plonemeeting_policy
     pol.setTitle(_(u'PloneMeeting tool policy'))
@@ -300,7 +299,7 @@ def postInstall(context):
     viewer_settings['show_search_on_group_view'] = False
 
     # make sure the 'previous_review_state' is available in portal_atct
-    portal_atct = getToolByName(site, 'portal_atct')
+    portal_atct = api.portal.get_tool('portal_atct')
     portal_atct.updateIndex(index='previous_review_state',
                             friendlyName='Previous review state',
                             description='The previous object workflow state',
