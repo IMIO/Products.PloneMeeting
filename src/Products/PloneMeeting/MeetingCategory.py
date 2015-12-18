@@ -145,7 +145,7 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
         try:
             # to avoid problems with categories that are disabled or
             # restricted to some groups, we pass onlySelectable=False
-            tool = api.portal_get_tool('portal_plonemeeting')
+            tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self)
             i = cfg.getCategories(
                 classifiers=self.isClassifier(), onlySelectable=onlySelectable).index(self)
