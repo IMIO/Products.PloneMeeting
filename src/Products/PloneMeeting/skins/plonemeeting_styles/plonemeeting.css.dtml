@@ -1298,6 +1298,11 @@ ul.item-predecessors span.pretty_link_content {
     vertical-align: text-top;
 }
 
+/* temporary until collective.documentgenerator 0.6 is out */
+div#doc-generation-view ul.pod-template li {
+    display: inline-block;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */
