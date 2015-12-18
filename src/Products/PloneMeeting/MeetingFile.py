@@ -13,27 +13,26 @@ __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
 <g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""
 __docformat__ = 'plaintext'
 
-from AccessControl import ClassSecurityInfo
-from zope.interface import implements
-import interfaces
+import os
+import os.path
 
-from Products.Archetypes import BaseContent
-from Products.Archetypes import BooleanField
-from Products.Archetypes import registerType
-from Products.Archetypes import Schema
-from Products.Archetypes import StringField
+from AccessControl import ClassSecurityInfo
+from AccessControl import Unauthorized
+from zope.annotation import IAnnotations
+from zope.i18n import translate
+from zope.interface import implements
+
+from Products.Archetypes.atapi import BaseContent
+from Products.Archetypes.atapi import BooleanField
+from Products.Archetypes.atapi import registerType
+from Products.Archetypes.atapi import Schema
+from Products.Archetypes.atapi import StringField
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 
 from plone.app.blob.content import ATBlob
 from plone.app.blob.content import ATBlobSchema
 from plone import api
 
-##code-section module-header #fill in your manual code here
-import os
-import os.path
-from AccessControl import Unauthorized
-from zope.annotation import IAnnotations
-from zope.i18n import translate
 from Products.CMFCore.permissions import View, ModifyPortalContent
 from Products.CMFPlone.CatalogTool import getObjSize
 from collective.documentviewer.async import asyncInstalled
@@ -41,6 +40,7 @@ from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import MAX_FILE_SIZE_WARNING
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.interfaces import IAnnexable
+from Products.PloneMeeting.interfaces import IMeetingFile
 from Products.PloneMeeting.utils import getCustomAdapter, sendMailIfRelevant
 
 import logging
@@ -128,7 +128,7 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
     """
     """
     security = ClassSecurityInfo()
-    implements(interfaces.IMeetingFile)
+    implements(IMeetingFile)
 
     meta_type = 'MeetingFile'
     _at_rename_after_creation = True
