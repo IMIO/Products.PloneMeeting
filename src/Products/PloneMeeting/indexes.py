@@ -188,6 +188,16 @@ def sendToAuthority(obj):
         return '0'
 
 
+@indexer(IMeetingItem)
+def hasAnnexesToPrint(obj):
+    """
+      Index the fact that an item has annexes toPrint.
+    """
+    if obj.getSendToAuthority():
+        return '1'
+    else:
+        return '0'
+
 @indexer(IItem)
 def templateUsingGroups(obj):
     """

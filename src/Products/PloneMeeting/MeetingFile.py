@@ -251,13 +251,6 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
             return False
         return True
 
-    security.declarePublic('getParent')
-
-    def getParent(self):
-        '''Returns the parent, aka the element managing MeetingFiles.
-           Annexes are located in an item or in an advice...'''
-        return self.getParentNode()
-
     security.declareProtected(View, 'index_html')
 
     def index_html(self, REQUEST=None, RESPONSE=None):
@@ -285,7 +278,7 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
           This is used to protect MeetingFile download in case current user knows the url
           of an annex he may not access...
         '''
-        parent = self.getParent()
+        parent = self.getParentNode()
         # is parent an item and privacy viewable?
         if parent.meta_type == 'MeetingItem' and not parent.adapted().isPrivacyViewable():
             return False
@@ -304,7 +297,7 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
 
     def at_post_create_script(self):
         tool = api.portal.get_tool('portal_plonemeeting')
-        parent = self.getParent()
+        parent = self.getParentNode()
         if parent:
             # update parent.annexIndex if it was not already set
             # by the conversion process for example
@@ -350,6 +343,7 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
            browser/annexes.py).'''
         fileTypeData = self.getMeetingFileType(theData=True)
         portal_url = api.portal.get_tool('portal_url')
+        parent = self.getParentNode()
         res = {'Title': self.Title(),
                'absolute_url': portal_url.getRelativeContentURL(self),
                'UID': self.UID(),
@@ -359,7 +353,8 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
                'id': self.getId(),
                'iconUrl': self.getIcon(),
                'relatedTo': self.findRelatedTo(),
-               'conversionStatus': IAnnexable(self).conversionStatus(),
+               'conversionStatus': IAnnexable(parent).conversionStatus(self),
+               'toPrint': self.getToPrint(),
                'isConfidential': self.getIsConfidential(),
                'warnSize': self.warnSize(),
                'friendlySize': getObjSize(self)()
@@ -517,18 +512,19 @@ registerType(MeetingFile, PROJECTNAME)
 ##code-section module-footer #fill in your manual code here
 
 
-def convertToImages(object, event, force=False):
+def convertToImages(annex, event, force=False):
     """
       Convert the MeetingFile to images so it can be printed or previewed.
     """
     tool = api.portal.get_tool('portal_plonemeeting')
+    parent = annex.getParentNode()
     if (not tool.getEnableAnnexPreview() and not force) or  \
-       not IAnnexable(object).isConvertable():
+       not IAnnexable(parent).isConvertable(annex):
         return
     # if the annex will be converted to images by plone.app.async
     # save some elements from the REQUEST that will be used after...
     if asyncInstalled():
-        saved_req = dict(object.REQUEST)
+        saved_req = dict(annex.REQUEST)
         # remove useless keys
         keys_to_remove = []
         for key in saved_req:
@@ -537,10 +533,10 @@ def convertToImages(object, event, force=False):
         for key in keys_to_remove:
             del saved_req[key]
         # save it as string to avoid pickling error
-        object.saved_request = str(saved_req)
+        annex.saved_request = str(saved_req)
     # queueJob use plone.app.async if installed or current instance if not
     from collective.documentviewer.async import queueJob
-    queueJob(object)
+    queueJob(annex)
 
 
 def prepareClonedAnnexForConversion(obj, event):
@@ -569,7 +565,7 @@ def checkAfterConversion(obj, event):
       After conversion, check that there was no error, if an error occured,
       make sure the annex is set to not toPrint and send an email if relevant.
     """
-    parent = obj.getParent()
+    parent = obj.getParentNode()
     if event.status == 'failure':
         # make sure the annex is not printed in documents
         obj.setToPrint(False)

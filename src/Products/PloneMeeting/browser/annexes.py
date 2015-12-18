@@ -91,8 +91,8 @@ class AnnexToPrintView(BrowserView):
 
     def isPrintable(self):
         """Is meetingFile printable?"""
-        annex = IAnnexable(self.context)
-        return annex.isConvertable() and not annex.conversionFailed()
+        annexable = IAnnexable(self.context)
+        return annexable.isConvertable(self.context) and not annexable.conversionFailed(self.context)
 
 
 class AnnexTitleView(BrowserView):
@@ -116,7 +116,8 @@ class AnnexTitleView(BrowserView):
         if isinstance(self.annexInfo, dict):
             return self.annexInfo['conversionStatus']
         else:
-            return IAnnexable(self.context).conversionStatus()
+            parent = self.context.getParentNode()
+            return IAnnexable(parent).conversionStatus(self.context)
 
     def appendToUrl(self, toAppend):
         """ """

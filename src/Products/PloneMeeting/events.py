@@ -371,7 +371,7 @@ def onAdviceTransition(advice, event):
 
 def onAnnexAdded(annex, event):
     '''When an annex is added, we need to update item modification date and SearchableText.'''
-    item = annex.getParent()
+    item = annex.getParentNode()
     item.setModificationDate(DateTime())
     # just reindex the entire object
     item.reindexObject()
@@ -383,7 +383,7 @@ def onAnnexRemoved(annex, event):
     if event.object.meta_type == 'Plone Site':
         return
 
-    item = annex.getParent()
+    item = annex.getParentNode()
     # do not call this if an annex is removed because the item is removed
     if item not in item.aq_inner.aq_parent.objectValues():
         return

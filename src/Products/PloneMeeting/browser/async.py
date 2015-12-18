@@ -107,6 +107,7 @@ class AnnexToPrint(BrowserView):
             raise Unauthorized
 
         try:
+            item = self.context.getParentNode()
             annexToPrint = self.context.getToPrint()
             # toggle value
             self.context.setToPrint(not annexToPrint)
@@ -114,7 +115,7 @@ class AnnexToPrint(BrowserView):
             # check that this annex is printable
             # in case last conversion failed, we should not let the user
             # specify that the annex is toPrint
-            if IAnnexable(self.context).conversionFailed():
+            if IAnnexable(item).conversionFailed(self.context):
                 raise Exception('This annex can not be printed because the conversion to a printable format failed!')
 
             if annexToPrint:
@@ -133,6 +134,7 @@ class AnnexToPrint(BrowserView):
             src = "%s/%s" % (portal_url, filename)
             html = self.IMG_TEMPLATE % (src, title, name)
             self.context.at_post_edit_script()
+            IAnnexable(item).updateAnnexIndex()
             return html
         except Exception, exc:
             # set an error status in request.RESPONSE so the ajax call knows

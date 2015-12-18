@@ -303,18 +303,18 @@ class AnnexableAdapter(object):
                     res += annexes
         return res
 
-    def isConvertable(self):
+    def isConvertable(self, annex):
         """
           Check if the annex is convertable (hopefully).  If the annex mimetype is one taken into
           account by collective.documentviewer CONVERTABLE_TYPES, then it should be convertable...
         """
-        mr = getToolByName(self.context, 'mimetypes_registry')
+        mr = api.portal.get_tool('mimetypes_registry')
         try:
-            content_type = mr.lookup(self.context.content_type)
+            content_type = mr.lookup(annex.content_type)
         except MimeTypeException:
             content_type = None
         if not content_type:
-            logger.warning(CONTENT_TYPE_NOT_FOUND % self.context.absolute_url_path())
+            logger.warning(CONTENT_TYPE_NOT_FOUND % annex.absolute_url_path())
             return False
         # get printable extensions from collective.documentviewer
         printableExtensions = self._documentViewerPrintableExtensions()
@@ -326,9 +326,9 @@ class AnnexableAdapter(object):
         # in case we have myimage.JPG, make sure extension is lowercase as
         # extentions on mimetypes_registry are lowercase...
         try:
-            filename = self.context.getFilename()
+            filename = annex.getFilename()
         except AttributeError:
-            filename = self.context.getFile().filename
+            filename = annex.getFile().filename
         file_extension = filename.split('.')[-1].lower()
         for extension in extensions:
             if file_extension == extension:
@@ -341,7 +341,7 @@ class AnnexableAdapter(object):
         if currentExtension in printableExtensions:
             return True
         if not currentExtension:
-            logger.warning(FILE_EXTENSION_NOT_FOUND % (self.context.absolute_url_path(),
+            logger.warning(FILE_EXTENSION_NOT_FOUND % (annex.absolute_url_path(),
                                                        content_type[0]))
 
         # if we did not find the currentExtension in the mimetype's extensions,
@@ -352,11 +352,11 @@ class AnnexableAdapter(object):
 
         return False
 
-    def conversionFailed(self):
+    def conversionFailed(self, annex):
         """
           Check if conversion failed
         """
-        annotations = IAnnotations(self.context)
+        annotations = IAnnotations(annex)
         if 'collective.documentviewer' in annotations and \
            'successfully_converted' in annotations['collective.documentviewer'] and \
            annotations['collective.documentviewer']['successfully_converted'] is False:
@@ -373,7 +373,7 @@ class AnnexableAdapter(object):
             printableExtensions.extend(convertable_type[1].extensions)
         return printableExtensions
 
-    def conversionStatus(self):
+    def conversionStatus(self, annex):
         """
           Returns the conversion status of current MeetingFile.
           Status can be :
@@ -383,9 +383,9 @@ class AnnexableAdapter(object):
                                Manager have access in the UI to more infos.
           - successfully_converted : the MeetingFile is converted correctly
         """
-        annotations = IAnnotations(self.context)
+        annotations = IAnnotations(annex)
         # not_convertable or awaiting conversion?
-        if 'collective.documentviewer' not in annotations.keys() or not self.isConvertable():
+        if 'collective.documentviewer' not in annotations.keys() or not self.isConvertable(annex):
             return 'not_convertable'
         # under conversion?
         if 'successfully_converted' not in annotations['collective.documentviewer']:
@@ -444,7 +444,7 @@ class MeetingFileContentDeletableAdapter(APContentDeletableAdapter):
 
     def mayDelete(self):
         '''See docstring in interfaces.py.'''
-        parent = self.context.getParent()
+        parent = self.context.getParentNode()
         if checkPermission(ModifyPortalContent, parent):
             return True
         return False
