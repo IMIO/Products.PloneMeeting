@@ -14,15 +14,19 @@ __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
 __docformat__ = 'plaintext'
 
 from AccessControl import ClassSecurityInfo
-from Products.Archetypes.atapi import *
 from zope.interface import implements
 import interfaces
 
+from Products.Archetypes import BaseContent
+from Products.Archetypes import BooleanField
+from Products.Archetypes import registerType
+from Products.Archetypes import Schema
+from Products.Archetypes import StringField
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 
 from plone.app.blob.content import ATBlob
 from plone.app.blob.content import ATBlobSchema
-from Products.PloneMeeting.config import *
+from plone import api
 
 ##code-section module-header #fill in your manual code here
 import os
@@ -31,10 +35,11 @@ from AccessControl import Unauthorized
 from zope.annotation import IAnnotations
 from zope.i18n import translate
 from Products.CMFCore.permissions import View, ModifyPortalContent
-from Products.CMFCore.utils import getToolByName
 from Products.CMFPlone.CatalogTool import getObjSize
 from collective.documentviewer.async import asyncInstalled
 from Products.PloneMeeting import PMMessageFactory as _
+from Products.PloneMeeting.config import MAX_FILE_SIZE_WARNING
+from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.utils import getCustomAdapter, sendMailIfRelevant
 
@@ -118,6 +123,7 @@ MeetingFile_schema = ATBlobSchema.copy() + \
 MeetingFile_schema['id'].searchable = False
 ##/code-section after-schema
 
+
 class MeetingFile(ATBlob, BrowserDefaultMixin):
     """
     """
@@ -150,11 +156,13 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
     # Manually created methods
 
     security.declarePublic('getName')
+
     def getName(self):
         '''Returns the annex title.'''
         return self.Title()
 
     security.declarePublic('getIcon')
+
     def getIcon(self, relative_to_portal=0):
         '''Calculate the icon using the meetingFileType icon.'''
         field = self.getField('file')
@@ -168,6 +176,7 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
             return None
 
     security.declarePublic('getMeetingFileType')
+
     def getMeetingFileType(self, theData=False, theRealObject=False, **kwargs):
         '''Override Archetypes accessor to be able to manage subTypes that are not real
            objects but dict of data.  If p_theData is True, we return a dict containing
@@ -178,7 +187,7 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
         if res and (theData or theRealObject):
             # MeetingFileTypes are not in the portal_catalog
             # but it is indexed in the uid_catalog...
-            uid_catalog = getToolByName(self, 'uid_catalog')
+            uid_catalog = api.portal.get_tool('uid_catalog')
             # if the meetingFileType is a subType, find the MeetingFileType
             # object than _dataFor corresponding subType
             mftUID = res
@@ -195,11 +204,13 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
         return res
 
     security.declarePublic('getBestIcon')
+
     def getBestIcon(self):
         '''Calculates the icon for the AT default view'''
         self.getIcon()
 
     security.declarePublic('findRelatedTo')
+
     def findRelatedTo(self):
         '''
           Check what the corresponding MeetingFileType is relatedTo...
@@ -210,14 +221,14 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
         return ''
 
     security.declarePublic('mayChangeToPrint')
+
     def mayChangeToPrint(self):
         '''
           May current user change toPrint?
         '''
         annex = self.getSelf()
-        membershipTool = getToolByName(annex, 'portal_membership')
-        member = membershipTool.getAuthenticatedMember()
-        tool = getToolByName(annex, 'portal_plonemeeting')
+        member = api.user.get_current()
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(annex)
         if not cfg.getEnableAnnexToPrint() or \
            not member.has_permission('Modify portal content', annex):
@@ -225,14 +236,14 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
         return True
 
     security.declarePublic('mayChangeConfidentiality')
+
     def mayChangeConfidentiality(self):
         '''
           May current user change confidentiality?
         '''
         annex = self.getSelf()
-        membershipTool = getToolByName(annex, 'portal_membership')
-        member = membershipTool.getAuthenticatedMember()
-        tool = getToolByName(annex, 'portal_plonemeeting')
+        member = api.user.get_current()
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(annex)
         if not cfg.getEnableAnnexConfidentiality() or \
            not member.has_permission('Modify portal content', annex) or \
@@ -241,12 +252,14 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
         return True
 
     security.declarePublic('getParent')
+
     def getParent(self):
         '''Returns the parent, aka the element managing MeetingFiles.
            Annexes are located in an item or in an advice...'''
         return self.getParentNode()
 
     security.declareProtected(View, 'index_html')
+
     def index_html(self, REQUEST=None, RESPONSE=None):
         '''Download the file'''
         if not self.isViewableForCurrentUser():
@@ -254,6 +267,7 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
         return ATBlob.index_html(self, REQUEST, RESPONSE)
 
     security.declareProtected(View, 'download')
+
     def download(self, REQUEST=None, RESPONSE=None):
         """Download the file"""
         if not self.isViewableForCurrentUser():
@@ -261,6 +275,7 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
         return ATBlob.download(self, REQUEST, RESPONSE)
 
     security.declarePublic('isViewableForCurrentUser')
+
     def isViewableForCurrentUser(self):
         '''
           MeetingFile is viewable if :
@@ -274,7 +289,7 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
         # is parent an item and privacy viewable?
         if parent.meta_type == 'MeetingItem' and not parent.adapted().isPrivacyViewable():
             return False
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(parent)
         if not cfg.getEnableAnnexConfidentiality():
             return True
@@ -286,8 +301,9 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
                                                             self.getAnnexInfo())
 
     security.declarePublic('at_post_create_script')
+
     def at_post_create_script(self):
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         parent = self.getParent()
         if parent:
             # update parent.annexIndex if it was not already set
@@ -322,16 +338,18 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
         self.reindexObject()
 
     security.declarePrivate('at_post_edit_script')
+
     def at_post_edit_script(self):
         self.adapted().onEdit(isCreated=False)
 
     security.declarePublic('getAnnexInfo')
+
     def getAnnexInfo(self):
         '''Produces a dict with some useful info about this annex. This is
            used for indexing purposes (see method updateAnnexIndex in
            browser/annexes.py).'''
         fileTypeData = self.getMeetingFileType(theData=True)
-        portal_url = getToolByName(self, 'portal_url')
+        portal_url = api.portal.get_tool('portal_url')
         res = {'Title': self.Title(),
                'absolute_url': portal_url.getRelativeContentURL(self),
                'UID': self.UID(),
@@ -353,21 +371,25 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
         return bool(self.get_size() > MAX_FILE_SIZE_WARNING)
 
     security.declarePublic('getSelf')
+
     def getSelf(self):
         if self.__class__.__name__ != 'MeetingFile':
             return self.context
         return self
 
     security.declarePublic('adapted')
+
     def adapted(self):
         return getCustomAdapter(self)
 
     security.declareProtected('Modify portal content', 'onEdit')
+
     def onEdit(self, isCreated):
         '''See doc in interfaces.py.'''
         pass
 
     security.declarePublic('indexExtractedText')
+
     def indexExtractedText(self):
         '''This method extracts text from the binary content of this object
            and puts it in the index that corresponds to this method. It does so
@@ -467,6 +489,7 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
         return extractedText
 
     security.declareProtected(ModifyPortalContent, 'setToPrint')
+
     def setToPrint(self, value):
         """
           Override the setToPrint mutator so we can handle conversion to images process
@@ -482,6 +505,7 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
         self.getField('toPrint').set(self, value)
 
     security.declarePrivate('getIndexValue')
+
     def getIndexValue(self, mimetype='text/plain'):
         """Override to make sure the 'file' is not indexed."""
         return ''
@@ -497,7 +521,8 @@ def convertToImages(object, event, force=False):
     """
       Convert the MeetingFile to images so it can be printed or previewed.
     """
-    if (not object.portal_plonemeeting.getEnableAnnexPreview() and not force) or  \
+    tool = api.portal.get_tool('portal_plonemeeting')
+    if (not tool.getEnableAnnexPreview() and not force) or  \
        not IAnnexable(object).isConvertable():
         return
     # if the annex will be converted to images by plone.app.async
