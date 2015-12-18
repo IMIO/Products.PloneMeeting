@@ -437,6 +437,22 @@ class Migrate_To_3_4(Migrator):
                 item.reindexObject(idxs=['getItemNumber', ])
         logger.info('Done.')
 
+    def _adaptMeetingConfigsItemRefFormat(self):
+        '''The call to item.getItemNumber needs a parameter 'for_display=True'
+           now taht stored MeetingItem.itemNumber is 100 instead of 1.'''
+        logger.info('Updating every MeetingConfigs \'itemReferenceFormat\' if it use getItemNumber...')
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            itemRefFormat = cfg.getItemReferenceFormat()
+            if ".getItemNumber(relativeTo='meeting')" in itemRefFormat:
+                itemRefFormat = itemRefFormat.replace(".getItemNumber(relativeTo='meeting')",
+                                                      ".getItemNumber(relativeTo='meeting', for_display=True)")
+                cfg.setItemReferenceFormat(itemRefFormat)
+            if ".getItemNumber()" in itemRefFormat:
+                itemRefFormat = itemRefFormat.replace(".getItemNumber()",
+                                                      ".getItemNumber(for_display=True)")
+                cfg.setItemReferenceFormat(itemRefFormat)
+        logger.info('Done.')
+
     def _cleanMeetingConfigs(self):
         """Clean MeetingConfigs :
            - remove attribute 'openAnnexesInSeparateWindows'.
@@ -505,6 +521,7 @@ class Migrate_To_3_4(Migrator):
         self._cleanMeetingFolderLayout()
         self._adaptAppForCollectiveDocumentGenerator()
         self._adaptMeetingItemsNumber()
+        self._adaptMeetingConfigsItemRefFormat()
         self._cleanMeetingConfigs()
         self._cleanMeetingUsers()
         self._updateAnnexIndex()
@@ -532,12 +549,13 @@ def migrate(context):
        8) Make sure no layout is defined on users MeetingFolders;
        9) Move to collective.documentgenerator;
        10) Adapt every items itemNumber;
-       11) Clean MeetingConfigs from unused attributes;
-       12) Clean MeetingUsers from unused attributes;
-       13) Reindex annexIndex;
-       14) Reindex adviceIndex;
-       15) Init new HTML fields;
-       16) Refresh catalogs.
+       11) Adapt every configs itemReferenceFormat;
+       12) Clean MeetingConfigs from unused attributes;
+       13) Clean MeetingUsers from unused attributes;
+       14) Reindex annexIndex;
+       15) Reindex adviceIndex;
+       16) Init new HTML fields;
+       17) Refresh catalogs.
     '''
     Migrate_To_3_4(context).run()
 # ------------------------------------------------------------------------------
