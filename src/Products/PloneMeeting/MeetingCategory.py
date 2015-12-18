@@ -30,7 +30,7 @@ from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 
 ##code-section module-header #fill in your manual code here
 from OFS.ObjectManager import BeforeDeleteException
-from Products.CMFCore.utils import getToolByName
+from plone import api
 from imio.helpers.cache import cleanVocabularyCacheFor
 from Products.PloneMeeting import PMMessageFactory
 from Products.PloneMeeting.config import PROJECTNAME
@@ -133,13 +133,6 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
         '''Returns the possibly translated title.'''
         return getFieldContent(self, 'title', force)
 
-    def getMeetingConfig(self):
-        '''Get the MeetingConfig I am defined in.'''
-        parent = self.getParentNode()
-        while not parent.meta_type == 'MeetingConfig':
-            parent = parent.getParentNode()
-        return parent
-
     def isClassifier(self):
         '''Return True if current category is a classifier,
            False if it is a normal category.'''
@@ -152,7 +145,9 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
         try:
             # to avoid problems with categories that are disabled or
             # restricted to some groups, we pass onlySelectable=False
-            i = self.getMeetingConfig().getCategories(
+            tool = api.portal_get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(self)
+            i = cfg.getCategories(
                 classifiers=self.isClassifier(), onlySelectable=onlySelectable).index(self)
         except ValueError:
             i = None
@@ -181,18 +176,19 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
         # bypass also if we are in the creation process
         if not item.meta_type == "Plone Site" and not item._at_creation_flag:
             isLinked = False
-            for brain in self.portal_catalog(Type=self.getMeetingConfig().getItemTypeName()):
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(self)
+            for brain in self.portal_catalog(portal_type=cfg.getItemTypeName()):
                 obj = brain.getObject()
                 if obj.getCategory() == self.getId():
                     isLinked = True
                     break
             # check also items added in the MeetingConfig but that are not indexed...
             if not isLinked:
-                for mc in self.portal_plonemeeting.objectValues('MeetingConfig'):
-                    for obj in mc.recurringitems.objectValues('MeetingItem'):
-                        if obj.getCategory() == self.getId():
-                            isLinked = True
-                            break
+                for obj in cfg.recurringitems.objectValues('MeetingItem'):
+                    if obj.getCategory() == self.getId():
+                        isLinked = True
+                        break
             if isLinked:
                 # The meetingCategory is linked to an existing item, we can not
                 # delete it.
@@ -222,8 +218,8 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
     def isSelectable(self, userId):
         '''See documentation in interfaces.py.'''
         cat = self.getSelf()
-        tool = getToolByName(cat, 'portal_plonemeeting')
-        wfTool = getToolByName(cat, 'portal_workflow')
+        tool = api.portal.get_tool('portal_plonemeeting')
+        wfTool = api.portal.get_tool('portal_workflow')
         state = wfTool.getInfoFor(cat, 'review_state')
         isUsing = True
         usingGroups = cat.getUsingGroups()
@@ -243,7 +239,7 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
            for.'''
         res = []
         # Get every Plone group related to a MeetingGroup
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         meetingGroups = tool.getMeetingGroups()
         for group in meetingGroups:
             res.append((group.id, group.Title()))
@@ -262,9 +258,10 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
            - otherMC2 : category 1
            - otherMC2 : category 2'''
         res = []
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
         # get every other MC the items of this MC can be sent to
-        otherMCs = self.getMeetingConfig().getMeetingConfigsToCloneTo()
+        otherMCs = cfg.getMeetingConfigsToCloneTo()
         for otherMC in otherMCs:
             otherMCObj = getattr(tool, otherMC['meeting_config'])
             if otherMCObj.getUseGroupsAsCategories():

@@ -34,33 +34,44 @@ class testMeetingCategory(PloneMeetingTestCase):
 
     def test_pm_CanNotRemoveLinkedMeetingCategory(self):
         '''While removing a MeetingCategory, it should raise if it is linked...'''
-        self.meetingConfig.setUseGroupsAsCategories(False)
-        # by default 'development'
-        category1 = self.meetingConfig.categories.objectValues('MeetingCategory')[0].getId()
+        self.changeUser('admin')
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        cfg.setUseGroupsAsCategories(False)
+        cfg2.setUseGroupsAsCategories(False)
+        # by default 'development', used by cfg and cfg2
+        development = cfg.categories.development.getId()
+        # create a recurring item in cfg2 using also category with id 'development'
+        recItemCfg2 = self.create('MeetingItemRecurring', meetingConfig=self.meetingConfig2)
+        recItemCfg2.setCategory(development)
         # by default 'research'
-        category2 = self.meetingConfig.categories.objectValues('MeetingCategory')[1].getId()
+        research = cfg.categories.research.getId()
         self.changeUser('pmManager')
         # create an item
         item = self.create('MeetingItem')
         # set a category
-        item.setCategory(category1)
+        item.setCategory(development)
         item.reindexObject()
         # now remove a used and an unused one
         self.changeUser('admin')
-        self.assertRaises(BeforeDeleteException, self.meetingConfig.categories.manage_delObjects, [category1])
+        self.assertRaises(BeforeDeleteException,
+                          cfg.categories.manage_delObjects,
+                          [development])
         # if a recurring item is using a category, it is taken into account too...
-        aRecurringItem = self.meetingConfig.recurringitems.objectValues('MeetingItem')[0]
+        aRecurringItem = cfg.recurringitems.objectValues('MeetingItem')[0]
         # make sure it is unindexed
         aRecurringItem.unindexObject()
-        aRecurringItem.setCategory(category2)
-        self.failUnless(aRecurringItem.getCategory() == category2)
-        self.assertRaises(BeforeDeleteException, self.meetingConfig.categories.manage_delObjects, [category2])
+        aRecurringItem.setCategory(research)
+        self.failUnless(aRecurringItem.getCategory() == research)
+        self.assertRaises(BeforeDeleteException,
+                          cfg.categories.manage_delObjects,
+                          [research])
         # now delete the recurring item and the category should be removable
         aRecurringItem.aq_inner.aq_parent.manage_delObjects([aRecurringItem.getId(), ])
-        self.meetingConfig.categories.manage_delObjects([category2])
+        cfg.categories.manage_delObjects([research])
         # remove the created item so the category is removable too
         item.aq_inner.aq_parent.manage_delObjects([item.getId(), ])
-        self.meetingConfig.categories.manage_delObjects([category1])
+        cfg.categories.manage_delObjects([development])
 
     def test_pm_ListCategoriesOfOtherMCs(self):
         '''Test the vocabulary of the 'categoryMappingsWhenCloningToOtherMC' field.'''
