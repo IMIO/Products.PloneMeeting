@@ -1297,6 +1297,10 @@ body.section-portal_plonemeeting #archetypes-fieldname-customViewFields {
 ul.item-predecessors span.pretty_link_content {
     vertical-align: text-top;
 }
+/* limit left space on the faceted form of items to present */
+body.template-meeting_available_items_view div#faceted-form {
+    margin-left: -0.8em;
+}
 
 /* temporary until collective.documentgenerator 0.6 is out */
 div#doc-generation-view ul.pod-template li {
