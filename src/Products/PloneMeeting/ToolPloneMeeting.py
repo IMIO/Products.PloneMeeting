@@ -1509,7 +1509,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             res = name + u' <%s>' % userInfo.getProperty('email').decode(enc)
         else:
             res = userInfo.getProperty('email').decode(enc)
-        return res.encode(enc)
+        return safe_unicode(res)
 
     security.declarePublic('addUsersOutsideGroups')
 
