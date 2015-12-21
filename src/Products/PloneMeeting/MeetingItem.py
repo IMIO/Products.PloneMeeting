@@ -3572,19 +3572,20 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if not isinstance(item, MeetingItem) or not item.UID() == self.UID():
             raise Unauthorized
         data = {}
-        if not adviserId:
-            for adviceInfo in self.adviceIndex.values():
-                advId = adviceInfo['id']
-                data[advId] = adviceInfo.copy()
-                # optimize some saved data
-                data[advId]['type_translated'] = translate(data[advId]['type'],
-                                                           domain='PloneMeeting',
-                                                           context=self.REQUEST)
-        else:
-            data = self.adviceIndex[adviserId].copy()
-            data['type_translated'] = translate(data['type'],
-                                                domain='PloneMeeting',
-                                                context=self.REQUEST)
+        for adviceInfo in self.adviceIndex.values():
+            advId = adviceInfo['id']
+            data[advId] = adviceInfo.copy()
+            # optimize some saved data
+            data[advId]['type_translated'] = translate(data[advId]['type'],
+                                                       domain='PloneMeeting',
+                                                       context=self.REQUEST)
+            data[advId]['given_advice'] = None
+            # add meetingadvice object if given
+            if data[advId].get('advice_id', None):
+                data[advId]['given_advice'] = getattr(self, data[advId]['advice_id'])
+        if adviserId:
+            data = data[adviserId]
+
         return data
 
     security.declarePublic('printAdvicesInfos')
