@@ -203,8 +203,8 @@
      <tr>
        <th class="nosort" i18n:translate="PloneMeeting_label_title">Title</th>
        <th class="nosort" i18n:translate="pm_annex_type">Annex type</th>
-       <th class="nosort" i18n:translate="Creator__header_title" i18n:domain="collective.eeafaceted.z3ctable">Creator</th>
-       <th class="nosort" i18n:translate="CreationDate__header_title" i18n:domain="collective.eeafaceted.z3ctable">Creation date</th>
+       <th class="nosort" i18n:translate="header_Creator" i18n:domain="collective.eeafaceted.z3ctable">Creator</th>
+       <th class="nosort" i18n:translate="header_CreationDate" i18n:domain="collective.eeafaceted.z3ctable">Creation date</th>
        <th class="nosort"
            i18n:translate="PloneMeeting_label_isConfidential"
            tal:condition="python: meetingConfig.getEnableAnnexConfidentiality() and isManager">Confidential?</th>
