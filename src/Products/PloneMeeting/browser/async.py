@@ -135,6 +135,7 @@ class AnnexToPrint(BrowserView):
             html = self.IMG_TEMPLATE % (src, title, name)
             self.context.at_post_edit_script()
             IAnnexable(item).updateAnnexIndex()
+            item.reindexObject(idxs=['hasAnnexesToPrint', ])
             return html
         except Exception, exc:
             # set an error status in request.RESPONSE so the ajax call knows

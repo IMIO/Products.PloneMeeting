@@ -136,6 +136,7 @@
   <adapter name="getRawClassifier" factory=".indexes.getRawClassifier" />
   <adapter name="Description" factory=".indexes.Description" />
   <adapter name="getDeliberation" factory=".indexes.getDeliberation" />
+  <adapter name="hasAnnexesToPrint" factory=".indexes.hasAnnexesToPrint" />
   <adapter name="linkedMeetingDate" factory=".indexes.linkedMeetingDate" />
   <adapter name="linkedMeetingUID" factory=".indexes.linkedMeetingUID" />
   <adapter name="getPreferredMeetingDate" factory=".indexes.getPreferredMeetingDate" />
@@ -185,6 +186,8 @@
            name="Products.PloneMeeting.vocabularies.senttoinfosvocabulary" />
   <utility component=".vocabularies.SendToAuthorityVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.sendtoauthorityvocabulary" />
+  <utility component=".vocabularies.HasAnnexesToPrintVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.hasannexestoprintvocabulary" />
   <utility component=".vocabularies.DownOrUpWorkflowAgainVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.downorupworkflowagainvocabulary" />
   <utility component=".vocabularies.ListTypesVocabularyFactory"

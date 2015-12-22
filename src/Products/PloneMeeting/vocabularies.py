@@ -346,6 +346,29 @@ class SendToAuthorityVocabulary(object):
 SendToAuthorityVocabularyFactory = SendToAuthorityVocabulary()
 
 
+class HasAnnexesToPrintVocabulary(object):
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """ """
+        res = []
+        res.append(SimpleTerm('1',
+                              '1',
+                              safe_unicode(translate('annexes_to_print_term',
+                                                     domain='PloneMeeting',
+                                                     context=context.REQUEST)))
+                   )
+        res.append(SimpleTerm('0',
+                              '0',
+                              safe_unicode(translate('no_annexes_to_print_term',
+                                                     domain='PloneMeeting',
+                                                     context=context.REQUEST)))
+                   )
+        return SimpleVocabulary(res)
+
+HasAnnexesToPrintVocabularyFactory = HasAnnexesToPrintVocabulary()
+
+
 class DownOrUpWorkflowAgainVocabulary(object):
     implements(IVocabularyFactory)
 

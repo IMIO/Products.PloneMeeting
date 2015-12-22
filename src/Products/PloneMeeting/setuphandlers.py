@@ -61,7 +61,7 @@ indexInfos = {
     'toDiscuss': ('BooleanIndex', {}),
     'privacy': ('FieldIndex', {}),
     'listType': ('FieldIndex', {}),
-    'HasAnnexesToPrint': ('FieldIndex', {}),
+    'hasAnnexesToPrint': ('FieldIndex', {}),
     # Meeting-related indexes
     'getDate': ('DateIndex', {}),
     # MeetingFile-related indexes
