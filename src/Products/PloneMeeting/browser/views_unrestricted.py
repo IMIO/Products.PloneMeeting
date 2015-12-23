@@ -7,7 +7,7 @@ from zope.component import getMultiAdapter
 from zope.i18n import translate
 
 from Products.Five import BrowserView
-from Products.CMFCore.utils import getToolByName
+from plone import api
 from plone.memoize.view import memoize
 
 from imio.actionspanel.utils import APOmnipotentUser
@@ -24,7 +24,8 @@ class UnrestrictedMethodsView(BrowserView):
         """
         meeting = self.context.getMeeting()
         if meeting:
-            return meeting.portal_plonemeeting.formatMeetingDate(meeting, prefixed=True)
+            tool = api.portal.get_tool('portal_plonemeeting')
+            return tool.formatMeetingDate(meeting, prefixed=True)
 
     def getLinkedMeetingDate(self):
         """
@@ -43,9 +44,9 @@ class UnrestrictedMethodsView(BrowserView):
         """
         # Look for every meetings that take place before the given p_meeting
         # and find a relevant firstItemNumber to base our count on
-        tool = getToolByName(self.context, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
-        catalog = getToolByName(self, 'portal_catalog')
+        catalog = api.portal.get_tool('portal_catalog')
         # previous meetings
         # we need to make an unrestricted search because previous meetings
         # could be unaccessible to the current user, for example by default a
@@ -102,7 +103,7 @@ class ItemSign(BrowserView):
         oldsm = getSecurityManager()
         # login as an omnipotent user
         newSecurityManager(None, APOmnipotentUser().__of__(self.portal.aq_inner.aq_parent.acl_users))
-        uid_catalog = getToolByName(self.context, 'uid_catalog')
+        uid_catalog = api.portal.get_tool('uid_catalog')
         item = uid_catalog(UID=UID)[0].getObject()
         itemIsSigned = not item.getItemIsSigned()
         item.setItemIsSigned(itemIsSigned)
