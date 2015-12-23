@@ -439,17 +439,26 @@ class Migrate_To_3_4(Migrator):
 
     def _adaptMeetingConfigsItemRefFormat(self):
         '''The call to item.getItemNumber needs a parameter 'for_display=True'
-           now taht stored MeetingItem.itemNumber is 100 instead of 1.'''
+           now taht stored MeetingItem.itemNumber is 100 instead of 1.
+           Moreover, avoid use of 'here.getMeeting().getDate()',
+           use 'here.restrictedTraverse('pm_unrestricted_methods').getLinkedMeetingDate()' instead.'''
         logger.info('Updating every MeetingConfigs \'itemReferenceFormat\' if it use getItemNumber...')
         for cfg in self.tool.objectValues('MeetingConfig'):
             itemRefFormat = cfg.getItemReferenceFormat()
             if ".getItemNumber(relativeTo='meeting')" in itemRefFormat:
-                itemRefFormat = itemRefFormat.replace(".getItemNumber(relativeTo='meeting')",
-                                                      ".getItemNumber(relativeTo='meeting', for_display=True)")
+                itemRefFormat = itemRefFormat.replace(
+                    ".getItemNumber(relativeTo='meeting')",
+                    ".getItemNumber(relativeTo='meeting', for_display=True)")
                 cfg.setItemReferenceFormat(itemRefFormat)
             if ".getItemNumber()" in itemRefFormat:
-                itemRefFormat = itemRefFormat.replace(".getItemNumber()",
-                                                      ".getItemNumber(for_display=True)")
+                itemRefFormat = itemRefFormat.replace(
+                    ".getItemNumber()",
+                    ".getItemNumber(for_display=True)")
+                cfg.setItemReferenceFormat(itemRefFormat)
+            if "here.getMeeting().getDate()" in itemRefFormat:
+                itemRefFormat = itemRefFormat.replace(
+                    "here.getMeeting().getDate()",
+                    "here.restrictedTraverse('pm_unrestricted_methods').getLinkedMeetingDate()")
                 cfg.setItemReferenceFormat(itemRefFormat)
         logger.info('Done.')
 

@@ -328,7 +328,7 @@ class MeetingConfigDescriptor(Descriptor):
         # What is the format of the item references ?
         # Default is Ref. MeetingDate/ItemNumberInMeeting
         self.itemReferenceFormat = "python: 'Ref. ' + (here.hasMeeting() and " \
-            "here.getMeeting().getDate().strftime('%Y%m%d') or '') " \
+            "here.restrictedTraverse('pm_unrestricted_methods').getLinkedMeetingDate().strftime('%Y%m%d') or '') " \
             "+ '/' + str(here.getItemNumber(relativeTo='meeting'))"
         # When adding items to a meeting, what sortingMethod must be applied successively?
         self.insertingMethodsOnAddItem = ({'insertingMethod': 'at_the_end', }, )
