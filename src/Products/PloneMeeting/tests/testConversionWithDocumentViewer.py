@@ -120,23 +120,32 @@ class testConversionWithDocumentViewer(PloneMeetingTestCase):
             the annex  is correctly converted
           - if MeetingFile.toPrint is True by default, the annex  is correctly converted upon creation
         '''
+        cfg = self.meetingConfig
         # first disable annex preview
         self.tool.setEnableAnnexPreview(False)
         # MeetingFile.toPrint is False by default
-        self.assertFalse(self.meetingConfig.getAnnexToPrintDefault())
+        self.assertFalse(cfg.getAnnexToPrintDefault())
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         annex1 = self.addAnnex(item)
         # this is not converted
         self.assertFalse(IAnnexable(item).conversionStatus(annex1) == 'successfully_converted')
         self.assertFalse(item.annexIndex[-1]['conversionStatus'] == 'successfully_converted')
-        # if we specify that this annex needs to be printed, it will be converted
+        # if we specify that this annex needs to be printed, it will not be converted because
+        # we use "for information" annex toPrint
+        cfg.setEnableAnnexToPrint('enabled_for_info')
         annex1.setToPrint(True)
+        self.assertFalse(IAnnexable(item).conversionStatus(annex1) == 'successfully_converted')
+        self.assertFalse(item.annexIndex[-1]['conversionStatus'] == 'successfully_converted')
+        cfg.setEnableAnnexToPrint('enabled_for_printing')
+        annex1.setToPrint(True)
+        # this time the annex is converted
         self.assertTrue(IAnnexable(item).conversionStatus(annex1) == 'successfully_converted')
         self.assertTrue(item.annexIndex[-1]['conversionStatus'] == 'successfully_converted')
+
         self.changeUser('admin')
         # specify that annexes are toPrint by default
-        self.assertFalse(self.meetingConfig.setAnnexToPrintDefault(True))
+        self.assertFalse(cfg.setAnnexToPrintDefault(True))
         self.changeUser('pmManager')
         annex2 = self.addAnnex(item)
         # this is actually converted

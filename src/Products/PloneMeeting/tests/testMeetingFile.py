@@ -38,9 +38,9 @@ class testMeetingFile(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         annex = self.addAnnex(item)
         # not activated in the cfg, not changeable
-        self.assertFalse(cfg.getEnableAnnexToPrint())
+        self.assertEquals(cfg.getEnableAnnexToPrint(), 'disabled')
         self.assertFalse(annex.adapted().mayChangeToPrint())
-        cfg.setEnableAnnexToPrint(True)
+        cfg.setEnableAnnexToPrint('enabled_for_info')
         self.assertTrue(annex.adapted().mayChangeToPrint())
         # propose it, no more editable and no more mayChangeToPrint
         self.proposeItem(item)
