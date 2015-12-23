@@ -1,7 +1,4 @@
 from AccessControl import Unauthorized
-from AccessControl.SecurityManagement import newSecurityManager
-from AccessControl.SecurityManagement import getSecurityManager
-from AccessControl.SecurityManagement import setSecurityManager
 
 from zope.component import getMultiAdapter
 from zope.i18n import translate
@@ -9,8 +6,6 @@ from zope.i18n import translate
 from Products.Five import BrowserView
 from plone import api
 from plone.memoize.view import memoize
-
-from imio.actionspanel.utils import APOmnipotentUser
 
 
 class UnrestrictedMethodsView(BrowserView):
@@ -99,16 +94,13 @@ class ItemSign(BrowserView):
         if not self.context.adapted().maySignItem():
             raise Unauthorized
 
-        # save current SecurityManager to fall back to it after deletion
-        oldsm = getSecurityManager()
-        # login as an omnipotent user
-        newSecurityManager(None, APOmnipotentUser().__of__(self.portal.aq_inner.aq_parent.acl_users))
         uid_catalog = api.portal.get_tool('uid_catalog')
-        item = uid_catalog(UID=UID)[0].getObject()
-        itemIsSigned = not item.getItemIsSigned()
-        item.setItemIsSigned(itemIsSigned)
-        item.reindexObject(idxs=('getItemIsSigned',))
-        setSecurityManager(oldsm)
+        # do this as Manager
+        with api.env.adopt_roles(['Manager', ]):
+            item = uid_catalog(UID=UID)[0].getObject()
+            itemIsSigned = not item.getItemIsSigned()
+            item.setItemIsSigned(itemIsSigned)
+            item.reindexObject(idxs=('getItemIsSigned',))
 
         # check again if member can signItem now that it has been signed
         # by default, when an item is signed, it can not be unsigned

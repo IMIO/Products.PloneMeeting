@@ -46,9 +46,6 @@ from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
 from AccessControl import Unauthorized
 from AccessControl.PermissionRole import rolesForPermissionOn
-from AccessControl.SecurityManagement import newSecurityManager
-from AccessControl.SecurityManagement import getSecurityManager
-from AccessControl.SecurityManagement import setSecurityManager
 from DateTime import DateTime
 from App.class_init import InitializeClass
 from OFS.ObjectManager import BeforeDeleteException
@@ -1551,22 +1548,19 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def setHistorizedTakenOverBy(self, wf_state):
         '''Check doc in interfaces.py.'''
         item = self.getSelf()
+
         if wf_state in item.takenOverByInfos:
             previousUserId = item.takenOverByInfos[wf_state]
-            membershipTool = getToolByName(item, 'portal_membership')
+            membershipTool = api.portal.get_tool('portal_membership')
             previousUser = membershipTool.getMemberById(previousUserId)
             mayTakeOver = False
             if previousUser:
-                # save current SecurityManager to fall back to it after
-                oldsm = getSecurityManager()
-                # login as an omnipotent user
-                newSecurityManager(None, previousUser)
-                try:
-                    mayTakeOver = item.adapted().mayTakeOver()
-                except:
-                    logger.warning("An error occured in 'setHistorizedTakenOverBy' while evaluating 'mayTakeOver'")
-                finally:
-                    setSecurityManager(oldsm)
+                # do this as previousUser
+                with api.env.adopt_user(user=previousUser):
+                    try:
+                        mayTakeOver = item.adapted().mayTakeOver()
+                    except:
+                        logger.warning("An error occured in 'setHistorizedTakenOverBy' while evaluating 'mayTakeOver'")
             if not mayTakeOver:
                 item.setTakenOverBy('')
             else:
