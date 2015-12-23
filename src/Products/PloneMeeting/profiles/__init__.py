@@ -288,7 +288,7 @@ class MeetingConfigDescriptor(Descriptor):
         # (ie 'P5', 'CC00_06'...)
         self.configVersion = ''
         self.itemCreatedOnlyUsingTemplate = False
-        self.enableAnnexToPrint = False
+        self.enableAnnexToPrint = 'disabled'
 
         # Data-related parameters ----------------------------------------------
         self.annexToPrintDefault = False

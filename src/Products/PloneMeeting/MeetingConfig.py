@@ -368,17 +368,19 @@ schema = Schema((
         ),
         write_permission="PloneMeeting: Write risky config",
     ),
-    BooleanField(
+    StringField(
         name='enableAnnexToPrint',
         default=defValues.enableAnnexToPrint,
-        widget=BooleanField._properties['widget'](
+        widget=SelectionWidget(
             description="EnableAnnexToPrint",
             description_msgid="enable_annex_to_print_descr",
             label='Enableannextoprint',
             label_msgid='PloneMeeting_label_enableAnnexToPrint',
             i18n_domain='PloneMeeting',
         ),
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
+        vocabulary='listEnableAnnexToPrint',
     ),
     BooleanField(
         name='annexToPrintDefault',
@@ -3081,6 +3083,22 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                          context=self.REQUEST)))
         return DisplayList(tuple(res)).sortedByValue()
 
+    security.declarePrivate('listEnableAnnexToPrint')
+
+    def listEnableAnnexToPrint(self):
+        '''Vocabulary for field 'enableAnnexToPrint'.'''
+        res = [('disabled', translate('enable_annex_to_print_disabled',
+                                      domain='PloneMeeting',
+                                      context=self.REQUEST)),
+               ('enabled_for_info', translate('enable_annex_to_print_enabled_for_info',
+                                              domain='PloneMeeting',
+                                              context=self.REQUEST)),
+               ('enabled_for_printing', translate('enable_annex_to_print_enabled_for_printing',
+                                                  domain='PloneMeeting',
+                                                  context=self.REQUEST)),
+               ]
+        return DisplayList(tuple(res))
+
     security.declarePrivate('listItemRelatedColumns')
 
     def listItemRelatedColumns(self):
@@ -3811,7 +3829,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
           set 2 other linked parameters annexToPrintDefault and annexDecisionToPrintDefault
           to False too...
         '''
-        if not self.getEnableAnnexToPrint():
+        if self.getEnableAnnexToPrint() == 'disabled':
             self.setAnnexToPrintDefault(False)
             self.setAnnexDecisionToPrintDefault(False)
 

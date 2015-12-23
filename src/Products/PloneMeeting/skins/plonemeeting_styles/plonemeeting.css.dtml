@@ -1239,8 +1239,12 @@ button.present_several img {
     top: 2px;
 }
 
+#content table.meetingConfigActions {
+    margin: 0;
+}
+
 table.meetingConfigActions td {
-    padding: 1em;
+    padding-right: 1em;
 }
 
 div.advice_popup_label {

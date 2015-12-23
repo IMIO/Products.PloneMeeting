@@ -506,6 +506,20 @@ class Migrate_To_3_4(Migrator):
             forceHTMLContentTypeForEmptyRichFields(itemOrMeeting)
         logger.info('Done.')
 
+    def _updateEnableAnnexToPrint(self):
+        """MeetingConfig.enableAnnexToPrint was a BooleanField, it is now a StringField.
+           Move 'False' to 'disabled' and 'True' to 'enabled_for_info'.
+        """
+        logger.info('Updating every MeetingConfigs \'enableAnnexToPrint\' from boolean to string...')
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            enableAnnexToPrint = cfg.enableAnnexToPrint
+            if isinstance(enableAnnexToPrint, bool):
+                if enableAnnexToPrint is True:
+                    cfg.setEnableAnnexToPrint('enabled_for_info')
+                else:
+                    cfg.setEnableAnnexToPrint('disabled')
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.4...')
         # reinstall so versions are correctly shown in portal_quickinstaller
@@ -527,6 +541,7 @@ class Migrate_To_3_4(Migrator):
         self._updateAnnexIndex()
         self._updateAdvices()
         self._initNewHTMLFields()
+        self._updateEnableAnnexToPrint()
         # update workflow, needed for items moved to item templates and recurring items
         # update reference_catalog as ReferenceFied "MeetingConfig.toDoListTopics"
         # and "Meeting.lateItems" were removed

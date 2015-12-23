@@ -1735,8 +1735,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             for brain in catalog(meta_type='MeetingItem') + catalog(portal_type='meetingadvice'):
                 obj = brain.getObject()
                 annexes = IAnnexable(obj).getAnnexes()
+                cfg = self.getMeetingConfig(obj)
+                force = bool(cfg.getEnableAnnexToPrint() == 'enabled_for_printing')
                 for annex in annexes:
-                    convertToImages(annex, None, force=True)
+                    convertToImages(annex, None, force=force)
             self.plone_utils.addPortalMessage('Done.')
         return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 

@@ -230,7 +230,7 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
         member = api.user.get_current()
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(annex)
-        if not cfg.getEnableAnnexToPrint() or \
+        if cfg.getEnableAnnexToPrint() == 'disabled' or \
            not member.has_permission('Modify portal content', annex):
             return False
         return True
@@ -495,7 +495,10 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
         if value is True:
             # check if we need to generate relevant images using collective.documentviewer converter
             # if we want the annex to be printable, force the conversion to images (not 'redone' if already done...)
-            convertToImages(self, None, force=True)
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(self)
+            force = bool(cfg.getEnableAnnexToPrint() == 'enabled_for_printing')
+            convertToImages(self, None, force=force)
         # finally set the given value
         self.getField('toPrint').set(self, value)
 
@@ -517,6 +520,7 @@ def convertToImages(annex, event, force=False):
       Convert the MeetingFile to images so it can be printed or previewed.
     """
     tool = api.portal.get_tool('portal_plonemeeting')
+    cfg = tool.getMeetingConfig(annex)
     parent = annex.getParentNode()
     if (not tool.getEnableAnnexPreview() and not force) or  \
        not IAnnexable(parent).isConvertable(annex):

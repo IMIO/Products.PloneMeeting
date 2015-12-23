@@ -208,7 +208,7 @@
        <th class="nosort"
            i18n:translate="PloneMeeting_label_isConfidential"
            tal:condition="python: meetingConfig.getEnableAnnexConfidentiality() and isManager">Confidential?</th>
-       <th class="nosort" i18n:translate="PloneMeeting_label_toPrint" tal:condition="meetingConfig/getEnableAnnexToPrint">To print?</th>
+       <th class="nosort" i18n:translate="PloneMeeting_label_toPrint" tal:condition="python: meetingConfig.getEnableAnnexToPrint() != 'disabled'">To print?</th>
        <th class="nosort" i18n:translate="listingheader_size" i18n:domain="plone">Size</th>
        <th class="nosort" i18n:translate="heading_actions" i18n:domain="plone">Actions</th>
      </tr>
