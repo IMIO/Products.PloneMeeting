@@ -142,6 +142,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Added parameter MeetingConfig.historizeItemDataWhenAdviceIsGiven, True by default, this will historize
   relevant item data (title and enabled rich text fields) when an advice transition 'give_advice' is triggered,
   this way we may still know what was the state of the item when the advice was given in case item content changes
+- MeetingItem.getAdviceDataFor returns now the real given meetingadvice object in key 'given_advice' if it was already
+  given, if not given, this key contains None
 
 3.3 (2015-02-27)
 ----------------
