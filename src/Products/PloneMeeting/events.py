@@ -327,6 +327,7 @@ def onItemDuplicated(item, event):
     newEvent['comments'] = label
     newEvent['action'] = action
     newEvent['actor'] = memberId
+    newEvent['time'] = DateTime()
     item.workflow_history[wfName] = item.workflow_history[wfName] + (newEvent, )
 
 
