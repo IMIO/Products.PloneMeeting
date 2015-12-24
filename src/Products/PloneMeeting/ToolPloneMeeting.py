@@ -499,7 +499,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            at least one of p_suffixes. If p_zope is False, we return MeetingGroups;
            else, we return Zope/Plone groups. If p_omittedSuffixes, we do not consider
            groups the user is in using those suffixes.'''
-        # formerl
         res = []
         user = self.getUser(userId)
         groupIds = user.getGroups()

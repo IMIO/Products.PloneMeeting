@@ -579,7 +579,8 @@ def migrate(context):
        14) Reindex annexIndex;
        15) Reindex adviceIndex;
        16) Init new HTML fields;
-       17) Refresh catalogs.
+       17) Update MeetingConfig.enableAnnexToPrint attribute;
+       18) Refresh catalogs.
     '''
     Migrate_To_3_4(context).run()
 # ------------------------------------------------------------------------------
