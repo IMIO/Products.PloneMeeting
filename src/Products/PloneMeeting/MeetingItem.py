@@ -3751,7 +3751,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if isDefinedInTool:
             automaticAdvisers = []
         else:
-            automaticAdvisers = self.getAutomaticAdvisers()
+            # here, there are still no 'Reader' access for advisers to the item
+            # make sure the automatic advisers (where a TAL expression is evaluated)
+            # may access the item correctly
+            with api.env.adopt_roles(['Reader', ]):
+                automaticAdvisers = self.getAutomaticAdvisers()
         # get formatted optionalAdvisers to be coherent with automaticAdvisers data format
         optionalAdvisers = self.getOptionalAdvisersData()
 

@@ -567,6 +567,7 @@ class testAdvices(PloneMeetingTestCase):
     def test_pm_AutomaticAdvices(self):
         '''Test the automatic advices mechanism, some advices can be
            automatically asked under specific conditions.'''
+        cfg = self.meetingConfig
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setOptionalAdvisers(('developers', ))
@@ -575,7 +576,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertFalse('vendors' in item.adviceIndex)
         # now make 'vendors' advice automatically asked
         # it will be asked if item.budgetRelated is True
-        self.meetingConfig.setCustomAdvisers(
+        cfg.setCustomAdvisers(
             [{'row_id': 'unique_id_123',
               'group': 'vendors',
               'gives_auto_advice_on': 'item/getBudgetRelated',
@@ -595,20 +596,37 @@ class testAdvices(PloneMeetingTestCase):
         # the advice is only asked once and considered as automatic, aka not optional
         # but before, 'developers' advice is still considered as optional
         self.assertTrue('developers' in item.getOptionalAdvisers())
-        self.meetingConfig.setCustomAdvisers([{'row_id': 'unique_id_123',
-                                               'group': 'vendors',
-                                               'gives_auto_advice_on': 'item/getBudgetRelated',
-                                               'for_item_created_from': '2012/01/01', },
-                                              {'row_id': 'unique_id_456',
-                                               'group': 'developers',
-                                               'gives_auto_advice_on': 'item/getBudgetRelated',
-                                               'for_item_created_from': '2012/01/01', }, ])
+        cfg.setCustomAdvisers([{'row_id': 'unique_id_123',
+                                'group': 'vendors',
+                                'gives_auto_advice_on': 'item/getBudgetRelated',
+                                'for_item_created_from': '2012/01/01', },
+                               {'row_id': 'unique_id_456',
+                                'group': 'developers',
+                                'gives_auto_advice_on': 'item/getBudgetRelated',
+                                'for_item_created_from': '2012/01/01', }, ])
         item.at_post_edit_script()
         self.assertFalse(item.adviceIndex['vendors']['optional'])
         # 'developers' asked advice is no more considered as optional even if in optionalAdvisers
         self.assertFalse(item.adviceIndex['developers']['optional'])
         # 'developers' asked advice is still in item.optionalAdvisers
         self.assertTrue('developers' in item.getOptionalAdvisers())
+
+        # now make sure an adviser of 'vendors' may add his advice and updateLocalRoles
+        # in MeetingItem._updateAdvices, this is why we call getAutomaticAdvisers with api.env.adopt_roles(['Reader', ])
+        self.proposeItem(item)
+        item.updateLocalRoles()
+        self.assertTrue('vendors' in item.adviceIndex)
+        self.changeUser('pmReviewer2')
+        item.updateLocalRoles()
+        # 'vendors' is still in adviceIndex, the TAL expr could be evaluated correctly
+        self.assertTrue('vendors' in item.adviceIndex)
+        self.assertEquals(item.getAdvicesGroupsInfosForUser(),
+                          ([('vendors', 'Vendors')], []))
+        createContentInContainer(item,
+                                 'meetingadvice',
+                                 **{'advice_group': 'vendors',
+                                    'advice_type': u'positive',
+                                    'advice_comment': RichTextValue(u'My comment')})
 
     def test_pm_GivenDelayAwareAutomaticAdviceLeftEvenIfItemConditionChanged(self):
         '''This test that if an automatic advice is asked because a condition
