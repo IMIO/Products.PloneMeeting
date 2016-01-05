@@ -43,16 +43,9 @@ class Migrator(BaseMigrator):
 
     def upgradeDependencies(self):
         """Upgrade every dependencies."""
-        self.upgradeProfile(u'collective.ckeditor:default')
-        self.upgradeProfile(u'collective.documentviewer:default')
-        self.upgradeProfile(u'collective.iconifieddocumentactions:default')
-        self.upgradeProfile(u'collective.js.fancytree:default')
-        self.upgradeProfile(u'collective.js.iframeresizer:default')
-        self.upgradeProfile(u'communesplone.layout:default')
-        self.upgradeProfile(u'plonetheme.imioapps:plonemeetingskin')
-        self.upgradeProfile(u'Products.DataGridField:default')
-        self.upgradeProfile(u'Products.PasswordStrength:default')
-        self.upgradeProfile(u'Products.cron4plone:default')
+        profile_names = self.ps.getDependenciesForProfile(u'profile-Products.PloneMeeting:default')
+        for profile_name in profile_names:
+            self.upgradeProfile(profile_name)
 
     def run(self):
         '''Must be overridden. This method does the migration job.'''
