@@ -189,7 +189,7 @@ class testAdvices(PloneMeetingTestCase):
         form.createAndAdd(form.request.form)
         self.assertEquals(item1.hasAdvices(), True)
         # 'pmReviewer2' has no more addable advice (as already given) but has now an editable advice
-        self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([], ['vendors']))
+        self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([], [('vendors', 'Vendors')]))
         # given advice is correctly stored
         self.assertEquals(item1.adviceIndex['vendors']['type'], 'positive')
         self.assertEquals(item1.adviceIndex['vendors']['comment'], u'My comment')

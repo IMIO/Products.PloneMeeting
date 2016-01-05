@@ -442,7 +442,7 @@ class Migrate_To_3_4(Migrator):
            now taht stored MeetingItem.itemNumber is 100 instead of 1.
            Moreover, avoid use of 'here.getMeeting().getDate()',
            use 'here.restrictedTraverse('pm_unrestricted_methods').getLinkedMeetingDate()' instead.'''
-        logger.info('Updating every MeetingConfigs \'itemReferenceFormat\' if it use getItemNumber...')
+        logger.info('Updating every MeetingConfigs \'itemReferenceFormat\' if it uses getItemNumber...')
         for cfg in self.tool.objectValues('MeetingConfig'):
             itemRefFormat = cfg.getItemReferenceFormat()
             if ".getItemNumber(relativeTo='meeting')" in itemRefFormat:

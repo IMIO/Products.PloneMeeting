@@ -1,51 +1,65 @@
 <tal:defines i18n:domain="PloneMeeting"
-             define="advicesByType context/getAdvicesByType;
+             define="item_url context/absolute_url;
+                     advicesByType context/getAdvicesByType;
                      advisableGroups context/getAdvicesGroupsInfosForUser;
-                     advicesToAdd python: advisableGroups[0];">
-  <table width="#"
-         class="contentActionsAX no-style-table" cellpadding="0" cellspacing="0"
-         tal:attributes="width python: 10 + (advicesToAdd and 1 or 0) * 15 + len(advicesByType) * 26"
-         style="margin: 0;">
-    <tr>
+                     advicesToAdd python: [info[0] for info in advisableGroups[0]];
+                     advicesToEdit python: [info[0] for info in advisableGroups[1]];
+                     advicesToWarn python: (advicesToAdd or advicesToEdit) and view.advicesDelayToWarn(advicesByType, advisableGroups) or {};">
+  <div class="contentActionsAX no-style-table" cellpadding="0" cellspacing="0">
       <tal:advicesToAddOrExisting condition="python: advicesByType or advicesToAdd">
-      <tal:definesIfSomethingToShow define="advicesToEdit python: advisableGroups[1];
-                                            cfg python: view.cfg;
+      <tal:definesIfSomethingToShow define="cfg python: view.cfg;
+                                            displayedAddIcon python: False;
                                             adviceStyle python: cfg.getUserParam('adviceStyle', context.REQUEST);
-                                            item_url context/absolute_url;
-                                            portal context/@@plone_portal_state/portal;
-                                            tool python: portal.portal_plonemeeting;
-                                            portal_url portal/absolute_url;
                                             pm_utils context/@@pm_utils;
-                                            displayAdviceConfidentiality python: cfg.getEnableAdviceConfidentiality() and tool.isManager(context);
-                                            isRealManager python: tool.isManager(context, realManagers=True);
+                                            displayAdviceConfidentiality python: cfg.getEnableAdviceConfidentiality() and view.tool.isManager(context);
+                                            isRealManager python: view.tool.isManager(context, realManagers=True);
                                             item_review_state context/queryState;
                                             adviceFileTypes python: cfg.getFileTypes('advice');">
-      <tal:comment replace="nothing">Icon for adding an advice</tal:comment>
-      <td tal:condition="advicesToAdd" class="noPadding">
-        <a href="++add++meetingadvice" class="link-overlay-pm-advice" tal:attributes="href string:${item_url}/++add++meetingadvice">
-          <img i18n:attributes="title" title="advice_add" style="cursor:pointer"
-               tal:attributes="src string:$portal_url/new.png;" />
-        </a>
-      </td>
       <tal:comment replace="nothing">For history reasons, we use cfg.listAdviceTypes to be sure
                                      that a deactivated adviceType is still shown.</tal:comment>
-      <tal:menu repeat="adviceType python: cfg.listAdviceTypes().keys() + ['not_given', 'hidden_during_redaction', 'considered_not_given_hidden_during_redaction']">
-      <td tal:condition="python: adviceType in advicesByType" class="noPadding">
-        <dl class="actionMenuAX">
+      <tal:menu repeat="adviceType python: ['not_given', 'hidden_during_redaction', 'considered_not_given_hidden_during_redaction'] + cfg.listAdviceTypes().keys()">
+        <dl class="actionMenuAX" tal:condition="python: adviceType in advicesByType" class="noPadding">
           <dt class="actionMenuHeaderAX pmLinks"><tal:comment replace="nothing">Icon with advice type</tal:comment>
-              <a href="#">
-                <img tal:attributes="src string:$portal_url/advice_${adviceStyle}_$adviceType.png;
-                                     title adviceType;"
-                     i18n:attributes="title"/><span tal:replace="python: len(advicesByType[adviceType])"></span>
+
+            <a href="#"
+               tal:define="adviceToWarn python: advicesToWarn.get(adviceType, None)"
+               tal:attributes="class python: adviceToWarn and 'warn_delay_advice' or ''">
+
+              <img tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_$adviceType.png;
+                                   title adviceType;"
+                   i18n:attributes="title"/><span class="advices_of_type" tal:content="python: len(advicesByType[adviceType])"></span>
+
+              <tal:adviceWarnDelay tal:condition="adviceToWarn">
+                <img src="advice_with_delay_big.png"
+                     style="outline: none; margin-left: 5px;"
+                     tal:attributes="src string:${view/portal_url}/advice_with_delay_big.png;"/>
+                <span tal:define="adviceToWarn python: advicesToWarn[adviceType];
+                                  class_if_not_given string:advice_delay advice_delay_${adviceToWarn/delay_infos/delay_status};"
+                      tal:content="adviceToWarn/delay_infos/left_delay"
+                      title="You still need to give an advice on this item respecting given delay."
+                      i18n:attributes="title"
+                      tal:attributes="class class_if_not_given" />
+              </tal:adviceWarnDelay>
+            </a>
+
+            <tal:comment replace="nothing">Icon for adding an advice</tal:comment>
+            <div tal:condition="python: advicesToAdd and not displayedAddIcon" style="display: inline;">
+              <a href="++add++meetingadvice"
+                 class="link-overlay-pm-advice"
+                 tal:define="global displayedAddIcon python: True"
+                 tal:attributes="href string:${item_url}/++add++meetingadvice">
+                <img i18n:attributes="title" title="advice_add" style="cursor:pointer"
+                     tal:attributes="src string:${view/portal_url}/new.png;" />
               </a>
+            </div>
+
           </dt>
           <dd class="actionMenuContentAX actionMenuContentAdvice">
             <ul style="cursor:default">
               <tal:comment replace="nothing">List of group names</tal:comment>
               <li tal:repeat="advice python:advicesByType[adviceType]">
-                <fieldset tal:define="tool python: portal.portal_plonemeeting;
-                                      mGroup python: getattr(tool, advice['id']);
-                                      memberIsAdviserForGroup python:  advice['id'] in [group.getId() for group in tool.getGroupsForUser(suffixes=['advisers'])];
+                <fieldset tal:define="mGroup python: getattr(view.tool, advice['id']);
+                                      memberIsAdviserForGroup python:  advice['id'] in [group.getId() for group in view.tool.getGroupsForUser(suffixes=['advisers'])];
                                       obj python: advice.get('advice_id', None) and getattr(context, advice['advice_id']) or None;
                                       mayEdit python: (advicesToEdit and advice['id'] in advicesToEdit) or (isRealManager and not adviceType == 'not_given');
                                       customMessageInfos python: context.adapted().getCustomAdviceMessageFor(advice);
@@ -54,11 +68,11 @@
                     <legend>
                          <span tal:condition="advice/delay">
                               <img src="advice_with_delay_big.png"
-                                   tal:attributes="src string:${portal_url}/advice_with_delay_big.png;"/>
+                                   tal:attributes="src string:${view/portal_url}/advice_with_delay_big.png;"/>
                               <span class="advice_delay"
                                     tal:content="advice/delay_infos/left_delay"
                                     tal:define="class_if_not_given string:advice_delay advice_delay_${advice/delay_infos/delay_status};"
-                                    tal:attributes="class python: (advice['type'] == 'not_given' or advice['hidden_during_redaction']) and class_if_not_given or 'advice_delay'" />
+                                    tal:attributes="class python: (advice['type'] in ('not_given', 'asked_again') or advice['hidden_during_redaction']) and class_if_not_given or 'advice_delay'" />
                          </span>
                          <div class="advice_popup_label">
                          <span tal:condition="advice/optional">(</span><b tal:content="structure advice/name"></b>
@@ -67,19 +81,19 @@
                               </tal:showDelayLabel><span tal:condition="advice/optional">)</span>
                          </div>
                          <div class="advice_popup_actions">
-                         &nbsp;&nbsp;<acronym tal:attributes="title python: context.getAdviceHelpMessageFor(**advice)"><img tal:attributes="src string:$portal_url/help.png;"/></acronym>
+                         &nbsp;&nbsp;<acronym tal:attributes="title python: context.getAdviceHelpMessageFor(**advice)"><img tal:attributes="src string:${view/portal_url}/help.png;"/></acronym>
                          <tal:confidentiality condition="displayAdviceConfidentiality" replace="structure python: context.restrictedTraverse('@@advice-confidentiality')(advice)" />
                          <acronym tal:condition="python: obj and context.adapted().mayAskAdviceAgain(obj)">
                             <img tal:condition="python: not advice['type'] == 'asked_again'"
                                  class="askAdviceAgainEditable"
                                  i18n:attributes="title" title="to_advice_asked_again"
-                                 tal:attributes="src string:$portal_url/advice_${adviceStyle}_asked_again.png;
+                                 tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_asked_again.png;
                                            onClick string:javascript:callViewAndReload(base_url='${item_url}/${advice/advice_id}', view_name='@@change-advice-asked-again', this);;"/></acronym>
                          <acronym tal:condition="python: obj and context.adapted().mayBackToPreviousAdvice(obj)">
                             <img tal:condition="python: advice['type'] == 'asked_again'"
                                  class="askAdviceAgainEditable"
                                  i18n:attributes="title" title="to_previous_given_advice"
-                                 tal:attributes="src string:$portal_url/advice_${adviceStyle}_asked_again_back_to_previous.png;
+                                 tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_asked_again_back_to_previous.png;
                                            onClick string:javascript:callViewAndReload(base_url='${item_url}/${advice/advice_id}', view_name='@@change-advice-asked-again', this);;"/></acronym>
                          <tal:advice-change-delay
                            condition="advice/delay"
@@ -95,7 +109,7 @@
                                href="@@historyview"
                                tal:attributes="href string:${obj/absolute_url}/@@historyview">
                                 <img src="++resource++imio.actionspanel/history.gif"
-                                     tal:attributes="src string:${portal_url}/++resource++imio.actionspanel/history.gif"/>
+                                     tal:attributes="src string:${view/portal_url}/++resource++imio.actionspanel/history.gif"/>
                             </a></acronym>
                          </div>
                     </legend>
@@ -113,26 +127,26 @@
                          class="link-overlay-pm-advice"
                          tal:attributes="href string:${item_url}/${advice/advice_id}/edit">
                         <img i18n:attributes="title" title="advice_edit"
-                             tal:attributes="src string:$portal_url/edit.gif;" />
+                             tal:attributes="src string:${view/portal_url}/edit.gif;" />
                       </a>
                       <a href="view"
                          tal:condition="adviceIsLocked"
                          tal:attributes="href string:${item_url}/${advice/advice_id}/view">
                         <img i18n:attributes="title" title="Locked"
                              i18n:domain="plone"
-                             tal:attributes="src string:$portal_url/lock_icon.png;" />
+                             tal:attributes="src string:${view/portal_url}/lock_icon.png;" />
                       </a>
                     </td>
                     <td align="right" width="20px" class="noPadding" condition="not: adviceIsLocked">
                       <img tal:condition="advice/hidden_during_redaction"
                            class="adviceHiddenDuringRedactionEditable"
                            i18n:attributes="title" title="to_not_hidden_during_redaction"
-                           tal:attributes="src string:$portal_url/advice_${adviceStyle}_enable_hidden_during_redaction.png;
+                           tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_enable_hidden_during_redaction.png;
                                            onClick string:javascript:callViewAndReload(base_url='${item_url}/${advice/advice_id}', view_name='@@change-advice-hidden-during-redaction', this);;"/>
                       <img tal:condition="not: advice/hidden_during_redaction"
                            class="adviceHiddenDuringRedactionEditable"
                            i18n:attributes="title" title="to_hidden_during_redaction"
-                           tal:attributes="src string:$portal_url/advice_${adviceStyle}_disable_hidden_during_redaction.png;
+                           tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_disable_hidden_during_redaction.png;
                                            onClick string:javascript:callViewAndReload(base_url='${item_url}/${advice/advice_id}', view_name='@@change-advice-hidden-during-redaction', this);;"/>
                     </td>
                     </tal:editableOrLocked>
@@ -140,7 +154,7 @@
                     <a href="view"
                        tal:attributes="href string:${item_url}/${advice/advice_id}/view">
                       <img i18n:attributes="title" title="Advice advanced management screen"
-                           tal:attributes="src string:$portal_url/advice_manage.png;" />
+                           tal:attributes="src string:${view/portal_url}/advice_manage.png;" />
                     </a>
                     </td>
                     <td tal:condition="python: adviceFileTypes or bool(advice['annexIndex'])" align="right" width="20px" class="noPadding">
@@ -148,12 +162,12 @@
                          tal:attributes="href string:${item_url}/${advice/advice_id}/annexes_form">
                         <img src="manage_annexes.gif"
                              i18n:attributes="title" title="Manage advice annexes"
-                             tal:attributes="src string:${portal_url}/manage_annexes.gif"/>
+                             tal:attributes="src string:${view/portal_url}/manage_annexes.gif"/>
                       </a>
                     </td>
                     <td align="right" width="20px" class="noPadding">
                         <img i18n:attributes="title" title="Delete"
-                             tal:attributes="src string: ${portal_url}/delete_icon.png;
+                             tal:attributes="src string: ${view/portal_url}/delete_icon.png;
                                              onClick string:javascript:confirmDeleteObject(base_url='${context/absolute_url}', object_uid='${advice/advice_uid}', this);;"
                              onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
                     </td>
@@ -162,14 +176,14 @@
                     <td colspan="4"
                         tal:define="needToCrop python: advice['comment'] and len(advice['comment']) > 400;
                                     comment python: needToCrop and pm_utils.cropHTML(advice['comment'], 400) or advice['comment']">
-                        <img tal:attributes="src string:$portal_url/advice_${adviceStyle}_${advice/type}.png;
+                        <img tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_${advice/type}.png;
                                              title string:${advice/type};"
                              i18n:attributes="title" title=""/>
                         <span tal:content="string:${advice/type}" i18n:translate="">Advice type</span>
                         <tal:comment replace="nothing">Display previous advice value if advice asked again.</tal:comment>
                         <tal:previousAdviceType condition="python: adviceType == 'asked_again'">
                           <tal:defines define="previous python: context.portal_repository.retrieve(obj, (context.portal_repository.getHistoryMetadata(obj).nextVersionId -1)).object">
-                            (<img tal:attributes="src string:$portal_url/advice_${adviceStyle}_${previous/advice_type}.png;
+                            (<img tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_${previous/advice_type}.png;
                                              title string:${previous/advice_type};"
                              i18n:attributes="title" title=""/>
                              <span tal:content="string:${previous/advice_type}" i18n:translate="">Previous advice type</span>)
@@ -192,7 +206,7 @@
                            class="link-overlay-pm"
                            tal:attributes="href string:${item_url}/${advice/advice_id}/view">
                             <img src="blue_arrow.gif"
-                                 tal:attributes="src string:${portal_url}/blue_arrow.gif"/>&nbsp;<span i18n:translate="">Preview detailled advice</span>
+                                 tal:attributes="src string:${view/portal_url}/blue_arrow.gif"/>&nbsp;<span i18n:translate="">Preview detailled advice</span>
                         </a>
                     </td>
                     <td colspan="3"
@@ -319,11 +333,17 @@
             </ul>
           </dd>
         </dl>
-      </td>
       </tal:menu>
       </tal:definesIfSomethingToShow>
       </tal:advicesToAddOrExisting>
-      <td tal:condition="not: advicesByType">-</td>
-    </tr>
-  </table>
+      <div tal:condition="not: advicesByType">
+        <tal:comment replace="nothing">Icon for adding an advice for power advisers</tal:comment>
+        <div tal:condition="python: advicesToAdd" style="display: inline">
+          <a href="++add++meetingadvice" class="link-overlay-pm-advice" tal:attributes="href string:${item_url}/++add++meetingadvice">
+            <img i18n:attributes="title" title="advice_add" style="cursor:pointer"
+                 tal:attributes="src string:${view/portal_url}/new.png;" />
+          </a>
+        </div>
+        <div class="no_advice_asked" style="display: inline">-</div>
+  </div>
 </tal:defines>

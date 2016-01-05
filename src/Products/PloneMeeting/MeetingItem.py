@@ -3360,7 +3360,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 if advice['type'] == NOT_GIVEN_ADVICE_VALUE and advice['advice_addable']:
                     toAdd.append((groupId, group.getName()))
                 if advice['type'] != NOT_GIVEN_ADVICE_VALUE and advice['advice_editable']:
-                    toEdit.append(groupId)
+                    toEdit.append((groupId, group.getName()))
             # if not in self.adviceIndex, aka not already given
             # check if group is a power adviser and if he is allowed
             # to add an advice in current item state

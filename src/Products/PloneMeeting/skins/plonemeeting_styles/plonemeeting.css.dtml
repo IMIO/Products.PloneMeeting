@@ -318,6 +318,17 @@ div.pm_search_no_result_info {
     cursor: pointer;
 }
 
+#faceted-form table.listing td.td_cell_advices {
+    padding-left: 0.3em;
+    padding-right: 0;
+}
+
+/* display advices menu more on the right on the dashboards */
+td.td_cell_advices .actionMenuAX .actionMenuContentAX {
+    right: 75px;
+    top: 0;
+}
+
 #content .actionMenuAX .actionMenuContentAX ul:first-child {
     display: block;
     background-color: white;
@@ -778,7 +789,6 @@ TD acronym {
 /* TH of the table listing items are stylable th by th */
 /* using 1% limit the width as much as possible... */
 table.listing th.th_header_actions,
-table.listing th.th_header_advices,
 table.listing th.th_header_itemIsSigned,
 table.listing th.th_header_toDiscuss,
 table.listing th.th_header_getItemIsSigned,
@@ -806,6 +816,9 @@ table.listing th.th_header_CreationDate {
 }
 table.listing th.th_header_privacy {
     width: 60px;
+}
+table.listing th.th_header_advices {
+    width: 55px;
 }
 
 /* hide border between listType and itemNumber */
@@ -966,6 +979,16 @@ div#optionalAdvisers input[value="not_selectable_value_non_delay_aware_optional_
     margin-right: -6px;
     font-weight: bold;
 }
+/* when displayed in the dashboard column, as warning delay advice, keep it closer to advice type icon */
+dt span.advice_delay {
+    margin-right: -8px;
+}
+/* add a border under the advice delay warning and advice type to link it together */
+#content a.warn_delay_advice {
+    border-bottom: 1px solid lightgrey !important;
+    padding-bottom: 2px !important;
+}
+
 .advice_delay_not_giveable {
     color: grey;
 }
@@ -980,6 +1003,16 @@ div#optionalAdvisers input[value="not_selectable_value_non_delay_aware_optional_
 #content span.advice_delay_timed_out,
 #content span.advice_delay_stopped_timed_out {
     color: red;
+}
+
+span.advices_of_type {
+    font-size: 90%;
+    vertical-align: sub;
+}
+
+/* display advices horizontally on the item view */
+body.template-meetingitem_view td.itemAdvicesCell div.contentActionsAX > dl {
+    display: inline-block;
 }
 
 #vote-abstain {

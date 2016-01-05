@@ -222,9 +222,9 @@ class AdviceGroupVocabulary(object):
         alterable_advices_groups = []
         if context.meta_type == 'MeetingItem':
             alterable_advices_groups = [groupId for groupId, groupTitle in context.getAdvicesGroupsInfosForUser()[0]]
-        # take into account groups for wich user can edit an advice
+        # take into account groups for which user can edit an advice
         elif context.meta_type == 'Dexterity Container':
-            alterable_advices_groups = context.getAdvicesGroupsInfosForUser()[1] or []
+            alterable_advices_groups = [groupId for groupId, groupTitle in context.getAdvicesGroupsInfosForUser()[1]]
             # make sure advice_type selected on advice is in the vocabulary
             if not context.advice_group in alterable_advices_groups:
                 terms.append(SimpleTerm(context.advice_group,

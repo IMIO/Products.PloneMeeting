@@ -29,6 +29,7 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import getToolByName
 from Products.CMFCore.utils import _checkPermission
 from Products.Five import BrowserView
+from plone import api
 from imio.history.browser.views import IHVersionPreviewView
 
 
@@ -41,11 +42,45 @@ class AdvicesIcons(BrowserView):
         super(AdvicesIcons, self).__init__(context, request)
         self.tool = getToolByName(self, 'portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
+        self.portal = api.portal.get()
+        self.portal_url = self.portal.absolute_url()
 
     def __call__(self):
         if not self.context.adapted().isPrivacyViewable():
             return '-'
         return super(AdvicesIcons, self).__call__()
+
+    def advicesDelayToWarn(self, advicesByType, advisableGroups):
+        """We will warn if :
+           - 'not_given' are in the addable advices;
+           - 'hidden_during_redaction' or 'asked_again' are in the editable advices."""
+
+        advicesToWarn = {}
+
+        def _findAdviceToWarn(adviceType, groupIds):
+            smaller_delay = 999
+            for groupId in groupIds:
+                # adviceToAdd could be a power adviser group
+                if not groupId in self.context.adviceIndex:
+                    continue
+                adviceInfo = self.context.adviceIndex[groupId]
+                # find smaller delay
+                if (adviceInfo['type'] == adviceType or (adviceType == 'hidden_during_redaction' and
+                                                         adviceInfo['hidden_during_redaction'])) and \
+                   adviceInfo['delay'] and \
+                   adviceInfo['delay_infos']['left_delay'] < smaller_delay:
+                    smaller_delay = adviceInfo['delay_infos']['left_delay']
+                    advicesToWarn[adviceType] = adviceInfo
+
+        # if adviceType is 'not_given', consider advices
+        toAdd, toEdit = advisableGroups
+        toAddGroupIds = [info[0] for info in toAdd]
+        toEditGroupIds = [info[0] for info in toEdit]
+        _findAdviceToWarn('not_given', toAddGroupIds)
+        _findAdviceToWarn('hidden_during_redaction', toEditGroupIds)
+        _findAdviceToWarn('asked_again', toEditGroupIds)
+
+        return advicesToWarn
 
 
 class ChangeAdviceHiddenDuringRedactionView(BrowserView):
