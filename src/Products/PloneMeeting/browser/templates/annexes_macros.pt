@@ -192,7 +192,7 @@
   This macro needs : relatedTo, showColors
   </tal:comment>
   <tal:defines define="tool python: context.portal_plonemeeting;
-                       meetingConfig python: context.portal_plonemeeting.getMeetingConfig(context);
+                       meetingConfig python: tool.getMeetingConfig(context);
                        isManager python: meetingConfig.isManager(context);
                        annexes python: context.restrictedTraverse('@@annexes').getAnnexesByType(relatedTo, makeSubLists=False);
                        member member|context/@@plone_portal_state/member;">
@@ -226,7 +226,7 @@
        <td tal:condition="python: meetingConfig.getEnableAnnexConfidentiality() and isManager">
           <metal:isConfidential use-macro="here/@@annexes-macros/isConfidential" />
        </td>
-       <td tal:condition="meetingConfig/getEnableAnnexToPrint">
+       <td tal:condition="python: meetingConfig.getEnableAnnexToPrint() != 'disabled'">
            <tal:annexToPrint replace="structure annex/@@annex-to-print" />
        </td>
        <td tal:define="warnSize annex/warnSize"
