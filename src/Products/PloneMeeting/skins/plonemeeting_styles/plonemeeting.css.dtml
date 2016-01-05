@@ -296,17 +296,16 @@ div.pm_search_no_result_info {
 
 .actionItems li { background-image: none; }
 .actionMenuAX { position: relative; margin: 0; padding: 0; }
-.actionMenuAX .actionMenuHeaderAX { margin: 0; padding: 0; cursor: pointer; font-size: 90%;}
+.actionMenuAX .actionMenuHeaderAX { margin: 0; padding: 0; font-size: 90%;}
 .actionMenuAX.activated .actionMenuHeaderAX { position: relative; }
 .actionMenuAX .actionMenuHeaderAX a { display: inline; }
 .actionMenuAX.activated .actionMenuHeaderAX a,
 .actionMenuAX.deactivated .actionMenuHeaderAX a {
     padding: 0 0.2em 0 0.2em !important;
-    cursor: pointer;
     border: 0 none white;
 }
 
-.actionMenuDisabled { padding: 0 0.5em 0 0.5em !important; cursor: pointer; }
+.actionMenuDisabled { padding: 0 0.5em 0 0.5em !important;}
 .actionMenuAX .actionMenuContentAX {
     display: none;
     position: absolute;
@@ -315,7 +314,6 @@ div.pm_search_no_result_info {
     height: auto;
     padding: 0;
     margin: 0;
-    cursor: pointer;
 }
 
 #faceted-form table.listing td.td_cell_advices {
@@ -327,6 +325,11 @@ div.pm_search_no_result_info {
 td.td_cell_advices .actionMenuAX .actionMenuContentAX {
     right: 75px;
     top: 0;
+}
+/* but display annexes of advices correctly */
+td.td_cell_advices td.advice_annexes .actionMenuAX .actionMenuContentAX  {
+    right: -1px;
+    top: 1.7em;
 }
 
 #content .actionMenuAX .actionMenuContentAX ul:first-child {

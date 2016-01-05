@@ -5,7 +5,7 @@
                      advicesToAdd python: [info[0] for info in advisableGroups[0]];
                      advicesToEdit python: [info[0] for info in advisableGroups[1]];
                      advicesToWarn python: (advicesToAdd or advicesToEdit) and view.advicesDelayToWarn(advicesByType, advisableGroups) or {};">
-  <div class="contentActionsAX no-style-table" cellpadding="0" cellspacing="0">
+  <div class="contentActionsAX" cellpadding="0" cellspacing="0">
       <tal:advicesToAddOrExisting condition="python: advicesByType or advicesToAdd">
       <tal:definesIfSomethingToShow define="cfg python: view.cfg;
                                             displayedAddIcon python: False;
@@ -48,7 +48,7 @@
                  class="link-overlay-pm-advice"
                  tal:define="global displayedAddIcon python: True"
                  tal:attributes="href string:${item_url}/++add++meetingadvice">
-                <img i18n:attributes="title" title="advice_add" style="cursor:pointer"
+                <img i18n:attributes="title" title="advice_add"
                      tal:attributes="src string:${view/portal_url}/new.png;" />
               </a>
             </div>
@@ -338,12 +338,12 @@
       </tal:advicesToAddOrExisting>
       <div tal:condition="not: advicesByType">
         <tal:comment replace="nothing">Icon for adding an advice for power advisers</tal:comment>
+        <div class="no_advice_asked" style="display: inline">&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;</div>
         <div tal:condition="python: advicesToAdd" style="display: inline">
           <a href="++add++meetingadvice" class="link-overlay-pm-advice" tal:attributes="href string:${item_url}/++add++meetingadvice">
-            <img i18n:attributes="title" title="advice_add" style="cursor:pointer"
+            <img i18n:attributes="title" title="advice_add"
                  tal:attributes="src string:${view/portal_url}/new.png;" />
           </a>
         </div>
-        <div class="no_advice_asked" style="display: inline">-</div>
   </div>
 </tal:defines>
