@@ -3337,7 +3337,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            currently logged user may, on this item:
            - add an advice;
            - edit or delete an advice.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         # Advices must be enabled
         if not cfg.getUseAdvices():
