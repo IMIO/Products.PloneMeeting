@@ -332,7 +332,8 @@ td.td_cell_advices td.advice_annexes .actionMenuAX .actionMenuContentAX  {
     top: 1.7em;
 }
 
-#content .actionMenuAX .actionMenuContentAX ul:first-child {
+/* skin menu displayed but avoid skinning contained <ul> */
+#content .actionMenuAX .actionMenuContentAX > ul:first-of-type {
     display: block;
     background-color: white;
     border: 1px solid #CCCCCC;
