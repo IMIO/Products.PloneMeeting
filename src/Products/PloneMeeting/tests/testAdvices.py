@@ -199,12 +199,12 @@ class testAdvices(PloneMeetingTestCase):
         # but he can still edit the advice he just gave
         self.changeUser('pmReviewer2')
         self.failUnless(self.hasPermission(View, item1))
-        self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([], ['vendors', ]))
+        self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([], [('vendors', 'Vendors')]))
         given_advice = getattr(item1, item1.adviceIndex['vendors']['advice_id'])
         self.failUnless(self.hasPermission('Modify portal content', given_advice))
         # another member of the same _advisers group may also edit the given advice
         self.changeUser('pmManager')
-        self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([], ['vendors', ]))
+        self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([], [('vendors', 'Vendors')]))
         self.failUnless(self.hasPermission('Modify portal content', given_advice))
         # if a user that can not remove the advice tries he gets Unauthorized
         self.changeUser('pmReviewer1')
