@@ -1,7 +1,8 @@
 <tal:defines define="mayEdit python: context.adapted().mayChangeToPrint();
                      isPrintable view/isPrintable;
                      isAnnexToPrint context/getToPrint;
-                     portal_url view/portal_url;">
+                     portal_url view/portal_url;"
+             i18n:domain="PloneMeeting">
   <tal:isPrintable condition="isPrintable">
   <span id="marker_toggle_annextoprint_UID#"
         tal:attributes="id string:marker_toggle_annextoprint_$UID;"
