@@ -19,10 +19,6 @@ from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 # The migration class ----------------------------------------------------------
 class Migrate_To_3_4(Migrator):
 
-    def __init__(self, context):
-        """ """
-        Migrator.__init__(self, context)
-
     def _updateItemsListVisibleFields(self):
         '''MeetingConfig.itemsListVisibleFields stored values changed from
            'description, decision' to 'MeetingItem.description, MeetingItem.decision'.'''
@@ -560,7 +556,6 @@ class Migrate_To_3_4(Migrator):
         # and "Meeting.lateItems" were removed
         self.refreshDatabase(catalogsToRebuild=['portal_catalog', 'reference_catalog'],
                              workflows=True)
-        self.finish()
 
 
 # The migration function -------------------------------------------------------
@@ -586,5 +581,7 @@ def migrate(context):
        17) Update MeetingConfig.enableAnnexToPrint attribute;
        18) Refresh catalogs.
     '''
-    Migrate_To_3_4(context).run()
+    migrator = Migrate_To_3_4(context)
+    migrator.run()
+    migrator.finish()
 # ------------------------------------------------------------------------------
