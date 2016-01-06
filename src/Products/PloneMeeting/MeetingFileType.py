@@ -14,28 +14,35 @@ __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
 __docformat__ = 'plaintext'
 
 from AccessControl import ClassSecurityInfo
-from Products.Archetypes.atapi import *
 from zope.interface import implements
 import interfaces
 
+from Products.Archetypes.atapi import AttributeStorage
+from Products.Archetypes.atapi import BaseContent
+from Products.Archetypes.atapi import BaseSchema
+from Products.Archetypes.atapi import BooleanField
+from Products.Archetypes.atapi import DisplayList
+from Products.Archetypes.atapi import ImageField
+from Products.Archetypes.atapi import LinesField
+from Products.Archetypes.atapi import MultiSelectionWidget
+from Products.Archetypes.atapi import registerType
+from Products.Archetypes.atapi import Schema
+from Products.Archetypes.atapi import SelectionWidget
+from Products.Archetypes.atapi import StringField
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
-
 from Products.DataGridField import DataGridField, DataGridWidget
 from Products.DataGridField.Column import Column
-from Products.DataGridField.SelectColumn import SelectColumn
 
-from Products.PloneMeeting.config import *
-
-##code-section module-header #fill in your manual code here
 from OFS.ObjectManager import BeforeDeleteException
 from zope.i18n import translate
-from Products.CMFCore.utils import getToolByName
 from Products.CMFPlone.utils import safe_unicode
 from plone import api
+from Products.PloneMeeting.config import PROJECTNAME
+from Products.PloneMeeting.config import WriteRiskyConfig
 from Products.PloneMeeting.utils import getCustomAdapter, getFieldContent
 from Products.DataGridField.CheckboxColumn import CheckboxColumn
 from collective.datagridcolumns.MultiSelectColumn import MultiSelectColumn
-##/code-section module-header
+
 
 schema = Schema((
 
@@ -105,7 +112,24 @@ schema = Schema((
     DataGridField(
         name='subTypes',
         widget=DataGridWidget(
-            columns={'row_id': Column("Sub type row id", visible=False), 'title': Column("Sub type title", required=True), 'predefinedTitle': Column("Sub type predefined title"), 'otherMCCorrespondences': MultiSelectColumn("Sub type correspondences while sent to other meeting configs", vocabulary='listOtherMCCorrespondences', col_description="Sub type correspondences while sent to other meeting configs description."), 'isConfidentialDefault': CheckboxColumn("Sub type confidentiality of created annexes", col_description="Sub type confidentiality of created annexes description.", default=''), 'isActive': CheckboxColumn("Sub type is active?", default='1'), },
+            columns={
+                'row_id': Column("Sub type row id", visible=False),
+                'title': Column("Sub type title", required=True),
+                'predefinedTitle': Column("Sub type predefined title"),
+                'otherMCCorrespondences':
+                MultiSelectColumn(
+                    "Sub type correspondences while sent to other meeting configs",
+                    vocabulary='listOtherMCCorrespondences',
+                    col_description="Sub type correspondences while sent to other meeting configs description."),
+                'isConfidentialDefault':
+                CheckboxColumn(
+                    "Sub type confidentiality of created annexes",
+                    col_description="Sub type confidentiality of created annexes description.",
+                    default=''),
+                'isActive':
+                CheckboxColumn(
+                    "Sub type is active?",
+                    default='1'), },
             description="SubTypes",
             description_msgid="sub_types_descr",
             label='Subtypes',
@@ -143,6 +167,7 @@ for field in MeetingFileType_schema.getSchemataFields('metadata'):
     field.write_permission = WriteRiskyConfig
 ##/code-section after-schema
 
+
 class MeetingFileType(BaseContent, BrowserDefaultMixin):
     """
     """
@@ -162,11 +187,13 @@ class MeetingFileType(BaseContent, BrowserDefaultMixin):
     # Manually created methods
 
     security.declarePublic('getName')
+
     def getName(self, force=None):
         '''Returns the possibly translated title.'''
         return getFieldContent(self, 'title', force)
 
     security.declarePublic('getIcon')
+
     def getIcon(self, relative_to_portal=0):
         '''Return the icon for views'''
         field = self.getField('theIcon')
@@ -176,11 +203,13 @@ class MeetingFileType(BaseContent, BrowserDefaultMixin):
         return self.absolute_url(relative=1) + "/theIcon"
 
     security.declarePublic('getBestIcon')
+
     def getBestIcon(self):
         '''Calculates the icon for the AT default view'''
         self.getIcon()
 
     security.declareProtected(WriteRiskyConfig, 'setSubTypes')
+
     def setSubTypes(self, value, **kwargs):
         '''Overrides the field 'subTypes' mutator to manage
            the 'row_id' column manually.  If empty, we need to add a
@@ -196,6 +225,7 @@ class MeetingFileType(BaseContent, BrowserDefaultMixin):
         self.getField('subTypes').set(self, value, **kwargs)
 
     security.declarePrivate('validate_relatedTo')
+
     def validate_relatedTo(self, value):
         '''We can not change the relatedTo if it is in use by an existing MeetingFile.'''
         # if value was not changed or set for the first time, no problem
@@ -204,11 +234,10 @@ class MeetingFileType(BaseContent, BrowserDefaultMixin):
             return
 
         # we can not change a relatedTo if a MeetingFile is already using this MeetingFileType
-        tool = getToolByName(self, 'portal_plonemeeting')
-        catalog = getToolByName(self, 'portal_catalog')
+        tool = api.portal.get_tool('portal_plonemeeting')
+        catalog = api.portal.get_tool('portal_catalog')
         cfg = tool.getMeetingConfig(self)
         foundAnnex = False
-        catalog = getToolByName(self, 'portal_catalog')
         brains = catalog(portal_type=cfg.getItemTypeName())
         mftUID = self.UID()
 
@@ -247,12 +276,13 @@ class MeetingFileType(BaseContent, BrowserDefaultMixin):
                                  context=self.REQUEST)
 
     security.declarePrivate('validate_subTypes')
+
     def validate_subTypes(self, value):
         '''A subType can not be removed if it is in use.'''
         def _checkIfSubTypeIsUsed(row_id):
             '''Check if the subType we want to remove was in use.
                This returns an item url if the subType is in use.'''
-            catalog = getToolByName(self, 'portal_catalog')
+            catalog = api.portal.get_tool('portal_catalog')
             brains = catalog(Type=self.getItemTypeName())
             for brain in brains:
                 item = brain.getObject()
@@ -274,12 +304,14 @@ class MeetingFileType(BaseContent, BrowserDefaultMixin):
                                  context=self.REQUEST)
 
     security.declarePrivate('listOtherMCCorrespondences')
+
     def listOtherMCCorrespondences(self):
         '''Vocabulary for the otherMCCorrespondence field, also
            used for the subTypes.otherMCCorrespondence column.
            This will only appear for the 'item' and 'item_decision' relatedTo
            MeetingFileType as advices are not transfered to another MC.'''
         uid_catalog = api.portal.get_tool('uid_catalog')
+
         def _findLabelFor(fileType, fileTypes):
             """This method will find the label to display in the vocabulary,
                especially when we are displaying a sub_type for which we need
@@ -293,7 +325,7 @@ class MeetingFileType(BaseContent, BrowserDefaultMixin):
         # display also inactive MeetingConfigs because during configuration
         # we can define thses values before activating the new meetingConfig
         # and we do not have to manage inactive meetingConfigs consistency
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         currentCfgId = self.getParentNode().getParentNode().getId()
         relatedToVocab = self.listRelatedTo()
         res = []
@@ -311,6 +343,7 @@ class MeetingFileType(BaseContent, BrowserDefaultMixin):
         return DisplayList(tuple(res))
 
     security.declarePrivate('listRelatedTo')
+
     def listRelatedTo(self):
         res = []
         res.append(('item',
@@ -328,24 +361,29 @@ class MeetingFileType(BaseContent, BrowserDefaultMixin):
         return DisplayList(tuple(res))
 
     security.declarePrivate('at_post_create_script')
+
     def at_post_create_script(self):
         self.adapted().onEdit(isCreated=True)
 
     security.declarePrivate('at_post_edit_script')
+
     def at_post_edit_script(self):
         self.adapted().onEdit(isCreated=False)
 
     security.declarePublic('getSelf')
+
     def getSelf(self):
         if self.__class__.__name__ != 'MeetingFileType':
             return self.context
         return self
 
     security.declarePublic('adapted')
+
     def adapted(self):
         return getCustomAdapter(self)
 
     security.declareProtected('Modify portal content', 'onEdit')
+
     def onEdit(self, isCreated):
         '''See doc in interfaces.py.'''
         pass
@@ -376,22 +414,24 @@ class MeetingFileType(BaseContent, BrowserDefaultMixin):
         return data
 
     security.declarePublic('isSelectable')
+
     def isSelectable(self, row_id=None):
         '''See documentation in interfaces.py.'''
         mft = self.getSelf()
-        wfTool = getToolByName(mft, 'portal_workflow')
+        wfTool = api.portal.get_tool('portal_workflow')
         state = wfTool.getInfoFor(mft, 'review_state')
         return state == 'active'
 
     security.declarePrivate('manage_beforeDelete')
+
     def manage_beforeDelete(self, item, container):
         '''Checks if the current meetingFile can be deleted:
           - it can not be used in a MeetingFile.meetingFileType.'''
         # If we are trying to remove the whole Plone Site, bypass this hook.
         # bypass also if we are in the creation process
         if not item.meta_type == "Plone Site" and not item._at_creation_flag:
-            tool = getToolByName(self, 'portal_plonemeeting')
-            catalog = getToolByName(self, 'portal_catalog')
+            tool = api.portal.get_tool('portal_plonemeeting')
+            catalog = api.portal.get_tool('portal_catalog')
             cfg = tool.getMeetingConfig(self)
             brains = catalog(portal_type=cfg.getItemTypeName())
             # build mftUIDs made of mft UID and subTypes fake UIDs
