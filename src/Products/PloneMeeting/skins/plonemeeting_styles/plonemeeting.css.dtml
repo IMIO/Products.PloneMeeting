@@ -822,7 +822,8 @@ table.listing th.th_header_privacy {
     width: 60px;
 }
 table.listing th.th_header_advices {
-    width: 55px;
+    min-width: 50px;
+    width: auto;
 }
 
 /* hide border between listType and itemNumber */

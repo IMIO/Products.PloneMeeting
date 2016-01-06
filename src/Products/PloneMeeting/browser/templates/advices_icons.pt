@@ -4,7 +4,7 @@
                      advisableGroups context/getAdvicesGroupsInfosForUser;
                      advicesToAdd python: [info[0] for info in advisableGroups[0]];
                      advicesToEdit python: [info[0] for info in advisableGroups[1]];
-                     advicesToWarn python: (advicesToAdd or advicesToEdit) and view.advicesDelayToWarn(advicesByType, advisableGroups) or {};">
+                     advicesToWarn python: view.advicesDelayToWarn(advicesByType, advisableGroups);">
   <div class="contentActionsAX" cellpadding="0" cellspacing="0">
       <tal:advicesToAddOrExisting condition="python: advicesByType or advicesToAdd">
       <tal:definesIfSomethingToShow define="cfg python: view.cfg;
@@ -30,15 +30,18 @@
                    i18n:attributes="title"/><span class="advices_of_type" tal:content="python: len(advicesByType[adviceType])"></span>
 
               <tal:adviceWarnDelay tal:condition="adviceToWarn">
-                <img src="advice_with_delay_big.png"
-                     style="outline: none; margin-left: 5px;"
-                     tal:attributes="src string:${view/portal_url}/advice_with_delay_big.png;"/>
-                <span tal:define="adviceToWarn python: advicesToWarn[adviceType];
-                                  class_if_not_given string:advice_delay advice_delay_${adviceToWarn/delay_infos/delay_status};"
-                      tal:content="adviceToWarn/delay_infos/left_delay"
-                      title="You still need to give an advice on this item respecting given delay."
-                      i18n:attributes="title"
-                      tal:attributes="class class_if_not_given" />
+                <tal:defines define="adviceToWarnGroupId python: advicesToWarn[adviceType][0];
+                                     adviceToWarnType python: advicesToWarn[adviceType][1];">
+                    <img src="advice_with_delay_big.png"
+                         style="outline: none; margin-left: 5px;"
+                         tal:define="adviceToWarnIcon python: adviceToWarnType == 0 and 'advice_with_delay_big.png' or 'advice_with_delay_disabled_big.png'"
+                         tal:attributes="src string:${view/portal_url}/${adviceToWarnIcon};"/>
+                    <span tal:define="class_if_not_given string:advice_delay advice_delay_${adviceToWarnGroupId/delay_infos/delay_status};"
+                          tal:content="adviceToWarnGroupId/delay_infos/left_delay"
+                          title="You still need to give an advice on this item respecting given delay."
+                          i18n:attributes="title"
+                          tal:attributes="class class_if_not_given" />
+                </tal:defines>
               </tal:adviceWarnDelay>
             </a>
 

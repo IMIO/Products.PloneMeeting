@@ -56,29 +56,34 @@ class AdvicesIcons(BrowserView):
            - 'hidden_during_redaction' or 'asked_again' are in the editable advices."""
 
         advicesToWarn = {}
+        # group ids the current user is adviser for
+        userAdviserGroupIds = [mGroup.getId() for mGroup in
+                               self.tool.getGroupsForUser(suffixes=('advisers', ))]
 
-        def _findAdviceToWarn(adviceType, groupIds):
+        def _findAdviceToWarn(adviceType):
             smaller_delay = 999
-            for groupId in groupIds:
-                # adviceToAdd could be a power adviser group
-                if not groupId in self.context.adviceIndex:
-                    continue
-                adviceInfo = self.context.adviceIndex[groupId]
+            # if we did not found an advice to warn for current user, maybe there is an advice
+            # with delay to be given by another group, we show it too
+            for groupId, adviceInfo in self.context.adviceIndex.items():
                 # find smaller delay
                 if (adviceInfo['type'] == adviceType or (adviceType == 'hidden_during_redaction' and
                                                          adviceInfo['hidden_during_redaction'])) and \
                    adviceInfo['delay'] and \
                    adviceInfo['delay_infos']['left_delay'] < smaller_delay:
+                    if groupId in userAdviserGroupIds:
+                        advicesToWarn[adviceType] = adviceInfo, 0
+                    # check if we already have a adviceToWarn, if user was adviser
+                    # for this group, it is prioritary
+                    elif not advicesToWarn.get(adviceType) or \
+                            (advicesToWarn.get(adviceType) and not advicesToWarn[adviceType][1] == 0):
+                        advicesToWarn[adviceType] = adviceInfo, 1
+                    else:
+                        continue
                     smaller_delay = adviceInfo['delay_infos']['left_delay']
-                    advicesToWarn[adviceType] = adviceInfo
 
-        # if adviceType is 'not_given', consider advices
-        toAdd, toEdit = advisableGroups
-        toAddGroupIds = [info[0] for info in toAdd]
-        toEditGroupIds = [info[0] for info in toEdit]
-        _findAdviceToWarn('not_given', toAddGroupIds)
-        _findAdviceToWarn('hidden_during_redaction', toEditGroupIds)
-        _findAdviceToWarn('asked_again', toEditGroupIds)
+        _findAdviceToWarn('not_given')
+        _findAdviceToWarn('hidden_during_redaction')
+        _findAdviceToWarn('asked_again')
 
         return advicesToWarn
 

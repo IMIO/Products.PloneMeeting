@@ -3433,6 +3433,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 delay = customAdviserConfig['delay'] or ''
                 delay_left_alert = customAdviserConfig['delay_left_alert'] or ''
                 delay_label = customAdviserConfig['delay_label'] or ''
+            advice_given_on = advice.get_advice_given_on()
             res[advice.advice_group] = {'type': advice.advice_type,
                                         'optional': optional,
                                         'not_asked': False,
@@ -3449,9 +3450,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                         'delay': delay,
                                         'delay_left_alert': delay_left_alert,
                                         'delay_label': delay_label,
-                                        'advice_given_on': advice.get_advice_given_on(),
+                                        'advice_given_on': advice_given_on,
                                         'advice_given_on_localized':
-                                        self.toLocalizedTime(advice.get_advice_given_on()),
+                                        self.toLocalizedTime(advice_given_on),
                                         'hidden_during_redaction': advice.advice_hide_during_redaction,
                                         }
         return res

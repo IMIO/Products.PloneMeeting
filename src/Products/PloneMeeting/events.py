@@ -365,8 +365,16 @@ def onAdviceTransition(advice, event):
 
     # in transition 'giveAdvice', historize the advice
     # and save item's relevant data if MeetingConfig.historizeItemDataWhenAdviceIsGiven
+    # make sure also the 'advice_given_on' data is correct in item's adviceIndex
     if event.transition.id == 'giveAdvice':
+        # historize
         advice.versionate_if_relevant(ADVICE_GIVEN_HISTORIZED_COMMENT)
+        # manage 'advice_given_on' dates
+        parent = advice.getParentNode()
+        advice_given_on = advice.get_advice_given_on()
+        toLocalizedTime = parent.restrictedTraverse('@@plone').toLocalizedTime
+        parent.adviceIndex[advice.advice_group]['advice_given_on'] = advice_given_on
+        parent.adviceIndex[advice.advice_group]['advice_given_on_localized'] = toLocalizedTime(advice_given_on)
 
 
 def onAnnexAdded(annex, event):
