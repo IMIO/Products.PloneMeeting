@@ -40,6 +40,7 @@ class Migrator(BaseMigrator):
         for cfg in self.tool.objectValues('MeetingConfig'):
             self.cfgsAdvicesInvalidation[cfg.getId()] = cfg.getEnableAdviceInvalidation()
             cfg.setEnableAdviceInvalidation(False)
+        self.profile_name = u'profile-Products.PloneMeeting:default'
 
     def upgradeDependencies(self):
         """Upgrade every dependencies."""

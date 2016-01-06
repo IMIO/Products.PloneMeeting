@@ -10,7 +10,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 3.4 (unreleased)
 ----------------
 - Moved to Plone 4.3.7
-- Moved to collective.ckeditor 4.3.0b2
+- Moved to collective.ckeditor 4.3.1.2
 - Moved to collective.documentviewer 3.0.3
 - Rely on beautifulsoup4, Products.CPUtils
 - Get rid of ArchGenXML, just use it for workflows generation
