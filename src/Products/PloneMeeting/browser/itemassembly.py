@@ -39,6 +39,14 @@ from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IRedirect
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
 
+USING_ABSENTS_OR_EXCUSED_MSGID = u"Enter the item attendees to be applied. By default, the value of the field is " \
+    "what is defined on the meeting. If you do not change this value, nothing will be applied on the item. If you " \
+    "already edited this field before and you want to fallback to meeting value, remove the entire value."
+USING_ONLY_ASSEMBLY_MSGID = u"Enter the item assembly to be applied. By default, the value of the field is what is " \
+    "defined on the meeting. If you do not change this value, nothing will be applied on the item. If you already " \
+    "edited this field before and you want to fallback to meeting value, remove the entire value.  You may add [[ ]] " \
+    "around absent people (like [[Mister Sample Peter]])."
+
 
 def item_assembly_default():
     """
@@ -90,12 +98,7 @@ def validate_apply_until_item_number(value):
 class IManageItemAssembly(interface.Interface):
     item_assembly = schema.Text(
         title=_(u"Item assembly to apply"),
-        description=_(u"Enter the item assembly to be applied. "
-                      u"By default, the value of the field is what is defined on the meeting. "
-                      u"If you do not change this value, nothing will be applied on the item. "
-                      u"If you already edited this field before and you want to fallback to meeting value, "
-                      u"remove the entire value.  You may add [[ ]] "
-                      u"around absent people (like [[Mister Sample Peter]])."),
+        description=_(USING_ONLY_ASSEMBLY_MSGID),
         defaultFactory=item_assembly_default,
         required=False,)
     item_excused = schema.Text(
@@ -305,11 +308,12 @@ class ManageItemAssemblyForm(form.Form):
             self.fields['item_assembly'].field.title = \
                 _('Item attendees to apply')
             self.fields['item_assembly'].field.description = \
-                _(u"Enter the item attendees to be applied. "
-                  u"By default, the value of the field is what is defined on the meeting. "
-                  u"If you do not change this value, nothing will be applied on the item. "
-                  u"If you already edited this field before and you want to fallback to meeting value, "
-                  u"remove the entire value.")
+                _(USING_ABSENTS_OR_EXCUSED_MSGID)
+        else:
+            self.fields['item_assembly'].field.title = \
+                _('Item assembly to apply')
+            self.fields['item_assembly'].field.description = \
+                _(USING_ONLY_ASSEMBLY_MSGID)
         form.Form.updateWidgets(self)
 
     def render(self):
