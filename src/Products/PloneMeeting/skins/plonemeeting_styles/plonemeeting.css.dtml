@@ -983,10 +983,7 @@ div#optionalAdvisers input[value="not_selectable_value_non_delay_aware_optional_
     left: -8px;
     margin-right: -6px;
     font-weight: bold;
-}
-/* when displayed in the dashboard column, as warning delay advice, keep it closer to advice type icon */
-dt span.advice_delay {
-    margin-right: -8px;
+    display: inline-block;
 }
 /* add a border under the advice delay warning and advice type to link it together */
 #content a.warn_delay_advice {
