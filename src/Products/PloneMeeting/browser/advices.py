@@ -50,15 +50,12 @@ class AdvicesIcons(BrowserView):
             return '-'
         return super(AdvicesIcons, self).__call__()
 
-    def advicesDelayToWarn(self, advicesByType, advisableGroups):
+    def advicesDelayToWarn(self, advicesByType, userAdviserGroupIds):
         """We will warn if :
            - 'not_given' are in the addable advices;
            - 'hidden_during_redaction' or 'asked_again' are in the editable advices."""
 
         advicesToWarn = {}
-        # group ids the current user is adviser for
-        userAdviserGroupIds = [mGroup.getId() for mGroup in
-                               self.tool.getGroupsForUser(suffixes=('advisers', ))]
 
         def _findAdviceToWarn(adviceType):
             smaller_delay = 999

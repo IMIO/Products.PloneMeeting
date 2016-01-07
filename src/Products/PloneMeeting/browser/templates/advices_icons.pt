@@ -4,7 +4,8 @@
                      advisableGroups context/getAdvicesGroupsInfosForUser;
                      advicesToAdd python: [info[0] for info in advisableGroups[0]];
                      advicesToEdit python: [info[0] for info in advisableGroups[1]];
-                     advicesToWarn python: view.advicesDelayToWarn(advicesByType, advisableGroups);">
+                     userAdviserGroupIds python: [group.getId() for group in view.tool.getGroupsForUser(suffixes=['advisers'])];
+                     advicesToWarn python: view.advicesDelayToWarn(advicesByType, userAdviserGroupIds);">
   <div class="contentActionsAX" cellpadding="0" cellspacing="0">
       <tal:advicesToAddOrExisting condition="python: advicesByType or advicesToAdd">
       <tal:definesIfSomethingToShow define="cfg python: view.cfg;
@@ -62,7 +63,7 @@
               <tal:comment replace="nothing">List of group names</tal:comment>
               <li tal:repeat="advice python:advicesByType[adviceType]">
                 <fieldset tal:define="mGroup python: getattr(view.tool, advice['id']);
-                                      memberIsAdviserForGroup python:  advice['id'] in [group.getId() for group in view.tool.getGroupsForUser(suffixes=['advisers'])];
+                                      memberIsAdviserForGroup python:  advice['id'] in userAdviserGroupIds;
                                       obj python: advice.get('advice_id', None) and getattr(context, advice['advice_id']) or None;
                                       mayEdit python: (advicesToEdit and advice['id'] in advicesToEdit) or (isRealManager and not adviceType == 'not_given');
                                       customMessageInfos python: context.adapted().getCustomAdviceMessageFor(advice);
@@ -71,7 +72,8 @@
                     <legend>
                          <span tal:condition="advice/delay">
                               <img src="advice_with_delay_big.png"
-                                   tal:attributes="src string:${view/portal_url}/advice_with_delay_big.png;"/>
+                                   tal:define="delay_icon python: memberIsAdviserForGroup and 'advice_with_delay_big.png' or 'advice_with_delay_disabled_big.png'"
+                                   tal:attributes="src string:${view/portal_url}/${delay_icon};"/>
                               <span class="advice_delay"
                                     tal:content="advice/delay_infos/left_delay"
                                     tal:define="class_if_not_given string:advice_delay advice_delay_${advice/delay_infos/delay_status};"
