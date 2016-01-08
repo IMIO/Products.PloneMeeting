@@ -980,7 +980,7 @@ div#optionalAdvisers input[value="not_selectable_value_non_delay_aware_optional_
 /* skin the way number of days left for delay-aware advice is displayed (colors, ...) */
 .advice_delay {
     position: relative;
-    left: -8px;
+    left: -7px;
     margin-right: -6px;
     font-weight: bold;
     display: inline-block;
@@ -991,7 +991,8 @@ div#optionalAdvisers input[value="not_selectable_value_non_delay_aware_optional_
     padding-bottom: 2px !important;
 }
 
-.advice_delay_not_giveable {
+.advice_delay_not_yet_giveable,
+.advice_delay_no_more_giveable {
     color: grey;
 }
 #content span.advice_delay_still_time,
