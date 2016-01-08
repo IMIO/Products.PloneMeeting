@@ -102,7 +102,7 @@
 
             <tal:comment replace="nothing">Item assembly</tal:comment>
             <div class="discreet"
-                 condition="python: ('itemAssembly' in usedAttrs) and ('assembly' in usedMeetingAttributes) and meeting">
+                 tal:condition="python: ('itemAssembly' in usedAttrs) and ('assembly' in usedMeetingAttributes) and meeting">
                 <tal:defines define="redefinedItemAssemblies python: context.redefinedItemAssemblies(usedMeetingAttributes);
                                      mayQuickEdit python: context.mayQuickEdit('itemAssembly', bypassWritePermissionCheck=True);
                                      class_if_highlighted python: redefinedItemAssemblies and 'highlightValue' or '';
