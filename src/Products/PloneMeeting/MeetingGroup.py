@@ -27,7 +27,7 @@ from zope.interface import implements
 import interfaces
 
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
-
+from plone import api
 from Products.DataGridField import DataGridField
 from Products.DataGridField.Column import Column
 from Products.DataGridField.SelectColumn import SelectColumn
@@ -36,7 +36,6 @@ from Products.DataGridField.SelectColumn import SelectColumn
 import logging
 logger = logging.getLogger('PloneMeeting')
 from zope.i18n import translate
-from Products.CMFCore.utils import getToolByName
 from imio.helpers.cache import cleanVocabularyCacheFor
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 from Products.PloneMeeting.config import PROJECTNAME
@@ -221,7 +220,7 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
 
     def listItemStates(self):
         '''Lists the states of the item workflow for each MeetingConfig.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         res = []
         for cfg in tool.getActiveConfigs():
             cfgItemStates = cfg.listStates('Item')
@@ -268,15 +267,15 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
         # edited TTW, his title is no more unicode if it was previously...
         # make sure we behave like Plone...
         groupTitle = groupTitle.encode(enc)
-        groupsTool = getToolByName(self, 'portal_groups')
+        portal_groups = api.portal.get_tool('portal_groups')
         if update:
             # just update the title so Plone groups title are coherent
             # with MeetingGroup title in case it is updated thereafter
-            groupsTool.editGroup(groupId, title=groupTitle)
+            portal_groups.editGroup(groupId, title=groupTitle)
         else:
             # create the Plone group
-            self.portal_groups.addGroup(groupId, title=groupTitle)
-            self.portal_groups.setRolesForGroup(groupId, ('MeetingObserverGlobal',))
+            portal_groups.addGroup(groupId, title=groupTitle)
+            portal_groups.setRolesForGroup(groupId, ('MeetingObserverGlobal',))
 
     def getOrder(self, associatedGroupIds=None, onlyActive=True):
         '''At what position am I among all the active groups ? If
@@ -428,7 +427,7 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
             if signatures:
                 computedSignatures = computeCertifiedSignatures(signatures)
             else:
-                tool = getToolByName(self, 'portal_plonemeeting')
+                tool = api.portal.get_tool('portal_plonemeeting')
                 cfg = tool.getMeetingConfig(context)
                 computedSignatures = cfg.getCertifiedSignatures(computed=True)
             signatures = computedSignatures
