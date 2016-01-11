@@ -30,7 +30,9 @@ from imio.helpers.catalog import addOrUpdateIndexes
 from imio.helpers.catalog import addOrUpdateColumns
 
 folderViews = ('folder_contents', )
-noSearchTypes = ('Folder', 'DashboardCollection', )
+noSearchTypes = ('Folder', 'DashboardCollection', 'meetingadvice',
+                 'MeetingCategory', 'MeetingConfig', 'MeetingFileType',
+                 'MeetingGroup', 'MeetingUser')
 # Indexes used by PloneMeeting
 # XXX warning, do ONLY use ZCTextIndex for real text values,
 # NOT returning empty tuple/list like () or [] but empty values like ''
@@ -122,18 +124,6 @@ def setupCatalogMultiplex(context):
     catalogmap = {}
     catalogmap['ToolPloneMeeting'] = {}
     catalogmap['ToolPloneMeeting']['black'] = ['portal_catalog']
-    catalogmap['MeetingCategory'] = {}
-    catalogmap['MeetingCategory']['white'] = ['portal_catalog']
-    catalogmap['MeetingConfig'] = {}
-    catalogmap['MeetingConfig']['black'] = ['portal_catalog']
-    catalogmap['MeetingFileType'] = {}
-    catalogmap['MeetingFileType']['black'] = ['portal_catalog']
-    catalogmap['MeetingGroup'] = {}
-    catalogmap['MeetingGroup']['black'] = ['portal_catalog']
-    catalogmap['PodTemplate'] = {}
-    catalogmap['PodTemplate']['black'] = ['portal_catalog']
-    catalogmap['MeetingUser'] = {}
-    catalogmap['MeetingUser']['white'] = ['portal_catalog']
     for meta_type in catalogmap:
         submap = catalogmap[meta_type]
         current_catalogs = set([c.id for c in atool.getCatalogsByType(meta_type)])
@@ -305,13 +295,6 @@ def postInstall(context):
                             description='The previous object workflow state',
                             enabled=True,
                             criteria='ATListCriterion')
-
-    # make sure meetingadvice is in site_properties.types_not_searched
-    site_properties = site.portal_properties.site_properties
-    blacklisted = list(site_properties.getProperty('types_not_searched'))
-    if 'meetingadvice' not in blacklisted:
-        blacklisted.append('meetingadvice')
-        site_properties.manage_changeProperties(types_not_searched=blacklisted)
 
     # configure Products.cron4plone
     # add a call to @@update-delay-aware-advices that will update
