@@ -26,7 +26,6 @@ from OFS.ObjectManager import BeforeDeleteException
 from zope.event import notify
 from zope.i18n import translate
 from zope.lifecycleevent import IObjectRemovedEvent
-from Products.CMFCore.utils import getToolByName
 from Products.CMFPlone.utils import safe_unicode
 from plone import api
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
@@ -132,16 +131,17 @@ def onGroupTransition(mGroup, event):
         return
     transitionId = event.transition.id
 
+    tool = api.portal.get_tool('portal_plonemeeting')
     if transitionId == 'deactivate':
         # Remove the group from every meetingConfigs.selectableCopyGroups
-        for mc in mGroup.portal_plonemeeting.objectValues('MeetingConfig'):
+        for mc in tool.objectValues('MeetingConfig'):
             for ploneGroupId in mGroup.getPloneGroups(idsOnly=True):
                 selectableCopyGroups = list(mc.getSelectableCopyGroups())
                 if ploneGroupId in selectableCopyGroups:
                     selectableCopyGroups.remove(ploneGroupId)
                 mc.setSelectableCopyGroups(selectableCopyGroups)
         # add a portal_message explaining what has been done to the user
-        plone_utils = getToolByName(mGroup, 'plone_utils')
+        plone_utils = api.portal.get_tool('plone_utils')
         plone_utils.addPortalMessage(_('meetinggroup_removed_from_meetingconfigs_selectablecopygroups'),
                                      'info')
 
@@ -247,7 +247,7 @@ def onItemAdded(item, event):
        role to the currently logged user that allows him to create the
        item. In item.at_post_create_script we will remove this temp local
        role.'''
-    user = item.portal_membership.getAuthenticatedMember()
+    user = api.user.get_current()
     item.manage_addLocalRoles(user.getId(), ('MeetingMember',))
     # Add a place to store annexIndex
     item.annexIndex = PersistentList()
@@ -304,7 +304,7 @@ def onAdviceAdded(advice, event):
         advice.REQUEST.RESPONSE.redirect(http_referer + '#adviceAndAnnexes')
 
     # log
-    userId = advice.portal_membership.getAuthenticatedMember().getId()
+    userId = api.user.get_current().getId()
     logger.info('Advice at %s created by "%s".' %
                 (advice.absolute_url_path(), userId))
 
@@ -322,7 +322,7 @@ def onAdviceModified(advice, event):
     notify(AdviceAfterModifyEvent(advice))
 
     # log
-    userId = advice.portal_membership.getAuthenticatedMember().getId()
+    userId = api.user.get_current().getId()
     logger.info('Advice at %s edited by "%s".' %
                 (advice.absolute_url_path(), userId))
 
@@ -415,13 +415,12 @@ def onItemDuplicated(item, event):
        it was sent to another meetingConfig.  The 'new item' already have
        a line added to his workflow_history.'''
     newItem = event.newItem
-    tool = getToolByName(item, 'portal_plonemeeting')
+    tool = api.portal.get_tool('portal_plonemeeting')
     if tool.getMeetingConfig(item) == tool.getMeetingConfig(newItem):
         return
     # add a line to the original item history
-    membershipTool = getToolByName(item, 'portal_membership')
-    memberId = membershipTool.getAuthenticatedMember().getId()
-    wfTool = getToolByName(item, 'portal_workflow')
+    memberId = api.user.get_current().getId()
+    wfTool = api.portal.get_tool('portal_workflow')
     wfName = wfTool.getWorkflowsFor(item)[0].id
     newItemConfig = tool.getMeetingConfig(newItem)
     itemConfig = tool.getMeetingConfig(item)
@@ -487,7 +486,7 @@ def onMeetingRemoved(meeting, event):
         meeting.REQUEST.set('items_to_remove', ())
 
     # update items for which current meeting is selected as preferred meeting
-    catalog = getToolByName(meeting, 'portal_catalog')
+    catalog = api.portal.get_tool('portal_catalog')
     brains = catalog(getPreferredMeeting=meeting.UID())
     for brain in brains:
         item = brain.getObject()
@@ -506,7 +505,7 @@ def onCategoryRemoved(category, event):
 def onDashboardCollectionAdded(collection, event):
     '''Called when a DashboardCollection is created.'''
     # we update customViewFields to fit the MeetingConfig
-    tool = getToolByName(collection, 'portal_plonemeeting')
+    tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(collection)
     if cfg:
         cfg.updateCollectionColumns()
