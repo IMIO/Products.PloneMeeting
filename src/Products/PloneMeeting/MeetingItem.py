@@ -60,7 +60,6 @@ from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.Expression import Expression, createExprContext
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFCore.permissions import ModifyPortalContent, ReviewPortalContent
-from Products.CMFCore.utils import getToolByName
 from Products.CMFPlone.utils import safe_unicode
 from imio.prettylink.interfaces import IPrettyLink
 from Products.PloneMeeting import PMMessageFactory as _
@@ -276,7 +275,7 @@ class MeetingItemWorkflowConditions:
         """Specific guard for the 'return_to_proposing_group' wfAdaptation.
            As we have only one guard_expr for potentially several transitions departing
            from the 'returned_to_proposing_group' state, we receive the p_transitionName."""
-        tool = getToolByName(self.context, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         if not checkPermission(ReviewPortalContent, self.context) and not \
            tool.isManager(self.context):
             return
@@ -408,7 +407,7 @@ class MeetingItemWorkflowActions:
         preferredMeeting = self.context.getPreferredMeeting()
         if preferredMeeting != ITEM_NO_PREFERRED_MEETING_VALUE:
             # Get the meeting from its UID
-            uid_catalog = getToolByName(self.context, 'uid_catalog')
+            uid_catalog = api.portal.get_tool('uid_catalog')
             brains = uid_catalog.searchResults(UID=preferredMeeting)
             if brains:
                 meeting = brains[0].getObject()
@@ -428,14 +427,14 @@ class MeetingItemWorkflowActions:
         if not meeting:
             # find meetings accepting items in the future
             meeting = self.context.getMeetingToInsertIntoWhenNoCurrentMeetingObject()
-        tool = getToolByName(self.context, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         forceNormal = bool(tool.readCookie('forceInsertNormal') == 'true')
         meeting.insertItem(self.context, forceNormal=forceNormal)
         # If the meeting is already frozen and this item is a "late" item,
         # I must set automatically the item to "itemfrozen".
         meetingState = meeting.queryState()
         if meetingState in self.meetingAlreadyFrozenStates:
-            wTool = getToolByName(self.context, 'portal_workflow')
+            wTool = api.portal.get_tool('portal_workflow')
             try:
                 wTool.doActionFor(self.context, 'itempublish')
             except:
@@ -1198,7 +1197,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if withMeetingDate:
             meeting = self.getMeeting()
             if meeting:
-                tool = getToolByName(self, 'portal_plonemeeting')
+                tool = api.portal.get_tool('portal_plonemeeting')
                 return "{0} ({1})".format(title, tool.formatMeetingDate(meeting, withHour=True).encode('utf-8'))
         return title
 
@@ -1223,7 +1222,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            the 'hide_decisions_when_under_writing' workflowAdaptation that
            hides the motivation/decision for non-managers if meeting state is 'decided.'''
         item = self.getSelf()
-        tool = getToolByName(item, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(item)
         adaptations = cfg.getWorkflowAdaptations()
         if 'hide_decisions_when_under_writing' in adaptations and item.hasMeeting() and \
@@ -1250,7 +1249,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = self.getField('decision').get(self, **kwargs)
         if keepWithNext:
             res = signatureNotAlone(res)
-        tool = getToolByName(item, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(item)
         adaptations = cfg.getWorkflowAdaptations()
         if 'hide_decisions_when_under_writing' in adaptations and item.hasMeeting() and \
@@ -1294,7 +1293,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def validate_category(self, value):
         '''Checks that, if we do not use groups as categories, a category is
            specified.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         meetingConfig = tool.getMeetingConfig(self)
         # Value could be '_none_' if it was displayed as listbox or None if
         # it was displayed as radio buttons...  Category use 'flex' format
@@ -1372,8 +1371,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def classifierStartupDirectory(self):
         '''Returns the startup_directory for the classifier referencebrowserwidget.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
-        portal_url = getToolByName(self, 'portal_url')
+        tool = api.portal.get_tool('portal_plonemeeting')
+        portal_url = api.portal.get_tool('portal_url')
         cfg = tool.getMeetingConfig(self)
         return portal_url.getRelativeContentURL(cfg.classifiers)
 
@@ -1382,7 +1381,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def classifierBaseQuery(self):
         '''base_query for the 'classifier' field.
            Here, we restrict the widget to search in the MeetingConfig's classifiers directory only.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         query = {}
         query['path'] = {'query': '/'.join(cfg.getPhysicalPath() + ('classifiers',))}
@@ -1393,7 +1392,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def manuallyLinkedItemsBaseQuery(self):
         '''base_query for the 'manuallyLinkedItems' field.
            Here, we restrict the widget to search only MeetingItems.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         allowed_types = []
         for cfg in tool.getActiveConfigs():
             allowed_types.append(cfg.getItemTypeName())
@@ -1405,7 +1404,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getDefaultBudgetInfo(self):
         '''The default budget info is to be found in the config.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         return cfg.getBudgetDefault()
 
@@ -1413,7 +1412,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getDefaultMotivation(self):
         '''Returns the default item motivation content from the MeetingConfig.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         return cfg.getDefaultMeetingItemMotivation()
 
@@ -1429,7 +1428,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
              another user editing the item after may not remove 'otherMeetingConfigsClonableTo' without
              removing the 'otherMeetingConfigsClonableToEmergency'.
         '''
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         # item will be 'presented' while sent to the other MC?
         cfg = tool.getMeetingConfig(self)
         presentAfterSend = False
@@ -1448,7 +1447,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''On edit or view page for an item, we must show field 'toDiscuss' in
            early stages of item creation and validation if
            config.toDiscussSetOnItemInsert is False.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         res = self.attributeIsUsed('toDiscuss') and \
             not cfg.getToDiscussSetOnItemInsert() or \
@@ -1468,7 +1467,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         """In which states must we show the itemIsSigned widget?
            By default, when the item is decided, but this is made to be overrided."""
         item = self.getSelf()
-        tool = getToolByName(item, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(item)
         return cfg.getItemDecidedStates()
 
@@ -1477,7 +1476,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def mayChangeListType(self):
         '''Condition for editing 'listType' field.'''
         item = self.getSelf()
-        tool = getToolByName(item, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         if item.hasMeeting() and tool.isManager(item):
             return True
         return False
@@ -1490,7 +1489,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            we use an unrestricted call in @@toggle_item_is_signed that is protected by
            this method.'''
         item = self.getSelf()
-        tool = getToolByName(item, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
 
         # bypass for the Manager role
         if tool.isManager(item, realManagers=True):
@@ -1515,7 +1514,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def mayTakeOver(self):
         '''Check doc in interfaces.py.'''
         item = self.getSelf()
-        wfTool = getToolByName(item, 'portal_workflow')
+        wfTool = api.portal.get_tool('portal_workflow')
         return bool(wfTool.getTransitionsFor(item))
 
     security.declareProtected('Modify portal content', 'setTakenOverBy')
@@ -1534,7 +1533,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if 'wf_state' in kwargs:
                 wf_state = kwargs['wf_state']
             else:
-                tool = getToolByName(self, 'portal_plonemeeting')
+                tool = api.portal.get_tool('portal_plonemeeting')
                 cfg = tool.getMeetingConfig(self)
                 wf_state = "%s__wfstate__%s" % (cfg.getItemWorkflow(), self.queryState())
             if value:
@@ -1577,8 +1576,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if item.isDefinedInTool():
             return False
 
-        membershipTool = getToolByName(item, 'portal_membership')
-        member = membershipTool.getAuthenticatedMember()
+        member = api.user.get_current()
         if member.has_permission(ModifyPortalContent, item):
             return True
 
@@ -1588,9 +1586,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Returns True if current user may accept or refuse emergency if asked for an item.'''
         # by default, only MeetingManagers can accept or refuse emergency
         item = self.getSelf()
-        tool = getToolByName(item, 'portal_plonemeeting')
-        membershipTool = getToolByName(item, 'portal_membership')
-        member = membershipTool.getAuthenticatedMember()
+        tool = api.portal.get_tool('portal_plonemeeting')
+        member = api.user.get_current()
         if tool.isManager(item) and member.has_permission(ModifyPortalContent, item):
             return True
         return False
@@ -1605,8 +1602,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if item.isDefinedInTool():
             return False
 
-        membershipTool = getToolByName(item, 'portal_membership')
-        member = membershipTool.getAuthenticatedMember()
+        member = api.user.get_current()
         # user must be an item completeness editor (one of corresponding role)
         if not member.has_permission(ModifyPortalContent, item) or \
            not member.has_role(ITEM_COMPLETENESS_EVALUATORS, item):
@@ -1623,8 +1619,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         item = self.getSelf()
         if item.isDefinedInTool():
             return
-        membershipTool = getToolByName(item, 'portal_membership')
-        member = membershipTool.getAuthenticatedMember()
+        member = api.user.get_current()
         # user must be an item completeness editor (one of corresponding role)
         if not item.getCompleteness() == 'completeness_incomplete' or \
            not member.has_permission(ModifyPortalContent, item) or \
@@ -1637,9 +1632,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def mayEditAdviceConfidentiality(self):
         '''Check doc in interfaces.py.'''
         item = self.getSelf()
-        tool = getToolByName(item, 'portal_plonemeeting')
-        membershipTool = getToolByName(item, 'portal_membership')
-        member = membershipTool.getAuthenticatedMember()
+        tool = api.portal.get_tool('portal_plonemeeting')
+        member = api.user.get_current()
         # user must be able to edit the item and must be a Manager
         if not member.has_permission(ModifyPortalContent, item) or \
            not tool.isManager(item):
@@ -1660,7 +1654,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if advice.advice_type == 'asked_again':
             return False
 
-        tool = getToolByName(item, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         # 'asked_again' must be activated in the configuration
         cfg = tool.getMeetingConfig(item)
         if 'asked_again' not in cfg.getUsedAdviceTypes():
@@ -1672,8 +1666,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            not tool.isManager(item):
             return False
 
-        membershipTool = getToolByName(item, 'portal_membership')
-        member = membershipTool.getAuthenticatedMember()
+        member = api.user.get_current()
         if member.has_permission(ModifyPortalContent, item):
             return True
         return False
@@ -1694,7 +1687,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if not advice.advice_type == 'asked_again':
             return False
 
-        tool = getToolByName(item, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
 
         # apart MeetingManagers, the advice can not be set back to previous
         # if editable by the adviser
@@ -1702,8 +1695,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            not tool.isManager(item):
             return False
 
-        membershipTool = getToolByName(item, 'portal_membership')
-        member = membershipTool.getAuthenticatedMember()
+        member = api.user.get_current()
         if member.has_permission(ModifyPortalContent, item):
             return True
         return False
@@ -1739,7 +1731,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if not set(stored) == set(value):
             # we will use unrestrictedSearchResults because in the case a user update manually linked items
             # and in already selected items, there is an item he can not view, it will be found in the catalog
-            unrestrictedSearch = getToolByName(self, 'portal_catalog').unrestrictedSearchResults
+            unrestrictedSearch = api.portal.get_tool('portal_catalog').unrestrictedSearchResults
 
             # sorting method, items will be sorted by meeting date descending
             # then, for items that are not in a meeting date, by creation date
@@ -1833,7 +1825,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Returns True is the current item can be cloned to another
            meetingConfig. This method is used as a condition for showing
            or not the 'otherMeetingConfigsClonableTo' field.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         if cfg.getMeetingConfigsToCloneTo():
             return True
@@ -1907,7 +1899,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # a ReferenceField, while reference_catalog.getBackReferences returns
         # *brains*.
 
-        refCatalog = getToolByName(self, 'reference_catalog')
+        refCatalog = api.portal.get_tool('reference_catalog')
         res = None
 
         if brain:  # Faster
@@ -1929,7 +1921,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            transition from another view than the meeting view.  This will take into
            acount meeting states defined in MeetingConfig.meetingPresentItemWhenNoCurrentMeetingStates.'''
         # first, find meetings in the future still accepting items
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         brains = cfg.adapted().getMeetingsAcceptingItems(inTheFuture=True)
         for brain in brains:
@@ -1964,7 +1956,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if privacy == 'public':
             return True
         # check if privacy needs to be checked...
-        tool = getToolByName(item, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(item)
         if not cfg.getRestrictAccessToSecretItems():
             return True
@@ -1973,8 +1965,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return True
         # Check that the user belongs to the proposing group.
         proposingGroup = item.getProposingGroup()
-        membershipTool = getToolByName(item, 'portal_membership')
-        user = membershipTool.getAuthenticatedMember()
+        user = api.user.get_current()
         userGroups = user.getGroups()
         for ploneGroup in userGroups:
             if ploneGroup.startswith('%s_' % proposingGroup):
@@ -2011,7 +2002,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Returns a list of groups that will restrict the use of this item
            when used (usage) as an item template.'''
         res = []
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         meetingGroups = tool.getMeetingGroups()
         for group in meetingGroups:
             res.append((group.id, group.Title()))
@@ -2023,7 +2014,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Returns the (Display)list of meetings returned by
            MeetingConfig.getMeetingsAcceptingItems.'''
         res = []
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         # save meetingUIDs, it will be necessary here under
         for meetingBrain in cfg.adapted().getMeetingsAcceptingItems():
@@ -2037,7 +2028,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if preferredMeetingUID and preferredMeetingUID not in [meetingInfo[0] for meetingInfo in res]:
             # check that stored preferredMeeting still exists, if it
             # is the case, add it the the vocabulary
-            catalog = getToolByName(self, 'portal_catalog')
+            catalog = api.portal.get_tool('portal_catalog')
             brains = catalog(UID=preferredMeetingUID)
             if brains:
                 preferredMeetingBrain = brains[0]
@@ -2067,7 +2058,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def listOtherMeetingConfigsClonableTo(self):
         '''Lists the possible other meetingConfigs the item can be cloned to.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         meetingConfig = tool.getMeetingConfig(self)
         res = []
         for mctct in meetingConfig.getMeetingConfigsToCloneTo():
@@ -2086,7 +2077,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def listOtherMeetingConfigsClonableToEmergency(self):
         '''Lists the possible other meetingConfigs the item can be cloned to.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         meetingConfig = tool.getMeetingConfig(self)
         res = []
         translated_msg = translate('Emergency while presenting in other MC',
@@ -2112,7 +2103,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            to. If a group is already set, it is returned.
            If this item is being created or edited in portal_plonemeeting (as a
            recurring item), the list of active groups is returned.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         isDefinedInTool = self.isDefinedInTool()
         # bypass for Managers, pass idDefinedInTool to True so Managers
         # can select any available MeetingGroup
@@ -2138,7 +2129,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            propose this item. Return groups that have at least one creator,
            excepted if we are on an archive site.'''
         res = []
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         for group in tool.getMeetingGroups(notEmptySuffix="creators"):
             res.append((group.id, group.getName()))
 
@@ -2258,7 +2249,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def showCategory(self):
         '''I must not show the "category" field if I use groups for defining
            categories.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         return not cfg.getUseGroupsAsCategories()
 
@@ -2268,7 +2259,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Returns a DisplayList containing all available active categories in
            the meeting config that corresponds me.'''
         res = []
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         for cat in cfg.getCategories():
             res.append((cat.id, cat.getName()))
@@ -2291,7 +2282,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            the PloneMeeting code (with p_theObject=True), it returns
            the true Category object (or Group object if groups are used
            as categories).'''
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         try:
             if cfg.getUseGroupsAsCategories():
@@ -2311,7 +2302,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def getProposingGroup(self, theObject=False, **kwargs):
         '''This redefined accessor may return the proposing group id or the real
            group if p_theObject is True.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         res = self.getField('proposingGroup').get(self, **kwargs)  # = group id
         if res and theObject:
             res = getattr(tool, res)
@@ -2373,7 +2364,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     @ram.cache(attributeIsUsed_cachekey)
     def attributeIsUsed(self, name):
         '''Is the attribute named p_name used in this meeting config ?'''
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         return (name in cfg.getUsedItemAttributes())
 
@@ -2388,7 +2379,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Must we show the "Annexes" (or "Decision-related annexes") tab ?'''
         if self.isTemporary() or self.isDefinedInTool():
             return False
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         if cfg.getFileTypes(relatedTo=(decisionRelated and 'item_decision' or 'item')):
             return True
@@ -2410,14 +2401,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     @ram.cache(queryState_cachekey)
     def queryState(self):
         '''In what state am I ?'''
-        wfTool = getToolByName(self, 'portal_workflow')
+        wfTool = api.portal.get_tool('portal_workflow')
         return wfTool.getInfoFor(self, 'review_state')
 
     security.declarePublic('getWorkflowName')
 
     def getWorkflowName(self):
         '''What is the name of my workflow ?'''
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         return cfg.getItemWorkflow()
 
@@ -2489,7 +2480,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def getCertifiedSignatures(self, forceUseCertifiedSignaturesOnMeetingConfig=False):
         '''See docstring in interfaces.py.'''
         item = self.getSelf()
-        tool = getToolByName(item, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(item)
         if forceUseCertifiedSignaturesOnMeetingConfig:
             return cfg.getCertifiedSignatures(computed=True)
@@ -2730,8 +2721,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             unrestrictedRemoveGivenObject(item)
             return True
         else:
-            wfTool = getToolByName(item, 'portal_workflow')
-            tool = getToolByName(item, 'portal_plonemeeting')
+            wfTool = api.portal.get_tool('portal_workflow')
+            tool = api.portal.get_tool('portal_plonemeeting')
             try:
                 # Hmm... the currently published object is p_meeting, right?
                 item.REQUEST.set('PUBLISHED', meeting)
@@ -2768,9 +2759,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            the item is presented in is not considered as 'closed'.  Bypass if current user is
            a real Manager (Site Administrator/Manager).
            If p_bypassWritePermissionCheck is True, we will not check for write_permission.'''
-        portal = getToolByName(self, 'portal_url').getPortalObject()
-        tool = getToolByName(self, 'portal_plonemeeting')
-        member = getToolByName(self, 'portal_membership').getAuthenticatedMember()
+        portal = api.portal.get()
+        tool = api.portal.get_tool('portal_plonemeeting')
+        member = api.user.get_current()
         field = self.Schema()[fieldName]
         if (not bypassWritePermissionCheck and member.has_permission(field.write_permission, self) or True) and \
            self.Schema()[fieldName].widget.testCondition(self.getParentNode(), portal, self) and not \
@@ -2956,7 +2947,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def sendAdviceToGiveMailIfRelevant(self, old_review_state, new_review_state):
         '''A transition was fired on self, check if, in the new item state,
            advices need to be given, that had not to be given in the previous item state.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         if 'adviceToGive' not in cfg.getMailItemEvents():
             return
@@ -3002,7 +2993,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Get optional advisers but with same format as getAutomaticAdvisers
            so it can be handled easily by the updateAdvices method.
            We need to return a list of dict with relevant informations.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         res = []
         for adviser in self.getOptionalAdvisers():
@@ -3032,9 +3023,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            evaluating the TAL expression on current MeetingConfig.customAdvisers and checking if
            corresponding group contains at least one adviser. The method returns a list of MeetingGroup
            ids.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        portal = getToolByName(self, 'portal_url').getPortalObject()
+        portal = api.portal.get()
         res = []
         for customAdviser in cfg.getCustomAdvisers():
             # check if there is something to evaluate...
@@ -3095,7 +3086,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Returns the 'delay-aware' advisers.
            This will return a list of dict where dict contains :
            'meetingGroupId', 'delay' and 'delay_label'.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         res = []
         ctx = createExprContext(self.getParentNode(), tool.getParentNode(), self)
@@ -3150,8 +3141,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            We get it by evaluating the TAL expression on every active
            MeetingGroup.asCopyGroupOn. The expression returns a list of suffixes
            or an empty list.  The method update existing copyGroups.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
-        portal = getToolByName(self, 'portal_url').getPortalObject()
+        tool = api.portal.get_tool('portal_plonemeeting')
+        portal = api.portal.get()
         cfg = tool.getMeetingConfig(self)
         res = []
         selectableCopyGroups = cfg.getSelectableCopyGroups()
@@ -3193,7 +3184,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def listOptionalAdvisers(self):
         '''Optional advisers for this item are MeetingGroups that are not among
            automatic advisers and that have at least one adviser.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
 
         resDelayAwareAdvisers = []
@@ -3385,7 +3376,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def getAdvicesByType(self):
         '''Returns the list of advices, grouped by type.'''
         res = {}
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         isPowerObserver = tool.isPowerObserverForCfg(cfg)
         isRestrictedPowerObserver = tool.isPowerObserverForCfg(cfg, isRestricted=True)
@@ -3419,7 +3410,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # for now, only contained elements in a MeetingItem of
         # meta_type 'Dexterity Container' are meetingadvices...
         res = {}
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         for advice in self.getAdvices():
             optional = True
@@ -3482,7 +3473,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return True
         # in case current user is a PowerAdviser, we need
         # to display advices on the item view
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         userAdviserGroupIds = set([group.getId() for group in tool.getGroupsForUser(suffixes=['advisers'])])
         cfg = tool.getMeetingConfig(self)
         powerAdviserGroupIds = set(cfg.getPowerAdvisersGroups())
@@ -3593,7 +3584,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Helper method to have a printable version of advices.'''
         # bbb compatible fix, as printAdvicesInfos was defined in a profile before...
         self = self.getSelf()
-        membershipTool = getToolByName(self, 'portal_membership')
+        membershipTool = api.portal.get_tool('portal_membership')
         itemAdvicesByType = self.getAdvicesByType()
         res = "<p class='pmAdvices'>"
         if withAdvicesTitle:
@@ -3709,8 +3700,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         isDefinedInTool = self.isDefinedInTool()
         if isDefinedInTool:
             self.adviceIndex = PersistentMapping()
-        tool = getToolByName(self, 'portal_plonemeeting')
-        plone_utils = getToolByName(self, 'plone_utils')
+        tool = api.portal.get_tool('portal_plonemeeting')
+        plone_utils = api.portal.get_tool('plone_utils')
         cfg = tool.getMeetingConfig(self)
 
         # check if the given p_triggered_by_transition transition name
@@ -3908,7 +3899,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                             obj=self)
 
         # Then, add local roles regarding asked advices
-        wfTool = getToolByName(self, 'portal_workflow')
+        wfTool = api.portal.get_tool('portal_workflow')
         for groupId in self.adviceIndex.iterkeys():
             mGroup = getattr(tool, groupId)
             itemAdviceStates = mGroup.getItemAdviceStates(cfg)
@@ -4083,7 +4074,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 data['delay_status'] = 'never_giveable'
                 return data
 
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         holidays = tool.getHolidaysAs_datetime()
         weekends = tool.getNonWorkingDayNumbers()
         unavailable_weekdays = tool.getUnavailableWeekDaysNumbers()
@@ -4375,14 +4366,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def isAdvicesEnabled(self):
         '''Is the "advices" functionality enabled for this meeting config?'''
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         return tool.getMeetingConfig(self).getUseAdvices()
 
     security.declarePublic('isCopiesEnabled')
 
     def isCopiesEnabled(self):
         '''Is the "copies" functionality enabled for this meeting config?'''
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         return cfg.getUseCopies()
 
@@ -4390,7 +4381,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def isVotesEnabled(self):
         '''Returns True if the votes are enabled.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         return cfg.getUseVotes()
 
@@ -4434,7 +4425,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def listCopyGroups(self):
         '''Lists the groups that will be selectable to be in copy for this
            item.'''
-        cfg = self.portal_plonemeeting.getMeetingConfig(self)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
         res = []
         for groupId in cfg.getSelectableCopyGroups():
             group = self.portal_groups.getGroupById(groupId)
@@ -4471,7 +4463,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # - the user is creator in some group;
         # - the user must be able to see the item if it is private.
         # The user will duplicate the item in his own folder.
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         if self.isDefinedInTool() or not tool.userIsAmong('creators') or not self.adapted().isPrivacyViewable():
             return False
         return True
@@ -4501,8 +4493,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if self.getProposingGroup() and not self.adapted().isPrivacyViewable():
             raise Unauthorized
         # Get the PloneMeetingFolder of the current user as destFolder
-        tool = getToolByName(self, 'portal_plonemeeting')
-        membershipTool = getToolByName(self, 'portal_membership')
+        tool = api.portal.get_tool('portal_plonemeeting')
+        membershipTool = api.portal.get_tool('portal_membership')
         userId = membershipTool.getAuthenticatedMember().getId()
         # make sure the newOwnerId exist (for example a user created an item, the
         # user was deleted and we are now cloning his item)
@@ -4534,7 +4526,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if cloneEventAction:
             # We are sure that there is only one key in the workflow_history
             # because it was cleaned by ToolPloneMeeting.pasteItems.
-            wfTool = getToolByName(self, 'portal_workflow')
+            wfTool = api.portal.get_tool('portal_workflow')
             wfName = wfTool.getWorkflowsFor(newItem)[0].id
             firstEvent = newItem.workflow_history[wfName][0]
             cloneEvent = firstEvent.copy()
@@ -4574,8 +4566,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if not self.adapted().mayCloneToOtherMeetingConfig(destMeetingConfigId):
             # If the user came here, he even does not deserve a clear message ;-)
             raise Unauthorized
-        tool = getToolByName(self, 'portal_plonemeeting')
-        plone_utils = getToolByName(self, 'plone_utils')
+        tool = api.portal.get_tool('portal_plonemeeting')
+        plone_utils = api.portal.get_tool('plone_utils')
         destMeetingConfig = getattr(tool, destMeetingConfigId, None)
         cfg = tool.getMeetingConfig(self)
 
@@ -4636,7 +4628,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if not triggerUntil == NO_TRIGGER_WF_TRANSITION_UNTIL:
             # triggerUntil is like meeting-config-xxx.validate, get the real transition
             triggerUntil = triggerUntil.split('.')[1]
-            wfTool = getToolByName(self, 'portal_workflow')
+            wfTool = api.portal.get_tool('portal_workflow')
             wf_comment = translate('transition_auto_triggered_item_sent_to_this_config',
                                    domain='PloneMeeting',
                                    context=self.REQUEST)
@@ -4761,7 +4753,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         ann = IAnnotations(self)
         itemUID = ann.get(annotation_key, None)
         if itemUID:
-            catalog = getToolByName(self, 'portal_catalog')
+            catalog = api.portal.get_tool('portal_catalog')
             # we search unrestricted because current user could not have access
             # to the other item, but we need to get some metadata about it...
             if not theObject:
@@ -4780,7 +4772,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def onDuplicate(self):
         '''This method is triggered when the users clicks on
            "duplicate item".'''
-        user = self.portal_membership.getAuthenticatedMember()
+        user = api.user.get_current()
         newItem = self.clone(newOwnerId=user.id, cloneEventAction='Duplicate')
         self.plone_utils.addPortalMessage(
             translate('item_duplicated', domain='PloneMeeting', context=self.REQUEST))
@@ -4791,11 +4783,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def onDuplicateAndKeepLink(self):
         '''This method is triggered when the users clicks on
            "duplicate item and keep link".'''
-        user = self.portal_membership.getAuthenticatedMember()
+        user = api.user.get_current()
         newItem = self.clone(newOwnerId=user.id,
                              cloneEventAction='Duplicate and keep link',
                              setCurrentAsPredecessor=True)
-        self.plone_utils.addPortalMessage(
+        plone_utils = api.portal.get_tool('plone_utils')
+        plone_utils.addPortalMessage(
             translate('item_duplicated_and_link_kept', domain='PloneMeeting', context=self.REQUEST))
         return self.REQUEST.RESPONSE.redirect(newItem.absolute_url())
 
@@ -4809,7 +4802,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Just check that the item is myself or a Plone Site.
         # We can remove an item directly, not "through" his container.
         if item.meta_type not in ['Plone Site', 'MeetingItem', ]:
-            user = self.portal_membership.getAuthenticatedMember()
+            user = api.user.get_current()
             logger.warn(BEFOREDELETE_ERROR % (user.getId(), self.id))
             raise BeforeDeleteException("can_not_delete_meetingitem_container")
         # if we are not removing the site and we are not in the creation process of
@@ -4819,12 +4812,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # the annotation on the predecessor specifying it.
             predecessor = self.getPredecessor()
             if predecessor:
-                pmtool = getToolByName(self, 'portal_plonemeeting')
-                meetingConfigId = pmtool.getMeetingConfig(self).getId()
-                if predecessor._checkAlreadyClonedToOtherMC(meetingConfigId):
+                tool = api.portal.get_tool('portal_plonemeeting')
+                cfgId = tool.getMeetingConfig(self).getId()
+                if predecessor._checkAlreadyClonedToOtherMC(cfgId):
                     ann = IAnnotations(predecessor)
                     annotation_key = self._getSentToOtherMCAnnotationKey(
-                        meetingConfigId)
+                        cfgId)
                     del ann[annotation_key]
             # manage_beforeDelete is called before the IObjectWillBeRemovedEvent
             # in IObjectWillBeRemovedEvent references are already broken, we need to remove
@@ -4902,7 +4895,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def displayLinkedItem(self, item):
         '''Return a HTML structure to display a linked item.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         meeting = item.hasMeeting()
         # display the meeting date if the item is linked to a meeting
         if meeting:
@@ -4938,7 +4931,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 else:
                     # up the workflow for at least second times and not linked to a meeting
                     # check if last event was already made in item workflow_history
-                    tool = getToolByName(self, 'portal_plonemeeting')
+                    tool = api.portal.get_tool('portal_plonemeeting')
                     cfg = tool.getMeetingConfig(self)
                     history = self.workflow_history[cfg.getItemWorkflow()]
                     i = 0
@@ -4956,7 +4949,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Must I show the "votes" tab on this item?'''
         if self.hasMeeting() and self.getMeeting().adapted().showVotes():
             # Checks whether votes may occur on this item
-            cfg = self.portal_plonemeeting.getMeetingConfig(self)
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(self)
             return cfg.isVotable(self)
 
     security.declarePublic('hasVotes')
@@ -4981,8 +4975,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if userId in self.votes:
             return self.votes[userId]
         else:
-            meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
-            return meetingConfig.getDefaultVoteValue()
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(self)
+            return cfg.getDefaultVoteValue()
 
     security.declarePublic('getVoteCount')
 
@@ -5029,12 +5024,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def saveVoteValues(self, newVoteValues):
         '''p_newVoteValues is a dictionary that contains a bunch of new vote
            values.'''
-        meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
-        user = self.portal_membership.getAuthenticatedMember()
-        usedVoteValues = meetingConfig.getUsedVoteValues()
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        user = api.user.get_current()
+        usedVoteValues = cfg.getUsedVoteValues()
         for userId in newVoteValues.iterkeys():
             # Check that the current user can update the vote of this user
-            meetingUser = meetingConfig.getMeetingUserFromPloneUser(userId)
+            meetingUser = cfg.getMeetingUserFromPloneUser(userId)
             if not newVoteValues[userId] in usedVoteValues:
                 raise ValueError('Trying to set vote with another value than '
                                  'ones defined in meetingConfig.usedVoteValues!')
@@ -5068,7 +5064,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         numberOfVoters = len(voters)
         rq.set('error', True)  # If everything OK, we'll set "False" in the end.
         # If allYes is True, we must set vote value "yes" for every voter.
-        allYes = self.REQUEST.get('allYes') == 'true'
+        allYes = rq.get('allYes') == 'true'
         # Questioners / answerers
         questioners = []
         answerers = []
@@ -5135,7 +5131,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         member = self.restrictedTraverse('@@plone_portal_state').member()
         if not self.hasVotes() and \
            member.has_permission(ModifyPortalContent, self) and \
-           self.portal_plonemeeting.isManager(self):
+           api.portal.get_tool('portal_plonemeeting').isManager(self):
             return True
         return False
 
@@ -5152,13 +5148,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def mayConsultVotes(self):
         '''Returns True if the current user may consult all votes for p_self.'''
-        membershipTool = getToolByName(self, 'portal_membership')
-        member = membershipTool.getAuthenticatedMember()
+        user = api.user.get_current()
         voters = self.getAttendees(usage='voter')
         if not voters:
             return False
         for mUser in voters:
-            if not mUser.adapted().mayConsultVote(member, self):
+            if not mUser.adapted().mayConsultVote(user, self):
                 return False
         return True
 
@@ -5166,7 +5161,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def mayEditVotes(self):
         '''Returns True if the current user may edit all votes for p_self.'''
-        user = self.portal_membership.getAuthenticatedMember()
+        user = api.user.get_current()
         voters = self.getAttendees(usage='voter')
         if not voters:
             return False
@@ -5179,7 +5174,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def mayEditQAs(self):
         '''May the logged user edit questioners and answerers for this item?'''
-        res = self.portal_plonemeeting.isManager(self) and self.hasMeeting() and \
+        tool = api.portal.get_tool('portal_plonemeeting')
+        res = tool.isManager(self) and self.hasMeeting() and \
             self.getMeeting().getDate().isPast()
         return res
 
@@ -5203,9 +5199,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def lastValidatedBefore(self, deadline):
         '''Returns True if this item has been (last) validated before
            p_deadline, which is a DateTime.'''
-        meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
         lastValidationDate = None
-        for event in self.workflow_history[meetingConfig.getItemWorkflow()]:
+        for event in self.workflow_history[cfg.getItemWorkflow()]:
             if event['action'] == 'validate':
                 lastValidationDate = event['time']
         if lastValidationDate and (lastValidationDate < deadline):
@@ -5217,7 +5214,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Some user (a late attendee) has entered the meeting just before
            discussing this item: we will record this info, excepted if
            request["action"] tells us to remove the info instead.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         if not tool.isManager(self) or not checkPermission(ModifyPortalContent, self):
             raise Unauthorized
         rq = self.REQUEST
@@ -5240,7 +5237,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
              (request.byeType == 'leaves_now').
            We will record this info, excepted if request["action"] tells us to
            remove it instead.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         if not tool.isManager(self) or not checkPermission(ModifyPortalContent, self):
             raise Unauthorized
         rq = self.REQUEST
@@ -5269,11 +5266,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def ItemAssemblyDescrMethod(self):
         '''Special handling of itemAssembly field description where we display
           the linked Meeting.assembly value so it is easily overridable.'''
-        enc = self.portal_properties.site_properties.getProperty(
+        portal_properties = api.portal.get_tool('portal_properties')
+        enc = portal_properties.site_properties.getProperty(
             'default_charset')
         # depending on the fact that we use 'excused' and 'absents', we will have
         # a different translation for the assembly defined on the meeting (assembly or attendees)
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         usedMeetingAttributes = cfg.getUsedMeetingAttributes()
         if 'assemblyExcused' in usedMeetingAttributes or \
@@ -5300,7 +5298,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def ItemAssemblyExcusedDescrMethod(self):
         '''Special handling of itemAssemblyExcused field description where we display
           the linked Meeting.assemblyExcused value so it is easily overridable.'''
-        enc = self.portal_properties.site_properties.getProperty(
+        portal_properties = api.portal.get_tool('portal_properties')
+        enc = portal_properties.site_properties.getProperty(
             'default_charset')
         value = translate(self.Schema()['itemAssemblyExcused'].widget.description_msgid,
                           domain='PloneMeeting',
@@ -5322,7 +5321,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def ItemAssemblyAbsentsDescrMethod(self):
         '''Special handling of itemAssemblyAbsents field description where we display
           the linked Meeting.assemblyAbsents value so it is easily overridable.'''
-        enc = self.portal_properties.site_properties.getProperty(
+        portal_properties = api.portal.get_tool('portal_properties')
+        enc = portal_properties.site_properties.getProperty(
             'default_charset')
         value = translate(self.Schema()['itemAssemblyAbsents'].widget.description_msgid,
                           domain='PloneMeeting',
@@ -5344,7 +5344,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def ItemSignaturesDescrMethod(self):
         '''Special handling of itemSignatures field description where we display
           the linked Meeting.signatures value so it is easily overridable.'''
-        enc = self.portal_properties.site_properties.getProperty(
+        portal_properties = api.portal.get_tool('portal_properties')
+        enc = portal_properties.site_properties.getProperty(
             'default_charset')
         value = translate(self.Schema()['itemSignatures'].widget.description_msgid,
                           domain='PloneMeeting',
@@ -5368,7 +5369,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
           'assembly, excused, absents', we will translate the 'assembly' label
           a different way.
         '''
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         usedMeetingAttributes = cfg.getUsedMeetingAttributes()
         if 'assemblyExcused' in usedMeetingAttributes or \
