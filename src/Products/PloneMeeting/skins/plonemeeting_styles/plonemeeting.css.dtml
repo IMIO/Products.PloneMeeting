@@ -991,6 +991,7 @@ div#optionalAdvisers input[value="not_selectable_value_non_delay_aware_optional_
     padding-bottom: 2px !important;
 }
 
+.advice_delay_never_giveable,
 .advice_delay_not_yet_giveable,
 .advice_delay_no_more_giveable {
     color: grey;
