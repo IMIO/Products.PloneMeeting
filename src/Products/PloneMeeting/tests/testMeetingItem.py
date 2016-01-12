@@ -847,28 +847,36 @@ class testMeetingItem(PloneMeetingTestCase):
         initial_state = self.wfTool[i4.getWorkflowName()].initial_state
         self.meetingConfig.setItemCopyGroupsStates((initial_state, ))
         i5 = self.create('MeetingItem', proposingGroup='vendors')
-        # We only have the '_reviewers' group, not the '_advisers'
-        # as not in self.meetingConfig.selectableCopyGroups
-        self.failUnless(i5.getCopyGroups() == ('developers_reviewers',))
+        # relevant groups are auto added
+        self.failIf(i5.getCopyGroups())
+        self.assertEquals(i5.autoCopyGroups, ['auto__developers_reviewers', 'auto__developers_advisers'])
         # corresponding local roles are added because copyGroups
         # can access the item when it is in its initial_state
-        self.failUnless('developers_reviewers' in i5.__ac_local_roles__.keys())
         self.failUnless(READER_USECASES['copy_groups'] in i5.__ac_local_roles__['developers_reviewers'])
+        self.failUnless(READER_USECASES['copy_groups'] in i5.__ac_local_roles__['developers_advisers'])
         # addAutoCopyGroups is triggered upon each edit (at_post_edit_script)
         self.tool.vendors.setAsCopyGroupOn(
             "python: item.getProposingGroup() == 'vendors' and ['reviewers', ] or []")
         # edit the item, 'vendors_reviewers' should be in the copyGroups of the item
         i5.at_post_edit_script()
-        self.failUnless(i5.getCopyGroups() == ('developers_reviewers', 'vendors_reviewers', ))
-        # even if removed from the config, existing copyGroups are not changed
+        self.failIf(i5.getCopyGroups())
+        self.assertEquals(i5.autoCopyGroups,
+                          ['auto__developers_reviewers', 'auto__developers_advisers', 'auto__vendors_reviewers'])
+        # when removed from the config, while updating every items, copyGroups are updated correctly
         self.tool.vendors.setAsCopyGroupOn('')
-        i5.at_post_edit_script()
-        self.failUnless(i5.getCopyGroups() == ('developers_reviewers', 'vendors_reviewers', ))
+        self.changeUser('siteadmin')
+        self.tool.updateAllLocalRoles()
+        self.assertEquals(i5.autoCopyGroups,
+                          ['auto__developers_reviewers', 'auto__developers_advisers'])
         # check that local_roles are correct
-        self.failUnless(READER_USECASES['copy_groups'] in i5.__ac_local_roles__['vendors_reviewers'])
+        self.failIf(READER_USECASES['copy_groups'] in i5.__ac_local_roles__['vendors_reviewers'])
+        self.failUnless(READER_USECASES['copy_groups'] in i5.__ac_local_roles__['developers_reviewers'])
+        self.failUnless(READER_USECASES['copy_groups'] in i5.__ac_local_roles__['developers_advisers'])
         # if a wrong TAL expression is used, it does not break anything upon item at_post_edit_script
         self.tool.vendors.setAsCopyGroupOn("python: item.someUnexistingMethod()")
         i5.at_post_edit_script()
+        self.assertEquals(i5.autoCopyGroups,
+                          ['auto__developers_reviewers', 'auto__developers_advisers'])
 
     def test_pm_AddAutoCopyGroupsIsCreated(self):
         '''Test the addAutoCopyGroups functionnality when using the parameter 'isCreated'
@@ -881,25 +889,27 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmManager')
         # create an item with group 'developers', 'vendors' will be copy group
         item = self.create('MeetingItem')
-        self.assertTrue(item.getCopyGroups() == ('vendors_reviewers', ))
+        self.assertEquals(item.autoCopyGroups, ['auto__vendors_reviewers'])
         # now unselect it and call at_post_edit_script again
         item.setCopyGroups(())
-        self.assertTrue(item.getCopyGroups() == ())
+        self.failIf(item.getCopyGroups())
         item.at_post_edit_script()
-        self.assertTrue(item.getCopyGroups() == ('vendors_reviewers', ))
+        self.assertEquals(item.autoCopyGroups, ['auto__vendors_reviewers'])
 
         # now use the isCreated in the TAL expression so an expression
         # is only True on item creation
         self.tool.vendors.setAsCopyGroupOn(
             "python: (isCreated and item.getProposingGroup() == 'developers') and ['reviewers', ] or []")
         item2 = self.create('MeetingItem')
-        self.assertTrue(item2.getCopyGroups() == ('vendors_reviewers', ))
+        self.assertEquals(item2.autoCopyGroups, ['auto__vendors_reviewers'])
         # now unselect it and call at_post_edit_script again
         item2.setCopyGroups(())
-        self.assertTrue(item2.getCopyGroups() == ())
+        self.failIf(item2.getCopyGroups())
+        self.assertEquals(item2.autoCopyGroups, ['auto__vendors_reviewers'])
         item2.at_post_edit_script()
         # this time it is now added again as the expression is only True at item creation time
-        self.assertTrue(item2.getCopyGroups() == ())
+        self.failIf(item2.getCopyGroups())
+        self.failIf(item2.autoCopyGroups)
 
     def test_pm_AddAutoCopyGroupsWrongExpressionDoesNotBreak(self):
         '''If the TAL expression defined on a MeetingGroup.asCopyGroupOn is wrong, it does not break.'''
@@ -915,29 +925,50 @@ class testMeetingItem(PloneMeetingTestCase):
         # set a correct expression so vendors is set as copy group
         self.tool.vendors.setAsCopyGroupOn("python: item.getProposingGroup() == 'developers' and ['reviewers', ] or []")
         item.at_post_edit_script()
-        self.assertTrue(item.getCopyGroups() == ('vendors_reviewers', ))
+        self.assertEquals(item.autoCopyGroups, ['auto__vendors_reviewers'])
         # with a wrong TAL expression (syntax or content) it does not break
         self.tool.vendors.setAsCopyGroupOn("python: item.someUnexistingMethod()")
         item.at_post_edit_script()
         # no matter the expression is wrong now, when a group is added in copy, it is left
-        self.assertTrue(READER_USECASES['copy_groups'] in item.__ac_local_roles__['vendors_reviewers'])
+        self.assertFalse(item.getCopyGroups(), item.autoCopyGroups)
         self.tool.vendors.setAsCopyGroupOn("python: some syntax error")
         item.at_post_edit_script()
-        # no matter the expression is wrong now, when a group is added in copy, it is left
-        self.assertTrue(READER_USECASES['copy_groups'] in item.__ac_local_roles__['vendors_reviewers'])
+        # no more there
+        self.assertFalse(item.getCopyGroups(), item.autoCopyGroups)
         # if it is a right TAL expression but that does not returns usable sufixes, it does not break neither
         self.tool.vendors.setAsCopyGroupOn("python: item.getId() and True or True")
         item.at_post_edit_script()
-        self.assertTrue(READER_USECASES['copy_groups'] in item.__ac_local_roles__['vendors_reviewers'])
+        self.assertFalse(item.getCopyGroups(), item.autoCopyGroups)
         self.tool.vendors.setAsCopyGroupOn("python: item.getId() and 'some_wrong_string' or 'some_wrong_string'")
         item.at_post_edit_script()
-        self.assertTrue(READER_USECASES['copy_groups'] in item.__ac_local_roles__['vendors_reviewers'])
+        self.assertFalse(item.getCopyGroups(), item.autoCopyGroups)
         self.tool.vendors.setAsCopyGroupOn("python: item.getId()")
         item.at_post_edit_script()
-        self.assertTrue(READER_USECASES['copy_groups'] in item.__ac_local_roles__['vendors_reviewers'])
+        self.assertFalse(item.getCopyGroups(), item.autoCopyGroups)
         self.tool.vendors.setAsCopyGroupOn("python: 123")
         item.at_post_edit_script()
-        self.assertTrue(READER_USECASES['copy_groups'] in item.__ac_local_roles__['vendors_reviewers'])
+        self.assertFalse(item.getCopyGroups(), item.autoCopyGroups)
+
+    def test_pm_GetAllCopyGroups(self):
+        '''Test the MeetingItem.getAllCopyGroups method.  It returns every copyGroups (manual and automatic)
+           and may also return real groupId intead of 'auto__' prefixed groupId.'''
+        # useCopies is enabled in cfg2
+        self.setMeetingConfig(self.meetingConfig2.getId())
+        self.changeUser('pmManager')
+        # add a manual copyGroup
+        item = self.create('MeetingItem')
+        item.setCopyGroups(('developers_reviewers', ))
+        item.at_post_edit_script()
+        self.assertEquals(item.getAllCopyGroups(),
+                          ('developers_reviewers', ))
+        self.assertEquals(item.getAllCopyGroups(auto_real_group_ids=True),
+                          ('developers_reviewers', ))
+        self.tool.vendors.setAsCopyGroupOn("python: item.getProposingGroup() == 'developers' and ['reviewers', ] or []")
+        item.at_post_edit_script()
+        self.assertEquals(item.getAllCopyGroups(),
+                          ('developers_reviewers', 'auto__vendors_reviewers'))
+        self.assertEquals(item.getAllCopyGroups(auto_real_group_ids=True),
+                          ('developers_reviewers', 'vendors_reviewers'))
 
     def test_pm_UpdateAdvices(self):
         '''Test if local roles for adviser groups, are still correct when an item is edited
@@ -1754,6 +1785,7 @@ class testMeetingItem(PloneMeetingTestCase):
           Check that we still have the stored value in the vocabulary, aka if the stored value
           is no more in the vocabulary, it is still in it tough ;-)
         '''
+        self.meetingConfig.setUseCopies(True)
         self.changeUser('pmManager')
         # create an item to test the vocabulary
         item = self.create('MeetingItem')
@@ -1769,6 +1801,15 @@ class testMeetingItem(PloneMeetingTestCase):
         # unselect 'developers_reviewers' on the item, it will not appear anymore in the vocabulary
         item.setCopyGroups(())
         self.assertEquals(item.listCopyGroups().keys(), ['vendors_reviewers', ])
+
+        # test with autoCopyGroups and the include_auto=False parameter
+        self.tool.vendors.setAsCopyGroupOn(
+            "python: item.getProposingGroup() == 'developers' and ['observers', 'advisers', ] or []")
+        item.at_post_edit_script()
+        self.assertEquals(item.autoCopyGroups, ['auto__vendors_observers', 'auto__vendors_advisers'])
+        self.assertEquals(item.listCopyGroups().keys(), ['vendors_reviewers'])
+        self.assertEquals(item.listCopyGroups(include_auto=True).keys(),
+                          ['auto__vendors_advisers', 'auto__vendors_observers', 'vendors_reviewers'])
 
     def test_pm_ListAssociatedGroups(self):
         '''

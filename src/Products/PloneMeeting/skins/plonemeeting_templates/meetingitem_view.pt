@@ -91,11 +91,11 @@
 
             <tal:comment replace="nothing">Copy groups for this item</tal:comment>
             <div class="discreet" tal:condition="python: context.isCopiesEnabled()"
-                                  tal:define="copyGroups context/getCopyGroups;">
+                                  tal:define="copyGroups context/getAllCopyGroups;">
                 <span class="item_attribute_label"
                       i18n:translate="PloneMeeting_label_copyGroups"></span>:&nbsp;&nbsp;
                 <tal:displayCopyGroups condition="copyGroups">
-                    <span metal:use-macro="python: here.widget('copyGroups', mode='view')" />
+                    <span tal:content="python: context.displayValue(context.listCopyGroups(include_auto=True), copyGroups)">Copy groups</span>
                 </tal:displayCopyGroups>
                 <span tal:condition="not: copyGroups">-</span>
             </div>

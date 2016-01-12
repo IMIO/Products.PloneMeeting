@@ -61,6 +61,7 @@ from Products.CMFCore.Expression import Expression, createExprContext
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFCore.permissions import ModifyPortalContent, ReviewPortalContent
 from Products.CMFPlone.utils import safe_unicode
+from collective.behavior.talcondition.utils import _evaluateExpression
 from imio.prettylink.interfaces import IPrettyLink
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting import PloneMeetingError
@@ -131,9 +132,8 @@ ADVICE_AVAILABLE_ON_CONDITION_ERROR = 'There was an error in the TAL expression 
 AS_COPYGROUP_CONDITION_ERROR = 'There was an error in the TAL expression ' \
     'defining if the group must be set as copyGroup. ' \
     'Please check this in your meeting config. %s'
-AS_COPYGROUP_RES_ERROR = 'The Plone group suffix \'%s\' returned by the ' \
-                         'expression on MeetingGroup \'%s\' is not a ' \
-                         'selectable copyGroup for MeetingConfig \'%s\'.'
+AS_COPYGROUP_RES_ERROR = 'While setting automatically added copyGroups, the Plone group suffix \'%s\' ' \
+                         'returned by the expression on MeetingGroup \'%s\' does not exist.'
 WRONG_TRANSITION = 'Transition "%s" is inappropriate for adding recurring ' \
     'items.'
 REC_ITEM_ERROR = 'There was an error while trying to generate recurring ' \
@@ -1971,7 +1971,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if ploneGroup.startswith('%s_' % proposingGroup):
                 return True
         # Check if the user is in the copyGroups
-        if set(item.getCopyGroups()).intersection(userGroups):
+        if set(item.getAllCopyGroups(auto_real_group_ids=True)).intersection(userGroups):
             return True
         # Check if the user has advices to add or give for item
         # we have userGroups, get groups he is adviser for and
@@ -1982,6 +1982,19 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if meetingGroupId in item.adviceIndex and \
                item.adviceIndex[meetingGroupId]['item_viewable_by_advisers']:
                 return True
+
+    security.declarePublic('getAllCopyGroups')
+
+    def getAllCopyGroups(self, auto_real_group_ids=False):
+        """Return manually selected copyGroups and automatically added ones.
+           If p_auto_real_group_ids is True, the real Plone groupId is returned for
+           automatically added groups instead of the 'auto__' prefixed name."""
+        allGroups = self.getCopyGroups()
+        if auto_real_group_ids:
+            allGroups += tuple([groupId.replace('auto__', '') for groupId in self.autoCopyGroups])
+        else:
+            allGroups += tuple(self.autoCopyGroups)
+        return allGroups
 
     security.declarePublic('checkPrivacyViewable')
 
@@ -3140,44 +3153,35 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''What group should be automatically set as copyGroups for this item?
            We get it by evaluating the TAL expression on every active
            MeetingGroup.asCopyGroupOn. The expression returns a list of suffixes
-           or an empty list.  The method update existing copyGroups.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        portal = api.portal.get()
-        cfg = tool.getMeetingConfig(self)
-        res = []
-        selectableCopyGroups = cfg.getSelectableCopyGroups()
-        if not selectableCopyGroups:
-            return
+           or an empty list.  The method update existing copyGroups and add groups
+           prefixed with 'auto__'.'''
+        tool = getToolByName(self, 'portal_plonemeeting')
+        self.autoCopyGroups = PersistentList()
+
         for mGroup in tool.getMeetingGroups():
-            # check if there is something to evaluate...
-            strippedExprToEvaluate = mGroup.getAsCopyGroupOn().replace(' ', '')
-            if not strippedExprToEvaluate or strippedExprToEvaluate == 'python:False':
-                continue
-            # Check that the TAL expression on the group returns a list of
-            # suffixes or an empty list (or False)
-            ctx = createExprContext(self.getParentNode(), portal, self)
-            ctx.setGlobal('item', self)
-            ctx.setGlobal('isCreated', isCreated)
-            suffixes = False
             try:
-                suffixes = Expression(mGroup.getAsCopyGroupOn())(ctx)
+                suffixes = _evaluateExpression(self,
+                                               expression=mGroup.getAsCopyGroupOn(),
+                                               roles_bypassing_expression=[],
+                                               extra_expr_ctx={'item': self,
+                                                               'isCreated': isCreated},
+                                               empty_expr_is_true=False)
+                if not suffixes:
+                    continue
                 # The expression is supposed to return a list a Plone group suffixes
                 # check that the real linked Plone groups are selectable
                 for suffix in suffixes:
-                    ploneGroupId = mGroup.getPloneGroupId(suffix)
-                    if ploneGroupId in selectableCopyGroups:
-                        res.append(ploneGroupId)
-                    else:
-                        # If the suffix returned by the expression is not
-                        # selectable, log it, it is a configuration problem
+                    if not suffix in MEETING_GROUP_SUFFIXES:
+                        # If the suffix returned by the expression does not exist
+                        # log it, it is a configuration problem
                         logger.warning(AS_COPYGROUP_RES_ERROR % (suffix,
-                                                                 mGroup.id,
-                                                                 cfg.id))
+                                                                 mGroup.getId()))
+                        continue
+                    ploneGroupId = mGroup.getPloneGroupId(suffix)
+                    autoPloneGroupId = 'auto__{0}'.format(ploneGroupId)
+                    self.autoCopyGroups.append(autoPloneGroupId)
             except Exception, e:
                 logger.warning(AS_COPYGROUP_CONDITION_ERROR % str(e))
-        # Add the automatic copyGroups to the existing manually selected ones
-        self.setCopyGroups(set(self.getCopyGroups()).union(set(res)))
-        return res
 
     security.declarePublic('listOptionalAdvisers')
 
@@ -4188,16 +4192,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # vote values and values are numbers of times the vote value has been
         # chosen.
         self.votes = PersistentMapping()
-        # Check if some copyGroups must be automatically added before updateLocalRoles
-        # because specific localRoles are given to copyGroups
-        if self.isCopiesEnabled():
-            self.addAutoCopyGroups(isCreated=True)
+        # Add a place to store automatically added copyGroups
+        self.autoCopyGroups = PersistentList()
         # Remove temp local role that allowed to create the item in
         # portal_factory.
         userId = api.user.get_current().getId()
         self.manage_delLocalRoles([userId])
         self.manage_addLocalRoles(userId, ('Owner',))
-        self.updateLocalRoles()
+        self.updateLocalRoles(isCreated=True)
         # Apply potential transformations to richtext fields
         transformAllRichTextFields(self)
         # Make sure we have 'text/html' for every Rich fields
@@ -4210,11 +4212,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('at_post_edit_script')
 
     def at_post_edit_script(self):
-        # Check if some copyGroups must be automatically added before updateLocalRoles
-        # because specific localRoles are given to copyGroups
-        if self.isCopiesEnabled():
-            self.addAutoCopyGroups(isCreated=False)
-        self.updateLocalRoles(invalidate=self.willInvalidateAdvices())
+        self.updateLocalRoles(invalidate=self.willInvalidateAdvices(),
+                              isCreated=False)
         # Apply potential transformations to richtext fields
         transformAllRichTextFields(self)
         # Add a line in history if historized fields have changed
@@ -4283,7 +4282,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     continue
                 self.manage_addLocalRoles(groupId, (MEETINGROLES[groupSuffix],))
         # update local roles regarding copyGroups
-        self._updateCopyGroupsLocalRoles()
+        isCreated = kwargs.get('isCreated', None)
+        self._updateCopyGroupsLocalRoles(isCreated)
         # Update advices after updateLocalRoles because updateLocalRoles
         # reinitialize existing local roles
         triggered_by_transition = kwargs.get('triggered_by_transition', None)
@@ -4305,11 +4305,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # reindex relevant indexes
         self.reindexObjectSecurity()
 
-    def _updateCopyGroupsLocalRoles(self):
+    def _updateCopyGroupsLocalRoles(self, isCreated):
         '''Give the 'Reader' local role to the copy groups
            depending on what is defined in the corresponding meetingConfig.'''
         if not self.isCopiesEnabled():
             return
+        # Check if some copyGroups must be automatically added
+        self.addAutoCopyGroups(isCreated=isCreated)
+
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         # check if copyGroups should have access to this item for current review state
@@ -4319,10 +4322,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Add the local roles corresponding to the selected copyGroups.
         # We give the 'Reader' role to the selected groups.
         # This will give them a read-only access to the item.
-        copyGroups = self.getCopyGroups()
+        copyGroups = self.getCopyGroups() + tuple(self.autoCopyGroups)
         if copyGroups:
             for copyGroup in copyGroups:
-                self.manage_addLocalRoles(copyGroup, (READER_USECASES['copy_groups'],))
+                # auto added copy groups are prefixed by 'auto__'
+                copyGroupId = copyGroup.split('auto__')[-1]
+                self.manage_addLocalRoles(copyGroupId, (READER_USECASES['copy_groups'],))
 
     def _updatePowerObserversLocalRoles(self):
         '''Configure local role for use case 'power_observers' and 'restricted_power_observers'
@@ -4422,14 +4427,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('listCopyGroups')
 
-    def listCopyGroups(self):
+    def listCopyGroups(self, include_auto=False):
         '''Lists the groups that will be selectable to be in copy for this
-           item.'''
+           item.  If p_include_auto is True, we add terms regarding self.autoCopyGroups.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
+        portal_groups = api.portal.get_tool('portal_groups')
         res = []
         for groupId in cfg.getSelectableCopyGroups():
-            group = self.portal_groups.getGroupById(groupId)
+            group = portal_groups.getGroupById(groupId)
             res.append((groupId, group.getProperty('title')))
 
         # make sure groups already selected for the current item
@@ -4440,12 +4446,20 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             copyGroupsInVocab = [copyGroup[0] for copyGroup in res]
             for groupId in copyGroups:
                 if not groupId in copyGroupsInVocab:
-                    group = self.portal_groups.getGroupById(groupId)
+                    group = portal_groups.getGroupById(groupId)
                     if group:
                         res.append((groupId, group.getProperty('title')))
                     else:
                         res.append((groupId, groupId))
-
+        # include terms for autoCopyGroups if relevant
+        if include_auto and self.autoCopyGroups:
+            for autoGroupId in self.autoCopyGroups:
+                groupId = autoGroupId.split('auto__')[-1]
+                group = portal_groups.getGroupById(groupId)
+                if group:
+                    res.append((autoGroupId, group.getProperty('title') + ' [auto]'))
+                else:
+                    res.append((autoGroupId, autoGroupId))
         return DisplayList(tuple(res)).sortedByValue()
 
     def showDuplicateItemAction_cachekey(method, self, brain=False):

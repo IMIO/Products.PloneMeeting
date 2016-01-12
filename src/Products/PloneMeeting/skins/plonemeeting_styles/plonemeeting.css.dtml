@@ -1124,6 +1124,7 @@ div a.advice_delay_change_value {
     padding-right: 50px !important;
     display: inline !important;
 }
+
 .item_no_emergency,
 #content a:link.item_no_emergency {
     vertical-align: middle;

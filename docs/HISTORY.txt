@@ -156,6 +156,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   on the different icons (not given, asked again, hidden) to know what is next 'time limit'.  The icon color is blue if current
   user is adviser for advice to give and is grey otherwise.  Moreover, to avoid loosing too much
   space in dashboards, advice icons are now displayed vertically in the dashboards and still horizontally on the item view
+- Refactored the way auto copyGroups are handled : now it is evaluated upon each change and stored separately from manually
+  selected copyGroups, this way it is possible to add or remove copyGroups automatically depending on the given
+  expression.  Automatically added copyGroups are displayed with a [auto] label on the item view
 
 3.3 (2015-02-27)
 ----------------
