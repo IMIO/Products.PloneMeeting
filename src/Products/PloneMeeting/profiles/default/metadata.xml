@@ -5,6 +5,7 @@
   <dependencies>
     <dependency>profile-Products.CMFPlacefulWorkflow:CMFPlacefulWorkflow</dependency>
     <dependency>profile-imio.dashboard:default</dependency>
+    <dependency>profile-collective.ckeditor:default</dependency>
     <dependency>profile-collective.documentviewer:default</dependency>
     <dependency>profile-collective.datagridcolumns:default</dependency>
     <dependency>profile-collective.iconifieddocumentactions:default</dependency>
