@@ -68,12 +68,13 @@ class AdvicesIcons(BrowserView):
                    adviceInfo['delay'] and \
                    adviceInfo['delay_infos']['left_delay'] < smaller_delay:
                     if groupId in userAdviserGroupIds:
-                        advicesToWarn[adviceType] = adviceInfo, 0
+                        # determinate delay_icon to use
+                        advicesToWarn[adviceType] = adviceInfo, self.delay_icon(True, adviceInfo)
                     # check if we already have a adviceToWarn, if user was adviser
                     # for this group, it is prioritary
                     elif not advicesToWarn.get(adviceType) or \
                             (advicesToWarn.get(adviceType) and not advicesToWarn[adviceType][1] == 0):
-                        advicesToWarn[adviceType] = adviceInfo, 1
+                        advicesToWarn[adviceType] = adviceInfo, self.delay_icon(False, adviceInfo)
                     else:
                         continue
                     smaller_delay = adviceInfo['delay_infos']['left_delay']
@@ -83,6 +84,21 @@ class AdvicesIcons(BrowserView):
         _findAdviceToWarn('asked_again')
 
         return advicesToWarn
+
+    def delay_icon(self, memberIsAdviserForGroup, adviceInfo):
+        """In case this is a delay aware advie, return a delay_icon is advie is not_given/hidden_during_redaction."""
+        if not memberIsAdviserForGroup:
+            return 'advice_with_delay_disabled_big.png'
+        else:
+            delay_status = adviceInfo['delay_infos']['delay_status']
+            if delay_status == 'still_time':
+                return 'advice_with_delay_big_green.png'
+            elif delay_status == 'still_time_but_alert':
+                return 'advice_with_delay_big_orange.png'
+            elif delay_status == 'timed_out':
+                return 'advice_with_delay_big_red.png'
+            else:
+                return 'advice_with_delay_big.png'
 
 
 class ChangeAdviceHiddenDuringRedactionView(BrowserView):

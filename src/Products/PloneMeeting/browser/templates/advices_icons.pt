@@ -32,10 +32,9 @@
 
               <tal:adviceWarnDelay tal:condition="adviceToWarn">
                 <tal:defines define="adviceToWarnGroupId python: advicesToWarn[adviceType][0];
-                                     adviceToWarnType python: advicesToWarn[adviceType][1];">
+                                     adviceToWarnIcon python: advicesToWarn[adviceType][1];">
                     <img src="advice_with_delay_big.png"
                          style="outline: none; margin-left: 5px;"
-                         tal:define="adviceToWarnIcon python: adviceToWarnType == 0 and 'advice_with_delay_big.png' or 'advice_with_delay_disabled_big.png'"
                          tal:attributes="src string:${view/portal_url}/${adviceToWarnIcon};"/>
                     <span tal:define="class_if_not_given string:advice_delay advice_delay_${adviceToWarnGroupId/delay_infos/delay_status};"
                           tal:content="adviceToWarnGroupId/delay_infos/left_delay"
@@ -71,13 +70,14 @@
                                       customAdviceMessage customMessageInfos/customAdviceMessage;">
                     <legend>
                          <span tal:condition="advice/delay">
+                            <tal:defines define="class_if_not_given string:advice_delay advice_delay_${advice/delay_infos/delay_status};">
                               <img src="advice_with_delay_big.png"
-                                   tal:define="delay_icon python: memberIsAdviserForGroup and 'advice_with_delay_big.png' or 'advice_with_delay_disabled_big.png'"
+                                   tal:define="delay_icon python: view.delay_icon(memberIsAdviserForGroup, advice)"
                                    tal:attributes="src string:${view/portal_url}/${delay_icon};"/>
                               <span class="advice_delay"
                                     tal:content="advice/delay_infos/left_delay"
-                                    tal:define="class_if_not_given string:advice_delay advice_delay_${advice/delay_infos/delay_status};"
                                     tal:attributes="class python: (advice['type'] in ('not_given', 'asked_again') or advice['hidden_during_redaction']) and class_if_not_given or 'advice_delay'" />
+                            </tal:defines>
                          </span>
                          <div class="advice_popup_label">
                          <span tal:condition="advice/optional">(</span><b tal:content="structure advice/name"></b>
