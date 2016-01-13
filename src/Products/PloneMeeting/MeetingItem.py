@@ -3155,7 +3155,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            MeetingGroup.asCopyGroupOn. The expression returns a list of suffixes
            or an empty list.  The method update existing copyGroups and add groups
            prefixed with 'auto__'.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         self.autoCopyGroups = PersistentList()
 
         for mGroup in tool.getMeetingGroups():
