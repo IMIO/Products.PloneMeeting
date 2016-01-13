@@ -4607,7 +4607,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         destUsedItemAttributes = destMeetingConfig.getUsedItemAttributes()
         # do not keep optional fields that are not used in the destMeetingConfig
         optionalFields = cfg.listUsedItemAttributes().keys()
-        for field in fieldsToCopy:
+        # iterate a copy of fieldsToCopy as we change it in the loop
+        for field in list(fieldsToCopy):
             if field in optionalFields and field not in destUsedItemAttributes:
                 fieldsToCopy.remove(field)
                 # special case for 'budgetRelated' that works together with 'budgetInfos'

@@ -333,6 +333,42 @@ class testMeetingItem(PloneMeetingTestCase):
         # but we do not use portal_actionicons
         self.failIf(actionId in [ai.getActionId() for ai in self.portal.portal_actionicons.listActionIcons()])
 
+    def test_pm_SendItemToOtherMCKeptFields(self):
+        '''Test what fields are taken when sending to another MC, actually only fields
+           enabled in both original and destination config.'''
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        cfg2Id = cfg2.getId()
+        # enable motivation and budgetInfos in cfg1, not in cfg2
+        cfg.setUsedItemAttributes(('motivation', 'budgetInfos'))
+        self.assertFalse('motivation' in cfg2.getUsedItemAttributes())
+        self.assertFalse('budgetInfos' in cfg2.getUsedItemAttributes())
+        cfg.setItemManualSentToOtherMCStates((self.WF_STATE_NAME_MAPPINGS['itemcreated'],))
+
+        # create and send
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        # default always kept fields
+        item.setTitle('My title')
+        item.setDescription('<p>My description</p>', mimetype='text/html')
+        item.setDecision('<p>My decision</p>', mimetype='text/html')
+        # optional fields
+        item.setMotivation('<p>My motivation</p>', mimetype='text/html')
+        item.setBudgetRelated(True)
+        item.setBudgetInfos('<p>My budget infos</p>', mimetype='text/html')
+        item.setOtherMeetingConfigsClonableTo((cfg2Id,))
+        item.at_post_edit_script()
+        clonedItem = item.cloneToOtherMeetingConfig(cfg2Id)
+
+        # make sure relevant fields are there or no more there
+        self.assertEquals(clonedItem.Title(), item.Title())
+        self.assertEquals(clonedItem.Description(), item.Description())
+        self.assertEquals(clonedItem.getDecision(), item.getDecision())
+        self.failIf(clonedItem.getMotivation())
+        self.failIf(clonedItem.getBudgetRelated())
+        self.failIf(clonedItem.getBudgetInfos())
+        self.failIf(clonedItem.getOtherMeetingConfigsClonableTo())
+
     def _setupSendItemToOtherMC(self, with_annexes=False, with_advices=False):
         '''
           This will do the setup of testing the send item to other MC functionnality.

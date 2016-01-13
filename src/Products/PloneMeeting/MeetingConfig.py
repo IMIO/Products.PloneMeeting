@@ -2370,7 +2370,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         for field in schema.fields():
             # Take all of them or optionals only, depending on p_optionalOnly
             if optionalOnly:
-                condition = hasattr(field, 'optional')
+                condition = getattr(field, 'optional', False)
             else:
                 condition = (field.getName() != 'id') and \
                             (field.schemata != 'metadata') and \
