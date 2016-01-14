@@ -44,6 +44,16 @@ class ForceInsertNormal(ViewletBase):
     '''This viewlet displays the forceInsertNormal button under the available
        items to present in a meeting on the meeting view.'''
 
+    def available(self):
+        """ """
+        return self.context._displayingAvailableItems() and self.view.brains
+
+    def render(self):
+        if self.available():
+            return self.index()
+        else:
+            return ''
+
     def update(self):
         self.context_state = getMultiAdapter((self.context, self.request),
                                              name=u'plone_context_state')
