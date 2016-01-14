@@ -162,6 +162,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Added possibility to force an item to be presented among normal items in a frozen meeting: a checkbox is added under the
   available items on the meeting view when the meeting is frozen so checking this box will force presented items to be
   inserted as a normal item
+- Removed condition that a meeting needed to contain items to be frozen,
+  a meeting may now be frozen no matter it contains items or not
 
 3.3 (2015-02-27)
 ----------------

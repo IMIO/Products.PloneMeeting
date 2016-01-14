@@ -371,9 +371,6 @@ class MeetingItemWorkflowActions:
     implements(IMeetingItemWorkflowActions)
     security = ClassSecurityInfo()
 
-    # Possible states of "frozen" meetings
-    meetingAlreadyFrozenStates = ('frozen', 'decided', 'published', 'decisions_published', 'closed', )
-
     def __init__(self, item):
         self.context = item
 
@@ -434,7 +431,7 @@ class MeetingItemWorkflowActions:
         # If the meeting is already frozen and this item is a "late" item,
         # I must set automatically the item to "itemfrozen".
         meetingState = meeting.queryState()
-        if meetingState in self.meetingAlreadyFrozenStates:
+        if not meetingState in meeting.getBeforeFrozenStates():
             wTool = api.portal.get_tool('portal_workflow')
             try:
                 wTool.doActionFor(self.context, 'itempublish')
