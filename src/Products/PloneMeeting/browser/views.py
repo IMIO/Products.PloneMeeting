@@ -95,7 +95,7 @@ class ItemMoreInfosView(BrowserView):
     @memoize_contextless
     def showMoreInfos(self):
         """ """
-        return self.tool.readCookie('pmShowDescriptions') == 'true' and True or False
+        return self.request.cookies.get('pmShowDescriptions', 'false') == 'true' and True or False
 
 
 class ItemIsSignedView(BrowserView):
@@ -120,10 +120,6 @@ class PresentSeveralItemsView(BrowserView):
         """ """
         uid_catalog = getToolByName(self.context, 'uid_catalog')
         wfTool = getToolByName(self, 'portal_workflow')
-        # make sure we have a list of uids, in some case, as it is called
-        # by jQuery, we receive only one uid, as a string...
-        if isinstance(uids, str):
-            uids = [uids]
         for uid in uids:
             obj = uid_catalog.searchResults(UID=uid)[0].getObject()
             wfTool.doActionFor(obj, 'present')

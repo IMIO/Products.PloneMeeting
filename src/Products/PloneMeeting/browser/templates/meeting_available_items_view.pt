@@ -59,6 +59,7 @@
     <!-- Faceted version -->
     <div style="display: none" id="faceted-version"
       tal:content="here/@@faceted_version|string:" />
+
   </div>
 
 </div>

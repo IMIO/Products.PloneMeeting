@@ -647,7 +647,7 @@ function presentSelectedItems(baseUrl) {
         var msg = window.eval('sure_to_present_selected_items');
         if (confirm(msg)) {
           // avoid Arrays to be passed as uids[]
-          params = $.param({uids: uids}, traditional=true)
+          params = $.param({'uids:list': uids}, traditional=true)
           $.ajax({
             url: baseUrl + "/@@present-several-items",
             dataType: 'html',
@@ -832,4 +832,14 @@ function updateNumberOfItems(infos) {
   parent.$('.meeting_number_of_items').each(function() {
       this.innerHTML = response.responseText;
     });
+}
+
+// when clicking on the input#forceInsertNormal, update the 'pmForceInsertNormal' cookie
+function changeForceInsertNormalCookie(input) {
+  if (input.checked) {
+  createCookie('pmForceInsertNormal', true);
+  }
+  else {
+  createCookie('pmForceInsertNormal', false);
+  }
 }

@@ -825,6 +825,37 @@ class testMeeting(PloneMeetingTestCase):
                            ('marketing', ())]
                           )
 
+    def test_pm_InsertItemForceNormal(self):
+        '''Test that we may insert an item in a frozen meeting among normal items.'''
+        self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_list_type',
+                                                          'reverse': '0'}, ))
+        self._removeConfigObjectsFor(self.meetingConfig)
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2015/01/01'))
+        meetingUID = meeting.UID()
+        item1 = self.create('MeetingItem')
+        item1.setPreferredMeeting(meetingUID)
+        item2 = self.create('MeetingItem')
+        item2.setPreferredMeeting(meetingUID)
+
+        # freeze the meeting and use functionnality
+        self.freezeMeeting(meeting)
+        self.assertTrue(item1.wfConditions().isLateFor(meeting))
+        self.assertTrue(item2.wfConditions().isLateFor(meeting))
+        # item1 will be presented as a late item
+        self.assertFalse(item1.wfActions()._forceInsertNormal())
+        self.presentItem(item1)
+        self.assertTrue(item1.isLate())
+        # force insert normal for item2
+        self.request.cookies['pmForceInsertNormal'] = 'true'
+        self.assertTrue(item2.wfActions()._forceInsertNormal())
+        self.presentItem(item2)
+        self.assertFalse(item2.isLate())
+
+        # items were inserted in right order
+        self.assertEquals(meeting.getItems(ordered=True),
+                          [item2, item1])
+
     def test_pm_RemoveOrDeleteLinkedItem(self):
         '''Test that removing or deleting a linked item works.'''
         self.changeUser('pmManager')
@@ -1087,7 +1118,7 @@ class testMeeting(PloneMeetingTestCase):
         # present items
         presentView = meeting.restrictedTraverse('@@present-several-items')
         # we can present one single item...
-        presentView(items[0].UID())
+        presentView([items[0].UID()])
         self.assertEquals(items[0].queryState(), 'presented')
         # or many items
         presentView([item.UID() for item in items[1:]])
@@ -1541,10 +1572,19 @@ class testMeeting(PloneMeetingTestCase):
                               permission=('View',),
                               visible=True,
                               category='object_buttons')
+        # add an action that only shows up when no item in the meeting
+        meetingType.addAction(id='no_items',
+                              name='no_items',
+                              action='',
+                              icon_expr='',
+                              condition="not: context/getItems",
+                              permission=('View',),
+                              visible=True,
+                              category='object_buttons')
         # not available for now
         pa = self.portal.portal_actions
-        # not object_buttons actions at all
-        self.assertTrue(not 'object_buttons' in pa.listFilteredActionsFor(meeting))
+        object_buttons = [k['id'] for k in pa.listFilteredActionsFor(meeting)['object_buttons']]
+        self.assertFalse('dummy' in object_buttons)
         beforeEdit_rendered_actions_panel = actions_panel()
         # now edit the meeting
         meeting.setDate(DateTime('2010/10/10'))
@@ -1556,12 +1596,14 @@ class testMeeting(PloneMeetingTestCase):
         afterEdit_rendered_actions_panel = actions_panel()
         self.assertTrue(not beforeEdit_rendered_actions_panel == afterEdit_rendered_actions_panel)
 
-        # invalidated when getRawItems/getRawLateItems changed
-        # for now no transitions on the meeting as it contains no item
-        # insert an item
-        self.assertTrue(not self.transitions(meeting))
+        # invalidated when getRawItems changed
+        # for now, no item in the meeting, the 'no_items' action is shown
+        object_buttons = [k['id'] for k in pa.listFilteredActionsFor(meeting)['object_buttons']]
+        self.assertTrue('no_items' in object_buttons)
         item = self.create('MeetingItem')
         self.presentItem(item)
+        object_buttons = [k['id'] for k in pa.listFilteredActionsFor(meeting)['object_buttons']]
+        self.assertFalse('no_items' in object_buttons)
         presentedItem_rendered_actions_panel = actions_panel()
         self.assertTrue(not afterEdit_rendered_actions_panel == presentedItem_rendered_actions_panel)
 

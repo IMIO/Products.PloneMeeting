@@ -28,6 +28,7 @@ from Products.CMFCore.utils import getToolByName
 
 class WorkflowState(ViewletBase):
     '''This viewlet displays the workflow state.'''
+
     def update(self):
         self.context_state = getMultiAdapter((self.context, self.request),
                                              name=u'plone_context_state')
@@ -36,4 +37,15 @@ class WorkflowState(ViewletBase):
         wfTool = getToolByName(self.context, 'portal_workflow')
         return wfTool.getInfoFor(self.context, 'review_state')
 
-    index = ViewPageTemplateFile("templates/workflowstate.pt")
+    index = ViewPageTemplateFile("templates/viewlet_workflowstate.pt")
+
+
+class ForceInsertNormal(ViewletBase):
+    '''This viewlet displays the forceInsertNormal button under the available
+       items to present in a meeting on the meeting view.'''
+
+    def update(self):
+        self.context_state = getMultiAdapter((self.context, self.request),
+                                             name=u'plone_context_state')
+
+    index = ViewPageTemplateFile("templates/viewlet_force_insert_normal.pt")

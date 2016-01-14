@@ -1,0 +1,16 @@
+<!-- Force insert normal checkbox -->
+<div id="forceInsertNormalInput" style="float: right" i18n:domain="PloneMeeting">
+  <script type="text/javascript">
+    createCookie('pmForceInsertNormal', false);
+  </script>
+  <input onclick="javascript:changeForceInsertNormalCookie(this)"
+         tal:define="enabled python: context.queryState() not in context.getBeforeFrozenStates()"
+         tal:attributes="disabled python: enabled and default or 'disabled'"
+         type="checkbox"
+         id="forceInsertNormal"
+         value="forceInsertNormal"
+         name="forceInsertNormal"
+         class="blurrable">
+  <label for="forceInsertNormal" i18n:translate="">Insert items among normal items</label>
+</div>
+<div style="clear: both" />

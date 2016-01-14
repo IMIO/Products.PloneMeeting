@@ -51,7 +51,7 @@
     <browser:viewlet
         for="eea.facetednavigation.interfaces.IFacetedNavigable"
         name="document-generation-link"
-        manager="collective.eeafaceted.z3ctable.interfaces.ITopManager"
+        manager="collective.eeafaceted.z3ctable.interfaces.ITopAboveNavManager"
         class="Products.PloneMeeting.browser.overrides.PMDashboardDocumentGeneratorLinksViewlet"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View"

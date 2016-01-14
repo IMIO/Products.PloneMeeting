@@ -328,9 +328,8 @@ class MeetingItemWorkflowConditions:
     def mayFreeze(self):
         res = False
         if checkPermission(ReviewPortalContent, self.context):
-            if self.context.hasMeeting() and \
-               self.context.getMeeting().queryState() in \
-               MeetingItemWorkflowActions.meetingAlreadyFrozenStates:
+            meeting = self.context.hasMeeting() and self.context.getMeeting() or None
+            if meeting and not meeting.queryState() in meeting.getBeforeFrozenStates():
                 res = True
         return res
 
@@ -415,6 +414,10 @@ class MeetingItemWorkflowActions:
                     sendMailIfRelevant(self.context, 'lateItem',
                                        'MeetingManager', isRole=True)
 
+    def _forceInsertNormal(self):
+        """ """
+        return bool(self.context.REQUEST.cookies.get('pmForceInsertNormal', 'false') == 'true')
+
     security.declarePrivate('doPresent')
 
     def doPresent(self, stateChange):
@@ -427,9 +430,7 @@ class MeetingItemWorkflowActions:
         if not meeting:
             # find meetings accepting items in the future
             meeting = self.context.getMeetingToInsertIntoWhenNoCurrentMeetingObject()
-        tool = api.portal.get_tool('portal_plonemeeting')
-        forceNormal = bool(tool.readCookie('forceInsertNormal') == 'true')
-        meeting.insertItem(self.context, forceNormal=forceNormal)
+        meeting.insertItem(self.context, forceNormal=self._forceInsertNormal())
         # If the meeting is already frozen and this item is a "late" item,
         # I must set automatically the item to "itemfrozen".
         meetingState = meeting.queryState()

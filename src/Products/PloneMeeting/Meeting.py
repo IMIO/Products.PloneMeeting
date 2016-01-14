@@ -127,13 +127,8 @@ class MeetingWorkflowConditions:
     security.declarePublic('mayPublish')
 
     def mayPublish(self):
-        if not checkPermission(ReviewPortalContent, self.context):
-            return False
-        if not self.context.getRawItems():
-            return No(translate('item_required_to_publish',
-                                domain="PloneMeeting",
-                                context=self.context.REQUEST))
-        return True
+        if checkPermission(ReviewPortalContent, self.context):
+            return True
 
     security.declarePublic('mayPublishDecisions')
 
@@ -148,7 +143,8 @@ class MeetingWorkflowConditions:
     security.declarePublic('mayFreeze')
 
     def mayFreeze(self):
-        return self.mayPublish()
+        if checkPermission(ReviewPortalContent, self.context):
+            return True
 
     security.declarePublic('mayDecide')
 
@@ -1183,8 +1179,8 @@ class Meeting(BaseContent, BrowserDefaultMixin):
 
     def getBeforeFrozenStates_cachekey(method, self):
         '''cachekey method for self.getBeforeFrozenStates.'''
-        # do only recompute once by REQUEST
-        return (self, str(self.REQUEST._debug))
+        # do only compute one time
+        return True
 
     @ram.cache(getBeforeFrozenStates_cachekey)
     def getBeforeFrozenStates(self):
@@ -1223,8 +1219,8 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         # at another place than at the end.
         tool = getToolByName(self, 'portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        isLate = item.wfConditions().isLateFor(self)
-        if isLate and not forceNormal:
+        isLate = not forceNormal and item.wfConditions().isLateFor(self)
+        if isLate:
             item.setListType('late')
             toDiscussValue = cfg.getToDiscussLateDefault()
         else:

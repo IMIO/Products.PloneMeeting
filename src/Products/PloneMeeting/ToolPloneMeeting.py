@@ -1449,20 +1449,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         pass
 
-    security.declarePublic('readCookie')
-
-    def readCookie(self, key):
-        '''Returns the cookie value at p_key.'''
-        httpCookie = self.REQUEST.get('HTTP_COOKIE', '')
-        res = None
-        indexKey = httpCookie.find(key)
-        if indexKey != -1:
-            res = httpCookie[indexKey + len(key) + 1:]
-            sepIndex = res.find(';')
-            if sepIndex != -1:
-                res = res[:sepIndex]
-        return res
-
     security.declarePublic('addUser')
 
     def addUser(self, userData):

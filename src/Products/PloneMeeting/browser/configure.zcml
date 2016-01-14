@@ -3,7 +3,7 @@
     xmlns:browser="http://namespaces.zope.org/browser"
     xmlns:plone="http://namespaces.plone.org/plone">
 
-    <!-- Overriden Plone viewlets -->
+    <!-- Viewlets -->
     <browser:viewlet
         name="plone.belowcontenttitle.workflowstate"
         manager="plone.app.layout.viewlets.interfaces.IBelowContentTitle"
@@ -16,6 +16,13 @@
         manager="plone.app.layout.viewlets.interfaces.IBelowContentTitle"
         class=".viewlets.WorkflowState"
         for="Products.PloneMeeting.interfaces.IMeetingItem"
+        permission="zope2.View"
+        />
+    <browser:viewlet
+        for="Products.PloneMeeting.interfaces.IMeeting"
+        name="force-insert-normal"
+        manager="collective.eeafaceted.z3ctable.interfaces.IBottomAboveNavManager"
+        class=".viewlets.ForceInsertNormal"
         permission="zope2.View"
         />
 
