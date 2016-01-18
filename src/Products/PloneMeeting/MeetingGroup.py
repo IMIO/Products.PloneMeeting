@@ -22,6 +22,7 @@ from Products.Archetypes.atapi import LinesField
 from Products.Archetypes.atapi import MultiSelectionWidget
 from Products.Archetypes.atapi import registerType
 from Products.Archetypes.atapi import Schema
+from Products.Archetypes.atapi import SelectionWidget
 from Products.Archetypes.atapi import StringField
 from zope.interface import implements
 import interfaces
@@ -32,9 +33,6 @@ from Products.DataGridField import DataGridField
 from Products.DataGridField.Column import Column
 from Products.DataGridField.SelectColumn import SelectColumn
 
-##code-section module-header #fill in your manual code here
-import logging
-logger = logging.getLogger('PloneMeeting')
 from zope.i18n import translate
 from imio.helpers.cache import cleanVocabularyCacheFor
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
@@ -46,7 +44,6 @@ from Products.PloneMeeting.utils import getFieldContent
 from Products.PloneMeeting import PloneMeetingError
 from Products.PloneMeeting.profiles import GroupDescriptor
 defValues = GroupDescriptor.get()
-##/code-section module-header
 
 schema = Schema((
 
@@ -103,6 +100,22 @@ schema = Schema((
         ),
         multiValued=1,
         vocabulary='listItemStates',
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    StringField(
+        name='keepAccessToItemWhenAdviceIsGiven',
+        widget=SelectionWidget(
+            format="select",
+            description="KeepAccessToItemWhenAdviceIsGiven",
+            description_msgid="group_keep_access_to_item_when_advice_is_given_descr",
+            label='Keepaccesstoitemwhenadviceisgiven',
+            label_msgid='PloneMeeting_label_keepAccessToItemWhenAdviceIsGiven',
+            i18n_domain='PloneMeeting',
+        ),
+        enforceVocabulary=True,
+        vocabulary='listKeepAccessToItemWhenAdviceIsGiven',
+        default=defValues.keepAccessToItemWhenAdviceIsGiven,
+        required=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
@@ -216,7 +229,7 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
             res.append((str(number), str(number)))
         return DisplayList(tuple(res))
 
-    security.declarePublic('listItemStates')
+    security.declarePrivate('listItemStates')
 
     def listItemStates(self):
         '''Lists the states of the item workflow for each MeetingConfig.'''
@@ -231,6 +244,25 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
                 res.append(("%s__state__%s" % (cfgId, key),
                             "%s - %s" % (unicode(cfg.Title(), 'utf-8'), value)))
         return DisplayList(tuple(res)).sortedByValue()
+
+    security.declarePrivate('listKeepAccessToItemWhenAdviceIsGiven')
+
+    def listKeepAccessToItemWhenAdviceIsGiven(self):
+        '''Vocabulary for field keepAccessToItemWhenAdviceIsGiven.'''
+        res = [('',
+                translate('use_meetingconfig_value',
+                          domain='PloneMeeting',
+                          context=self.REQUEST)),
+               ('0',
+                translate('boolean_value_false',
+                          domain='PloneMeeting',
+                          context=self.REQUEST)),
+               ('1',
+                translate('boolean_value_true',
+                          domain='PloneMeeting',
+                          context=self.REQUEST)),
+               ]
+        return DisplayList(tuple(res))
 
     def getPloneGroupId(self, suffix):
         '''Returns the id of the Plone group that corresponds to me and
@@ -413,6 +445,25 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
             # if nothing redefined for given p_cfg in this MeetingGroup, use value defined on the cfg
             res = tmpres or cfg.getItemAdviceViewStates()
         return tuple(res)
+
+    security.declarePublic('getKeepAccessToItemWhenAdviceIsGiven')
+
+    def getKeepAccessToItemWhenAdviceIsGiven(self, cfg=None, **kwargs):
+        '''This is an overridden version of the Archetypes accessor for field
+           "keepAccessToItemWhenAdviceIsGiven". When called by Archetypes (with no arg), it
+           simply returns the content of field MeetingGroup.keepAccessToItemWhenAdviceIsGiven.
+           When called with a p_cfg (MeetingConfig), if MeetingGroup.keepAccessToItemWhenAdviceIsGiven
+           is '', we will use value defined in MeetingConfig.keepAccessToItemWhenAdviceIsGiven, else
+           we will return False if it is '0' and True if it is '1'.'''
+        res = self.getField('keepAccessToItemWhenAdviceIsGiven').get(self, **kwargs)
+        if cfg:
+            if not res:
+                res = cfg.getKeepAccessToItemWhenAdviceIsGiven()
+            elif res == '0':
+                res = False
+            else:
+                res = True
+        return res
 
     security.declarePublic('getCertifiedSignatures')
 

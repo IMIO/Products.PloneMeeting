@@ -3925,7 +3925,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     self.REQUEST.set('mayGiveAdvice', False)
                 # in case advice was not given or access to given advice is not kept,
                 # we are done with this one
-                if not (adviceObj and cfg.getKeepAccessToItemWhenAdviceIsGiven()):
+                if not (adviceObj and mGroup.getKeepAccessToItemWhenAdviceIsGiven(cfg)):
                     continue
 
             # give access to the item if adviser can see it

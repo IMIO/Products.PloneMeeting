@@ -164,7 +164,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEquals(data['advice_type'], u'positive')
         # regarding 'advice_group' value, only correct are the ones in the vocabulary
         # so using another will fail, for example, can not give an advice for another group
-        form.request.set('form.widgets.advice_group', self.portal.portal_plonemeeting.developers.getId())
+        form.request.set('form.widgets.advice_group', self.tool.developers.getId())
         data = form.extractData()[0]
         self.assertFalse('advice_group' in data)
         # we can use the values from the vocabulary
@@ -1725,10 +1725,8 @@ class testAdvices(PloneMeetingTestCase):
                            {'field_name': 'motivation', 'field_content': '<p>Item motivation</p>'},
                            {'field_name': 'decision', 'field_content': '<p>Another decision</p>'}])
 
-    def test_pm_KeepAccessToItemWhenAdviceIsGiven(self):
-        """Test when MeetingConfig.keepAccessToItemWhenAdviceIsGiven is True,
-           access to the item is kept if advice was given no matter the item is
-           in a state where it should not be anymore."""
+    def _setupKeepAccessToItemWhenAdviceIsGiven(self):
+        """Setup for testing aroung 'keepAccessToItemWhenAdviceIsGiven'."""
         # classic scenario is an item visible by advisers when it is 'proposed'
         # and no more when it goes back to 'itemcreated'
         cfg = self.meetingConfig
@@ -1741,21 +1739,39 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         data = {
             'title': 'Item to advice',
-            'optionalAdvisers': ('vendors', ),
+            'optionalAdvisers': ('vendors', 'developers'),
             'description': '<p>Item description</p>',
         }
         item = self.create('MeetingItem', **data)
         self.proposeItem(item)
         # give advice
         self.changeUser('pmReviewer2')
-        advice = createContentInContainer(item,
-                                          'meetingadvice',
-                                          **{'advice_group': 'vendors',
-                                             'advice_type': u'positive',
-                                             'advice_hide_during_redaction': False,
-                                             'advice_comment': RichTextValue(u'My comment')})
+        vendors_advice = createContentInContainer(item,
+                                                  'meetingadvice',
+                                                  **{'advice_group': 'vendors',
+                                                     'advice_type': u'positive',
+                                                     'advice_hide_during_redaction': False,
+                                                     'advice_comment': RichTextValue(u'My comment')})
+        self.changeUser('pmAdviser1')
+        developers_advice = createContentInContainer(item,
+                                                     'meetingadvice',
+                                                     **{'advice_group': 'developers',
+                                                        'advice_type': u'positive',
+                                                        'advice_hide_during_redaction': False,
+                                                        'advice_comment': RichTextValue(u'My comment')})
+        return item, vendors_advice, developers_advice
+
+    def test_pm_KeepAccessToItemWhenAdviceIsGiven(self):
+        """Test when MeetingConfig.keepAccessToItemWhenAdviceIsGiven is True,
+           access to the item is kept if advice was given no matter the item is
+           in a state where it should not be anymore."""
+
+        cfg = self.meetingConfig
+        item, vendors_advice, developers_advice = self._setupKeepAccessToItemWhenAdviceIsGiven()
 
         # set item back to 'itemcreated', it will not be visible anymore by advisers
+        self.changeUser('pmReviewer2')
+        self.assertFalse(cfg.getKeepAccessToItemWhenAdviceIsGiven())
         self.backToState(item, self.WF_STATE_NAME_MAPPINGS['itemcreated'])
         self.assertFalse(self.hasPermission(View, item))
 
@@ -1765,8 +1781,53 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(View, item))
 
         # access is only kept if advice was given
-        self.deleteAsManager(advice.UID())
+        self.deleteAsManager(vendors_advice.UID())
         self.assertFalse(self.hasPermission(View, item))
+
+    def test_pm_MeetingGroupDefinedKeepAccessToItemWhenAdviceIsGivenOverridesMeetingConfigValues(self):
+        '''MeetingGroup.keepAccessToItemWhenAdviceIsGiven will use or override the MeetingConfig value.'''
+        cfg = self.meetingConfig
+        item, vendors_advice, developers_advice = self._setupKeepAccessToItemWhenAdviceIsGiven()
+        vendors = self.tool.vendors
+        developers = self.tool.developers
+
+        # by default, the MeetingConfig value is used
+        self.changeUser('pmReviewer2')
+        self.assertEquals(vendors.getKeepAccessToItemWhenAdviceIsGiven(), '')
+        self.assertFalse(cfg.getKeepAccessToItemWhenAdviceIsGiven())
+        self.backToState(item, self.WF_STATE_NAME_MAPPINGS['itemcreated'])
+        self.assertFalse(self.hasPermission(View, item))
+
+        # override MeetingConfig value
+        vendors.setKeepAccessToItemWhenAdviceIsGiven('1')
+        item.updateLocalRoles()
+        self.assertTrue(self.hasPermission(View, item))
+
+        # this does not interact with other given advices
+        self.changeUser('pmAdviser1')
+        self.assertEquals(developers.getKeepAccessToItemWhenAdviceIsGiven(), '')
+        self.assertFalse(self.hasPermission(View, item))
+
+        # override the other way round
+        self.changeUser('pmReviewer2')
+        vendors.setKeepAccessToItemWhenAdviceIsGiven('')
+        cfg.setKeepAccessToItemWhenAdviceIsGiven(True)
+        item.updateLocalRoles()
+        self.assertTrue(self.hasPermission(View, item))
+
+        # use MeetingConfig value that is True
+        self.changeUser('pmAdviser1')
+        self.assertTrue(self.hasPermission(View, item))
+
+        # force disable keep access
+        self.changeUser('pmReviewer2')
+        vendors.setKeepAccessToItemWhenAdviceIsGiven('0')
+        item.updateLocalRoles()
+        self.assertFalse(self.hasPermission(View, item))
+
+        # this does not interact with other given advices, still using MeetingConfig value
+        self.changeUser('pmAdviser1')
+        self.assertTrue(self.hasPermission(View, item))
 
 
 def test_suite():

@@ -209,6 +209,7 @@ class GroupDescriptor(Descriptor):
         self.itemAdviceStates = []
         self.itemAdviceEditStates = []
         self.itemAdviceViewStates = []
+        self.keepAccessToItemWhenAdviceIsGiven = ''
         self.asCopyGroupOn = asCopyGroupOn
         self.certifiedSignatures = []
         # Add lists of users (observers, reviewers, etc) ~[UserDescriptor]~
