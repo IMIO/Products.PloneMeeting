@@ -59,11 +59,6 @@ class Migrator(BaseMigrator):
         for defaultHoliday in defaultHolidays:
             if not defaultHoliday in currentHolidays:
                 storedHolidays.append({'date': defaultHoliday})
-            else:
-                # if we found a holiday that is already defined
-                # it is that we already updated this or that the siteadmin
-                # already updated it manually, we break...
-                break
         self.tool.setHolidays(storedHolidays)
         logger.info('Done.')
 
