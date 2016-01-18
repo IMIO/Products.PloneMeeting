@@ -3923,7 +3923,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     wf_comment = _('wf_transition_triggered_by_application')
                     wfTool.doActionFor(adviceObj, 'giveAdvice', comment=wf_comment)
                     self.REQUEST.set('mayGiveAdvice', False)
-                continue
+                # in case advice was not given or access to given advice is not kept,
+                # we are done with this one
+                if not (adviceObj and cfg.getKeepAccessToItemWhenAdviceIsGiven()):
+                    continue
 
             # give access to the item if adviser can see it
             if self.adapted()._itemToAdviceIsViewable(groupId):

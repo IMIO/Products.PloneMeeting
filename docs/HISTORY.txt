@@ -168,6 +168,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   Holidays will now be updated for the 2 next years to avoid problems where holydays are updated too late.
   Added a collective.messagesviewlet warning message that is displayed to MeetingManagers if last defined holiday
   is in less than 60 days
+- Added parameter MeetingConfig.keepAccessToItemWhenAdviceIsGiven, if set to True, the advisers of an advice that was
+  given on an item will keep read access to the item, no matter the state in which the item is set thereafter
 
 3.3 (2015-02-27)
 ----------------

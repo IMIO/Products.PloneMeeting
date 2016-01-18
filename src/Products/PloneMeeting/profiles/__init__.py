@@ -494,6 +494,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.defaultAdviceHiddenDuringRedaction = False
         self.transitionReinitializingDelays = ''
         self.historizeItemDataWhenAdviceIsGiven = True
+        self.keepAccessToItemWhenAdviceIsGiven = False
         self.customAdvisers = []
 
         # Votes parameters -----------------------------------------------------

@@ -565,22 +565,23 @@ def migrate(context):
 
        1) Reinstall PloneMeeting and upgrade dependencies;
        2) Clean registries;
-       3) Update MeetingConfig.itemsListVisibleFields stored values;
-       4) Migrate late items;
-       5) Move to imio.dashboard;
-       6) Clean pm_modification_date on items and annexes;
-       7) Move item templates and recurring items to their own portal_type;
-       8) Make sure no layout is defined on users MeetingFolders;
-       9) Move to collective.documentgenerator;
-       10) Adapt every items itemNumber;
-       11) Adapt every configs itemReferenceFormat;
-       12) Clean MeetingConfigs from unused attributes;
-       13) Clean MeetingUsers from unused attributes;
-       14) Reindex annexIndex;
-       15) Reindex adviceIndex;
-       16) Init new HTML fields;
-       17) Update MeetingConfig.enableAnnexToPrint attribute;
-       18) Refresh catalogs.
+       3) Update holidays defined on portal_plonemeeting;
+       4) Update MeetingConfig.itemsListVisibleFields stored values;
+       5) Migrate late items;
+       6) Move to imio.dashboard;
+       7) Clean pm_modification_date on items and annexes;
+       8) Move item templates and recurring items to their own portal_type;
+       9) Make sure no layout is defined on users MeetingFolders;
+       10) Move to collective.documentgenerator;
+       11) Adapt every items itemNumber;
+       12) Adapt every configs itemReferenceFormat;
+       13) Clean MeetingConfigs from unused attributes;
+       14) Clean MeetingUsers from unused attributes;
+       15) Reindex annexIndex;
+       16) Reindex adviceIndex;
+       17) Init new HTML fields;
+       18) Update MeetingConfig.enableAnnexToPrint attribute;
+       19) Refresh catalogs.
     '''
     migrator = Migrate_To_3_4(context)
     migrator.run()

@@ -751,6 +751,12 @@
           <td tal:define="field python:here.getField('useAdvices')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
+          <td tal:define="field python:here.getField('usedAdviceTypes')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td tal:define="field python:here.getField('defaultAdviceType')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
         </tr>
         <tr valign="top">
           <td width="34%" tal:define="field python:here.getField('itemAdviceStates')">
@@ -764,24 +770,24 @@
           </td>
         </tr>
         <tr valign="top">
-          <td tal:define="field python:here.getField('usedAdviceTypes')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
-          <td tal:define="field python:here.getField('defaultAdviceType')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
           <td tal:define="field python:here.getField('enforceAdviceMandatoriness')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-        <tr valign="top">
           <td tal:define="field python:here.getField('enableAdviceInvalidation')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <td tal:define="field python:here.getField('itemAdviceInvalidateStates')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
+        </tr>
+        <tr valign="top">
           <td tal:define="field python:here.getField('adviceStyle')">
             <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td tal:define="field python:here.getField('keepAccessToItemWhenAdviceIsGiven')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td>
           </td>
         </tr>
         <tr valign="top">

@@ -1725,6 +1725,49 @@ class testAdvices(PloneMeetingTestCase):
                            {'field_name': 'motivation', 'field_content': '<p>Item motivation</p>'},
                            {'field_name': 'decision', 'field_content': '<p>Another decision</p>'}])
 
+    def test_pm_KeepAccessToItemWhenAdviceIsGiven(self):
+        """Test when MeetingConfig.keepAccessToItemWhenAdviceIsGiven is True,
+           access to the item is kept if advice was given no matter the item is
+           in a state where it should not be anymore."""
+        # classic scenario is an item visible by advisers when it is 'proposed'
+        # and no more when it goes back to 'itemcreated'
+        cfg = self.meetingConfig
+        cfg.setItemAdviceStates([self.WF_STATE_NAME_MAPPINGS['proposed'], ])
+        cfg.setItemAdviceEditStates([self.WF_STATE_NAME_MAPPINGS['proposed'], ])
+        cfg.setItemAdviceViewStates([self.WF_STATE_NAME_MAPPINGS['proposed'], ])
+        cfg.setKeepAccessToItemWhenAdviceIsGiven(False)
+
+        # create an item, set it to 'proposed', give advice and set it back to 'itemcreated'
+        self.changeUser('pmCreator1')
+        data = {
+            'title': 'Item to advice',
+            'optionalAdvisers': ('vendors', ),
+            'description': '<p>Item description</p>',
+        }
+        item = self.create('MeetingItem', **data)
+        self.proposeItem(item)
+        # give advice
+        self.changeUser('pmReviewer2')
+        advice = createContentInContainer(item,
+                                          'meetingadvice',
+                                          **{'advice_group': 'vendors',
+                                             'advice_type': u'positive',
+                                             'advice_hide_during_redaction': False,
+                                             'advice_comment': RichTextValue(u'My comment')})
+
+        # set item back to 'itemcreated', it will not be visible anymore by advisers
+        self.backToState(item, self.WF_STATE_NAME_MAPPINGS['itemcreated'])
+        self.assertFalse(self.hasPermission(View, item))
+
+        # activate keepAccessToItemWhenAdviceIsGiven, then item is visible again
+        cfg.setKeepAccessToItemWhenAdviceIsGiven(True)
+        item.updateLocalRoles()
+        self.assertTrue(self.hasPermission(View, item))
+
+        # access is only kept if advice was given
+        self.deleteAsManager(advice.UID())
+        self.assertFalse(self.hasPermission(View, item))
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
