@@ -532,17 +532,31 @@ class PloneMeetingConfiguration(Descriptor):
         self.enableUserPreferences = False
         self.enableAnnexPreview = False
         self.workingDays = ('mon', 'tue', 'wed', 'thu', 'fri')
-        self.holidays = [{'date': '2015/01/01', },
-                         {'date': '2015/04/06', },
-                         {'date': '2015/05/01', },
-                         {'date': '2015/05/14', },
-                         {'date': '2015/05/25', },
-                         {'date': '2015/07/21', },
-                         {'date': '2015/08/15', },
-                         {'date': '2015/09/27', },
-                         {'date': '2015/11/01', },
-                         {'date': '2015/11/11', },
-                         {'date': '2015/12/25', }]
+        self.holidays = [{'date': '2016/01/01', },  # 2016
+                         {'date': '2016/03/28', },
+                         {'date': '2016/05/01', },
+                         {'date': '2016/05/05', },
+                         {'date': '2016/05/16', },
+                         {'date': '2016/07/21', },
+                         {'date': '2016/08/15', },
+                         {'date': '2016/09/27', },
+                         {'date': '2016/11/01', },
+                         {'date': '2016/11/11', },
+                         {'date': '2016/11/15', },
+                         {'date': '2016/12/25', },
+
+                         {'date': '2017/01/01', },  # 2017
+                         {'date': '2017/04/17', },
+                         {'date': '2017/05/01', },
+                         {'date': '2017/05/25', },
+                         {'date': '2017/06/05', },
+                         {'date': '2017/07/21', },
+                         {'date': '2017/08/15', },
+                         {'date': '2017/09/27', },
+                         {'date': '2017/11/01', },
+                         {'date': '2017/11/11', },
+                         {'date': '2017/11/15', },
+                         {'date': '2017/12/25', }]
         self.delayUnavailableEndDays = ()
         self.meetingConfigs = meetingConfigs  # ~[MeetingConfigDescriptor]~
         self.groups = groups  # ~[GroupDescriptor]~

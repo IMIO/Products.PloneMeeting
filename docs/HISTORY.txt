@@ -12,7 +12,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Moved to Plone 4.3.7
 - Moved to collective.ckeditor 4.3.2
 - Moved to collective.documentviewer 3.0.3
-- Rely on beautifulsoup4, Products.CPUtils
+- Rely on beautifulsoup4, Products.CPUtils, collective.messagesviewlet
 - Get rid of ArchGenXML, just use it for workflows generation
 - Replaced own PODTemplate by the ConfigurablePODTemplate of collective.documentgenerator, removed appy.pod
   parameters from portal_plonemeeting and use the collective.documentgenerator control panel. Added back
@@ -164,6 +164,10 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   inserted as a normal item
 - Removed condition that a meeting needed to contain items to be frozen,
   a meeting may now be frozen no matter it contains items or not
+- Added method 'updateHolidays' on the Migrator to be able to easily update holidays.
+  Holidays will now be updated for the 2 next years to avoid problems where holydays are updated too late.
+  Added a collective.messagesviewlet warning message that is displayed to MeetingManagers if last defined holiday
+  is in less than 60 days
 
 3.3 (2015-02-27)
 ----------------

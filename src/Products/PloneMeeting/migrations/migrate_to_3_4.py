@@ -536,6 +536,7 @@ class Migrate_To_3_4(Migrator):
         self.reinstall(profiles=[self.profile_name, ])
         self.upgradeDependencies()
         self.cleanRegistries()
+        self.updateHolidays()
         self._updateItemsListVisibleFields()
         self._migrateLateItems()
         self._adaptAppForImioDashboard()

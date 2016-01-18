@@ -615,6 +615,27 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertEquals(self.tool.formatMeetingDate(meeting, short=True, withHour=True, prefixed=True),
                           u'Meeting of 05/05/2015 (14:30)')
 
+    def test_pm_showHolidaysWarning(self):
+        """Method that shows the 'warning holidays' message."""
+        # only available to MeetingManagers if last defined holidays is < 60 days in the future
+        self.changeUser('pmManager')
+
+        # working for now
+        self.assertFalse(self.tool.showHolidaysWarning(self.portal))
+
+        # make message shows
+        self.tool.setHolidays([{'date': (DateTime() + 59).strftime('%y/%m/%d')}])
+        self.assertTrue(self.tool.showHolidaysWarning(self.tool))
+
+        # not shown if not a MeetingManager
+        self.changeUser('pmCreator1')
+        self.assertFalse(self.tool.showHolidaysWarning(self.tool))
+
+        # not shown if last defined holiday is in more than 60 days
+        self.changeUser('pmManager')
+        self.tool.setHolidays([{'date': (DateTime() + 61).strftime('%Y/%m/%d')}])
+        self.assertFalse(self.tool.showHolidaysWarning(self.tool))
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

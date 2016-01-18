@@ -48,6 +48,25 @@ class Migrator(BaseMigrator):
         for profile_name in profile_names:
             self.upgradeProfile(profile_name)
 
+    def updateHolidays(self):
+        '''Update holidays using default holidays.'''
+        logger.info('Updating holidays...')
+        from Products.PloneMeeting.profiles import PloneMeetingConfiguration
+        defaultPMConfig = PloneMeetingConfiguration('', '', '')
+        defaultHolidays = [holiday['date'] for holiday in defaultPMConfig.holidays]
+        currentHolidays = [holiday['date'] for holiday in self.tool.getHolidays()]
+        storedHolidays = list(self.tool.getHolidays())
+        for defaultHoliday in defaultHolidays:
+            if not defaultHoliday in currentHolidays:
+                storedHolidays.append({'date': defaultHoliday})
+            else:
+                # if we found a holiday that is already defined
+                # it is that we already updated this or that the siteadmin
+                # already updated it manually, we break...
+                break
+        self.tool.setHolidays(storedHolidays)
+        logger.info('Done.')
+
     def run(self):
         '''Must be overridden. This method does the migration job.'''
         raise 'You should have overridden me darling.'''

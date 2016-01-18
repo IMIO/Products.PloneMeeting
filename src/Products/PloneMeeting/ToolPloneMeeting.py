@@ -1799,5 +1799,14 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 res.append(name.strip())
         return res
 
+    def showHolidaysWarning(self, context):
+        """Condition for showing the 'holidays_waring_message'."""
+        holidays = self.getHolidays()
+        # if user isManager and last defined holiday is in less than 60 days, display warning
+        if self.isManager(context) and \
+           (not holidays or DateTime(holidays[-1]['date']) < DateTime() + 60):
+            return True
+        return False
+
 
 registerType(ToolPloneMeeting, PROJECTNAME)

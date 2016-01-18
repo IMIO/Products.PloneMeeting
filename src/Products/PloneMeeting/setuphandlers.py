@@ -21,6 +21,7 @@ from zope.component import queryUtility
 from zope.i18n import translate
 from Products.CMFPlacefulWorkflow.PlacefulWorkflowTool import WorkflowPolicyConfig_id
 from plone import api
+from collective.messagesviewlet.utils import add_message
 from Products.cron4plone.browser.configlets.cron_configuration import ICronConfiguration
 from Products.CPUtils.Extensions.utils import configure_ckeditor
 from Products.PloneMeeting import PMMessageFactory as _
@@ -304,6 +305,21 @@ def postInstall(context):
     if not cron_configlet.cronjobs:
         # add a cron job that will be launched at 00:00
         cron_configlet.cronjobs = [u'0 0 * * portal/@@update-delay-aware-advices']
+
+    # add a collective.messagesviewlet message that will be used to warn MeetingManagers
+    # that there are no more holidays in the configuration in less that 2 months
+    messages_config = site.get('messages-config', None)
+    if messages_config and not 'holidays_warning' in messages_config.objectIds():
+        add_message(id='holidays_warning',
+                    title=translate('Holidays warning (do not delete!)',
+                                    domain='PloneMeeting',
+                                    context=site.REQUEST),
+                    text=translate('holidays_warning_message',
+                                   domain='PloneMeeting',
+                                   context=site.REQUEST),
+                    msg_type='significant',
+                    tal_condition='python: context.portal_plonemeeting.showHolidaysWarning(context)',
+                    activate=True)
 
 
 ##code-section FOOT
