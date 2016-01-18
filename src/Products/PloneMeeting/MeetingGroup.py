@@ -115,7 +115,6 @@ schema = Schema((
         enforceVocabulary=True,
         vocabulary='listKeepAccessToItemWhenAdviceIsGiven',
         default=defValues.keepAccessToItemWhenAdviceIsGiven,
-        required=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
