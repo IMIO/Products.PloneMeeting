@@ -7,7 +7,7 @@ from plone.memoize.instance import memoize
 from plone.app.portlets.portlets import base
 from plone.portlets.interfaces import IPortletDataProvider
 
-from Products.CMFCore.utils import getToolByName
+from plone import api
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 
 from collective.behavior.talcondition.interfaces import ITALConditionable
@@ -61,7 +61,7 @@ class Renderer(base.Renderer, FacetedRenderer):
 
         portal_state = getMultiAdapter((self.context, self.request), name=u'plone_portal_state')
         self.portal = portal_state.portal()
-        self.tool = getToolByName(self.context, 'portal_plonemeeting')
+        self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
 
     @property
@@ -93,6 +93,10 @@ class Renderer(base.Renderer, FacetedRenderer):
         res = []
         if not self.cfg:
             return res
+        member = api.user.get_current()
+        data = {'member': member,
+                'tool': self.tool,
+                'cfg': self.cfg}
 
         # add a special key in the REQUEST specifying that we are querying
         # available searches from the portlet_todo, this way, we can use a different
@@ -101,7 +105,8 @@ class Renderer(base.Renderer, FacetedRenderer):
         self.request.set('fromPortletTodo', True)
         for search in self.cfg.getToDoListSearches():
             if ITALConditionable.providedBy(search):
-                if not evaluateExpressionFor(search):
+                data.update({'obj': search})
+                if not evaluateExpressionFor(search, extra_expr_ctx=data):
                     continue
             res.append(search)
         self.request.set('fromPortletTodo', False)
