@@ -850,20 +850,21 @@ $(document).ready(function () {
 
 budgetRelated = $('input#budgetRelated')
 if (budgetRelated.length) {
-budgetInfos = $('#archetypes-fieldname-budgetInfos');
-if (!budgetRelated[0].checked) {
-  budgetInfos.hide();
-}
-
-budgetRelated.on('click', function() {
-  if (this.checked) {
-    budgetInfos.hide().fadeIn("fast");
+  budgetInfos = $('#archetypes-fieldname-budgetInfos');
+  if (!budgetRelated[0].checked) {
+    budgetInfos.hide();
   }
-  else {
-    budgetInfos.fadeOut("fast", function() {
-    $(this).hide();
+
+  budgetRelated.on('click', function() {
+    if (this.checked) {
+      budgetInfos.hide().fadeIn("fast");
+    }
+    else {
+      budgetInfos.fadeOut("fast", function() {
+      $(this).hide();
+    });
+  };
   });
-};});
 
 }
 
