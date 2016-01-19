@@ -821,7 +821,7 @@ table.listing th.th_header_privacy {
     width: 60px;
 }
 table.listing th.th_header_advices {
-    min-width: 50px;
+    min-width: 56px;
     width: auto;
 }
 

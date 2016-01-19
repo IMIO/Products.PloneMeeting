@@ -6,7 +6,7 @@
       <tal:comment replace="nothing">In the following "td"s, keep all tags as is: if you add spaces
          or carriage returns, the DOM tree created by Firefox will add additional nodes and some
          Javascript expressions will fail.</tal:comment>
-      <td><input type="text" size="3" name="moveValue"
+      <td><input type="text" size="2" name="moveValue"
                  tal:attributes="id string:value_moveAction_${itemNumber};
                                  class python: view.is_integer(context.getItemNumber()) and 'number' or 'subnumber';
                                  value itemNumber;
