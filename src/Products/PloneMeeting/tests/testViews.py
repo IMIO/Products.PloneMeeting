@@ -255,7 +255,10 @@ class testViews(PloneMeetingTestCase):
         self.assertTrue(not catalog(**query))
 
         # no delay-aware advice
-        itemWithNonDelayAwareAdvices = self.create('MeetingItem', **{'budgetRelated': True})
+        itemWithNonDelayAwareAdvices = self.create('MeetingItem')
+        itemWithNonDelayAwareAdvices.setBudgetRelated(True)
+        itemWithNonDelayAwareAdvices.at_post_edit_script()
+
         # the automatic advice has been added
         self.assertTrue(itemWithNonDelayAwareAdvices.adviceIndex['vendors']['optional'] is False)
         itemWithNonDelayAwareAdvices.setOptionalAdvisers(('developers', ))
