@@ -567,6 +567,8 @@ schema = Schema((
             label_msgid='PloneMeeting_label_budgetRelated',
             i18n_domain='PloneMeeting',
         ),
+        read_permission="PloneMeeting: Read budget infos",
+        write_permission="PloneMeeting: Write budget infos",
     ),
     TextField(
         name='budgetInfos',

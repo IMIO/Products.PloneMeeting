@@ -139,37 +139,9 @@
     </table>
 
     <tal:comment replace="nothing">Budget-related information</tal:comment>
-    <tal:budget define="cbChecked  python: (request.get('budgetRelated',None)==True) or context.getBudgetRelated()"
-                condition="python: 'budgetInfos' in usedAttrs">
-    <script language="javascript">
-      function toggleBudgetInfo(checkbox) {
-        var budgetField = $('#budgetField');
-        if (checkbox.checked) {
-            budgetField.fadeIn();
-        }
-        else {
-            budgetField.fadeOut("normal", function() {
-                $(this).hide();
-            });
-        };
-      }
-    </script>
-    <div id="archetypes-fieldname-budgetRelated" class="field ArchetypesBooleanWidget"
-         tal:define="brField python: here.getField('budgetRelated')">
-      <input type="checkbox" id="budgetRelated" name="budgetRelated:boolean" value="on" class="noborder"
-             onclick="javascript:toggleBudgetInfo(this)" tal:attributes="checked cbChecked"/>
-      <input type="hidden" name="budgetRelated:boolean:default" value="" originalvalue=""/>
-      <label for="budgetRelated" class="formQuestion" i18n:domain="PloneMeeting"
-             tal:content="brField/widget/label_msgid" i18n:translate=""></label>
-      <br/>
-    </div>
-    <div id="budgetField" name="budgetField"
-         tal:attributes="style python:test(cbChecked, 'display: block', 'display: none')">
-      <metal:field use-macro="python:here.widget('budgetInfos', mode='edit')"/>
-      <br/>
-    </div>
-    </tal:budget>
-
+    <metal:field use-macro="python:here.widget('budgetRelated', mode='edit')"/>
+    <metal:field use-macro="python:here.widget('budgetInfos', mode='edit')"/>
+ 
     <metal:field use-macro="python:here.widget('oralQuestion', mode='edit')"/>
     <metal:field use-macro="python:here.widget('itemInitiator', mode='edit')"/>
 

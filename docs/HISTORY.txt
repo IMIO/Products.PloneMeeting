@@ -172,6 +172,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   given on an item will keep read access to the item, no matter the state in which the item is set thereafter.
   MeetingGroup.keepAccessToItemWhenAdviceIsGiven is also available so the value of the meetingConfig may be overrided
   for a given MeetingGroup
+- Reworked MeetingItem.budgetRelated/MeetingItem.budgetInfos fields displayed in the meetingitem_edit form, fields
+  are displayed like other, MeetingItem.budgetRelated now use and respect the 'PloneMeeting: Read budget infos' and
+  'PloneMeeting: Write budget infos' permissions and the hide/show javascript is moved to plonemeeting.js
 
 3.3 (2015-02-27)
 ----------------
