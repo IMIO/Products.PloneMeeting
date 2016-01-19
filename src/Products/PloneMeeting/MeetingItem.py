@@ -3750,7 +3750,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # here, there are still no 'Reader' access for advisers to the item
             # make sure the automatic advisers (where a TAL expression is evaluated)
             # may access the item correctly
-            with api.env.adopt_roles(['Reader', ]):
+            with api.env.adopt_roles(['Manager', ]):
                 automaticAdvisers = self.getAutomaticAdvisers()
         # get formatted optionalAdvisers to be coherent with automaticAdvisers data format
         optionalAdvisers = self.getOptionalAdvisersData()
