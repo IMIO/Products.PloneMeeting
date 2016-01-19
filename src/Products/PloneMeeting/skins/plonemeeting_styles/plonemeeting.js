@@ -844,6 +844,8 @@ function changeForceInsertNormalCookie(input) {
   }
 }
 
+// manage the item 'budgetRelated' and 'budgetInfos' fields hide/show
+// functionnality when displayed on the meetingitem_edit form
 $(document).ready(function () {
 
 budgetRelated = $('input#budgetRelated')
