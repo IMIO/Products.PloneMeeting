@@ -1284,15 +1284,7 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmManager')
         self.assertTrue(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']) ==
                         [('unique_id_456', '10', u''), ('unique_id_789', '20', u'')])
-        # but only if no 'delay_stopped_on' date is defined
-        self.assertTrue(item.adviceIndex['vendors']['delay_stopped_on'] is None)
-        # now validate the item, it will not be editable anymore so a 'delay_stopped_on' date is defined
-        self.validateItem(item)
-        self.assertTrue(isinstance(item.adviceIndex['vendors']['delay_stopped_on'], datetime))
-        # even a MeetingManager can no more change delay of a 'delay_stopped_on' advice
-        self.assertTrue(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']) == [])
-
-        # ok, back to proposed and test the 'available_on' behaviour
+        # test the 'available_on' behaviour
         self.backToState(item, self.WF_STATE_NAME_MAPPINGS['proposed'])
         self.assertTrue(item.adviceIndex['vendors']['delay_stopped_on'] is None)
         self.assertTrue(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']) ==

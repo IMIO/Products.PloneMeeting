@@ -37,9 +37,7 @@ class AdviceDelaysView(BrowserView):
            The rule managed here is :
            - An optional (not isAutomatic) advice can be edited if the user,
              has the 'PloneMeeting: Write optional advisers' permission on the item;
-           - An automatic advice delay can only be edited by Managers (and MeetingManagers);
-           - In both cases (isAutomatic or not) the delay can be changed only if the advice has still
-             never be giveable or is currently giveable, but no more when the advice is no more giveable.'''
+           - An automatic advice delay can only be edited by Managers (and MeetingManagers).'''
         # advice is not automatic, the user must have 'PloneMeeting: Write optional advisers' permission
         if not isAutomatic:
             if not checkPermission('PloneMeeting: Write optional advisers', self.context):
@@ -50,10 +48,7 @@ class AdviceDelaysView(BrowserView):
             tool = getToolByName(self.context, 'portal_plonemeeting')
             if not tool.isManager(self.context) or not checkPermission('Modify portal content', self.context):
                 return False
-        # we can not change delay for an advice that is no more giveable,
-        # aka for wich a delay_stopped_on date is defined
-        if self.context.adviceIndex[self.advice['id']]['delay_stopped_on']:
-            return False
+
         return True
 
     def _availableDelays(self, linkedRows, row_id):
