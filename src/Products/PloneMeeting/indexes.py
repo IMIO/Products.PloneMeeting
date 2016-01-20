@@ -7,6 +7,8 @@
 # GNU General Public License (GPL)
 #
 
+from DateTime import DateTime
+
 from OFS.interfaces import IItem
 
 from plone.indexer import indexer
@@ -116,6 +118,8 @@ def linkedMeetingDate(obj):
     meeting = obj.getMeeting()
     if meeting:
         res = meeting.getDate()
+    else:
+        res = DateTime('1950/01/01')
     return res or _marker
 
 
@@ -131,6 +135,8 @@ def getPreferredMeetingDate(obj):
         # if we clear and rebuild the portal_catalog, preferredMeetingUID will not be found...
         uid_catalog = getToolByName(obj, 'uid_catalog')
         res = uid_catalog(UID=preferredMeetingUID)[0].getObject().getDate()
+    else:
+        res = DateTime('1950/01/01')
     return res or _marker
 
 

@@ -1719,15 +1719,19 @@ class testMeeting(PloneMeetingTestCase):
         self.assertEquals(meeting.getStrikedAssembly(),
                           '<p class="mltAssembly">Assembly with <strike>striked</strike> part</p>')
 
-    def test_pm_ChaningMeetingDateUpdateLinkedItemsMeetingDateMetadata(self):
+    def test_pm_ChangingMeetingDateUpdateLinkedItemsMeetingDateMetadata(self):
         """When the date of a meeting is changed, the linked items are reindexed,
            regarding the preferredMeetingDate and linkedMeetingDate."""
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=DateTime())
         item = self.create('MeetingItem')
+        catalog = self.portal.portal_catalog
+        itemBrain = catalog(UID=item.UID())[0]
+        # by default, if no preferred/linked meeting, the date is '1950/01/01'
+        self.assertEquals(itemBrain.linkedMeetingDate, DateTime('1950/01/01'))
+        self.assertEquals(itemBrain.getPreferredMeetingDate, DateTime('1950/01/01'))
         item.setPreferredMeeting(meeting.UID())
         self.presentItem(item)
-        catalog = self.portal.portal_catalog
         itemBrain = catalog(UID=item.UID())[0]
         self.assertEquals(itemBrain.linkedMeetingDate, meeting.getDate())
         self.assertEquals(itemBrain.getPreferredMeetingDate, meeting.getDate())
@@ -1738,6 +1742,21 @@ class testMeeting(PloneMeetingTestCase):
         itemBrain = catalog(UID=item.UID())[0]
         self.assertEquals(itemBrain.linkedMeetingDate, meeting.getDate())
         self.assertEquals(itemBrain.getPreferredMeetingDate, meeting.getDate())
+
+        # if item is removed from the meeting, it falls back to 1950
+        self.do(item, 'backToValidated')
+        self.assertEquals(item.queryState(), 'validated')
+        itemBrain = catalog(UID=item.UID())[0]
+        self.assertEquals(itemBrain.linkedMeetingDate, DateTime('1950/01/01'))
+        # preferredMeetingDate is still the meetingDate
+        self.assertEquals(itemBrain.getPreferredMeetingDate, meeting.getDate())
+
+        # when a meeting is removed, preferredMeetingDate is updated on items
+        self.deleteAsManager(meeting.UID())
+        self.assertEquals(item.getPreferredMeeting(), ITEM_NO_PREFERRED_MEETING_VALUE)
+        itemBrain = catalog(UID=item.UID())[0]
+        self.assertEquals(itemBrain.linkedMeetingDate, DateTime('1950/01/01'))
+        self.assertEquals(itemBrain.getPreferredMeetingDate, DateTime('1950/01/01'))
 
     def test_pm_GetFirstItemNumberIgnoresSubnumbers(self):
         """When computing the firstItemNumber of a meeting,
