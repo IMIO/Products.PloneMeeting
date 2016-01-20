@@ -175,7 +175,7 @@ class AdviceChangeDelayView(BrowserView):
             history_data = {'action': (currentAdviceData['delay'], newAdviceData['delay']),
                             'actor': member.getId(),
                             'time': DateTime(),
-                            'comment': self.request.get('comment', '')}
+                            'comments': self.request.get('comment', '')}
             self.context.adviceIndex[currentAdviceData['group']]['delay_changes_history'].append(history_data)
             self.request.response.redirect(self.context.absolute_url() + '/#adviceAndAnnexes')
         return self.index()

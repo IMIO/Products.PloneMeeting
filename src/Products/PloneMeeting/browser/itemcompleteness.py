@@ -83,7 +83,7 @@ class ChangeItemCompletenessView(BrowserView):
         history_data = {'action': new_completeness_value,
                         'actor': member.getId(),
                         'time': DateTime(),
-                        'comment': comment}
+                        'comments': comment}
         self.context.completeness_changes_history.append(history_data)
         self.context.reindexObject(idxs=['getCompleteness', ])
 

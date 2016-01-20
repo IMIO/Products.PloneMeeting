@@ -72,7 +72,7 @@ class ChangeItemEmergencyView(BrowserView):
             history_data = {'action': new_emergency_value,
                             'actor': member.getId(),
                             'time': DateTime(),
-                            'comment': self.request.get('comment', '')}
+                            'comments': self.request.get('comment', '')}
             self.context.emergency_changes_history.append(history_data)
             # update item
             self.context.at_post_edit_script()

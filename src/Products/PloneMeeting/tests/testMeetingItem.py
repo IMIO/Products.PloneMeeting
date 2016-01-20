@@ -3172,14 +3172,15 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(item.adapted().mayEvaluateCompleteness())
         self.assertFalse(item.adapted().mayAskCompletenessEvalAgain())
         self.request['new_completeness_value'] = 'completeness_incomplete'
+        self.request['comment'] = 'My comment'
         self.request.form['form.submitted'] = True
         self.assertEquals(self.request.RESPONSE.status, 200)
         changeCompletenessView()
         self.assertTrue(item.getCompleteness() == 'completeness_incomplete')
         self.assertTrue(item.adapted().mayEvaluateCompleteness())
         self.assertTrue(item.adapted().mayAskCompletenessEvalAgain())
-        self.assertTrue(item.completeness_changes_history and
-                        item.completeness_changes_history[0]['action'] == 'completeness_incomplete')
+        self.assertEquals(item.completeness_changes_history[0]['action'], 'completeness_incomplete')
+        self.assertEquals(item.completeness_changes_history[-1]['comments'], 'My comment')
         # user was redirected to the item view
         self.assertEquals(self.request.RESPONSE.status, 302)
         self.assertEquals(self.request.RESPONSE.getHeader('location'),
@@ -3189,8 +3190,11 @@ class testMeetingItem(PloneMeetingTestCase):
         self.backToState(item, 'itemcreated')
         self.changeUser('pmCreator1')
         self.request['new_completeness_value'] = 'completeness_evaluation_asked_again'
+        self.request['comment'] = 'My second comment'
         changeCompletenessView()
         self.assertTrue(item.getCompleteness() == 'completeness_evaluation_asked_again')
+        self.assertEquals(item.completeness_changes_history[-1]['action'], 'completeness_evaluation_asked_again')
+        self.assertEquals(item.completeness_changes_history[-1]['comments'], 'My second comment')
         # trying to change completeness if he can not will raise Unauthorized
         self.assertFalse(item.adapted().mayEvaluateCompleteness())
         self.request['new_completeness_value'] = 'completeness_complete'
@@ -3219,12 +3223,13 @@ class testMeetingItem(PloneMeetingTestCase):
         # ask emergency
         self.assertTrue(itemEmergencyView.listSelectableEmergencies().keys() == ['emergency_asked'])
         self.request['new_emergency_value'] = 'emergency_asked'
+        self.request['comment'] = 'My comment'
         self.request.form['form.submitted'] = True
         changeEmergencyView()
         self.assertTrue(item.getEmergency() == 'emergency_asked')
         # history was updated
-        self.assertTrue(item.emergency_changes_history and
-                        item.emergency_changes_history[0]['action'] == 'emergency_asked')
+        self.assertEquals(item.emergency_changes_history[0]['action'], 'emergency_asked')
+        self.assertEquals(item.emergency_changes_history[0]['comments'], 'My comment')
         # when asked, asker can do nothing else but back to 'no_emergency'
         self.assertTrue(itemEmergencyView.listSelectableEmergencies().keys() == ['no_emergency'])
         self.assertFalse(item.adapted().mayAcceptOrRefuseEmergency())
@@ -3243,8 +3248,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # 'emergency_accepted' no more selectable
         self.assertTrue(not 'emergency_accepted' in itemEmergencyView.listSelectableEmergencies())
         # history was updated
-        self.assertTrue(item.emergency_changes_history and
-                        item.emergency_changes_history[1]['action'] == 'emergency_accepted')
+        self.assertEquals(item.emergency_changes_history[1]['action'], 'emergency_accepted')
 
         # trying to change emergency if can not will raise Unauthorized
         self.changeUser('pmCreator1')

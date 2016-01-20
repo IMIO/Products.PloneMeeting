@@ -17,7 +17,7 @@
              tal:define="historyInfos python: list(context.emergency_changes_history);
                          dummy python: historyInfos.reverse();">
 
-        <tal:comment replace="nothing">Table containing the history of emergency field changes</tal:comment>
+        <tal:comments replace="nothing">Table containing the history of emergency field changes</tal:comments>
         <tal:history condition="historyInfos">
         <table class="listing nosort" style="width: 100%">
          <thead>
@@ -25,13 +25,13 @@
             <th i18n:translate="listingheader_action" width="100px">Action</th>
             <th i18n:translate="listingheader_performed_by" width="125px">Performed by</th>
             <th i18n:translate="listingheader_date_and_time" width="125px">Date and time</th>
-            <th i18n:translate="listingheader_comment">Comments</th>
+            <th i18n:translate="listingheader_comments">Comments</th>
           </tr>
          </thead>
          <tbody>
           <tal:historyInfo repeat="historyInfo historyInfos">
           <tr tal:define="odd repeat/historyInfo/odd;
-                          comment historyInfo/comment|nothing;"
+                          comments historyInfo/comments|nothing;"
               tal:attributes="class python: odd and 'even' or 'odd'" valign="top">
             <td class="#"
                 tal:define="actionTitle python: historyInfo['action']">
@@ -46,8 +46,8 @@
                 tal:content="python:fullname or username or actorid"/>
             <td tal:content="python:context.restrictedTraverse('@@plone').toLocalizedTime(historyInfo['time'],long_format=True)"/>
             <td>
-              <tal:comment condition="comment" i18n:translate="" i18n:domain="PloneMeeting" tal:content="structure comment"/>
-              <span tal:condition="not:comment" i18n:domain="plone" i18n:translate="no_comments" class="discreet">No comments</span>
+              <tal:comments condition="comments" i18n:translate="" i18n:domain="PloneMeeting" tal:content="structure comments"/>
+              <span tal:condition="not:comments" i18n:domain="plone" i18n:translate="no_comments" class="discreet">No comments</span>
             </td>
           </tr>
           </tal:historyInfo>

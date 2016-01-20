@@ -529,6 +529,43 @@ class Migrate_To_3_4(Migrator):
                     cfg.setEnableAnnexToPrint('disabled')
         logger.info('Done.')
 
+    def _updateHistoryComments(self):
+        '''Some histories used for MeetingItems stored comment in a 'comment' key, we need
+           to store it in a 'comments' key so it behaves like the workflow_history.'''
+        logger.info('Updating histories comment of every items...')
+        brains = self.portal.portal_catalog(meta_type=('MeetingItem', ))
+        check_already_migrated = False
+        for brain in brains:
+            if check_already_migrated:
+                break
+            item = brain.getObject()
+            # histories directl stored on the MeetingItem
+            for history_id in ('completeness_changes_history', 'emergency_changes_history'):
+                if check_already_migrated:
+                    break
+                history = getattr(item, history_id)
+                for action in history:
+                    if not 'comment' in action:
+                        # already migrated
+                        check_already_migrated = True
+                        break
+                    action['comments'] = action['comment']
+                    del action['comment']
+                    history._p_changed = True
+            # history stored on every adviser of the adviceIndex
+            for adviceInfo in item.adviceIndex.values():
+                if check_already_migrated:
+                    break
+                for action in adviceInfo['delay_changes_history']:
+                    if not 'comment' in action:
+                        # already migrated
+                        check_already_migrated = True
+                        break
+                    action['comments'] = action['comment']
+                    del action['comment']
+                    item.adviceIndex._p_changed = True
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.4...')
         # reinstall so versions are correctly shown in portal_quickinstaller
@@ -552,6 +589,7 @@ class Migrate_To_3_4(Migrator):
         self._updateAdvices()
         self._initNewHTMLFields()
         self._updateEnableAnnexToPrint()
+        self._updateHistoryComments()
         # update workflow, needed for items moved to item templates and recurring items
         # update reference_catalog as ReferenceFied "MeetingConfig.toDoListTopics"
         # and "Meeting.lateItems" were removed
