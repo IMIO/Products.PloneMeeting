@@ -1184,20 +1184,34 @@ class testMeeting(PloneMeetingTestCase):
         self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
         # every items are 'presented'
-        for item in meeting.getItems():
+        items = meeting.getItems()
+        for item in items:
             self.assertTrue(item.queryState() == 'presented')
+        # numbering is correct
+        self.assertEquals(
+            [numberedItem.getItemNumber(for_display=True) for numberedItem in meeting.getItems(ordered=True)],
+            ['1', '2', '3', '4', '5', '6', '7'])
         removeView = meeting.restrictedTraverse('@@remove-several-items')
         # the view can receive a single uid (as a string) or several as a list of uids
         removeView(meeting.getItems()[0].UID())
+        # numbering is correct
+        self.assertEquals(
+            [numberedItem.getItemNumber(for_display=True) for numberedItem in meeting.getItems(ordered=True)],
+            ['1', '2', '3', '4', '5', '6'])
         # remove every items left
         removeView([item.UID() for item in meeting.getItems()])
         # every items are now 'validated'
-        for item in meeting.getItems():
+        self.assertFalse(meeting.getItems())
+        for item in items:
             self.assertTrue(item.queryState() == 'validated')
 
         # if we are not able to correct the items, it does not break
         meeting2 = self._createMeetingWithItems()
         self.closeMeeting(meeting2)
+        # numbering is correct
+        self.assertEquals(
+            [numberedItem.getItemNumber(for_display=True) for numberedItem in meeting2.getItems(ordered=True)],
+            ['1', '2', '3', '4', '5', '6', '7'])
         # every items are in a final state
         for item in meeting2.getItems():
             self.assertTrue(item.queryState() == self.ITEM_WF_STATE_AFTER_MEETING_TRANSITION['close'])
@@ -1205,6 +1219,10 @@ class testMeeting(PloneMeetingTestCase):
         self.assertTrue(not [tr for tr in self.transitions(meeting2.getItems()[0]) if tr.startswith('back')])
         removeView = meeting2.restrictedTraverse('@@remove-several-items')
         removeView([item.UID() for item in meeting2.getItems()])
+        # numbering is correct
+        self.assertEquals(
+            [numberedItem.getItemNumber(for_display=True) for numberedItem in meeting2.getItems(ordered=True)],
+            ['1', '2', '3', '4', '5', '6', '7'])
         # items state was not changed
         for item in meeting2.getItems():
             self.assertTrue(item.queryState() == self.ITEM_WF_STATE_AFTER_MEETING_TRANSITION['close'])
