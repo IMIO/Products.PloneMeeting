@@ -25,7 +25,7 @@
             <th i18n:translate="listingheader_action" width="300px">Action</th>
             <th i18n:translate="listingheader_performed_by" width="125px">Performed by</th>
             <th i18n:translate="listingheader_date_and_time" width="125px">Date and time</th>
-            <th i18n:translate="listingheader_comments">Comments</th>
+            <th i18n:translate="listingheader_comment">Comments</th>
           </tr>
          </thead>
          <tbody>
