@@ -26,6 +26,7 @@ from OFS.ObjectManager import BeforeDeleteException
 from zope.event import notify
 from zope.i18n import translate
 from zope.lifecycleevent import IObjectRemovedEvent
+from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFPlone.utils import safe_unicode
 from plone import api
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
@@ -123,6 +124,30 @@ def onMeetingTransition(meeting, event):
     transitionId = event.transition.id
     action = 'do%s%s' % (transitionId[0].upper(), transitionId[1:])
     do(action, event)
+
+
+def onItemBeforeTransition(item, event):
+    '''Called before a transition is triggered on an item.'''
+    # when raising exceptions in a WF script, this needs to be done in the
+    # before transition or state is changed nevertheless?
+    pass
+
+
+def onMeetingBeforeTransition(meeting, event):
+    '''Called before a transition is triggered on a meeting.'''
+    # when raising exceptions in a WF script, this needs to be done in the
+    # before transition or state is changed nevertheless?
+    if event.new_state.id == 'closed':
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(meeting)
+        if 'return_to_proposing_group' in cfg.getWorkflowAdaptations():
+            # raise a WorkflowException in case there are items still in state 'returned_to_proposing_group'
+            additional_catalog_query = [{'i': 'review_state',
+                                         'o': 'plone.app.querystring.operation.selection.is',
+                                         'v': 'returned_to_proposing_group'}]
+            if meeting.getItems(useCatalog=True, additional_catalog_query=additional_catalog_query):
+                msg = _('Can not close a meeting containing items returned to proposing group!')
+                raise WorkflowException(msg)
 
 
 def onGroupTransition(mGroup, event):

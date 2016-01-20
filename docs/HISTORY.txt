@@ -73,7 +73,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Removed Meeting.getAllItems and deprecated Meeting.getItemsInOrder that must be replaced by Meeting.getItems.
   Meeting.getItems does not receive a 'late=True/False' parameter anymore as we may have more than 'normal/late' for
   MeetingItem.listType, but receives now a list of listTypes that is by default empty ([]) meaning that it will
-  return every items of the meeting
+  return every items of the meeting.  Moreover, when using getItems with 'useCatalog=True', an 'additional_catalog_query'
+  parameter may be provided to filter items of a meeting with arbitrary catalog query
 - Added MeetingItem.listType attribute that defines the fact that the item is 'normal' or 'late'.  Also added
   a 'on_list_type' item insertion method into a meeting.  These 'list types' are defined in the MeetingConfig, default
   listTypes ('normal' and 'late') may not be removed but other types of list may be added and order may be changed.
@@ -179,6 +180,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - The 'comment' stored in histories (completeness_changes_history, emergency_changes_history and
   adviceIndex['delay_changes_history']) are now stored in a 'comments' key instead of 'comment' so it behaves like
   other histories (workflow, versioning)
+- A meeting containing items in state 'returned_to_proposing_group' may not be closed anymore
 
 3.3 (2015-02-27)
 ----------------

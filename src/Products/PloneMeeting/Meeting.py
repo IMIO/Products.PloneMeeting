@@ -1117,7 +1117,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
     security.declarePublic('getItems')
 
     @ram.cache(getItems_cachekey)
-    def getItems(self, uids=[], listTypes=[], ordered=False, useCatalog=False, **kwargs):
+    def getItems(self, uids=[], listTypes=[], ordered=False, useCatalog=False, additional_catalog_query=[], **kwargs):
         '''Overrides the Meeting.items accessor.
            Items can be filtered depending on :
            - list of given p_uids;
@@ -1136,6 +1136,8 @@ class Meeting(BaseContent, BrowserDefaultMixin):
                 catalog_query.append({'i': 'UID',
                                       'o': 'plone.app.querystring.operation.selection.is',
                                       'v': uids},)
+            # append additional_catalog_query
+            catalog_query += additional_catalog_query
             if ordered:
                 query = queryparser.parseFormquery(self, catalog_query, sort_on=self.getSort_on())
             else:
@@ -1144,7 +1146,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         else:
             res = self.getField('items').get(self, **kwargs)
             if uids:
-                member = getToolByName(self, 'portal_membership').getAuthenticatedMember()
+                member = api.user.get_current()
                 keptItems = []
                 for item in res:
                     if item.UID() in uids and member.has_permission(View, item):

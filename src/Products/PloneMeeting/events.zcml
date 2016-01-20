@@ -21,6 +21,14 @@
               handler=".events.onItemTransition"/>
 
   <subscriber for=".interfaces.IMeetingItem
+                   Products.DCWorkflow.interfaces.IBeforeTransitionEvent"
+              handler=".events.onItemBeforeTransition"/>
+
+  <subscriber for=".interfaces.IMeeting
+                   Products.DCWorkflow.interfaces.IBeforeTransitionEvent"
+              handler=".events.onMeetingBeforeTransition"/>
+
+  <subscriber for=".interfaces.IMeetingItem
                    Products.PloneMeeting.interfaces.IItemDuplicatedEvent"
               handler=".events.onItemDuplicated"/>
 

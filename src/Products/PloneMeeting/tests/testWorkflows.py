@@ -25,9 +25,13 @@
 from DateTime import DateTime
 from AccessControl import Unauthorized
 from OFS.ObjectManager import BeforeDeleteException
+from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.statusmessages.interfaces import IStatusMessage
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
+from imio.helpers.cache import cleanRamCacheFor
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
+from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
 
 
 class testWorkflows(PloneMeetingTestCase):
@@ -559,6 +563,28 @@ class testWorkflows(PloneMeetingTestCase):
         # every items are now back to presented
         for item in meeting2.getItems():
             self.assertTrue(item.queryState() == 'presented')
+
+    def test_pm_MeetingNotClosableIfItemStillReturnedToProposingGroup(self):
+        """If there are items in state 'returned_to_proposing_group', a meeting may not be closed."""
+        cfg = self.meetingConfig
+        cfg.setWorkflowAdaptations(('return_to_proposing_group', ))
+        performWorkflowAdaptations(self.portal, cfg, pm_logger)
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2016/01/05'))
+        item = self.create('MeetingItem')
+        self.presentItem(item)
+        self.decideMeeting(meeting)
+        self.do(item, 'return_to_proposing_group')
+        with self.assertRaises(WorkflowException) as cm:
+            self.closeMeeting(meeting)
+        self.assertEquals(cm.exception.message,
+                          'Can not close a meeting containing items returned to proposing group!')
+        # if no item returned anymore, closable
+        self.do(item, 'backTo_itemfrozen_from_returned_to_proposing_group')
+        # Meeting.getItems is memoized and cache is not invalidated when an item's state changed
+        cleanRamCacheFor('Products.PloneMeeting.Meeting.getItems')
+        self.cleanMemoize()
+        self.closeMeeting(meeting)
 
 
 def test_suite():
