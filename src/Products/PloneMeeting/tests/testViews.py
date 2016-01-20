@@ -25,6 +25,7 @@
 from DateTime import DateTime
 from AccessControl import Unauthorized
 from Products.Five import zcml
+from zope.i18n import translate
 from plone import api
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
@@ -319,6 +320,37 @@ class testViews(PloneMeetingTestCase):
         self.portal.restrictedTraverse('@@update-delay-aware-advices')._updateAllAdvices()
         self.assertFalse('developers_advisers' in item1.__ac_local_roles__)
         self.assertTrue('developers_advisers' in item2.__ac_local_roles__)
+
+    def test_pm_SendPodTemplateToMailingList(self):
+        """Send a Pod template to a mailing list."""
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        template = self.meetingConfig.podtemplates.itemTemplate
+        # no mailing lists for now
+        self.assertIsNone(template.mailing_lists)
+        self.failIf(self.tool.getAvailableMailingLists(item, template.UID()))
+
+        # define mailing_lists
+        template.mailing_lists = "list1;python:True;user1@test.be\nlist2;python:False;user1@test.be"
+        self.assertEquals(self.tool.getAvailableMailingLists(item, template.UID()),
+                          ['list1'])
+
+        # call the document-generation view
+        self.request.set('template_uid', template.UID())
+        self.request.set('output_format', 'odt')
+        self.request.set('mailinglist_name', 'unknown_mailing_list')
+        view = item.restrictedTraverse('@@document-generation')
+        # raises Unauthorized if mailing list no available
+        self.assertRaises(Unauthorized, view)
+
+        # use correct mailing list, works as expected
+        self.request.set('mailinglist_name', 'list1')
+        messages = IStatusMessage(self.request).show()
+        msg = translate('pt_mailing_sent', domain='PloneMeeting', context=self.request)
+        self.assertNotEquals(messages[-1].message, msg)
+        view()
+        messages = IStatusMessage(self.request).show()
+        self.assertEquals(messages[-1].message, msg)
 
 
 def test_suite():

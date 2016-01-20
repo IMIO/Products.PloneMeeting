@@ -615,7 +615,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertEquals(self.tool.formatMeetingDate(meeting, short=True, withHour=True, prefixed=True),
                           u'Meeting of 05/05/2015 (14:30)')
 
-    def test_pm_showHolidaysWarning(self):
+    def test_pm_ShowHolidaysWarning(self):
         """Method that shows the 'warning holidays' message."""
         # only available to MeetingManagers if last defined holidays is < 60 days in the future
         self.changeUser('pmManager')
