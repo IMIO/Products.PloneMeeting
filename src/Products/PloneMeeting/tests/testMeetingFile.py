@@ -107,6 +107,27 @@ class testMeetingFile(PloneMeetingTestCase):
         self.assertTrue(catalog(SearchableText=ITEM_TITLE))
         self.assertFalse(catalog(SearchableText=ANNEX_TITLE))
 
+    def test_pm_AnnexDefaultValues(self):
+        '''When creating an annex, default values are correctly set and item's annexIndex is correct.'''
+        cfg = self.meetingConfig
+        # enable annex printing
+        cfg.setEnableAnnexToPrint(True)
+        cfg.setAnnexToPrintDefault(True)
+        # enable annex confidentiality
+        cfg.setEnableAnnexConfidentiality(True)
+        mft = cfg.meetingfiletypes.get('item-annex')
+        mft.setIsConfidentialDefault(True)
+
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        annex = self.addAnnex(item, annexType='item-annex')
+        # check that everything is correct
+        self.assertTrue(annex.getToPrint())
+        self.assertTrue(annex.getIsConfidential())
+        annexInfo = item.annexIndex[0]
+        self.assertTrue(annexInfo['toPrint'])
+        self.assertTrue(annexInfo['isConfidential'])
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

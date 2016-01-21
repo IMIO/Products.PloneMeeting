@@ -297,14 +297,6 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
 
     def at_post_create_script(self):
         tool = api.portal.get_tool('portal_plonemeeting')
-        parent = self.getParentNode()
-        if parent:
-            # update parent.annexIndex if it was not already set
-            # by the conversion process for example
-            annexIndexUids = [annex['UID'] for annex in parent.annexIndex]
-            if not self.UID() in annexIndexUids:
-                IAnnexable(parent).updateAnnexIndex()
-            parent.alreadyUsedAnnexNames.append(self.id)
         # at the end of creation, we know now self.relatedTo
         # and we can manage the self.toPrint default value
         cfg = tool.getMeetingConfig(self)
@@ -325,6 +317,15 @@ class MeetingFile(ATBlob, BrowserDefaultMixin):
         rq = self.REQUEST
         self.needsOcr = rq.get('needs_ocr', None) is not None
         self.ocrLanguage = rq.get('ocr_language', None)
+
+        # update parent.annexIndex if it was not already set
+        # by the conversion process for example
+        parent = self.getParentNode()
+        annexIndexUids = [annex['UID'] for annex in parent.annexIndex]
+        if not self.UID() in annexIndexUids:
+            IAnnexable(parent).updateAnnexIndex()
+        parent.alreadyUsedAnnexNames.append(self.id)
+
         # Reindexing the annex may have the effect of extracting text from the
         # binary content, if tool.extractTextFromFiles is True (see method
         # MeetingFile.indexExtractedText).
