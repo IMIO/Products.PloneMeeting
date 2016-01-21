@@ -1348,6 +1348,10 @@ div#doc-generation-view ul.pod-template li {
     display: inline-block;
 }
 
+/* highlight when meeting.extraodrinarySession is True */
+.meeting_extraodrinary_session {
+    color: red;
+}
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */

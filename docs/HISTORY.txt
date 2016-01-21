@@ -181,6 +181,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   adviceIndex['delay_changes_history']) are now stored in a 'comments' key instead of 'comment' so it behaves like
   other histories (workflow, versioning)
 - A meeting containing items in state 'returned_to_proposing_group' may not be closed anymore
+- Added boolean field Meeting.extraordinarySession, informational field useable when necessary
 
 3.3 (2015-02-27)
 ----------------

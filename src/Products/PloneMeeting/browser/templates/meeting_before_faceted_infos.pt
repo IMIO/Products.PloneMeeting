@@ -27,6 +27,13 @@
     <b i18n:translate="PloneMeeting_label_endDate"></b>&nbsp;&nbsp;
     <span tal:replace="python:toLocalizedTime(context.getEndDate(),long_format=1)"></span>&nbsp;&nbsp;
   </tal:date>
+
+  <tal:comment replace="nothing">Extraordinary session</tal:comment>
+  <tal:extraordinarySession condition="python: ('extraordinarySession' in usedAttrs)">
+    <b tal:attributes="class python: context.getExtraordinarySession() and 'meeting_extraodrinary_session' or ''"
+       i18n:translate="PloneMeeting_label_extraordinarySession"></b>&nbsp;&nbsp;
+    <metal:field use-macro="python:here.widget('extraordinarySession', mode='view', label=1)"/>
+  </tal:extraordinarySession>
   <br/>
   </div>
 

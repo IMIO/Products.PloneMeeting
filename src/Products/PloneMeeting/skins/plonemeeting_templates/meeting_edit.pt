@@ -162,9 +162,12 @@
             <td width="50%"><metal:field use-macro="python:here.widget('deadlineFreeze', mode='edit')"/></td>
           </tr>
         </table>
+        <metal:field use-macro="python:here.widget('extraordinarySession', mode='edit')"/>
+
         <metal:field use-macro="python:here.widget('assembly', mode='edit')"/>
         <metal:field use-macro="python:here.widget('assemblyExcused', mode='edit')"/>
         <metal:field use-macro="python:here.widget('assemblyAbsents', mode='edit')"/>
+        
         <tal:comment replace="nothing">User table: attendees, lateAttendees, absents, signatories, replacements</tal:comment>
         <tal:users condition="python: 'attendees' in usedAttrs">
         <table id="meeting_users" name="meeting_users" class="vertical listing" i18n:domain="PloneMeeting"

@@ -19,6 +19,7 @@ import interfaces
 
 from Products.Archetypes.atapi import BaseContent
 from Products.Archetypes.atapi import BaseSchema
+from Products.Archetypes.atapi import BooleanField
 from Products.Archetypes.atapi import DateTimeField
 from Products.Archetypes.atapi import DisplayList
 from Products.Archetypes.atapi import IntegerField
@@ -34,7 +35,6 @@ from Products.Archetypes.atapi import TextField
 
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 
-##code-section module-header #fill in your manual code here
 import os
 from appy.gen import No
 from collections import OrderedDict
@@ -534,6 +534,16 @@ schema = Schema((
         ),
         optional=True,
         searchable=True,
+    ),
+    BooleanField(
+        name='extraordinarySession',
+        default=False,
+        widget=BooleanField._properties['widget'](
+            label='Extraordinarysession',
+            label_msgid='PloneMeeting_label_extraordinarySession',
+            i18n_domain='PloneMeeting',
+        ),
+        optional=True,
     ),
     TextField(
         name='inAndOutMoves',
