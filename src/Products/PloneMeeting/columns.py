@@ -1,4 +1,5 @@
 # encoding: utf-8
+from DateTime import DateTime
 from zope.i18n import translate
 
 from Products.CMFCore.permissions import ModifyPortalContent
@@ -132,7 +133,8 @@ class ItemLinkedMeetingColumn(BaseColumn):
 
     def renderCell(self, item):
         """Display right icon depending on toDiscuss or not."""
-        if not self.getValue(item):
+        value = self.getValue(item)
+        if not value or value == DateTime('1950/01/01'):
             return u'-'
         else:
             catalog = getToolByName(item, 'uid_catalog')
