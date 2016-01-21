@@ -1091,6 +1091,10 @@ div.highlightBlankRow:before {
     padding-left: 0.5em;
 }
 
+/* highlight when meeting.extraodrinarySession is True */
+.meeting_extraodrinary_session {
+    color: red;
+}
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */

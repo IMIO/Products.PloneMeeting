@@ -488,6 +488,16 @@ schema = Schema((
         optional=True,
         searchable=True,
     ),
+    BooleanField(
+        name='extraordinarySession',
+        default=False,
+        widget=BooleanField._properties['widget'](
+            label='Extraordinarysession',
+            label_msgid='PloneMeeting_label_extraordinarySession',
+            i18n_domain='PloneMeeting',
+        ),
+        optional=True,
+    ),
     TextField(
         name='inAndOutMoves',
         allowable_content_types=('text/html',),

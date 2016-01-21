@@ -15,6 +15,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   encode notes to be used in document generation (for example) on an item or on a meeting
 - Bugfix when sending an item to another MC, the 'time' of the event was the 'time' of the last event, if resulting item
   was deleted then item was sent again, it used wrong 'time', now it uses the correct current time
+- Added boolean field Meeting.extraordinarySession, informational field useable when necessary
 
 3.3 (2015-02-27)
 ----------------
