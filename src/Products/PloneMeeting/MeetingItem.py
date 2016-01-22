@@ -69,6 +69,7 @@ from Products.PloneMeeting.config import AddAdvice
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from Products.PloneMeeting.config import DEFAULT_COPIED_FIELDS
 from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_SAME_MC
+from Products.PloneMeeting.config import HIDE_DECISION_UNDER_WRITING_MSG
 from Products.PloneMeeting.config import ITEM_COMPLETENESS_ASKERS
 from Products.PloneMeeting.config import ITEM_COMPLETENESS_EVALUATORS
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
@@ -1230,7 +1231,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return translate('decision_under_edit',
                              domain='PloneMeeting',
                              context=item.REQUEST,
-                             default='<p>The decision is currently under edit by managers, you can not access it.</p>')
+                             default=HIDE_DECISION_UNDER_WRITING_MSG)
         return self.getField('motivation').get(self, **kwargs)
     getRawMotivation = getMotivation
 
@@ -1257,7 +1258,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return translate('decision_under_edit',
                              domain='PloneMeeting',
                              context=item.REQUEST,
-                             default='<p>The decision is currently under edit by managers, you can not access it.</p>')
+                             default=HIDE_DECISION_UNDER_WRITING_MSG)
         return res
     getRawDecision = getDecision
 

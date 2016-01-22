@@ -30,6 +30,7 @@ from Products.CMFCore.permissions import View
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
+from Products.PloneMeeting.config import HIDE_DECISION_UNDER_WRITING_MSG
 from Products.PloneMeeting.config import WriteDecision
 from Products.PloneMeeting.model.adaptations import WF_NOT_CREATOR_EDITS_UNLESS_CLOSED, \
     RETURN_TO_PROPOSING_GROUP_FROM_ITEM_STATES, RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE
@@ -928,9 +929,9 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         self.assertEquals(meeting.queryState(), 'decided')
         self.assertEquals(item.getMotivation(),
-                          '<p>The decision is currently under edit by managers, you can not access it.</p>')
+                          HIDE_DECISION_UNDER_WRITING_MSG)
         self.assertEquals(item.getDecision(),
-                          '<p>The decision is currently under edit by managers, you can not access it.</p>')
+                          HIDE_DECISION_UNDER_WRITING_MSG)
         self.changeUser('pmManager')
         # MeetingManagers see it correctly
         self.assertEquals(item.getMotivation(), '<p>Motivation adapted by pmManager</p>')
