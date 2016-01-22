@@ -22,7 +22,9 @@
 # 02110-1301, USA.
 #
 
+from AccessControl import Unauthorized
 from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFCore.permissions import View
 from Products.PloneMeeting.indexes import SearchableText
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 
@@ -127,6 +129,57 @@ class testMeetingFile(PloneMeetingTestCase):
         annexInfo = item.annexIndex[0]
         self.assertTrue(annexInfo['toPrint'])
         self.assertTrue(annexInfo['isConfidential'])
+
+    def test_pm_ToggleAnnexIsConfidential(self):
+        """Test the '@@toggle_annex_is_confidential' view."""
+        self.meetingConfig.setEnableAnnexConfidentiality(True)
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        annex = self.addAnnex(item)
+        view = annex.restrictedTraverse('@@toggle_annex_is_confidential')
+
+        # toggle value
+        self.assertTrue(annex.adapted().mayChangeConfidentiality())
+        self.assertEquals(annex.getIsConfidential(), False)
+        self.assertEquals(item.annexIndex[0]['isConfidential'], False)
+        view.toggle()
+        self.assertEquals(annex.getIsConfidential(), True)
+        self.assertEquals(item.annexIndex[0]['isConfidential'], True)
+
+        # if a user tries to change confidentiality but may not, it raises Unauthorized
+        self.proposeItem(item)
+        self.changeUser('pmCreator1')
+        self.assertTrue(self.hasPermission(View, annex))
+        self.assertFalse(annex.adapted().mayChangeConfidentiality())
+        self.assertRaises(Unauthorized, view.toggle)
+        # isConfidential did not change
+        self.assertEquals(annex.getIsConfidential(), True)
+        self.assertEquals(item.annexIndex[0]['isConfidential'], True)
+
+    def test_pm_ToggleAnnexToPrint(self):
+        """Test the '@@toggle_annex_to_print' view."""
+        self.meetingConfig.setEnableAnnexToPrint(True)
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        annex = self.addAnnex(item)
+        view = annex.restrictedTraverse('@@toggle_annex_to_print')
+
+        # toggle value
+        self.assertTrue(annex.adapted().mayChangeToPrint())
+        self.assertEquals(annex.getToPrint(), False)
+        self.assertEquals(item.annexIndex[0]['toPrint'], False)
+        view.toggle()
+        self.assertEquals(annex.getToPrint(), True)
+        self.assertEquals(item.annexIndex[0]['toPrint'], True)
+
+        # if a user tries to change toPrint but may not, it raises Unauthorized
+        self.proposeItem(item)
+        self.assertTrue(self.hasPermission(View, annex))
+        self.assertFalse(annex.adapted().mayChangeToPrint())
+        self.assertRaises(Unauthorized, view.toggle)
+        # toPrint did not change
+        self.assertEquals(annex.getToPrint(), True)
+        self.assertEquals(item.annexIndex[0]['toPrint'], True)
 
 
 def test_suite():
