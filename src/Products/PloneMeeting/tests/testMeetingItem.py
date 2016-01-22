@@ -2748,8 +2748,8 @@ class testMeetingItem(PloneMeetingTestCase):
              },
         ]
         self.meetingConfig.setCertifiedSignatures(certified)
-        self.assertTrue(item.adapted().getCertifiedSignatures() ==
-                        [u'Function1valid', u'Name1valid'])
+        self.assertEquals(item.adapted().getCertifiedSignatures(),
+                          [u'Function1valid', u'Name1valid'])
 
     def test_pm_ItemCreatedOnlyUsingTemplate(self):
         '''If MeetingConfig.itemCreatedOnlyUsingTemplate is True, a user can only
