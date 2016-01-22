@@ -24,6 +24,7 @@
 
 from DateTime import DateTime
 from AccessControl import Unauthorized
+from zope.testing.testrunner.find import find_test_files
 
 from Products.CMFCore.permissions import ManagePortal
 from plone.app.textfield.value import RichTextValue
@@ -37,6 +38,52 @@ from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCas
 
 class testToolPloneMeeting(PloneMeetingTestCase):
     '''Tests the ToolPloneMeeting class methods.'''
+
+    def test_pm_VerifyTestFiles(self):
+        """
+          This test is called by the base TestCase file of the subproduct.
+          We check that every test files in Products.PloneMeeting are also in this sub-product.
+        """
+        # list test files from Products.PloneMeeting
+        options = self._resultForDoCleanups.options
+        # get test files for subproduct
+        subproduct_files_generator = find_test_files(options)
+        # self.__module__ is like 'Products.MySubProducts.tests.MySubProductTestCase'
+        subproduct_name = self.__module__.split('tests')[0][0:-1]
+        subproduct_files = [f[0] for f in subproduct_files_generator if subproduct_name in f[0]]
+        # if we do not find any test files using Products.MyProduct, check with Products/MyProduct
+        # probably we are in a development buildout...
+        if not subproduct_files:
+            subproduct_name = subproduct_name.replace('.', '/')
+            subproduct_files_generator = find_test_files(options)
+            subproduct_files = [f[0] for f in subproduct_files_generator if subproduct_name in f[0]]
+        subproduct_testfiles = [f.split('/')[-1] for f in subproduct_files if not
+                                f.split('/')[-1].startswith('testCustom')]
+        # get test files for PloneMeeting
+        # find PloneMeeting package path
+        import os
+        pm_path = None
+        for path in os.sys.path:
+            if 'Products.PloneMeeting' in path:
+                pm_path = path
+                break
+        if not pm_path:
+            raise Exception('Products.PloneMeeting path not found!')
+
+        # find every Products.PloneMeeting test file
+        saved_package = options.package
+        saved_prefix = list(options.prefix)
+        options.package = ['Products.PloneMeeting', ]
+        options.prefix.append((pm_path, ''))
+        pm_files_generator = find_test_files(options)
+        pm_files = [f[0] for f in pm_files_generator if 'Products.PloneMeeting' in f[0]]
+        options.package = saved_package
+        options.prefix = saved_prefix
+        # now check that every PloneMeeting files are managed by subproduct
+        pm_testfiles = [f.split('/')[-1] for f in pm_files]
+        # there should not be a file in PloneMeeting that is not in this subproduct...
+        # a subproduct can ignore some PloneMeeting test files in self.subproductIgnoredTestFiles
+        self.failIf(set(pm_testfiles).difference(set(subproduct_testfiles + self.subproductIgnoredTestFiles)))
 
     def test_pm_GetMeetingConfig(self):
         '''Test the ToolPloneMeeting.getMeetingConfig method :

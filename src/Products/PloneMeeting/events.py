@@ -190,11 +190,15 @@ def onGroupWillBeRemoved(group, event):
         customAdvisersGroupIds = [customAdviser['group'] for customAdviser in mc.getCustomAdvisers()]
         if groupId in customAdvisersGroupIds or \
            groupId in mc.getPowerAdvisersGroups():
-            raise BeforeDeleteException("can_not_delete_meetinggroup_meetingconfig")
+            raise BeforeDeleteException(translate("can_not_delete_meetinggroup_meetingconfig",
+                                                  domain="plone",
+                                                  context=group.REQUEST))
         for groupSuffix in MEETING_GROUP_SUFFIXES:
             ploneGroupId = group.getPloneGroupId(groupSuffix)
             if ploneGroupId in mc.getSelectableCopyGroups():
-                raise BeforeDeleteException("can_not_delete_meetinggroup_meetingconfig")
+                raise BeforeDeleteException(translate("can_not_delete_meetinggroup_meetingconfig",
+                                                      domain="plone",
+                                                      context=group.REQUEST))
     # Then check that every linked Plone group is empty because we are
     # going to delete them.
     portal = api.portal.get()
@@ -207,7 +211,9 @@ def onGroupWillBeRemoved(group, event):
         # [('a_removed_user', '<a_removed_user: not found>'), ('pmCreator1', 'pmCreator1'), ]
         groupsMembersWithoutNotFound = [member for member in groupMembers if 'not found' not in member[1]]
         if groupsMembersWithoutNotFound:
-            raise BeforeDeleteException("can_not_delete_meetinggroup_plonegroup")
+            raise BeforeDeleteException(translate("can_not_delete_meetinggroup_plonegroup",
+                                                  domain="plone",
+                                                  context=group.REQUEST))
     # And finally, check that meetingGroup is not linked to an existing item.
     # In the configuration
     for cfg in tool.objectValues('MeetingConfig'):
@@ -235,7 +241,10 @@ def onGroupWillBeRemoved(group, event):
            set(obj.getCopyGroups()).intersection(suffixedGroups):
             # The meetingGroup is linked to an existing item, we can not
             # delete it.
-            raise BeforeDeleteException("can_not_delete_meetinggroup_meetingitem")
+            raise BeforeDeleteException(
+                translate("can_not_delete_meetinggroup_meetingitem",
+                          domain="plone",
+                          context=group.REQUEST))
     # If everything passed correctly, we delete every linked (and empty)
     # Plone groups.
     portal_groups = api.portal.get_tool('portal_groups')

@@ -54,7 +54,12 @@ class testMeetingGroup(PloneMeetingTestCase):
         self.failUnless('developers_reviewers' in self.meetingConfig.getSelectableCopyGroups())
         with self.assertRaises(BeforeDeleteException) as cm:
             self.tool.manage_delObjects(['developers', ])
-        self.assertEquals(cm.exception.message, 'can_not_delete_meetinggroup_meetingconfig')
+
+        can_not_delete_meetinggroup_meetingconfig = \
+            translate('can_not_delete_meetinggroup_meetingconfig',
+                      domain="plone",
+                      context=self.request)
+        self.assertEquals(cm.exception.message, can_not_delete_meetinggroup_meetingconfig)
         # so remove selectableCopyGroups from the meetingConfigs
         self.meetingConfig.setSelectableCopyGroups(())
         self.meetingConfig2.setSelectableCopyGroups(())
@@ -65,21 +70,26 @@ class testMeetingGroup(PloneMeetingTestCase):
               'delay': '5', }, ])
         with self.assertRaises(BeforeDeleteException) as cm:
             self.tool.manage_delObjects(['developers', ])
-        self.assertEquals(cm.exception.message, 'can_not_delete_meetinggroup_meetingconfig')
+
+        self.assertEquals(cm.exception.message, can_not_delete_meetinggroup_meetingconfig)
         # so remove customAdvisers
         self.meetingConfig.setCustomAdvisers([])
         # define powerAdvisersGroups, the exception is also raised
         self.meetingConfig.setPowerAdvisersGroups(['developers', ])
         with self.assertRaises(BeforeDeleteException) as cm:
             self.tool.manage_delObjects(['developers', ])
-        self.assertEquals(cm.exception.message, 'can_not_delete_meetinggroup_meetingconfig')
+        self.assertEquals(cm.exception.message, can_not_delete_meetinggroup_meetingconfig)
         # so remove powerAdvisersGroups
         self.meetingConfig.setPowerAdvisersGroups([])
 
         # 2) fails because the corresponding Plone groups are not empty
         with self.assertRaises(BeforeDeleteException) as cm:
             self.tool.manage_delObjects(['developers', ])
-        self.assertEquals(cm.exception.message, 'can_not_delete_meetinggroup_plonegroup')
+        can_not_delete_meetinggroup_plonegroup = \
+            translate('can_not_delete_meetinggroup_plonegroup',
+                      domain="plone",
+                      context=self.request)
+        self.assertEquals(cm.exception.message, can_not_delete_meetinggroup_plonegroup)
         # so remove every users of these groups
         developers = self.tool.developers
         for ploneGroup in developers.getPloneGroups():
@@ -103,7 +113,13 @@ class testMeetingGroup(PloneMeetingTestCase):
         # but it does not raise an exception with message 'can_not_delete_meetinggroup_plonegroup'
         with self.assertRaises(BeforeDeleteException) as cm:
             self.tool.manage_delObjects(['developers', ])
-        self.assertNotEquals(cm.exception.message, 'can_not_delete_meetinggroup_plonegroup')
+
+        self.assertNotEquals(cm.exception.message, can_not_delete_meetinggroup_plonegroup)
+        can_not_delete_meetinggroup_meetingitem = \
+            translate('can_not_delete_meetinggroup_meetingitem',
+                      domain="plone",
+                      context=self.request)
+        self.assertEquals(cm.exception.message, can_not_delete_meetinggroup_meetingitem)
 
         # 3) complains about a linked meetingitem
         # checks on the item are made around :
@@ -122,7 +138,8 @@ class testMeetingGroup(PloneMeetingTestCase):
         item.at_post_edit_script()
         with self.assertRaises(BeforeDeleteException) as cm:
             self.tool.manage_delObjects(['developers', ])
-        self.assertEquals(cm.exception.message, 'can_not_delete_meetinggroup_meetingitem')
+
+        self.assertEquals(cm.exception.message, can_not_delete_meetinggroup_meetingitem)
 
         # now check with item having associatedGroups
         item.setProposingGroup('vendors')
@@ -133,7 +150,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         item.at_post_edit_script()
         with self.assertRaises(BeforeDeleteException) as cm:
             self.tool.manage_delObjects(['developers', ])
-        self.assertEquals(cm.exception.message, 'can_not_delete_meetinggroup_meetingitem')
+        self.assertEquals(cm.exception.message, can_not_delete_meetinggroup_meetingitem)
 
         # now check with item having optionalAdvisers
         item.setProposingGroup('vendors')
@@ -144,7 +161,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         item.at_post_edit_script()
         with self.assertRaises(BeforeDeleteException) as cm:
             self.tool.manage_delObjects(['developers', ])
-        self.assertEquals(cm.exception.message, 'can_not_delete_meetinggroup_meetingitem')
+        self.assertEquals(cm.exception.message, can_not_delete_meetinggroup_meetingitem)
 
         # check with item having copyGroups
         item.setProposingGroup('vendors')
@@ -156,7 +173,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         item.at_post_edit_script()
         with self.assertRaises(BeforeDeleteException) as cm:
             self.tool.manage_delObjects(['developers', ])
-        self.assertEquals(cm.exception.message, 'can_not_delete_meetinggroup_meetingitem')
+        self.assertEquals(cm.exception.message, can_not_delete_meetinggroup_meetingitem)
 
         # remove copyGroups for item so it works...
         item.setCopyGroups(())
@@ -172,7 +189,8 @@ class testMeetingGroup(PloneMeetingTestCase):
         # then fails because corresponding Plone groups are not empty...
         with self.assertRaises(BeforeDeleteException) as cm:
             self.tool.manage_delObjects(['vendors', ])
-        self.assertEquals(cm.exception.message, 'can_not_delete_meetinggroup_plonegroup')
+
+        self.assertEquals(cm.exception.message, can_not_delete_meetinggroup_plonegroup)
         # so remove them...
         vendors = self.tool.vendors
         for ploneGroup in vendors.getPloneGroups():
