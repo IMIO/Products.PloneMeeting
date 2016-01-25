@@ -263,6 +263,8 @@ MAX_FILE_SIZE_WARNING = 5000000
 # default user password used when sample users are added to a PloneMeeting during install
 DEFAULT_USER_PASSWORD = 'Meeting_12'
 
+HIDE_DECISION_UNDER_WRITING_MSG = "<p class='highlightValue'>The decision is currently under edit by managers, you can not access it.</p>"
+
 
 def registerClasses():
     '''ArchGenXML generated code does not register Archetype classes at the

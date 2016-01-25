@@ -32,9 +32,12 @@ from Products.CMFCore.permissions import View
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
+from Products.PloneMeeting.config import HIDE_DECISION_UNDER_WRITING_MSG
 from Products.PloneMeeting.config import WriteDecision
 from Products.PloneMeeting.model.adaptations import WF_NOT_CREATOR_EDITS_UNLESS_CLOSED, \
     RETURN_TO_PROPOSING_GROUP_FROM_ITEM_STATES, RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE
+
+logger = logging.getLogger('PloneMeeting: testing')
 
 
 class testWFAdaptations(PloneMeetingTestCase):
@@ -961,6 +964,68 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         self.assertEquals(item.getMotivation(), '<p>Motivation adapted by pmManager</p>')
         self.assertEquals(item.getDecision(), '<p>Decision adapted by pmManager</p>')
+
+    def test_pm_WFA_return_to_proposing_group_with_hide_decisions_when_under_writing(self):
+        """Test when both 'return_to_proposing_group' and 'hide_decisions_when_under_writing' WFAdaptations
+           are enabled, in this case, when the meeting is decided and decisions are hidden, nevertheless, when
+           returned to the proposing group, the decision is visible to the users able to edit the item."""
+        # ease override by subproducts
+        if not 'return_to_proposing_group' in self.meetingConfig.listWorkflowAdaptations() or \
+           not 'hide_decisions_when_under_writing' in self.meetingConfig.listWorkflowAdaptations():
+            return
+        self.changeUser('admin')
+        self._removeConfigObjectsFor(self.meetingConfig)
+        self.changeUser('pmManager')
+        cfg = self.meetingConfig
+        cfg.setWorkflowAdaptations(
+            ('hide_decisions_when_under_writing', 'return_to_proposing_group'))
+        performWorkflowAdaptations(self.portal, cfg, logger)
+
+        # if one of the user of the proposingGroup may edit the decision, then
+        # every members of the proposingGroup may see the decision, this way, if MeetingMember
+        # may edit the decision, then a MeetingObserverLocal may see it also evern if he may not edit it
+        meeting = self.create('Meeting', date=DateTime('2016/01/01 12:00'))
+        item = self.create('MeetingItem')
+        item.setMotivation('<p>Motivation field</p>')
+        item.setDecision('<p>Decision field</p>')
+        self.presentItem(item)
+        # maybe we have a 'publish' transition
+        if 'publish' in self.transitions(meeting):
+            self.do(meeting, 'publish')
+        self.decideMeeting(meeting)
+
+        # set another decision...
+        item.setMotivation('<p>Motivation adapted by pmManager</p>')
+        item.setDecision('<p>Decision adapted by pmManager</p>')
+        item.reindexObject()
+
+        # not viewable for now
+        self.changeUser('pmCreator1')
+        self.assertEquals(meeting.queryState(), 'decided')
+        self.assertEquals(item.getMotivation(),
+                          HIDE_DECISION_UNDER_WRITING_MSG)
+        self.assertEquals(item.getDecision(),
+                          HIDE_DECISION_UNDER_WRITING_MSG)
+
+        # return the item to the proposingGroup
+        self.changeUser('pmManager')
+        self.do(item, 'return_to_proposing_group')
+        # now the decision is viewable by the 'pmCreator1' as he may edit it
+        self.changeUser('pmCreator1')
+        self.assertTrue(self.hasPermission(ModifyPortalContent, item))
+        self.assertEquals(item.getMotivation(), '<p>Motivation adapted by pmManager</p>')
+        self.assertEquals(item.getDecision(), '<p>Decision adapted by pmManager</p>')
+
+        # but another user that may see the item but not edit it may not see the decision
+        cfg.setUseCopies(True)
+        cfg.setItemCopyGroupsStates((item.queryState(), ))
+        item.setCopyGroups(('vendors_reviewers', ))
+        item.updateLocalRoles()
+        self.changeUser('pmReviewer2')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertFalse(self.hasPermission(ModifyPortalContent, item))
+        self.assertEquals(item.getMotivation(), HIDE_DECISION_UNDER_WRITING_MSG)
+        self.assertEquals(item.getDecision(), HIDE_DECISION_UNDER_WRITING_MSG)
 
 
 def test_suite():
