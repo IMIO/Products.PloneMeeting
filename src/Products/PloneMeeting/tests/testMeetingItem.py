@@ -2906,6 +2906,35 @@ class testMeetingItem(PloneMeetingTestCase):
         # actually, no copyGroups
         self.assertFalse(clonedItem.getCopyGroups())
 
+    def test_pm_CopiedFieldsOtherMeetingConfigsClonableToWhenDuplicated(self):
+        '''Make sure field MeetingItem.otherMeetingConfigsClonableTo is not kept
+           if it was selected on original item but configuration changed and new item
+           is not more sendable to the same meetingConfigs.
+           An item with wrong value for 'otherMeetingConfigsClonableTo' raises
+           Unauthorized when inserted in a meeting and trying to send it to the
+           other MC because it can not...'''
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        cfg2Id = cfg2.getId()
+        # items are clonable to cfg2
+        cfg.setMeetingConfigsToCloneTo(
+            ({'meeting_config': cfg2Id,
+              'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},))
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        item.setOtherMeetingConfigsClonableTo((self.meetingConfig2.getId(), ))
+        item.at_post_edit_script()
+        newItem = item.clone()
+        # field was kept as still possible in the configuration
+        self.assertEquals(newItem.getOtherMeetingConfigsClonableTo(),
+                          (self.meetingConfig2.getId(), ))
+
+        # change configuration and clone again
+        cfg.setMeetingConfigsToCloneTo(())
+        notSendableItem = item.clone()
+        # field was not kept as no more possible with current configuration
+        self.assertFalse(notSendableItem.getOtherMeetingConfigsClonableTo())
+
     def test_pm_ToDiscussFieldBehaviourWhenCloned(self):
         '''When cloning an item to the same MeetingConfig, the field 'toDiscuss' is managed manually :
            - if MeetingConfig.toDiscussSetOnItemInsert is True, value is not kept

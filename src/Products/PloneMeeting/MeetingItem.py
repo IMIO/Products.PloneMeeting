@@ -4533,6 +4533,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cloned_to_same_mc = newPortalType in same_mc_types
         if cloned_to_same_mc:
             copyFields = copyFields + EXTRA_COPIED_FIELDS_SAME_MC
+            # special handling for field 'otherMeetingConfigsClonableTo', we double
+            # check that value is still valid in case configuration changed since original
+            # item was created
+            if 'otherMeetingConfigsClonableTo' in copyFields:
+                clonableTo = set([mc['meeting_config'] for mc in cfg.getMeetingConfigsToCloneTo()])
+                if set(self.getOtherMeetingConfigsClonableTo()).difference(clonableTo):
+                    copyFields.remove('otherMeetingConfigsClonableTo')
 
         # Check if an external plugin want to add some copyFields
         copyFields = copyFields + self.adapted().getExtraFieldsToCopyWhenCloning(cloned_to_same_mc)
