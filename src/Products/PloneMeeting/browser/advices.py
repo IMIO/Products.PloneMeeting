@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 #
-# File: annexes.py
+# File: advices.py
 #
 # Copyright (c) 2015 by Imio.be
 #
