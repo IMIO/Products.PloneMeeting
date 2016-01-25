@@ -1216,23 +1216,30 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         adapted.showContentIcon = True
         return adapted.getLink()
 
+    def _mayNotViewDecisionMsg(self):
+        """Return a message specifying that current user may not view decision.
+           Decision is hidden when using 'hide_decisions_when_under_writing' WFAdaptation
+           when meeting is 'decided' and user may not edit the item."""
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        adaptations = cfg.getWorkflowAdaptations()
+        if 'hide_decisions_when_under_writing' in adaptations and \
+           self.hasMeeting() and self.getMeeting().queryState() == 'decided' and \
+           not api.user.get_current().has_permission(ModifyPortalContent, self):
+            return translate('decision_under_edit',
+                             domain='PloneMeeting',
+                             context=self.REQUEST,
+                             default=HIDE_DECISION_UNDER_WRITING_MSG)
+
     security.declarePublic('getMotivation')
 
     def getMotivation(self, **kwargs):
         '''Overridden version of 'motivation' field accessor. It allows to manage
            the 'hide_decisions_when_under_writing' workflowAdaptation that
            hides the motivation/decision for non-managers if meeting state is 'decided.'''
-        item = self.getSelf()
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(item)
-        adaptations = cfg.getWorkflowAdaptations()
-        if 'hide_decisions_when_under_writing' in adaptations and item.hasMeeting() and \
-           item.getMeeting().queryState() == 'decided' and not tool.isManager(item):
-            return translate('decision_under_edit',
-                             domain='PloneMeeting',
-                             context=item.REQUEST,
-                             default=HIDE_DECISION_UNDER_WRITING_MSG)
-        return self.getField('motivation').get(self, **kwargs)
+        # hide the decision?
+        msg = self._mayNotViewDecisionMsg()
+        return msg or self.getField('motivation').get(self, **kwargs)
     getRawMotivation = getMotivation
 
     security.declarePublic('getDecision')
@@ -1246,20 +1253,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            on the next page.
            Manage the 'hide_decisions_when_under_writing' workflowAdaptation that
            hides the decision for non-managers if meeting state is 'decided.'''
-        item = self.getSelf()
         res = self.getField('decision').get(self, **kwargs)
         if keepWithNext:
             res = signatureNotAlone(res)
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(item)
-        adaptations = cfg.getWorkflowAdaptations()
-        if 'hide_decisions_when_under_writing' in adaptations and item.hasMeeting() and \
-           item.getMeeting().queryState() == 'decided' and not tool.isManager(item):
-            return translate('decision_under_edit',
-                             domain='PloneMeeting',
-                             context=item.REQUEST,
-                             default=HIDE_DECISION_UNDER_WRITING_MSG)
-        return res
+        # hide the decision?
+        msg = self._mayNotViewDecisionMsg()
+        return msg or res
     getRawDecision = getDecision
 
     security.declarePublic('getDeliberation')
