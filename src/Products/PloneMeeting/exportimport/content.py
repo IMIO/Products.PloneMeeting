@@ -86,7 +86,10 @@ class ToolInitializer:
         # Register classes again, after model adaptations have been performed
         # (see comment in __init__.py)
         registerClasses()
-        self.tool.addUsersAndGroups(d.groups)
+        # if we already have existing MeetingGroups, we do not add additional ones
+        alreadyHaveGroups = bool(self.tool.objectValues('MeetingGroup'))
+        if not alreadyHaveGroups:
+            self.tool.addUsersAndGroups(d.groups)
         savedMeetingConfigsToCloneTo = {}
         for mConfig in d.meetingConfigs:
             # XXX we need to defer the management of the 'meetingConfigsToCloneTo'
@@ -114,7 +117,8 @@ class ToolInitializer:
         self.site.portal_membership.createMemberArea()
         # at the end, add users outside PloneMeeting groups because
         # they could have to be added in groups created by the MeetingConfig
-        self.tool.addUsersOutsideGroups(d.usersOutsideGroups)
+        if not alreadyHaveGroups:
+            self.tool.addUsersOutsideGroups(d.usersOutsideGroups)
         return self.successMessage
 
     def finishConfigFor(self, cfg, data):
