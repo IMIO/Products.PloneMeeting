@@ -322,7 +322,7 @@ div.pm_search_no_result_info {
 
 /* display advices menu more on the right on the dashboards */
 td.td_cell_advices .actionMenuAX .actionMenuContentAX {
-    right: 75px;
+    right: 70px;
     top: 0;
 }
 /* but display annexes of advices correctly */
