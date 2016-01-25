@@ -265,7 +265,8 @@ DEFAULT_LIST_TYPES = [
 
 NO_TRIGGER_WF_TRANSITION_UNTIL = '__nothing__'
 
-HIDE_DECISION_UNDER_WRITING_MSG = "<p class='highlightValue'>The decision is currently under edit by managers, you can not access it.</p>"
+HIDE_DECISION_UNDER_WRITING_MSG = \
+    "<p class='highlightValue'>The decision is currently under edit by managers, you can not access it.</p>"
 
 
 def registerClasses():
@@ -279,6 +280,7 @@ def registerClasses():
     classNames.append('ToolPloneMeeting')
     for name in classNames:
         exec 'import Products.PloneMeeting.%s as module' % name
+        klass = None  # PEP8
         exec 'klass = module.%s' % name
         key = 'PloneMeeting.%s' % name
         if key in Products.Archetypes.ATToolModule._types:
