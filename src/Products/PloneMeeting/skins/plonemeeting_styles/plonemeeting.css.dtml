@@ -418,7 +418,9 @@ body.template-meetingitem_view td.itemAnnexesCell dd.actionMenuContentAX {
     display: none;
 }
 
-.actionMenuContentAdvice { width: 600px; }
+.actionMenuContentAdvice {
+    width: 600px;
+}
 
 /* annexes displayed in the annexes_form (table of annexes) */
 td.pmLinks a {
@@ -821,8 +823,7 @@ table.listing th.th_header_privacy {
     width: 60px;
 }
 table.listing th.th_header_advices {
-    min-width: 56px;
-    width: auto;
+    width: 56px;
 }
 
 /* hide border between listType and itemNumber */
