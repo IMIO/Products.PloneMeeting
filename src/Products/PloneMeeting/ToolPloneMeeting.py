@@ -604,6 +604,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         cData = configData.getData()
         self.invokeFactory('MeetingConfig', **cData)
         cfg = getattr(self, configData.id)
+        cfg._at_creation_flag = True
         # TextArea fields are not set properly.
         for field in cfg.Schema().fields():
             fieldName = field.getName()
@@ -624,7 +625,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         cfg.processForm(values={'dummy': None})
         # when the object is created through-the-web.
         if not configData.active:
-            self.portal_workflow.doActionFor(cfg, 'deactivate')
+            wfTool = api.portal.get_tool('portal_workflow')
+            wfTool.doActionFor(cfg, 'deactivate')
         # Adds the sub-objects within the config: categories, classifiers,...
         for descr in configData.categories:
             cfg.addCategory(descr, False)
