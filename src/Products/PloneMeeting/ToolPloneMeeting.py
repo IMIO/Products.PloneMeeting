@@ -90,7 +90,7 @@ from Products.PloneMeeting.profiles import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.profiles import PloneMeetingConfiguration
 from Products.PloneMeeting.utils import getCustomAdapter, \
     monthsIds, weekdaysIds, getCustomSchemaFields, workday
-from Products.PloneMeeting.model.adaptations import performModelAdaptations, performWorkflowAdaptations
+from Products.PloneMeeting.model.adaptations import performModelAdaptations
 
 # Some constants ---------------------------------------------------------------
 MEETING_CONFIG_ERROR = 'A validation error occurred while instantiating ' \
@@ -611,6 +611,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             widgetName = field.widget.getName()
             if (widgetName == 'TextAreaWidget') and fieldName in cData:
                 field.set(cfg, cData[fieldName], mimetype='text/html')
+        # call processForm passing dummy values so existing values are not touched
+        cfg.processForm(values={'dummy': None})
 
         # Validates meeting config (validation seems not to be triggered
         # automatically when an object is created from code).
@@ -621,8 +623,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 errors.append("'%s': %s" % (field.getName(), error))
         if errors:
             raise PloneMeetingError(MEETING_CONFIG_ERROR % (cfg.getId(), '\n'.join(errors)))
-        # call processForm passing dummy values so existing values are not touched
-        cfg.processForm(values={'dummy': None})
         # when the object is created through-the-web.
         if not configData.active:
             wfTool = api.portal.get_tool('portal_workflow')
@@ -653,8 +653,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         for userId in configData.meetingManagers:
             groupsTool.addPrincipalToGroup(userId, '{0}_{1}'.format(cfg.getId(),
                                                                     MEETINGMANAGERS_GROUP_SUFFIX))
-        # Perform workflow adaptations on this meetingConfig
-        performWorkflowAdaptations(self.getParentNode(), cfg, logger)
         return cfg
 
     security.declarePublic('createMeetingConfigFolder')
@@ -1764,12 +1762,14 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''Deletes an p_event in p_obj's history.'''
         history = []
         eventToDelete = DateTime(eventToDelete)
-        for event in obj.workflow_history[obj.getWorkflowName()]:
+        wfTool = api.portal.get_tool('portal_workflow')
+        workflow_name = wfTool.getWorkflowsFor(obj)[0].getId()
+        for event in obj.workflow_history[workflow_name]:
             # Allow to remove data changes only.
             if (event['action'] != '_datachange_') or \
                (event['time'] != eventToDelete):
                 history.append(event)
-        obj.workflow_history[obj.getWorkflowName()] = tuple(history)
+        obj.workflow_history[workflow_name] = tuple(history)
 
     def _enableFacetedDashboardFor(self, obj, xmlpath=None):
         """ """
@@ -1810,5 +1810,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             return True
         return False
 
+    def performCustomWFAdaptations(self, meetingConfig, wfAdaptation, logger, itemWorkflow, meetingWorkflow):
+        '''See doc in interfaces.py.'''
+        return False
 
 registerType(ToolPloneMeeting, PROJECTNAME)

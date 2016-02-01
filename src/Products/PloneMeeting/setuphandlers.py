@@ -26,7 +26,6 @@ from Products.cron4plone.browser.configlets.cron_configuration import ICronConfi
 from Products.CPUtils.Extensions.utils import configure_ckeditor
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG
-from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
 from imio.helpers.catalog import addOrUpdateIndexes
 from imio.helpers.catalog import addOrUpdateColumns
 
@@ -215,11 +214,8 @@ def postInstall(context):
     # re-add them manually here...
     for meetingConfig in site.portal_plonemeeting.objectValues('MeetingConfig'):
         meetingConfig.registerPortalTypes()
-        meetingConfig.updatePortalTypes()
         # add default portal_tabs
         meetingConfig.createTab()
-        # Perform workflow adaptations if required
-        performWorkflowAdaptations(site, meetingConfig, logger)
 
     # Remove some types from the standard Plone search (live and advanced).
     props = site.portal_properties.site_properties

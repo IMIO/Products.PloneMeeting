@@ -403,8 +403,7 @@ class testSearches(PloneMeetingTestCase):
         # activate 'prevalidation' if necessary
         if 'prereviewers' in MEETINGREVIEWERS:
             cfg.setWorkflowAdaptations('pre_validation')
-            logger = logging.getLogger('PloneMeeting: testing')
-            performWorkflowAdaptations(self.portal, cfg, logger)
+            performWorkflowAdaptations(cfg, logger=pm_logger)
         # now do the query
         # this adapter is used by the "searchitemstovalidate"
         collection = cfg.searches.searches_items.searchitemstovalidate
@@ -465,7 +464,7 @@ class testSearches(PloneMeetingTestCase):
         if 'pre_validation' in cfg.listWorkflowAdaptations():
             cfg.setWorkflowAdaptations('pre_validation')
             logger = logging.getLogger('PloneMeeting: testing')
-            performWorkflowAdaptations(self.portal, cfg, logger)
+            performWorkflowAdaptations(cfg, logger=pm_logger)
 
         itemTypeName = cfg.getItemTypeName()
 
@@ -553,7 +552,7 @@ class testSearches(PloneMeetingTestCase):
         if 'pre_validation_keep_reviewer_permissions' in cfg.listWorkflowAdaptations():
             cfg.setWorkflowAdaptations(('pre_validation_keep_reviewer_permissions', ))
             logger = logging.getLogger('PloneMeeting: testing')
-            performWorkflowAdaptations(self.portal, cfg, logger)
+            performWorkflowAdaptations(cfg, logger=pm_logger)
         itemTypeName = cfg.getItemTypeName()
         # create 2 items
         self.changeUser('pmCreator1')
@@ -610,8 +609,11 @@ class testSearches(PloneMeetingTestCase):
         # wfAdaptation 'return_to_proposing_group' is not enabled
         self.assertEquals(adapter.query,
                           {'review_state': {'query': ['unknown_review_state']}})
-        cfg.setWorkflowAdaptations('return_to_proposing_group')
-        performWorkflowAdaptations(self.portal, cfg, pm_logger)
+        wfAdaptations = list(cfg.getWorkflowAdaptations())
+        if not 'return_to_proposing_group' in wfAdaptations:
+            wfAdaptations.append('return_to_proposing_group')
+        cfg.setWorkflowAdaptations(wfAdaptations)
+        performWorkflowAdaptations(cfg, logger=pm_logger)
 
         # normally this search is not available to users that are not able to correct items
         # nevertheless, if a user is in not able to edit items to correct, the special

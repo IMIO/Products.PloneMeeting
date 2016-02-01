@@ -568,7 +568,7 @@ class testWorkflows(PloneMeetingTestCase):
         """If there are items in state 'returned_to_proposing_group', a meeting may not be closed."""
         cfg = self.meetingConfig
         cfg.setWorkflowAdaptations(('return_to_proposing_group', ))
-        performWorkflowAdaptations(self.portal, cfg, pm_logger)
+        performWorkflowAdaptations(cfg, logger=pm_logger)
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=DateTime('2016/01/05'))
         item = self.create('MeetingItem')

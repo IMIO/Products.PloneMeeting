@@ -188,6 +188,11 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   is viewable by users that will correct the item
 - When duplicating an item, as field MeetingItem.otherMeetingConfigsClonableTo is kept, check that we may keep stored
   value in case the configuration changed since the original item was created
+- Added possibility to use the same workflow for item/meeting generated portal_types of several MeetingConfigs.  We duplicate
+  the selected item/meeting workflow so WFAdaptations are applied on a separated workflow and the original is kept clean for
+  other MeetingConfigs.  Added ToolPloneMeeting.performCustomWFAdaptations to manage custom WFAdaptations instead of
+  monkeypatching adaptations.performWorkflowAdaptations.  WFAdaptations are now applied when the MeetingConfig is saved, no
+  need to reinstall the package
 
 3.3 (2015-02-27)
 ----------------

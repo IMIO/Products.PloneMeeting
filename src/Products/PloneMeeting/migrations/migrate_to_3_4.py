@@ -4,6 +4,7 @@ import logging
 logger = logging.getLogger('PloneMeeting')
 
 from Acquisition import aq_base
+from DateTime import DateTime
 from Products.CMFCore.utils import getToolByName
 from plone import api
 from plone.namedfile.file import NamedBlobFile
@@ -18,6 +19,48 @@ from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 
 # The migration class ----------------------------------------------------------
 class Migrate_To_3_4(Migrator):
+
+    def _get_wh_key(self, itemOrMeeting):
+        """Get workflow_history key to use, in case there are several keys, we take the one
+           having the last event."""
+        keys = itemOrMeeting.workflow_history.keys()
+        if len(keys) == 1:
+            return keys[0]
+        else:
+            lastEventDate = DateTime('1950/01/01')
+            keyToUse = None
+            for key in keys:
+                if itemOrMeeting.workflow_history[key][-1]['time'] > lastEventDate:
+                    lastEventDate = itemOrMeeting.workflow_history[key][-1]['time']
+                    keyToUse = key
+            return keyToUse
+
+    def _changeWFUsedForItemAndMeeting(self):
+        """Now that the WF really used for Meeting and MeetingItem portal_types
+           is a duplicated version of what is selected in the configuration, we need to
+           update every meetingConfigs....
+        """
+        logger.info('Changing really used WF for items and meetings...')
+        wfTool = api.portal.get_tool('portal_workflow')
+        catalog = api.portal.get_tool('portal_catalog')
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            # this will call especially part where we duplicate WF and apply WFAdaptations
+            cfg.registerPortalTypes()
+            # we need to update the workflow_history of items and meetings
+            for brain in catalog(portal_type=(cfg.getItemTypeName(), cfg.getMeetingTypeName())):
+                itemOrMeeting = brain.getObject()
+                itemOrMeetingWFId = wfTool.getWorkflowsFor(itemOrMeeting)[0].getId()
+                if not itemOrMeetingWFId in itemOrMeeting.workflow_history:
+                    wf_history_key = self._get_wh_key(itemOrMeeting)
+                    itemOrMeeting.workflow_history[itemOrMeetingWFId] = \
+                        tuple(itemOrMeeting.workflow_history[wf_history_key])
+                    del itemOrMeeting.workflow_history[wf_history_key]
+                    # do this so changes is persisted
+                    itemOrMeeting.workflow_history = itemOrMeeting.workflow_history
+                else:
+                    # already migrated
+                    break
+        logger.info('Done.')
 
     def _updateItemsListVisibleFields(self):
         '''MeetingConfig.itemsListVisibleFields stored values changed from
@@ -315,7 +358,7 @@ class Migrate_To_3_4(Migrator):
             for recItem in recItems:
                 if recItem.portal_type == itemType:
                     recItem.portal_type = recItemType
-                    recItem.getObject().reindexObject(idxs=['portal_type', 'Type', ])
+                    recItem.reindexObject(idxs=['portal_type', 'Type', ])
             # update constraintypes for folders itemtemplates and recurringitems
             cfg.itemtemplates.setLocallyAllowedTypes(['Folder', itemTemplateType])
             cfg.itemtemplates.setImmediatelyAddableTypes(['Folder', itemTemplateType])
@@ -574,6 +617,7 @@ class Migrate_To_3_4(Migrator):
         self.upgradeDependencies()
         self.cleanRegistries()
         self.updateHolidays()
+        self._changeWFUsedForItemAndMeeting()
         self._updateItemsListVisibleFields()
         self._migrateLateItems()
         self._adaptAppForImioDashboard()

@@ -48,6 +48,16 @@ class Migrator(BaseMigrator):
         for profile_name in profile_names:
             self.upgradeProfile(profile_name)
 
+    def reinstall(self, profiles):
+        """Override to be able to call _after_reinstall at the end."""
+        BaseMigrator.reinstall(self, profiles)
+        self._after_reinstall()
+
+    def _after_reinstall(self):
+        """After self.reinstall hook that let's a subplugin knows that the profile
+           has been executed and may launch some migration steps before PM ones."""
+        pass
+
     def updateHolidays(self):
         '''Update holidays using default holidays.'''
         logger.info('Updating holidays...')

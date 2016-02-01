@@ -1040,8 +1040,8 @@ class testMeeting(PloneMeetingTestCase):
         m1_query = queryparser.parseFormquery(m1, m1.adapted()._availableItemsQuery())
         m2_query = queryparser.parseFormquery(m2, m2.adapted()._availableItemsQuery())
         m3_query = queryparser.parseFormquery(m3, m3.adapted()._availableItemsQuery())
-
-        if not self.wfTool[i1.getWorkflowName()].initial_state == 'validated':
+        wf_name = self.wfTool.getWorkflowsFor(i1)[0].getId()
+        if not self.wfTool[wf_name].initial_state == 'validated':
             self.assertEquals(len(catalog(m1_query)), 0)
             self.assertEquals(len(catalog(m2_query)), 0)
             self.assertEquals(len(catalog(m3_query)), 0)
@@ -1250,7 +1250,7 @@ class testMeeting(PloneMeetingTestCase):
         # get available decision transitions
         # this will return every transitions that lead to a decided item
         decidingTransitions = self.meetingConfig.listTransitionsDecidingItem()
-        itemWF = getattr(self.wfTool, self.meetingConfig.getItemWorkflow())
+        itemWF = self.wfTool.getWorkflowsFor(self.meetingConfig.getItemTypeName())[0]
         for tr in decidingTransitions:
             # make sure the transition lead to an item decided state
             self.assertTrue(itemWF.transitions[tr].new_state_id in self.meetingConfig.getItemDecidedStates())

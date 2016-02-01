@@ -549,7 +549,7 @@ def clonePermissions(srcObj, destObj, permissions=(View,
     '''This method applies on p_destObj the same values for p_permissions
        than those that apply for p_srcObj, according to workflow on
        p_srcObj. p_srcObj may be an item or a meeting.'''
-    wfTool = srcObj.portal_workflow
+    wfTool = api.portal.get_tool('portal_workflow')
     srcWorkflows = wfTool.getWorkflowsFor(srcObj)
     if not srcWorkflows:
         return
@@ -819,7 +819,9 @@ def getFieldVersion(obj, name, changes):
     # Return cumulative diff between successive versions of field
     res = None
     lastEvent = None
-    for event in obj.workflow_history[obj.getWorkflowName()]:
+    wfTool = api.portal.get_tool('portal_workflow')
+    workflow_name = wfTool.getWorkflowsFor(obj)[0].getId()
+    for event in obj.workflow_history[workflow_name]:
         if (event['action'] == '_datachange_') and (name in event['changes']):
             if res is None:
                 # We have found the first version of the field
@@ -850,7 +852,7 @@ def getLastEvent(obj, transition=None, notBefore='transfer'):
        to search only within history of the "last" site, so we want to ignore
        everything that occurrred before the last "transfer" transition.
        If p_transition is None, the very last event is returned'''
-    wfTool = getToolByName(obj, 'portal_workflow')
+    wfTool = api.portal.get_tool('portal_workflow')
 
     try:
         history = obj.workflow_history[wfTool.getWorkflowsFor(obj)[0].getId()]
@@ -933,16 +935,19 @@ def addDataChange(obj, previousData=None):
     if hasattr(obj, '_v_previousData'):
         del obj._v_previousData
     # Add the event to the history
-    obj.workflow_history[obj.getWorkflowName()] += (event,)
+    wfTool = api.portal.get_tool('portal_workflow')
+    workflow_name = wfTool.getWorkflowsFor(obj)[0].getId()
+    obj.workflow_history[workflow_name] += (event,)
 
 
 def hasHistory(obj, fieldName=None):
     '''Has p_obj an history? If p_fieldName is specified, the question is: has
        p_obj an history for field p_fieldName?'''
-    wfName = obj.getWorkflowName()
+    wfTool = api.portal.get_tool('portal_workflow')
+    workflow_name = wfTool.getWorkflowsFor(obj)[0].getId()
     if hasattr(obj.aq_base, 'workflow_history') and obj.workflow_history and \
-       (wfName in obj.workflow_history):
-        for event in obj.workflow_history[wfName]:
+       (workflow_name in obj.workflow_history):
+        for event in obj.workflow_history[workflow_name]:
             if not fieldName:
                 condition = event['action']
             else:
@@ -991,7 +996,7 @@ def getHistory(obj, startNumber=0, batchSize=500, checkMayView=True):
     '''Returns the history for this object, sorted in reverse order
        (most recent change first)'''
     res = []
-    wfTool = getToolByName(obj, 'portal_workflow')
+    wfTool = api.portal.get_tool('portal_workflow')
     wfName = wfTool.getWorkflowsFor(obj)[0].getId()
     history = list(obj.workflow_history[wfName])
     stopIndex = startNumber + batchSize - 1
@@ -1174,7 +1179,7 @@ def meetingTriggerTransitionOnLinkedItems(meeting, transitionId):
     '''
     tool = getToolByName(meeting, 'portal_plonemeeting')
     cfg = tool.getMeetingConfig(meeting)
-    wfTool = getToolByName(meeting, 'portal_workflow')
+    wfTool = api.portal.get_tool('portal_workflow')
     wf_comment = _('wf_transition_triggered_by_application')
 
     # if we have a transition to trigger on every items, trigger it!

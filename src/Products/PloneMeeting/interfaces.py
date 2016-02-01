@@ -613,6 +613,9 @@ class IMeetingCategoryCustom(IMeetingCategory):
 # Interfaces used for customizing the behaviour of meeting configs -------------
 # See docstring of previous classes for understanding this section.
 class IMeetingConfigDocumentation:
+    def custom_validate_workflowAdaptations():
+        '''This is called by MeetingConfig.validate_workflowAdaptations and let
+           a plugin that added his own workflowAdaptations validates it.'''
     def onEdit(isCreated):
         '''Called when an object p_isCreated or edited.'''
     def getMeetingsAcceptingItems():
@@ -683,6 +686,8 @@ class IToolPloneMeetingDocumentation:
         '''Called when the tool p_isCreated or edited.'''
     def getSpecificMailContext(event, translationMapping):
         '''See doc in methods with similar names above.'''
+    def performCustomWFAdaptations(meetingConfig, wfAdaptation, logger, itemWorkflow, meetingWorkflow):
+        '''This let's a plugin define it's own WFAdaptations to apply.'''
 
 
 class IToolPloneMeetingCustom(IToolPloneMeeting):

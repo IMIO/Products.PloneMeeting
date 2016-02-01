@@ -246,7 +246,8 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failIf(newItem.portal_type == item.portal_type)
         self.failUnless(newItem.portal_type == self.tool.getMeetingConfig(newItem).getItemTypeName())
         # the new item is created in his initial state
-        newItemInitialState = self.wfTool[newItem.getWorkflowName()].initial_state
+        wf_name = self.wfTool.getWorkflowsFor(newItem)[0].getId()
+        newItemInitialState = self.wfTool[wf_name].initial_state
         self.failUnless(self.wfTool.getInfoFor(newItem, 'review_state') == newItemInitialState)
         # the original item is no more sendable to the same meetingConfig
         self.failIf(item.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
@@ -276,11 +277,11 @@ class testMeetingItem(PloneMeetingTestCase):
         annotationKey = item._getSentToOtherMCAnnotationKey(otherMeetingConfigId)
         newUID = annotations[annotationKey]
         newItem = self.portal.uid_catalog(UID=newUID)[0].getObject()
-        itemWorkflow = self.tool.getMeetingConfig(newItem).getItemWorkflow()
-        self.assertEquals(len(newItem.workflow_history[itemWorkflow]), 2)
+        itemWorkflowId = self.wfTool.getWorkflowsFor(newItem)[0].getId()
+        self.assertEquals(len(newItem.workflow_history[itemWorkflowId]), 2)
         # the workflow_history contains the intial transition to 'itemcreated' with None action
         # and the special cloneEvent action specifying that it has been transfered to another meetingConfig
-        self.assertEquals([action['action'] for action in newItem.workflow_history[itemWorkflow]],
+        self.assertEquals([action['action'] for action in newItem.workflow_history[itemWorkflowId]],
                           [None, 'create_to_%s_from_%s' % (otherMeetingConfigId, meetingConfigId)])
         # now check that the item is sent to another meetingConfig for each
         # cfg.getItemAutoSentToOtherMCStates() state
@@ -576,7 +577,11 @@ class testMeetingItem(PloneMeetingTestCase):
            WF intial state is coherent.'''
         # first, make sure we have different WFs used in self.meetingConfig
         # and self.meetingConfig2 regarding item
-        if self.meetingConfig.getItemWorkflow() == self.meetingConfig2.getItemWorkflow():
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        cfg1ItemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
+        cfg2ItemWF = self.wfTool.getWorkflowsFor(cfg2.getItemTypeName())[0]
+        if cfg1ItemWF.getId() == cfg2ItemWF.getId():
             self.changeUser('admin')
             # duplicate WF and update self.meetingConfig2
             copyInfos = self.wfTool.manage_copyObjects(self.meetingConfig.getItemWorkflow())
@@ -586,15 +591,14 @@ class testMeetingItem(PloneMeetingTestCase):
         # now define a different WF intial_state for self.meetingConfig2
         # item workflow and test that everything is ok
         # set new intial_state to 'validated'
-        newWF = getattr(self.wfTool, self.meetingConfig2.getItemWorkflow())
+        newWF = self.wfTool.getWorkflowsFor(cfg2.getItemTypeName())[0]
         newWF.initial_state = 'validated'
         # now send an item from self.meetingConfig to self.meetingConfig2
         data = self._setupSendItemToOtherMC()
         newItem = data['newItem']
         newItemWF = self.wfTool.getWorkflowsFor(newItem)[0]
-        # the originalItemWF initial_state is different from newItem WF initial_state
-        originalItemWF = getattr(self.wfTool, self.meetingConfig.getItemWorkflow())
-        self.assertNotEquals(newItemWF.initial_state, originalItemWF.initial_state)
+        # the cfg1ItemWF initial_state is different from newItem WF initial_state
+        self.assertNotEquals(newItemWF.initial_state, cfg1ItemWF.initial_state)
         # but the initial_state for new item is correct
         self.assertEquals(self.wfTool.getInfoFor(newItem, 'review_state'), newItemWF.initial_state)
 
@@ -606,19 +610,22 @@ class testMeetingItem(PloneMeetingTestCase):
            - we can present an item to next available in the future 'created' meeting;
            - errors are managed.'''
         cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        cfg2Id = cfg2.getId()
         data = self._setupSendItemToOtherMC(with_advices=True)
         # by default, an item sent is resulting in his wf initial_state
         # if no transitions to trigger are defined when sending the item to the new MC
         newItem = data['newItem']
-        item_initial_state = self.wfTool[newItem.getWorkflowName()].initial_state
+        wf_name = self.wfTool.getWorkflowsFor(newItem)[0].getId()
+        item_initial_state = self.wfTool[wf_name].initial_state
         self.assertTrue(newItem.queryState() == item_initial_state)
         self.assertTrue(cfg.getMeetingConfigsToCloneTo() ==
-                        ({'meeting_config': '%s' % self.meetingConfig2.getId(),
+                        ({'meeting_config': '%s' % cfg2Id,
                           'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},))
         # remove the items and define that we want the item to be 'validated' when sent
-        cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % self.meetingConfig2.getId(),
+        cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
                                          'trigger_workflow_transitions_until': '%s.%s' %
-                                         (self.meetingConfig2.getId(), 'validate')},))
+                                         (cfg2Id, 'validate')},))
         self.deleteAsManager(newItem.UID())
         originalItem = data['originalItem']
         self.deleteAsManager(originalItem.UID())
@@ -628,23 +635,24 @@ class testMeetingItem(PloneMeetingTestCase):
         # in this case, it failed because a category is required for newItem and was not set
         data = self._setupSendItemToOtherMC(with_advices=True)
         newItem = data['newItem']
-        self.assertTrue(self.meetingConfig2.getUseGroupsAsCategories() is False)
+        self.assertTrue(cfg2.getUseGroupsAsCategories() is False)
         # item is not 'validated' unless it was it's initial_state...
-        if not self.wfTool[newItem.getWorkflowName()].initial_state == 'validated':
+        wf_name = self.wfTool.getWorkflowsFor(newItem)[0].getId()
+        if not self.wfTool[wf_name].initial_state == 'validated':
             self.assertTrue(not newItem.queryState() == 'validated')
             fail_to_trigger_msg = translate('could_not_trigger_transition_for_cloned_item',
                                             domain='PloneMeeting',
-                                            mapping={'meetingConfigTitle': self.meetingConfig2.Title()},
+                                            mapping={'meetingConfigTitle': cfg2.Title()},
                                             context=self.request)
             lastPortalMessage = IStatusMessage(self.request).showStatusMessages()[-1]
             self.assertTrue(lastPortalMessage.message == fail_to_trigger_msg)
 
-        # now adapt self.meetingConfig2 to not use categories,
+        # now adapt cfg2 to not use categories,
         # the required transitions should have been triggerd this time
-        self.meetingConfig2.setUseGroupsAsCategories(True)
+        cfg2.setUseGroupsAsCategories(True)
         # change insert order method too as 'on_categories' for now
-        self.meetingConfig2.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_proposing_groups',
-                                                          'reverse': '0'}, ))
+        cfg2.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_proposing_groups',
+                                            'reverse': '0'}, ))
         # remove items and try again
         self.deleteAsManager(newItem.UID())
         originalItem = data['originalItem']
@@ -660,20 +668,21 @@ class testMeetingItem(PloneMeetingTestCase):
         self.deleteAsManager(newItem.UID())
         originalItem = data['originalItem']
         self.deleteAsManager(originalItem.UID())
-        cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % self.meetingConfig2.getId(),
+        cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
                                          'trigger_workflow_transitions_until': '%s.%s' %
-                                         (self.meetingConfig2.getId(), 'present')},))
+                                         (cfg2Id, 'present')},))
         data = self._setupSendItemToOtherMC(with_advices=True)
         newItem = data['newItem']
         # could not be added because no meeting in initial_state is available
-        meeting_initial_state = self.wfTool[self.meetingConfig2.getMeetingWorkflow()].initial_state
-        self.assertTrue(len(self.meetingConfig2.adapted().getMeetingsAcceptingItems(
+        cfg2MeetingWF = self.wfTool.getWorkflowsFor(cfg2.getMeetingTypeName())[0]
+        meeting_initial_state = self.wfTool[cfg2MeetingWF.getId()].initial_state
+        self.assertTrue(len(cfg2.adapted().getMeetingsAcceptingItems(
             review_states=(meeting_initial_state, ))) == 0)
         self.assertTrue(newItem.queryState() == 'validated')
         # a status message was added
         fail_to_present_msg = translate('could_not_present_item_no_meeting_accepting_items',
                                         domain='PloneMeeting',
-                                        mapping={'destMeetingConfigTitle': self.meetingConfig2.Title(),
+                                        mapping={'destMeetingConfigTitle': cfg2.Title(),
                                                  'initial_state': translate(meeting_initial_state,
                                                                             domain="plone",
                                                                             context=self.request)},
@@ -685,7 +694,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # in the future is available.  Add a meeting with a date in the past
         self.create('Meeting',
                     date=DateTime('2008/06/12 08:00:00'),
-                    meetingConfig=self.meetingConfig2)
+                    meetingConfig=cfg2)
         self.deleteAsManager(newItem.UID())
         originalItem = data['originalItem']
         self.deleteAsManager(originalItem.UID())
@@ -697,7 +706,7 @@ class testMeetingItem(PloneMeetingTestCase):
         futureDate = DateTime() + 15
         self.create('Meeting',
                     date=futureDate,
-                    meetingConfig=self.meetingConfig2)
+                    meetingConfig=cfg2)
         self.deleteAsManager(newItem.UID())
         originalItem = data['originalItem']
         self.deleteAsManager(originalItem.UID())
@@ -809,7 +818,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # do this as 'Manager' in case 'MeetingManager' can not delete the item in used item workflow
         self.deleteAsManager(newItem.UID())
         originalItem.cloneToOtherMeetingConfig(self.meetingConfig2.getId())
-        newItem = originalItem.getBRefs('ItemPredecessor')[0].getObject()
+        newItem = originalItem.getBRefs('ItemPredecessor')[0]
         self.assertTrue(newItem.getCategory() == catIdOfMC2Mapped)
 
     def test_pm_SendItemToOtherMCManually(self):
@@ -879,7 +888,8 @@ class testMeetingItem(PloneMeetingTestCase):
         # True will make it add the relevant copyGroups
         # moreover, check that auto added copyGroups add correctly
         # relevant local roles for copyGroups
-        initial_state = self.wfTool[i4.getWorkflowName()].initial_state
+        wf_name = self.wfTool.getWorkflowsFor(i4)[0].getId()
+        initial_state = self.wfTool[wf_name].initial_state
         self.meetingConfig.setItemCopyGroupsStates((initial_state, ))
         i5 = self.create('MeetingItem', proposingGroup='vendors')
         # relevant groups are auto added
@@ -954,7 +964,8 @@ class testMeetingItem(PloneMeetingTestCase):
         # By default, adding an item does not add any copyGroup
         item = self.create('MeetingItem')
         # activate copy groups at initial wf state
-        initial_state = self.wfTool[item.getWorkflowName()].initial_state
+        wf_name = self.wfTool.getWorkflowsFor(item)[0].getId()
+        initial_state = self.wfTool[wf_name].initial_state
         self.meetingConfig.setItemCopyGroupsStates((initial_state, ))
         self.failIf(item.getCopyGroups())
         # set a correct expression so vendors is set as copy group
@@ -1149,7 +1160,8 @@ class testMeetingItem(PloneMeetingTestCase):
         self.do(validatedItem, 'backToValidated')
         presentedItem = meeting.getItems()[0]
         self.changeUser(userThatCanSee)
-        createdItemInitialState = self.wfTool[createdItem.getWorkflowName()].initial_state
+        wf_name = self.wfTool.getWorkflowsFor(createdItem)[0].getId()
+        createdItemInitialState = self.wfTool[wf_name].initial_state
         self.assertEquals(createdItem.queryState(), createdItemInitialState)
         self.assertEquals(validatedItem.queryState(), 'validated')
         self.assertEquals(presentedItem.queryState(), 'presented')

@@ -70,6 +70,7 @@ from eea.facetednavigation.interfaces import ICriteria
 from imio.helpers.cache import cleanRamCache
 from imio.helpers.cache import cleanVocabularyCacheFor
 from Products.PloneMeeting import PMMessageFactory as _
+from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from Products.PloneMeeting.config import CLONE_TO_OTHER_MC_ACTION_SUFFIX
 from Products.PloneMeeting.config import CLONE_TO_OTHER_MC_EMERGENCY_ACTION_SUFFIX
@@ -849,7 +850,7 @@ schema = Schema((
         ),
         enforceVocabulary=True,
         schemata="workflow",
-        vocabulary='listWorkflows',
+        vocabulary='listItemWorkflows',
         default=defValues.itemWorkflow,
         required=True,
         write_permission="PloneMeeting: Write risky config",
@@ -895,7 +896,7 @@ schema = Schema((
         ),
         enforceVocabulary=True,
         schemata="workflow",
-        vocabulary='listWorkflows',
+        vocabulary='listMeetingWorkflows',
         default=defValues.meetingWorkflow,
         required=True,
         write_permission="PloneMeeting: Write risky config",
@@ -2549,7 +2550,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                        default=u'${name} is required, please correct.',
                                        mapping={'name': label})
         wfTool = getToolByName(self, 'portal_workflow')
-        itemWorkflow = getattr(wfTool, self.getItemWorkflow())
+        itemWorkflow = wfTool.getWorkflowsFor(self.getItemTypeName())[0]
         # first value must be a transition leaving the wf initial_state
         initialState = itemWorkflow.states[itemWorkflow.initial_state]
         if not values[0] in initialState.transitions:
@@ -2912,6 +2913,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def validate_workflowAdaptations(self, values):
         '''This method ensures that the combination of used workflow
            adaptations is valid.'''
+        # inline validation sends a string instead of a tuple... bypass it!
+        if not hasattr(values, '__iter__'):
+            return
+
         if '' in values:
             values.remove('')
         msg = translate('wa_conflicts', domain='PloneMeeting', context=self.REQUEST)
@@ -2931,6 +2936,68 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # 'hide_decisions_when_under_writing' and 'no_publication' are not working together
         if ('hide_decisions_when_under_writing' in values) and ('no_publication' in values):
             return msg
+
+        catalog = api.portal.get_tool('portal_catalog')
+
+        # validate new added workflowAdaptations regarding existing items and meetings
+        added = set(values).difference(set(self.getWorkflowAdaptations()))
+        if 'no_publication' in added:
+            # this will remove the 'published' state for Meeting and 'itempublished' for MeetingItem
+            # check that no more elements are in these states
+            if catalog(portal_type=self.getItemTypeName(), review_state='itempublished') or \
+               catalog(portal_type=self.getMeetingTypeName(), review_state='published'):
+                return translate('wa_added_no_publication_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+        if 'no_proposal' in added:
+            # this will remove the 'proposed' state for MeetingItem
+            # check that no more items are in this state
+            if catalog(portal_type=self.getItemTypeName(), review_state='proposed'):
+                return translate('wa_added_no_proposal_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+        if 'items_come_validated' in added:
+            # this will remove states 'itemcreated' and 'proposed' for MeetingItem
+            # check that no more items are in these states
+            if catalog(portal_type=self.getItemTypeName(), review_state=('itemcreated', 'proposed')):
+                return translate('wa_added_items_come_validated_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+
+        # validate removed workflowAdaptations, in case we removed a wfAdaptation that added
+        # a state for example, double check that no more element (item or meeting) is in that state...
+        removed = set(self.getWorkflowAdaptations()).difference(set(values))
+        if 'archiving' in removed:
+            # it is not possible to go back from an archived site
+            return translate('wa_removed_archiving_error',
+                             domain='PloneMeeting',
+                             context=self.REQUEST)
+        if 'pre_validation' in removed or 'pre_validation_keep_reviewer_permissions' in removed:
+            # this will remove the 'prevalidated' state for MeetingItem
+            # check that no more items are in this state
+            if catalog(portal_type=self.getItemTypeName(), review_state='prevalidated'):
+                return translate('wa_removed_pre_validation_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+        if 'return_to_proposing_group' in removed:
+            # this will remove the 'returned_to_proposing_group' state for MeetingItem
+            # check that no more items are in this state
+            if catalog(portal_type=self.getItemTypeName(), review_state='returned_to_proposing_group'):
+                return translate('wa_removed_return_to_proposing_group_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+        if 'hide_decisions_when_under_writing' in removed:
+            # this will remove the 'decisions_published' state for Meeting
+            # check that no more meetings are in this state
+            if catalog(portal_type=self.getMeetingTypeName(), review_state='decisions_published'):
+                return translate('wa_removed_hide_decisions_when_under_writing_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+        return self.adapted().custom_validate_workflowAdaptations()
+
+    def custom_validate_workflowAdaptations(self):
+        '''See doc in interfaces.py.'''
+        pass
 
     security.declarePrivate('validate_itemAdviceEditStates')
 
@@ -3227,12 +3294,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if not meetingConfig:
             meetingConfig = self
         res = []
+        wfTool = api.portal.get_tool('portal_workflow')
         if objectType == 'Item':
-            workflowName = meetingConfig.getItemWorkflow()
+            workflow = wfTool.getWorkflowsFor(meetingConfig.getItemTypeName())[0]
         else:
             # objectType == 'Meeting'
-            workflowName = meetingConfig.getMeetingWorkflow()
-        workflow = getattr(self.portal_workflow, workflowName)
+            workflow = wfTool.getWorkflowsFor(meetingConfig.getMeetingTypeName())[0]
         for t in workflow.transitions.objectValues():
             name = translate(t.title, domain="plone", context=self.REQUEST) + ' (' + t.id + ')'
             # Indeed several transitions can have the same translation
@@ -3416,12 +3483,82 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # set elements existing in both lists, we do not use set() because it is not ordered
             collection.setCustomViewFields(tuple([mCol for mCol in meetingColumns if mCol in customViewFieldIds]))
 
-    security.declarePrivate('updatePortalTypes')
+    def _setDuplicatedWorkflowFor(self, portalTypeName, workflowName):
+        """Set the correct workflow for given p_portalTypeName.
+           To be able to use same workflow for several MeetingConfigs, we will
+           duplicate the selected workflow and use it."""
 
-    def updatePortalTypes(self):
+        # now duplicate the workflow and use the copy for portalTypeName
+        # do that as a Manager because MeetingManager may edit the MeetingConfig
+        # but does not have the right to copy/paste workflows
+        with api.env.adopt_roles(['Manager', ]):
+            wfTool = api.portal.get_tool('portal_workflow')
+            copyInfos = wfTool.manage_copyObjects(workflowName)
+            newWFId = wfTool.manage_pasteObjects(copyInfos)[0]['new_id']
+            duplicatedWFId = '{0}__{1}'.format(self.getId(), workflowName)
+            # if already exists, delete it, so we are on a clean copy
+            # before applying workflow_adaptations
+            if duplicatedWFId in wfTool:
+                wfTool.manage_delObjects(ids=[duplicatedWFId])
+            wfTool.manage_renameObject(newWFId, duplicatedWFId)
+            duplicatedWF = wfTool.get(duplicatedWFId)
+            duplicatedWF.title = duplicatedWFId
+            wfTool.setChainForPortalTypes([portalTypeName], duplicatedWFId)
+
+    security.declarePrivate('registerPortalTypes')
+
+    def registerPortalTypes(self):
+        '''Registers, into portal_types, specific item and meeting types
+           corresponding to this meeting config.'''
+        i = -1
+        registeredFactoryTypes = self.portal_factory.getFactoryTypes().keys()
+        factoryTypesToRegister = []
+        site_properties = api.portal.get_tool('portal_properties').site_properties
+
+        for metaTypeName in self.metaTypes:
+            i += 1
+            portalTypeName = '%s%s' % (metaTypeName, self.getShortName())
+            # If the portal type corresponding to the meta type is
+            # registered in portal_factory (in the model:
+            # use_portal_factory=True), we must also register the new
+            # portal_type we are currently creating.
+            if metaTypeName in registeredFactoryTypes:
+                factoryTypesToRegister.append(portalTypeName)
+            if not hasattr(self.portal_types, portalTypeName):
+                typeInfoName = "PloneMeeting: %s (%s)" % (metaTypeName,
+                                                          metaTypeName)
+                realMetaType = metaTypeName.startswith('MeetingItem') and 'MeetingItem' or metaTypeName
+                self.portal_types.manage_addTypeInformation(
+                    getattr(self.portal_types, realMetaType).meta_type,
+                    id=portalTypeName, typeinfo_name=typeInfoName)
+                # Set the human readable title explicitly
+                portalType = getattr(self.portal_types, portalTypeName)
+                portalType.title = portalTypeName
+                # base portal_types 'Meeting' and 'MeetingItem' are global_allow=False
+                portalType.global_allow = True
+
+                if metaTypeName in ('MeetingItemTemplate', 'MeetingItemRecurring'):
+                    # Update the typesUseViewActionInListings property of site_properties
+                    # so MeetingItem types are in it, this is usefull when managing item templates
+                    # in the MeetingConfig because folders there have the 'folder_contents' layout
+                    if portalTypeName not in site_properties.typesUseViewActionInListings:
+                        site_properties.typesUseViewActionInListings = site_properties.typesUseViewActionInListings + \
+                            (portalTypeName, )
+
+        # Copy actions from the base portal type
+        self._updatePortalTypes()
+        # Update the factory tool with the list of types to register
+        portal_factory = api.portal.get_tool('portal_factory')
+        portal_factory.manage_setPortalFactoryTypes(
+            listOfTypeIds=factoryTypesToRegister + registeredFactoryTypes)
+        # Perform workflow adaptations if required
+        performWorkflowAdaptations(self)
+
+    def _updatePortalTypes(self):
         '''Reupdates the portal_types in this meeting config.'''
-        typesTool = getToolByName(self, 'portal_types')
-        props = getToolByName(self, 'portal_properties').site_properties
+        typesTool = api.portal.get_tool('portal_types')
+        props = api.portal.get_tool('portal_properties').site_properties
+        wfTool = api.portal.get_tool('portal_workflow')
         for metaTypeName in self.metaTypes:
             portalTypeName = '%s%s' % (metaTypeName, self.getShortName())
             portalType = getattr(typesTool, portalTypeName)
@@ -3429,6 +3566,17 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             portalType.i18n_domain = basePortalType.i18n_domain
             # base portal_types 'Meeting' and 'MeetingItem' are global_allow=False
             portalType.global_allow = True
+            # Associate a workflow for this new portal type.
+            # keep the method computation because it manages
+            # getItemRecurringWorkflow and getItemTemplateWorkflow
+            workflowName = 'get%sWorkflow' % self.metaNames[self.metaTypes.index(metaTypeName)]
+            workflowName = getattr(self, workflowName)()
+            # set a duplicated WF for Meeting and MeetingItem
+            if metaTypeName in ('Meeting', 'MeetingItem'):
+                self._setDuplicatedWorkflowFor(portalTypeName, workflowName)
+            else:
+                wfTool.setChainForPortalTypes([portalTypeName], workflowName)
+
             if metaTypeName.startswith("MeetingItem"):
                 portal_type = metaTypeName == "MeetingItem" and \
                     self.getItemTypeName() or \
@@ -3473,59 +3621,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             portalType._actions = tuple(basePortalType._cloneActions())
         # Update the cloneToOtherMeetingConfig actions visibility
         self._updateCloneToOtherMCActions()
-
-    security.declarePrivate('registerPortalTypes')
-
-    def registerPortalTypes(self):
-        '''Registers, into portal_types, specific item and meeting types
-           corresponding to this meeting config.'''
-        i = -1
-        registeredFactoryTypes = self.portal_factory.getFactoryTypes().keys()
-        factoryTypesToRegister = []
-        site_properties = self.portal_properties.site_properties
-
-        for metaTypeName in self.metaTypes:
-            i += 1
-            portalTypeName = '%s%s' % (metaTypeName, self.getShortName())
-            # If the portal type corresponding to the meta type is
-            # registered in portal_factory (in the model:
-            # use_portal_factory=True), we must also register the new
-            # portal_type we are currently creating.
-            if metaTypeName in registeredFactoryTypes:
-                factoryTypesToRegister.append(portalTypeName)
-            if not hasattr(self.portal_types, portalTypeName):
-                typeInfoName = "PloneMeeting: %s (%s)" % (metaTypeName,
-                                                          metaTypeName)
-                realMetaType = metaTypeName.startswith('MeetingItem') and 'MeetingItem' or metaTypeName
-                self.portal_types.manage_addTypeInformation(
-                    getattr(self.portal_types, realMetaType).meta_type,
-                    id=portalTypeName, typeinfo_name=typeInfoName)
-                # Set the human readable title explicitly
-                portalType = getattr(self.portal_types, portalTypeName)
-                portalType.title = portalTypeName
-                # base portal_types 'Meeting' and 'MeetingItem' are global_allow=False
-                portalType.global_allow = True
-                # Associate a workflow for this new portal type.
-                workflowName = 'get%sWorkflow' % self.metaNames[i]
-                workflowName = getattr(self, workflowName)()
-                # because of reinstallation problems, we MUST trust given workflow name and use
-                # it.  For example, while reinstalling an external profile, the workflow
-                # could not exist at this time but we need to set it nevertheless
-                self.portal_workflow.setChainForPortalTypes([portalTypeName],
-                                                            workflowName)
-                if metaTypeName in ('MeetingItemTemplate', 'MeetingItemRecurring'):
-                    # Update the typesUseViewActionInListings property of site_properties
-                    # so MeetingItem types are in it, this is usefull when managing item templates
-                    # in the MeetingConfig because folders there have the 'folder_contents' layout
-                    if portalTypeName not in site_properties.typesUseViewActionInListings:
-                        site_properties.typesUseViewActionInListings = site_properties.typesUseViewActionInListings + \
-                            (portalTypeName, )
-
-        # Copy actions from the base portal type
-        self.updatePortalTypes()
-        # Update the factory tool with the list of types to register
-        self.portal_factory.manage_setPortalFactoryTypes(
-            listOfTypeIds=factoryTypesToRegister + registeredFactoryTypes)
 
     security.declarePrivate('createSearches')
 
@@ -3740,13 +3835,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         cleanRamCache()
         # invalidate cache for every vocabularies
         cleanVocabularyCacheFor()
-        s = self.portal_workflow.setChainForPortalTypes
-        # Update meeting item workflow
-        s([self.getItemTypeName()], self.getItemWorkflow())
-        # Update meeting workflow
-        s([self.getMeetingTypeName()], self.getMeetingWorkflow())
         # Update portal types
-        self.updatePortalTypes()
+        self.registerPortalTypes()
         # Update customViewFields defined on DashboardCollections
         self.updateCollectionColumns()
         # Update item tags order if I must sort them
@@ -3892,13 +3982,33 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if "_%s'" % reviewSuffix in strGroupIds:
                 return reviewSuffix
 
-    security.declarePublic('listWorkflows')
+    security.declarePublic('listItemWorkflows')
 
-    def listWorkflows(self):
-        '''Lists the workflows registered in portal_workflow.'''
+    def listItemWorkflows(self):
+        '''Lists the workflows available for MeetingItem, it has to :
+           - start with 'meetingitem';
+           - do not contain '__' (it is a duplicated workflow).'''
         res = []
         for workflowName in self.portal_workflow.listWorkflows():
-            res.append((workflowName, workflowName))
+            if workflowName.startswith('meetingitem') and \
+               not '__' in workflowName:
+                res.append((workflowName, workflowName))
+        return DisplayList(tuple(res)).sortedByValue()
+
+    security.declarePublic('listMeetingWorkflows')
+
+    def listMeetingWorkflows(self):
+        '''Lists the workflows available for Meeting, it has to :
+           - start with 'meeting';
+           - do not start with 'meetingadvice' nor 'meetingitem';
+           - do not contain '__' (it is a duplicated workflow).'''
+        res = []
+        for workflowName in self.portal_workflow.listWorkflows():
+            if workflowName.startswith('meeting') and \
+               not workflowName.startswith('meetingadvice') and \
+               not workflowName.startswith('meetingitem') and \
+               not '__' in workflowName:
+                res.append((workflowName, workflowName))
         return DisplayList(tuple(res)).sortedByValue()
 
     def listStates_cachekey(method, self, objectType, excepted=None):
@@ -3914,9 +4024,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            be ommitted from the result.'''
         wfTool = api.portal.get_tool('portal_workflow')
         res = []
-        workflowName = 'get%sWorkflow' % objectType
-        workflowName = getattr(self, workflowName)()
-        workflow = getattr(wfTool, workflowName)
+        workflow = None
+        if objectType == 'Meeting':
+            workflow = wfTool.getWorkflowsFor(self.getMeetingTypeName())[0]
+        else:
+            workflow = wfTool.getWorkflowsFor(self.getItemTypeName())[0]
         for state in workflow.states.objectValues():
             if excepted and (state.id == excepted):
                 continue
@@ -3999,7 +4111,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def listItemAutoSentToOtherMCStates(self):
         """Vocabulary for the 'itemAutoSentToOtherMCStates' field, every states excepted initial state."""
         wfTool = api.portal.get_tool('portal_workflow')
-        itemWorkflow = getattr(wfTool, self.getItemWorkflow())
+        itemWorkflow = wfTool.getWorkflowsFor(self.getItemTypeName())[0]
         initialState = itemWorkflow.states[itemWorkflow.initial_state]
         states = self.listStates('Item', excepted=initialState.id)
         return DisplayList(tuple(states)).sortedByValue()
@@ -4631,7 +4743,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            This is used by the panel of transitions available at the bottom of a decided meeting to
            decide several items at once.'''
         wfTool = getToolByName(self, 'portal_workflow')
-        itemWorkflow = getattr(wfTool, self.getItemWorkflow())
+        itemWorkflow = wfTool.getWorkflowsFor(self.getItemTypeName())[0]
         res = []
         for transition in itemWorkflow.transitions.values():
             if transition.id.startswith('backTo'):

@@ -56,7 +56,10 @@ class PloneMeetingTestingHelpers:
                      'backToProposed', ),
         'validated': ('backToItemFrozen',
                       'backToPresented',
-                      'backToValidated', )}
+                      'backToValidated', ),
+        'presented': ('backToItemFrozen',
+                      'backToItemPublished',
+                      'backToPresented', )}
 
     WF_STATE_NAME_MAPPINGS = {'itemcreated': 'itemcreated',
                               'proposed': 'proposed',

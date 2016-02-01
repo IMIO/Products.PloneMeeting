@@ -1697,14 +1697,6 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         wfTool = getToolByName(self, 'portal_workflow')
         return wfTool.getInfoFor(self, 'review_state')
 
-    security.declarePublic('getWorkflowName')
-
-    def getWorkflowName(self):
-        '''What is the name of my workflow ?'''
-        tool = getToolByName(self, 'portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-        return cfg.getMeetingWorkflow()
-
     security.declarePublic('getLastEvent')
 
     def getLastEvent(self, transition=None):

@@ -307,10 +307,10 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # values relative to the 'itemcreated' action
         # But here, the workflow_history is cleaned by ToolPloneMeeting.pasteItems
         # and only contains informations about the current workflow and the actions in it
-        itemWorkflow = self.tool.getMeetingConfig(res1).getItemWorkflow()
+        itemWorkflowId = self.wfTool.getWorkflowsFor(res1)[0].getId()
         # The workflow_history only contains one action, the 'itemcreated' action
-        self.assertEquals(len(res1.workflow_history[itemWorkflow]), 1)
-        self.assertEquals(len(res2.workflow_history[itemWorkflow]), 1)
+        self.assertEquals(len(res1.workflow_history[itemWorkflowId]), 1)
+        self.assertEquals(len(res2.workflow_history[itemWorkflowId]), 1)
         # Annexes are copied for item1
         # and that existing references are correctly kept
         self.assertEquals(len(IAnnexable(res1).getAnnexes()), 2)

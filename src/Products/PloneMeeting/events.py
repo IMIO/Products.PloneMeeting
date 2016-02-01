@@ -108,7 +108,7 @@ def onItemTransition(item, event):
 
     # if 'takenOverBy' is used, it is automatically set after a transition
     # to last user that was taking the item over or to nothing
-    wf_state = "%s__wfstate__%s" % (event.workflow.getId(), event.new_state.getId())
+    wf_state = "%s__wfstate__%s" % (cfg.getItemWorkflow(), event.new_state.getId())
     item.adapted().setHistorizedTakenOverBy(wf_state)
     # notify our own PM event so we are sure that this event is called
     # after the onItemTransition event

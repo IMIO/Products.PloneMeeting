@@ -1228,6 +1228,24 @@ class testMeetingConfig(PloneMeetingTestCase):
         newDecisionCol.processForm(values={'dummy': None})
         self.assertEquals(newDecisionCol.getCustomViewFields(), tuple(meetingColumns))
 
+    def test_pm_WorkflowsForGeneratedTypes(self):
+        """Workflows used for the generated Meeting and MeetigItem portal_types
+           are duplicated versions of what is selected in the MeetingConfig so it
+           is possible to use the same workflow for several MeetingConfigs."""
+        # Meeting and MeetingItem type is using a generated workflow
+        cfg = self.meetingConfig
+        itemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
+        meetingWF = self.wfTool.getWorkflowsFor(cfg.getMeetingTypeName())[0]
+        self.assertEquals(itemWF.id, '{0}__{1}'.format(cfg.getId(), cfg.getItemWorkflow()))
+        self.assertEquals(itemWF.title, '{0}__{1}'.format(cfg.getId(), cfg.getItemWorkflow()))
+        self.assertEquals(meetingWF.id, '{0}__{1}'.format(cfg.getId(), cfg.getMeetingWorkflow()))
+        self.assertEquals(meetingWF.title, '{0}__{1}'.format(cfg.getId(), cfg.getMeetingWorkflow()))
+        # MeetingItemTemplate and MeetingItemRecurring continue to use the activation_workflow
+        itemRecurringWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName('MeetingItemRecurring'))[0]
+        itemTemplateWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName('MeetingItemTemplate'))[0]
+        self.assertEquals(itemRecurringWF.id, 'plonemeeting_activity_managers_workflow')
+        self.assertEquals(itemTemplateWF.id, 'plonemeeting_activity_managers_workflow')
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

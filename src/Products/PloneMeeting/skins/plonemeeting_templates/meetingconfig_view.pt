@@ -504,10 +504,15 @@
 
     <tal:workflow condition="python: pageName=='workflow'">
       <p i18n:translate="meetingconfig_workflow_descr" class='pageNameDescr'></p><br />
-      <table width="100%" class="discreet">
+      <p i18n:translate="warning_meetingconfig_workflow_descr" style="color: red;">
+        DO NOT CHANGE PARAMETERS DEFINFED IN THIS SECTION UNLESS YOU ARE REALLY SURE WHAT YOU ARE DOING!
+      </p><br />
+      
+      <table width="100%" class="discreet" tal:define="wfTool python: context.portal_workflow">
         <tr valign="top">
           <td width="33%" tal:define="field python:here.getField('itemWorkflow')">
             <span metal:use-macro="here/widgets/field/macros/view" />
+            <span style="color: red;" tal:content="python: wfTool.getWorkflowsFor(context.getItemTypeName())[0].getId()"></span>
           </td>
           <td width="34%" tal:define="field python:here.getField('itemConditionsInterface')">
             <span metal:use-macro="here/widgets/field/macros/view" />
@@ -519,6 +524,7 @@
         <tr valign="top">
           <td tal:define="field python:here.getField('meetingWorkflow')">
             <span metal:use-macro="here/widgets/field/macros/view" />
+            <span style="color: red;" tal:content="python: wfTool.getWorkflowsFor(context.getMeetingTypeName())[0].getId()"></span>
           </td>
           <td tal:define="field python:here.getField('meetingConditionsInterface')">
             <span metal:use-macro="here/widgets/field/macros/view" />

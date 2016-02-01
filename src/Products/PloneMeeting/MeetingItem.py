@@ -1522,8 +1522,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def setTakenOverBy(self, value, **kwargs):
         '''Override MeetingItem.takenOverBy mutator so we can manage
            history stored in 'takenOverByInfos'.
-           We can receive a 'wf_state' in the kwargs, than needs to have format like :
-           workflowname__wfstate__wfstatename.'''
+           We can receive a 'wf_state' in the kwargs, then needs to have format like :
+           config_workflowname__wfstate__wfstatename.'''
         # Add a place to store takenOverBy by review_state user id
         # as we override mutator, this method is called before ObjectInitializedEvent
         # do not manage history while creating a new item
@@ -2059,9 +2059,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # I add here the "initial transition", that is not stored as a real
         # transition.
         res = [('_init_', translate('_init_', domain="plone", context=self.REQUEST))]
-        meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
-        meetingWorkflowName = meetingConfig.getMeetingWorkflow()
-        meetingWorkflow = getattr(self.portal_workflow, meetingWorkflowName)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        wfTool = api.portal.get_tool('portal_workflow')
+        cfg = tool.getMeetingConfig(self)
+        meetingWorkflow = wfTool.getWorkflowsFor(cfg.getMeetingTypeName())[0]
         for transition in meetingWorkflow.transitions.objectValues():
             name = translate(transition.id, domain="plone", context=self.REQUEST) + ' (' + transition.id + ')'
             res.append((transition.id, name))
@@ -2417,26 +2418,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         wfTool = api.portal.get_tool('portal_workflow')
         return wfTool.getInfoFor(self, 'review_state')
 
-    security.declarePublic('getWorkflowName')
-
-    def getWorkflowName(self):
-        '''What is the name of my workflow ?'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-        return cfg.getItemWorkflow()
-
-    security.declarePublic('getLastEvent')
-
-    def getLastEvent(self, transition=None):
-        '''Check doc in called function in utils.py.'''
-        return getLastEvent(self, transition=transition)
-
-    security.declarePublic('getObject')
-
-    def getObject(self):
-        '''Some macros must work with either an object or a brain as input.'''
-        return self
-
     security.declarePublic('getSelf')
 
     def getSelf(self):
@@ -2707,7 +2688,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         item = self.getSelf()
         # Retrieve the meeting history of the workflow used for the meeting
-        history = meeting.workflow_history[meeting.getWorkflowName()]
+        wfTool = api.portal.get_tool('portal_workflow')
+        meetingWFName = wfTool.getWorkflowsFor(meeting)[0].getId()
+        history = meeting.workflow_history[meetingWFName]
         # By default, a first action is added to the workflow_history when the element
         # is created, the 'action' is None and the intial review_state is in 'review_state'
         if history[-1]['action'] is None:
@@ -4661,6 +4644,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # several items in a meeting and some are sent to another MC then presented
             # to a meeting of this other MB
             originalPublishedObject = self.REQUEST.get('PUBLISHED')
+            meetingWF = wfTool.getWorkflowsFor(cfg.getMeetingTypeName())[0]
             for tr in destMeetingConfig.getTransitionsForPresentingAnItem():
                 try:
                     # special handling for the 'present' transition
@@ -4672,7 +4656,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                             meetingsAcceptingItems = destMeetingConfig.adapted().getMeetingsAcceptingItems(
                                 inTheFuture=True)
                         else:
-                            initial_state = wfTool[destMeetingConfig.getMeetingWorkflow()].initial_state
+                            initial_state = wfTool[meetingWF.getId()].initial_state
                             meetingsAcceptingItems = destMeetingConfig.adapted().getMeetingsAcceptingItems(
                                 review_states=(initial_state, ),
                                 inTheFuture=True)
@@ -4956,9 +4940,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 else:
                     # up the workflow for at least second times and not linked to a meeting
                     # check if last event was already made in item workflow_history
-                    tool = api.portal.get_tool('portal_plonemeeting')
-                    cfg = tool.getMeetingConfig(self)
-                    history = self.workflow_history[cfg.getItemWorkflow()]
+                    history = self.workflow_history[itemWF.getId()]
                     i = 0
                     for event in history:
                         if event['action'] == lastEvent['action']:
@@ -5224,10 +5206,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def lastValidatedBefore(self, deadline):
         '''Returns True if this item has been (last) validated before
            p_deadline, which is a DateTime.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
+        wfTool = api.portal.get_tool('portal_workflow')
+        wf_name = wfTool.getWorkflowsFor(self)[0].getId()
         lastValidationDate = None
-        for event in self.workflow_history[cfg.getItemWorkflow()]:
+        for event in self.workflow_history[wf_name]:
             if event['action'] == 'validate':
                 lastValidationDate = event['time']
         if lastValidationDate and (lastValidationDate < deadline):
