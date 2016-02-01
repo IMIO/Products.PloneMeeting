@@ -327,7 +327,7 @@ document.location.reload(true);
 
     <img class="budgetRelatedEditable"
          tal:condition="not: budgetRelated"
-         title="budget_related_yes_img_title_edit"
+         title="budget_related_no_img_title_edit"
          name="budgetRelatedYes"
          i18n:attributes="title"
          tal:attributes="src string: $portal_url/budgetRelatedNo.png;
