@@ -3454,8 +3454,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('displayAdvices')
 
     def displayAdvices(self):
-        '''Is there at least one advice that needs to be (or has already been)
-           given on this item?'''
+        '''Is there at least one advice that needs to be displayed on this item?'''
         if bool(self.adviceIndex):
             return True
         # in case current user is a PowerAdviser, we need
