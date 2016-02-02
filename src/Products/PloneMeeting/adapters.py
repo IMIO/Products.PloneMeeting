@@ -18,7 +18,6 @@ from zope.i18n import translate
 from plone.memoize import ram
 
 from Products.CMFCore.permissions import ModifyPortalContent
-from Products.CMFCore.utils import getToolByName
 from Products.MimetypesRegistry.common import MimeTypeException
 from Products.CMFPlone.utils import safe_unicode
 from plone import api
@@ -77,7 +76,8 @@ class AnnexableAdapter(object):
         # rights to create the annex
         idCandidate = idCandidate.lstrip('_')
         # Normalize idCandidate
-        idCandidate = self.context.plone_utils.normalizeString(idCandidate)
+        plone_utils = api.portal.get_tool('plone_utils')
+        idCandidate = plone_utils.normalizeString(idCandidate)
         i = 0
         idMayBeUsed = False
         while not idMayBeUsed:
@@ -130,9 +130,9 @@ class AnnexableAdapter(object):
         newAnnex.processForm()
         # display a warning portal message if annex size is large
         if newAnnex.warnSize():
-            self.context.plone_utils.addPortalMessage(_("The annex that you just added has a large size and could be "
-                                                        "difficult to download by users wanting to view it!"),
-                                                      type='warning')
+            plone_utils.addPortalMessage(_("The annex that you just added has a large size and could be "
+                                           "difficult to download by users wanting to view it!"),
+                                         type='warning')
         userId = self.context.portal_membership.getAuthenticatedMember().getId()
         logger.info('Annex at %s uploaded by "%s".' % (newAnnex.absolute_url_path(), userId))
 
@@ -153,7 +153,7 @@ class AnnexableAdapter(object):
     @ram.cache(getAnnexesToPrint_cachekey)
     def getAnnexesToPrint(self, relatedTo='item'):
         '''See docstring in interfaces.py'''
-        portal = getToolByName(self.context, 'portal_url').getPortalObject()
+        portal = api.portal.get()
         global_settings = GlobalSettings(portal)
         annexes = self.getAnnexes(relatedTo)
         res = []
@@ -254,7 +254,7 @@ class AnnexableAdapter(object):
                                   typesIds=[], realAnnexes=False):
         '''cachekey method for self.getAnnexesByType.'''
         # if MeetingConfig changed (MeetingConfig.annexConfidentialFor for example)
-        tool = getToolByName(self.context, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
         return (self.context, relatedTo, makeSubLists, typesIds,
                 realAnnexes, self.context.annexIndex, self.request['AUTHENTICATED_USER'],
@@ -269,7 +269,7 @@ class AnnexableAdapter(object):
         if not self.context.annexIndex:
             return res
 
-        tool = getToolByName(self.context, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
         meetingFileTypes = cfg.getFileTypes(relatedTo,
                                             typesIds=typesIds,
@@ -429,7 +429,7 @@ class MeetingContentDeletableAdapter(APContentDeletableAdapter):
         if not self.context.getRawItems():
             return True
 
-        member = getToolByName(self.context, 'portal_membership').getAuthenticatedMember()
+        member = api.user.get_current()
         if member.has_role('Manager'):
             return True
 
@@ -467,7 +467,7 @@ class PMPrettyLinkAdapter(PrettyLinkAdapter):
         inAvailableItems = False
         if meeting:
             inAvailableItems = meeting._displayingAvailableItems()
-        tool = getToolByName(self.context, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
         usedItemAttributes = cfg.getUsedItemAttributes()
 
@@ -644,7 +644,7 @@ class PMWfHistoryAdapter(ImioWfHistoryAdapter):
         """
         userMayAccessComment = True
         if self.context.meta_type == 'MeetingItem':
-            tool = getToolByName(self.context, 'portal_plonemeeting')
+            tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self.context)
             if cfg.getHideItemHistoryCommentsToUsersOutsideProposingGroup() and not tool.isManager(self.context):
                 userMeetingGroupIds = [mGroup.getId() for mGroup in tool.getGroupsForUser()]
@@ -675,7 +675,7 @@ class Criteria(eeaCriteria):
            context.REQUEST.get('enablingFacetedDashboard', False):
             return
         try:
-            tool = getToolByName(context, 'portal_plonemeeting')
+            tool = api.portal.get_tool('portal_plonemeeting')
         except AttributeError:
             # in case 'portal_plonemeeting' is not available, keep classing criteria behaviour
             return
@@ -732,7 +732,7 @@ class CompoundCriterionBaseAdapter(object):
 
     def __init__(self, context):
         self.context = context
-        self.tool = getToolByName(self.context, 'portal_plonemeeting')
+        self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
 
     @property
@@ -757,8 +757,7 @@ class MyItemsTakenOverAdapter(CompoundCriterionBaseAdapter):
     @property
     def query(self):
         '''Queries all items that current user take over.'''
-        membershipTool = getToolByName(self.context, 'portal_membership')
-        member = membershipTool.getAuthenticatedMember()
+        member = api.user.get_current()
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 'getTakenOverBy': {'query': member.getId()}, }
 
@@ -768,9 +767,8 @@ class ItemsInCopyAdapter(CompoundCriterionBaseAdapter):
     @property
     def query(self):
         '''Queries all items for which the current user is in copyGroups.'''
-        membershipTool = getToolByName(self.context, 'portal_membership')
-        groupsTool = getToolByName(self.context, 'portal_groups')
-        member = membershipTool.getAuthenticatedMember()
+        groupsTool = api.portal.get_tool('portal_groups')
+        member = api.user.get_current()
         userGroups = groupsTool.getGroupsForPrincipal(member)
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 # KeywordIndex 'getCopyGroups' use 'OR' by default
@@ -784,9 +782,8 @@ class ItemsToValidateOfHighestHierarchicLevelAdapter(CompoundCriterionBaseAdapte
         '''Return a list of items that the user can validate regarding his highest hierarchic level.
            So if a user is 'prereviewer' and 'reviewier', the search will only return items
            in state corresponding to his 'reviewer' role.'''
-        membershipTool = getToolByName(self.context, 'portal_membership')
-        member = membershipTool.getAuthenticatedMember()
-        groupsTool = getToolByName(self.context, 'portal_groups')
+        member = api.user.get_current()
+        groupsTool = api.portal.get_tool('portal_groups')
         groupIds = groupsTool.getGroupsForPrincipal(member)
         res = []
         highestReviewerLevel = self.cfg._highestReviewerLevel(groupIds)
@@ -826,10 +823,9 @@ class ItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(CompoundCriterio
            So get highest hierarchic level of each group of the user and
            take into account lowest levels too.'''
         # search every highest reviewer level for each group of the user
-        membershipTool = getToolByName(self.context, 'portal_membership')
-        groupsTool = getToolByName(self.context, 'portal_groups')
+        member = api.user.get_current()
+        groupsTool = api.portal.get_tool('portal_groups')
         userMeetingGroups = self.tool.getGroupsForUser()
-        member = membershipTool.getAuthenticatedMember()
         groupIds = groupsTool.getGroupsForPrincipal(member)
         reviewProcessInfos = []
         for mGroup in userMeetingGroups:
@@ -873,9 +869,8 @@ class ItemsToValidateOfMyReviewerGroupsAdapter(CompoundCriterionBaseAdapter):
         '''Return a list of items that the user could validate.  So it returns every items the current
            user is able to validate at any state of the validation process.  So if a user is 'prereviewer'
            and 'reviewer' for a group, the search will return items in both states.'''
-        membershipTool = getToolByName(self.context, 'portal_membership')
-        groupsTool = getToolByName(self.context, 'portal_groups')
-        member = membershipTool.getAuthenticatedMember()
+        member = api.user.get_current()
+        groupsTool = api.portal.get_tool('portal_groups')
         groupIds = groupsTool.getGroupsForPrincipal(member)
         reviewProcessInfos = []
         for groupId in groupIds:
@@ -997,7 +992,7 @@ class AdvisedItemsAdapter(CompoundCriterionBaseAdapter):
         # advised items are items that has an advice in a particular review_state
         # just append every available meetingadvice state: we want "given" advices.
         # this search will return every advices
-        wfTool = getToolByName(self.context, 'portal_workflow')
+        wfTool = api.portal.get_tool('portal_workflow')
         adviceWF = wfTool.getWorkflowsFor('meetingadvice')[0]
         adviceStates = adviceWF.states.keys()
         groupIds = []
@@ -1019,7 +1014,7 @@ class AdvisedItemsWithDelayAdapter(CompoundCriterionBaseAdapter):
         # advised items are items that has an advice in a particular review_state
         # just append every available meetingadvice state: we want "given" advices.
         # this search will only return 'delay-aware' advices
-        wfTool = getToolByName(self.context, 'portal_workflow')
+        wfTool = api.portal.get_tool('portal_workflow')
         adviceWF = wfTool.getWorkflowsFor('meetingadvice')[0]
         adviceStates = adviceWF.states.keys()
         groupIds = []

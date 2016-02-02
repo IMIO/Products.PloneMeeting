@@ -28,11 +28,10 @@ from ZPublisher.HTTPRequest import FileUpload
 from zope.event import notify
 from zope.traversing.interfaces import BeforeTraverseEvent
 
-
+from plone import api
 from plone.app.testing.helpers import setRoles
 from plone.app.testing import login, logout
 
-from Products.CMFCore.utils import getToolByName
 from Products.PloneTestCase.setup import _createHomeFolder
 
 from imio.helpers.cache import cleanRamCacheFor
@@ -121,8 +120,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
 
     def createUser(self, username, roles):
         '''Creates a user named p_username with some p_roles.'''
-        membershipTool = getToolByName(self.portal, 'portal_membership')
-        membershipTool.addMember(username, 'password', [], [])
+        api.user.create(username=username, password='password', roles=[], properties=[])
         setRoles(self.portal, username, roles)
         _createHomeFolder(self.portal, username)
 
@@ -173,8 +171,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             login(self.app, loginName)
         else:
             login(self.portal, loginName)
-        membershipTool = getToolByName(self.portal, 'portal_membership')
-        self.member = membershipTool.getAuthenticatedMember()
+        self.member = api.user.get_current()
         self.portal.REQUEST['AUTHENTICATED_USER'] = self.member
 
     def _generateId(self, ploneFolder):
