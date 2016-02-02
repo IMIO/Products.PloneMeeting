@@ -38,6 +38,7 @@ from imio.helpers.cache import cleanRamCacheFor
 import Products.PloneMeeting
 # If I do not remove this method, some tests crash.
 #from Products.PloneMeeting.MeetingItem import MeetingItem
+from Products.PloneMeeting.config import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.config import MEETINGREVIEWERS
 from Products.PloneMeeting.MeetingItem import MeetingItem_schema
 from Products.PloneMeeting.Meeting import Meeting_schema
@@ -120,7 +121,11 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
 
     def createUser(self, username, roles):
         '''Creates a user named p_username with some p_roles.'''
-        api.user.create(username=username, password='password', roles=[], properties=[])
+        api.user.create(email='test@test.be',
+                        username=username,
+                        password=DEFAULT_USER_PASSWORD,
+                        roles=[],
+                        properties={})
         setRoles(self.portal, username, roles)
         _createHomeFolder(self.portal, username)
 
