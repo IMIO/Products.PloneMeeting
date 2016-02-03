@@ -230,9 +230,7 @@ def _to_coded_adviser_index(obj, groupId, advice):
         '''
         # still not given but still giveable?  Not giveable?  Delay exceeded? Asked again?
         if advice['type'] in (NOT_GIVEN_ADVICE_VALUE, 'asked_again'):
-            delayIsExceeded = isDelayAware and \
-                obj.getDelayInfosForAdvice(groupId)['delay_status'] == 'timed_out'
-            if delayIsExceeded:
+            if obj._adviceDelayIsTimedOut(groupId):
                 # delay is exceeded, advice was not given
                 return '_advice_delay_exceeded'
             else:
