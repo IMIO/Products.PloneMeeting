@@ -21,6 +21,7 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.MimetypesRegistry.common import MimeTypeException
 from Products.CMFPlone.utils import safe_unicode
 from plone import api
+from plone.api.exc import InvalidParameterError
 
 from collective.documentviewer.settings import GlobalSettings
 from eea.facetednavigation.criteria.handler import Criteria as eeaCriteria
@@ -676,7 +677,7 @@ class Criteria(eeaCriteria):
             return
         try:
             tool = api.portal.get_tool('portal_plonemeeting')
-        except AttributeError:
+        except InvalidParameterError:
             # in case 'portal_plonemeeting' is not available, keep classing criteria behaviour
             return
         cfg = tool.getMeetingConfig(context)
@@ -724,7 +725,6 @@ class Criteria(eeaCriteria):
             # manage default value for the 'resultsperpage' criterion
             if criterion.widget == ResultsPerPageWidget.widget_type:
                 criterion.default = resultsperpagedefault
-
         self.criteria = res
 
 
