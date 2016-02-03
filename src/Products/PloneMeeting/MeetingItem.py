@@ -3895,9 +3895,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             adviceObj = None
             if 'advice_id' in self.adviceIndex[groupId]:
                 adviceObj = getattr(self, self.adviceIndex[groupId]['advice_id'])
+            giveReaderAccess = True
             if itemState not in itemAdviceStates and \
                itemState not in itemAdviceEditStates and \
                itemState not in itemAdviceViewStates:
+                giveReaderAccess = False
                 # in this case, the advice is no more accessible in any way by the adviser
                 # make sure the advice given by groupId is no more editable
                 if adviceObj and not adviceObj.queryState() == 'advice_given':
@@ -3909,11 +3911,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     self.REQUEST.set('mayGiveAdvice', False)
                 # in case advice was not given or access to given advice is not kept,
                 # we are done with this one
-                if not (adviceObj and mGroup.getKeepAccessToItemWhenAdviceIsGiven(cfg)):
-                    continue
+                if adviceObj and mGroup.getKeepAccessToItemWhenAdviceIsGiven(cfg):
+                    giveReaderAccess = True
 
-            # give access to the item if adviser can see it
-            if self.adapted()._itemToAdviceIsViewable(groupId):
+            if self.adapted()._itemToAdviceIsViewable(groupId) and giveReaderAccess:
+                # give access to the item if adviser can see it
                 self.manage_addLocalRoles(ploneGroup, (READER_USECASES['advices'],))
                 self.adviceIndex[groupId]['item_viewable_by_advisers'] = True
 
@@ -3980,11 +3982,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # when the advice can not be given anymore due to a workflow transition
             # we only do that if not already done (a stopped date is already defined)
             # and if we are not on the transition that reinitialize delays
+            # and if ever delay was started
             if itemState not in itemAdviceStates and \
-               self.adviceIndex[groupId]['delay'] and not \
-               isTransitionReinitializingDelays and not \
-               bool(groupId in saved_stored_data and
-                    saved_stored_data[groupId]['delay_stopped_on']):
+               self.adviceIndex[groupId]['delay'] and \
+               self.adviceIndex[groupId]['delay_started_on'] and \
+               not isTransitionReinitializingDelays and \
+               not bool(groupId in saved_stored_data and
+                        saved_stored_data[groupId]['delay_stopped_on']):
                 self.adviceIndex[groupId]['delay_stopped_on'] = datetime.now()
             # now index advice annexes
             if self.adviceIndex[groupId]['type'] != NOT_GIVEN_ADVICE_VALUE:

@@ -814,13 +814,25 @@ class testAdvices(PloneMeetingTestCase):
            The 2 dates are only reinitialized to None if the user
            triggers the MeetingConfig.transitionReinitializingDelays.
         '''
+        self.meetingConfig.setKeepAccessToItemWhenAdviceIsGiven(False)
+        self._checkDelayStartedStoppedOn()
+
+    def test_pm_DelayStartedStoppedOnWithKeepAccessToItemWhenAdviceIsGiven(self):
+        '''Same has 'test_pm_DelayStartedStoppedOn' but when
+           MeetingConfig.keepAccessToItemWhenAdviceIsGiven is True.
+        '''
+        self.meetingConfig.setKeepAccessToItemWhenAdviceIsGiven(True)
+        self._checkDelayStartedStoppedOn()
+
+    def _checkDelayStartedStoppedOn(self):
         # make advice giveable when item is 'validated'
-        self.meetingConfig.setItemAdviceStates(('validated', ))
-        self.meetingConfig.setItemAdviceEditStates(('validated', ))
+        cfg = self.meetingConfig
+        cfg.setItemAdviceStates(('validated', ))
+        cfg.setItemAdviceEditStates(('validated', ))
         self.changeUser('pmManager')
         # configure one automatic adviser with delay
         # and ask one non-delay-aware optional adviser
-        self.meetingConfig.setCustomAdvisers(
+        cfg.setCustomAdvisers(
             [{'row_id': 'unique_id_123',
               'group': 'developers',
               'gives_auto_advice_on': 'not:item/getBudgetRelated',
@@ -861,6 +873,15 @@ class testAdvices(PloneMeetingTestCase):
         # vendors optional advice is not delay-aware
         self.assertTrue(item.adviceIndex['vendors']['delay_started_on'] is None)
         self.assertTrue(item.adviceIndex['vendors']['delay_stopped_on'] is None)
+
+        # set item back to proposed, 'delay_stopped_on' should be set
+        self.backToState(item, self.WF_STATE_NAME_MAPPINGS['proposed'])
+        self.assertTrue(isinstance(item.adviceIndex['developers']['delay_started_on'], datetime))
+        self.assertTrue(isinstance(item.adviceIndex['developers']['delay_stopped_on'], datetime))
+        # vendors optional advice is not delay-aware
+        self.assertTrue(item.adviceIndex['vendors']['delay_started_on'] is None)
+        self.assertTrue(item.adviceIndex['vendors']['delay_stopped_on'] is None)
+
         # if we go on, the 'delay_started_on' date does not change anymore, even in a state where
         # advice are not giveable anymore, but at this point, the 'delay_stopped_date' will be set.
         # We present the item
@@ -875,7 +896,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(isinstance(item.adviceIndex['developers']['delay_stopped_on'], datetime))
         self.assertTrue(item.adviceIndex['vendors']['delay_stopped_on'] is None)
         # if we excute the transition that will reinitialize dates, it is 'backToItemCreated'
-        self.assertEquals(self.meetingConfig.getTransitionReinitializingDelays(),
+        self.assertEquals(cfg.getTransitionReinitializingDelays(),
                           self.WF_TRANSITION_NAME_MAPPINGS['backToItemCreated'])
         self.backToState(item, self.WF_STATE_NAME_MAPPINGS['itemcreated'])
         self.assertEquals(item.queryState(), self.WF_STATE_NAME_MAPPINGS['itemcreated'])
