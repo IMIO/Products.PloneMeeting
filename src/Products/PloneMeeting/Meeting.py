@@ -1617,6 +1617,8 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         self.manage_addLocalRoles(self.owner_info()['id'], ('Owner',))
         # add powerObservers local roles
         self._updatePowerObserversLocalRoles()
+        # reindex relevant indexes
+        self.reindexObjectSecurity()
 
     def _updatePowerObserversLocalRoles(self):
         '''Configure local role for use case 'power_observers' and 'restricted_power_observers'
