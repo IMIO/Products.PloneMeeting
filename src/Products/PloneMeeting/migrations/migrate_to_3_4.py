@@ -533,11 +533,11 @@ class Migrate_To_3_4(Migrator):
         self.tool.reindexAnnexes()
         logger.info('Done.')
 
-    def _updateAdvices(self):
-        '''The 'comment' is always available in the adviceIndex now,
-           even on still not given advices.'''
-        logger.info('Updating advices (all localRoles)...')
-        self.tool.updateAllLocalRoles(meta_type=('MeetingItem', ))
+    def _updateAllLocalRoles(self):
+        '''updateAllLocalRoles so especially the advices are updated because the 'comment'
+           is always available in the adviceIndex now, even on still not given advices.'''
+        logger.info('Updating allLocalRoles...')
+        self.tool.updateAllLocalRoles()
         logger.info('Done.')
 
     def _initNewHTMLFields(self):
@@ -630,7 +630,7 @@ class Migrate_To_3_4(Migrator):
         self._cleanMeetingConfigs()
         self._cleanMeetingUsers()
         self._updateAnnexIndex()
-        self._updateAdvices()
+        self._updateAllLocalRoles()
         self._initNewHTMLFields()
         self._updateEnableAnnexToPrint()
         self._updateHistoryComments()
