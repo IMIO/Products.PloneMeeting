@@ -3660,6 +3660,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             ids.append(advice.getId())
         self.manage_delObjects(ids=ids)
 
+    def _adviceDelayIsTimedOut(self, groupId):
+        """Returns True if given p_advice is delay-aware and delay is timed out."""
+        if not self.adviceIndex[groupId]['delay']:
+            return False
+        delay_infos = self.getDelayInfosForAdvice(groupId)
+        return delay_infos['delay_status'] == 'timed_out' or \
+            delay_infos['delay_status_when_stopped'] == 'stopped_timed_out'
+
     def _updateAdvices(self, invalidate=False, triggered_by_transition=None):
         '''Every time an item is created or updated, this method updates the
            dictionary self.adviceIndex: a key is added for every advice that needs
@@ -3927,8 +3935,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
             # check if user must be able to add an advice, if not already given
             # check also if the delay is not exceeded, in this case the advice can not be given anymore
-            delayIsNotExceeded = not self.adviceIndex[groupId]['delay'] or \
-                self.getDelayInfosForAdvice(groupId)['delay_status'] != 'timed_out'
+            delayIsNotExceeded = not self._adviceDelayIsTimedOut(groupId)
             if itemState in itemAdviceStates and \
                not adviceObj and \
                delayIsNotExceeded and \
