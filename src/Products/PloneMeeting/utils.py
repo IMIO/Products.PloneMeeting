@@ -167,6 +167,12 @@ def getCurrentMeetingObject(context):
     className = obj.__class__.__name__
     if className == 'present-several-items':
         return obj.context
+    elif obj and \
+            hasattr(obj, 'context') and \
+            hasattr(obj.context, 'meta_type') and \
+            obj.context.meta_type == 'Meeting':
+        toReturn = obj.context
+
     if not (className in ('Meeting', 'MeetingItem')):
         # check if we are on a Script or so or calling a BrowserView
         if className in methodTypes or 'SimpleViewClass' in className:
