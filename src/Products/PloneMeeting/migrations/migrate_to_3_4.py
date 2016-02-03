@@ -660,7 +660,7 @@ def migrate(context):
        13) Clean MeetingConfigs from unused attributes;
        14) Clean MeetingUsers from unused attributes;
        15) Reindex annexIndex;
-       16) Reindex adviceIndex;
+       16) Update all local_roles of Meeting and MeetingItems;
        17) Init new HTML fields;
        18) Update MeetingConfig.enableAnnexToPrint attribute;
        19) Refresh catalogs.
