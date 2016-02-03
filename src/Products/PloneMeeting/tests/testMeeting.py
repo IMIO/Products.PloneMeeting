@@ -1087,8 +1087,8 @@ class testMeeting(PloneMeetingTestCase):
             m1_query = queryparser.parseFormquery(m1, m1.adapted()._availableItemsQuery())
             self.assertTrue([brain.UID for brain in catalog(m1_query)] == [i2.UID()])
 
-        # if a meeting is not in a MEETING_STATES_ACCEPTING_ITEMS state
-        # it can not accept any kind of items, getAvailableItems returns []
+        # if a meeting is not in a MEETING_STATES_ACCEPTING_ITEMS state,
+        # it does not accept items anymore
         self.closeMeeting(m1)
         self.assertTrue(not m1.queryState() in MEETING_STATES_ACCEPTING_ITEMS)
         m1_query = queryparser.parseFormquery(m1, m1.adapted()._availableItemsQuery())

@@ -477,8 +477,6 @@ class IMeetingDocumentation:
     '''Normally, the methods described here should be part of IMeeting.
        Because it is impossible to do so with an overengineered yet overrigid
        ArchGenXML 2, we document the provided methods in this absurd class.'''
-    def getAvailableItems():
-        '''Returns the list of items that may be presented to me.'''
     def isDecided():
         '''Am I in a state such that decisions have all been taken?'''
     def getSpecificDocumentContext():
