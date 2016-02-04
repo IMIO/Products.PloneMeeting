@@ -559,6 +559,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEquals(brains[0].UID, itemUID)
         # if a delay-aware advice delay is exceeded, it is indexed with an ending '2'
         item.adviceIndex['vendors']['delay_started_on'] = datetime(2012, 01, 01)
+        item.updateLocalRoles()
         self.assertEquals(set(indexAdvisers.callable(item)), set(['delay_real_group_id__unique_id_123',
                                                                   'delay__vendors_advice_delay_exceeded',
                                                                   'real_group_id__developers',
