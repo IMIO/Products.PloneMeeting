@@ -936,9 +936,9 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         self.assertEquals(meeting.queryState(), 'decided')
         self.assertEquals(item.getMotivation(),
-                          '<p>The decision is currently under edit by managers, you can not access it.</p>')
+                          "<p class='highlightValue'>The decision is currently under edit by managers, you can not access it.</p>")
         self.assertEquals(item.getDecision(),
-                          '<p>The decision is currently under edit by managers, you can not access it.</p>')
+                          "<p class='highlightValue'>The decision is currently under edit by managers, you can not access it.</p>")
         self.changeUser('pmManager')
         # MeetingManagers see it correctly
         self.assertEquals(item.getMotivation(), '<p>Motivation adapted by pmManager</p>')
