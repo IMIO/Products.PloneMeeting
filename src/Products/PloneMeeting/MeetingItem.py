@@ -433,14 +433,20 @@ class MeetingItemWorkflowActions:
         # I must set automatically the item to "itemfrozen".
         meetingState = meeting.queryState()
         if not meetingState in meeting.getBeforeFrozenStates():
-            wTool = api.portal.get_tool('portal_workflow')
-            try:
-                wTool.doActionFor(self.context, 'itempublish')
-            except:
-                pass  # Maybe does state 'itempublish' not exist.
-            wTool.doActionFor(self.context, 'itemfreeze')
+            self._freezePresentedItem()
         # We may have to send a mail.
         self.context.sendMailIfRelevant('itemPresented', 'Owner', isRole=True)
+
+    def _freezePresentedItem(self):
+        """Freeze presented item, this is done to be easy to override in case
+           WF transitions to freeze an item is different, without redefining
+           the entire doPresent."""
+        wTool = api.portal.get_tool('portal_workflow')
+        try:
+            wTool.doActionFor(self.context, 'itempublish')
+        except:
+            pass  # Maybe does state 'itempublish' not exist.
+        wTool.doActionFor(self.context, 'itemfreeze')
 
     security.declarePrivate('doItemPublish')
 
