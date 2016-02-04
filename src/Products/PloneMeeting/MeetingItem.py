@@ -283,9 +283,8 @@ class MeetingItemWorkflowConditions:
     def mayFreeze(self):
         res = False
         if checkPermission(ReviewPortalContent, self.context):
-            if self.context.hasMeeting() and \
-               (self.context.getMeeting().queryState() in
-               MeetingItemWorkflowActions.meetingAlreadyFrozenStates):
+            meeting = self.context.hasMeeting() and self.context.getMeeting() or None
+            if meeting and not meeting.queryState() in meeting.getBeforeFrozenStates():
                 res = True
         return res
 
@@ -323,9 +322,6 @@ class MeetingItemWorkflowActions:
     '''Adapts a meeting item to interface IMeetingItemWorkflowActions.'''
     implements(IMeetingItemWorkflowActions)
     security = ClassSecurityInfo()
-
-    # Possible states of "frozen" meetings
-    meetingAlreadyFrozenStates = ('frozen', 'decided', 'published', 'decisions_published', 'closed', )
 
     def __init__(self, item):
         self.context = item
@@ -369,15 +365,21 @@ class MeetingItemWorkflowActions:
         # If the meeting is already frozen and this item is a "late" item,
         # I must set automatically the item to "itemfrozen".
         meetingState = meeting.queryState()
-        if meetingState in self.meetingAlreadyFrozenStates:
-            wTool = getToolByName(self.context, 'portal_workflow')
-            try:
-                wTool.doActionFor(self.context, 'itempublish')
-            except:
-                pass  # Maybe does state 'itempublish' not exist.
-            wTool.doActionFor(self.context, 'itemfreeze')
+        if not meetingState in meeting.getBeforeFrozenStates():
+            self._freezePresentedItem()
         # We may have to send a mail.
         self.context.sendMailIfRelevant('itemPresented', 'Owner', isRole=True)
+
+    def _freezePresentedItem(self):
+        """Freeze presented item, this is done to be easy to override in case
+           WF transitions to freeze an item is different, without redefining
+           the entire doPresent."""
+        wTool = api.portal.get_tool('portal_workflow')
+        try:
+            wTool.doActionFor(self.context, 'itempublish')
+        except:
+            pass  # Maybe does state 'itempublish' not exist.
+        wTool.doActionFor(self.context, 'itemfreeze')
 
     security.declarePrivate('doItemPublish')
     def doItemPublish(self, stateChange):
