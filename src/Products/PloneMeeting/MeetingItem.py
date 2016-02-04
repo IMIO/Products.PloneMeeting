@@ -4719,6 +4719,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         annotation_key = self._getSentToOtherMCAnnotationKey(destMeetingConfigId)
         ann = IAnnotations(self)
         ann[annotation_key] = newItem.UID()
+        # reindex sentToInfos
+        self.reindexObject(idxs=['sentToInfos'])
         # Send an email to the user being able to modify the new item if relevant
         mapping = {'meetingConfigTitle': destMeetingConfig.Title(), }
         newItem.sendMailIfRelevant('itemClonedToThisMC', ModifyPortalContent,
@@ -4852,6 +4854,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     annotation_key = self._getSentToOtherMCAnnotationKey(
                         cfgId)
                     del ann[annotation_key]
+                    # reindex predecessor's sentToInfos index
+                    predecessor.reindexObject(idxs=['sentToInfos'])
             # manage_beforeDelete is called before the IObjectWillBeRemovedEvent
             # in IObjectWillBeRemovedEvent references are already broken, we need to remove
             # the item from a meeting if it is inserted in there...

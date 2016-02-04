@@ -50,6 +50,7 @@ from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import WriteBudgetInfos
 from Products.PloneMeeting.interfaces import IAnnexable
+from Products.PloneMeeting.indexes import sentToInfos
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.utils import getFieldVersion
@@ -508,6 +509,29 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEquals(newItem.objectValues('MeetingFile')[3].getMeetingFileType(),
                           defaultMC2ItemDecisionMFT['id'])
 
+    def test_pm_SentToInfosIndex(self):
+        """The fact that an item is sendable/sent to another MC is indexed."""
+        cfg2 = self.meetingConfig2
+        cfg2Id = cfg2.getId()
+        data = self._setupSendItemToOtherMC()
+
+        originalItem = data['originalItem']
+        newItem = data['newItem']
+        catalog = self.portal.portal_catalog
+        # originalItem was sent
+        cloned_to_cfg2 = '{0}__cloned_to'.format(cfg2Id)
+        self.assertEquals(sentToInfos(originalItem)(), [cloned_to_cfg2])
+        self.assertTrue(catalog(UID=originalItem.UID(), sentToInfos=[cloned_to_cfg2]))
+        # newItem is not sendable to any MC
+        self.assertFalse(newItem.getOtherMeetingConfigsClonableTo())
+        self.assertEquals(sentToInfos(newItem)(), ['not_to_be_cloned_to'])
+        self.assertTrue(catalog(UID=newItem.UID(), sentToInfos=['not_to_be_cloned_to']))
+        # if we delete sent item, sentToInfos changed and index is updated
+        self.deleteAsManager(newItem.UID())
+        clonable_to_cfg2 = '{0}__clonable_to'.format(cfg2Id)
+        self.assertEquals(sentToInfos(originalItem)(), [clonable_to_cfg2])
+        self.assertTrue(catalog(UID=originalItem.UID(), sentToInfos=[clonable_to_cfg2]))
+
     def test_pm_CloneItemToMCWithoutDefinedAnnexType(self):
         '''When cloning an item to another meetingConfig or to the same meetingConfig,
            if we have annexes on the original item and destination meetingConfig (that could be same
@@ -855,6 +879,10 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmManager')
         clonedItem = item.cloneToOtherMeetingConfig(cfg2Id)
         self.assertEquals(clonedItem.queryState(), 'validated')
+        # make sure sentToInfos index was updated
+        cloned_to_cfg2 = '{0}__cloned_to'.format(cfg2Id)
+        self.assertEquals(sentToInfos(item)(), [cloned_to_cfg2])
+        self.assertTrue(self.portal.portal_catalog(UID=item.UID(), sentToInfos=[cloned_to_cfg2]))
 
     def test_pm_AddAutoCopyGroups(self):
         '''Test the functionnality of automatically adding some copyGroups depending on
