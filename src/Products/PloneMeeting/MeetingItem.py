@@ -3666,11 +3666,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             ids.append(advice.getId())
         self.manage_delObjects(ids=ids)
 
-    def _adviceDelayIsTimedOut(self, groupId):
-        """Returns True if given p_advice is delay-aware and delay is timed out."""
+    def _adviceDelayIsTimedOut(self, groupId, computeNewDelayInfos=False):
+        """Returns True if given p_advice is delay-aware and delay is timed out.
+           If p_computeNewDelayInfos is True, we will not take delay_infos from the
+           adviceIndex but call getDelayInfosForAdvice to get fresh data."""
         if not self.adviceIndex[groupId]['delay']:
             return False
-        delay_infos = self.getDelayInfosForAdvice(groupId)
+        if computeNewDelayInfos:
+            delay_infos = self.getDelayInfosForAdvice(groupId)
+        else:
+            delay_infos = self.adviceIndex[groupId]['delay_infos']
         return delay_infos['delay_status'] == 'timed_out' or \
             delay_infos['delay_status_when_stopped'] == 'stopped_timed_out'
 
@@ -3941,7 +3946,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
             # check if user must be able to add an advice, if not already given
             # check also if the delay is not exceeded, in this case the advice can not be given anymore
-            delayIsNotExceeded = not self._adviceDelayIsTimedOut(groupId)
+            delayIsNotExceeded = not self._adviceDelayIsTimedOut(groupId, computeNewDelayInfos=True)
             if itemState in itemAdviceStates and \
                not adviceObj and \
                delayIsNotExceeded and \

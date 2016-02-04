@@ -22,6 +22,7 @@
 # 02110-1301, USA.
 #
 
+from datetime import datetime
 from DateTime import DateTime
 from AccessControl import Unauthorized
 from Products.Five import zcml
@@ -291,9 +292,39 @@ class testViews(PloneMeetingTestCase):
         # an editable item will found by the query
         self.assertTrue(len(catalog(**query)) == 1)
         self.assertTrue(catalog(**query)[0].UID == itemWithDelayAwareAdvice.UID())
+        # even once updated, it will still be found
+        itemWithDelayAwareAdvice.updateLocalRoles()
+        self.assertTrue(catalog(**query)[0].UID == itemWithDelayAwareAdvice.UID())
+
         # makes it no more editable
         self.backToState(itemWithDelayAwareAdvice, self.WF_STATE_NAME_MAPPINGS['itemcreated'])
         self.assertTrue(not itemWithDelayAwareAdvice.adviceIndex['vendors']['advice_editable'])
+        self.assertTrue(not catalog(**query))
+
+        # makes it giveable again and timed_out, it should still be found
+        self.proposeItem(itemWithDelayAwareAdvice)
+        itemWithDelayAwareAdvice.adviceIndex['vendors']['delay_started_on'] = datetime(2016, 1, 1)
+        self.assertTrue(catalog(**query)[0].UID == itemWithDelayAwareAdvice.UID())
+        # even if a reindexObject occurs in between, still found
+        itemWithDelayAwareAdvice.reindexObject()
+        self.assertTrue(catalog(**query)[0].UID == itemWithDelayAwareAdvice.UID())
+        # but once updated, it is not found anymore
+        itemWithDelayAwareAdvice.updateLocalRoles()
+        self.assertTrue(not catalog(**query))
+
+        # try with an not_given timed_out advice as indexAdvisers behaves differently
+        # remove meetingadvice, back to not timed_out, updateLocalRoles then proceed
+        self.deleteAsManager(itemWithDelayAwareAdvice.meetingadvice.UID())
+        itemWithDelayAwareAdvice.adviceIndex['vendors']['delay_started_on'] = datetime.now()
+        itemWithDelayAwareAdvice.updateLocalRoles()
+        # found for now
+        itemWithDelayAwareAdvice.adviceIndex['vendors']['delay_started_on'] = datetime(2016, 1, 1)
+        self.assertTrue(catalog(**query)[0].UID == itemWithDelayAwareAdvice.UID())
+        # even if a reindexObject occurs in between, still found
+        itemWithDelayAwareAdvice.reindexObject()
+        self.assertTrue(catalog(**query)[0].UID == itemWithDelayAwareAdvice.UID())
+        # but once updated, it is not found anymore
+        itemWithDelayAwareAdvice.updateLocalRoles()
         self.assertTrue(not catalog(**query))
 
     def test_pm_UpdateDelayAwareAdvicesUpdateAllAdvices(self):
