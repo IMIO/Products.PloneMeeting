@@ -3672,7 +3672,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            adviceIndex but call getDelayInfosForAdvice to get fresh data."""
         if not self.adviceIndex[groupId]['delay']:
             return False
-        if computeNewDelayInfos:
+        # in some case, when creating advice, if adviserIndex is reindexed before
+        # _updateAdvices is finished, we do not have the 'delay_infos' in the adviceIndex
+        # in this case, no matter p_computeNewDelayInfos we use getDelayInfosForAdvice
+        if computeNewDelayInfos or not 'delay_infos' in self.adviceIndex[groupId]:
             delay_infos = self.getDelayInfosForAdvice(groupId)
         else:
             delay_infos = self.adviceIndex[groupId]['delay_infos']
