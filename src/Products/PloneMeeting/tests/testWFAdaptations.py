@@ -185,13 +185,6 @@ class testWFAdaptations(PloneMeetingTestCase):
             cfg.validate_workflowAdaptations(('no_proposal', 'pre_validation_keep_reviewer_permissions')),
             wa_conflicts)
 
-        # 'hide_decisions_when_under_writing' alone is ok
-        self.failIf(cfg.validate_workflowAdaptations(('hide_decisions_when_under_writing', )))
-        # conflicts with 'no_publication')
-        self.assertEquals(
-            cfg.validate_workflowAdaptations(('hide_decisions_when_under_writing', 'no_publication')),
-            wa_conflicts)
-
     def test_pm_validate_workflowAdaptations_added_no_publication(self):
         """Test MeetingConfig.validate_workflowAdaptations that manage addition
            of wfAdaptations 'no_publication' that is not possible if some meeting

@@ -590,7 +590,7 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                     title='closed', description='',
                     transitions=['backToDecisionsPublished', ])
                 # Initialize permission->roles mapping for new state "decisions_published",
-                # which is the same as state "frozen" (or "decided")in the previous setting.
+                # which is the same as state "frozen" (or "decided") in the previous setting.
                 frozen = wf.states['frozen']
                 decisions_published = wf.states['decisions_published']
                 for permission, roles in frozen.permission_roles.iteritems():

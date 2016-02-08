@@ -2933,9 +2933,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             return msg
         if 'pre_validation' in values and 'pre_validation_keep_reviewer_permissions' in values:
             return msg
-        # 'hide_decisions_when_under_writing' and 'no_publication' are not working together
-        if ('hide_decisions_when_under_writing' in values) and ('no_publication' in values):
-            return msg
 
         catalog = api.portal.get_tool('portal_catalog')
 
