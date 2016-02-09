@@ -7,8 +7,6 @@
 # GNU General Public License (GPL)
 #
 
-import unittest
-
 from plone.testing import z2, zca
 from plone.app.testing import FunctionalTesting
 from plone.app.testing import IntegrationTesting
@@ -50,30 +48,3 @@ PM_TESTING_ROBOT = FunctionalTesting(
     ),
     name="PM_TESTING_ROBOT",
 )
-
-# simple layer used for testSetup
-PM_PLONE_FIXTURE = PloneWithPackageLayer(
-    zcml_filename="testing.zcml",
-    zcml_package=Products.PloneMeeting,
-    additional_z2_products=('imio.dashboard',
-                            'Products.PloneMeeting',
-                            'Products.CMFPlacefulWorkflow',
-                            'Products.PasswordStrength'),
-    gs_profile_id='Products.PloneMeeting:default',
-    name="PLONE_FIXTURE")
-
-PM_PLONE_INTEGRATION = IntegrationTesting(
-    bases=(PM_PLONE_FIXTURE,),
-    name="PLONE_INTEGRATION"
-)
-
-
-class NakedIntegrationTestCase(unittest.TestCase):
-    """Base class for integration tests."""
-
-    layer = PM_PLONE_INTEGRATION
-
-    def setUp(self):
-        super(NakedIntegrationTestCase, self).setUp()
-        self.app = self.layer['app']
-        self.portal = self.layer['portal']

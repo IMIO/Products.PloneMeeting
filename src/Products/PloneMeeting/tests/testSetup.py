@@ -25,12 +25,12 @@
 from Products.CMFPlone.factory import addPloneSite
 from plone.app.testing import login
 from plone.app.testing.interfaces import DEFAULT_LANGUAGE
-from Products.PloneMeeting.testing import NakedIntegrationTestCase
+from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.utils import cleanMemoize
 
 
-class testSetup(NakedIntegrationTestCase):
+class testSetup(PloneMeetingTestCase):
     '''Tests the setup, especially registered profiles.'''
 
     def test_pm_InstallAvailableProfiles(self):
