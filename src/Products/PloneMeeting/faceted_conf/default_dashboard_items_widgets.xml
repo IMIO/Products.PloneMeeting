@@ -139,6 +139,26 @@
 
   <criterion name="c8" i18n:attributes="title">
    <property name="widget">checkbox</property>
+   <property name="title">Advice type</property>
+   <property name="position">top</property>
+   <property name="section">advanced</property>
+   <property name="hidden">0</property>
+   <property name="count">0</property>
+   <property name="sortcountable">0</property>
+   <property name="hidezerocount">0</property>
+   <property name="index">combined__indexAdvisers</property>
+   <property name="operator">or</property>
+   <property name="operator_visible">0</property>
+   <property
+      name="vocabulary">Products.PloneMeeting.vocabularies.advicetypesvocabulary</property>
+   <property name="catalog"></property>
+   <property name="maxitems"></property>
+   <property name="sortreversed">0</property>
+   <property name="default"/>
+  </criterion>
+
+  <criterion name="c9" i18n:attributes="title">
+   <property name="widget">checkbox</property>
    <property name="title">Meeting</property>
    <property name="position">top</property>
    <property name="section">advanced</property>
@@ -157,7 +177,7 @@
    <property name="default"/>
   </criterion>
 
-  <criterion name="c9" i18n:attributes="title">
+  <criterion name="c10" i18n:attributes="title">
    <property name="widget">checkbox</property>
    <property name="title">Preferred meeting</property>
    <property name="position">top</property>
@@ -177,7 +197,7 @@
    <property name="default"/>
   </criterion>
 
-  <criterion name="c10" i18n:attributes="title">
+  <criterion name="c11" i18n:attributes="title">
    <property name="widget">checkbox</property>
    <property name="title">Creator</property>
    <property name="position">top</property>
@@ -197,7 +217,7 @@
    <property name="default"/>
   </criterion>
 
-  <criterion name="c11" i18n:attributes="title">
+  <criterion name="c12" i18n:attributes="title">
    <property name="widget">checkbox</property>
    <property name="title">Taken over by</property>
    <property name="position">top</property>
@@ -217,7 +237,7 @@
    <property name="default"/>
   </criterion>
 
-  <criterion name="c12" i18n:attributes="title">
+  <criterion name="c13" i18n:attributes="title">
    <property name="widget">daterange</property>
    <property name="title">Modified</property>
    <property name="position">top</property>
@@ -228,7 +248,7 @@
    <property name="calYearRange">c-10:c+10</property>
   </criterion>
 
-  <criterion name="c13" i18n:attributes="title">
+  <criterion name="c14" i18n:attributes="title">
    <property name="widget">daterange</property>
    <property name="title">Created</property>
    <property name="position">top</property>
@@ -239,7 +259,7 @@
    <property name="calYearRange">c-10:c+10</property>
   </criterion>
 
-  <criterion name="c14" i18n:attributes="title">
+  <criterion name="c15" i18n:attributes="title">
    <property name="widget">daterange</property>
    <property name="title">Meeting date</property>
    <property name="position">top</property>
@@ -250,7 +270,7 @@
    <property name="calYearRange">c-10:c+10</property>
   </criterion>
 
-  <criterion name="c15" i18n:attributes="title">
+  <criterion name="c16" i18n:attributes="title">
    <property name="widget">checkbox</property>
    <property name="title">To send to</property>
    <property name="position">top</property>
@@ -270,7 +290,7 @@
    <property name="default"/>
   </criterion>
 
-  <criterion name="c16" i18n:attributes="title">
+  <criterion name="c17" i18n:attributes="title">
    <property name="widget">checkbox</property>
    <property name="title">Send to authority?</property>
    <property name="position">top</property>
@@ -290,7 +310,7 @@
    <property name="default"/>
   </criterion>
 
-  <criterion name="c17" i18n:attributes="title">
+  <criterion name="c18" i18n:attributes="title">
    <property name="widget">checkbox</property>
    <property name="title">Item up/down workflow</property>
    <property name="position">top</property>
@@ -310,7 +330,7 @@
    <property name="default"/>
   </criterion>
 
-  <criterion name="c18" i18n:attributes="title">
+  <criterion name="c19" i18n:attributes="title">
    <property name="widget">checkbox</property>
    <property name="title">List type</property>
    <property name="position">top</property>
@@ -330,7 +350,7 @@
    <property name="default"/>
   </criterion>
 
-  <criterion name="c19" i18n:attributes="title">
+  <criterion name="c20" i18n:attributes="title">
    <property name="widget">checkbox</property>
    <property name="title">Has annexes to print?</property>
    <property name="position">top</property>

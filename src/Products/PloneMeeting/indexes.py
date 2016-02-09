@@ -259,11 +259,20 @@ def _to_coded_adviser_index(obj, groupId, advice):
     if isDelayAware:
         res.append('delay__' + groupId + suffix)
         # 'real_group_id_'
-        res.append(DELAYAWARE_REAL_GROUP_ID_PATTERN.format(advice['row_id'], groupId))
+        real_group_id = DELAYAWARE_REAL_GROUP_ID_PATTERN.format(advice['row_id'], groupId)
+        res.append(real_group_id)
+        # 'real_group_id_' with suffixed advice_type
+        res.append(real_group_id + '__' + advice['type'])
     else:
         res.append(groupId + suffix)
         # 'real_group_id_'
-        res.append(REAL_GROUP_ID_PATTERN.format(groupId))
+        real_group_id = REAL_GROUP_ID_PATTERN.format(groupId)
+        res.append(real_group_id)
+        # 'real_group_id_' with suffixed advice_type
+        res.append(real_group_id + '__' + advice['type'])
+    # advice_type
+    if not advice['type'] in res:
+        res.append(advice['type'])
     return res
 
 
@@ -288,5 +297,7 @@ def indexAdvisers(obj):
     res = []
     for groupId, advice in obj.adviceIndex.iteritems():
         res += _to_coded_adviser_index(obj, groupId, advice)
+    # remove double entry, it could be the case for the 'advice_type' alone
+    res = list(set(res))
     res.sort()
     return res

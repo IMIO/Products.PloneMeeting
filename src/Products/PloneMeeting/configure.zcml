@@ -183,6 +183,8 @@
            name="Products.PloneMeeting.vocabularies.meetingdatesvocabulary" />
   <utility component=".vocabularies.AskedAdvicesVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.askedadvicesvocabulary" />
+  <utility component=".vocabularies.AdviceTypesVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.advicetypesvocabulary" />
   <utility component=".vocabularies.SentToInfosVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.senttoinfosvocabulary" />
   <utility component=".vocabularies.SendToAuthorityVocabularyFactory"

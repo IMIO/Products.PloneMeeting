@@ -18,6 +18,7 @@ from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.dashboard.content.dashboardcollection import IDashboardCollection
 from imio.dashboard.vocabulary import ConditionAwareCollectionVocabulary
 from imio.dashboard.vocabulary import DashboardCollectionsVocabulary
+from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.indexes import REAL_GROUP_ID_PATTERN
 from Products.PloneMeeting.indexes import DELAYAWARE_REAL_GROUP_ID_PATTERN
 
@@ -287,6 +288,34 @@ class AskedAdvicesVocabulary(object):
         return SimpleVocabulary(res)
 
 AskedAdvicesVocabularyFactory = AskedAdvicesVocabulary()
+
+
+class AdviceTypesVocabulary(object):
+    implements(IVocabularyFactory)
+
+    @memoize
+    def __call__(self, context):
+        """ """
+        tool = getToolByName(context, 'portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        res = []
+        # add the 'not_given' advice_type
+        res.append(SimpleTerm(NOT_GIVEN_ADVICE_VALUE,
+                              NOT_GIVEN_ADVICE_VALUE,
+                              translate(NOT_GIVEN_ADVICE_VALUE,
+                                        domain='PloneMeeting',
+                                        context=context.REQUEST))
+                   )
+        for advice_type in cfg.getUsedAdviceTypes():
+            res.append(SimpleTerm(advice_type,
+                                  advice_type,
+                                  translate(advice_type,
+                                            domain='PloneMeeting',
+                                            context=context.REQUEST))
+                       )
+        return SimpleVocabulary(res)
+
+AdviceTypesVocabularyFactory = AdviceTypesVocabulary()
 
 
 class SentToInfosVocabulary(object):

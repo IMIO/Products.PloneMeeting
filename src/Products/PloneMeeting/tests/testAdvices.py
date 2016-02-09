@@ -478,17 +478,23 @@ class testAdvices(PloneMeetingTestCase):
         item.updateLocalRoles()
         # no advice to give as item is 'itemcreated'
         self.assertEquals(set(indexAdvisers.callable(item)), set(['delay_real_group_id__unique_id_123',
+                                                                  'delay_real_group_id__unique_id_123__not_given',
                                                                   'delay__vendors_advice_not_giveable',
                                                                   'real_group_id__developers',
-                                                                  'developers_advice_not_giveable']))
+                                                                  'real_group_id__developers__not_given',
+                                                                  'developers_advice_not_giveable',
+                                                                  'not_given']))
         self.proposeItem(item)
         item.reindexObject()
         self.changeUser('pmAdviser1')
         # now advice are giveable but not given
         self.assertEquals(set(indexAdvisers.callable(item)), set(['delay_real_group_id__unique_id_123',
+                                                                  'delay_real_group_id__unique_id_123__not_given',
                                                                   'delay__vendors_advice_not_given',
                                                                   'real_group_id__developers',
-                                                                  'developers_advice_not_given']))
+                                                                  'real_group_id__developers__not_given',
+                                                                  'developers_advice_not_given',
+                                                                  'not_given']))
         itemUID = item.UID()
         brains = self.portal.portal_catalog(indexAdvisers='developers_advice_not_given')
         self.assertEquals(len(brains), 1)
@@ -503,20 +509,26 @@ class testAdvices(PloneMeetingTestCase):
                                              'advice_comment': RichTextValue(u'My comment')})
         # now that an advice has been given for the developers group, the indexAdvisers has been updated
         self.assertEquals(set(indexAdvisers.callable(item)), set(['delay_real_group_id__unique_id_123',
+                                                                  'delay_real_group_id__unique_id_123__not_given',
                                                                   'delay__vendors_advice_not_given',
                                                                   'real_group_id__developers',
-                                                                  'developers_advice_under_edit']))
+                                                                  'real_group_id__developers__positive',
+                                                                  'developers_advice_under_edit',
+                                                                  'not_given', 'positive']))
         brains = self.portal.portal_catalog(indexAdvisers='developers_advice_under_edit')
         self.assertEquals(len(brains), 1)
         self.assertEquals(brains[0].UID, itemUID)
         # now change the value of the created meetingadvice.advice_group
-        advice.advice_group = self.portal.portal_plonemeeting.vendors.getId()
+        advice.advice_group = self.tool.vendors.getId()
         # notify modified
         notify(ObjectModifiedEvent(advice))
         self.assertEquals(set(indexAdvisers.callable(item)), set(['delay_real_group_id__unique_id_123',
+                                                                  'delay_real_group_id__unique_id_123__positive',
                                                                   'delay__vendors_advice_under_edit',
                                                                   'real_group_id__developers',
-                                                                  'developers_advice_not_given']))
+                                                                  'real_group_id__developers__not_given',
+                                                                  'developers_advice_not_given',
+                                                                  'not_given', 'positive']))
         # the index in the portal_catalog is updated too
         brains = self.portal.portal_catalog(indexAdvisers='delay__vendors_advice_under_edit')
         self.assertEquals(len(brains), 1)
@@ -525,31 +537,43 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmReviewer1')
         self.backToState(item, self.WF_STATE_NAME_MAPPINGS['itemcreated'])
         self.assertEquals(set(indexAdvisers.callable(item)), set(['delay_real_group_id__unique_id_123',
+                                                                  'delay_real_group_id__unique_id_123__positive',
                                                                   'delay__vendors_advice_given',
                                                                   'real_group_id__developers',
-                                                                  'developers_advice_not_giveable']))
+                                                                  'real_group_id__developers__not_given',
+                                                                  'developers_advice_not_giveable',
+                                                                  'not_given', 'positive']))
         # ask a given advice again
         self.changeUser('pmCreator1')
         advice.restrictedTraverse('@@change-advice-asked-again')()
         self.assertEquals(set(indexAdvisers.callable(item)), set(['delay_real_group_id__unique_id_123',
+                                                                  'delay_real_group_id__unique_id_123__asked_again',
                                                                   'delay__vendors_advice_not_giveable',
                                                                   'developers_advice_not_giveable',
-                                                                  'real_group_id__developers']))
+                                                                  'real_group_id__developers',
+                                                                  'real_group_id__developers__not_given',
+                                                                  'not_given', 'asked_again']))
 
         # put it back to a state where it is editable
         self.proposeItem(item)
         self.assertEquals(set(indexAdvisers.callable(item)), set(['delay_real_group_id__unique_id_123',
+                                                                  'delay_real_group_id__unique_id_123__asked_again',
                                                                   'delay__vendors_advice_asked_again',
                                                                   'developers_advice_not_given',
-                                                                  'real_group_id__developers']))
+                                                                  'real_group_id__developers',
+                                                                  'real_group_id__developers__not_given',
+                                                                  'not_given', 'asked_again']))
 
         # delete the advice
         self.changeUser('pmAdviser1')
         item.restrictedTraverse('@@delete_givenuid')(advice.UID())
         self.assertEquals(set(indexAdvisers.callable(item)), set(['delay_real_group_id__unique_id_123',
+                                                                  'delay_real_group_id__unique_id_123__not_given',
                                                                   'delay__vendors_advice_not_given',
                                                                   'real_group_id__developers',
-                                                                  'developers_advice_not_given']))
+                                                                  'real_group_id__developers__not_given',
+                                                                  'developers_advice_not_given',
+                                                                  'not_given']))
         # the index in the portal_catalog is updated too
         brains = self.portal.portal_catalog(indexAdvisers='delay__vendors_advice_not_given')
         self.assertEquals(len(brains), 1)
@@ -561,9 +585,92 @@ class testAdvices(PloneMeetingTestCase):
         item.adviceIndex['vendors']['delay_started_on'] = datetime(2012, 01, 01)
         item.updateLocalRoles()
         self.assertEquals(set(indexAdvisers.callable(item)), set(['delay_real_group_id__unique_id_123',
+                                                                  'delay_real_group_id__unique_id_123__not_given',
                                                                   'delay__vendors_advice_delay_exceeded',
                                                                   'real_group_id__developers',
-                                                                  'developers_advice_not_given']))
+                                                                  'real_group_id__developers__not_given',
+                                                                  'developers_advice_not_given',
+                                                                  'not_given']))
+
+    def test_pm_IndexAdvisersCombinedIndex(self):
+        '''Test the indexAdvisers 'combined idnex' functionnality that makes it possible
+           to query items having advice of a given group using a given advice_type.'''
+        # an advice can be given when an item is 'proposed' or 'validated'
+        self.assertEquals(self.meetingConfig.getItemAdviceStates(),
+                          (self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+        # create 3 items with various advices
+        self.changeUser('pmCreator1')
+        item1 = self.create('MeetingItem')
+        item1.setOptionalAdvisers(('developers', 'vendors', ))
+        item1.updateLocalRoles()
+        item2 = self.create('MeetingItem')
+        item2.setOptionalAdvisers(('developers'))
+        item2.updateLocalRoles()
+        item3 = self.create('MeetingItem')
+        item3.setOptionalAdvisers(())
+        item3.updateLocalRoles()
+
+        # query not_given advices
+        catalog = self.portal.portal_catalog
+        self.assertEquals(set([brain.UID for brain in catalog(indexAdvisers='not_given')]),
+                          set([item1.UID(), item2.UID()]))
+        self.assertEquals(set([brain.UID for brain in catalog(indexAdvisers='real_group_id__developers')]),
+                          set([item1.UID(), item2.UID()]))
+        self.assertEquals(set([brain.UID for brain in catalog(indexAdvisers='real_group_id__developers__not_given')]),
+                          set([item1.UID(), item2.UID()]))
+        self.assertEquals(set([brain.UID for brain in catalog(indexAdvisers='real_group_id__vendors__not_given')]),
+                          set([item1.UID()]))
+
+        # give positive developers advice on item1
+        self.proposeItem(item1)
+        item1.reindexObject()
+        self.changeUser('pmAdviser1')
+        createContentInContainer(item1,
+                                 'meetingadvice',
+                                 **{'advice_group': 'developers',
+                                    'advice_type': u'positive',
+                                    'advice_comment': RichTextValue(u'My comment')})
+        # query not given and positive advices
+        self.changeUser('pmCreator1')
+        # item1 still have vendors advice not given
+        self.assertEquals(set([brain.UID for brain in catalog(indexAdvisers='not_given')]),
+                          set([item1.UID(), item2.UID()]))
+        self.assertEquals(set([brain.UID for brain in catalog(indexAdvisers=['not_given', 'positive'])]),
+                          set([item1.UID(), item2.UID()]))
+        self.assertEquals(set([brain.UID for brain in catalog(indexAdvisers='real_group_id__developers')]),
+                          set([item1.UID(), item2.UID()]))
+        self.assertEquals(set([brain.UID for brain in catalog(indexAdvisers='real_group_id__developers__not_given')]),
+                          set([item2.UID()]))
+        self.assertEquals(set([brain.UID for brain in catalog(indexAdvisers='real_group_id__developers__positive')]),
+                          set([item1.UID()]))
+        self.assertEquals(set([brain.UID for brain in catalog(indexAdvisers='real_group_id__vendors__not_given')]),
+                          set([item1.UID()]))
+
+        # give negative developers advice on item2
+        self.changeUser('pmCreator1')
+        self.proposeItem(item2)
+        item2.reindexObject()
+        self.changeUser('pmAdviser1')
+        createContentInContainer(item2,
+                                 'meetingadvice',
+                                 **{'advice_group': 'developers',
+                                    'advice_type': u'negative',
+                                    'advice_comment': RichTextValue(u'My comment')})
+        # query not given and positive advices
+        self.assertEquals(set([brain.UID for brain in catalog(indexAdvisers=['not_given'])]),
+                          set([item1.UID()]))
+        self.assertEquals(set([brain.UID for brain in catalog(indexAdvisers=['positive'])]),
+                          set([item1.UID()]))
+        self.assertEquals(set([brain.UID for brain in catalog(indexAdvisers=['negative'])]),
+                          set([item2.UID()]))
+        self.assertEquals(set([brain.UID for brain in catalog(indexAdvisers='real_group_id__developers')]),
+                          set([item1.UID(), item2.UID()]))
+        self.assertEquals(set([brain.UID for brain in catalog(indexAdvisers='real_group_id__developers__negative')]),
+                          set([item2.UID()]))
+        self.assertEquals(set([brain.UID for brain in catalog(indexAdvisers='real_group_id__developers__positive')]),
+                          set([item1.UID()]))
+        self.assertEquals(set([brain.UID for brain in catalog(indexAdvisers='real_group_id__vendors__not_given')]),
+                          set([item1.UID()]))
 
     def test_pm_AutomaticAdvices(self):
         '''Test the automatic advices mechanism, some advices can be
