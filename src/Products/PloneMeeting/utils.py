@@ -215,7 +215,7 @@ def getCurrentMeetingObject(context):
     return toReturn
 
 
-def cleanMemoize(portal, prefixes):
+def cleanMemoize(portal, prefixes=[]):
     ''' '''
     # borg localroles are memoized...
     # so while checking local roles twice, there could be problems...
@@ -223,9 +223,12 @@ def cleanMemoize(portal, prefixes):
     annotations = IAnnotations(portal.REQUEST)
     annotations_to_delete = []
     for annotation in annotations.keys():
-        for prefix in prefixes:
-            if annotation.startswith(prefix):
-                annotations_to_delete.append(annotation)
+        if not prefixes:
+            annotations_to_delete.append(annotation)
+        else:
+            for prefix in prefixes:
+                if annotation.startswith(prefix):
+                    annotations_to_delete.append(annotation)
     for annotation_to_delete in annotations_to_delete:
         del annotations[annotation_to_delete]
 
