@@ -4508,6 +4508,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             self.getItemTypeName(configType='MeetingItemTemplate')
         folder.invokeFactory(itemType, **data)
         item = getattr(folder, descr.id)
+        # disable _at_rename_after_creation for itemTemplates and recurringItems
+        item._at_rename_after_creation = False
         # call processForm passing dummy values so existing values are not touched
         item.processForm(values={'dummy': None})
         return item

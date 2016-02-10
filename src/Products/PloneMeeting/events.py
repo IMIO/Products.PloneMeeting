@@ -300,12 +300,14 @@ def onItemModified(item, event):
     meeting = item.getMeeting()
     if meeting:
         meeting.invalidate_meeting_actions_panel_cache = True
+
     # reactivate rename_after_creation as long as item is in it's initial_state
-    wfTool = api.portal.get_tool('portal_workflow')
-    itemWF = wfTool.getWorkflowsFor(item)[0]
-    initial_state = itemWF.initial_state
-    if initial_state == item.queryState():
-        item._renameAfterCreation(check_auto_id=False)
+    if item._at_rename_after_creation:
+        wfTool = api.portal.get_tool('portal_workflow')
+        itemWF = wfTool.getWorkflowsFor(item)[0]
+        initial_state = itemWF.initial_state
+        if initial_state == item.queryState():
+            item._renameAfterCreation(check_auto_id=False)
 
 
 def onAdviceAdded(advice, event):

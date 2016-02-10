@@ -91,6 +91,7 @@ class ToolInitializer:
         if not alreadyHaveGroups:
             self.tool.addUsersAndGroups(d.groups)
         savedMeetingConfigsToCloneTo = {}
+
         for mConfig in d.meetingConfigs:
             # XXX we need to defer the management of the 'meetingConfigsToCloneTo'
             # defined on the mConfig after the creation of every mConfigs because
