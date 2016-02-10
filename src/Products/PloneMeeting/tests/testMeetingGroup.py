@@ -278,6 +278,29 @@ class testMeetingGroup(PloneMeetingTestCase):
             translatedSuffix = translate(suffix, domain='PloneMeeting', context=self.request)
             self.assertTrue(ploneGroup.getProperty('title') == ('{0} ({1})'.format(devTitle, translatedSuffix)))
 
+    def test_pm_RemovedPloneGroupsAreRecreatedOnMeetingGroupEdit(self):
+        """When a MeetingGroup is created/edited, it makes sure every Plone groups are
+           created or created again if some where deleted..."""
+        cfg = self.meetingConfig
+        self.changeUser('siteadmin')
+        # create a new group and make sure every Plone groups are created
+        newGroup = self.create('MeetingGroup', title='NewGroup', acronym='N.G.')
+        # one Plone group created for each MEETING_GROUP_SUFFIXES
+        self.assertEquals(len(newGroup.getPloneGroups()), len(MEETING_GROUP_SUFFIXES))
+
+        # remove a Plone group
+        aPloneGroupId = newGroup.getPloneGroups()[0].getId()
+        self.assertTrue(self.portal.portal_groups.removeGroup(aPloneGroupId))
+        # now we have a missing group
+        self.assertTrue(None in newGroup.getPloneGroups())
+        # a missing Plone group makes various things fail, like MeetingConfig.listSelectableCopyGroups
+        self.assertRaises(AttributeError, cfg.listSelectableCopyGroups)
+
+        # correct this by editing the MeetingGroup
+        newGroup.at_post_edit_script()
+        self.assertFalse(None in newGroup.getPloneGroups())
+        self.assertTrue(cfg.listSelectableCopyGroups())
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

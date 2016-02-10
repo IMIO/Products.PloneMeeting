@@ -194,6 +194,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   monkeypatching adaptations.performWorkflowAdaptations.  WFAdaptations are now applied when the MeetingConfig is saved, no
   need to reinstall the package
 - Added method MeetingItem._adviceDelayIsTimedOut that returns True if given groupId advice delay is timed out
+- Plone groups linked to a MeetingGroup that were removed are now recreated when the MeetingGroup is edited
 
 3.3 (2015-02-27)
 ----------------

@@ -285,9 +285,9 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
                 res.append(group)
         return res
 
-    def _createOrUpdatePloneGroup(self, groupSuffix, update=False):
-        '''If p_update is False, this will create the PloneGroup that corresponds to me
-           and p_groupSuffix, if p_update is True, it will just update it's title.'''
+    def _createOrUpdatePloneGroup(self, groupSuffix):
+        '''This will create the PloneGroup that corresponds to me
+           and p_groupSuffix, if group already exists, it will just update it's title.'''
         groupId = self.getPloneGroupId(groupSuffix)
         enc = self.portal_properties.site_properties.getProperty(
             'default_charset')
@@ -299,14 +299,13 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
         # make sure we behave like Plone...
         groupTitle = groupTitle.encode(enc)
         portal_groups = api.portal.get_tool('portal_groups')
-        if update:
-            # just update the title so Plone groups title are coherent
+        group_created = portal_groups.addGroup(groupId, title=groupTitle)
+        if group_created:
+            portal_groups.setRolesForGroup(groupId, ('MeetingObserverGlobal',))
+        else:
+            # update the title so Plone groups title are coherent
             # with MeetingGroup title in case it is updated thereafter
             portal_groups.editGroup(groupId, title=groupTitle)
-        else:
-            # create the Plone group
-            portal_groups.addGroup(groupId, title=groupTitle)
-            portal_groups.setRolesForGroup(groupId, ('MeetingObserverGlobal',))
 
     def getOrder(self, associatedGroupIds=None, onlyActive=True):
         '''At what position am I among all the active groups ? If
@@ -364,7 +363,7 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
 
     def at_post_edit_script(self):
         for groupSuffix in MEETING_GROUP_SUFFIXES:
-            self._createOrUpdatePloneGroup(groupSuffix, update=True)
+            self._createOrUpdatePloneGroup(groupSuffix)
         # clean cache for "Products.PloneMeeting.vocabularies.proposinggroupsvocabulary" and
         # "Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary" vocabularies
         cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
