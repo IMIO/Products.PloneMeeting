@@ -198,6 +198,10 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Item id is now recomputed each time the item is edited as long as the item is in it's intial_state (WF), this avoid
   having inconsistent item id especially when duplicating another item or creating an item from an template where the
   item id was finally something like copy34_of_my_sample_template
+- While presenting an item using the 'present' action displayed on the item_view or in the dashboards, take the item
+  preferredMeeting into account to find out in which meeting the item should be presented.  First in the preferredMeeting
+  if it is still a meetingAcceptingItems in the MeetingConfig.meetingPresentItemWhenNoCurrentMeetingStates or in the
+  first meetingAcceptingItems in the future (still in the MeetingConfig.meetingPresentItemWhenNoCurrentMeetingStates)
 
 3.3 (2015-02-27)
 ----------------

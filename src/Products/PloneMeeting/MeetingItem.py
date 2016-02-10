@@ -204,7 +204,8 @@ class MeetingItemWorkflowConditions:
             return False
         # if we are not on a meeting, try to get the next meeting accepting items
         if not self._publishedObjectIsMeeting():
-            meeting = self.context.getMeetingToInsertIntoWhenNoCurrentMeetingObject()
+            meeting = self.context.getMeetingToInsertIntoWhenNoCurrentMeetingObject(
+                self.context.getPreferredMeeting())
             # if we found a meeting, check that, if it is a meeting accepting late items
             # the current item is a late item...
             if not meeting or \
@@ -427,7 +428,8 @@ class MeetingItemWorkflowActions:
         # the item in the next available meeting
         if not meeting:
             # find meetings accepting items in the future
-            meeting = self.context.getMeetingToInsertIntoWhenNoCurrentMeetingObject()
+            meeting = self.context.getMeetingToInsertIntoWhenNoCurrentMeetingObject(
+                self.context.getPreferredMeeting())
         meeting.insertItem(self.context, forceNormal=self._forceInsertNormal())
         # If the meeting is already frozen and this item is a "late" item,
         # I must set automatically the item to "itemfrozen".
@@ -1916,25 +1918,36 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res = brains[0]
         return res
 
-    def getMeetingToInsertIntoWhenNoCurrentMeetingObject_cachekey(method, self):
+    def getMeetingToInsertIntoWhenNoCurrentMeetingObject_cachekey(method, self, preferredMeeting):
         '''cachekey method for self.getMeetingToInsertIntoWhenNoCurrentMeetingObject.'''
         # do only recompute once by REQUEST
-        return str(self.REQUEST._debug)
+        return str(self.REQUEST._debug), preferredMeeting
 
     @ram.cache(getMeetingToInsertIntoWhenNoCurrentMeetingObject_cachekey)
-    def getMeetingToInsertIntoWhenNoCurrentMeetingObject(self):
+    def getMeetingToInsertIntoWhenNoCurrentMeetingObject(self, preferredMeeting):
         '''Return the meeting the item will be inserted into in case the 'present'
            transition from another view than the meeting view.  This will take into
            acount meeting states defined in MeetingConfig.meetingPresentItemWhenNoCurrentMeetingStates.'''
         # first, find meetings in the future still accepting items
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        brains = cfg.adapted().getMeetingsAcceptingItems(inTheFuture=True)
-        for brain in brains:
-            # now filter found brains regarding MeetingConfig.meetingPresentItemWhenNoCurrentMeetingStates
-            meetingStates = cfg.getMeetingPresentItemWhenNoCurrentMeetingStates()
-            if not meetingStates or brain.review_state in meetingStates:
-                return brain.getObject()
+        # do a list fith meetingStates so it is not considered as a tuple by getMeetingsAcceptingItems
+        # indeed, in some case the tuple ('created', 'frozen') behaves specifically
+        meetingStates = list(cfg.getMeetingPresentItemWhenNoCurrentMeetingStates())
+        brains = []
+        if preferredMeeting != ITEM_NO_PREFERRED_MEETING_VALUE:
+            # preferredMeeting, try to get it from meetingsAcceptingItems or
+            # use meetingsAcceptingItems in the future
+            brains = cfg.adapted().getMeetingsAcceptingItems(review_states=meetingStates)
+            brains = [brain for brain in brains if brain.UID == preferredMeeting]
+        if not brains:
+            # no preferredMeeting or it was not found in meetingsAcceptingItems
+            # take into account meetings in the future
+            brains = cfg.adapted().getMeetingsAcceptingItems(review_states=meetingStates,
+                                                             inTheFuture=True)
+
+        if brains:
+            return brains[0].getObject()
         return None
 
     def _getOtherMeetingConfigsImAmClonedIn(self):

@@ -4873,6 +4873,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         query = {'portal_type': cfg.getMeetingTypeName(),
                  'review_state': review_states,
                  'sort_on': 'getDate'}
+        # querying empty review_state will return nothing
+        if not review_states:
+            query.pop('review_state')
 
         if inTheFuture:
             query['getDate'] = {'query': DateTime(), 'range': 'min'}
