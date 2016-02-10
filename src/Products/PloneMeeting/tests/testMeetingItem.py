@@ -3392,7 +3392,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(catalog(downOrUpWorkflowAgain='up'))
         self.assertFalse(catalog(downOrUpWorkflowAgain='down'))
 
-    def test_pm_groupIsNotEmpty(self):
+    def test_pm_GroupIsNotEmpty(self):
         '''Test the groupIsNotEmpty method.'''
         pg = self.portal.portal_groups
         dcGroup = pg.getGroupById('developers_creators')
@@ -3403,6 +3403,43 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(item.wfConditions()._groupIsNotEmpty('creators'))
         self._removeAllMembers(dcGroup, dcMembers)
         self.assertFalse(item.wfConditions()._groupIsNotEmpty('creators'))
+
+    def test_pm_ItemRenamedWhileInInitialState(self):
+        """As long as the item is in it's initial_state, the id is recomputed."""
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        item.setTitle('My new title')
+        item.processForm()
+        # id as been recomputed
+        self.assertEquals(item.getId(), 'my-new-title')
+
+        # id is recomputer as long as item is in it's initial_state
+        # thereafter, as link to item could have been sent by mail or so, we do not change it
+        self.proposeItem(item)
+        item.setTitle('My other title')
+        item.processForm()
+        self.assertEquals(item.getId(), 'my-new-title')
+
+    def test_pm_ItemRenamedWhenDuplicated(self):
+        """As long as the item is in it's initial_state, the id is recomputed,
+           it works also when duplicating an item."""
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.setTitle('My new title')
+        # we do not processForm so title used for cloned item does not correspond
+        # to id, and we may check if it has been renamed
+        newItem = item.clone()
+        newItem.processForm()
+        self.assertEquals(newItem.getId(), 'my-new-title')
+        item.processForm()
+        self.assertEquals(item.getId(), 'my-new-title-1')
+
+        # renaming process does not break linked items
+        newItem2 = item.clone(setCurrentAsPredecessor=True)
+        self.assertEquals(newItem2.getId(), 'copy_of_' + item.getId())
+        newItem2.processForm()
+        self.assertEquals(newItem2.getId(), 'my-new-title-2')
+        self.assertEquals(newItem2.getPredecessor(), item)
 
 
 def test_suite():
