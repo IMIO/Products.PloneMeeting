@@ -38,7 +38,7 @@
              global itemNumber python:startNumber-1;
              global shownItems python:0;
              isDecided python: meeting.adapted().isDecided();
-             showAnnexesDecision python: isDecided and ('annexesDecision' in visibleColumns);
+             showAnnexesDecision python: 'annexesDecision' in visibleColumns;
              showToDiscuss python: ('toDiscuss' in meetingConfig.getUsedItemAttributes()) and (((not itemsNumbering) and ('toDiscuss' in visibleColumns)) or (itemsNumbering and ('toDiscuss' in visibleColumns) and ((whichItems!='lateItems') or ((whichItems=='lateItems') and meetingConfig.getToDiscussShownForLateItems()))));
              showItemIsSigned python: ('itemIsSigned' in meetingConfig.getUsedItemAttributes()) and ('itemIsSigned' in visibleColumns);
              showAdvices python: meetingConfig.getUseAdvices() and ('advices' in visibleColumns);
