@@ -108,6 +108,11 @@ for valid in baseValidators:
         del valid.regex[0]
         valid.regex_strings = (r'(%s)s?://[^\s\r\n]+' % '|'.join(protocols),)
         valid.compileRegex()
+
+from Products.validation import validation
+from validators import CertifiedSignaturesValidator
+from validators import WorkflowInterfacesValidator
+validation.register(CertifiedSignaturesValidator('isValidCertifiedSignatures', title='', description=''))
 ##/code-section custom-init-head
 
 

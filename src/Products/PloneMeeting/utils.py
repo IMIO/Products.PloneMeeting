@@ -1205,9 +1205,8 @@ def meetingTriggerTransitionOnLinkedItems(meeting, transitionId):
 
 
 def computeCertifiedSignatures(signatures):
-    # compute available signatures and return it as a list of pair
-    # of function/name, like ['function1', 'name1', 'function2', 'name2']
-    computedSignatures = []
+
+    computedSignatures = {}
     now = DateTime()
     validSignatureNumber = 0
     for signature in signatures:
@@ -1223,36 +1222,19 @@ def computeCertifiedSignatures(signatures):
         # if dates are defined and not current, continue
         if (date_from and date_to) and not _in_between(date_from, date_to, now):
             continue
-        computedSignatures.append(signature['function'])
-        computedSignatures.append(signature['name'])
         validSignatureNumber = signature['signatureNumber']
+        computedSignatures[validSignatureNumber] = {}
+        computedSignatures[validSignatureNumber]['function'] = signature['function']
+        computedSignatures[validSignatureNumber]['name'] = signature['name']
     return computedSignatures
 
 
-def prepareSearchValue(value):
-    '''Prepare given p_value to execute a query in the portal_catalog
-       with a ZCTextIndex by adding a '*' at the end of each word.'''
-    # first remove nasty characters meaning something as a search string
-    toRemove = '?-+*()'
-    for char in toRemove:
-        value.replace(char, ' ')
-
-    words = value.split(' ')
+def listifySignatures(signatures):
     res = []
-    # do not add a star at the end of some words
-    noAddStartFor = ['OR', 'AND', ]
-    for word in words:
-        if not word:
-            continue
-        addAStar = True
-        for elt in noAddStartFor:
-            if word.endswith(elt):
-                addAStar = False
-                break
-        if addAStar:
-            word = word + '*'
-        res.append(word)
-    return ' '.join(res)
+    for singNumber, signInfos in sorted(signatures.items()):
+        res.append(signInfos['function'])
+        res.append(signInfos['name'])
+    return res
 
 
 def updateCollectionCriterion(collection, i, v):

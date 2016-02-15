@@ -49,7 +49,6 @@ from DateTime import DateTime
 from OFS.Image import File
 from OFS.ObjectManager import BeforeDeleteException
 from zope.annotation import IAnnotations
-from zope.component import getGlobalSiteManager
 from zope.component import getUtility
 from zope.component import getMultiAdapter
 from zope.container.interfaces import INameChooser
@@ -105,12 +104,17 @@ from Products.PloneMeeting.interfaces import IMeetingWorkflowConditions
 from Products.PloneMeeting.interfaces import IMeeting
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingWorkflowActions
-from Products.PloneMeeting.utils import getInterface, getCustomAdapter, \
-    getCustomSchemaFields, getFieldContent, forceHTMLContentTypeForEmptyRichFields, \
-    computeCertifiedSignatures
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
+from Products.PloneMeeting.utils import computeCertifiedSignatures
+from Products.PloneMeeting.utils import getCustomAdapter
+from Products.PloneMeeting.utils import getCustomSchemaFields
+from Products.PloneMeeting.utils import getFieldContent
+from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
+from Products.PloneMeeting.utils import listifySignatures
+from Products.PloneMeeting.validators import WorkflowInterfacesValidator
 from Products.PloneMeeting.Meeting import Meeting
 from Products.PloneMeeting.MeetingItem import MeetingItem
+
 defValues = MeetingConfigDescriptor.get()
 # This way, I get the default values for some MeetingConfig fields,
 # that are defined in a unique place: the MeetingConfigDescriptor class, used
@@ -119,43 +123,6 @@ import logging
 logger = logging.getLogger('PloneMeeting')
 DUPLICATE_SHORT_NAME = 'Short name "%s" is already used by another meeting ' \
                        'configuration. Please choose another one.'
-
-# Helper class for validating workflow interfaces ------------------------------
-WRONG_INTERFACE = 'You must specify here interface "%s" or a subclass of it.'
-NO_ADAPTER_FOUND = 'No adapter was found that provides "%s" for "%s".'
-
-
-class WorkflowInterfacesValidator:
-    '''Checks that declared interfaces exist and that adapters were defined for
-       it.'''
-    def __init__(self, baseInterface, baseWorkflowInterface):
-        self.baseInterface = baseInterface
-        self.baseWorkflowInterface = baseWorkflowInterface
-
-    def _getPackageName(self, klass):
-        '''Returns the full package name if p_klass.'''
-        return '%s.%s' % (klass.__module__, klass.__name__)
-
-    def validate(self, value):
-        # Get the interface corresponding to the name specified in p_value.
-        theInterface = None
-        try:
-            theInterface = getInterface(value)
-        except Exception, e:
-            return str(e)
-        # Check that this interface is self.baseWorkflowInterface or
-        # a subclass of it.
-        if not issubclass(theInterface, self.baseWorkflowInterface):
-            return WRONG_INTERFACE % (self._getPackageName(
-                                      self.baseWorkflowInterface))
-        # Check that there exits an adapter that provides theInterface for
-        # self.baseInterface.
-        sm = getGlobalSiteManager()
-        adapter = sm.adapters.lookup1(self.baseInterface, theInterface)
-        if not adapter:
-            return NO_ADAPTER_FOUND % (self._getPackageName(theInterface),
-                                       self._getPackageName(self.baseInterface))
-##/code-section module-header
 
 schema = Schema((
 
@@ -216,6 +183,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_certifiedSignatures',
             i18n_domain='PloneMeeting',
         ),
+        validators=('isValidCertifiedSignatures',),
         schemata="assembly_and_signatures",
         default=defValues.certifiedSignatures,
         allow_oddeven=True,
@@ -2455,48 +2423,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if (cfg != self) and (cfg.getShortName() == value):
                 return DUPLICATE_SHORT_NAME % value
 
-    security.declarePrivate('validate_certifiedSignatures')
-
-    def validate_certifiedSignatures(self, value):
-        '''Validate the 'certifiedSignatures' field, check that provided dates
-           (date_from and date_to) respect correct format and that signatures are
-           sorted by signature number.'''
-        lastSignatureNumber = 0
-        row_number = 0
-        for signature in value:
-            # bypass 'template_row_marker'
-            if 'orderindex_' in signature and signature['orderindex_'] == 'template_row_marker':
-                continue
-            row_number += 1
-            # check that signatures are correctly ordered by signature number
-            signatureNumber = int(signature['signatureNumber'])
-            if signatureNumber < lastSignatureNumber:
-                return _('error_certified_signatures_order')
-            lastSignatureNumber = signatureNumber
-            # if a date_from is defined, a date_to is required and vice versa
-            date_from = signature['date_from']
-            date_to = signature['date_to']
-            # stop checks if no date provided
-            if not date_from and not date_to:
-                continue
-            # if a date is provided, both are required
-            if (date_from and not date_to) or \
-               (date_to and not date_from):
-                return _('error_certified_signatures_both_dates_required',
-                         mapping={'row_number': row_number})
-            try:
-                datetime_from = DateTime(date_from)
-                datetime_to = DateTime(date_to)
-                # respect right string format?
-                # datefrom <= dateto?
-                if not datetime_from.strftime('%Y/%m/%d') == date_from or \
-                   not datetime_to.strftime('%Y/%m/%d') == date_to or \
-                   not datetime_from <= datetime_to:
-                    raise SyntaxError
-            except:
-                return _('error_certified_signatures_invalid_dates',
-                         mapping={'row_number': row_number})
-
     security.declarePrivate('validate_listTypes')
 
     def validate_listTypes(self, value):
@@ -2848,28 +2774,28 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def validate_itemConditionsInterface(self, value):
         '''Validates the item conditions interface.'''
         iwf = IMeetingItemWorkflowConditions
-        return WorkflowInterfacesValidator(IMeetingItem, iwf).validate(value)
+        return WorkflowInterfacesValidator(IMeetingItem, iwf)(value)
 
     security.declarePrivate('validate_itemActionsInterface')
 
     def validate_itemActionsInterface(self, value):
         '''Validates the item actions interface.'''
         iwf = IMeetingItemWorkflowActions
-        return WorkflowInterfacesValidator(IMeetingItem, iwf).validate(value)
+        return WorkflowInterfacesValidator(IMeetingItem, iwf)(value)
 
     security.declarePrivate('validate_meetingConditionsInterface')
 
     def validate_meetingConditionsInterface(self, value):
         '''Validates the meeting conditions interface.'''
         iwf = IMeetingWorkflowConditions
-        return WorkflowInterfacesValidator(IMeeting, iwf).validate(value)
+        return WorkflowInterfacesValidator(IMeeting, iwf)(value)
 
     security.declarePrivate('validate_meetingActionsInterface')
 
     def validate_meetingActionsInterface(self, value):
         '''Validates the meeting actions interface.'''
         iwf = IMeetingWorkflowActions
-        return WorkflowInterfacesValidator(IMeeting, iwf).validate(value)
+        return WorkflowInterfacesValidator(IMeeting, iwf)(value)
 
     security.declarePrivate('validate_meetingConfigsToCloneTo')
 
@@ -4255,14 +4181,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getCertifiedSignatures')
 
-    def getCertifiedSignatures(self, computed=False, **kwargs):
+    def getCertifiedSignatures(self, computed=False, listified=False, **kwargs):
         '''Overrides field 'certifiedSignatures' accessor to be able to pass
            the p_computed parameter that will return computed certified signatures,
            so signatures really available right now.'''
         signatures = self.getField('certifiedSignatures').get(self, **kwargs)
         if computed:
-            computedSignatures = computeCertifiedSignatures(signatures)
-            signatures = computedSignatures
+            signatures = computeCertifiedSignatures(signatures)
+            if listified:
+                signatures = listifySignatures(signatures)
         return signatures
 
     def getFileTypes_cachekey(method, self, relatedTo='*', typesIds=[], onlySelectable=True, includeSubTypes=True):

@@ -301,6 +301,126 @@ class testMeetingGroup(PloneMeetingTestCase):
         self.assertFalse(None in newGroup.getPloneGroups())
         self.assertTrue(cfg.listSelectableCopyGroups())
 
+    def test_pm_RedefinedCertifiedSignatures(self):
+        """MeetingGroup.certifiedSignatures may override what is defined on a MeetingConfig,
+           either partially (one signature, the other is taken from MeetingConfig) or completely."""
+        cfg = self.meetingConfig
+        certified = [
+            {'signatureNumber': '1',
+             'name': 'Name1',
+             'function': 'Function1',
+             'date_from': '',
+             'date_to': '',
+             },
+            {'signatureNumber': '2',
+             'name': 'Name2',
+             'function': 'Function2',
+             'date_from': '',
+             'date_to': '',
+             },
+        ]
+        cfg.setCertifiedSignatures(certified)
+        vendors = self.tool.vendors
+        # called without computed=True, the actual values defined on the MeetingGroup is returned
+        self.assertEquals(vendors.getCertifiedSignatures(), ())
+        # with a cfg, cfg values are returned if not overrided
+        self.assertEquals(vendors.getCertifiedSignatures(computed=True, context=cfg),
+                          ['Function1', 'Name1', 'Function2', 'Name2'])
+
+        # redefine one signature
+        group_certified = [
+            {'signatureNumber': '2',
+             'name': 'Redefined name2',
+             'function': 'Redefined function2',
+             'date_from': '',
+             'date_to': ''},
+            ]
+        # it validates
+        vendors.setCertifiedSignatures(group_certified)
+        self.assertEquals(vendors.getCertifiedSignatures(computed=True, context=cfg),
+                          ['Function1', 'Name1', 'Redefined function2', 'Redefined name2'])
+
+        # redefine every signatures
+        group_certified = [
+            {'signatureNumber': '1',
+             'name': 'Redefined name1',
+             'function': 'Redefined function1',
+             'date_from': '',
+             'date_to': ''},
+            {'signatureNumber': '2',
+             'name': 'Redefined name2',
+             'function': 'Redefined function2',
+             'date_from': '',
+             'date_to': ''},
+            ]
+        vendors.setCertifiedSignatures(group_certified)
+        self.assertEquals(vendors.getCertifiedSignatures(computed=True, context=cfg),
+                          ['Redefined function1', 'Redefined name1',
+                           'Redefined function2', 'Redefined name2'])
+
+        # redefine a third signature
+        group_certified = [
+            {'signatureNumber': '1',
+             'name': 'Redefined name1',
+             'function': 'Redefined function1',
+             'date_from': '',
+             'date_to': ''},
+            {'signatureNumber': '2',
+             'name': 'Redefined name2',
+             'function': 'Redefined function2',
+             'date_from': '',
+             'date_to': ''},
+            {'signatureNumber': '3',
+             'name': 'Redefined name3',
+             'function': 'Redefined function3',
+             'date_from': '',
+             'date_to': ''},
+            ]
+        vendors.setCertifiedSignatures(group_certified)
+        self.assertEquals(vendors.getCertifiedSignatures(computed=True, context=cfg),
+                          ['Redefined function1', 'Redefined name1',
+                           'Redefined function2', 'Redefined name2',
+                           'Redefined function3', 'Redefined name3'])
+
+        # redefine a third signature but not the second
+        group_certified = [
+            {'signatureNumber': '1',
+             'name': 'Redefined name1',
+             'function': 'Redefined function1',
+             'date_from': '',
+             'date_to': ''},
+            {'signatureNumber': '3',
+             'name': 'Redefined name3',
+             'function': 'Redefined function3',
+             'date_from': '',
+             'date_to': ''},
+            ]
+        vendors.setCertifiedSignatures(group_certified)
+        self.assertEquals(vendors.getCertifiedSignatures(computed=True, context=cfg),
+                          ['Redefined function1', 'Redefined name1',
+                           'Function2', 'Name2',
+                           'Redefined function3', 'Redefined name3'])
+
+        # period validity is taken into account
+        # redefine a third signature but not the second
+        group_certified = [
+            {'signatureNumber': '1',
+             'name': 'Redefined name1',
+             'function': 'Redefined function1',
+             'date_from': '2015/01/01',
+             'date_to': '2015/05/05'},
+            {'signatureNumber': '3',
+             'name': 'Redefined name3',
+             'function': 'Redefined function3',
+             'date_from': '',
+             'date_to': ''},
+            ]
+        vendors.setCertifiedSignatures(group_certified)
+        self.assertEquals(vendors.getCertifiedSignatures(computed=True, context=cfg),
+                          ['Function1', 'Name1',
+                           'Function2', 'Name2',
+                           'Redefined function3', 'Redefined name3'])
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

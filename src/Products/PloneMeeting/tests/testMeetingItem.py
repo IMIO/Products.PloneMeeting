@@ -2658,9 +2658,11 @@ class testMeetingItem(PloneMeetingTestCase):
              },
         ]
         self.meetingConfig.setCertifiedSignatures(certified)
-        self.assertTrue(item.adapted().getCertifiedSignatures() ==
-                        [u'Function1', u'Name1', u'Function2', u'Name2',
-                         u'Function3', u'Name3', u'Function4', u'Name4'])
+        self.assertEquals(item.adapted().getCertifiedSignatures(),
+                          [u'Function1', u'Name1',
+                           u'Function2', u'Name2',
+                           u'Function3', u'Name3',
+                           u'Function4', u'Name4'])
 
         # when periods are define, returned signature is first available
         # define a passed period signature then a signature always valid (no date_from/date_to)

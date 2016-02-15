@@ -203,6 +203,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   if it is still a meetingAcceptingItems in the MeetingConfig.meetingPresentItemWhenNoCurrentMeetingStates or in the
   first meetingAcceptingItems in the future (still in the MeetingConfig.meetingPresentItemWhenNoCurrentMeetingStates)
 - Links to meetings are colorized depending on their review_state wherever it is displayed
+- Added possibility to only redefine partially certifiedSignatures on a MeetingGroup, this way we may still use for example
+  signature 1 from the MeetingConfig and only redefine signature 2 on the MeetingGroup
 
 3.3 (2015-02-27)
 ----------------

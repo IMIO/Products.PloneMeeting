@@ -41,6 +41,7 @@ from Products.PloneMeeting.config import WriteRiskyConfig
 from Products.PloneMeeting.utils import computeCertifiedSignatures
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getFieldContent
+from Products.PloneMeeting.utils import listifySignatures
 from Products.PloneMeeting import PloneMeetingError
 from Products.PloneMeeting.profiles import GroupDescriptor
 defValues = GroupDescriptor.get()
@@ -157,6 +158,7 @@ schema = Schema((
             label='Certifiedsignatures',
             i18n_domain='PloneMeeting',
         ),
+        validators=('isValidCertifiedSignatures',),
         default=defValues.certifiedSignatures,
         allow_oddeven=True,
         write_permission="PloneMeeting: Write harmless config",
@@ -470,17 +472,20 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
            the p_computed parameter that will return computed certified signatures,
            so signatures really available right now.  If nothing is defined on the MeetingGroup,
            use certified signatures defined on the corresponding MeetingConfig found using p_context.'''
-        signatures = self.getField('certifiedSignatures').get(self, **kwargs)
+        group_signatures = self.getField('certifiedSignatures').get(self, **kwargs)
         if computed:
-            # if we have certified signatures defined on this MeetingGroup use it
-            if signatures:
-                computedSignatures = computeCertifiedSignatures(signatures)
-            else:
-                tool = api.portal.get_tool('portal_plonemeeting')
-                cfg = tool.getMeetingConfig(context)
-                computedSignatures = cfg.getCertifiedSignatures(computed=True)
-            signatures = computedSignatures
-        return signatures
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(context)
+            computedSignatures = cfg.getCertifiedSignatures(computed=True)
+
+            # if we have certified signatures defined on this MeetingGroup
+            # update MeetingConfig signatures regarding what is defined here
+            if group_signatures:
+                computedSignatures.update(computeCertifiedSignatures(group_signatures))
+            # listify signatures, for backward compatibility, we need a list of pair
+            # of function/name, like ['function1', 'name1', 'function2', 'name2']
+            group_signatures = listifySignatures(computedSignatures)
+        return group_signatures
 
 
 registerType(MeetingGroup, PROJECTNAME)

@@ -2498,7 +2498,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(item)
         if forceUseCertifiedSignaturesOnMeetingConfig:
-            return cfg.getCertifiedSignatures(computed=True)
+            return cfg.getCertifiedSignatures(computed=True, listified=True)
 
         # if we do not use MeetingUsers, compute certified signatures calling
         # it on the MeetingGroup (that will call the MeetingConfig if nothing defined on it)
