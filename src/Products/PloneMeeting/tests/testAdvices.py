@@ -45,6 +45,8 @@ from plone import api
 from Products.PloneMeeting.config import AddAdvice
 from Products.PloneMeeting.config import ADVICE_STATES_ALIVE
 from Products.PloneMeeting.config import ADVICE_STATES_ENDED
+from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
+from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.indexes import indexAdvisers
@@ -464,13 +466,15 @@ class testAdvices(PloneMeetingTestCase):
     def test_pm_IndexAdvisers(self):
         '''Test the indexAdvisers index and check that it is always consistent.
            Ask a delay and a non delay-aware advice.'''
-        self.meetingConfig.setCustomAdvisers(
+        cfg = self.meetingConfig
+        cfg.setCustomAdvisers(
             [{'row_id': 'unique_id_123',
               'group': 'vendors',
               'delay': '5', }, ])
-        self.meetingConfig.setUsedAdviceTypes(self.meetingConfig.getUsedAdviceTypes() + ('asked_again', ))
-        # an advice can be given when an item is 'proposed' or 'validated'
-        self.assertEquals(self.meetingConfig.getItemAdviceStates(), (self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+        cfg.setUsedAdviceTypes(cfg.getUsedAdviceTypes() + ('asked_again', ))
+        # an advice can be given or edited when an item is 'proposed'
+        cfg.setItemAdviceStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+        cfg.setItemAdviceEditStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
         # create an item to advice
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -502,6 +506,7 @@ class testAdvices(PloneMeetingTestCase):
         brains = self.portal.portal_catalog(indexAdvisers='delay_real_group_id__unique_id_123')
         self.assertEquals(len(brains), 1)
         self.assertEquals(brains[0].UID, itemUID)
+        # create the advice
         advice = createContentInContainer(item,
                                           'meetingadvice',
                                           **{'advice_group': 'developers',
@@ -518,6 +523,42 @@ class testAdvices(PloneMeetingTestCase):
         brains = self.portal.portal_catalog(indexAdvisers='developers_advice_under_edit')
         self.assertEquals(len(brains), 1)
         self.assertEquals(brains[0].UID, itemUID)
+
+        # turn advice to hidden during redaction
+        changeHiddenDuringRedactionView = advice.restrictedTraverse('@@change-advice-hidden-during-redaction')
+        changeHiddenDuringRedactionView()
+        self.assertTrue(advice.advice_hide_during_redaction)
+        self.assertEquals(set(indexAdvisers.callable(item)),
+                          set(['delay_real_group_id__unique_id_123',
+                               'delay_real_group_id__unique_id_123__not_given',
+                               'delay__vendors_advice_not_given',
+                               'real_group_id__developers',
+                               'real_group_id__developers__hidden_during_redaction',
+                               'developers_advice_under_edit',
+                               'not_given', HIDDEN_DURING_REDACTION_ADVICE_VALUE]))
+        brains = self.portal.portal_catalog(indexAdvisers='real_group_id__developers__hidden_during_redaction')
+        self.assertEquals(len(brains), 1)
+        self.assertEquals(brains[0].UID, itemUID)
+        # makes this advice 'considered_not_given_hidden_during_redaction'
+        self.changeUser('pmReviewer1')
+        self.validateItem(item)
+        self.assertEquals(set(indexAdvisers.callable(item)),
+                          set(['delay_real_group_id__unique_id_123',
+                               'delay_real_group_id__unique_id_123__not_given',
+                               'delay__vendors_advice_not_giveable',
+                               'real_group_id__developers',
+                               'real_group_id__developers__considered_not_given_hidden_during_redaction',
+                               'developers_advice_given',
+                               'not_given', CONSIDERED_NOT_GIVEN_ADVICE_VALUE]))
+        brains = self.portal.portal_catalog(
+            indexAdvisers='real_group_id__developers__considered_not_given_hidden_during_redaction')
+        self.assertEquals(len(brains), 1)
+        self.assertEquals(brains[0].UID, itemUID)
+        # back to 'proposed' and not more hidden_during_redaction
+        self.backToState(item, self.WF_STATE_NAME_MAPPINGS['proposed'])
+        self.changeUser('pmAdviser1')
+        changeHiddenDuringRedactionView()
+
         # now change the value of the created meetingadvice.advice_group
         advice.advice_group = self.tool.vendors.getId()
         # notify modified
@@ -533,6 +574,7 @@ class testAdvices(PloneMeetingTestCase):
         brains = self.portal.portal_catalog(indexAdvisers='delay__vendors_advice_under_edit')
         self.assertEquals(len(brains), 1)
         self.assertEquals(brains[0].UID, itemUID)
+
         # put the item in a state where given advices are not editable anymore
         self.changeUser('pmReviewer1')
         self.backToState(item, self.WF_STATE_NAME_MAPPINGS['itemcreated'])

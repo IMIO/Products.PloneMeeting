@@ -256,23 +256,25 @@ def _to_coded_adviser_index(obj, groupId, advice):
     suffix = _computeSuffixFor(groupId, advice)
     # we also index the 'real_group_id_' so we can query who we asked
     # advice to, without passing the advice state
+    # we compute the 'advice_type' to take into account 'hidden_during_redaction'
+    advice_type = obj._shownAdviceTypeFor(advice)
     if isDelayAware:
         res.append('delay__' + groupId + suffix)
         # 'real_group_id_'
         real_group_id = DELAYAWARE_REAL_GROUP_ID_PATTERN.format(advice['row_id'], groupId)
         res.append(real_group_id)
         # 'real_group_id_' with suffixed advice_type
-        res.append(real_group_id + '__' + advice['type'])
+        res.append(real_group_id + '__' + advice_type)
     else:
         res.append(groupId + suffix)
         # 'real_group_id_'
         real_group_id = REAL_GROUP_ID_PATTERN.format(groupId)
         res.append(real_group_id)
         # 'real_group_id_' with suffixed advice_type
-        res.append(real_group_id + '__' + advice['type'])
+        res.append(real_group_id + '__' + advice_type)
     # advice_type
-    if not advice['type'] in res:
-        res.append(advice['type'])
+    if not advice_type in res:
+        res.append(advice_type)
     return res
 
 

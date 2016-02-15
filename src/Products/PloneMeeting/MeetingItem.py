@@ -67,9 +67,11 @@ from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting import PloneMeetingError
 from Products.PloneMeeting.config import AddAdvice
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
+from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import DEFAULT_COPIED_FIELDS
 from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_SAME_MC
 from Products.PloneMeeting.config import HIDE_DECISION_UNDER_WRITING_MSG
+from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_COMPLETENESS_ASKERS
 from Products.PloneMeeting.config import ITEM_COMPLETENESS_EVALUATORS
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
@@ -3365,17 +3367,32 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 toAdd.append((groupId, group.getName()))
         return (toAdd, toEdit)
 
-    def _adviceIsViewableForCurrentUser(self, cfg, isPowerObserver, isRestrictedPowerObserver, advice):
+    def _adviceIsViewableForCurrentUser(self, cfg, isPowerObserver, isRestrictedPowerObserver, adviceInfo):
         '''
           Returns True if current user may view the advice.
         '''
         # if confidentiality is used and advice is marked as confidential,
         # advices could be hidden to power observers and/or restricted power observers
-        if cfg.getEnableAdviceConfidentiality() and advice['isConfidential'] and \
+        if cfg.getEnableAdviceConfidentiality() and adviceInfo['isConfidential'] and \
            ((isPowerObserver and 'power_observers' in cfg.getAdviceConfidentialFor()) or
                 (isRestrictedPowerObserver and 'restricted_power_observers' in cfg.getAdviceConfidentialFor())):
             return False
         return True
+
+    def _shownAdviceTypeFor(self, adviceInfo):
+        """Return the advice_type to take into account, essentially regarding
+           the fact that the advice is 'hidden_during_redaction' or not."""
+        adviceType = None
+        # if the advice is 'hidden_during_redaction', we create a specific advice type
+        if not adviceInfo['hidden_during_redaction']:
+            adviceType = adviceInfo['type']
+        else:
+            # check if advice still giveable/editable
+            if adviceInfo['advice_editable']:
+                adviceType = HIDDEN_DURING_REDACTION_ADVICE_VALUE
+            else:
+                adviceType = CONSIDERED_NOT_GIVEN_ADVICE_VALUE
+        return adviceType
 
     security.declarePublic('getAdvicesByType')
 
@@ -3386,26 +3403,21 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(self)
         isPowerObserver = tool.isPowerObserverForCfg(cfg)
         isRestrictedPowerObserver = tool.isPowerObserverForCfg(cfg, isRestricted=True)
-        for groupId, advice in self.adviceIndex.iteritems():
+        for groupId, adviceInfo in self.adviceIndex.iteritems():
             # Create the entry for this type of advice if not yet created.
             # first check if current user may access advice, aka advice is not confidential to him
-            if not self._adviceIsViewableForCurrentUser(cfg, isPowerObserver, isRestrictedPowerObserver, advice):
+            if not self._adviceIsViewableForCurrentUser(cfg,
+                                                        isPowerObserver,
+                                                        isRestrictedPowerObserver,
+                                                        adviceInfo):
                 continue
 
-            # if the advice is 'hidden_during_redaction', we create a specific advice type
-            if not advice['hidden_during_redaction'] or advice['type'] == 'asked_again':
-                adviceType = advice['type']
-            else:
-                # check if advice still giveable/editable
-                if advice['advice_editable']:
-                    adviceType = 'hidden_during_redaction'
-                else:
-                    adviceType = 'considered_not_given_hidden_during_redaction'
+            adviceType = self._shownAdviceTypeFor(adviceInfo)
             if adviceType not in res:
                 res[adviceType] = advices = []
             else:
                 advices = res[adviceType]
-            advices.append(advice.__dict__['data'])
+            advices.append(adviceInfo.__dict__['data'])
         return res
 
     security.declarePublic('getGivenAdvices')

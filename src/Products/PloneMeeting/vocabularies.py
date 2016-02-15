@@ -18,6 +18,8 @@ from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.dashboard.content.dashboardcollection import IDashboardCollection
 from imio.dashboard.vocabulary import ConditionAwareCollectionVocabulary
 from imio.dashboard.vocabulary import DashboardCollectionsVocabulary
+from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
+from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.indexes import REAL_GROUP_ID_PATTERN
 from Products.PloneMeeting.indexes import DELAYAWARE_REAL_GROUP_ID_PATTERN
@@ -313,6 +315,20 @@ class AdviceTypesVocabulary(object):
                                             domain='PloneMeeting',
                                             context=context.REQUEST))
                        )
+        # finally add the 'hidden_during_redaction' and
+        # 'considered_not_given_hidden_during_redaction' advice_types
+        res.append(SimpleTerm(HIDDEN_DURING_REDACTION_ADVICE_VALUE,
+                              HIDDEN_DURING_REDACTION_ADVICE_VALUE,
+                              translate(HIDDEN_DURING_REDACTION_ADVICE_VALUE,
+                                        domain='PloneMeeting',
+                                        context=context.REQUEST))
+                   )
+        res.append(SimpleTerm(CONSIDERED_NOT_GIVEN_ADVICE_VALUE,
+                              CONSIDERED_NOT_GIVEN_ADVICE_VALUE,
+                              translate(CONSIDERED_NOT_GIVEN_ADVICE_VALUE,
+                                        domain='PloneMeeting',
+                                        context=context.REQUEST))
+                   )
         return SimpleVocabulary(res)
 
 AdviceTypesVocabularyFactory = AdviceTypesVocabulary()
