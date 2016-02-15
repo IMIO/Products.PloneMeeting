@@ -2975,6 +2975,27 @@ class testMeetingItem(PloneMeetingTestCase):
         # field was not kept as no more possible with current configuration
         self.assertFalse(notSendableItem.getOtherMeetingConfigsClonableTo())
 
+    def test_pm_CopiedFieldsCopyGroupsWhenDuplicated(self):
+        '''Make sure field MeetingItem.copyGroups value correspond to what is currently
+           defined in the MeetingConfig.'''
+        cfg = self.meetingConfig
+        cfg.setUseCopies(True)
+        cfg.setSelectableCopyGroups(('developers_reviewers', 'vendors_reviewers'))
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.setCopyGroups(('developers_reviewers', 'vendors_reviewers'))
+        item.at_post_edit_script()
+        # change configuration, and do 'developers_reviewers' no more a selectable copyGroup
+        cfg.setSelectableCopyGroups(('vendors_reviewers', ))
+        newItem = item.clone()
+        # only relevant copyGroups were kept
+        self.assertEquals(newItem.getCopyGroups(),
+                          ('vendors_reviewers', ))
+        # if we do not use copyGroups anymore, no copyGroups are kept
+        cfg.setUseCopies(False)
+        newItem2 = item.clone()
+        self.assertFalse(newItem2.getCopyGroups())
+
     def test_pm_ToDiscussFieldBehaviourWhenCloned(self):
         '''When cloning an item to the same MeetingConfig, the field 'toDiscuss' is managed manually :
            - if MeetingConfig.toDiscussSetOnItemInsert is True, value is not kept

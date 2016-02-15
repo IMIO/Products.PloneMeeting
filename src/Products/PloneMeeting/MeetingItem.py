@@ -4543,11 +4543,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             raise Unauthorized
         # Get the PloneMeetingFolder of the current user as destFolder
         tool = api.portal.get_tool('portal_plonemeeting')
-        membershipTool = api.portal.get_tool('portal_membership')
-        userId = membershipTool.getAuthenticatedMember().getId()
+        userId = api.user.get_current().getId()
         # make sure the newOwnerId exist (for example a user created an item, the
         # user was deleted and we are now cloning his item)
-        if not membershipTool.getMemberById(newOwnerId):
+        if newOwnerId and not api.user.get(userid=newOwnerId):
             newOwnerId = userId
         # Do not use "not destFolder" because destFolder is an ATBTreeFolder
         # and an empty ATBTreeFolder will return False while testing destFolder.
@@ -4565,20 +4564,31 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cloned_to_same_mc = newPortalType in same_mc_types
         if cloned_to_same_mc:
             copyFields = copyFields + EXTRA_COPIED_FIELDS_SAME_MC
-            # special handling for field 'otherMeetingConfigsClonableTo', we double
-            # check that value is still valid in case configuration changed since original
-            # item was created
-            if 'otherMeetingConfigsClonableTo' in copyFields:
-                clonableTo = set([mc['meeting_config'] for mc in cfg.getMeetingConfigsToCloneTo()])
-                if set(self.getOtherMeetingConfigsClonableTo()).difference(clonableTo):
-                    copyFields.remove('otherMeetingConfigsClonableTo')
-
         # Check if an external plugin want to add some copyFields
         copyFields = copyFields + self.adapted().getExtraFieldsToCopyWhenCloning(cloned_to_same_mc)
+
+        # clone
         newItem = tool.pasteItems(destFolder, copiedData, copyAnnexes=copyAnnexes,
                                   newOwnerId=newOwnerId, copyFields=copyFields,
                                   newPortalType=newPortalType,
                                   keepProposingGroup=keepProposingGroup)[0]
+
+        # special handling for some fields kept when cloned_to_same_mc
+        # we check that used values on original item are still useable for cloned item
+        # in case configuration changed since original item was created
+        dest_cfg = tool.getMeetingConfig(newItem)
+        if 'otherMeetingConfigsClonableTo' in copyFields:
+            clonableTo = set([mc['meeting_config'] for mc in dest_cfg.getMeetingConfigsToCloneTo()])
+            # make sure we only have selectable otherMeetingConfigsClonableTo
+            newItem.setOtherMeetingConfigsClonableTo(
+                tuple(set(self.getOtherMeetingConfigsClonableTo()).intersection(clonableTo)))
+        if 'copyGroups' in copyFields:
+            copyGroups = list(self.getCopyGroups())
+            selectableCopyGroups = cfg.getUseCopies() and dest_cfg.getSelectableCopyGroups() or []
+            # make sure we only have selectable copyGroups
+            newItem.setCopyGroups(
+                tuple(set(copyGroups).intersection(set(selectableCopyGroups))))
+
         if cloneEventAction:
             # We are sure that there is only one key in the workflow_history
             # because it was cleaned by ToolPloneMeeting.pasteItems.
