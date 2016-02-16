@@ -32,7 +32,6 @@ from zope.interface import implements
 
 from Products.ZCatalog.Catalog import AbstractCatalogBrain
 from Products.CMFCore.permissions import View
-from Products.CMFCore.utils import _checkPermission
 from Products.CMFCore.utils import UniqueObject
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from Products.CMFPlone.utils import safe_unicode
@@ -953,10 +952,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                                   context=self.REQUEST).encode('utf-8')
             adapted.tag_title = tag_title
         # Is this a not-privacy-viewable item?
-        if obj.meta_type == 'MeetingItem' and \
-           (not _checkPermission(View, obj) or not obj.adapted().isPrivacyViewable()):
-            adapted.isViewable = False
-        elif obj.meta_type == 'Meeting' and not _checkPermission(View, obj):
+        if obj.meta_type == 'MeetingItem' and not obj.adapted().isPrivacyViewable():
             adapted.isViewable = False
 
         # if we received annexInfo, the adapted element is the meetingItem but we want actually
@@ -1669,7 +1665,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             itemOrMeeting.updateLocalRoles()
 
         seconds = time.time() - startTime
-        logger.info('updateAllLocalRoles finished in %.2f seconds(s) (about %d minutes).' % (seconds, seconds/60))
+        logger.info('updateAllLocalRoles finished in %.2f seconds(s) (about %d minute(s)).' %
+                    (seconds, round(float(seconds)/60.0)))
         self.plone_utils.addPortalMessage('Done.')
         return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 
