@@ -2803,7 +2803,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         # in AT, the EditBegunEvent is triggered on the edit form by the @@at_lifecycle_view
-        # accessing it for now does work on a item in the creation process
+        # accessing it for now does work on an item in the creation process
         item._at_creation_flag = True
         self.assertTrue(item._at_creation_flag)
         self.assertIsNone(item.restrictedTraverse('@@at_lifecycle_view').begin_edit())

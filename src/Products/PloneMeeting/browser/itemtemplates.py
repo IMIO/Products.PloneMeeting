@@ -54,6 +54,8 @@ class ItemTemplateView(BrowserView):
                                      cloneEventAction='create_meeting_item_from_template',
                                      destFolder=self.context,
                                      newPortalType=self.cfg.getItemTypeName())
+        # set _at_creation_flag to True so if user cancel first edit, it will be removed
+        newItem._at_creation_flag = True
         return newItem
 
     def getTemplatesTree(self):

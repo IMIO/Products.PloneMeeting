@@ -496,6 +496,15 @@ def onItemEditBegun(item, event):
             raise Unauthorized
 
 
+def onItemEditCancelled(item, event):
+    '''When cancelling an edit, if item is not in portal_factory but have
+       the _at_creation to True, it means we are creating an item from a template,
+       we need to delete it if first edit was cancelled.'''
+    if item._at_creation_flag and not item.isTemporary():
+        parent = item.getParentNode()
+        parent.manage_delObjects(ids=[item.getId()])
+
+
 def onMeetingAdded(meeting, event):
     '''This method is called every time a Meeting is created, even in
        portal_factory. Local roles defined on a meeting define who may view

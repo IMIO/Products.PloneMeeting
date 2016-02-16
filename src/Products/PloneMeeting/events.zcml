@@ -36,6 +36,10 @@
                    Products.Archetypes.interfaces.IEditBegunEvent"
               handler=".events.onItemEditBegun"/>
 
+  <subscriber for=".interfaces.IMeetingItem
+                   Products.Archetypes.interfaces.IEditCancelledEvent"
+              handler=".events.onItemEditCancelled"/>
+
   <subscriber for=".interfaces.IMeeting
                    zope.lifecycleevent.interfaces.IObjectAddedEvent"
               handler=".events.onMeetingAdded"/>
