@@ -609,6 +609,29 @@ class Migrate_To_3_4(Migrator):
                     item.adviceIndex._p_changed = True
         logger.info('Done.')
 
+    def _updateCKeditorCustomToolbar(self):
+        """If still using the old default toolbar, move to the new toolbar
+           where buttons 'link', 'Unlink' and 'Image' are added."""
+        logger.info('Updating ckeditor custom toolbar, adding buttons \'Link\', \'Unlink\' and \'Image\'...')
+        toolbar = self.portal.portal_properties.ckeditor_properties.toolbar_Custom
+        if not 'Image' in toolbar:
+            # try to insert these buttons after 'SpecialChar' or 'Table'
+            if 'SpecialChar' in toolbar:
+                toolbar.replace("'SpecialChar'", "'SpecialChar','Image'")
+            elif 'Table' in toolbar:
+                toolbar.replace("'Table'", "'Table','Image'")
+            else:
+                logger.warn("Could not add new button 'Image' to the ckeditor toolbar!")
+        if not 'Link' in toolbar and not 'Unlink' in toolbar:
+            # try to insert these buttons after 'SpecialChar' or 'Table'
+            if 'SpecialChar' in toolbar:
+                toolbar.replace("'SpecialChar'", "'SpecialChar','Link','Unlink'")
+            elif 'Table' in toolbar:
+                toolbar.replace("'Table'", "'Table','Link','Unlink'")
+            else:
+                logger.warn("Could not add new buttons 'Link' and 'Unlink' to the ckeditor toolbar!")
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.4...')
         # reinstall so versions are correctly shown in portal_quickinstaller
@@ -634,6 +657,7 @@ class Migrate_To_3_4(Migrator):
         self._initNewHTMLFields()
         self._updateEnableAnnexToPrint()
         self._updateHistoryComments()
+        self._updateCKeditorCustomToolbar()
         # update workflow, needed for items moved to item templates and recurring items
         # update reference_catalog as ReferenceFied "MeetingConfig.toDoListTopics"
         # and "Meeting.lateItems" were removed
