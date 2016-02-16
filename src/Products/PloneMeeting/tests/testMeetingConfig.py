@@ -1020,6 +1020,26 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.tool.manage_delObjects([cfgId, ])
         self.assertFalse(cfgId in self.tool.objectIds())
 
+    def test_pm_ConfigLinkedGroupsRemovedWhenConfigDeleted(self, ):
+        """When the MeetingConfig is deleted, created groups are removed too :
+           - meetingmanagers group;
+           - powerobservers groups;
+           - budgetimpacteditors group.
+           """
+        self.changeUser('siteadmin')
+        newCfg = self.create('MeetingConfig')
+        newCfgId = newCfg.getId()
+        # this created 4 groups
+        created_groups = [groupId for groupId in self.portal.portal_groups.listGroupIds()
+                          if groupId.startswith(newCfgId)]
+        self.assertEquals(len(created_groups), 4)
+        # remove the MeetingConfig, groups are removed as well
+        self.tool.restrictedTraverse('@@delete_givenuid')(newCfg.UID())
+        self.assertFalse(newCfgId in self.tool.objectIds())
+        created_groups = [groupId for groupId in self.portal.portal_groups.listGroupIds()
+                          if groupId.startswith(newCfgId)]
+        self.assertFalse(created_groups)
+
     def test_pm_SynchSearches(self):
         '''Test the synchSearches functionnality.'''
         cfg = self.meetingConfig

@@ -4329,16 +4329,17 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # bypass also if we are in the creation process
         if not item.meta_type == "Plone Site" and not item._at_creation_flag:
             # Checks that no Meeting and no MeetingItem remains.
-            brains = self.portal_catalog(portal_type=self.getMeetingTypeName())
+            catalog = api.portal.get_tool('portal_catalog')
+            brains = catalog(portal_type=self.getMeetingTypeName())
             if brains:
                 # We found at least one Meeting.
                 raise BeforeDeleteException("can_not_delete_meetingconfig_meeting")
-            brains = self.portal_catalog(portal_type=self.getItemTypeName())
+            brains = catalog(portal_type=self.getItemTypeName())
             if brains:
                 # We found at least one MeetingItem.
                 raise BeforeDeleteException("can_not_delete_meetingconfig_meetingitem")
             # Check that every meetingConfig folder of Members is empty.
-            membershipTool = getToolByName(self, 'portal_membership')
+            membershipTool = api.portal.get_tool('portal_membership')
             members = membershipTool.getMembersFolder()
             meetingFolderId = self.getId()
             searches_folder_ids = [info[0] for info in self.subFoldersInfo[TOOL_FOLDER_SEARCHES][2]]
@@ -4362,15 +4363,24 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         root_folder.manage_delObjects(meetingFolderId)
             # Remove the corresponding action from portal_actions
             actionId = '%s_action' % meetingFolderId
-            portalTabs = self.portal_actions.portal_tabs
+            portal_actions = api.portal.get_tool('portal_actions')
+            portalTabs = portal_actions.portal_tabs
             if hasattr(portalTabs.aq_base, actionId):
                 portalTabs.manage_delObjects([actionId])
             # Remove the portal types which are specific to this meetingConfig
+            portal_types = api.portal.get_tool('portal_types')
             for pt in [self.getMeetingTypeName(), self.getItemTypeName()]:
-                if hasattr(self.portal_types.aq_base, pt):
+                if hasattr(portal_types.aq_base, pt):
                     # It may not be the case if the object is a temp object
                     # being deleted from portal_factory
-                    self.portal_types.manage_delObjects([pt])
+                    portal_types.manage_delObjects([pt])
+            # Remove groups added by the MeetingConfig (budgetimpacteditors, powerobservers, ...)
+            portal_groups = api.portal.get_tool('portal_groups')
+            for suffix in (MEETINGMANAGERS_GROUP_SUFFIX,
+                           POWEROBSERVERS_GROUP_SUFFIX,
+                           RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX,
+                           BUDGETIMPACTEDITORS_GROUP_SUFFIX):
+                portal_groups.removeGroup("%s_%s" % (self.getId(), suffix))
         BaseFolder.manage_beforeDelete(self, item, container)
 
     security.declarePublic('getCustomFields')
