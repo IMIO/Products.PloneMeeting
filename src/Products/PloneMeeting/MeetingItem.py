@@ -2052,8 +2052,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(self)
         # save meetingUIDs, it will be necessary here under
         for meetingBrain in cfg.adapted().getMeetingsAcceptingItems():
+            meetingDate = tool.formatMeetingDate(meetingBrain, withHour=True)
+            meetingState = translate(meetingBrain.review_state,
+                                     domain="plone",
+                                     context=self.REQUEST)
             res.append((meetingBrain.UID,
-                        tool.formatMeetingDate(meetingBrain, withHour=True)))
+                        u"{0} ({1})".format(meetingDate,
+                                            meetingState)))
         # if one preferred meeting was already defined on self, add it
         # to the vocabulary or editing an older item could loose that information
         preferredMeetingUID = self.getPreferredMeeting()
@@ -2066,8 +2071,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             brains = catalog(UID=preferredMeetingUID)
             if brains:
                 preferredMeetingBrain = brains[0]
+                preferredMeetingDate = tool.formatMeetingDate(preferredMeetingBrain, withHour=True)
+                preferredMeetingState = translate(preferredMeetingBrain.review_state,
+                                                  domain="plone",
+                                                  context=self.REQUEST)
                 res.append((preferredMeetingBrain.UID,
-                            tool.formatMeetingDate(preferredMeetingBrain, withHour=True)))
+                            u"{0} ({1})".format(preferredMeetingDate, preferredMeetingState)))
         res.reverse()
         res.insert(0, (ITEM_NO_PREFERRED_MEETING_VALUE, 'Any meeting'))
         return DisplayList(tuple(res))
