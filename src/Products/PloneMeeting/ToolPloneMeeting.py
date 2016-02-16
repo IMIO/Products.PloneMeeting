@@ -13,10 +13,29 @@ __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
 <g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""
 __docformat__ = 'plaintext'
 
-import time
-from AccessControl import ClassSecurityInfo
-from zope.interface import implements
 import interfaces
+import re
+import time
+import OFS.Moniker
+
+from datetime import datetime
+from AccessControl import ClassSecurityInfo
+from AccessControl import getSecurityManager
+from AccessControl import Unauthorized
+from Acquisition import aq_base
+from DateTime import DateTime
+from OFS import CopySupport
+from ZODB.POSException import ConflictError
+from zope.annotation.interfaces import IAnnotations
+from zope.i18n import translate
+from zope.interface import implements
+
+from Products.ZCatalog.Catalog import AbstractCatalogBrain
+from Products.CMFCore.permissions import View
+from Products.CMFCore.utils import _checkPermission
+from Products.CMFCore.utils import UniqueObject
+from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
+from Products.CMFPlone.utils import safe_unicode
 
 from Products.Archetypes.atapi import BooleanField
 from Products.Archetypes.atapi import DisplayList
@@ -31,37 +50,13 @@ from Products.Archetypes.atapi import StringField
 from Products.Archetypes.atapi import TextAreaWidget
 from Products.Archetypes.atapi import TextField
 
-from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
-
+from Products.ATContentTypes import permission as ATCTPermissions
 from Products.DataGridField import DataGridField
 from Products.DataGridField.Column import Column
 
-from Products.CMFCore.utils import UniqueObject
-
-
-##code-section module-header #fill in your manual code here
-import json
-import re
-import OFS.Moniker
-from datetime import datetime
-from AccessControl import Unauthorized
-from AccessControl import getSecurityManager
-from Acquisition import aq_base
-from DateTime import DateTime
-from OFS import CopySupport
-from zExceptions import NotFound
-from ZODB.POSException import ConflictError
-from zope.annotation.interfaces import IAnnotations
-from zope.i18n import translate
 from plone.memoize import ram
 from plone import api
-from Products.ZCatalog.Catalog import AbstractCatalogBrain
-from Products.CMFCore.utils import _checkPermission
-from Products.CMFCore.permissions import View
-from Products.CMFPlone.utils import safe_unicode
-from Products.ATContentTypes import permission as ATCTPermissions
 from collective.behavior.talcondition.utils import _evaluateExpression
-from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.dashboard.utils import enableFacetedDashboardFor
 from imio.helpers.cache import cleanVocabularyCacheFor
@@ -84,7 +79,6 @@ from Products.PloneMeeting.config import PY_DATETIME_WEEKDAYS
 from Products.PloneMeeting.config import RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import ROOT_FOLDER
 from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
-from Products.PloneMeeting.config import TOOL_FOLDER_POD_TEMPLATES
 from Products.PloneMeeting.interfaces import IAnnexable, IMeetingFile
 from Products.PloneMeeting.profiles import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.profiles import PloneMeetingConfiguration
@@ -100,7 +94,6 @@ defValues = PloneMeetingConfiguration.get()
 # This way, I get the default values for some MeetingConfig fields,
 # that are defined in a unique place: the MeetingConfigDescriptor class, used
 # for importing profiles.
-##/code-section module-header
 
 schema = Schema((
 
