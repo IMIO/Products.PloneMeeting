@@ -819,11 +819,9 @@ table.listing th.th_header_ModificationDate,
 table.listing th.th_header_CreationDate {
     width: 90px;
 }
+table.listing th.th_header_advices,
 table.listing th.th_header_privacy {
     width: 60px;
-}
-table.listing th.th_header_advices {
-    width: 56px;
 }
 
 /* hide border between listType and itemNumber */
