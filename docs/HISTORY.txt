@@ -40,6 +40,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   in various places
 - Added view '@@pm_utils' that make some utils available in various places and added
   method cropHTML that make sure a cropped HTML content is still valid
+- Use checkboxes for multi selection fields (MeetingItem.optionalAdvisers, MeetingConfig.usedItemAttributes, ...)
+  this way it is no more necessary to use 'CTRL+Click' to select several values
 - Do not call the advice in the meetingadvice_workflow guard_expr because the advice could not be
   accessible and it can raises Unauthorized.  Instead, put the guard_expr logic in the guard expression itself
 - If advices states are redefined for a given MeetingConfig on a MeetingGroup, make sure other MeetingConfig

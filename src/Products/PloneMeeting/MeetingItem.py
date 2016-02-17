@@ -652,6 +652,7 @@ schema = Schema((
             size=10,
             description="AssociatedGroupItem",
             description_msgid="associated_group_item_descr",
+            format="checkbox",
             label='Associatedgroups',
             label_msgid='PloneMeeting_label_associatedGroups',
             i18n_domain='PloneMeeting',
@@ -703,6 +704,7 @@ schema = Schema((
         name='itemTags',
         widget=MultiSelectionWidget(
             condition="python: here.attributeIsUsed('itemTags')",
+            format="checkbox",
             label='Itemtags',
             label_msgid='PloneMeeting_label_itemTags',
             i18n_domain='PloneMeeting',
@@ -796,6 +798,7 @@ schema = Schema((
             condition="python: here.attributeIsUsed('itemInitiator') and here.portal_plonemeeting.isManager(here)",
             description="ItemInitiator",
             description_msgid="item_initiator_descr",
+            format="checkbox",
             label='Iteminitiator',
             label_msgid='PloneMeeting_label_itemInitiator',
             i18n_domain='PloneMeeting',
@@ -867,6 +870,7 @@ schema = Schema((
             description="TemplateUsingGroups",
             description_msgid="template_using_groups_descr",
             condition="python: here.isDefinedInTool() and 'itemtemplates' in here.absolute_url()",
+            format="checkbox",
             label='Templateusinggroups',
             label_msgid='PloneMeeting_label_templateUsingGroups',
             i18n_domain='PloneMeeting',
@@ -958,6 +962,7 @@ schema = Schema((
             description="ItemSignatories",
             description_msgid="item_signatories_descr",
             size=10,
+            format="checkbox",
             label='Itemsignatories',
             label_msgid='PloneMeeting_label_itemSignatories',
             i18n_domain='PloneMeeting',
@@ -969,6 +974,7 @@ schema = Schema((
         name='itemAbsents',
         widget=MultiSelectionWidget(
             visible=False,
+            format="checkbox",
             label='Itemabsents',
             label_msgid='PloneMeeting_label_itemAbsents',
             i18n_domain='PloneMeeting',
@@ -1105,6 +1111,7 @@ schema = Schema((
         name='questioners',
         widget=MultiSelectionWidget(
             visible=False,
+            format="checkbox",
             label='Questioners',
             label_msgid='PloneMeeting_label_questioners',
             i18n_domain='PloneMeeting',
@@ -1117,6 +1124,7 @@ schema = Schema((
         name='answerers',
         widget=MultiSelectionWidget(
             visible=False,
+            format="checkbox",
             label='Answerers',
             label_msgid='PloneMeeting_label_answerers',
             i18n_domain='PloneMeeting',
@@ -4530,7 +4538,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def clone(self, copyAnnexes=True, newOwnerId=None, cloneEventAction=None,
               destFolder=None, copyFields=DEFAULT_COPIED_FIELDS, newPortalType=None,
-              keepProposingGroup=False, setCurrentAsPredecessor=False):
+              keepProposingGroup=False, setCurrentAsPredecessor=False, manualLinkToPredecessor=False):
         '''Clones me in the PloneMeetingFolder of the current user, or
            p_newOwnerId if given (this guy will also become owner of this
            item). If there is a p_cloneEventAction, an event will be included
@@ -4542,7 +4550,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            If p_keepProposingGroup, the proposingGroup in ToolPloneMeeting.pasteItems
            no matter current user is not member of that group.
            If p_setCurrentAsPredecessor, current item will be set as predecessor
-           for the new item.'''
+           for the new item, concomitantly if p_manualLinkToPredecessor is True and
+           optional field MeetingItem.manuallyLinkedItems is enabled, this will create
+           a manualLink to the predecessor, otherwise, the 'ItemPredecessor' reference is used
+           and the link is unbreakable (at least thru the UI).'''
         # first check that we are not trying to clone an item
         # we can not access because of privacy status
         # do thsi check if we are not creating an item from an itemTemplate
@@ -4614,7 +4625,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             newItem.workflow_history[wfName] = (firstEvent, cloneEvent)
         # automatically set current item as predecessor for newItem?
         if setCurrentAsPredecessor:
-            newItem.setPredecessor(self)
+            if manualLinkToPredecessor and \
+               'manuallyLinkedItems' in cfg.getUsedItemAttributes() and \
+               'manuallyLinkedItems' in dest_cfg.getUsedItemAttributes():
+                newItem.setManuallyLinkedItems([self.UID()])
+            else:
+                newItem.setPredecessor(self)
         # notify that item has been duplicated so subproducts
         # may interact if necessary
         notify(ItemDuplicatedEvent(self, newItem))
