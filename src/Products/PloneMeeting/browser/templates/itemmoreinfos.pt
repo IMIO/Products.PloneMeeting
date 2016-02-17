@@ -15,12 +15,18 @@
       class="pmMoreInfo"
       tal:condition="view/showMoreInfos"
       tal:define="mode string:view;">
-    <tal:loop repeat="visibleField view/getItemsListVisibleFields">
-        <span tal:define="visibleFieldName python: visibleField.split('.')[1];
+    <tal:loop repeat="visibleFieldInfos python: view.getItemsListVisibleFields().items()">
+        <span tal:define="visibleFieldName python: visibleFieldInfos[0];
+                          visibleFieldRenderer python: visibleFieldInfos[1];
                           field python: context.getField(visibleFieldName);"
               tal:condition="python: not context.fieldIsEmpty(visibleFieldName) and ((visibleFieldName == 'budgetInfos' and
                              context.getBudgetRelated() or not visibleFieldName == 'budgetInfos') and True or False) and not visibleFieldName in view.visibleColumns">
-            <span metal:use-macro="context/widgets/field/macros/view" />
+            <tal:customRenderer condition="visibleFieldRenderer">
+                <span tal:replace="structure python: context.restrictedTraverse(visibleFieldRenderer)(visibleFieldName)" />
+            </tal:customRenderer> 
+            <tal:defaultRenderer condition="not: visibleFieldRenderer">
+                <metal:render use-macro="context/widgets/field/macros/view" />
+            </tal:defaultRenderer> 
         </span>
     </tal:loop>
 </div>

@@ -210,6 +210,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - When editing an item, in the 'preferredMeeting' list box, display the meeting review_state next to the meeting date so
   users are aware of the review_state of the meeting they are selecting.  This is useful to know if a meeting is in a
   frozen state or not
+- Added possibility to define a custom renderer for fields displayed by the @@item-more-infos view in the dashboards.
+  By default the widget renderer is used but when necessary, the _rendererForField method may be overrided to return a
+  view_name to use to render the field
 
 3.3 (2015-02-27)
 ----------------

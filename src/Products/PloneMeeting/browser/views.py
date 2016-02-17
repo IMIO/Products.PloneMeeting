@@ -90,7 +90,19 @@ class ItemMoreInfosView(BrowserView):
         """
           Get the topicName from the request and returns it.
         """
-        return self.cfg.getItemsListVisibleFields()
+        visibleFields = self.cfg.getItemsListVisibleFields()
+        res = {}
+        for visibleField in visibleFields:
+            visibleFieldName = visibleField.split('.')[1]
+            # if nothing is defined, the default rendering macro will be used
+            # this is made to be overrided
+            res[visibleFieldName] = self._rendererForField(visibleFieldName)
+        return res
+
+    def _rendererForField(self, fieldName):
+        """Return the renderer to use for given p_fieldName, this returns nothing
+           by default and is made to by overriden by subproduct."""
+        return None
 
     @memoize_contextless
     def showMoreInfos(self):
