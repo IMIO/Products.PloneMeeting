@@ -242,9 +242,9 @@ class MeetingConfigDescriptor(Descriptor):
                          'itemDecidedStates', 'itemAdviceEditStates', 'itemAdviceViewStates', 'itemBudgetInfosStates',
                          'powerAdvisersGroups', 'itemPowerObserversStates', 'meetingPowerObserversStates',
                          'itemRestrictedPowerObserversStates', 'meetingRestrictedPowerObserversStates',
-                         'meetingConfigsToCloneTo', 'itemAdviceInvalidateStates', 'customAdvisers',
-                         'selectableCopyGroups', 'votesEncoder', 'meetingTopicStates', 'decisionTopicStates',
-                         'listTypes', 'xhtmlTransformFields', 'xhtmlTransformTypes',
+                         'meetingConfigsToCloneTo', 'itemAdviceInvalidateStates', 'transitionsReinitializingDelays',
+                         'customAdvisers', 'selectableCopyGroups', 'votesEncoder', 'meetingTopicStates',
+                         'decisionTopicStates', 'listTypes', 'xhtmlTransformFields', 'xhtmlTransformTypes',
                          'usedVoteValues', 'insertingMethodsOnAddItem')
     excludedFields = ['maxDaysDecisions', 'meetingAppDefaultView']
 
@@ -494,7 +494,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.itemAdviceInvalidateStates = []
         self.adviceStyle = 'standard'
         self.defaultAdviceHiddenDuringRedaction = False
-        self.transitionReinitializingDelays = ''
+        self.transitionsReinitializingDelays = []
         self.historizeItemDataWhenAdviceIsGiven = True
         self.keepAccessToItemWhenAdviceIsGiven = False
         self.customAdvisers = []

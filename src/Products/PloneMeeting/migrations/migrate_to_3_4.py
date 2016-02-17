@@ -507,12 +507,18 @@ class Migrate_To_3_4(Migrator):
 
     def _cleanMeetingConfigs(self):
         """Clean MeetingConfigs :
-           - remove attribute 'openAnnexesInSeparateWindows'.
+           - remove attribute 'openAnnexesInSeparateWindows';
+           - migrate attribute 'transitionReinitializingDelays' to 'transitionsReinitializingDelays'.
         """
         logger.info('Cleaning MeetingConfigs...')
         for cfg in self.tool.objectValues('MeetingConfig'):
             if hasattr(cfg, 'openAnnexesInSeparateWindows'):
                 delattr(cfg, 'openAnnexesInSeparateWindows')
+            if hasattr(cfg, 'transitionReinitializingDelays'):
+                old_transition = cfg.transitionReinitializingDelays
+                if old_transition:
+                    cfg.setTransitionsReinitializingDelays((old_transition, ))
+                delattr(cfg, 'transitionReinitializingDelays')
         logger.info('Done.')
 
     def _cleanMeetingUsers(self):

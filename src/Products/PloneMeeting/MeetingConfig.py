@@ -1463,18 +1463,19 @@ schema = Schema((
         schemata="advices",
         write_permission="PloneMeeting: Write risky config",
     ),
-    StringField(
-        name='transitionReinitializingDelays',
-        widget=SelectionWidget(
-            description="TransitionReinitializingDelays",
-            description_msgid="transition_reinitializing_delays_descr",
-            label='Transitionreinitializingdelays',
-            label_msgid='PloneMeeting_label_transitionReinitializingDelays',
+    LinesField(
+        name='transitionsReinitializingDelays',
+        widget=MultiSelectionWidget(
+            description="TransitionsReinitializingDelays",
+            description_msgid="transitions_reinitializing_delays_descr",
+            format="checkbox",
+            label='Transitionsreinitializingdelays',
+            label_msgid='PloneMeeting_label_transitionsReinitializingDelays',
             i18n_domain='PloneMeeting',
         ),
         schemata="advices",
-        vocabulary='listTransitionsReinitializingDelays',
-        default=defValues.transitionReinitializingDelays,
+        vocabulary='listEveryItemTransitions',
+        default=defValues.transitionsReinitializingDelays,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
@@ -3229,21 +3230,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # (ie "correct")
             res.append((t.id, name))
         return res
-
-    security.declarePrivate('listTransitionsReinitializingDelays')
-
-    def listTransitionsReinitializingDelays(self):
-        '''Vocabulary for the MeetingConfig.transitionsReinitializingDelays field.'''
-        # we only consider back transitions
-        backTransitions = [(tr[0], tr[1]) for tr in self.listTransitions('Item') if tr[0].startswith('back')]
-        res = []
-        res.append(("",
-                    translate('none_started_once_for_all',
-                              domain="PloneMeeting",
-                              context=self.REQUEST)))
-        for transition in backTransitions:
-            res.append((transition[0], transition[1]))
-        return DisplayList(res).sortedByValue()
 
     security.declarePrivate('listActiveMeetingGroupsForPowerAdvisers')
 

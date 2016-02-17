@@ -800,7 +800,7 @@
           <td tal:define="field python:here.getField('defaultAdviceHiddenDuringRedaction')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td tal:define="field python:here.getField('transitionReinitializingDelays')">
+          <td tal:define="field python:here.getField('transitionsReinitializingDelays')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <td tal:define="field python:here.getField('historizeItemDataWhenAdviceIsGiven')">

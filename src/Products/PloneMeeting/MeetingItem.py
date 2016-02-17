@@ -3748,7 +3748,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # check if the given p_triggered_by_transition transition name
         # is the transition that will restart delays
-        isTransitionReinitializingDelays = bool(cfg.getTransitionReinitializingDelays() == triggered_by_transition)
+        isTransitionReinitializingDelays = triggered_by_transition in cfg.getTransitionsReinitializingDelays()
 
         # add a message for the user
         if isTransitionReinitializingDelays:

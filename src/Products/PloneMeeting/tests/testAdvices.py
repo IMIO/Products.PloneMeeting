@@ -962,7 +962,7 @@ class testAdvices(PloneMeetingTestCase):
            The 'advice_stopped_on' date is initialized when the advice is no more giveable,
            so when the item state is no more in itemAdviceStates.
            The 2 dates are only reinitialized to None if the user
-           triggers the MeetingConfig.transitionReinitializingDelays.
+           triggers the MeetingConfig.transitionsReinitializingDelays.
         '''
         self.meetingConfig.setKeepAccessToItemWhenAdviceIsGiven(False)
         self._checkDelayStartedStoppedOn()
@@ -1046,8 +1046,8 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(isinstance(item.adviceIndex['developers']['delay_stopped_on'], datetime))
         self.assertTrue(item.adviceIndex['vendors']['delay_stopped_on'] is None)
         # if we excute the transition that will reinitialize dates, it is 'backToItemCreated'
-        self.assertEquals(cfg.getTransitionReinitializingDelays(),
-                          self.WF_TRANSITION_NAME_MAPPINGS['backToItemCreated'])
+        self.assertEquals(cfg.getTransitionsReinitializingDelays(),
+                          (self.WF_TRANSITION_NAME_MAPPINGS['backToItemCreated'], ))
         self.backToState(item, self.WF_STATE_NAME_MAPPINGS['itemcreated'])
         self.assertEquals(item.queryState(), self.WF_STATE_NAME_MAPPINGS['itemcreated'])
         # the delays have been reinitialized to None

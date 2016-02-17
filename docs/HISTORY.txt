@@ -213,6 +213,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Added possibility to define a custom renderer for fields displayed by the @@item-more-infos view in the dashboards.
   By default the widget renderer is used but when necessary, the _rendererForField method may be overrided to return a
   view_name to use to render the field
+- MeetingConfig.transitionsReinitializingDelays is now multivalued so it is possible to define several transitions
+  that will reinitialize advice delays, moreover, every transitions are now selectable, not only 'back' transitions
 
 3.3 (2015-02-27)
 ----------------
