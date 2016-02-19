@@ -14,7 +14,7 @@ function displayPloneMeetingSelectBox(selectName) {
   }
 }
 
-function hidePloneMeetingSelectBox(selectName, idImage, msg, value, predefined_title) {
+function hidePloneMeetingSelectBox(selectName, idImage, inner_tag, value, predefined_title) {
   var newImage = document.getElementById(idImage);
 
   var btnImage = document.getElementById(ploneMeetingSelectBoxes[selectName]["image"])
@@ -22,25 +22,15 @@ function hidePloneMeetingSelectBox(selectName, idImage, msg, value, predefined_t
 
   document.getElementById(ploneMeetingSelectBoxes[selectName]["button"]).style.borderStyle = "outset";
   document.getElementById(ploneMeetingSelectBoxes[selectName]["box"]).style.display="none";
-  btnText.innerHTML = msg;
+  btnText.innerHTML = inner_tag.innerHTML;
 
   // Display
-  if (newImage!=null) {btnImage.src = newImage.src;};
+  // if (newImage!=null) {btnImage.src = newImage.src;};
   document.getElementById(ploneMeetingSelectBoxes[selectName]["hidden"]).value = value;
   annex_title = document.getElementById("annex_title");
   if (annex_title) {
    annex_title.value = predefined_title;
   }
-}
-
-function ploneMeetingSelectOnMouseOverItem(obj) {
-  // Set the "selected" style, without touching other possibily existing classes
-  obj.className = obj.className.replace("ploneMeetingSelectItem",  "ploneMeetingSelectItem ploneMeetingSelectItemUnselected");
-}
-
-function ploneMeetingSelectOnMouseOutItem(obj) {
-  // Set the default style (unselected), without touching other possibily existing classes
-  obj.className = obj.className.replace("ploneMeetingSelectItem ploneMeetingSelectItemUnselected", "ploneMeetingSelectItem");
 }
 
 /* The functions below are derived from Plone's dropdown.js for using a dropdown

@@ -171,7 +171,7 @@ def getCurrentMeetingObject(context):
             hasattr(obj, 'context') and \
             hasattr(obj.context, 'meta_type') and \
             obj.context.meta_type == 'Meeting':
-        toReturn = obj.context
+        return obj.context
 
     if not (className in ('Meeting', 'MeetingItem')):
         # check if we are on a Script or so or calling a BrowserView

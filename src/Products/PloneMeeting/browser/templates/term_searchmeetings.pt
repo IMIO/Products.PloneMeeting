@@ -13,10 +13,9 @@
     <ul class="fewMeetings">
         <li tal:condition="python: nbOfMeetings <= maxShownMeetings"
                   tal:repeat="brain brains">
-            <a tal:define="state_class string:state-${brain/review_state};"
-               tal:attributes="href brain/getURL;
-                               class python: context.REQUEST['URL'].startswith(brain.getURL()) and state_class + ' portletSelected' or state_class"
-               tal:content="python:tool.formatMeetingDate(brain, short=True, withHour=True)">
+            <a tal:attributes="href brain/getURL;
+                               class python: context.REQUEST['URL'].startswith(brain.getURL()) and 'portletSelected' or ''"
+               tal:content="structure python: view.getMeetingPrettyLink(brain)">
                 Meeting date
             </a>
         </li>
@@ -24,21 +23,7 @@
 
     <tal:comment replace="nothing">Many meetings, show a combo box</tal:comment>
     <div class="manyMeetings" tal:condition="python: nbOfMeetings > maxShownMeetings">
-      <form name="gotoMeetingForm">
-        <select style="width: 90%"
-                name="selectMeeting"
-                onChange="location.href=this.options[selectedIndex].value">
-          <option i18n:translate="make_a_choice"
-                  tal:attributes="value meetingFolder/absolute_url">
-            Make a choice
-          </option>
-          <option tal:repeat="brain brains"
-                  tal:content="python:tool.formatMeetingDate(brain, short=True, withHour=True)"
-                  tal:attributes="value brain/getURL;
-                                  class string:state-${brain/review_state};
-                                  selected python:view.request['URL'].startswith(brain.getURL())"></option>
-        </select>
-      </form>
+      <tal:go_to_meeting_select_box replace="structure python: context.restrictedTraverse('@@go_to_meeting_img_select_box')(**{'brains': brains})" />
     </div>
 
     <tal:comment replace="nothing">No available meeting visible, show a help message</tal:comment>

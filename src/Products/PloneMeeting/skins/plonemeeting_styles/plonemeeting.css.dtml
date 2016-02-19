@@ -52,17 +52,41 @@ table.listing tbody tr {
     height: 100%;
 }
 
-.ploneMeetingRef{
-    vertical-align: top;
-}
 
 /* PloneMeeting implementation of a selection box whose elements are icons + texts */
-.ploneMeetingSelectContainer{
-    float: left;
-}
 #content .ploneMeetingSelectContainer p {
     margin-right: 1em;
 }
+div.ploneMeetingSelectContainer.annex_type_img_select_box {
+    float: left;
+}
+div.ploneMeetingSelectContainer.annex_type_img_select_box div.ploneMeetingSelectDropdownIcon {
+    min-width: 250px;
+}
+div.ploneMeetingSelectContainer.go_to_meeting_img_select_box div.ploneMeetingSelectDropdownIcon {
+    width: 80%;
+}
+div.ploneMeetingSelectContainer.go_to_meeting_img_select_box div.ploneMeetingSelectBox {
+    width: 80%;
+    padding-right: 9px;
+}
+div.ploneMeetingSelectContainer span[id^='idButtonText_'] {
+    padding-left: 5px;
+    padding-top: 2px;
+}
+div.ploneMeetingSelectContainer span#idButtonText_go_to_meeting_img_select_box {
+    display: inline-block;
+}
+/* cancel additional padding given by faceted to the meeting list */
+div.faceted-tagscloud-collection-widget div.ploneMeetingSelectContainer.go_to_meeting_img_select_box a.pretty_link {
+    margin-left: 0em;
+}
+
+div.ploneMeetingSelectContainer.go_to_meeting_img_select_box p {
+    margin-bottom: 0em;
+    width: 104%;
+}
+
 .ploneMeetingSelectButton {
     cursor: pointer;
     border: 1px solid &dtml-globalBorderColor;;
@@ -90,14 +114,22 @@ table.listing tbody tr {
     overflow: auto;
     text-align: left;
     width: auto;
-    min-width: 274px;
     z-index: 1;
 }
+div.ploneMeetingSelectContainer.annex_type_img_select_box div#annex_type_img_select_box {
+    min-width: 274px;
+}
+
 .ploneMeetingSelectItem {
     margin: 0px 1px 0px 1px;
     width: 99%; /* If 100% a horizontal scrollbar is displayed */
     vertical-align: top !important;
     min-height: 18px;
+}
+.ploneMeetingSelectItem:hover,
+.ploneMeetingSelectItem:hover span {
+    background-color: &dtml-globalBackgroundColor;;
+    color: white;
 }
 #content p.ploneMeetingSelectItem {
     margin-bottom: 0em;
@@ -107,9 +139,6 @@ table.listing tbody tr {
     margin-left: 15px;
 }
 
-.ploneMeetingSelectItemUnselected {
-    background-color: &dtml-globalBackgroundColor;;
-}
 .ploneMeetingSelectImage {
     max-height: 16px;
     max-width: 16px;
@@ -120,9 +149,7 @@ table.listing tbody tr {
     background-image: url(&dtml-portal_url;/drop_down.png);
     background-repeat: no-repeat;
     background-position: right;
-    min-width: 250px;
 }
-
 /* while copy/pasting a table from Word in CKeditor
    there are no border...  So force border of table displayed in item rich fields.
    .cke_show_borders is an override for CKeditor while displaying tables inside the editor. */

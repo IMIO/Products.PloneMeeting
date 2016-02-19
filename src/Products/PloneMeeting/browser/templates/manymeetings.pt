@@ -1,0 +1,51 @@
+<div class="ploneMeetingSelectContainer">
+    <input type="hidden" tal:attributes="value request/annex_type|nothing" id="idHidden1" name="selected_meeting">
+  
+    <tal:comment replace="nothing">Select button</tal:comment>
+    <div class="ploneMeetingSelectButton ploneMeetingSelectDropdownIcon" id="idButton1"
+         onclick="displayPloneMeetingSelectBox('selectMeetingBox')">
+      <tal:comment replace="nothing">Manage validation failed and form is displayed again to the user</tal:comment>
+      <span tal:condition="python: (request.has_key('annex_type')) and request['annex_type']">
+        <span tal:define="annexType python: request['annex_type'];
+                          meetingFileType python:context.uid_catalog(UID=annexType.split('__subtype__')[0])[0].getObject();
+                          mftData python: '__subtype__' in annexType and meetingFileType._dataFor(annexType.split('__subtype__')[1]) or meetingFileType._dataFor()">
+          <img id="idImage1" tal:attributes="src string:${meetingFileType/absolute_url}/theIcon;"
+               alt="" class="ploneMeetingSelectImage" />
+          <span id="idButtonText1" tal:content="mftData/name" class="ploneMeetingRef"></span>
+        </span>
+      </span>
+      <span tal:condition="python: (not request.has_key('annex_type')) or (not request['annex_type'])">
+        <img id="idImage1" src="pixel.gif" class="ploneMeetingSelectImage"/>
+        <span id="idButtonText1" class="ploneMeetingRef" i18n:translate="">make_a_choice</span>
+      </span>
+    </div>
+
+    <tal:comment replace="nothing">The listbox</tal:comment>
+    <div class="ploneMeetingSelectBox" id="idBox1"
+         tal:define="global num python: 0">
+      <p tal:define='choose python:here.translate("make_a_choice", domain="PloneMeeting")'
+         tal:attributes="onclick python:'hidePloneMeetingSelectBox(\'annexTypeBox\', \'idImage10\', \'' + tool.forJs(choose) + '\', \'\', \'\');; ploneMeetingSelectOnMouseOutItem(this)'"
+         class="ploneMeetingSelectItem"
+         onmouseover="ploneMeetingSelectOnMouseOverItem(this)"
+         onmouseout="ploneMeetingSelectOnMouseOutItem(this)"
+         onclick="hidePloneMeetingSelectBox('annexTypeBox','idImage10', '--- Choisissez ---', '', ''); ploneMeetingSelectOnMouseOutItem(this)"
+         id="idButtonText10">
+        <img id="idImage10" src="pixel.gif" class="ploneMeetingSelectImage" />
+        <span i18n:translate="">make_a_choice</span>
+      </p>
+      <tal:loop repeat="meetingFileType fileTypes">
+       <p tal:define="global num python: num + 1;
+                      ftName meetingFileType/name"
+         class="ploneMeetingSelectItem" onmouseover="ploneMeetingSelectOnMouseOverItem(this)"
+         onmouseout="ploneMeetingSelectOnMouseOutItem(this)"
+         onclick="hidePloneMeetingSelectBox('annexTypeBox','idImage1', 'value1', 'predefined_title1'); ploneMeetingSelectOnMouseOutItem(this)"
+         tal:attributes="onclick python:'hidePloneMeetingSelectBox(\'annexTypeBox\', \'idImage1' + str(num) + '\', \'' + tool.forJs(ftName) + '\', \'' + meetingFileType['id'] + '\', \'' + tool.forJs(meetingFileType['predefinedTitle']) + '\');; ploneMeetingSelectOnMouseOutItem(this)';
+                         class python: '__subtype__' in meetingFileType['id'] and 'ploneMeetingSelectItem subtype' or 'ploneMeetingSelectItem'">
+        <img class="ploneMeetingSelectImage"
+            tal:attributes="src python: meetingFileType['absolute_url'] + '/theIcon'; id python: 'idImage1' + str(num)"
+            id="idImage1" src="#" alt="" />
+        <span tal:content="ftName" />
+       </p>
+      </tal:loop>
+    </div>
+</div>

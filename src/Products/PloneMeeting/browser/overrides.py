@@ -32,6 +32,7 @@ from imio.dashboard.browser.overrides import IDDashboardDocumentGeneratorLinksVi
 from imio.dashboard.browser.views import RenderTermPortletView
 from imio.dashboard.content.pod_template import IDashboardPODTemplate
 from imio.history.browser.views import IHDocumentBylineViewlet
+from imio.prettylink.interfaces import IPrettyLink
 
 from Products.CMFCore.utils import getToolByName
 from Products.CMFCore.permissions import ModifyPortalContent
@@ -266,6 +267,11 @@ class PMRenderTermView(RenderTermPortletView):
             self.brains = self.context.getQuery()
             return ViewPageTemplateFile("templates/term_searchmeetings.pt")(self)
         return self.index()
+
+    def getMeetingPrettyLink(self, brain):
+        """ """
+        adapted = IPrettyLink(brain.getObject())
+        return adapted.getLink()
 
 
 class PMRenderCategoryView(RenderCategoryView):

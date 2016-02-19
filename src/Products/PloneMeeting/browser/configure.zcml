@@ -545,6 +545,26 @@
         permission="zope2.View"
       />
 
+    <!-- Display the annex_type imgSelectBox on the annexes_form -->
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        name="annex_type_img_select_box"
+        class=".imgselectbox.AnnexTypeImgSelectBoxView"
+        template="templates/imgselectbox.pt"
+        permission="zope2.View"
+      />
+
+    <!-- Display the go_to_meeting imgSelectBox in the plonemeeting portlet -->
+    <browser:page
+        for="*"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        name="go_to_meeting_img_select_box"
+        class=".imgselectbox.GoToMeetingImgSelectBoxView"
+        template="templates/imgselectbox.pt"
+        permission="zope2.View"
+      />
+
     <!-- special view that make it possible to redirect from an overlay and show status messages afterward -->
     <browser:page
         for="*"

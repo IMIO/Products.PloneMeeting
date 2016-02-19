@@ -1,0 +1,59 @@
+<tal:init_js replace='structure string:<script language="JavaScript">
+    var imgSelectBox = new Object();
+    imgSelectBox["button"] = "idButton_${view/select_box_name}";
+    imgSelectBox["box"] = "${view/select_box_name}";
+    imgSelectBox["image"] = "idImage_${view/select_box_name}";
+    imgSelectBox["buttonText"] = "idButtonText_${view/select_box_name}";
+    imgSelectBox["hidden"] = "idHidden_${view/select_box_name}";
+    ploneMeetingSelectBoxes["${view/select_box_name}"] = imgSelectBox;
+</script>'></tal:init_js>
+
+
+<div class="ploneMeetingSelectContainer"
+     tal:define="value_name view/value_name;
+                 select_box_name view/select_box_name;"
+     tal:attributes="class string:ploneMeetingSelectContainer ${select_box_name}"
+     i18n:domain="PloneMeeting">
+    <input type="hidden"
+           tal:attributes="name view/value_name;
+                           id string:idHidden_${select_box_name}"
+           name="img_select_box">
+  
+    <tal:comment replace="nothing">Select button</tal:comment>
+    <div class="ploneMeetingSelectButton ploneMeetingSelectDropdownIcon"
+         tal:attributes="onclick string:displayPloneMeetingSelectBox('${select_box_name}');
+                         id string:idButton_${select_box_name};">
+      <tal:hasSelectedValue condition="view/has_selected_value">
+        <span tal:replace="structure view/selected_value_html" />
+      </tal:hasSelectedValue>
+      <tal:noSelectedValue condition="not: view/has_selected_value">
+        <span tal:attributes="id string:idButtonText_${select_box_name}"
+              i18n:translate="">make_a_choice</span>
+      </tal:noSelectedValue>
+    </div>
+
+    <tal:comment replace="nothing">The listbox</tal:comment>
+    <div class="ploneMeetingSelectBox"
+         tal:attributes="id string:${select_box_name}"
+         tal:define="global num python: 0">
+      <p tal:define="choose python:here.translate('make_a_choice', domain='PloneMeeting');
+                     choose_for_js python: view.tool.forJs(choose)"
+         tal:attributes="onclick string:hidePloneMeetingSelectBox('${select_box_name}', 'idImage_${select_box_name}10', this, '', '');;"
+         class="ploneMeetingSelectItem"
+         id="idButtonText10">
+        <span i18n:translate="">make_a_choice</span>
+      </p>
+      <tal:loop repeat="selectable_value view/getSelectableValues">
+       <p tal:define="global num python: num + 1;
+                      selectable_value_name python: view.selectable_value_name(selectable_value);
+                      selectable_value_id python: view.selectable_value_id(selectable_value);
+                      selectable_value_name_for_js python: view.tool.forJs(selectable_value_name);
+                      predefinedTitle_for_js python:  view.tool.forJs(selectable_value.get('predefinedTitle', ''));"
+         class="ploneMeetingSelectItem"
+         tal:attributes="onclick string:hidePloneMeetingSelectBox('${select_box_name}', 'idImage_${select_box_name}1${num}', this, '${selectable_value_id}', '${predefinedTitle_for_js}');;;
+                         class python: view.selectable_value_class(selectable_value)">
+        <tal:selectable_value_html tal:content="structure python: view.selectable_value_html(num, selectable_value)" />
+       </p>
+      </tal:loop>
+    </div>
+</div>

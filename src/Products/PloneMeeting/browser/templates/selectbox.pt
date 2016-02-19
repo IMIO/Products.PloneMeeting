@@ -1,0 +1,59 @@
+<script language="JavaScript">
+    var imgSelectBox = new Object();
+    imgSelectBox["button"] = "idButton1";
+    imgSelectBox["box"] = "idBox1";
+    imgSelectBox["image"] = "idImage1";
+    imgSelectBox["buttonText"] = "idButtonText1";
+    imgSelectBox["hidden"] = "idHidden1";
+    ploneMeetingSelectBoxes["imgSelectBox"] = imgSelectBox;
+</script>
+
+<div class="ploneMeetingSelectContainer" tal:define="value_name view/value_name">
+    <input type="hidden" tal:attributes="value request/value_name|nothing" id="idHidden1" name="img_select_box">
+  
+    <tal:comment replace="nothing">Select button</tal:comment>
+    <div class="ploneMeetingSelectButton ploneMeetingSelectDropdownIcon" id="idButton1"
+         onclick="displayPloneMeetingSelectBox('imgSelectBox')">
+      <span tal:condition="python: (request.has_key(value_name)) and request[value_name]">
+        <span tal:define="selected_value view/selected_value;
+                          select_value_img view/selected_value_img;">
+          <img id="idImage1" tal:attributes="src string:${select_value_img};"
+               alt="" class="ploneMeetingSelectImage" />
+          <span id="idButtonText1" tal:content="selected_value" class="ploneMeetingRef"></span>
+        </span>
+      </span>
+      <span tal:condition="python: (not request.has_key(value_name)) or (not request[value_name])">
+        <img id="idImage1" src="pixel.gif" class="ploneMeetingSelectImage"/>
+        <span id="idButtonText1" class="ploneMeetingRef" i18n:translate="">make_a_choice</span>
+      </span>
+    </div>
+
+    <tal:comment replace="nothing">The listbox</tal:comment>
+    <div class="ploneMeetingSelectBox" id="idBox1"
+         tal:define="global num python: 0">
+      <p tal:define='choose python:here.translate("make_a_choice", domain="PloneMeeting")'
+         tal:attributes="onclick python:'hidePloneMeetingSelectBox(\'imgSelectBox\', \'idImage10\', \'' + tool.forJs(choose) + '\', \'\', \'\');; ploneMeetingSelectOnMouseOutItem(this)'"
+         class="ploneMeetingSelectItem"
+         onmouseover="ploneMeetingSelectOnMouseOverItem(this)"
+         onmouseout="ploneMeetingSelectOnMouseOutItem(this)"
+         onclick="hidePloneMeetingSelectBox('imgSelectBox','idImage10', '--- Choisissez ---', '', ''); ploneMeetingSelectOnMouseOutItem(this)"
+         id="idButtonText10">
+        <img id="idImage10" src="pixel.gif" class="ploneMeetingSelectImage" />
+        <span i18n:translate="">make_a_choice</span>
+      </p>
+      <tal:loop repeat="selectable_value view/getSelectableValues">
+       <p tal:define="global num python: num + 1;
+                      name selectable_value/name"
+         class="ploneMeetingSelectItem" onmouseover="ploneMeetingSelectOnMouseOverItem(this)"
+         onmouseout="ploneMeetingSelectOnMouseOutItem(this)"
+         onclick="hidePloneMeetingSelectBox('imgSelectBox','idImage1', 'value1', 'predefined_title1'); ploneMeetingSelectOnMouseOutItem(this)"
+         tal:attributes="onclick python:'hidePloneMeetingSelectBox(\'imgSelectBox\', \'idImage1' + str(num) + '\', \'' + tool.forJs(name) + '\', \'' + meetingFileType['id'] + '\', \'' + tool.forJs(meetingFileType['predefinedTitle']) + '\');; ploneMeetingSelectOnMouseOutItem(this)';
+                         class python: '__subtype__' in selectable_value['id'] and 'ploneMeetingSelectItem subtype' or 'ploneMeetingSelectItem'">
+        <img class="ploneMeetingSelectImage"
+            tal:attributes="src python: selectable_value['absolute_url'] + '/theIcon'; id python: 'idImage1' + str(num)"
+            id="idImage1" src="#" alt="" />
+        <span tal:content="name" />
+       </p>
+      </tal:loop>
+    </div>
+</div>
