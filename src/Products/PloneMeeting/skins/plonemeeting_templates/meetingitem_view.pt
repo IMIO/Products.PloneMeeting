@@ -381,7 +381,7 @@
                        hasAdvices python: (meetingConfig.getUseAdvices() or context.displayAdvices())">
         <tr style="vertical-align: top;">
             <td class="itemAnnexesCell" width="50%">
-                <fieldset style="margin: 0;">
+                <fieldset>
                     <legend i18n:translate="existing_annexes">Annexes</legend>
                     <table width="100%" class="no-style-table" cellpadding="0" cellspacing="0" style="margin: 0;">
                         <tr tal:define="obj python: context">
@@ -401,7 +401,7 @@
 
             <tal:comment replace="nothing">Advices</tal:comment>
             <td class="itemAdvicesCell" tal:condition="hasAdvices" width="50%">
-                <fieldset style="margin: 0;" tal:define="meetingItem python: context">
+                <fieldset tal:define="meetingItem python: context">
                 <legend i18n:translate="PloneMeeting_label_advices">Advices</legend>
                     <tal:advice replace="structure context/@@advices-icons" />
                 </fieldset>
