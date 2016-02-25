@@ -661,6 +661,19 @@
                 </td>
                 <td>
                   <span tal:content="obj/query">Criteria</span>
+                  <div>
+                    <label class="formQuestion">
+                      <span i18n:translate="" i18n:domain="plone">Sort the collection on this index</span>
+                    </label> :
+                    <span tal:content="obj/getSort_on" i18n:domain="plone" i18n:translate="">Sort on</span>
+                  </div>
+                  <div>
+                    <label class="formQuestion">
+                      <span i18n:translate="" i18n:domain="plone">Sort the results in reversed order</span>
+                    </label> :
+                    <span tal:content="python: obj.getSort_reversed() and 'boolean_value_true' or 'boolean_value_false'"
+                          i18n:translate="">Sort reversed</span>
+                  </div>
                 </td>
                 <td style="word-break: break-all;" >
                   <span tal:content="obj/tal_condition">TAL Condition</span>
