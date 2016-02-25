@@ -4,7 +4,6 @@ from zope.formlib import form
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.dashboard.browser.facetedcollectionportlet import Renderer as FacetedRenderer
 
-from plone.memoize.instance import memoize
 from plone.app.portlets.portlets import base
 from plone.portlets.interfaces import IPortletDataProvider
 
@@ -99,7 +98,6 @@ class Renderer(base.Renderer, FacetedRenderer):
     def render(self):
         return self._template()
 
-    @memoize
     def getPloneMeetingFolder(self):
         '''Returns the current PM folder.'''
         if self.cfg:

@@ -8,16 +8,16 @@ from zope.interface import implements
 from zope.schema.vocabulary import SimpleVocabulary
 from zope.schema.interfaces import IVocabularyFactory
 from zope.schema.vocabulary import SimpleTerm
-from Products.CMFCore.utils import getToolByName
 from Products.CMFPlone.utils import safe_unicode
 
 from plone import api
-from plone.memoize.instance import memoize
+from plone.memoize import ram
 from collective.documentgenerator.content.vocabulary import PortalTypesVocabularyFactory
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.dashboard.content.dashboardcollection import IDashboardCollection
 from imio.dashboard.vocabulary import ConditionAwareCollectionVocabulary
 from imio.dashboard.vocabulary import DashboardCollectionsVocabulary
+from imio.helpers.cache import get_cachekey_volatile
 from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
@@ -47,7 +47,7 @@ class PMConditionAwareCollectionVocabulary(ConditionAwareCollectionVocabulary):
         redirect_to = super(PMConditionAwareCollectionVocabulary, self)._compute_redirect_to(collection,
                                                                                              criterion)
         # XXX begin change by PloneMeeting, do redirect to the folder in the user pmFolder
-        tool = getToolByName(self.context, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(collection)
         redirect_to = redirect_to.replace(cfg.searches.absolute_url(),
                                           tool.getPloneMeetingFolder(cfg.getId()).absolute_url())
@@ -66,12 +66,17 @@ PMConditionAwareCollectionVocabularyFactory = PMConditionAwareCollectionVocabula
 class ItemCategoriesVocabulary(object):
     implements(IVocabularyFactory)
 
-    @memoize
+    def __call___cachekey(method, self, context):
+        '''cachekey method for self.__call__.'''
+        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.categoriesvocabulary')
+        return date
+
+    @ram.cache(__call___cachekey)
     def __call__(self, context):
         """ """
-        tool = getToolByName(context, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        categories = cfg.getCategories(onlySelectable=False)
+        categories = cfg.getCategories(onlySelectable=False, caching=False)
         res = []
         for category in categories:
             res.append(SimpleTerm(category.getId(),
@@ -88,11 +93,16 @@ ItemCategoriesVocabularyFactory = ItemCategoriesVocabulary()
 class ItemProposingGroupsVocabulary(object):
     implements(IVocabularyFactory)
 
-    @memoize
+    def __call___cachekey(method, self, context):
+        '''cachekey method for self.__call__.'''
+        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.proposinggroupsvocabulary')
+        return date
+
+    @ram.cache(__call___cachekey)
     def __call__(self, context):
         """ """
-        tool = getToolByName(context, 'portal_plonemeeting')
-        groups = tool.getMeetingGroups(onlyActive=False)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        groups = tool.getMeetingGroups(onlyActive=False, caching=False)
         res = []
         for group in groups:
             res.append(SimpleTerm(group.getId(),
@@ -109,11 +119,16 @@ ItemProposingGroupsVocabularyFactory = ItemProposingGroupsVocabulary()
 class ItemProposingGroupAcronymsVocabulary(object):
     implements(IVocabularyFactory)
 
-    @memoize
+    def __call___cachekey(method, self, context):
+        '''cachekey method for self.__call__.'''
+        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary')
+        return date
+
+    @ram.cache(__call___cachekey)
     def __call__(self, context):
         """ """
-        tool = getToolByName(context, 'portal_plonemeeting')
-        groups = tool.getMeetingGroups(onlyActive=False)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        groups = tool.getMeetingGroups(onlyActive=False, caching=False)
         res = []
         for group in groups:
             res.append(SimpleTerm(group.getId(),
@@ -132,7 +147,7 @@ class MeetingReviewStatesVocabulary(object):
 
     def __call__(self, context):
         """ """
-        tool = getToolByName(context, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         res = []
         for state_id, state_title in cfg.listMeetingStates().items():
@@ -150,7 +165,7 @@ class ItemReviewStatesVocabulary(object):
 
     def __call__(self, context):
         """ """
-        tool = getToolByName(context, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         res = []
         for state_id, state_title in cfg.listItemStates().items():
@@ -166,11 +181,16 @@ ItemReviewStatesVocabularyFactory = ItemReviewStatesVocabulary()
 class CreatorsVocabulary(object):
     implements(IVocabularyFactory)
 
-    @memoize
+    def __call___cachekey(method, self, context):
+        '''cachekey method for self.__call__.'''
+        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.creatorsvocabulary')
+        return date
+
+    @ram.cache(__call___cachekey)
     def __call__(self, context):
         """ """
-        catalog = getToolByName(context, 'portal_catalog')
-        membershipTool = getToolByName(context, 'portal_membership')
+        catalog = api.portal.get_tool('portal_catalog')
+        membershipTool = api.portal.get_tool('portal_membership')
         res = []
         for creator in catalog.uniqueValuesFor('Creator'):
             memberInfo = membershipTool.getMemberInfo(creator)
@@ -188,17 +208,22 @@ CreatorsVocabularyFactory = CreatorsVocabulary()
 class MeetingDatesVocabulary(object):
     implements(IVocabularyFactory)
 
-    @memoize
+    def __call___cachekey(method, self, context):
+        '''cachekey method for self.__call__.'''
+        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.meetingdatesvocabulary')
+        return date
+
+    @ram.cache(__call___cachekey)
     def __call__(self, context):
         """ """
-        catalog = getToolByName(context, 'portal_catalog')
-        tool = getToolByName(context, 'portal_plonemeeting')
+        catalog = api.portal.get_tool('portal_catalog')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         brains = catalog(portal_type=cfg.getMeetingTypeName())
         res = []
         for brain in brains:
             res.append(SimpleTerm(brain.UID,
-                                  brain.getDate,
+                                  brain.UID,
                                   tool.formatMeetingDate(brain, withHour=True))
                        )
         res = sorted(res, key=attrgetter('token'))
@@ -226,12 +251,18 @@ class AskedAdvicesVocabulary(object):
                 res.append(REAL_GROUP_ID_PATTERN.format(customAdviser['group']))
 
         # classic advisers
-        for mGroup in self.tool.getMeetingGroups(notEmptySuffix='advisers'):
+        for mGroup in self.tool.getMeetingGroups(caching=False):
             formatted = REAL_GROUP_ID_PATTERN.format(mGroup.getId())
             if formatted not in res:
                 res.append(REAL_GROUP_ID_PATTERN.format(mGroup.getId()))
         return res
 
+    def __call___cachekey(method, self, context):
+        '''cachekey method for self.__call__.'''
+        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.askedadvicesvocabulary')
+        return date
+
+    @ram.cache(__call___cachekey)
     def __call__(self, context):
         """ """
         res = []
@@ -252,7 +283,7 @@ class AskedAdvicesVocabulary(object):
                 if not context.portal_type == 'DashboardCollection':
                     return SimpleVocabulary(res)
 
-        self.tool = getToolByName(context, 'portal_plonemeeting')
+        self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(context)
         advisers = self._getAdvisers()
         for adviser in advisers:
@@ -295,10 +326,15 @@ AskedAdvicesVocabularyFactory = AskedAdvicesVocabulary()
 class AdviceTypesVocabulary(object):
     implements(IVocabularyFactory)
 
-    @memoize
+    def __call___cachekey(method, self, context):
+        '''cachekey method for self.__call__.'''
+        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.advicetypesvocabulary')
+        return date
+
+    @ram.cache(__call___cachekey)
     def __call__(self, context):
         """ """
-        tool = getToolByName(context, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         res = []
         # add the 'not_given' advice_type
@@ -340,7 +376,7 @@ class SentToInfosVocabulary(object):
     def __call__(self, context):
         """ """
         res = []
-        tool = getToolByName(context, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         # the 'not to be cloned anywhere' term
         res.append(SimpleTerm('not_to_be_cloned_to',
@@ -443,7 +479,7 @@ class ListTypesVocabulary(object):
 
     def __call__(self, context):
         """ """
-        tool = getToolByName(context, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         res = []
         for listType in cfg.getListTypes():
@@ -465,7 +501,7 @@ class PMPortalTypesVocabulary(PortalTypesVocabularyFactory):
     implements(IVocabularyFactory)
 
     def __call__(self, context):
-        tool = getToolByName(context, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         res = []
         if cfg:
@@ -497,7 +533,7 @@ class PMDashboardCollectionsVocabulary(DashboardCollectionsVocabulary):
 
     def __call__(self, context):
         catalog = api.portal.get_tool('portal_catalog')
-        tool = getToolByName(context, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         query = {}
         query['object_provides'] = IDashboardCollection.__identifier__

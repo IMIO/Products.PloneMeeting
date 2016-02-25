@@ -26,10 +26,7 @@ from DateTime import DateTime
 from AccessControl import Unauthorized
 from zope.component import queryUtility
 from zope.schema.interfaces import IVocabularyFactory
-from plone.memoize.instance import Memojito
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
-
-memPropName = Memojito.propname
 
 
 class testFaceted(PloneMeetingTestCase):
@@ -80,33 +77,40 @@ class testFaceted(PloneMeetingTestCase):
         pmFolder = self.getMeetingFolder()
         cfg = self.meetingConfig
         cfg.useGroupsAsCategories = False
-        vocab = queryUtility(IVocabularyFactory, "Products.PloneMeeting.vocabularies.categoriesvocabulary")
-        self.assertFalse(getattr(vocab, memPropName, {}))
+        vocab = queryUtility(IVocabularyFactory,
+                             "Products.PloneMeeting.vocabularies.categoriesvocabulary")
         # once get, it is cached
-        vocab(pmFolder)
-        self.assertTrue(getattr(vocab, memPropName))
+        terms = vocab(pmFolder)
+        self.assertEquals(len(terms), 2)
+        # here we make sure it is cached by changing a category title
+        # manually without using the processForm way
+        dev = cfg.categories.development
+        dev.title = u'New title'
+        terms = vocab(pmFolder)
+        self.assertNotEquals(terms.by_token['development'].title,
+                             cfg.categories.development.title)
+        # right correctly edit the category, the vocabulary is invalidated
+        dev.at_post_edit_script()
+        terms = vocab(pmFolder)
+        self.assertEquals(terms.by_token['development'].title,
+                          cfg.categories.development.title)
 
-        # if we add/remove/edit a category, then the cache is cleaned
+        # if we add/remove a category, then the cache is cleaned too
         # add a category
-        newCatId = cfg.categories.invokeFactory('MeetingCategory', id='new-category', title='New category')
+        newCatId = cfg.categories.invokeFactory('MeetingCategory',
+                                                id='new-category',
+                                                title='New category')
         newCat = getattr(cfg.categories, newCatId)
         newCat.at_post_create_script()
-        # cache was cleaned
-        self.assertFalse(getattr(vocab, memPropName, {}))
-        vocab(pmFolder)
-        self.assertTrue(getattr(vocab, memPropName))
-
-        # edit a category
-        newCat.at_post_edit_script()
-        # cache was cleaned
-        self.assertFalse(getattr(vocab, memPropName, {}))
-        vocab(pmFolder)
-        self.assertTrue(getattr(vocab, memPropName))
+        # cache was cleaned, the new value is available
+        terms = vocab(pmFolder)
+        self.assertEquals(len(terms), 3)
 
         # remove a category
         self.portal.restrictedTraverse('@@delete_givenuid')(newCat.UID())
         # cache was cleaned
-        self.assertFalse(getattr(vocab, memPropName, {}))
+        terms = vocab(pmFolder)
+        self.assertEquals(len(terms), 2)
 
     def test_pm_MeetingDatesVocabulary(self):
         '''Test the "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
@@ -115,32 +119,30 @@ class testFaceted(PloneMeetingTestCase):
         self.changeUser('pmManager')
         pmFolder = self.getMeetingFolder()
         # create a meeting
-        self.create('Meeting', date=DateTime('2015/05/05'))
+        meeting = self.create('Meeting', date=DateTime('2015/05/05'))
+        meetingUID = meeting.UID()
         vocab = queryUtility(IVocabularyFactory, "Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
-        self.assertFalse(getattr(vocab, memPropName, {}))
         # once get, it is cached
         vocab(pmFolder)
-        self.assertTrue(getattr(vocab, memPropName))
+        self.assertEquals(len(vocab(pmFolder)), 1)
 
         # if we add/remove/edit a meeting, then the cache is cleaned
         # add a meeting
-        meeting = self.create('Meeting', date=DateTime('2015/06/06'))
+        self.create('Meeting', date=DateTime('2015/06/06'))
         # cache was cleaned
-        self.assertFalse(getattr(vocab, memPropName, {}))
-        vocab(pmFolder)
-        self.assertTrue(getattr(vocab, memPropName))
+        self.assertEquals(len(vocab(pmFolder)), 2)
 
         # edit a meeting
+        self.assertEquals(vocab(pmFolder).by_token[meetingUID].title, meeting.Title())
+        meeting.setDate(DateTime('2015/06/06'))
         meeting.at_post_edit_script()
         # cache was cleaned
-        self.assertFalse(getattr(vocab, memPropName, {}))
-        vocab(pmFolder)
-        self.assertTrue(getattr(vocab, memPropName))
+        self.assertEquals(vocab(pmFolder).by_token[meetingUID].title, meeting.Title())
 
         # remove a meeting
         self.portal.restrictedTraverse('@@delete_givenuid')(meeting.UID())
         # cache was cleaned
-        self.assertFalse(getattr(vocab, memPropName, {}))
+        self.assertEquals(len(vocab(pmFolder)), 1)
 
     def test_pm_ProposingGroupsVocabularies(self):
         '''Test the "Products.PloneMeeting.vocabularies.proposinggroupsvocabulary"
@@ -150,42 +152,33 @@ class testFaceted(PloneMeetingTestCase):
         pmFolder = self.getMeetingFolder()
         vocab1 = queryUtility(IVocabularyFactory, "Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
         vocab2 = queryUtility(IVocabularyFactory, "Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary")
-        self.assertFalse(getattr(vocab1, memPropName, {}))
-        self.assertFalse(getattr(vocab2, memPropName, {}))
         # once get, it is cached
-        vocab1(pmFolder)
-        vocab2(pmFolder)
-        self.assertTrue(getattr(vocab1, memPropName))
-        self.assertTrue(getattr(vocab2, memPropName))
+        self.assertEquals(len(vocab1(pmFolder)), 3)
+        self.assertEquals(len(vocab2(pmFolder)), 3)
 
         # if we add/remove/edit a group, then the cache is cleaned
         # add a group
-        newGroupId = self.tool.invokeFactory('MeetingGroup', id='new-group', title='New group')
-        newGroup = getattr(self.tool, newGroupId)
-        newGroup.at_post_create_script()
+        newGroup = self.create('MeetingGroup', title='NewGroup', acronym='N.G.')
+        newGroupId = newGroup.getId()
         # cache was cleaned
-        self.assertFalse(getattr(vocab1, memPropName, {}))
-        self.assertFalse(getattr(vocab2, memPropName, {}))
-        vocab1(pmFolder)
-        vocab2(pmFolder)
-        self.assertTrue(getattr(vocab1, memPropName))
-        self.assertTrue(getattr(vocab2, memPropName))
+        self.assertEquals(len(vocab1(pmFolder)), 4)
+        self.assertEquals(len(vocab2(pmFolder)), 4)
 
         # edit a group
+        self.assertEquals(vocab1(pmFolder).by_token[newGroupId].title, newGroup.Title())
+        self.assertEquals(vocab2(pmFolder).by_token[newGroupId].title, newGroup.getAcronym())
+        newGroup.setTitle(u'Modified title')
+        newGroup.setAcronym(u'Modified acronym')
         newGroup.at_post_edit_script()
         # cache was cleaned
-        self.assertFalse(getattr(vocab1, memPropName, {}))
-        self.assertFalse(getattr(vocab2, memPropName, {}))
-        vocab1(pmFolder)
-        vocab2(pmFolder)
-        self.assertTrue(getattr(vocab1, memPropName))
-        self.assertTrue(getattr(vocab2, memPropName))
+        self.assertEquals(vocab1(pmFolder).by_token[newGroupId].title, newGroup.Title())
+        self.assertEquals(vocab2(pmFolder).by_token[newGroupId].title, newGroup.getAcronym())
 
         # remove a group
         self.portal.restrictedTraverse('@@delete_givenuid')(newGroup.UID())
         # cache was cleaned
-        self.assertFalse(getattr(vocab1, memPropName, {}))
-        self.assertFalse(getattr(vocab2, memPropName, {}))
+        self.assertEquals(len(vocab1(pmFolder)), 3)
+        self.assertEquals(len(vocab2(pmFolder)), 3)
 
     def test_pm_CreatorsVocabulary(self):
         '''Test the "Products.PloneMeeting.vocabularies.creatorsvocabulary"
@@ -193,19 +186,114 @@ class testFaceted(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         pmFolder = self.getMeetingFolder()
         vocab = queryUtility(IVocabularyFactory, "Products.PloneMeeting.vocabularies.creatorsvocabulary")
-        self.assertFalse(getattr(vocab, memPropName, {}))
         # once get, it is cached
-        vocab(pmFolder)
-        self.assertTrue(getattr(vocab, memPropName))
+        self.assertEquals(len(vocab(pmFolder)), 3)
 
         # if a new pmFolder is created, then the cache is cleaned
         # get pmFolder for user 'pmManager'
         self.changeUser('pmManager')
         pmFolder = self.getMeetingFolder()
         # cache was cleaned
-        self.assertFalse(getattr(vocab, memPropName, {}))
-        vocab(pmFolder)
-        self.assertTrue(getattr(vocab, memPropName))
+        self.assertEquals(len(vocab(pmFolder)), 4)
+
+    def test_pm_AskedAdvicesVocabularies(self):
+        '''Test the "Products.PloneMeeting.vocabularies.askedadvicesvocabulary"
+           vocabulary, especially because it is cached.'''
+        self.changeUser('siteadmin')
+        cfg = self.meetingConfig
+        customAdvisers = [{'row_id': 'unique_id_000',
+                           'group': 'developers',
+                           'gives_auto_advice_on': '',
+                           'for_item_created_from': '2012/01/01',
+                           'delay': '2',
+                           'delay_label': ''},
+                          {'row_id': 'unique_id_123',
+                           'group': 'vendors',
+                           'gives_auto_advice_on': '',
+                           'for_item_created_from': '2012/01/01',
+                           'delay': '5',
+                           'delay_label': ''},
+                          {'row_id': 'unique_id_456',
+                           'group': 'vendors',
+                           'gives_auto_advice_on': '',
+                           'for_item_created_from': '2012/01/01',
+                           'delay': '10',
+                           'delay_label': ''},
+                          {'row_id': 'unique_id_789',
+                           'group': 'vendors',
+                           'gives_auto_advice_on': '',
+                           'for_item_created_from': '2012/01/01',
+                           'delay': '20',
+                           'delay_label': ''}]
+        cfg.setCustomAdvisers(customAdvisers)
+        pmFolder = self.getMeetingFolder()
+        vocab = queryUtility(IVocabularyFactory, "Products.PloneMeeting.vocabularies.askedadvicesvocabulary")
+        # we have 4 delay-aware advisers and 2 adviser groups selectable as optional
+        delayAdvisers = [adviser for adviser in cfg.getCustomAdvisers() if adviser['delay']]
+        self.assertEquals(len(delayAdvisers), 4)
+        self.assertEquals(len(self.tool.getMeetingGroups(notEmptySuffix='advisers')), 2)
+        # once get, it is cached
+        self.assertEquals(len(vocab(pmFolder)), 6)
+
+        # if we add/remove/edit a group, then the cache is cleaned
+        # add a group
+        newGroup = self.create('MeetingGroup', title='NewGroup', acronym='N.G.')
+        newGroupId = newGroup.getId()
+        # cache was cleaned
+        self.assertEquals(len(vocab(pmFolder)), 7)
+        # edit a group
+        self.assertEquals(vocab(pmFolder).by_token['real_group_id__{0}'.format(newGroupId)].title,
+                          newGroup.Title())
+        newGroup.setTitle(u'Modified title')
+        newGroup.at_post_edit_script()
+        # cache was cleaned
+        self.assertEquals(vocab(pmFolder).by_token['real_group_id__{0}'.format(newGroupId)].title,
+                          newGroup.Title())
+        # remove a group
+        self.portal.restrictedTraverse('@@delete_givenuid')(newGroup.UID())
+        # cache was cleaned
+        self.assertEquals(len(vocab(pmFolder)), 6)
+
+        # if we add/remove/edit a customAdviser, then the cache is cleaned
+        # add a customAdviser
+        customAdvisers.append({'row_id': 'unique_id_999',
+                               'group': 'vendors',
+                               'gives_auto_advice_on': '',
+                               'for_item_created_from': '2012/01/01',
+                               'delay': '11',
+                               'delay_label': 'New delay'})
+        cfg.setCustomAdvisers(customAdvisers)
+        cfg.at_post_edit_script()
+        self.assertEquals(len(vocab(pmFolder)), 7)
+        self.assertTrue('delay_real_group_id__unique_id_999' in vocab(pmFolder).by_token)
+        # delay is displayed in customAdviser title
+        self.assertTrue('11 day(s)' in vocab(pmFolder).by_token['delay_real_group_id__unique_id_999'].title)
+        # edit a customAdviser
+        customAdvisers[-1]['delay'] = '12'
+        cfg.setCustomAdvisers(customAdvisers)
+        cfg.at_post_edit_script()
+        self.assertTrue('12 day(s)' in vocab(pmFolder).by_token['delay_real_group_id__unique_id_999'].title)
+        # remove a customAdviser
+        customAdvisers = customAdvisers[:-1]
+        cfg.setCustomAdvisers(customAdvisers)
+        cfg.at_post_edit_script()
+        self.assertEquals(len(vocab(pmFolder)), 6)
+
+    def test_pm_AdviceTypesVocabulary(self):
+        '''Test the "Products.PloneMeeting.vocabularies.advicetypesvocabulary"
+           vocabulary, especially because it is cached.'''
+        cfg = self.meetingConfig
+        self.changeUser('siteadmin')
+        cfg.setUsedAdviceTypes(('positive', 'negative'))
+        pmFolder = self.getMeetingFolder()
+        vocab = queryUtility(IVocabularyFactory, "Products.PloneMeeting.vocabularies.advicetypesvocabulary")
+        # once get, it is cached
+        self.assertEquals(len(vocab(pmFolder)), 5)
+
+        # change the MeetingConfig.usedAdvicesTypes
+        cfg.setUsedAdviceTypes(('positive', ))
+        cfg.at_post_edit_script()
+        self.assertEquals(len(vocab(pmFolder)), 4)
 
     def test_pm_RedirectedToDefaultSearchPMFolderOnlyIfNecessary(self):
         """This test portlet_plonemeeting.widget_render where we manipulate the redirection,

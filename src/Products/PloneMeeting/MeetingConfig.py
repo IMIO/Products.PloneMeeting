@@ -67,7 +67,6 @@ from Products.CMFPlone.utils import safe_unicode
 from plone import api
 from eea.facetednavigation.interfaces import ICriteria
 from imio.helpers.cache import cleanRamCache
-from imio.helpers.cache import cleanVocabularyCacheFor
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
@@ -3742,8 +3741,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         ''' '''
         # invalidateAll ram.cache
         cleanRamCache()
-        # invalidate cache for every vocabularies
-        cleanVocabularyCacheFor()
         # Update portal types
         self.registerPortalTypes()
         # Update customViewFields defined on DashboardCollections

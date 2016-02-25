@@ -230,4 +230,10 @@
              factory="Products.PloneMeeting.adapters.Criteria" />
     </configure>
 
+    <!-- Vocabularies -->
+    <utility component=".vocabularies.PMPortalTypesVocabularyFactory"
+             name="collective.documentgenerator.PortalTypes" />
+    <utility component=".vocabularies.PMDashboardCollectionsVocabularyFactory"
+             name="imio.dashboard.collectionsvocabulary" />
+
 </configure>

@@ -34,7 +34,7 @@ from Products.DataGridField.Column import Column
 from Products.DataGridField.SelectColumn import SelectColumn
 
 from zope.i18n import translate
-from imio.helpers.cache import cleanVocabularyCacheFor
+from imio.helpers.cache import invalidate_cachekey_volatile_for
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import WriteRiskyConfig
@@ -355,10 +355,10 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
                                         "'%s' already exists." % groupId)
         for groupSuffix in MEETING_GROUP_SUFFIXES:
             self._createOrUpdatePloneGroup(groupSuffix)
-        # clean cache for "Products.PloneMeeting.vocabularies.proposinggroupsvocabulary" and
-        # "Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary" vocabularies
-        cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
-        cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary")
+        # clean cache for vocabularies using MeetingGroups
+        invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
+        invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary")
+        invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.askedadvicesvocabulary")
         self.adapted().onEdit(isCreated=True)  # Call product-specific code
 
     security.declarePrivate('at_post_edit_script')
@@ -366,10 +366,10 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
     def at_post_edit_script(self):
         for groupSuffix in MEETING_GROUP_SUFFIXES:
             self._createOrUpdatePloneGroup(groupSuffix)
-        # clean cache for "Products.PloneMeeting.vocabularies.proposinggroupsvocabulary" and
-        # "Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary" vocabularies
-        cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
-        cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary")
+        # clean cache for vocabularies using MeetingGroups
+        invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
+        invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary")
+        invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.askedadvicesvocabulary")
         self.adapted().onEdit(isCreated=False)
 
     security.declarePublic('getSelf')

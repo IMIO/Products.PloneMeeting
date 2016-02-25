@@ -30,7 +30,7 @@ from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFPlone.utils import safe_unicode
 from plone import api
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
-from imio.helpers.cache import cleanVocabularyCacheFor
+from imio.helpers.cache import invalidate_cachekey_volatile_for
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import ADVICE_GIVEN_HISTORIZED_COMMENT
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
@@ -259,8 +259,9 @@ def onGroupRemoved(group, event):
     '''Called when a MeetingGroup is removed.'''
     # clean cache for "Products.PloneMeeting.vocabularies.proposinggroupsvocabulary" and
     # "Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary" vocabularies
-    cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
-    cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary")
+    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
+    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary")
+    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.askedadvicesvocabulary")
 
 
 def onItemMoved(item, event):
@@ -516,7 +517,7 @@ def onMeetingAdded(meeting, event):
     userId = api.user.get_current().getId()
     meeting.manage_addLocalRoles(userId, ('Owner',))
     # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
-    cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
+    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
 
 
 def onMeetingRemoved(meeting, event):
@@ -544,13 +545,13 @@ def onMeetingRemoved(meeting, event):
         item.setPreferredMeeting(ITEM_NO_PREFERRED_MEETING_VALUE)
         item.reindexObject('getPreferredMeeting')
     # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
-    cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
+    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
 
 
 def onCategoryRemoved(category, event):
     '''Called when a MeetingCategory is removed.'''
     # clean cache for "Products.PloneMeeting.vocabularies.categoriesvocabulary"
-    cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.categoriesvocabulary")
+    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.categoriesvocabulary")
 
 
 def onDashboardCollectionAdded(collection, event):

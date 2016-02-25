@@ -28,7 +28,6 @@ from eea.facetednavigation.criteria.handler import Criteria as eeaCriteria
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
 from imio.actionspanel.adapters import ContentDeletableAdapter as APContentDeletableAdapter
-from imio.dashboard.adapters import CustomViewFieldsVocabularyAdapter
 from imio.history.adapters import ImioWfHistoryAdapter
 from imio.prettylink.adapters import PrettyLinkAdapter
 from Products.PloneMeeting import PMMessageFactory as _
@@ -611,17 +610,6 @@ class PMPrettyLinkAdapter(PrettyLinkAdapter):
                                                 mapping={'fullname': safe_unicode(tool.getUserName(takenOverBy))},
                                                 context=self.request)))
         return res
-
-
-class PMCustomViewFieldsVocabularyAdapter(CustomViewFieldsVocabularyAdapter):
-    """Add some additional fields."""
-
-    def additionalViewFields(self):
-        """See docstring in interfaces.py."""
-        additionalFields = super(PMCustomViewFieldsVocabularyAdapter, self).additionalViewFields()
-        additionalFields.add('proposing_group_acronym', 'Proposing group acronym')
-        additionalFields.add('advices', 'Advices')
-        return additionalFields
 
 
 class PMWfHistoryAdapter(ImioWfHistoryAdapter):

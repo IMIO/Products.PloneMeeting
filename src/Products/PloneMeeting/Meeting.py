@@ -48,7 +48,7 @@ from zope.i18n import translate
 from plone.app.querystring.querybuilder import queryparser
 from plone.memoize import ram
 from imio.helpers.cache import cleanRamCacheFor
-from imio.helpers.cache import cleanVocabularyCacheFor
+from imio.helpers.cache import invalidate_cachekey_volatile_for
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import ModifyPortalContent, ReviewPortalContent, View
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
@@ -1091,7 +1091,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
                 item = brain.getObject()
                 item.reindexObject(idxs=['linkedMeetingDate', 'getPreferredMeetingDate'])
             # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
-            cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
+            invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
 
     security.declarePublic('showObs')
 
@@ -1605,7 +1605,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         notify(ObjectEditedEvent(self))
         self.reindexObject()
         # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
-        cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
+        invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
         userId = api.user.get_current().getId()
         logger.info('Meeting at %s edited by "%s".' % (self.absolute_url_path(), userId))
 

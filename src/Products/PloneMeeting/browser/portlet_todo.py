@@ -3,7 +3,7 @@ from zope.component import getMultiAdapter
 from zope.interface import implements
 from zope.formlib import form
 
-from plone.memoize.instance import memoize
+from plone.memoize.view import memoize
 from plone.app.portlets.portlets import base
 from plone.portlets.interfaces import IPortletDataProvider
 
@@ -75,7 +75,6 @@ class Renderer(base.Renderer, FacetedRenderer):
     def render(self):
         return self._template()
 
-    @memoize
     def showTodoPortlet(self, context):
         '''Must we show the portlet_todo ?'''
         if not self.cfg:
@@ -112,20 +111,6 @@ class Renderer(base.Renderer, FacetedRenderer):
         self.request.set('fromPortletTodo', False)
         return res
 
-    @memoize
-    def getBrainsForPortletTodo(self, search):
-        """
-          Return the brains for portlet todo...
-        """
-        return search.getQuery({'limit': self.data.batch_size, })
-
-    @memoize
-    def getTitleLength(self):
-        """
-          Return the length of the title to display in the portlet
-        """
-        return self.data.title_length
-
     def getColoredLink(self, brain):
         """
           Get the colored link for current item.
@@ -134,7 +119,7 @@ class Renderer(base.Renderer, FacetedRenderer):
         """
         # received brain is a plone.app.contentlisting.catalog.CatalogContentListingObject instance
         item = brain._brain._unrestrictedGetObject()
-        return self.tool.getColoredLink(item, showColors=True, maxLength=self.getTitleLength())
+        return self.tool.getColoredLink(item, showColors=True, maxLength=self.data.title_length)
 
     def getCollectionWidgetId(self):
         """Returns the collection widget id to be used in the URL generated on the collection link."""

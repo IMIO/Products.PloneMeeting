@@ -58,7 +58,7 @@ from plone import api
 from collective.behavior.talcondition.utils import _evaluateExpression
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.dashboard.utils import enableFacetedDashboardFor
-from imio.helpers.cache import cleanVocabularyCacheFor
+from imio.helpers.cache import invalidate_cachekey_volatile_for
 from imio.helpers.security import is_develop_environment
 from imio.helpers.security import generate_password
 from imio.prettylink.interfaces import IPrettyLink
@@ -694,7 +694,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         # Give MeetingManager localrole to relevant _meetingmanagers group
         mc_folder.manage_addLocalRoles("%s_%s" % (cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX), ('MeetingManager',))
         # clean cache for "Products.PloneMeeting.vocabularies.creatorsvocabulary"
-        cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.creatorsvocabulary")
+        invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.creatorsvocabulary")
 
     security.declarePublic('getMeetingConfig')
 

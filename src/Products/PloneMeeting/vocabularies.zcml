@@ -1,0 +1,41 @@
+<configure xmlns="http://namespaces.zope.org/zope"
+           xmlns:browser="http://namespaces.zope.org/browser"
+           xmlns:five="http://namespaces.zope.org/five"
+           xmlns:i18n="http://namespaces.zope.org/i18n"
+           i18n_domain="PloneMeeting">
+
+  <!-- Vocabularies -->
+  <utility component=".vocabularies.ItemCategoriesVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.categoriesvocabulary" />
+  <utility component=".vocabularies.ItemProposingGroupsVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.proposinggroupsvocabulary" />
+  <utility component=".vocabularies.ItemProposingGroupAcronymsVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary" />
+  <utility component=".vocabularies.ItemReviewStatesVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.itemreviewstatesvocabulary" />
+  <utility component=".vocabularies.MeetingReviewStatesVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.meetingreviewstatesvocabulary" />
+  <utility component=".vocabularies.CreatorsVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.creatorsvocabulary" />
+  <utility component=".vocabularies.MeetingDatesVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.meetingdatesvocabulary" />
+  <utility component=".vocabularies.AskedAdvicesVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.askedadvicesvocabulary" />
+  <utility component=".vocabularies.AdviceTypesVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.advicetypesvocabulary" />
+  <utility component=".vocabularies.SentToInfosVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.senttoinfosvocabulary" />
+  <utility component=".vocabularies.SendToAuthorityVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.sendtoauthorityvocabulary" />
+  <utility component=".vocabularies.HasAnnexesToPrintVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.hasannexestoprintvocabulary" />
+  <utility component=".vocabularies.DownOrUpWorkflowAgainVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.downorupworkflowagainvocabulary" />
+  <utility component=".vocabularies.ListTypesVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.listtypesvocabulary" />
+
+  <!-- Vocabulary used in collectionwidget and inheritating from the imio.dashboard vocabulary -->
+  <utility component=".vocabularies.PMConditionAwareCollectionVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.conditionawarecollectionvocabulary" />
+
+</configure>

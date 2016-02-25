@@ -31,7 +31,7 @@ from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 ##code-section module-header #fill in your manual code here
 from OFS.ObjectManager import BeforeDeleteException
 from plone import api
-from imio.helpers.cache import cleanVocabularyCacheFor
+from imio.helpers.cache import invalidate_cachekey_volatile_for
 from Products.PloneMeeting import PMMessageFactory
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import WriteRiskyConfig
@@ -157,14 +157,14 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
 
     def at_post_create_script(self):
         # clean cache for "Products.PloneMeeting.vocabularies.categoriesvocabulary"
-        cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.categoriesvocabulary")
+        invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.categoriesvocabulary")
         self.adapted().onEdit(isCreated=True)
 
     security.declarePrivate('at_post_edit_script')
 
     def at_post_edit_script(self):
         # clean cache for "Products.PloneMeeting.vocabularies.categoriesvocabulary"
-        cleanVocabularyCacheFor("Products.PloneMeeting.vocabularies.categoriesvocabulary")
+        invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.categoriesvocabulary")
         self.adapted().onEdit(isCreated=False)
 
     security.declarePrivate('manage_beforeDelete')
