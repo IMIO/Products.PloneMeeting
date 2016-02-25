@@ -81,7 +81,9 @@ class testFaceted(PloneMeetingTestCase):
                              "Products.PloneMeeting.vocabularies.categoriesvocabulary")
         # once get, it is cached
         terms = vocab(pmFolder)
-        self.assertEquals(len(terms), 2)
+        # every existing categories are shown, no matter it is disabled
+        nbOfCategories = len(cfg.getCategories(onlySelectable=False, caching=False))
+        self.assertEquals(len(terms), nbOfCategories)
         # here we make sure it is cached by changing a category title
         # manually without using the processForm way
         dev = cfg.categories.development
@@ -104,13 +106,13 @@ class testFaceted(PloneMeetingTestCase):
         newCat.at_post_create_script()
         # cache was cleaned, the new value is available
         terms = vocab(pmFolder)
-        self.assertEquals(len(terms), 3)
+        self.assertEquals(len(terms), nbOfCategories + 1)
 
         # remove a category
         self.portal.restrictedTraverse('@@delete_givenuid')(newCat.UID())
         # cache was cleaned
         terms = vocab(pmFolder)
-        self.assertEquals(len(terms), 2)
+        self.assertEquals(len(terms), nbOfCategories)
 
     def test_pm_MeetingDatesVocabulary(self):
         '''Test the "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
