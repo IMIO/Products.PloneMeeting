@@ -127,12 +127,8 @@
     </tal:withFileTypes>
   </fieldset>
   </form>
-  <fieldset>
-   <legend i18n:translate="existing_annexes">Annexes</legend>
-   <metal:showAnnexes use-macro="here/@@annexes-macros/annexesShowMacro" />
-  </fieldset>
-
-  <metal:closeButton use-macro="here/@@pm-macros/closeButtonMacro" />
+  <h2 i18n:translate="existing_annexes">Annexes</h2>
+  <metal:showAnnexes use-macro="here/@@annexes-macros/annexesShowMacro" />
 
 </div>
 
