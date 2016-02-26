@@ -559,6 +559,13 @@ td.noPadding a {
     text-decoration:none;
 }
 
+.portletCell.pmLink.odd {
+    background-color: &dtml-oddRowBackgroundColor;;
+}
+.portletCell.pmLink.even {
+    background-color: &dtml-evenRowBackgroundColor;;
+}
+
 .documentContent { padding: 1em 0.5em 2.5em 1em !important; }
 .documentContent p a { border-bottom: 0px solid #CCCCCC; }
 .documentEditable { margin: 0; padding: 0 !important; }

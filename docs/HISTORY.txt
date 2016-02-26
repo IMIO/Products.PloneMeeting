@@ -217,6 +217,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   view_name to use to render the field
 - MeetingConfig.transitionsReinitializingDelays is now multivalued so it is possible to define several transitions
   that will reinitialize advice delays, moreover, every transitions are now selectable, not only 'back' transitions
+- Do synchronize portlet_todo with dashboards so portlet is refreshed when an action in the dashboards is triggered
 
 3.3 (2015-02-27)
 ----------------

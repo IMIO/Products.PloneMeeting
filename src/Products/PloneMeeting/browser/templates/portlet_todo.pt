@@ -3,10 +3,9 @@
 
     <dt class="portletHeader" i18n:translate="To do">To do</dt>
 
-    <tal:block repeat="search view/getSearches">
-       <tal:block define="brains python: search.getQuery(**{'limit': view.data.batch_size});">
+   <tal:block repeat="search view/getSearches">
+      <tal:block define="brains python: search.getQuery(**{'limit': view.data.batch_size});">
          <dd class="portletSection">
-         <strong>
             <tal:comment replace="nothing">On click, we simulate click in the collection widget portlet</tal:comment>
             <a href="javascript:;"
                style="display: inline;"
@@ -15,21 +14,23 @@
                i18n:attributes="title"
                i18n:translate=""
                tal:content="search/Title">Search title</a>
-         </strong>
-        </dd>
-        <dd class="portletCell" tal:condition="not: brains">
-         <span class="discreet" i18n:translate="nothing_to_do">Nothing to do</span>
-        </dd>
-        <tal:loop repeat="brain brains">
-        <dd class="portletCell" tal:condition="brains"
-                                tal:define="oddrow repeat/brain/odd;
-                                            lastRow python:repeat['search'].last('meta_type') and repeat['brain'].last('meta_type');
-                                            dummy python: oddrow and 'portletCell pmLink odd' or 'portletCell pmLink even';
-                                            class python: lastRow and dummy + ' lastRow' or dummy;"
-                                tal:attributes="class class">
-            <tal:showTitle replace="structure python: view.getColoredLink(brain)"/>
-        </dd>
-        </tal:loop>
-       </tal:block>
-    </tal:block>
+         </dd>
+         <span tal:attributes="id string:todo_${search/UID}">
+            <dd class="portletCell" tal:condition="not: brains">
+               <span class="discreet" i18n:translate="nothing_to_do">Nothing to do</span>
+            </dd>
+            <tal:loop repeat="brain brains">
+               <dd class="portletCell"
+                   tal:condition="brains"
+                   tal:define="oddrow repeat/brain/odd;
+                               lastRow python:repeat['search'].last('meta_type') and repeat['brain'].last('meta_type');
+                               dummy python: oddrow and 'portletCell pmLink odd' or 'portletCell pmLink even';
+                               class python: lastRow and dummy + ' lastRow' or dummy;"
+                   tal:attributes="class class">
+                  <tal:showTitle replace="structure python: view.getColoredLink(brain)"/>
+               </dd>
+            </tal:loop>
+         </span>
+      </tal:block>
+   </tal:block>
 </dl>

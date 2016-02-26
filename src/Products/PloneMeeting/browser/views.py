@@ -420,6 +420,30 @@ class DeleteHistoryEventView(BrowserView):
         return self.request.RESPONSE.redirect(self.request['HTTP_REFERER'])
 
 
+class PortletTodoUpdateView(BrowserView):
+
+    """Produce json to update portlet_todo."""
+
+    def __call__(self):
+        """Render portlet_todo and return the entire HTML tree."""
+        from zope.component import getUtility
+        from plone.portlets.interfaces import IPortletManager
+        from plone.portlets.interfaces import IPortletRenderer
+        from Products.PloneMeeting.browser.portlet_todo import Assignment as todo_assignment
+
+        view = self.context.restrictedTraverse('@@plone')
+        manager = getUtility(IPortletManager,
+                             name='plone.leftcolumn',
+                             context=self.context)
+        renderer = getMultiAdapter((self.context,
+                                    self.request,
+                                    view,
+                                    manager,
+                                    todo_assignment()),
+                                   IPortletRenderer)
+        return renderer.render()
+
+
 class PMDocumentGenerationHelperView(ATDocumentGenerationHelperView):
     """ """
 

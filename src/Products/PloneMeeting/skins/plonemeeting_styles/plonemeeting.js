@@ -859,3 +859,18 @@ if (budgetRelated.length) {
 }
 
 });
+
+
+// called on each faceted table change to update the portlet_todo
+$(document).ready(function () {
+  var url = $('base').attr('href') + '/@@portlet-todo-update';
+  $(Faceted.Events).bind(Faceted.Events.AJAX_QUERY_SUCCESS, function() {
+      $.get(url, function (data) {
+          tag = $('dl.portlet.portletTodo');
+          if (tag.length) {
+            tag[0].parentNode.innerHTML = data;
+          }
+          
+      })
+  });
+});

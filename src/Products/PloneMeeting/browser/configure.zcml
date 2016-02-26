@@ -607,6 +607,12 @@
         class=".jsvariables.JSVariables"
         permission="zope.Public" />
 
+    <browser:page
+        for="*"
+        name="portlet-todo-update"
+        class=".views.PortletTodoUpdateView"
+        permission="zope.Public" />
+
     <!-- collective.documentgenerator helper view for Folder -->
     <browser:page
         for="Products.ATContentTypes.interfaces.folder.IATBTreeFolder"
