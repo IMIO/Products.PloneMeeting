@@ -2798,33 +2798,44 @@ class testMeetingItem(PloneMeetingTestCase):
            create a new item using an item template, if he tries to create an item
            using createObject?type_name=MeetingItemXXX, he gets Unauthorized, except
            if the item is added in the configuration, for managing item templates for example.'''
+        cfg = self.meetingConfig
         # make sure user may add an item without a template for now
-        self.meetingConfig.setItemCreatedOnlyUsingTemplate(False)
+        cfg.setItemCreatedOnlyUsingTemplate(False)
         self.changeUser('pmCreator1')
-        item = self.create('MeetingItem')
+        pmFolder = self.getMeetingFolder()
+        # create an item in portal_factory
+        itemTypeName = cfg.getItemTypeName()
+        temp_item = pmFolder.restrictedTraverse('portal_factory/{0}/tmp_id'.format(itemTypeName))
         # in AT, the EditBegunEvent is triggered on the edit form by the @@at_lifecycle_view
         # accessing it for now does work on an item in the creation process
-        item._at_creation_flag = True
-        self.assertTrue(item._at_creation_flag)
-        self.assertIsNone(item.restrictedTraverse('@@at_lifecycle_view').begin_edit())
+        self.assertTrue(temp_item._at_creation_flag)
+        self.assertIsNone(temp_item.restrictedTraverse('@@at_lifecycle_view').begin_edit())
         # now make only item creation possible using a template
-        self.meetingConfig.setItemCreatedOnlyUsingTemplate(True)
-        self.assertRaises(Unauthorized, item.restrictedTraverse('@@at_lifecycle_view').begin_edit)
+        cfg.setItemCreatedOnlyUsingTemplate(True)
+        self.assertRaises(Unauthorized, temp_item.restrictedTraverse('@@at_lifecycle_view').begin_edit)
+        # create an item from a template
+        view = pmFolder.restrictedTraverse('@@createitemfromtemplate')
+        itemTemplate = cfg.getItemTemplates(as_brains=False)[0]
+        itemFromTemplate = view.createItemFromTemplate(itemTemplate.UID())
+        self.assertTrue(itemFromTemplate._at_creation_flag)
+        # using the edit form will not raise Unauthorized
+        self.assertIsNone(itemFromTemplate.restrictedTraverse('@@at_lifecycle_view').begin_edit())
 
         # but it is still possible to add items in the configuration
         self.changeUser('admin')
         # an item template
-        itemTemplate = self.create('MeetingItemTemplate')
-        itemTemplate._at_creation_flag = True
+        templateTypeName = cfg.getItemTypeName(configType='MeetingItemTemplate')
+        itemTemplate = cfg.itemtemplates.restrictedTraverse('portal_factory/{0}/tmp_id'.format(templateTypeName))
         self.assertTrue(itemTemplate._at_creation_flag)
         # using the edit form will not raise Unauthorized
         self.assertIsNone(itemTemplate.restrictedTraverse('@@at_lifecycle_view').begin_edit())
-        # an recurring item
-        itemTemplate = self.create('MeetingItemRecurring')
-        itemTemplate._at_creation_flag = True
-        self.assertTrue(itemTemplate._at_creation_flag)
+        # a recurring item
+        recTypeName = cfg.getItemTypeName(configType='MeetingItemRecurring')
+        recItem = cfg.recurringitems.restrictedTraverse('portal_factory/{0}/tmp_id'.format(recTypeName))
+        recItem._at_creation_flag = True
+        self.assertTrue(recItem._at_creation_flag)
         # using the edit form will not raise Unauthorized
-        self.assertIsNone(itemTemplate.restrictedTraverse('@@at_lifecycle_view').begin_edit())
+        self.assertIsNone(recItem.restrictedTraverse('@@at_lifecycle_view').begin_edit())
 
     def test_pm_GetAdviceDataFor(self):
         '''Test the getAdviceDataFor method, essentially the fact that it needs the item

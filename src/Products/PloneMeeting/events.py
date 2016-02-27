@@ -490,7 +490,7 @@ def onItemEditBegun(item, event):
        if MeetingConfig.itemCreatedOnlyUsingTemplate is True, the user is not trying to create
        an fresh item not from an item template.  Do not check this for items added to the
        configuration (recurring items and item templates).'''
-    if item._at_creation_flag and not item.isDefinedInTool():
+    if item.isTemporary() and not item.isDefinedInTool():
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(item)
         if cfg.getItemCreatedOnlyUsingTemplate():
