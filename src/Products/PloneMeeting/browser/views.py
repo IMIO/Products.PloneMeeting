@@ -20,6 +20,7 @@
 # 02110-1301, USA.
 #
 
+import cgi
 import json
 import lxml
 
@@ -37,6 +38,7 @@ from eea.facetednavigation.interfaces import ICriteria
 from collective.documentgenerator.helper.archetypes import ATDocumentGenerationHelperView
 from Products.PloneMeeting import logger
 from Products.PloneMeeting.config import ADVICE_STATES_ALIVE
+from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.browser.itemchangeorder import _is_integer
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
 from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
@@ -447,11 +449,87 @@ class PortletTodoUpdateView(BrowserView):
 class PMDocumentGenerationHelperView(ATDocumentGenerationHelperView):
     """ """
 
+    def imageOrientation(self, image):
+        """Compute image orientation, if orientation is landscape, we rotate
+           the image from 90° so it is displayed on the full page.
+           This is used by the appy.pod 'import from document' method
+           as 'convertOptions' parameter."""
+        if image.width > image.height:
+            return '-rotate 90'
+
     def printHistory(self):
         """Return the history view for templates. """
         historyView = self.context.restrictedTraverse('historyview')()
         historyViewRendered = lxml.html.fromstring(historyView)
         return lxml.html.tostring(historyViewRendered.get_element_by_id('content-core'), method='xml')
+
+    def printAdvicesInfos(self,
+                          item,
+                          withAdvicesTitle=True,
+                          withDelay=False,
+                          withDelayLabel=True,
+                          withAuthor=True):
+        '''Helper method to have a printable version of advices.'''
+        membershipTool = api.portal.get_tool('portal_membership')
+        itemAdvicesByType = item.getAdvicesByType()
+        res = "<p class='pmAdvices'>"
+        if withAdvicesTitle:
+            res += "<u><b>%s :</b></u><br />" % translate('PloneMeeting_label_advices',
+                                                          domain='PloneMeeting',
+                                                          context=self.request)
+        for adviceType in itemAdvicesByType:
+            for advice in itemAdvicesByType[adviceType]:
+                # if we have a delay and delay_label, we display it
+                delayAwareMsg = u''
+                if withDelay and advice['delay']:
+                        delayAwareMsg = u"%s" % (translate('delay_of_x_days',
+                                                 domain='PloneMeeting',
+                                                 mapping={'delay': advice['delay']},
+                                                 context=self.request))
+                if withDelayLabel and advice['delay'] and advice['delay_label']:
+                        if delayAwareMsg:
+                            delayAwareMsg = "%s - %s" % (delayAwareMsg,
+                                                         unicode(advice['delay_label'], 'utf-8'))
+                        else:
+                            delayAwareMsg = "%s" % unicode(advice['delay_label'], 'utf-8')
+                if delayAwareMsg:
+                    delayAwareMsg = u" <i>(%s)</i>" % cgi.escape(delayAwareMsg)
+                    res = res + u"<u>%s %s:</u>" % (cgi.escape(advice['name']),
+                                                    delayAwareMsg, )
+                else:
+                    res = res + u"<u>%s:</u>" % cgi.escape(advice['name'])
+
+                # add advice type
+                res = res + u"<br /><u>%s :</u> <i>%s</i>" % (translate('Advice type',
+                                                              domain='PloneMeeting',
+                                                              context=self.request),
+                                                              translate([advice['type']][0],
+                                                                        domain='PloneMeeting',
+                                                                        context=self.request), )
+
+                # display the author if advice was given
+                if withAuthor and not adviceType == NOT_GIVEN_ADVICE_VALUE:
+                    adviceObj = getattr(item, advice['advice_id'])
+                    author = membershipTool.getMemberInfo(adviceObj.Creator())
+                    if author:
+                        author = author['fullname']
+                    else:
+                        author = adviceObj.Creator()
+                    res = res + u"<br /><u>%s :</u> <i>%s</i>" % (translate('Advice given by',
+                                                                  domain='PloneMeeting',
+                                                                  context=self.request),
+                                                                  cgi.escape(unicode(author, 'utf-8')), )
+
+                adviceComment = 'comment' in advice and advice['comment'] or '-'
+                res = res + (u"<br /><u>%s :</u> %s<p></p>" % (translate('Advice comment',
+                                                                         domain='PloneMeeting',
+                                                                         context=self.request),
+                                                               unicode(adviceComment, 'utf-8')))
+        if not itemAdvicesByType:
+            res += '-'
+        res += u"</p>"
+
+        return res.encode('utf-8')
 
 
 class FolderDocumentGenerationHelperView(PMDocumentGenerationHelperView):
