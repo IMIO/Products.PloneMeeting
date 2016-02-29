@@ -13,11 +13,9 @@
     <ul class="fewMeetings">
         <li tal:condition="python: nbOfMeetings <= maxShownMeetings"
                   tal:repeat="brain brains">
-            <a tal:attributes="href brain/getURL;
-                               class python: context.REQUEST['URL'].startswith(brain.getURL()) and 'portletSelected' or ''"
-               tal:content="structure python: view.getMeetingPrettyLink(brain)">
-                Meeting date
-            </a>
+            <div tal:attributes="class python: context.REQUEST['URL'].startswith(brain.getURL()) and 'portletSelected' or ''">
+               <tal:meetingPrettyLink replace="structure python: view.getMeetingPrettyLink(brain)" />
+            </div>
         </li>
     </ul>
 

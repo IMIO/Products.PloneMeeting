@@ -450,7 +450,7 @@ class MeetingFileContentDeletableAdapter(APContentDeletableAdapter):
         return False
 
 
-class PMPrettyLinkAdapter(PrettyLinkAdapter):
+class ItemPrettyLinkAdapter(PrettyLinkAdapter):
     """
       Override to take into account PloneMeeting use cases...
     """
@@ -460,8 +460,6 @@ class PMPrettyLinkAdapter(PrettyLinkAdapter):
           Manage icons to display before the icons managed by PrettyLink._icons.
         """
         res = []
-        if not self.context.meta_type == 'MeetingItem':
-            return res
 
         meeting = getCurrentMeetingObject(self.context)
         inAvailableItems = False
@@ -609,6 +607,23 @@ class PMPrettyLinkAdapter(PrettyLinkAdapter):
                                                 domain="PloneMeeting",
                                                 mapping={'fullname': safe_unicode(tool.getUserName(takenOverBy))},
                                                 context=self.request)))
+        return res
+
+
+class MeetingPrettyLinkAdapter(PrettyLinkAdapter):
+    """
+      Override to take into account PloneMeeting use cases...
+    """
+
+    def _leadingIcons(self):
+        """
+          Manage icons to display before the icons managed by PrettyLink._icons.
+        """
+        res = []
+        if self.context.getExtraordinarySession():
+            res.append(('extraordinarySession.png', translate('this_meeting_is_extraodrinary_meeting',
+                                                      domain="PloneMeeting",
+                                                      context=self.request)))
         return res
 
 

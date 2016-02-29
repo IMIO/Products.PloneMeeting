@@ -162,9 +162,12 @@
     <implements interface="Products.ATContentTypes.interfaces.file.IFileContent" />
   </class>
 
-  <!-- IPrettyLink for MeetingItem -->
+  <!-- IPrettyLink -->
   <adapter for="Products.PloneMeeting.interfaces.IMeetingItem"
-           factory=".adapters.PMPrettyLinkAdapter"
+           factory=".adapters.ItemPrettyLinkAdapter"
+           provides="imio.prettylink.interfaces.IPrettyLink" />
+  <adapter for="Products.PloneMeeting.interfaces.IMeeting"
+           factory=".adapters.MeetingPrettyLinkAdapter"
            provides="imio.prettylink.interfaces.IPrettyLink" />
 
   <five:deprecatedManageAddDelete class=".MeetingItem.MeetingItem" />
