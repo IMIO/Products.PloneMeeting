@@ -47,21 +47,25 @@
     tal:content="python: 'ploneEditor = \'%s\';' % (member.getProperty('wysiwyg_editor') or here.portal_properties.site_properties.default_editor)">
   </script>
 
+
   <tal:comment replace="nothing">XXX changed for PM, infos displayed before the faceted table.</tal:comment>
   <tal:meetingBeforeFacetedInfos replace="structure context/@@meeting-before-faceted-infos" />
-  <tal:comment replace="nothing">Show items that may be presented into the current meeting</tal:comment>
-  <h2 tal:condition="showAvailableItems" class="available-items"> <span i18n:translate='available_items'>Available items</span></h2>
-  <iframe src="@@meeting_available_items_view"
-          tal:attributes="src string:${context/absolute_url}/@@meeting_available_items_view?ajax_load=0&ajax_include_head=1"
-          class="auto-height" style="width: 100%;"><span>trlal</span>
-  </iframe>
-
-  <script>
-      $('iframe.auto-height').iFrameResize({log:true})
-  </script>
-
-  <tal:comment replace="nothing">Show items that are presented into the current meeting</tal:comment>
-  <h2 class="presented-items" i18n:translate="presented_items"><span>Presented items</span> (<span class="meeting_number_of_items" tal:content="context/numberOfItems"/>)</h2>
+  <tal:availableItems condition="showAvailableItems">
+    <h2>
+      <span i18n:translate='available_items'>Available items</span>
+    </h2>
+    <iframe src="@@meeting_available_items_view"
+            tal:attributes="src string:${context/absolute_url}/@@meeting_available_items_view?ajax_load=0&ajax_include_head=1"
+            class="auto-height" style="width: 100%;"><span>trlal</span>
+    </iframe>
+    
+    <script>
+        $('iframe.auto-height').iFrameResize({log:true})
+    </script>
+  </tal:availableItems>
+  <h2 class="presented-items" i18n:translate="presented_items">
+    <span>Presented items</span> (<span class="meeting_number_of_items" tal:content="context/numberOfItems"/>)
+  </h2>
 
   <!-- Folder contents -->
   <div class="faceted-form" metal:define-macro="widgets" id="faceted-form"
