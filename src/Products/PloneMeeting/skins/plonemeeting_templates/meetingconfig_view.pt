@@ -504,8 +504,8 @@
 
     <tal:workflow condition="python: pageName=='workflow'">
       <p i18n:translate="meetingconfig_workflow_descr" class='pageNameDescr'></p><br />
-      <p i18n:translate="warning_meetingconfig_workflow_descr" style="color: red;">
-        DO NOT CHANGE PARAMETERS DEFINFED IN THIS SECTION UNLESS YOU ARE REALLY SURE WHAT YOU ARE DOING!
+      <p i18n:translate="warning_meetingconfig_edit_section_descr" style="color: red;">
+        DO NOT CHANGE PARAMETERS DEFINED IN THIS SECTION UNLESS YOU ARE REALLY SURE WHAT YOU ARE DOING!
       </p><br />
       
       <table width="100%" class="discreet" tal:define="wfTool python: context.portal_workflow">
@@ -620,6 +620,9 @@
         <legend>
           <span i18n:translate="Searches">Searches</span>
         </legend>
+        <p i18n:translate="warning_meetingconfig_edit_section_descr" style="color: red;">
+          DO NOT CHANGE PARAMETERS DEFINED IN THIS SECTION UNLESS YOU ARE REALLY SURE WHAT YOU ARE DOING!
+        </p>
         <p class="discreet" i18n:translate="searches_descr"></p>
         <p><img src="manage.png"
                 tal:attributes="src string:${portal_url}/manage.png;"/>&nbsp;
@@ -627,6 +630,7 @@
                 Manage dashboard
             </a>
         </p>
+
         <tal:searchesCategories repeat="cFolder python: context.searches.objectValues()">
             <table class="listing nosort" style="text-align: right;" width="100%"
                    tal:define="cFolderUrl cFolder/absolute_url" width="100%;">
