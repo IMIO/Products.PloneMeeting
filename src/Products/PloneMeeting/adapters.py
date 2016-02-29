@@ -621,9 +621,10 @@ class MeetingPrettyLinkAdapter(PrettyLinkAdapter):
         """
         res = []
         if self.context.getExtraordinarySession():
-            res.append(('extraordinarySession.png', translate('this_meeting_is_extraodrinary_meeting',
-                                                      domain="PloneMeeting",
-                                                      context=self.request)))
+            res.append(('extraordinarySession.png',
+                        translate('this_meeting_is_extraodrinary_session',
+                                  domain="PloneMeeting",
+                                  context=self.request)))
         return res
 
 
