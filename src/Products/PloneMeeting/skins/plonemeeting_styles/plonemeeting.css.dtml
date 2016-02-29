@@ -115,6 +115,7 @@ div.ploneMeetingSelectContainer.go_to_meeting_img_select_box p {
     text-align: left;
     width: auto;
     z-index: 1;
+    overflow: hidden;
 }
 div.ploneMeetingSelectContainer.annex_type_img_select_box div#annex_type_img_select_box {
     min-width: 274px;
