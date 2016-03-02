@@ -152,7 +152,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   in this case annexes are set "to print" for information, it is not converted to printable format and these annexes need
   to be printed manually, last option is "for automated printing", in this case, annexes "to print" are converted to
   printable formats to be inserted in a generated Pod template.  Added also a faceted filter "annexes to print?" filtering
-  items having annexes to print or not
+  items having annexes to print or not.  Moreover, added a method "imageOrientation" to the view passed to the Pod template
+  to manage orientation of inserted images of annexes to print
 - Bugfix when sending an item to another MC, the 'time' of the event was the 'time' of the last event, if resulting item
   was deleted then item was sent again, it used wrong 'time', now it uses the correct current time
 - Use plone.api.env.adopt_user and plone.api.env.adopt_roles instead of getSecurityManager/setSecurityManager
