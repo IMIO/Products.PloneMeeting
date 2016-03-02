@@ -238,7 +238,8 @@ class MeetingItemWorkflowConditions:
                    self.context.fieldIsEmpty('motivation'):
                     res = True
                 else:
-                    itemNumber = self.context.getItemNumber(relativeTo='meeting')
+                    itemNumber = self.context.getItemNumber(relativeTo='meeting',
+                                                            for_display=True)
                     res = No(translate('decision_is_empty',
                                        mapping={'itemNumber': itemNumber},
                                        domain="PloneMeeting",

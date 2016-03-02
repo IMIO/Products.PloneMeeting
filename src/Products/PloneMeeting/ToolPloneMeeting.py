@@ -1246,7 +1246,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                                 raise Exception('Could not update meeting file type of copied annex at %s!'
                                                 % oldAnnex.absolute_url())
                         # initialize toPrint correctly regarding configuration
-                        newAnnex.setToPrint(toPrintDefault)
+                        if not destMeetingConfig.getKeepOriginalToPrintOfClonedItems():
+                            newAnnex.setToPrint(toPrintDefault)
                         # call processForm on the newAnnex so it is fully initialized
                         newAnnex.processForm()
             # The copy/paste has transferred history. We must clean the history

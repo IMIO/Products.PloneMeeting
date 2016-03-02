@@ -219,6 +219,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - MeetingConfig.transitionsReinitializingDelays is now multivalued so it is possible to define several transitions
   that will reinitialize advice delays, moreover, every transitions are now selectable, not only 'back' transitions
 - Do synchronize portlet_todo with dashboards so portlet is refreshed when an action in the dashboards is triggered
+- Added field MeetingConfig.keepOriginalToPrintOfClonedItems (True by default), it True, duplicated items annexes 'toPrint'
+  information will be kept from the original item, if False, we use the MeetingConfig.annexToPrintDefault to set the
+  'toPrint' information of annexes of the new item
 
 3.3 (2015-02-27)
 ----------------

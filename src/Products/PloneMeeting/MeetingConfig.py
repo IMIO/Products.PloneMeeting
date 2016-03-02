@@ -351,6 +351,18 @@ schema = Schema((
         vocabulary='listEnableAnnexToPrint',
     ),
     BooleanField(
+        name='keepOriginalToPrintOfClonedItems',
+        default=defValues.keepOriginalToPrintOfClonedItems,
+        widget=BooleanField._properties['widget'](
+            description="KeepOriginalToPrintOfClonedItems",
+            description_msgid="keep_original_to_print_of_cloned_items_descr",
+            label='Keeporiginaltoprintofcloneditems',
+            label_msgid='PloneMeeting_label_keepOriginalToPrintOfClonedItems',
+            i18n_domain='PloneMeeting',
+        ),
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    BooleanField(
         name='annexToPrintDefault',
         default=defValues.annexToPrintDefault,
         widget=BooleanField._properties['widget'](

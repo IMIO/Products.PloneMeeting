@@ -95,6 +95,15 @@
           <td tal:define="field python:here.getField('enableAnnexToPrint')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
+          <td tal:define="field python:here.getField('keepOriginalToPrintOfClonedItems')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td>
+          </td>
+          <td>
+          </td>
+        </tr>
+        <tr valign="top">
           <td tal:define="field python:here.getField('annexToPrintDefault')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
@@ -103,6 +112,8 @@
           </td>
           <td tal:define="field python:here.getField('annexAdviceToPrintDefault')">
             <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td>
           </td>
         </tr>
       </table>
@@ -678,6 +689,14 @@
                     <span tal:content="python: obj.getSort_reversed() and 'boolean_value_true' or 'boolean_value_false'"
                           i18n:translate="">Sort reversed</span>
                   </div>
+                  <div>
+                    <label class="formQuestion">
+                      <span i18n:translate="" i18n:domain="imio.dashboard">Show number of items in filter</span>
+                    </label> :
+                    <span tal:content="python: obj.getShowNumberOfItems() and 'boolean_value_true' or 'boolean_value_false'"
+                          i18n:translate="">Show number of items in filter</span>
+                  </div>
+                  
                 </td>
                 <td style="word-break: break-all;" >
                   <span tal:content="obj/tal_condition">TAL Condition</span>

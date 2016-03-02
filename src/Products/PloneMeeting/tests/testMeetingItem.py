@@ -3068,6 +3068,77 @@ class testMeetingItem(PloneMeetingTestCase):
         clonedItem = item.getItemClonedToOtherMC(cfg2Id)
         self.assertFalse(clonedItem.getToDiscuss())
 
+    def test_pm_AnnexToPrintBehaviourWhenCloned(self):
+        '''When cloning an item with annexes, to the same or another MeetingConfig, the 'toPrint' field
+           is kept depending on MeetingConfig.keepOriginalToPrintOfClonedItems.
+           If it is True, the original value is kept, if it is False, it will use the
+           MeetingConfig.annexToPrintDefault value.'''
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        cfg2Id = cfg2.getId()
+        cfg.setKeepOriginalToPrintOfClonedItems(False)
+        cfg2.setKeepOriginalToPrintOfClonedItems(False)
+        cfg.setAnnexToPrintDefault(False)
+        cfg.setAnnexDecisionToPrintDefault(False)
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2016/02/02'))
+        item = self.create('MeetingItem')
+        item.setDecision(self.decisionText)
+        self.presentItem(item)
+        self.decideMeeting(meeting)
+        self.do(item, 'accept')
+        self.assertEquals(item.queryState(), 'accepted')
+        # decide the item so we may add decision annex and add relevant annexes
+        annex = self.addAnnex(item)
+        self.assertFalse(annex.getToPrint())
+        annex.setToPrint(True)
+        self.assertTrue(annex.getToPrint())
+        annexDec = self.addAnnex(item, relatedTo='item_decision')
+        self.assertFalse(annexDec.getToPrint())
+        annexDec.setToPrint(True)
+        self.assertTrue(annexDec.getToPrint())
+
+        # clone item locally, as keepOriginalToPrintOfClonedItems is False
+        # default values defined in the config will be used
+        self.assertFalse(cfg.getKeepOriginalToPrintOfClonedItems())
+        clonedItem = item.clone()
+        cloneItemAnnex = IAnnexable(clonedItem).getAnnexes(relatedTo='item')[0]
+        cloneItemAnnexDec = IAnnexable(clonedItem).getAnnexes(relatedTo='item_decision')[0]
+        self.assertFalse(cloneItemAnnex.getToPrint())
+        self.assertFalse(cloneItemAnnexDec.getToPrint())
+
+        # enable keepOriginalToPrintOfClonedItems
+        self.changeUser('siteadmin')
+        cfg.setKeepOriginalToPrintOfClonedItems(True)
+        self.changeUser('pmManager')
+        clonedItem2 = item.clone()
+        cloneItem2Annex = IAnnexable(clonedItem2).getAnnexes(relatedTo='item')[0]
+        cloneItem2AnnexDec = IAnnexable(clonedItem2).getAnnexes(relatedTo='item_decision')[0]
+        self.assertTrue(cloneItem2Annex.getToPrint())
+        self.assertTrue(cloneItem2AnnexDec.getToPrint())
+
+        # clone item to another MC and test again
+        # cfg2.keepOriginalToPrintOfClonedItems is True
+        self.assertFalse(cfg2.getKeepOriginalToPrintOfClonedItems())
+        item.setOtherMeetingConfigsClonableTo((cfg2Id,))
+        clonedToCfg2 = item.cloneToOtherMeetingConfig(cfg2Id)
+        clonedToCfg2Annex = IAnnexable(clonedToCfg2).getAnnexes(relatedTo='item')[0]
+        clonedToCfg2AnnexDec = IAnnexable(clonedToCfg2).getAnnexes(relatedTo='item_decision')[0]
+        self.assertFalse(clonedToCfg2Annex.getToPrint())
+        self.assertFalse(clonedToCfg2AnnexDec.getToPrint())
+
+        # enable keepOriginalToPrintOfClonedItems
+        self.changeUser('siteadmin')
+        cfg2.setKeepOriginalToPrintOfClonedItems(True)
+        self.deleteAsManager(clonedToCfg2.UID())
+        # send to cfg2 again
+        self.changeUser('pmManager')
+        clonedToCfg2Again = item.cloneToOtherMeetingConfig(cfg2Id)
+        clonedToCfg2AgainAnnex = IAnnexable(clonedToCfg2Again).getAnnexes(relatedTo='item')[0]
+        clonedToCfg2AgainAnnexDec = IAnnexable(clonedToCfg2Again).getAnnexes(relatedTo='item_decision')[0]
+        self.assertTrue(clonedToCfg2AgainAnnex.getToPrint())
+        self.assertTrue(clonedToCfg2AgainAnnexDec.getToPrint())
+
     def test_pm_CustomInsertingMethodRaisesNotImplementedErrorIfNotImplemented(self):
         '''Test that we can use a custom inserting method, relevant code is called.
            For now, it will raise NotImplementedError.

@@ -290,6 +290,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.configVersion = ''
         self.itemCreatedOnlyUsingTemplate = False
         self.enableAnnexToPrint = 'disabled'
+        self.keepOriginalToPrintOfClonedItems = True
 
         # Data-related parameters ----------------------------------------------
         self.annexToPrintDefault = False
