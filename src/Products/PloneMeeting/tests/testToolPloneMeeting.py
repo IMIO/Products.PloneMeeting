@@ -192,8 +192,8 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # Check that the annexes have been cloned, too.
         self.assertEquals(len(IAnnexable(clonedItem).getAnnexes()), 1)
         newAnnex = clonedItem.objectValues('MeetingFile')[0]
-        # toPrint is the value defined in the configuration
-        self.assertEquals(newAnnex.getToPrint(), False)
+        # toPrint is kept as cfg.keepOriginalToPrintOfClonedItems is True by default
+        self.assertTrue(newAnnex.getToPrint())
         # check that annexes returned by the IAnnexable.getAnnexes method
         # and stored in annexIndex correspond to new cloned annexes
         newAnnexesUids = [annex.UID() for annex in clonedItem.objectValues('MeetingFile')]
