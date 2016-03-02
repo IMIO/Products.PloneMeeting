@@ -83,7 +83,7 @@ setDefaultRoles(AddAnnex, ('Manager', 'Owner'))
 ReadDecision = 'PloneMeeting: Read decision'
 WriteDecision = 'PloneMeeting: Write decision'
 ReadObservations = 'PloneMeeting: Read item observations'
-WriteObservations = 'PloneMeeting: Write item observations'
+WriteItemMeetingManagerFields = 'PloneMeeting: Write item MeetingManager reserved fields'
 ReadDecisionAnnex = 'PloneMeeting: Read decision annex'
 WriteDecisionAnnex = 'PloneMeeting: Write decision annex'
 ReadBudgetInfos = 'PloneMeeting: Read budget infos'

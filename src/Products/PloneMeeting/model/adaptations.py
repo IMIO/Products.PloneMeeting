@@ -13,7 +13,9 @@ from plone import api
 from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.PloneMeeting import logger
-from Products.PloneMeeting.config import ReadDecision, WriteDecision
+from Products.PloneMeeting.config import ReadDecision
+from Products.PloneMeeting.config import WriteDecision
+from Products.PloneMeeting.config import WriteItemMeetingManagerFields
 from Products.PloneMeeting.utils import updateCollectionCriterion
 
 # Stuff for performing workflow adaptations ------------------------------------
@@ -47,7 +49,7 @@ RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE = {'meetingitem_workflow': 'meetingitem
 # if roles for a permission is a tuple, it means that it is not acquired and if it is a list,
 # it means that is is acquired... so most of times, use tuples to define roles
 # For example :
-# {'my_item_workflow': {'PloneMeeting: Write item observations': ('Manager', 'MeetingManager', 'MeetingMember', )}, }
+# {'my_item_workflow': {WriteMeetingManagerItemFields: ('Manager', 'MeetingManager', 'MeetingMember', )}, }
 RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS = {}
 # states of the meeting from wich an item can be 'returned_to_proposing_group'
 RETURN_TO_PROPOSING_GROUP_FROM_ITEM_STATES = ('presented', 'itemfrozen', 'itempublished', )
@@ -670,7 +672,7 @@ additions = {
         label='PloneMeeting_itemObservations',
         condition="python: here.attributeIsUsed('observations')",
         readPermission="PloneMeeting: Read item observations",
-        writePermission="PloneMeeting: Write item observations")),
+        writePermission=WriteItemMeetingManagerFields)),
 
     # Additional fields for Meeting
     "Meeting": (cf('observations', type='rich',

@@ -36,7 +36,6 @@ from Products.Archetypes.atapi import TextField
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 
 ##code-section module-header #fill in your manual code here
-import cgi
 import lxml.html
 from datetime import datetime
 from collections import OrderedDict
@@ -294,7 +293,7 @@ class MeetingItemWorkflowConditions:
             return True
         # if we did not return True, then return a No(...) message specifying that
         # it can no more be returned to the meeting because the meeting is in some
-        # specifig states (like 'closed' for example)
+        # specific states (like 'closed' for example)
         if meetingState in RETURN_TO_PROPOSING_GROUP_MAPPINGS['NO_MORE_RETURNABLE_STATES']:
             # avoid to display No(...) message for each transition having the 'mayBackToMeeting'
             # guard expr, just return the No(...) msg for the first transitionName checking this...
@@ -822,6 +821,7 @@ schema = Schema((
         default_content_type="text/html",
         default_output_type="text/x-html-safe",
         optional=True,
+        write_permission="PloneMeeting: Write item MeetingManager reserved fields",
     ),
     TextField(
         name='notes',
@@ -836,6 +836,7 @@ schema = Schema((
         default_content_type="text/html",
         default_output_type="text/x-html-safe",
         optional=True,
+        write_permission="PloneMeeting: Write item MeetingManager reserved fields",
     ),
     TextField(
         name='observations',
@@ -852,7 +853,7 @@ schema = Schema((
         allowable_content_types=('text/html',),
         default_output_type="text/x-html-safe",
         optional=True,
-        write_permission="PloneMeeting: Write item observations",
+        write_permission="PloneMeeting: Write item MeetingManager reserved fields",
     ),
     BooleanField(
         name='toDiscuss',

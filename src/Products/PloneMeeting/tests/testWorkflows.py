@@ -29,6 +29,7 @@ from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.statusmessages.interfaces import IStatusMessage
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.cache import cleanRamCacheFor
+from Products.PloneMeeting.config import WriteItemMeetingManagerFields
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
@@ -585,6 +586,16 @@ class testWorkflows(PloneMeetingTestCase):
         cleanRamCacheFor('Products.PloneMeeting.Meeting.getItems')
         self.cleanMemoize()
         self.closeMeeting(meeting)
+
+    def test_pm_WriteItemMeetingManagerReservedFieldsPermission(self):
+        """The permission 'PloneMeeting: Write item MeetingManager reserved fields' is
+           used to protect fields on the item that are only editable by MeetingManagers."""
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        # find fields using the permission, it should not be editable by a MeetingMember
+        for field in item.Schema().fields():
+            if field.write_permission == WriteItemMeetingManagerFields:
+                self.assertFalse(item.mayQuickEdit(field.getName()))
 
 
 def test_suite():

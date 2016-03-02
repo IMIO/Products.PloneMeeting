@@ -35,6 +35,8 @@ from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
 from Products.PloneMeeting.config import HIDE_DECISION_UNDER_WRITING_MSG
 from Products.PloneMeeting.config import WriteDecision
+from Products.PloneMeeting.config import WriteItemMeetingManagerFields
+
 from Products.PloneMeeting.model.adaptations import WF_NOT_CREATOR_EDITS_UNLESS_CLOSED, \
     RETURN_TO_PROPOSING_GROUP_FROM_ITEM_STATES, RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE
 
@@ -1047,9 +1049,9 @@ class testWFAdaptations(PloneMeetingTestCase):
         from Products.PloneMeeting.model import adaptations
         # first time the wfAdaptation was applied without a defined RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS
         self.assertEquals(adaptations.RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS, {})
-        # we will change the 'PloneMeeting: Write item observations' but for now, it is the same permissions than
+        # we will change the WriteItemMeetingManagerFields but for now, it is the same permissions than
         # in the permissions cloned from the defined state to clone
-        CUSTOM_PERMISSION = 'PloneMeeting: Write item observations'
+        CUSTOM_PERMISSION = WriteItemMeetingManagerFields
         cfgItemWFId = cfg.getItemWorkflow()
         state_to_clone_id = RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE.get(cfgItemWFId).split('.')[1]
         if not 'MeetingManager' in \
@@ -1073,7 +1075,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.failIf('MeetingMember' in itemWF.states['returned_to_proposing_group'].permission_roles[CUSTOM_PERMISSION])
         # we define the custom permissions and we run the wfAdaptation again...
         adaptations.RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS[cfgItemWFId] = \
-            {'PloneMeeting: Write item observations':
+            {WriteItemMeetingManagerFields:
              ('Manager', 'MeetingManager', 'MeetingMember', )}
         # reapply wfAdaptation 'return_to_proposing_group'
         cfg.at_post_edit_script()
