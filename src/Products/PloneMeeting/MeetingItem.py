@@ -2799,7 +2799,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         member = api.user.get_current()
         field = self.Schema()[fieldName]
-        if (not bypassWritePermissionCheck and member.has_permission(field.write_permission, self) or True) and \
+        if (bypassWritePermissionCheck or member.has_permission(field.write_permission, self)) and \
            self.Schema()[fieldName].widget.testCondition(self.getParentNode(), portal, self) and not \
            (self.hasMeeting() and self.getMeeting().queryState() in Meeting.meetingClosedStates) or \
            tool.isManager(self, realManagers=True):
