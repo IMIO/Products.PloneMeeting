@@ -157,11 +157,6 @@
            for="Products.PloneMeeting.interfaces.IMeetingFile"
            factory="plone.app.blob.subtypes.file.SchemaExtender" />
 
-  <!-- makes the MeetingFile implements IFileContent so every views of collective.documentviewer are also available... -->
-  <class class="Products.PloneMeeting.MeetingFile.MeetingFile">
-    <implements interface="Products.ATContentTypes.interfaces.file.IFileContent" />
-  </class>
-
   <!-- IPrettyLink -->
   <adapter for="Products.PloneMeeting.interfaces.IMeetingItem"
            factory=".adapters.ItemPrettyLinkAdapter"
@@ -202,6 +197,16 @@
   </class>
   <class class="Products.PloneMeeting.Meeting.Meeting">
     <implements interface="eea.facetednavigation.interfaces.IPossibleFacetedNavigable" />
+  </class>
+  <!-- makes the MeetingFile implements IFileContent so every views of collective.documentviewer are also available... -->
+  <class class="Products.PloneMeeting.MeetingFile.MeetingFile">
+    <implements interface="Products.ATContentTypes.interfaces.file.IFileContent" />
+  </class>
+  <!-- makes the MeetingItem implements IFinderUploadCapable and IQuickUploadCapable
+      so user may upload Images into it thru plonefinder -->
+  <class class="Products.PloneMeeting.MeetingItem.MeetingItem">
+    <implements interface="collective.plonefinder.browser.interfaces.IFinderUploadCapable" />
+    <implements interface="collective.quickupload.interfaces.IQuickUploadCapable" />
   </class>
 
   <!-- ##/code-section configure.zcml.core -->

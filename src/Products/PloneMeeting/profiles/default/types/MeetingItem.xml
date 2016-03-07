@@ -17,6 +17,7 @@
    <element value="MeetingFile"/>
    <element value="meetingadvice"/>
    <element value="File"/>
+   <element value="Image"/>
  </property>
  <property name="allow_discussion">False</property>
  <property name="default_view">meetingitem_view</property>
