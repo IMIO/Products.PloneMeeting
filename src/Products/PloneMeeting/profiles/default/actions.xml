@@ -100,6 +100,10 @@
    <object name="local_roles" meta_type="CMF Action">
     <property name="available_expr">python: not here.portal_plonemeeting.isInPloneMeeting(here, True)</property>
    </object>
+   <!-- Hide the 'Faceted criteria' everywhere except in the configuration -->
+   <object name="faceted.configure" meta_type="CMF Action">
+    <property name="available_expr">python: here.portal_plonemeeting.showFacetedCriteriaAction(here)</property>
+   </object>
   </object>
 
   <!-- Manage portal_tabs actions. -->

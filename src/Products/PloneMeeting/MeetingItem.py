@@ -51,8 +51,10 @@ from OFS.ObjectManager import BeforeDeleteException
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from zope.annotation.interfaces import IAnnotations
 from zope.component import getMultiAdapter
+from zope.component import queryUtility
 from zope.event import notify
 from zope.i18n import translate
+from zope.schema.interfaces import IVocabularyFactory
 from plone import api
 from plone.memoize import ram
 from Products.Archetypes.event import ObjectEditedEvent
@@ -1091,7 +1093,8 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         optional=True,
-        vocabulary='listPrivacyValues',
+        vocabulary_factory='Products.PloneMeeting.vocabularies.privaciesvocabulary'
+
     ),
     StringField(
         name='completeness',
@@ -2230,17 +2233,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Not required anymore because field "itemAbsents" is never shown.'''
         return []
 
-    security.declarePublic('listPrivacyValues')
-
-    def listPrivacyValues(self):
-        '''An item be "public" or "secret".'''
-        d = 'PloneMeeting'
-        res = DisplayList((
-            ("public", translate('public', domain=d, context=self.REQUEST)),
-            ("secret", translate('secret', domain=d, context=self.REQUEST)),
-        ))
-        return res
-
     security.declarePublic('listEmergencies')
 
     def listEmergencies(self):
@@ -2799,7 +2791,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         member = api.user.get_current()
         field = self.Schema()[fieldName]
-        if (not bypassWritePermissionCheck and member.has_permission(field.write_permission, self) or True) and \
+        if (bypassWritePermissionCheck or member.has_permission(field.write_permission, self)) and \
            self.Schema()[fieldName].widget.testCondition(self.getParentNode(), portal, self) and not \
            (self.hasMeeting() and self.getMeeting().queryState() in Meeting.meetingClosedStates) or \
            tool.isManager(self, realManagers=True):
@@ -2897,7 +2889,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         elif insertMethod in ('on_proposing_groups', 'on_all_groups'):
             return len(tool.getMeetingGroups(onlyActive=False))
         elif insertMethod == 'on_privacy':
-            return len(self.listPrivacyValues())
+            factory = queryUtility(IVocabularyFactory,
+                                   'Products.PloneMeeting.vocabularies.privaciesvocabulary')
+            return len(factory(self))
         elif insertMethod == 'on_to_discuss':
             # either 'toDiscuss' is True or False
             return 2
@@ -2946,7 +2940,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res = self.getProposingGroup(True).getOrder(self.getAssociatedGroups(), onlyActive=False)
         elif insertMethod == 'on_privacy':
             privacy = self.getPrivacy()
-            privacies = self.listPrivacyValues().keys()
+            factory = queryUtility(IVocabularyFactory,
+                                   'Products.PloneMeeting.vocabularies.privaciesvocabulary')
+            privacies = [term.token for term in factory(self)._terms]
             # Get the order of the privacy
             res = privacies.index(privacy)
         elif insertMethod == 'on_to_discuss':

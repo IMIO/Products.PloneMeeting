@@ -227,6 +227,10 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   "PloneMeeting: Write item MeetingManager reserved fields" that is now used to protect every fields of the item that should
   only be writeable by the MeetingManagers, it is the case for fields MeetingItem.inAndOutMoves, MeetingItem.notes
   and MeetingItem.observations
+- Added validator for fields MeetingGroup.certifiedSignatures and MeetingConfig.certifiedSignatures, it takes care that :
+  - signatures are sorted by signature number;
+  - if dates (date_from and date_to) are provided, both are provided and it respects correct format;
+  - 2 lines are not using same 'number/datefrom/dateto'
 
 3.3 (2015-02-27)
 ----------------

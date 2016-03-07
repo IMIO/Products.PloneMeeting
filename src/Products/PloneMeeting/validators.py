@@ -32,12 +32,16 @@ class CertifiedSignaturesValidator:
         self.description = description
 
     def __call__(self, value, *args, **kwargs):
-        '''Validate the 'certifiedSignatures' field, check that provided dates
-           (date_from and date_to) respect correct format and that signatures are
-           sorted by signature number.'''
+        '''Validate the 'certifiedSignatures' field, check that :
+           - signatures are sorted by signature number;
+           - if dates (date_from and date_to) are provided, both are provided and it respects correct format;
+           - 2 lines are not using same 'number/datefrom/dateto'.'''
         lastSignatureNumber = 0
         row_number = 0
         portal = getSite()
+        # we will store a "hash" of every signatures so we may check
+        # that 2 signatures does not use same number/datefrom/dateto
+        signHashes = []
         for signature in value:
             # bypass 'template_row_marker'
             if 'orderindex_' in signature and signature['orderindex_'] == 'template_row_marker':
@@ -55,28 +59,38 @@ class CertifiedSignaturesValidator:
             date_to = signature['date_to']
             # stop checks if no date provided
             if not date_from and not date_to:
-                continue
-            # if a date is provided, both are required
-            if (date_from and not date_to) or \
-               (date_to and not date_from):
-                return translate('error_certified_signatures_both_dates_required',
+                pass
+            else:
+                # if a date is provided, both are required
+                if (date_from and not date_to) or \
+                   (date_to and not date_from):
+                    return translate('error_certified_signatures_both_dates_required',
+                                     mapping={'row_number': row_number},
+                                     domain='PloneMeeting',
+                                     context=portal.REQUEST)
+                try:
+                    datetime_from = DateTime(date_from)
+                    datetime_to = DateTime(date_to)
+                    # respect right string format?
+                    # datefrom <= dateto?
+                    if not datetime_from.strftime('%Y/%m/%d') == date_from or \
+                       not datetime_to.strftime('%Y/%m/%d') == date_to or \
+                       not datetime_from <= datetime_to:
+                        raise SyntaxError
+                except:
+                    return translate('error_certified_signatures_invalid_dates',
+                                     mapping={'row_number': row_number},
+                                     domain='PloneMeeting',
+                                     context=portal.REQUEST)
+            # now check that 2 signatures having same number does not have same period
+            # indeed 2 signatures with same number and period is nonsense, the first will still be used
+            signHash = "{0}__{1}__{2}".format(signatureNumber, date_from, date_to)
+            if signHash in signHashes:
+                return translate('error_certified_signatures_duplicated_entries',
                                  mapping={'row_number': row_number},
                                  domain='PloneMeeting',
                                  context=portal.REQUEST)
-            try:
-                datetime_from = DateTime(date_from)
-                datetime_to = DateTime(date_to)
-                # respect right string format?
-                # datefrom <= dateto?
-                if not datetime_from.strftime('%Y/%m/%d') == date_from or \
-                   not datetime_to.strftime('%Y/%m/%d') == date_to or \
-                   not datetime_from <= datetime_to:
-                    raise SyntaxError
-            except:
-                return translate('error_certified_signatures_invalid_dates',
-                                 mapping={'row_number': row_number},
-                                 domain='PloneMeeting',
-                                 context=portal.REQUEST)
+            signHashes.append(signHash)
 
 
 # Helper class for validating workflow interfaces ------------------------------

@@ -31,8 +31,9 @@ from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCas
 class testValidators(PloneMeetingTestCase):
     '''Tests the validators.'''
 
-    def test_pm_IsValidCertifiedSignaturesValidator(self):
+    def test_pm_IsValidCertifiedSignaturesValidatorWorking(self):
         '''Test the 'isCertifiedSignaturesValidator' validator.
+           Here we are testing that working cases are actually working..."""
            It fails if :
            - signatures are not ordered by signature number;
            - both date_from/date_to are not provided together (if provided);
@@ -90,6 +91,10 @@ class testValidators(PloneMeetingTestCase):
         ]
         self.failIf(v(certified))
 
+    def test_pm_IsValidCertifiedSignaturesValidatorFailIfNotOrdered(self):
+        '''Test the 'isCertifiedSignaturesValidator' validator.
+           It fails if signatures are not ordered by signature number.'''
+        v = validation.validatorFor('isValidCertifiedSignatures')
         # fails if signatureNumber are not ordered
         certified = [
             {'signatureNumber': '2',
@@ -111,7 +116,11 @@ class testValidators(PloneMeetingTestCase):
         self.assertEquals(v(certified),
                           order_error_msg)
 
-        # if we want to use date, we have to provide both from and to
+    def test_pm_IsValidCertifiedSignaturesValidatorFailIfBothDatesNotProvided(self):
+        '''Test the 'isCertifiedSignaturesValidator' validator.
+           It fails if signatures both dates are not provided.'''
+        v = validation.validatorFor('isValidCertifiedSignatures')
+        # if we want to use date, we have to provide both date_from and date_to
         certified = [
             {'signatureNumber': '1',
              'name': '',
@@ -137,6 +146,10 @@ class testValidators(PloneMeetingTestCase):
         self.assertEquals(v(certified),
                           both_error_msg)
 
+    def test_pm_IsValidCertifiedSignaturesValidatorFailIfWrondDateFormat(self):
+        '''Test the 'isCertifiedSignaturesValidator' validator.
+           It fails if signatures use wrong format for dates.'''
+        v = validation.validatorFor('isValidCertifiedSignatures')
         # check date format
         # wrong date
         certified = [
@@ -204,6 +217,65 @@ class testValidators(PloneMeetingTestCase):
                                              context=self.portal.REQUEST)
         self.assertEquals(v(certified),
                           invalid_dates_error_msg2)
+
+    def test_pm_IsValidCertifiedSignaturesValidatorFailIfUsingDuplicatedEntries(self):
+        '''Test the 'isCertifiedSignaturesValidator' validator.
+           It fails if 2 entries use exactly same signatureNumber/date_from/date_to.'''
+        v = validation.validatorFor('isValidCertifiedSignatures')
+        # test first without dates, row 3 is wrong
+        certified = [
+            {'signatureNumber': '1',
+             'name': '',
+             'function': '',
+             'date_from': '',
+             'date_to': '',
+             },
+            {'signatureNumber': '2',
+             'name': '',
+             'function': '',
+             'date_from': '',
+             'date_to': '',
+             },
+            {'signatureNumber': '2',
+             'name': '',
+             'function': '',
+             'date_from': '',
+             'date_to': '',
+             },
+        ]
+        duplicated_entries_error_msg = translate('error_certified_signatures_duplicated_entries',
+                                                 mapping={'row_number': 3},
+                                                 domain='PloneMeeting',
+                                                 context=self.portal.REQUEST)
+        self.assertEquals(v(certified),
+                          duplicated_entries_error_msg)
+        # test with dates, row 2 is wrong
+        certified = [
+            {'signatureNumber': '1',
+             'name': '',
+             'function': '',
+             'date_from': '2015/01/01',
+             'date_to': '2015/02/02',
+             },
+            {'signatureNumber': '1',
+             'name': '',
+             'function': '',
+             'date_from': '2015/01/01',
+             'date_to': '2015/02/02',
+             },
+            {'signatureNumber': '2',
+             'name': '',
+             'function': '',
+             'date_from': '',
+             'date_to': '',
+             },
+        ]
+        duplicated_entries_error_msg2 = translate('error_certified_signatures_duplicated_entries',
+                                                  mapping={'row_number': 2},
+                                                  domain='PloneMeeting',
+                                                  context=self.portal.REQUEST)
+        self.assertEquals(v(certified),
+                          duplicated_entries_error_msg2)
 
 
 def test_suite():
