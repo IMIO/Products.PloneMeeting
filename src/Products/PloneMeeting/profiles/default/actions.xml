@@ -104,7 +104,6 @@
    <object name="faceted.configure" meta_type="CMF Action">
     <property name="available_expr">python: here.portal_plonemeeting.showFacetedCriteriaAction(here)</property>
    </object>
-   object/@@faceted_subtyper/is_faceted
   </object>
 
   <!-- Manage portal_tabs actions. -->
