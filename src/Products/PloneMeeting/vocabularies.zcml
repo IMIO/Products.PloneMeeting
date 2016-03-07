@@ -33,6 +33,8 @@
            name="Products.PloneMeeting.vocabularies.downorupworkflowagainvocabulary" />
   <utility component=".vocabularies.ListTypesVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.listtypesvocabulary" />
+  <utility component=".vocabularies.PrivaciesVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.privaciesvocabulary" />
 
   <!-- Vocabulary used in collectionwidget and inheritating from the imio.dashboard vocabulary -->
   <utility component=".vocabularies.PMConditionAwareCollectionVocabularyFactory"

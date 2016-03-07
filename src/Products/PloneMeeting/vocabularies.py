@@ -494,6 +494,30 @@ class ListTypesVocabulary(object):
 ListTypesVocabularyFactory = ListTypesVocabulary()
 
 
+class PrivaciesVocabulary(object):
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """ """
+        res = []
+        res.append(SimpleTerm('public',
+                              'public',
+                              safe_unicode(translate('public',
+                                                     domain='PloneMeeting',
+                                                     context=context.REQUEST)))
+                   )
+        res.append(SimpleTerm('secret',
+                              'secret',
+                              safe_unicode(translate('secret',
+                                                     domain='PloneMeeting',
+                                                     context=context.REQUEST)))
+                   )
+
+        return SimpleVocabulary(res)
+
+PrivaciesVocabularyFactory = PrivaciesVocabulary()
+
+
 class PMPortalTypesVocabulary(PortalTypesVocabularyFactory):
     """
     Vocabulary factory for 'pod_portal_types' field, make it MeetingConfig aware.
