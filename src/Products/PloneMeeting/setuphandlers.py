@@ -49,7 +49,6 @@ indexInfos = {
     'getPreferredMeetingDate': ('DateIndex', {}),
     'linkedMeetingUID': ('FieldIndex', {}),
     'linkedMeetingDate': ('DateIndex', {}),
-    'getDeliberation': ('ZCTextIndex', {}),
     'getCopyGroups': ('KeywordIndex', {}),
     'indexAdvisers': ('KeywordIndex', {}),
     'previous_review_state': ('FieldIndex', {}),

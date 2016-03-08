@@ -36,7 +36,6 @@ from Products.Archetypes.atapi import TextField
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 
 ##code-section module-header #fill in your manual code here
-import lxml.html
 from datetime import datetime
 from collections import OrderedDict
 from copy import deepcopy
@@ -114,7 +113,6 @@ from Products.PloneMeeting.utils import rememberPreviousData
 from Products.PloneMeeting.utils import sendMail
 from Products.PloneMeeting.utils import sendMailIfRelevant
 from Products.PloneMeeting.utils import setFieldFromAjax
-from Products.PloneMeeting.utils import signatureNotAlone
 from Products.PloneMeeting.utils import toHTMLStrikedContent
 from Products.PloneMeeting.utils import transformAllRichTextFields
 from Products.PloneMeeting.utils import workday
@@ -1267,49 +1265,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getDecision')
 
-    def getDecision(self, keepWithNext=False, **kwargs):
-        '''Overridde 'decision' field accessor. It allows to specify
-           p_keepWithNext=True. In that case, the last paragraph of bullet in
-           field "decision" will get a specific CSS class that will keep it with
-           next paragraph. Useful when including the decision in a document
-           template and avoid having the signatures, just below it, being alone
-           on the next page.
+    def getDecision(self, **kwargs):
+        '''Overridde 'decision' field accessor.
            Manage the 'hide_decisions_when_under_writing' workflowAdaptation that
            hides the decision for non-managers if meeting state is 'decided.'''
-        res = self.getField('decision').get(self, **kwargs)
-        if keepWithNext:
-            res = signatureNotAlone(res)
         # hide the decision?
         msg = self._mayNotViewDecisionMsg()
-        return msg or res
+        return msg or self.getField('decision').get(self, **kwargs)
     getRawDecision = getDecision
-
-    security.declarePublic('getDeliberation')
-
-    def getDeliberation(self, keepWithNext=False, separate=False, **kwargs):
-        '''Returns the entire deliberation depending on fields used.'''
-        motivation = self.getMotivation(**kwargs).strip()
-        decision = self.getDecision(**kwargs).strip()
-        # do add a separation blank line between motivation and decision
-        # if p_separate is True and if motivation is used...
-        if separate and motivation:
-            hasSeparation = False
-            # check if there is not already an empty line at the bottom of 'motivation'
-            # take last node and check if it is empty
-            # surround xhtmlContent with a special tag so we are sure that tree is always
-            # a list of children of this special tag
-            xhtmlContent = "<special_tag>%s</special_tag>" % motivation
-            tree = lxml.html.fromstring(unicode(xhtmlContent, 'utf-8'))
-            children = tree.getchildren()
-            if children and not children[-1].text:
-                hasSeparation = True
-
-            if not hasSeparation:
-                motivation = motivation + '<p>&nbsp;</p>'
-        deliberation = motivation + decision
-        if keepWithNext:
-            deliberation = signatureNotAlone(deliberation)
-        return deliberation
 
     security.declarePrivate('validate_category')
 

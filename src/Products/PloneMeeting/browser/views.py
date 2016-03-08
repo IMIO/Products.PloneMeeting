@@ -36,12 +36,14 @@ from Products.CMFCore.WorkflowCore import WorkflowException
 from plone import api
 from eea.facetednavigation.interfaces import ICriteria
 from collective.documentgenerator.helper.archetypes import ATDocumentGenerationHelperView
+from imio.helpers.xhtml import imagesToPath
 from Products.PloneMeeting import logger
 from Products.PloneMeeting.config import ADVICE_STATES_ALIVE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.browser.itemchangeorder import _is_integer
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
 from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
+from Products.PloneMeeting.utils import signatureNotAlone
 from Products.PloneMeeting.indexes import _to_coded_adviser_index
 
 
@@ -456,6 +458,41 @@ class PMDocumentGenerationHelperView(ATDocumentGenerationHelperView):
            as 'convertOptions' parameter."""
         if image.width > image.height:
             return '-rotate 90'
+
+    def printXhtml(self, context, xhtmlContents,
+                   image_src_to_paths=True, separatorValue='<p>&nbsp;</p>', keepWithNext=False):
+        """Helper method to format a p_xhtmlContents.  The xhtmlContents is a list or a string containing
+           either XHTML content or some specific recognized words like :
+           - 'space', in this case, it is replaced with the p_separatorValue;
+           Given xhtmlContents are all merged together to be printed in the document.
+           If p_keepWithNext is True, signatureNotAlone is applied on the resulting XHTML.
+           If p_image_src_to_paths is True, if some <img> are contained in the XHTML, the link to the image
+           is replaced with a path to the .blob of the image of the server so LibreOffice may access it.
+           Indeed, private images not accessible by anonymous may not be reahed by LibreOffice.
+           Finally, the separatorValue is used when word 'space' is encountered in xhtmlContents.
+           A call to printXHTML in a POD template with an item as context could be :
+           view.printXHTML(self.getMotivation(), 'space', '<p>DECIDE :</p>', 'space', self.getDecision())
+        """
+        xhtmlFinal = ''
+        # list or tuple?
+        if hasattr(xhtmlContents, '__iter__'):
+            for xhtmlContent in xhtmlContents:
+                if xhtmlContent == 'space':
+                    xhtmlFinal += separatorValue
+                else:
+                    xhtmlFinal += xhtmlContent
+        else:
+            xhtmlFinal = xhtmlContents
+
+        # manage image_src_to_paths
+        if image_src_to_paths:
+            xhtmlFinal = imagesToPath(context, xhtmlFinal)
+
+        # manage keepWithNext
+        if keepWithNext:
+            xhtmlFinal = signatureNotAlone(xhtmlFinal)
+
+        return xhtmlFinal
 
     def printHistory(self):
         """Return the history view for templates. """

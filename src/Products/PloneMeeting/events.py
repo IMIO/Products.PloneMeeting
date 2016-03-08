@@ -26,6 +26,7 @@ from OFS.ObjectManager import BeforeDeleteException
 from zope.event import notify
 from zope.i18n import translate
 from zope.lifecycleevent import IObjectRemovedEvent
+from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFPlone.utils import safe_unicode
 from plone import api
@@ -274,6 +275,24 @@ def onItemMoved(item, event):
     IAnnexable(item).updateAnnexIndex()
 
 
+def _addImagePermission(obj):
+    """Give the ability of users able to edit at least one XHTML field """
+    roles = []
+    # get every RichText fields using a write_permission
+    for field in obj.Schema().filterFields(default_content_type='text/html'):
+        if field.write_permission:
+            roles_of_perm = [perm['name'] for perm in obj.rolesOfPermission(field.write_permission)
+                             if perm['selected'] == 'SELECTED']
+            roles += roles_of_perm
+    # check the 'Modify portal content' permission
+    roles_of_perm = [perm['name'] for perm in obj.rolesOfPermission(ModifyPortalContent)
+                     if perm['selected'] == 'SELECTED']
+    roles += roles_of_perm
+    # remove duplicates
+    roles = tuple(set(roles))
+    obj.manage_permission("ATContentTypes: Add Image", roles)
+
+
 def onItemAdded(item, event):
     '''This method is called every time a MeetingItem is created, even in
        portal_factory. Local roles defined on an item define who may view
@@ -294,6 +313,8 @@ def onItemAdded(item, event):
     item.completeness_changes_history = PersistentList()
     # Add a place to store takenOverBy by review_state user id
     item.takenOverByInfos = PersistentMapping()
+    # manage the 'ATContentTypes: Add Image' permission
+    _addImagePermission(item)
 
 
 def onItemModified(item, event):

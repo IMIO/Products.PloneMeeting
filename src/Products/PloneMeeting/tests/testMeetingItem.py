@@ -2161,34 +2161,6 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failIf(itemTemplate.validate_proposingGroup(''))
         self.failIf(itemTemplate.validate_proposingGroup('developers'))
 
-    def test_pm_GetDeliberation(self):
-        '''Test different behaviours of getDeliberation.  getDeliberation concatenate motivation and decision.'''
-        # item.getDeliberation always works, no matter motivation/decision is used, empty, ...
-        self.changeUser('pmManager')
-        item = self.create('MeetingItem')
-        item.setMotivation('<p>My motivation</p>')
-        item.setDecision('<p>My decision</p>')
-        self.assertTrue(item.getDeliberation() == item.getMotivation() + item.getDecision())
-        # if passed arg separate=True, it adds a seperation blank line between motivation and decision
-        self.assertTrue(item.getDeliberation(separate=True) == item.getMotivation() +
-                        '<p>&nbsp;</p>' + item.getDecision())
-        # if passed keepWithNext is passed, a specific class 'pmParaKeepWithNext' is set
-        # on last tags of the text, until number of chars is 60
-        self.assertTrue(item.getDeliberation(keepWithNext=True) ==
-                        '<p class="pmParaKeepWithNext">My motivation</p>\n'
-                        '<p class="pmParaKeepWithNext">My decision</p>\n')
-        # keepWithNext applies a different class for lists
-        item.setMotivation('<p>My motivation</p><ul><li>Art 1</li><li>Art 2</li></ul>')
-        self.assertTrue(item.getDeliberation(keepWithNext=True) ==
-                        '<p class="pmParaKeepWithNext">My motivation</p>\n<ul>\n  '
-                        '<li class="podItemKeepWithNext">Art 1</li>\n  '
-                        '<li class="podItemKeepWithNext">Art 2</li>\n</ul>\n'
-                        '<p class="pmParaKeepWithNext">My decision</p>\n')
-        # if there is no motivation, we do not insert a blank line even if separate is True
-        item.setMotivation('')
-        self.assertTrue(item.getDeliberation() == item.getMotivation() + item.getDecision())
-        self.assertTrue(item.getDeliberation(separate=True) == item.getMotivation() + item.getDecision())
-
     def test_pm_GetMeetingsAcceptingItems(self):
         """Test the MeetingItem.getMeetingsAcceptingItems method."""
         cfg = self.meetingConfig
@@ -2229,7 +2201,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item1.setDecision(originalDecision)
         # for now, as nothing is defined, nothing happens when item is delayed
         self.do(item1, 'delay')
-        self.assertTrue(item1.getDecision(keepWithNext=False) == originalDecision)
+        self.assertTrue(item1.getDecision() == originalDecision)
         # configure onTransitionFieldTransforms and delay another item
         delayedItemDecision = '<p>This item has been delayed.</p>'
         self.meetingConfig.setOnTransitionFieldTransforms(
@@ -2239,13 +2211,13 @@ class testMeetingItem(PloneMeetingTestCase):
         item2 = meeting.getItems()[1]
         item2.setDecision(originalDecision)
         self.do(item2, 'delay')
-        self.assertTrue(item2.getDecision(keepWithNext=False) == delayedItemDecision)
+        self.assertTrue(item2.getDecision() == delayedItemDecision)
         # if the item was duplicated (often the case when delaying an item), the duplicated
         # item keep the original decision
         duplicatedItem = item2.getBRefs('ItemPredecessor')[0]
         # right duplicated item
         self.assertTrue(duplicatedItem.getPredecessor() == item2)
-        self.assertTrue(duplicatedItem.getDecision(keepWithNext=False) == originalDecision)
+        self.assertTrue(duplicatedItem.getDecision() == originalDecision)
         # this work also when triggering any other item or meeting transition with every rich fields
         item3 = meeting.getItems()[2]
         self.meetingConfig.setOnTransitionFieldTransforms(
@@ -2267,7 +2239,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # transition was triggered
         self.assertTrue(item4.queryState() == 'accepted')
         # original decision was not touched
-        self.assertTrue(item4.getDecision(keepWithNext=False) == '<p>My decision that will not be touched.</p>')
+        self.assertTrue(item4.getDecision() == '<p>My decision that will not be touched.</p>')
         # a portal_message is displayed to the user that triggered the transition
         messages = IStatusMessage(self.request).show()
         self.assertTrue(messages[-1].message == ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR %

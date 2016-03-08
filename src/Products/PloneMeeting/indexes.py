@@ -81,14 +81,6 @@ def getRawClassifier(obj):
 
 
 @indexer(IMeetingItem)
-def getDeliberation(obj):
-    """
-      Make sure to use 'text/plain' version of getDeliberation field
-    """
-    return obj.getDeliberation(mimetype='text/plain')
-
-
-@indexer(IMeetingItem)
 def reviewProcessInfo(obj):
     """
       Compute a reviewProcessInfo, this concatenate the proposingGroup

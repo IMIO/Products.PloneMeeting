@@ -638,6 +638,12 @@ class Migrate_To_3_4(Migrator):
                 logger.warn("Could not add new buttons 'Link' and 'Unlink' to the ckeditor toolbar!")
         logger.info('Done.')
 
+    def _removeUnusedIndexes(self):
+        """Index 'getDeliberation' is no more used."""
+        logger.info('Removing no more used indexes...')
+        removeIndexes(self.portal, indexes=('getDeliberation', ))
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.4...')
         # reinstall so versions are correctly shown in portal_quickinstaller
@@ -664,6 +670,7 @@ class Migrate_To_3_4(Migrator):
         self._updateEnableAnnexToPrint()
         self._updateHistoryComments()
         self._updateCKeditorCustomToolbar()
+        self._removeGetDeliberationIndex()
         # update workflow, needed for items moved to item templates and recurring items
         # update reference_catalog as ReferenceFied "MeetingConfig.toDoListTopics"
         # and "Meeting.lateItems" were removed

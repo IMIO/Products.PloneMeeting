@@ -22,6 +22,7 @@
 # 02110-1301, USA.
 #
 
+from os import path
 from datetime import datetime
 from DateTime import DateTime
 from AccessControl import Unauthorized
@@ -450,6 +451,71 @@ class testViews(PloneMeetingTestCase):
         view()
         messages = IStatusMessage(self.request).show()
         self.assertEquals(messages[-1].message, msg)
+
+    def test_pm_PrintXhtml(self):
+        '''Test the method that will ease print of XHTML content into Pod templates.'''
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.setMotivation('<p>The motivation using UTF-8 characters : \xc3\xa8\xc3\xa0.</p>')
+        motivation = item.getMotivation()
+        item.setDecision('<p>The d\xc3\xa9cision using UTF-8 characters.</p>')
+        decision = item.getDecision()
+        template = self.meetingConfig.podtemplates.itemTemplate
+        # call the document-generation view
+        self.request.set('template_uid', template.UID())
+        self.request.set('output_format', 'odt')
+        self.request.set('mailinglist_name', 'unknown_mailing_list')
+        view = item.restrictedTraverse('@@document-generation')
+        helper = view.get_generation_context_helper()
+
+        # test with one single xhtmlContent
+        self.assertEquals(helper.printXhtml(item, decision),
+                          item.getDecision())
+        # several xhtmlContent
+        self.assertEquals(helper.printXhtml(item, [motivation, decision]),
+                          motivation + decision)
+        # use 'space'
+        self.assertEquals(helper.printXhtml(item, [motivation, 'space', decision]),
+                          motivation + '<p>&nbsp;</p>' + decision)
+        # use 'space' with a fonctionnal usecase
+        self.assertEquals(helper.printXhtml(item, [motivation,
+                                                   'space',
+                                                   '<p>DECIDE :</p>',
+                                                   'space',
+                                                   decision]),
+                          motivation + '<p>&nbsp;</p><p>DECIDE :</p><p>&nbsp;</p>' + decision)
+
+        # use 'space' and change 'separatorValue', insert 2 empty lines
+        self.assertEquals(helper.printXhtml(item,
+                                            [motivation, 'space', decision],
+                                            separatorValue='<p>&nbsp;</p><p>&nbsp;</p>'),
+                          motivation + '<p>&nbsp;</p><p>&nbsp;</p>' + decision)
+        # use keepWithNext
+        # special characters are turned to HTML entities decimal representation
+        self.assertEquals(helper.printXhtml(item,
+                                            [motivation, 'space', decision],
+                                            keepWithNext=True),
+                          """<p class="pmParaKeepWithNext">The motivation using UTF-8 characters : &#232;&#224;.</p>
+<p class="pmParaKeepWithNext">&#160;</p>
+<p class="pmParaKeepWithNext">The d&#233;cision using UTF-8 characters.</p>
+""")
+
+        # use image_src_to_paths
+        file_path = path.join(path.dirname(__file__), 'dot.gif')
+        data = open(file_path, 'r')
+        img_id = item.invokeFactory('Image', id='img', title='Image', file=data.read())
+        img = getattr(item, img_id)
+        img_blob_path = img.getBlobWrapper().blob._p_blob_committed
+        text = "<p>Text with image <img src='{0}'/> and more text.".format(img.absolute_url())
+        self.assertEquals(helper.printXhtml(item,
+                                            [motivation, 'space', decision, 'space', text],
+                                            keepWithNext=True).replace('\n', ''),
+                          """<p>The motivation using UTF-8 characters : &#232;&#224;.</p>
+<p>&#160;</p>
+<p class="pmParaKeepWithNext">The d&#233;cision using UTF-8 characters.</p>
+<p class="pmParaKeepWithNext">&#160;</p>
+<p class="pmParaKeepWithNext">Text with image <img src="{0}"/> and more text.</p>
+""".format(img_blob_path).replace('\n', ''))
 
 
 def test_suite():

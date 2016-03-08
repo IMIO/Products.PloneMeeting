@@ -1174,9 +1174,7 @@ def applyOnTransitionFieldTransform(obj, transitionId):
             field = obj.getField(transform['field_name'].split('.')[1])
             field.set(obj, res, mimetype='text/html')
             idxs.append(field.accessor)
-    if idxs and obj.meta_type == 'MeetingItem':
-        idxs.append('getDeliberation')
-        obj.reindexObject(idxs=idxs)
+    obj.reindexObject(idxs=idxs)
 
 
 # ------------------------------------------------------------------------------
