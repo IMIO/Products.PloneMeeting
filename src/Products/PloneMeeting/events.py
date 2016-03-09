@@ -111,6 +111,8 @@ def onItemTransition(item, event):
     # to last user that was taking the item over or to nothing
     wf_state = "%s__wfstate__%s" % (cfg.getItemWorkflow(), event.new_state.getId())
     item.adapted().setHistorizedTakenOverBy(wf_state)
+    # manage the 'ATContentTypes: Add Image' permission
+    _addImagePermission(item)
     # notify our own PM event so we are sure that this event is called
     # after the onItemTransition event
     notify(ItemAfterTransitionEvent(item))
@@ -276,7 +278,9 @@ def onItemMoved(item, event):
 
 
 def _addImagePermission(obj):
-    """Give the ability of users able to edit at least one XHTML field """
+    """Give the ability of users able to edit at least one XHTML field.
+       Every roles having the 'Modify portal content' or a RichText
+       field.write_permission must be able to add images."""
     roles = []
     # get every RichText fields using a write_permission
     for field in obj.Schema().filterFields(default_content_type='text/html'):

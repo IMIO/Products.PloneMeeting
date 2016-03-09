@@ -22,6 +22,8 @@
 # 02110-1301, USA.
 #
 
+from os import path
+
 from AccessControl import Unauthorized
 from DateTime import DateTime
 
@@ -41,7 +43,6 @@ from imio.helpers.cache import cleanRamCacheFor
 
 from Products.PloneMeeting.browser.itemassembly import item_assembly_default
 from Products.PloneMeeting.browser.itemsignatures import item_signatures_default
-from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from Products.PloneMeeting.config import DEFAULT_COPIED_FIELDS
 from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_SAME_MC
 from Products.PloneMeeting.config import HISTORY_COMMENT_NOT_VIEWABLE
@@ -1289,13 +1290,14 @@ class testMeetingItem(PloneMeetingTestCase):
         # specify that budgetImpactEditors will be able to edit the budgetInfos of self.meetingConfig items
         # when the item is in state 'validated'.  For example here, a 'validated' item will not be fully editable
         # but the MeetingItem.budgetInfos field will be editable
-        self.portal.portal_groups.addPrincipalToGroup('pmReviewer2', '%s_%s' %
-                                                      (self.meetingConfig.getId(),
-                                                       BUDGETIMPACTEDITORS_GROUP_SUFFIX))
+        cfg = self.meetingConfig
         # we will let copyGroups view items when in state 'validated'
-        self.meetingConfig.setUseCopies(True)
-        self.meetingConfig.setItemCopyGroupsStates((self.WF_STATE_NAME_MAPPINGS['proposed'], 'validated', ))
-        self.meetingConfig.setItemBudgetInfosStates(('validated', ))
+        cfg.setUseCopies(True)
+        cfg.setItemCopyGroupsStates((self.WF_STATE_NAME_MAPPINGS['proposed'], 'validated', ))
+        cfg.setItemBudgetInfosStates(('validated', ))
+        # budget impact editors gets view on an item thru another role
+        # here 'budgetimpacteditor' is a powerobserver
+        cfg.setItemPowerObserversStates(('validated', ))
         # first make sure the permission associated with MeetingItem.budgetInfos.write_permission is the right one
         self.assertTrue(MeetingItem.schema['budgetInfos'].write_permission == WriteBudgetInfos)
         # now create an item for 'developers', let vendors access it setting them as copyGroups
@@ -1304,17 +1306,15 @@ class testMeetingItem(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         item.setCopyGroups(('vendors_reviewers', ))
         self.proposeItem(item)
-        item.at_post_create_script()
-        # for now, 'pmReviewer2' can not edit the field, even if item viewable
-        self.changeUser('pmReviewer2')
-        self.assertTrue(self.hasPermission(View, item))
+        # for now, 'budgetimpacteditor' can not view/edit the field
+        self.changeUser('budgetimpacteditor')
+        self.assertFalse(self.hasPermission(View, item))
         self.assertFalse(self.hasPermission(WriteBudgetInfos, item))
         # validate the item
         self.changeUser('pmReviewer1')
         self.validateItem(item)
-        item.at_post_create_script()
-        # now 'pmReviewer2' can see the item, not edit it fully but edit the budgetInfos
-        self.changeUser('pmReviewer2')
+        # now 'budgetimpacteditor' can see the item, not edit it fully but edit the budgetInfos
+        self.changeUser('budgetimpacteditor')
         self.assertTrue(self.hasPermission(View, item))
         self.assertFalse(self.hasPermission(ModifyPortalContent, item))
         self.assertTrue(self.hasPermission(WriteBudgetInfos, item))
@@ -3541,6 +3541,84 @@ class testMeetingItem(PloneMeetingTestCase):
         newItem2.processForm()
         self.assertEquals(newItem2.getId(), 'my-new-title-2')
         self.assertEquals(newItem2.getPredecessor(), item)
+
+    def test_pm_AddImagePermission(self):
+        """A user able to edit at least one RichText field must be able to add images."""
+        # configure so different access are enabled when item is validated
+        cfg = self.meetingConfig
+        cfg.setUseCopies(True)
+        cfg.setSelectableCopyGroups(('vendors_creators', ))
+        cfg.setUseAdvices(True)
+        cfg.setItemCopyGroupsStates(('itemcreated', 'validated', ))
+        cfg.setItemAdviceStates(('itemcreated', 'validated', ))
+        cfg.setItemAdviceEditStates(('itemcreated', 'validated', ))
+        cfg.setItemAdviceViewStates(('itemcreated', 'validated', ))
+        cfg.setItemBudgetInfosStates(('itemcreated', 'validated', ))
+        # test image
+        file_path = path.join(path.dirname(__file__), 'dot.gif')
+        data = open(file_path, 'r')
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem', title='My new title')
+        item.setCopyGroups(('vendors_reviewers', ))
+        item.setOptionalAdvisers(('vendors', ))
+        item.at_post_edit_script()
+        # users able to edit at least one field are able to add images
+        self.assertTrue(self.hasPermission('ATContentTypes: Add Image', item))
+        item.invokeFactory('Image', id='img1', title='Image1', file=data.read())
+        self.changeUser('budgetimpacteditor')
+        self.assertTrue(self.hasPermission('ATContentTypes: Add Image', item))
+        item.invokeFactory('Image', id='img2', title='Image2', file=data.read())
+        # users just able to see the item are not able to add images
+        # copyGroup
+        self.changeUser('pmCreator2')
+        self.assertFalse(self.hasPermission('ATContentTypes: Add Image', item))
+        self.assertRaises(Unauthorized, item.invokeFactory, 'Image', id='img', title='Image1', file=data.read())
+        # adviser
+        self.changeUser('pmReviewer2')
+        self.assertFalse(self.hasPermission('ATContentTypes: Add Image', item))
+
+        # propose the item
+        self.changeUser('pmCreator1')
+        self.proposeItem(item)
+        # nobody except 'pmReviewer1' may add images
+        self.assertFalse(self.hasPermission('ATContentTypes: Add Image', item))
+        self.assertRaises(Unauthorized, item.invokeFactory, 'Image', id='img', title='Image1', file=data.read())
+        # copyGroup not able to view
+        self.changeUser('pmCreator2')
+        self.assertFalse(self.hasPermission('ATContentTypes: Add Image', item))
+        # adviser not able to view
+        self.changeUser('pmReviewer2')
+        self.assertFalse(self.hasPermission('ATContentTypes: Add Image', item))
+        # budgetimpacteditor
+        self.changeUser('budgetimpacteditor')
+        self.assertFalse(self.hasPermission('ATContentTypes: Add Image', item))
+        # only one editor left
+        self.changeUser('pmReviewer1')
+        self.assertTrue(self.hasPermission('ATContentTypes: Add Image', item))
+        item.invokeFactory('Image', id='img3', title='Image3', file=data.read())
+
+        # validate the item
+        self.changeUser('pmCreator1')
+        self.validateItem(item)
+        # nobody except MeetingManagers and budgetimpacteditor may add images
+        self.assertFalse(self.hasPermission('ATContentTypes: Add Image', item))
+        self.assertRaises(Unauthorized, item.invokeFactory, 'Image', id='img', title='Image1', file=data.read())
+        # copyGroups
+        self.changeUser('pmCreator2')
+        self.assertFalse(self.hasPermission('ATContentTypes: Add Image', item))
+        # adviser
+        self.changeUser('pmReviewer2')
+        self.assertFalse(self.hasPermission('ATContentTypes: Add Image', item))
+        # reviewer
+        self.changeUser('pmReviewer1')
+        self.assertFalse(self.hasPermission('ATContentTypes: Add Image', item))
+        # MeetingManager and budgetimpacteditor
+        self.changeUser('budgetimpacteditor')
+        self.assertTrue(self.hasPermission('ATContentTypes: Add Image', item))
+        item.invokeFactory('Image', id='img4', title='Image4', file=data.read())
+        self.changeUser('pmManager')
+        self.assertTrue(self.hasPermission('ATContentTypes: Add Image', item))
+        item.invokeFactory('Image', id='img5', title='Image5', file=data.read())
 
 
 def test_suite():
