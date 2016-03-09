@@ -1784,7 +1784,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     removedItem.getField('manuallyLinkedItems').set(removedItem, [], **kwargs)
 
             # save newUids, newLinkedUids and removedUids in the REQUEST
-            # so it can be used by seubmethods like subscribers
+            # so it can be used by submethods like subscribers
             self.REQUEST.set('manuallyLinkedItems_newUids', newUids)
             self.REQUEST.set('manuallyLinkedItems_newLinkedUids', newLinkedUids)
             self.REQUEST.set('manuallyLinkedItems_removedUids', removedUids)
