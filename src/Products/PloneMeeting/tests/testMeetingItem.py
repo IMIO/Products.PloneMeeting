@@ -34,6 +34,7 @@ from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 
 from Products.PloneTestCase.setup import _createHomeFolder
+from Products.CMFCore.permissions import AddPortalContent
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.CMFCore.utils import getToolByName
@@ -3542,7 +3543,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEquals(newItem2.getId(), 'my-new-title-2')
         self.assertEquals(newItem2.getPredecessor(), item)
 
-    def test_pm_AddImagePermission(self):
+    def test_pm_ItemAddImagePermission(self):
         """A user able to edit at least one RichText field must be able to add images."""
         # configure so different access are enabled when item is validated
         cfg = self.meetingConfig
@@ -3564,37 +3565,58 @@ class testMeetingItem(PloneMeetingTestCase):
         item.at_post_edit_script()
         # users able to edit at least one field are able to add images
         self.assertTrue(self.hasPermission('ATContentTypes: Add Image', item))
+        self.assertTrue(self.hasPermission(AddPortalContent, item))
         item.invokeFactory('Image', id='img1', title='Image1', file=data.read())
         self.changeUser('budgetimpacteditor')
         self.assertTrue(self.hasPermission('ATContentTypes: Add Image', item))
+        self.assertTrue(self.hasPermission(AddPortalContent, item))
         item.invokeFactory('Image', id='img2', title='Image2', file=data.read())
         # users just able to see the item are not able to add images
         # copyGroup
         self.changeUser('pmCreator2')
         self.assertFalse(self.hasPermission('ATContentTypes: Add Image', item))
+        self.assertFalse(self.hasPermission(AddPortalContent, item))
         self.assertRaises(Unauthorized, item.invokeFactory, 'Image', id='img', title='Image1', file=data.read())
         # adviser
         self.changeUser('pmReviewer2')
         self.assertFalse(self.hasPermission('ATContentTypes: Add Image', item))
+        # pmReviewer2 still have AddPortalContent because he is an adviser
+        # and need it to be able to add an advice
+        self.assertTrue(self.hasPermission(AddPortalContent, item))
+        # add advice
+        # he can actually give it
+        createContentInContainer(item,
+                                 'meetingadvice',
+                                 **{'advice_group': 'vendors',
+                                    'advice_type': u'positive',
+                                    'advice_comment': RichTextValue(u'My comment')})
+        # now he does not have anymore
+        self.assertFalse(self.hasPermission(AddPortalContent, item))
 
         # propose the item
         self.changeUser('pmCreator1')
         self.proposeItem(item)
         # nobody except 'pmReviewer1' may add images
         self.assertFalse(self.hasPermission('ATContentTypes: Add Image', item))
+        # pmCreator1 still have AddPortalContent because he is Owner but he may not add anything
+        self.assertTrue(self.hasPermission(AddPortalContent, item))
         self.assertRaises(Unauthorized, item.invokeFactory, 'Image', id='img', title='Image1', file=data.read())
         # copyGroup not able to view
         self.changeUser('pmCreator2')
         self.assertFalse(self.hasPermission('ATContentTypes: Add Image', item))
+        self.assertFalse(self.hasPermission(AddPortalContent, item))
         # adviser not able to view
         self.changeUser('pmReviewer2')
         self.assertFalse(self.hasPermission('ATContentTypes: Add Image', item))
+        self.assertFalse(self.hasPermission(AddPortalContent, item))
         # budgetimpacteditor
         self.changeUser('budgetimpacteditor')
         self.assertFalse(self.hasPermission('ATContentTypes: Add Image', item))
+        self.assertFalse(self.hasPermission(AddPortalContent, item))
         # only one editor left
         self.changeUser('pmReviewer1')
         self.assertTrue(self.hasPermission('ATContentTypes: Add Image', item))
+        self.assertTrue(self.hasPermission(AddPortalContent, item))
         item.invokeFactory('Image', id='img3', title='Image3', file=data.read())
 
         # validate the item
@@ -3602,22 +3624,29 @@ class testMeetingItem(PloneMeetingTestCase):
         self.validateItem(item)
         # nobody except MeetingManagers and budgetimpacteditor may add images
         self.assertFalse(self.hasPermission('ATContentTypes: Add Image', item))
+        # pmCreator1 still have AddPortalContent because he is Owner but he may not add anything
+        self.assertTrue(self.hasPermission(AddPortalContent, item))
         self.assertRaises(Unauthorized, item.invokeFactory, 'Image', id='img', title='Image1', file=data.read())
         # copyGroups
         self.changeUser('pmCreator2')
         self.assertFalse(self.hasPermission('ATContentTypes: Add Image', item))
+        self.assertFalse(self.hasPermission(AddPortalContent, item))
         # adviser
         self.changeUser('pmReviewer2')
         self.assertFalse(self.hasPermission('ATContentTypes: Add Image', item))
+        self.assertFalse(self.hasPermission(AddPortalContent, item))
         # reviewer
         self.changeUser('pmReviewer1')
         self.assertFalse(self.hasPermission('ATContentTypes: Add Image', item))
+        self.assertFalse(self.hasPermission(AddPortalContent, item))
         # MeetingManager and budgetimpacteditor
         self.changeUser('budgetimpacteditor')
         self.assertTrue(self.hasPermission('ATContentTypes: Add Image', item))
+        self.assertTrue(self.hasPermission(AddPortalContent, item))
         item.invokeFactory('Image', id='img4', title='Image4', file=data.read())
         self.changeUser('pmManager')
         self.assertTrue(self.hasPermission('ATContentTypes: Add Image', item))
+        self.assertTrue(self.hasPermission(AddPortalContent, item))
         item.invokeFactory('Image', id='img5', title='Image5', file=data.read())
 
 

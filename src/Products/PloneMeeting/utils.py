@@ -48,7 +48,11 @@ from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.utils import getToolByName
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.MailHost.MailHost import MailHostError
-from Products.CMFCore.permissions import View, AccessContentsInformation, ModifyPortalContent, DeleteObjects
+from Products.CMFCore.permissions import AccessContentsInformation
+from Products.CMFCore.permissions import AddPortalContent
+from Products.CMFCore.permissions import DeleteObjects
+from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFCore.permissions import View
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting import PloneMeetingError
 from Products.PloneMeeting import PMMessageFactory as _
@@ -1415,6 +1419,28 @@ def workday(start_date, days=0, holidays=[], weekends=[], unavailable_weekdays=[
         new_date = workday(start_date, days+1, holidays, weekends, unavailable_weekdays)
 
     return new_date
+
+
+def _addImagePermission(obj):
+    """Give the ability of users able to edit at least one XHTML field.
+       Every roles having the 'Modify portal content' or a RichText
+       field.write_permission must be able to add images."""
+    roles = []
+    # get every RichText fields using a write_permission
+    for field in obj.Schema().filterFields(default_content_type='text/html'):
+        if field.write_permission:
+            roles_of_perm = [perm['name'] for perm in obj.rolesOfPermission(field.write_permission)
+                             if perm['selected'] == 'SELECTED']
+            roles += roles_of_perm
+    # check the 'Modify portal content' permission
+    roles_of_perm = [perm['name'] for perm in obj.rolesOfPermission(ModifyPortalContent)
+                     if perm['selected'] == 'SELECTED']
+    roles += roles_of_perm
+    # remove duplicates
+    roles = tuple(set(roles))
+    # the AddPortalContent is given on the portal to 'Contributor', keep this and add local ones
+    obj.manage_permission(AddPortalContent, roles, acquire=True)
+    obj.manage_permission("ATContentTypes: Add Image", roles, acquire=False)
 
 
 class AdvicesUpdatedEvent(ObjectEvent):

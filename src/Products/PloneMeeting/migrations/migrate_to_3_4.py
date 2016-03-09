@@ -13,8 +13,9 @@ from imio.dashboard.utils import _updateDefaultCollectionFor
 from imio.helpers.catalog import removeIndexes
 
 from Products.PloneMeeting.migrations import Migrator
-from Products.PloneMeeting.utils import updateCollectionCriterion
+from Products.PloneMeeting.utils import _addImagePermission
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
+from Products.PloneMeeting.utils import updateCollectionCriterion
 
 
 # The migration class ----------------------------------------------------------
@@ -546,6 +547,16 @@ class Migrate_To_3_4(Migrator):
         self.tool.updateAllLocalRoles()
         logger.info('Done.')
 
+    def _manageAddImagePermission(self):
+        '''Configure the 'ATContentTypes: Add Image' permission on meetings and items.
+           On meetingadvice, the permission is managed directly in the workflow.'''
+        logger.info('Updating the \'ATContentTypes: Add Image\' permission...')
+        brains = self.portal.portal_catalog(meta_type=('Meeting', 'MeetingItem', ))
+        for brain in brains:
+            itemOrMeeting = brain.getObject()
+            _addImagePermission(itemOrMeeting)
+        logger.info('Done.')
+
     def _initNewHTMLFields(self):
         '''The MeetingItem and Meeting receive to new HTML fields 'notes' and 'inAndOutMoves',
            make sure the content_type is correctly set to 'text/html'.'''
@@ -666,11 +677,12 @@ class Migrate_To_3_4(Migrator):
         self._cleanMeetingUsers()
         self._updateAnnexIndex()
         self._updateAllLocalRoles()
+        self._manageAddImagePermission()
         self._initNewHTMLFields()
         self._updateEnableAnnexToPrint()
         self._updateHistoryComments()
         self._updateCKeditorCustomToolbar()
-        self._removeGetDeliberationIndex()
+        self._removeUnusedIndexes()
         # update workflow, needed for items moved to item templates and recurring items
         # update reference_catalog as ReferenceFied "MeetingConfig.toDoListTopics"
         # and "Meeting.lateItems" were removed

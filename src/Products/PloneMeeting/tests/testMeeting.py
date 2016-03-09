@@ -23,6 +23,7 @@
 #
 
 from copy import deepcopy
+from os import path
 
 from DateTime import DateTime
 from DateTime.DateTime import _findLocalTimeZoneName
@@ -30,6 +31,7 @@ from DateTime.DateTime import _findLocalTimeZoneName
 from AccessControl import Unauthorized
 from zope.i18n import translate
 from Products.ZCatalog.Catalog import AbstractCatalogBrain
+from Products.CMFCore.permissions import AddPortalContent
 
 from plone.app.textfield.value import RichTextValue
 from plone.app.querystring.querybuilder import queryparser
@@ -1840,6 +1842,37 @@ class testMeeting(PloneMeetingTestCase):
         self.cleanMemoize()
         # now meeting1 last number is considered 5
         self.assertEquals(unrestricted_view.findFirstItemNumberForMeeting(meeting3), 13)
+
+    def test_pm_MeetingAddImagePermission(self):
+        """A user able to edit at least one RichText field must be able to add images."""
+        # just check that MeetingManagers may add images to an editable meeting
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date='2015/05/05')
+        # test image
+        file_path = path.join(path.dirname(__file__), 'dot.gif')
+        data = open(file_path, 'r')
+        self.assertTrue(self.hasPermission('ATContentTypes: Add Image', meeting))
+        self.assertTrue(self.hasPermission(AddPortalContent, meeting))
+        meeting.invokeFactory('Image', id='img1', title='Image1', file=data.read())
+
+        # frozen meeting
+        self.freezeMeeting(meeting)
+        self.assertTrue(self.hasPermission('ATContentTypes: Add Image', meeting))
+        self.assertTrue(self.hasPermission(AddPortalContent, meeting))
+        meeting.invokeFactory('Image', id='img2', title='Image2', file=data.read())
+
+        # decide meeting
+        self.decideMeeting(meeting)
+        self.assertTrue(self.hasPermission('ATContentTypes: Add Image', meeting))
+        self.assertTrue(self.hasPermission(AddPortalContent, meeting))
+        meeting.invokeFactory('Image', id='img3', title='Image3', file=data.read())
+
+        # close meeting
+        self.closeMeeting(meeting)
+        self.assertFalse(self.hasPermission('ATContentTypes: Add Image', meeting))
+        # pmManager still have AddPortalContent because he is Owner but he may not add anything
+        self.assertTrue(self.hasPermission(AddPortalContent, meeting))
+        self.assertRaises(Unauthorized, meeting.invokeFactory, 'Image', id='img', title='Image1', file=data.read())
 
 
 def test_suite():

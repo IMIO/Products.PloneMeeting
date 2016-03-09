@@ -17,14 +17,14 @@ from AccessControl import ClassSecurityInfo
 from zope.interface import implements
 import interfaces
 
-from Products.Archetypes.atapi import BaseContent
-from Products.Archetypes.atapi import BaseSchema
 from Products.Archetypes.atapi import BooleanField
 from Products.Archetypes.atapi import DateTimeField
 from Products.Archetypes.atapi import DisplayList
 from Products.Archetypes.atapi import IntegerField
 from Products.Archetypes.atapi import LinesField
 from Products.Archetypes.atapi import MultiSelectionWidget
+from Products.Archetypes.atapi import OrderedBaseFolder
+from Products.Archetypes.atapi import OrderedBaseFolderSchema
 from Products.Archetypes.atapi import ReferenceField
 from Products.Archetypes.atapi import registerType
 from Products.Archetypes.atapi import RichWidget
@@ -68,12 +68,25 @@ from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.interfaces import IMeetingWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingWorkflowConditions
-from Products.PloneMeeting.utils import getWorkflowAdapter, getCustomAdapter, \
-    fieldIsEmpty, checkPermission, addRecurringItemsIfRelevant, getLastEvent, \
-    getMeetingUsers, getFieldVersion, getDateFromDelta, \
-    rememberPreviousData, addDataChange, hasHistory, getHistory, \
-    setFieldFromAjax, transformAllRichTextFields, forceHTMLContentTypeForEmptyRichFields, \
-    ItemDuplicatedFromConfigEvent, toHTMLStrikedContent
+from Products.PloneMeeting.utils import _addImagePermission
+from Products.PloneMeeting.utils import addDataChange
+from Products.PloneMeeting.utils import addRecurringItemsIfRelevant
+from Products.PloneMeeting.utils import checkPermission
+from Products.PloneMeeting.utils import fieldIsEmpty
+from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
+from Products.PloneMeeting.utils import getWorkflowAdapter
+from Products.PloneMeeting.utils import getCustomAdapter
+from Products.PloneMeeting.utils import getLastEvent
+from Products.PloneMeeting.utils import getMeetingUsers
+from Products.PloneMeeting.utils import getFieldVersion
+from Products.PloneMeeting.utils import getDateFromDelta
+from Products.PloneMeeting.utils import getHistory
+from Products.PloneMeeting.utils import hasHistory
+from Products.PloneMeeting.utils import ItemDuplicatedFromConfigEvent
+from Products.PloneMeeting.utils import rememberPreviousData
+from Products.PloneMeeting.utils import setFieldFromAjax
+from Products.PloneMeeting.utils import toHTMLStrikedContent
+from Products.PloneMeeting.utils import transformAllRichTextFields
 from Products.PloneMeeting import PMMessageFactory as _
 import logging
 logger = logging.getLogger('PloneMeeting')
@@ -688,17 +701,11 @@ schema = Schema((
 ),
 )
 
-##code-section after-local-schema #fill in your manual code here
-##/code-section after-local-schema
-
-Meeting_schema = BaseSchema.copy() + \
+Meeting_schema = OrderedBaseFolderSchema.copy() + \
     schema.copy()
 
-##code-section after-schema #fill in your manual code here
-##/code-section after-schema
 
-
-class Meeting(BaseContent, BrowserDefaultMixin):
+class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
     """ A meeting made of items """
     security = ClassSecurityInfo()
     implements(interfaces.IMeeting)
@@ -1617,6 +1624,8 @@ class Meeting(BaseContent, BrowserDefaultMixin):
         self.manage_addLocalRoles(self.owner_info()['id'], ('Owner',))
         # add powerObservers local roles
         self._updatePowerObserversLocalRoles()
+        # manage the 'ATContentTypes: Add Image' permission
+        _addImagePermission(self)
         # reindex relevant indexes
         self.reindexObjectSecurity()
 
@@ -1816,7 +1825,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
             member = membershipTool.getAuthenticatedMember()
             if member.has_role('Manager'):
                 item.REQUEST.set('items_to_remove', item.getItems())
-        BaseContent.manage_beforeDelete(self, item, container)
+        OrderedBaseFolder.manage_beforeDelete(self, item, container)
 
     security.declarePublic('showVotes')
 
@@ -1907,7 +1916,7 @@ class Meeting(BaseContent, BrowserDefaultMixin):
            values of historized fields.'''
         if not self.isTemporary():
             self._v_previousData = rememberPreviousData(self)
-        return BaseContent.processForm(self, *args, **kwargs)
+        return OrderedBaseFolder.processForm(self, *args, **kwargs)
 
     security.declarePublic('showRemoveSelectedItemsAction')
 
