@@ -548,13 +548,12 @@ class Migrate_To_3_4(Migrator):
         logger.info('Done.')
 
     def _manageAddImagePermission(self):
-        '''Configure the 'ATContentTypes: Add Image' permission on meetings and items.
-           On meetingadvice, the permission is managed directly in the workflow.'''
+        '''Configure the 'ATContentTypes: Add Image' permission on meetings, items and advices.'''
         logger.info('Updating the \'ATContentTypes: Add Image\' permission...')
-        brains = self.portal.portal_catalog(meta_type=('Meeting', 'MeetingItem', ))
+        brains = self.portal.portal_catalog(meta_type=('Meeting', 'MeetingItem', 'meetingadvice'))
         for brain in brains:
-            itemOrMeeting = brain.getObject()
-            _addImagePermission(itemOrMeeting)
+            obj = brain.getObject()
+            _addImagePermission(obj)
         logger.info('Done.')
 
     def _initNewHTMLFields(self):

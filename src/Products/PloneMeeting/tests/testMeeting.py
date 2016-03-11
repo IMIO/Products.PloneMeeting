@@ -47,6 +47,7 @@ from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.utils import getCurrentMeetingObject
+from Products.PloneMeeting.utils import setFieldFromAjax
 
 
 class testMeeting(PloneMeetingTestCase):
@@ -1873,6 +1874,33 @@ class testMeeting(PloneMeetingTestCase):
         # pmManager still have AddPortalContent because he is Owner but he may not add anything
         self.assertTrue(self.hasPermission(AddPortalContent, meeting))
         self.assertRaises(Unauthorized, meeting.invokeFactory, 'Image', id='img', title='Image1', file=data.read())
+
+    def test_pm_MeetingExternalImagesStoredLocally(self):
+        """External images are stored locally."""
+        cfg = self.meetingConfig
+        self.changeUser('pmManager')
+        # creation time
+        text = '<p>Working external image <img src="http://www.imio.be/contact.png"/>.</p>'
+        pmFolder = self.getMeetingFolder()
+        # do not use self.create to be sure that it works correctly with invokeFactory
+        meetingId = pmFolder.invokeFactory(cfg.getMeetingTypeName(),
+                                           id='meeting',
+                                           date=DateTime('2015/05/05'),
+                                           observations=text)
+        meeting = getattr(pmFolder, meetingId)
+        meeting.processForm()
+        self.assertTrue('contact.png' in meeting.objectIds())
+
+        # test using the quickedit
+        text = '<p>Working external image <img src="http://www.imio.be/mascotte-presentation.jpg"/>.</p>'
+        setFieldFromAjax(meeting, 'observations', text)
+        self.assertTrue('mascotte-presentation.jpg' in meeting.objectIds())
+
+        # test using at_post_edit_script, aka full edit form
+        text = '<p>Working external image <img src="http://www.imio.be/spw.png"/>.</p>'
+        meeting.setObservations(text)
+        meeting.at_post_edit_script()
+        self.assertTrue('spw.png' in meeting.objectIds())
 
 
 def test_suite():

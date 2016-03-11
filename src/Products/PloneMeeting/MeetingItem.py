@@ -4215,6 +4215,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Add the local roles corresponding to the proposing group
         meetingGroup = self.getProposingGroup(True)
         if meetingGroup:
+            portal_groups = api.portal.get_tool('portal_groups')
             for groupSuffix in MEETING_GROUP_SUFFIXES:
                 # adviser-related local roles are managed in method
                 # MeetingItem._updateAdvices.
@@ -4222,7 +4223,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     continue
                 # if we have a Plone group related to this suffix, apply a local role for it
                 groupId = meetingGroup.getPloneGroupId(groupSuffix)
-                ploneGroup = self.portal_groups.getGroupById(groupId)
+                ploneGroup = portal_groups.getGroupById(groupId)
                 if not ploneGroup:
                     # in some case, MEETING_GROUP_SUFFIXES are used to manage
                     # only some groups so some other may not have a linked Plone group

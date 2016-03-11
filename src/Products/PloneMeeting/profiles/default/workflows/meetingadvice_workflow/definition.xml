@@ -12,15 +12,10 @@
  <permission>Delete objects</permission>
  <permission>PloneMeeting: Add MeetingFile</permission>
  <permission>PloneMeeting: Add annex</permission>
- <permission>ATContentTypes: Add Image</permission>
  <state state_id="advice_given"
         title="advice_given"
         i18n:attributes="title">
   <exit-transition transition_id="backToAdviceUnderEdit"/>
-  <permission-map name="ATContentTypes: Add Image"
-                  acquired="False">
-   <permission-role>Manager</permission-role>
-  </permission-map>
   <permission-map name="Access contents information"
                   acquired="True">
   </permission-map>
@@ -52,11 +47,6 @@
         title="advice_under_edit"
         i18n:attributes="title">
   <exit-transition transition_id="giveAdvice"/>
-  <permission-map name="ATContentTypes: Add Image"
-                  acquired="False">
-   <permission-role>Editor</permission-role>
-   <permission-role>Manager</permission-role>
-  </permission-map>
   <permission-map name="Access contents information"
                   acquired="True">
   </permission-map>

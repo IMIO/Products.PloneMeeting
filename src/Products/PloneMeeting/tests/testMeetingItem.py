@@ -59,6 +59,7 @@ from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.utils import getFieldVersion
 from Products.PloneMeeting.utils import getLastEvent
 from Products.PloneMeeting.utils import ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR
+from Products.PloneMeeting.utils import setFieldFromAjax
 
 
 class testMeetingItem(PloneMeetingTestCase):
@@ -3648,6 +3649,34 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission('ATContentTypes: Add Image', item))
         self.assertTrue(self.hasPermission(AddPortalContent, item))
         item.invokeFactory('Image', id='img5', title='Image5', file=data.read())
+
+    def test_pm_ItemExternalImagesStoredLocally(self):
+        """External images are stored locally."""
+        cfg = self.meetingConfig
+        self.changeUser('pmCreator1')
+        # creation time
+        text = '<p>Working external image <img src="http://www.imio.be/contact.png"/>.</p>'
+        pmFolder = self.getMeetingFolder()
+        # do not use self.create to be sure that it works correctly with invokeFactory
+        itemId = pmFolder.invokeFactory(cfg.getItemTypeName(),
+                                        id='item',
+                                        proposingGroup=u'developers',
+                                        description=text)
+        item = getattr(pmFolder, itemId)
+        item.processForm()
+        # contact.png was saved in the item
+        self.assertTrue('contact.png' in item.objectIds())
+
+        # test using the quickedit
+        text = '<p>Working external image <img src="http://www.imio.be/mascotte-presentation.jpg"/>.</p>'
+        setFieldFromAjax(item, 'description', text)
+        self.assertTrue('mascotte-presentation.jpg' in item.objectIds())
+
+        # test using at_post_edit_script, aka full edit form
+        text = '<p>Working external image <img src="http://www.imio.be/spw.png"/>.</p>'
+        item.setDescription(text)
+        item.at_post_edit_script()
+        self.assertTrue('spw.png' in item.objectIds())
 
 
 def test_suite():
