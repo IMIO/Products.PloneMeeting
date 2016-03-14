@@ -650,4 +650,24 @@
         permission="zope2.View"
     />
 
+    <!-- ckeditor browser, override for Meeting, MeetingItem and meetingadvice -->
+    <browser:page
+        name="plone_ckfinder"
+        for="Products.PloneMeeting.interfaces.IMeeting"
+        class=".overrides.PMCKFinder"
+        permission="zope2.View"
+        />
+    <browser:page
+        name="plone_ckfinder"
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        class=".overrides.PMCKFinder"
+        permission="zope2.View"
+        />
+    <browser:page
+        name="plone_ckfinder"
+        for="Products.PloneMeeting.content.advice.IMeetingAdvice"
+        class=".overrides.PMCKFinder"
+        permission="zope2.View"
+        />
+
 </configure>
