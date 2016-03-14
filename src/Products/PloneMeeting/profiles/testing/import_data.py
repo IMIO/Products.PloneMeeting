@@ -138,6 +138,16 @@ plonegov_assembly_restrictedpowerobservers = PloneGroupDescriptor('plonegov-asse
                                                                   'plonegov-assembly_restrictedpowerobservers',
                                                                   [])
 restrictedpowerobserver2.ploneGroups = [plonegov_assembly_restrictedpowerobservers, ]
+# budget impact editors
+budgetimpacteditor = UserDescriptor('budgetimpacteditor',
+                                    [],
+                                    email="budgetimpacteditor@plonemeeting.org",
+                                    fullname='M. Budget Impact Editor')
+plonemeeting_assembly_budgetimpacteditors = PloneGroupDescriptor('plonemeeting-assembly_budgetimpacteditors',
+                                                                 'plonemeeting-assembly_budgetimpacteditors',
+                                                                 [])
+budgetimpacteditor.ploneGroups = [plonemeeting_assembly_budgetimpacteditors,
+                                  plonemeeting_assembly_powerobservers]
 
 developers = GroupDescriptor('developers', 'Developers', 'Devel')
 developers.creators.append(pmCreator1)
@@ -363,5 +373,6 @@ meetingPga.itemCopyGroupsStates = ['validated', 'itempublished', 'itemfrozen', '
 data = PloneMeetingConfiguration('My meetings', (meetingPga, meetingPma),
                                  (developers, vendors, endUsers))
 data.usersOutsideGroups = [cadranel, voter1, voter2, powerobserver1, powerobserver2,
-                           restrictedpowerobserver1, restrictedpowerobserver2]
+                           restrictedpowerobserver1, restrictedpowerobserver2,
+                           budgetimpacteditor]
 # ------------------------------------------------------------------------------

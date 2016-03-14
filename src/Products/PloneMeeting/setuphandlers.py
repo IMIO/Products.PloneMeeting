@@ -49,7 +49,6 @@ indexInfos = {
     'getPreferredMeetingDate': ('DateIndex', {}),
     'linkedMeetingUID': ('FieldIndex', {}),
     'linkedMeetingDate': ('DateIndex', {}),
-    'getDeliberation': ('ZCTextIndex', {}),
     'getCopyGroups': ('KeywordIndex', {}),
     'indexAdvisers': ('KeywordIndex', {}),
     'previous_review_state': ('FieldIndex', {}),
@@ -338,6 +337,9 @@ def _configureCKeditor(site):
                     enc)
     # activate SCAYT auto-start
     cke_props.enableScaytOnStartup = True
+    # disable folder creation thru CKeditor to avoid
+    # having the add folder icon when adding an image
+    cke_props.allow_folder_creation = False
 
 
 def _congfigureSafeHtml(site):

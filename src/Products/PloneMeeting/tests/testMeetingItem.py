@@ -22,6 +22,8 @@
 # 02110-1301, USA.
 #
 
+from os import path
+
 from AccessControl import Unauthorized
 from DateTime import DateTime
 
@@ -32,6 +34,7 @@ from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 
 from Products.PloneTestCase.setup import _createHomeFolder
+from Products.CMFCore.permissions import AddPortalContent
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.CMFCore.utils import getToolByName
@@ -41,7 +44,6 @@ from imio.helpers.cache import cleanRamCacheFor
 
 from Products.PloneMeeting.browser.itemassembly import item_assembly_default
 from Products.PloneMeeting.browser.itemsignatures import item_signatures_default
-from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from Products.PloneMeeting.config import DEFAULT_COPIED_FIELDS
 from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_SAME_MC
 from Products.PloneMeeting.config import HISTORY_COMMENT_NOT_VIEWABLE
@@ -57,6 +59,7 @@ from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.utils import getFieldVersion
 from Products.PloneMeeting.utils import getLastEvent
 from Products.PloneMeeting.utils import ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR
+from Products.PloneMeeting.utils import setFieldFromAjax
 
 
 class testMeetingItem(PloneMeetingTestCase):
@@ -1289,13 +1292,14 @@ class testMeetingItem(PloneMeetingTestCase):
         # specify that budgetImpactEditors will be able to edit the budgetInfos of self.meetingConfig items
         # when the item is in state 'validated'.  For example here, a 'validated' item will not be fully editable
         # but the MeetingItem.budgetInfos field will be editable
-        self.portal.portal_groups.addPrincipalToGroup('pmReviewer2', '%s_%s' %
-                                                      (self.meetingConfig.getId(),
-                                                       BUDGETIMPACTEDITORS_GROUP_SUFFIX))
+        cfg = self.meetingConfig
         # we will let copyGroups view items when in state 'validated'
-        self.meetingConfig.setUseCopies(True)
-        self.meetingConfig.setItemCopyGroupsStates((self.WF_STATE_NAME_MAPPINGS['proposed'], 'validated', ))
-        self.meetingConfig.setItemBudgetInfosStates(('validated', ))
+        cfg.setUseCopies(True)
+        cfg.setItemCopyGroupsStates((self.WF_STATE_NAME_MAPPINGS['proposed'], 'validated', ))
+        cfg.setItemBudgetInfosStates(('validated', ))
+        # budget impact editors gets view on an item thru another role
+        # here 'budgetimpacteditor' is a powerobserver
+        cfg.setItemPowerObserversStates(('validated', ))
         # first make sure the permission associated with MeetingItem.budgetInfos.write_permission is the right one
         self.assertTrue(MeetingItem.schema['budgetInfos'].write_permission == WriteBudgetInfos)
         # now create an item for 'developers', let vendors access it setting them as copyGroups
@@ -1304,17 +1308,15 @@ class testMeetingItem(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         item.setCopyGroups(('vendors_reviewers', ))
         self.proposeItem(item)
-        item.at_post_create_script()
-        # for now, 'pmReviewer2' can not edit the field, even if item viewable
-        self.changeUser('pmReviewer2')
-        self.assertTrue(self.hasPermission(View, item))
+        # for now, 'budgetimpacteditor' can not view/edit the field
+        self.changeUser('budgetimpacteditor')
+        self.assertFalse(self.hasPermission(View, item))
         self.assertFalse(self.hasPermission(WriteBudgetInfos, item))
         # validate the item
         self.changeUser('pmReviewer1')
         self.validateItem(item)
-        item.at_post_create_script()
-        # now 'pmReviewer2' can see the item, not edit it fully but edit the budgetInfos
-        self.changeUser('pmReviewer2')
+        # now 'budgetimpacteditor' can see the item, not edit it fully but edit the budgetInfos
+        self.changeUser('budgetimpacteditor')
         self.assertTrue(self.hasPermission(View, item))
         self.assertFalse(self.hasPermission(ModifyPortalContent, item))
         self.assertTrue(self.hasPermission(WriteBudgetInfos, item))
@@ -2161,34 +2163,6 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failIf(itemTemplate.validate_proposingGroup(''))
         self.failIf(itemTemplate.validate_proposingGroup('developers'))
 
-    def test_pm_GetDeliberation(self):
-        '''Test different behaviours of getDeliberation.  getDeliberation concatenate motivation and decision.'''
-        # item.getDeliberation always works, no matter motivation/decision is used, empty, ...
-        self.changeUser('pmManager')
-        item = self.create('MeetingItem')
-        item.setMotivation('<p>My motivation</p>')
-        item.setDecision('<p>My decision</p>')
-        self.assertTrue(item.getDeliberation() == item.getMotivation() + item.getDecision())
-        # if passed arg separate=True, it adds a seperation blank line between motivation and decision
-        self.assertTrue(item.getDeliberation(separate=True) == item.getMotivation() +
-                        '<p>&nbsp;</p>' + item.getDecision())
-        # if passed keepWithNext is passed, a specific class 'pmParaKeepWithNext' is set
-        # on last tags of the text, until number of chars is 60
-        self.assertTrue(item.getDeliberation(keepWithNext=True) ==
-                        '<p class="pmParaKeepWithNext">My motivation</p>\n'
-                        '<p class="pmParaKeepWithNext">My decision</p>\n')
-        # keepWithNext applies a different class for lists
-        item.setMotivation('<p>My motivation</p><ul><li>Art 1</li><li>Art 2</li></ul>')
-        self.assertTrue(item.getDeliberation(keepWithNext=True) ==
-                        '<p class="pmParaKeepWithNext">My motivation</p>\n<ul>\n  '
-                        '<li class="podItemKeepWithNext">Art 1</li>\n  '
-                        '<li class="podItemKeepWithNext">Art 2</li>\n</ul>\n'
-                        '<p class="pmParaKeepWithNext">My decision</p>\n')
-        # if there is no motivation, we do not insert a blank line even if separate is True
-        item.setMotivation('')
-        self.assertTrue(item.getDeliberation() == item.getMotivation() + item.getDecision())
-        self.assertTrue(item.getDeliberation(separate=True) == item.getMotivation() + item.getDecision())
-
     def test_pm_GetMeetingsAcceptingItems(self):
         """Test the MeetingItem.getMeetingsAcceptingItems method."""
         cfg = self.meetingConfig
@@ -2229,7 +2203,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item1.setDecision(originalDecision)
         # for now, as nothing is defined, nothing happens when item is delayed
         self.do(item1, 'delay')
-        self.assertTrue(item1.getDecision(keepWithNext=False) == originalDecision)
+        self.assertTrue(item1.getDecision() == originalDecision)
         # configure onTransitionFieldTransforms and delay another item
         delayedItemDecision = '<p>This item has been delayed.</p>'
         self.meetingConfig.setOnTransitionFieldTransforms(
@@ -2239,13 +2213,13 @@ class testMeetingItem(PloneMeetingTestCase):
         item2 = meeting.getItems()[1]
         item2.setDecision(originalDecision)
         self.do(item2, 'delay')
-        self.assertTrue(item2.getDecision(keepWithNext=False) == delayedItemDecision)
+        self.assertTrue(item2.getDecision() == delayedItemDecision)
         # if the item was duplicated (often the case when delaying an item), the duplicated
         # item keep the original decision
         duplicatedItem = item2.getBRefs('ItemPredecessor')[0]
         # right duplicated item
         self.assertTrue(duplicatedItem.getPredecessor() == item2)
-        self.assertTrue(duplicatedItem.getDecision(keepWithNext=False) == originalDecision)
+        self.assertTrue(duplicatedItem.getDecision() == originalDecision)
         # this work also when triggering any other item or meeting transition with every rich fields
         item3 = meeting.getItems()[2]
         self.meetingConfig.setOnTransitionFieldTransforms(
@@ -2267,7 +2241,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # transition was triggered
         self.assertTrue(item4.queryState() == 'accepted')
         # original decision was not touched
-        self.assertTrue(item4.getDecision(keepWithNext=False) == '<p>My decision that will not be touched.</p>')
+        self.assertTrue(item4.getDecision() == '<p>My decision that will not be touched.</p>')
         # a portal_message is displayed to the user that triggered the transition
         messages = IStatusMessage(self.request).show()
         self.assertTrue(messages[-1].message == ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR %
@@ -3569,6 +3543,140 @@ class testMeetingItem(PloneMeetingTestCase):
         newItem2.processForm()
         self.assertEquals(newItem2.getId(), 'my-new-title-2')
         self.assertEquals(newItem2.getPredecessor(), item)
+
+    def test_pm_ItemAddImagePermission(self):
+        """A user able to edit at least one RichText field must be able to add images."""
+        # configure so different access are enabled when item is validated
+        cfg = self.meetingConfig
+        cfg.setUseCopies(True)
+        cfg.setSelectableCopyGroups(('vendors_creators', ))
+        cfg.setUseAdvices(True)
+        cfg.setItemCopyGroupsStates(('itemcreated', 'validated', ))
+        cfg.setItemAdviceStates(('itemcreated', 'validated', ))
+        cfg.setItemAdviceEditStates(('itemcreated', 'validated', ))
+        cfg.setItemAdviceViewStates(('itemcreated', 'validated', ))
+        cfg.setItemBudgetInfosStates(('itemcreated', 'validated', ))
+        # test image
+        file_path = path.join(path.dirname(__file__), 'dot.gif')
+        data = open(file_path, 'r')
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem', title='My new title')
+        item.setCopyGroups(('vendors_reviewers', ))
+        item.setOptionalAdvisers(('vendors', ))
+        item.at_post_edit_script()
+        # users able to edit at least one field are able to add images
+        self.assertTrue(self.hasPermission('ATContentTypes: Add Image', item))
+        self.assertTrue(self.hasPermission(AddPortalContent, item))
+        item.invokeFactory('Image', id='img1', title='Image1', file=data.read())
+        self.changeUser('budgetimpacteditor')
+        self.assertTrue(self.hasPermission('ATContentTypes: Add Image', item))
+        self.assertTrue(self.hasPermission(AddPortalContent, item))
+        item.invokeFactory('Image', id='img2', title='Image2', file=data.read())
+        # users just able to see the item are not able to add images
+        # copyGroup
+        self.changeUser('pmCreator2')
+        self.assertFalse(self.hasPermission('ATContentTypes: Add Image', item))
+        self.assertFalse(self.hasPermission(AddPortalContent, item))
+        self.assertRaises(Unauthorized, item.invokeFactory, 'Image', id='img', title='Image1', file=data.read())
+        # adviser
+        self.changeUser('pmReviewer2')
+        self.assertFalse(self.hasPermission('ATContentTypes: Add Image', item))
+        # pmReviewer2 still have AddPortalContent because he is an adviser
+        # and need it to be able to add an advice
+        self.assertTrue(self.hasPermission(AddPortalContent, item))
+        # add advice
+        # he can actually give it
+        createContentInContainer(item,
+                                 'meetingadvice',
+                                 **{'advice_group': 'vendors',
+                                    'advice_type': u'positive',
+                                    'advice_comment': RichTextValue(u'My comment')})
+        # now he does not have anymore
+        self.assertFalse(self.hasPermission(AddPortalContent, item))
+
+        # propose the item
+        self.changeUser('pmCreator1')
+        self.proposeItem(item)
+        # nobody except 'pmReviewer1' may add images
+        self.assertFalse(self.hasPermission('ATContentTypes: Add Image', item))
+        # pmCreator1 still have AddPortalContent because he is Owner but he may not add anything
+        self.assertTrue(self.hasPermission(AddPortalContent, item))
+        self.assertRaises(Unauthorized, item.invokeFactory, 'Image', id='img', title='Image1', file=data.read())
+        # copyGroup not able to view
+        self.changeUser('pmCreator2')
+        self.assertFalse(self.hasPermission('ATContentTypes: Add Image', item))
+        self.assertFalse(self.hasPermission(AddPortalContent, item))
+        # adviser not able to view
+        self.changeUser('pmReviewer2')
+        self.assertFalse(self.hasPermission('ATContentTypes: Add Image', item))
+        self.assertFalse(self.hasPermission(AddPortalContent, item))
+        # budgetimpacteditor
+        self.changeUser('budgetimpacteditor')
+        self.assertFalse(self.hasPermission('ATContentTypes: Add Image', item))
+        self.assertFalse(self.hasPermission(AddPortalContent, item))
+        # only one editor left
+        self.changeUser('pmReviewer1')
+        self.assertTrue(self.hasPermission('ATContentTypes: Add Image', item))
+        self.assertTrue(self.hasPermission(AddPortalContent, item))
+        item.invokeFactory('Image', id='img3', title='Image3', file=data.read())
+
+        # validate the item
+        self.changeUser('pmCreator1')
+        self.validateItem(item)
+        # nobody except MeetingManagers and budgetimpacteditor may add images
+        self.assertFalse(self.hasPermission('ATContentTypes: Add Image', item))
+        # pmCreator1 still have AddPortalContent because he is Owner but he may not add anything
+        self.assertTrue(self.hasPermission(AddPortalContent, item))
+        self.assertRaises(Unauthorized, item.invokeFactory, 'Image', id='img', title='Image1', file=data.read())
+        # copyGroups
+        self.changeUser('pmCreator2')
+        self.assertFalse(self.hasPermission('ATContentTypes: Add Image', item))
+        self.assertFalse(self.hasPermission(AddPortalContent, item))
+        # adviser
+        self.changeUser('pmReviewer2')
+        self.assertFalse(self.hasPermission('ATContentTypes: Add Image', item))
+        self.assertFalse(self.hasPermission(AddPortalContent, item))
+        # reviewer
+        self.changeUser('pmReviewer1')
+        self.assertFalse(self.hasPermission('ATContentTypes: Add Image', item))
+        self.assertFalse(self.hasPermission(AddPortalContent, item))
+        # MeetingManager and budgetimpacteditor
+        self.changeUser('budgetimpacteditor')
+        self.assertTrue(self.hasPermission('ATContentTypes: Add Image', item))
+        self.assertTrue(self.hasPermission(AddPortalContent, item))
+        item.invokeFactory('Image', id='img4', title='Image4', file=data.read())
+        self.changeUser('pmManager')
+        self.assertTrue(self.hasPermission('ATContentTypes: Add Image', item))
+        self.assertTrue(self.hasPermission(AddPortalContent, item))
+        item.invokeFactory('Image', id='img5', title='Image5', file=data.read())
+
+    def test_pm_ItemExternalImagesStoredLocally(self):
+        """External images are stored locally."""
+        cfg = self.meetingConfig
+        self.changeUser('pmCreator1')
+        # creation time
+        text = '<p>Working external image <img src="http://www.imio.be/contact.png"/>.</p>'
+        pmFolder = self.getMeetingFolder()
+        # do not use self.create to be sure that it works correctly with invokeFactory
+        itemId = pmFolder.invokeFactory(cfg.getItemTypeName(),
+                                        id='item',
+                                        proposingGroup=u'developers',
+                                        description=text)
+        item = getattr(pmFolder, itemId)
+        item.processForm()
+        # contact.png was saved in the item
+        self.assertTrue('contact.png' in item.objectIds())
+
+        # test using the quickedit
+        text = '<p>Working external image <img src="http://www.imio.be/mascotte-presentation.jpg"/>.</p>'
+        setFieldFromAjax(item, 'description', text)
+        self.assertTrue('mascotte-presentation.jpg' in item.objectIds())
+
+        # test using at_post_edit_script, aka full edit form
+        text = '<p>Working external image <img src="http://www.imio.be/spw.png"/>.</p>'
+        item.setDescription(text)
+        item.at_post_edit_script()
+        self.assertTrue('spw.png' in item.objectIds())
 
 
 def test_suite():

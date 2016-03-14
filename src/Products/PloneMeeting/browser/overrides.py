@@ -19,6 +19,7 @@ from plone.app.layout.viewlets.common import GlobalSectionsViewlet
 from plone.memoize import ram
 from plone.memoize.view import memoize_contextless
 
+from collective.ckeditor.browser.ckeditorfinder import CKFinder
 from collective.documentgenerator.content.pod_template import IPODTemplate
 from collective.eeafaceted.collectionwidget.browser.views import RenderCategoryView
 from eea.facetednavigation.browser.app.view import FacetedContainerView
@@ -718,3 +719,15 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
         plone_utils = api.portal.get_tool('plone_utils')
         plone_utils.addPortalMessage(msg)
         return self.request.RESPONSE.redirect(self.request['HTTP_REFERER'])
+
+
+class PMCKFinder(CKFinder):
+
+    def __init__(self, context, request):
+        super(PMCKFinder, self).__init__(context, request)
+        self.showbreadcrumbs = False
+        self.types = ['Image']
+        self.browse = False
+        self.allowimagesizeselection = False
+        self.allowaddfolder = False
+        self.allowsearch = False

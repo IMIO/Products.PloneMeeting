@@ -137,7 +137,6 @@
   <!-- Indexes -->
   <adapter name="getRawClassifier" factory=".indexes.getRawClassifier" />
   <adapter name="Description" factory=".indexes.Description" />
-  <adapter name="getDeliberation" factory=".indexes.getDeliberation" />
   <adapter name="hasAnnexesToPrint" factory=".indexes.hasAnnexesToPrint" />
   <adapter name="linkedMeetingDate" factory=".indexes.linkedMeetingDate" />
   <adapter name="linkedMeetingUID" factory=".indexes.linkedMeetingUID" />
@@ -156,11 +155,6 @@
   <adapter name="plone.app.blob.subtypes.file"
            for="Products.PloneMeeting.interfaces.IMeetingFile"
            factory="plone.app.blob.subtypes.file.SchemaExtender" />
-
-  <!-- makes the MeetingFile implements IFileContent so every views of collective.documentviewer are also available... -->
-  <class class="Products.PloneMeeting.MeetingFile.MeetingFile">
-    <implements interface="Products.ATContentTypes.interfaces.file.IFileContent" />
-  </class>
 
   <!-- IPrettyLink -->
   <adapter for="Products.PloneMeeting.interfaces.IMeetingItem"
@@ -198,10 +192,26 @@
   </class>
   <!-- Make Meeting behave like a Collection to be faceted navigable -->
   <class class="Products.PloneMeeting.Meeting.Meeting">
-    <implements interface="plone.app.collection.interfaces.ICollection" />
-  </class>
-  <class class="Products.PloneMeeting.Meeting.Meeting">
     <implements interface="eea.facetednavigation.interfaces.IPossibleFacetedNavigable" />
+    <implements interface="plone.app.collection.interfaces.ICollection" />
+    <implements interface="collective.plonefinder.browser.interfaces.IFinderUploadCapable" />
+    <implements interface="collective.quickupload.interfaces.IQuickUploadCapable" />
+  </class>
+  <!-- makes the MeetingFile implements IFileContent so every views of collective.documentviewer are also available... -->
+  <class class="Products.PloneMeeting.MeetingFile.MeetingFile">
+    <implements interface="Products.ATContentTypes.interfaces.file.IFileContent" />
+  </class>
+  <!-- makes the MeetingItem implements IFinderUploadCapable and IQuickUploadCapable
+      so user may upload Images into it thru plonefinder -->
+  <class class="Products.PloneMeeting.MeetingItem.MeetingItem">
+    <implements interface="collective.plonefinder.browser.interfaces.IFinderUploadCapable" />
+    <implements interface="collective.quickupload.interfaces.IQuickUploadCapable" />
+  </class>
+  <!-- makes the meetingadvice implements IFinderUploadCapable and IQuickUploadCapable
+      so user may upload Images into it thru plonefinder -->
+  <class class="Products.PloneMeeting.content.advice.MeetingAdvice">
+    <implements interface="collective.plonefinder.browser.interfaces.IFinderUploadCapable" />
+    <implements interface="collective.quickupload.interfaces.IQuickUploadCapable" />
   </class>
 
   <!-- ##/code-section configure.zcml.core -->

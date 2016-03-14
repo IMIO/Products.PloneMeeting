@@ -12,10 +12,10 @@
  <property name="factory">addMeeting</property>
  <property name="immediate_view">meeting_view</property>
  <property name="global_allow">False</property>
- <property name="filter_content_types">False</property>
+ <property name="filter_content_types">True</property>
  <property name="allowed_content_types">
- </property>
- <property name="allow_discussion">False</property>
+   <element value="Image"/>
+ </property> <property name="allow_discussion">False</property>
  <property name="default_view">meeting_view</property>
  <property name="view_methods">
   <element value="meeting_view"/>

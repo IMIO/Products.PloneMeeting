@@ -22,6 +22,8 @@
 # 02110-1301, USA.
 #
 
+from os import path
+
 from datetime import datetime
 from datetime import timedelta
 from DateTime import DateTime
@@ -1991,6 +1993,81 @@ class testAdvices(PloneMeetingTestCase):
         # this does not interact with other given advices, still using MeetingConfig value
         self.changeUser('pmAdviser1')
         self.assertTrue(self.hasPermission(View, item))
+
+    def test_pm_AdviceAddImagePermission(self):
+        """A user able to edit the advice is able to add images."""
+        cfg = self.meetingConfig
+        cfg.setCustomAdvisers([])
+        cfg.setItemAdviceStates(('itemcreated', ))
+        cfg.setItemAdviceEditStates(('itemcreated', ))
+        cfg.setItemAdviceViewStates(('itemcreated', ))
+        file_path = path.join(path.dirname(__file__), 'dot.gif')
+        data = open(file_path, 'r')
+
+        # just check that an adviser may add images to an editable advice
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.setOptionalAdvisers(('vendors', ))
+        item.at_post_edit_script()
+
+        # give advice
+        self.changeUser('pmReviewer2')
+        vendors_advice = createContentInContainer(item,
+                                                  'meetingadvice',
+                                                  **{'advice_group': 'vendors',
+                                                     'advice_type': u'positive',
+                                                     'advice_hide_during_redaction': False,
+                                                     'advice_comment': RichTextValue(u'My comment')})
+        self.assertTrue(self.hasPermission('ATContentTypes: Add Image', vendors_advice))
+        self.assertTrue(self.hasPermission(AddPortalContent, vendors_advice))
+        vendors_advice.invokeFactory('Image', id='img1', title='Image1', file=data.read())
+
+        # make advice no more editable and test image addition
+        self.changeUser('pmCreator1')
+        self.proposeItem(item)
+        self.changeUser('pmReviewer2')
+        # pmReviewer2 still have AddPortalContent because he is Owner but he may not add anything
+        self.assertTrue(self.hasPermission(AddPortalContent, vendors_advice))
+        self.assertFalse(self.hasPermission('ATContentTypes: Add Image', vendors_advice))
+        self.assertRaises(Unauthorized, item.invokeFactory, 'Image', id='img', title='Image1', file=data.read())
+        # back to 'itemcreated', add image permission is set back correctly
+        self.changeUser('pmCreator1')
+        self.backToState(item, 'itemcreated')
+        self.changeUser('pmReviewer2')
+        self.assertTrue(self.hasPermission(AddPortalContent, vendors_advice))
+        self.assertTrue(self.hasPermission('ATContentTypes: Add Image', vendors_advice))
+
+    def test_pm_AdviceExternalImagesStoredLocally(self):
+        """External images are stored locally."""
+        cfg = self.meetingConfig
+        cfg.setCustomAdvisers([])
+        cfg.setItemAdviceStates(('itemcreated', ))
+        cfg.setItemAdviceEditStates(('itemcreated', ))
+        cfg.setItemAdviceViewStates(('itemcreated', ))
+
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.setOptionalAdvisers(('vendors', ))
+        item.at_post_edit_script()
+
+        # give advice
+        self.changeUser('pmReviewer2')
+        # creation time
+        text = u'<p>Working external image <img src="http://www.imio.be/contact.png"/>.</p>'
+        advice = createContentInContainer(item,
+                                          'meetingadvice',
+                                          **{'advice_group': 'vendors',
+                                             'advice_type': u'positive',
+                                             'advice_hide_during_redaction': False,
+                                             'advice_comment': RichTextValue(text)})
+        self.assertTrue('contact.png' in advice.objectIds())
+
+        # test using IObjectModifiedEvent event, aka using edit form
+        text = '<p>Working external image <img src="http://www.imio.be/spw.png"/>.</p>'
+        advice.advice_comment = RichTextValue(text)
+        # notify modified
+        notify(ObjectModifiedEvent(advice))
+        self.assertTrue('spw.png' in advice.objectIds())
 
 
 def test_suite():

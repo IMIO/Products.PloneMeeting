@@ -28,14 +28,18 @@ from zope.i18n import translate
 from zope.lifecycleevent import IObjectRemovedEvent
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFPlone.utils import safe_unicode
+from plone.app.textfield import RichText
+from plone.app.textfield.value import RichTextValue
 from plone import api
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.cache import invalidate_cachekey_volatile_for
+from imio.helpers.xhtml import storeExternalImagesLocally
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import ADVICE_GIVEN_HISTORIZED_COMMENT
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 from Products.PloneMeeting.interfaces import IAnnexable
+from Products.PloneMeeting.utils import _addImagePermission
 from Products.PloneMeeting.utils import AdviceAfterAddEvent
 from Products.PloneMeeting.utils import AdviceAfterModifyEvent
 from Products.PloneMeeting.utils import ItemAfterTransitionEvent
@@ -311,6 +315,21 @@ def onItemModified(item, event):
             item._renameAfterCreation(check_auto_id=False)
 
 
+def storeExternalImagesLocallyDexterity(advice):
+    '''Store external images of every RichText field of a dexterity object locally.'''
+    portal_types = api.portal.get_tool('portal_types')
+    fti = portal_types[advice.portal_type]
+    schema = fti.lookupSchema()
+    for field_id, field in schema._v_attrs.items():
+        if isinstance(field, RichText) and getattr(advice, field_id, None):
+            # avoid infinite loop because this is called in a ObjectModifiedEvent
+            # and we are modifying the advice...
+            advice.REQUEST.set('currentlyStoringExternalImages', True)
+            newValue = storeExternalImagesLocally(advice, getattr(advice, field_id).output)
+            setattr(advice, field_id, RichTextValue(newValue))
+            advice.REQUEST.set('currentlyStoringExternalImages', False)
+
+
 def onAdviceAdded(advice, event):
     '''Called when a meetingadvice is added so we can warn parent item.'''
     # if advice is added because we are pasting, pass as we will remove the advices...
@@ -337,6 +356,12 @@ def onAdviceAdded(advice, event):
     # make the entire _advisers group able to edit the meetingadvice
     advice.manage_addLocalRoles('%s_advisers' % advice.advice_group, ('Editor', ))
 
+    # ATContentTypes: Add Image permission
+    _addImagePermission(advice)
+
+    # make sure external images used in RichText fields are stored locally
+    storeExternalImagesLocallyDexterity(advice)
+
     # notify our own PM event so we are sure that this event is called
     # after the onAviceAdded event
     notify(AdviceAfterAddEvent(advice))
@@ -354,11 +379,17 @@ def onAdviceAdded(advice, event):
 
 def onAdviceModified(advice, event):
     '''Called when a meetingadvice is modified so we can warn parent item.'''
+    if advice.REQUEST.get('currentlyStoringExternalImages', False) is True:
+        return
+
     # update advice_row_id
     advice._updateAdviceRowId()
 
     item = advice.getParentNode()
     item.updateLocalRoles()
+
+    # make sure external images used in RichText fields are stored locally
+    storeExternalImagesLocallyDexterity(advice)
 
     # notify our own PM event so we are sure that this event is called
     # after the onAviceModified event
@@ -418,6 +449,8 @@ def onAdviceTransition(advice, event):
         toLocalizedTime = parent.restrictedTraverse('@@plone').toLocalizedTime
         parent.adviceIndex[advice.advice_group]['advice_given_on'] = advice_given_on
         parent.adviceIndex[advice.advice_group]['advice_given_on_localized'] = toLocalizedTime(advice_given_on)
+
+    _addImagePermission(advice)
 
 
 def onAnnexAdded(annex, event):

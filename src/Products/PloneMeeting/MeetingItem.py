@@ -36,7 +36,6 @@ from Products.Archetypes.atapi import TextField
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 
 ##code-section module-header #fill in your manual code here
-import lxml.html
 from datetime import datetime
 from collections import OrderedDict
 from copy import deepcopy
@@ -92,6 +91,7 @@ from Products.PloneMeeting.Meeting import Meeting
 from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowConditions
+from Products.PloneMeeting.utils import _addImagePermission
 from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
 from Products.PloneMeeting.utils import addDataChange
 from Products.PloneMeeting.utils import AdvicesUpdatedEvent
@@ -114,7 +114,6 @@ from Products.PloneMeeting.utils import rememberPreviousData
 from Products.PloneMeeting.utils import sendMail
 from Products.PloneMeeting.utils import sendMailIfRelevant
 from Products.PloneMeeting.utils import setFieldFromAjax
-from Products.PloneMeeting.utils import signatureNotAlone
 from Products.PloneMeeting.utils import toHTMLStrikedContent
 from Products.PloneMeeting.utils import transformAllRichTextFields
 from Products.PloneMeeting.utils import workday
@@ -1267,49 +1266,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getDecision')
 
-    def getDecision(self, keepWithNext=False, **kwargs):
-        '''Overridde 'decision' field accessor. It allows to specify
-           p_keepWithNext=True. In that case, the last paragraph of bullet in
-           field "decision" will get a specific CSS class that will keep it with
-           next paragraph. Useful when including the decision in a document
-           template and avoid having the signatures, just below it, being alone
-           on the next page.
+    def getDecision(self, **kwargs):
+        '''Overridde 'decision' field accessor.
            Manage the 'hide_decisions_when_under_writing' workflowAdaptation that
            hides the decision for non-managers if meeting state is 'decided.'''
-        res = self.getField('decision').get(self, **kwargs)
-        if keepWithNext:
-            res = signatureNotAlone(res)
         # hide the decision?
         msg = self._mayNotViewDecisionMsg()
-        return msg or res
+        return msg or self.getField('decision').get(self, **kwargs)
     getRawDecision = getDecision
-
-    security.declarePublic('getDeliberation')
-
-    def getDeliberation(self, keepWithNext=False, separate=False, **kwargs):
-        '''Returns the entire deliberation depending on fields used.'''
-        motivation = self.getMotivation(**kwargs).strip()
-        decision = self.getDecision(**kwargs).strip()
-        # do add a separation blank line between motivation and decision
-        # if p_separate is True and if motivation is used...
-        if separate and motivation:
-            hasSeparation = False
-            # check if there is not already an empty line at the bottom of 'motivation'
-            # take last node and check if it is empty
-            # surround xhtmlContent with a special tag so we are sure that tree is always
-            # a list of children of this special tag
-            xhtmlContent = "<special_tag>%s</special_tag>" % motivation
-            tree = lxml.html.fromstring(unicode(xhtmlContent, 'utf-8'))
-            children = tree.getchildren()
-            if children and not children[-1].text:
-                hasSeparation = True
-
-            if not hasSeparation:
-                motivation = motivation + '<p>&nbsp;</p>'
-        deliberation = motivation + decision
-        if keepWithNext:
-            deliberation = signatureNotAlone(deliberation)
-        return deliberation
 
     security.declarePrivate('validate_category')
 
@@ -1821,7 +1785,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     removedItem.getField('manuallyLinkedItems').set(removedItem, [], **kwargs)
 
             # save newUids, newLinkedUids and removedUids in the REQUEST
-            # so it can be used by seubmethods like subscribers
+            # so it can be used by submethods like subscribers
             self.REQUEST.set('manuallyLinkedItems_newUids', newUids)
             self.REQUEST.set('manuallyLinkedItems_newLinkedUids', newLinkedUids)
             self.REQUEST.set('manuallyLinkedItems_removedUids', removedUids)
@@ -4251,6 +4215,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Add the local roles corresponding to the proposing group
         meetingGroup = self.getProposingGroup(True)
         if meetingGroup:
+            portal_groups = api.portal.get_tool('portal_groups')
             for groupSuffix in MEETING_GROUP_SUFFIXES:
                 # adviser-related local roles are managed in method
                 # MeetingItem._updateAdvices.
@@ -4258,7 +4223,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     continue
                 # if we have a Plone group related to this suffix, apply a local role for it
                 groupId = meetingGroup.getPloneGroupId(groupSuffix)
-                ploneGroup = self.portal_groups.getGroupById(groupId)
+                ploneGroup = portal_groups.getGroupById(groupId)
                 if not ploneGroup:
                     # in some case, MEETING_GROUP_SUFFIXES are used to manage
                     # only some groups so some other may not have a linked Plone group
@@ -4283,6 +4248,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # actually it could be enough to do in in the onItemTransition but as it is
         # always done after updateLocalRoles, we do it here as it is trivial
         self._updateBudgetImpactEditorsLocalRoles()
+        # manage the 'ATContentTypes: Add Image' permission
+        _addImagePermission(self)
         # notify that localRoles have been updated
         notify(ItemLocalRolesUpdatedEvent(self, old_local_roles))
         # reindex relevant indexes

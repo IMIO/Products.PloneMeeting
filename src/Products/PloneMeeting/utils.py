@@ -35,20 +35,30 @@ from AccessControl import getSecurityManager
 from zope.annotation import IAnnotations
 from zope.i18n import translate
 from zope.component import getAdapter
+from zope.component import queryUtility
 from zope.component.interfaces import ObjectEvent
 from zope.event import notify
 from zope.interface import implements
+from zope.security.interfaces import IPermission
+from plone.app.textfield import RichText
+from plone.autoform.interfaces import WRITE_PERMISSIONS_KEY
+from plone.dexterity.interfaces import IDexterityContent
 from plone import api
 from imio.helpers.xhtml import addClassToLastChildren
 from imio.helpers.xhtml import markEmptyTags
 from imio.helpers.xhtml import removeBlanks
+from imio.helpers.xhtml import storeExternalImagesLocally
 from imio.helpers.xhtml import xhtmlContentIsEmpty
 from imio.history.interfaces import IImioHistory
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.utils import getToolByName
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.MailHost.MailHost import MailHostError
-from Products.CMFCore.permissions import View, AccessContentsInformation, ModifyPortalContent, DeleteObjects
+from Products.CMFCore.permissions import AccessContentsInformation
+from Products.CMFCore.permissions import AddPortalContent
+from Products.CMFCore.permissions import DeleteObjects
+from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFCore.permissions import View
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting import PloneMeetingError
 from Products.PloneMeeting import PMMessageFactory as _
@@ -1111,6 +1121,7 @@ def transformAllRichTextFields(obj, onlyField=None):
             continue
         # Apply mandatory transforms
         fieldContent = formatXhtmlFieldForAppy(field.get(obj))
+        fieldContent = storeExternalImagesLocally(obj, field.get(obj))
         # Apply standard transformations as defined in the config
         # fieldsToTransform is like ('MeetingItem.description', 'MeetingItem.budgetInfos', )
         if ("%s.%s" % (obj.meta_type, field.getName()) in fieldsToTransform) and \
@@ -1174,9 +1185,7 @@ def applyOnTransitionFieldTransform(obj, transitionId):
             field = obj.getField(transform['field_name'].split('.')[1])
             field.set(obj, res, mimetype='text/html')
             idxs.append(field.accessor)
-    if idxs and obj.meta_type == 'MeetingItem':
-        idxs.append('getDeliberation')
-        obj.reindexObject(idxs=idxs)
+    obj.reindexObject(idxs=idxs)
 
 
 # ------------------------------------------------------------------------------
@@ -1417,6 +1426,50 @@ def workday(start_date, days=0, holidays=[], weekends=[], unavailable_weekdays=[
         new_date = workday(start_date, days+1, holidays, weekends, unavailable_weekdays)
 
     return new_date
+
+
+def _addImagePermission(obj):
+    """Give the ability of users able to edit at least one XHTML field.
+       Every roles having the 'Modify portal content' or a RichText
+       field.write_permission must be able to add images."""
+    write_perms = []
+    # get every RichText fields using a write_permission
+    if IDexterityContent.providedBy(obj):
+        # dexterity
+        portal_types = api.portal.get_tool('portal_types')
+        fti = portal_types[obj.portal_type]
+        schema = fti.lookupSchema()
+        write_permissions = schema.queryTaggedValue(WRITE_PERMISSIONS_KEY, {})
+        for field_id, write_permission in write_permissions.items():
+            if isinstance(schema.get(field_id), RichText):
+                write_perms.append(write_permission)
+    else:
+        # Archetypes
+        for field in obj.Schema().filterFields(default_content_type='text/html'):
+            if field.write_permission:
+                write_perms.append(field.write_permission)
+
+    roles = []
+    for write_perm in write_perms:
+        try:
+            rolesOfPerm = obj.rolesOfPermission(write_perm)
+        except ValueError:
+            # we have a the id of a Zope3 style permission, get the title
+            write_perm = queryUtility(IPermission, write_perm)
+            rolesOfPerm = obj.rolesOfPermission(write_perm)
+        roles_of_perm = [p['name'] for p in rolesOfPerm
+                         if p['selected'] == 'SELECTED']
+        roles += roles_of_perm
+
+    # check the 'Modify portal content' permission
+    roles_of_perm = [p['name'] for p in obj.rolesOfPermission(ModifyPortalContent)
+                     if p['selected'] == 'SELECTED']
+    roles += roles_of_perm
+    # remove duplicates
+    roles = tuple(set(roles))
+    # the AddPortalContent is given on the portal to 'Contributor', keep this and add local ones
+    obj.manage_permission(AddPortalContent, roles, acquire=True)
+    obj.manage_permission("ATContentTypes: Add Image", roles, acquire=False)
 
 
 class AdvicesUpdatedEvent(ObjectEvent):
