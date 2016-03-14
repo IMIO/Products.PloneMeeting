@@ -730,4 +730,4 @@ class PMCKFinder(CKFinder):
         self.browse = False
         self.allowimagesizeselection = False
         self.allowaddfolder = False
-        self.allowsearch = False
+        self.showsearchbox = False
