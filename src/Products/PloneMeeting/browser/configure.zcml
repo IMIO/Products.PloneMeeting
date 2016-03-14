@@ -547,7 +547,7 @@
 
     <!-- Display the annex_type imgSelectBox on the annexes_form -->
     <browser:page
-        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        for="*"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         name="annex_type_img_select_box"
         class=".imgselectbox.AnnexTypeImgSelectBoxView"
