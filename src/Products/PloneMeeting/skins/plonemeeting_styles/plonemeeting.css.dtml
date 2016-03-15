@@ -1398,6 +1398,19 @@ body.template-base_view.portaltype-meetingconfig div[id^="archetypes-fieldname-m
     margin-bottom: 0;
 }
 
+h2.check_pod_template_no_obj_found,
+h2.check_pod_template_no_pod_portal_types,
+h2.check_pod_template_error {
+    color: red;
+}
+h2.check_pod_template_not_enabled,
+h2.check_pod_template_dashboard_templates_not_managed {
+    color: orange;
+}
+h2.check_pod_template_clean {
+    color: green;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */

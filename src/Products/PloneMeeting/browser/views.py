@@ -24,6 +24,8 @@ import cgi
 import json
 import lxml
 
+from collections import OrderedDict
+
 from zope.component import getMultiAdapter
 from zope.i18n import translate
 
@@ -460,7 +462,10 @@ class PMDocumentGenerationHelperView(ATDocumentGenerationHelperView):
             return '-rotate 90'
 
     def printXhtml(self, context, xhtmlContents,
-                   image_src_to_paths=True, separatorValue='<p>&nbsp;</p>', keepWithNext=False):
+                   image_src_to_paths=True,
+                   separatorValue='<p>&nbsp;</p>',
+                   keepWithNext=False,
+                   checkNeedSeparator=True):
         """Helper method to format a p_xhtmlContents.  The xhtmlContents is a list or a string containing
            either XHTML content or some specific recognized words like :
            - 'space', in this case, it is replaced with the p_separatorValue;
@@ -468,6 +473,8 @@ class PMDocumentGenerationHelperView(ATDocumentGenerationHelperView):
            If p_keepWithNext is True, signatureNotAlone is applied on the resulting XHTML.
            If p_image_src_to_paths is True, if some <img> are contained in the XHTML, the link to the image
            is replaced with a path to the .blob of the image of the server so LibreOffice may access it.
+           If p_checkNeedSeparator is True, it will only add the separator if previous
+           xhtmlContent did not contain empty lines at the end.
            Indeed, private images not accessible by anonymous may not be reahed by LibreOffice.
            Finally, the separatorValue is used when word 'space' is encountered in xhtmlContents.
            A call to printXHTML in a POD template with an item as context could be :
@@ -478,7 +485,15 @@ class PMDocumentGenerationHelperView(ATDocumentGenerationHelperView):
         if hasattr(xhtmlContents, '__iter__'):
             for xhtmlContent in xhtmlContents:
                 if xhtmlContent == 'space':
-                    xhtmlFinal += separatorValue
+                    hasSeparation = False
+                    if checkNeedSeparator:
+                        preparedXhtmlContent = "<special_tag>%s</special_tag>" % xhtmlContent
+                        tree = lxml.html.fromstring(unicode(preparedXhtmlContent, 'utf-8'))
+                        children = tree.getchildren()
+                        if children and not children[-1].text:
+                            hasSeparation = True
+                    if not hasSeparation:
+                        xhtmlFinal += separatorValue
                 else:
                     xhtmlFinal += xhtmlContent
         else:
@@ -621,3 +636,86 @@ class ItemDocumentGenerationHelperView(PMDocumentGenerationHelperView):
 
 class AdviceDocumentGenerationHelperView(PMDocumentGenerationHelperView):
     """ """
+
+
+class CheckPodTemplatesView(BrowserView):
+    """
+      Check existing pod templates to try to find one out that is generating errors.
+    """
+
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+        self.tool = getToolByName(self.context, 'portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
+
+    def __call__(self):
+        '''Generate Pod Templates and check if some are genering errors.'''
+        messages = OrderedDict()
+        messages['error'] = []
+        messages['no_obj_found'] = []
+        messages['no_pod_portal_types'] = []
+        messages['not_enabled'] = []
+        messages['dashboard_templates_not_managed'] = []
+        messages['clean'] = []
+
+        for pod_template in self.cfg.podtemplates.objectValues():
+
+            # we do not manage 'DashboardPODTemplate' automatically for now...
+            if pod_template.meta_type == 'DashboardPODTemplate':
+                messages['dashboard_templates_not_managed'].append((pod_template, None))
+                continue
+
+            # here we have a 'ConfigurablePODTemplate'
+            if not pod_template.pod_portal_types:
+                messages['no_pod_portal_types'].append((pod_template, None))
+                continue
+
+            if not pod_template.pod_portal_types:
+                messages['no_pod_portal_types'].append((pod_template, None))
+                continue
+
+            if not pod_template.enabled:
+                messages['not_enabled'].append((pod_template, None))
+                continue
+
+            objs = self.findObjsFor(pod_template)
+            if not objs:
+                messages['no_obj_found'].append((pod_template, None))
+                continue
+
+            document_template = pod_template.get_file()
+            kwargs = {}
+            kwargs['raiseOnError'] = True
+            for obj in objs:
+                view = obj.restrictedTraverse('@@document-generation')
+                self.request.set('template_uid', pod_template.UID())
+                self.request.set('output_format', 'odt')
+                try:
+                    view._render_document(document_template,
+                                          output_format='odt',
+                                          sub_documents=[],
+                                          **kwargs)
+                    messages['clean'].append((pod_template, obj))
+                except:
+                    messages['error'].append((pod_template, obj))
+        self.messages = messages
+        return self.index()
+
+    def findObjsFor(self, pod_template):
+        '''This will find objs working with given p_pod_template.
+           We return one obj of each pod_portal_types respecting the TAL condition.'''
+        catalog = api.portal.get_tool('portal_catalog')
+        res = []
+        for pod_portal_type in pod_template.pod_portal_types:
+            # get an element for which the TAL condition is True
+            brains = catalog(portal_type=pod_portal_type)
+            found = False
+            for brain in brains:
+                if found:
+                    break
+                obj = brain.getObject()
+                if pod_template.can_be_generated(obj):
+                    found = True
+                    res.append(obj)
+        return res

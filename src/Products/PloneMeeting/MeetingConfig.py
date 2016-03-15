@@ -4739,6 +4739,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         self.plone_utils.addPortalMessage('Done.')
         return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 
+    def checkPodTemplates(self):
+        '''Check Pod templates.'''
+        if not self.isManager(self, realManagers=True):
+            raise Unauthorized
+        return self.REQUEST.RESPONSE.redirect(self.absolute_url() + '/@@check-pod-templates')
+
     def _synchSearches(self, folder=None):
         """Synchronize the searches for a givan meetingFolder p_folder, if it is not given,
            every user folder for this MeetingConfig will be synchronized.

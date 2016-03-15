@@ -432,6 +432,13 @@ document.location.reload(true);
     <img src="back_to.gif" tal:attributes="src string:${portal_url}/back_to.gif" />&nbsp;<span i18n:translate="">Back to the item</span></a>
 </p>
 
+<tal:comment replace="nothing">
+  This macro displays a link back to the MeetingConfig from a view called onto it (same context)
+</tal:comment>
+<p metal:define-macro="backToMeetingConfig" i18n:domain="PloneMeeting">
+  <a href=''>
+    <img src="back_to.gif" tal:attributes="src string:${portal_url}/back_to.gif" />&nbsp;<span i18n:translate="">Back to the MeetingConfig</span></a>
+</p>
 
 <div id="meeting_users_"
      metal:define-macro="itemPeople" i18n:domain="PloneMeeting"

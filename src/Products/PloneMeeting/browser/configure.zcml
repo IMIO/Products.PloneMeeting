@@ -102,14 +102,14 @@
       for="Products.PloneMeeting.interfaces.IMeeting"
       name="meeting_view"
       template="templates/meeting_view.pt"
-      class="Products.PloneMeeting.browser.overrides.PMFacetedContainerView"
+      class=".overrides.PMFacetedContainerView"
       permission="zope2.View"
       />
     <browser:page
       for="Products.PloneMeeting.interfaces.IMeeting"
       name="meeting_available_items_view"
       template="templates/meeting_available_items_view.pt"
-      class="Products.PloneMeeting.browser.overrides.PMFacetedContainerView"
+      class=".overrides.PMFacetedContainerView"
       permission="zope2.View"
       />
 
@@ -117,33 +117,40 @@
       for="Products.PloneMeeting.interfaces.IMeeting"
       name="meeting-before-faceted-infos"
       template="templates/meeting_before_faceted_infos.pt"
-      class="Products.PloneMeeting.browser.views.MeetingBeforeFacetedInfosView"
+      class=".views.MeetingBeforeFacetedInfosView"
       permission="zope2.View"
       />
     <browser:page
       for="Products.PloneMeeting.interfaces.IMeeting"
       name="meeting-after-faceted-infos"
       template="templates/meeting_after_faceted_infos.pt"
-      class="Products.PloneMeeting.browser.views.MeetingAfterFacetedInfosView"
+      class=".views.MeetingAfterFacetedInfosView"
       permission="zope2.View"
       />
     <browser:view
       for="Products.PloneMeeting.interfaces.IMeeting"
       name="present-several-items"
-      class="Products.PloneMeeting.browser.views.PresentSeveralItemsView"
+      class=".views.PresentSeveralItemsView"
       permission="zope2.View"
       />
     <browser:view
       for="Products.PloneMeeting.interfaces.IMeeting"
       name="remove-several-items"
-      class="Products.PloneMeeting.browser.views.RemoveSeveralItemsView"
+      class=".views.RemoveSeveralItemsView"
       permission="zope2.View"
       />
     <browser:view
       for="Products.PloneMeeting.interfaces.IMeeting"
       name="decide-several-items"
-      class="Products.PloneMeeting.browser.views.DecideSeveralItemsView"
+      class=".views.DecideSeveralItemsView"
       permission="zope2.View"
+      />
+    <browser:page
+      for="Products.PloneMeeting.interfaces.IMeetingConfig"
+      name="check-pod-templates"
+      template="templates/check_pod_templates.pt"
+      class=".views.CheckPodTemplatesView"
+      permission="cmf.ManagePortal"
       />
 
     <!-- a view that will make some utils available -->

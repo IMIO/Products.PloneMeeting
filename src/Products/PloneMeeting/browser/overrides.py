@@ -563,7 +563,12 @@ class ConfigActionsPanelView(ActionsPanelView):
         self.folder = self.context.getParentNode()
         # objectIds is used for moving elements, we actually only want
         # to move elements of same portal_type
-        self.objectIds = self.folder.objectIds(self.context.meta_type)
+        # exception for Pod templates where we have ConfigurablePodTemplate
+        # and DashboardTemplate objects
+        if self.folder.getId() == 'podtemplates':
+            self.objectIds = self.folder.objectIds()
+        else:
+            self.objectIds = self.folder.objectIds(self.context.meta_type)
         self.objId = self.context.getId()
         self.moveUrl = "{0}/folder_position?position=%s&id=%s&template_id={1}".format(
             self.folder.absolute_url(), self.returnTo())
