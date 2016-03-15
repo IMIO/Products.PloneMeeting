@@ -452,6 +452,20 @@ class testViews(PloneMeetingTestCase):
         messages = IStatusMessage(self.request).show()
         self.assertEquals(messages[-1].message, msg)
 
+    def test_pm_ItemMoreInfos(self, ):
+        '''Test the @@item-more-infos view, especially getItemsListVisibleFields
+           that keeps order of fields, because we need to make sure that it respects
+           order defined in the MeetingItem schema.'''
+        cfg = self.meetingConfig
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        view = item.restrictedTraverse('@@item-more-infos')
+        cfg.setItemsListVisibleFields(('MeetingItem.description',
+                                       'MeetingItem.motivation',
+                                       'MeetingItem.decision'))
+        self.assertEquals(view.getItemsListVisibleFields().keys(),
+                          ['description', 'motivation', 'decision'])
+
     def test_pm_PrintXhtml(self):
         '''Test the method that will ease print of XHTML content into Pod templates.'''
         self.changeUser('pmCreator1')

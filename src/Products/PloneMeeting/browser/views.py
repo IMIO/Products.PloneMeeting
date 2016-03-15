@@ -98,7 +98,8 @@ class ItemMoreInfosView(BrowserView):
           Get the topicName from the request and returns it.
         """
         visibleFields = self.cfg.getItemsListVisibleFields()
-        res = {}
+        # keep order of displayed fields
+        res = OrderedDict()
         for visibleField in visibleFields:
             visibleFieldName = visibleField.split('.')[1]
             # if nothing is defined, the default rendering macro will be used
