@@ -45,6 +45,7 @@ from plone.autoform.interfaces import WRITE_PERMISSIONS_KEY
 from plone.dexterity.interfaces import IDexterityContent
 from plone import api
 from imio.helpers.xhtml import addClassToLastChildren
+from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
 from imio.helpers.xhtml import markEmptyTags
 from imio.helpers.xhtml import removeBlanks
 from imio.helpers.xhtml import storeExternalImagesLocally
@@ -1135,14 +1136,14 @@ def transformAllRichTextFields(obj, onlyField=None):
 
 
 # ------------------------------------------------------------------------------
-def signatureNotAlone(xhtmlContent):
+def signatureNotAlone(xhtmlContent, numberOfChars=CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT):
     '''This method will set, on the p_xhtmlContent's last paragraph, a
        specific CSS class that will prevent, in ODT documents, signatures
        to stand alone on their last page.'''
     # A paragraph may be a "p" or "li". If it is a "p", I will add style
     # (if not already done) "podItemKeepWithNext"; if it is a "li" I will
     # add style "podParaKeepWithNext" (if not already done).
-    return addClassToLastChildren(xhtmlContent)
+    return addClassToLastChildren(xhtmlContent, numberOfChars=numberOfChars)
 
 
 # ------------------------------------------------------------------------------

@@ -38,6 +38,7 @@ from Products.CMFCore.WorkflowCore import WorkflowException
 from plone import api
 from eea.facetednavigation.interfaces import ICriteria
 from collective.documentgenerator.helper.archetypes import ATDocumentGenerationHelperView
+from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
 from imio.helpers.xhtml import imagesToPath
 from Products.PloneMeeting import logger
 from Products.PloneMeeting.config import ADVICE_STATES_ALIVE
@@ -465,6 +466,7 @@ class PMDocumentGenerationHelperView(ATDocumentGenerationHelperView):
                    image_src_to_paths=True,
                    separatorValue='<p>&nbsp;</p>',
                    keepWithNext=False,
+                   keepWithNextNumberOfChars=CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT,
                    checkNeedSeparator=True):
         """Helper method to format a p_xhtmlContents.  The xhtmlContents is a list or a string containing
            either XHTML content or some specific recognized words like :
@@ -505,7 +507,7 @@ class PMDocumentGenerationHelperView(ATDocumentGenerationHelperView):
 
         # manage keepWithNext
         if keepWithNext:
-            xhtmlFinal = signatureNotAlone(xhtmlFinal)
+            xhtmlFinal = signatureNotAlone(xhtmlFinal, numberOfChars=keepWithNextNumberOfChars)
 
         return xhtmlFinal
 

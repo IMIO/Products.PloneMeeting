@@ -236,6 +236,10 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   and meetingadvice), if external images are used, it is automatically downloaded and stored locally
 - Added action to 'Check Pod templates' of a given MeetingConfig.  This action can be triggered from the
   MeetingConfig [Default] tab and is especially made for Managers during migrations
+- Added method 'printXhtml' available in Pod templates on view.printXhtml to be able to print a xhtmlContent with some
+  options like being able to print several xhtml chunks (MeetingItem.motivation + Meeting.decision for example), to define
+  arbitrary xhtml chunks ('<p>DECIDE :</p>'), to manage 'space' between xhtml chunks, keepWithNext, ...  And thus, removed
+  method Meeting.getDeliberation that was used to contatenate 'motivation' and 'decision'.
 
 3.3 (2015-02-27)
 ----------------
