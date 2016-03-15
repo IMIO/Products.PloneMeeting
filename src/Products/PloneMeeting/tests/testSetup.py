@@ -51,13 +51,26 @@ class testSetup(PloneMeetingTestCase):
         i = 1
         for profile_name in profile_names:
             pm_logger.info("Applying import_data of profile '%s'" % profile_name)
-            addPloneSite(self.app,
-                         str(i),
-                         title='Site title',
-                         setup_content=False,
-                         default_language=DEFAULT_LANGUAGE,
-                         extension_ids=('plonetheme.sunburst:default',
-                                        profile_name, ))
+            addPloneSite(
+                self.app,
+                str(i),
+                title='Site title',
+                setup_content=False,
+                default_language=DEFAULT_LANGUAGE,
+                extension_ids=('plonetheme.sunburst:default', profile_name, ))
+            # check that configured Pod templates are correctly rendered
+            # there should be no message of type
+            tool = api.portal.get_tool('portal_plonemeeting')
+            for cfg in tool.objectValues('MeetingConfig'):
+                view = cfg.restrictedTraverse('@@check-pod-templates')
+                messages = view.manageMessages()
+                self.assertEquals(messages['error'], [])
+                self.assertEquals(messages['no_pod_portal_types'], [])
+                # check that there are no new keys in messages
+                self.assertEquals(messages.keys(),
+                                  ['error', 'no_obj_found',
+                                   'no_pod_portal_types', 'not_enabled',
+                                   'dashboard_templates_not_managed', 'clean'])
             # clean memoize between each site because the same REQUEST especially
             # is used for every sites and this can lead to problems...
             cleanMemoize(self.portal)

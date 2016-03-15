@@ -653,6 +653,11 @@ class CheckPodTemplatesView(BrowserView):
 
     def __call__(self):
         '''Generate Pod Templates and check if some are genering errors.'''
+        self.messages = self.manageMessages()
+        return self.index()
+
+    def manageMessages(self):
+        ''' '''
         messages = OrderedDict()
         messages['error'] = []
         messages['no_obj_found'] = []
@@ -701,8 +706,7 @@ class CheckPodTemplatesView(BrowserView):
                     messages['clean'].append((pod_template, obj))
                 except:
                     messages['error'].append((pod_template, obj))
-        self.messages = messages
-        return self.index()
+        return messages
 
     def findObjsFor(self, pod_template):
         '''This will find objs working with given p_pod_template.
