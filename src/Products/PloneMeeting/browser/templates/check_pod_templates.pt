@@ -34,6 +34,11 @@
              tal:content="python: elt[1].Title()">
             Link to used object
           </a>
+          <tal:comment replace="nothing">Display additional message if any</tal:comment>
+          <tal:additionInfo condition="python: len(elt) == 3">
+            <h3 style="display: inline;"><span tal:content="python: elt[2][0]">Additional info type</span> :</h3>
+            <span tal:content="python: elt[2][1]">Additional info message</span>
+          </tal:additionInfo>
         </tal:used_obj>
         <br />
       </tal:loop2>

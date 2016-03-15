@@ -704,8 +704,8 @@ class CheckPodTemplatesView(BrowserView):
                                           sub_documents=[],
                                           **kwargs)
                     messages['clean'].append((pod_template, obj))
-                except:
-                    messages['error'].append((pod_template, obj))
+                except Exception, exc:
+                    messages['error'].append((pod_template, obj, ('Error', str(exc))))
         return messages
 
     def findObjsFor(self, pod_template):
