@@ -84,6 +84,7 @@ from Products.PloneMeeting.utils import getDateFromDelta
 from Products.PloneMeeting.utils import getHistory
 from Products.PloneMeeting.utils import hasHistory
 from Products.PloneMeeting.utils import ItemDuplicatedFromConfigEvent
+from Products.PloneMeeting.utils import MeetingLocalRolesUpdatedEvent
 from Products.PloneMeeting.utils import rememberPreviousData
 from Products.PloneMeeting.utils import setFieldFromAjax
 from Products.PloneMeeting.utils import toHTMLStrikedContent
@@ -1624,6 +1625,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
     def updateLocalRoles(self, **kwargs):
         """Update various local roles."""
         # remove every localRoles then recompute
+        old_local_roles = self.__ac_local_roles__.copy()
         self.__ac_local_roles__.clear()
         # add 'Owner' local role
         self.manage_addLocalRoles(self.owner_info()['id'], ('Owner',))
@@ -1631,6 +1633,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         self._updatePowerObserversLocalRoles()
         # manage the 'ATContentTypes: Add Image' permission
         _addImagePermission(self)
+        # notify that localRoles have been updated
+        notify(MeetingLocalRolesUpdatedEvent(self, old_local_roles))
         # reindex relevant indexes
         self.reindexObjectSecurity()
 

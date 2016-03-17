@@ -71,8 +71,6 @@ def do(action, event):
     elif objectType == 'Meeting':
         # update every local roles
         event.object.updateLocalRoles()
-        # update powerObservers local roles
-        event.object._updatePowerObserversLocalRoles()
         # Add recurring items to the meeting if relevant
         addRecurringItemsIfRelevant(event.object, event.transition.id)
         # Send mail if relevant

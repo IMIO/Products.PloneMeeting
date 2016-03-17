@@ -81,6 +81,7 @@ from Products.PloneMeeting.interfaces import IMeetingFileCustom
 from Products.PloneMeeting.interfaces import IMeetingFileTypeCustom
 from Products.PloneMeeting.interfaces import IMeetingGroupCustom
 from Products.PloneMeeting.interfaces import IMeetingItemCustom
+from Products.PloneMeeting.interfaces import IMeetingLocalRolesUpdatedEvent
 from Products.PloneMeeting.interfaces import IMeetingUserCustom
 from Products.PloneMeeting.interfaces import IToolPloneMeetingCustom
 
@@ -1480,6 +1481,14 @@ class AdvicesUpdatedEvent(ObjectEvent):
         self.object = object
         self.triggered_by_transition = triggered_by_transition
         self.old_adviceIndex = old_adviceIndex
+
+
+class MeetingLocalRolesUpdatedEvent(ObjectEvent):
+    implements(IMeetingLocalRolesUpdatedEvent)
+
+    def __init__(self, object, old_local_roles):
+        self.object = object
+        self.old_local_roles = old_local_roles
 
 
 class ItemAfterTransitionEvent(ObjectEvent):

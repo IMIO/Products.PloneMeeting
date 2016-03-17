@@ -135,9 +135,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   will invalidate caches for actions_panel, faceted filters vocabularies, ...
 - Refactored the way localRoles are updated on item and meeting, do no more manage various cases,
   just one single call to updateLocalRoles that will update every relevant localRoles each time
-  (copyGroups, powerObservers, advices, ...). This way we added a ItemLocalRolesUpdatedEvent to which
-  a plugin may subscribe to adapt localRoles if needed. Do not call MeetingItem._updateAdvices directly,
-  it is now a submethod of MeetingItem.updateLocalRoles
+  (copyGroups, powerObservers, advices, ...). This way we added a MeetingLocalRolesUpdatedEvent and
+  ItemLocalRolesUpdatedEvent to which a plugin may subscribe to adapt localRoles if needed.
+  Do not call MeetingItem._updateAdvices directly, it is now a submethod of MeetingItem.updateLocalRoles
 - Added caching for ToolPloneMeeting.userIsAmong
 - ToolPloneMeeting.getGroupsForUser parameter 'suffix' is now 'suffixes' and receives
   a list of suffixes to consider when getting MeetingGroups the user is in

@@ -1231,11 +1231,12 @@ class testMeetingItem(PloneMeetingTestCase):
         #   not restricted power observers;
         # - frozen items/meetings are accessible by both;
         # - only restricted power observers may access 'refused' items.
-        self.meetingConfig.setItemPowerObserversStates(('itemcreated', 'validated', 'presented',
-                                                       'itemfrozen', 'accepted', 'delayed'))
-        self.meetingConfig.setMeetingPowerObserversStates(('created', 'frozen', 'decided', 'closed'))
-        self.meetingConfig.setItemRestrictedPowerObserversStates(('itemfrozen', 'accepted', 'refused'))
-        self.meetingConfig.setMeetingRestrictedPowerObserversStates(('frozen', 'decided', 'closed'))
+        cfg = self.meetingConfig
+        cfg.setItemPowerObserversStates(('itemcreated', 'validated', 'presented',
+                                         'itemfrozen', 'accepted', 'delayed'))
+        cfg.setMeetingPowerObserversStates(('created', 'frozen', 'decided', 'closed'))
+        cfg.setItemRestrictedPowerObserversStates(('itemfrozen', 'accepted', 'refused'))
+        cfg.setMeetingRestrictedPowerObserversStates(('frozen', 'decided', 'closed'))
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         item.setDecision("<p>Decision</p>")
