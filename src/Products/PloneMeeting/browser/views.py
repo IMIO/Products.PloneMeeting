@@ -575,7 +575,7 @@ class PMDocumentGenerationHelperView(ATDocumentGenerationHelperView):
                                                                   context=self.request),
                                                                   cgi.escape(unicode(author, 'utf-8')), )
 
-                adviceComment = 'comment' in advice and advice['comment'] or '-'
+                adviceComment = 'comment' in advice and self.printXhtml(adviceObj, advice['comment']) or '-'
                 res = res + (u"<br /><u>%s :</u> %s<p></p>" % (translate('Advice comment',
                                                                          domain='PloneMeeting',
                                                                          context=self.request),
