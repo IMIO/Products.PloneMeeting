@@ -1549,7 +1549,7 @@ class testMeeting(PloneMeetingTestCase):
         # as MeetingManager, if useCatalog=False, uids may not be provided, it returns every items
         self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
-        allItemObjs = meeting.getItems(useCatalog=False, uids=[])
+        allItemObjs = meeting.getItems(useCatalog=False, uids=[], ordered=True)
         self.assertEquals(len(allItemObjs),
                           7)
         # if uids are provided, result is filtered
@@ -1562,8 +1562,8 @@ class testMeeting(PloneMeetingTestCase):
         self.assertRaises(Unauthorized, meeting.getItems, useCatalog=False, uids=[])
         # if uids of elements that user may not see are passed, asked items are not returned
         # pmCreator1 may only see items of 'vendors' group
-        self.assertTrue(allItemObjs[0].getProposingGroup() == 'developers')
-        self.assertTrue(allItemObjs[2].getProposingGroup() == 'vendors')
+        self.assertEquals(allItemObjs[0].getProposingGroup(), 'developers')
+        self.assertEquals(allItemObjs[2].getProposingGroup(), 'vendors')
         # only item of group 'developers' is returned
         items = meeting.getItems(useCatalog=False, uids=[allItemObjs[0].UID(), allItemObjs[2].UID()])
         self.assertEquals([item.UID() for item in items],
