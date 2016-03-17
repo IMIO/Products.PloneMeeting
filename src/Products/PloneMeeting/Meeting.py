@@ -14,6 +14,7 @@ __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
 __docformat__ = 'plaintext'
 
 from AccessControl import ClassSecurityInfo
+from AccessControl import Unauthorized
 from zope.interface import implements
 import interfaces
 
@@ -1162,6 +1163,10 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             res = catalog(**query)
         else:
             res = self.getField('items').get(self, **kwargs)
+            # if not filtering on uids, accessing the 'items' directly is only available to (Meeting)Managers
+            tool = api.portal.get_tool('portal_plonemeeting')
+            if not uids and not tool.isManager(self):
+                raise Unauthorized
             if uids:
                 member = api.user.get_current()
                 keptItems = []

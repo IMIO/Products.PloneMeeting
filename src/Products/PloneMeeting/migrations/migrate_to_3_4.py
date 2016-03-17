@@ -296,14 +296,19 @@ class Migrate_To_3_4(Migrator):
             lateItems = meeting.getReferences('MeetingLateItems')
             if not lateItems:
                 continue
+
             # Sort late items according to item number
+            normalItems = meeting.getReferences('MeetingItems')
+            normalItems.sort(key=lambda x: x.getItemNumber())
             lateItems.sort(key=lambda x: x.getItemNumber())
-            lenNormalItems = len(meeting.getItems())
+            lenNormalItems = len(normalItems)
             for lateItem in lateItems:
                 lateItem.setListType('late')
                 lateItem.setItemNumber(lateItem.itemNumber + lenNormalItems)
+            lateItems.sort(key=lambda x: x.getItemNumber())
+
             # now join lateItems to Meeting.items
-            meeting.setItems(meeting.getItems(ordered=True) + lateItems)
+            meeting.setItems(normalItems + lateItems)
             meeting.deleteReferences('MeetingLateItems')
         logger.info('Done.')
 

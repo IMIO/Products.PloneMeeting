@@ -1504,7 +1504,7 @@ class testMeeting(PloneMeetingTestCase):
         meeting = self._createMeetingWithItems()
         itemsInOrder = meeting.getItems(ordered=True)
         self.assertTrue(len(itemsInOrder) == 7)
-        # we have objects
+        # we have MeetingItems as useCatalog=False by default
         self.assertTrue(isinstance(itemsInOrder[0], MeetingItem))
         # items are ordered
         self.assertEquals([item.getItemNumber() for item in itemsInOrder],
@@ -1533,6 +1533,41 @@ class testMeeting(PloneMeetingTestCase):
         # we can specify the listType
         self.assertTrue(len(meeting.getItems(listTypes=['normal'], useCatalog=True)) == 7)
         self.assertTrue(len(meeting.getItems(listTypes=['late'], useCatalog=True)) == 0)
+
+    def test_pm_GetItemsWithUseCatalogFalse(self):
+        '''Test that Meeting.getItems method may not be used to get not accessible items.
+           When using getItems(useCatalog=False) as we use directly the getField method
+           that gets linked items without checking permission, we reimplemented that, make
+           sure a user could not access items he may not...
+           If p_uids is not given to Meeting.getItems, only MeetingManagers may call that,
+           for other users, the p_uids are checked.'''
+        # create a meeting with items then try to get unreachable items
+        cfg = self.meetingConfig
+        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'at_the_end',
+                                           'reverse': '0'}, ))
+
+        # as MeetingManager, if useCatalog=False, uids may not be provided, it returns every items
+        self.changeUser('pmManager')
+        meeting = self._createMeetingWithItems()
+        allItemObjs = meeting.getItems(useCatalog=False, uids=[])
+        self.assertEquals(len(allItemObjs),
+                          7)
+        # if uids are provided, result is filtered
+        self.assertEquals(len(meeting.getItems(useCatalog=False, uids=[allItemObjs[0].UID(), allItemObjs[1].UID()])),
+                          2)
+
+        # as a non MeetingManager, if useCatalog=False, uids must be provided
+        self.changeUser('pmCreator1')
+        cleanRamCacheFor('Products.PloneMeeting.Meeting.getItems')
+        self.assertRaises(Unauthorized, meeting.getItems, useCatalog=False, uids=[])
+        # if uids of elements that user may not see are passed, asked items are not returned
+        # pmCreator1 may only see items of 'vendors' group
+        self.assertTrue(allItemObjs[0].getProposingGroup() == 'developers')
+        self.assertTrue(allItemObjs[2].getProposingGroup() == 'vendors')
+        # only item of group 'developers' is returned
+        items = meeting.getItems(useCatalog=False, uids=[allItemObjs[0].UID(), allItemObjs[2].UID()])
+        self.assertEquals([item.UID() for item in items],
+                          [allItemObjs[0].UID()])
 
     def test_pm_GetItemByNumber(self):
         '''Test the Meeting.getItemByNumber method.'''
