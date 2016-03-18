@@ -3565,13 +3565,16 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setCopyGroups(('vendors_reviewers', ))
         item.setOptionalAdvisers(('vendors', ))
         item.at_post_edit_script()
-        # users able to edit at least one field are able to add images
+        # users able to edit the item or at least one field are able to add images
         self.assertTrue(self.hasPermission('ATContentTypes: Add Image', item))
         self.assertTrue(self.hasPermission(AddPortalContent, item))
+        self.assertTrue(self.hasPermission(ModifyPortalContent, item))
         item.invokeFactory('Image', id='img1', title='Image1', file=data.read())
         self.changeUser('budgetimpacteditor')
         self.assertTrue(self.hasPermission('ATContentTypes: Add Image', item))
         self.assertTrue(self.hasPermission(AddPortalContent, item))
+        self.assertFalse(self.hasPermission(ModifyPortalContent, item))
+        self.assertTrue(self.hasPermission(WriteBudgetInfos, item))
         item.invokeFactory('Image', id='img2', title='Image2', file=data.read())
         # users just able to see the item are not able to add images
         # copyGroup
