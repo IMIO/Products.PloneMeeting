@@ -63,10 +63,17 @@ div.ploneMeetingSelectContainer.annex_type_img_select_box {
 div.ploneMeetingSelectContainer.annex_type_img_select_box div.ploneMeetingSelectDropdownIcon {
     min-width: 250px;
 }
-div.ploneMeetingSelectContainer.go_to_meeting_img_select_box div.ploneMeetingSelectDropdownIcon {
+/* make sure if both select boxes are displayed, first is displayed above second */
+div#go_to_meeting_img_select_box_searchallmeetings {
+    z-index: 2;
+}
+
+div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchallmeetings div.ploneMeetingSelectDropdownIcon,
+div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchlastdecisions div.ploneMeetingSelectDropdownIcon {
     width: 80%;
 }
-div.ploneMeetingSelectContainer.go_to_meeting_img_select_box div.ploneMeetingSelectBox {
+div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchallmeetings div.ploneMeetingSelectBox,
+div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchlastdecisions div.ploneMeetingSelectBox {
     width: 80%;
     padding-right: 9px;
 }
@@ -74,15 +81,18 @@ div.ploneMeetingSelectContainer span[id^='idButtonText_'] {
     padding-left: 5px;
     padding-top: 2px;
 }
-div.ploneMeetingSelectContainer span#idButtonText_go_to_meeting_img_select_box {
+div.ploneMeetingSelectContainer span#idButtonText_go_to_meeting_img_select_box_searchallmeetings,
+div.ploneMeetingSelectContainer span#idButtonText_go_to_meeting_img_select_box_searchlastdecisions {
     display: inline-block;
 }
 /* cancel additional padding given by faceted to the meeting list */
-div.faceted-tagscloud-collection-widget div.ploneMeetingSelectContainer.go_to_meeting_img_select_box a.pretty_link {
+div.faceted-tagscloud-collection-widget div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchallmeetings a.pretty_link,
+div.faceted-tagscloud-collection-widget div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchlastdecisions a.pretty_link {
     margin-left: 0em;
 }
 
-div.ploneMeetingSelectContainer.go_to_meeting_img_select_box p {
+div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchallmeetings p,
+div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchlastdecisions p {
     margin-bottom: 0em;
     width: 104%;
 }
@@ -117,7 +127,8 @@ div.ploneMeetingSelectContainer.go_to_meeting_img_select_box p {
     z-index: 1;
     overflow: hidden;
 }
-div.ploneMeetingSelectContainer.go_to_meeting_img_select_box span.ploneMeetingRef {
+div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchallmeetings span.ploneMeetingRef,
+div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchlastdecisions span.ploneMeetingRef {
     font-weight: bold;
 }
 

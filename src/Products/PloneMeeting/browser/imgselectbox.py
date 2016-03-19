@@ -111,7 +111,7 @@ class GoToMeetingImgSelectBoxView(BaseImgSelectBoxView):
     @property
     def select_box_name(self):
         """ """
-        return 'go_to_meeting_img_select_box'
+        return 'go_to_meeting_img_select_box_' + self.select_box_name_suffix
 
     def has_selected_value(self):
         """ """

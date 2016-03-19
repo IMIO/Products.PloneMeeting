@@ -1,10 +1,5 @@
 <tal:defines define="brains python: view.brains;
-                     tool python: view.tool;
                      cfg python: view.cfg;
-                     term python: view.term;
-                     category python: view.category;
-                     widget python: view.widget;
-                     meetingFolder python: cfg.getPloneMeetingFolder(cfg.getId());
                      nbOfMeetings python:len(brains);
                      maxShownMeetings cfg/maxShownMeetings;"
              i18n:domain="PloneMeeting">
@@ -21,7 +16,7 @@
 
     <tal:comment replace="nothing">Many meetings, show a combo box</tal:comment>
     <div class="manyMeetings" tal:condition="python: nbOfMeetings > maxShownMeetings">
-      <tal:go_to_meeting_select_box replace="structure python: context.restrictedTraverse('@@go_to_meeting_img_select_box')(**{'brains': brains})" />
+      <tal:go_to_meeting_select_box replace="structure python: context.restrictedTraverse('@@go_to_meeting_img_select_box')(**{'brains': brains, 'select_box_name_suffix': view.context.getId()})" />
     </div>
 
     <tal:comment replace="nothing">No available meeting visible, show a help message</tal:comment>
