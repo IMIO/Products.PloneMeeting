@@ -75,7 +75,8 @@ def do(action, event):
         addRecurringItemsIfRelevant(event.object, event.transition.id)
         # Send mail if relevant
         sendMailIfRelevant(event.object, "meeting_state_changed_%s" % event.transition.id, 'View')
-        # apply on transition field transform if any
+        # trigger some transitions on contained items depending on
+        # MeetingConfig.onMeetingTransitionItemTransitionToTrigger
         meetingTriggerTransitionOnLinkedItems(event.object, event.transition.id)
 
     # update modification date upon state change
