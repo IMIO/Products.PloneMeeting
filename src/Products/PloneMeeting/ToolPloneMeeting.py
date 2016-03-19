@@ -1675,8 +1675,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             itemOrMeeting.updateLocalRoles()
 
         seconds = time.time() - startTime
-        logger.info('updateAllLocalRoles finished in %.2f seconds(s) (about %d minute(s)).' %
-                    (seconds, round(float(seconds)/60.0)))
+        logger.info('updateAllLocalRoles finished in %.2f seconds(s) (about %d minute(s)), that is %d by second.' %
+                    (seconds, round(float(seconds)/60.0), numberOfBrains/seconds))
         self.plone_utils.addPortalMessage('Done.')
         return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 
