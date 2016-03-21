@@ -37,6 +37,11 @@ class IItemLocalRolesUpdatedEvent(IObjectEvent):
     """
 
 
+class IMeetingAfterTransitionEvent(IObjectEvent):
+    """
+    """
+
+
 class IMeetingLocalRolesUpdatedEvent(IObjectEvent):
     """
     """

@@ -74,6 +74,7 @@ from Products.PloneMeeting.interfaces import IItemDuplicatedEvent
 from Products.PloneMeeting.interfaces import IItemDuplicatedFromConfigEvent
 from Products.PloneMeeting.interfaces import IItemListTypeChangedEvent
 from Products.PloneMeeting.interfaces import IItemLocalRolesUpdatedEvent
+from Products.PloneMeeting.interfaces import IMeetingAfterTransitionEvent
 from Products.PloneMeeting.interfaces import IMeetingCategoryCustom
 from Products.PloneMeeting.interfaces import IMeetingConfigCustom
 from Products.PloneMeeting.interfaces import IMeetingCustom
@@ -1489,6 +1490,18 @@ class MeetingLocalRolesUpdatedEvent(ObjectEvent):
     def __init__(self, object, old_local_roles):
         self.object = object
         self.old_local_roles = old_local_roles
+
+
+class MeetingAfterTransitionEvent(ObjectEvent):
+    '''
+      Event triggered at the end of the onMeetingTransition,
+      so we are sure that subplugins registering to this event
+      will be called after.
+    '''
+    implements(IMeetingAfterTransitionEvent)
+
+    def __init__(self, object):
+        self.object = object
 
 
 class ItemAfterTransitionEvent(ObjectEvent):

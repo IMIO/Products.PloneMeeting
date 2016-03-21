@@ -40,11 +40,12 @@ from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.utils import _addImagePermission
+from Products.PloneMeeting.utils import addRecurringItemsIfRelevant
 from Products.PloneMeeting.utils import AdviceAfterAddEvent
 from Products.PloneMeeting.utils import AdviceAfterModifyEvent
-from Products.PloneMeeting.utils import ItemAfterTransitionEvent
-from Products.PloneMeeting.utils import addRecurringItemsIfRelevant
 from Products.PloneMeeting.utils import applyOnTransitionFieldTransform
+from Products.PloneMeeting.utils import ItemAfterTransitionEvent
+from Products.PloneMeeting.utils import MeetingAfterTransitionEvent
 from Products.PloneMeeting.utils import meetingTriggerTransitionOnLinkedItems
 from Products.PloneMeeting.utils import sendMailIfRelevant
 
@@ -81,8 +82,6 @@ def do(action, event):
 
     # update modification date upon state change
     event.object.setModificationDate(DateTime())
-    # just reindex the entire object
-    event.object.reindexObject()
 
 
 def onItemTransition(item, event):
@@ -113,8 +112,8 @@ def onItemTransition(item, event):
     # to last user that was taking the item over or to nothing
     wf_state = "%s__wfstate__%s" % (cfg.getItemWorkflow(), event.new_state.getId())
     item.adapted().setHistorizedTakenOverBy(wf_state)
-    # notify our own PM event so we are sure that this event is called
-    # after the onItemTransition event
+    # notify an ItemAfterTransitionEvent for subplugins so we are sure
+    # that it is called after PloneMeeting item transition
     notify(ItemAfterTransitionEvent(item))
     # just reindex the entire object
     item.reindexObject()
@@ -127,6 +126,11 @@ def onMeetingTransition(meeting, event):
     transitionId = event.transition.id
     action = 'do%s%s' % (transitionId[0].upper(), transitionId[1:])
     do(action, event)
+    # notify a MeetingAfterTransitionEvent for subplugins so we are sure
+    # that it is called after PloneMeeting meeting transition
+    notify(MeetingAfterTransitionEvent(meeting))
+    # just reindex the entire object
+    event.object.reindexObject()
 
 
 def onItemBeforeTransition(item, event):

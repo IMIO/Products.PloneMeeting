@@ -92,6 +92,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Removed utils.spanifyLink
 - Added events AdviceAfterAddEvent and AdviceAfterAddEvent so other package can register subscriber for
   it and be sure it is called after the PloneMeeting AdviceAdded and AdviceModified events
+- Added events ItemAfterTransitionEvent and MeetingAfterTransitionEvent so other package can register subscriber for
+  it and be sure it is called after the PloneMeeting ItemTransitionEvent and MeetingTransitionEvent events
 - Added new portal_types for recurring items (MeetingItemRecurring) and item templates (MeetingItemTemplate),
   this way we may remove the monkey patch about CatalogTool.searchResults and the 'isDefinedInTool' catalog index
 - Mark base portal_types Meeting, MeetingItem, MeetingItemTemplate and MeetingItemRecurring global_allow=False
@@ -240,6 +242,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   options like being able to print several xhtml chunks (MeetingItem.motivation + Meeting.decision for example), to define
   arbitrary xhtml chunks ('<p>DECIDE :</p>'), to manage 'space' between xhtml chunks, keepWithNext, ...  And thus, removed
   method Meeting.getDeliberation that was used to contatenate 'motivation' and 'decision'.
+
 
 3.3 (2015-02-27)
 ----------------
