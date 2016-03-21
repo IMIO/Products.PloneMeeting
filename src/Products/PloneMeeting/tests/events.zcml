@@ -1,0 +1,22 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:five="http://namespaces.zope.org/five"
+    xmlns:i18n="http://namespaces.zope.org/i18n"
+    xmlns:genericsetup="http://namespaces.zope.org/genericsetup"
+    i18n_domain="PloneMeeting">
+
+ <include package="zope.component" file="meta.zcml" />
+
+    <subscriber for="Products.PloneMeeting.interfaces.IMeetingItem
+                     Products.PloneMeeting.interfaces.IItemListTypeChangedEvent"
+                handler=".tests.events.onItemListTypeChanged"/>
+
+    <subscriber for="Products.PloneMeeting.interfaces.IMeetingItem
+                     Products.PloneMeeting.interfaces.IItemLocalRolesUpdatedEvent"
+                handler=".tests.events.onItemLocalRolesUpdated"/>
+
+    <subscriber for="Products.PloneMeeting.interfaces.IMeeting
+                     Products.PloneMeeting.interfaces.IMeetingLocalRolesUpdatedEvent"
+                handler=".tests.events.onMeetingLocalRolesUpdated"/>
+
+</configure>

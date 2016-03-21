@@ -243,7 +243,6 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   arbitrary xhtml chunks ('<p>DECIDE :</p>'), to manage 'space' between xhtml chunks, keepWithNext, ...  And thus, removed
   method Meeting.getDeliberation that was used to contatenate 'motivation' and 'decision'.
 
-
 3.3 (2015-02-27)
 ----------------
 - Moved to Plone 4.3.4

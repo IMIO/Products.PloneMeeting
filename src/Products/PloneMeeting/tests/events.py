@@ -22,3 +22,15 @@ def onItemListTypeChanged(item, event):
     # set old_listType and new listType
     item.setTitle("{0} - {1}".format(event.old_listType, item.getListType()))
     item.reindexObject()
+
+
+def onItemLocalRolesUpdated(item, event):
+    """Called after localRoles have been updated on the item.
+       Add a local_role 'Reader' to user 'pmCreator2'."""
+    item.manage_addLocalRoles('pmCreator2', ('Reader', ))
+
+
+def onMeetingLocalRolesUpdated(item, event):
+    """Called after localRoles have been updated on the meeting.
+       Add a local_role 'MeetingManager' to user 'pmCreator2'."""
+    item.manage_addLocalRoles('pmCreator2', ('MeetingManager', ))

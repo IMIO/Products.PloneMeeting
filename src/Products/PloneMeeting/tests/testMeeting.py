@@ -27,11 +27,13 @@ from os import path
 
 from DateTime import DateTime
 from DateTime.DateTime import _findLocalTimeZoneName
-
 from AccessControl import Unauthorized
+from Products.Five import zcml
 from zope.i18n import translate
-from Products.ZCatalog.Catalog import AbstractCatalogBrain
+
 from Products.CMFCore.permissions import AddPortalContent
+from Products.CMFCore.permissions import ModifyPortalContent
+from Products.ZCatalog.Catalog import AbstractCatalogBrain
 
 from plone.app.textfield.value import RichTextValue
 from plone.app.querystring.querybuilder import queryparser
@@ -39,6 +41,7 @@ from plone.dexterity.utils import createContentInContainer
 
 from imio.helpers.cache import cleanRamCacheFor
 
+from Products import PloneMeeting as products_plonemeeting
 from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
@@ -1936,6 +1939,40 @@ class testMeeting(PloneMeetingTestCase):
         meeting.setObservations(text)
         meeting.at_post_edit_script()
         self.assertTrue('spw.png' in meeting.objectIds())
+
+    def test_pm_MeetingLocalRolesUpdatedEvent(self):
+        """Test this event that is triggered after the local_roles on the meeting have been updated."""
+        # load a subscriber and check that it does what necessary each time
+        # it will give 'Reader' local role to 'pmCreator2' so he may edit the meeting
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2016/03/03'))
+        # for now, pmCreator2 does not have any local_roles
+        self.assertFalse('pmCreator2' in meeting.__ac_local_roles__)
+        meeting.updateLocalRoles()
+        self.assertFalse('pmCreator2' in meeting.__ac_local_roles__)
+        # item is found by a query
+        self.assertTrue(self.portal.portal_catalog(UID=meeting.UID()))
+
+        # pmCreator2 may not edit the meeting for now
+        self.changeUser('pmCreator2')
+        self.assertFalse(self.hasPermission(ModifyPortalContent, meeting))
+
+        # load subscriber and updateLocalRoles
+        zcml.load_config('tests/events.zcml', products_plonemeeting)
+        meeting.updateLocalRoles()
+        # pmCreator2 may edit now
+        self.assertTrue('pmCreator2' in meeting.__ac_local_roles__)
+        self.assertTrue(self.hasPermission(ModifyPortalContent, meeting))
+
+        # freeze the meeting, still ok
+        self.changeUser('pmManager')
+        self.freezeMeeting(meeting)
+        self.changeUser('pmCreator2')
+        self.assertTrue('pmCreator2' in meeting.__ac_local_roles__)
+        self.assertTrue(self.hasPermission(ModifyPortalContent, meeting))
+
+        # cleanUp zmcl.load_config because it impact other tests
+        zcml.cleanUp()
 
 
 def test_suite():

@@ -266,9 +266,9 @@ class testViews(PloneMeetingTestCase):
         self.assertEquals(item.getListType(), u'late')
         self.assertTrue(self.portal.portal_catalog(UID=item.UID(), listType=u'late'))
         # a specific subscriber is triggered when listType value changed
-        # register a subscriber that will actually change item title
+        # register a subscriber (onItemListTypeChanged) that will actually change item title
         # and set it to 'old_listType - new_listType'
-        zcml.load_config('tests/testing-subscribers.zcml', products_plonemeeting)
+        zcml.load_config('tests/events.zcml', products_plonemeeting)
         self.assertEquals(item.Title(), 'Item title')
         view('normal')
         self.assertEquals(item.Title(), 'late - normal')

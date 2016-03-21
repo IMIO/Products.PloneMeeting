@@ -26,6 +26,7 @@ from os import path
 
 from AccessControl import Unauthorized
 from DateTime import DateTime
+from Products.Five import zcml
 
 from zope.annotation.interfaces import IAnnotations
 from zope.i18n import translate
@@ -42,6 +43,7 @@ from Products.statusmessages.interfaces import IStatusMessage
 
 from imio.helpers.cache import cleanRamCacheFor
 
+from Products import PloneMeeting as products_plonemeeting
 from Products.PloneMeeting.browser.itemassembly import item_assembly_default
 from Products.PloneMeeting.browser.itemsignatures import item_signatures_default
 from Products.PloneMeeting.config import DEFAULT_COPIED_FIELDS
@@ -3681,6 +3683,43 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setDescription(text)
         item.at_post_edit_script()
         self.assertTrue('spw.png' in item.objectIds())
+
+    def test_pm_ItemLocalRolesUpdatedEvent(self):
+        """Test this event that is triggered after the local_roles on the item have been updated."""
+        # load a subscriber and check that it does what necessary each time
+        # it will give 'Reader' local role to 'pmCreator2' so he may see the item
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        # for now, pmCreator2 does not have any local_roles
+        self.assertFalse('pmCreator2' in item.__ac_local_roles__)
+        item.updateLocalRoles()
+        self.assertFalse('pmCreator2' in item.__ac_local_roles__)
+        # item is found by a query
+        self.assertTrue(self.portal.portal_catalog(UID=item.UID()))
+
+        # pmCreator2 does not have access for now
+        self.changeUser('pmCreator2')
+        self.assertFalse(self.hasPermission(View, item))
+        self.assertFalse(self.portal.portal_catalog(UID=item.UID()))
+
+        # load subscriber and updateLocalRoles
+        zcml.load_config('tests/events.zcml', products_plonemeeting)
+        item.updateLocalRoles()
+        # pmCreator2 has access now
+        self.assertTrue('pmCreator2' in item.__ac_local_roles__)
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertTrue(self.portal.portal_catalog(UID=item.UID()))
+
+        # propose the item, still ok
+        self.changeUser('pmCreator1')
+        self.proposeItem(item)
+        self.changeUser('pmCreator2')
+        self.assertTrue('pmCreator2' in item.__ac_local_roles__)
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertTrue(self.portal.portal_catalog(UID=item.UID()))
+
+        # cleanUp zmcl.load_config because it impact other tests
+        zcml.cleanUp()
 
 
 def test_suite():
