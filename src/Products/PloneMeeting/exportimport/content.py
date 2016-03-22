@@ -58,8 +58,9 @@ class ToolInitializer:
         if not self.profileData:
             return
         # initialize the tool only if it was not already done before
-        # by another profile, it is the case if some MeetingConfigs exist
-        if not self.tool.objectValues('MeetingConfig'):
+        # by another profile, it is the case if some MeetingConfigs or MeetingGroups exist
+        if not self.tool.objectIds('MeetingConfig') and \
+           not self.tool.objectIds('MeetingGroup'):
             for k, v in self.profileData.getData().iteritems():
                 exec 'self.tool.set%s%s(v)' % (k[0].upper(), k[1:])
 
