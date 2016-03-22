@@ -681,10 +681,14 @@ div[id^="pm_menu_advice_change_delay"].pmDropdown {
 }
 
 /* Add a highlight-red style useable in CKeditor to highlight modified elements */
-/* See ticket #901 on http://trac.imio.be */
 .highlight-red {
     color:red;
 }
+/* Add a indent-firstline style useable in CKeditor to indent first line of a paragraph */
+p.indent-firstline {
+    text-indent: 40px;
+}
+
 
 /* CSS for MeetingItem.privacy */
 /* While displayed as a single item (meetingitem_view) */

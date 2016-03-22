@@ -319,22 +319,26 @@ def postInstall(context):
 
 ##code-section FOOT
 def _configureCKeditor(site):
-    '''Make sure CKeditor is the new default editor used by everyone...'''
+    '''Make sure CKeditor is the new default editor used by everyone...
+       CKeditor custom styles are kept during migrations using the _before_reinstall/_after_reinstall hooks.'''
     logger.info('Defining CKeditor as the new default editor for every users and configuring it (styles)...')
     # this will install collective.ckeditor if it is not already the case...
     configure_ckeditor(site, custom='plonemeeting')
-    # remove every styles defined by default and add the "highlight red" style if not already done...
+    # remove every styles defined by default and add the custom styles if not already done...
     cke_props = site.portal_properties.ckeditor_properties
     if cke_props.menuStyles.find(CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG) == -1:
         enc = site.portal_properties.site_properties.getProperty('default_charset')
-        msg = translate('ckeditor_style_highlight_in_red',
-                        domain='PloneMeeting',
-                        context=site.REQUEST).encode('utf-8')
-        cke_props.menuStyles = \
-            unicode("[\n%s\n{ name : '%s'\t\t, element : 'span', "
-                    "attributes : { 'class' : 'highlight-red' } },\n]\n" %
-                    (CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG, msg),
-                    enc)
+        msg_highlight = translate('ckeditor_style_highlight_in_red',
+                                  domain='PloneMeeting',
+                                  context=site.REQUEST).encode('utf-8')
+        msg_indent = translate('ckeditor_style_indent_first_line',
+                               domain='PloneMeeting',
+                               context=site.REQUEST).encode('utf-8')
+        menuStyles = unicode(
+            "[\n{0}\n{{ name : '{1}'\t\t, element : 'span', attributes : {{ 'class' : 'highlight-red' }} }},\n"
+            "{{ name : '{2}'\t\t, element : 'p', attributes : {{ 'class' : 'indent-firstline' }} }},\n]\n".
+            format(CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG, msg_highlight, msg_indent), enc)
+        cke_props.menuStyles = menuStyles
     # activate SCAYT auto-start
     cke_props.enableScaytOnStartup = True
     # disable folder creation thru CKeditor to avoid

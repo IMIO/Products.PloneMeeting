@@ -1615,7 +1615,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         numberOfBrains = len(brains)
         i = 1
         for brain in brains:
-            IAnnexable(brain.getObject()).updateAnnexIndex()
+            try:
+                obj = brain.getObject()
+            except AttributeError:
+                continue
+            IAnnexable(obj).updateAnnexIndex()
             logger.info('%d/%d Updating annexIndex of %s at %s' % (i,
                                                                    numberOfBrains,
                                                                    brain.portal_type,

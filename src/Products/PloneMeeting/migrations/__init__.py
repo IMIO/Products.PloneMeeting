@@ -50,13 +50,23 @@ class Migrator(BaseMigrator):
 
     def reinstall(self, profiles):
         """Override to be able to call _after_reinstall at the end."""
+        self._before_reinstall()
         BaseMigrator.reinstall(self, profiles)
         self._after_reinstall()
+
+    def _before_reinstall(self):
+        """Before self.reinstall hook that let's a subplugin knows that the profile
+           will be executed and may launch some migration steps before PM ones."""
+        # save CKeditor custom styles
+        cke_props = self.portal.portal_properties.ckeditor_properties
+        self.menuStyles = cke_props.menuStyles
 
     def _after_reinstall(self):
         """After self.reinstall hook that let's a subplugin knows that the profile
            has been executed and may launch some migration steps before PM ones."""
-        pass
+        # set back CKeditor custom styles
+        cke_props = self.portal.portal_properties.ckeditor_properties
+        cke_props.menuStyles = self.menuStyles
 
     def updateHolidays(self):
         '''Update holidays using default holidays.'''

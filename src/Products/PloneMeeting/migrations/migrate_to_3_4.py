@@ -294,6 +294,7 @@ class Migrate_To_3_4(Migrator):
         for brain in brains:
             meeting = brain.getObject()
             lateItems = meeting.getReferences('MeetingLateItems')
+            # no late items or no more 'MeetingLateItems' reference, already migrated
             if not lateItems:
                 continue
 
