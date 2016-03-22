@@ -26,6 +26,8 @@ from Products.CMFPlone.factory import addPloneSite
 from plone.app.testing import login
 from plone.app.testing.interfaces import DEFAULT_LANGUAGE
 from plone import api
+
+from Products.GenericSetup.context import DirectoryImportContext
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.utils import cleanMemoize
@@ -107,6 +109,26 @@ class testSetup(PloneMeetingTestCase):
             self.assertFalse(DUMMY_STATE in itemBaseWF.states)
             meetingBaseWF = wfTool.getWorkflowById(cfg.getMeetingWorkflow())
             self.assertFalse(DUMMY_STATE in meetingBaseWF.states)
+
+    def test_pm_ToolAttributesAreOnlySetOnFirstImportData(self):
+        '''The tool attributes are set the first time it is imported, if some
+           import_data are imported after, it does not change the tool attributes.'''
+        # testing import_data has been imported, change a parameter in the tool
+        # and import_data again to check
+        self.changeUser('admin')
+        self.assertFalse(self.tool.restrictUsers)
+        self.tool.setRestrictUsers(True)
+        # make sure restrictUsers is set in the 'testing' profile import_data
+        profile_names = self._currentSetupProfileNames()
+        profile_name = [p_name for p_name in profile_names if p_name.endswith(':testing')][0]
+        profile_infos = [profile for profile in self.portal.portal_setup.listProfileInfo()
+                         if profile['id'] == profile_name][0]
+        path = profile_infos['path']
+        import_context = DirectoryImportContext(self.portal.portal_setup, path)
+        self.assertTrue('data.restrictUsers = False' in import_context.readDataFile('import_data.py'))
+        self.portal.portal_setup.runAllImportStepsFromProfile(u'profile-' + profile_name)
+        # restrictUsers is still True
+        self.assertTrue(self.tool.restrictUsers)
 
 
 def test_suite():

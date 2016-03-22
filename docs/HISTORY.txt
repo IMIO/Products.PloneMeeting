@@ -245,6 +245,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Added CKeditor custom style 'indent-firstline' to be able to apply a text-index: 40px; on a paragraph
 - Added hooks _before_reinstall and _after_reinstall made to do things before and after reinstalling the profile in a migration.
   By default it will save CKeditor custom styles (saved in _before_reinstall and stored again in _after_reinstall)
+- While applying a new profile having an import_data, make sure the paramters defined on portal_plonemeeting are not changed,
+  portal_plonemeeting attributes are only set the first time
 
 3.3 (2015-02-27)
 ----------------

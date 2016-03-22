@@ -372,6 +372,8 @@ meetingPga.itemCopyGroupsStates = ['validated', 'itempublished', 'itemfrozen', '
 # The whole configuration object -----------------------------------------------
 data = PloneMeetingConfiguration('My meetings', (meetingPga, meetingPma),
                                  (developers, vendors, endUsers))
+# necessary for testSetup.test_pm_ToolAttributesAreOnlySetOnFirstImportData
+data.restrictUsers = False
 data.usersOutsideGroups = [cadranel, voter1, voter2, powerobserver1, powerobserver2,
                            restrictedpowerobserver1, restrictedpowerobserver2,
                            budgetimpacteditor]

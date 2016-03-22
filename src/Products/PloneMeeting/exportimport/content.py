@@ -57,8 +57,11 @@ class ToolInitializer:
         # Initialize the tool if we have data
         if not self.profileData:
             return
-        for k, v in self.profileData.getData().iteritems():
-            exec 'self.tool.set%s%s(v)' % (k[0].upper(), k[1:])
+        # initialize the tool only if it was not already done before
+        # by another profile, it is the case if some MeetingConfigs exist
+        if not self.tool.objectValues('MeetingConfig'):
+            for k, v in self.profileData.getData().iteritems():
+                exec 'self.tool.set%s%s(v)' % (k[0].upper(), k[1:])
 
     def getProfileData(self):
         '''Loads, from the current profile, the data to import into the tool:
@@ -101,7 +104,8 @@ class ToolInitializer:
             savedMeetingConfigsToCloneTo[mConfig.id] = mConfig.meetingConfigsToCloneTo
             mConfig.meetingConfigsToCloneTo = []
             cfg = self.tool.createMeetingConfig(mConfig, source=self.profilePath)
-            self.finishConfigFor(cfg, data=mConfig)
+            if cfg:
+                self.finishConfigFor(cfg, data=mConfig)
         # now that every meetingConfigs have been created, we can manage the meetingConfigsToCloneTo
         for mConfigId in savedMeetingConfigsToCloneTo:
             if not savedMeetingConfigsToCloneTo[mConfigId]:

@@ -594,6 +594,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            data like images or templates that need to be attached to some
            sub-objects of the meeting config will be searched there.'''
         cData = configData.getData()
+        if cData['id'] in self.objectIds():
+            return
         self.invokeFactory('MeetingConfig', **cData)
         cfg = getattr(self, configData.id)
         cfg._at_creation_flag = True
