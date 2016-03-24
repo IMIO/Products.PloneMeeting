@@ -1130,14 +1130,13 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             return translate(label, domain='PloneMeeting', context=self.REQUEST)
 
     def getItems(self, uids=[], listTypes=[], ordered=False, useCatalog=False,
-                 additional_catalog_query=[], catalogUnrestricted=False, **kwargs):
+                 additional_catalog_query=[], unrestricted=False, **kwargs):
         '''Overrides the Meeting.items accessor.
            Items can be filtered depending on :
            - list of given p_uids;
            - given p_listTypes;
            - returned ordered (by getItemNumber) if p_ordered is True;
-           - if p_catalogUnrestricted is True and useCatalog is True, it will query
-             the catalog using an unrestrictedSearchResults.
+           - if p_unrestricted is True it will return every items, not checking permission.
         '''
         if useCatalog:
             # execute the query using the portal_catalog
@@ -1157,7 +1156,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                 query = queryparser.parseFormquery(self, catalog_query, sort_on=self.getSort_on())
             else:
                 query = queryparser.parseFormquery(self, catalog_query)
-            if catalogUnrestricted:
+            if unrestricted:
                 res = catalog.unrestrictedSearchResults(**query)
             else:
                 res = catalog(**query)
@@ -1165,7 +1164,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             res = self.getField('items').get(self, **kwargs)
             # if not filtering on uids, accessing the 'items' directly is only available to (Meeting)Managers
             tool = api.portal.get_tool('portal_plonemeeting')
-            if not uids and not tool.isManager(self):
+            if not uids and not unrestricted and not tool.isManager(self):
                 raise Unauthorized
             if uids:
                 member = api.user.get_current()
