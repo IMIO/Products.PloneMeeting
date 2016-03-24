@@ -1763,11 +1763,11 @@ class testMeetingItem(PloneMeetingTestCase):
         # meeting_before is not viewable by common users by default as in state 'created'
         for memberId in ('pmManager', 'pmCreator1'):
             self.changeUser(memberId)
-            self.assertTrue(item.getItemNumber(relativeTo='meeting') == 500)
-            self.assertTrue(item.getItemNumber(relativeTo='meetingConfig') == 1200)
+            self.assertEquals(item.getItemNumber(relativeTo='meeting'), 500)
+            self.assertEquals(item.getItemNumber(relativeTo='meetingConfig'), 1200)
             # for the late item
-            self.assertTrue(lateItem.getItemNumber(relativeTo='meeting') == 600)
-            self.assertTrue(lateItem.getItemNumber(relativeTo='meetingConfig') == (600+700))
+            self.assertEquals(lateItem.getItemNumber(relativeTo='meeting'), 600)
+            self.assertEquals(lateItem.getItemNumber(relativeTo='meetingConfig'), (600+700))
         # now set firstItemNumber for meeting_before
         self.changeUser('pmManager')
         self.closeMeeting(meeting_before)

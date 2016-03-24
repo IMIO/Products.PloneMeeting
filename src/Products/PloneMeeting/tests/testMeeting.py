@@ -1690,7 +1690,7 @@ class testMeeting(PloneMeetingTestCase):
                               name='no_items',
                               action='',
                               icon_expr='',
-                              condition="not: context/getItems",
+                              condition="python: not context.getItems(useCatalog=True)",
                               permission=('View',),
                               visible=True,
                               category='object_buttons')
