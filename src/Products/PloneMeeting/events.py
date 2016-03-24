@@ -264,6 +264,10 @@ def onGroupWillBeRemoved(group, event):
 
 def onGroupRemoved(group, event):
     '''Called when a MeetingGroup is removed.'''
+    # bypass this if we are actually removing the 'Plone Site'
+    if event.object.meta_type == 'Plone Site':
+        return
+
     # clean cache for "Products.PloneMeeting.vocabularies.proposinggroupsvocabulary" and
     # "Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary" vocabularies
     invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
@@ -586,6 +590,10 @@ def onMeetingRemoved(meeting, event):
 
 def onCategoryRemoved(category, event):
     '''Called when a MeetingCategory is removed.'''
+    # bypass this if we are actually removing the 'Plone Site'
+    if event.object.meta_type == 'Plone Site':
+        return
+
     # clean cache for "Products.PloneMeeting.vocabularies.categoriesvocabulary"
     invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.categoriesvocabulary")
 
