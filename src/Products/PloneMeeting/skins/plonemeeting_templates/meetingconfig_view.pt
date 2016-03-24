@@ -776,10 +776,10 @@
 
     <tal:mail condition="python: pageName=='mail'">
       <p i18n:translate="meetingconfig_mail_descr" class='pageNameDescr'></p><br />
-  width="33%"     <table width="100%" class="discreet">
+      <table width="100%" class="discreet">
         <tr valign="top">
           <td width="33%" tal:define="field python:here.getField('mailMode')">
-  width="33%" width="33%"           <span metal:use-macro="here/widgets/field/macros/view" />
+            <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <td width="33%" tal:define="field python:here.getField('mailFormat')">
             <span metal:use-macro="here/widgets/field/macros/view" />
