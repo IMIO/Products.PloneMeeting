@@ -67,8 +67,8 @@ class UnrestrictedMethodsView(BrowserView):
             # and we continue to the previous meeting
             # divide lastItem itemNumber by 100 so we are sure to ignore subnumbers
             # 308 will become 3 or 1400 will become 14
-            items = meetingObj.getItems(ordered=True)
-            lastItemNumber = items and items[-1].getItemNumber() / 100 or 0
+            items = meetingObj.getItems(useCatalog=True, ordered=True, catalogUnrestricted=True)
+            lastItemNumber = items and items[-1].getItemNumber / 100 or 0
             numberOfItemsBefore += lastItemNumber
             if not meetingObj.getFirstItemNumber() == -1:
                 previousFirstItemNumber = meetingObj.getFirstItemNumber()

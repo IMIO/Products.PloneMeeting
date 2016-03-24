@@ -1129,12 +1129,15 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             label = 'pre_date_after_meeting_date'
             return translate(label, domain='PloneMeeting', context=self.REQUEST)
 
-    def getItems(self, uids=[], listTypes=[], ordered=False, useCatalog=False, additional_catalog_query=[], **kwargs):
+    def getItems(self, uids=[], listTypes=[], ordered=False, useCatalog=False,
+                 additional_catalog_query=[], catalogUnrestricted=False, **kwargs):
         '''Overrides the Meeting.items accessor.
            Items can be filtered depending on :
            - list of given p_uids;
            - given p_listTypes;
-           - returned ordered (by getItemNumber) if p_ordered is True.
+           - returned ordered (by getItemNumber) if p_ordered is True;
+           - if p_catalogUnrestricted is True and useCatalog is True, it will query
+             the catalog using an unrestrictedSearchResults.
         '''
         if useCatalog:
             # execute the query using the portal_catalog
@@ -1154,7 +1157,10 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                 query = queryparser.parseFormquery(self, catalog_query, sort_on=self.getSort_on())
             else:
                 query = queryparser.parseFormquery(self, catalog_query)
-            res = catalog(**query)
+            if catalogUnrestricted:
+                res = catalog.unrestrictedSearchResults(**query)
+            else:
+                res = catalog(**query)
         else:
             res = self.getField('items').get(self, **kwargs)
             # if not filtering on uids, accessing the 'items' directly is only available to (Meeting)Managers
