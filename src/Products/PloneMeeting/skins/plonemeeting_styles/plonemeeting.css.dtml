@@ -689,7 +689,6 @@ p.indent-firstline {
     text-indent: 40px;
 }
 
-
 /* CSS for MeetingItem.privacy */
 /* While displayed as a single item (meetingitem_view) */
 .item_privacy_public {
@@ -1004,6 +1003,10 @@ div[id^="archetypes-fieldname-subTypes-"] TH {
 /* hide the title of the customAdvisers DataGridField in view mode */
 div[id^="archetypes-fieldname-customAdvisers-"] label.formQuestion {
     display: none;
+}
+/* show the row_id column in view mode */
+.dgw-hidden-column.row_id {
+    display: table-cell;
 }
 
 /* make sure multiselect fields displayed on the edit form are not too long */
@@ -1424,6 +1427,22 @@ h2.check_pod_template_dashboard_templates_not_managed {
 }
 h2.check_pod_template_clean {
     color: green;
+}
+
+/* highlight button to add images in the plonefinder popup */
+#menuActions a.uploadView,
+#menuActions a.uploadView.selected,
+#menuActions a:visited.uploadView,
+#menuActions a:hover.uploadView {
+    border: 2px solid red;
+    padding-bottom: 0.2em;
+    padding-right: 0.2em;
+    padding-top: 0.2em;
+}
+#menuActions a.uploadView span,
+#menuActions a.uploadView.selected span {
+    font-size: 15pt;
+    color: red;
 }
 
 /* </dtml-with> */

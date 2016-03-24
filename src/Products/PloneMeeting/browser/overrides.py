@@ -736,3 +736,4 @@ class PMCKFinder(CKFinder):
         self.allowimagesizeselection = False
         self.allowaddfolder = False
         self.showsearchbox = False
+        self.openuploadwidgetdefault = True
