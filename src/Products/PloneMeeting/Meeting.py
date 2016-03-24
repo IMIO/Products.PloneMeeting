@@ -1129,13 +1129,6 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             label = 'pre_date_after_meeting_date'
             return translate(label, domain='PloneMeeting', context=self.REQUEST)
 
-    def getItems_cachekey(method, self, uids=[], listTypes=[], ordered=False, useCatalog=False, **kwargs):
-        '''cachekey method for self.getItems.'''
-        return (self, str(self.REQUEST._debug), uids, listTypes, ordered, useCatalog, kwargs, self.modified())
-
-    security.declarePublic('getItems')
-
-    @ram.cache(getItems_cachekey)
     def getItems(self, uids=[], listTypes=[], ordered=False, useCatalog=False, additional_catalog_query=[], **kwargs):
         '''Overrides the Meeting.items accessor.
            Items can be filtered depending on :

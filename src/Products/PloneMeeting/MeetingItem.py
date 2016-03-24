@@ -1873,13 +1873,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res = meetingConfig.getToDiscussDefault()
         return res
 
-    def getMeeting_cachekey(method, self, brain=False):
-        '''cachekey method for self.getMeeting.'''
-        return (self, str(hasattr(self, 'REQUEST') and self.REQUEST._debug or False), brain)
-
-    security.declarePublic('getMeeting')
-
-    @ram.cache(getMeeting_cachekey)
     def getMeeting(self, brain=False):
         '''Returns the linked meeting if it exists.'''
         # getBRefs returns linked *objects* through a relationship defined in
