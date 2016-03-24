@@ -1429,22 +1429,6 @@ h2.check_pod_template_clean {
     color: green;
 }
 
-/* highlight button to add images in the plonefinder popup */
-#menuActions a.uploadView,
-#menuActions a.uploadView.selected,
-#menuActions a:visited.uploadView,
-#menuActions a:hover.uploadView {
-    border: 2px solid red;
-    padding-bottom: 0.2em;
-    padding-right: 0.2em;
-    padding-top: 0.2em;
-}
-#menuActions a.uploadView span,
-#menuActions a.uploadView.selected span {
-    font-size: 15pt;
-    color: red;
-}
-
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */
