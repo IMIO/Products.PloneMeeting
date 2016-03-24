@@ -247,6 +247,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   By default it will save CKeditor custom styles (saved in _before_reinstall and stored again in _after_reinstall)
 - While applying a new profile having an import_data, make sure the paramters defined on portal_plonemeeting are not changed,
   portal_plonemeeting attributes are only set the first time
+- Removed caching for MeetingItem.getMeeting
 
 3.3 (2015-02-27)
 ----------------
