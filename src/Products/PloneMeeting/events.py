@@ -319,7 +319,11 @@ def onItemModified(item, event):
         itemWF = wfTool.getWorkflowsFor(item)[0]
         initial_state = itemWF.initial_state
         if initial_state == item.queryState():
-            item._renameAfterCreation(check_auto_id=False)
+            # in case a user of same group is editing the item of another user
+            # he does not have the 'Add portal content' permission that is necessary
+            # when renaming so do this as Manager
+            with api.env.adopt_roles(['Manager']):
+                item._renameAfterCreation(check_auto_id=False)
 
 
 def storeExternalImagesLocallyDexterity(advice):

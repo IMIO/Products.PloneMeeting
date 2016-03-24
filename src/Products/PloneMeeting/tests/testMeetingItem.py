@@ -3512,19 +3512,32 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm_ItemRenamedWhileInInitialState(self):
         """As long as the item is in it's initial_state, the id is recomputed."""
-        self.changeUser('pmManager')
+        catalog = self.portal.portal_catalog
+        self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setTitle('My new title')
         item.processForm()
         # id as been recomputed
         self.assertEquals(item.getId(), 'my-new-title')
+        # correctly recatalogued
+        self.assertEquals(catalog(getId=item.getId())[0].UID, item.UID())
+
+        # another creator of same group may also edit the item
+        self.changeUser('pmCreator1b')
+        self.assertTrue(self.hasPermission(ModifyPortalContent, item))
+        item.setTitle('My new title b')
+        item.processForm()
+        # id as been recomputed
+        self.assertEquals(item.getId(), 'my-new-title-b')
+        # correctly recatalogued
+        self.assertEquals(catalog(getId=item.getId())[0].UID, item.UID())
 
         # id is recomputer as long as item is in it's initial_state
         # thereafter, as link to item could have been sent by mail or so, we do not change it
         self.proposeItem(item)
         item.setTitle('My other title')
         item.processForm()
-        self.assertEquals(item.getId(), 'my-new-title')
+        self.assertEquals(item.getId(), 'my-new-title-b')
 
     def test_pm_ItemRenamedWhenDuplicated(self):
         """As long as the item is in it's initial_state, the id is recomputed,
