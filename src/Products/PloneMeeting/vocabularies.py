@@ -219,15 +219,15 @@ class MeetingDatesVocabulary(object):
         catalog = api.portal.get_tool('portal_catalog')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        brains = catalog(portal_type=cfg.getMeetingTypeName())
+        brains = catalog(portal_type=cfg.getMeetingTypeName(),
+                         sort_on='getDate',
+                         sort_order='reverse')
         res = []
         for brain in brains:
             res.append(SimpleTerm(brain.UID,
                                   brain.UID,
                                   tool.formatMeetingDate(brain, withHour=True))
                        )
-        res = sorted(res, key=attrgetter('token'))
-        res.reverse()
         return SimpleVocabulary(res)
 
 MeetingDatesVocabularyFactory = MeetingDatesVocabulary()
