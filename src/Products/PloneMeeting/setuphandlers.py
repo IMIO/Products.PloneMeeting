@@ -328,16 +328,20 @@ def _configureCKeditor(site):
     cke_props = site.portal_properties.ckeditor_properties
     if cke_props.menuStyles.find(CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG) == -1:
         enc = site.portal_properties.site_properties.getProperty('default_charset')
-        msg_highlight = translate('ckeditor_style_highlight_in_red',
-                                  domain='PloneMeeting',
-                                  context=site.REQUEST).encode('utf-8')
+        msg_highlight_red = translate('ckeditor_style_highlight_in_red',
+                                      domain='PloneMeeting',
+                                      context=site.REQUEST).encode('utf-8')
+        msg_highlight_yellow = translate('ckeditor_style_highlight_in_yellow',
+                                         domain='PloneMeeting',
+                                         context=site.REQUEST).encode('utf-8')
         msg_indent = translate('ckeditor_style_indent_first_line',
                                domain='PloneMeeting',
                                context=site.REQUEST).encode('utf-8')
         menuStyles = unicode(
             "[\n{0}\n{{ name : '{1}'\t\t, element : 'span', attributes : {{ 'class' : 'highlight-red' }} }},\n"
-            "{{ name : '{2}'\t\t, element : 'p', attributes : {{ 'class' : 'indent-firstline' }} }},\n]\n".
-            format(CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG, msg_highlight, msg_indent), enc)
+            "{{ name : '{2}'	, element : 'span', styles : {{ 'background-color' : 'Yellow' }} }},\n"
+            "{{ name : '{3}'\t\t, element : 'p', attributes : {{ 'class' : 'indent-firstline' }} }},\n]\n".
+            format(CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG, msg_highlight_red, msg_highlight_yellow, msg_indent), enc)
         cke_props.menuStyles = menuStyles
     # activate SCAYT auto-start
     cke_props.enableScaytOnStartup = True
