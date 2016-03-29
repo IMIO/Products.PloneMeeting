@@ -30,9 +30,6 @@ from imio.helpers.catalog import addOrUpdateIndexes
 from imio.helpers.catalog import addOrUpdateColumns
 
 folderViews = ('folder_contents', )
-noSearchTypes = ('Folder', 'DashboardCollection', 'meetingadvice',
-                 'MeetingCategory', 'MeetingConfig', 'MeetingFileType',
-                 'MeetingGroup', 'MeetingUser')
 # Indexes used by PloneMeeting
 # XXX warning, do ONLY use ZCTextIndex for real text values,
 # NOT returning empty tuple/list like () or [] but empty values like ''
@@ -215,18 +212,6 @@ def postInstall(context):
         meetingConfig.registerPortalTypes()
         # add default portal_tabs
         meetingConfig.createTab()
-
-    # Remove some types from the standard Plone search (live and advanced).
-    props = site.portal_properties.site_properties
-    nsTypes = props.getProperty('types_not_searched')
-    if not nsTypes:
-        nsTypes = []
-    else:
-        nsTypes = list(nsTypes)
-    for t in noSearchTypes:
-        if t not in nsTypes:
-            nsTypes.append(t)
-    props.manage_changeProperties(types_not_searched=tuple(nsTypes))
 
     # Make sure that no workflow is set for the MeetingFile type
     site.portal_workflow.setChainForPortalTypes(['MeetingFile'], '')

@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<object name="portal_properties" meta_type="Plone Properties Tool">
+ <object name="site_properties" meta_type="Plone Property Sheet">
+  <property name="types_not_searched" type="lines" purge="False">
+   <element value="Document"/>
+   <element value="Event"/>
+   <element value="File"/>
+   <element value="Folder"/>
+   <element value="Image"/>
+   <element value="Link"/>
+   <element value="News Item"/>
+   <element value="meetingadvice"/>
+   <element value="Meeting"/>
+   <element value="MeetingCategory"/>
+   <element value="MeetingConfig"/>
+   <element value="MeetingFileType"/>
+   <element value="MeetingGroup"/>
+   <element value="MeetingItem"/>
+   <element value="MeetingItemTemplate"/>
+   <element value="MeetingItemRecurring"/>
+   <element value="MeetingUser"/>
+   <element value="ToolPloneMeeting"/>
+  </property>
+ </object>
+</object>
