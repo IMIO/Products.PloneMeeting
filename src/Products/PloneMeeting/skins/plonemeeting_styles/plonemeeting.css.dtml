@@ -208,13 +208,10 @@ table.no-style-table td {
     margin: 0 !important;
 }
 
-tr.even table.advices td {
-    background-color: white !important;
-}
-
 #content table.no-style-table.advices {
     margin-bottom: 0;
 }
+
 /* avoid background of parent table (list of items) being used for advices popup table */
 #content table.no-style-table.advices tr td {
     background-color: transparent;
