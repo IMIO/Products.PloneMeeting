@@ -378,7 +378,7 @@ td.td_cell_advices td.advice_annexes .actionMenuAX .actionMenuContentAX  {
     border: 1px solid #CCCCCC;
     margin-top: -1px;
     padding-top: 0.5em;
-    padding-bottom: 0;
+    padding-bottom: 0.5em;
     padding-left: 0.5em;
     padding-right: 0.5em;
     cursor: pointer;
