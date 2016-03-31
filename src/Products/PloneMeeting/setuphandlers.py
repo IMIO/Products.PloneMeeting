@@ -268,6 +268,7 @@ def postInstall(context):
     viewer_settings['show_search'] = False
     viewer_settings['show_sidebar'] = False
     viewer_settings['show_search_on_group_view'] = False
+    viewer_settings['storage_type'] = 'Blob'
 
     # make sure the 'previous_review_state' is available in portal_atct
     portal_atct = api.portal.get_tool('portal_atct')
