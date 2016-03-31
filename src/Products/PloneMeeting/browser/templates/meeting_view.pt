@@ -51,7 +51,7 @@
   <tal:comment replace="nothing">XXX changed for PM, infos displayed before the faceted table.</tal:comment>
   <tal:meetingBeforeFacetedInfos replace="structure context/@@meeting-before-faceted-infos" />
   <tal:availableItems condition="showAvailableItems">
-    <h2>
+    <h2 class="available-items" >
       <span i18n:translate='available_items'>Available items</span>
     </h2>
     <iframe src="@@meeting_available_items_view"
@@ -63,8 +63,8 @@
         $('iframe.auto-height').iFrameResize({log:true})
     </script>
   </tal:availableItems>
-  <h2 class="presented-items" i18n:translate="presented_items">
-    <span>Presented items</span> (<span class="meeting_number_of_items" tal:content="context/numberOfItems"/>)
+  <h2 class="presented-items">
+    <span i18n:translate="presented_items">Presented items</span> (<span class="meeting_number_of_items" tal:content="context/numberOfItems"/>)
   </h2>
 
   <!-- Folder contents -->
