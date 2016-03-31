@@ -1316,7 +1316,7 @@ h1.documentFirstHeading span.pretty_link_icons {
 #content th a.showHideDetails:visited {
     cursor: pointer;
     margin-left: 3em;
-    color: &dtml-discreetColor; !important;
+    vertical-align: middle;
 }
 
 /* button for removing several items from a meeting */

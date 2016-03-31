@@ -77,7 +77,7 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
                                     default="Show/hide details")
             header = \
                 u'<span class="showHideDetails" onclick="javascript:toggleMeetingDescriptions()">' + \
-                u'({0})</span>'.format(showHideMsg)
+                u'<img src="{0}/more_less_details.png" title="{1}" /></span>'.format(self.table.portal_url, showHideMsg)
             return super(PMPrettyLinkColumn, self).renderHeadCell() + header
         return super(PMPrettyLinkColumn, self).renderHeadCell()
 
@@ -199,15 +199,17 @@ class ItemCheckBoxColumn(CheckBoxColumn):
                     present_msg = translate('present_several_items',
                                             domain='PloneMeeting',
                                             context=self.request)
-                    head = u'''<table class="actionspanel-no-style-table nosort"><tr><td>{0}</td><td><button onclick="presentSelectedItems('{1}')" title="{2}" class="present_several" type="button">
-        <img src="{3}/presentSeveral.png">
+                    head = u'''<table class="actionspanel-no-style-table nosort">
+    <tr><td>{0}</td><td><button onclick="presentSelectedItems('{1}')" title="{2}" class="present_several" type="button">
+    <img src="{3}/presentSeveral.png">
     </button></td></tr></table>'''.format(head, self.context.absolute_url(), present_msg, self.table.portal_url)
             else:
                 if self.context.adapted().showRemoveSelectedItemsAction():
                     unpresent_msg = translate('remove_several_items',
                                               domain='PloneMeeting',
                                               context=self.request)
-                    head = u'''<table class="actionspanel-no-style-table nosort"><tr><td>{0}</td><td><button onclick="removeSelectedItems('{1}')" title="{2}" class="remove_several" type="button">
-        <img src="{3}/removeSeveral.png">
+                    head = u'''<table class="actionspanel-no-style-table nosort">
+    <tr><td>{0}</td><td><button onclick="removeSelectedItems('{1}')" title="{2}" class="remove_several" type="button">
+    <img src="{3}/removeSeveral.png">
     </button></td></tr></table>'''.format(head, self.context.absolute_url(), unpresent_msg, self.table.portal_url)
         return head
