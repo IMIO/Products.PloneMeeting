@@ -950,35 +950,36 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             obj = obj._unrestrictedGetObject()
 
         adapted = IPrettyLink(obj)
-        adapted.showColors = showColors
-        adapted.showContentIcon = showContentIcon
-        adapted.contentValue = contentValue
-        adapted.target = target
-        adapted.maxLength = maxLength
-        adapted.appendToUrl = appendToUrl
-        adapted.additionalClasses = additionalCSSClasses
+        params = {}
+        params['showColors'] = showColors
+        params['showContentIcon'] = showContentIcon
+        params['contentValue'] = contentValue
+        params['target'] = target
+        params['maxLength'] = maxLength
+        params['appendToUrl'] = appendToUrl
+        params['additionalClasses'] = additionalCSSClasses
         if tag_title:
             tag_title = translate(tag_title,
                                   domain='PloneMeeting',
                                   context=self.REQUEST).encode('utf-8')
-            adapted.tag_title = tag_title
+            params['tag_title'] = tag_title
         # Is this a not-privacy-viewable item?
         if obj.meta_type == 'MeetingItem' and not obj.adapted().isPrivacyViewable():
-            adapted.isViewable = False
+            params['isViewable'] = False
 
         # if we received annexInfo, the adapted element is the meetingItem but we want actually
         # to display a link to an annex and for performance reason, we received the annexIndex
         if annexInfo:
             # do not display colors
-            adapted.showColors = False
+            params['showColors'] = False
             # do not showIcons or icons of the item are shown...
-            adapted.showIcons = False
+            params['showIcons'] = False
             # annexInfo is either an annexInfo or a MeetingFile instance...
             if IMeetingFile.providedBy(annexInfo):
                 annexInfo = annexInfo.getAnnexInfo()
-            adapted.contentValue = annexInfo['Title']
+            params['contentValue'] = annexInfo['Title']
             if annexInfo['warnSize']:
-                adapted.contentValue += \
+                params['contentValue'] += \
                     "&nbsp;<span title='{0}' style='color: red; cursor: help;'>({1})</span>".format(
                         translate("annex_size_warning",
                                   domain="PloneMeeting",
@@ -986,7 +987,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                                   default="Annex size is huge, it could be difficult "
                                   "to be downloaded!").encode('utf-8'),
                         annexInfo['friendlySize'])
-
+        adapted.__init__(obj, **params)
         return adapted.getLink()
 
     security.declarePublic('listOcrLanguages')
