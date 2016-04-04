@@ -166,23 +166,15 @@ div.ploneMeetingSelectContainer.annex_type_img_select_box div#annex_type_img_sel
     background-repeat: no-repeat;
     background-position: right;
 }
-/* while copy/pasting a table from Word in CKeditor
-   there are no border...  So force border of table displayed in item rich fields.
-   .cke_show_borders is an override for CKeditor while displaying tables inside the editor. */
-#pmDescription table td, #pmDescription table tr,
-[id*="hook_"] fieldset table tr, [id*="hook_"] fieldset table td,
-.cke_show_borders table.cke_show_border,
-.cke_show_borders table.cke_show_border > tr > td,
-.cke_show_borders table.cke_show_border > tr > th,
-.cke_show_borders table.cke_show_border > tbody > tr > td,
-.cke_show_borders table.cke_show_border > tbody > tr > th,
-.cke_show_borders table.cke_show_border > thead > tr > td,
-.cke_show_borders table.cke_show_border > thead > tr > th,
-.cke_show_borders table.cke_show_border > tfoot > tr > td,
-.cke_show_borders table.cke_show_border > tfoot > tr > th,
-.cke_editable table td {
-    border: 1px solid black !important;
+
+/* show table using border="0" */
+table[border='0'],
+table[border='0'] tr,
+table[border='0'] td,
+table[border='0'] th {
+    border: 1px dotted lightgrey;
 }
+
 
 /* make sure table borders in pmMoreInfo (when using glasses icon) are displayed */
 #content div.pmMoreInfo td {
@@ -1392,9 +1384,11 @@ body.section-portal_plonemeeting #archetypes-fieldname-customViewFields {
 ul.item-predecessors span.pretty_link_content {
     vertical-align: text-top;
 }
-/* limit left space on the faceted form of items to present */
+/* limit left space on the faceted form of items to present,
+   define width so we do not have the width scrollbar */
 body.template-meeting_available_items_view div#faceted-form {
     margin-left: -0.5em;
+    width: 99.5%;
 }
 
 /* temporary until collective.documentgenerator 0.6 is out */
@@ -1426,6 +1420,10 @@ h2.check_pod_template_clean {
     color: green;
 }
 
+iframe#iFrameResizer0 {
+    overflow-x: auto;
+    overflow-y: hidden;
+}
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */

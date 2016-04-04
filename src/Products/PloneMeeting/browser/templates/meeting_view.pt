@@ -56,11 +56,11 @@
     </h2>
     <iframe src="@@meeting_available_items_view"
             tal:attributes="src string:${context/absolute_url}/@@meeting_available_items_view?ajax_load=0&ajax_include_head=1"
-            class="auto-height" style="width: 100%;"><span>trlal</span>
+            class="auto-height" style="width: 100%;">
     </iframe>
     
     <script>
-        $('iframe.auto-height').iFrameResize({log:true})
+        $('iframe.auto-height').iFrameResize({log:false, scrolling:true})
     </script>
   </tal:availableItems>
   <h2 class="presented-items">
