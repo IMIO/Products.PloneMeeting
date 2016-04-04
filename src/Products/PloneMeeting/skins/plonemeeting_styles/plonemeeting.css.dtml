@@ -564,11 +564,15 @@ td.noPadding a {
     text-decoration:none;
 }
 
-.portletCell.pmLink.odd {
-    background-color: &dtml-oddRowBackgroundColor;;
+dd.portletCell.pmLink {
+    margin-left: -1em;
 }
-.portletCell.pmLink.even {
-    background-color: &dtml-evenRowBackgroundColor;;
+
+dd.portletCell.pmLink.odd {
+    background-color: white;
+}
+dd.portletCell.pmLink.even {
+    background-color: #EFEFEF;
 }
 
 .documentContent { padding: 1em 0.5em 2.5em 1em !important; }
