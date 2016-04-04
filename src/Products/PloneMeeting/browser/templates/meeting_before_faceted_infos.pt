@@ -53,10 +53,10 @@
    field before and the 'attendees' now, if the field is not empty, we display it</tal:comment>
   <tal:assemblyFields condition="python: 'assembly' in usedAttrs or 'signatures' in usedAttrs">
     <dl class="collapsible inline collapsedOnLoad">
-      <dt class="collapsibleHeader discreet">
-          <b i18n:translate="assembly_and_signatures">
+      <dt class="collapsibleHeader">
+          <span class="meeting_attribute_label" i18n:translate="assembly_and_signatures">
               Meeting assembly and signatures
-          </b>
+          </span>
       </dt>
       <dd class="collapsibleContent">
         <table class="no-style-table discreet"

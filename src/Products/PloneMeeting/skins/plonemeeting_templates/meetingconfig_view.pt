@@ -781,19 +781,12 @@
           <td width="33%" tal:define="field python:here.getField('mailMode')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td width="33%" tal:define="field python:here.getField('mailFormat')">
+          <td width="34%" tal:define="field python:here.getField('mailItemEvents')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td width="34%"></td>
-        </tr>
-        <tr valign="top">
-          <td tal:define="field python:here.getField('mailItemEvents')">
+          <td width="33%" tal:define="field python:here.getField('mailMeetingEvents')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td tal:define="field python:here.getField('mailMeetingEvents')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
-          <td></td>
         </tr>
       </table>
     </tal:mail>

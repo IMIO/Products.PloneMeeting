@@ -1257,21 +1257,6 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
-    StringField(
-        name='mailFormat',
-        widget=SelectionWidget(
-            description="MailFormat",
-            description_msgid="mail_format_descr",
-            label='Mailformat',
-            label_msgid='PloneMeeting_label_mailFormat',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="mail",
-        vocabulary='listMailFormats',
-        default=defValues.mailFormat,
-        enforceVocabulary=True,
-        write_permission="PloneMeeting: Write risky config",
-    ),
     LinesField(
         name='mailItemEvents',
         widget=MultiSelectionWidget(
@@ -4086,17 +4071,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ("activated", translate('mail_mode_activated', domain=d, context=self.REQUEST)),
             ("deactivated", translate('mail_mode_deactivated', domain=d, context=self.REQUEST)),
             ("test", translate('mail_mode_test', domain=d, context=self.REQUEST)),
-        ))
-        return res
-
-    security.declarePublic('listMailFormats')
-
-    def listMailFormats(self):
-        '''Lists the available formats for email notifications.'''
-        d = 'PloneMeeting'
-        res = DisplayList((
-            ("text", translate('mail_format_text', domain=d, context=self.REQUEST)),
-            ("html", translate('mail_format_html', domain=d, context=self.REQUEST)),
         ))
         return res
 

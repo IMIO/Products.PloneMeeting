@@ -455,10 +455,8 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         logger.info('Subject is [%s]' % subject)
         logger.info('Body is [%s]' % body)
         return
-    # Determine mail format (plain text or HTML)
+    # Use 'plain' for mail format so the email client will turn links to clickable links
     mailFormat = 'plain'
-    if cfg.getUserParam('mailFormat', obj.REQUEST) == 'html':
-        mailFormat = 'html'
     # Send the mail(s)
     try:
         if not attachments:

@@ -14,19 +14,30 @@ __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
 __docformat__ = 'plaintext'
 
 from AccessControl import ClassSecurityInfo
-from Products.Archetypes.atapi import *
 from zope.interface import implements
 import interfaces
 
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 
-from Products.PloneMeeting.config import *
-
-##code-section module-header #fill in your manual code here
 from zope.i18n import translate
 from Products.CMFCore.utils import getToolByName
-from Products.PloneMeeting.utils import getCustomAdapter, FakeMeetingUser, getFieldContent
-##/code-section module-header
+from Products.Archetypes.atapi import AttributeStorage
+from Products.Archetypes.atapi import BaseContent
+from Products.Archetypes.atapi import BaseSchema
+from Products.Archetypes.atapi import BooleanField
+from Products.Archetypes.atapi import DisplayList
+from Products.Archetypes.atapi import ImageField
+from Products.Archetypes.atapi import LinesField
+from Products.Archetypes.atapi import MultiSelectionWidget
+from Products.Archetypes.atapi import registerType
+from Products.Archetypes.atapi import SelectionWidget
+from Products.Archetypes.atapi import Schema
+from Products.Archetypes.atapi import StringField
+from Products.PloneMeeting.config import PROJECTNAME
+from Products.PloneMeeting.config import WriteRiskyConfig
+from Products.PloneMeeting.utils import FakeMeetingUser
+from Products.PloneMeeting.utils import getCustomAdapter
+from Products.PloneMeeting.utils import getFieldContent
 
 schema = Schema((
 
@@ -132,20 +143,6 @@ schema = Schema((
         write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
-        name='mailFormat',
-        widget=SelectionWidget(
-            description="MailFormat",
-            description_msgid="mail_format_descr",
-            label='Mailformat',
-            label_msgid='PloneMeeting_label_mailFormat',
-            i18n_domain='PloneMeeting',
-        ),
-        enforceVocabulary=True,
-        write_permission="PloneMeeting: Write risky config",
-        vocabulary='listMailFormats',
-        default_method='getDefaultMailFormat',
-    ),
-    StringField(
         name='adviceStyle',
         widget=SelectionWidget(
             description="AdviceStyle",
@@ -245,20 +242,16 @@ schema = Schema((
 ),
 )
 
-##code-section after-local-schema #fill in your manual code here
-##/code-section after-local-schema
-
 MeetingUser_schema = BaseSchema.copy() + \
     schema.copy()
 
-##code-section after-schema #fill in your manual code here
 MeetingUser_schema['id'].write_permission = "PloneMeeting: Write risky config"
 MeetingUser_schema['title'].write_permission = "PloneMeeting: Write risky config"
 # hide metadata fields and even protect it vy the WriteRiskyConfig permission
 for field in MeetingUser_schema.getSchemataFields('metadata'):
     field.widget.visible = {'edit': 'invisible', 'view': 'invisible'}
     field.write_permission = WriteRiskyConfig
-##/code-section after-schema
+
 
 class MeetingUser(BaseContent, BrowserDefaultMixin):
     """
@@ -271,38 +264,37 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
 
     schema = MeetingUser_schema
 
-    ##code-section class-header #fill in your manual code here
-    ##/code-section class-header
-
-    # Methods
-
-    # Manually created methods
-
     security.declarePublic('getSelf')
+
     def getSelf(self):
         if self.__class__.__name__ != 'MeetingUser':
             return self.context
         return self
 
     security.declarePublic('getBilingual')
+
     def getBilingual(self, name, force=None, sep='-'):
         '''Returns the possibly translated content of field named p_name.'''
         return getFieldContent(self, name, force, sep)
 
     security.declarePublic('adapted')
+
     def adapted(self):
         return getCustomAdapter(self)
 
     security.declareProtected('Modify portal content', 'onEdit')
+
     def onEdit(self, isCreated):
         '''See doc in interfaces.py.'''
         pass
 
     security.declarePublic('config')
+
     def config(self):
         return self.getParentNode().getParentNode()
 
     security.declarePrivate('updateMeetingUser')
+
     def updateMeetingUser(self):
         '''Updates this meeting user (local roles, title).'''
         # Updates the title
@@ -318,11 +310,13 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
             self.manage_addLocalRoles(self.id, ('Owner',))
 
     security.declarePrivate('at_post_create_script')
+
     def at_post_create_script(self):
         self.updateMeetingUser()
         self.adapted().onEdit(isCreated=True)
 
     security.declarePrivate('at_post_edit_script')
+
     def at_post_edit_script(self):
         self.updateMeetingUser()
         self.adapted().onEdit(isCreated=False)
@@ -348,6 +342,7 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
         return res
 
     security.declarePublic('mayConsultVote')
+
     def mayConsultVote(self, loggedUser, item):
         '''See doc in interfaces.py.'''
         mUser = self.getSelf()
@@ -359,6 +354,7 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
         return False
 
     security.declarePublic('mayEditVote')
+
     def mayEditVote(self, loggedUser, item):
         '''See doc in interfaces.py.'''
         mUser = self.getSelf()
@@ -380,16 +376,11 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
         return False
 
     security.declarePublic('isManager')
+
     def isManager(self):
         '''Has logged user role Manager?'''
         user = self.portal_membership.getAuthenticatedMember()
         return user.has_role('Manager')
-
-    def listMailFormats(self):
-        return self.config().listMailFormats()
-
-    def getDefaultMailFormat(self):
-        return self.config().getMailFormat()
 
     def listAdviceStyles(self):
         return self.config().listAdviceStyles()
@@ -498,6 +489,7 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
         return self
 
     security.declarePublic('isPresent')
+
     def isPresent(self, item, meeting):
         '''Is this user present at p_meeting when p_item is discussed?'''
         aId = self.getId()
@@ -513,14 +505,10 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
         return True
 
     security.declarePublic('indexUsages')
+
     def indexUsages(self):
         '''Returns the index content for usages.'''
         return self.getUsages()
 
 
-
 registerType(MeetingUser, PROJECTNAME)
-# end of class MeetingUser
-
-##code-section module-footer #fill in your manual code here
-##/code-section module-footer

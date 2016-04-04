@@ -451,7 +451,6 @@ class MeetingConfigDescriptor(Descriptor):
         # Mail-related parameters -----------------------------------------------
         # Mail mode can be: activated, deactivated, test.
         self.mailMode = 'activated'
-        self.mailFormat = 'text'  # Or html.
         # What are the item-related events that trigger mail sending ?
         self.mailItemEvents = []
         # What are the meeting-related events that trigger mail sending?

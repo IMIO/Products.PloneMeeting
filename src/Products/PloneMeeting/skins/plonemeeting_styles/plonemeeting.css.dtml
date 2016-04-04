@@ -1221,9 +1221,11 @@ td[class^="meeting_item_listType_"] div.item_listType.Editable {
     font-style: italic;
 }
 
-.item_attribute_label {
+.item_attribute_label,
+.meeting_attribute_label {
     font-style: italic;
     font-weight: bold !important;
+    color: &dtml-discreetColor;;
 }
 
 #portal-columns p.advice_hidden_during_redaction,

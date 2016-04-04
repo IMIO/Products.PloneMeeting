@@ -514,13 +514,15 @@ class Migrate_To_3_4(Migrator):
 
     def _cleanMeetingConfigs(self):
         """Clean MeetingConfigs :
-           - remove attribute 'openAnnexesInSeparateWindows';
+           - remove attributes 'openAnnexesInSeparateWindows' and 'mailFormat';
            - migrate attribute 'transitionReinitializingDelays' to 'transitionsReinitializingDelays'.
         """
         logger.info('Cleaning MeetingConfigs...')
         for cfg in self.tool.objectValues('MeetingConfig'):
             if hasattr(cfg, 'openAnnexesInSeparateWindows'):
                 delattr(cfg, 'openAnnexesInSeparateWindows')
+            if hasattr(cfg, 'mailFormat'):
+                delattr(cfg, 'mailFormat')
             if hasattr(cfg, 'transitionReinitializingDelays'):
                 old_transition = cfg.transitionReinitializingDelays
                 if old_transition:
@@ -530,13 +532,15 @@ class Migrate_To_3_4(Migrator):
 
     def _cleanMeetingUsers(self):
         """Clean MeetingUsers :
-           - remove attribute 'openAnnexesInSeparateWindows'.
+           - remove attributes 'openAnnexesInSeparateWindows' and 'mailFormat'.
         """
         logger.info('Cleaning MeetingUsers...')
         for cfg in self.tool.objectValues('MeetingConfig'):
             for user in cfg.meetingusers.objectValues('MeetingUser'):
                 if hasattr(user, 'openAnnexesInSeparateWindows'):
                     delattr(user, 'openAnnexesInSeparateWindows')
+                if hasattr(user, 'mailFormat'):
+                    delattr(user, 'mailFormat')
         logger.info('Done.')
 
     def _updateAnnexIndex(self):
