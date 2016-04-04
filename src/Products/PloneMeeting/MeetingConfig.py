@@ -1992,6 +1992,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
+                    'showNumberOfItems': False,
                     'tal_condition': "python: tool.userIsAmong('creators')",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
@@ -2006,6 +2007,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
+                    'showNumberOfItems': False,
                     'tal_condition': "python: tool.getGroupsForUser()",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
@@ -2023,6 +2025,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
+                    'showNumberOfItems': False,
                     'tal_condition': "python: tool.getGroupsForUser()",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
@@ -2037,6 +2040,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
+                    'showNumberOfItems': False,
                     'tal_condition': "python: 'takenOverBy' in cfg.getUsedItemAttributes() "
                                      "and (tool.getGroupsForUser(omittedSuffixes=['observers', ]) or "
                                      "tool.isManager(here))",
@@ -2053,6 +2057,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
+                    'showNumberOfItems': False,
                     'tal_condition': "",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
@@ -2067,6 +2072,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
+                    'showNumberOfItems': False,
                     'tal_condition': "python: cfg.getUseCopies() and not tool.userIsAmong('powerobservers')",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
@@ -2084,6 +2090,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
+                    'showNumberOfItems': True,
                     'tal_condition': "python: tool.userIsAmong('prereviewers') and "
                                      "'pre_validation' in cfg.getWorkflowAdaptations()",
                     'roles_bypassing_talcondition': ['Manager', ]
@@ -2099,6 +2106,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
+                    'showNumberOfItems': True,
                     'tal_condition': "python: cfg.userIsAReviewer()",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
@@ -2113,6 +2121,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
+                    'showNumberOfItems': False,
                     'tal_condition': "python: cfg.userIsAReviewer()",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
@@ -2127,6 +2136,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
+                    'showNumberOfItems': True,
                     'tal_condition': "python: cfg.getUseAdvices() and tool.userIsAmong('advisers')",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
@@ -2141,6 +2151,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
+                    'showNumberOfItems': True,
                     'tal_condition': "python: cfg.getUseAdvices() and tool.userIsAmong('advisers')",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
@@ -2155,6 +2166,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
+                    'showNumberOfItems': True,
                     'tal_condition': "python: cfg.getUseAdvices() and tool.userIsAmong('advisers')",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
@@ -2169,6 +2181,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
+                    'showNumberOfItems': False,
                     'tal_condition': "python: cfg.getUseAdvices() and tool.userIsAmong('advisers')",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
@@ -2183,6 +2196,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
+                    'showNumberOfItems': False,
                     'tal_condition': "python: cfg.getUseAdvices() and tool.userIsAmong('advisers')",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
@@ -2197,6 +2211,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
+                    'showNumberOfItems': False,
                     'tal_condition': "python: cfg.getUseAdvices() and tool.userIsAmong('advisers')",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
@@ -2211,6 +2226,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
+                    'showNumberOfItems': True,
                     'tal_condition': "python: tool.userIsAmong('creators') and "
                                      "'return_to_proposing_group' in cfg.getWorkflowAdaptations()",
                     'roles_bypassing_talcondition': ['Manager', ]
@@ -2229,6 +2245,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
+                    'showNumberOfItems': False,
                     'tal_condition': "python: tool.isManager(here) and "
                                      "'return_to_proposing_group' in cfg.getWorkflowAdaptations()",
                     'roles_bypassing_talcondition': ['Manager', ]
@@ -2244,6 +2261,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
+                    'showNumberOfItems': False,
                     'tal_condition': '',
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
@@ -2261,6 +2279,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     ],
                     'sort_on': u'sortable_title',
                     'sort_reversed': True,
+                    'showNumberOfItems': False,
                     'tal_condition': '',
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
@@ -2281,6 +2300,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     ],
                     'sort_on': u'sortable_title',
                     'sort_reversed': True,
+                    'showNumberOfItems': False,
                     'tal_condition': '',
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
@@ -2298,6 +2318,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     ],
                     'sort_on': u'sortable_title',
                     'sort_reversed': True,
+                    'showNumberOfItems': False,
                     'tal_condition': '',
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
