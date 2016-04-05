@@ -50,6 +50,8 @@
 
   <tal:comment replace="nothing">XXX changed for PM, infos displayed before the faceted table.</tal:comment>
   <tal:meetingBeforeFacetedInfos replace="structure context/@@meeting-before-faceted-infos" />
+  <br />
+
   <tal:availableItems condition="showAvailableItems">
     <h2 class="available-items" >
       <span i18n:translate='available_items'>Available items</span>
