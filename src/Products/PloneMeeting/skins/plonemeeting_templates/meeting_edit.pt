@@ -278,18 +278,20 @@
             </tr>
           </table>
         </fieldset>
-        <tal:field define="fieldName python: 'inAndOutMoves'">
+        <tal:field define="fieldName python: 'inAndOutMoves'"
+                   condition="python: context.showMeetingManagerReservedField('inAndOutMoves')">
           <metal:f use-macro="context/@@pm-macros/editContentField"/>
         </tal:field>
-        <tal:field define="fieldName python: 'notes'">
+        <tal:field define="fieldName python: 'notes'"
+                   condition="python: context.showMeetingManagerReservedField('notes')">
           <metal:f use-macro="context/@@pm-macros/editContentField"/>
         </tal:field>
         <tal:field define="fieldName python: 'observations'"
-                   condition="python: context.showObs('observations')">
+                   condition="python: context.showMeetingManagerReservedField('observations')">
           <metal:f use-macro="context/@@pm-macros/editContentField"/>
         </tal:field>
         <tal:field define="fieldName python: 'preObservations'"
-                   condition="python: context.showObs('preObservations')">
+                   condition="python: context.showMeetingManagerReservedField('preObservations')">
           <metal:f use-macro="context/@@pm-macros/editContentField"/>
         </tal:field>
 

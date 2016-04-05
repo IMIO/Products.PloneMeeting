@@ -676,10 +676,10 @@ additions = {
 
     # Additional fields for Meeting
     "Meeting": (cf('observations', type='rich',
-                   condition="python: here.showObs('observations')",
+                   condition="python: here.showMeetingManagerReservedField('observations')",
                    label='PloneMeeting_meetingObservations'),
                 cf('preObservations', type='rich',
-                   condition="python: here.showObs('preObservations')",)),
+                   condition="python: here.showMeetingManagerReservedField('preObservations')",)),
 
     # Additional fields for other types
     "MeetingCategory":     (cf('title'), cf('description', type='text')),

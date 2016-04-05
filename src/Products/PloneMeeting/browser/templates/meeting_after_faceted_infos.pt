@@ -14,24 +14,26 @@
 
 
   <tal:comment replace="nothing">In and out moves</tal:comment>
-  <tal:field define="fieldName python: 'inAndOutMoves'; ajaxEdit python:True">
+  <tal:field define="fieldName python: 'inAndOutMoves'; ajaxEdit python:True"
+             condition="python: context.showMeetingManagerReservedField('inAndOutMoves')">
     <metal:f use-macro="context/@@pm-macros/viewContentField"/>
   </tal:field>
 
   <tal:comment replace="nothing">Notes</tal:comment>
-  <tal:field define="fieldName python: 'notes'; ajaxEdit python:True">
+  <tal:field define="fieldName python: 'notes'; ajaxEdit python:True"
+             condition="python: context.showMeetingManagerReservedField('notes')">
     <metal:f use-macro="context/@@pm-macros/viewContentField"/>
   </tal:field>
 
   <tal:comment replace="nothing">Observations</tal:comment>
   <tal:field define="fieldName python: 'observations'; ajaxEdit python:True"
-             condition="python: context.showObs('observations')">
+             condition="python: context.showMeetingManagerReservedField('observations')">
     <metal:f use-macro="context/@@pm-macros/viewContentField"/>
   </tal:field>
 
   <tal:comment replace="nothing">Pre-observations</tal:comment>
   <tal:field define="fieldName python: 'preObservations'; ajaxEdit python:True"
-             condition="python: context.showObs('preObservations')">
+             condition="python: context.showMeetingManagerReservedField('preObservations')">
     <metal:f use-macro="context/@@pm-macros/viewContentField"/>
   </tal:field>
 

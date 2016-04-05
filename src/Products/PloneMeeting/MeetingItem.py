@@ -813,7 +813,7 @@ schema = Schema((
         name='inAndOutMoves',
         allowable_content_types=('text/html',),
         widget=RichWidget(
-            condition="python: here.attributeIsUsed('inAndOutMoves')",
+            condition="python: here.showMeetingManagerReservedField('inAndOutMoves')",
             label_msgid="PloneMeeting_inAndOutMoves",
             rows=15,
             label='Inandoutmoves',
@@ -828,7 +828,7 @@ schema = Schema((
         name='notes',
         allowable_content_types=('text/html',),
         widget=RichWidget(
-            condition="python: here.attributeIsUsed('notes')",
+            condition="python: here.showMeetingManagerReservedField('notes')",
             label_msgid="PloneMeeting_notes",
             rows=15,
             label='Notes',
@@ -1402,6 +1402,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         return cfg.getDefaultMeetingItemMotivation()
+
+    security.declarePublic('showMeetingManagerReservedField')
+
+    def showMeetingManagerReservedField(self, name):
+        '''When must field named p_name be shown?'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        isMgr = tool.isManager(self)
+        res = not self.isTemporary() and isMgr and self.attributeIsUsed(name)
+        return res
 
     security.declarePublic('showOtherMeetingConfigsClonableToEmergency')
 

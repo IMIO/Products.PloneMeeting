@@ -564,7 +564,7 @@ schema = Schema((
         name='inAndOutMoves',
         allowable_content_types=('text/html',),
         widget=RichWidget(
-            condition="python: here.attributeIsUsed('inAndOutMoves')",
+            condition="python: here.showMeetingManagerReservedField('inAndOutMoves')",
             label_msgid="PloneMeeting_inAndOutMoves",
             rows=15,
             label='Inandoutmoves',
@@ -578,7 +578,7 @@ schema = Schema((
         name='notes',
         allowable_content_types=('text/html',),
         widget=RichWidget(
-            condition="python: here.attributeIsUsed('notes')",
+            condition="python: here.showMeetingManagerReservedField('notes')",
             label_msgid="PloneMeeting_notes",
             rows=15,
             label='Notes',
@@ -592,7 +592,7 @@ schema = Schema((
         name='observations',
         allowable_content_types=('text/html',),
         widget=RichWidget(
-            condition="python: here.showObs('observations')",
+            condition="python: here.showMeetingManagerReservedField('observations')",
             label_msgid="PloneMeeting_meetingObservations",
             rows=15,
             label='Observations',
@@ -626,7 +626,7 @@ schema = Schema((
         name='preObservations',
         allowable_content_types=('text/html',),
         widget=RichWidget(
-            condition="python: here.showObs('preObservations')",
+            condition="python: here.showMeetingManagerReservedField('preObservations')",
             rows=15,
             label='Preobservations',
             label_msgid='PloneMeeting_label_preObservations',
@@ -1102,12 +1102,12 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
             invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
 
-    security.declarePublic('showObs')
+    security.declarePublic('showMeetingManagerReservedField')
 
-    def showObs(self, name):
-        '''When must field named p_name be shown? p_name can be "observations"
-           or "preObservations".'''
-        isMgr = self.portal_plonemeeting.isManager(self)
+    def showMeetingManagerReservedField(self, name):
+        '''When must field named p_name be shown?'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        isMgr = tool.isManager(self)
         res = not self.isTemporary() and isMgr and self.attributeIsUsed(name)
         return res
 

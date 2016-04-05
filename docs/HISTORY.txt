@@ -130,9 +130,11 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   is also defined by item workflow and the state_to_clone may come from another existing item workflow,
   not mandatorily from workflow the workflowAdaptation is applied on
 - Added new richText field 'Meeting.inAndOutMoves/MeetingItem.inAndOutMoves' to be able to specifically
-  encode in and out assembly members movements on an item or on a meeting
-- Added new richText field 'Meeting.notes/MeetingItem.notes' to be able to specifically
-  encode notes to be used in document generation (for example) on an item or on a meeting
+  encode in and out assembly members movements on an item or on a meeting.  These fields are by default only
+  editable/viewable by MeetingManagers
+- Added new richText field 'Meeting.notes/MeetingItem.notes' to be able to specifically encode notes to be used
+  in document generation (for example) on an item or on a meeting.  These fields are by default only
+  editable/viewable by MeetingManagers
 - Every caches are invalidated when a MeetingConfig is edited so changing a parameter
   will invalidate caches for actions_panel, faceted filters vocabularies, ...
 - Refactored the way localRoles are updated on item and meeting, do no more manage various cases,
