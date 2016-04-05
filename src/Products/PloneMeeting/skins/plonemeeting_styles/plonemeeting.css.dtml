@@ -1402,10 +1402,6 @@ div#doc-generation-view ul.pod-template li {
     display: inline-block;
 }
 
-/* highlight when meeting.extraodrinarySession is True */
-.meeting_extraodrinary_session {
-    color: red;
-}
 /* remove margin for fields itemWorkflow and meetingWorkflow on the meetingconfig_view
  * so really used workflow is displayed just under selected workflow */
 body.template-base_view.portaltype-meetingconfig div[id^="archetypes-fieldname-itemWorkflow"],
