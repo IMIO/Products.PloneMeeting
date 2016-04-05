@@ -120,7 +120,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   emergency for the sent item so it can be inserted in a meeting in the future that is no more in 'created' state.
   Added also relevant leading icons to show an item 'to send' with emergency
 - Added possibility to manually clone an item to another config.  It is now possible to define states in
-  which an item may be sent manually and states in which an item will be sent automatically
+  which an item may be sent manually and states in which an item will be sent automatically.  Take care that when
+  an item is cloned manually, the transitions to tigger on new item will NOT be triggered, this is reserved to
+  items cloned automatically
 - Added adaptable method MeetingItem._isViewableByPowerObservers that makes it possible to refine
   (restricted) power observers access to an item in addition to
   check on MeetingConfig.item(Restricted)PowerObserversStates

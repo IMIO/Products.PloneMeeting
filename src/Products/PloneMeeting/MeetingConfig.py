@@ -768,10 +768,13 @@ schema = Schema((
                      'trigger_workflow_transitions_until':
                         SelectColumn("Meeting config to clone to Trigger workflow transitions until",
                                      vocabulary="listTransitionsUntilPresented",
-                                     col_description="While sent, the new item is in the workflow initial state, "
-                                                     "some transitions can be automatically triggered for the new "
-                                                     "item, select until wich transition it will be done (selected "
-                                                     "transition will also be triggered)."), },
+                                     col_description="While sent, the new item is in the workflow initial state, if it "
+                                     "was sent automatically (depending on states selected in field 'States in which "
+                                     "an item will be automatically sent to selected other meeting configurations' "
+                                     "here under), some transitions can be automatically triggered for the new item, "
+                                     "select until which transition it will be done (selected transition will also be "
+                                     "triggered).  This relies on the 'Transitions for presenting an item' you defined "
+                                     "in the 'Workflows' tab of the meeting configuration the item will be sent to.")},
             label='Meetingconfigstocloneto',
             label_msgid='PloneMeeting_label_meetingConfigsToCloneTo',
             i18n_domain='PloneMeeting',

@@ -280,7 +280,7 @@ class testMeetingItem(PloneMeetingTestCase):
         annotations = IAnnotations(item)
         annotationKey = item._getSentToOtherMCAnnotationKey(otherMeetingConfigId)
         newUID = annotations[annotationKey]
-        newItem = self.portal.uid_catalog(UID=newUID)[0].getObject()
+        newItem = self.portal.portal_catalog(UID=newUID)[0].getObject()
         itemWorkflowId = self.wfTool.getWorkflowsFor(newItem)[0].getId()
         self.assertEquals(len(newItem.workflow_history[itemWorkflowId]), 2)
         # the workflow_history contains the intial transition to 'itemcreated' with None action
@@ -289,7 +289,6 @@ class testMeetingItem(PloneMeetingTestCase):
                           [None, 'create_to_%s_from_%s' % (otherMeetingConfigId, meetingConfigId)])
         # now check that the item is sent to another meetingConfig for each
         # cfg.getItemAutoSentToOtherMCStates() state
-        # by default, the only positive state is 'accepted'
         needToBackToFrozen = True
         for state in cfg.getItemAutoSentToOtherMCStates():
             if needToBackToFrozen:
@@ -535,7 +534,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEquals(sentToInfos(originalItem)(), [clonable_to_cfg2])
         self.assertTrue(catalog(UID=originalItem.UID(), sentToInfos=[clonable_to_cfg2]))
 
-    def test_pm_CloneItemToMCWithoutDefinedAnnexType(self):
+    def test_pm_SendItemToOtherMCWithoutDefinedAnnexType(self):
         '''When cloning an item to another meetingConfig or to the same meetingConfig,
            if we have annexes on the original item and destination meetingConfig (that could be same
            as original item or another) does not have annex types defined,
@@ -742,6 +741,43 @@ class testMeetingItem(PloneMeetingTestCase):
         # the item could not be presented
         self.assertTrue(newItem.queryState() == 'presented')
 
+    def test_pm_SendItemToOtherMCTriggeredTransitionsAreUnrestricted(self):
+        '''When the item is sent automatically to the other MC, if current user,
+           most of time a MeetingManager, is not able to trigger the transition,
+           it is triggered nevertheless.'''
+        # create an item with group 'vendors', pmManager is not able to trigger
+        # any transition on it
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        cfg2Id = cfg2.getId()
+        cfg.setUseGroupsAsCategories(True)
+        cfg2.setUseGroupsAsCategories(True)
+        cfg2.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_proposing_groups',
+                                            'reverse': '0'}, ))
+        cfg.setItemAutoSentToOtherMCStates(('validated', ))
+        cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
+                                         'trigger_workflow_transitions_until': '%s.%s' %
+                                         (cfg2Id, 'present')},))
+        self.changeUser('pmCreator2')
+        self.tool.getPloneMeetingFolder(cfg2Id)
+        vendorsItem = self.create('MeetingItem')
+        vendorsItem.setDecision('<p>My decision</p>', mimetype='text/html')
+        vendorsItem.setOtherMeetingConfigsClonableTo((cfg2Id,))
+
+        # pmManager may not validate it
+        self.changeUser('pmManager')
+
+        # create a meeting
+        self.setMeetingConfig(cfg2Id)
+        self.create('Meeting', date=DateTime() + 1)
+        self.assertFalse(self.transitions(vendorsItem))
+        # item is automatically sent when it is validated
+        self.validateItem(vendorsItem)
+
+        # and it has been presented
+        sentItem = vendorsItem.getItemClonedToOtherMC(destMeetingConfigId=cfg2Id)
+        self.assertTrue(sentItem.queryState() == 'presented')
+
     def test_pm_SendItemToOtherMCUsingEmergency(self):
         '''Test when sending an item to another MeetingConfig and emergency is asked,
            when item will be sent and presented to the other MC, it will be presented
@@ -793,12 +829,12 @@ class testMeetingItem(PloneMeetingTestCase):
         sentItem = item.getItemClonedToOtherMC(cfg2Id)
         self.assertEquals(sentItem.getMeeting(), createdMeeting)
 
-        # now ask emergency on item and send it again
+        # now ask emergency on item and accept it again
         # it will be presented to the frozenMeeting
         self.deleteAsManager(sentItem.UID())
         item.setOtherMeetingConfigsClonableToEmergency((cfg2.getId(),))
-        item.cloneToOtherMeetingConfig(cfg2Id)
-        item.getItemClonedToOtherMC(cfg2Id)
+        self.backToState(item, 'itemfrozen')
+        self.do(item, 'accept')
         sentItem = item.getItemClonedToOtherMC(cfg2Id)
         self.assertEquals(sentItem.getMeeting(), frozenMeeting)
 
@@ -809,7 +845,8 @@ class testMeetingItem(PloneMeetingTestCase):
         # before frozenMeeting
         createdMeeting.setDate(now+1)
         createdMeeting.reindexObject(idxs=['getDate'])
-        item.cloneToOtherMeetingConfig(cfg2Id)
+        self.backToState(item, 'itemfrozen')
+        self.do(item, 'accept')
         item.getItemClonedToOtherMC(cfg2Id)
         sentItem = item.getItemClonedToOtherMC(cfg2Id)
         self.assertEquals(sentItem.getMeeting(), createdMeeting)
@@ -818,7 +855,8 @@ class testMeetingItem(PloneMeetingTestCase):
         self.deleteAsManager(sentItem.UID())
         createdMeeting.setDate(now-1)
         createdMeeting.reindexObject(idxs=['getDate'])
-        item.cloneToOtherMeetingConfig(cfg2Id)
+        self.backToState(item, 'itemfrozen')
+        self.do(item, 'accept')
         item.getItemClonedToOtherMC(cfg2Id)
         sentItem = item.getItemClonedToOtherMC(cfg2Id)
         self.assertEquals(sentItem.getMeeting(), frozenMeeting)
@@ -857,7 +895,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg2.setUseGroupsAsCategories(True)
         cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
                                          'trigger_workflow_transitions_until': '%s.%s' %
-                                         (self.meetingConfig2.getId(), 'validate')},))
+                                         (cfg2Id, 'validate')},))
         cfg.setItemManualSentToOtherMCStates((self.WF_STATE_NAME_MAPPINGS['proposed'],
                                               'validated'))
 
@@ -877,15 +915,52 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(item.queryState() in cfg.getItemManualSentToOtherMCStates())
         self.assertTrue(item.mayCloneToOtherMeetingConfig(cfg2Id))
         # if we send it, every other things works like if it was sent automatically
-        # sent item has been automatically validated
-        # send it as 'pmManager' so clonedItem may be 'validated'
+        # except transitions that are not triggered when item is sent manually
+        # item stays in it's initial_state
         self.changeUser('pmManager')
         clonedItem = item.cloneToOtherMeetingConfig(cfg2Id)
-        self.assertEquals(clonedItem.queryState(), 'validated')
+        wf_name = self.wfTool.getWorkflowsFor(clonedItem)[0].getId()
+        initial_state = self.wfTool[wf_name].initial_state
+        self.assertEquals(clonedItem.queryState(), initial_state)
         # make sure sentToInfos index was updated
         cloned_to_cfg2 = '{0}__cloned_to'.format(cfg2Id)
         self.assertEquals(sentToInfos(item)(), [cloned_to_cfg2])
         self.assertTrue(self.portal.portal_catalog(UID=item.UID(), sentToInfos=[cloned_to_cfg2]))
+
+    def test_pm_SendItemToOtherMCTransitionsTriggeredOnlyWhenAutomatic(self):
+        '''When an item is sent manually to another MC, the transitions are not
+           triggered on the resulting item, only when it is sent automatically.'''
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        cfg2Id = cfg2.getId()
+        cfg2.setUseGroupsAsCategories(True)
+        cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
+                                         'trigger_workflow_transitions_until': '%s.%s' %
+                                         (cfg2Id, 'validate')},))
+        cfg.setItemManualSentToOtherMCStates(('itemcreated', ))
+        cfg.setItemAutoSentToOtherMCStates(('validated', ))
+
+        # automatically
+        # create an item and validate it
+        self.changeUser('pmCreator1')
+        self.tool.getPloneMeetingFolder(cfg2Id)
+        autoItem = self.create('MeetingItem')
+        autoItem.setDecision('<p>My decision</p>', mimetype='text/html')
+        autoItem.setOtherMeetingConfigsClonableTo((cfg2Id,))
+        self.validateItem(autoItem)
+        clonedAutoItem = autoItem.getItemClonedToOtherMC(cfg2Id)
+        self.assertEquals(clonedAutoItem.queryState(), 'validated')
+
+        # manually
+        # create an item and send it
+        manualItem = self.create('MeetingItem')
+        manualItem.setDecision('<p>My decision</p>', mimetype='text/html')
+        manualItem.setOtherMeetingConfigsClonableTo((cfg2Id,))
+        clonedManualItem = manualItem.cloneToOtherMeetingConfig(cfg2Id)
+        # transitions were not triggered, item was left in it's initial_state
+        wf_name = self.wfTool.getWorkflowsFor(clonedManualItem)[0].getId()
+        initial_state = self.wfTool[wf_name].initial_state
+        self.assertEquals(clonedManualItem.queryState(), initial_state)
 
     def test_pm_AddAutoCopyGroups(self):
         '''Test the functionnality of automatically adding some copyGroups depending on

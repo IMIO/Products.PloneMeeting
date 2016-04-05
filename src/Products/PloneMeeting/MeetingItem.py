@@ -4550,10 +4550,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePrivate('cloneToOtherMeetingConfig')
 
-    def cloneToOtherMeetingConfig(self, destMeetingConfigId):
+    def cloneToOtherMeetingConfig(self, destMeetingConfigId, automatically=False):
         '''Sends this meetingItem to another meetingConfig whose id is
-           p_destMeetingConfigId. The cloned item is set in its initial state,
-           and a link to the source item is made.'''
+           p_destMeetingConfigId.
+           If p_automatically is True it means that we are sending the item
+           using the automatic way, either it means we are sending it manually.
+           If defined in the configuration, different transitions will be triggered on
+           the cloned item if p_automatically is True.
+           In any case, a link to the source item is made.'''
         if not self.adapted().mayCloneToOtherMeetingConfig(destMeetingConfigId):
             # If the user came here, he even does not deserve a clear message ;-)
             raise Unauthorized
@@ -4617,7 +4621,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if mctct['meeting_config'] == destMeetingConfigId:
                 triggerUntil = mctct['trigger_workflow_transitions_until']
         # if transitions to trigger, trigger them!
-        if not triggerUntil == NO_TRIGGER_WF_TRANSITION_UNTIL:
+        # this is only done when item is cloned automatically and current user isManager
+        if not triggerUntil == NO_TRIGGER_WF_TRANSITION_UNTIL and \
+           automatically and \
+           tool.isManager(self):
             # triggerUntil is like meeting-config-xxx.validate, get the real transition
             triggerUntil = triggerUntil.split('.')[1]
             wfTool = api.portal.get_tool('portal_workflow')
@@ -4629,48 +4636,50 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # to a meeting of this other MB
             originalPublishedObject = self.REQUEST.get('PUBLISHED')
             meetingWF = wfTool.getWorkflowsFor(cfg.getMeetingTypeName())[0]
-            for tr in destMeetingConfig.getTransitionsForPresentingAnItem():
-                try:
-                    # special handling for the 'present' transition
-                    # that needs a meeting as 'PUBLISHED' object to work
-                    if tr == 'present':
-                        # find next meeting accepting items, only query meetings that
-                        # are in the initial workflow state if not otherMeetingConfigsClonableToEmergency
-                        if destMeetingConfigId in self.getOtherMeetingConfigsClonableToEmergency():
-                            meetingsAcceptingItems = destMeetingConfig.adapted().getMeetingsAcceptingItems(
-                                inTheFuture=True)
-                        else:
-                            initial_state = wfTool[meetingWF.getId()].initial_state
-                            meetingsAcceptingItems = destMeetingConfig.adapted().getMeetingsAcceptingItems(
-                                review_states=(initial_state, ),
-                                inTheFuture=True)
-                        if not meetingsAcceptingItems:
-                            plone_utils.addPortalMessage(
-                                _('could_not_present_item_no_meeting_accepting_items',
-                                  mapping={'destMeetingConfigTitle': destMeetingConfig.Title(),
-                                           'initial_state': translate(initial_state,
-                                                                      domain="plone",
-                                                                      context=self.REQUEST)}),
-                                'warning')
-                            break
-                        meeting = meetingsAcceptingItems[0].getObject()
-                        newItem.setPreferredMeeting(meeting.UID())
-                        newItem.reindexObject(idxs=['getPreferredMeeting', 'getPreferredMeetingDate'])
-                        newItem.REQUEST['PUBLISHED'] = meeting
+            # do this as Manager to be sure that transitions may be triggered
+            with api.env.adopt_roles(roles=['Manager']):
+                for tr in destMeetingConfig.getTransitionsForPresentingAnItem():
+                    try:
+                        # special handling for the 'present' transition
+                        # that needs a meeting as 'PUBLISHED' object to work
+                        if tr == 'present':
+                            # find next meeting accepting items, only query meetings that
+                            # are in the initial workflow state if not otherMeetingConfigsClonableToEmergency
+                            if destMeetingConfigId in self.getOtherMeetingConfigsClonableToEmergency():
+                                meetingsAcceptingItems = destMeetingConfig.adapted().getMeetingsAcceptingItems(
+                                    inTheFuture=True)
+                            else:
+                                initial_state = wfTool[meetingWF.getId()].initial_state
+                                meetingsAcceptingItems = destMeetingConfig.adapted().getMeetingsAcceptingItems(
+                                    review_states=(initial_state, ),
+                                    inTheFuture=True)
+                            if not meetingsAcceptingItems:
+                                plone_utils.addPortalMessage(
+                                    _('could_not_present_item_no_meeting_accepting_items',
+                                      mapping={'destMeetingConfigTitle': destMeetingConfig.Title(),
+                                               'initial_state': translate(initial_state,
+                                                                          domain="plone",
+                                                                          context=self.REQUEST)}),
+                                    'warning')
+                                break
+                            meeting = meetingsAcceptingItems[0].getObject()
+                            newItem.setPreferredMeeting(meeting.UID())
+                            newItem.reindexObject(idxs=['getPreferredMeeting', 'getPreferredMeetingDate'])
+                            newItem.REQUEST['PUBLISHED'] = meeting
 
-                    wfTool.doActionFor(newItem, tr, comment=wf_comment)
-                except WorkflowException:
-                    # in case something goes wrong, only warn the user by adding a portal message
-                    plone_utils.addPortalMessage(translate('could_not_trigger_transition_for_cloned_item',
-                                                           mapping={'meetingConfigTitle': unicode(
-                                                                    destMeetingConfig.Title(), 'utf-8')},
-                                                           domain="PloneMeeting",
-                                                           context=self.REQUEST),
-                                                 type='warning')
-                    break
-                                # if we are on the triggerUntil transition, we will stop at next loop
-                if tr == triggerUntil:
-                    break
+                        wfTool.doActionFor(newItem, tr, comment=wf_comment)
+                    except WorkflowException:
+                        # in case something goes wrong, only warn the user by adding a portal message
+                        plone_utils.addPortalMessage(translate('could_not_trigger_transition_for_cloned_item',
+                                                               mapping={'meetingConfigTitle': unicode(
+                                                                        destMeetingConfig.Title(), 'utf-8')},
+                                                               domain="PloneMeeting",
+                                                               context=self.REQUEST),
+                                                     type='warning')
+                        break
+                                    # if we are on the triggerUntil transition, we will stop at next loop
+                    if tr == triggerUntil:
+                        break
             # set back originally PUBLISHED object
             self.REQUEST.set('PUBLISHED', originalPublishedObject)
 

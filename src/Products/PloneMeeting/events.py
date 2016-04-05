@@ -106,7 +106,7 @@ def onItemTransition(item, event):
             # if already cloned to another MC, pass.  This could be the case
             # if the item is accepted, corrected then accepted again
             if not item._checkAlreadyClonedToOtherMC(otherMC):
-                item.cloneToOtherMeetingConfig(otherMC)
+                item.cloneToOtherMeetingConfig(otherMC, automatically=True)
 
     # if 'takenOverBy' is used, it is automatically set after a transition
     # to last user that was taking the item over or to nothing
