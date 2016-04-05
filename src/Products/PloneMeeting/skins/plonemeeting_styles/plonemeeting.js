@@ -874,3 +874,11 @@ $(document).ready(function () {
       })
   });
 });
+
+/* Disable caching of AJAX responses when using IE,
+   otherwise, the double ajax call on the meeting (available and presented items)
+   will display the same result... */
+if (/msie/.test(navigator.userAgent.toLowerCase())) {
+  $.ajaxSetup ({ 
+    cache: false }); 
+}
