@@ -72,7 +72,7 @@
                   tal:attributes="width string:${colWidthPercentage}%">
                   <fieldset tal:condition="python: 'assembly' in usedAssemblyFields">
                       <legend tal:content="context/getLabelAssembly">Assembly</legend>
-                      <span tal:replace="structure python: context.getRawAssembly() and context.getStrikedAssembly() or '-'"/>
+                      <span tal:replace="structure python: context.getRawAssembly() and context.getStrikedAssembly() or '<p>-</p>'"/>
                   </fieldset>
               </td>
               <td width="25%"
@@ -81,7 +81,7 @@
                   tal:attributes="width string:${colWidthPercentage}%">
                   <fieldset>
                       <legend i18n:translate="PloneMeeting_label_assemblyExcused">Assembly</legend>
-                      <span tal:replace="structure python: context.getAssemblyExcused() or '-'"/>
+                      <span tal:replace="structure python: context.getAssemblyExcused() or '<p>-</p>'"/>
                   </fieldset>
               </td>
               <td width="25%"
@@ -90,7 +90,7 @@
                   tal:attributes="width string:${colWidthPercentage}%">
                   <fieldset>
                       <legend i18n:translate="PloneMeeting_label_assemblyAbsents">Assembly</legend>
-                      <span tal:replace="structure python: context.getAssemblyAbsents() or '-'"/>
+                      <span tal:replace="structure python: context.getAssemblyAbsents() or '<p>-</p>'"/>
                   </fieldset>
               </td>
               <td width="25%"
@@ -98,7 +98,7 @@
                   tal:attributes="width string:${colWidthPercentage}%">
                   <fieldset>
                       <legend i18n:translate="meeting_signatures">Signatures</legend>
-                      <span tal:replace="structure python: context.getSignatures(mimetype='text/x-html-safe') or '-'"/>
+                      <span tal:replace="structure python: context.getSignatures(mimetype='text/x-html-safe') or '<p>-</p>'"/>
                   </fieldset>
               </td>
           </tr>
