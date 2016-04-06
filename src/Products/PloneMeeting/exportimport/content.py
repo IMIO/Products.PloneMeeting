@@ -27,6 +27,7 @@ __docformat__ = 'plaintext'
    profiles/default for more information.'''
 
 # ------------------------------------------------------------------------------
+from zope.i18n import translate
 from imio.dashboard.utils import _updateDefaultCollectionFor
 from Products.PloneMeeting.config import registerClasses, PROJECTNAME
 from Products.PloneMeeting.model.adaptations import performModelAdaptations
@@ -53,6 +54,10 @@ class ToolInitializer:
         self.productname = '.' in productname and productname or 'Products.%s' % productname
         self.site = context.getSite()
         self.tool = self.site.portal_plonemeeting
+        # set correct title
+        self.tool.setTitle(translate('pm_configuration',
+                           domain='PloneMeeting',
+                           context=self.site.REQUEST))
         self.profileData = self.getProfileData()
         # Initialize the tool if we have data
         if not self.profileData:

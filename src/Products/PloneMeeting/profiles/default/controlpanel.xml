@@ -2,9 +2,9 @@
 <object name="portal_controlpanel"
         meta_type="Plone Control Panel Tool"
         xmlns:i18n="http://xml.zope.org/namespaces/i18n"
-        i18n:domain="plone">
+        i18n:domain="PloneMeeting">
 
- <configlet title="PloneMeeting"
+ <configlet title="pm_configuration"
             action_id="PloneMeeting"
             appId="PloneMeeting"
             category="Products"

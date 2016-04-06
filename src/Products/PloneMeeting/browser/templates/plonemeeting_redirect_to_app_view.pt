@@ -9,7 +9,7 @@
 
   <body>
   <metal:title fill-slot="content-title" tal:define="frontPage python: getattr(context, 'front-page', None)">
-    <h1 class="documentFirstHeading" tal:content="frontPage/Title" tal:on-error="python: context.utranslate('hs_welcome_title', domain='PloneMeeting')">Welcome title</h1>
+    <h1 class="documentFirstHeading" tal:content="frontPage/Title" tal:on-error="python: context.utranslate('front_page_title', domain='PloneMeeting')">Welcome title</h1>
   </metal:title>
   <metal:description fill-slot="content-description">
    <tal:comment replace="nothing">Just hide the description as shown by default by Plone</tal:comment>

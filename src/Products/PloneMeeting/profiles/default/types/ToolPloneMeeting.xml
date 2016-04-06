@@ -2,9 +2,9 @@
 <object name="ToolPloneMeeting"
         meta_type="Factory-based Type Information with dynamic views"
         xmlns:i18n="http://xml.zope.org/namespaces/i18n"
-        i18n:domain="plone">
+        i18n:domain="PloneMeeting">
 
- <property name="title" i18n:translate="">PloneMeeting</property>
+ <property name="title" i18n:translate="">pm_configuration</property>
  <property name="description" i18n:translate=""></property>
  <property name="icon_expr">string:${portal_url}/ToolPloneMeeting.png</property>
  <property name="content_meta_type">ToolPloneMeeting</property>

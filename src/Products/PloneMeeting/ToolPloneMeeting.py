@@ -324,13 +324,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     backPages = {'categories': 'data', 'classifiers': 'data',
                  'meetingfiletypes': 'data', 'meetingusers': 'users',
                  'podtemplates': 'doc'}
-    vhRex = re.compile('\d+(.*)')
-    ##/code-section class-header
-
-    # tool-constructors have no id argument, the id is fixed
-    def __init__(self, id=None):
-        OrderedBaseFolder.__init__(self, 'portal_plonemeeting')
-        self.setTitle('PloneMeeting')
 
     # tool should not appear in portal_catalog
     def at_post_edit_script(self):

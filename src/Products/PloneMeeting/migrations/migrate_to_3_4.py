@@ -5,6 +5,7 @@ logger = logging.getLogger('PloneMeeting')
 
 from Acquisition import aq_base
 from DateTime import DateTime
+from zope.i18n import translate
 from Products.CMFCore.utils import getToolByName
 from plone import api
 from plone.namedfile.file import NamedBlobFile
@@ -664,6 +665,20 @@ class Migrate_To_3_4(Migrator):
         removeIndexes(self.portal, indexes=('getDeliberation', ))
         logger.info('Done.')
 
+    def _moveAppName(self):
+        """Remove 'PloneMeeting' technical app name."""
+        logger.info('Adapting app name...')
+        self.tool.setTitle(translate('pm_configuration',
+                           domain='PloneMeeting',
+                           context=self.portal.REQUEST))
+        frontPage = getattr(self.portal, 'front-page')
+        if frontPage:
+            frontPage.setTitle(translate('front_page_title',
+                               domain='PloneMeeting',
+                               context=self.portal.REQUEST))
+            frontPage.reindexObject()
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 3.4...')
         # reinstall so versions are correctly shown in portal_quickinstaller
@@ -692,6 +707,7 @@ class Migrate_To_3_4(Migrator):
         self._updateHistoryComments()
         self._updateCKeditorCustomToolbar()
         self._removeUnusedIndexes()
+        self._moveAppName()
         # update workflow, needed for items moved to item templates and recurring items
         # update reference_catalog as ReferenceFied "MeetingConfig.toDoListTopics"
         # and "Meeting.lateItems" were removed
