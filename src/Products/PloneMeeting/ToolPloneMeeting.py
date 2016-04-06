@@ -14,7 +14,6 @@ __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
 __docformat__ = 'plaintext'
 
 import interfaces
-import re
 import time
 import OFS.Moniker
 
@@ -834,7 +833,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
           If p_iRestricted is True, it will check if current user is a
           restricted power observer.
         """
-        member = self.portal_membership.getAuthenticatedMember()
+        member = api.user.get_current()
         if not isRestricted:
             groupId = "%s_%s" % (cfg.getId(), POWEROBSERVERS_GROUP_SUFFIX)
         else:

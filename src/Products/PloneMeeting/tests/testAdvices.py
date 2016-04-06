@@ -50,6 +50,7 @@ from Products.PloneMeeting.config import ADVICE_STATES_ENDED
 from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
+from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.indexes import indexAdvisers
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
@@ -1198,17 +1199,40 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(vendors.getItemAdviceViewStates(cfg2) == cfg2.getItemAdviceViewStates())
 
     def test_pm_PowerAdvisers(self):
-        '''Power advisers are users that can give an advice even when not asked...'''
+        '''Power advisers are users that can give an advice even when not asked...
+           This will give these users opportunity to add the advice but 'View' access to the relevant
+           item is given by another functionnality (MeetingManager, power observer, ...).'''
         # set developers as power advisers
-        self.meetingConfig.setItemAdviceStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
-        self.meetingConfig.setPowerAdvisersGroups(('developers', ))
+        cfg = self.meetingConfig
+        cfg.setItemAdviceStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+        cfg.setPowerAdvisersGroups(('developers', ))
+        cfg.setItemPowerObserversStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         self.proposeItem(item)
         item.at_post_edit_script()
+        # pmAdviser1 must have 'View' on the item to be able to give advice
+        # for now, it is not the case, the 'View' is not given automatically to power advisers
+        self.changeUser('pmAdviser1')
+        # pmAdviser1 is not power adviser
+        self.assertFalse(self.tool.isPowerObserverForCfg(cfg, isRestricted=False))
+        self.assertFalse(self.tool.isPowerObserverForCfg(cfg, isRestricted=True))
+        self.assertTrue(not 'developers' in item.adviceIndex)
+        # he may not see item
+        self.failIf(self.hasPermission(View, item))
+        # but he is able to add the advice
+        self.failUnless(self.hasPermission(AddPortalContent, item))
+        self.failUnless(self.hasPermission(AddAdvice, item))
+        # right, give 'View' access, now pmAdviser1 will be able to see the item
+        # add pmAdviser1 to power observers
+        self.changeUser('siteadmin')
+        self.portal.portal_groups.addPrincipalToGroup('pmAdviser1', '%s_%s' %
+                                                      (cfg.getId(), POWEROBSERVERS_GROUP_SUFFIX))
+        item.updateLocalRoles()
+        self.changeUser('pmAdviser1')
         # pmAdviser1 can give advice for developers even if
         # not asked, aka not in item.adviceIndex
-        self.changeUser('pmAdviser1')
         self.assertTrue(not 'developers' in item.adviceIndex)
         self.failUnless(self.hasPermission(AddPortalContent, item))
         self.failUnless(self.hasPermission(AddAdvice, item))
@@ -1219,6 +1243,7 @@ class testAdvices(PloneMeetingTestCase):
                                  **{'advice_group': 'developers',
                                     'advice_type': u'positive',
                                     'advice_comment': RichTextValue(u'My comment')})
+
         # he can give advice for every groups he is adviser for
         # here as only adviser for 'developers', he can not give an advice anymore
         # after having given the advice for 'developers'
@@ -1228,7 +1253,7 @@ class testAdvices(PloneMeetingTestCase):
         # but if he is also adviser for 'vendors', he can give it also
         self.changeUser('admin')
         self.portal.portal_groups.addPrincipalToGroup('pmAdviser1', 'vendors_advisers')
-        self.meetingConfig.setPowerAdvisersGroups(('developers', 'vendors', ))
+        cfg.setPowerAdvisersGroups(('developers', 'vendors', ))
         item.updateLocalRoles()
         # now as pmAdviser1 is adviser for vendors and vendors is a PowerAdviser,
         # he can add an advice for vendors

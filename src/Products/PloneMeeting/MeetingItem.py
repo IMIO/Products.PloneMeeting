@@ -3839,7 +3839,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             mGroup = getattr(tool, mGroupId)
             if itemState in mGroup.getItemAdviceStates(cfg):
                 advisersGroup = mGroup.getPloneGroupId(suffix='advisers')
-                self.manage_addLocalRoles(advisersGroup, (READER_USECASES['advices'], 'Contributor', ))
+                # power advisers get only the right to add the advice, but not to see the item
+                # this must be provided using another functionnality, like power observer or so
+                self.manage_addLocalRoles(advisersGroup, ('Contributor', ))
                 # make sure 'Contributor' has the 'AddAdvice' permission
                 self._grantPermissionToRole(permission=AddAdvice,
                                             role_to_give='Contributor',

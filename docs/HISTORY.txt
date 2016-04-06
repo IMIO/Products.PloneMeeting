@@ -253,6 +253,10 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   portal_plonemeeting attributes are only set the first time
 - Removed caching for MeetingItem.getMeeting
 - Removed 'mailFormat' management, we now only use 'plain' as mail format, no more HTML
+- Changed the way power advisers work: now it only gives power advisers the possibility to add an advice on any item that
+  are viewable and in the advice giveable states, but it does not given them the 'View' anymore.
+  So it needs to be used in addition to another way to give 'View' on the item
+  (user can get 'View' access because it is MeetingManager, power observer, observer, copy group, ...)
 
 3.3 (2015-02-27)
 ----------------
