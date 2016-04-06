@@ -91,7 +91,7 @@ class testValidators(PloneMeetingTestCase):
         ]
         self.failIf(v(certified))
 
-    def test_pm_IsValidCertifiedSignaturesValidatorFailIfNotOrdered(self):
+    def test_pm_IsValidCertifiedSignaturesValidatorFailsIfNotOrdered(self):
         '''Test the 'isCertifiedSignaturesValidator' validator.
            It fails if signatures are not ordered by signature number.'''
         v = validation.validatorFor('isValidCertifiedSignatures')
@@ -116,7 +116,7 @@ class testValidators(PloneMeetingTestCase):
         self.assertEquals(v(certified),
                           order_error_msg)
 
-    def test_pm_IsValidCertifiedSignaturesValidatorFailIfBothDatesNotProvided(self):
+    def test_pm_IsValidCertifiedSignaturesValidatorFailsIfBothDatesNotProvided(self):
         '''Test the 'isCertifiedSignaturesValidator' validator.
            It fails if signatures both dates are not provided.'''
         v = validation.validatorFor('isValidCertifiedSignatures')
@@ -146,7 +146,7 @@ class testValidators(PloneMeetingTestCase):
         self.assertEquals(v(certified),
                           both_error_msg)
 
-    def test_pm_IsValidCertifiedSignaturesValidatorFailIfWrondDateFormat(self):
+    def test_pm_IsValidCertifiedSignaturesValidatorFailsIfWrongDateFormat(self):
         '''Test the 'isCertifiedSignaturesValidator' validator.
            It fails if signatures use wrong format for dates.'''
         v = validation.validatorFor('isValidCertifiedSignatures')

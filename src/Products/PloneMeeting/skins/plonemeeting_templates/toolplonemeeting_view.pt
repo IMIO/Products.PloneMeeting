@@ -154,8 +154,7 @@
             <td tal:define="field python:here.getField('unrestrictedUsers')">
                 <span metal:use-macro="here/widgets/field/macros/view" />
             </td>
-            <td tal:define="field python:here.getField('dateFormat')">
-              <span metal:use-macro="here/widgets/field/macros/view" />
+            <td>
             </td>
           </tr>
           <tr valign="top">

@@ -157,18 +157,6 @@ schema = Schema((
         ),
         default_content_type='text/plain',
     ),
-    StringField(
-        name='dateFormat',
-        default=defValues.dateFormat,
-        widget=StringField._properties['widget'](
-            description="DateFormat",
-            description_msgid="date_format_descr",
-            label='Dateformat',
-            label_msgid='PloneMeeting_label_dateFormat',
-            i18n_domain='PloneMeeting',
-        ),
-        required=True,
-    ),
     BooleanField(
         name='extractTextFromFiles',
         default=defValues.extractTextFromFiles,
@@ -1501,8 +1489,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     def formatMeetingDate(self, meeting, lang=None, short=False,
                           withHour=False, prefixed=False):
-        '''Returns p_meeting.getDate as formatted by the user-defined date format defined
-           in field dateFormat.
+        '''Returns p_meeting.getDate formatted.
            - If p_lang is specified, it translates translatable elements (if
              any), like day of week or month, in p_lang. Else, it translates it
              in the user language (see tool.getUserLanguage).
@@ -1521,7 +1508,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if short:
             fmt = '%d/%m/%Y'
         else:
-            fmt = self.getDateFormat()
+            fmt = '%d %mt %Y'
         if withHour and (date._hour or date._minute):
             fmt += ' (%H:%M)'
         # Apply p_fmt to p_aDate. Manage first special symbols corresponding to

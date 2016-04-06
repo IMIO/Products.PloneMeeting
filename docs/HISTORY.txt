@@ -86,7 +86,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Added possibility to print a meeting showing filtered items, like for example only "accepted" items
 - Moved ToolPloneMeeting.getJavascriptMessages to a view generating 'plonemeeting_javascript_variables.js'
 - Added icon action shortcut on an advice to hide/show it when under redaction
-- Removed some fields from ToolPloneMeeting : 'usedColorSystem', 'colorSystemDisabledFor', 'publicUrl',
+- Removed some fields from ToolPloneMeeting : 'dateFormat', 'usedColorSystem', 'colorSystemDisabledFor', 'publicUrl',
   'deferredNotificationsHandling' and 'showItemKeywordsTargets'. Moved 'maxShownFound' to the MeetingConfig
 - Removed colorization mechanism 'on modification', now the only color system is 'on workflow state' and is always on
 - Removed utils.spanifyLink

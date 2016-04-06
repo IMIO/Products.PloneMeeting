@@ -260,7 +260,7 @@ class Migrate_To_3_4(Migrator):
         if 'toggleDescriptions' in dactions.objectIds():
             dactions.manage_delObjects(ids=['toggleDescriptions'])
 
-        logger.info('Moving to imio.dashboard : removing parameters "usedColorSystem", '
+        logger.info('Moving to imio.dashboard : removing parameters "usedColorSystem", "dateFormat", '
                     '"colorSystemDisabledFor", "publicUrl" and "deferredNotificationsHandling" '
                     'from portal_plonemeeting...')
         if hasattr(self.tool, 'usedColorSystem'):
@@ -275,6 +275,8 @@ class Migrate_To_3_4(Migrator):
             delattr(self.tool, 'maxShownFound')
         if hasattr(self.tool, 'showItemKeywordsTargets'):
             delattr(self.tool, 'showItemKeywordsTargets')
+        if hasattr(self.tool, 'dateFormat'):
+            delattr(self.tool, 'dateFormat')
 
         logger.info('Moving to imio.dashboard : enabling faceted view for existing Meetings...')
         brains = self.portal.portal_catalog(meta_type='Meeting')

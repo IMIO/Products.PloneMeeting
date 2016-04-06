@@ -527,7 +527,6 @@ class PloneMeetingConfiguration(Descriptor):
         self.functionalAdminName = ''
         self.restrictUsers = False
         self.unrestrictedUsers = ''
-        self.dateFormat = '%d %mt %Y'
         self.extractTextFromFiles = False
         self.availableOcrLanguages = ('eng',)
         self.defaultOcrLanguage = 'eng'
