@@ -667,6 +667,21 @@ class Migrate_To_3_4(Migrator):
         removeIndexes(self.portal, indexes=('getDeliberation', ))
         logger.info('Done.')
 
+    def _initSelectableAdvisers(self):
+        """MeetingConfig.selectableAdvisers now stores advisers displayed in the
+           MeetingItem.optionalAdvisers list. Initialize it to values selectable before,
+           aka active MeetingGroups having at least one user in the 'advisers' sub-group.
+        """
+        logger.info('For each MeetingConfigs : initializing field \'selectableAdvisers\'...')
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            if not cfg.getUseCopies():
+                continue
+            selectableAdvisers = cfg.getSelectableAdvisers()
+            if not selectableAdvisers:
+                nonEmptyMeetingGroups = self.tool.getMeetingGroups(notEmptySuffix='advisers')
+                cfg.setSelectableAdvisers([mGroup.getId() for mGroup in nonEmptyMeetingGroups])
+        logger.info('Done.')
+
     def _moveAppName(self):
         """Remove 'PloneMeeting' technical app name."""
         logger.info('Adapting app name...')
@@ -709,6 +724,7 @@ class Migrate_To_3_4(Migrator):
         self._updateHistoryComments()
         self._updateCKeditorCustomToolbar()
         self._removeUnusedIndexes()
+        self._initSelectableAdvisers()
         self._moveAppName()
         # update workflow, needed for items moved to item templates and recurring items
         # update reference_catalog as ReferenceFied "MeetingConfig.toDoListTopics"
@@ -739,7 +755,12 @@ def migrate(context):
        16) Update all local_roles of Meeting and MeetingItems;
        17) Init new HTML fields;
        18) Update MeetingConfig.enableAnnexToPrint attribute;
-       19) Refresh catalogs.
+       19) Update history comments;
+       20) Update CKEditor custom toolbar;
+       21) Remove unused catalog indexes;
+       22) Initialize MeetingConfig.selectableAdvisers field;
+       23) Adapt application name;
+       24) Refresh catalogs.
     '''
     migrator = Migrate_To_3_4(context)
     migrator.run()

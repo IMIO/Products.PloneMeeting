@@ -43,7 +43,7 @@
       <tal:itemNavigation replace="structure context/@@item-navigation-widget" />
     </tal:itemNavigation>
 
-    <table width="100%">
+    <table width="100%" class="item-infos">
       <tr valign="top">
         <td width="50%" style="padding-right: 0.5em;">
 
@@ -360,6 +360,7 @@
 
     <tal:comment replace="nothing">Budgetary informations, manage fields budgetRelated and budgetInfos</tal:comment>
     <tal:block condition="python: 'budgetInfos' in usedAttrs">
+        <p class="item-before-budget-related"></p>
         <metal:budgetInfos use-macro="here/@@pm-macros/budgetInfos" />
     </tal:block>
 

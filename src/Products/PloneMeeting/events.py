@@ -172,10 +172,17 @@ def onGroupTransition(mGroup, event):
                 if ploneGroupId in selectableCopyGroups:
                     selectableCopyGroups.remove(ploneGroupId)
                 mc.setSelectableCopyGroups(selectableCopyGroups)
+        # Remove the group from every meetingConfigs.selectableAdvisers
+        for mc in tool.objectValues('MeetingConfig'):
+            selectableAdvisers = list(mc.getSelectableAdvisers())
+            if mGroup.getId() in mc.getSelectableAdvisers():
+                selectableAdvisers.remove(mGroup.getId())
+            mc.setSelectableAdvisers(selectableAdvisers)
         # add a portal_message explaining what has been done to the user
         plone_utils = api.portal.get_tool('plone_utils')
-        plone_utils.addPortalMessage(_('meetinggroup_removed_from_meetingconfigs_selectablecopygroups'),
-                                     'info')
+        plone_utils.addPortalMessage(
+            _('meetinggroup_removed_from_meetingconfigs_selectablecopygroups_selectableadvisers'),
+            'info')
 
 
 def onGroupWillBeRemoved(group, event):

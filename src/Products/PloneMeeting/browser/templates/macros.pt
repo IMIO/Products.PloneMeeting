@@ -309,7 +309,6 @@ document.location.reload(true);
                    i18n:domain="PloneMeeting"
                    tal:define="mayEdit python: member.has_permission('PloneMeeting: Write budget infos', context);
                                budgetRelated context/getBudgetRelated;">
-  <br />
   <span id="marker_toggle_budgetrelated_UID#"
         tal:attributes="id string:marker_toggle_budgetrelated_$UID;"
         tal:define="UID context/UID;

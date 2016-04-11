@@ -805,6 +805,15 @@
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
         </tr>
+        <tr valign="top" colspan="3">
+          <td tal:define="field python:here.getField('selectableAdvisers')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td>
+          </td>
+          <td>
+          </td>
+        </tr>
         <tr valign="top">
           <td width="34%" tal:define="field python:here.getField('itemAdviceStates')">
             <span metal:use-macro="here/widgets/field/macros/view" />

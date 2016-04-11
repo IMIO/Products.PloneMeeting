@@ -733,7 +733,7 @@ schema = Schema((
         widget=MultiSelectionWidget(
             description="OptionalAdvisersItem",
             description_msgid="optional_advisers_item_descr",
-            condition='python:here.isAdvicesEnabled() and len(here.listOptionalAdvisers())',
+            condition='python:here.isAdvicesEnabled()',
             format="checkbox",
             size=10,
             label='Optionaladvisers',
@@ -3080,6 +3080,42 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                             res[-1]['delay_label'] = storedCustomAdviser['delay_label']
         return res
 
+    security.declarePublic('addAutoCopyGroups')
+
+    def addAutoCopyGroups(self, isCreated):
+        '''What group should be automatically set as copyGroups for this item?
+           We get it by evaluating the TAL expression on every active
+           MeetingGroup.asCopyGroupOn. The expression returns a list of suffixes
+           or an empty list.  The method update existing copyGroups and add groups
+           prefixed with 'auto__'.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        self.autoCopyGroups = PersistentList()
+
+        for mGroup in tool.getMeetingGroups():
+            try:
+                suffixes = _evaluateExpression(self,
+                                               expression=mGroup.getAsCopyGroupOn(),
+                                               roles_bypassing_expression=[],
+                                               extra_expr_ctx={'item': self,
+                                                               'isCreated': isCreated},
+                                               empty_expr_is_true=False)
+                if not suffixes:
+                    continue
+                # The expression is supposed to return a list a Plone group suffixes
+                # check that the real linked Plone groups are selectable
+                for suffix in suffixes:
+                    if not suffix in MEETING_GROUP_SUFFIXES:
+                        # If the suffix returned by the expression does not exist
+                        # log it, it is a configuration problem
+                        logger.warning(AS_COPYGROUP_RES_ERROR % (suffix,
+                                                                 mGroup.getId()))
+                        continue
+                    ploneGroupId = mGroup.getPloneGroupId(suffix)
+                    autoPloneGroupId = 'auto__{0}'.format(ploneGroupId)
+                    self.autoCopyGroups.append(autoPloneGroupId)
+            except Exception, e:
+                logger.warning(AS_COPYGROUP_CONDITION_ERROR % str(e))
+
     def _optionalDelayAwareAdvisers(self):
         '''Returns the 'delay-aware' advisers.
            This will return a list of dict where dict contains :
@@ -3132,42 +3168,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         'row_id': customAdviserConfig['row_id']})
         return res
 
-    security.declarePublic('addAutoCopyGroups')
-
-    def addAutoCopyGroups(self, isCreated):
-        '''What group should be automatically set as copyGroups for this item?
-           We get it by evaluating the TAL expression on every active
-           MeetingGroup.asCopyGroupOn. The expression returns a list of suffixes
-           or an empty list.  The method update existing copyGroups and add groups
-           prefixed with 'auto__'.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        self.autoCopyGroups = PersistentList()
-
-        for mGroup in tool.getMeetingGroups():
-            try:
-                suffixes = _evaluateExpression(self,
-                                               expression=mGroup.getAsCopyGroupOn(),
-                                               roles_bypassing_expression=[],
-                                               extra_expr_ctx={'item': self,
-                                                               'isCreated': isCreated},
-                                               empty_expr_is_true=False)
-                if not suffixes:
-                    continue
-                # The expression is supposed to return a list a Plone group suffixes
-                # check that the real linked Plone groups are selectable
-                for suffix in suffixes:
-                    if not suffix in MEETING_GROUP_SUFFIXES:
-                        # If the suffix returned by the expression does not exist
-                        # log it, it is a configuration problem
-                        logger.warning(AS_COPYGROUP_RES_ERROR % (suffix,
-                                                                 mGroup.getId()))
-                        continue
-                    ploneGroupId = mGroup.getPloneGroupId(suffix)
-                    autoPloneGroupId = 'auto__{0}'.format(ploneGroupId)
-                    self.autoCopyGroups.append(autoPloneGroupId)
-            except Exception, e:
-                logger.warning(AS_COPYGROUP_CONDITION_ERROR % str(e))
-
     security.declarePublic('listOptionalAdvisers')
 
     def listOptionalAdvisers(self):
@@ -3206,10 +3206,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 resDelayAwareAdvisers.append((adviserId, value_to_display))
 
         resNonDelayAwareAdvisers = []
-        # only let select groups for which there is at least one user in
-        nonEmptyMeetingGroups = tool.getMeetingGroups(notEmptySuffix='advisers')
-        for mGroup in nonEmptyMeetingGroups:
-            resNonDelayAwareAdvisers.append((mGroup.getId(), mGroup.getName()))
+        selectableAdvisers = cfg.getSelectableAdvisers()
+        for mGroupId in selectableAdvisers:
+            mGroup = tool.get(mGroupId)
+            resNonDelayAwareAdvisers.append((mGroupId, mGroup.getName()))
 
         # make sure optionalAdvisers actually stored have their corresponding
         # term in the vocabulary, if not, add it
@@ -3245,7 +3245,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
             # if we have delay-aware advisers, we add another special value
             # that explain that under are 'normal' optional advisers
-            if nonEmptyMeetingGroups:
+            if selectableAdvisers:
                 non_delay_aware_optional_advisers_msg = translate('non_delay_aware_optional_advisers_term',
                                                                   domain='PloneMeeting',
                                                                   context=self.REQUEST)

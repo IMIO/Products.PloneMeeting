@@ -1341,6 +1341,24 @@ schema = Schema((
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
+        name='selectableAdvisers',
+        widget=MultiSelectionWidget(
+            description="SelectableAdvisers",
+            description_msgid="selectable_advisers_descr",
+            format="checkbox",
+            size=10,
+            label='Selectableadvisers',
+            label_msgid='PloneMeeting_label_selectableAdvisers',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        multiValued=1,
+        vocabulary='listSelectableAdvisers',
+        default=defValues.selectableAdvisers,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
         name='itemAdviceStates',
         widget=MultiSelectionWidget(
             description="ItemAdviceStates",
@@ -2434,6 +2452,32 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         for number in range(20, 1001, 20):
             res.append((str(number), str(number)))
         return DisplayList(tuple(res))
+
+    security.declarePrivate('listSelectableAdvisers')
+
+    def listSelectableAdvisers(self):
+        '''List advisers that will be selectable in the MeetingItem.optionalAdvisers field.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+
+        res = []
+        # display every groups and mark empty advisers group
+        activeGroups = tool.getMeetingGroups(onlyActive=True)
+        nonEmptyMeetingGroups = tool.getMeetingGroups(notEmptySuffix='advisers',
+                                                      onlyActive=False)
+        advisers_msg = translate('advisers',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+        non_empty_advisers_group_msg = translate('empty_advisers_group',
+                                                 mapping={'suffix': advisers_msg},
+                                                 domain='PloneMeeting',
+                                                 context=self.REQUEST)
+        for mGroup in activeGroups:
+            # display if a group is disabled or empty
+            title = safe_unicode(mGroup.getName())
+            if not mGroup in nonEmptyMeetingGroups:
+                title = title + ' (%s)' % non_empty_advisers_group_msg
+            res.append((mGroup.getId(), title))
+        return DisplayList(res).sortedByValue()
 
     security.declarePrivate('validate_shortName')
 
@@ -4283,8 +4327,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('listSelectableCopyGroups')
 
     def listSelectableCopyGroups(self):
-        '''Returns a list of groups that can be selected on an item as copy for
-           the item.'''
+        '''Returns a list of groups that can be selected on an item as copy for the item.'''
         res = []
         tool = getToolByName(self, 'portal_plonemeeting')
         meetingGroups = tool.getMeetingGroups()

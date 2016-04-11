@@ -1991,20 +1991,27 @@ class testMeetingItem(PloneMeetingTestCase):
     def test_pm_ListOptionalAdvisersVocabulary(self):
         '''
           This is the vocabulary for the field "optionalAdvisers".
+          It relies on the advisers selected in the MeetingConfig.selectableAdvisers field.
           Check that we still have the stored value in the vocabulary, aka if the stored value
           is no more in the vocabulary, it is still in it tough ;-)
         '''
+        cfg = self.meetingConfig
         self.changeUser('pmManager')
         # create an item to test the vocabulary
         item = self.create('MeetingItem')
-        self.assertEquals(item.listOptionalAdvisers().keys(), ['developers', 'vendors'])
+        # relies on MeetingConfig.selectableAdvisers
+        self.assertEquals(cfg.getSelectableAdvisers(), ('developers', 'vendors'))
+        cfg.setSelectableAdvisers(['developers'])
+        self.assertEquals(item.listOptionalAdvisers().keys(), ['developers'])
+        cfg.setSelectableAdvisers(['developers', 'vendors'])
         # now select the 'developers' as optionalAdvisers for the item
         item.setOptionalAdvisers(('developers', ))
         # still the complete vocabulary
         self.assertEquals(item.listOptionalAdvisers().keys(), ['developers', 'vendors'])
-        # disable developers MeetingGroup in the portal_plonemeeting
+        # if a group is disabled, it is automatically removed from MeetingConfig.selectableAdvisers
         self.changeUser('admin')
         self.do(self.tool.developers, 'deactivate')
+        self.assertEquals(cfg.getSelectableAdvisers(), ('vendors', ))
         self.changeUser('pmManager')
         # still in the vocabulary because selected on the item
         self.assertEquals(item.listOptionalAdvisers().keys(), ['developers', 'vendors'])

@@ -257,6 +257,10 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   are viewable and in the advice giveable states, but it does not given them the 'View' anymore.
   So it needs to be used in addition to another way to give 'View' on the item
   (user can get 'View' access because it is MeetingManager, power observer, observer, copy group, ...)
+- Optional advisers selectable on an item now need to be selected in the MeetingConfig.selectableAdvisers field. This way,
+  optional advisers are not automatically the groups that contain users in the "advisers" sub-group but manually selected groups.
+  This makes it possible to hide a group that exists for the MeetingConfig.customAdvisers purpose but to which it should not
+  be possible to ask an optional adviser
 
 3.3 (2015-02-27)
 ----------------

@@ -1002,7 +1002,9 @@ div[id^="archetypes-fieldname-customAdvisers-"] label.formQuestion {
     display: table-cell;
 }
 
-/* make sure multiselect fields displayed on the edit form are not too long */
+/* make sure multiselect fields displayed on the edit form are not too long,
+   add padding-bottom: 1em; to avoid displaying scroll when height < 300px */
+div#archetypes-fieldname-associatedGroups,
 div#archetypes-fieldname-categoryMappingsWhenCloningToOtherMC,
 div#archetypes-fieldname-copyGroups,
 div#archetypes-fieldname-optionalAdvisers,
@@ -1014,6 +1016,7 @@ div#archetypes-fieldname-usingGroups {
     max-height: 300px;
     max-width: 500px;
     overflow-x: auto;
+    padding-bottom: 1em;
 }
 /* hide some options in the select showing optionalAdvisers */
 div#optionalAdvisers input[value="not_selectable_value_delay_aware_optional_advisers"],
@@ -1326,6 +1329,11 @@ button.remove_several img,
 button.present_several img {
     position: relative;
     top: 2px;
+}
+
+/* space before the budgetRelated field on the item view */
+p.item-before-budget-related {
+    padding-bottom: 0.5em;
 }
 
 #content table.meetingConfigActions {
