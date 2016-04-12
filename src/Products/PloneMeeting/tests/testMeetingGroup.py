@@ -35,11 +35,14 @@ class testMeetingGroup(PloneMeetingTestCase):
 
     def test_pm_CanNotRemoveUsedMeetingGroup(self):
         '''While removing a MeetingGroup, it should raise if it is used somewhere...'''
+        cfg = self.meetingConfig
+        cfg.setSelectableAdvisers(())
+        cfg2 = self.meetingConfig2
         self.changeUser('pmManager')
         # delete recurring items, just keep item templates
-        self._removeConfigObjectsFor(self.meetingConfig, folders=['recurringitems', ])
-        # make sure self.meetingConfig2 does not interact...
-        self._removeConfigObjectsFor(self.meetingConfig2)
+        self._removeConfigObjectsFor(cfg, folders=['recurringitems', ])
+        # make sure cfg2 does not interact...
+        self._removeConfigObjectsFor(cfg2)
         # create an item
         item = self.create('MeetingItem')
         # default used proposingGroup is 'developers'
@@ -48,39 +51,48 @@ class testMeetingGroup(PloneMeetingTestCase):
         self.changeUser('admin')
 
         # 1) fails because used in the configuration, in
-        # selectableCopyGroups, customAdvisers or powerAdvisersGroups
-        self.failIf(self.meetingConfig.getCustomAdvisers())
-        self.failIf(self.meetingConfig.getPowerAdvisersGroups())
-        self.failUnless('developers_reviewers' in self.meetingConfig.getSelectableCopyGroups())
-        with self.assertRaises(BeforeDeleteException) as cm:
-            self.tool.manage_delObjects(['developers', ])
-
+        # selectableCopyGroups, selectableAdvisers, customAdvisers or powerAdvisersGroups
+        self.failIf(cfg.getCustomAdvisers())
+        self.failIf(cfg.getPowerAdvisersGroups())
+        self.failIf(cfg.getSelectableAdvisers())
+        self.failUnless('developers_reviewers' in cfg.getSelectableCopyGroups())
         can_not_delete_meetinggroup_meetingconfig = \
             translate('can_not_delete_meetinggroup_meetingconfig',
                       domain="plone",
                       context=self.request)
+        with self.assertRaises(BeforeDeleteException) as cm:
+            self.tool.manage_delObjects(['developers', ])
         self.assertEquals(cm.exception.message, can_not_delete_meetinggroup_meetingconfig)
         # so remove selectableCopyGroups from the meetingConfigs
-        self.meetingConfig.setSelectableCopyGroups(())
-        self.meetingConfig2.setSelectableCopyGroups(())
+        cfg.setSelectableCopyGroups(())
+        cfg2.setSelectableCopyGroups(())
+
+        # define selectableAdvisers, the exception is also raised
+        cfg.setSelectableAdvisers(('developers', ))
+        with self.assertRaises(BeforeDeleteException) as cm:
+            self.tool.manage_delObjects(['developers', ])
+        self.assertEquals(cm.exception.message, can_not_delete_meetinggroup_meetingconfig)
+        # so remove selectableAdvisers
+        cfg.setSelectableAdvisers(())
+
         # define customAdvisers, the exception is also raised
-        self.meetingConfig.setCustomAdvisers(
+        cfg.setCustomAdvisers(
             [{'row_id': 'unique_id_123',
               'group': 'developers',
               'delay': '5', }, ])
         with self.assertRaises(BeforeDeleteException) as cm:
             self.tool.manage_delObjects(['developers', ])
-
         self.assertEquals(cm.exception.message, can_not_delete_meetinggroup_meetingconfig)
         # so remove customAdvisers
-        self.meetingConfig.setCustomAdvisers([])
+        cfg.setCustomAdvisers([])
+
         # define powerAdvisersGroups, the exception is also raised
-        self.meetingConfig.setPowerAdvisersGroups(['developers', ])
+        cfg.setPowerAdvisersGroups(['developers', ])
         with self.assertRaises(BeforeDeleteException) as cm:
             self.tool.manage_delObjects(['developers', ])
         self.assertEquals(cm.exception.message, can_not_delete_meetinggroup_meetingconfig)
         # so remove powerAdvisersGroups
-        self.meetingConfig.setPowerAdvisersGroups([])
+        cfg.setPowerAdvisersGroups([])
 
         # 2) fails because the corresponding Plone groups are not empty
         with self.assertRaises(BeforeDeleteException) as cm:
@@ -168,7 +180,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         item.setAssociatedGroups(())
         item.setOptionalAdvisers(())
         self.assertTrue('developers_advisers' not in item.adviceIndex)
-        self.meetingConfig.setUseCopies(True)
+        cfg.setUseCopies(True)
         item.setCopyGroups(('developers_reviewers', ))
         item.at_post_edit_script()
         with self.assertRaises(BeforeDeleteException) as cm:
@@ -185,7 +197,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         # 4) removing a used group in the configuration fails too
         # remove item because it uses 'vendors'
         item.aq_inner.aq_parent.manage_delObjects([item.getId(), ])
-        self.assertEquals(self.meetingConfig.itemtemplates.template2.getProposingGroup(), 'vendors')
+        self.assertEquals(cfg.itemtemplates.template2.getProposingGroup(), 'vendors')
         # then fails because corresponding Plone groups are not empty...
         with self.assertRaises(BeforeDeleteException) as cm:
             self.tool.manage_delObjects(['vendors', ])
@@ -204,10 +216,10 @@ class testMeetingGroup(PloneMeetingTestCase):
         self.assertEquals(cm.exception.message,
                           translate('can_not_delete_meetinggroup_config_meetingitem',
                                     domain='plone',
-                                    mapping={'url': self.meetingConfig.itemtemplates.template2.absolute_url()},
+                                    mapping={'url': cfg.itemtemplates.template2.absolute_url()},
                                     context=self.portal.REQUEST))
         # so remove the item in the config (it could work by changing the proposingGroup too...)
-        self.meetingConfig.itemtemplates.manage_delObjects(['template2', ])
+        cfg.itemtemplates.manage_delObjects(['template2', ])
         # now it works...
         self.tool.manage_delObjects(['vendors', ])
         # the group is actually removed
@@ -225,8 +237,11 @@ class testMeetingGroup(PloneMeetingTestCase):
         self._removeConfigObjectsFor(self.meetingConfig2)
         self.meetingConfig.itemtemplates.manage_delObjects(['template2', ])
         # and remove 'vendors_reviewers' from every MeetingConfig.selectableCopyGroups
+        # and 'vendors' from every MeetingConfig.selectableAdvisers
         self.meetingConfig.setSelectableCopyGroups(('developers_reviewers', ))
+        self.meetingConfig.setSelectableAdvisers(('developers', ))
         self.meetingConfig2.setSelectableCopyGroups(('developers_reviewers', ))
+        self.meetingConfig2.setSelectableAdvisers(('developers', ))
         # and remove users from vendors Plone groups
         vendors = self.tool.vendors
         for ploneGroup in vendors.getPloneGroups():

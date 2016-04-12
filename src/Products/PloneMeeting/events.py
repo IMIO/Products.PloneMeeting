@@ -203,7 +203,8 @@ def onGroupWillBeRemoved(group, event):
         # The meetingGroup can be referenced in selectableCopyGroups.
         customAdvisersGroupIds = [customAdviser['group'] for customAdviser in mc.getCustomAdvisers()]
         if groupId in customAdvisersGroupIds or \
-           groupId in mc.getPowerAdvisersGroups():
+           groupId in mc.getPowerAdvisersGroups() or \
+           groupId in mc.getSelectableAdvisers():
             raise BeforeDeleteException(translate("can_not_delete_meetinggroup_meetingconfig",
                                                   domain="plone",
                                                   context=group.REQUEST))
