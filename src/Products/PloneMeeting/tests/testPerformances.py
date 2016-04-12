@@ -124,7 +124,7 @@ class testPerformances(PloneMeetingTestCase):
            and same 'listType' every items are evaluated each time and
            every new is finally added at the end of the meeting.
            We present 50 by 50 items successively in same meeting'''
-        pm_logger.info('Presenting %d items without annexes in an meeting containing %d items.' % (50, 0))
+        pm_logger.info('Presenting %d items without annexes in a meeting containing %d items.' % (50, 0))
         # use 'complex' inserting method
         self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_list_type',
                                                           'reverse': '0'},
@@ -137,19 +137,19 @@ class testPerformances(PloneMeetingTestCase):
         # called when no item in the meeting
         self._presentSeveralItems(items)
         # called second times whith items in the meeting
-        pm_logger.info('Presenting %d items without annexes in an meeting containing %d items.'
+        pm_logger.info('Presenting %d items without annexes in a meeting containing %d items.'
                        % (50, len(meeting.getRawItems())))
         dummy_meeting, uids = self._setupMeetingItemsWithAnnexes(50, 0, with_meeting=False)
         items = [brain.getObject() for brain in self.portal.portal_catalog(UID=uids)]
         self._presentSeveralItems(items)
         # called third times whith items in the meeting
-        pm_logger.info('Presenting %d items without annexes in an meeting containing %d items.'
+        pm_logger.info('Presenting %d items without annexes in a meeting containing %d items.'
                        % (50, len(meeting.getRawItems())))
         dummy_meeting, uids = self._setupMeetingItemsWithAnnexes(50, 0, with_meeting=False)
         items = [brain.getObject() for brain in self.portal.portal_catalog(UID=uids)]
         self._presentSeveralItems(items)
         # called fourth times whith items in the meeting
-        pm_logger.info('Presenting %d items without annexes in an meeting containing %d items.'
+        pm_logger.info('Presenting %d items without annexes in a meeting containing %d items.'
                        % (50, len(meeting.getRawItems())))
         dummy_meeting, uids = self._setupMeetingItemsWithAnnexes(50, 0, with_meeting=False)
         items = [brain.getObject() for brain in self.portal.portal_catalog(UID=uids)]
@@ -257,17 +257,21 @@ class testPerformances(PloneMeetingTestCase):
 
     def _setupForMeetingGroups(self, number_of_groups):
         self.changeUser('admin')
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
         # remove existing groups and add our own
         # make what necessary for groups to be removable...
-        self.meetingConfig.setSelectableCopyGroups(())
-        self.meetingConfig2.setSelectableCopyGroups(())
+        cfg.setSelectableCopyGroups(())
+        cfg.setSelectableAdvisers(())
+        cfg2.setSelectableCopyGroups(())
+        cfg2.setSelectableAdvisers(())
         for mGroup in self.tool.objectValues('MeetingGroup'):
             for ploneGroup in mGroup.getPloneGroups():
                 for memberId in ploneGroup.getGroupMemberIds():
                     ploneGroup.removeMember(memberId)
         # remove items defined in the tool
-        self._removeConfigObjectsFor(self.meetingConfig)
-        self._removeConfigObjectsFor(self.meetingConfig2)
+        self._removeConfigObjectsFor(cfg)
+        self._removeConfigObjectsFor(cfg2)
 
         # remove groups
         ids_to_remove = []
