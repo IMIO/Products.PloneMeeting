@@ -564,6 +564,45 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                                       domain="PloneMeeting",
                                       context=self.request)))
 
+        # display an icon if item is sent from another mc
+        predecessor = self.context.getPredecessor()
+        if predecessor and predecessor.portal_type != self.context.portal_type:
+            predecessorCfg = tool.getMeetingConfig(predecessor)
+            predecessorMeeting = predecessor.getMeeting()
+            predecessor_state = predecessor.queryState()
+            translated_state = translate(predecessor_state, domain='plone', context=self.request)
+            if not predecessorMeeting:
+                res.append(('cloned_not_decided.png',
+                            translate('icon_help_cloned_not_presented',
+                                      domain="PloneMeeting",
+                                      mapping={'meetingConfigTitle': safe_unicode(predecessorCfg.Title()),
+                                               'predecessorState': translated_state},
+                                      context=self.request,
+                                      default="Sent from ${meetingConfigTitle}, "
+                                      "original item is \"${predecessorState}\".")))
+            else:
+                if predecessor_state in predecessorCfg.getItemPositiveDecidedStates():
+                    res.append(('cloned_and_decided.png',
+                                translate(
+                                    'icon_help_cloned_and_decided',
+                                    mapping={'meetingDate': tool.formatMeetingDate(predecessorMeeting),
+                                             'meetingConfigTitle': safe_unicode(predecessorCfg.Title()),
+                                             'predecessorState': translated_state},
+                                    domain="PloneMeeting",
+                                    context=self.request,
+                                    default="Sent from ${meetingConfigTitle} (${meetingDate}), original item is "
+                                    "\"${predecessorState}\".")))
+                else:
+                    res.append(('cloned_not_decided.png',
+                                translate('icon_help_cloned_not_decided',
+                                          mapping={'meetingDate': tool.formatMeetingDate(predecessorMeeting),
+                                                   'meetingConfigTitle': safe_unicode(predecessorCfg.Title()),
+                                                   'predecessorState': translated_state},
+                                          domain="PloneMeeting",
+                                          context=self.request,
+                                          default="Sent from ${meetingConfigTitle} (${meetingDate}), original item is "
+                                          "\"${predecessorState}\".")))
+
         # display icons if element is down the workflow or up for at least second time...
         # display it only for items before state 'validated'
         downOrUpWorkflowAgain = self.context.downOrUpWorkflowAgain()

@@ -929,6 +929,23 @@ schema = Schema((
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
+        name='itemPositiveDecidedStates',
+        widget=MultiSelectionWidget(
+            description="ItemPositiveDecidedStates",
+            description_msgid="item_positive_decided_states_descr",
+            format="checkbox",
+            label='Itempositivedecidedstates',
+            label_msgid='PloneMeeting_label_itemPositiveDecidedStates',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="workflow",
+        multiValued=1,
+        vocabulary='listItemStates',
+        default=defValues.itemPositiveDecidedStates,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
         name='workflowAdaptations',
         widget=MultiSelectionWidget(
             description="WorkflowAdaptations",
