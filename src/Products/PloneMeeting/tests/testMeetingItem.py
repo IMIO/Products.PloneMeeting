@@ -3556,10 +3556,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmManager')
         item.setOtherMeetingConfigsClonableTo((cfg2Id,))
         newItem = item.cloneToOtherMeetingConfig(cfg2Id)
-        clonedActionId = translate(
-            cfg2._getCloneToOtherMCActionTitle(cfg2Id, cfg.getId()),
-            domain="plone",
-            context=self.portal.REQUEST)
+        clonedActionId = cfg2._getCloneToOtherMCActionTitle(cfg2.Title())
         self.assertEquals(getLastEvent(item)['action'], clonedActionId)
         self.assertEquals(item.downOrUpWorkflowAgain(), 'down')
 
