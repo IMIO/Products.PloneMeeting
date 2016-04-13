@@ -2901,20 +2901,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 return translate('transition_not_from_selected_meeting_config',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
-            # make sure the icons necessary for the action exists
-            # there is a 'item will be send' icon and a 'item is sent' icon
-            configId = mctct['meeting_config']
-            actionId = self._getCloneToOtherMCActionId(configId, self.getId())
-            actionIdEmergency = self._getCloneToOtherMCActionId(configId, self.getId(), emergency=True)
-            iconnames = ('%s.png' % actionId, 'will_be_%s.png' % actionId,
-                         '%s.png' % actionIdEmergency, 'will_be_%s.png' % actionIdEmergency)
-            for iconname in iconnames:
-                # try to get the icon in portal_skins
-                if not getattr(self.portal_skins, iconname, None):
-                    return translate('iconname_does_not_exist',
-                                     mapping={'iconname': iconname, },
-                                     domain='PloneMeeting',
-                                     context=self.REQUEST)
 
     security.declarePrivate('validate_workflowAdaptations')
 
@@ -3646,10 +3632,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                  destMeetingConfigId,
                                  meetingConfigId)
 
-    def _getCloneToOtherMCActionTitle(self, destMeetingConfigId, meetingConfigId):
-        '''Returns the title of the action used for the cloneToOtherMC
-           functionnality'''
-        return 'create_to_%s_from_%s' % (destMeetingConfigId, meetingConfigId)
+    def _getCloneToOtherMCActionTitle(self, destMeetingConfigTitle):
+        '''Returns the title of the action used for the cloneToOtherMC functionnality.'''
+        return translate(msgid='clone_to',
+                         domain='PloneMeeting',
+                         mapping={'meetingConfigTitle': safe_unicode(destMeetingConfigTitle)},
+                         context=self.REQUEST).encode('utf-8')
 
     def _updateCloneToOtherMCActions(self):
         '''Manage the visibility of the object_button action corresponding to
@@ -3657,6 +3645,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            This method should only be called if you are sure that no actions regarding
            the 'send to other mc' functionnality exist.  Either, call updatePortalTypes that
            actually remove every existing actions on the portal_type then call this submethod'''
+        tool = api.portal.get_tool('portal_plonemeeting')
         item_portal_type = self.portal_types[self.getItemTypeName()]
         for mctct in self.getMeetingConfigsToCloneTo():
             configId = mctct['meeting_config']
@@ -3667,12 +3656,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             availExpr = 'python: object.meta_type == "MeetingItem" and ' \
                         'object.adapted().mayCloneToOtherMeetingConfig("%s")' \
                         % configId
-            actionName = self._getCloneToOtherMCActionTitle(configId, self.getId())
+            destConfig = tool.get(configId)
+            actionName = self._getCloneToOtherMCActionTitle(destConfig.Title())
             item_portal_type.addAction(id=actionId,
                                        name=actionName,
                                        category='object_buttons',
                                        action=urlExpr,
-                                       icon_expr='string:${portal_url}/%s.png' % actionId,
+                                       icon_expr='string:${portal_url}/clone_to_other_mc.png',
                                        condition=availExpr,
                                        permission=('View',),
                                        visible=True)

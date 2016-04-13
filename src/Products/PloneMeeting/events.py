@@ -518,15 +518,11 @@ def onItemDuplicated(item, event):
     wfTool = api.portal.get_tool('portal_workflow')
     wfName = wfTool.getWorkflowsFor(item)[0].id
     newItemConfig = tool.getMeetingConfig(newItem)
-    itemConfig = tool.getMeetingConfig(item)
     label = translate('sentto_othermeetingconfig',
                       domain="PloneMeeting",
                       context=item.REQUEST,
                       mapping={'meetingConfigTitle': safe_unicode(newItemConfig.Title())})
-    action = translate(newItemConfig._getCloneToOtherMCActionTitle(newItemConfig.getId(),
-                                                                   itemConfig.getId()),
-                       domain="plone",
-                       context=item.REQUEST)
+    action = newItemConfig._getCloneToOtherMCActionTitle(newItemConfig.Title())
     # copy last event and adapt it
     lastEvent = item.workflow_history[wfName][-1]
     newEvent = lastEvent.copy()

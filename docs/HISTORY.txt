@@ -126,6 +126,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Added leading icon 'sent from' that shows on an item if it is the result of another item sent from another
   configuration.  This way we have the leading icon on the original item with informations about the resulting item
   and on the resulting item with informations about the original item
+- Removed complexity around icons used for the 'send to other config' functionnality, it was meant to be possible to use
+  different icons while sending an item to different other configurations, but for now, we use the same icon in every cases.
+  This avoid adding icons for every cases : config1 to config2, config2 to config1, config1 to config3, ...
 - Added adaptable method MeetingItem._isViewableByPowerObservers that makes it possible to refine
   (restricted) power observers access to an item in addition to
   check on MeetingConfig.item(Restricted)PowerObserversStates
