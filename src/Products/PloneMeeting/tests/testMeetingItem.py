@@ -3816,6 +3816,26 @@ class testMeetingItem(PloneMeetingTestCase):
         # cleanUp zmcl.load_config because it impact other tests
         zcml.cleanUp()
 
+    def test_pm_DisplayOtherMeetingConfigsClonableTo(self, ):
+        """Test how otherMeetingConfigsClonableTo are displayed on the item view,
+           especially if a MeetingConfig to clone to title contains special characters."""
+        cfg2 = self.meetingConfig2
+        cfg2Id = cfg2.getId()
+        # create a third meetingConfig with special characters in it's title
+        self.changeUser('siteadmin')
+        cfg3 = self.create('MeetingConfig')
+        cfg3.setTitle('\xc3\xa9 and \xc3\xa9')
+        cfg3Id = cfg3.getId()
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.setOtherMeetingConfigsClonableTo((cfg2Id, cfg3Id))
+        self.assertEquals(item.displayOtherMeetingConfigsClonableTo(),
+                          u'PloneGov assembly, \xe9 and \xe9')
+        # ask emergency for sending to cfg3
+        item.setOtherMeetingConfigsClonableToEmergency((cfg3Id, ))
+        self.assertEquals(item.displayOtherMeetingConfigsClonableTo(),
+                          u'PloneGov assembly, \xe9 and \xe9 (Emergency)')
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
