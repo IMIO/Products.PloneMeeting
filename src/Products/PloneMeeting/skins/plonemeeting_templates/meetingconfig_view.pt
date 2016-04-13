@@ -563,26 +563,28 @@
           <td tal:define="field python:here.getField('itemDecidedStates')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td tal:define="field python:here.getField('transitionsToConfirm')">
+          <td tal:define="field python:here.getField('itemPositiveDecidedStates')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
         </tr>
         <tr valign="top">
+          <td tal:define="field python:here.getField('transitionsToConfirm')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
           <td tal:define="field python:here.getField('transitionsForPresentingAnItem')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <td tal:define="field python:here.getField('onTransitionFieldTransforms')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
+        </tr>
+        <tr valign="top">
           <td tal:define="field python:here.getField('onMeetingTransitionItemTransitionToTrigger')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-        </tr>
-        <tr valign="top">
           <td tal:define="field python:here.getField('meetingPresentItemWhenNoCurrentMeetingStates')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td></td>
           <td></td>
         </tr>
       </table>

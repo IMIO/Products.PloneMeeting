@@ -386,6 +386,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.meetingActionsInterface = 'Products.PloneMeeting.interfaces.' \
                                        'IMeetingWorkflowActions'
         self.itemDecidedStates = []
+        self.itemPositiveDecidedStates = []
         # Workflow adaptations are sets of changes that can be applied to
         # default PloneMeeting workflows.
         self.workflowAdaptations = []

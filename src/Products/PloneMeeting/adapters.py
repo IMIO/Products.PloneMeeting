@@ -539,30 +539,67 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                 toLocalizedTime = toLocalizedTime or self.context.restrictedTraverse('@@plone').toLocalizedTime
                 long_format = clonedBrain.linkedMeetingDate.hour() and True or False
                 msg = msg + u' ({0})'.format(toLocalizedTime(clonedBrain.linkedMeetingDate, long_format=long_format))
-            res.append(("%s.png" %
-                        cfg._getCloneToOtherMCActionId(clonedToOtherMCId,
-                                                       cfg.getId(),
-                                                       emergency=emergency),
-                        msg))
+            iconName = emergency and "clone_to_other_mc_emergency.png" or "clone_to_other_mc.png"
+            res.append((iconName, msg))
 
         # if not already cloned to another mc, maybe it will be?
-        if not clonedToOtherMCIds:
-            otherMeetingConfigsClonableTo = self.context.getOtherMeetingConfigsClonableTo()
-            for otherMeetingConfigClonableTo in otherMeetingConfigsClonableTo:
-                # Append a tuple with name of the icon and a list containing
-                # the msgid and the mapping as a dict
-                emergency = otherMeetingConfigClonableTo in self.context.getOtherMeetingConfigsClonableToEmergency()
-                msgid = emergency and 'will_be_sentto_othermeetingconfig_emergency' or \
-                    'will_be_sentto_othermeetingconfig'
-                res.append(("will_be_%s.png" %
-                            cfg._getCloneToOtherMCActionId(otherMeetingConfigClonableTo,
-                                                           cfg.getId(),
-                                                           emergency=emergency),
-                            translate(msgid,
-                                      mapping={'meetingConfigTitle': safe_unicode(
-                                               getattr(tool, otherMeetingConfigClonableTo).Title())},
+        # we could have an item to clone to 2 other MCs, one already sent, not the other...
+        otherMeetingConfigsClonableTo = self.context.getOtherMeetingConfigsClonableTo()
+        for otherMeetingConfigClonableTo in otherMeetingConfigsClonableTo:
+            # already cloned?
+            if otherMeetingConfigClonableTo in clonedToOtherMCIds:
+                continue
+            # Append a tuple with name of the icon and a list containing
+            # the msgid and the mapping as a dict
+            emergency = otherMeetingConfigClonableTo in self.context.getOtherMeetingConfigsClonableToEmergency()
+            msgid = emergency and 'will_be_sentto_othermeetingconfig_emergency' or \
+                'will_be_sentto_othermeetingconfig'
+            iconName = emergency and "will_be_cloned_to_other_mc_emergency.png" or "will_be_cloned_to_other_mc.png"
+            res.append((iconName,
+                        translate(msgid,
+                                  mapping={'meetingConfigTitle': safe_unicode(
+                                           getattr(tool, otherMeetingConfigClonableTo).Title())},
+                                  domain="PloneMeeting",
+                                  context=self.request)))
+
+        # display an icon if item is sent from another mc
+        predecessor = self.context.getPredecessor()
+        if predecessor and predecessor.portal_type != self.context.portal_type:
+            predecessorCfg = tool.getMeetingConfig(predecessor)
+            predecessorMeeting = predecessor.getMeeting()
+            predecessor_state = predecessor.queryState()
+            translated_state = translate(predecessor_state, domain='plone', context=self.request)
+            if not predecessorMeeting:
+                res.append(('cloned_not_decided.png',
+                            translate('icon_help_cloned_not_presented',
                                       domain="PloneMeeting",
-                                      context=self.request)))
+                                      mapping={'meetingConfigTitle': safe_unicode(predecessorCfg.Title()),
+                                               'predecessorState': translated_state},
+                                      context=self.request,
+                                      default="Sent from ${meetingConfigTitle}, "
+                                      "original item is \"${predecessorState}\".")))
+            else:
+                if predecessor_state in predecessorCfg.getItemPositiveDecidedStates():
+                    res.append(('cloned_and_decided.png',
+                                translate(
+                                    'icon_help_cloned_and_decided',
+                                    mapping={'meetingDate': tool.formatMeetingDate(predecessorMeeting),
+                                             'meetingConfigTitle': safe_unicode(predecessorCfg.Title()),
+                                             'predecessorState': translated_state},
+                                    domain="PloneMeeting",
+                                    context=self.request,
+                                    default="Sent from ${meetingConfigTitle} (${meetingDate}), original item is "
+                                    "\"${predecessorState}\".")))
+                else:
+                    res.append(('cloned_not_decided.png',
+                                translate('icon_help_cloned_not_decided',
+                                          mapping={'meetingDate': tool.formatMeetingDate(predecessorMeeting),
+                                                   'meetingConfigTitle': safe_unicode(predecessorCfg.Title()),
+                                                   'predecessorState': translated_state},
+                                          domain="PloneMeeting",
+                                          context=self.request,
+                                          default="Sent from ${meetingConfigTitle} (${meetingDate}), original item is "
+                                          "\"${predecessorState}\".")))
 
         # display icons if element is down the workflow or up for at least second time...
         # display it only for items before state 'validated'
