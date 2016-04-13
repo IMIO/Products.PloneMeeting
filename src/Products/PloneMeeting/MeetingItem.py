@@ -1173,7 +1173,7 @@ MeetingItem_schema = OrderedBaseFolderSchema.copy() + \
 
 ##code-section after-schema #fill in your manual code here
 # Make title longer
-MeetingItem_schema['title'].widget.maxlength = '500'
+MeetingItem_schema['title'].widget.maxlength = '750'
 # Define a specific msgid for title
 MeetingItem_schema['title'].widget.i18n_domain = 'PloneMeeting'
 MeetingItem_schema['title'].widget.label_msgid = 'PloneMeeting_label_itemTitle'
