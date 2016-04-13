@@ -3821,20 +3821,22 @@ class testMeetingItem(PloneMeetingTestCase):
            especially if a MeetingConfig to clone to title contains special characters."""
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
+        cfg2Title = cfg2.Title()
         # create a third meetingConfig with special characters in it's title
         self.changeUser('siteadmin')
         cfg3 = self.create('MeetingConfig')
         cfg3.setTitle('\xc3\xa9 and \xc3\xa9')
         cfg3Id = cfg3.getId()
+        cfg3Title = cfg3.Title()
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setOtherMeetingConfigsClonableTo((cfg2Id, cfg3Id))
         self.assertEquals(item.displayOtherMeetingConfigsClonableTo(),
-                          u'PloneGov assembly, \xe9 and \xe9')
+                          unicode('{0}, {1}'.format(cfg2Title, cfg3Title), 'utf-8'))
         # ask emergency for sending to cfg3
         item.setOtherMeetingConfigsClonableToEmergency((cfg3Id, ))
         self.assertEquals(item.displayOtherMeetingConfigsClonableTo(),
-                          u'PloneGov assembly, \xe9 and \xe9 (Emergency)')
+                          unicode('{0}, {1} (Emergency)'.format(cfg2Title, cfg3Title), 'utf-8'))
 
 
 def test_suite():
