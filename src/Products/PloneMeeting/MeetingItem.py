@@ -1173,7 +1173,7 @@ MeetingItem_schema = OrderedBaseFolderSchema.copy() + \
 
 ##code-section after-schema #fill in your manual code here
 # Make title longer
-MeetingItem_schema['title'].widget.maxlength = '500'
+MeetingItem_schema['title'].widget.maxlength = '750'
 # Define a specific msgid for title
 MeetingItem_schema['title'].widget.i18n_domain = 'PloneMeeting'
 MeetingItem_schema['title'].widget.label_msgid = 'PloneMeeting_label_itemTitle'
@@ -3457,11 +3457,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                    context=self.REQUEST)
         res = []
         for otherMC in self.getOtherMeetingConfigsClonableTo():
-            tmp = vocab.getValue(otherMC)
+            tmp = safe_unicode(vocab.getValue(otherMC))
             if otherMC in self.getOtherMeetingConfigsClonableToEmergency():
                 tmp = u'{0} ({1})'.format(tmp, translated_msg)
             res.append(tmp)
-        return ','.join(res) or '-'
+        return u', '.join(res) or '-'
 
     security.declarePublic('displayAdvices')
 
