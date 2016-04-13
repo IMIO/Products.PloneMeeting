@@ -821,8 +821,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                    'orderindex_': 'template_row_marker'},)
         self.failIf(cfg.validate_meetingConfigsToCloneTo(values))
 
-        # with a right configuration, it can fails if a corresponding icon is not found
-        # indeed, an icon has to exist to manage the action in the UI
+        # with a right configuration, it works
         values = ({'meeting_config': '%s' % cfg2Id,
                    'trigger_workflow_transitions_until': '%s.present' % cfg2Id},)
         self.failIf(cfg.validate_meetingConfigsToCloneTo(values))
