@@ -128,7 +128,7 @@
    <property name="hidezerocount">0</property>
    <property name="index">indexAdvisers</property>
    <property name="operator">or</property>
-   <property name="operator_visible">0</property>
+   <property name="operator_visible">1</property>
    <property
       name="vocabulary">Products.PloneMeeting.vocabularies.askedadvicesvocabulary</property>
    <property name="catalog"></property>
