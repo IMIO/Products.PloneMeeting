@@ -1148,9 +1148,11 @@ schema = Schema((
     ),
     ReferenceField(
         name='toDoListSearches',
+        referencesSortable=True,
         widget=ReferenceBrowserWidget(
             allow_search=False,
             allow_browse=False,
+            allow_sorting=True,
             description="ToDoListSearches",
             description_msgid="to_do_list_searches",
             startup_directory="searches/searches_items",
