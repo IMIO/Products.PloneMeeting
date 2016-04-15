@@ -1842,7 +1842,7 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmReviewer2')
         self.assertTrue(self.hasPermission(ModifyPortalContent, advice))
 
-    def test_pm_ItemDataSavedWhenAdviceGiven(self):
+    def test_pm_AdviceHistorizedWithItemDataWhenAdviceGiven(self):
         """When an advice is given, it is versioned and relevant item infos are saved.
            Moreover, advice is only versioned if it was modified."""
         cfg = self.meetingConfig
@@ -1914,6 +1914,109 @@ class testAdvices(PloneMeetingTestCase):
                            {'field_name': 'detailedDescription', 'field_content': '<p>Item detailed description</p>'},
                            {'field_name': 'motivation', 'field_content': '<p>Item motivation</p>'},
                            {'field_name': 'decision', 'field_content': '<p>Another decision</p>'}])
+
+    def test_pm_AdviceHistorizedIfGivenAndItemChanged(self):
+        """When an advice is given, if it was not historized and an item richText field
+           is changed, it is versioned and relevant item infos are saved.  This way we are sure that
+           historized infos about item are the one when the advice was given.
+           Moreover, advice is only versioned if it was modified since last version."""
+        cfg = self.meetingConfig
+        # item data are saved if cfg.historizeItemDataWhenAdviceIsGiven
+        self.assertTrue(cfg.getHistorizeItemDataWhenAdviceIsGiven())
+        # make sure we know what item rich text fields are enabled
+        cfg.setUsedItemAttributes(('detailedDescription', 'motivation', ))
+        cfg.setItemAdviceStates([self.WF_STATE_NAME_MAPPINGS['proposed'], ])
+        cfg.setItemAdviceEditStates([self.WF_STATE_NAME_MAPPINGS['proposed'], ])
+        cfg.setItemAdviceViewStates([self.WF_STATE_NAME_MAPPINGS['proposed'], ])
+        # default value of field 'advice_hide_during_redaction' is False
+        self.assertFalse(cfg.getDefaultAdviceHiddenDuringRedaction())
+
+        self.changeUser('pmCreator1')
+        # create an item and ask the advice of group 'vendors'
+        data = {
+            'title': 'Item to advice',
+            'category': 'maintenance',
+            'optionalAdvisers': ('vendors', 'developers', ),
+            'description': '<p>Item description</p>',
+        }
+        item = self.create('MeetingItem', **data)
+        item.setDetailedDescription('<p>Item detailed description</p>')
+        item.setMotivation('<p>Item motivation</p>')
+        item.setDecision('<p>Item decision</p>')
+        self.proposeItem(item)
+        # give advice
+        self.changeUser('pmReviewer2')
+        advice = createContentInContainer(item,
+                                          'meetingadvice',
+                                          **{'advice_group': 'vendors',
+                                             'advice_type': u'negative',
+                                             'advice_hide_during_redaction': False,
+                                             'advice_comment': RichTextValue(u'My comment')})
+        # advice will be versioned if the item is edited
+        self.changeUser('pmReviewer1')
+        pr = api.portal.get_tool('portal_repository')
+        self.assertFalse(pr.getHistoryMetadata(advice))
+        self.request.form['detailedDescription'] = '<p>Item detailed description edited</p>'
+        item.processForm()
+        self.assertEquals(item.getDetailedDescription(), '<p>Item detailed description edited</p>')
+        h_metadata = pr.getHistoryMetadata(advice)
+        self.assertTrue(h_metadata)
+        # first version, item data was historized on it
+        self.assertEquals(h_metadata._available, [0])
+        previous = pr.retrieve(advice, 0).object
+        # we have item data before it was modified
+        self.assertEquals(previous.historized_item_data,
+                          [{'field_name': 'title', 'field_content': 'Item to advice'},
+                           {'field_name': 'description', 'field_content': '<p>Item description</p>'},
+                           {'field_name': 'detailedDescription', 'field_content': '<p>Item detailed description</p>'},
+                           {'field_name': 'motivation', 'field_content': '<p>Item motivation</p>'},
+                           {'field_name': 'decision', 'field_content': '<p>Item decision</p>'}])
+
+        # when editing item a second time, if advice is not edited, it is not versioned uselessly
+        self.request.form['detailedDescription'] = '<p>Item detailed description edited 2</p>'
+        item.processForm({'detailedDescription': '<p>Item detailed description edited 2</p>'})
+        self.assertEquals(item.getDetailedDescription(), '<p>Item detailed description edited 2</p>')
+        h_metadata = pr.getHistoryMetadata(advice)
+        self.assertEquals(h_metadata._available, [0])
+
+        # when moving to 'validated', advice is 'adviceGiven', but not versioned again
+        self.validateItem(item)
+        h_metadata = pr.getHistoryMetadata(advice)
+        self.assertEquals(h_metadata._available, [0])
+
+        # but it is again if advice is edited
+        self.changeUser('pmManager')
+        self.backToState(item, self.WF_STATE_NAME_MAPPINGS['proposed'])
+        self.changeUser('pmReviewer2')
+        notify(ObjectModifiedEvent(advice))
+        self.changeUser('pmReviewer1')
+        # validate item, this time advice is versioned again
+        self.validateItem(item)
+        h_metadata = pr.getHistoryMetadata(advice)
+        self.assertEquals(h_metadata._available, [0, 1])
+
+        # and once again back to proposed and edit item
+        # not versioned because advice was not edited
+        self.changeUser('pmManager')
+        self.backToState(item, self.WF_STATE_NAME_MAPPINGS['proposed'])
+        self.changeUser('pmReviewer1')
+        self.request.form['detailedDescription'] = '<p>Item detailed description edited 3</p>'
+        item.processForm({'detailedDescription': '<p>Item detailed description edited 3</p>'})
+        self.assertEquals(item.getDetailedDescription(), '<p>Item detailed description edited 3</p>')
+        h_metadata = pr.getHistoryMetadata(advice)
+        self.assertEquals(h_metadata._available, [0, 1])
+
+        # right, back to proposed and use ajax edit
+        self.changeUser('pmManager')
+        self.backToState(item, self.WF_STATE_NAME_MAPPINGS['proposed'])
+        self.changeUser('pmReviewer2')
+        notify(ObjectModifiedEvent(advice))
+        self.changeUser('pmReviewer1')
+        item.setFieldFromAjax('detailedDescription', '<p>Item detailed description edited 4</p>')
+        self.assertEquals(item.getDetailedDescription(), '<p>Item detailed description edited 4</p>')
+        # advice was versioned again
+        h_metadata = pr.getHistoryMetadata(advice)
+        self.assertEquals(h_metadata._available, [0, 1, 2])
 
     def _setupKeepAccessToItemWhenAdviceIsGiven(self):
         """Setup for testing aroung 'keepAccessToItemWhenAdviceIsGiven'."""

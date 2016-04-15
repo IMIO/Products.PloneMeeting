@@ -64,9 +64,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - In MeetingItem.sendAdviceToGiveMailIfRelevant, added an adaptable call to a method _sendAdviceToGiveToGroup
   that make it possible to check if the mail must be sent to a given groupId or not.  This makes it possible
   to bypass some groups when sending the 'advice to give' notification
-- When an advice is given (when the 'give_advice' transition is triggered), it is automatically versioned,
-  we rely now on plone.app.versioningbehavior to display a historized version, moreover versioned advice is
-  directly previewable in the @@historyview popup
+- A given advice is automatically versionned when necessary (the 'give_advice' transition is triggered, 
+  the item is edited after the advice has been given), we rely now on plone.app.versioningbehavior to display a 
+  historized version, moreover versioned advice is directly previewable in the @@historyview popup
 - Added possibility to ask an advice several times, if it was never historized or if advice was modified
   since last historization, it is historized again
 - Adapted the 'move item to position number' on the meeting view to move an item to an exact position and no

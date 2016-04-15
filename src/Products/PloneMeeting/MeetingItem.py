@@ -4312,14 +4312,26 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         budgetImpactEditorsGroupId = "%s_%s" % (cfg.getId(), BUDGETIMPACTEDITORS_GROUP_SUFFIX)
         self.manage_addLocalRoles(budgetImpactEditorsGroupId, ('MeetingBudgetImpactEditor',))
 
+    def _versionateAdvicesOnItemEdit(self):
+        """When item is edited, versionate advices if necessary, it is the case if advice was
+           really given and is not hidden during redaction."""
+        for adviceInfo in self.adviceIndex.itervalues():
+            if not adviceInfo.get('advice_id', None) or adviceInfo['hidden_during_redaction']:
+                continue
+            adviceObj = self.get(adviceInfo['advice_id'])
+            adviceObj.versionate_if_relevant(comment='Versioned because item was edited.')
+
     security.declareProtected(ModifyPortalContent, 'processForm')
 
-    def processForm(self, *args, **kwargs):
+    def processForm(self, data=1, metadata=0, REQUEST=None, values=None):
         ''' '''
         if not self.isTemporary():
             # Remember previous data if historization is enabled.
             self._v_previousData = rememberPreviousData(self)
-        return BaseFolder.processForm(self, *args, **kwargs)
+            # Historize advice that were still not, this way we ensure that
+            # given advices are historized with right item data
+            self._versionateAdvicesOnItemEdit()
+        return BaseFolder.processForm(self, data=data, metadata=metadata, REQUEST=REQUEST, values=values)
 
     security.declarePublic('isAdvicesEnabled')
 
@@ -5192,6 +5204,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # invalidate advices if needed
         if self.willInvalidateAdvices():
             self.updateLocalRoles(invalidate=True)
+        # versionate given advices if necessary
+        self._versionateAdvicesOnItemEdit()
         return setFieldFromAjax(self, fieldName, fieldValue)
 
     security.declarePublic('getFieldVersion')
