@@ -4315,11 +4315,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def _versionateAdvicesOnItemEdit(self):
         """When item is edited, versionate advices if necessary, it is the case if advice was
            really given and is not hidden during redaction."""
-        for adviceInfo in self.adviceIndex.itervalues():
-            if not adviceInfo.get('advice_id', None) or adviceInfo['hidden_during_redaction']:
-                continue
-            adviceObj = self.get(adviceInfo['advice_id'])
-            adviceObj.versionate_if_relevant(comment='Versioned because item was edited.')
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        if cfg.getVersionateAdviceIfGivenAndItemModified():
+            for adviceInfo in self.adviceIndex.itervalues():
+                if not adviceInfo.get('advice_id', None) or adviceInfo['hidden_during_redaction']:
+                    continue
+                adviceObj = self.get(adviceInfo['advice_id'])
+                adviceObj.versionate_if_relevant(comment='Versioned because item was edited.')
 
     security.declareProtected(ModifyPortalContent, 'processForm')
 

@@ -1953,22 +1953,30 @@ class testAdvices(PloneMeetingTestCase):
                                              'advice_hide_during_redaction': False,
                                              'advice_comment': RichTextValue(u'My comment')})
         # advice will be versioned if the item is edited
+        # this is only the case if cfg.versionateAdviceIfGivenAndItemModified is True
+        self.changeUser('siteadmin')
+        cfg.setVersionateAdviceIfGivenAndItemModified(False)
         self.changeUser('pmReviewer1')
         pr = api.portal.get_tool('portal_repository')
         self.assertFalse(pr.getHistoryMetadata(advice))
-        self.request.form['detailedDescription'] = '<p>Item detailed description edited</p>'
+        self.request.form['detailedDescription'] = '<p>Item detailed description not active</p>'
         item.processForm()
-        self.assertEquals(item.getDetailedDescription(), '<p>Item detailed description edited</p>')
+        self.assertEquals(item.getDetailedDescription(), '<p>Item detailed description not active</p>')
+        # it was not versioned because versionateAdviceIfGivenAndItemModified is False
         h_metadata = pr.getHistoryMetadata(advice)
-        self.assertTrue(h_metadata)
+        self.assertEquals(h_metadata, [])
+        # activate and try again
+        self.changeUser('siteadmin')
+        cfg.setVersionateAdviceIfGivenAndItemModified(True)
+        self.changeUser('pmReviewer1')
+        item.processForm()
         # first version, item data was historized on it
-        self.assertEquals(h_metadata._available, [0])
         previous = pr.retrieve(advice, 0).object
         # we have item data before it was modified
         self.assertEquals(previous.historized_item_data,
                           [{'field_name': 'title', 'field_content': 'Item to advice'},
                            {'field_name': 'description', 'field_content': '<p>Item description</p>'},
-                           {'field_name': 'detailedDescription', 'field_content': '<p>Item detailed description</p>'},
+                           {'field_name': 'detailedDescription', 'field_content': '<p>Item detailed description not active</p>'},
                            {'field_name': 'motivation', 'field_content': '<p>Item motivation</p>'},
                            {'field_name': 'decision', 'field_content': '<p>Item decision</p>'}])
 
@@ -2017,6 +2025,40 @@ class testAdvices(PloneMeetingTestCase):
         # advice was versioned again
         h_metadata = pr.getHistoryMetadata(advice)
         self.assertEquals(h_metadata._available, [0, 1, 2])
+        # we have item data before it was modified
+        previous = pr.retrieve(advice, 2).object
+        self.assertEquals(previous.historized_item_data,
+                          [{'field_name': 'title',
+                            'field_content': 'Item to advice'},
+                           {'field_name': 'description',
+                            'field_content': '<p>Item description</p>'},
+                           {'field_name': 'detailedDescription',
+                            'field_content': '<p>Item detailed description edited 3</p>'},
+                           {'field_name': 'motivation',
+                            'field_content': '<p>Item motivation</p>'},
+                           {'field_name': 'decision',
+                            'field_content': '<p>Item decision</p>'}])
+
+        # advice is also versionated if some annex are added/removed
+        annex = self.addAnnex(item)
+        # was already versionated so no more
+        h_metadata = pr.getHistoryMetadata(advice)
+        self.assertEquals(h_metadata._available, [0, 1, 2])
+        # right edit the advice and remove the annex
+        self.changeUser('pmReviewer2')
+        notify(ObjectModifiedEvent(advice))
+        self.changeUser('pmReviewer1')
+        item.restrictedTraverse('@@delete_givenuid')(annex.UID())
+        # advice was versioned again
+        h_metadata = pr.getHistoryMetadata(advice)
+        self.assertEquals(h_metadata._available, [0, 1, 2, 3])
+        # edit advice and add a new annex, advice will be versionated
+        self.changeUser('pmReviewer2')
+        notify(ObjectModifiedEvent(advice))
+        self.changeUser('pmReviewer1')
+        annex = self.addAnnex(item)
+        h_metadata = pr.getHistoryMetadata(advice)
+        self.assertEquals(h_metadata._available, [0, 1, 2, 3, 4])
 
     def _setupKeepAccessToItemWhenAdviceIsGiven(self):
         """Setup for testing aroung 'keepAccessToItemWhenAdviceIsGiven'."""

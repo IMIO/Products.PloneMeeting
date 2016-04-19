@@ -1541,6 +1541,19 @@ schema = Schema((
         schemata="advices",
         write_permission="PloneMeeting: Write risky config",
     ),
+    BooleanField(
+        name='versionateAdviceIfGivenAndItemModified',
+        default=defValues.versionateAdviceIfGivenAndItemModified,
+        widget=BooleanField._properties['widget'](
+            description="VersionateAdviceIfGivenAndItemModified",
+            description_msgid="versionate_advice_if_given_and_item_modified_descr",
+            label='Versionateadviceifgivenanditemmodified',
+            label_msgid='PloneMeeting_label_versionateAdviceIfGivenAndItemModified',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        write_permission="PloneMeeting: Write risky config",
+    ),
     DataGridField(
         name='customAdvisers',
         widget=DataGridField._properties['widget'](

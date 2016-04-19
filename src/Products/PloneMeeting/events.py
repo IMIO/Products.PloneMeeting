@@ -475,6 +475,9 @@ def onAdviceTransition(advice, event):
 def onAnnexAdded(annex, event):
     '''When an annex is added, we need to update item modification date and SearchableText.'''
     item = annex.getParentNode()
+    # versionate given advices if necessary
+    item._versionateAdvicesOnItemEdit()
+    # change item's modificationDate, it is used for caching and co
     item.setModificationDate(DateTime())
     # just reindex the entire object
     item.reindexObject()
@@ -490,6 +493,8 @@ def onAnnexRemoved(annex, event):
     # do not call this if an annex is removed because the item is removed
     if item not in item.aq_inner.aq_parent.objectValues():
         return
+    # versionate given advices if necessary
+    item._versionateAdvicesOnItemEdit()
 
     IAnnexable(item).updateAnnexIndex(annex, removeAnnex=True)
     item.updateHistory('delete',
