@@ -474,13 +474,14 @@ def onAdviceTransition(advice, event):
 
 def onAnnexAdded(annex, event):
     '''When an annex is added, we need to update item modification date and SearchableText.'''
-    item = annex.getParentNode()
-    # versionate given advices if necessary
-    item._versionateAdvicesOnItemEdit()
-    # change item's modificationDate, it is used for caching and co
-    item.setModificationDate(DateTime())
+    parent = annex.getParentNode()
+    # if it is an annex added on an item, versionate given advices if necessary
+    if parent.meta_type == 'MeetingItem':
+        parent._versionateAdvicesOnItemEdit()
+    # update modificationDate, it is used for caching and co
+    parent.setModificationDate(DateTime())
     # just reindex the entire object
-    item.reindexObject()
+    parent.reindexObject()
 
 
 def onAnnexRemoved(annex, event):
@@ -489,24 +490,26 @@ def onAnnexRemoved(annex, event):
     if event.object.meta_type == 'Plone Site':
         return
 
-    item = annex.getParentNode()
+    parent = annex.getParentNode()
     # do not call this if an annex is removed because the item is removed
-    if item not in item.aq_inner.aq_parent.objectValues():
+    if parent not in parent.aq_inner.aq_parent.objectValues():
         return
-    # versionate given advices if necessary
-    item._versionateAdvicesOnItemEdit()
 
-    IAnnexable(item).updateAnnexIndex(annex, removeAnnex=True)
-    item.updateHistory('delete',
-                       annex,
-                       decisionRelated=annex.findRelatedTo() == 'item_decision' and True or False)
-    if item.willInvalidateAdvices():
-        item.updateLocalRoles(invalidate=True)
+    # if it is an annex added on an item, versionate given advices if necessary
+    if parent.meta_type == 'MeetingItem':
+        parent._versionateAdvicesOnItemEdit()
 
-    # update item modification date and SearchableText
-    item.setModificationDate(DateTime())
+    IAnnexable(parent).updateAnnexIndex(annex, removeAnnex=True)
+    parent.updateHistory('delete',
+                         annex,
+                         decisionRelated=annex.findRelatedTo() == 'item_decision' and True or False)
+    if parent.willInvalidateAdvices():
+        parent.updateLocalRoles(invalidate=True)
+
+    # update modification date and SearchableText
+    parent.setModificationDate(DateTime())
     # just reindex the entire object
-    item.reindexObject()
+    parent.reindexObject()
 
 
 def onItemDuplicated(item, event):
