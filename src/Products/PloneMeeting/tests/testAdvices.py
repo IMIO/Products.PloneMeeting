@@ -1787,10 +1787,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertFalse(item.adapted().mayAskAdviceAgain(advice))
         self.assertFalse(item.adapted().mayBackToPreviousAdvice(advice))
         self.assertRaises(Unauthorized, changeView)
-        # except for MeetingManagers
-        self.changeUser('pmManager')
-        self.assertTrue(item.adapted().mayAskAdviceAgain(advice))
-        self.assertFalse(item.adapted().mayBackToPreviousAdvice(advice))
+
         # send advice back to creator so advice may be asked_again
         self.changeUser('pmCreator1')
         # never historized
@@ -1961,7 +1958,8 @@ class testAdvices(PloneMeetingTestCase):
         self.assertFalse(pr.getHistoryMetadata(advice))
         self.request.form['detailedDescription'] = '<p>Item detailed description not active</p>'
         item.processForm()
-        self.assertEquals(item.getDetailedDescription(), '<p>Item detailed description not active</p>')
+        self.assertEquals(item.getDetailedDescription(),
+                          '<p>Item detailed description not active</p>')
         # it was not versioned because versionateAdviceIfGivenAndItemModified is False
         h_metadata = pr.getHistoryMetadata(advice)
         self.assertEquals(h_metadata, [])
@@ -1974,11 +1972,16 @@ class testAdvices(PloneMeetingTestCase):
         previous = pr.retrieve(advice, 0).object
         # we have item data before it was modified
         self.assertEquals(previous.historized_item_data,
-                          [{'field_name': 'title', 'field_content': 'Item to advice'},
-                           {'field_name': 'description', 'field_content': '<p>Item description</p>'},
-                           {'field_name': 'detailedDescription', 'field_content': '<p>Item detailed description not active</p>'},
-                           {'field_name': 'motivation', 'field_content': '<p>Item motivation</p>'},
-                           {'field_name': 'decision', 'field_content': '<p>Item decision</p>'}])
+                          [{'field_name': 'title',
+                            'field_content': 'Item to advice'},
+                           {'field_name': 'description',
+                            'field_content': '<p>Item description</p>'},
+                           {'field_name': 'detailedDescription',
+                            'field_content': '<p>Item detailed description not active</p>'},
+                           {'field_name': 'motivation',
+                            'field_content': '<p>Item motivation</p>'},
+                           {'field_name': 'decision',
+                            'field_content': '<p>Item decision</p>'}])
 
         # when editing item a second time, if advice is not edited, it is not versioned uselessly
         self.request.form['detailedDescription'] = '<p>Item detailed description edited 2</p>'

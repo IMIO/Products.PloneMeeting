@@ -1656,12 +1656,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if 'asked_again' not in cfg.getUsedAdviceTypes():
             return False
 
-        # apart MeetingManagers, the advice can not be asked again
-        # if editable by the adviser
-        if item.adviceIndex[advice.advice_group]['advice_editable'] and \
-           not tool.isManager(item):
-            return False
-
         member = api.user.get_current()
         if member.has_permission(ModifyPortalContent, item):
             return True
