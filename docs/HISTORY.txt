@@ -176,7 +176,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   space in dashboards, advice icons are now displayed vertically in the dashboards and still horizontally on the item view
 - Refactored the way auto copyGroups are handled : now it is evaluated upon each change and stored separately from manually
   selected copyGroups, this way it is possible to add or remove copyGroups automatically depending on the given
-  expression.  Automatically added copyGroups are displayed with a [auto] label on the item view
+  expression.  Automatically added copyGroups are displayed with a label [auto] on the item view.  Moreover, unlike before,
+  the returned suffix has not necessarilly to be in the MeetingConfig.selectableCopyGroups, it can be another suffix
 - Added possibility to force an item to be presented among normal items in a frozen meeting: a checkbox is added under the
   available items on the meeting view when the meeting is frozen so checking this box will force presented items to be
   inserted as a normal item
