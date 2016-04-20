@@ -86,7 +86,6 @@
     <div style="display: none" id="faceted-version"
       tal:content="here/@@faceted_version|string:" />
   </div>
-  <br />
 
   <tal:comment replace="nothing">XXX changed for PM, infos displayed after the faceted table.</tal:comment>
   <tal:meetingBeforeFacetedInfos replace="structure context/@@meeting-after-faceted-infos" />
