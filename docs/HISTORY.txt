@@ -269,7 +269,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   optional advisers are not automatically the groups that contain users in the "advisers" sub-group but manually selected groups.
   This makes it possible to hide a group that exists for the MeetingConfig.customAdvisers purpose but to which it should not
   be possible to ask an optional adviser. A MeetingGroup may not be deleted if used in this field
-
+- Added workflow adaptation 'waiting_advices' that makes it possible to add a state where proposing group may no more edit the
+  item so advices are giveable and advisers are sure that the item is no more evolving.  By default, this state can be reached from
+  states 'proposed' and 'prevalidated' if available and item may go back to these states
 
 3.3 (2015-02-27)
 ----------------

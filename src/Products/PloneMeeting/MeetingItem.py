@@ -368,6 +368,31 @@ class MeetingItemWorkflowConditions:
             return True
         return False
 
+    security.declarePublic('mayWait_advices_from_itemcreated')
+
+    def mayWait_advices_from_itemcreated(self):
+        res = False
+        if checkPermission(ReviewPortalContent, self.context):
+            res = True
+        return res
+
+    security.declarePublic('mayWait_advices_from_proposed')
+
+    def mayWait_advices_from_proposed(self):
+        res = False
+        if checkPermission(ReviewPortalContent, self.context):
+            res = True
+        return res
+
+    security.declarePublic('mayWait_advices_from_prevalidated')
+
+    def mayWait_advices_from_prevalidated(self):
+        res = False
+        if checkPermission(ReviewPortalContent, self.context):
+            res = True
+        return res
+
+
 InitializeClass(MeetingItemWorkflowConditions)
 
 
@@ -524,6 +549,22 @@ class MeetingItemWorkflowActions:
     def doReturn_to_proposing_group(self, stateChange):
         '''Send an email when returned to proposing group if relevant...'''
         self.context.sendMailIfRelevant('returnedToProposingGroup', 'MeetingMember', isRole=True)
+
+    security.declarePrivate('doWait_advices_from_itemcreated')
+
+    def doWait_advices_from_itemcreated(self, stateChange):
+        pass
+
+    security.declarePrivate('doWait_advices_from_proposed')
+
+    def doWait_advices_from_proposed(self, stateChange):
+        pass
+
+    security.declarePrivate('doWait_advices_from_prevalidated')
+
+    def doWait_advices_from_prevalidated(self, stateChange):
+        pass
+
 
 InitializeClass(MeetingItemWorkflowActions)
 ##/code-section module-header
