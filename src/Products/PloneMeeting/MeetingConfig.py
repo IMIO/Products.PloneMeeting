@@ -2986,6 +2986,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 return translate('wa_removed_pre_validation_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
+        if 'waiting_advices' in removed:
+            # this will remove the 'waiting_advices' state for MeetingItem
+            # check that no more items are in this state
+            if catalog(portal_type=self.getItemTypeName(), review_state='waiting_advices'):
+                return translate('wa_removed_waiting_advices_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
         if 'return_to_proposing_group' in removed:
             # this will remove the 'returned_to_proposing_group' state for MeetingItem
             # check that no more items are in this state

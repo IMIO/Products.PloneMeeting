@@ -516,6 +516,11 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
             res.append(('pre_accepted.png', translate('icon_help_pre_accepted',
                                                       domain="PloneMeeting",
                                                       context=self.request)))
+        elif itemState == 'waiting_advices':
+            res.append(('wait_advices_from_proposed.png',
+                        translate('icon_help_waiting_advices',
+                                  domain="PloneMeeting",
+                                  context=self.request)))
 
         # Display icons about sent/cloned to other meetingConfigs
         clonedToOtherMCIds = self.context._getOtherMeetingConfigsImAmClonedIn()

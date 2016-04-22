@@ -628,21 +628,28 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
         # "waiting_advices" add state 'waiting_advices' in the item workflow
         # it is a go/back state from the WAITING_ADVICES_FROM_STATES item list of states.
         # It is made to isolate an item in a state where it is no more editable but some advices may be given
+        # if we have several 'waiting_advices' states added,
+        # it is prefixed with originState1__or__originState2 like 'proposed__or__prevalidated_waiting_advices'
         elif wfAdaptation == 'waiting_advices':
             wf = itemWorkflow
-            FROM_TRANSITION_ID_PATTERN = 'wait_advices_from_{0}'
             # compute edit permissions existing on MeetingItem schema
             from Products.PloneMeeting.MeetingItem import MeetingItem
             edit_permissions = [ModifyPortalContent]
             for field in MeetingItem.schema.fields():
                 if field.write_permission and not field.write_permission in edit_permissions:
                     edit_permissions.append(field.write_permission)
-            # add states 'waiting_advices'
+            # new_state_id pattern changes depending on number of added states
+            if len(WAITING_ADVICES_FROM_STATES) == 1:
+                NEW_STATE_ID_PATTERN = 'waiting_advices'
+            else:
+                NEW_STATE_ID_PATTERN = '{0}_waiting_advices'
+            # for transition to 'waiting_advices', we need to know where we are coming from
+            FROM_TRANSITION_ID_PATTERN = 'wait_advices_from_{0}'
             for infos in WAITING_ADVICES_FROM_STATES:
                 # wipeout 'from_states' and 'back_states' to remove unexisting ones
                 from_state_ids = [state for state in infos['from_states'] if state in wf.states]
                 back_state_ids = [state for state in infos['back_states'] if state in wf.states]
-                new_state_id = '{0}_waiting_advices'.format('__or__'.join(from_state_ids))
+                new_state_id = NEW_STATE_ID_PATTERN.format('__or__'.join(from_state_ids))
                 back_transition_ids = []
                 if new_state_id not in wf.states:
                     wf.states.addState(new_state_id)
@@ -656,7 +663,8 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                             title=from_transition_id,
                             new_state_id=new_state_id, trigger_type=1, script_name='',
                             actbox_name=from_transition_id, actbox_url='',
-                            actbox_icon='', actbox_category='workflow',
+                            actbox_icon='{0}.png'.format(from_transition_id),
+                            actbox_category='workflow',
                             props={'guard_expr': 'python:here.wfConditions().may{0}()'.format(
                                 string.capwords(from_transition_id))})
                     for back_state_id in back_state_ids:
@@ -667,11 +675,13 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                         transition.setProperties(title=back_transition_id,
                                                  new_state_id=from_state_id, trigger_type=1, script_name='',
                                                  actbox_name=back_transition_id, actbox_url='',
-                                                 actbox_icon='', actbox_category='workflow',
+                                                 actbox_icon='{0}.png'.format(back_transition_id),
+                                                 actbox_category='workflow',
                                                  props={'guard_expr': 'python:here.wfConditions().mayCorrect()'})
 
                     # Update connections between states and transitions
-                    new_state.setProperties(transitions=back_transition_ids)
+                    new_state.setProperties(title=new_state_id, description='',
+                                            transitions=back_transition_ids)
                     # store roles having the 'Review portal content' permission
                     # from states going to 'waiting_advices' so it will be used
                     # on the waiting_advices states for 'Review portal content' permission
@@ -684,7 +694,8 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                                 set(review_portal_content_roles)))
                         existing_transitions = from_state.transitions
                         from_transition_id = FROM_TRANSITION_ID_PATTERN.format(from_state_id)
-                        from_state.setProperties(transitions=existing_transitions + (from_transition_id, ))
+                        from_state.setProperties(title=from_state_id, description='',
+                                                 transitions=existing_transitions + (from_transition_id, ))
 
                     # Initialize permission->roles mapping for new state "to_transition",
                     # which is the same as state infos['perm_cloned_state']
