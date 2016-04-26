@@ -353,7 +353,8 @@ class testWFAdaptations(PloneMeetingTestCase):
 
         item = self.create('MeetingItem')
         self.proposeItem(item)
-        self.do(item, 'wait_advices_from_proposed')
+        proposedState = item.queryState()
+        self.do(item, 'wait_advices_from_{0}'.format(proposedState))
         self.assertEqual(item.queryState(), 'waiting_advices')
         self.failIf(cfg.validate_workflowAdaptations(('waiting_advices', )))
         self.assertEquals(
@@ -361,7 +362,7 @@ class testWFAdaptations(PloneMeetingTestCase):
             waiting_advices_removed_error)
 
         # make wfAdaptation selectable
-        self.do(item, 'backTo_proposed_from_waiting_advices')
+        self.do(item, 'backTo_{0}_from_waiting_advices'.format(proposedState))
         self.failIf(cfg.validate_workflowAdaptations(()))
 
     def test_pm_Validate_workflowAdaptations_removed_return_to_proposing_group(self):
