@@ -2015,7 +2015,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     wfAdaptations = ('no_global_observation', 'creator_initiated_decisions',
                      'only_creator_may_delete', 'pre_validation',  'pre_validation_keep_reviewer_permissions',
                      'items_come_validated', 'archiving', 'no_publication', 'no_proposal', 'everyone_reads_all',
-                     'creator_edits_unless_closed', 'return_to_proposing_group', 'hide_decisions_when_under_writing', )
+                     'creator_edits_unless_closed', 'return_to_proposing_group', 'hide_decisions_when_under_writing',
+                     'waiting_advices')
     ##/code-section class-header
 
     # Methods
@@ -2983,6 +2984,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # check that no more items are in this state
             if catalog(portal_type=self.getItemTypeName(), review_state='prevalidated'):
                 return translate('wa_removed_pre_validation_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+        if 'waiting_advices' in removed:
+            # this will remove the 'waiting_advices' state for MeetingItem
+            # check that no more items are in this state
+            if catalog(portal_type=self.getItemTypeName(), review_state='waiting_advices'):
+                return translate('wa_removed_waiting_advices_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
         if 'return_to_proposing_group' in removed:
