@@ -458,6 +458,7 @@ class MeetingItemWorkflowActions:
             # find meetings accepting items in the future
             meeting = self.context.getMeetingToInsertIntoWhenNoCurrentMeetingObject(
                 self.context.getPreferredMeeting())
+        self.context.REQUEST.set('currentlyInsertedItem', self.context)
         meeting.insertItem(self.context, forceNormal=self._forceInsertNormal())
         # If the meeting is already frozen and this item is a "late" item,
         # I must set automatically the item to "itemfrozen".
