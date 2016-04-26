@@ -35,7 +35,6 @@ from imio.dashboard.content.pod_template import IDashboardPODTemplate
 from imio.history.browser.views import IHDocumentBylineViewlet
 from imio.prettylink.interfaces import IPrettyLink
 
-from Products.CMFCore.utils import getToolByName
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFPlone.utils import safe_unicode
 from Products.CPUtils.Extensions.utils import check_zope_admin
@@ -69,7 +68,7 @@ class PloneMeetingGlobalSectionsViewlet(GlobalSectionsViewlet):
     '''
 
     def selectedTabs(self, default_tab='index_html', portal_tabs=()):
-        plone_url = getToolByName(self.context, 'portal_url')()
+        plone_url = api.portal.get_tool('portal_url')()
         plone_url_len = len(plone_url)
         request = self.request
         valid_actions = []
@@ -181,11 +180,11 @@ class PMDocumentGeneratorLinksViewlet(IDDocumentGeneratorLinksViewlet, BaseGener
 
     def get_all_pod_templates(self):
         """Query by MeetingConfig."""
-        tool = getToolByName(self.context, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
         if not cfg:
             return []
-        catalog = getToolByName(self.context, 'portal_catalog')
+        catalog = api.portal.get_tool('portal_catalog')
         brains = catalog.unrestrictedSearchResults(
             object_provides={'query': IPODTemplate.__identifier__,
                              'not': IDashboardPODTemplate.__identifier__},
@@ -204,11 +203,11 @@ class PMDashboardDocumentGeneratorLinksViewlet(IDDashboardDocumentGeneratorLinks
     render = ViewPageTemplateFile('templates/generationlinks.pt')
 
     def get_all_pod_templates(self):
-        tool = getToolByName(self.context, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
         if not cfg:
             return []
-        catalog = getToolByName(self.context, 'portal_catalog')
+        catalog = api.portal.get_tool('portal_catalog')
         brains = catalog.unrestrictedSearchResults(
             object_provides=IDashboardPODTemplate.__identifier__,
             # PloneMeeting, just added following line
@@ -263,7 +262,7 @@ class PMRenderTermView(RenderTermPortletView):
         super(PMRenderTermView, self).__call__(term, category, widget)
         # display the searchallmeetings as a selection list
         if self.context.getId() in ['searchallmeetings', 'searchlastdecisions']:
-            self.tool = getToolByName(self, 'portal_plonemeeting')
+            self.tool = api.portal.get_tool('portal_plonemeeting')
             self.cfg = self.tool.getMeetingConfig(self.context)
             self.brains = self.context.getQuery()
             return ViewPageTemplateFile("templates/term_searchmeetings.pt")(self)
@@ -284,13 +283,13 @@ class PMRenderCategoryView(RenderCategoryView):
 
     def __call__(self, widget):
         self.widget = widget
-        self.tool = getToolByName(self, 'portal_plonemeeting')
+        self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
 
         if self.context.getId() == 'searches_items':
             return ViewPageTemplateFile("templates/category_meetingitems.pt")(self)
         if self.context.getId() == 'searches_meetings':
-            self.member = getToolByName(self.context, 'portal_membership').getAuthenticatedMember()
+            self.member = api.user.get_current()
             return ViewPageTemplateFile("templates/category_meetings.pt")(self)
         else:
             return self.index()
@@ -339,7 +338,7 @@ class BaseActionsPanelView(ActionsPanelView):
           This is relevant for Meeting and MeetingItem.
         """
         toConfirm = []
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
         if cfg:
             toConfirm = cfg.getTransitionsToConfirm()
@@ -606,7 +605,7 @@ class ConfigActionsPanelView(ActionsPanelView):
         """
           Add a link to linked Plone groups for a MeetingGroup.
         """
-        tool = getToolByName(self.context, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         if tool.isManager(self.context, True):
             return ViewPageTemplateFile("templates/actions_panel_config_linkedplonegroups.pt")(self)
         return ''
@@ -641,9 +640,9 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
 
     def get_base_generation_context(self):
         """ """
-        tool = getToolByName(self.context, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
-        currentUser = getToolByName(self.context, 'portal_membership').getAuthenticatedMember()
+        currentUser = api.user.get_current()
         specific_context = {
             'self': self.context,
             'adap': hasattr(self.context, 'adapted') and self.context.adapted() or None,

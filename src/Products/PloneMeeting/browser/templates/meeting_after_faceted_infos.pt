@@ -6,7 +6,7 @@
              i18n:domain="PloneMeeting">
 
   <tal:comment replace="nothing">Action on selected items</tal:comment>
-  <div tal:condition="python: view.tool.isManager(context) and context.adapted().isDecided() and not context.queryState() in context.meetingClosedStates" id="showItemsDecidedTransitions" >
+  <div tal:condition="view/showDecideSeveralItems" id="meetingDecideSeveralItems" >
     <div metal:use-macro="here/@@pm-macros/showItemsDecidedTransitions"></div>
   </div>
   <div class="visualClear"></div>

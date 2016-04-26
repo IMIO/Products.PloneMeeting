@@ -932,7 +932,7 @@ body.template-search_form #content label {
     vertical-align: text-top;
 }
 
-#showItemsDecidedTransitions{
+#meetingDecideSeveralItems {
     float:right;
 }
 

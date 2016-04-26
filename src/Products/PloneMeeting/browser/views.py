@@ -33,7 +33,6 @@ from plone.memoize.view import memoize
 from plone.memoize.view import memoize_contextless
 
 from Products.Five import BrowserView
-from Products.CMFCore.utils import getToolByName
 from Products.CMFCore.WorkflowCore import WorkflowException
 from plone import api
 from eea.facetednavigation.interfaces import ICriteria
@@ -63,9 +62,9 @@ class ItemNavigationWidgetView(BrowserView):
     def __init__(self, context, request):
         self.context = context
         self.request = request
-        self.tool = getToolByName(self.context, 'portal_plonemeeting')
+        self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
-        self.portal_url = getToolByName(self.context, 'portal_url').getPortalObject().absolute_url()
+        self.portal_url = api.portal.get().absolute_url()
 
     @memoize
     def __call__(self):
@@ -84,7 +83,7 @@ class ItemMoreInfosView(BrowserView):
     def __init__(self, context, request):
         self.context = context
         self.request = request
-        self.tool = getToolByName(self.context, 'portal_plonemeeting')
+        self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
 
     def __call__(self, visibleColumns):
@@ -125,7 +124,7 @@ class ItemIsSignedView(BrowserView):
     def __init__(self, context, request):
         self.context = context
         self.request = request
-        self.portal_url = getToolByName(self.context, 'portal_url').getPortalObject().absolute_url()
+        self.portal_url = api.portal.get().absolute_url()
 
 
 class PresentSeveralItemsView(BrowserView):
@@ -138,15 +137,15 @@ class PresentSeveralItemsView(BrowserView):
 
     def __call__(self, uids):
         """ """
-        uid_catalog = getToolByName(self.context, 'uid_catalog')
-        wfTool = getToolByName(self, 'portal_workflow')
+        uid_catalog = api.portal.get_tool('uid_catalog')
+        wfTool = api.portal.get_tool('portal_workflow')
         for uid in uids:
             obj = uid_catalog.searchResults(UID=uid)[0].getObject()
             wfTool.doActionFor(obj, 'present')
         msg = translate('present_several_items_done',
                         domain='PloneMeeting',
                         context=self.request)
-        plone_utils = getToolByName(self.context, 'plone_utils')
+        plone_utils = api.portal.get_tool('plone_utils')
         plone_utils.addPortalMessage(msg)
 
 
@@ -160,8 +159,8 @@ class RemoveSeveralItemsView(BrowserView):
 
     def __call__(self, uids):
         """ """
-        uid_catalog = getToolByName(self.context, 'uid_catalog')
-        wfTool = getToolByName(self.context, 'portal_workflow')
+        uid_catalog = api.portal.get_tool('uid_catalog')
+        wfTool = api.portal.get_tool('portal_workflow')
         # make sure we have a list of uids, in some case, as it is called
         # by jQuery, we receive only one uid, as a string...
         if isinstance(uids, str):
@@ -183,7 +182,7 @@ class RemoveSeveralItemsView(BrowserView):
         msg = translate('remove_several_items_done',
                         domain='PloneMeeting',
                         context=self.request)
-        plone_utils = getToolByName(self.context, 'plone_utils')
+        plone_utils = api.portal.get_tool('plone_utils')
         plone_utils.addPortalMessage(msg)
 
 
@@ -194,12 +193,12 @@ class DecideSeveralItemsView(BrowserView):
     def __init__(self, context, request):
         self.context = context
         self.request = request
-        self.portal_url = getToolByName(self.context, 'portal_url').getPortalObject().absolute_url()
+        self.portal_url = api.portal.get().absolute_url()
 
     def __call__(self, uids, transition):
         """ """
-        uid_catalog = getToolByName(self.context, 'uid_catalog')
-        wfTool = getToolByName(self.context, 'portal_workflow')
+        uid_catalog = api.portal.get_tool('uid_catalog')
+        wfTool = api.portal.get_tool('portal_workflow')
         # make sure we have a list of uids, in some case, as it is called
         # by jQuery, we receive only one uid, as a string...
         if isinstance(uids, str):
@@ -212,7 +211,7 @@ class DecideSeveralItemsView(BrowserView):
             except WorkflowException:
                 continue
         msg = translate('decide_several_items_done', domain='PloneMeeting', context=self.request)
-        plone_utils = getToolByName(self.context, 'plone_utils')
+        plone_utils = api.portal.get_tool('plone_utils')
         plone_utils.addPortalMessage(msg)
 
 
@@ -223,7 +222,7 @@ class ItemNumberView(BrowserView):
     def __init__(self, context, request):
         self.context = context
         self.request = request
-        self.portal_url = getToolByName(self.context, 'portal_url').getPortalObject().absolute_url()
+        self.portal_url = api.portal.get().absolute_url()
 
     def mayChangeOrder(self):
         """ """
@@ -241,12 +240,12 @@ class ItemToDiscussView(BrowserView):
     def __init__(self, context, request):
         self.context = context
         self.request = request
-        self.portal_url = getToolByName(self.context, 'portal_url').getPortalObject().absolute_url()
-        self.tool = getToolByName(self.context, 'portal_plonemeeting')
+        self.portal_url = api.portal.get().absolute_url()
+        self.tool = api.portal.get_tool('portal_plonemeeting')
 
     def mayEdit(self):
         """ """
-        member = getToolByName(self.context, 'portal_membership').getAuthenticatedMember()
+        member = api.user.get_current()
         toDiscuss_write_perm = self.context.getField('toDiscuss').write_permission
         return member.has_permission(toDiscuss_write_perm, self.context) and \
             self.context.showToDiscuss()
@@ -268,8 +267,8 @@ class MeetingBeforeFacetedInfosView(BrowserView):
     def __init__(self, context, request):
         self.context = context
         self.request = request
-        self.portal_url = getToolByName(self.context, 'portal_url').getPortalObject().absolute_url()
-        self.tool = getToolByName(self.context, 'portal_plonemeeting')
+        self.portal_url = api.portal.get().absolute_url()
+        self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
 
 
@@ -279,9 +278,15 @@ class MeetingAfterFacetedInfosView(BrowserView):
     def __init__(self, context, request):
         self.context = context
         self.request = request
-        self.portal_url = getToolByName(self.context, 'portal_url').getPortalObject().absolute_url()
-        self.tool = getToolByName(self.context, 'portal_plonemeeting')
+        self.portal_url = api.portal.get().absolute_url()
+        self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
+
+    def showDecideSeveralItems(self):
+        """Show the 'decide several items' widget?"""
+        return self.tool.isManager(self.context) and \
+            self.context.adapted().isDecided() and \
+            self.context.queryState() not in self.context.meetingClosedStates
 
 
 class PloneMeetingRedirectToAppView(BrowserView):
@@ -300,8 +305,8 @@ class PloneMeetingRedirectToAppView(BrowserView):
           Add a specific portal_message if we have no active meetingConfig to redirect the connected member to.
         '''
         defaultMeetingConfig = self.defaultMeetingConfig()
-        if not self.defaultMeetingConfig() and \
-           self.portal.portal_membership.getAuthenticatedMember().has_role('Manager'):
+        member = api.user.get_current()
+        if not self.defaultMeetingConfig() and member.has_role('Manager'):
             self.portal.plone_utils.addPortalMessage(
                 translate('Please specify a default meeting config upon active existing '
                           'meeting configs to be automaatically redirected to it.',
@@ -323,7 +328,7 @@ class PloneMeetingRedirectToAppView(BrowserView):
     @memoize
     def getPloneMeetingTool(self):
         '''Returns the tool.'''
-        return getToolByName(self.portal, 'portal_plonemeeting')
+        return api.portal.get_tool('portal_plonemeeting')
 
 
 class ObjectGoToView(BrowserView):
@@ -336,7 +341,7 @@ class ObjectGoToView(BrowserView):
           p_itemNumber is the number of the item we want to go to.  This item
           is in the same meeting than self.context.
         """
-        catalog = getToolByName(self.context, 'portal_catalog')
+        catalog = api.portal.get_tool('portal_catalog')
         meeting = self.context.getMeeting()
         itemNumber = _itemNumber_to_storedItemNumber(itemNumber)
         brains = catalog(linkedMeetingUID=meeting.UID(), getItemNumber=itemNumber)
@@ -368,7 +373,7 @@ class UpdateDelayAwareAdvicesView(BrowserView):
           Compute the catalog query to execute to get only relevant items to update,
           so items with delay-aware advices still addable/editable.
         '''
-        tool = getToolByName(self.context, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         # compute the indexAdvisers index, take every groups, including disabled ones
         # then constuct every possibles cases, by default there is 2 possible values :
         # delay__groupId1__advice_not_given, delay__groupId1__advice_under_edit
@@ -423,7 +428,7 @@ class DeleteHistoryEventView(BrowserView):
         obj = catalog_brains[0].getObject()
 
         # now get the event to delete and delete it...
-        tool = getToolByName(self.context, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         tool.deleteHistoryEvent(obj, event_time)
         return self.request.RESPONSE.redirect(self.request['HTTP_REFERER'])
 
@@ -649,7 +654,7 @@ class CheckPodTemplatesView(BrowserView):
     def __init__(self, context, request):
         self.context = context
         self.request = request
-        self.tool = getToolByName(self.context, 'portal_plonemeeting')
+        self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
 
     def __call__(self):
