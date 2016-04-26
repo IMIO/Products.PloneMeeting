@@ -1492,10 +1492,13 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertFalse(self.hasPermission(ModifyPortalContent, item))
         self.assertFalse(self.transitions(item))
 
-        # right come back to 'prevalidated'
-        self.changeUser('pmReviewerLevel2')
+        # right test the back transitions, first come back to 'prevalidated', then to 'proposed'
+        self.changeUser('pmManager')
         self.do(item, 'backTo_prevalidated_from_waiting_advices')
         self.assertEquals(item.queryState(), 'prevalidated')
+        self.do(item, 'wait_advices_from_prevalidated')
+        self.do(item, 'backTo_proposed_from_waiting_advices')
+        self.assertEquals(item.queryState(), 'proposed')
 
     def test_pm_WFA_waiting_advices_several_states(self):
         '''Test the workflowAdaptation 'waiting_advices'.

@@ -673,7 +673,7 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                         wf.transitions.addTransition(back_transition_id)
                         transition = wf.transitions[back_transition_id]
                         transition.setProperties(title=back_transition_id,
-                                                 new_state_id=from_state_id, trigger_type=1, script_name='',
+                                                 new_state_id=back_state_id, trigger_type=1, script_name='',
                                                  actbox_name=back_transition_id, actbox_url='',
                                                  actbox_icon='{0}.png'.format(back_transition_id),
                                                  actbox_category='workflow',
