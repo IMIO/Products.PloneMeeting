@@ -47,13 +47,15 @@
 
             <tal:comment replace="nothing">Icon for adding an advice</tal:comment>
             <div tal:condition="python: advicesToAdd and not displayedAddIcon" style="display: inline;">
+            <tal:loop tal:repeat="advice_portal_type python: context.getAddableAdvicePortalTypes(advicesToAdd)">
               <a href="++add++meetingadvice"
                  class="link-overlay-pm-advice"
                  tal:define="global displayedAddIcon python: True"
-                 tal:attributes="href string:${item_url}/++add++meetingadvice">
+                 tal:attributes="href string:${item_url}/++add++${advice_portal_type}">
                 <img i18n:attributes="title" title="advice_add"
-                     tal:attributes="src string:${view/portal_url}/new.png;" />
+                     tal:attributes="src string:${view/portal_url}/new_${advice_portal_type}.png;" />
               </a>
+            </tal:loop>
             </div>
 
           </dt>

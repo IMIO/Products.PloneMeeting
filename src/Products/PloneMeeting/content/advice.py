@@ -17,6 +17,7 @@ from plone.directives import form
 
 from plone import api
 from Products.PloneMeeting import PMMessageFactory as _
+from Products.PloneMeeting.utils import findMeetingAdvicePortalType
 from Products.PloneMeeting.utils import getHistory
 from Products.PloneMeeting.utils import getLastEvent
 from Products.PloneMeeting.utils import isModifiedSinceLastVersion
@@ -96,6 +97,7 @@ def advice_hide_during_redactionDefaultValue(data):
 
 class MeetingAdvice(Container):
     """ """
+
     implements(IMeetingAdvice)
 
     def Title(self):
@@ -223,13 +225,19 @@ class AdviceGroupVocabulary(object):
         if context.meta_type == 'MeetingItem':
             alterable_advices_groups = [groupId for groupId, groupTitle in context.getAdvicesGroupsInfosForUser()[0]]
         # take into account groups for which user can edit an advice
-        elif context.meta_type == 'Dexterity Container':
+        elif context.portal_type.startswith('meetingadvice'):
             alterable_advices_groups = [groupId for groupId, groupTitle in context.getAdvicesGroupsInfosForUser()[1]]
-            # make sure advice_type selected on advice is in the vocabulary
+            # make sure advice_group selected on advice is in the vocabulary
             if not context.advice_group in alterable_advices_groups:
-                terms.append(SimpleTerm(context.advice_group,
-                                        context.advice_group,
-                                        getattr(tool, context.advice_group).Title()))
+                alterable_advices_groups.append(context.advice_group)
+
+        meeting_item = context.meta_type == 'MeetingItem' and context or context.getParentNode()
+
+        # depending on current portal_type, clean up selectable groups
+        current_portal_type = findMeetingAdvicePortalType(context)
+        alterable_advices_groups = [groupId for groupId in alterable_advices_groups
+                                    if (meeting_item.adapted()._adviceTypeForAdviser(groupId) == current_portal_type or
+                                        groupId == context.advice_group)]
 
         for alterable_advices_group in alterable_advices_groups:
             terms.append(SimpleTerm(alterable_advices_group,

@@ -15,7 +15,7 @@
  <state state_id="advice_given"
         title="advice_given"
         i18n:attributes="title">
-  <exit-transition transition_id="backToAdviceUnderEdit"/>
+  <exit-transition transition_id="backToAdviceInitialState"/>
   <permission-map name="Access contents information"
                   acquired="True">
   </permission-map>
@@ -79,16 +79,16 @@
                   acquired="True">
   </permission-map>
  </state>
- <transition transition_id="backToAdviceUnderEdit"
-             title="backToAdviceUnderEdit"
+ <transition transition_id="backToAdviceInitialState"
+             title="backToAdviceInitialState"
              new_state="advice_under_edit"
              trigger="USER"
              before_script=""
              after_script=""
              i18n:attributes="title">
-  <action url="" icon="" category="workflow" i18n:translate="">backToAdviceUnderEdit</action>
+  <action url="" icon="" category="workflow" i18n:translate="">backToAdviceInitialState</action>
   <guard>
-    <guard-expression>python: here.REQUEST.get('mayBackToAdviceUnderEdit', False)</guard-expression>
+    <guard-expression>python: here.REQUEST.get('mayBackToInitialState', False)</guard-expression>
   </guard>
  </transition>
  <transition transition_id="giveAdvice"

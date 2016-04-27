@@ -1473,6 +1473,23 @@ def _addImagePermission(obj):
     obj.manage_permission("ATContentTypes: Add Image", roles, acquire=False)
 
 
+def findMeetingAdvicePortalType(context):
+    """ """
+    # wipeout alterable_advices_groups depending on current portal_type
+    published = context.REQUEST['PUBLISHED']
+    if not getattr(published, 'ti', None):
+        published = published.context
+        if hasattr(published, 'context'):
+            published = published.context
+
+    # adding the meetingadvice
+    if hasattr(published, 'ti'):
+        current_portal_type = published.ti.id
+    else:
+        current_portal_type = published.portal_type
+    return current_portal_type
+
+
 class AdvicesUpdatedEvent(ObjectEvent):
     implements(IAdvicesUpdatedEvent)
 

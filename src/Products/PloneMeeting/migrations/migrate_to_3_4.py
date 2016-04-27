@@ -540,10 +540,10 @@ class Migrate_To_3_4(Migrator):
         logger.info('Cleaning MeetingUsers...')
         for cfg in self.tool.objectValues('MeetingConfig'):
             for user in cfg.meetingusers.objectValues('MeetingUser'):
-                if hasattr(user, 'openAnnexesInSeparateWindows'):
-                    delattr(user, 'openAnnexesInSeparateWindows')
-                if hasattr(user, 'mailFormat'):
-                    delattr(user, 'mailFormat')
+                if hasattr(aq_base(user), 'openAnnexesInSeparateWindows'):
+                    delattr(aq_base(user), 'openAnnexesInSeparateWindows')
+                if hasattr(aq_base(user), 'mailFormat'):
+                    delattr(aq_base(user), 'mailFormat')
         logger.info('Done.')
 
     def _updateAnnexIndex(self):
