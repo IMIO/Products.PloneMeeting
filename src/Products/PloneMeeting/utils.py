@@ -1473,11 +1473,12 @@ def _addImagePermission(obj):
     obj.manage_permission("ATContentTypes: Add Image", roles, acquire=False)
 
 
-def getTransitionToReachState(self, obj, state):
+def getTransitionToReachState(obj, state):
     '''Given a state, return a transition that will set the obj in this state.'''
-    wf = self.wfTool.getWorkflowsFor(obj)[0]
+    wfTool = api.portal.get_tool('portal_workflow')
+    wf = wfTool.getWorkflowsFor(obj)[0]
     res = ''
-    availableTransitions = self.transitions(obj)
+    availableTransitions = wfTool.getTransitionsFor(obj)
     for transition in wf.transitions.values():
         if not transition.id in availableTransitions:
             continue
