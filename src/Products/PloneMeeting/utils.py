@@ -1476,7 +1476,14 @@ def _addImagePermission(obj):
 def findMeetingAdvicePortalType(context):
     """ """
     # wipeout alterable_advices_groups depending on current portal_type
-    published = context.REQUEST['PUBLISHED']
+    published = context.REQUEST.get('PUBLISHED')
+    if not published:
+        return 'meetingadvice'
+
+    # portal_type stored on published
+    if getattr(published, 'portal_type', None) and published.portal_type.startswith('meetingadvice'):
+        return published.portal_type
+
     if not getattr(published, 'ti', None):
         published = published.context
         if hasattr(published, 'context'):

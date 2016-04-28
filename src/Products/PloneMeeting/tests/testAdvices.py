@@ -155,6 +155,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEquals(item1.hasAdvices(), False)
         # fields 'advice_type' and 'advice_group' are mandatory
         form = item1.restrictedTraverse('++add++meetingadvice').form_instance
+        self.request['PUBLISHED'] = form
         form.update()
         errors = form.extractData()[1]
         self.assertEquals(errors[0].error, RequiredMissing('advice_group'))
@@ -1610,17 +1611,19 @@ class testAdvices(PloneMeetingTestCase):
         adviceWF = adviceWF[0]
         everyStates = adviceWF.states.keys()
         statesOfConfig = ADVICE_STATES_ALIVE + ADVICE_STATES_ENDED
-        self.assertTrue(set(everyStates) == set(statesOfConfig))
+        # statesOfConfig are all in everyStates
+        self.assertFalse(set(everyStates).difference(set(statesOfConfig)))
 
     def test_pm_AdvicesConfidentiality(self):
         '''Test the getAdvicesByType method when advice confidentiality is enabled.
            A confidential advice is not visible by power observers or restricted power observers.'''
+        cfg = self.meetingConfig
         # hide confidential advices to power observers
-        self.meetingConfig.setEnableAdviceConfidentiality(True)
-        self.meetingConfig.setAdviceConfidentialityDefault(True)
-        self.meetingConfig.setAdviceConfidentialFor(('power_observers', ))
+        cfg.setEnableAdviceConfidentiality(True)
+        cfg.setAdviceConfidentialityDefault(True)
+        cfg.setAdviceConfidentialFor(('power_observers', ))
         # make power observers able to see proposed items
-        self.meetingConfig.setItemPowerObserversStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+        cfg.setItemPowerObserversStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
         # first check default confidentiality value
         # create an item and ask advice of 'developers'
         self.changeUser('pmCreator1')
@@ -1633,7 +1636,7 @@ class testAdvices(PloneMeetingTestCase):
         toggleView = item.restrictedTraverse('@@toggle_advice_is_confidential')
         self.assertRaises(Unauthorized, toggleView.toggle, UID='%s__%s' % (item.UID(), 'developers'))
         self.assertTrue(item.adviceIndex['developers']['isConfidential'])
-        self.meetingConfig.setAdviceConfidentialityDefault(False)
+        cfg.setAdviceConfidentialityDefault(False)
         # ask 'vendors' advice
         item.setOptionalAdvisers(('developers', 'vendors', ))
         item.at_post_edit_script()
@@ -1681,10 +1684,11 @@ class testAdvices(PloneMeetingTestCase):
         '''Test that if an item is set back to a state the user that set it back can
            not view anymore, and that the advice turn from giveable to not giveable anymore,
            transitions triggered on advice that will 'giveAdvice'.'''
+        cfg = self.meetingConfig
         # advice can be given when item is validated
-        self.meetingConfig.setItemAdviceStates((self.WF_STATE_NAME_MAPPINGS['validated'], ))
-        self.meetingConfig.setItemAdviceEditStates((self.WF_STATE_NAME_MAPPINGS['validated'], ))
-        self.meetingConfig.setItemAdviceViewStates((self.WF_STATE_NAME_MAPPINGS['validated'], ))
+        cfg.setItemAdviceStates((self.WF_STATE_NAME_MAPPINGS['validated'], ))
+        cfg.setItemAdviceEditStates((self.WF_STATE_NAME_MAPPINGS['validated'], ))
+        cfg.setItemAdviceViewStates((self.WF_STATE_NAME_MAPPINGS['validated'], ))
         # create an item as vendors and give an advice as vendors on it
         # it is viewable by MeetingManager when validated
         self.changeUser('pmCreator2')
@@ -1714,9 +1718,10 @@ class testAdvices(PloneMeetingTestCase):
 
     def test_pm_ChangeAdviceHiddenDuringRedactionView(self):
         """Test the view that will toggle the advice_hide_during_redaction attribute on an item."""
-        self.meetingConfig.setItemAdviceStates(['itemcreated', ])
-        self.meetingConfig.setItemAdviceEditStates(['itemcreated', ])
-        self.meetingConfig.setItemAdviceViewStates(['itemcreated', ])
+        cfg = self.meetingConfig
+        cfg.setItemAdviceStates(['itemcreated', ])
+        cfg.setItemAdviceEditStates(['itemcreated', ])
+        cfg.setItemAdviceViewStates(['itemcreated', ])
         self.changeUser('pmCreator1')
         # create an item and ask the advice of group 'vendors'
         data = {

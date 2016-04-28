@@ -235,9 +235,10 @@ class AdviceGroupVocabulary(object):
 
         # depending on current portal_type, clean up selectable groups
         current_portal_type = findMeetingAdvicePortalType(context)
-        alterable_advices_groups = [groupId for groupId in alterable_advices_groups
-                                    if (meeting_item.adapted()._adviceTypeForAdviser(groupId) == current_portal_type or
-                                        groupId == context.advice_group)]
+        alterable_advices_groups = [
+            groupId for groupId in alterable_advices_groups
+            if (meeting_item.adapted()._adviceTypeForAdviser(groupId) == current_portal_type or
+                (context.portal_type.startswith('meetingadvice') and groupId == context.advice_group))]
 
         for alterable_advices_group in alterable_advices_groups:
             terms.append(SimpleTerm(alterable_advices_group,

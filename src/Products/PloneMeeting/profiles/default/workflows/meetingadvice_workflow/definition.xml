@@ -88,7 +88,7 @@
              i18n:attributes="title">
   <action url="" icon="" category="workflow" i18n:translate="">backToAdviceInitialState</action>
   <guard>
-    <guard-expression>python: here.REQUEST.get('mayBackToInitialState', False)</guard-expression>
+    <guard-expression>python: here.REQUEST.get('mayBackToAdviceInitialState', False)</guard-expression>
   </guard>
  </transition>
  <transition transition_id="giveAdvice"
