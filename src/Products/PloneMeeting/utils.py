@@ -1473,6 +1473,20 @@ def _addImagePermission(obj):
     obj.manage_permission("ATContentTypes: Add Image", roles, acquire=False)
 
 
+def getTransitionToReachState(self, obj, state):
+    '''Given a state, return a transition that will set the obj in this state.'''
+    wf = self.wfTool.getWorkflowsFor(obj)[0]
+    res = ''
+    availableTransitions = self.transitions(obj)
+    for transition in wf.transitions.values():
+        if not transition.id in availableTransitions:
+            continue
+        if transition.new_state_id == state:
+            res = transition.id
+            break
+    return res
+
+
 def findMeetingAdvicePortalType(context):
     """ """
     # wipeout alterable_advices_groups depending on current portal_type

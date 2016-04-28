@@ -249,7 +249,7 @@ class MeetingFileType(BaseContent, BrowserDefaultMixin):
             for brain in brains:
                 item = brain.getObject()
                 # check item.annexIndex and every advices annexIndex too
-                toCheck = [item, ] + item.objectValues('MeetingAdvices')
+                toCheck = [item, ] + item.getAdvices()
                 # check annexIndex
                 for itemOrAdvice in toCheck:
                     for annexInfo in itemOrAdvice.annexIndex:
