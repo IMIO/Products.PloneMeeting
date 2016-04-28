@@ -244,7 +244,6 @@ class AdviceGroupVocabulary(object):
             terms.append(SimpleTerm(alterable_advices_group,
                                     alterable_advices_group,
                                     getattr(tool, alterable_advices_group).Title()))
-
         return SimpleVocabulary(terms)
 
 

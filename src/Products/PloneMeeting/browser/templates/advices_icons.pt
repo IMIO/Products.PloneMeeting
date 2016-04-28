@@ -52,8 +52,10 @@
                  class="link-overlay-pm-advice"
                  tal:define="global displayedAddIcon python: True"
                  tal:attributes="href string:${item_url}/++add++${advice_portal_type}">
-                <img i18n:attributes="title" title="advice_add"
-                     tal:attributes="src string:${view/portal_url}/new_${advice_portal_type}.png;" />
+                <img i18n:attributes="title"
+                     title="#"
+                     tal:attributes="src string:${view/portal_url}/new_${advice_portal_type}.png;
+                                     title string:add_new_${advice_portal_type}" />
               </a>
             </tal:loop>
             </div>
@@ -348,8 +350,9 @@
         <div class="no_advice_asked" style="display: inline">&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;</div>
         <div tal:condition="python: advicesToAdd" style="display: inline">
           <a href="++add++meetingadvice" class="link-overlay-pm-advice" tal:attributes="href string:${item_url}/++add++meetingadvice">
-            <img i18n:attributes="title" title="advice_add"
-                 tal:attributes="src string:${view/portal_url}/new.png;" />
+            <img i18n:attributes="title"
+                 title="add_new_meetingadvice"
+                 tal:attributes="src string:${view/portal_url}/new_meetingadvice.png;" />
           </a>
         </div>
   </div>
