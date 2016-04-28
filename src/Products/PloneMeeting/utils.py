@@ -1500,7 +1500,7 @@ def findMeetingAdvicePortalType(context):
 
     if not getattr(published, 'ti', None):
         published = published.context
-        if hasattr(published, 'context'):
+        if not hasattr(published, 'ti') and hasattr(published, 'context'):
             published = published.context
 
     # adding the meetingadvice
