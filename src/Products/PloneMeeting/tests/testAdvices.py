@@ -2247,6 +2247,15 @@ class testAdvices(PloneMeetingTestCase):
         notify(ObjectModifiedEvent(advice))
         self.assertTrue('spw.png' in advice.objectIds())
 
+    def test_pm_ManualVersioningEnabledForMeetingAdvicePortalTypes(self):
+        """ """
+        portal_types = self.portal.portal_types
+        portal_repository = self.portal.portal_repository
+        for portal_type_id in portal_types:
+            if portal_type_id.startswith('meetingadvice'):
+                self.assertEquals(portal_repository._version_policy_mapping[portal_type_id],
+                                  [u'version_on_revert'])
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
