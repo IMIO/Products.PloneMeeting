@@ -1493,6 +1493,9 @@ def findMeetingAdvicePortalType(context):
     # wipeout alterable_advices_groups depending on current portal_type
     published = context.REQUEST.get('PUBLISHED')
     if not published:
+        # try to get it from context
+        if context.portal_type.startswith('meetingadvice'):
+            return context.portal_type
         return 'meetingadvice'
 
     # portal_type stored on published

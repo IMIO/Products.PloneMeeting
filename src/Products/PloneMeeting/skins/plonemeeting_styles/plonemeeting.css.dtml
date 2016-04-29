@@ -1442,6 +1442,10 @@ iframe#iFrameResizer0 {
     overflow-x: auto;
     overflow-y: hidden;
 }
+
+div.customAdviceMessage {
+    margin-top: 2.3em;
+}
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */

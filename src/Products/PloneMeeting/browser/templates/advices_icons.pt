@@ -330,7 +330,7 @@
                 </tal:complementaryInfoMessage>
 
                 <tal:customAdviceMessage condition="customAdviceMessage">
-                    <tal:block replace="structure customAdviceMessage" />
+                    <div class="customAdviceMessage" tal:content="structure customAdviceMessage" />
                 </tal:customAdviceMessage>
 
                 <div tal:condition="python: advice['delay'] and advice['delay_started_on']" class="discreet" style="text-align: right;">

@@ -231,15 +231,16 @@ class AdviceGroupVocabulary(object):
             if not context.advice_group in alterable_advices_groups:
                 alterable_advices_groups.append(context.advice_group)
 
-        meeting_item = context.meta_type == 'MeetingItem' and context or context.getParentNode()
-
+        # manage case where we have several meetingadvice portal_types
         # depending on current portal_type, clean up selectable groups
+        itemObj = context.meta_type == 'MeetingItem' and context or context.getParentNode()
         current_portal_type = findMeetingAdvicePortalType(context)
         alterable_advices_groups = [
             groupId for groupId in alterable_advices_groups
-            if (meeting_item.adapted()._adviceTypeForAdviser(groupId) == current_portal_type or
+            if (itemObj.adapted()._advicePortalTypeForAdviser(groupId) == current_portal_type or
                 (context.portal_type.startswith('meetingadvice') and groupId == context.advice_group))]
 
+        # create vocabulary
         for alterable_advices_group in alterable_advices_groups:
             terms.append(SimpleTerm(alterable_advices_group,
                                     alterable_advices_group,
@@ -255,6 +256,13 @@ class AdviceTypeVocabulary(object):
         terms = []
         cfg = context.portal_plonemeeting.getMeetingConfig(context)
         usedAdviceTypes = list(cfg.getUsedAdviceTypes())
+
+        # now wipeout usedAdviceTypes depending on current meetingadvice portal_type
+        itemObj = context.meta_type == 'MeetingItem' and context or context.getParentNode()
+        current_portal_type = findMeetingAdvicePortalType(context)
+        usedAdviceTypes = [usedAdviceType for usedAdviceType in usedAdviceTypes
+                           if usedAdviceType in itemObj.adapted()._adviceTypesForAdviser(current_portal_type)]
+
         # remove the 'asked_again' value, it can only be used if it is the current context.advice_type
         # and it will be added here under if necessary
         if 'asked_again' in usedAdviceTypes:

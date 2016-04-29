@@ -3384,17 +3384,26 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 toAdd.append((groupId, group.getName()))
         return (toAdd, toEdit)
 
-    def _adviceTypeForAdviser(self, groupId):
+    def _advicePortalTypeForAdviser(self, groupId):
         """Return the meetingadvice portal_type that will be added for given p_groupId.
            By default we always use meetingadvice but this makes it possible to have several
            portal_types for meetingadvice."""
-        return "meetingadvice"
+        return 'meetingadvice'
+
+    def _adviceTypesForAdviser(self, meeting_advice_portal_type):
+        """Return the advice types (positive, negative, ...) for given p_meeting_advice_portal_type.
+           By default we always use every MeetingConfig.usedAdviceTypes but this is useful
+           when using several portal_types for meetingadvice and some may use particular advice types."""
+        item = self.getSelf()
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(item)
+        return cfg.getUsedAdviceTypes()
 
     def getAddableAdvicePortalTypes(self, advicesToAdd):
         """ """
         res = []
         for adviceToAdd in advicesToAdd:
-            advice_portal_type = self.adapted()._adviceTypeForAdviser(adviceToAdd)
+            advice_portal_type = self.adapted()._advicePortalTypeForAdviser(adviceToAdd)
             if not advice_portal_type in res:
                 res.append(advice_portal_type)
         return res
