@@ -26,7 +26,9 @@ from DateTime import DateTime
 class PloneMeetingTestingHelpers:
     '''Stub class that provides some helper methods about testing.'''
 
+    TRANSITIONS_FOR_PROPOSING_ITEM_FIRST_LEVEL_1 = TRANSITIONS_FOR_PROPOSING_ITEM_FIRST_LEVEL_2 = ('propose', )
     TRANSITIONS_FOR_PROPOSING_ITEM_1 = TRANSITIONS_FOR_PROPOSING_ITEM_2 = ('propose', 'prevalidate', )
+
     TRANSITIONS_FOR_VALIDATING_ITEM_1 = TRANSITIONS_FOR_VALIDATING_ITEM_2 = ('propose', 'validate', )
     TRANSITIONS_FOR_PREVALIDATING_ITEM_1 = TRANSITIONS_FOR_PREVALIDATING_ITEM_2 = ('propose', 'prevalidate', )
     TRANSITIONS_FOR_PRESENTING_ITEM_1 = TRANSITIONS_FOR_PRESENTING_ITEM_2 = ('propose', 'validate', 'present', )
@@ -62,6 +64,7 @@ class PloneMeetingTestingHelpers:
                       'backToPresented', )}
 
     WF_STATE_NAME_MAPPINGS = {'itemcreated': 'itemcreated',
+                              'proposed_first_level': 'proposed',
                               'proposed': 'proposed',
                               'validated': 'validated',
                               'presented': 'presented'}
@@ -117,12 +120,21 @@ class PloneMeetingTestingHelpers:
         meetingConfigNumber = self._determinateUsedMeetingConfigNumber()
         return getattr(self, ('TRANSITIONS_FOR_ACCEPTING_ITEMS_MEETING_%d' % meetingConfigNumber))
 
-    def proposeItem(self, item):
+    def proposeItem(self, item, first_level=False):
         '''Propose passed p_item using TRANSITIONS_FOR_PROPOSING_ITEM_x.
            The p_meetingConfigNumber specify if we use meetingConfig or meetingConfig2, so
-           the _x here above in TRANSITIONS_FOR_PROPOSING_ITEM_x is 1 or 2.'''
+           the _x here above in TRANSITIONS_FOR_PROPOSING_ITEM_x is 1 or 2.
+           If p_first_level is True, we will use TRANSITIONS_FOR_PROPOSING_ITEM_FIRST_LEVEL_x,
+           this makes it possible to reach an intermediate propose level.'''
         meetingConfigNumber = self._determinateUsedMeetingConfigNumber()
-        self._doTransitionsFor(item, getattr(self, ('TRANSITIONS_FOR_PROPOSING_ITEM_%d' % meetingConfigNumber)))
+        if first_level:
+            self._doTransitionsFor(item,
+                                   getattr(self,
+                                           ('TRANSITIONS_FOR_PROPOSING_ITEM_FIRST_LEVEL_%d' % meetingConfigNumber)))
+        else:
+            self._doTransitionsFor(item,
+                                   getattr(self,
+                                           ('TRANSITIONS_FOR_PROPOSING_ITEM_%d' % meetingConfigNumber)))
 
     def prevalidateItem(self, item):
         '''Prevalidate passed p_item using TRANSITIONS_FOR_PREVALIDATING_ITEM_x.
