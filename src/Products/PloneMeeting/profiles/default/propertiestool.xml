@@ -2,6 +2,9 @@
 <object name="portal_properties" meta_type="Plone Properties Tool">
  <object name="site_properties" meta_type="Plone Property Sheet">
   <property name="types_not_searched" type="lines" purge="False">
+   <element value="Collection"/>
+   <element value="ConfigurablePODTemplate"/>
+   <element value="DashboardPODTemplate"/>
    <element value="Document"/>
    <element value="Event"/>
    <element value="File"/>
@@ -13,13 +16,18 @@
    <element value="Meeting"/>
    <element value="MeetingCategory"/>
    <element value="MeetingConfig"/>
+   <element value="MeetingFile"/>
    <element value="MeetingFileType"/>
    <element value="MeetingGroup"/>
    <element value="MeetingItem"/>
    <element value="MeetingItemTemplate"/>
    <element value="MeetingItemRecurring"/>
    <element value="MeetingUser"/>
+   <element value="PODTemplate"/>
+   <element value="StyleTemplate"/>
+   <element value="SubTemplate"/>
    <element value="ToolPloneMeeting"/>
+   <element value="Topic"/>
   </property>
  </object>
 </object>
