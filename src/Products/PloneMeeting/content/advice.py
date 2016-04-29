@@ -82,6 +82,7 @@ class IMeetingAdvice(Interface):
 def advice_typeDefaultValue(data):
     tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(data.context)
+    # manage when portal_type accessed from the Dexterity types configuration
     return cfg and cfg.getDefaultAdviceType() or ''
 
 
@@ -92,7 +93,8 @@ def advice_hide_during_redactionDefaultValue(data):
         return False
     tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(data.context)
-    return cfg.getDefaultAdviceHiddenDuringRedaction()
+    # manage when portal_type accessed from the Dexterity types configuration
+    return cfg and cfg.getDefaultAdviceHiddenDuringRedaction() or False
 
 
 class MeetingAdvice(Container):
@@ -255,23 +257,26 @@ class AdviceTypeVocabulary(object):
         """ """
         terms = []
         cfg = context.portal_plonemeeting.getMeetingConfig(context)
-        usedAdviceTypes = list(cfg.getUsedAdviceTypes())
+        # manage when portal_type accessed from the Dexterity types configuration
+        if cfg:
+            usedAdviceTypes = list(cfg.getUsedAdviceTypes())
 
-        # now wipeout usedAdviceTypes depending on current meetingadvice portal_type
-        itemObj = context.meta_type == 'MeetingItem' and context or context.getParentNode()
-        current_portal_type = findMeetingAdvicePortalType(context)
-        usedAdviceTypes = [usedAdviceType for usedAdviceType in usedAdviceTypes
-                           if usedAdviceType in itemObj.adapted()._adviceTypesForAdviser(current_portal_type)]
+            # now wipeout usedAdviceTypes depending on current meetingadvice portal_type
+            itemObj = context.meta_type == 'MeetingItem' and context or context.getParentNode()
+            current_portal_type = findMeetingAdvicePortalType(context)
+            usedAdviceTypes = [usedAdviceType for usedAdviceType in usedAdviceTypes
+                               if usedAdviceType in itemObj.adapted()._adviceTypesForAdviser(current_portal_type)]
 
-        # remove the 'asked_again' value, it can only be used if it is the current context.advice_type
-        # and it will be added here under if necessary
-        if 'asked_again' in usedAdviceTypes:
-            usedAdviceTypes.remove('asked_again', )
-        # make sure if an adviceType was used for context and it is no more available, it
-        # appears in the vocabulary and is so useable...
-        if context.portal_type == 'meetingadvice' and not context.advice_type in usedAdviceTypes:
-            usedAdviceTypes.append(context.advice_type)
-        for advice_id, advice_title in cfg.listAdviceTypes().items():
-            if advice_id in usedAdviceTypes:
-                terms.append(SimpleTerm(advice_id, advice_id, advice_title))
+            # remove the 'asked_again' value, it can only be used if it is the current context.advice_type
+            # and it will be added here under if necessary
+            if 'asked_again' in usedAdviceTypes:
+                usedAdviceTypes.remove('asked_again', )
+            # make sure if an adviceType was used for context and it is no more available, it
+            # appears in the vocabulary and is so useable...
+            if context.portal_type == 'meetingadvice' and not context.advice_type in usedAdviceTypes:
+                usedAdviceTypes.append(context.advice_type)
+            for advice_id, advice_title in cfg.listAdviceTypes().items():
+                if advice_id in usedAdviceTypes:
+                    terms.append(SimpleTerm(advice_id, advice_id, advice_title))
+
         return SimpleVocabulary(terms)

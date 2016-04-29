@@ -27,6 +27,12 @@
   <element value="plone.app.content.interfaces.INameFromTitle" />
   <element value="plone.app.lockingbehavior.behaviors.ILocking" />
  </property>
+ <property name="schema"></property>
+ <property name="model_source">
+     &lt;model xmlns="http://namespaces.plone.org/supermodel/schema"&gt;
+       &lt;schema/&gt;
+     &lt;/model&gt;
+ </property>
 
  <alias from="(Default)" to="(dynamic view)"/>
  <alias from="edit" to="@@edit"/>
