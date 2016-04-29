@@ -2,7 +2,7 @@
 #
 # File: MeetingConfig.py
 #
-# Copyright (c) 2015 by Imio.be
+# Copyright (c) 2016 by Imio.be
 # Generator: ArchGenXML Version 2.7
 #            http://plone.org/products/archgenxml
 #
@@ -3555,6 +3555,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _updatePortalTypes(self):
         '''Reupdates the portal_types in this meeting config.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
         typesTool = api.portal.get_tool('portal_types')
         props = api.portal.get_tool('portal_properties').site_properties
         wfTool = api.portal.get_tool('portal_workflow')
@@ -3615,8 +3616,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             portalType.allowed_content_types = basePortalType.allowed_content_types
             # for MeetingItem, make sure every 'meetingadvice' portal_types are in allowed_types
             if basePortalType.id == 'MeetingItem':
-                advice_portal_types = [ptype for ptype in typesTool.listContentTypes()
-                                       if ptype.startswith('meetingadvice')]
+                advice_portal_types = tool.getAdvicePortalTypes(as_ids=True)
                 allowed = tuple(set(portalType.allowed_content_types + tuple(advice_portal_types)))
                 portalType.allowed_content_types = allowed
             portalType.allow_discussion = basePortalType.allow_discussion

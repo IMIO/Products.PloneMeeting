@@ -1363,16 +1363,17 @@ div.advice_popup_actions {
 }
 
 /* hide some elements on the versions_history_form */
-body.template-versions_history_form.portaltype-meetingadvice table[summary="Content history"],
-body.template-versions_history_form.portaltype-meetingadvice form[action$="saveasnewversion"],
-body.template-versions_history_form.portaltype-meetingadvice #content-core div.documentByLine,
-body.template-versions_history_form.portaltype-meetingadvice #content-core fieldset#folder-listing {
+body.template-versions_history_form[class*="portaltype-meetingadvice"] table[summary="Content history"],
+body.template-versions_history_form[class*="portaltype-meetingadvice"] form[action$="saveasnewversion"],
+body.template-versions_history_form[class*="portaltype-meetingadvice"] #content div.documentByLine,
+body.template-versions_history_form[class*="portaltype-meetingadvice"] #content div.pm_workflowstate,
+body.template-versions_history_form[class*="portaltype-meetingadvice"] #content fieldset#folder-listing {
     display: none;
 }
-body.template-versions_history_form.portaltype-meetingadvice #content-core > div:first-of-type {
+body.template-versions_history_form[class*="portaltype-meetingadvice"] #content-core > div:first-of-type {
     border: 0px solid transparent !important;
 }
-body.template-versions_history_form.portaltype-meetingadvice #content-core {
+body.template-versions_history_form[class*="portaltype-meetingadvice"] #content-core {
     margin-top: 1em;
 }
 
@@ -1443,7 +1444,9 @@ iframe#iFrameResizer0 {
     overflow-y: hidden;
 }
 
-div.customAdviceMessage {
+/* margin for content of fieldsets */
+div.customAdviceMessage,
+fieldset.field div {
     margin-top: 2.3em;
 }
 /* </dtml-with> */

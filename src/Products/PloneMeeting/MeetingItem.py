@@ -3941,10 +3941,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
             # check if user must be able to add an advice, if not already given
             # check also if the delay is not exceeded, in this case the advice can not be given anymore
-            try:
-                delayIsNotExceeded = not self._adviceDelayIsTimedOut(groupId, computeNewDelayInfos=True)
-            except:
-                import ipdb; ipdb.set_trace()
+            delayIsNotExceeded = not self._adviceDelayIsTimedOut(groupId, computeNewDelayInfos=True)
             if itemState in itemAdviceStates and \
                not adviceObj and \
                delayIsNotExceeded and \

@@ -1490,7 +1490,11 @@ def getTransitionToReachState(obj, state):
 
 def findMeetingAdvicePortalType(context):
     """ """
-    # wipeout alterable_advices_groups depending on current portal_type
+    if context.portal_type.startswith('meetingadvice'):
+        return context.portal_type
+
+    # try to find the used portal_type from the published object, it is the case
+    # when adding an advice, the published is the form
     published = context.REQUEST.get('PUBLISHED')
     if not published:
         # try to get it from context

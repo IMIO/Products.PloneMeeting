@@ -1039,8 +1039,11 @@ class AdvisedItemsAdapter(CompoundCriterionBaseAdapter):
         # just append every available meetingadvice state: we want "given" advices.
         # this search will return every advices
         wfTool = api.portal.get_tool('portal_workflow')
-        adviceWF = wfTool.getWorkflowsFor('meetingadvice')[0]
-        adviceStates = adviceWF.states.keys()
+        adviceStates = []
+        # manage multiple 'meetingadvice' portal_types
+        for portal_type in self.tool.getAdvicePortalTypes():
+            adviceWF = wfTool.getWorkflowsFor(portal_type.id)[0]
+            adviceStates += adviceWF.states.keys()
         groupIds = []
         for adviceState in adviceStates:
             groupIds += [g.getId() + '_%s' % adviceState for g in groups]
@@ -1061,8 +1064,11 @@ class AdvisedItemsWithDelayAdapter(CompoundCriterionBaseAdapter):
         # just append every available meetingadvice state: we want "given" advices.
         # this search will only return 'delay-aware' advices
         wfTool = api.portal.get_tool('portal_workflow')
-        adviceWF = wfTool.getWorkflowsFor('meetingadvice')[0]
-        adviceStates = adviceWF.states.keys()
+        adviceStates = []
+        # manage multiple 'meetingadvice' portal_types
+        for portal_type in self.tool.getAdvicePortalTypes():
+            adviceWF = wfTool.getWorkflowsFor(portal_type.id)[0]
+            adviceStates += adviceWF.states.keys()
         groupIds = []
         for adviceState in adviceStates:
             groupIds += ['delay__' + g.getId() + '_%s' % adviceState for g in groups]

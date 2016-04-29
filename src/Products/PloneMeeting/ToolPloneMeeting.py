@@ -1593,7 +1593,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         catalog = api.portal.get_tool('portal_catalog')
         # update items and advices
         brains = catalog(meta_type=('MeetingItem', ))
-        brains = brains + catalog(portal_type=('meetingadvice', ))
+        brains = brains + catalog(object_provides='Products.PloneMeeting.content.advice.IMeetingAdvice')
         numberOfBrains = len(brains)
         i = 1
         for brain in brains:
@@ -1626,7 +1626,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             from Products.PloneMeeting.MeetingFile import convertToImages
             catalog = api.portal.get_tool('portal_catalog')
             # update annexes in items and advices
-            for brain in catalog(meta_type='MeetingItem') + catalog(portal_type='meetingadvice'):
+            brains = catalog(meta_type='MeetingItem') + \
+                catalog(object_provides='Products.PloneMeeting.content.advice.IMeetingAdvice')
+            for brain in brains:
                 obj = brain.getObject()
                 annexes = IAnnexable(obj).getAnnexes()
                 cfg = self.getMeetingConfig(obj)
@@ -1723,5 +1725,17 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def performCustomWFAdaptations(self, meetingConfig, wfAdaptation, logger, itemWorkflow, meetingWorkflow):
         '''See doc in interfaces.py.'''
         return False
+
+    def getAdvicePortalTypes(self, as_ids=False):
+        """We may have several 'meetingadvice' portal_types."""
+        typesTool = api.portal.get_tool('portal_types')
+        res = []
+        for portal_type in typesTool.listTypeInfo():
+            if portal_type.id.startswith('meetingadvice'):
+                res.append(portal_type)
+        if as_ids:
+            res = [p.id for p in res]
+        return res
+
 
 registerType(ToolPloneMeeting, PROJECTNAME)

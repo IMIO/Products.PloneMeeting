@@ -563,7 +563,9 @@ class Migrate_To_3_4(Migrator):
     def _manageAddImagePermission(self):
         '''Configure the 'ATContentTypes: Add Image' permission on meetings, items and advices.'''
         logger.info('Updating the \'ATContentTypes: Add Image\' permission...')
-        brains = self.portal.portal_catalog(meta_type=('Meeting', 'MeetingItem', 'meetingadvice'))
+        # manage multiple 'meetingadvice' portal_types
+        brains = self.portal.portal_catalog(meta_type=['Meeting', 'MeetingItem'] +
+                                            self.tool.getAdvicePortalTypes(as_ids=True))
         for brain in brains:
             obj = brain.getObject()
             _addImagePermission(obj)

@@ -135,7 +135,7 @@ class PloneMeetingContentActionsViewlet(ContentActionsViewlet):
         if self.context.meta_type in ('ATTopic', 'Meeting', 'MeetingItem',  'MeetingCategory',
                                       'MeetingConfig', 'MeetingGroup', 'MeetingFileType', 'MeetingUser',
                                       'PodTemplate', 'ToolPloneMeeting',) or \
-           self.context.portal_type in ('meetingadvice', ):
+           self.context.portal_type.startswith('meetingadvice', ):
             return ''
         return self.index()
 
