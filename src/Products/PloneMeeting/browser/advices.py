@@ -57,14 +57,17 @@ class AdvicesIcons(BrowserView):
 
         advicesToWarn = {}
 
-        def _findAdviceToWarn(adviceType):
+        def _updateAdvicesToWarn(adviceType):
             smaller_delay = 999
             # if we did not found an advice to warn for current user, maybe there is an advice
             # with delay to be given by another group, we show it too
             for groupId, adviceInfo in self.context.adviceIndex.items():
                 # find smaller delay
-                if (adviceInfo['type'] == adviceType or (adviceType == 'hidden_during_redaction' and
-                                                         adviceInfo['hidden_during_redaction'])) and \
+                if (adviceInfo['type'] == adviceType or
+                    (adviceType == 'hidden_during_redaction' and
+                     adviceInfo['hidden_during_redaction'] and adviceInfo['advice_editable']) or
+                    (adviceType == 'considered_not_given_hidden_during_redaction' and
+                     adviceInfo['hidden_during_redaction'] and not adviceInfo['advice_editable'])) and \
                    adviceInfo['delay'] and \
                    adviceInfo['delay_infos']['left_delay'] < smaller_delay:
                     if groupId in userAdviserGroupIds:
@@ -79,9 +82,10 @@ class AdvicesIcons(BrowserView):
                         continue
                     smaller_delay = adviceInfo['delay_infos']['left_delay']
 
-        _findAdviceToWarn('not_given')
-        _findAdviceToWarn('hidden_during_redaction')
-        _findAdviceToWarn('asked_again')
+        _updateAdvicesToWarn('not_given')
+        _updateAdvicesToWarn('hidden_during_redaction')
+        _updateAdvicesToWarn('considered_not_given_hidden_during_redaction')
+        _updateAdvicesToWarn('asked_again')
 
         return advicesToWarn
 
@@ -99,6 +103,15 @@ class AdvicesIcons(BrowserView):
                 return 'advice_with_delay_big_red.png'
             else:
                 return 'advice_with_delay_big.png'
+
+    def getAddableAdvicePortalTypes(self, advicesToAdd):
+        """ """
+        res = []
+        for adviceToAdd in advicesToAdd:
+            advice_portal_type = self.context.adapted()._advicePortalTypeForAdviser(adviceToAdd)
+            if not advice_portal_type in res:
+                res.append(advice_portal_type)
+        return res
 
 
 class ChangeAdviceHiddenDuringRedactionView(BrowserView):

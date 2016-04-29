@@ -3399,15 +3399,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(item)
         return cfg.getUsedAdviceTypes()
 
-    def getAddableAdvicePortalTypes(self, advicesToAdd):
-        """ """
-        res = []
-        for adviceToAdd in advicesToAdd:
-            advice_portal_type = self.adapted()._advicePortalTypeForAdviser(adviceToAdd)
-            if not advice_portal_type in res:
-                res.append(advice_portal_type)
-        return res
-
     def _adviceIsViewableForCurrentUser(self, cfg, isPowerObserver, isRestrictedPowerObserver, adviceInfo):
         '''
           Returns True if current user may view the advice.

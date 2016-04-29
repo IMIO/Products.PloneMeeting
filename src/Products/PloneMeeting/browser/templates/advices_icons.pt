@@ -38,7 +38,7 @@
                          tal:attributes="src string:${view/portal_url}/${adviceToWarnIcon};"/>
                     <span tal:define="class_if_not_given string:advice_delay advice_delay_${adviceToWarnGroupId/delay_infos/delay_status};"
                           tal:content="adviceToWarnGroupId/delay_infos/left_delay"
-                          title="You still need to give an advice on this item respecting given delay."
+                          title="An advice on this item still needs to be given respecting given delay."
                           i18n:attributes="title"
                           tal:attributes="class class_if_not_given" />
                 </tal:defines>
@@ -47,7 +47,7 @@
 
             <tal:comment replace="nothing">Icon for adding an advice</tal:comment>
             <div tal:condition="python: advicesToAdd and not displayedAddIcon" style="display: inline;">
-            <tal:loop tal:repeat="advice_portal_type python: context.getAddableAdvicePortalTypes(advicesToAdd)">
+            <tal:loop tal:repeat="advice_portal_type python: view.getAddableAdvicePortalTypes(advicesToAdd)">
               <a href="++add++meetingadvice"
                  class="link-overlay-pm-advice"
                  tal:define="global displayedAddIcon python: True"
