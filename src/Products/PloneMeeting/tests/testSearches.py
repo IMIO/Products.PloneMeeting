@@ -156,9 +156,13 @@ class testSearches(PloneMeetingTestCase):
                            'portal_type': {'query': itemTypeName}})
         # as adviser, query is correct
         self.changeUser('pmAdviser1')
-        adviceWF = self.wfTool.getWorkflowsFor('meetingadvice')[0]
-        adviceStates = adviceWF.states.keys()
         groupIds = []
+        adviceStates = []
+        for portal_type in self.tool.getAdvicePortalTypes():
+            adviceWF = self.wfTool.getWorkflowsFor(portal_type.id)[0]
+            adviceStates += adviceWF.states.keys()
+        # remove duplicates
+        adviceStates = tuple(set(adviceStates))
         for adviceState in adviceStates:
             groupIds.append('developers_%s' % adviceState)
             groupIds.append('delay__developers_%s' % adviceState)
@@ -238,8 +242,12 @@ class testSearches(PloneMeetingTestCase):
                            'portal_type':  {'query': itemTypeName}})
         # as adviser, query is correct
         self.changeUser('pmAdviser1')
-        adviceWF = self.wfTool.getWorkflowsFor('meetingadvice')[0]
-        adviceStates = adviceWF.states.keys()
+        adviceStates = []
+        for portal_type in self.tool.getAdvicePortalTypes():
+            adviceWF = self.wfTool.getWorkflowsFor(portal_type.id)[0]
+            adviceStates += adviceWF.states.keys()
+        # remove duplicates
+        adviceStates = tuple(set(adviceStates))
         self.assertEquals(adapter.query,
                           {'indexAdvisers':  {'query':
                            ['delay__developers_%s' % adviceState for adviceState in adviceStates]},
