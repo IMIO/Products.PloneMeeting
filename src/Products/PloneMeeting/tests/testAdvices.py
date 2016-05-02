@@ -346,9 +346,10 @@ class testAdvices(PloneMeetingTestCase):
         '''This test the MeetingItem.getAdvicesGroupsInfosForUser method.
            MeetingItem.getAdvicesGroupsInfosForUser returns 2 lists : first with addable advices and
            the second with editable/deletable advices.'''
-        self.meetingConfig.setItemAdviceStates(itemAdviceStates)
-        self.meetingConfig.setItemAdviceEditStates(itemAdviceEditStates)
-        self.meetingConfig.setItemAdviceViewStates(itemAdviceViewStates)
+        cfg = self.meetingConfig
+        cfg.setItemAdviceStates(itemAdviceStates)
+        cfg.setItemAdviceEditStates(itemAdviceEditStates)
+        cfg.setItemAdviceViewStates(itemAdviceViewStates)
         self.changeUser('pmCreator1')
         # create an item and ask the advice of group 'vendors'
         data = {
@@ -368,8 +369,9 @@ class testAdvices(PloneMeetingTestCase):
         '''Test the advice invalidation process.'''
         # advisers can give an advice when item is 'proposed' or 'validated'
         # activate advice invalidation in state 'validated'
-        self.meetingConfig.setEnableAdviceInvalidation(True)
-        self.meetingConfig.setItemAdviceInvalidateStates((self.WF_STATE_NAME_MAPPINGS['validated'],))
+        cfg = self.meetingConfig
+        cfg.setEnableAdviceInvalidation(True)
+        cfg.setItemAdviceInvalidateStates((self.WF_STATE_NAME_MAPPINGS['validated'],))
         self.changeUser('pmCreator1')
         # create an item and ask the advice of group 'vendors'
         data = {
