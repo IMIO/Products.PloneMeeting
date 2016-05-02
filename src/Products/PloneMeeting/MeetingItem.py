@@ -3323,8 +3323,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getItemInitiator')
 
     def getItemInitiator(self, theObject=False, **kwargs):
-        '''Returns the itemInitiator id or the MeetingUser object if p_theObject
-           is True.'''
+        '''Returns the itemInitiator id or the MeetingUser object if p_theObject is True.'''
         res = self.getField('itemInitiator').get(self, **kwargs)
         if res and theObject:
             mc = self.portal_plonemeeting.getMeetingConfig(self)
@@ -3373,9 +3372,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             groupId = group.getId()
             if groupId in self.adviceIndex:
                 advice = self.adviceIndex[groupId]
-                if advice['type'] == NOT_GIVEN_ADVICE_VALUE and advice['advice_addable']:
+                if advice['type'] == NOT_GIVEN_ADVICE_VALUE and \
+                   advice['advice_addable'] and \
+                   self.adapted()._adviceIsAddableByCurrentUser(groupId):
                     toAdd.append((groupId, group.getName()))
-                if advice['type'] != NOT_GIVEN_ADVICE_VALUE and advice['advice_editable']:
+                if advice['type'] != NOT_GIVEN_ADVICE_VALUE and \
+                   advice['advice_editable'] and \
+                   self.adapted()._adviceIsEditableByCurrentUser(groupId):
                     toEdit.append((groupId, group.getName()))
             # if not in self.adviceIndex, aka not already given
             # check if group is a power adviser and if he is allowed
@@ -3385,21 +3388,21 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return (toAdd, toEdit)
 
     def _advicePortalTypeForAdviser(self, groupId):
-        """Return the meetingadvice portal_type that will be added for given p_groupId.
-           By default we always use meetingadvice but this makes it possible to have several
-           portal_types for meetingadvice."""
+        '''See doc in interfaces.py.'''
         return 'meetingadvice'
 
     def _adviceTypesForAdviser(self, meeting_advice_portal_type):
-        """Return the advice types (positive, negative, ...) for given p_meeting_advice_portal_type.
-           By default we always use every MeetingConfig.usedAdviceTypes but this is useful
-           when using several portal_types for meetingadvice and some may use particular advice types."""
+        '''See doc in interfaces.py.'''
         item = self.getSelf()
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(item)
         return cfg.getUsedAdviceTypes()
 
-    def _adviceIsViewableForCurrentUser(self, cfg, isPowerObserver, isRestrictedPowerObserver, adviceInfo):
+    def _adviceIsViewableForCurrentUser(self,
+                                        cfg,
+                                        isPowerObserver,
+                                        isRestrictedPowerObserver,
+                                        adviceInfo):
         '''
           Returns True if current user may view the advice.
         '''
@@ -3552,8 +3555,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('hasAdvices')
 
     def hasAdvice(self, groupId):
-        '''Returns True if someone from p_groupId has given an advice on this
-           item.'''
+        '''Returns True if someone from p_groupId has given an advice on this item.'''
         if (groupId in self.adviceIndex) and \
            (self.adviceIndex[groupId]['type'] != NOT_GIVEN_ADVICE_VALUE):
             return True
@@ -3576,8 +3578,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('enforceAdviceMandatoriness')
 
     def enforceAdviceMandatoriness(self):
-        '''Checks in the configuration if we must enforce advice
-           mandatoriness.'''
+        '''Checks in the configuration if we must enforce advice mandatoriness.'''
         meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
         if meetingConfig.getUseAdvices() and \
            meetingConfig.getEnforceAdviceMandatoriness():
@@ -3587,8 +3588,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('mandatoryAdvicesAreOk')
 
     def mandatoryAdvicesAreOk(self):
-        '''Returns True if all mandatory advices for this item have been given
-           and are all positive.'''
+        '''Returns True if all mandatory advices for this item have been given and are all positive.'''
         if not hasattr(self, 'isRecurringItem'):
             for advice in self.adviceIndex.itervalues():
                 if not advice['optional'] and \
@@ -3636,9 +3636,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             obj.manage_permission(permission, roles)
 
     def _removePermissionToRole(self, permission, role_to_remove, obj):
-        """
-          Remove given p_permission to given p_role_to_remove on given p_obj.
-        """
+        """Remove given p_permission to given p_role_to_remove on given p_obj."""
         roles = rolesForPermissionOn(permission, obj)
         if role_to_remove in roles:
             # cleanup roles as the permission is also returned with a leading '_'
@@ -3647,9 +3645,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             obj.manage_permission(permission, roles)
 
     def _removeEveryContainedAdvices(self):
-        """
-          Remove every contained advices.
-        """
+        """Remove every contained advices."""
         ids = []
         for advice in self.getAdvices():
             self._grantPermissionToRole('Delete objects', 'Authenticated', advice)
@@ -4026,7 +4022,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         return True
 
+    def _adviceIsAddableByCurrentUser(self, groupId):
+        '''See doc in interfaces.py.'''
+        return True
+
     def _adviceIsEditable(self, groupId):
+        '''See doc in interfaces.py.'''
+        return True
+
+    def _adviceIsEditableByCurrentUser(self, groupId):
         '''See doc in interfaces.py.'''
         return True
 

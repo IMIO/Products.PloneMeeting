@@ -387,10 +387,25 @@ class IMeetingItemDocumentation:
         '''Is the item viewable by given p_groupId for which advice has been asked?'''
     def _adviceIsAddable(groupId):
         """Is advice asked to p_groupId addable on item?"""
+    def _adviceIsAddableByCurrentUser(groupId):
+        """Even if adviceInfo['advice_addable'], is current user really able to add the advice?
+           This is useful when using custom workflows and made to ease override of
+           MeetingItem.getAdvicesGroupsInfosForUser."""
     def _adviceIsEditable(groupId):
         """Is advice asked to p_groupId editable on item?"""
+    def _adviceIsEditableByCurrentUser(groupId):
+        """Even if adviceInfo['advice_editable'], is current user really able to edit the advice?
+           This is useful when using custom workflows and made to ease override of
+           MeetingItem.getAdvicesGroupsInfosForUser."""
     def _sendAdviceToGiveToGroup(groupId):
         """Send the 'your advice is asked on this item' mail notification to given p_groupId?"""
+    def _advicePortalTypeForAdviser(groupId):
+        """Advices may use several 'meetingadvice' portal_types.  A portal_type is associated to
+           an adviser groupId, this method will return the advice portal_type used by given p_groupId."""
+    def _adviceTypesForAdviser(self, meeting_advice_portal_type):
+        """Return the advice types (positive, negative, ...) for given p_meeting_advice_portal_type.
+           By default we always use every MeetingConfig.usedAdviceTypes but this is useful
+           when using several portal_types for meetingadvice and some may use particular advice types."""
 
 
 class IMeetingItemWorkflowConditions(Interface):
