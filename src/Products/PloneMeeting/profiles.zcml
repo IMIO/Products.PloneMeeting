@@ -50,11 +50,11 @@
       profile="Products.PloneMeeting:default" />
 
   <genericsetup:upgradeStep
-      title="Go to PloneMeeting 3.4"
+      title="Go to PloneMeeting 4.0"
       description=""
       source="3.3"
-      destination="3.4"
-      handler="Products.PloneMeeting.migrations.migrate_to_3_4.migrate"
+      destination="4.0"
+      handler="Products.PloneMeeting.migrations.migrate_to_4_0.migrate"
       profile="Products.PloneMeeting:default" />
 
   <!-- ##/code-section profiles.zcml-bottom -->

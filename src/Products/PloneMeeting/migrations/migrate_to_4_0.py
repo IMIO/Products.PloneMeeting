@@ -20,7 +20,7 @@ from Products.PloneMeeting.utils import updateCollectionCriterion
 
 
 # The migration class ----------------------------------------------------------
-class Migrate_To_3_4(Migrator):
+class Migrate_To_4_0(Migrator):
 
     def _get_wh_key(self, itemOrMeeting):
         """Get workflow_history key to use, in case there are several keys, we take the one
@@ -699,7 +699,7 @@ class Migrate_To_3_4(Migrator):
         logger.info('Done.')
 
     def run(self):
-        logger.info('Migrating to PloneMeeting 3.4...')
+        logger.info('Migrating to PloneMeeting 4.0...')
         # reinstall so versions are correctly shown in portal_quickinstaller
         # and new stuffs are added (portal_catalog metadata especially, imio.history is installed)
         self.reinstall(profiles=[self.profile_name, ])
@@ -764,7 +764,7 @@ def migrate(context):
        23) Adapt application name;
        24) Refresh catalogs.
     '''
-    migrator = Migrate_To_3_4(context)
+    migrator = Migrate_To_4_0(context)
     migrator.run()
     migrator.finish()
 # ------------------------------------------------------------------------------
