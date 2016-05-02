@@ -35,6 +35,7 @@ from Products.DataGridField.SelectColumn import SelectColumn
 
 from zope.i18n import translate
 from imio.helpers.cache import invalidate_cachekey_volatile_for
+from Products.PloneMeeting.config import EXTRA_ADVICE_SUFFIXES
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import WriteRiskyConfig
@@ -275,7 +276,7 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
            p_acl is True, it returns True PAS groups. Else, it returns Plone
            wrappers from portal_groups.'''
         res = []
-        for suffix in MEETING_GROUP_SUFFIXES:
+        for suffix in self.getAllSuffixes():
             groupId = self.getPloneGroupId(suffix)
             if idsOnly:
                 res.append(groupId)
@@ -334,6 +335,10 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
                     break
         return i
 
+    def getAllSuffixes(self):
+        """ """
+        return MEETING_GROUP_SUFFIXES + EXTRA_ADVICE_SUFFIXES.get(self.getId(), [])
+
     security.declarePrivate('at_post_create_script')
 
     def at_post_create_script(self):
@@ -346,14 +351,14 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
            but there could be other suffixes, check MEETING_GROUP_SUFFIXES.'''
         # If a group with this id already exists, prevent creation from this
         # group.
-        for groupSuffix in MEETING_GROUP_SUFFIXES:
+        for groupSuffix in self.getAllSuffixes():
             groupId = self.getPloneGroupId(groupSuffix)
             ploneGroup = self.portal_groups.getGroupById(groupId)
             if ploneGroup:
                 raise PloneMeetingError("You can't create this MeetingGroup "
                                         "because a Plone groupe having id "
                                         "'%s' already exists." % groupId)
-        for groupSuffix in MEETING_GROUP_SUFFIXES:
+        for groupSuffix in self.getAllSuffixes():
             self._createOrUpdatePloneGroup(groupSuffix)
         # clean cache for vocabularies using MeetingGroups
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
@@ -364,7 +369,7 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
     security.declarePrivate('at_post_edit_script')
 
     def at_post_edit_script(self):
-        for groupSuffix in MEETING_GROUP_SUFFIXES:
+        for groupSuffix in self.getAllSuffixes():
             self._createOrUpdatePloneGroup(groupSuffix)
         # clean cache for vocabularies using MeetingGroups
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")

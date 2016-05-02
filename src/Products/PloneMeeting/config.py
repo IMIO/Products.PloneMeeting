@@ -102,6 +102,13 @@ MEETINGROLES = {'creators': 'MeetingMember',
                 'advisers': None}
 MEETING_GROUP_SUFFIXES = MEETINGROLES.keys()
 
+# advice specific suffixes in case a workflow involving several suffixes is used by some group ids
+# this will be like :
+# {'my_group_id': ['additional_suffix1', 'additional_suffix2'],
+# {'my_group_id2': ['additional_suffix1', 'additional_suffix2'],
+# {'my_group_id3': ['other_additional_suffix1', 'other_additional_suffix2'], }
+EXTRA_ADVICE_SUFFIXES = {}
+
 # list of reviewer roles, this needs to be defined in logical order because
 # we will also look for 'higher' reviewer level
 # the key is the group suffix and the value is a tuple of states of the items to review

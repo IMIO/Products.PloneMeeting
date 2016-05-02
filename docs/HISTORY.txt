@@ -273,7 +273,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   sure that proposing group may no more edit the item.  By default, this state can be reached from states 'proposed' and
   'prevalidated' if available and item may go back to these states, but for custom configuration, it is possible to generate several
   'waiting_advices' states and to specify origin and back states
-- It is now possible to register several 'meetingadvice' portal_types so we may use different workflows or define additional fields
+- It is now possible to register several 'meetingadvice' portal_types so we may use different workflows or define additional fields.
+  Added constant EXTRA_ADVICE_SUFFIXES to config.py to define extra suffixes to use for groups giving advice using a custom workflow
 
 3.3 (2015-02-27)
 ----------------
