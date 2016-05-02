@@ -2,7 +2,7 @@
 #
 # File: MeetingConfig.py
 #
-# Copyright (c) 2015 by Imio.be
+# Copyright (c) 2016 by Imio.be
 # Generator: ArchGenXML Version 2.7
 #            http://plone.org/products/archgenxml
 #
@@ -3513,7 +3513,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         registeredFactoryTypes = self.portal_factory.getFactoryTypes().keys()
         factoryTypesToRegister = []
         site_properties = api.portal.get_tool('portal_properties').site_properties
-
+        portal_types = api.portal.get_tool('portal_types')
         for metaTypeName in self.metaTypes:
             i += 1
             portalTypeName = '%s%s' % (metaTypeName, self.getShortName())
@@ -3527,11 +3527,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 typeInfoName = "PloneMeeting: %s (%s)" % (metaTypeName,
                                                           metaTypeName)
                 realMetaType = metaTypeName.startswith('MeetingItem') and 'MeetingItem' or metaTypeName
-                self.portal_types.manage_addTypeInformation(
-                    getattr(self.portal_types, realMetaType).meta_type,
+                portal_types.manage_addTypeInformation(
+                    getattr(portal_types, realMetaType).meta_type,
                     id=portalTypeName, typeinfo_name=typeInfoName)
                 # Set the human readable title explicitly
-                portalType = getattr(self.portal_types, portalTypeName)
+                portalType = getattr(portal_types, portalTypeName)
                 portalType.title = portalTypeName
                 # base portal_types 'Meeting' and 'MeetingItem' are global_allow=False
                 portalType.global_allow = True
@@ -3555,6 +3555,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _updatePortalTypes(self):
         '''Reupdates the portal_types in this meeting config.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
         typesTool = api.portal.get_tool('portal_types')
         props = api.portal.get_tool('portal_properties').site_properties
         wfTool = api.portal.get_tool('portal_workflow')
@@ -3613,6 +3614,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             portalType.product = basePortalType.product
             portalType.filter_content_types = basePortalType.filter_content_types
             portalType.allowed_content_types = basePortalType.allowed_content_types
+            # for MeetingItem, make sure every 'meetingadvice' portal_types are in allowed_types
+            if basePortalType.id == 'MeetingItem':
+                advice_portal_types = tool.getAdvicePortalTypes(as_ids=True)
+                allowed = tuple(set(portalType.allowed_content_types + tuple(advice_portal_types)))
+                portalType.allowed_content_types = allowed
             portalType.allow_discussion = basePortalType.allow_discussion
             portalType.default_view = basePortalType.default_view
             portalType.view_methods = basePortalType.view_methods

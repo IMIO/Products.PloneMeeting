@@ -540,10 +540,10 @@ class Migrate_To_3_4(Migrator):
         logger.info('Cleaning MeetingUsers...')
         for cfg in self.tool.objectValues('MeetingConfig'):
             for user in cfg.meetingusers.objectValues('MeetingUser'):
-                if hasattr(user, 'openAnnexesInSeparateWindows'):
-                    delattr(user, 'openAnnexesInSeparateWindows')
-                if hasattr(user, 'mailFormat'):
-                    delattr(user, 'mailFormat')
+                if hasattr(aq_base(user), 'openAnnexesInSeparateWindows'):
+                    delattr(aq_base(user), 'openAnnexesInSeparateWindows')
+                if hasattr(aq_base(user), 'mailFormat'):
+                    delattr(aq_base(user), 'mailFormat')
         logger.info('Done.')
 
     def _updateAnnexIndex(self):
@@ -563,7 +563,9 @@ class Migrate_To_3_4(Migrator):
     def _manageAddImagePermission(self):
         '''Configure the 'ATContentTypes: Add Image' permission on meetings, items and advices.'''
         logger.info('Updating the \'ATContentTypes: Add Image\' permission...')
-        brains = self.portal.portal_catalog(meta_type=('Meeting', 'MeetingItem', 'meetingadvice'))
+        # manage multiple 'meetingadvice' portal_types
+        brains = self.portal.portal_catalog(meta_type=['Meeting', 'MeetingItem'] +
+                                            self.tool.getAdvicePortalTypes(as_ids=True))
         for brain in brains:
             obj = brain.getObject()
             _addImagePermission(obj)

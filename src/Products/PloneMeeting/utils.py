@@ -1473,6 +1473,52 @@ def _addImagePermission(obj):
     obj.manage_permission("ATContentTypes: Add Image", roles, acquire=False)
 
 
+def getTransitionToReachState(obj, state):
+    '''Given a state, return a transition that will set the obj in this state.'''
+    wfTool = api.portal.get_tool('portal_workflow')
+    wf = wfTool.getWorkflowsFor(obj)[0]
+    res = ''
+    availableTransitions = wfTool.getTransitionsFor(obj)
+    for transition in wf.transitions.values():
+        if not transition.id in availableTransitions:
+            continue
+        if transition.new_state_id == state:
+            res = transition.id
+            break
+    return res
+
+
+def findMeetingAdvicePortalType(context):
+    """ """
+    if context.portal_type.startswith('meetingadvice'):
+        return context.portal_type
+
+    # try to find the used portal_type from the published object, it is the case
+    # when adding an advice, the published is the form
+    published = context.REQUEST.get('PUBLISHED')
+    if not published:
+        # try to get it from context
+        if context.portal_type.startswith('meetingadvice'):
+            return context.portal_type
+        return 'meetingadvice'
+
+    # portal_type stored on published
+    if getattr(published, 'portal_type', None) and published.portal_type.startswith('meetingadvice'):
+        return published.portal_type
+
+    if not getattr(published, 'ti', None):
+        published = published.context
+        if not hasattr(published, 'ti') and hasattr(published, 'context'):
+            published = published.context
+
+    # adding the meetingadvice
+    if hasattr(published, 'ti'):
+        current_portal_type = published.ti.id
+    else:
+        current_portal_type = published.portal_type
+    return current_portal_type
+
+
 class AdvicesUpdatedEvent(ObjectEvent):
     implements(IAdvicesUpdatedEvent)
 

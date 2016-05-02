@@ -60,6 +60,7 @@ from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCas
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.utils import getFieldVersion
 from Products.PloneMeeting.utils import getLastEvent
+from Products.PloneMeeting.utils import getTransitionToReachState
 from Products.PloneMeeting.utils import ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR
 from Products.PloneMeeting.utils import setFieldFromAjax
 
@@ -297,7 +298,7 @@ class testMeetingItem(PloneMeetingTestCase):
                 self.do(item, 'backToItemFrozen')
                 self.failIf(item._checkAlreadyClonedToOtherMC(otherMeetingConfigId))
                 self.assertFalse(item.getItemClonedToOtherMC(otherMeetingConfigId))
-            transition = self._getTransitionToReachState(item, state)
+            transition = getTransitionToReachState(item, state)
             if not transition:
                 pm_logger.info("Could not test if item is sent to other meeting config in state '%s' !" % state)
                 needToBackToFrozen = False

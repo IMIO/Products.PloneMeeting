@@ -3337,7 +3337,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Returns a list of contained meetingadvice objects.'''
         res = []
         for obj in self.objectValues('Dexterity Container'):
-            if obj.portal_type == 'meetingadvice':
+            if obj.portal_type.startswith('meetingadvice'):
                 res.append(obj)
         return res
 
@@ -3383,6 +3383,21 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             elif groupId in powerAdvisers and itemState in group.getItemAdviceStates(cfg):
                 toAdd.append((groupId, group.getName()))
         return (toAdd, toEdit)
+
+    def _advicePortalTypeForAdviser(self, groupId):
+        """Return the meetingadvice portal_type that will be added for given p_groupId.
+           By default we always use meetingadvice but this makes it possible to have several
+           portal_types for meetingadvice."""
+        return 'meetingadvice'
+
+    def _adviceTypesForAdviser(self, meeting_advice_portal_type):
+        """Return the advice types (positive, negative, ...) for given p_meeting_advice_portal_type.
+           By default we always use every MeetingConfig.usedAdviceTypes but this is useful
+           when using several portal_types for meetingadvice and some may use particular advice types."""
+        item = self.getSelf()
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(item)
+        return cfg.getUsedAdviceTypes()
 
     def _adviceIsViewableForCurrentUser(self, cfg, isPowerObserver, isRestrictedPowerObserver, adviceInfo):
         '''
@@ -3946,19 +3961,20 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                delayIsNotExceeded and \
                adviceObj and \
                self.adapted()._adviceIsEditable(groupId):
-                # make sure the advice given by groupId is in state 'advice_under_edit'
-                if not adviceObj.queryState() == 'advice_under_edit':
+                # make sure the advice given by groupId is no more in state 'advice_given'
+                # if it is the case, we set it back to the advice initial_state
+                if adviceObj.queryState() == 'advice_given':
                     try:
-                        # make the guard_expr protecting 'backToAdviceUnderEdit' alright
-                        self.REQUEST.set('mayBackToAdviceUnderEdit', True)
+                        # make the guard_expr protecting 'mayBackToAdviceInitialState' alright
+                        self.REQUEST.set('mayBackToAdviceInitialState', True)
                         # add a comment for this transition triggered by the application
                         wf_comment = _('wf_transition_triggered_by_application')
-                        wfTool.doActionFor(adviceObj, 'backToAdviceUnderEdit', comment=wf_comment)
+                        wfTool.doActionFor(adviceObj, 'backToAdviceInitialState', comment=wf_comment)
                     except WorkflowException:
                         # if we have another workflow than default meetingadvice_workflow
                         # maybe we can not 'backToAdviceUnderEdit'
                         pass
-                    self.REQUEST.set('mayBackToAdviceUnderEdit', False)
+                    self.REQUEST.set('mayBackToAdviceInitialState', False)
                 self.adviceIndex[groupId]['advice_editable'] = True
             else:
                 # make sure it is no more editable

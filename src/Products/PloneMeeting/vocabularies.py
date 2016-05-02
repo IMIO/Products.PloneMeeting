@@ -538,9 +538,13 @@ class PMPortalTypesVocabulary(PortalTypesVocabularyFactory):
             res.append(SimpleTerm(meetingTypeName, meetingTypeName, translate(meetingTypeName,
                                                                               domain="plone",
                                                                               context=context.REQUEST)))
-            res.append(SimpleTerm('meetingadvice', 'meetingadvice', translate('MeetingAdvice',
-                                                                              domain="PloneMeeting",
-                                                                              context=context.REQUEST)))
+            # manage multiple 'meetingadvice' portal_types
+            for portal_type in tool.getAdvicePortalTypes():
+                res.append(SimpleTerm(portal_type.id,
+                                      portal_type.id,
+                                      translate(portal_type.title,
+                                                domain="PloneMeeting",
+                                                context=context.REQUEST)))
             return SimpleVocabulary(res)
         else:
             return super(PMPortalTypesVocabulary, self).__call__(context)

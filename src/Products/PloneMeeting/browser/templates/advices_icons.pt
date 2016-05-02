@@ -38,7 +38,7 @@
                          tal:attributes="src string:${view/portal_url}/${adviceToWarnIcon};"/>
                     <span tal:define="class_if_not_given string:advice_delay advice_delay_${adviceToWarnGroupId/delay_infos/delay_status};"
                           tal:content="adviceToWarnGroupId/delay_infos/left_delay"
-                          title="You still need to give an advice on this item respecting given delay."
+                          title="An advice on this item still needs to be given respecting given delay."
                           i18n:attributes="title"
                           tal:attributes="class class_if_not_given" />
                 </tal:defines>
@@ -47,13 +47,17 @@
 
             <tal:comment replace="nothing">Icon for adding an advice</tal:comment>
             <div tal:condition="python: advicesToAdd and not displayedAddIcon" style="display: inline;">
+            <tal:loop tal:repeat="advice_portal_type python: view.getAddableAdvicePortalTypes(advicesToAdd)">
               <a href="++add++meetingadvice"
                  class="link-overlay-pm-advice"
                  tal:define="global displayedAddIcon python: True"
-                 tal:attributes="href string:${item_url}/++add++meetingadvice">
-                <img i18n:attributes="title" title="advice_add"
-                     tal:attributes="src string:${view/portal_url}/new.png;" />
+                 tal:attributes="href string:${item_url}/++add++${advice_portal_type}">
+                <img i18n:attributes="title"
+                     title="#"
+                     tal:attributes="src string:${view/portal_url}/new_${advice_portal_type}.png;
+                                     title string:add_new_${advice_portal_type}" />
               </a>
+            </tal:loop>
             </div>
 
           </dt>
@@ -326,7 +330,7 @@
                 </tal:complementaryInfoMessage>
 
                 <tal:customAdviceMessage condition="customAdviceMessage">
-                    <tal:block replace="structure customAdviceMessage" />
+                    <div class="customAdviceMessage" tal:content="structure customAdviceMessage" />
                 </tal:customAdviceMessage>
 
                 <div tal:condition="python: advice['delay'] and advice['delay_started_on']" class="discreet" style="text-align: right;">
@@ -346,8 +350,9 @@
         <div class="no_advice_asked" style="display: inline">&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;</div>
         <div tal:condition="python: advicesToAdd" style="display: inline">
           <a href="++add++meetingadvice" class="link-overlay-pm-advice" tal:attributes="href string:${item_url}/++add++meetingadvice">
-            <img i18n:attributes="title" title="advice_add"
-                 tal:attributes="src string:${view/portal_url}/new.png;" />
+            <img i18n:attributes="title"
+                 title="add_new_meetingadvice"
+                 tal:attributes="src string:${view/portal_url}/new_meetingadvice.png;" />
           </a>
         </div>
   </div>

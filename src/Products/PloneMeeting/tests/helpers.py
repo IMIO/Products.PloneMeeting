@@ -120,19 +120,6 @@ class PloneMeetingTestingHelpers:
         meetingConfigNumber = self._determinateUsedMeetingConfigNumber()
         return getattr(self, ('TRANSITIONS_FOR_ACCEPTING_ITEMS_MEETING_%d' % meetingConfigNumber))
 
-    def _getTransitionToReachState(self, obj, state):
-        '''Given a state, return a transition that will set the obj in this state.'''
-        wf = self.wfTool.getWorkflowsFor(obj)[0]
-        res = ''
-        availableTransitions = self.transitions(obj)
-        for transition in wf.transitions.values():
-            if not transition.id in availableTransitions:
-                continue
-            if transition.new_state_id == state:
-                res = transition.id
-                break
-        return res
-
     def proposeItem(self, item, first_level=False):
         '''Propose passed p_item using TRANSITIONS_FOR_PROPOSING_ITEM_x.
            The p_meetingConfigNumber specify if we use meetingConfig or meetingConfig2, so

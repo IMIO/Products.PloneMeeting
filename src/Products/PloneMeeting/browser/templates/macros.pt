@@ -787,11 +787,9 @@ Needs moveUrl, firstId, lastId, obj</tal:comment>
 </metal:moveUpDown>
 
 <tal:comment replace="nothing">
-  This macro displays buttons for decided items transitions.
+  This macro displays buttons listing transitions to decide an item.
 </tal:comment>
 <metal:decideSeveralItems define-macro="showItemsDecidedTransitions" i18n:domain="PloneMeeting">
-    <tal:comment replace="nothing">We show at the end the buttons
-         for deciding several items at once</tal:comment>
     <p class="discreet"><span i18n:translate="decide_several_items_help">For every selected items, appy following action</span> :</p>
       <span tal:repeat="transition python: cfg.listTransitionsDecidingItem().items()"
           class="noPadding">
