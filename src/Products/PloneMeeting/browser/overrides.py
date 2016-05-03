@@ -547,6 +547,27 @@ class MeetingActionsPanelView(BaseActionsPanelView):
             return super(MeetingActionsPanelView, self).renderOwnDelete()
 
 
+class AdviceActionsPanelView(BaseActionsPanelView):
+    """
+      Specific actions displayed on a meetingadvice.
+    """
+    def __init__(self, context, request):
+        super(AdviceActionsPanelView, self).__init__(context, request)
+
+    @memoize_contextless
+    def _transitionsToConfirm(self):
+        """
+          Override, every available transitions will have to be confirmed.
+        """
+        wfTool = api.portal.get_tool('portal_workflow')
+        portal_type = self.context.portal_type
+        adviceWF = wfTool.getWorkflowsFor(portal_type)[0]
+        toConfirm = []
+        for transition in adviceWF.transitions:
+            toConfirm.append('{0}.{1}'.format(portal_type, transition))
+        return toConfirm
+
+
 class ConfigActionsPanelView(ActionsPanelView):
     """
       Actions panel used for elements of the configuration.

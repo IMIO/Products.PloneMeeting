@@ -89,6 +89,14 @@
             template="browser/actions_panel.pt"
             layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
             permission="zope2.View" />
+        <!-- Enable transition confirmation for transitions available on the meetingadvice -->
+        <browser:page
+            for="Products.PloneMeeting.content.advice.IMeetingAdvice"
+            name="actions_panel"
+            class="Products.PloneMeeting.browser.overrides.AdviceActionsPanelView"
+            template="browser/actions_panel.pt"
+            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+            permission="zope2.View" />
         <browser:page
             for="Products.PloneMeeting.interfaces.IMeetingFile"
             name="actions_panel"

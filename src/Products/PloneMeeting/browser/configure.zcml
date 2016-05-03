@@ -4,6 +4,7 @@
     xmlns:plone="http://namespaces.plone.org/plone">
 
     <!-- Viewlets -->
+    <!-- Display workflow state on the Meeting, MeetingItem and meetingadvice -->
     <browser:viewlet
         name="plone.belowcontenttitle.workflowstate"
         manager="plone.app.layout.viewlets.interfaces.IBelowContentTitle"
@@ -18,6 +19,13 @@
         for="Products.PloneMeeting.interfaces.IMeetingItem"
         permission="zope2.View"
         />
+    <browser:viewlet
+        name="plone.belowcontenttitle.workflowstate"
+        manager="plone.app.layout.viewlets.interfaces.IBelowContentTitle"
+        class="Products.PloneMeeting.browser.viewlets.WorkflowState"
+        for="Products.PloneMeeting.content.advice.IMeetingAdvice"
+        permission="zope2.View" />
+
     <browser:viewlet
         for="Products.PloneMeeting.interfaces.IMeeting"
         name="force-insert-normal"
@@ -52,6 +60,14 @@
             class="imio.actionspanel.browser.viewlets.ActionsPanelViewlet"
             template="browser/actions_panel_viewlet.pt"
             permission="zope2.View"/>
+        <browser:viewlet
+            name="plonemeeting.actionspanel"
+            for="Products.PloneMeeting.content.advice.IMeetingAdvice"
+            manager="plone.app.layout.viewlets.interfaces.IBelowContentBody"
+            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+            class="imio.actionspanel.browser.viewlets.ActionsPanelViewlet"
+            template="browser/actions_panel_viewlet.pt"
+            permission="zope2.View" />
     </configure>
 
     <!-- Use our own actionspanel viewlet for elements of the configuration -->
@@ -676,5 +692,13 @@
         class=".overrides.PMCKFinder"
         permission="zope2.View"
         />
+
+
+
+    <!-- Display the imio.actionspanel viewlet on the meetingadvice -->
+    <configure package="imio.actionspanel">
+    </configure>
+
+
 
 </configure>
