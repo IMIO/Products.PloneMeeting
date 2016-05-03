@@ -1323,7 +1323,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             items.remove(item)
             # set listType back to 'normal' if it was late
             # if it is another value (custom), we do not change it
-            if item.getListType == 'late':
+            if item.getListType() == 'late':
                 item.setListType('normal')
             item.reindexObject(idxs=['listType', ])
         except ValueError:

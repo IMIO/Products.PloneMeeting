@@ -833,9 +833,10 @@ class testMeeting(PloneMeetingTestCase):
 
     def test_pm_InsertItemForceNormal(self):
         '''Test that we may insert an item in a frozen meeting among normal items.'''
-        self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_list_type',
-                                                          'reverse': '0'}, ))
-        self._removeConfigObjectsFor(self.meetingConfig)
+        cfg = self.meetingConfig
+        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_list_type',
+                                           'reverse': '0'}, ))
+        self._removeConfigObjectsFor(cfg)
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=DateTime('2015/01/01'))
         meetingUID = meeting.UID()
@@ -861,6 +862,37 @@ class testMeeting(PloneMeetingTestCase):
         # items were inserted in right order
         self.assertEquals(meeting.getItems(ordered=True),
                           [item2, item1])
+
+    def test_pm_NormalAndLateItem(self):
+        """Test the normal/late mechanism when presenting items in a meeting."""
+        cfg = self.meetingConfig
+        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_list_type',
+                                           'reverse': '0'}, ))
+        self._removeConfigObjectsFor(cfg)
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2015/01/01'))
+        normalItem = self.create('MeetingItem')
+        lateItem = self.create('MeetingItem')
+        lateItem.setPreferredMeeting(meeting.UID())
+
+        # presenting an item in a before frozen state will insert it as normal
+        self.assertTrue(meeting.queryState() in meeting.getBeforeFrozenStates())
+        self.presentItem(normalItem)
+        self.assertEquals(normalItem.getListType(), 'normal')
+
+        # freeze the meeting and insert the late item
+        self.freezeMeeting(meeting)
+        self.assertFalse(meeting.queryState() in meeting.getBeforeFrozenStates())
+        self.presentItem(lateItem)
+        self.assertEquals(lateItem.getListType(), 'late')
+
+        # remove the late item, put the meeting back to a non frozen state
+        # and insert it again, it will be inserted as a normal item
+        self.backToState(meeting, 'created')
+        self.backToState(lateItem, 'validated')
+        self.assertTrue(meeting.queryState() in meeting.getBeforeFrozenStates())
+        self.presentItem(lateItem)
+        self.assertEquals(lateItem.getListType(), 'normal')
 
     def test_pm_RemoveOrDeleteLinkedItem(self):
         '''Test that removing or deleting a linked item works.'''
