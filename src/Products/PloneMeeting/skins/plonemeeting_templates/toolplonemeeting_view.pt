@@ -18,7 +18,7 @@
                    mode string:view;">
 
     <tal:hideToNonManagers condition="python: isRealManager or context.isManager(context)">
-    <p i18n:translate="plonemeeting_descr"></p>
+      <p class="tool_pm_descr" i18n:translate="plonemeeting_descr"></p>
 
       <tal:comment replace="nothing">Meeting configurations</tal:comment>
       <a name="MeetingConfig"></a>

@@ -1449,6 +1449,12 @@ div.customAdviceMessage,
 fieldset.field div {
     margin-top: 2.3em;
 }
+div.customAdviceMessage {
+    color: red;
+}
+#content-core p.tool_pm_descr {
+    margin-bottom: 0.5em;
+}
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */
