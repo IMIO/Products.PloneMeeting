@@ -196,8 +196,6 @@ body.template-meeting_available_items_view label.formQuestion {
 }
 table.no-style-table td {
     border: 0 !important;
-    padding: 0 !important;
-    margin: 0 !important;
 }
 
 #content table.no-style-table.advices {
@@ -1452,8 +1450,15 @@ fieldset.field div {
 div.customAdviceMessage {
     color: red;
 }
-#content-core p.tool_pm_descr {
+
+#content-core p.tool_pm_descr,
+#content-core p.backToItem {
     margin-bottom: 0.5em;
+}
+
+.meetingConfigActions form {
+    margin-bottom: 0.5em;
+    margin-top: 0.5em;
 }
 /* </dtml-with> */
 

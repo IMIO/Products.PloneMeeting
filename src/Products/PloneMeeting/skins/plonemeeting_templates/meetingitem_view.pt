@@ -428,7 +428,6 @@
     <tal:itemNavigation tal:condition="python: meeting">
       <tal:itemNavigation replace="structure context/@@item-navigation-widget" />
     </tal:itemNavigation>
-    <br />
 
     <tal:comment replace="nothing">Fields that appear only if the item is defined in a configuration</tal:comment>
     <tal:itemInConfig condition="context/isDefinedInTool">
