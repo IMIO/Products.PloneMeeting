@@ -3290,7 +3290,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ("nil", translate('nil', domain=d, context=self.REQUEST)),
         ))
         for extra_advice_type in EXTRA_ADVICE_TYPES:
-            res.add((extra_advice_type, translate(extra_advice_type, domain=d, context=self.REQUEST)))
+            res.add(extra_advice_type, translate(extra_advice_type, domain=d, context=self.REQUEST))
         return res
 
     security.declarePrivate('listAdviceStyles')
