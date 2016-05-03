@@ -75,6 +75,7 @@ from Products.PloneMeeting.config import CLONE_TO_OTHER_MC_EMERGENCY_ACTION_SUFF
 from Products.PloneMeeting.config import DEFAULT_ITEM_COLUMNS
 from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
 from Products.PloneMeeting.config import DEFAULT_MEETING_COLUMNS
+from Products.PloneMeeting.config import EXTRA_ADVICE_TYPES
 from Products.PloneMeeting.config import ITEM_ICON_COLORS
 from Products.PloneMeeting.config import ITEM_INSERT_METHODS
 from Products.PloneMeeting.config import MEETING_CONFIG
@@ -3288,6 +3289,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ("negative", translate('negative', domain=d, context=self.REQUEST)),
             ("nil", translate('nil', domain=d, context=self.REQUEST)),
         ))
+        for extra_advice_type in EXTRA_ADVICE_TYPES:
+            res.add((extra_advice_type, translate(extra_advice_type, domain=d, context=self.REQUEST)))
         return res
 
     security.declarePrivate('listAdviceStyles')
