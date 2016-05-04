@@ -749,6 +749,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # create an item with group 'vendors', pmManager is not able to trigger
         # any transition on it
         cfg = self.meetingConfig
+        cfgId = cfg.getId()
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
         cfg.setUseGroupsAsCategories(True)
@@ -772,12 +773,14 @@ class testMeetingItem(PloneMeetingTestCase):
         self.setMeetingConfig(cfg2Id)
         self.create('Meeting', date=DateTime() + 1)
         self.assertFalse(self.transitions(vendorsItem))
+
         # item is automatically sent when it is validated
+        self.setMeetingConfig(cfgId)
         self.validateItem(vendorsItem)
 
         # and it has been presented
         sentItem = vendorsItem.getItemClonedToOtherMC(destMeetingConfigId=cfg2Id)
-        self.assertTrue(sentItem.queryState() == 'presented')
+        self.assertEquals(sentItem.queryState(), 'presented')
 
     def test_pm_SendItemToOtherMCUsingEmergency(self):
         '''Test when sending an item to another MeetingConfig and emergency is asked,

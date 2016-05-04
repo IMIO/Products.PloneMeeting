@@ -439,7 +439,8 @@ class testSearches(PloneMeetingTestCase):
                            'review_state': {'query': self.WF_STATE_NAME_MAPPINGS['proposed']}})
 
         # activate 'prevalidation' if necessary
-        if 'prereviewers' in MEETINGREVIEWERS:
+        if 'prereviewers' in MEETINGREVIEWERS and \
+           not 'pre_validation' in cfg.getWorkflowAdaptations():
             cfg.setWorkflowAdaptations('pre_validation')
             performWorkflowAdaptations(cfg, logger=pm_logger)
         # now do the query
@@ -597,10 +598,11 @@ class testSearches(PloneMeetingTestCase):
         # this, but if a subplugin has the right workflow behaviour, this can works also
         # so if we have 'pre_validation_keep_reviewer_permissions' apply it, either,
         # check if self.runSearchItemsToValidateOfEveryReviewerLevelsAndLowerLevelsTest() is True
-        if not 'pre_validation_keep_reviewer_permissions' and not \
-           self.runSearchItemsToValidateOfEveryReviewerLevelsAndLowerLevelsTest():
+        if not 'pre_validation_keep_reviewer_permissions' in cfg.listWorkflowAdaptations() and \
+           not self.runSearchItemsToValidateOfEveryReviewerLevelsAndLowerLevelsTest():
             logger.info("Could not launch test 'test_pm_SearchItemsToValidateOfEveryReviewerLevelsAndLowerLevels'"
                         "because we need a correctly configured workflow.")
+            return
         if 'pre_validation_keep_reviewer_permissions' in cfg.listWorkflowAdaptations():
             cfg.setWorkflowAdaptations(('pre_validation_keep_reviewer_permissions', ))
             logger = logging.getLogger('PloneMeeting: testing')
