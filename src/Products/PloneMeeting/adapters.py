@@ -778,6 +778,7 @@ class CompoundCriterionBaseAdapter(object):
 
     def __init__(self, context):
         self.context = context
+        self.request = self.context.REQUEST
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
 
@@ -789,29 +790,50 @@ class CompoundCriterionBaseAdapter(object):
 
 class ItemsOfMyGroupsAdapter(CompoundCriterionBaseAdapter):
 
+    def itemsofmygroups_cachekey(method, self):
+        '''cachekey method for every CompoundCriterion adapters.'''
+        return str(self.request._debug)
+
     @property
-    def query(self):
+    @ram.cache(itemsofmygroups_cachekey)
+    def query_itemsofmygroups(self):
         '''Queries all items of groups of the current user, no matter wich suffix
            of the group the user is in.'''
         userGroupIds = [mGroup.getId() for mGroup in self.tool.getGroupsForUser()]
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 'getProposingGroup': {'query': userGroupIds}, }
 
+    # we may not ram.cache methods in same file with same name...
+    query = query_itemsofmygroups
+
 
 class MyItemsTakenOverAdapter(CompoundCriterionBaseAdapter):
 
+    def myitemstakenover_cachekey(method, self):
+        '''cachekey method for every CompoundCriterion adapters.'''
+        return str(self.request._debug)
+
     @property
-    def query(self):
+    @ram.cache(myitemstakenover_cachekey)
+    def query_myitemstakenover(self):
         '''Queries all items that current user take over.'''
         member = api.user.get_current()
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 'getTakenOverBy': {'query': member.getId()}, }
 
+    # we may not ram.cache methods in same file with same name...
+    query = query_myitemstakenover
+
 
 class ItemsInCopyAdapter(CompoundCriterionBaseAdapter):
 
+    def itemsincopy_cachekey(method, self):
+        '''cachekey method for every CompoundCriterion adapters.'''
+        return str(self.request._debug)
+
     @property
-    def query(self):
+    @ram.cache(itemsincopy_cachekey)
+    def query_itemsincopy(self):
         '''Queries all items for which the current user is in copyGroups.'''
         groupsTool = api.portal.get_tool('portal_groups')
         member = api.user.get_current()
@@ -820,11 +842,19 @@ class ItemsInCopyAdapter(CompoundCriterionBaseAdapter):
                 # KeywordIndex 'getCopyGroups' use 'OR' by default
                 'getCopyGroups': {'query': userGroups}, }
 
+    # we may not ram.cache methods in same file with same name...
+    query = query_itemsincopy
+
 
 class ItemsToValidateOfHighestHierarchicLevelAdapter(CompoundCriterionBaseAdapter):
 
+    def itemstovalidateofhighesthierarchiclevel_query_cachekey(method, self):
+        '''cachekey method for every CompoundCriterion adapters.'''
+        return str(self.request._debug)
+
     @property
-    def query(self):
+    @ram.cache(itemstovalidateofhighesthierarchiclevel_query_cachekey)
+    def query_itemstovalidateofhighesthierarchiclevel(self):
         '''Return a list of items that the user can validate regarding his highest hierarchic level.
            So if a user is 'prereviewer' and 'reviewier', the search will only return items
            in state corresponding to his 'reviewer' role.'''
@@ -852,11 +882,19 @@ class ItemsToValidateOfHighestHierarchicLevelAdapter(CompoundCriterionBaseAdapte
                 'getProposingGroup': {'query': res},
                 'review_state': {'query': review_state}, }
 
+    # we may not ram.cache methods in same file with same name...
+    query = query_itemstovalidateofhighesthierarchiclevel
+
 
 class ItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(CompoundCriterionBaseAdapter):
 
+    def itemstovalidateofeveryreviewerlevelsandlowerlevels_cachekey(method, self):
+        '''cachekey method for every CompoundCriterion adapters.'''
+        return str(self.request._debug)
+
     @property
-    def query(self):
+    @ram.cache(itemstovalidateofeveryreviewerlevelsandlowerlevels_cachekey)
+    def query_itemstovalidateofeveryreviewerlevelsandlowerlevels(self):
         '''This will check for user highest reviewer level of each of his groups and return these items and
            items of lower reviewer levels.
            This search works if the workflow manage reviewer levels where higher reviewer level
@@ -907,11 +945,19 @@ class ItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(CompoundCriterio
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 'reviewProcessInfo': {'query': reviewProcessInfos}, }
 
+    # we may not ram.cache methods in same file with same name...
+    query = query_itemstovalidateofeveryreviewerlevelsandlowerlevels
+
 
 class ItemsToValidateOfMyReviewerGroupsAdapter(CompoundCriterionBaseAdapter):
 
+    def itemstovalidateofmyreviewergroups_cachekey(method, self):
+        '''cachekey method for every CompoundCriterion adapters.'''
+        return str(self.request._debug)
+
     @property
-    def query(self):
+    @ram.cache(itemstovalidateofmyreviewergroups_cachekey)
+    def query_itemstovalidateofmyreviewergroups(self):
         '''Return a list of items that the user could validate.  So it returns every items the current
            user is able to validate at any state of the validation process.  So if a user is 'prereviewer'
            and 'reviewer' for a group, the search will return items in both states.'''
@@ -939,11 +985,19 @@ class ItemsToValidateOfMyReviewerGroupsAdapter(CompoundCriterionBaseAdapter):
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 'reviewProcessInfo': {'query': reviewProcessInfos}, }
 
+    # we may not ram.cache methods in same file with same name...
+    query = query_itemstovalidateofmyreviewergroups
+
 
 class ItemsToCorrectAdapter(CompoundCriterionBaseAdapter):
 
+    def itemstocorrect_cachekey(method, self):
+        '''cachekey method for every CompoundCriterion adapters.'''
+        return str(self.request._debug)
+
     @property
-    def query(self):
+    @ram.cache(itemstocorrect_cachekey)
+    def query_itemstocorrect(self):
         '''Queries all items that current user may correct.'''
         # get the state 'returned_to_proposing_group' and check what roles are able edit
         # so we will get groups suffixes linked to these roles and find relevant proposingGroups
@@ -962,11 +1016,19 @@ class ItemsToCorrectAdapter(CompoundCriterionBaseAdapter):
 
         return FIND_NOTHING_QUERY
 
+    # we may not ram.cache methods in same file with same name...
+    query = query_itemstocorrect
+
 
 class ItemsToAdviceAdapter(CompoundCriterionBaseAdapter):
 
+    def itemstoadvice_cachekey(method, self):
+        '''cachekey method for query.'''
+        return str(self.context.REQUEST._debug)
+
     @property
-    def query(self):
+    @ram.cache(itemstoadvice_cachekey)
+    def query_itemstoadvice(self):
         '''Queries all items for which the current user must give an advice.'''
         groups = self.tool.getGroupsForUser(suffixes=['advisers'])
         # Add a '_advice_not_given' at the end of every group id: we want "not given" advices.
@@ -980,11 +1042,19 @@ class ItemsToAdviceAdapter(CompoundCriterionBaseAdapter):
                 # KeywordIndex 'indexAdvisers' use 'OR' by default
                 'indexAdvisers': {'query': groupIds}, }
 
+    # we may not ram.cache methods in same file with same name...
+    query = query_itemstoadvice
+
 
 class ItemsToAdviceWithoutDelayAdapter(CompoundCriterionBaseAdapter):
 
+    def itemstoadvicewithoutdelay_cachekey(method, self):
+        '''cachekey method for every CompoundCriterion adapters.'''
+        return str(self.request._debug)
+
     @property
-    def query(self):
+    @ram.cache(itemstoadvicewithoutdelay_cachekey)
+    def query_itemstoadvicewithoutdelay(self):
         '''Queries all items for which the current user must give an advice without delay.'''
         groups = self.tool.getGroupsForUser(suffixes=['advisers'])
         # Add a '_advice_not_given' at the end of every group id: we want "not given" advices.
@@ -996,11 +1066,19 @@ class ItemsToAdviceWithoutDelayAdapter(CompoundCriterionBaseAdapter):
                 # KeywordIndex 'indexAdvisers' use 'OR' by default
                 'indexAdvisers': {'query': groupIds}, }
 
+    # we may not ram.cache methods in same file with same name...
+    query = query_itemstoadvicewithoutdelay
+
 
 class ItemsToAdviceWithDelayAdapter(CompoundCriterionBaseAdapter):
 
+    def itemstoadvicewithdelay_cachekey(method, self):
+        '''cachekey method for every CompoundCriterion adapters.'''
+        return str(self.request._debug)
+
     @property
-    def query(self):
+    @ram.cache(itemstoadvicewithdelay_cachekey)
+    def query_itemstoadvicewithdelay(self):
         '''Queries all items for which the current user must give an advice with delay.'''
 
         groups = self.tool.getGroupsForUser(suffixes=['advisers'])
@@ -1013,11 +1091,19 @@ class ItemsToAdviceWithDelayAdapter(CompoundCriterionBaseAdapter):
                 # KeywordIndex 'indexAdvisers' use 'OR' by default
                 'indexAdvisers': {'query': groupIds}, }
 
+    # we may not ram.cache methods in same file with same name...
+    query = query_itemstoadvicewithdelay
+
 
 class ItemsToAdviceWithExceededDelayAdapter(CompoundCriterionBaseAdapter):
 
+    def itemstoadvicewithexceededdelay_cachekey(method, self):
+        '''cachekey method for every CompoundCriterion adapters.'''
+        return str(self.request._debug)
+
     @property
-    def query(self):
+    @ram.cache(itemstoadvicewithexceededdelay_cachekey)
+    def query_itemstoadvicewithexceededdelay(self):
         '''Queries all items for which the current user must give an advice with exceeded delay.'''
         groups = self.tool.getGroupsForUser(suffixes=['advisers'])
         # Add a '_delay_exceeded' at the end of every group id: we want "not given" advices.
@@ -1028,11 +1114,19 @@ class ItemsToAdviceWithExceededDelayAdapter(CompoundCriterionBaseAdapter):
                 # KeywordIndex 'indexAdvisers' use 'OR' by default
                 'indexAdvisers': {'query': groupIds}, }
 
+    # we may not ram.cache methods in same file with same name...
+    query = query_itemstoadvicewithexceededdelay
+
 
 class AdvisedItemsAdapter(CompoundCriterionBaseAdapter):
 
+    def adviseditems_cachekey(method, self):
+        '''cachekey method for every CompoundCriterion adapters.'''
+        return str(self.request._debug)
+
     @property
-    def query(self):
+    @ram.cache(adviseditems_cachekey)
+    def query_adviseditems(self):
         '''Queries items for which an advice has been given.'''
         groups = self.tool.getGroupsForUser(suffixes=['advisers'])
         # advised items are items that has an advice in a particular review_state
@@ -1055,11 +1149,19 @@ class AdvisedItemsAdapter(CompoundCriterionBaseAdapter):
                 # KeywordIndex 'indexAdvisers' use 'OR' by default
                 'indexAdvisers': {'query': groupIds}, }
 
+    # we may not ram.cache methods in same file with same name...
+    query = query_adviseditems
+
 
 class AdvisedItemsWithDelayAdapter(CompoundCriterionBaseAdapter):
 
+    def adviseditemswithdelay_cachekey(method, self):
+        '''cachekey method for every CompoundCriterion adapters.'''
+        return str(self.request._debug)
+
     @property
-    def query(self):
+    @ram.cache(adviseditemswithdelay_cachekey)
+    def query_adviseditemswithdelay(self):
         '''Queries items for which an advice has been given with delay.'''
         groups = self.tool.getGroupsForUser(suffixes=['advisers'])
         # advised items are items that has an advice in a particular review_state
@@ -1081,11 +1183,22 @@ class AdvisedItemsWithDelayAdapter(CompoundCriterionBaseAdapter):
                 # KeywordIndex 'indexAdvisers' use 'OR' by default
                 'indexAdvisers': {'query': groupIds}, }
 
+    # we may not ram.cache methods in same file with same name...
+    query = query_adviseditemswithdelay
+
 
 class DecidedItemsAdapter(CompoundCriterionBaseAdapter):
 
+    def decideditems_cachekey(method, self):
+        '''cachekey method for every CompoundCriterion adapters.'''
+        return str(self.request._debug)
+
     @property
-    def query(self):
+    @ram.cache(decideditems_cachekey)
+    def query_decideditems(self):
         '''Queries decided items.'''
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 'review_state': {'query': self.cfg.getItemDecidedStates()}, }
+
+    # we may not ram.cache methods in same file with same name...
+    query = query_decideditems
