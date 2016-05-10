@@ -372,6 +372,10 @@ class MeetingItemWorkflowConditions:
 
     def mayWait_advices_from_itemcreated(self):
         res = False
+        if not self.context.getCategory():
+            return No(translate('required_category_ko',
+                                domain="PloneMeeting",
+                                context=self.context.REQUEST))
         if checkPermission(ReviewPortalContent, self.context):
             res = True
         return res

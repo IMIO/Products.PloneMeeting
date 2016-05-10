@@ -2945,6 +2945,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             return msg
 
         catalog = api.portal.get_tool('portal_catalog')
+        wfTool = api.portal.get_tool('portal_workflow')
 
         # validate new added workflowAdaptations regarding existing items and meetings
         added = set(values).difference(set(self.getWorkflowAdaptations()))
@@ -2989,7 +2990,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if 'waiting_advices' in removed:
             # this will remove the 'waiting_advices' state for MeetingItem
             # check that no more items are in this state
-            if catalog(portal_type=self.getItemTypeName(), review_state='waiting_advices'):
+            # get every 'waiting_advices'-like states, we could have 'itemcreated_waiting_advices'
+            # and 'proposed_waiting_advices' for example
+            itemWF = wfTool.getWorkflowsFor(self.getItemTypeName())[0]
+            waiting_advices_states = [state for state in itemWF.states if 'waiting_advices' in state]
+            if catalog(portal_type=self.getItemTypeName(), review_state=waiting_advices_states):
                 return translate('wa_removed_waiting_advices_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)

@@ -249,6 +249,8 @@ div.pm_search_no_result_info {
 .label-state-proposed_waiting_advices,
 .state-prevalidated,
 .label-state-prevalidated,
+.state-prevalidated_waiting_advices,
+.label-state-prevalidated_waiting_advices,
 .state-waiting_advices,
 .label-state-waiting_advices {
     color: DarkOrange !important;

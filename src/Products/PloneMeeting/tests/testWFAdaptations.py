@@ -358,7 +358,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         proposedState = item.queryState()
         self._setItemToWaitingAdvices(item,
                                       'wait_advices_from_{0}'.format(proposedState))
-        self.assertEqual(item.queryState(), 'waiting_advices')
+        self.assertTrue('waiting_advices' in item.queryState())
         self.failIf(cfg.validate_workflowAdaptations(('waiting_advices', )))
         self.assertEquals(
             cfg.validate_workflowAdaptations(()),
