@@ -370,6 +370,7 @@ class testWFAdaptations(PloneMeetingTestCase):
             waiting_advices_removed_error)
 
         # make wfAdaptation selectable
+        self.changeUser(self._userAbleToBackFromWaitingAdvices(item.queryState()))
         self.do(item, 'backTo_{0}_from_waiting_advices'.format(proposedState))
         self.failIf(cfg.validate_workflowAdaptations(()))
 
@@ -401,6 +402,7 @@ class testWFAdaptations(PloneMeetingTestCase):
             return_to_proposing_group_removed_error)
 
         # make wfAdaptation selectable
+        self.changeUser(self._userAbleToBackFromWaitingAdvices(item.queryState()))
         self.do(item, 'backTo_itemfrozen_from_returned_to_proposing_group')
         self.failIf(cfg.validate_workflowAdaptations(()))
 
@@ -1624,7 +1626,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(View, item))
         self.assertFalse(self.hasPermission(ModifyPortalContent, item))
         self.assertFalse(self.transitions(item))
-        self.changeUser('pmReviewer1')
+        self.changeUser(self._userAbleToBackFromWaitingAdvices(item.queryState()))
         self.do(item, 'backTo_%s_from_waiting_advices' % self.WF_STATE_NAME_MAPPINGS['proposed'])
         self.assertEquals(item.queryState(), self.WF_STATE_NAME_MAPPINGS['proposed'])
 
@@ -1660,6 +1662,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._setItemToWaitingAdvices(item, 'wait_advices_from_itemcreated')
         self.assertEquals(item.queryState(), 'itemcreated_waiting_advices')
         self.assertTrue(self.hasPermission(ModifyPortalContent, item))
+        self.changeUser(self._userAbleToBackFromWaitingAdvices(item.queryState()))
         self.do(item, 'backTo_itemcreated_from_waiting_advices')
         self.assertEquals(item.queryState(), 'itemcreated')
 
@@ -1670,6 +1673,13 @@ class testWFAdaptations(PloneMeetingTestCase):
         """Done to be overrided, sometimes it is necessary to do something more to be able
            to set item to 'waiting_advices'."""
         self.do(item, transition)
+
+    def _userAbleToBackFromWaitingAdvices(self, currentState):
+        """Return username able to back from waiting advices."""
+        if currentState == 'itemcreated_waiting_advices':
+            return 'pmCreator1'
+        else:
+            return 'pmReviewer1'
 
     def _afterItemCreatedWaitingAdviceWithPrevalidation(self, item):
         """Made to be overrided..."""
