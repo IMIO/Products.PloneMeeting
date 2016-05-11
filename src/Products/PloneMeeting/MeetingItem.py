@@ -408,7 +408,8 @@ class MeetingItemWorkflowConditions:
         wfTool = api.portal.get_tool('portal_workflow')
         itemWF = wfTool.getWorkflowsFor(self.context)[0]
         originState = itemWF.states[originStateId]
-        waiting_advices_transition = [tr for tr in originState.getTransitions() if tr.startswith('wait_advices_from')][0]
+        waiting_advices_transition = [tr for tr in originState.getTransitions()
+                                      if tr.startswith('wait_advices_from')][0]
         return itemWF.transitions[waiting_advices_transition].new_state_id
 
     security.declarePublic('mayWait_advices_from_itemcreated')
