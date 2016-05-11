@@ -401,8 +401,7 @@ class testWFAdaptations(PloneMeetingTestCase):
             cfg.validate_workflowAdaptations(()),
             return_to_proposing_group_removed_error)
 
-        # make wfAdaptation selectable
-        self.changeUser(self._userAbleToBackFromWaitingAdvices(item.queryState()))
+        # make wfAdaptation unselectable
         self.do(item, 'backTo_itemfrozen_from_returned_to_proposing_group')
         self.failIf(cfg.validate_workflowAdaptations(()))
 
