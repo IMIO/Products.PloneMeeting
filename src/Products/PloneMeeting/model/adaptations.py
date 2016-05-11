@@ -625,10 +625,10 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                             updateCollectionCriterion(collection, criterion['i'],
                                                       tuple(criterion['v']) + ('decisions_published', ))
             logger.info(WF_APPLIED % ("hide_decisions_when_under_writing", meetingConfig.getId()))
-        # "waiting_advices" add state 'waiting_advices' in the item workflow
+        # "waiting_advices" add state 'xxx_waiting_advices' in the item workflow
         # it is a go/back state from the WAITING_ADVICES_FROM_STATES item list of states.
         # It is made to isolate an item in a state where it is no more editable but some advices may be given
-        # if we have several 'waiting_advices' states added,
+        # if we have several 'xxx_waiting_advices' states added,
         # it is prefixed with originState1__or__originState2 like 'proposed__or__prevalidated_waiting_advices'
         elif wfAdaptation == 'waiting_advices':
             wf = itemWorkflow
@@ -638,12 +638,8 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
             for field in MeetingItem.schema.fields():
                 if field.write_permission and not field.write_permission in edit_permissions:
                     edit_permissions.append(field.write_permission)
-            # new_state_id pattern changes depending on number of added states
-            if len(WAITING_ADVICES_FROM_STATES) == 1:
-                NEW_STATE_ID_PATTERN = 'waiting_advices'
-            else:
-                NEW_STATE_ID_PATTERN = '{0}_waiting_advices'
-            # for transition to 'waiting_advices', we need to know where we are coming from
+            NEW_STATE_ID_PATTERN = '{0}_waiting_advices'
+            # for transition to 'xxx_waiting_advices', we need to know where we are coming from
             FROM_TRANSITION_ID_PATTERN = 'wait_advices_from_{0}'
             for infos in WAITING_ADVICES_FROM_STATES:
                 # wipeout 'from_states' and 'back_states' to remove unexisting ones
@@ -683,8 +679,8 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                     new_state.setProperties(title=new_state_id, description='',
                                             transitions=back_transition_ids)
                     # store roles having the 'Review portal content' permission
-                    # from states going to 'waiting_advices' so it will be used
-                    # on the waiting_advices states for 'Review portal content' permission
+                    # from states going to 'xxx_waiting_advices' so it will be used
+                    # on the 'xxx_waiting_advices' states for 'Review portal content' permission
                     # every roles able to 'wait_advices' are able to get it back
                     review_portal_content_roles = []
                     for from_state_id in from_state_ids:

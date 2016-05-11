@@ -39,7 +39,6 @@ from Products.PloneMeeting.config import WriteItemMeetingManagerFields
 
 from Products.PloneMeeting.model.adaptations import RETURN_TO_PROPOSING_GROUP_FROM_ITEM_STATES
 from Products.PloneMeeting.model.adaptations import RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE
-from Products.PloneMeeting.model.adaptations import WAITING_ADVICES_FROM_STATES
 from Products.PloneMeeting.model.adaptations import WF_NOT_CREATOR_EDITS_UNLESS_CLOSED
 
 
@@ -343,8 +342,12 @@ class testWFAdaptations(PloneMeetingTestCase):
            'waiting_advices'."""
         # ease override by subproducts
         cfg = self.meetingConfig
-        if not 'pre_validation' in cfg.listWorkflowAdaptations():
+        if not 'waiting_advices' in cfg.listWorkflowAdaptations():
             return
+
+        waiting_advices_proposed_state = '{0}_waiting_advices'.format(self.WF_STATE_NAME_MAPPINGS['proposed'])
+        self.tool.vendors.setItemAdviceStates(
+            ("{0}__state__{1}".format(cfg.getId(), waiting_advices_proposed_state),))
 
         waiting_advices_removed_error = translate('wa_removed_waiting_advices_error',
                                                   domain='PloneMeeting',
@@ -354,11 +357,13 @@ class testWFAdaptations(PloneMeetingTestCase):
         performWorkflowAdaptations(cfg, logger=pm_logger)
 
         item = self.create('MeetingItem')
+        item.setOptionalAdvisers(('vendors', ))
         self.proposeItem(item)
         proposedState = item.queryState()
         self._setItemToWaitingAdvices(item,
                                       'wait_advices_from_{0}'.format(proposedState))
-        self.assertTrue('waiting_advices' in item.queryState())
+        self.assertEqual(item.queryState(),
+                         '{0}_waiting_advices'.format(proposedState))
         self.failIf(cfg.validate_workflowAdaptations(('waiting_advices', )))
         self.assertEquals(
             cfg.validate_workflowAdaptations(()),
@@ -1424,23 +1429,6 @@ class testWFAdaptations(PloneMeetingTestCase):
         cfg.at_post_edit_script()
         self._waiting_advices_active()
 
-        # if pre_validation is active, it works too
-        if not 'pre_validation' in cfg.listWorkflowAdaptations():
-            return
-
-        cfg.setWorkflowAdaptations(('pre_validation', 'waiting_advices'))
-        adaptations.WAITING_ADVICES_FROM_STATES = (
-            {'from_states': (self.WF_STATE_NAME_MAPPINGS['proposed_first_level'],
-                             'prevalidated', ),
-             'back_states': (self.WF_STATE_NAME_MAPPINGS['proposed_first_level'],
-                             'prevalidated', ),
-             'perm_cloned_states': (self.WF_STATE_NAME_MAPPINGS['proposed_first_level'],
-                                    'prevalidated', ),
-             'remove_modify_access': True},)
-        # use cfg.at_post_edit_script so WFs are correct
-        cfg.at_post_edit_script()
-        self._waiting_advices_with_prevalidation_active()
-
         # back to original configuration
         adaptations.WAITING_ADVICES_FROM_STATES = original_WAITING_ADVICES_FROM_STATES
 
@@ -1455,7 +1443,9 @@ class testWFAdaptations(PloneMeetingTestCase):
         cfg = self.meetingConfig
         # by default it is linked to the 'proposed' state
         itemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
-        self.assertTrue('waiting_advices' in itemWF.states)
+        waiting_state_name = '{0}_waiting_advices'.format(self.WF_STATE_NAME_MAPPINGS['proposed_first_level'])
+        waiting_transition_name = 'wait_advices_from_{0}'.format(self.WF_STATE_NAME_MAPPINGS['proposed_first_level'])
+        self.assertTrue(waiting_state_name in itemWF.states)
 
         # right, create an item and set it to 'waiting_advices'
         self.changeUser('pmCreator1')
@@ -1465,12 +1455,26 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertFalse(self.transitions(item))
         # 'pmReviewer1' may do it but by default is not able to edit it
         self.changeUser('pmReviewer1')
-        self._setItemToWaitingAdvices(item,
-                                      'wait_advices_from_%s' %
-                                      self.WF_STATE_NAME_MAPPINGS['proposed_first_level'])
-        # in a 'waiting_advices'-like state
-        # it could be 'waiting_advices' or 'itemcreated_waiting_advices' for example
-        self.assertTrue('waiting_advices' in item.queryState())
+        # no advice asked so a No() instance is returned for now
+        self.assertFalse(waiting_transition_name in self.transitions(item))
+        advice_required_to_ask_advices = translate('advice_required_to_ask_advices',
+                                                   domain='PloneMeeting',
+                                                   context=self.request)
+        methodName = 'mayWait_advices_from_{0}'.format(self.WF_STATE_NAME_MAPPINGS['proposed_first_level'])
+        self.assertEqual(getattr(item.wfConditions(), methodName)().msg,
+                         advice_required_to_ask_advices)
+        # ask an advice so transition is available
+        item.setOptionalAdvisers(('vendors', ))
+        item.at_post_edit_script()
+        # still not available because no advice may be asked in state waiting_state_name
+        self.assertFalse(waiting_state_name in self.tool.vendors.getItemAdviceStates())
+        self.assertFalse(waiting_transition_name in self.transitions(item))
+
+        # do things work
+        self.tool.vendors.setItemAdviceStates(("{0}__state__{1}".format(cfg.getId(), waiting_state_name), ))
+        self.assertTrue(waiting_transition_name in self.transitions(item))
+        self._setItemToWaitingAdvices(item, waiting_transition_name)
+        self.assertEqual(item.queryState(), waiting_state_name)
         self.assertFalse(self.hasPermission(ModifyPortalContent, item))
 
         # pmCreator1 may view but not edit
@@ -1484,23 +1488,50 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.do(item, 'backTo_%s_from_waiting_advices' % self.WF_STATE_NAME_MAPPINGS['proposed_first_level'])
         self.assertEquals(item.queryState(), self.WF_STATE_NAME_MAPPINGS['proposed_first_level'])
 
-    def _waiting_advices_with_prevalidation_active(self):
+    def test_pm_WFA_waiting_advices_with_prevalidation(self):
         '''It can also work from several states, if pre_validation is enabled
            it is possible to go from 'proposed' and 'prevalidated' to 'waiting_advices'
            and to go back to both states.'''
         cfg = self.meetingConfig
+        if not 'pre_validation' in cfg.listWorkflowAdaptations() or \
+           not 'waiting_advices' in cfg.listWorkflowAdaptations():
+            return
+
+        wfAdaptations = list(cfg.getWorkflowAdaptations())
+        if not 'pre_validation' in wfAdaptations:
+            wfAdaptations.append('pre_validation')
+        if not 'waiting_advices' in wfAdaptations:
+            wfAdaptations.append('waiting_advices')
+        cfg.setWorkflowAdaptations(tuple(wfAdaptations))
+        from Products.PloneMeeting.model import adaptations
+        original_WAITING_ADVICES_FROM_STATES = adaptations.WAITING_ADVICES_FROM_STATES
+        adaptations.WAITING_ADVICES_FROM_STATES = (
+            {'from_states': (self.WF_STATE_NAME_MAPPINGS['proposed_first_level'],
+                             'prevalidated', ),
+             'back_states': (self.WF_STATE_NAME_MAPPINGS['proposed_first_level'],
+                             'prevalidated', ),
+             'perm_cloned_states': (self.WF_STATE_NAME_MAPPINGS['proposed_first_level'],
+                                    'prevalidated', ),
+             'remove_modify_access': True},)
+        cfg.at_post_edit_script()
+        waiting_advices_state = '{0}__or__prevalidated_waiting_advices'.format(
+            self.WF_STATE_NAME_MAPPINGS['proposed_first_level'])
+        self.tool.vendors.setItemAdviceStates(("{0}__state__{1}".format(cfg.getId(), waiting_advices_state), ))
+
         # by default it is linked to the 'proposed' state
         itemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
-        # we have a least a 'waiting_advices'-like state
-        self.assertTrue('waiting_advices' in str(itemWF.states.keys()))
+        self.assertTrue(waiting_advices_state in itemWF.states)
 
         # suffixed transitions are not added
         self.assertFalse('%s_waiting_advices' % self.WF_STATE_NAME_MAPPINGS['proposed_first_level']
                          in itemWF.states)
         self.assertFalse('prevalidated_waiting_advices' in itemWF.states)
-        self.assertTrue('wait_advices_from_%s' % self.WF_STATE_NAME_MAPPINGS['proposed_first_level']
-                        in itemWF.transitions)
+        # transitions are created
+        wait_advices_from_proposed_transition = 'wait_advices_from_%s' % \
+            self.WF_STATE_NAME_MAPPINGS['proposed_first_level']
+        self.assertTrue(wait_advices_from_proposed_transition in itemWF.transitions)
         self.assertTrue('wait_advices_from_prevalidated' in itemWF.transitions)
+        # back transitions are created
         self.assertTrue('backTo_%s_from_waiting_advices' % self.WF_STATE_NAME_MAPPINGS['proposed_first_level']
                         in itemWF.transitions)
         self.assertTrue('backTo_prevalidated_from_waiting_advices' in itemWF.transitions)
@@ -1508,14 +1539,15 @@ class testWFAdaptations(PloneMeetingTestCase):
         # right, create an item and set it to 'proposed__or__prevalidated_waiting_advices'
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
+        item.setOptionalAdvisers(('vendors', ))
+        item.at_post_edit_script()
         self._afterItemCreatedWaitingAdviceWithPrevalidation(item)
         self.proposeItem(item, first_level=True)
         # 'pmCreator1' is not able to set item to 'waiting_advices'
         self.assertFalse(self.transitions(item))
         # 'pmReviewerLevel1' may do it, it is a prereviewer
         self.changeUser('pmReviewerLevel1')
-        self.assertTrue('wait_advices_from_%s' % self.WF_STATE_NAME_MAPPINGS['proposed_first_level']
-                        in self.transitions(item))
+        self.assertTrue(wait_advices_from_proposed_transition in self.transitions(item))
         # trigger from 'prevalidated'
         self.do(item, 'prevalidate')
         self.assertEquals(item.queryState(), 'prevalidated')
@@ -1537,6 +1569,9 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.do(item, 'wait_advices_from_prevalidated')
         self.do(item, 'backTo_prevalidated_from_waiting_advices')
         self.assertEquals(item.queryState(), 'prevalidated')
+
+        # back to original configuration
+        adaptations.WAITING_ADVICES_FROM_STATES = original_WAITING_ADVICES_FROM_STATES
 
     def test_pm_WFA_waiting_advices_several_states(self):
         '''Test the workflowAdaptation 'waiting_advices'.
@@ -1561,9 +1596,15 @@ class testWFAdaptations(PloneMeetingTestCase):
              'remove_modify_access': True},)
         cfg.setWorkflowAdaptations(cfg.getWorkflowAdaptations() + ('waiting_advices', ))
         cfg.at_post_edit_script()
-
+        waiting_advices_itemcreated_state = 'itemcreated_waiting_advices'
+        waiting_advices_proposed_state = '{0}_waiting_advices'.format(self.WF_STATE_NAME_MAPPINGS['proposed'])
+        self.tool.vendors.setItemAdviceStates(
+            ("{0}__state__{1}".format(cfg.getId(), waiting_advices_itemcreated_state),
+             "{0}__state__{1}".format(cfg.getId(), waiting_advices_proposed_state),))
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
+        item.setOptionalAdvisers(('vendors', ))
+        item.at_post_edit_script()
         # from 'itemcreated'
         self.do(item, 'wait_advices_from_itemcreated')
         self.assertEquals(item.queryState(), 'itemcreated_waiting_advices')
@@ -1608,12 +1649,16 @@ class testWFAdaptations(PloneMeetingTestCase):
              'remove_modify_access': False},)
         cfg.setWorkflowAdaptations('waiting_advices')
         cfg.at_post_edit_script()
+        self.tool.vendors.setItemAdviceStates(("{0}__state__{1}".format(cfg.getId(),
+                                                                        'itemcreated_waiting_advices'), ))
 
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
+        item.setOptionalAdvisers(('vendors', ))
+        item.at_post_edit_script()
         # from 'itemcreated'
         self._setItemToWaitingAdvices(item, 'wait_advices_from_itemcreated')
-        self.assertEquals(item.queryState(), 'waiting_advices')
+        self.assertEquals(item.queryState(), 'itemcreated_waiting_advices')
         self.assertTrue(self.hasPermission(ModifyPortalContent, item))
         self.do(item, 'backTo_itemcreated_from_waiting_advices')
         self.assertEquals(item.queryState(), 'itemcreated')

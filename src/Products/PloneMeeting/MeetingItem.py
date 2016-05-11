@@ -368,33 +368,66 @@ class MeetingItemWorkflowConditions:
             return True
         return False
 
-    security.declarePublic('mayWait_advices_from_itemcreated')
+    def _hasAdvicesToGive(self, destination_state):
+        """Check if there are advice to give in p_destination_state."""
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        hasAdvicesToGive = False
+        for adviceId, adviceInfo in self.context.adviceIndex.items():
+            # only consider advices to give
+            if adviceInfo['type'] not in (NOT_GIVEN_ADVICE_VALUE, 'asked_again', ):
+                continue
+            mGroup = getattr(tool, adviceId)
+            adviceStates = mGroup.getItemAdviceStates(cfg)
+            if destination_state in adviceStates:
+                hasAdvicesToGive = True
+                break
+        return hasAdvicesToGive
 
-    def mayWait_advices_from_itemcreated(self):
+    def _mayWaitAdvices(self, destination_state):
+        """Helper method used in every mayWait_advices_from_ guards."""
         res = False
         if not self.context.getCategory():
             return No(translate('required_category_ko',
                                 domain="PloneMeeting",
                                 context=self.context.REQUEST))
-        if checkPermission(ReviewPortalContent, self.context):
+        # check if there are advices to give in destination state
+        hasAdvicesToGive = self._hasAdvicesToGive(destination_state)
+        if not hasAdvicesToGive:
+            res = No(translate('advice_required_to_ask_advices',
+                               domain='PloneMeeting',
+                               context=self.context.REQUEST))
+        elif checkPermission(ReviewPortalContent, self.context):
             res = True
         return res
+
+    def _getWaitingAdvicesStateFrom(self, originStateId):
+        """Get the xxx_waiting_advices state from originState,
+           this will manage the fact that state can be 'itemcreated_waiting_advices' or
+           'itemcreated__or__proposed_waiting_advices'."""
+        wfTool = api.portal.get_tool('portal_workflow')
+        itemWF = wfTool.getWorkflowsFor(self.context)[0]
+        originState = itemWF.states[originStateId]
+        waiting_advices_transition = [tr for tr in originState.getTransitions() if tr.startswith('wait_advices_from')][0]
+        return itemWF.transitions[waiting_advices_transition].new_state_id
+
+    security.declarePublic('mayWait_advices_from_itemcreated')
+
+    def mayWait_advices_from_itemcreated(self):
+        """ """
+        return self._mayWaitAdvices(self._getWaitingAdvicesStateFrom('itemcreated'))
 
     security.declarePublic('mayWait_advices_from_proposed')
 
     def mayWait_advices_from_proposed(self):
-        res = False
-        if checkPermission(ReviewPortalContent, self.context):
-            res = True
-        return res
+        """ """
+        return self._mayWaitAdvices(self._getWaitingAdvicesStateFrom('proposed'))
 
     security.declarePublic('mayWait_advices_from_prevalidated')
 
     def mayWait_advices_from_prevalidated(self):
-        res = False
-        if checkPermission(ReviewPortalContent, self.context):
-            res = True
-        return res
+        """ """
+        return self._mayWaitAdvices(self._getWaitingAdvicesStateFrom('prevalidated'))
 
 
 InitializeClass(MeetingItemWorkflowConditions)
