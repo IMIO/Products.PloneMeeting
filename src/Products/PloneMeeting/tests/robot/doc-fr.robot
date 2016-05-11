@@ -1,6 +1,7 @@
 *** Settings ***
 Resource  plone/app/robotframework/keywords.robot
 Resource  plone/app/robotframework/selenium.robot
+Resource  keywords.robot
 
 Library  Remote  ${PLONE_URL}/RobotRemote
 Library  plone.app.robotframework.keywords.Debugging
@@ -20,8 +21,3 @@ Caractéristiques de l'application
 Suite Setup
     Open test browser
     Set Window Size  1280  800
-
-ConnectAs
-    [Arguments]  ${login}  ${mdp}
-    Go to  ${PLONE_URL}
-    Log in  ${login}  ${mdp}
