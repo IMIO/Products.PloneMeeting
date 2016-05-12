@@ -261,10 +261,11 @@ class MeetingItemWorkflowConditions:
 
     security.declarePublic('mayCorrect')
 
-    def mayCorrect(self):
-        '''If the item is not linked to a meeting, the user just need the
-           'Review portal content' permission, if it is linked to a meeting, an item
-           may still be corrected until the meeting is 'closed'.'''
+    def mayCorrect(self, destinationState=None):
+        '''See doc in interfaces.py.'''
+        # If the item is not linked to a meeting, the user just need the
+        # 'Review portal content' permission, if it is linked to a meeting, an item
+        # may still be corrected until the meeting is 'closed'.
         res = False
         meeting = self.context.getMeeting()
         if not meeting or (meeting and meeting.queryState() != 'closed'):

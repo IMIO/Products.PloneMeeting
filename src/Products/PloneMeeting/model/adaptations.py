@@ -139,7 +139,7 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
             new_state_id='prevalidated', trigger_type=1, script_name='',
             actbox_name='backToPrevalidated', actbox_url='',
             actbox_icon='%(portal_url)s/backToPrevalidated.png', actbox_category='workflow',
-            props={'guard_expr': 'python:here.wfConditions().mayCorrect()'})
+            props={'guard_expr': 'python:here.wfConditions().mayCorrect("prevalidated")'})
         # Update connections between states and transitions
         wf.states['proposed'].setProperties(
             title='proposed', description='',
@@ -583,17 +583,19 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                     if tr not in wf.transitions:
                         wf.transitions.addTransition(tr)
                 transition = wf.transitions['publish_decisions']
-                transition.setProperties(title='publish_decisions',
-                                         new_state_id='decisions_published', trigger_type=1, script_name='',
-                                         actbox_name='publish_decisions', actbox_url='',
-                                         actbox_icon='', actbox_category='workflow',
-                                         props={'guard_expr': 'python:here.wfConditions().mayPublishDecisions()'})
+                transition.setProperties(
+                    title='publish_decisions',
+                    new_state_id='decisions_published', trigger_type=1, script_name='',
+                    actbox_name='publish_decisions', actbox_url='',
+                    actbox_icon='', actbox_category='workflow',
+                    props={'guard_expr': 'python:here.wfConditions().mayPublishDecisions()'})
                 transition = wf.transitions['backToDecisionsPublished']
-                transition.setProperties(title='backToDecisionsPublished',
-                                         new_state_id='decisions_published', trigger_type=1, script_name='',
-                                         actbox_name='backToDecisionsPublished', actbox_url='',
-                                         actbox_icon='', actbox_category='workflow',
-                                         props={'guard_expr': 'python:here.wfConditions().mayCorrect()'})
+                transition.setProperties(
+                    title='backToDecisionsPublished',
+                    new_state_id='decisions_published', trigger_type=1, script_name='',
+                    actbox_name='backToDecisionsPublished', actbox_url='',
+                    actbox_icon='', actbox_category='workflow',
+                    props={'guard_expr': 'python:here.wfConditions().mayCorrect("decisions_published")'})
                 # Update connections between states and transitions
                 wf.states['decided'].setProperties(
                     title='decided', description='',
@@ -668,12 +670,13 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                         back_transition_ids.append(back_transition_id)
                         wf.transitions.addTransition(back_transition_id)
                         transition = wf.transitions[back_transition_id]
-                        transition.setProperties(title=back_transition_id,
-                                                 new_state_id=back_state_id, trigger_type=1, script_name='',
-                                                 actbox_name=back_transition_id, actbox_url='',
-                                                 actbox_icon='{0}.png'.format(back_transition_id),
-                                                 actbox_category='workflow',
-                                                 props={'guard_expr': 'python:here.wfConditions().mayCorrect()'})
+                        transition.setProperties(
+                            title=back_transition_id,
+                            new_state_id=back_state_id, trigger_type=1, script_name='',
+                            actbox_name=back_transition_id, actbox_url='',
+                            actbox_icon='{0}.png'.format(back_transition_id),
+                            actbox_category='workflow',
+                            props={'guard_expr': 'python:here.wfConditions().mayCorrect("%s")' % back_state_id})
 
                     # Update connections between states and transitions
                     new_state.setProperties(title=new_state_id, description='',

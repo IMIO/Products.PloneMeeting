@@ -1285,7 +1285,7 @@
              i18n:attributes="title">
   <action url="" icon="%(portal_url)s/backToAccepted.png" category="workflow" i18n:translate="">backToAccepted</action>
   <guard>
-    <guard-expression>python:here.wfConditions().mayCorrect()</guard-expression>
+    <guard-expression>python:here.wfConditions().mayCorrect('accepted')</guard-expression>
   </guard>
  </transition>
  <transition transition_id="backToConfirmed"
@@ -1297,7 +1297,7 @@
              i18n:attributes="title">
   <action url="" icon="%(portal_url)s/backToConfirmed.png" category="workflow" i18n:translate="">backToConfirmed</action>
   <guard>
-    <guard-expression>python:here.wfConditions().mayCorrect()</guard-expression>
+    <guard-expression>python:here.wfConditions().mayCorrect('confirmed')</guard-expression>
   </guard>
  </transition>
  <transition transition_id="backToDelayed"
@@ -1309,7 +1309,7 @@
              i18n:attributes="title">
   <action url="" icon="%(portal_url)s/backToDelayed.png" category="workflow" i18n:translate="">backToDelayed</action>
   <guard>
-    <guard-expression>python:here.wfConditions().mayCorrect()</guard-expression>
+    <guard-expression>python:here.wfConditions().mayCorrect('delayed')</guard-expression>
   </guard>
  </transition>
  <transition transition_id="backToItemCreated"
@@ -1321,7 +1321,7 @@
              i18n:attributes="title">
   <action url="" icon="%(portal_url)s/backToItemCreated.png" category="workflow" i18n:translate="">backToItemCreated</action>
   <guard>
-    <guard-expression>python:here.wfConditions().mayCorrect()</guard-expression>
+    <guard-expression>python:here.wfConditions().mayCorrect('itemcreated')</guard-expression>
   </guard>
  </transition>
  <transition transition_id="backToItemFrozen"
@@ -1333,7 +1333,7 @@
              i18n:attributes="title">
   <action url="" icon="%(portal_url)s/backToItemFrozen.png" category="workflow" i18n:translate="">backToItemFrozen</action>
   <guard>
-    <guard-expression>python:here.wfConditions().mayCorrect()</guard-expression>
+    <guard-expression>python:here.wfConditions().mayCorrect('itemfrozen')</guard-expression>
   </guard>
  </transition>
  <transition transition_id="backToItemPublished"
@@ -1345,7 +1345,7 @@
              i18n:attributes="title">
   <action url="" icon="%(portal_url)s/backToItePublished.png" category="workflow" i18n:translate="">backToItemPublished</action>
   <guard>
-    <guard-expression>python:here.wfConditions().mayCorrect()</guard-expression>
+    <guard-expression>python:here.wfConditions().mayCorrect('itempublished')</guard-expression>
   </guard>
  </transition>
  <transition transition_id="backToPresented"
@@ -1357,7 +1357,7 @@
              i18n:attributes="title">
   <action url="" icon="%(portal_url)s/backToPresented.png" category="workflow" i18n:translate="">backToPresented</action>
   <guard>
-    <guard-expression>python:here.wfConditions().mayCorrect()</guard-expression>
+    <guard-expression>python:here.wfConditions().mayCorrect('presented')</guard-expression>
   </guard>
  </transition>
  <transition transition_id="backToProposed"
@@ -1369,7 +1369,7 @@
              i18n:attributes="title">
   <action url="" icon="%(portal_url)s/backToProposed.png" category="workflow" i18n:translate="">backToProposed</action>
   <guard>
-    <guard-expression>python:here.wfConditions().mayCorrect()</guard-expression>
+    <guard-expression>python:here.wfConditions().mayCorrect('proposed')</guard-expression>
   </guard>
  </transition>
  <transition transition_id="backToRefused"
@@ -1381,7 +1381,7 @@
              i18n:attributes="title">
   <action url="" icon="%(portal_url)s/backToRefused.png" category="workflow" i18n:translate="">backToRefused</action>
   <guard>
-    <guard-expression>python:here.wfConditions().mayCorrect()</guard-expression>
+    <guard-expression>python:here.wfConditions().mayCorrect('refused')</guard-expression>
   </guard>
  </transition>
  <transition transition_id="backToValidated"
@@ -1393,7 +1393,7 @@
              i18n:attributes="title">
   <action url="" icon="%(portal_url)s/backToValidated.png" category="workflow" i18n:translate="">backToValidated</action>
   <guard>
-    <guard-expression>python:here.wfConditions().mayCorrect()</guard-expression>
+    <guard-expression>python:here.wfConditions().mayCorrect('validated')</guard-expression>
   </guard>
  </transition>
  <transition transition_id="confirm"

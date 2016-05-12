@@ -186,7 +186,8 @@ class MeetingWorkflowConditions:
 
     security.declarePublic('mayCorrect')
 
-    def mayCorrect(self):
+    def mayCorrect(self, destinationState=None):
+        '''See doc in interfaces.py.'''
         if not checkPermission(ReviewPortalContent, self.context):
             return
         if self.context.queryState() == 'decided':

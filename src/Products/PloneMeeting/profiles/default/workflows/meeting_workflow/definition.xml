@@ -234,7 +234,7 @@
              i18n:attributes="title">
   <action url="" icon="" category="workflow" i18n:translate="">backToClosed</action>
   <guard>
-    <guard-expression>python:here.wfConditions().mayCorrect()</guard-expression>
+    <guard-expression>python:here.wfConditions().mayCorrect('closed')</guard-expression>
   </guard>
  </transition>
  <transition transition_id="backToCreated"
@@ -246,7 +246,7 @@
              i18n:attributes="title">
   <action url="" icon="" category="workflow" i18n:translate="">backToCreated</action>
   <guard>
-    <guard-expression>python:here.wfConditions().mayCorrect()</guard-expression>
+    <guard-expression>python:here.wfConditions().mayCorrect('created')</guard-expression>
   </guard>
  </transition>
  <transition transition_id="backToDecided"
@@ -258,7 +258,7 @@
              i18n:attributes="title">
   <action url="" icon="" category="workflow" i18n:translate="">backToDecided</action>
   <guard>
-    <guard-expression>python:here.wfConditions().mayCorrect()</guard-expression>
+    <guard-expression>python:here.wfConditions().mayCorrect('decided')</guard-expression>
   </guard>
  </transition>
  <transition transition_id="backToFrozen"
@@ -270,7 +270,7 @@
              i18n:attributes="title">
   <action url="" icon="" category="workflow" i18n:translate="">backToFrozen</action>
   <guard>
-    <guard-expression>python:here.wfConditions().mayCorrect()</guard-expression>
+    <guard-expression>python:here.wfConditions().mayCorrect('frozen')</guard-expression>
   </guard>
  </transition>
  <transition transition_id="backToPublished"
@@ -282,7 +282,7 @@
              i18n:attributes="title">
   <action url="" icon="" category="workflow" i18n:translate="">backToPublished</action>
   <guard>
-    <guard-expression>python:here.wfConditions().mayCorrect()</guard-expression>
+    <guard-expression>python:here.wfConditions().mayCorrect('published')</guard-expression>
   </guard>
  </transition>
  <transition transition_id="close"

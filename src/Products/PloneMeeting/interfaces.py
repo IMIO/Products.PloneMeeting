@@ -428,8 +428,9 @@ class IMeetingItemWorkflowConditions(Interface):
         '''May this item be delayed to another meeting ?'''
     def mayConfirm():
         '''May the decision be definitely confirmed?'''
-    def mayCorrect():
-        '''May the user cancel the previous action performed on me?'''
+    def mayCorrect(destinationState=None):
+        '''Used for 'back' transitions.  p_destinationState is useful when there are
+           several 'back' transitions from the same state.'''
     def mayPublish():
         '''May one publish me?'''
     def meetingIsPublished():
@@ -553,8 +554,9 @@ class IMeetingWorkflowConditions(Interface):
            finalized ?'''
     def mayArchive():
         '''May the user archive me ?'''
-    def mayCorrect():
-        '''May the user cancel the previous action performed on me?'''
+    def mayCorrect(destinationState=None):
+        '''Used for 'back' transitions.  p_destinationState is useful when there are
+           several 'back' transitions from the same state.'''
     def mayRepublish():
         '''May the user publish me again ? Returns False by default.'''
 
