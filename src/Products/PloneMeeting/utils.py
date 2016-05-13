@@ -1033,6 +1033,7 @@ def getHistory(obj, startNumber=0, batchSize=500, checkMayView=True):
         event = history[i].copy()
         if event['action'] == '_datachange_':
             event['changes'] = {}
+            event['type'] = 'changes'
             for name, oldValue in history[i]['changes'].iteritems():
                 widgetName = obj.getField(name).widget.getName()
                 if widgetName == 'RichWidget':
