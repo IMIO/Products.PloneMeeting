@@ -4238,6 +4238,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ("returnedToMeetingManagers", translate('event_item_returned_to_meeting_managers',
                                                     domain=d,
                                                     context=self.REQUEST)), ]
+
+        # add custom mail notifications added by subproducs
+        res += self.adapted().extraItemEvents()
+
         # a notification can also be sent on every item transition
         # create a separated result (res_transitions) so we can easily sort it
         item_transitions = self.listTransitions('Item')
@@ -4257,9 +4261,21 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # we just preprend a 'meeting_state_changed_'
         meeting_transitions = self.listTransitions('Meeting')
         res = []
+
+        # add custom mail notifications added by subproducs
+        res += self.adapted().extraMeetingEvents()
+
         for meeting_transition_id, meeting_transition_name in meeting_transitions:
             res.append(("meeting_state_changed_%s" % meeting_transition_id, meeting_transition_name))
         return DisplayList(res).sortedByValue()
+
+    def extraItemEvents(self):
+        '''See doc in interfaces.py.'''
+        return []
+
+    def extraMeetingEvents(self):
+        '''See doc in interfaces.py.'''
+        return []
 
     security.declarePublic('getCertifiedSignatures')
 
