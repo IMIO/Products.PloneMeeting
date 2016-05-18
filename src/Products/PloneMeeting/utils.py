@@ -301,6 +301,8 @@ def _sendMail(obj, body, recipients, fromAddress, subject, format,
     # Construct the data structures for the attachments if relevant
     if attachments:
         msg = MIMEMultipart()
+        if isinstance(body, unicode):
+            body = body.encode('utf-8')
         msg.attach(MIMEText(body))
         body = msg
         for fileName, fileContent in attachments:
