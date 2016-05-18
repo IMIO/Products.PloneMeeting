@@ -292,10 +292,11 @@ def _getEmailAddress(name, email):
 def _sendMail(obj, body, recipients, fromAddress, subject, format,
               attachments=None):
     '''Sends a mail. p_mto can be a single email or a list of emails.'''
-    # Hide the whole list of recipients if we must send the mail to many.
     bcc = None
+    # Hide the whole list of recipients if we must send the mail to many.
     if not isinstance(recipients, basestring):
-        bcc = recipients
+        # mbcc passed parameter must be utf-8 encoded
+        bcc = [rec.encode('utf-8') for rec in recipients]
         recipients = fromAddress
     # Construct the data structures for the attachments if relevant
     if attachments:
