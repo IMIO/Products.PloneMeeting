@@ -3293,11 +3293,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ("negative", translate('negative', domain=d, context=self.REQUEST)),
             ("nil", translate('nil', domain=d, context=self.REQUEST)),
         ))
-        # import it here so eventual monkey patches are applied...
-        from Products.PloneMeeting.config import EXTRA_ADVICE_TYPES
-        for extra_advice_type in EXTRA_ADVICE_TYPES:
-            res.add(extra_advice_type, translate(extra_advice_type, domain=d, context=self.REQUEST))
+        # add custom extra advice types
+        for extra_advice_type in self.adapted().extraAdviceTypes():
+            res.add(extra_advice_type, translate(extra_advice_type,
+                                                 domain=d,
+                                                 context=self.REQUEST))
         return res
+
+    def extraAdviceTypes(self):
+        '''See doc in interfaces.py.'''
+        return []
 
     security.declarePrivate('listAdviceStyles')
 
