@@ -282,7 +282,6 @@ NO_TRIGGER_WF_TRANSITION_UNTIL = '__nothing__'
 HIDE_DECISION_UNDER_WRITING_MSG = \
     "<p class='highlightValue'>The decision is currently under edit by managers, you can not access it.</p>"
 
-
 def registerClasses():
     '''ArchGenXML generated code does not register Archetype classes at the
        right moment since model adaptations have been implemented. This method

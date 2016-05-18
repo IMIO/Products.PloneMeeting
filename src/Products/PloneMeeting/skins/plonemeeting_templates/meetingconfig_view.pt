@@ -977,7 +977,7 @@
     </tal:votes>
 
     <tal:users condition="python: pageName=='users'">
-    <p i18n:translate="meetingconfig_users_descr" class='pageNameDescr'></p>
+    <p i18n:translate="meetingconfig_users_descr" class='pageNameDescr'></p><br />
 
     <tal:comment replace="nothing">Meeting users</tal:comment>
     <a name="meetingusers"></a>
@@ -1041,7 +1041,7 @@
     </tal:users>
 
     <tal:doc condition="python: pageName=='doc'">
-    <p i18n:translate="meetingconfig_doc_descr" class='pageNameDescr'></p>
+    <p i18n:translate="meetingconfig_doc_descr" class='pageNameDescr'></p><br />
 
       <a name="podtemplates"></a>
       <fieldset>
