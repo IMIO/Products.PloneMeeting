@@ -523,17 +523,17 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                                   context=self.request)))
         elif itemState == 'itemcreated_waiting_advices':
             res.append(('wait_advices_from_itemcreated.png',
-                        translate('icon_help_waiting_advices',
+                        translate('icon_help_waiting_advices_from_itemcreated',
                                   domain="PloneMeeting",
                                   context=self.request)))
         elif itemState == 'proposed_waiting_advices':
             res.append(('wait_advices_from_proposed.png',
-                        translate('icon_help_waiting_advices',
+                        translate('icon_help_waiting_advices_from_proposed',
                                   domain="PloneMeeting",
                                   context=self.request)))
         elif itemState == 'prevalidated_waiting_advices':
             res.append(('wait_advices_from_prevalidated.png',
-                        translate('icon_help_waiting_advices',
+                        translate('icon_help_waiting_advices_from_prevalidated',
                                   domain="PloneMeeting",
                                   context=self.request)))
 
