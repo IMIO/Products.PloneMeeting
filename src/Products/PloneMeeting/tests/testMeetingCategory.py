@@ -22,9 +22,8 @@
 # 02110-1301, USA.
 #
 
+from zope.i18n import translate
 from OFS.ObjectManager import BeforeDeleteException
-
-from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 
@@ -100,10 +99,13 @@ class testMeetingCategory(PloneMeetingTestCase):
         values = (aCatInMC.listCategoriesOfOtherMCs().keys()[0], )
         self.failIf(aCatInMC.validate_categoryMappingsWhenCloningToOtherMC(values))
         # but not 2 for the same meetingConfig...
-        error_msg = _('error_can_not_select_several_cat_for_same_mc')
+        error_msg = translate('error_can_not_select_several_cat_for_same_mc',
+                              domain='PloneMeeting',
+                              context=self.request)
         values = (aCatInMC.listCategoriesOfOtherMCs().keys()[0],
                   aCatInMC.listCategoriesOfOtherMCs().keys()[1])
-        self.assertTrue(aCatInMC.validate_categoryMappingsWhenCloningToOtherMC(values) == error_msg)
+        self.assertEqual(aCatInMC.validate_categoryMappingsWhenCloningToOtherMC(values),
+                         error_msg)
         # simulate a third meetingConfig, select one single value of existing meetingConfig2 and
         # one of unexisting meetingConfig3, the validate is ok...
         values = (aCatInMC.listCategoriesOfOtherMCs().keys()[0],
