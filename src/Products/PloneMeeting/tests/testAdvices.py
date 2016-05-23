@@ -594,23 +594,29 @@ class testAdvices(PloneMeetingTestCase):
         # ask a given advice again
         self.changeUser('pmCreator1')
         advice.restrictedTraverse('@@change-advice-asked-again')()
-        self.assertEquals(set(indexAdvisers.callable(item)), set(['delay_real_group_id__unique_id_123',
-                                                                  'delay_real_group_id__unique_id_123__asked_again',
-                                                                  'delay__vendors_advice_not_giveable',
-                                                                  'developers_advice_not_giveable',
-                                                                  'real_group_id__developers',
-                                                                  'real_group_id__developers__not_given',
-                                                                  'not_given', 'asked_again']))
+        self.assertEquals(sorted(indexAdvisers.callable(item)),
+                          ['asked_again',
+                           'delay__vendors_advice_given',
+                           'delay__vendors_advice_not_giveable',
+                           'delay_real_group_id__unique_id_123',
+                           'delay_real_group_id__unique_id_123__asked_again',
+                           'developers_advice_not_giveable',
+                           'not_given',
+                           'real_group_id__developers',
+                           'real_group_id__developers__not_given'])
 
         # put it back to a state where it is editable
         self.proposeItem(item)
-        self.assertEquals(set(indexAdvisers.callable(item)), set(['delay_real_group_id__unique_id_123',
-                                                                  'delay_real_group_id__unique_id_123__asked_again',
-                                                                  'delay__vendors_advice_asked_again',
-                                                                  'developers_advice_not_given',
-                                                                  'real_group_id__developers',
-                                                                  'real_group_id__developers__not_given',
-                                                                  'not_given', 'asked_again']))
+        self.assertEquals(sorted(indexAdvisers.callable(item)),
+                          ['asked_again',
+                           'delay__vendors_advice_asked_again',
+                           'delay__vendors_advice_under_edit',
+                           'delay_real_group_id__unique_id_123',
+                           'delay_real_group_id__unique_id_123__asked_again',
+                           'developers_advice_not_given',
+                           'not_given',
+                           'real_group_id__developers',
+                           'real_group_id__developers__not_given'])
 
         # delete the advice
         self.changeUser('pmAdviser1')
