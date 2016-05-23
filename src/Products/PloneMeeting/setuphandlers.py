@@ -334,6 +334,8 @@ def _configureCKeditor(site):
     # disable folder creation thru CKeditor to avoid
     # having the add folder icon when adding an image
     cke_props.allow_folder_creation = False
+    # set 500px for editor height everywhere
+    cke_props.height = '500px'
 
 
 def _congfigureSafeHtml(site):
