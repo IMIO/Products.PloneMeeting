@@ -237,13 +237,16 @@ class testSearches(PloneMeetingTestCase):
         self.failIf(collection.getQuery())
 
         # ask advice again to 'pmAdviser1'
-        # if an advice is asked again, it is no more considered given
+        # if an advice is asked again, it stiil appears in the given advice
+        # this way, if advice is asked again but no directly giveable, it is
+        # still found in proposed search
         self.backToState(item1, 'itemcreated')
         advice.restrictedTraverse('@@change-advice-asked-again')()
         self.proposeItem(item1)
         self.changeUser('pmAdviser1')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_adviseditems')
-        self.failIf(collection.getQuery())
+        self.failUnless(len(collection.getQuery()) == 1)
+        self.assertEquals(collection.getQuery()[0].UID, item1.UID())
 
     def test_pm_SearchAdvisedItemsWithDelay(self):
         '''Test the 'search-advised-items-with-delay' adapter.  This should return a list

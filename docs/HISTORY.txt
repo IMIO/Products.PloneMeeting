@@ -68,8 +68,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   the item is edited after the advice has been given or annex have been added/removed), we rely now on
   plone.app.versioningbehavior to display a historized version, moreover versioned advice is directly previewable
   in the @@historyview popup
-- Added possibility to ask an advice several times, if it was never historized or if advice was modified
-  since last historization, it is historized again
+- Added possibility to ask an advice several times (asked again), if it was never historized or if advice was modified
+  since last historization, it is historized again.  Asked again advices appear in the 'given advices' search and anew
+  in the 'advices to give' search when giveable
 - Adapted the 'move item to position number' on the meeting view to move an item to an exact position and no
   more the 'position before the entered number'
 - Added possibility to display the item reference in the item dashboards

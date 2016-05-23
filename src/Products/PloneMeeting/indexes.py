@@ -220,50 +220,54 @@ def _to_coded_adviser_index(obj, groupId, advice):
         '''
           Compute the suffix that will be appended depending on advice state.
         '''
+        suffixes = []
         # still not given but still giveable?  Not giveable?  Delay exceeded? Asked again?
         if advice['type'] in (NOT_GIVEN_ADVICE_VALUE, 'asked_again'):
             if obj._adviceDelayIsTimedOut(groupId):
                 # delay is exceeded, advice was not given
-                return '_advice_delay_exceeded'
+                suffixes.append('_advice_delay_exceeded')
             else:
                 # does the relevant group may add the advice in current item state?
                 if advice['advice_addable']:
-                    return '_advice_not_given'
+                    suffixes.append('_advice_not_given')
                 elif advice['advice_editable']:
                     # case when 'asked_again'
-                    return '_advice_asked_again'
+                    suffixes.append('_advice_asked_again')
                 else:
-                    return '_advice_not_giveable'
-        else:
+                    suffixes.append('_advice_not_giveable')
+
+        if advice['type'] != NOT_GIVEN_ADVICE_VALUE:
             # if advice was given, is it still editable or not?
             # we return the current advice review_state
             # by default, a still editable advice is 'advice_under_edit'
             # and a no more editable advice is 'advice_given'
             advice = getattr(obj, advice['advice_id'])
-            return '_%s' % advice.queryState()
+            suffixes.append('_%s' % advice.queryState())
+        return suffixes
 
     res = []
     isDelayAware = obj.adviceIndex[groupId]['delay'] and True or False
-    # compute suffix
-    suffix = _computeSuffixFor(groupId, advice)
+    # compute suffixes
+    suffixes = _computeSuffixFor(groupId, advice)
     # we also index the 'real_group_id_' so we can query who we asked
     # advice to, without passing the advice state
     # we compute the 'advice_type' to take into account 'hidden_during_redaction'
     advice_type = obj._shownAdviceTypeFor(advice)
-    if isDelayAware:
-        res.append('delay__' + groupId + suffix)
-        # 'real_group_id_'
-        real_group_id = DELAYAWARE_REAL_GROUP_ID_PATTERN.format(advice['row_id'], groupId)
-        res.append(real_group_id)
-        # 'real_group_id_' with suffixed advice_type
-        res.append(real_group_id + '__' + advice_type)
-    else:
-        res.append(groupId + suffix)
-        # 'real_group_id_'
-        real_group_id = REAL_GROUP_ID_PATTERN.format(groupId)
-        res.append(real_group_id)
-        # 'real_group_id_' with suffixed advice_type
-        res.append(real_group_id + '__' + advice_type)
+    for suffix in suffixes:
+        if isDelayAware:
+            res.append('delay__' + groupId + suffix)
+            # 'real_group_id_'
+            real_group_id = DELAYAWARE_REAL_GROUP_ID_PATTERN.format(advice['row_id'], groupId)
+            res.append(real_group_id)
+            # 'real_group_id_' with suffixed advice_type
+            res.append(real_group_id + '__' + advice_type)
+        else:
+            res.append(groupId + suffix)
+            # 'real_group_id_'
+            real_group_id = REAL_GROUP_ID_PATTERN.format(groupId)
+            res.append(real_group_id)
+            # 'real_group_id_' with suffixed advice_type
+            res.append(real_group_id + '__' + advice_type)
     # advice_type
     if not advice_type in res:
         res.append(advice_type)
