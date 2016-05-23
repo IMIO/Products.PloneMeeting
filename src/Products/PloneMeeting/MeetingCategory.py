@@ -14,7 +14,9 @@ __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
 __docformat__ = 'plaintext'
 
 from AccessControl import ClassSecurityInfo
+from zope.i18n import translate
 from zope.interface import implements
+from OFS.ObjectManager import BeforeDeleteException
 from Products.Archetypes.atapi import AttributeStorage
 from Products.Archetypes.atapi import BaseContent
 from Products.Archetypes.atapi import BaseSchema
@@ -24,19 +26,13 @@ from Products.Archetypes.atapi import MultiSelectionWidget
 from Products.Archetypes.atapi import registerType
 from Products.Archetypes.atapi import Schema
 from Products.Archetypes.atapi import StringField
-import interfaces
-
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
-
-##code-section module-header #fill in your manual code here
-from OFS.ObjectManager import BeforeDeleteException
+import interfaces
 from plone import api
 from imio.helpers.cache import invalidate_cachekey_volatile_for
-from Products.PloneMeeting import PMMessageFactory
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import WriteRiskyConfig
 from Products.PloneMeeting.utils import getCustomAdapter, getFieldContent
-##/code-section module-header
 
 schema = Schema((
 
@@ -282,7 +278,9 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
         for value in values:
             MCValue = value.split('.')[0]
             if MCValue.startswith(previousMCValue):
-                return PMMessageFactory(u'error_can_not_select_several_cat_for_same_mc')
+                return translate(u'error_can_not_select_several_cat_for_same_mc',
+                                 domain="PloneMeeting",
+                                 context=self.REQUEST)
             previousMCValue = MCValue
 
 
