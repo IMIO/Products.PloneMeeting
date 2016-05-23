@@ -825,6 +825,7 @@ p.indent-firstline {
 
 /* make the textarea displayed in the manage itemAssembly/itemSignatures having a higher height */
 #form #form-widgets-item_assembly,
+#form #form-widgets-comment,
 #form #form-widgets-item_excused,
 #form #form-widgets-item_absents,
 #form #form-widgets-item_signatures {

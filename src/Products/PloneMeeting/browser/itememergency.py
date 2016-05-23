@@ -1,8 +1,17 @@
 from AccessControl import Unauthorized
 from DateTime import DateTime
+from zope import interface
+from zope import schema
+from zope.component.hooks import getSite
+from zope.i18n import translate
+from z3c.form import button
+from z3c.form import field
+from z3c.form import form
+from plone import api
 from Products.Archetypes import DisplayList
 from Products.CMFCore.utils import getToolByName
 from Products.Five.browser import BrowserView
+from Products.PloneMeeting import PMMessageFactory as _
 
 
 class ItemEmergencyView(BrowserView):
@@ -42,47 +51,107 @@ class ItemEmergencyView(BrowserView):
         return DisplayList(tuple(res))
 
 
-class ChangeItemEmergencyView(BrowserView):
-    '''This manage the overlay popup displayed to enter a comment when the emergency is changed.'''
-    def __init__(self, context, request):
-        super(BrowserView, self).__init__(context, request)
-        self.context = context
-        self.request = request
-
-    def __call__(self):
-        form = self.request.form
-        submitted = form.get('form.buttons.save', False) or form.get('form.submitted', False)
-        cancelled = form.get('form.buttons.cancel', False)
-        if cancelled:
-            # the only way to enter here is the popup overlay not to be shown
-            # because while using the popup overlay, the jQ function take care of hidding it
-            # while the Cancel button is hit
-            return self.request.RESPONSE.redirect(self.context.absolute_url())
-        elif submitted:
-            # check that given 'new_emergency_value' is available in the field vocabulary
-            # if not available, just raise Unauthorized
-            new_emergency_value = self.request.get('new_emergency_value')
-            itemEmergencyView = self.context.restrictedTraverse('@@item-emergency')
-            if not new_emergency_value in itemEmergencyView.listSelectableEmergencies():
-                raise Unauthorized
-            self.context.setEmergency(new_emergency_value)
-            # add a line to the item's emergency_change_history
-            membershipTool = getToolByName(self.context, 'portal_membership')
-            member = membershipTool.getAuthenticatedMember()
-            history_data = {'action': new_emergency_value,
-                            'actor': member.getId(),
-                            'time': DateTime(),
-                            'comments': self.request.get('comment', '')}
-            self.context.emergency_changes_history.append(history_data)
-            # update item
-            self.context.at_post_edit_script()
-            return self.request.RESPONSE.redirect(self.context.absolute_url())
-        return self.index()
-
-
 class ItemEmergencyHistoryView(BrowserView):
     '''Display history of emergency value changes.'''
     def __init__(self, context, request):
         super(BrowserView, self).__init__(context, request)
         self.context = context
         self.request = request
+
+
+def new_emergency_value_default():
+    """
+      Get the value from the REQUEST as it is passed when calling the
+      form : form?new_emergency_value=new_value.
+    """
+    request = getSite().REQUEST
+    return request.get('new_emergency_value', '')
+
+
+class IItemEmergencyComment(interface.Interface):
+    comment = schema.Text(
+        title=_(u"Comment"),
+        description=_(u""),
+        required=True,)
+
+    new_emergency_value = schema.TextLine(
+        title=_(u"New emergency value"),
+        description=_(u""),
+        defaultFactory=new_emergency_value_default)
+
+
+class ItemEmergencyChangeForm(form.Form):
+    """
+      This form will give the possibility to add a
+      required comment while changing item emergency.
+    """
+    label = _(u"Manage item emergency")
+    description = u''
+
+    fields = field.Fields(IItemEmergencyComment)
+    ignoreContext = True  # don't use context to get widget data
+
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+        self.label = translate(self.label,
+                               domain='PloneMeeting',
+                               context=self.request)
+
+    @button.buttonAndHandler(_('save'), name='save_item_emergency')
+    def handleSaveItemEmergency(self, action):
+        data, errors = self.extractData()
+        if errors:
+            self.status = self.formErrorsMessage
+            return
+
+        # check that given 'new_emergency_value' is available in the field vocabulary
+        # if not available, just raise Unauthorized
+        new_emergency_value = data.get('new_emergency_value')
+        itemEmergencyView = self.context.restrictedTraverse('@@item-emergency')
+        if not new_emergency_value in itemEmergencyView.listSelectableEmergencies():
+            raise Unauthorized
+        self.context.setEmergency(new_emergency_value)
+        # add a line to the item's emergency_change_history
+        member = api.user.get_current()
+        history_data = {'action': new_emergency_value,
+                        'actor': member.getId(),
+                        'time': DateTime(),
+                        'comments': data['comment']}
+        self.context.emergency_changes_history.append(history_data)
+        # update item
+        self.context.at_post_edit_script()
+        plone_utils = api.portal.get_tool('plone_utils')
+        plone_utils.addPortalMessage(_("Item emergency changed."))
+        self.request.RESPONSE.redirect(self.context.absolute_url())
+
+    @button.buttonAndHandler(_('Cancel'), name='cancel')
+    def handleCancel(self, action):
+        self.request.RESPONSE.redirect(self.context.absolute_url())
+
+    def update(self):
+        """ """
+        # raise Unauthorized if current user can not manage itemAssembly
+        if not self.context.mayQuickEdit('emergency'):
+            raise Unauthorized
+        super(ItemEmergencyChangeForm, self).update()
+        # after calling parent's update, self.actions are available
+        self.actions.get('cancel').addClass('standalone')
+
+    def updateWidgets(self):
+        # hide field 'new_emergency_value'
+        self.fields['new_emergency_value'].mode = 'hidden'
+        translate_new_emergency_value = translate(new_emergency_value_default(),
+                                                  domain='PloneMeeting',
+                                                  context=self.request)
+        self.fields['comment'].field.description = translate(
+            'change_emergency_descr',
+            domain='PloneMeeting',
+            mapping={'new_emergency_value': translate_new_emergency_value},
+            context=self.request,
+            default=u"You are about to change emergency for this item to <span style='font-weight: bold;'>"
+            u"${new_emergency_value}</span>, please enter a comment.")
+        super(ItemEmergencyChangeForm, self).updateWidgets()
+
+from plone.z3cform.layout import wrap_form
+ItemEmergencyChangeFormWrapper = wrap_form(ItemEmergencyChangeForm)

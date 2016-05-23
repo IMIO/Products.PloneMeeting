@@ -346,14 +346,14 @@
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View" />
 
-    <!-- the view that change MeetingItem.emergency value and display a popup to enter a comment -->
+    <!-- Form that manage item emergency change with required comment -->
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItem"
-        name="change-item-emergency"
-        class=".itememergency.ChangeItemEmergencyView"
-        template="templates/itememergencychange.pt"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        permission="zope2.View" />
+        name="item_emergency_change_form"
+        class=".itememergency.ItemEmergencyChangeFormWrapper"
+        permission="zope2.View"
+      />
 
     <!-- the view that display MeetingItem.emergency_changes_history in a popup -->
     <browser:page

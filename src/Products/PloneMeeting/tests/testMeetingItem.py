@@ -1583,19 +1583,20 @@ class testMeetingItem(PloneMeetingTestCase):
           The behaviour of itemAssembly and itemSignatures is the same that is why we test it
           together...
         '''
+        cfg = self.meetingConfig
         self.changeUser('admin')
         # make sure 'itemAssembly' and 'itemSignatures' are not in usedItemAttributes
-        usedItemAttributes = list(self.meetingConfig.getUsedItemAttributes())
+        usedItemAttributes = list(cfg.getUsedItemAttributes())
         if 'itemAssembly' in usedItemAttributes:
             usedItemAttributes.remove('itemAssembly')
         if 'itemSignatures' in usedItemAttributes:
             usedItemAttributes.remove('itemSignatures')
-        self.meetingConfig.setUsedItemAttributes(tuple(usedItemAttributes))
+        cfg.setUsedItemAttributes(tuple(usedItemAttributes))
         # make items inserted in a meeting inserted in this order
-        self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'at_the_end',
-                                                          'reverse': '0'}, ))
+        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'at_the_end',
+                                           'reverse': '0'}, ))
         # remove recurring items if any as we are playing with item number here under
-        self._removeConfigObjectsFor(self.meetingConfig)
+        self._removeConfigObjectsFor(cfg)
         # a user create an item and we insert it into a meeting
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -1613,17 +1614,17 @@ class testMeetingItem(PloneMeetingTestCase):
         formAssembly = item.restrictedTraverse('@@manage_item_assembly_form').form_instance
         formSignatures = item.restrictedTraverse('@@manage_item_signatures_form').form_instance
         # for now, the itemAssembly/itemSignatures fields are not used, so it raises Unauthorized
-        self.assertFalse('itemAssembly' in self.meetingConfig.getUsedItemAttributes())
-        self.assertFalse('itemSignatures' in self.meetingConfig.getUsedItemAttributes())
+        self.assertFalse('itemAssembly' in cfg.getUsedItemAttributes())
+        self.assertFalse('itemSignatures' in cfg.getUsedItemAttributes())
         self.assertRaises(Unauthorized, formAssembly.update)
         self.assertRaises(Unauthorized, formSignatures.update)
         # so use this field
-        self.meetingConfig.setUsedItemAttributes(self.meetingConfig.getUsedItemAttributes() +
-                                                 ('itemAssembly', 'itemAssemblyAbsents',
-                                                  'itemAssemblyExcused', 'itemSignatures', ))
-        self.meetingConfig.setUsedMeetingAttributes(self.meetingConfig.getUsedMeetingAttributes() +
-                                                    ('assembly', 'assemblyAbsents',
-                                                     'assemblyExcused', 'signatures', ))
+        cfg.setUsedItemAttributes(cfg.getUsedItemAttributes() +
+                                  ('itemAssembly', 'itemAssemblyAbsents',
+                                   'itemAssemblyExcused', 'itemSignatures', ))
+        cfg.setUsedMeetingAttributes(cfg.getUsedMeetingAttributes() +
+                                     ('assembly', 'assemblyAbsents',
+                                      'assemblyExcused', 'signatures', ))
         # MeetingItem.attributeIsUsed is RAMCached
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attributeIsUsed')
         # current user must be at least MeetingManager to use this
@@ -1880,18 +1881,22 @@ class testMeetingItem(PloneMeetingTestCase):
         # we have 8 items, if we remove item number 5, others are correct
         self.assertTrue(len(meeting.getItems(ordered=True)) == 9)
         self.assertTrue([anItem.getItemNumber(relativeTo='meeting') for anItem
-                         in meeting.getItems(ordered=True)] == [100, 200, 300, 400, 500, 600, 700, 800, 900])
+                         in meeting.getItems(ordered=True)] ==
+                        [100, 200, 300, 400, 500, 600, 700, 800, 900])
         # relative to meetingConfig
         self.assertTrue([anItem.getItemNumber(relativeTo='meetingConfig') for anItem
-                         in meeting.getItems(ordered=True)] == [800, 900, 1000, 1100, 1200, 1300, 1400, 1500, 1600])
+                         in meeting.getItems(ordered=True)] ==
+                        [800, 900, 1000, 1100, 1200, 1300, 1400, 1500, 1600])
         # item is 5th of normal items
         self.assertTrue(item.UID() == meeting.getItems(ordered=True)[4].UID())
         self.portal.restrictedTraverse('@@delete_givenuid')(item.UID())
         self.assertTrue([anItem.getItemNumber(relativeTo='meeting') for anItem
-                         in meeting.getItems(ordered=True)] == [100, 200, 300, 400, 500, 600, 700, 800])
+                         in meeting.getItems(ordered=True)] ==
+                        [100, 200, 300, 400, 500, 600, 700, 800])
         # relative to meetingConfig
         self.assertTrue([anItem.getItemNumber(relativeTo='meetingConfig') for anItem
-                         in meeting.getItems(ordered=True)] == [800, 900, 1000, 1100, 1200, 1300, 1400, 1500])
+                         in meeting.getItems(ordered=True)] ==
+                        [800, 900, 1000, 1100, 1200, 1300, 1400, 1500])
 
     def test_pm_ListMeetingsAcceptingItems(self):
         '''
@@ -3480,17 +3485,29 @@ class testMeetingItem(PloneMeetingTestCase):
         # item emergency history is empty
         self.assertTrue(not item.emergency_changes_history)
         itemEmergencyView = item.restrictedTraverse('item-emergency')
-        changeEmergencyView = item.restrictedTraverse('change-item-emergency')
+        changeEmergencyForm = item.restrictedTraverse('@@item_emergency_change_form').form_instance
+
         # ask emergency
         self.assertTrue(itemEmergencyView.listSelectableEmergencies().keys() == ['emergency_asked'])
-        self.request['new_emergency_value'] = 'emergency_asked'
-        self.request['comment'] = 'My comment'
-        self.request.form['form.submitted'] = True
-        changeEmergencyView()
-        self.assertTrue(item.getEmergency() == 'emergency_asked')
+        # current user may not quickEdit 'emergency' as it is not in cfg.usedItemAttributes
+        self.assertFalse('emergency' in cfg.getUsedItemAttributes())
+        self.assertRaises(Unauthorized, changeEmergencyForm)
+        cfg.setUsedItemAttributes(cfg.getUsedItemAttributes() + ('emergency', ))
+        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attributeIsUsed')
+        # not changed until required values are not given
+        self.request['form.widgets.new_emergency_value'] = u'emergency_asked'
+        self.request['form.widgets.comment'] = u''
+        changeEmergencyForm()
+        changeEmergencyForm.handleSaveItemEmergency(changeEmergencyForm, '')
+        self.assertEqual(item.getEmergency(), u'no_emergency')
+        # define required comment, now it will work
+        self.request['form.widgets.comment'] = u'My comment'
+        changeEmergencyForm.handleSaveItemEmergency(changeEmergencyForm, '')
+        self.assertEqual(item.getEmergency(), u'emergency_asked')
         # history was updated
         self.assertEquals(item.emergency_changes_history[0]['action'], 'emergency_asked')
         self.assertEquals(item.emergency_changes_history[0]['comments'], 'My comment')
+
         # when asked, asker can do nothing else but back to 'no_emergency'
         self.assertTrue(itemEmergencyView.listSelectableEmergencies().keys() == ['no_emergency'])
         self.assertFalse(item.adapted().mayAcceptOrRefuseEmergency())
@@ -3503,9 +3520,9 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(item.adapted().mayAskEmergency())
         self.assertTrue(item.adapted().mayAcceptOrRefuseEmergency())
         # accept emergency
-        self.request['new_emergency_value'] = 'emergency_accepted'
-        changeEmergencyView()
-        self.assertTrue(item.getEmergency() == 'emergency_accepted')
+        self.request['form.widgets.new_emergency_value'] = u'emergency_accepted'
+        changeEmergencyForm.handleSaveItemEmergency(changeEmergencyForm, '')
+        self.assertEqual(item.getEmergency(), 'emergency_accepted')
         # 'emergency_accepted' no more selectable
         self.assertTrue(not 'emergency_accepted' in itemEmergencyView.listSelectableEmergencies())
         # history was updated
@@ -3516,7 +3533,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(item.adapted().mayAskEmergency())
         self.assertFalse(item.adapted().mayAcceptOrRefuseEmergency())
         self.request['new_emergency_value'] = 'no_emergency'
-        self.assertRaises(Unauthorized, changeEmergencyView)
+        self.assertRaises(Unauthorized, changeEmergencyForm)
 
     def test_pm_ItemStrikedAssembly(self):
         """Test use of utils.toHTMLStrikedContent for itemAssembly."""

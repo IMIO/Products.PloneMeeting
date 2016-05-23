@@ -15,8 +15,8 @@
                      src="blue_arrow.gif"
                      tal:attributes="src string:${view/portal_url}/blue_arrow.gif"/>
                 <a href="#"
-                   tal:attributes="href python: '%s/@@change-item-emergency?new_emergency_value=%s' % (context.absolute_url(),
-                                                                                    emergency[0]);
+                   tal:attributes="href python: '%s/@@item_emergency_change_form?new_emergency_value=%s'
+                                   % (context.absolute_url(), emergency[0]);
                                    class python: 'link-overlay-pm item_%s' % emergency[0]"
                    tal:content="python: emergency[1]">Emergency</a>
             </tal:block>

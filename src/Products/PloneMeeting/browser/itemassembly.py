@@ -23,10 +23,13 @@
 from AccessControl import Unauthorized
 from zope.contentprovider.provider import ContentProviderBase
 from zope.i18n import translate
-from zope import interface, schema
+from zope import interface
+from zope import schema
 from zope.component.hooks import getSite
 from zope.interface import implements
-from z3c.form import form, field, button
+from z3c.form import button
+from z3c.form import field
+from z3c.form import form
 from z3c.form.interfaces import IFieldsAndContentProvidersForm
 from z3c.form.contentprovider import ContentProviders
 
