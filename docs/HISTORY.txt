@@ -278,6 +278,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Meeting and MeetingItem WorkflowCondition 'mayCorrect' now receive an extra parameter 'destinationState' that is useful
   when a state has several 'back' transitions to know which transition we are working on
 - Moved emergency change comment popup to z3c.form to be able to define that comment is now required
+- Added helpe method MeetingItem.getAdviceObj(advId) that will return the 'meetingadvice' object for the given p_advId adviser
+  id.  If advice object exists, it is returned, otherwise 'None' is returned
 
 3.3 (2015-02-27)
 ----------------

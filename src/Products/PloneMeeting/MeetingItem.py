@@ -3654,14 +3654,20 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             data[advId]['type_translated'] = translate(data[advId]['type'],
                                                        domain='PloneMeeting',
                                                        context=self.REQUEST)
-            data[advId]['given_advice'] = None
             # add meetingadvice object if given
-            if data[advId].get('advice_id', None):
-                data[advId]['given_advice'] = getattr(self, data[advId]['advice_id'])
+            data[advId]['given_advice'] = self.getAdviceObj(advId)
         if adviserId:
             data = data[adviserId]
-
         return data
+
+    def getAdviceObj(self, advId):
+        """Return the advice object for given p_advId.
+           If advice object does not exist, None is returned."""
+        adviceObj = None
+        if advId in self.adviceIndex and \
+           self.adviceIndex[advId].get('advice_id', None):
+            adviceObj = getattr(self, self.adviceIndex[advId]['advice_id'])
+        return adviceObj
 
     def _grantPermissionToRole(self, permission, role_to_give, obj):
         """

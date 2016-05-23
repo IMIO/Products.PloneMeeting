@@ -2258,6 +2258,31 @@ class testAdvices(PloneMeetingTestCase):
                 self.assertEquals(portal_repository._version_policy_mapping[portal_type_id],
                                   [u'version_on_revert'])
 
+    def test_pm_GetAdviceObj(self):
+        """Test the MeetingItem.getAdviceObj that return the real advice
+           object if available, otherwise it returns None."""
+        cfg = self.meetingConfig
+        cfg.setCustomAdvisers([])
+        cfg.setItemAdviceStates(('itemcreated', ))
+        cfg.setItemAdviceEditStates(('itemcreated', ))
+        cfg.setItemAdviceViewStates(('itemcreated', ))
+
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.setOptionalAdvisers(('vendors', 'developers', ))
+        item.at_post_edit_script()
+
+        # give 'vendors' advice and test
+        self.changeUser('pmReviewer2')
+        vendors_advice = createContentInContainer(item,
+                                                  'meetingadvice',
+                                                  **{'advice_group': 'vendors',
+                                                     'advice_type': u'positive',
+                                                     'advice_hide_during_redaction': False,
+                                                     'advice_comment': RichTextValue(u'My comment')})
+        self.assertEqual(item.getAdviceObj('vendors'), vendors_advice)
+        self.assertIsNone(item.getAdviceObj('developers'))
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

@@ -3834,7 +3834,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # cleanUp zmcl.load_config because it impact other tests
         zcml.cleanUp()
 
-    def test_pm_DisplayOtherMeetingConfigsClonableTo(self, ):
+    def test_pm_DisplayOtherMeetingConfigsClonableTo(self):
         """Test how otherMeetingConfigsClonableTo are displayed on the item view,
            especially if a MeetingConfig to clone to title contains special characters."""
         cfg2 = self.meetingConfig2

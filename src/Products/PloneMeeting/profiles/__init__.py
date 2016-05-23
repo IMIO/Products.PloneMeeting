@@ -189,7 +189,8 @@ class MeetingUserDescriptor(Descriptor):
 
 
 class GroupDescriptor(Descriptor):
-    multiSelectFields = ('certifiedSignatures', 'itemAdviceStates', 'itemAdviceEditStates', 'itemAdviceViewStates')
+    multiSelectFields = ('certifiedSignatures', 'itemAdviceStates',
+                         'itemAdviceEditStates', 'itemAdviceViewStates')
     # The 'instance' static attribute stores an instance used for assigning
     # default values to a meeting config being created through-the-web.
     instance = None
