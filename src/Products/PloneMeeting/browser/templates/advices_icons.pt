@@ -90,36 +90,45 @@
                               </tal:showDelayLabel><span tal:condition="advice/optional">)</span>
                          </div>
                          <div class="advice_popup_actions">
-                         &nbsp;&nbsp;<acronym tal:attributes="title python: context.getAdviceHelpMessageFor(**advice)"><img tal:attributes="src string:${view/portal_url}/help.png;"/></acronym>
-                         <tal:confidentiality condition="displayAdviceConfidentiality" replace="structure python: context.restrictedTraverse('@@advice-confidentiality')(advice)" />
-                         <acronym tal:condition="python: obj and context.adapted().mayAskAdviceAgain(obj)">
-                            <img tal:condition="python: not advice['type'] == 'asked_again'"
-                                 class="askAdviceAgainEditable"
-                                 i18n:attributes="title" title="to_advice_asked_again"
-                                 tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_asked_again.png;
-                                           onClick string:javascript:callViewAndReload(base_url='${item_url}/${advice/advice_id}', view_name='@@change-advice-asked-again', this);;"/></acronym>
-                         <acronym tal:condition="python: obj and context.adapted().mayBackToPreviousAdvice(obj)">
-                            <img tal:condition="python: advice['type'] == 'asked_again'"
-                                 class="askAdviceAgainEditable"
-                                 i18n:attributes="title" title="to_previous_given_advice"
-                                 tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_asked_again_back_to_previous.png;
-                                           onClick string:javascript:callViewAndReload(base_url='${item_url}/${advice/advice_id}', view_name='@@change-advice-asked-again', this);;"/></acronym>
-                         <tal:advice-change-delay
-                           condition="advice/delay"
-                           tal:define="dummy python: context.REQUEST.set('advice_change_delay_advice', advice);
-                                       dummy python: context.REQUEST.set('advice_change_delay_cfg', cfg);"
-                           replace="structure context/@@advice-available-delays/index" />
-                         <acronym tal:condition="advice/advice_id|nothing">
-                            <a class="overlay-history"
-                               title="History"
-                               i18n:domain="plone"
-                               i18n:attributes="title"
-                               style="display: inline-block;"
-                               href="@@historyview"
-                               tal:attributes="href string:${obj/absolute_url}/@@historyview">
-                                <img src="++resource++imio.actionspanel/history.gif"
-                                     tal:attributes="src string:${view/portal_url}/++resource++imio.actionspanel/history.gif"/>
-                            </a></acronym>
+                            &nbsp;&nbsp;<acronym style="margin-right: 2px;">
+                                <a href=""
+                                   tal:attributes="href string:${view/portal_url}/@@display-group-users?group_id=${advice/id}_advisers"
+                                   class="link-tooltip"
+                                   style="display: inline; padding: 0;"
+                                   onclick="event.preventDefault();">
+                                    <img src="group_users.png" tal:attributes="src string:${view/portal_url}/group_users.png">
+                                </a>
+                            </acronym>
+                            <acronym tal:attributes="title python: context.getAdviceHelpMessageFor(**advice)"><img tal:attributes="src string:${view/portal_url}/help.png;"/></acronym>
+                            <tal:confidentiality condition="displayAdviceConfidentiality" replace="structure python: context.restrictedTraverse('@@advice-confidentiality')(advice)" />
+                            <acronym tal:condition="python: obj and context.adapted().mayAskAdviceAgain(obj)">
+                               <img tal:condition="python: not advice['type'] == 'asked_again'"
+                                    class="askAdviceAgainEditable"
+                                    i18n:attributes="title" title="to_advice_asked_again"
+                                    tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_asked_again.png;
+                                              onClick string:javascript:callViewAndReload(base_url='${item_url}/${advice/advice_id}', view_name='@@change-advice-asked-again', this);;"/></acronym>
+                            <acronym tal:condition="python: obj and context.adapted().mayBackToPreviousAdvice(obj)">
+                               <img tal:condition="python: advice['type'] == 'asked_again'"
+                                    class="askAdviceAgainEditable"
+                                    i18n:attributes="title" title="to_previous_given_advice"
+                                    tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_asked_again_back_to_previous.png;
+                                              onClick string:javascript:callViewAndReload(base_url='${item_url}/${advice/advice_id}', view_name='@@change-advice-asked-again', this);;"/></acronym>
+                            <tal:advice-change-delay
+                              condition="advice/delay"
+                              tal:define="dummy python: context.REQUEST.set('advice_change_delay_advice', advice);
+                                          dummy python: context.REQUEST.set('advice_change_delay_cfg', cfg);"
+                              replace="structure context/@@advice-available-delays/index" />
+                            <acronym tal:condition="advice/advice_id|nothing">
+                               <a class="overlay-history"
+                                  title="History"
+                                  i18n:domain="plone"
+                                  i18n:attributes="title"
+                                  style="display: inline-block;"
+                                  href="@@historyview"
+                                  tal:attributes="href string:${obj/absolute_url}/@@historyview">
+                                   <img src="++resource++imio.actionspanel/history.gif"
+                                        tal:attributes="src string:${view/portal_url}/++resource++imio.actionspanel/history.gif"/>
+                               </a></acronym>
                          </div>
                     </legend>
 

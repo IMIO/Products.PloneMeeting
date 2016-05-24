@@ -3571,6 +3571,23 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         powerAdviserGroupIds = set(cfg.getPowerAdvisersGroups())
         return bool(userAdviserGroupIds.intersection(powerAdviserGroupIds))
 
+    security.declarePublic('displayCopyGroups')
+
+    def displayCopyGroups(self):
+        '''Display copy groups on the item view, especially the link showing users of a group.'''
+        portal_url = api.portal.get().absolute_url()
+        # get copyGroups vocabulary and patch it
+        copyGroupsVocab = self.listCopyGroups(include_auto=True)
+        patched_vocab = []
+        for term_id, term_title in copyGroupsVocab.items():
+            patched_vocab.append((term_id, '{0} {1}'.format(
+                term_title,
+                "<a onclick='event.preventDefault();' class='link-tooltip' "
+                "href='{0}/@@display-group-users?group_id={1}'><img src='{0}/group_users.png' /></a>"
+                .format(portal_url, term_id))))
+        patched_vocab = DisplayList(patched_vocab)
+        return self.displayValue(patched_vocab, self.getAllCopyGroups())
+
     security.declarePublic('hasAdvices')
 
     def hasAdvices(self, toGive=False, adviceIdsToBypass={}):

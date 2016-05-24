@@ -882,3 +882,49 @@ if (/msie/.test(navigator.userAgent.toLowerCase())) {
   $.ajaxSetup ({ 
     cache: false }); 
 }
+
+// tool tip, gently borrowed from
+// https://github.com/collective/collective.contact.widget/blob/master/src/collective/contact/widget/js/widget.js.pt
+$(document).ready(function() {
+
+  var pendingCall = {timeStamp: null, procID: null};
+  $(document).on('mouseleave', '.link-tooltip', function() {
+    if (pendingCall.procID) {
+      clearTimeout(pendingCall.procID);
+      pendingCall.procID = null;
+    }
+  });
+  $(document).on('mouseenter', '.link-tooltip', function() {
+    var trigger = $(this);
+    // don't open tooltip in tooltip
+    if (trigger.closest('.tooltip').length) {
+        return;
+    }
+    if (!trigger.data('tooltip')) {
+      if (pendingCall.procID) {
+        clearTimeout(pendingCall.procID);
+      }
+      var timeStamp = new Date();
+      var tooltipCall = function() {
+          var tip = $('<div class="tooltip pb-ajax" style="display:none">' + wait_msg + '</div>')
+                .insertAfter(trigger);
+          trigger.tooltip({relative: true, position: "center right"});
+          var tooltip = trigger.tooltip();
+          tooltip.show();
+          var url = trigger.attr('href');
+          $.get(url, {ajax_load: new Date().getTime()}, function(data) {
+            tooltip.hide();
+            tooltip.getTip().html($('<div />').append(
+                    data.replace(/<script(.|\s)*?\/script>/gi, ""))
+                .find(common_content_filter));
+            if (pendingCall.timeStamp == timeStamp) {
+                tooltip.show();
+            }
+            pendingCall.procID = null;
+          });
+      }
+      pendingCall = {timeStamp: timeStamp,
+                     procID: setTimeout(tooltipCall, 0)};
+    }
+  });
+});

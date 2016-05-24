@@ -660,7 +660,7 @@ td[class^="meeting_item_listType_"] div[id^="pm_menu_item_listType"].pmDropdown 
 
 div[id^="pm_menu_advice_change_delay"].pmDropdown {
     right: 25px;
-    margin-top: -1px;
+    top: 28px;
     font-weight: normal;
 }
 
@@ -850,6 +850,10 @@ p.indent-firstline {
    this will avoid acronyms displayed on 2 lines messups */
 TD acronym {
     line-height: 1.25em;
+}
+
+acronym a {
+    padding: 0;
 }
 
 /* TH of the table listing items are stylable th by th */
@@ -1365,7 +1369,8 @@ div.advice_popup_label {
 }
 div.advice_popup_actions {
     float: right;
-    max-width: 110px;
+    max-width: 130px;
+    height: 18px;
 }
 
 /* hide some elements on the versions_history_form */
@@ -1468,6 +1473,15 @@ div.customAdviceMessage {
     margin-bottom: 0.5em;
     margin-top: 0.5em;
 }
+
+.tooltip.pb-ajax {
+    padding: 1em;
+    width: 500px;
+    box-shadow: 5px 5px 5px grey;
+    /* when displaying group users, force font-weight to normal or it is displayed bold */
+    font-weight: normal;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */

@@ -168,6 +168,13 @@
       class=".views.CheckPodTemplatesView"
       permission="cmf.ManagePortal"
       />
+    <browser:page
+      for="Products.CMFPlone.interfaces.siteroot.IPloneSiteRoot"
+      name="display-group-users"
+      template="templates/display_group_users.pt"
+      class=".views.DisplayGroupUsersView"
+      permission="cmf.ManagePortal"
+      />
 
     <!-- a view that will make some utils available -->
     <browser:page

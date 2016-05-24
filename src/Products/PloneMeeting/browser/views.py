@@ -731,3 +731,35 @@ class CheckPodTemplatesView(BrowserView):
                     found = True
                     res.append(obj)
         return res
+
+
+class DisplayGroupUsersView(BrowserView):
+    """
+      View that display the users of a Plone group.
+    """
+
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+
+    def __call__(self, group_id):
+        """ """
+        self.group_id = group_id
+        return self.index()
+
+    def group_title(self):
+        """ """
+        groupsTool = api.portal.get_tool('portal_groups')
+        group = groupsTool.getGroupById(self.group_id)
+        return group.getProperty('title')
+
+    def group_users(self):
+        """ """
+        groupsTool = api.portal.get_tool('portal_groups')
+        membershipTool = api.portal.get_tool('portal_membership')
+        res = []
+        for member_id in groupsTool.getGroupMembers(self.group_id):
+            memberInfos = membershipTool.getMemberInfo(member_id)
+            res.append(memberInfos['fullname'])
+        res.sort()
+        return "<br />".join(res)

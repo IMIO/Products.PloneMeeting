@@ -1,0 +1,5 @@
+<div id="content" class="group_users" i18n:domain="plone">
+<h3 i18n:translate="heading_group_members_of">Members of group <span style="font-style: italic;" i18n:name="groupname" tal:content="view/group_title">group title</span></h3>
+<br />
+<span tal:content="structure view/group_users"></span>
+</div>
