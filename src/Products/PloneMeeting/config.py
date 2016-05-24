@@ -208,21 +208,6 @@ EXTRA_COPIED_FIELDS_SAME_MC = ['associatedGroups', 'copyGroups', 'classifier', '
 # to differenciate items, we can use a different icon color
 ITEM_ICON_COLORS = ("azur", "black", "green", "grey", "orange", "pink", "purple", "red", "yellow")
 
-# There are various ways to insert items into meetings
-ITEM_INSERT_METHODS = (  # Items are inserted:
-    'at_the_end',  # at the end of meetings;
-    'on_list_type',  # depending on the item's listType, by default 'normal' or 'late';
-    'on_categories',  # according to category order;
-    'on_proposing_groups',  # according to proposing group order;
-    'on_all_groups',  # according to all groups (among proposing group AND
-    # associated groups). Similar to the previous sort method, with this
-    # difference: the group taken into consideration is the group among all
-    # groups that comes first in the order.
-    'on_privacy',  # according to the item privacy;
-    'on_to_discuss',  # according to the item toDiscuss;
-    'on_other_mc_to_clone_to',  # according to items that need to be sent to another meeting config;
-)
-
 NOT_ENCODED_VOTE_VALUE = 'not_yet'
 NOT_CONSULTABLE_VOTE_VALUE = 'not_consultable'
 NOT_GIVEN_ADVICE_VALUE = 'not_given'
