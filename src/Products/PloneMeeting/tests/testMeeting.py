@@ -747,21 +747,21 @@ class testMeeting(PloneMeetingTestCase):
         # items of mc1 are clonable to mc2
         cfg2Id = self.meetingConfig2.getId()
         self.assertTrue(self.meetingConfig.getMeetingConfigsToCloneTo(),
-                        ({'meeting_config': '%s' % cfg2Id,
+                        ({'meeting_config': cfg2Id,
                           'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}, ))
         self.changeUser('pmManager')
         self._removeConfigObjectsFor(self.meetingConfig)
         meeting = self.create('Meeting', date=DateTime('2014/01/01'))
-        data = ({'otherMeetingConfigsClonableTo': ('%s' % cfg2Id, )},
+        data = ({'otherMeetingConfigsClonableTo': (cfg2Id, )},
                 {'otherMeetingConfigsClonableTo': ()},
                 {'otherMeetingConfigsClonableTo': ()},
-                {'otherMeetingConfigsClonableTo': ('%s' % cfg2Id, )},
-                {'otherMeetingConfigsClonableTo': ('%s' % cfg2Id, )},
+                {'otherMeetingConfigsClonableTo': (cfg2Id, )},
+                {'otherMeetingConfigsClonableTo': (cfg2Id, )},
                 {'otherMeetingConfigsClonableTo': ()},
-                {'otherMeetingConfigsClonableTo': ('%s' % cfg2Id, )},
+                {'otherMeetingConfigsClonableTo': (cfg2Id, )},
                 {'otherMeetingConfigsClonableTo': ()},
-                {'otherMeetingConfigsClonableTo': ('%s' % cfg2Id, )},
-                {'otherMeetingConfigsClonableTo': ('%s' % cfg2Id, )},
+                {'otherMeetingConfigsClonableTo': (cfg2Id, )},
+                {'otherMeetingConfigsClonableTo': (cfg2Id, )},
                 {'otherMeetingConfigsClonableTo': ()},)
         for itemData in data:
             item = self.create('MeetingItem', **itemData)
@@ -776,7 +776,7 @@ class testMeeting(PloneMeetingTestCase):
         '''Sort method tested here is "on_categories" then "on_other_mc_to_clone_to".'''
         # use meetingConfig2 for wich categories are configured
         self.meetingConfig2.setMeetingConfigsToCloneTo(
-            ({'meeting_config': '%s' % self.meetingConfig.getId(),
+            ({'meeting_config': self.meetingConfig.getId(),
               'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}, ))
         self.meetingConfig2.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_categories',
                                                            'reverse': '0'},
@@ -1184,7 +1184,7 @@ class testMeeting(PloneMeetingTestCase):
         cfg2Id = cfg2.getId()
         # when items are sent to cfg2, it will be 'presented'
         cfg.setMeetingConfigsToCloneTo(
-            ({'meeting_config': '%s' % cfg2.getId(),
+            ({'meeting_config': cfg2.getId(),
               'trigger_workflow_transitions_until': '%s.%s' % (cfg2Id, 'present')}, ))
         # items of cfg1 are automatically sent to cfg2 when in state 'presented'
         cfg.setItemAutoSentToOtherMCStates(('presented', ))
