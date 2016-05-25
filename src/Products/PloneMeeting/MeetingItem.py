@@ -2373,13 +2373,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         try:
+            res = ''
             if cfg.getUseGroupsAsCategories():
                 res = self.getProposingGroup(theObject=True)
             else:
                 categoryId = self.getField('category').get(self, **kwargs)
-                res = getattr(cfg.categories,
-                              categoryId)
-            if not theObject:
+                # avoid problems with acquisition
+                if categoryId in cfg.categories.objectIds():
+                    res = getattr(cfg.categories, categoryId)
+            if res and not theObject:
                 res = res.id
         except AttributeError:
             res = ''
