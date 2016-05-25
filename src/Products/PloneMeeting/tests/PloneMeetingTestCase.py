@@ -220,7 +220,8 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             contentType = '%s%s' % (objectType, shortName)
             folder = self.getMeetingFolder(meetingConfig)
         # Add some computed attributes
-        attrs.update({'id': self._generateId(folder)})
+        if not 'id' in attrs:
+            attrs.update({'id': self._generateId(folder)})
         if objectType == 'MeetingItem':
             if not 'proposingGroup' in attrs.keys():
                 cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.getGroupsForUser')
