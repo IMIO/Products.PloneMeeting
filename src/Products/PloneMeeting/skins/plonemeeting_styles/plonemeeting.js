@@ -893,6 +893,13 @@ $(document).ready(function() {
       clearTimeout(pendingCall.procID);
       pendingCall.procID = null;
     }
+    // if computed tooltip is still the wait_msg, destroy it
+    trigger = $(this);
+    tooltip = trigger.next('div.tooltip');
+    if (tooltip && tooltip.html() === wait_msg) {
+      tooltip.remove();
+      trigger.removeData('tooltip');
+    }
   });
   $(document).on('mouseenter', '.link-tooltip', function() {
     var trigger = $(this);
