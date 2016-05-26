@@ -235,6 +235,8 @@ class MeetingConfigDescriptor(Descriptor):
                          'recordItemHistoryStates', 'usedMeetingAttributes',
                          'historizedMeetingAttributes', 'recordMeetingHistoryStates',
                          'itemsListVisibleColumns', 'itemsListVisibleFields', 'itemColumns', 'meetingColumns',
+                         'dashboardItemsListingsFilters', 'dashboardMeetingAvailableItemsFilters',
+                         'dashboardMeetingLinkedItemsFilters',
                          'workflowAdaptations', 'transitionsToConfirm', 'transitionsForPresentingAnItem',
                          'onTransitionFieldTransforms', 'onMeetingTransitionItemTransitionToTrigger',
                          'meetingPresentItemWhenNoCurrentMeetingStates',
