@@ -488,26 +488,26 @@ class testViews(PloneMeetingTestCase):
         # several xhtmlContent
         self.assertEquals(helper.printXhtml(item, [motivation, decision]),
                           motivation + decision)
-        # use 'space'
-        self.assertEquals(helper.printXhtml(item, [motivation, 'space', decision]),
+        # use 'separator'
+        self.assertEquals(helper.printXhtml(item, [motivation, 'separator', decision]),
                           motivation + '<p>&nbsp;</p>' + decision)
-        # use 'space' with a fonctionnal usecase
+        # use 'separator' with a fonctionnal usecase
         self.assertEquals(helper.printXhtml(item, [motivation,
-                                                   'space',
+                                                   'separator',
                                                    '<p>DECIDE :</p>',
-                                                   'space',
+                                                   'separator',
                                                    decision]),
                           motivation + '<p>&nbsp;</p><p>DECIDE :</p><p>&nbsp;</p>' + decision)
 
-        # use 'space' and change 'separatorValue', insert 2 empty lines
+        # use 'separator' and change 'separatorValue', insert 2 empty lines
         self.assertEquals(helper.printXhtml(item,
-                                            [motivation, 'space', decision],
+                                            [motivation, 'separator', decision],
                                             separatorValue='<p>&nbsp;</p><p>&nbsp;</p>'),
                           motivation + '<p>&nbsp;</p><p>&nbsp;</p>' + decision)
         # use keepWithNext
         # special characters are turned to HTML entities decimal representation
         self.assertEquals(helper.printXhtml(item,
-                                            [motivation, 'space', decision],
+                                            [motivation, 'separator', decision],
                                             keepWithNext=True),
                           """<p class="pmParaKeepWithNext">The motivation using UTF-8 characters : &#232;&#224;.</p>
 <p class="pmParaKeepWithNext">&#160;</p>
@@ -522,7 +522,8 @@ class testViews(PloneMeetingTestCase):
         img_blob_path = img.getBlobWrapper().blob._p_blob_committed
         text = "<p>Text with image <img src='{0}'/> and more text.".format(img.absolute_url())
         self.assertEquals(helper.printXhtml(item,
-                                            [motivation, 'space', decision, 'space', text],
+                                            [motivation, 'separator', decision, 'separator', text],
+                                            image_src_to_paths=True,
                                             keepWithNext=True).replace('\n', ''),
                           """<p>The motivation using UTF-8 characters : &#232;&#224;.</p>
 <p>&#160;</p>
