@@ -476,7 +476,7 @@ class PMDocumentGenerationHelperView(ATDocumentGenerationHelperView):
                    checkNeedSeparator=True):
         """Helper method to format a p_xhtmlContents.  The xhtmlContents is a list or a string containing
            either XHTML content or some specific recognized words like :
-           - 'space', in this case, it is replaced with the p_separatorValue;
+           - 'separator', in this case, it is replaced with the p_separatorValue;
            Given xhtmlContents are all merged together to be printed in the document.
            If p_keepWithNext is True, signatureNotAlone is applied on the resulting XHTML.
            If p_image_src_to_paths is True, if some <img> are contained in the XHTML, the link to the image
@@ -484,15 +484,15 @@ class PMDocumentGenerationHelperView(ATDocumentGenerationHelperView):
            If p_checkNeedSeparator is True, it will only add the separator if previous
            xhtmlContent did not contain empty lines at the end.
            Indeed, private images not accessible by anonymous may not be reahed by LibreOffice.
-           Finally, the separatorValue is used when word 'pagebreak' is encountered in xhtmlContents.
+           Finally, the separatorValue is used when word 'separator' is encountered in xhtmlContents.
            A call to printXHTML in a POD template with an item as context could be :
-           view.printXHTML(self.getMotivation(), 'space', '<p>DECIDE :</p>', 'space', self.getDecision())
+           view.printXHTML(self.getMotivation(), 'separator', '<p>DECIDE :</p>', 'separator', self.getDecision())
         """
         xhtmlFinal = ''
         # list or tuple?
         if hasattr(xhtmlContents, '__iter__'):
             for xhtmlContent in xhtmlContents:
-                if xhtmlContent == 'space':
+                if xhtmlContent == 'separator':
                     hasSeparation = False
                     if checkNeedSeparator:
                         preparedXhtmlContent = "<special_tag>%s</special_tag>" % xhtmlContent
