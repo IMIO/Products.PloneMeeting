@@ -78,9 +78,9 @@ class testMeetingItem(PloneMeetingTestCase):
         # Use the 'plonegov-assembly' meetingConfig
         self.setMeetingConfig(self.meetingConfig2.getId())
         cfg = self.meetingConfig
-        cfg.classifiers.invokeFactory('MeetingCategory', id='class1', title='Classifier 1')
-        cfg.classifiers.invokeFactory('MeetingCategory', id='class2', title='Classifier 2')
-        cfg.classifiers.invokeFactory('MeetingCategory', id='class3', title='Classifier 3')
+        self.create('MeetingCategory', isClassifier=True, id='class1', title='Classifier 1')
+        self.create('MeetingCategory', isClassifier=True, id='class2', title='Classifier 2')
+        self.create('MeetingCategory', isClassifier=True, id='class3', title='Classifier 3')
         # create an item for test
         self.changeUser('pmCreator1')
         expectedCategories = ['deployment', 'maintenance', 'development', 'events', 'research', 'projects', ]
