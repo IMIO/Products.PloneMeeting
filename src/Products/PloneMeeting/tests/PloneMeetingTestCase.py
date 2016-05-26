@@ -198,7 +198,13 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             meetingConfig = self.meetingConfig
         return self.tool.getPloneMeetingFolder(meetingConfig.id)
 
-    def create(self, objectType, folder=None, autoAddCategory=True, meetingConfig=None, **attrs):
+    def create(self,
+               objectType,
+               folder=None,
+               autoAddCategory=True,
+               meetingConfig=None,
+               isClassifier=False,
+               **attrs):
         '''Creates an instance of a meeting (if p_objectType is 'Meeting') or
            meeting item (if p_objectType is 'MeetingItem') and
            returns the created object. p_attrs is a dict of attributes
@@ -216,11 +222,18 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         elif objectType in ('MeetingGroup', 'MeetingConfig'):
             contentType = objectType
             folder = self.tool
+        elif objectType in ('MeetingCategory', ):
+            contentType = objectType
+            if isClassifier:
+                folder = cfg.classifiers
+            else:
+                folder = cfg.categories
         else:
             contentType = '%s%s' % (objectType, shortName)
             folder = self.getMeetingFolder(meetingConfig)
         # Add some computed attributes
-        if not 'id' in attrs:
+        idInAttrs = 'id' in attrs
+        if not idInAttrs:
             attrs.update({'id': self._generateId(folder)})
         if objectType == 'MeetingItem':
             if not 'proposingGroup' in attrs.keys():
@@ -244,7 +257,12 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         if hasattr(obj.aq_inner, 'processForm'):
             # at_post_create_script is called by processForm
             # but processForm manage the _at_creation_flag
+            # keep id if it was given
+            if idInAttrs:
+                obj._at_rename_after_creation = False
             obj.processForm()
+            if idInAttrs:
+                obj._at_rename_after_creation = True
         # make sure we do not have permission check cache problems...
         self.cleanMemoize()
         return obj
