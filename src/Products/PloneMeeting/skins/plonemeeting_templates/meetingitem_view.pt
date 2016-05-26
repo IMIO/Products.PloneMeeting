@@ -420,6 +420,11 @@
        <metal:f use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
 
+    <tal:comment replace="nothing">Internal notes</tal:comment>
+    <tal:field define="fieldName python: 'internalNotes'; ajaxEdit python:True">
+       <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+    </tal:field>
+
     <tal:comment replace="nothing">Observations</tal:comment>
     <tal:field define="fieldName python: 'observations'; ajaxEdit python:True">
        <metal:f use-macro="context/@@pm-macros/viewContentField"/>

@@ -3856,6 +3856,53 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEquals(item.displayOtherMeetingConfigsClonableTo(),
                           unicode('{0}, {1} (Emergency)'.format(cfg2Title, cfg3Title), 'utf-8'))
 
+    def test_pm_InternalNotesIsRestrictedToProposingGroupOnly(self, ):
+        """Field MeetingItem.internalNotes is only available to members
+           of the proposing group."""
+        cfg = self.meetingConfig
+        self.changeUser('siteadmin')
+        # remove 'pmManager' from every 'vendors' groups
+        vendors = self.tool.vendors
+        for ploneGroup in vendors.getPloneGroups():
+            if 'pmManager' in ploneGroup.getGroupMemberIds():
+                ploneGroup.removeMember('pmManager')
+        # make copyGroups able to see item when it is validated
+        cfg.setItemCopyGroupsStates(('validated', ))
+        cfg.setUseCopies(True)
+        cfg.setSelectableCopyGroups(('developers_reviewers', 'vendors_reviewers'))
+
+        # create an item
+        self.changeUser('pmCreator2')
+        item = self.create('MeetingItem')
+        item.setCopyGroups(('developers_reviewers'))
+        # if not used, not shown
+        self.assertFalse(item.showInternalNotes())
+        # enable field internalNotes
+        cfg.setUsedItemAttributes(('internalNotes', ))
+        # MeetingItem.attributeIsUsed is RAMCached
+        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attributeIsUsed')
+        self.assertTrue(item.showInternalNotes())
+        self.assertTrue(item.mayQuickEdit('internalNotes'))
+
+        # a MeetingManager may not access it neither
+        self.validateItem(item)
+        self.changeUser('pmManager')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertFalse(item.showInternalNotes())
+        self.assertFalse(item.mayQuickEdit('internalNotes'))
+
+        # copyGroups no more
+        self.changeUser('pmReviewer1')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertFalse(item.showInternalNotes())
+        self.assertFalse(item.mayQuickEdit('internalNotes'))
+
+        # a Manager may see it
+        self.changeUser('siteadmin')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertTrue(item.showInternalNotes())
+        self.assertTrue(item.mayQuickEdit('internalNotes'))
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

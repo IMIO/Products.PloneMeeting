@@ -9,7 +9,7 @@
   <div tal:condition="view/showDecideSeveralItems" id="meetingDecideSeveralItems" >
     <div metal:use-macro="here/@@pm-macros/showItemsDecidedTransitions"></div>
   </div>
-  <div class="visualClear"></div>
+  <div style="padding-bottom: 2em;" class="visualClear"></div>
   <br />
 
   <tal:comment replace="nothing">In and out moves</tal:comment>

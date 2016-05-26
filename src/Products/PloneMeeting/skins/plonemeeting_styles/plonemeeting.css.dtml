@@ -1486,6 +1486,9 @@ div.customAdviceMessage {
     /* when displaying group users, force font-weight to normal or it is displayed bold */
     font-weight: normal;
 }
+span.no_users {
+    font-style: italic;
+}
 
 /* </dtml-with> */
 

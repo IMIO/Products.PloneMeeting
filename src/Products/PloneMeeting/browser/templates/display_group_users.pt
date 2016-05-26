@@ -1,5 +1,13 @@
-<div id="content" class="group_users" i18n:domain="plone">
-<h3 i18n:translate="heading_group_members_of">Members of group <span style="font-style: italic;" i18n:name="groupname" tal:content="view/group_title">group title</span></h3>
-<br />
-<span tal:content="structure view/group_users"></span>
+<div id="content" i18n:domain="plone">
+    <h3 i18n:translate="heading_group_members_of">Members of group <span style="font-style: italic;"
+                                                                         i18n:name="groupname"
+                                                                         tal:content="view/group_title">group title</span></h3>
+    <tal:users define="users view/group_users">
+        <span  tal:condition="users"
+               tal:content="structure view/group_users"></span>
+        <span class="no_users"
+              tal:condition="not:users"
+              i18n:domain="PloneMeeting"
+              i18n:translate="no_users_in_group">No user was found in this group.</span>
+    </tal:users>
 </div>

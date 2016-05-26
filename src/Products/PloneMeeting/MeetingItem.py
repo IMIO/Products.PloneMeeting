@@ -922,6 +922,22 @@ schema = Schema((
         write_permission="PloneMeeting: Write item MeetingManager reserved fields",
     ),
     TextField(
+        name='internalNotes',
+        allowable_content_types=('text/html',),
+        widget=RichWidget(
+            description="InternalNotes",
+            description_msgid="internal_notes_descr",
+            condition="python: here.showInternalNotes()",
+            label_msgid="PloneMeeting_label_internalNotes",
+            rows=20,
+            label='InternalNotes',
+            i18n_domain='PloneMeeting',
+        ),
+        default_content_type="text/html",
+        default_output_type="text/x-html-safe",
+        optional=True,
+    ),
+    TextField(
         name='observations',
         widget=RichWidget(
             label_msgid="PloneMeeting_itemObservations",
@@ -1484,6 +1500,26 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         return cfg.getDefaultMeetingItemMotivation()
+
+    security.declarePublic('showInternalNotes')
+
+    def showInternalNotes(self):
+        '''When must field 'internalNotes' be shown?'''
+        if self.isTemporary() or not self.attributeIsUsed('internalNotes'):
+            return False
+
+        # by pass for Managers
+        tool = api.portal.get_tool('portal_plonemeeting')
+        if tool.isManager(self, realManagers=True):
+            return True
+
+        # user must be in one of the proposingGroup Plone groups
+        mGroup = self.getProposingGroup(theObject=True)
+        ploneGroups = mGroup.getPloneGroups(idsOnly=True)
+        member = api.user.get_current()
+        if set(ploneGroups).intersection(set(member.getGroups())):
+            return True
+        return False
 
     security.declarePublic('showMeetingManagerReservedField')
 
@@ -3582,11 +3618,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         copyGroupsVocab = self.listCopyGroups(include_auto=True)
         patched_vocab = []
         for term_id, term_title in copyGroupsVocab.items():
+            # auto copyGroups are prefixed with 'auto__'
+            real_group_id = term_id.split('auto__')[-1]
             patched_vocab.append((term_id, '{0} {1}'.format(
                 term_title,
                 "<a onclick='event.preventDefault();' class='link-tooltip' "
                 "href='{0}/@@display-group-users?group_id={1}'><img src='{0}/group_users.png' /></a>"
-                .format(portal_url, term_id))))
+                .format(portal_url, real_group_id))))
         patched_vocab = DisplayList(patched_vocab)
         return self.displayValue(patched_vocab, self.getAllCopyGroups())
 

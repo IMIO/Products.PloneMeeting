@@ -744,6 +744,7 @@ class DisplayGroupUsersView(BrowserView):
 
     def __call__(self, group_id):
         """ """
+        # manage auto groups
         self.group_id = group_id
         return self.index()
 
@@ -760,6 +761,6 @@ class DisplayGroupUsersView(BrowserView):
         res = []
         for member_id in groupsTool.getGroupMembers(self.group_id):
             memberInfos = membershipTool.getMemberInfo(member_id)
-            res.append(memberInfos['fullname'])
+            res.append(memberInfos and memberInfos['fullname'] or member_id)
         res.sort()
         return "<br />".join(res)
