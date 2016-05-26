@@ -469,7 +469,7 @@ class PMDocumentGenerationHelperView(ATDocumentGenerationHelperView):
             return '-rotate 90'
 
     def printXhtml(self, context, xhtmlContents,
-                   image_src_to_paths=True,
+                   image_src_to_paths=False,
                    separatorValue='<p>&nbsp;</p>',
                    keepWithNext=False,
                    keepWithNextNumberOfChars=CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT,
@@ -484,7 +484,7 @@ class PMDocumentGenerationHelperView(ATDocumentGenerationHelperView):
            If p_checkNeedSeparator is True, it will only add the separator if previous
            xhtmlContent did not contain empty lines at the end.
            Indeed, private images not accessible by anonymous may not be reahed by LibreOffice.
-           Finally, the separatorValue is used when word 'space' is encountered in xhtmlContents.
+           Finally, the separatorValue is used when word 'pagebreak' is encountered in xhtmlContents.
            A call to printXHTML in a POD template with an item as context could be :
            view.printXHTML(self.getMotivation(), 'space', '<p>DECIDE :</p>', 'space', self.getDecision())
         """
