@@ -2922,29 +2922,42 @@ class testMeetingItem(PloneMeetingTestCase):
            is correctly considered by these 2 constants or purposely not taken into account.'''
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
+        # title is in the DEFAULT_COPIED_FIELDS
+        item.setTitle('Original title')
+        # optionalAdvisers is in the EXTRA_COPIED_FIELDS_SAME_MC
+        item.setOptionalAdvisers(('developers', ))
+        # 'internalNotes' is in the NEUTRAL_FIELDS
+        item.setInternalNotes('<p>Internal notes.</p>')
         # every item fields except ones considered as metadata
         itemFields = [field.getName() for field in item.Schema().filterFields(isMetadata=False)]
         # fields not taken into account are following
         # XXX toDiscuss is a neutral field because it is managed manually depending
         # on the parameter MeetingConfig.toDiscussSetOnItemInsert
         # check test test_pm_ToDiscussFieldBehaviourWhenCloned
-        neutralFields = ['answerers', 'completeness', 'emergency', 'id',
-                         'itemAbsents', 'itemAssembly', 'itemAssemblyAbsents',
-                         'itemAssemblyExcused', 'itemInitiator', 'itemIsSigned',
-                         'itemKeywords', 'itemNumber', 'itemSignatories',
-                         'itemSignatures', 'itemTags', 'listType', 'manuallyLinkedItems',
-                         'meetingTransitionInsertingMe', 'inAndOutMoves', 'notes', 'observations',
-                         'predecessor', 'preferredMeeting', 'proposingGroup',
-                         'questioners', 'takenOverBy', 'templateUsingGroups',
-                         'toDiscuss', 'votesAreSecret', 'otherMeetingConfigsClonableToEmergency']
+        NEUTRAL_FIELDS = ['answerers', 'completeness', 'emergency', 'id',
+                          'itemAbsents', 'itemAssembly', 'itemAssemblyAbsents',
+                          'itemAssemblyExcused', 'itemInitiator', 'itemIsSigned',
+                          'itemKeywords', 'itemNumber', 'itemSignatories',
+                          'itemSignatures', 'itemTags', 'listType', 'manuallyLinkedItems',
+                          'meetingTransitionInsertingMe', 'inAndOutMoves', 'notes', 'observations',
+                          'predecessor', 'preferredMeeting', 'proposingGroup',
+                          'questioners', 'takenOverBy', 'templateUsingGroups',
+                          'toDiscuss', 'votesAreSecret', 'otherMeetingConfigsClonableToEmergency',
+                          'internalNotes']
         # neutral + default + extra + getExtraFieldsToCopyWhenCloning(True) +
         # getExtraFieldsToCopyWhenCloning(False) should equal itemFields
-        copiedFields = set(neutralFields +
+        copiedFields = set(NEUTRAL_FIELDS +
                            DEFAULT_COPIED_FIELDS +
                            EXTRA_COPIED_FIELDS_SAME_MC +
                            item.adapted().getExtraFieldsToCopyWhenCloning(cloned_to_same_mc=True) +
                            item.adapted().getExtraFieldsToCopyWhenCloning(cloned_to_same_mc=False))
         self.assertEquals(copiedFields, set(itemFields))
+
+        newItem = item.clone()
+        self.assertEquals(item.Title(), newItem.Title())
+        self.assertEquals(item.getOptionalAdvisers(), newItem.getOptionalAdvisers())
+        self.assertNotEquals(item.getInternalNotes(), newItem.getInternalNotes())
+        self.assertFalse(newItem.getInternalNotes())
 
     def test_pm_CopiedFieldsWhenDuplicatedAsItemTemplate(self):
         '''Test that relevant fields are kept when an item is created from an itemTemplate.
