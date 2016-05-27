@@ -436,6 +436,25 @@ class testMeetingGroup(PloneMeetingTestCase):
                            'Function2', 'Name2',
                            'Redefined function3', 'Redefined name3'])
 
+    def test_pm_UserPloneGroups(self):
+        """This will return the Plone groups of a MeetingGroup the current user is in."""
+        self.changeUser('pmCreator1')
+        self.assertFalse(self.tool.vendors.userPloneGroups())
+        self.assertEquals(self.tool.developers.userPloneGroups(),
+                          ['developers_creators'])
+
+        self.changeUser('pmManager')
+        self.assertEquals(self.tool.vendors.userPloneGroups(),
+                          ['vendors_advisers'])
+        self.assertEquals(sorted(self.tool.developers.userPloneGroups()),
+                          ['developers_advisers', 'developers_creators',
+                           'developers_observers', 'developers_reviewers'])
+        # we may ask if user is in a specific suffix
+        self.assertEquals(self.tool.developers.userPloneGroups(suffixes=['observers']),
+                          ['developers_observers'])
+        self.assertEquals(sorted(self.tool.developers.userPloneGroups(suffixes=['advisers', 'reviewers'])),
+                          ['developers_advisers', 'developers_reviewers'])
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

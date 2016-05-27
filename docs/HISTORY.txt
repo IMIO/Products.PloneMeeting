@@ -286,6 +286,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Display a "group users" icon next to the displayed copy groups and asked advices on the item view to be able to get informations
   about users that are in the selected Plone groups, this way we know which users will have read access to the item and which will be
   able to give an advice
+- Added method MeetingGroup.userPloneGroups to be able to get the Plone groups of a MeetingGroup the currently connected used is in
 
 3.3 (2015-02-27)
 ----------------

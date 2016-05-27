@@ -1515,9 +1515,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # user must be in one of the proposingGroup Plone groups
         mGroup = self.getProposingGroup(theObject=True)
-        ploneGroups = mGroup.getPloneGroups(idsOnly=True)
-        member = api.user.get_current()
-        if set(ploneGroups).intersection(set(member.getGroups())):
+        if mGroup.userPloneGroups():
             return True
         return False
 

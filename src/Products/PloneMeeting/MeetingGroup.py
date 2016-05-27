@@ -271,12 +271,15 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
            p_suffix.'''
         return '%s_%s' % (self.id, suffix)
 
-    def getPloneGroups(self, idsOnly=False, acl=False):
+    def getPloneGroups(self, idsOnly=False, acl=False, suffixes=[]):
         '''Returns the list of Plone groups tied to this MeetingGroup. If
            p_acl is True, it returns True PAS groups. Else, it returns Plone
-           wrappers from portal_groups.'''
+           wrappers from portal_groups.
+           If some p_suffixes are defined, only these Plone groups are returned.'''
         res = []
         for suffix in self.getAllSuffixes():
+            if suffixes and not suffix in suffixes:
+                continue
             groupId = self.getPloneGroupId(suffix)
             if idsOnly:
                 res.append(groupId)
@@ -287,6 +290,13 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
                     group = self.portal_groups.getGroupById(groupId)
                 res.append(group)
         return res
+
+    def userPloneGroups(self, suffixes=[]):
+        """Return the Plone groups linked to this MeetingGroup
+           the currently connected user is in."""
+        ploneGroups = self.getPloneGroups(idsOnly=True, suffixes=suffixes)
+        member = api.user.get_current()
+        return list(set(ploneGroups).intersection(set(member.getGroups())))
 
     def _createOrUpdatePloneGroup(self, groupSuffix):
         '''This will create the PloneGroup that corresponds to me
