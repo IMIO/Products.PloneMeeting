@@ -24,7 +24,7 @@
 
 from OFS.ObjectManager import BeforeDeleteException
 from zope.i18n import translate
-from Products.CMFCore.utils import getToolByName
+from plone import api
 from imio.helpers.cache import cleanRamCacheFor
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
@@ -112,7 +112,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         # before from groups he is in, a special "not found" user will still be assigned to the groups...
         # to test, add a new user, assign it to the developers_creators group, remove the user
         # it should not complain about 'can_not_delete_meetinggroup_plonegroup'
-        membershipTool = getToolByName(self.portal, 'portal_membership')
+        membershipTool = api.portal.get_tool('portal_membership')
         membershipTool.addMember(id='new_test_user',
                                  password='12345',
                                  roles=('Member', ),
@@ -438,12 +438,29 @@ class testMeetingGroup(PloneMeetingTestCase):
 
     def test_pm_UserPloneGroups(self):
         """This will return the Plone groups of a MeetingGroup the current user is in."""
-        self.changeUser('pmCreator1')
+        # add specific users so it works correctly with different testing profile
+        membershipTool = api.portal.get_tool('portal_membership')
+        membershipTool.addMember(id='test_user1',
+                                 password='12345',
+                                 roles=('Member', ),
+                                 domains=())
+        membershipTool.addMember(id='test_user2',
+                                 password='12345',
+                                 roles=('Member', ),
+                                 domains=())
+        self.portal.portal_groups.addPrincipalToGroup('test_user1', 'developers_creators')
+        self.portal.portal_groups.addPrincipalToGroup('test_user2', 'vendors_advisers')
+        self.portal.portal_groups.addPrincipalToGroup('test_user2', 'developers_advisers')
+        self.portal.portal_groups.addPrincipalToGroup('test_user2', 'developers_creators')
+        self.portal.portal_groups.addPrincipalToGroup('test_user2', 'developers_observers')
+        self.portal.portal_groups.addPrincipalToGroup('test_user2', 'developers_reviewers')
+
+        self.changeUser('test_user1')
         self.assertFalse(self.tool.vendors.userPloneGroups())
         self.assertEquals(self.tool.developers.userPloneGroups(),
                           ['developers_creators'])
 
-        self.changeUser('pmManager')
+        self.changeUser('test_user2')
         self.assertEquals(self.tool.vendors.userPloneGroups(),
                           ['vendors_advisers'])
         self.assertEquals(sorted(self.tool.developers.userPloneGroups()),
@@ -454,6 +471,8 @@ class testMeetingGroup(PloneMeetingTestCase):
                           ['developers_observers'])
         self.assertEquals(sorted(self.tool.developers.userPloneGroups(suffixes=['advisers', 'reviewers'])),
                           ['developers_advisers', 'developers_reviewers'])
+        self.assertEquals(sorted(self.tool.developers.userPloneGroups(suffixes=['advisers', 'other_suffix'])),
+                          ['developers_advisers'])
 
 
 def test_suite():
