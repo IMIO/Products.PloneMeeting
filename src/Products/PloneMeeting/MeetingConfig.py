@@ -3875,6 +3875,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
           Create necessary subfolders for the MeetingConfig.
         '''
         tool = api.portal.get_tool('portal_plonemeeting')
+        default_language = api.portal.get_tool('portal_languages').getDefaultLanguage()
         for folderId, folderInfo in self.subFoldersInfo.iteritems():
             # if a folder already exists, we continue
             # this is done because this method is used as helper
@@ -3910,6 +3911,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             folder.setTitle(translate(folderInfo[0],
                                       domain="PloneMeeting",
                                       context=self.REQUEST,
+                                      target_language=default_language,
                                       default=folderInfo[0]))
             folder.setConstrainTypesMode(1)
             allowedTypes = list(folderInfo[1])
@@ -3944,6 +3946,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 subFolder.setTitle(translate(subFolderTitle,
                                              domain="PloneMeeting",
                                              context=self.REQUEST,
+                                             target_language=default_language,
                                              default=subFolderTitle))
                 subFolder.processForm(values={'dummy': None})
 

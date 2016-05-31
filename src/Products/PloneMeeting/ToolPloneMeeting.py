@@ -1514,6 +1514,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         # Apply p_fmt to p_aDate. Manage first special symbols corresponding to
         # translated names of days and months.
         # Manage day of week
+        if not lang:
+            lang = api.portal.get_tool('portal_languages').getDefaultLanguage()
         dow = translate(weekdaysIds[date.dow()], target_language=lang,
                         domain='plonelocales', context=self.REQUEST)
         fmt = fmt.replace('%dt', dow.lower())
