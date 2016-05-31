@@ -652,6 +652,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         """Test the formatMeetingDate method."""
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=DateTime('2015/05/05'))
+        self.portal.portal_languages.setDefaultLanguage('en')
         self.assertEquals(self.tool.formatMeetingDate(meeting),
                           u'05 may 2015')
         self.assertEquals(self.tool.formatMeetingDate(meeting, short=True),
