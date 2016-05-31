@@ -2,7 +2,7 @@
 #
 # File: overrides.py
 #
-# Copyright (c) 2015 by Imio.be
+# Copyright (c) 2016 by Imio.be
 #
 # GNU General Public License (GPL)
 #

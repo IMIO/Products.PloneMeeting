@@ -739,7 +739,7 @@ class Criteria(eeaCriteria):
         try:
             tool = api.portal.get_tool('portal_plonemeeting')
         except InvalidParameterError:
-            # in case 'portal_plonemeeting' is not available, keep classing criteria behaviour
+            # in case 'portal_plonemeeting' is not available, use original criteria behaviour
             return
         cfg = tool.getMeetingConfig(context)
         if not cfg:
