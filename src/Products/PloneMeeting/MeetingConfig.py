@@ -3643,6 +3643,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def createSearches(self, searchesInfo):
         '''Adds a bunch of collections in the 'searches' sub-folder.'''
+        default_language = api.portal.get_tool('portal_languages').getDefaultLanguage()
         for collectionId, collectionData in searchesInfo.items():
             container = getattr(self, TOOL_FOLDER_SEARCHES)
             subFolderId = collectionData['subFolderId']
@@ -3660,7 +3661,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             collection.setTitle(translate(collectionId,
                                           domain="PloneMeeting",
                                           context=self.REQUEST,
-                                          target_language=self.portal_languages.getDefaultLanguage(),
+                                          target_language=default_language,
                                           default=collectionId))
             collection.setCustomViewFields(['Title', 'CreationDate', 'Creator', 'review_state', 'actions'])
             collection.reindexObject()
