@@ -3660,6 +3660,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             collection.setTitle(translate(collectionId,
                                           domain="PloneMeeting",
                                           context=self.REQUEST,
+                                          target_language=self.portal_languages.getDefaultLanguage(),
                                           default=collectionId))
             collection.setCustomViewFields(['Title', 'CreationDate', 'Creator', 'review_state', 'actions'])
             collection.reindexObject()
