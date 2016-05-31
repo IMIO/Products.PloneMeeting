@@ -133,8 +133,9 @@ class AnnexableAdapter(object):
             plone_utils.addPortalMessage(_("The annex that you just added has a large size and could be "
                                            "difficult to download by users wanting to view it!"),
                                          type='warning')
-        userId = self.context.portal_membership.getAuthenticatedMember().getId()
+        userId = api.user.get_current().getId()
         logger.info('Annex at %s uploaded by "%s".' % (newAnnex.absolute_url_path(), userId))
+        return newAnnex
 
     def isValidAnnexId(self, idCandidate):
         '''See docstring in interfaces.py'''
