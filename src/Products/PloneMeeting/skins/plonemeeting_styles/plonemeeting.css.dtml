@@ -1370,11 +1370,11 @@ table.meetingConfigActions td {
 div.advice_popup_label {
     display: inline-block;
     vertical-align: middle;
-    max-width: 385px;
+    max-width: 365px;
 }
 div.advice_popup_actions {
     float: right;
-    max-width: 130px;
+    max-width: 150px;
     height: 18px;
 }
 
