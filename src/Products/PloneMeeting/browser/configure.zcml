@@ -173,7 +173,7 @@
       name="display-group-users"
       template="templates/display_group_users.pt"
       class=".views.DisplayGroupUsersView"
-      permission="cmf.ManagePortal"
+      permission="zope2.View"
       />
 
     <!-- a view that will make some utils available -->
