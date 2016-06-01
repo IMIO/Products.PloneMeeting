@@ -307,7 +307,8 @@ class PloneMeetingRedirectToAppView(BrowserView):
         defaultMeetingConfig = self.defaultMeetingConfig()
         member = api.user.get_current()
         if not self.defaultMeetingConfig() and member.has_role('Manager'):
-            self.portal.plone_utils.addPortalMessage(
+            plone_utils = api.portal.get_tool('plone_utils')
+            plone_utils.addPortalMessage(
                 translate('Please specify a default meeting config upon active existing '
                           'meeting configs to be automaatically redirected to it.',
                           domain='PloneMeeting',

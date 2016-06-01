@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from AccessControl import Unauthorized
+from DateTime import DateTime
 from persistent.list import PersistentList
 from zope.interface import implements, Interface
 from zope import schema
@@ -204,6 +205,12 @@ class MeetingAdvice(Container):
             pr = api.portal.get_tool('portal_repository')
             pr.save(obj=self, comment=comment)
             delattr(self, 'historized_item_data')
+            # now initialize self.modificationDate to last version timestamp
+            # see utils.isModifiedSinceLastVersion
+            history_metadata = pr.getHistoryMetadata(self)
+            timestamp = history_metadata._full[history_metadata.nextVersionId-1]['metadata']['sys_metadata']['timestamp']
+            self.setModificationDate(DateTime(timestamp))
+            self.reindexObject(idxs=['modified', 'ModificationDate'])
 
 
 class MeetingAdviceSchemaPolicy(DexteritySchemaPolicy):

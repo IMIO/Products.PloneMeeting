@@ -1352,8 +1352,13 @@ def isModifiedSinceLastVersion(obj):
     history_metadata = pr.getHistoryMetadata(obj)
     modified = True
     if history_metadata and history_metadata._available:
-        previous = pr.retrieve(obj, (history_metadata.nextVersionId-1)).object
-        if previous.modified() == obj.modified():
+        # date it was versionned
+        timestamp = history_metadata._full[history_metadata.nextVersionId-1]['metadata']['sys_metadata']['timestamp']
+        # we do not use _retrieve because it does a transaction savepoint and it
+        # breaks collective.zamqp...  So we use timestamp
+        # advice.modified is initialized to timestamp just after a version, see content.advice.versionate_if_relevant
+        # keep >= for backward compatibility as before, timestamp was > than modified, now it is equal...
+        if DateTime(timestamp) >= obj.modified():
             modified = False
     return modified
 
