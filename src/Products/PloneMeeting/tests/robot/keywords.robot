@@ -12,3 +12,9 @@ Select collection
     Click element  ${widget_name}${UID}
     Run keyword if  '${results}'=='1'  Wait until element is visible  css=.faceted-table-results  10  ELSE  Wait until element is visible  css=.table_faceted_no_results  10
     Sleep  1
+
+Click and Screenshot overlayForm
+    [Arguments]  ${locator}  ${image_title}  ${screen_zone}
+    Click element  ${locator}
+    Sleep  0.5
+    Capture and crop page screenshot  ${image_title}  ${screen_zone}
