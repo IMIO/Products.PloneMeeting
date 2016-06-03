@@ -1490,6 +1490,11 @@ span.no_users {
     font-style: italic;
 }
 
+/* width of input used on the meeting_view to change item number */
+input[id^='value_moveAction_'] {
+    width: 40px;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */
