@@ -1345,7 +1345,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         adaptations = cfg.getWorkflowAdaptations()
         if 'hide_decisions_when_under_writing' in adaptations and \
            self.hasMeeting() and self.getMeeting().queryState() == 'decided' and \
-           not api.user.get_current().has_permission(ModifyPortalContent, self):
+           not checkPermission(ModifyPortalContent, self):
             return translate('decision_under_edit',
                              domain='PloneMeeting',
                              context=self.REQUEST,

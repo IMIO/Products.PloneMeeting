@@ -1309,8 +1309,15 @@ class testWFAdaptations(PloneMeetingTestCase):
                           HIDE_DECISION_UNDER_WRITING_MSG)
         self.assertEquals(item.getDecision(),
                           HIDE_DECISION_UNDER_WRITING_MSG)
-        self.changeUser('pmManager')
+
+        # special test, remove an annex, it is done as 'all_powerful_Oz' user
+        # and broke when checking has_permission in MeetingItem._mayNotViewDecisionMsg
+        self.changeUser('siteadmin')
+        annex = self.addAnnex(item)
+        self.deleteAsManager(annex.UID())
+
         # MeetingManagers see it correctly
+        self.changeUser('pmManager')
         self.assertEquals(item.getMotivation(), '<p>Motivation adapted by pmManager</p>')
         self.assertEquals(item.getDecision(), '<p>Decision adapted by pmManager</p>')
         # a 'publish_decisions' transition is added after 'decide'
