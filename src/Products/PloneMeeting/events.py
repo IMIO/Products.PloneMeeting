@@ -512,35 +512,6 @@ def onAnnexRemoved(annex, event):
     parent.reindexObject()
 
 
-def onItemDuplicated(item, event):
-    '''When an item is duplicated, if it was sent from a MeetingConfig to
-       another, we will add a line in the original item history specifying that
-       it was sent to another meetingConfig.  The 'new item' already have
-       a line added to his workflow_history.'''
-    newItem = event.newItem
-    tool = api.portal.get_tool('portal_plonemeeting')
-    if tool.getMeetingConfig(item) == tool.getMeetingConfig(newItem):
-        return
-    # add a line to the original item history
-    memberId = api.user.get_current().getId()
-    wfTool = api.portal.get_tool('portal_workflow')
-    wfName = wfTool.getWorkflowsFor(item)[0].id
-    newItemConfig = tool.getMeetingConfig(newItem)
-    label = translate('sentto_othermeetingconfig',
-                      domain="PloneMeeting",
-                      context=item.REQUEST,
-                      mapping={'meetingConfigTitle': safe_unicode(newItemConfig.Title())})
-    action = newItemConfig._getCloneToOtherMCActionTitle(newItemConfig.Title())
-    # copy last event and adapt it
-    lastEvent = item.workflow_history[wfName][-1]
-    newEvent = lastEvent.copy()
-    newEvent['comments'] = label
-    newEvent['action'] = action
-    newEvent['actor'] = memberId
-    newEvent['time'] = DateTime()
-    item.workflow_history[wfName] = item.workflow_history[wfName] + (newEvent, )
-
-
 def onItemEditBegun(item, event):
     '''When an item edit begun, if it is an item in creation, we check that
        if MeetingConfig.itemCreatedOnlyUsingTemplate is True, the user is not trying to create

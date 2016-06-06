@@ -1144,7 +1144,7 @@ schema = Schema((
     LinesField(
         name='otherMeetingConfigsClonableTo',
         widget=MultiSelectionWidget(
-            condition="python: here.isClonableToOtherMeetingConfigs()",
+            condition="here/isClonableToOtherMeetingConfigs",
             format="checkbox",
             label='Othermeetingconfigsclonableto',
             label_msgid='PloneMeeting_label_otherMeetingConfigsClonableTo',
@@ -1157,15 +1157,30 @@ schema = Schema((
     LinesField(
         name='otherMeetingConfigsClonableToEmergency',
         widget=MultiSelectionWidget(
-            condition="python: here.showOtherMeetingConfigsClonableToEmergency()",
+            condition="here/showOtherMeetingConfigsClonableToEmergency",
             format="checkbox",
-            label="Pouvoir envoyer dans une séance qui n'est plus 'en création'",
+            label="Othermeetingconfigsclonabletoemergency",
             label_msgid='PloneMeeting_label_otherMeetingConfigsClonableToEmergency',
             i18n_domain='PloneMeeting',
         ),
+        optional=True,
         enforceVocabulary=True,
         multiValued=1,
         vocabulary='listOtherMeetingConfigsClonableToEmergency',
+    ),
+    LinesField(
+        name='otherMeetingConfigsClonableToPrivacy',
+        widget=MultiSelectionWidget(
+            condition="python: here.attributeIsUsed('otherMeetingConfigsClonableToPrivacy')",
+            format="checkbox",
+            label="Othermeetingconfigsclonabletoprivacy",
+            label_msgid='PloneMeeting_label_otherMeetingConfigsClonableToPrivacy',
+            i18n_domain='PloneMeeting',
+        ),
+        optional=True,
+        enforceVocabulary=True,
+        multiValued=1,
+        vocabulary='listOtherMeetingConfigsClonableToPrivacy',
     ),
     BooleanField(
         name='sendToAuthority',
@@ -1533,6 +1548,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def showOtherMeetingConfigsClonableToEmergency(self):
         '''Widget condition used for field 'otherMeetingConfigsClonableToEmergency'.
            Show it if:
+           - optional field is used;
            - is clonable to other MC;
            - item cloned to the other MC will be automatically presented in an available meeting;
            - isManager;
@@ -1540,6 +1556,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
              another user editing the item after may not remove 'otherMeetingConfigsClonableTo' without
              removing the 'otherMeetingConfigsClonableToEmergency'.
         '''
+        # is used?
+        if not self.attributeIsUsed('otherMeetingConfigsClonableToEmergency'):
+            return False
+
         tool = api.portal.get_tool('portal_plonemeeting')
         # item will be 'presented' while sent to the other MC?
         cfg = tool.getMeetingConfig(self)
@@ -2225,6 +2245,28 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             otherMeetingConfigsClonableToEmergencyInVocab = [term[0] for term in res]
             for meetingConfigId in otherMCsClonableToEmergency:
                 if meetingConfigId not in otherMeetingConfigsClonableToEmergencyInVocab:
+                    res.append((meetingConfigId, translated_msg))
+        return DisplayList(tuple(res))
+
+    security.declarePublic('listOtherMeetingConfigsClonableToPrivacy')
+
+    def listOtherMeetingConfigsClonableToPrivacy(self):
+        '''Lists the possible other meetingConfigs the item can be cloned to.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        meetingConfig = tool.getMeetingConfig(self)
+        res = []
+        translated_msg = translate('Secret while presenting in other MC?',
+                                   domain='PloneMeeting',
+                                   context=self.REQUEST)
+        for mctct in meetingConfig.getMeetingConfigsToCloneTo():
+            res.append((mctct['meeting_config'], translated_msg))
+        # make sure otherMeetingConfigsClonableToPrivacy actually stored have their corresponding
+        # term in the vocabulary, if not, add it
+        otherMCsClonableToPrivacy = self.getOtherMeetingConfigsClonableToPrivacy()
+        if otherMCsClonableToPrivacy:
+            otherMeetingConfigsClonableToPrivacyInVocab = [term[0] for term in res]
+            for meetingConfigId in otherMCsClonableToPrivacy:
+                if meetingConfigId not in otherMeetingConfigsClonableToPrivacyInVocab:
                     res.append((meetingConfigId, translated_msg))
         return DisplayList(tuple(res))
 
@@ -3580,18 +3622,47 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('displayOtherMeetingConfigsClonableTo')
 
     def displayOtherMeetingConfigsClonableTo(self):
-        '''Display otherMeetingConfigsClonableTo with eventual emergency informations.'''
+        '''Display otherMeetingConfigsClonableTo with eventual
+           emergency and privacy informations.'''
         vocab = self.listOtherMeetingConfigsClonableTo()
-        translated_msg = translate('Emergency while presenting in other MC',
-                                   domain='PloneMeeting',
-                                   context=self.REQUEST)
+
+        # emergency
+        emergency_msg = translate('Emergency while presenting in other MC',
+                                  domain='PloneMeeting',
+                                  context=self.REQUEST)
+        # privacy
+        secret_msg = translate('secret',
+                               domain='PloneMeeting',
+                               context=self.REQUEST)
+        public_msg = translate('public',
+                               domain='PloneMeeting',
+                               context=self.REQUEST)
         res = []
         for otherMC in self.getOtherMeetingConfigsClonableTo():
-            tmp = safe_unicode(vocab.getValue(otherMC))
+            isSecret = otherMC in self.getOtherMeetingConfigsClonableToPrivacy()
+            cfgTitle = safe_unicode(vocab.getValue(otherMC))
+            displayEmergency = False
+            displayPrivacy = False
             if otherMC in self.getOtherMeetingConfigsClonableToEmergency():
-                tmp = u'{0} ({1})'.format(tmp, translated_msg)
+                displayEmergency = True
+            if self.attributeIsUsed('otherMeetingConfigsClonableToPrivacy'):
+                displayPrivacy = True
+
+            PATTERN = u"{0}"
+            if displayEmergency or displayPrivacy:
+                PATTERN = u"{0} ({1})"
+
+            emergencyAndPrivacyInfos = []
+            if displayEmergency:
+                emergencyAndPrivacyInfos.append(emergency_msg)
+            if displayPrivacy:
+                privacyInfo = u"<span class='item_privacy_{0}'>{1}</span>".format(
+                    isSecret and 'secret' or 'public',
+                    isSecret and secret_msg or public_msg)
+                emergencyAndPrivacyInfos.append(privacyInfo)
+            tmp = PATTERN.format(cfgTitle, " - ".join(emergencyAndPrivacyInfos))
             res.append(tmp)
-        return u', '.join(res) or '-'
+        return u", ".join(res) or "-"
 
     security.declarePublic('displayAdvices')
 
@@ -4635,6 +4706,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # privacyViewable and using such an item template will always fail...
         if self.getProposingGroup() and not self.adapted().isPrivacyViewable():
             raise Unauthorized
+        wfTool = api.portal.get_tool('portal_workflow')
         # Get the PloneMeetingFolder of the current user as destFolder
         tool = api.portal.get_tool('portal_plonemeeting')
         userId = api.user.get_current().getId()
@@ -4686,7 +4758,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if cloneEventAction:
             # We are sure that there is only one key in the workflow_history
             # because it was cleaned by ToolPloneMeeting.pasteItems.
-            wfTool = api.portal.get_tool('portal_workflow')
             wfName = wfTool.getWorkflowsFor(newItem)[0].id
             firstEvent = newItem.workflow_history[wfName][0]
             cloneEvent = firstEvent.copy()
@@ -4697,6 +4768,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             cloneEvent['action'] = cloneEventAction
             cloneEvent['actor'] = userId
             newItem.workflow_history[wfName] = (firstEvent, cloneEvent)
+
         # automatically set current item as predecessor for newItem?
         if setCurrentAsPredecessor:
             if manualLinkToPredecessor and \
@@ -4705,6 +4777,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 newItem.setManuallyLinkedItems([self.UID()])
             else:
                 newItem.setPredecessor(self)
+
         # notify that item has been duplicated so subproducts
         # may interact if necessary
         notify(ItemDuplicatedEvent(self, newItem))
@@ -4735,6 +4808,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if not self.adapted().mayCloneToOtherMeetingConfig(destMeetingConfigId):
             # If the user came here, he even does not deserve a clear message ;-)
             raise Unauthorized
+
+        wfTool = api.portal.get_tool('portal_workflow')
         tool = api.portal.get_tool('portal_plonemeeting')
         plone_utils = api.portal.get_tool('plone_utils')
         destMeetingConfig = getattr(tool, destMeetingConfigId, None)
@@ -4801,7 +4876,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            tool.isManager(self):
             # triggerUntil is like meeting-config-xxx.validate, get the real transition
             triggerUntil = triggerUntil.split('.')[1]
-            wfTool = api.portal.get_tool('portal_workflow')
             wf_comment = translate('transition_auto_triggered_item_sent_to_this_config',
                                    domain='PloneMeeting',
                                    context=self.REQUEST)
@@ -4857,6 +4931,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # set back originally PUBLISHED object
             self.REQUEST.set('PUBLISHED', originalPublishedObject)
 
+        # handle 'otherMeetingConfigsClonableToPrivacy' of original item
+        if destMeetingConfigId in self.getOtherMeetingConfigsClonableToPrivacy() and \
+           'privacy' in destMeetingConfig.getUsedItemAttributes():
+            newItem.setPrivacy('secret')
+
         newItem.reindexObject()
         # Save that the element has been cloned to another meetingConfig
         annotation_key = self._getSentToOtherMCAnnotationKey(destMeetingConfigId)
@@ -4864,6 +4943,27 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         ann[annotation_key] = newItem.UID()
         # reindex sentToInfos
         self.reindexObject(idxs=['sentToInfos'])
+
+        # When an item is duplicated, if it was sent from a MeetingConfig to
+        # another, we will add a line in the original item history specifying that
+        # it was sent to another meetingConfig.  The 'new item' already have
+        # a line added to his workflow_history.
+        # add a line to the original item history
+        wfName = wfTool.getWorkflowsFor(self)[0].id
+        label = translate('sentto_othermeetingconfig',
+                          domain="PloneMeeting",
+                          context=self.REQUEST,
+                          mapping={'meetingConfigTitle': safe_unicode(destMeetingConfig.Title())})
+        action = destMeetingConfig._getCloneToOtherMCActionTitle(destMeetingConfig.Title())
+        # copy last event and adapt it
+        lastEvent = self.workflow_history[wfName][-1]
+        newEvent = lastEvent.copy()
+        newEvent['comments'] = label
+        newEvent['action'] = action
+        newEvent['actor'] = api.user.get_current().getId()
+        newEvent['time'] = DateTime()
+        self.workflow_history[wfName] = self.workflow_history[wfName] + (newEvent, )
+
         # Send an email to the user being able to modify the new item if relevant
         mapping = {'meetingConfigTitle': destMeetingConfig.Title(), }
         newItem.sendMailIfRelevant('itemClonedToThisMC', ModifyPortalContent,

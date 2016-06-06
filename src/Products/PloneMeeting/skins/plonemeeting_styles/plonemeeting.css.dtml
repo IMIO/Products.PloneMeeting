@@ -251,6 +251,8 @@ div.pm_search_no_result_info {
 .label-state-prevalidated,
 .state-prevalidated_waiting_advices,
 .label-state-prevalidated_waiting_advices,
+.state-proposed__or__prevalidated_waiting_advices,
+.label-state-proposed__or__prevalidated_waiting_advices,
 .state-waiting_advices,
 .label-state-waiting_advices {
     color: DarkOrange !important;
@@ -1412,10 +1414,19 @@ body.section-portal_plonemeeting #archetypes-fieldname-customViewFields {
     float: left;
 }
 
-#archetypes-fieldname-otherMeetingConfigsClonableToEmergency {
+#archetypes-fieldname-otherMeetingConfigsClonableToEmergency,
+#archetypes-fieldname-otherMeetingConfigsClonableToPrivacy {
     display: inherit;
 }
-#otherMeetingConfigsClonableToEmergency div.formQuestion.label {
+#archetypes-fieldname-otherMeetingConfigsClonableToEmergency {
+    width: 425px;
+}
+#archetypes-fieldname-otherMeetingConfigsClonableToPrivacy {
+    width: 215px;
+}
+
+#otherMeetingConfigsClonableToEmergency div.formQuestion.label,
+#otherMeetingConfigsClonableToPrivacy div.formQuestion.label {
     font-size: 80%;
     color: &dtml-discreetColor;;
 }

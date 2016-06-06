@@ -103,6 +103,7 @@
                 tal:define="showOtherMeetingConfigsClonableToEmergency context/showOtherMeetingConfigsClonableToEmergency"
                 tal:attributes="style python: showOtherMeetingConfigsClonableToEmergency and 'border: 1px solid lightgrey;; min-width: 600px;;' or ''">
                 <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableTo', mode='edit')"/>
+                <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableToPrivacy', mode='edit')"/>
                 <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableToEmergency', mode='edit', label=0)"/>
                 <tal:scriptForOtherMeetingConfigsClonableToEmergency condition="showOtherMeetingConfigsClonableToEmergency">
                 <script type="text/javascript">
@@ -111,12 +112,16 @@
                          $(this).bind("click", function() {
                             number = this.id.split('_')[1]
                             otherMCEmergencyField = $('#otherMeetingConfigsClonableToEmergency_' + number);
+                            otherMCPrivacyField = $('#otherMeetingConfigsClonableToPrivacy_' + number);
                             if (this.checked) {
                                 otherMCEmergencyField.attr('disabled', false);
+                                otherMCPrivacyField.attr('disabled', false);
                             }
                             else {
                                 otherMCEmergencyField.attr('checked', false);
                                 otherMCEmergencyField.attr('disabled', true);
+                                otherMCPrivacyField.attr('checked', false);
+                                otherMCPrivacyField.attr('disabled', true);
                             };
                             });
                         });
@@ -129,6 +134,9 @@
                             otherMCEmergencyField = $('#otherMeetingConfigsClonableToEmergency_' + number);
                             otherMCEmergencyField.attr('checked', false);
                             otherMCEmergencyField.attr('disabled', true);
+                            otherMCPrivacyField = $('#otherMeetingConfigsClonableToPrivacy_' + number);
+                            otherMCPrivacyField.attr('checked', false);
+                            otherMCPrivacyField.attr('disabled', true);
                             };
                         });
                     });

@@ -789,12 +789,14 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
+        cfg.setUsedItemAttributes(cfg.getUsedItemAttributes() +
+                                  ('otherMeetingConfigsClonableToEmergency', ))
         # field 'otherMeetingConfigsClonableToEmergency' is
         # only available to MeetingManagers if item will be presented
         # while it is sent to the other MC
         cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
                                          'trigger_workflow_transitions_until': '%s.%s' %
-                                         (cfg2.getId(), 'present')},))
+                                         (cfg2Id, 'present')},))
         # use insertion on groups for cfg2
         cfg2.setUseGroupsAsCategories(True)
         cfg2.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_proposing_groups',
@@ -805,7 +807,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.tool.getPloneMeetingFolder(cfg2Id)
         item = self.create('MeetingItem')
         item.setDecision('<p>My decision</p>', mimetype='text/html')
-        item.setOtherMeetingConfigsClonableTo((cfg2.getId(),))
+        item.setOtherMeetingConfigsClonableTo((cfg2Id,))
         self.assertFalse(item.showOtherMeetingConfigsClonableToEmergency())
         # right, change user to a MeetingManager
         self.changeUser('pmManager')
@@ -836,7 +838,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # now ask emergency on item and accept it again
         # it will be presented to the frozenMeeting
         self.deleteAsManager(sentItem.UID())
-        item.setOtherMeetingConfigsClonableToEmergency((cfg2.getId(),))
+        item.setOtherMeetingConfigsClonableToEmergency((cfg2Id,))
         self.backToState(item, 'itemfrozen')
         self.do(item, 'accept')
         sentItem = item.getItemClonedToOtherMC(cfg2Id)
@@ -864,6 +866,48 @@ class testMeetingItem(PloneMeetingTestCase):
         item.getItemClonedToOtherMC(cfg2Id)
         sentItem = item.getItemClonedToOtherMC(cfg2Id)
         self.assertEquals(sentItem.getMeeting(), frozenMeeting)
+
+    def test_pm_SendItemToOtherMCUsingPrivacy(self):
+        '''Test when sending an item to another MeetingConfig and privacy is defined
+           on the item that will be sent, the resulting item has a correct privacy set.'''
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        cfg2Id = cfg2.getId()
+        cfg.setUsedItemAttributes(cfg.getUsedItemAttributes() +
+                                  ('otherMeetingConfigsClonableToPrivacy', ))
+        cfg.setItemManualSentToOtherMCStates(('itemcreated', ))
+        cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
+                                         'trigger_workflow_transitions_until':
+                                         NO_TRIGGER_WF_TRANSITION_UNTIL},))
+        cfg2.setUsedItemAttributes(cfg2.getUsedItemAttributes() +
+                                  ('privacy', ))
+
+        # create an item and sent it
+        self.changeUser('pmCreator1')
+        self.tool.getPloneMeetingFolder(cfg2Id)
+        itemPublic = self.create('MeetingItem')
+        itemPublic.setDecision('<p>My decision</p>', mimetype='text/html')
+        itemPublic.setOtherMeetingConfigsClonableTo((cfg2Id,))
+        itemPublic.setOtherMeetingConfigsClonableToPrivacy(())
+        itemSecret = self.create('MeetingItem')
+        itemSecret.setDecision('<p>My decision</p>', mimetype='text/html')
+        itemSecret.setOtherMeetingConfigsClonableTo((cfg2Id,))
+        itemSecret.setOtherMeetingConfigsClonableToPrivacy((cfg2Id))
+
+        # send items to cfg2
+        newItemPublic = itemPublic.cloneToOtherMeetingConfig(cfg2Id)
+        self.assertEquals(newItemPublic.getPrivacy(), 'public')
+        newItemSecret = itemSecret.cloneToOtherMeetingConfig(cfg2Id)
+        self.assertEquals(newItemSecret.getPrivacy(), 'secret')
+
+        # this only work if destination config uses privacy
+        usedItemAttrs = list(cfg2.getUsedItemAttributes())
+        usedItemAttrs.remove('privacy')
+        cfg2.setUsedItemAttributes(usedItemAttrs)
+        self.deleteAsManager(newItemSecret.UID())
+        newItemSecret2 = itemSecret.cloneToOtherMeetingConfig(cfg2Id)
+        # item is left 'public'
+        self.assertEquals(newItemSecret2.getPrivacy(), 'public')
 
     def test_pm_SendItemToOtherMCWithMappedCategories(self):
         '''Test when sending an item to another MeetingConfig and both using
@@ -3850,6 +3894,7 @@ class testMeetingItem(PloneMeetingTestCase):
     def test_pm_DisplayOtherMeetingConfigsClonableTo(self):
         """Test how otherMeetingConfigsClonableTo are displayed on the item view,
            especially if a MeetingConfig to clone to title contains special characters."""
+        cfg = self.meetingConfig
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
         cfg2Title = cfg2.Title()
@@ -3868,6 +3913,26 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setOtherMeetingConfigsClonableToEmergency((cfg3Id, ))
         self.assertEquals(item.displayOtherMeetingConfigsClonableTo(),
                           unicode('{0}, {1} (Emergency)'.format(cfg2Title, cfg3Title), 'utf-8'))
+
+        # enable 'otherMeetingConfigsClonableToPrivacy' that is also displayed
+        cfg.setUsedItemAttributes(cfg.getUsedItemAttributes() +
+                                  ('otherMeetingConfigsClonableToPrivacy', ))
+        # MeetingItem.attributeIsUsed is RAMCached
+        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attributeIsUsed')
+        self.assertEquals(
+            item.displayOtherMeetingConfigsClonableTo(),
+            u"PloneGov assembly (<span class='item_privacy_public'>Public meeting</span>), "
+            u"\xe9 and \xe9 (Emergency - <span class='item_privacy_public'>Public meeting</span>)")
+        item.setOtherMeetingConfigsClonableToPrivacy((cfg2Id, ))
+        self.assertEquals(
+            item.displayOtherMeetingConfigsClonableTo(),
+            u"PloneGov assembly (<span class='item_privacy_secret'>Closed door</span>), "
+            u"\xe9 and \xe9 (Emergency - <span class='item_privacy_public'>Public meeting</span>)")
+        item.setOtherMeetingConfigsClonableToPrivacy((cfg2Id, cfg3Id))
+        self.assertEquals(
+            item.displayOtherMeetingConfigsClonableTo(),
+            u"PloneGov assembly (<span class='item_privacy_secret'>Closed door</span>), "
+            u"\xe9 and \xe9 (Emergency - <span class='item_privacy_secret'>Closed door</span>)")
 
     def test_pm_InternalNotesIsRestrictedToProposingGroupOnly(self, ):
         """Field MeetingItem.internalNotes is only available to members

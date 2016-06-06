@@ -29,10 +29,6 @@
               handler=".events.onMeetingBeforeTransition"/>
 
   <subscriber for=".interfaces.IMeetingItem
-                   Products.PloneMeeting.interfaces.IItemDuplicatedEvent"
-              handler=".events.onItemDuplicated"/>
-
-  <subscriber for=".interfaces.IMeetingItem
                    Products.Archetypes.interfaces.IEditBegunEvent"
               handler=".events.onItemEditBegun"/>
 
