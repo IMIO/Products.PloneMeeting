@@ -100,12 +100,12 @@
         </tr>
         <tr>
             <td colspan="5"
-                tal:define="showOtherMeetingConfigsClonableToEmergency context/showOtherMeetingConfigsClonableToEmergency"
-                tal:attributes="style python: showOtherMeetingConfigsClonableToEmergency and 'border: 1px solid lightgrey;; min-width: 600px;;' or ''">
+                tal:define="showOtherMeetingConfigsClonableToSpecialFields python: context.showOtherMeetingConfigsClonableToEmergency() or 'otherMeetingConfigsClonableToPrivacy' in usedAttrs"
+                tal:attributes="style python: showOtherMeetingConfigsClonableToSpecialFields and 'border: 1px solid lightgrey;; min-width: 600px;;' or ''">
                 <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableTo', mode='edit')"/>
                 <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableToPrivacy', mode='edit')"/>
                 <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableToEmergency', mode='edit', label=0)"/>
-                <tal:scriptForOtherMeetingConfigsClonableToEmergency condition="showOtherMeetingConfigsClonableToEmergency">
+                <tal:scriptForOtherMeetingConfigsClonableToSpecificFields condition="showOtherMeetingConfigsClonableToSpecialFields">
                 <script type="text/javascript">
                     $("input[id^='otherMeetingConfigsClonableTo_']").each(function()
                         {
@@ -141,7 +141,7 @@
                         });
                     });
                 </script>
-                </tal:scriptForOtherMeetingConfigsClonableToEmergency>
+                </tal:scriptForOtherMeetingConfigsClonableToSpecificFields>
             </td>
         </tr>
     </table>
