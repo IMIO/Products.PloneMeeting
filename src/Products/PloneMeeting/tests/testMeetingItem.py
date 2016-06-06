@@ -3921,18 +3921,21 @@ class testMeetingItem(PloneMeetingTestCase):
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attributeIsUsed')
         self.assertEquals(
             item.displayOtherMeetingConfigsClonableTo(),
-            u"PloneGov assembly (<span class='item_privacy_public'>Public meeting</span>), "
-            u"\xe9 and \xe9 (Emergency - <span class='item_privacy_public'>Public meeting</span>)")
+            unicode("{0} (<span class='item_privacy_public'>Public meeting</span>), "
+                    "{1} (Emergency - <span class='item_privacy_public'>Public meeting</span>)".format(
+                        cfg2Title, cfg3Title), 'utf-8'))
         item.setOtherMeetingConfigsClonableToPrivacy((cfg2Id, ))
         self.assertEquals(
             item.displayOtherMeetingConfigsClonableTo(),
-            u"PloneGov assembly (<span class='item_privacy_secret'>Closed door</span>), "
-            u"\xe9 and \xe9 (Emergency - <span class='item_privacy_public'>Public meeting</span>)")
+            unicode("{0} (<span class='item_privacy_secret'>Closed door</span>), "
+                    "{1} (Emergency - <span class='item_privacy_public'>Public meeting</span>)".format(
+                        cfg2Title, cfg3Title), 'utf-8'))
         item.setOtherMeetingConfigsClonableToPrivacy((cfg2Id, cfg3Id))
         self.assertEquals(
             item.displayOtherMeetingConfigsClonableTo(),
-            u"PloneGov assembly (<span class='item_privacy_secret'>Closed door</span>), "
-            u"\xe9 and \xe9 (Emergency - <span class='item_privacy_secret'>Closed door</span>)")
+            unicode("{0} (<span class='item_privacy_secret'>Closed door</span>), "
+                    "{1} (Emergency - <span class='item_privacy_secret'>Closed door</span>)".format(
+                        cfg2Title, cfg3Title), 'utf-8'))
 
     def test_pm_InternalNotesIsRestrictedToProposingGroupOnly(self, ):
         """Field MeetingItem.internalNotes is only available to members
