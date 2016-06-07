@@ -2006,6 +2006,35 @@ class testMeeting(PloneMeetingTestCase):
         # cleanUp zmcl.load_config because it impact other tests
         zcml.cleanUp()
 
+    def test_pm_GetPrettyLink(self):
+        """Test the Meeting.getPrettyLink method."""
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2015/05/05 12:35'))
+        self.portal.portal_languages.setDefaultLanguage('en')
+        self.assertEquals(
+            meeting.getPrettyLink(),
+            u"<a class='pretty_link state-created' title='' "
+            "href='http://nohost/plone/Members/pmManager/mymeetings/plonemeeting-assembly/o1' "
+            "target='_self'><span class='pretty_link_icons'><img title='PloneMeeting assembly' "
+            "src='http://nohost/plone/Meeting.png' /></span><span class='pretty_link_content'>"
+            "Meeting of 05 may 2015 (12:35)</span></a>")
+
+    def test_pm_ShowMeetingManagerReservedField(self):
+        """This condition is protecting some fields that should only be
+           viewable by MeetingManagers."""
+        cfg = self.meetingConfig
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime())
+        # a reserved field is shown if used
+        usedMeetingAttrs = cfg.getUsedMeetingAttributes()
+        self.assertFalse('notes' in usedMeetingAttrs)
+        self.assertFalse(meeting.showMeetingManagerReservedField('notes'))
+        cfg.setUsedMeetingAttributes(usedMeetingAttrs + ('notes', ))
+        self.assertTrue(meeting.showMeetingManagerReservedField('notes'))
+        # not viewable by non MeetingManagers
+        self.changeUser('pmCreator1')
+        self.assertFalse(meeting.showMeetingManagerReservedField('notes'))
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
