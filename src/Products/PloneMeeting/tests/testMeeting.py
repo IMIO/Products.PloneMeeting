@@ -1823,7 +1823,6 @@ class testMeeting(PloneMeetingTestCase):
         self.assertNotEqual(meeting.getNextMeeting(cfgId=self.meetingConfig2.getId(), dateGap=7), otherMCMeeting)
         self.assertEqual(meeting.getNextMeeting(cfgId=self.meetingConfig2.getId(), dateGap=7), otherMCMeeting2)
 
-
     def test_pm_GetPreviousMeeting(self):
         """Test the getPreviousMeeting method that will return the previous meeting
            regarding the meeting date and within a given interval that is 60 days by default."""
