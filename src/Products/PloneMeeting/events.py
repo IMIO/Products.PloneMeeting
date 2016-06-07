@@ -27,7 +27,6 @@ from zope.event import notify
 from zope.i18n import translate
 from zope.lifecycleevent import IObjectRemovedEvent
 from Products.CMFCore.WorkflowCore import WorkflowException
-from Products.CMFPlone.utils import safe_unicode
 from plone.app.textfield import RichText
 from plone.app.textfield.value import RichTextValue
 from plone import api
