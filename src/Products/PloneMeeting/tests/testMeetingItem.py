@@ -879,8 +879,9 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
                                          'trigger_workflow_transitions_until':
                                          NO_TRIGGER_WF_TRANSITION_UNTIL},))
-        cfg2.setUsedItemAttributes(cfg2.getUsedItemAttributes() +
-                                  ('privacy', ))
+        if not 'privacy' in cfg2.getUsedItemAttributes():
+            cfg2.setUsedItemAttributes(cfg2.getUsedItemAttributes() +
+                                       ('privacy', ))
 
         # create an item and sent it
         self.changeUser('pmCreator1')
