@@ -236,7 +236,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   frozen state or not
 - Added possibility to define a custom renderer for fields displayed by the @@item-more-infos view in the dashboards.
   By default the widget renderer is used but when necessary, the _rendererForField method may be overrided to return a
-  view_name to use to render the field
+  view_name to use to render the field.  Moreover, static informations displayed above @@item-more-infos are now in a
+  separated view @@item-static-infos so it is easy to override
 - MeetingConfig.transitionsReinitializingDelays is now multivalued so it is possible to define several transitions
   that will reinitialize advice delays, moreover, every transitions are now selectable, not only 'back' transitions
 - Do synchronize portlet_todo with dashboards so portlet is refreshed when an action in the dashboards is triggered

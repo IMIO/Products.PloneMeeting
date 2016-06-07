@@ -415,6 +415,15 @@
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View" />
 
+    <!-- the view that display staticInfos about item in the PrettyLink column -->
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        name="item-static-infos"
+        class=".views.ItemStaticInfosView"
+        template="templates/itemstaticinfos.pt"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        permission="zope2.View" />
+
     <!-- the view that display moreInfos about item in the PrettyLink column -->
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItem"

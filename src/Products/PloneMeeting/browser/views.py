@@ -93,9 +93,7 @@ class ItemMoreInfosView(BrowserView):
 
     @memoize_contextless
     def getItemsListVisibleFields(self):
-        """
-          Get the topicName from the request and returns it.
-        """
+        """ """
         visibleFields = self.cfg.getItemsListVisibleFields()
         # keep order of displayed fields
         res = OrderedDict()
@@ -108,13 +106,27 @@ class ItemMoreInfosView(BrowserView):
 
     def _rendererForField(self, fieldName):
         """Return the renderer to use for given p_fieldName, this returns nothing
-           by default and is made to by overriden by subproduct."""
+           by default and is made to be overrided by subproduct."""
         return None
 
     @memoize_contextless
     def showMoreInfos(self):
         """ """
         return self.request.cookies.get('pmShowDescriptions', 'false') == 'true' and True or False
+
+
+class ItemStaticInfosView(BrowserView):
+    """
+      This manage the view displaying static infos about an item in the PrettyLink column
+    """
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+
+    def __call__(self, visibleColumns):
+        """ """
+        self.visibleColumns = visibleColumns
+        return super(ItemStaticInfosView, self).__call__()
 
 
 class ItemIsSignedView(BrowserView):

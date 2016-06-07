@@ -88,13 +88,12 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
         prettyLinker.target = '_parent'
         pretty_link = prettyLinker.getLink()
 
-        annexes = moreInfos = ''
+        annexes = staticInfos = moreInfos = ''
 
         if obj.meta_type == 'MeetingItem':
             tool = getToolByName(self.context, 'portal_plonemeeting')
             cfg = tool.getMeetingConfig(self.context)
-            # display annexes if item and item isPrivacyViewable
-            annexes = ''
+            # display annexes and infos if item and item isPrivacyViewable
             if obj.adapted().isPrivacyViewable():
                 annexes = obj.restrictedTraverse('@@annexes-icons')(relatedTo='item_decision') + \
                     obj.restrictedTraverse('@@annexes-icons')(relatedTo='item')
@@ -106,8 +105,9 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
                     visibleColumns = cfg.getItemsListVisibleColumns()
                 else:
                     visibleColumns = cfg.getItemColumns()
+                staticInfos = obj.restrictedTraverse('@@item-static-infos')(visibleColumns=visibleColumns)
                 moreInfos = obj.restrictedTraverse('@@item-more-infos')(visibleColumns=visibleColumns)
-        return pretty_link + annexes + moreInfos
+        return pretty_link + annexes + staticInfos + moreInfos
 
 
 class PMActionsColumn(ActionsColumn):
