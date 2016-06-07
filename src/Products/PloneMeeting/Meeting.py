@@ -1894,16 +1894,23 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getNextMeeting')
 
-    def getNextMeeting(self):
-        '''Gets the next meeting based on meeting date.'''
+    def getNextMeeting(self, cfgId='', dateGap=0):
+        '''Gets the next meeting based on meeting date.
+           p_cfg can be used to compare meetings from another meetingconfig
+           with meeting from the current config.
+           p_dateGap is the number of 'dead days' following the date of
+           the current meeting in which we do not look for next meeting'''
         meetingDate = self.getDate()
         tool = getToolByName(self, 'portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
+        if not cfgId:
+            cfg = tool.getMeetingConfig(self)
+        else:
+            cfg = getattr(tool, cfgId)
         meetingTypeName = cfg.getMeetingTypeName()
         catalog = getToolByName(self, 'portal_catalog')
         # find every meetings after self.getDate
         brains = catalog(portal_type=meetingTypeName,
-                         getDate={'query': meetingDate, 'range': 'min'},
+                         getDate={'query': meetingDate + dateGap, 'range': 'min'},
                          sort_on='getDate')
         res = None
         for brain in brains:
