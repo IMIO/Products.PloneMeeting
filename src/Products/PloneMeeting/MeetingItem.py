@@ -4683,7 +4683,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def clone(self, copyAnnexes=True, newOwnerId=None, cloneEventAction=None,
               destFolder=None, copyFields=DEFAULT_COPIED_FIELDS, newPortalType=None,
-              keepProposingGroup=False, setCurrentAsPredecessor=False, manualLinkToPredecessor=False):
+              keepProposingGroup=False, setCurrentAsPredecessor=False,
+              manualLinkToPredecessor=False):
         '''Clones me in the PloneMeetingFolder of the current user, or
            p_newOwnerId if given (this guy will also become owner of this
            item). If there is a p_cloneEventAction, an event will be included
@@ -4771,9 +4772,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # automatically set current item as predecessor for newItem?
         if setCurrentAsPredecessor:
-            if manualLinkToPredecessor and \
-               'manuallyLinkedItems' in cfg.getUsedItemAttributes() and \
-               'manuallyLinkedItems' in dest_cfg.getUsedItemAttributes():
+            if manualLinkToPredecessor:
                 newItem.setManuallyLinkedItems([self.UID()])
             else:
                 newItem.setPredecessor(self)
@@ -5064,7 +5063,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         user = api.user.get_current()
         newItem = self.clone(newOwnerId=user.id,
                              cloneEventAction='Duplicate and keep link',
-                             setCurrentAsPredecessor=True)
+                             setCurrentAsPredecessor=True,
+                             manualLinkToPredecessor=True)
         plone_utils = api.portal.get_tool('plone_utils')
         plone_utils.addPortalMessage(
             translate('item_duplicated_and_link_kept', domain='PloneMeeting', context=self.REQUEST))

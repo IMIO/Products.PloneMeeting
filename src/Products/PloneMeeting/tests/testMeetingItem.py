@@ -1011,6 +1011,33 @@ class testMeetingItem(PloneMeetingTestCase):
         initial_state = self.wfTool[wf_name].initial_state
         self.assertEquals(clonedManualItem.queryState(), initial_state)
 
+    def test_pm_CloneItemWithSetCurrentAsPredecessor(self):
+        '''When an item is cloned with option setCurrentAsPredecessor=True,
+           items are linked together, with an automatic link if option
+           manualLinkToPredecessor=False, a manual otherwise.'''
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+
+        # no link
+        itemWithNoLink = item.clone(setCurrentAsPredecessor=False)
+        self.assertFalse(itemWithNoLink.getPredecessor())
+        self.assertFalse(itemWithNoLink.getManuallyLinkedItems())
+
+        # auto link
+        itemWithAutoLink = item.clone(setCurrentAsPredecessor=True,
+                                      manualLinkToPredecessor=False)
+        self.assertEqual(itemWithAutoLink.getPredecessor(), item)
+        self.assertFalse(itemWithAutoLink.getManuallyLinkedItems())
+
+        # manual link
+        itemWithManualLink = item.clone(setCurrentAsPredecessor=True,
+                                        manualLinkToPredecessor=True)
+        self.assertFalse(itemWithManualLink.getPredecessor())
+        self.assertEquals(itemWithManualLink.getManuallyLinkedItems(),
+                          [item])
+        self.assertEquals(itemWithManualLink.getRawManuallyLinkedItems(),
+                          [item.UID()])
+
     def test_pm_AddAutoCopyGroups(self):
         '''Test the functionnality of automatically adding some copyGroups depending on
            the TAL expression defined on every MeetingGroup.asCopyGroupOn.'''

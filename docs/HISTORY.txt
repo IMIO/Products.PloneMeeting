@@ -290,6 +290,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   about users that are in the selected Plone groups, this way we know which users will have read access to the item and which will be
   able to give an advice
 - Added method MeetingGroup.userPloneGroups to be able to get the Plone groups of a MeetingGroup the currently connected used is in
+- The 'Duplicate and keep link' action is now generating a manual link (MeetingItem.manuallyLinkedItems) between the items,
+  no more an automatic link.  This way, the link is manageable by the creator, can be removed if necessary and the eventual items
+  that were already linked to the original item are also linked to the new duplicated item (virtual folder)
 
 3.3 (2015-02-27)
 ----------------

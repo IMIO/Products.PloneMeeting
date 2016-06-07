@@ -810,7 +810,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         """ """
         tool = getToolByName(self, 'portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        # some columns are displayed in the 'Prupose' column
+        # some columns are displayed in the 'Purpose' column
         itemsListVisibleColumns = [col for col in cfg.getItemsListVisibleColumns() if
                                    not col in ('budget_infos', 'item_reference')]
         itemsListVisibleColumns.insert(0, u'pretty_link')
@@ -1108,8 +1108,9 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
     def showMeetingManagerReservedField(self, name):
         '''When must field named p_name be shown?'''
         tool = api.portal.get_tool('portal_plonemeeting')
-        isMgr = tool.isManager(self)
-        res = not self.isTemporary() and isMgr and self.attributeIsUsed(name)
+        res = not self.isTemporary() and \
+            tool.isManager(self) and \
+            self.attributeIsUsed(name)
         return res
 
     security.declarePrivate('validate_preMeetingDate')
@@ -1723,12 +1724,6 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
     def getLastEvent(self, transition=None):
         '''Check doc in called function in utils.py.'''
         return getLastEvent(self, transition=transition)
-
-    security.declarePublic('getObject')
-
-    def getObject(self):
-        '''Some macros must work with either an object or a brain as input.'''
-        return self
 
     security.declarePublic('getSelf')
 

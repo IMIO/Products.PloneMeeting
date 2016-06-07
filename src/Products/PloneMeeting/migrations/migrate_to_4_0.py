@@ -613,7 +613,7 @@ class Migrate_To_4_0(Migrator):
             if check_already_migrated:
                 break
             item = brain.getObject()
-            # histories directl stored on the MeetingItem
+            # histories directly stored on the MeetingItem
             for history_id in ('completeness_changes_history', 'emergency_changes_history'):
                 if check_already_migrated:
                     break
@@ -626,7 +626,7 @@ class Migrate_To_4_0(Migrator):
                     action['comments'] = action['comment']
                     del action['comment']
                     history._p_changed = True
-            # history stored on every adviser of the adviceIndex
+            # history stored on each adviser of the adviceIndex
             for adviceInfo in item.adviceIndex.values():
                 if check_already_migrated:
                     break
@@ -698,6 +698,27 @@ class Migrate_To_4_0(Migrator):
             frontPage.reindexObject()
         logger.info('Done.')
 
+    def _moveDuplicatedItemLinkFromAutoToManual(self):
+        '''When using action 'Duplicate and keep link', the link between original
+           and new item was an 'automatic' link (using MeetingItem.predecessor reference field),
+           now we use a manual link (using MeetingItem.manuallyLinkedItems reference field).'''
+        logger.info("Moving automatic links from 'Duplicate and keep link' to manual links...")
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            brains = self.portal.portal_catalog(portal_type=cfg.getItemTypeName(), )
+            itemWFId = self.portal.portal_workflow.getWorkflowsFor(cfg.getItemTypeName())[0].getId()
+            for brain in brains:
+                item = brain.getObject()
+                wf_history = item.workflow_history[itemWFId]
+                if len(wf_history) > 1 and wf_history[1]['action'] == 'Duplicate and keep link':
+                    if not item.getPredecessor():
+                        continue
+                    # migrate to manual link
+                    predecessor = item.getPredecessor()
+                    item.setPredecessor(())
+                    item.setManuallyLinkedItems([predecessor.UID()] +
+                                                item.getRawManuallyLinkedItems())
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 4.0...')
         # reinstall so versions are correctly shown in portal_quickinstaller
@@ -728,6 +749,7 @@ class Migrate_To_4_0(Migrator):
         self._removeUnusedIndexes()
         self._initSelectableAdvisers()
         self._moveAppName()
+        self._moveDuplicatedItemLinkFromAutoToManual()
         # update workflow, needed for items moved to item templates and recurring items
         # update reference_catalog as ReferenceFied "MeetingConfig.toDoListTopics"
         # and "Meeting.lateItems" were removed
