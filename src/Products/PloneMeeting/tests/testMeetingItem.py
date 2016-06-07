@@ -3899,6 +3899,11 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
         cfg2Title = cfg2.Title()
+        # for now make sure 'otherMeetingConfigsClonableToPrivacy' is disabled
+        usedItemAttrs = list(cfg.getUsedItemAttributes())
+        if 'otherMeetingConfigsClonableToPrivacy' in usedItemAttrs:
+            usedItemAttrs.remove('otherMeetingConfigsClonableToPrivacy')
+            cfg.setUsedItemAttributes(tuple(usedItemAttrs))
         # create a third meetingConfig with special characters in it's title
         self.changeUser('siteadmin')
         cfg3 = self.create('MeetingConfig')
