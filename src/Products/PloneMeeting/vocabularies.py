@@ -485,7 +485,7 @@ class ListTypesVocabulary(object):
         for listType in cfg.getListTypes():
             res.append(SimpleTerm(listType['identifier'],
                                   listType['identifier'],
-                                  translate(listType['label'],
+                                  translate(safe_unicode(listType['label']),
                                             domain='PloneMeeting',
                                             context=context.REQUEST))
                        )
