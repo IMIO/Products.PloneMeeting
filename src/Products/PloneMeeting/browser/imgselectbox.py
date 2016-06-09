@@ -119,13 +119,14 @@ class GoToMeetingImgSelectBoxView(BaseImgSelectBoxView):
 
     def selected_value_html(self):
         """ """
-        adapted = IPrettyLink(self.selected_value())
-        adapted.isViewable = False
-        adapted.notViewableHelpMessage = u''
+        link = self.selected_value().getPrettyLink(prefixed=False,
+                                                   short=True,
+                                                   showContentIcon=True,
+                                                   isViewable=False,
+                                                   notViewableHelpMessage=u'')
         return u"""
 <span id="idButtonText_{0}" class="ploneMeetingRef">{1}</span>
-""".format(self.select_box_name,
-           adapted.getLink())
+""".format(self.select_box_name, link)
 
     @memoize
     def selected_value(self):
@@ -139,8 +140,7 @@ class GoToMeetingImgSelectBoxView(BaseImgSelectBoxView):
 
     def selectable_value_html(self, num, selectable_value):
         """ """
-        adapted = IPrettyLink(selectable_value)
-        return adapted.getLink()
+        return selectable_value.getPrettyLink(prefixed=False, short=True)
 
     def getSelectableValues(self):
         """ """

@@ -27,8 +27,9 @@
         <span tal:replace="structure view/selected_value_html" />
       </tal:hasSelectedValue>
       <tal:noSelectedValue condition="not: view/has_selected_value">
-        <span tal:attributes="id string:idButtonText_${select_box_name}"
-              i18n:translate="">make_a_choice</span>
+        <span tal:attributes="id string:idButtonText_${select_box_name}">
+          <span class="select_choice" i18n:translate="">make_a_choice</span>
+        </span>
       </tal:noSelectedValue>
     </div>
 
@@ -41,7 +42,7 @@
          tal:attributes="onclick string:hidePloneMeetingSelectBox('${select_box_name}', 'idImage_${select_box_name}10', this, '', '');;"
          class="ploneMeetingSelectItem"
          id="idButtonText10">
-        <span i18n:translate="">make_a_choice</span>
+        <span class="select_choice" i18n:translate="">make_a_choice</span>
       </p>
       <tal:loop repeat="selectable_value view/getSelectableValues">
        <p tal:define="global num python: num + 1;

@@ -71,20 +71,28 @@ div#go_to_meeting_img_select_box_searchallmeetings {
 div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchallmeetings div.ploneMeetingSelectDropdownIcon,
 div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchlastdecisions div.ploneMeetingSelectDropdownIcon {
     width: 80%;
+    min-width: 150px;
 }
 div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchallmeetings div.ploneMeetingSelectBox,
 div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchlastdecisions div.ploneMeetingSelectBox {
     width: 80%;
+    min-width: 150px;
     padding-right: 9px;
 }
 div.ploneMeetingSelectContainer span[id^='idButtonText_'] {
     padding-left: 5px;
-    padding-top: 2px;
 }
+
 div.ploneMeetingSelectContainer span#idButtonText_go_to_meeting_img_select_box_searchallmeetings,
 div.ploneMeetingSelectContainer span#idButtonText_go_to_meeting_img_select_box_searchlastdecisions {
     display: inline-block;
 }
+/* add some top padding for --- choose --- */
+div.ploneMeetingSelectContainer span#idButtonText_go_to_meeting_img_select_box_searchallmeetings span.select_choice {
+    display: block;
+    padding-top: 2px;
+}
+
 /* cancel additional padding given by faceted to the meeting list */
 div.faceted-tagscloud-collection-widget div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchallmeetings a.pretty_link,
 div.faceted-tagscloud-collection-widget div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchlastdecisions a.pretty_link {
@@ -126,10 +134,6 @@ div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchlastdecisions
     width: auto;
     z-index: 1;
     overflow: hidden;
-}
-div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchallmeetings span.ploneMeetingRef,
-div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchlastdecisions span.ploneMeetingRef {
-    font-weight: bold;
 }
 
 div.ploneMeetingSelectContainer.annex_type_img_select_box div#annex_type_img_select_box {
