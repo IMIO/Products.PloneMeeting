@@ -24,7 +24,6 @@ __docformat__ = 'plaintext'
 # will be included (by importing) in this file if found.
 
 from Products.CMFCore.permissions import setDefaultRoles
-##code-section config-head #fill in your manual code here
 appyRequired = '0.8.0'
 try:
     import appy
@@ -34,7 +33,6 @@ try:
 except ImportError:
     raise Exception('Appy framework not found. You can download it at http://launchpad.net/appy.')
 from collections import OrderedDict
-##/code-section config-head
 
 
 PROJECTNAME = "PloneMeeting"
@@ -70,7 +68,6 @@ DEPENDENCIES = []
 # override in custom configuration
 PRODUCT_DEPENDENCIES = []
 
-##code-section config-bottom #fill in your manual code here
 # Define PloneMeeting-specific permissions
 AddAnnex = 'PloneMeeting: Add annex'
 setDefaultRoles(AddAnnex, ('Manager', 'Owner'))
@@ -267,6 +264,7 @@ NO_TRIGGER_WF_TRANSITION_UNTIL = '__nothing__'
 HIDE_DECISION_UNDER_WRITING_MSG = \
     "<p class='highlightValue'>The decision is currently under edit by managers, you can not access it.</p>"
 
+
 def registerClasses():
     '''ArchGenXML generated code does not register Archetype classes at the
        right moment since model adaptations have been implemented. This method
@@ -285,4 +283,3 @@ def registerClasses():
             # Unregister the class
             del Products.Archetypes.ATToolModule._types[key]
         registerType(klass, PROJECTNAME)
-##/code-section config-bottom
