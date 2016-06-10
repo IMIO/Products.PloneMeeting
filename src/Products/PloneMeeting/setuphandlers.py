@@ -16,7 +16,6 @@ __docformat__ = 'plaintext'
 
 import logging
 logger = logging.getLogger('PloneMeeting: setuphandlers')
-##code-section HEAD
 from zope.component import queryUtility
 from zope.i18n import translate
 from Products.CMFPlacefulWorkflow.PlacefulWorkflowTool import WorkflowPolicyConfig_id
@@ -41,6 +40,7 @@ indexInfos = {
     'getItemNumber': ('FieldIndex', {}),
     'getRawClassifier': ('FieldIndex', {}),
     'getProposingGroup': ('FieldIndex', {}),
+    'getGroupInCharge': ('FieldIndex', {}),
     'getAssociatedGroups': ('KeywordIndex', {}),
     'getPreferredMeeting': ('FieldIndex', {}),
     'getPreferredMeetingDate': ('DateIndex', {}),
@@ -69,7 +69,7 @@ indexInfos = {
     'indexUsages': ('KeywordIndex', {}),
     'getItemNumber': ('FieldIndex', {})}
 # Metadata to create in portal_catalog
-columnInfos = ('getTitle2', 'getDate', 'getProposingGroup',
+columnInfos = ('getTitle2', 'getDate', 'getProposingGroup', 'getGroupInCharge',
                'getPreferredMeeting', 'getPreferredMeetingDate',
                'linkedMeetingDate', 'linkedMeetingUID',
                'getItemIsSigned', 'title_or_id', 'toDiscuss',

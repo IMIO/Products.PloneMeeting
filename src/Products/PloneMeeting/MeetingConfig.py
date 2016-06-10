@@ -3220,6 +3220,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 translate("header_getProposingGroup", domain=d, context=self.REQUEST)),
             ("proposing_group_acronym",
                 translate("header_proposing_group_acronym", domain=d, context=self.REQUEST)),
+            ("getGroupInCharge",
+                translate("header_getGroupInCharge", domain=d, context=self.REQUEST)),
+            ("group_in_charge_acronym",
+                translate("header_group_in_charge_acronym", domain=d, context=self.REQUEST)),
             ("advices",
                 translate("header_advices", domain=d, context=self.REQUEST)),
             ("toDiscuss",
@@ -4409,6 +4413,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # difference: the group taken into consideration is the group among all
             # groups that comes first in the order.
             'on_all_groups',
+            # according to the groupInCharge of the proposingGroup used for the item
+            'on_groups_in_charge',
             # according to the item privacy;
             'on_privacy',
             # according to the item toDiscuss;

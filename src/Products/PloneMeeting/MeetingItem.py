@@ -3006,7 +3006,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return len([listType for listType in listTypes if listType['used_in_inserting_method'] == '1'])
         elif insertMethod == 'on_categories':
             return len(cfg.getCategories(onlySelectable=False))
-        elif insertMethod in ('on_proposing_groups', 'on_all_groups'):
+        elif insertMethod in ('on_proposing_groups', 'on_all_groups', 'on_groups_in_charge'):
+            # for 'on_groups_in_charge', for efficiency, we return len of every MeetingGroups
             return len(tool.getMeetingGroups(onlyActive=False))
         elif insertMethod == 'on_privacy':
             factory = queryUtility(IVocabularyFactory,
@@ -3077,6 +3078,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 return len(values) + 1
             else:
                 return values.index(toCloneTo[0])
+        elif insertMethod == 'on_groups_in_charge':
+            proposingGroup = self.getProposingGroup(True)
+            groupInCharge = proposingGroup.getGroupInChargeAt()
+            if not groupInCharge:
+                raise Exception("No valid groupInCharge defined for {0}".format(proposingGroup.getId()))
+            return groupInCharge.getOrder(onlyActive=False)
         else:
             res = self.adapted()._findCustomOrderFor(insertMethod)
         return res

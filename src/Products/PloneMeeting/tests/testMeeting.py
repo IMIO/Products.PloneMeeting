@@ -450,6 +450,19 @@ class testMeeting(PloneMeetingTestCase):
         self.assertTrue([item.getId() for item in meeting.getItems(ordered=True)] ==
                         ['recItem1', 'recItem2', 'o2', 'o3', 'o5', newItem.getId(), secondItem.getId(), 'o4', 'o6'])
 
+    def test_pm_InsertItemOnGroupsInCharge(self):
+        '''Sort method tested here is "on_groups_in_charge".
+           It takes into account the currently valid MeetingGroup.inChargeGroup that
+           must be defined on every groups used as proposingGroup for presented items.'''
+        self.changeUser('pmManager')
+        self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_groups_in_charge',
+                                                          'reverse': '0'}, ))
+        meeting = self._createMeetingWithItems()
+        orderedItems = meeting.getItems(ordered=True)
+        # 'o2' as got an associated group 'developers' even if main proposing group is 'vendors'
+        self.assertTrue([item.getId() for item in orderedItems] ==
+                        ['recItem1', 'recItem2', 'o2', 'o3', 'o5', 'o4', 'o6'])
+
     def test_pm_InsertItemPrivacyThenProposingGroups(self):
         '''Sort method tested here is "on_privacy_xxx" then "on_proposing_groups".'''
         self.changeUser('pmManager')

@@ -7,6 +7,7 @@ from Products.CMFCore.utils import _checkPermission
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.interfaces import IMeeting
 
+from collective.eeafaceted.z3ctable.columns import AbbrColumn
 from collective.eeafaceted.z3ctable.columns import BaseColumn
 from collective.eeafaceted.z3ctable.columns import BrowserViewCallColumn
 from collective.eeafaceted.z3ctable.columns import CheckBoxColumn
@@ -28,10 +29,26 @@ class ItemProposingGroupColumn(VocabularyColumn):
     vocabulary = u'Products.PloneMeeting.vocabularies.proposinggroupsvocabulary'
 
 
-class ItemProposingGroupAcronymColumn(VocabularyColumn):
+class ItemProposingGroupAcronymColumn(AbbrColumn):
     """A column that display the MeetingItem.proposingGroup acronym."""
     attrName = 'getProposingGroup'
     vocabulary = u'Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary'
+    full_vocabulary = u'Products.PloneMeeting.vocabularies.proposinggroupsvocabulary'
+
+
+class ItemGroupInChargeColumn(VocabularyColumn):
+    """A column that display the proposingGroup.groupInCharge
+    taking into account meeting date."""
+    attrName = 'getProposingGroupInCharge'
+    vocabulary = u'Products.PloneMeeting.vocabularies.proposinggroupsvocabulary'
+
+
+class ItemGroupInChargeAcronymColumn(AbbrColumn):
+    """A column that display the proposingGroup.groupInCharge
+    acronym taking into account meeting date."""
+    attrName = 'getProposingGroupInCharge'
+    vocabulary = u'Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary'
+    full_vocabulary = u'Products.PloneMeeting.vocabularies.proposinggroupsvocabulary'
 
 
 class ItemAdvicesColumn(BrowserViewCallColumn):

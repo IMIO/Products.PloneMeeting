@@ -873,6 +873,8 @@ table.listing th.th_header_actions,
 table.listing th.th_header_itemIsSigned,
 table.listing th.th_header_toDiscuss,
 table.listing th.th_header_getItemIsSigned,
+table.listing th.th_header_proposing_group_acronym,
+table.listing th.th_header_group_in_charge_acronym,
 .pm_meeting_listing_th_checkBoxes {
     width: 1%;
 }
@@ -883,8 +885,7 @@ table.listing th.th_header_listType {
 }
 
 table.listing th.th_header_Creator,
-table.listing th.th_header_getProposingGroup,
-table.listing th.th_header_proposing_group_acronym {
+table.listing th.th_header_getProposingGroup {
     width: 100px;
 }
 table.listing th.th_header_review_state,

@@ -22,6 +22,7 @@
 # 02110-1301, USA.
 #
 
+from DateTime import DateTime
 from OFS.ObjectManager import BeforeDeleteException
 from zope.i18n import translate
 from plone import api
@@ -473,6 +474,133 @@ class testMeetingGroup(PloneMeetingTestCase):
                           ['developers_advisers', 'developers_reviewers'])
         self.assertEquals(sorted(self.tool.developers.userPloneGroups(suffixes=['advisers', 'other_suffix'])),
                           ['developers_advisers'])
+
+    def test_pm_Validate_groupInCharge(self):
+        """Test the MeetingGroup.groupInCharge validate method."""
+        vendors = self.tool.vendors
+
+        # nothing defined, right
+        self.failIf(vendors.validate_groupInCharge(()))
+        self.failIf(vendors.validate_groupInCharge(
+            [{'date_to': '', 'group_id': 'bourgmestre', 'orderindex_': 'template_row_marker'}]))
+
+        # correct definition
+        self.failIf(vendors.validate_groupInCharge(
+            [{'date_to': '2013/05/05', 'group_id': 'developers', 'orderindex_': '1'},
+             {'date_to': '2014/05/05', 'group_id': 'developers', 'orderindex_': '2'},
+             {'date_to': '2015/05/05', 'group_id': 'developers', 'orderindex_': '3'},
+             {'date_to': '', 'group_id': 'developers', 'orderindex_': '4'}]))
+        self.failIf(vendors.validate_groupInCharge(
+            [{'date_to': '2015/05/05', 'group_id': 'developers', 'orderindex_': '1'},
+             {'date_to': '', 'group_id': 'developers', 'orderindex_': '2'}]))
+        self.failIf(vendors.validate_groupInCharge(
+            [{'date_to': '', 'group_id': 'developers', 'orderindex_': '1'}]))
+
+        # the last row can not contain a 'date_to', it is the current group in charge
+        error_last_row_msg = translate('error_in_charge_group_date_may_not_be_given',
+                                       domain='PloneMeeting',
+                                       context=self.request)
+        self.assertEquals(vendors.validate_groupInCharge(
+            [{'date_to': '2016/05/05', 'group_id': 'developers', 'orderindex_': '1'}]),
+            error_last_row_msg)
+        self.assertEquals(vendors.validate_groupInCharge(
+            [{'date_to': '2016/05/05', 'group_id': 'developers', 'orderindex_': '1'},
+             {'date_to': '2016/05/05', 'group_id': 'developers', 'orderindex_': '2'}]),
+            error_last_row_msg)
+
+        # only the last row will have no date_to
+        error_date_missing_msg = translate('error_in_charge_group_date_to_missing',
+                                           domain='PloneMeeting',
+                                           context=self.request)
+        self.assertEquals(vendors.validate_groupInCharge(
+            [{'date_to': '', 'group_id': 'developers', 'orderindex_': '1'},
+             {'date_to': '2016/05/05', 'group_id': 'developers', 'orderindex_': '2'}]),
+            error_date_missing_msg)
+        self.assertEquals(vendors.validate_groupInCharge(
+            [{'date_to': '', 'group_id': 'developers', 'orderindex_': '1'},
+             {'date_to': '', 'group_id': 'developers', 'orderindex_': '2'}]),
+            error_date_missing_msg)
+        self.assertEquals(vendors.validate_groupInCharge(
+            [{'date_to': '', 'group_id': 'developers', 'orderindex_': '1'},
+             {'date_to': '2015/05/05', 'group_id': 'developers', 'orderindex_': '2'},
+             {'date_to': '', 'group_id': 'developers', 'orderindex_': '3'}]),
+            error_date_missing_msg)
+
+        # only the last row will have no date_to
+        error_invalid_dates_msg = translate('error_in_charge_group_invalid_dates',
+                                            domain='PloneMeeting',
+                                            context=self.request)
+        # wrong format, need YYYY/MM/DD
+        self.assertEquals(vendors.validate_groupInCharge(
+            [{'date_to': '05/05/2015', 'group_id': 'developers', 'orderindex_': '1'},
+             {'date_to': '', 'group_id': 'developers', 'orderindex_': '2'}]),
+            error_invalid_dates_msg)
+
+        # dates must be sorted correctly, from older to current one
+        error_dates_sorting_msg = translate('error_in_charge_group_dates_sorting',
+                                            domain='PloneMeeting',
+                                            context=self.request)
+        self.assertEquals(vendors.validate_groupInCharge(
+            [{'date_to': '2015/05/05', 'group_id': 'developers', 'orderindex_': '1'},
+             {'date_to': '2014/05/05', 'group_id': 'developers', 'orderindex_': '2'},
+             {'date_to': '', 'group_id': 'developers', 'orderindex_': '3'}]),
+            error_dates_sorting_msg)
+
+    def test_pm_GetGroupInChargeAt(self):
+        """Test the MeetingGroup.getGroupInChargeAt method.
+           This method receives a date and return who was in charge at the given date."""
+        self.changeUser('siteadmin')
+        vendors = self.tool.vendors
+        developers = self.tool.developers
+        group1 = self.create('MeetingGroup', id='group1', title='Group 1', acronym='G1')
+        group2 = self.create('MeetingGroup', id='group2', title='Group 2', acronym='G2')
+        group3 = self.create('MeetingGroup', id='group3', title='Group 3', acronym='G3')
+
+        # no group in charge
+        vendors.setGroupInCharge(())
+        self.failIf(vendors.validate_groupInCharge(vendors.getGroupInCharge()))
+        self.assertIsNone(vendors.getGroupInChargeAt())
+        self.assertIsNone(vendors.getGroupInChargeAt(DateTime('2015/05/05')))
+
+        # only one without date_to, always in charge
+        vendors.setGroupInCharge(
+            ({'date_to': '', 'group_id': 'developers', 'orderindex_': '1'},))
+        self.failIf(vendors.validate_groupInCharge(vendors.getGroupInCharge()))
+        self.assertEquals(vendors.getGroupInChargeAt(), developers)
+        self.assertEquals(vendors.getGroupInChargeAt(DateTime('2015/05/05')), developers)
+
+        # one past, one current
+        vendors.setGroupInCharge(
+            ({'date_to': '2015/05/05', 'group_id': 'group1', 'orderindex_': '1'},
+             {'date_to': '', 'group_id': 'developers', 'orderindex_': '2'},))
+        self.failIf(vendors.validate_groupInCharge(vendors.getGroupInCharge()))
+        self.assertEquals(vendors.getGroupInChargeAt(), developers)
+        # after '2015/05/05'
+        self.assertEquals(vendors.getGroupInChargeAt(DateTime('2016/05/05')), developers)
+        # the '2015/05/05' and before
+        self.assertEquals(vendors.getGroupInChargeAt(DateTime('2015/05/05')), group1)
+        self.assertEquals(vendors.getGroupInChargeAt(DateTime('2014/03/03')), group1)
+
+        # 'complex' configuration
+        vendors.setGroupInCharge(
+            ({'date_to': '2013/05/05', 'group_id': 'group1', 'orderindex_': '1'},
+             {'date_to': '2014/05/05', 'group_id': 'group2', 'orderindex_': '2'},
+             {'date_to': '2015/05/05', 'group_id': 'group3', 'orderindex_': '3'},
+             {'date_to': '', 'group_id': 'developers', 'orderindex_': '4'},))
+        self.failIf(vendors.validate_groupInCharge(vendors.getGroupInCharge()))
+        self.assertEquals(vendors.getGroupInChargeAt(), developers)
+        # after '2015/05/05'
+        self.assertEquals(vendors.getGroupInChargeAt(DateTime('2016/05/05')), developers)
+        # the '2015/05/05' and before
+        self.assertEquals(vendors.getGroupInChargeAt(DateTime('2015/05/05')), group3)
+        self.assertEquals(vendors.getGroupInChargeAt(DateTime('2014/08/08')), group3)
+        # the '2014/05/05' and before
+        self.assertEquals(vendors.getGroupInChargeAt(DateTime('2014/05/05')), group2)
+        self.assertEquals(vendors.getGroupInChargeAt(DateTime('2013/08/08')), group2)
+        # the '2013/05/05' and before
+        self.assertEquals(vendors.getGroupInChargeAt(DateTime('2013/05/05')), group1)
+        self.assertEquals(vendors.getGroupInChargeAt(DateTime('2012/08/08')), group1)
+        self.assertEquals(vendors.getGroupInChargeAt(DateTime('2008/08/08')), group1)
 
 
 def test_suite():

@@ -190,7 +190,8 @@ class MeetingUserDescriptor(Descriptor):
 
 class GroupDescriptor(Descriptor):
     multiSelectFields = ('certifiedSignatures', 'itemAdviceStates',
-                         'itemAdviceEditStates', 'itemAdviceViewStates')
+                         'itemAdviceEditStates', 'itemAdviceViewStates',
+                         'groupInCharge')
     # The 'instance' static attribute stores an instance used for assigning
     # default values to a meeting config being created through-the-web.
     instance = None
@@ -202,7 +203,7 @@ class GroupDescriptor(Descriptor):
     get = classmethod(get)
 
     def __init__(self, id, title, acronym, description='',
-                 active=True, asCopyGroupOn='', ):
+                 active=True, asCopyGroupOn='', groupInCharge=[]):
         self.id = id
         self.setBilingual('title', title)
         self.acronym = acronym
@@ -213,6 +214,7 @@ class GroupDescriptor(Descriptor):
         self.keepAccessToItemWhenAdviceIsGiven = ''
         self.asCopyGroupOn = asCopyGroupOn
         self.certifiedSignatures = []
+        self.groupInCharge = groupInCharge
         # Add lists of users (observers, reviewers, etc) ~[UserDescriptor]~
         for role in MEETING_GROUP_SUFFIXES:
             setattr(self, role, [])
