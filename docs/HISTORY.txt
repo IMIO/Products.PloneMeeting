@@ -294,6 +294,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - The 'Duplicate and keep link' action is now generating a manual link (MeetingItem.manuallyLinkedItems) between the items,
   no more an automatic link.  This way, the link is manageable by the creator, can be removed if necessary and the eventual items
   that were already linked to the original item are also linked to the new duplicated item (virtual folder)
+- Added field MeetingGroup.groupInCharge to be able to define a group in charge of another.  It keeps history of groupInCharge so
+  it is possible to know who was in charge 2 years ago and to print relevant informations on a document for example.
+  Added also 'on_groups_in_charge' item insertion method into a meeting
 
 3.3 (2015-02-27)
 ----------------

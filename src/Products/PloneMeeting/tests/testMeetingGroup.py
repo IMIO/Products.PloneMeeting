@@ -511,6 +511,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         # only the last row will have no date_to
         error_date_missing_msg = translate('error_in_charge_group_date_to_missing',
                                            domain='PloneMeeting',
+                                           mapping={'row_number': 1},
                                            context=self.request)
         self.assertEquals(vendors.validate_groupInCharge(
             [{'date_to': '', 'group_id': 'developers', 'orderindex_': '1'},
@@ -526,11 +527,11 @@ class testMeetingGroup(PloneMeetingTestCase):
              {'date_to': '', 'group_id': 'developers', 'orderindex_': '3'}]),
             error_date_missing_msg)
 
-        # only the last row will have no date_to
+        # wrong format, need YYYY/MM/DD
         error_invalid_dates_msg = translate('error_in_charge_group_invalid_dates',
                                             domain='PloneMeeting',
+                                            mapping={'row_number': 1},
                                             context=self.request)
-        # wrong format, need YYYY/MM/DD
         self.assertEquals(vendors.validate_groupInCharge(
             [{'date_to': '05/05/2015', 'group_id': 'developers', 'orderindex_': '1'},
              {'date_to': '', 'group_id': 'developers', 'orderindex_': '2'}]),

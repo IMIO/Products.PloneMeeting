@@ -408,14 +408,14 @@ class testMeeting(PloneMeetingTestCase):
         meeting = self._createMeetingWithItems()
         orderedItems = meeting.getItems(ordered=True)
         # 'o2' as got an associated group 'developers' even if main proposing group is 'vendors'
-        self.assertTrue([item.getId() for item in orderedItems] ==
-                        ['recItem1', 'recItem2', 'o2', 'o3', 'o5', 'o4', 'o6'])
+        self.assertEquals([item.getId() for item in orderedItems],
+                          ['recItem1', 'recItem2', 'o2', 'o3', 'o5', 'o4', 'o6'])
         # so 'o2' is inserted in 'developers' items even if it has the 'vendors' proposing group
-        self.assertTrue([item.getProposingGroup() for item in orderedItems] ==
-                        ['developers', 'developers', 'vendors', 'developers', 'developers', 'vendors', 'vendors'])
+        self.assertEquals([item.getProposingGroup() for item in orderedItems],
+                          ['developers', 'developers', 'vendors', 'developers', 'developers', 'vendors', 'vendors'])
         # because 'o2' has 'developers' in his associatedGroups
-        self.assertTrue([item.getAssociatedGroups() for item in orderedItems] ==
-                        [(), (), ('developers',), (), (), (), ()])
+        self.assertEquals([item.getAssociatedGroups() for item in orderedItems],
+                          [(), (), ('developers',), (), (), (), ()])
 
     def test_pm_InsertItemOnAllGroupsWithDisabledGroup(self):
         '''Sort method tested here is "on_all_groups" but with an associated group and
@@ -454,24 +454,103 @@ class testMeeting(PloneMeetingTestCase):
         '''Sort method tested here is "on_groups_in_charge".
            It takes into account the currently valid MeetingGroup.inChargeGroup that
            must be defined on every groups used as proposingGroup for presented items.'''
-        self.changeUser('pmManager')
-        self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_groups_in_charge',
-                                                          'reverse': '0'}, ))
+
+        self.changeUser('siteadmin')
+        cfg = self.meetingConfig
+        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_groups_in_charge',
+                                           'reverse': '0'}, ))
+        # groupInCharge must be defined for every proposingGroup or it fails
+        with self.assertRaises(Exception) as cm:
+            self._createMeetingWithItems()
+        self.assertEquals(cm.exception.message, "No valid groupInCharge defined for developers")
+
+        # configure groups to define groups in charge
+        self.create('MeetingGroup',
+                    id='groupincharge1',
+                    Title='Group in charge 1',
+                    acronym='GIC1')
+        self.create('MeetingGroup',
+                    id='groupincharge2',
+                    Title='Group in charge 2',
+                    acronym='GIC2')
+        self.tool.vendors.setGroupInCharge(
+            ({'date_to': '', 'group_id': 'groupincharge1', 'orderindex_': '1'},))
+        self.tool.developers.setGroupInCharge(
+            ({'date_to': '', 'group_id': 'groupincharge2', 'orderindex_': '1'},))
+
+        # no reverse
         meeting = self._createMeetingWithItems()
-        orderedItems = meeting.getItems(ordered=True)
-        # 'o2' as got an associated group 'developers' even if main proposing group is 'vendors'
-        self.assertTrue([item.getId() for item in orderedItems] ==
-                        ['recItem1', 'recItem2', 'o2', 'o3', 'o5', 'o4', 'o6'])
+        self.assertEquals([(item.getProposingGroup(theObject=True).getId(),
+                           item.getProposingGroup(theObject=True).getGroupInChargeAt().getId())
+                           for item in meeting.getItems(ordered=True)],
+                          [('vendors', 'groupincharge1'),
+                           ('vendors', 'groupincharge1'),
+                           ('vendors', 'groupincharge1'),
+                           ('developers', 'groupincharge2'),
+                           ('developers', 'groupincharge2'),
+                           ('developers', 'groupincharge2'),
+                           ('developers', 'groupincharge2')])
+        self.tool.vendors.setGroupInCharge(
+            ({'date_to': '', 'group_id': 'groupincharge2', 'orderindex_': '1'},))
+        self.tool.developers.setGroupInCharge(
+            ({'date_to': '', 'group_id': 'groupincharge1', 'orderindex_': '1'},))
+        meeting2 = self._createMeetingWithItems()
+        self.assertEquals([(item.getProposingGroup(theObject=True).getId(),
+                           item.getProposingGroup(theObject=True).getGroupInChargeAt().getId())
+                           for item in meeting2.getItems(ordered=True)],
+                          [('developers', 'groupincharge1'),
+                           ('developers', 'groupincharge1'),
+                           ('developers', 'groupincharge1'),
+                           ('developers', 'groupincharge1'),
+                           ('vendors', 'groupincharge2'),
+                           ('vendors', 'groupincharge2'),
+                           ('vendors', 'groupincharge2')])
+
+        # reverse
+        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_groups_in_charge',
+                                           'reverse': '1'}, ))
+        meeting3 = self._createMeetingWithItems()
+        self.assertEquals([(item.getProposingGroup(theObject=True).getId(),
+                           item.getProposingGroup(theObject=True).getGroupInChargeAt().getId())
+                           for item in meeting3.getItems(ordered=True)],
+                          [('vendors', 'groupincharge2'),
+                           ('vendors', 'groupincharge2'),
+                           ('vendors', 'groupincharge2'),
+                           ('developers', 'groupincharge1'),
+                           ('developers', 'groupincharge1'),
+                           ('developers', 'groupincharge1'),
+                           ('developers', 'groupincharge1')])
+
+        # it follows groupInCharge order in the configuration, change it and test again
+        self.assertEquals(self.tool.objectIds('MeetingGroup'),
+                          ['developers', 'vendors', 'endUsers', 'groupincharge1', 'groupincharge2'])
+        self.tool.folder_position(position='up', id='groupincharge2')
+        self.assertEquals(self.tool.objectIds('MeetingGroup'),
+                          ['developers', 'vendors', 'endUsers', 'groupincharge2', 'groupincharge1'])
+        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_groups_in_charge',
+                                           'reverse': '0'}, ))
+        meeting4 = self._createMeetingWithItems()
+        self.assertEquals([(item.getProposingGroup(theObject=True).getId(),
+                           item.getProposingGroup(theObject=True).getGroupInChargeAt().getId())
+                           for item in meeting4.getItems(ordered=True)],
+                          [('vendors', 'groupincharge2'),
+                           ('vendors', 'groupincharge2'),
+                           ('vendors', 'groupincharge2'),
+                           ('developers', 'groupincharge1'),
+                           ('developers', 'groupincharge1'),
+                           ('developers', 'groupincharge1'),
+                           ('developers', 'groupincharge1')])
 
     def test_pm_InsertItemPrivacyThenProposingGroups(self):
-        '''Sort method tested here is "on_privacy_xxx" then "on_proposing_groups".'''
+        '''Sort method tested here is "on_privacy" not reverse and reverse then "on_proposing_groups".'''
+        cfg = self.meetingConfig
         self.changeUser('pmManager')
 
         # on_privacy_public
-        self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_privacy',
-                                                          'reverse': '0'},
-                                                         {'insertingMethod': 'on_proposing_groups',
-                                                          'reverse': '0'},))
+        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_privacy',
+                                           'reverse': '0'},
+                                          {'insertingMethod': 'on_proposing_groups',
+                                           'reverse': '0'},))
         meeting = self._createMeetingWithItems()
         self.assertEquals([item.getId() for item in meeting.getItems(ordered=True)],
                           ['recItem1', 'recItem2', 'o3', 'o2', 'o6', 'o5', 'o4'])
@@ -479,10 +558,10 @@ class testMeeting(PloneMeetingTestCase):
                           ['public', 'public', 'public', 'public', 'public', 'secret', 'secret'])
 
         # on_privacy_secret
-        self.meetingConfig.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_privacy',
-                                                          'reverse': '1'},
-                                                         {'insertingMethod': 'on_proposing_groups',
-                                                          'reverse': '0'},))
+        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_privacy',
+                                           'reverse': '1'},
+                                          {'insertingMethod': 'on_proposing_groups',
+                                           'reverse': '0'},))
         meeting = self._createMeetingWithItems()
         self.assertEquals([item.getId() for item in meeting.getItems(ordered=True)],
                           ['o11', 'o10', 'copy_of_recItem1', 'copy_of_recItem2', 'o9', 'o8', 'o12'])

@@ -91,7 +91,7 @@ def getGroupInCharge(obj):
     groupInCharge = obj.getProposingGroup(theObject=True).getGroupInChargeAt(date)
     if groupInCharge:
         return groupInCharge.getId()
-    return None
+    return _marker
 
 
 @indexer(IMeetingItem)
