@@ -603,7 +603,7 @@ class testSearches(PloneMeetingTestCase):
         # check if self.runSearchItemsToValidateOfEveryReviewerLevelsAndLowerLevelsTest() is True
         if not 'pre_validation_keep_reviewer_permissions' in cfg.listWorkflowAdaptations() and \
            not self.runSearchItemsToValidateOfEveryReviewerLevelsAndLowerLevelsTest():
-            logger.info("Could not launch test 'test_pm_SearchItemsToValidateOfEveryReviewerLevelsAndLowerLevels'"
+            logger.info("Could not launch test 'test_pm_SearchItemsToValidateOfEveryReviewerLevelsAndLowerLevels' "
                         "because we need a correctly configured workflow.")
             return
         if 'pre_validation_keep_reviewer_permissions' in cfg.listWorkflowAdaptations():
