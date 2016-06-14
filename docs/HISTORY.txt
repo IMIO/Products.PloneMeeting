@@ -297,6 +297,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Added field MeetingGroup.groupInCharge to be able to define a group in charge of another.  It keeps history of groupInCharge so
   it is possible to know who was in charge 2 years ago and to print relevant informations on a document for example.
   Added also 'on_groups_in_charge' item insertion method into a meeting
+- Added optiona fields Meeting.assemblyGuest, Meeting.assemblyProxies and Meeting.assemblyStaves on the meeting to use if necessary.
+  Meeting.assemblyXXX fields are now displayed one under the other on the meeting_view and it is hidden using a collapsible widget
 
 3.3 (2015-02-27)
 ----------------

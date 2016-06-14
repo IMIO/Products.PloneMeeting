@@ -167,6 +167,9 @@
         <metal:field use-macro="python:here.widget('assembly', mode='edit')"/>
         <metal:field use-macro="python:here.widget('assemblyExcused', mode='edit')"/>
         <metal:field use-macro="python:here.widget('assemblyAbsents', mode='edit')"/>
+        <metal:field use-macro="python:here.widget('assemblyGuests', mode='edit')"/>
+        <metal:field use-macro="python:here.widget('assemblyProxies', mode='edit')"/>
+        <metal:field use-macro="python:here.widget('assemblyStaves', mode='edit')"/>
         
         <tal:comment replace="nothing">User table: attendees, lateAttendees, absents, signatories, replacements</tal:comment>
         <tal:users condition="python: 'attendees' in usedAttrs">

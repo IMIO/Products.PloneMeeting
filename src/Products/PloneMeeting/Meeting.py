@@ -491,6 +491,45 @@ schema = Schema((
         default_output_type="text/html",
         default_content_type="text/plain",
     ),
+    TextField(
+        name='assemblyGuests',
+        allowable_content_types="text/plain",
+        optional=True,
+        widget=TextAreaWidget(
+            condition="python: here.attributeIsUsed('assemblyGuests')",
+            label='Assemblyguests',
+            label_msgid='PloneMeeting_label_assemblyGuests',
+            i18n_domain='PloneMeeting',
+        ),
+        default_output_type="text/html",
+        default_content_type="text/plain",
+    ),
+    TextField(
+        name='assemblyProxies',
+        allowable_content_types="text/plain",
+        optional=True,
+        widget=TextAreaWidget(
+            condition="python: here.attributeIsUsed('assemblyProxies')",
+            label='Assemblyproxies',
+            label_msgid='PloneMeeting_label_assemblyProxies',
+            i18n_domain='PloneMeeting',
+        ),
+        default_output_type="text/html",
+        default_content_type="text/plain",
+    ),
+    TextField(
+        name='assemblyStaves',
+        allowable_content_types="text/plain",
+        optional=True,
+        widget=TextAreaWidget(
+            condition="python: here.attributeIsUsed('assemblyStaves')",
+            label='Assemblystaves',
+            label_msgid='PloneMeeting_label_assemblyStaves',
+            i18n_domain='PloneMeeting',
+        ),
+        default_output_type="text/html",
+        default_content_type="text/plain",
+    ),
     LinesField(
         name='attendees',
         widget=MultiSelectionWidget(

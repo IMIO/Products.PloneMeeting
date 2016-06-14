@@ -51,11 +51,8 @@ from config import DEFAULT_ADD_CONTENT_PERMISSION
 from config import product_globals
 from config import PROJECTNAME
 
-
 DirectoryView.registerDirectory('skins', product_globals)
 
-
-##code-section custom-init-head #fill in your manual code here
 from zope.i18nmessageid import MessageFactory
 
 PMMessageFactory = MessageFactory("PloneMeeting")
@@ -111,19 +108,12 @@ for valid in baseValidators:
 
 from Products.validation import validation
 from validators import CertifiedSignaturesValidator
-from validators import WorkflowInterfacesValidator
 validation.register(CertifiedSignaturesValidator('isValidCertifiedSignatures', title='', description=''))
-##/code-section custom-init-head
 
 
 def initialize(context):
     """initialize product (called by zope)"""
-    ##code-section custom-init-top #fill in your manual code here
     import PodTemplate
-    ##/code-section custom-init-top
-
-    # imports packages and types for registration
-
     import MeetingItem
     import Meeting
     import ToolPloneMeeting
@@ -163,7 +153,6 @@ def initialize(context):
                               constructors=(all_constructors[i],),
                               permission=ADD_CONTENT_PERMISSIONS[klassname])
 
-    ##code-section custom-init-bottom #fill in your manual code here
     from AccessControl import allow_module
     allow_module('Products.PloneMeeting.utils')
     from AccessControl import ClassSecurityInfo
@@ -173,4 +162,3 @@ def initialize(context):
         if not elem.startswith('__'):
             FakeBrain.security.declarePublic(elem)
     InitializeClass(FakeBrain)
-    ##/code-section custom-init-bottom
