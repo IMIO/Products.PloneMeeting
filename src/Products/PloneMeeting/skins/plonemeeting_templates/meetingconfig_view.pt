@@ -535,7 +535,7 @@
         <tr valign="top">
           <td width="33%" tal:define="field python:here.getField('itemWorkflow')">
             <span metal:use-macro="here/widgets/field/macros/view" />
-            <span style="color: red;" tal:content="python: wfTool.getWorkflowsFor(context.getItemTypeName())[0].getId()"></span>
+            <span style="color: red;" tal:content="python: '{0}__{1}'.format(context.getId(), context.getItemWorkflow())"></span>
           </td>
           <td width="34%" tal:define="field python:here.getField('itemConditionsInterface')">
             <span metal:use-macro="here/widgets/field/macros/view" />
@@ -547,7 +547,7 @@
         <tr valign="top">
           <td tal:define="field python:here.getField('meetingWorkflow')">
             <span metal:use-macro="here/widgets/field/macros/view" />
-            <span style="color: red;" tal:content="python: wfTool.getWorkflowsFor(context.getMeetingTypeName())[0].getId()"></span>
+            <span style="color: red;" tal:content="python: '{0}__{1}'.format(context.getId(), context.getMeetingWorkflow())"></span>
           </td>
           <td tal:define="field python:here.getField('meetingConditionsInterface')">
             <span metal:use-macro="here/widgets/field/macros/view" />
