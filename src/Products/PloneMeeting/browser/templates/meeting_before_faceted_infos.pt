@@ -74,7 +74,7 @@
             <legend i18n:translate="PloneMeeting_label_assemblyExcused">Excused</legend>
             <span tal:replace="structure python: context.getAssemblyExcused() or '<p>-</p>'"/>
         </fieldset>
-        <fieldset tal:condition="python: 'assemblyabsents' in usedAssemblyFields">
+        <fieldset tal:condition="python: 'assemblyAbsents' in usedAssemblyFields">
             <legend i18n:translate="PloneMeeting_label_assemblyAbsents">Absents</legend>
             <span tal:replace="structure python: context.getAssemblyAbsents() or '<p>-</p>'"/>
         </fieldset>
