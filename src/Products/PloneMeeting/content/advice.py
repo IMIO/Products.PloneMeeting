@@ -184,7 +184,9 @@ class MeetingAdvice(Container):
         """Versionate if self was never versioned or
            if it was modified since last version."""
         # only historize advice if it was modified since last historization
-        if isModifiedSinceLastVersion(self):
+        # and if it is not 'asked_again', indeed we do not versionate an advice
+        # that is 'asked_again' of it's predecessor would be an advice 'asked_again' too...
+        if self.advice_type != 'asked_again' and isModifiedSinceLastVersion(self):
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self)
             # create the historized_item_data before versioning, then removes it after

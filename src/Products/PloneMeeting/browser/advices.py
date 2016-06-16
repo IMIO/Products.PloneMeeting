@@ -26,7 +26,6 @@ from AccessControl import Unauthorized
 from zope.event import notify
 from zope.lifecycleevent import ObjectModifiedEvent
 from Products.CMFCore.permissions import ModifyPortalContent
-from Products.CMFCore.utils import getToolByName
 from Products.CMFCore.utils import _checkPermission
 from Products.Five import BrowserView
 from plone import api
@@ -40,7 +39,7 @@ class AdvicesIcons(BrowserView):
     def __init__(self, context, request):
         """ """
         super(AdvicesIcons, self).__init__(context, request)
-        self.tool = getToolByName(self, 'portal_plonemeeting')
+        self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
         self.portal = api.portal.get()
         self.portal_url = self.portal.absolute_url()
@@ -137,7 +136,7 @@ class ChangeAdviceAskedAgainView(BrowserView):
 
     def __call__(self):
         """ """
-        pr = getToolByName(self.context, 'portal_repository')
+        pr = api.portal.get_tool('portal_repository')
         parent = self.context.getParentNode()
         if not self.context.advice_type == 'asked_again':
             # we are about to set advice to 'asked_again'
@@ -149,7 +148,7 @@ class ChangeAdviceAskedAgainView(BrowserView):
             self.context.advice_type = 'asked_again'
             # and we may also set 'advice_hide_during_redaction' to the default
             # value defined in the MeetingConfig
-            tool = getToolByName(self.context, 'portal_plonemeeting')
+            tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self.context)
             self.context.advice_hide_during_redaction = cfg.getDefaultAdviceHiddenDuringRedaction()
         else:
@@ -171,7 +170,7 @@ class AdviceConfidentialityView(BrowserView):
     def __init__(self, context, request):
         self.context = context
         self.request = request
-        self.portal_url = getToolByName(self.context, 'portal_url').getPortalObject().absolute_url()
+        self.portal_url = api.portal.get().absolute_url()
 
     def __call__(self, advice):
         self.advice = advice
@@ -183,6 +182,6 @@ class AdviceVersionPreviewView(IHVersionPreviewView):
     def __init__(self, context, request):
         """ """
         super(AdviceVersionPreviewView, self).__init__(context, request)
-        tool = getToolByName(self.context, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
         self.adviceStyle = cfg.getAdviceStyle()

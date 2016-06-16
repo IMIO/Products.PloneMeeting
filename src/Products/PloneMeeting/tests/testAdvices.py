@@ -1819,7 +1819,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertFalse('asked_again' in vocab)
         # right, ask advice again
         changeView()
-        # advice was not hsitorized again because it was not modified
+        # advice was not historized again because it was not modified
         self.assertEquals(pr.getHistoryMetadata(advice)._available, [0])
         self.assertTrue(advice.advice_type == 'asked_again')
         # now it is available in vocabulary
@@ -1851,6 +1851,23 @@ class testAdvices(PloneMeetingTestCase):
         self.proposeItem(item)
         self.changeUser('pmReviewer2')
         self.assertTrue(self.hasPermission(ModifyPortalContent, advice))
+
+        # when an advice is 'asked_again', it is not versioned twice even
+        # if advice was edited in between, an advice 'asked_again' is like 'never given'
+        # this will avoid that previous advice of an advice 'asked_again' is also
+        # an advice 'asked_again'...
+        notify(ObjectModifiedEvent(advice))
+        self.changeUser('pmReviewer1')
+        self.backToState(item, 'itemcreated')
+        self.assertEquals(pr.getHistoryMetadata(advice)._available, [0, 1, 2])
+        # but works after when advice is no more 'asked_again'
+        self.proposeItem(item)
+        self.changeUser('pmReviewer2')
+        advice.advice_type = 'positive'
+        notify(ObjectModifiedEvent(advice))
+        self.changeUser('pmReviewer1')
+        self.backToState(item, 'itemcreated')
+        self.assertEquals(pr.getHistoryMetadata(advice)._available, [0, 1, 2, 3])
 
     def test_pm_AdviceHistorizedWithItemDataWhenAdviceGiven(self):
         """When an advice is given, it is versioned and relevant item infos are saved.
