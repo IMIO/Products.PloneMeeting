@@ -299,6 +299,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   Added also 'on_groups_in_charge' item insertion method into a meeting
 - Added optiona fields Meeting.assemblyGuest, Meeting.assemblyProxies and Meeting.assemblyStaves on the meeting to use if necessary.
   Meeting.assemblyXXX fields are now displayed one under the other on the meeting_view and it is hidden using a collapsible widget
+- Reindex item (reindexObject) when an advice is added/edited/deleted, this way if some custom indexes are managed depending on
+  a value of the advice, it is updated if necessary
 
 3.3 (2015-02-27)
 ----------------

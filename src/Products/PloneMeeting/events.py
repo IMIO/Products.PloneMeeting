@@ -389,6 +389,10 @@ def onAdviceAdded(advice, event):
     if not http_referer.endswith('/edit') and not http_referer.endswith('/@@edit'):
         advice.REQUEST.RESPONSE.redirect(http_referer + '#adviceAndAnnexes')
 
+    # reindexObject in case for example we have custom indexes
+    # depending on the advice value
+    item.reindexObject()
+
     # log
     userId = api.user.get_current().getId()
     logger.info('Advice at %s created by "%s".' %
@@ -412,6 +416,10 @@ def onAdviceModified(advice, event):
     # notify our own PM event so we are sure that this event is called
     # after the onAviceModified event
     notify(AdviceAfterModifyEvent(advice))
+
+    # reindexObject in case for example we have custom indexes
+    # depending on the advice value
+    item.reindexObject()
 
     # log
     userId = api.user.get_current().getId()
@@ -448,6 +456,10 @@ def onAdviceRemoved(advice, event):
         # it can raise a TypeError, this can be the case when using ToolPloneMeeting.pasteItems
         # the newItem has an empty adviceIndex but can contain advices that will be removed
         logger.info('Removal of advice at %s raised TypeError.' % advice.absolute_url_path())
+
+    # reindexObject in case for example we have custom indexes
+    # depending on the advice value
+    item.reindexObject()
 
 
 def onAdviceTransition(advice, event):
