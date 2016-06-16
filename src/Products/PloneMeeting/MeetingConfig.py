@@ -2153,7 +2153,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     [
                         {'i': 'CompoundCriterion',
                          'o': 'plone.app.querystring.operation.compound.is',
-                         'v': 'items-to-validate-of-my-reviewer-groups'},
+                         'v': 'items-to-validate-of-highest-hierarchic-level'},
                     ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
