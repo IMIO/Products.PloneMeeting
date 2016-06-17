@@ -14,10 +14,6 @@ table.listing tbody tr.odd.meeting_item_privacy_secret td {
     background-color: #ffff99;
 }
 
-table.listing tr[class][class] td.meeting_item_listType_late {
-    background-color: #ed0000;
-}
-
 table.listing tr[class][class] td[class^='meeting_item_listType_'] {
     padding: 0em;
     border-right: 0px;
@@ -715,11 +711,6 @@ p.indent-firstline {
 .item_privacy_secret {
     color: #FF934A;
 }
-/* CSS for MeetingItem.listType */
-/* While displayed as a single item (meetingitem_view) */
-.item_listType_late {
-    color: red;
-}
 
 /* While displayed in a Meeting */
 .meeting_item_privacy_secret {
@@ -1131,18 +1122,21 @@ body.template-meetingitem_view td.itemAdvicesCell div.contentActionsAX > dl {
     color: black;
     font-weight: bold;
 }
-.item_listType_normal,
+
+#content a.item_listType_normal,
+#content span.item_listType_normal,
 #content a.item_listType_normal:link,
 #content a.item_listType_normal:visited {
-    vertical-align: middle;
-    display: inline;
     color: &dtml-discreetColor;;
 }
-.item_listType_late,
+
+table.listing tr[class][class] td.meeting_item_listType_late {
+    background-color: red;;
+}
+#content a.item_listType_late,
+#content span.item_listType_late,
 #content a.item_listType_late:link,
 #content a.item_listType_late:visited {
-    vertical-align: middle;
-    display: inline;
     color: red;;
 }
 
