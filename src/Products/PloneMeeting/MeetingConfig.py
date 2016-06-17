@@ -553,19 +553,6 @@ schema = Schema((
         schemata="data",
         write_permission="PloneMeeting: Write risky config",
     ),
-    BooleanField(
-        name='toDiscussShownForLateItems',
-        default=defValues.toDiscussShownForLateItems,
-        widget=BooleanField._properties['widget'](
-            description="ToDiscussShownForLateItems",
-            description_msgid="to_discuss_shown_for_late_items_descr",
-            label='Todiscussshownforlateitems',
-            label_msgid='PloneMeeting_label_toDiscussShownForLateItems',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="data",
-        write_permission="PloneMeeting: Write risky config",
-    ),
     TextField(
         name='itemReferenceFormat',
         allowable_content_types=('text/plain',),

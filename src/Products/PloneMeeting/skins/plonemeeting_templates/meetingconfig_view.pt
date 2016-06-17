@@ -245,21 +245,19 @@
           <td tal:define="field python:here.getField('useGroupsAsCategories')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
+          <td tal:define="field python:here.getField('itemReferenceFormat')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td></td>
+        </tr>
+        <tr valign="top">
           <td tal:define="field python:here.getField('toDiscussSetOnItemInsert')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <td tal:define="field python:here.getField('toDiscussDefault')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-        </tr>
-        <tr valign="top">
           <td tal:define="field python:here.getField('toDiscussLateDefault')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
-          <td tal:define="field python:here.getField('toDiscussShownForLateItems')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
-          <td tal:define="field python:here.getField('itemReferenceFormat')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
         </tr>

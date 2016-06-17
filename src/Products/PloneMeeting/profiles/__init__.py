@@ -324,14 +324,10 @@ class MeetingConfigDescriptor(Descriptor):
         # meeting ? If no, the user having permission to write the item will be
         # able to set this value, as soon as on item creation.
         self.toDiscussSetOnItemInsert = True
-        # What must be the default value for the "toDiscuss" field for normal
-        # items ?
+        # What must be the default value for the "toDiscuss" field for normal items ?
         self.toDiscussDefault = True
-        # What must be the default value for the "toDiscuss" field for late
-        # items ?
+        # What must be the default value for the "toDiscuss" field for late items ?
         self.toDiscussLateDefault = True
-        # Must we show column 'toDiscuss' on lists of late items ?
-        self.toDiscussShownForLateItems = True
         # What is the format of the item references ?
         # Default is Ref. MeetingDate/ItemNumberInMeeting
         self.itemReferenceFormat = "python: 'Ref. ' + (here.hasMeeting() and " \

@@ -522,6 +522,8 @@ class Migrate_To_4_0(Migrator):
         """
         logger.info('Cleaning MeetingConfigs...')
         for cfg in self.tool.objectValues('MeetingConfig'):
+            if hasattr(cfg, 'toDiscussShownForLateItems'):
+                delattr(cfg, 'toDiscussShownForLateItems')
             if hasattr(cfg, 'openAnnexesInSeparateWindows'):
                 delattr(cfg, 'openAnnexesInSeparateWindows')
             if hasattr(cfg, 'mailFormat'):
