@@ -242,9 +242,8 @@
                 <span class="item_attribute_label" i18n:translate="PloneMeeting_label_preferredMeeting"></span>:&nbsp;&nbsp;
                 <span tal:define="meetings python:here.portal_catalog(UID=here.getPreferredMeeting())">
                 <span tal:condition="meetings">
-                    <tal:block define="meeting python:meetings[0];">
-                      <tal:link define="contentValue python: tool.formatMeetingDate(meeting, prefixed=True, withHour=True)"
-                                tal:replace="structure python: tool.getColoredLink(meeting, contentValue=contentValue)">
+                    <tal:block define="meeting python:meetings[0].getObject();">
+                      <tal:link tal:replace="structure meeting/getPrettyLink">
                       </tal:link>
                     </tal:block>
                 </span>
@@ -258,8 +257,7 @@
               <span class="item_attribute_label"
                     i18n:translate="presented_in_meeting">Presented in meeting</span>:&nbsp;&nbsp;
               <tal:hasMeeting condition="python: meeting">
-                  <tal:link define="contentValue python: tool.formatMeetingDate(meeting, prefixed=True, withHour=True)"
-                            tal:replace="structure python: tool.getColoredLink(meeting, contentValue=contentValue)">
+                  <tal:link tal:replace="structure meeting/getPrettyLink">
                   </tal:link>
               </tal:hasMeeting>
               <span tal:condition="python: not meeting">-</span>
