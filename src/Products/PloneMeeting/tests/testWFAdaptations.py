@@ -1484,11 +1484,13 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._setItemToWaitingAdvices(item, waiting_transition_name)
         self.assertEqual(item.queryState(), waiting_state_name)
         self.assertFalse(self.hasPermission(ModifyPortalContent, item))
+        self.assertFalse(self.hasPermission(DeleteObjects, item))
 
         # pmCreator1 may view but not edit
         self.changeUser('pmCreator1')
         self.assertTrue(self.hasPermission(View, item))
         self.assertFalse(self.hasPermission(ModifyPortalContent, item))
+        self.assertFalse(self.hasPermission(DeleteObjects, item))
         self.assertFalse(self.transitions(item))
 
         # right come back to 'proposed'
@@ -1563,11 +1565,13 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.changeUser('pmReviewerLevel2')
         self.do(item, 'wait_advices_from_prevalidated')
         self.assertFalse(self.hasPermission(ModifyPortalContent, item))
+        self.assertFalse(self.hasPermission(DeleteObjects, item))
 
         # pmCreator1 may view but not edit
         self.changeUser('pmCreator1')
         self.assertTrue(self.hasPermission(View, item))
         self.assertFalse(self.hasPermission(ModifyPortalContent, item))
+        self.assertFalse(self.hasPermission(DeleteObjects, item))
         self.assertFalse(self.transitions(item))
 
         # right test the back transitions, first come back to 'prevalidated', then to 'proposed'
@@ -1617,6 +1621,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.do(item, 'wait_advices_from_itemcreated')
         self.assertEquals(item.queryState(), 'itemcreated_waiting_advices')
         self.assertFalse(self.hasPermission(ModifyPortalContent, item))
+        self.assertFalse(self.hasPermission(DeleteObjects, item))
         self.do(item, 'backTo_itemcreated_from_waiting_advices')
         self.assertEquals(item.queryState(), 'itemcreated')
 
@@ -1627,10 +1632,12 @@ class testWFAdaptations(PloneMeetingTestCase):
                                       'wait_advices_from_%s' % self.WF_STATE_NAME_MAPPINGS['proposed'])
         self.assertEquals(item.queryState(), '%s_waiting_advices' % self.WF_STATE_NAME_MAPPINGS['proposed'])
         self.assertFalse(self.hasPermission(ModifyPortalContent, item))
+        self.assertFalse(self.hasPermission(DeleteObjects, item))
         # 'pmCreator1' may view, not edit
         self.changeUser('pmCreator1')
         self.assertTrue(self.hasPermission(View, item))
         self.assertFalse(self.hasPermission(ModifyPortalContent, item))
+        self.assertFalse(self.hasPermission(DeleteObjects, item))
         self.assertFalse(self.transitions(item))
         self.changeUser(self._userAbleToBackFromWaitingAdvices(item.queryState()))
         self.do(item, 'backTo_%s_from_waiting_advices' % self.WF_STATE_NAME_MAPPINGS['proposed'])
@@ -1668,6 +1675,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._setItemToWaitingAdvices(item, 'wait_advices_from_itemcreated')
         self.assertEquals(item.queryState(), 'itemcreated_waiting_advices')
         self.assertTrue(self.hasPermission(ModifyPortalContent, item))
+        self.assertTrue(self.hasPermission(DeleteObjects, item))
         self.changeUser(self._userAbleToBackFromWaitingAdvices(item.queryState()))
         self.do(item, 'backTo_itemcreated_from_waiting_advices')
         self.assertEquals(item.queryState(), 'itemcreated')

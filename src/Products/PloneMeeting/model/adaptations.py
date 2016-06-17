@@ -636,7 +636,7 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
             wf = itemWorkflow
             # compute edit permissions existing on MeetingItem schema
             from Products.PloneMeeting.MeetingItem import MeetingItem
-            edit_permissions = [ModifyPortalContent]
+            edit_permissions = [ModifyPortalContent, DeleteObjects]
             for field in MeetingItem.schema.fields():
                 if field.write_permission and not field.write_permission in edit_permissions:
                     edit_permissions.append(field.write_permission)
