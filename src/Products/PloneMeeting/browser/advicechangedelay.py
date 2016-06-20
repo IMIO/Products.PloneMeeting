@@ -27,9 +27,8 @@ class AdviceDelaysView(BrowserView):
         # find linked rows in the MeetingConfig.customAdvisers
         isAutomatic, linkedRows = self.cfg._findLinkedRowsFor(row_id)
         # check if current user may change delays for advice
-        if not self._mayEditDelays(isAutomatic):
-            return []
-        return self._availableDelays(linkedRows, row_id)
+        mayEdit = self._mayEditDelays(isAutomatic)
+        return self._availableDelays(linkedRows, row_id, mayEdit)
 
     def _mayEditDelays(self, isAutomatic):
         '''Check if current user may edit delays for advice.  Given p_isAutomatic
@@ -51,28 +50,32 @@ class AdviceDelaysView(BrowserView):
 
         return True
 
-    def _availableDelays(self, linkedRows, row_id):
-        '''Returns available delays.'''
+    def _availableDelays(self, linkedRows, row_id, mayEdit):
+        '''Returns available delays.
+           p_mayEdit is passed so it can be used in the expression,
+           indeed, we have 2 usecases here :
+           - either we have users able to edit and we want to restrict some values;
+           - or we have users not able to edit but we want to let them the possibility to change an advice delay.'''
         res = []
         # evaluate the 'available_on' TAL expression defined on each linkedRows
         availableLinkedRows = []
         ctx = createExprContext(self.context.getParentNode(), self.portal, self.context)
         # Check that the TAL expression on the group returns True
         ctx.setGlobal('item', self.context)
+        ctx.setGlobal('mayEdit', mayEdit)
         # set a special value in the request usable in the TAL expression
         # that just specify that we are managing available delays
         # this way, it is easy to protect a custom adviser by just checking
         # this value in the REQUEST
         self.request.set('managing_available_delays', True)
         for linkedRow in linkedRows:
-            eRes = False
+            eRes = mayEdit
             try:
                 if linkedRow['available_on']:
                     eRes = Expression(linkedRow['available_on'])(ctx)
-                else:
-                    eRes = True
             except Exception, e:
                 logger.warning(ADVICE_AVAILABLE_ON_CONDITION_ERROR % str(e))
+                eRes = False
             if eRes:
                 availableLinkedRows.append(linkedRow)
         self.request.set('managing_available_delays', False)

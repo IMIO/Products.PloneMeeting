@@ -824,14 +824,15 @@ class testAdvices(PloneMeetingTestCase):
 
     def test_pm_GetAutomaticAdvisers(self):
         '''Test the getAutomaticAdvisers method that compute automatic advices to ask.'''
+        cfg = self.meetingConfig
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        self.meetingConfig.setCustomAdvisers([])
+        cfg.setCustomAdvisers([])
         # if nothing defined, getAutomaticAdvisers returns nothing...
         self.failIf(item.getAutomaticAdvisers())
         # define some customAdvisers
-        self.meetingConfig.setCustomAdvisers([])
-        self.meetingConfig.setCustomAdvisers(
+        cfg.setCustomAdvisers([])
+        cfg.setCustomAdvisers(
             [{'row_id': 'unique_id_123',
               'group': 'vendors',
               'gives_auto_advice_on': 'item/wrongMethod',
@@ -865,7 +866,7 @@ class testAdvices(PloneMeetingTestCase):
                             'delay_label': ''}])
         # define one condition for wich the date is > than current item CreationDate
         futureDate = DateTime() + 1
-        self.meetingConfig.setCustomAdvisers(
+        cfg.setCustomAdvisers(
             [{'row_id': 'unique_id_123',
               'group': 'developers',
               'gives_auto_advice_on': 'not:item/getBudgetRelated',
@@ -878,7 +879,7 @@ class testAdvices(PloneMeetingTestCase):
         self.failIf(item.getAutomaticAdvisers())
         # define an old 'for_item_created_from' and a 'for_item_created_until' in the future
         # the advice should be considered as automatic advice to ask
-        self.meetingConfig.setCustomAdvisers(
+        cfg.setCustomAdvisers(
             [{'row_id': 'unique_id_123',
               'group': 'developers',
               'gives_auto_advice_on': 'item/getBudgetRelated',
@@ -897,7 +898,7 @@ class testAdvices(PloneMeetingTestCase):
                             'delay_label': ''}])
         # now define a 'for_item_created_until' that is in the past
         # relative to the item created date
-        self.meetingConfig.setCustomAdvisers(
+        cfg.setCustomAdvisers(
             [{'row_id': 'unique_id_123',
               'group': 'developers',
               'gives_auto_advice_on': 'not:item/getBudgetRelated',
@@ -1478,55 +1479,67 @@ class testAdvices(PloneMeetingTestCase):
         item.at_post_edit_script()
         customAdvisers[0]['gives_auto_advice_on'] = 'python:True'
         cfg.setCustomAdvisers(customAdvisers)
-        # MeetingConfig._findLinkedRowsFor is ram cached, based on MC modified
-        cfg.processForm({'dummy': ''})
+        # MeetingConfig._findLinkedRowsFor is ram cached
+        cleanRamCacheFor('Products.PloneMeeting.MeetingConfig._findLinkedRowsFor')
         item.setOptionalAdvisers(())
         item.at_post_edit_script()
-        self.assertTrue(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']) == [])
+        self.assertEqual(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']),
+                         [])
         self.proposeItem(item)
-        self.assertTrue(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']) == [])
+        self.assertEqual(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']),
+                         [])
         # the pmReviewer1 can not change an automatic advice delay
         self.changeUser('pmReviewer1')
-        self.assertTrue(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']) == [])
+        self.assertEqual(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']),
+                         [])
         # a MeetingManager may edit an automatic advice delay
         self.changeUser('pmManager')
-        self.assertTrue(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']) ==
-                        [('unique_id_456', '10', u''), ('unique_id_789', '20', u'')])
+        self.assertEqual(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']),
+                         [('unique_id_456', '10', u''), ('unique_id_789', '20', u'')])
         # test the 'available_on' behaviour
         self.backToState(item, self.WF_STATE_NAME_MAPPINGS['proposed'])
         self.assertTrue(item.adviceIndex['vendors']['delay_stopped_on'] is None)
-        self.assertTrue(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']) ==
-                        [('unique_id_456', '10', u''), ('unique_id_789', '20', u'')])
+        self.assertEqual(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']),
+                         [('unique_id_456', '10', u''), ('unique_id_789', '20', u'')])
         # now define a 'available_on' for third row
         # first step, something that is False
         customAdvisers[2]['available_on'] = 'python:False'
         cfg.setCustomAdvisers(customAdvisers)
-        # MeetingConfig._findLinkedRowsFor is ram cached, based on MC modified
-        cfg.processForm({'dummy': ''})
-        self.assertTrue(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']) ==
-                        [('unique_id_456', '10', u''), ])
+        cleanRamCacheFor('Products.PloneMeeting.MeetingConfig._findLinkedRowsFor')
+        self.assertEqual(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']),
+                         [('unique_id_456', '10', u''), ])
         # a wrong TAL expression for 'available_on' does not break anything
         customAdvisers[2]['available_on'] = 'python:here.someUnexistingMethod()'
         cfg.setCustomAdvisers(customAdvisers)
-        # MeetingConfig._findLinkedRowsFor is ram cached, based on MC modified
-        cfg.processForm({'dummy': ''})
-        self.assertTrue(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']) ==
-                        [('unique_id_456', '10', u''), ])
+        cleanRamCacheFor('Products.PloneMeeting.MeetingConfig._findLinkedRowsFor')
+        self.assertEqual(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']),
+                         [('unique_id_456', '10', u''), ])
         # second step, something that is True
         customAdvisers[2]['available_on'] = 'python:True'
         cfg.setCustomAdvisers(customAdvisers)
-        # MeetingConfig._findLinkedRowsFor is ram cached, based on MC modified
-        cfg.processForm({'dummy': ''})
-        self.assertTrue(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']) ==
-                        [('unique_id_456', '10', u''), ('unique_id_789', '20', u'')])
+        cleanRamCacheFor('Products.PloneMeeting.MeetingConfig._findLinkedRowsFor')
+        self.assertEqual(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']),
+                         [('unique_id_456', '10', u''), ('unique_id_789', '20', u'')])
         # now test the particular expression that makes a custom adviser
         # useable when changing delays but not in other cases
         customAdvisers[2]['available_on'] = "python:item.REQUEST.get('managing_available_delays', False)"
-        # MeetingConfig._findLinkedRowsFor is ram cached, based on MC modified
-        cfg.processForm({'dummy': ''})
+        cleanRamCacheFor('Products.PloneMeeting.MeetingConfig._findLinkedRowsFor')
         cfg.setCustomAdvisers(customAdvisers)
-        self.assertTrue(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']) ==
-                        [('unique_id_456', '10', u''), ('unique_id_789', '20', u'')])
+        self.assertEqual(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']),
+                         [('unique_id_456', '10', u''), ('unique_id_789', '20', u'')])
+
+        # the mayEdit variable is available in the expression, it is True if current
+        # user may edit item, False otherwise
+        customAdvisers[2]['available_on'] = "mayEdit"
+        cleanRamCacheFor('Products.PloneMeeting.MeetingConfig._findLinkedRowsFor')
+        cfg.setCustomAdvisers(customAdvisers)
+        self.assertEqual(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']),
+                         [('unique_id_456', '10', u''), ('unique_id_789', '20', u'')])
+        customAdvisers[2]['available_on'] = "not:mayEdit"
+        cleanRamCacheFor('Products.PloneMeeting.MeetingConfig._findLinkedRowsFor')
+        cfg.setCustomAdvisers(customAdvisers)
+        self.assertEqual(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']),
+                         [('unique_id_456', '10', u''), ])
 
     def test_pm_ChangeDelayView(self):
         '''Test the view '@@change-advice-delay' that apply the change delay action.'''
