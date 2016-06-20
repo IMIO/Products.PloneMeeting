@@ -3334,6 +3334,26 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def listOptionalAdvisers(self):
         '''Optional advisers for this item are MeetingGroups that are not among
            automatic advisers and that have at least one adviser.'''
+        def _displayDelayAwareValue(delay_label, group_name, delay):
+            group_name = safe_unicode(group_name)
+            delay_label = safe_unicode(delay_label)
+            if delay_label:
+                value_to_display = translate('advice_delay_with_label',
+                                             domain='PloneMeeting',
+                                             mapping={'group_name': group_name,
+                                                      'delay': delay,
+                                                      'delay_label': delay_label},
+                                             default='${group_name} - ${delay} day(s) (${delay_label})',
+                                             context=self.REQUEST).encode('utf-8')
+            else:
+                value_to_display = translate('advice_delay_without_label',
+                                             domain='PloneMeeting',
+                                             mapping={'group_name': group_name,
+                                                      'delay': delay},
+                                             default='${group_name} - ${delay} day(s)',
+                                             context=self.REQUEST).encode('utf-8')
+            return value_to_display
+
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
 
@@ -3346,24 +3366,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 adviserId = "%s__rowid__%s" % \
                             (delayAwareAdviser['meetingGroupId'],
                              delayAwareAdviser['row_id'])
-                delay = safe_unicode(delayAwareAdviser['delay'])
-                delay_label = safe_unicode(delayAwareAdviser['delay_label'])
-                group_name = safe_unicode(delayAwareAdviser['meetingGroupName'])
-                if delay_label:
-                    value_to_display = translate('advice_delay_with_label',
-                                                 domain='PloneMeeting',
-                                                 mapping={'group_name': group_name,
-                                                          'delay': delay,
-                                                          'delay_label': delay_label},
-                                                 default='${group_name} - ${delay} day(s) (${delay_label})',
-                                                 context=self.REQUEST).encode('utf-8')
-                else:
-                    value_to_display = translate('advice_delay_without_label',
-                                                 domain='PloneMeeting',
-                                                 mapping={'group_name': group_name,
-                                                          'delay': delay},
-                                                 default='${group_name} - ${delay} day(s)',
-                                                 context=self.REQUEST).encode('utf-8')
+                delay = delayAwareAdviser['delay']
+                delay_label = delayAwareAdviser['delay_label']
+                group_name = delayAwareAdviser['meetingGroupName']
+                value_to_display = _displayDelayAwareValue(delay_label, group_name, delay)
                 resDelayAwareAdvisers.append((adviserId, value_to_display))
 
         resNonDelayAwareAdvisers = []
@@ -3383,10 +3389,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     if '__rowid__' in groupId:
                         meetingGroupId, row_id = self._decodeDelayAwareId(groupId)
                         delay = cfg._dataForCustomAdviserRowId(row_id)['delay']
-                        resDelayAwareAdvisers.append((groupId, "%s - delay of %s clear days (%s)" %
-                                                      (getattr(tool, meetingGroupId).getName(),
-                                                       delay,
-                                                       self.adviceIndex[meetingGroupId]['delay_label'])))
+                        delay_label = self.adviceIndex[meetingGroupId]['delay_label']
+                        group_name = getattr(tool, meetingGroupId).getName()
+                        value_to_display = _displayDelayAwareValue(delay_label, group_name, delay)
+                        resDelayAwareAdvisers.append((groupId, value_to_display))
                     else:
                         resNonDelayAwareAdvisers.append((groupId, getattr(tool, groupId).getName()))
 

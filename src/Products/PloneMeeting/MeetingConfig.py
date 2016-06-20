@@ -2788,7 +2788,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                             # 3) or if we disabled the 'is_linked_to_previous_row' of a used automatic adviser
                             # that is not permitted
                             if not (k == 'for_item_created_until' and not v) and \
-                               not k in ['gives_auto_advice_on_help_message', 'delay_left_alert', 'delay_label', ] and \
+                               not k in ['gives_auto_advice_on_help_message',
+                                         'delay_left_alert',
+                                         'delay_label',
+                                         'available_on'] and \
                                not (k == 'is_linked_to_previous_row' and
                                     (v == '0' or not self._findLinkedRowsFor(customAdviser['row_id'])[0])):
                                 # we are setting another field, it is not permitted if

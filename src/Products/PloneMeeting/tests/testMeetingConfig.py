@@ -392,6 +392,15 @@ class testMeetingConfig(PloneMeetingTestCase):
         # validate returns nothing if validation was successful
         self.failIf(cfg.validate_customAdvisers(customAdvisers))
 
+        # 'available_on' may be changed even if advice is in use
+        cfg.setCustomAdvisers(customAdvisers)
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.setOptionalAdvisers(('vendors__rowid__unique_id_123', ))
+        item.at_post_edit_script()
+        customAdvisers[0]['available_on'] = ''
+        self.failIf(cfg.validate_customAdvisers(customAdvisers))
+
     def test_pm_Validate_customAdvisersIsLinkedToPreviousRowDelayAware(self):
         '''Test the MeetingConfig.customAdvisers validate method.
            This validates the 'is_linked_to_previous_row' row regarding :

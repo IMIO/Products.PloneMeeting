@@ -1409,11 +1409,12 @@ class testAdvices(PloneMeetingTestCase):
     def test_pm_AvailableDelaysView(self):
         '''Test the view '@@advice-available-delays' that shows
            available delays for a selected delay-aware advice.'''
+        cfg = self.meetingConfig
         # make advice addable and editable when item is 'proposed'
-        self.meetingConfig.setItemAdviceStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
-        self.meetingConfig.setItemAdviceEditStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
-        self.meetingConfig.setItemAdviceViewStates((self.WF_STATE_NAME_MAPPINGS['proposed'],
-                                                    self.WF_STATE_NAME_MAPPINGS['validated']))
+        cfg.setItemAdviceStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+        cfg.setItemAdviceEditStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+        cfg.setItemAdviceViewStates((self.WF_STATE_NAME_MAPPINGS['proposed'],
+                                     self.WF_STATE_NAME_MAPPINGS['validated']))
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         # no other linked delay
@@ -1426,14 +1427,14 @@ class testAdvices(PloneMeetingTestCase):
                            'delay_label': '',
                            'available_on': '',
                            'is_linked_to_previous_row': '0'}, ]
-        self.meetingConfig.setCustomAdvisers(customAdvisers)
+        cfg.setCustomAdvisers(customAdvisers)
         # select delay of 5 days
         item.setOptionalAdvisers(('vendors__rowid__unique_id_123', ))
         item.at_post_edit_script()
         availableDelaysView = item.restrictedTraverse('@@advice-available-delays')
         # some values are defined in the __init__ of the view
         availableDelaysView.advice = item.adviceIndex['vendors']
-        availableDelaysView.cfg = self.meetingConfig
+        availableDelaysView.cfg = cfg
         self.assertFalse(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']))
         # now add delays to change to
         customAdvisers += [{'row_id': 'unique_id_456',
@@ -1454,7 +1455,7 @@ class testAdvices(PloneMeetingTestCase):
                             'delay_label': '',
                             'available_on': '',
                             'is_linked_to_previous_row': '1'}, ]
-        self.meetingConfig.setCustomAdvisers(customAdvisers)
+        cfg.setCustomAdvisers(customAdvisers)
         # we need to cleanRamCacheFor _findLinkedRowsFor used by listSelectableDelays
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig._findLinkedRowsFor')
         # the delay may still be edited when the user can edit the item
@@ -1476,9 +1477,9 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         item.at_post_edit_script()
         customAdvisers[0]['gives_auto_advice_on'] = 'python:True'
-        self.meetingConfig.setCustomAdvisers(customAdvisers)
+        cfg.setCustomAdvisers(customAdvisers)
         # MeetingConfig._findLinkedRowsFor is ram cached, based on MC modified
-        self.meetingConfig.processForm({'dummy': ''})
+        cfg.processForm({'dummy': ''})
         item.setOptionalAdvisers(())
         item.at_post_edit_script()
         self.assertTrue(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']) == [])
@@ -1499,41 +1500,42 @@ class testAdvices(PloneMeetingTestCase):
         # now define a 'available_on' for third row
         # first step, something that is False
         customAdvisers[2]['available_on'] = 'python:False'
-        self.meetingConfig.setCustomAdvisers(customAdvisers)
+        cfg.setCustomAdvisers(customAdvisers)
         # MeetingConfig._findLinkedRowsFor is ram cached, based on MC modified
-        self.meetingConfig.processForm({'dummy': ''})
+        cfg.processForm({'dummy': ''})
         self.assertTrue(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']) ==
                         [('unique_id_456', '10', u''), ])
         # a wrong TAL expression for 'available_on' does not break anything
         customAdvisers[2]['available_on'] = 'python:here.someUnexistingMethod()'
-        self.meetingConfig.setCustomAdvisers(customAdvisers)
+        cfg.setCustomAdvisers(customAdvisers)
         # MeetingConfig._findLinkedRowsFor is ram cached, based on MC modified
-        self.meetingConfig.processForm({'dummy': ''})
+        cfg.processForm({'dummy': ''})
         self.assertTrue(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']) ==
                         [('unique_id_456', '10', u''), ])
         # second step, something that is True
         customAdvisers[2]['available_on'] = 'python:True'
-        self.meetingConfig.setCustomAdvisers(customAdvisers)
+        cfg.setCustomAdvisers(customAdvisers)
         # MeetingConfig._findLinkedRowsFor is ram cached, based on MC modified
-        self.meetingConfig.processForm({'dummy': ''})
+        cfg.processForm({'dummy': ''})
         self.assertTrue(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']) ==
                         [('unique_id_456', '10', u''), ('unique_id_789', '20', u'')])
         # now test the particular expression that makes a custom adviser
         # useable when changing delays but not in other cases
         customAdvisers[2]['available_on'] = "python:item.REQUEST.get('managing_available_delays', False)"
         # MeetingConfig._findLinkedRowsFor is ram cached, based on MC modified
-        self.meetingConfig.processForm({'dummy': ''})
-        self.meetingConfig.setCustomAdvisers(customAdvisers)
+        cfg.processForm({'dummy': ''})
+        cfg.setCustomAdvisers(customAdvisers)
         self.assertTrue(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']) ==
                         [('unique_id_456', '10', u''), ('unique_id_789', '20', u'')])
 
     def test_pm_ChangeDelayView(self):
         '''Test the view '@@change-advice-delay' that apply the change delay action.'''
+        cfg = self.meetingConfig
         # make advice addable and editable when item is 'proposed'
-        self.meetingConfig.setItemAdviceStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
-        self.meetingConfig.setItemAdviceEditStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
-        self.meetingConfig.setItemAdviceViewStates((self.WF_STATE_NAME_MAPPINGS['proposed'],
-                                                    self.WF_STATE_NAME_MAPPINGS['validated']))
+        cfg.setItemAdviceStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+        cfg.setItemAdviceEditStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+        cfg.setItemAdviceViewStates((self.WF_STATE_NAME_MAPPINGS['proposed'],
+                                     self.WF_STATE_NAME_MAPPINGS['validated']))
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         customAdvisers = [{'row_id': 'unique_id_123',
@@ -1563,7 +1565,7 @@ class testAdvices(PloneMeetingTestCase):
                            'delay_label': '',
                            'available_on': '',
                            'is_linked_to_previous_row': '1'}, ]
-        self.meetingConfig.setCustomAdvisers(customAdvisers)
+        cfg.setCustomAdvisers(customAdvisers)
         # select delay of 5 days
         item.setOptionalAdvisers(('vendors__rowid__unique_id_123', ))
         item.at_post_edit_script()
@@ -1590,9 +1592,9 @@ class testAdvices(PloneMeetingTestCase):
         # it works also for automatic advices but only MeetingManagers may change it
         # makes it an automatic advice
         customAdvisers[0]['gives_auto_advice_on'] = 'python:True'
-        self.meetingConfig.setCustomAdvisers(customAdvisers)
+        cfg.setCustomAdvisers(customAdvisers)
         # MeetingConfig._findLinkedRowsFor is ram cached, based on MC modified
-        self.meetingConfig.processForm({'dummy': ''})
+        cfg.processForm({'dummy': ''})
         item.setOptionalAdvisers(())
         item.at_post_edit_script()
         self.assertTrue(item.adviceIndex['vendors']['row_id'] == 'unique_id_123')

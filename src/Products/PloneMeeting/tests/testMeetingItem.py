@@ -2100,6 +2100,30 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setOptionalAdvisers(())
         self.assertEquals(item.listOptionalAdvisers().keys(), ['vendors', ])
 
+        # when using customAdvisers with 'available_on', if value was selected
+        # it is correctly displayed by the vocabulary
+        customAdvisers = [{'row_id': 'unique_id_123',
+                           'group': 'developers',
+                           'gives_auto_advice_on': '',
+                           'for_item_created_from': '2012/01/01',
+                           'available_on': 'python:False',
+                           'is_linked_to_previous_row': '1',
+                           'delay': '5'},
+                          {'row_id': 'unique_id_456',
+                           'group': 'developers',
+                           'gives_auto_advice_on': '',
+                           'for_item_created_from': '2012/01/01',
+                           'is_linked_to_previous_row': '1',
+                           'delay': '10'}]
+        cfg.setCustomAdvisers(customAdvisers)
+        self.assertFalse('developers__rowid__unique_id_123' in item.listOptionalAdvisers())
+        self.assertTrue('developers__rowid__unique_id_456' in item.listOptionalAdvisers())
+        # but if selected, then it appears in the vocabulary, no matter the 'available_on' expression
+        item.setOptionalAdvisers(('developers__rowid__unique_id_123', ))
+        item.at_post_edit_script()
+        self.assertTrue('developers__rowid__unique_id_123' in item.listOptionalAdvisers())
+        self.assertTrue('developers__rowid__unique_id_456' in item.listOptionalAdvisers())
+
     def test_pm_ListOptionalAdvisersDelayAwareAdvisers(self):
         '''
           Test how the optionalAdvisers vocabulary behaves while
