@@ -42,37 +42,10 @@
         <td><metal:field use-macro="python:here.widget('proposingGroup', mode='edit')"/></td>
         <td><metal:field use-macro="python:here.widget('classifier', mode='edit')"/></td>
         <td><metal:field use-macro="python:here.widget('category', mode='edit')"/></td>
-        <tal:comment replace="nothing">Custom display of field "toDiscuss"</tal:comment>
-        <td tal:condition="context/showToDiscuss">
-          <div id="archetypes-fieldname-toDiscuss" class="field"
-               tal:define="field python: here.getField('toDiscuss');
-                           reqValue request/toDiscuss|nothing;
-                           value python: test(reqValue, reqValue, str(context.getToDiscuss()))">
-            <input type="radio" id="toDiscuss_no" name="toDiscuss" class="noborder"
-                   tal:attributes="value python:'False'; checked python: value=='False'"/>
-            <label for="toDiscuss_no" class="formQuestion" i18n:domain="PloneMeeting"
-                   i18n:translate="to_discuss_no"></label><br/>
-            <input type="radio" id="toDiscuss_yes" name="toDiscuss" value="on" class="noborder"
-                   tal:attributes="value python:'True'; checked python: value=='True'"/>
-            <label for="toDiscuss_yes" class="formQuestion" i18n:domain="PloneMeeting"
-                   i18n:translate="to_discuss_yes"></label>
-          </div>
-        </td>
-        <td tal:condition="python: context.adapted().maySignItem()">
-          <div id="archetypes-fieldname-itemIsSigned" class="field"
-               tal:define="field python: here.getField('itemIsSigned');
-                           reqValue request/itemIsSigned|nothing;
-                           value python: test(reqValue, reqValue, str(context.getItemIsSigned()))">
-            <input type="radio" id="itemIsSigned_no" name="itemIsSigned" class="noborder"
-                   tal:attributes="value python:'False'; checked python: value=='False'"/>
-            <label for="toDiscuss_no" class="formQuestion" i18n:domain="PloneMeeting"
-                   i18n:translate="item_is_signed_no"></label><br/>
-            <input type="radio" id="itemIsSigned_yes" name="itemIsSigned" value="on" class="noborder"
-                   tal:attributes="value python:'True'; checked python: value=='True'"/>
-            <label for="item_is_signed_yes_yes" class="formQuestion" i18n:domain="PloneMeeting"
-                   i18n:translate="item_is_signed_yes"></label>
-          </div>
-        </td>
+      </tr>
+      <tr>
+        <td width="160px"><metal:field use-macro="python:here.widget('toDiscuss', mode='edit')"/></td>
+        <td><metal:field use-macro="python:here.widget('itemIsSigned', mode='edit')"/></td>
       </tr>
       <tr>
         <td colspan="5">
