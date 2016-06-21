@@ -416,6 +416,17 @@ schema = Schema((
         ),
         optional=True,
     ),
+    DateTimeField(
+        name='approvalDate',
+        widget=DateTimeField._properties['widget'](
+            condition="python: here.attributeIsUsed('approvalDate') and not here.isTemporary()",
+            minute_step=1,
+            label='Approvaldate',
+            label_msgid='PloneMeeting_label_approvalDate',
+            i18n_domain='PloneMeeting',
+        ),
+        optional=True,
+    ),
     TextField(
         name='signatures',
         allowable_content_types=('text/plain',),

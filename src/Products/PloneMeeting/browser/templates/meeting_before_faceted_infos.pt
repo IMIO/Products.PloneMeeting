@@ -5,27 +5,34 @@
              i18n:domain="PloneMeeting">
   <div class="discreet">
   <tal:comment replace="nothing">Place</tal:comment>
-  <tal:place condition="python: ('place' in usedAttrs) and context.getPlace()">
+  <tal:place condition="python: ('place' in usedAttrs) or context.getPlace()">
     <span class="meeting_attribute_label" i18n:translate="PloneMeeting_label_place"></span>:&nbsp;&nbsp;
     <span tal:replace="context/getPlace"></span>&nbsp;&nbsp;
   </tal:place>
 
   <tal:comment replace="nothing">Start date</tal:comment>
-  <tal:date condition="python: ('startDate' in usedAttrs) and context.getStartDate()">
+  <tal:date condition="python: ('startDate' in usedAttrs) or context.getStartDate()">
     <span class="meeting_attribute_label" i18n:translate="PloneMeeting_label_startDate"></span>:&nbsp;&nbsp;
-    <span tal:replace="python:toLocalizedTime(context.getStartDate(),long_format=1)"></span>&nbsp;&nbsp;
+    <span tal:replace="python:context.getStartDate() and toLocalizedTime(context.getStartDate(), long_format=1) or '-'"></span>&nbsp;&nbsp;
   </tal:date>
 
   <tal:comment replace="nothing">Mid date</tal:comment>
-  <tal:date condition="python: ('midDate' in usedAttrs) and context.getMidDate()">
+  <tal:date condition="python: ('midDate' in usedAttrs) or context.getMidDate()">
     <span class="meeting_attribute_label" i18n:translate="PloneMeeting_label_midDate"></span>:&nbsp;&nbsp;
-    <span tal:replace="python:toLocalizedTime(context.getMidDate(),long_format=1)"></span>&nbsp;&nbsp;
+    <span tal:replace="python:context.getMidDate() and toLocalizedTime(context.getMidDate(), long_format=1) or '-'"></span>&nbsp;&nbsp;
   </tal:date>
 
   <tal:comment replace="nothing">End date</tal:comment>
-  <tal:date condition="python: ('endDate' in usedAttrs) and context.getEndDate()">
+  <tal:date condition="python: ('endDate' in usedAttrs) or context.getEndDate()">
     <span class="meeting_attribute_label" i18n:translate="PloneMeeting_label_endDate"></span>:&nbsp;&nbsp;
-    <span tal:replace="python:toLocalizedTime(context.getEndDate(),long_format=1)"></span>&nbsp;&nbsp;
+    <span tal:replace="python:context.getEndDate() and toLocalizedTime(context.getEndDate(), long_format=1) or '-'"></span>&nbsp;&nbsp;
+  </tal:date>
+  <br/>
+
+  <tal:comment replace="nothing">Approval date</tal:comment>
+  <tal:date condition="python: ('approvalDate' in usedAttrs) or context.getApprovalDate()">
+    <span class="meeting_attribute_label" i18n:translate="PloneMeeting_label_approvalDate"></span>:&nbsp;&nbsp;
+    <span tal:replace="python:context.getApprovalDate() and toLocalizedTime(context.getApprovalDate(), long_format=0) or '-'"></span>&nbsp;&nbsp;
   </tal:date>
 
   <tal:comment replace="nothing">Extraordinary session</tal:comment>
@@ -38,13 +45,13 @@
 
   <div class="discreet" tal:condition="cfg/deadlinesAreEnabled">
   <tal:comment replace="nothing">Publish deadline</tal:comment>
-  <tal:date condition="python: ('deadlinePublish' in usedAttrs) and context.getDeadlinePublish()">
+  <tal:date condition="python: ('deadlinePublish' in usedAttrs) or context.getDeadlinePublish()">
     <span class="meeting_attribute_label" i18n:translate="PloneMeeting_label_deadlinePublish"></span>:&nbsp;&nbsp;
-    <span tal:replace="python:toLocalizedTime(context.getDeadlinePublish(),long_format=1)"></span>&nbsp;&nbsp;
+    <span tal:replace="python:context.getDeadlinePublish() and toLocalizedTime(context.getDeadlinePublish(),long_format=1) or '-'"></span>&nbsp;&nbsp;
   </tal:date>
-  <tal:date condition="python: ('deadlineFreeze' in usedAttrs) and context.getDeadlineFreeze()">
+  <tal:date condition="python: ('deadlineFreeze' in usedAttrs) or context.getDeadlineFreeze()">
     <span class="meeting_attribute_label" i18n:translate="PloneMeeting_label_deadlineFreeze"></span>:&nbsp;&nbsp;
-    <span tal:replace="python:toLocalizedTime(context.getDeadlineFreeze(),long_format=1)"></span>&nbsp;&nbsp;
+    <span tal:replace="python:context.getDeadlineFreeze() and toLocalizedTime(context.getDeadlineFreeze(),long_format=1) or '-'"></span>&nbsp;&nbsp;
   </tal:date>
   </div>
 

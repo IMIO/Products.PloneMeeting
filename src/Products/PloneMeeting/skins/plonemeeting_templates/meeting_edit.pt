@@ -148,20 +148,15 @@
               </div>
             </td>
           </tr>
-          <tr valign="top" tal:condition="python: 'startDate' in usedAttrs">
-            <tal:comment replace="nothing">Effective start and end dates</tal:comment>
-            <td width="50%"><metal:field use-macro="python:here.widget('startDate', mode='edit')"/></td>
-            <td width="50%"><metal:field use-macro="python:here.widget('endDate', mode='edit')"/></td>
-          </tr>
-          <tr valign="top" tal:condition="python: 'midDate' in usedAttrs">
-            <tal:comment replace="nothing">Mid date</tal:comment>
-            <td colspan="2"><metal:field use-macro="python:here.widget('midDate', mode='edit')"/></td>
-          </tr>
-          <tr valign="top"> <tal:comment replace="nothing">Deadlines</tal:comment>
-            <td width="50%"><metal:field use-macro="python:here.widget('deadlinePublish', mode='edit')"/></td>
-            <td width="50%"><metal:field use-macro="python:here.widget('deadlineFreeze', mode='edit')"/></td>
-          </tr>
         </table>
+
+        <metal:field use-macro="python:here.widget('startDate', mode='edit')"/>
+        <metal:field use-macro="python:here.widget('midDate', mode='edit')"/>
+        <metal:field use-macro="python:here.widget('endDate', mode='edit')"/>
+        <metal:field use-macro="python:here.widget('approvalDate', mode='edit')"/>
+        <metal:field use-macro="python:here.widget('deadlinePublish', mode='edit')"/>
+        <metal:field use-macro="python:here.widget('deadlineFreeze', mode='edit')"/>
+
         <metal:field use-macro="python:here.widget('extraordinarySession', mode='edit')"/>
 
         <metal:field use-macro="python:here.widget('assembly', mode='edit')"/>

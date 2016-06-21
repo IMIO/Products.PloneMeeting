@@ -305,6 +305,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   edit the item, it was a way to restrict some values to some editors profiles.  Now, it can also be used to give non editors the
   possibility to change the advice delay, for example, the advisers of an advice with delay could now be able to edit the advice delay.
   The value 'mayEdit' has been added to the available variables in the expression and is True if current user may edit the item
+- Added optional field Meeting.approvalDate made to encode the date the current meeting was approved
 
 3.3 (2015-02-27)
 ----------------
