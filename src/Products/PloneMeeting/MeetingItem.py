@@ -1157,7 +1157,7 @@ schema = Schema((
     LinesField(
         name='otherMeetingConfigsClonableToEmergency',
         widget=MultiSelectionWidget(
-            condition="here/showOtherMeetingConfigsClonableToEmergency",
+            condition="python: here.attributeIsUsed('otherMeetingConfigsClonableToEmergency')",
             format="checkbox",
             label="Othermeetingconfigsclonabletoemergency",
             label_msgid='PloneMeeting_label_otherMeetingConfigsClonableToEmergency',
@@ -1542,36 +1542,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         isMgr = tool.isManager(self)
         res = not self.isTemporary() and isMgr and self.attributeIsUsed(name)
         return res
-
-    security.declarePublic('showOtherMeetingConfigsClonableToEmergency')
-
-    def showOtherMeetingConfigsClonableToEmergency(self):
-        '''Widget condition used for field 'otherMeetingConfigsClonableToEmergency'.
-           Show it if:
-           - optional field is used;
-           - is clonable to other MC;
-           - item cloned to the other MC will be automatically presented in an available meeting;
-           - isManager;
-           - or if it was selected so if a MeetingManager selects the emergency for a destination,
-             another user editing the item after may not remove 'otherMeetingConfigsClonableTo' without
-             removing the 'otherMeetingConfigsClonableToEmergency'.
-        '''
-        # is used?
-        if not self.attributeIsUsed('otherMeetingConfigsClonableToEmergency'):
-            return False
-
-        tool = api.portal.get_tool('portal_plonemeeting')
-        # item will be 'presented' while sent to the other MC?
-        cfg = tool.getMeetingConfig(self)
-        presentAfterSend = False
-        for otherMC in cfg.getMeetingConfigsToCloneTo():
-            if otherMC['trigger_workflow_transitions_until'] != NO_TRIGGER_WF_TRANSITION_UNTIL and \
-               otherMC['trigger_workflow_transitions_until'].split('.')[1] == 'present':
-                presentAfterSend = True
-                break
-        hasStoredEmergencies = self.getOtherMeetingConfigsClonableToEmergency()
-        return hasStoredEmergencies or \
-            (presentAfterSend and self.isClonableToOtherMeetingConfigs() and tool.isManager(self))
 
     security.declarePublic('showToDiscuss')
 
@@ -3667,7 +3637,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
             emergencyAndPrivacyInfos = []
             if displayEmergency:
-                emergencyAndPrivacyInfos.append(emergency_msg)
+                emergencyAndPrivacyInfos.append(
+                    u"<span class='item_clone_to_emergency'>{0}</span>".format(emergency_msg))
             if displayPrivacy:
                 privacyInfo = u"<span class='item_privacy_{0}'>{1}</span>".format(
                     isSecret and 'secret' or 'public',

@@ -711,6 +711,11 @@ p.indent-firstline {
 .item_privacy_secret {
     color: #FF934A;
 }
+/* CSS for MeetingItem.otherMeetingConfigsClonableToEmergency */
+/* While displayed as a single item (meetingitem_view) */
+.item_clone_to_emergency {
+    color: red;
+}
 
 /* While displayed in a Meeting */
 .meeting_item_privacy_secret {

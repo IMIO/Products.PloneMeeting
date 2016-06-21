@@ -14,8 +14,8 @@
                        tool python: context.portal_plonemeeting;
                        member tool/getUser;
                        portal context/portal_url/getPortalObject;
-                       meetingConfig python: tool.getMeetingConfig(context);
-                       usedAttrs meetingConfig/getUsedItemAttributes;
+                       cfg python: tool.getMeetingConfig(context);
+                       usedAttrs cfg/getUsedItemAttributes;
                        bilingual python: 'secondLanguage' in tool.getModelAdaptations();">
 
     <tal:showWarningWillInvalidateAdvices condition="context/willInvalidateAdvices">
@@ -100,7 +100,7 @@
         </tr>
         <tr>
             <td colspan="5"
-                tal:define="showOtherMeetingConfigsClonableToSpecialFields python: context.showOtherMeetingConfigsClonableToEmergency() or 'otherMeetingConfigsClonableToPrivacy' in usedAttrs"
+                tal:define="showOtherMeetingConfigsClonableToSpecialFields python: cfg.getMeetingConfigsToCloneTo() and ('otherMeetingConfigsClonableToEmergency' in usedAttrs or 'otherMeetingConfigsClonableToPrivacy' in usedAttrs)"
                 tal:attributes="style python: showOtherMeetingConfigsClonableToSpecialFields and 'border: 1px solid lightgrey;; min-width: 600px;;' or ''">
                 <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableTo', mode='edit')"/>
                 <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableToPrivacy', mode='edit')"/>

@@ -808,11 +808,9 @@ class testMeetingItem(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         item.setDecision('<p>My decision</p>', mimetype='text/html')
         item.setOtherMeetingConfigsClonableTo((cfg2Id,))
-        self.assertFalse(item.showOtherMeetingConfigsClonableToEmergency())
+
         # right, change user to a MeetingManager
         self.changeUser('pmManager')
-        self.assertTrue(item.showOtherMeetingConfigsClonableToEmergency())
-
         # first test while emergency not set, the item will be presented
         # in the next 'created' meeting, no matter a 'frozen' is happening in the future but before
         now = DateTime()
