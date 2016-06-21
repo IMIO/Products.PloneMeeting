@@ -3967,7 +3967,8 @@ class testMeetingItem(PloneMeetingTestCase):
         # ask emergency for sending to cfg3
         item.setOtherMeetingConfigsClonableToEmergency((cfg3Id, ))
         self.assertEquals(item.displayOtherMeetingConfigsClonableTo(),
-                          unicode('{0}, {1} (Emergency)'.format(cfg2Title, cfg3Title), 'utf-8'))
+                          unicode("{0}, {1} (<span class='item_clone_to_emergency'>Emergency</span>)".format(
+                                  cfg2Title, cfg3Title), 'utf-8'))
 
         # enable 'otherMeetingConfigsClonableToPrivacy' that is also displayed
         cfg.setUsedItemAttributes(cfg.getUsedItemAttributes() +
@@ -3977,19 +3978,22 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEquals(
             item.displayOtherMeetingConfigsClonableTo(),
             unicode("{0} (<span class='item_privacy_public'>Public meeting</span>), "
-                    "{1} (Emergency - <span class='item_privacy_public'>Public meeting</span>)".format(
+                    "{1} (<span class='item_clone_to_emergency'>Emergency</span> - "
+                    "<span class='item_privacy_public'>Public meeting</span>)".format(
                         cfg2Title, cfg3Title), 'utf-8'))
         item.setOtherMeetingConfigsClonableToPrivacy((cfg2Id, ))
         self.assertEquals(
             item.displayOtherMeetingConfigsClonableTo(),
             unicode("{0} (<span class='item_privacy_secret'>Closed door</span>), "
-                    "{1} (Emergency - <span class='item_privacy_public'>Public meeting</span>)".format(
+                    "{1} (<span class='item_clone_to_emergency'>Emergency</span> - "
+                    "<span class='item_privacy_public'>Public meeting</span>)".format(
                         cfg2Title, cfg3Title), 'utf-8'))
         item.setOtherMeetingConfigsClonableToPrivacy((cfg2Id, cfg3Id))
         self.assertEquals(
             item.displayOtherMeetingConfigsClonableTo(),
             unicode("{0} (<span class='item_privacy_secret'>Closed door</span>), "
-                    "{1} (Emergency - <span class='item_privacy_secret'>Closed door</span>)".format(
+                    "{1} (<span class='item_clone_to_emergency'>Emergency</span> - "
+                    "<span class='item_privacy_secret'>Closed door</span>)".format(
                         cfg2Title, cfg3Title), 'utf-8'))
 
     def test_pm_InternalNotesIsRestrictedToProposingGroupOnly(self, ):
