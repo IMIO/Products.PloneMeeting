@@ -4904,17 +4904,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                 meetingsAcceptingItems = destMeetingConfig.adapted().getMeetingsAcceptingItems(
                                     inTheFuture=True)
                             else:
-                                initial_state = wfTool[meetingWF.getId()].initial_state
                                 meetingsAcceptingItems = destMeetingConfig.adapted().getMeetingsAcceptingItems(
-                                    review_states=(initial_state, ),
+                                    review_states=(wfTool[meetingWF.getId()].initial_state, ),
                                     inTheFuture=True)
                             if not meetingsAcceptingItems:
                                 plone_utils.addPortalMessage(
                                     _('could_not_present_item_no_meeting_accepting_items',
-                                      mapping={'destMeetingConfigTitle': destMeetingConfig.Title(),
-                                               'initial_state': translate(initial_state,
-                                                                          domain="plone",
-                                                                          context=self.REQUEST)}),
+                                      mapping={'destMeetingConfigTitle': destMeetingConfig.Title()}),
                                     'warning')
                                 break
                             meeting = meetingsAcceptingItems[0].getObject()

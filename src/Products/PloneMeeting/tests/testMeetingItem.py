@@ -865,6 +865,19 @@ class testMeetingItem(PloneMeetingTestCase):
         sentItem = item.getItemClonedToOtherMC(cfg2Id)
         self.assertEquals(sentItem.getMeeting(), frozenMeeting)
 
+        # if not available meeting in the future, it is left 'validated'
+        self.deleteAsManager(sentItem.UID())
+        createdMeeting.setDate(now-1)
+        createdMeeting.reindexObject(idxs=['getDate'])
+        frozenMeeting.setDate(now-1)
+        frozenMeeting.reindexObject(idxs=['getDate'])
+        self.backToState(item, 'itemfrozen')
+        self.do(item, 'accept')
+        item.getItemClonedToOtherMC(cfg2Id)
+        sentItem = item.getItemClonedToOtherMC(cfg2Id)
+        self.assertIsNone(sentItem.getMeeting())
+        self.assertEqual(sentItem.queryState(), 'validated')
+
     def test_pm_SendItemToOtherMCUsingPrivacy(self):
         '''Test when sending an item to another MeetingConfig and privacy is defined
            on the item that will be sent, the resulting item has a correct privacy set.'''
