@@ -268,7 +268,9 @@ div.pm_search_no_result_info {
 .state-decisions_published, .label-state-decisions_published { color: black !important; }
 .state-accepted, .label-state-accepted,
 .state-confirmed, .label-state-confirmed { color: green !important; }
-.state-delayed, .label-state-delayed { color: grey !important; }
+.state-delayed, .label-state-delayed,
+.state-postponed_next_meeting, .label-state-postponed_next_meeting {
+    color: grey !important; }
 .state-refused, .label-state-refused { color: violet !important; }
 .state-closed, .label-state-closed { color: grey !important; }
 

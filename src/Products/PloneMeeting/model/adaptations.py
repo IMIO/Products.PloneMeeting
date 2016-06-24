@@ -713,6 +713,47 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
 
             logger.info(WF_APPLIED % ("waiting_advices", meetingConfig.getId()))
 
+        # "postpone_next_meeting" add state 'postponed_next_meeting' in the item workflow
+        # additionnaly, when an item is set to this state, it will be duplicated and validated
+        # for a next meeting thru the doPostpone_next_meeting method
+        elif wfAdaptation == 'postpone_next_meeting':
+            wf = itemWorkflow
+
+            # create new state
+            wf.states.addState('postponed_next_meeting')
+
+            # create transitions, for the 'back' transition, take the same as
+            # when coming back from 'delayed'
+            wf.transitions.addTransition('postpone_next_meeting')
+            transition = wf.transitions['postpone_next_meeting']
+            transition.setProperties(
+                title='postpone_next_meeting',
+                new_state_id='postponed_next_meeting', trigger_type=1, script_name='',
+                actbox_name='postpone_next_meeting', actbox_url='',
+                actbox_icon='%(portal_url)s/postpone_next_meeting.png', actbox_category='workflow',
+                props={'guard_expr': 'python:here.wfConditions().mayDecide()'})
+
+            # use same transitions as state 'delayed'
+            back_transition_ids = wf.states['delayed'].transitions
+            # link state and transitions
+            wf.states['postponed_next_meeting'].setProperties(
+                title='postponed_next_meeting', description='',
+                transitions=back_transition_ids)
+
+            # add state to possible transitions of same origin state as for 'delayed'
+            # get the state, the transition 'delay' is going from
+            origin_state_id = [state for state in wf.states.values() if 'delay' in state.transitions][0].id
+            wf.states[origin_state_id].transitions = \
+                wf.states[origin_state_id].transitions + ('postpone_next_meeting', )
+
+            # use same permissions as used by the 'delayed' state
+            delayed = wf.states['delayed']
+            postponed_next_meeting = wf.states['postponed_next_meeting']
+            for permission, roles in delayed.permission_roles.iteritems():
+                postponed_next_meeting.setPermission(permission, 0, roles)
+
+            logger.info(WF_APPLIED % ("postpone_next_meeting", meetingConfig.getId()))
+
 
 # Stuff for performing model adaptations ---------------------------------------
 def companionField(name, type='simple', label=None, searchable=False,

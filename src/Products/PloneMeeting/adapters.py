@@ -502,9 +502,10 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                                                  domain="PloneMeeting",
                                                  context=self.request)))
         elif itemState == 'returned_to_proposing_group':
-            res.append(('return_to_proposing_group.png', translate('icon_help_returned_to_proposing_group',
-                                                                   domain="PloneMeeting",
-                                                                   context=self.request)))
+            res.append(('return_to_proposing_group.png',
+                        translate('icon_help_returned_to_proposing_group',
+                                  domain="PloneMeeting",
+                                  context=self.request)))
         elif itemState == 'prevalidated':
             res.append(('prevalidate.png', translate('icon_help_prevalidated',
                                                      domain="PloneMeeting",
@@ -517,6 +518,11 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
             res.append(('pre_accepted.png', translate('icon_help_pre_accepted',
                                                       domain="PloneMeeting",
                                                       context=self.request)))
+        elif itemState == 'postponed_next_meeting':
+            res.append(('postponed_next_meeting.png',
+                        translate('icon_help_postponed_next_meeting',
+                                  domain="PloneMeeting",
+                                  context=self.request)))
         elif itemState == 'waiting_advices':
             res.append(('wait_advices_from_proposed.png',
                         translate('icon_help_waiting_advices',

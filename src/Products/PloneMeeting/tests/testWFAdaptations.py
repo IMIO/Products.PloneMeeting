@@ -63,6 +63,7 @@ class testWFAdaptations(PloneMeetingTestCase):
                                'no_proposal',
                                'no_publication',
                                'only_creator_may_delete',
+                               'postpone_next_meeting',
                                'pre_validation',
                                'pre_validation_keep_reviewer_permissions',
                                'return_to_proposing_group',
@@ -86,7 +87,7 @@ class testWFAdaptations(PloneMeetingTestCase):
 
     def test_pm_WFA_mayBeRemovedOnMeetingConfigEdit(self):
         """If a WFAdaptation is unselected in a MeetingConfig, the workflow
-           will no integrates it anymore.  Try with 'return_to_proposing_group'."""
+           will not integrate it anymore.  Try with 'return_to_proposing_group'."""
         cfg = self.meetingConfig
         # ease override by subproducts
         if not 'return_to_proposing_group' in cfg.listWorkflowAdaptations():
@@ -1698,6 +1699,80 @@ class testWFAdaptations(PloneMeetingTestCase):
     def _afterItemCreatedWaitingAdviceWithPrevalidation(self, item):
         """Made to be overrided..."""
         return
+
+    def test_pm_WFA_postpone_next_meeting(self):
+        '''Test the workflowAdaptation 'postpone_next_meeting'.'''
+        # ease override by subproducts
+        cfg = self.meetingConfig
+        if not 'postpone_next_meeting' in cfg.listWorkflowAdaptations():
+            return
+        self.changeUser('pmManager')
+        # check while the wfAdaptation is not activated
+        self._postpone_next_meeting_inactive()
+        # activate the wfAdaptation and check
+        cfg.setWorkflowAdaptations(('postpone_next_meeting', ))
+        performWorkflowAdaptations(cfg, logger=pm_logger)
+        self._postpone_next_meeting_active()
+
+    def _postpone_next_meeting_inactive(self):
+        '''Tests while 'postpone_next_meeting' wfAdaptation is inactive.'''
+        itemWF = self.wfTool.getWorkflowsFor(self.meetingConfig.getItemTypeName())[0]
+        self.assertFalse('postpone_next_meeting' in itemWF.transitions)
+        self.assertFalse('postponed_next_meeting' in itemWF.states)
+
+    def _postpone_next_meeting_active(self):
+        '''Tests while 'postpone_next_meeting' wfAdaptation is active.'''
+        itemWF = self.wfTool.getWorkflowsFor(self.meetingConfig.getItemTypeName())[0]
+        self.assertTrue('postpone_next_meeting' in itemWF.transitions)
+        self.assertTrue('postponed_next_meeting' in itemWF.states)
+
+    def test_pm_WFA_postpone_next_meeting_back_transition(self):
+        '''The back transition may vary if using additional WFAdaptations,
+           item may back to 'itempublished', 'itemfrozen', ...'''
+        cfg = self.meetingConfig
+        if not 'postpone_next_meeting' in cfg.listWorkflowAdaptations():
+            return
+        self.changeUser('pmManager')
+
+        # test with only 'postpone_next_meeting' then when using 'no_publication'
+        for wfAdaptations in [('postpone_next_meeting', ),
+                              ('no_publication', 'postpone_next_meeting')]:
+            # activate the wfAdaptations and check
+            cfg.setWorkflowAdaptations(wfAdaptations)
+            cfg.at_post_edit_script()
+
+            itemWF = self.wfTool.getWorkflowsFor(self.meetingConfig.getItemTypeName())[0]
+            self.assertEquals(itemWF.states['postponed_next_meeting'].transitions,
+                              itemWF.states['delayed'].transitions)
+            # transition 'postpone_next_meeting' get out from same state as 'delay'
+            for state in itemWF.states.values():
+                if 'delay' in state.transitions:
+                    self.assertTrue('postpone_next_meeting' in state.transitions)
+                else:
+                    self.assertFalse('postpone_next_meeting' in state.transitions)
+
+    def test_pm_WFA_postpone_next_meeting_duplicated_and_validated(self):
+        '''When an item is set to 'postponed_next_meeting', it is automatically duplicated
+           and the duplicated item is automatically validated.'''
+        cfg = self.meetingConfig
+        if not 'postpone_next_meeting' in cfg.listWorkflowAdaptations():
+            return
+        self.changeUser('pmManager')
+        originalWFAdaptations = cfg.getWorkflowAdaptations()
+        if not 'postpone_next_meeting' in originalWFAdaptations:
+            cfg.setWorkflowAdaptations(originalWFAdaptations + ('postpone_next_meeting', ))
+        cfg.at_post_edit_script()
+
+        item = self.create('MeetingItem')
+        item.setDecision('<p>Decision</p>')
+        meeting = self.create('Meeting', date=DateTime('2016/06/06'))
+        self.presentItem(item)
+        self.decideMeeting(meeting)
+        self.do(item, 'postpone_next_meeting')
+        # duplicated and duplicated item is validated
+        clonedItem = item.getBRefs('ItemPredecessor')[0]
+        self.assertEqual(clonedItem.getPredecessor(), item)
+        self.assertEqual(clonedItem.queryState(), 'validated')
 
 
 def test_suite():

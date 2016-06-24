@@ -2000,12 +2000,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                      'only_creator_may_delete', 'pre_validation',  'pre_validation_keep_reviewer_permissions',
                      'items_come_validated', 'archiving', 'no_publication', 'no_proposal', 'everyone_reads_all',
                      'creator_edits_unless_closed', 'return_to_proposing_group', 'hide_decisions_when_under_writing',
-                     'waiting_advices')
-    ##/code-section class-header
-
-    # Methods
-
-    # Manually created methods
+                     'waiting_advices', 'postpone_next_meeting')
 
     def _searchesInfo(self):
         """Informations used to create DashboardCollections in the searches."""
@@ -4968,10 +4963,3 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
 
 registerType(MeetingConfig, PROJECTNAME)
-# end of class MeetingConfig
-
-##code-section module-footer #fill in your manual code here
-from zope import interface
-from Products.Archetypes.interfaces import IMultiPageSchema
-interface.classImplements(MeetingConfig, IMultiPageSchema)
-##/code-section module-footer

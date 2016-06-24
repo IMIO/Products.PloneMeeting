@@ -306,6 +306,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   possibility to change the advice delay, for example, the advisers of an advice with delay could now be able to edit the advice delay.
   The value 'mayEdit' has been added to the available variables in the expression and is True if current user may edit the item
 - Added optional field Meeting.approvalDate made to encode the date the current meeting was approved
+- Added workflowAdaptation 'postpone_next_meeting', it adds a decided state 'postponed_next_meeting' (based on the already existing
+  state 'delayed') and additionally it will duplicate the item and automatically set the new item to "validated"
 
 3.3 (2015-02-27)
 ----------------
