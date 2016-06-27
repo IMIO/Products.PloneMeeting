@@ -125,8 +125,9 @@ def linkedMeetingDate(obj):
     if meeting:
         res = meeting.getDate()
     else:
+        # for sorting it is necessary to have a date
         res = DateTime('1950/01/01')
-    return res or _marker
+    return res
 
 
 @indexer(IMeetingItem)

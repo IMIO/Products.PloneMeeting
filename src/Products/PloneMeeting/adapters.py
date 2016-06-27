@@ -561,7 +561,9 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                             context=self.request)
 
             clonedBrain = self.context.getItemClonedToOtherMC(clonedToOtherMCId, theObject=False)
-            if clonedBrain.linkedMeetingDate:
+            # do not check on linkedMeetingDate because it may contains '1950/01/01',
+            # see linkedMeetingDate indexer in indexes.py
+            if clonedBrain.linkedMeetingUID:
                 # avoid instantiating toLocalizedTime more than once
                 toLocalizedTime = toLocalizedTime or self.context.restrictedTraverse('@@plone').toLocalizedTime
                 long_format = clonedBrain.linkedMeetingDate.hour() and True or False
