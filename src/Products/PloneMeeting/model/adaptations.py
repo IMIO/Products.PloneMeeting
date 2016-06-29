@@ -231,6 +231,48 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
     itemWorkflow = _getItemWorkflow()
     meetingWorkflow = _getMeetingWorkflow()
 
+    def _addDecidedState(new_state_id,
+                         transition_id,
+                         base_state_id='delayed'):
+        """Helper method for adding a decided state, base work will be done using the
+           p_base_state (cloning permission, transition start/end points)."""
+        wf = itemWorkflow
+
+        # create new state
+        wf.states.addState(new_state_id)
+
+        # create transitions, for the 'back' transition, take the same as
+        # when coming back from base_state_id
+        wf.transitions.addTransition(transition_id)
+        transition = wf.transitions[transition_id]
+        transition.setProperties(
+            title=transition_id,
+            new_state_id=new_state_id, trigger_type=1, script_name='',
+            actbox_name=transition_id, actbox_url='',
+            actbox_icon='%(portal_url)s/{0}.png'.format(transition_id), actbox_category='workflow',
+            props={'guard_expr': 'python:here.wfConditions().mayDecide()'})
+
+        # use same transitions as state base_state_id
+        back_transition_ids = wf.states[base_state_id].transitions
+        # link state and transitions
+        wf.states[new_state_id].setProperties(
+            title=new_state_id, description='',
+            transitions=back_transition_ids)
+
+        # add state to possible transitions of same origin state as for base_state
+        # get the transition leading to base_state then get the state it is going from
+        tr_leading_to_base_state = [tr for tr in wf.transitions.values() if tr.new_state_id == base_state_id][0].id
+        # get the state, the transition 'delay' is going from
+        origin_state_id = [state for state in wf.states.values() if tr_leading_to_base_state in state.transitions][0].id
+        wf.states[origin_state_id].transitions = \
+            wf.states[origin_state_id].transitions + (transition_id, )
+
+        # use same permissions as used by the base_state
+        base_state = wf.states[base_state_id]
+        postponed_next_meeting = wf.states[new_state_id]
+        for permission, roles in base_state.permission_roles.iteritems():
+            postponed_next_meeting.setPermission(permission, 0, roles)
+
     for wfAdaptation in wfAdaptations:
         # first try to call a performCustomWFAdaptations to see if it manages wfAdaptation
         # it could be a separated one or an overrided one
@@ -717,42 +759,15 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
         # additionnaly, when an item is set to this state, it will be duplicated and validated
         # for a next meeting thru the doPostpone_next_meeting method
         elif wfAdaptation == 'postpone_next_meeting':
-            wf = itemWorkflow
-
-            # create new state
-            wf.states.addState('postponed_next_meeting')
-
-            # create transitions, for the 'back' transition, take the same as
-            # when coming back from 'delayed'
-            wf.transitions.addTransition('postpone_next_meeting')
-            transition = wf.transitions['postpone_next_meeting']
-            transition.setProperties(
-                title='postpone_next_meeting',
-                new_state_id='postponed_next_meeting', trigger_type=1, script_name='',
-                actbox_name='postpone_next_meeting', actbox_url='',
-                actbox_icon='%(portal_url)s/postpone_next_meeting.png', actbox_category='workflow',
-                props={'guard_expr': 'python:here.wfConditions().mayDecide()'})
-
-            # use same transitions as state 'delayed'
-            back_transition_ids = wf.states['delayed'].transitions
-            # link state and transitions
-            wf.states['postponed_next_meeting'].setProperties(
-                title='postponed_next_meeting', description='',
-                transitions=back_transition_ids)
-
-            # add state to possible transitions of same origin state as for 'delayed'
-            # get the state, the transition 'delay' is going from
-            origin_state_id = [state for state in wf.states.values() if 'delay' in state.transitions][0].id
-            wf.states[origin_state_id].transitions = \
-                wf.states[origin_state_id].transitions + ('postpone_next_meeting', )
-
-            # use same permissions as used by the 'delayed' state
-            delayed = wf.states['delayed']
-            postponed_next_meeting = wf.states['postponed_next_meeting']
-            for permission, roles in delayed.permission_roles.iteritems():
-                postponed_next_meeting.setPermission(permission, 0, roles)
-
+            _addDecidedState(new_state_id='postponed_next_meeting',
+                             transition_id='postpone_next_meeting')
             logger.info(WF_APPLIED % ("postpone_next_meeting", meetingConfig.getId()))
+
+        # "mark_not_applicable" add state 'marked_not_applicable' in the item workflow
+        elif wfAdaptation == 'mark_not_applicable':
+            _addDecidedState(new_state_id='marked_not_applicable',
+                             transition_id='mark_not_applicable')
+            logger.info(WF_APPLIED % ("mark_not_applicable", meetingConfig.getId()))
 
 
 # Stuff for performing model adaptations ---------------------------------------

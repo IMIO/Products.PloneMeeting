@@ -523,6 +523,11 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                         translate('icon_help_postponed_next_meeting',
                                   domain="PloneMeeting",
                                   context=self.request)))
+        elif itemState == 'marked_not_applicable':
+            res.append(('marked_not_applicable.png',
+                        translate('icon_help_marked_not_applicable',
+                                  domain="PloneMeeting",
+                                  context=self.request)))
         elif itemState == 'waiting_advices':
             res.append(('wait_advices_from_proposed.png',
                         translate('icon_help_waiting_advices',

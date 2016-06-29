@@ -308,6 +308,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Added optional field Meeting.approvalDate made to encode the date the current meeting was approved
 - Added workflowAdaptation 'postpone_next_meeting', it adds a decided state 'postponed_next_meeting' (based on the already existing
   state 'delayed') and additionally it will duplicate the item and automatically set the new item to "validated"
+- Added workflowAdaptation 'mark_not_applicable', it adds a decided state 'marked_not_applicable' (based on the already existing
+  state 'delayed')
 
 3.3 (2015-02-27)
 ----------------

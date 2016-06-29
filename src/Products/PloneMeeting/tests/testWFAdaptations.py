@@ -64,6 +64,7 @@ class testWFAdaptations(PloneMeetingTestCase):
                                'no_publication',
                                'only_creator_may_delete',
                                'postpone_next_meeting',
+                               'mark_not_applicable',
                                'pre_validation',
                                'pre_validation_keep_reviewer_permissions',
                                'return_to_proposing_group',
@@ -335,6 +336,70 @@ class testWFAdaptations(PloneMeetingTestCase):
 
         # make wfAdaptation selectable
         self.validateItem(item)
+        self.failIf(cfg.validate_workflowAdaptations(()))
+
+    def test_pm_Validate_workflowAdaptations_removed_postpone_next_meeting(self):
+        """Test MeetingConfig.validate_workflowAdaptations that manage removal
+           of wfAdaptations 'postpone_next_meeting' that is not possible if
+           some items are 'postponed_next_meeting'."""
+        # ease override by subproducts
+        cfg = self.meetingConfig
+        if not 'postpone_next_meeting' in cfg.listWorkflowAdaptations():
+            return
+
+        postpone_removed_error = translate('wa_removed_postpone_next_meeting_error',
+                                           domain='PloneMeeting',
+                                           context=self.request)
+        self.changeUser('pmManager')
+        cfg.setWorkflowAdaptations(('postpone_next_meeting', ))
+        performWorkflowAdaptations(cfg, logger=pm_logger)
+
+        meeting = self.create('Meeting', date=DateTime('2016/06/06'))
+        item = self.create('MeetingItem')
+        item.setDecision('<p>Decision</p>')
+        self.presentItem(item)
+        self.decideMeeting(meeting)
+        self.do(item, 'postpone_next_meeting')
+        self.assertEqual(item.queryState(), 'postponed_next_meeting')
+        self.failIf(cfg.validate_workflowAdaptations(('postpone_next_meeting', )))
+        self.assertEquals(
+            cfg.validate_workflowAdaptations(()),
+            postpone_removed_error)
+
+        # make wfAdaptation selectable
+        self.do(item, 'backToItemFrozen')
+        self.failIf(cfg.validate_workflowAdaptations(()))
+
+    def test_pm_Validate_workflowAdaptations_removed_mark_not_applicable(self):
+        """Test MeetingConfig.validate_workflowAdaptations that manage removal
+           of wfAdaptations 'mark_not_applicable' that is not possible if
+           some items are 'marked_not_applicable'."""
+        # ease override by subproducts
+        cfg = self.meetingConfig
+        if not 'mark_not_applicable' in cfg.listWorkflowAdaptations():
+            return
+
+        mark_not_applicable_removed_error = translate('wa_removed_mark_not_applicable_error',
+                                                      domain='PloneMeeting',
+                                                      context=self.request)
+        self.changeUser('pmManager')
+        cfg.setWorkflowAdaptations(('mark_not_applicable', ))
+        performWorkflowAdaptations(cfg, logger=pm_logger)
+
+        meeting = self.create('Meeting', date=DateTime('2016/06/06'))
+        item = self.create('MeetingItem')
+        item.setDecision('<p>Decision</p>')
+        self.presentItem(item)
+        self.decideMeeting(meeting)
+        self.do(item, 'mark_not_applicable')
+        self.assertEqual(item.queryState(), 'marked_not_applicable')
+        self.failIf(cfg.validate_workflowAdaptations(('mark_not_applicable', )))
+        self.assertEquals(
+            cfg.validate_workflowAdaptations(()),
+            mark_not_applicable_removed_error)
+
+        # make wfAdaptation selectable
+        self.do(item, 'backToItemFrozen')
         self.failIf(cfg.validate_workflowAdaptations(()))
 
     def test_pm_Validate_workflowAdaptations_removed_waiting_advices(self):
@@ -1725,6 +1790,17 @@ class testWFAdaptations(PloneMeetingTestCase):
         itemWF = self.wfTool.getWorkflowsFor(self.meetingConfig.getItemTypeName())[0]
         self.assertTrue('postpone_next_meeting' in itemWF.transitions)
         self.assertTrue('postponed_next_meeting' in itemWF.states)
+        # test it
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2016/06/06'))
+        item = self.create('MeetingItem')
+        item.setDecision('<p>A decision</p>')
+        self.presentItem(item)
+        self.decideMeeting(meeting)
+        self.do(item, 'postpone_next_meeting')
+        self.assertEqual(item.queryState(), 'postponed_next_meeting')
+        # back transition
+        self.do(item, 'backToItemFrozen')
 
     def test_pm_WFA_postpone_next_meeting_back_transition(self):
         '''The back transition may vary if using additional WFAdaptations,
@@ -1773,6 +1849,43 @@ class testWFAdaptations(PloneMeetingTestCase):
         clonedItem = item.getBRefs('ItemPredecessor')[0]
         self.assertEqual(clonedItem.getPredecessor(), item)
         self.assertEqual(clonedItem.queryState(), 'validated')
+
+    def test_pm_WFA_mark_not_applicable(self):
+        '''Test the workflowAdaptation 'mark_not_applicable'.'''
+        # ease override by subproducts
+        cfg = self.meetingConfig
+        if not 'mark_not_applicable' in cfg.listWorkflowAdaptations():
+            return
+        self.changeUser('pmManager')
+        # check while the wfAdaptation is not activated
+        self._mark_not_applicable_inactive()
+        # activate the wfAdaptation and check
+        cfg.setWorkflowAdaptations(('mark_not_applicable', ))
+        performWorkflowAdaptations(cfg, logger=pm_logger)
+        self._mark_not_applicable_active()
+
+    def _mark_not_applicable_inactive(self):
+        '''Tests while 'mark_not_applicable' wfAdaptation is inactive.'''
+        itemWF = self.wfTool.getWorkflowsFor(self.meetingConfig.getItemTypeName())[0]
+        self.assertFalse('mark_not_applicable' in itemWF.transitions)
+        self.assertFalse('marked_not_applicable' in itemWF.states)
+
+    def _mark_not_applicable_active(self):
+        '''Tests while 'mark_not_applicable' wfAdaptation is active.'''
+        itemWF = self.wfTool.getWorkflowsFor(self.meetingConfig.getItemTypeName())[0]
+        self.assertTrue('mark_not_applicable' in itemWF.transitions)
+        self.assertTrue('marked_not_applicable' in itemWF.states)
+        # test it
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2016/06/06'))
+        item = self.create('MeetingItem')
+        item.setDecision('<p>A decision</p>')
+        self.presentItem(item)
+        self.decideMeeting(meeting)
+        self.do(item, 'mark_not_applicable')
+        self.assertEqual(item.queryState(), 'marked_not_applicable')
+        # back transition
+        self.do(item, 'backToItemFrozen')
 
 
 def test_suite():

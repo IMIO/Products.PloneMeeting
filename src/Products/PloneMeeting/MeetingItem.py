@@ -538,6 +538,11 @@ class MeetingItemWorkflowActions:
     def doRefuse(self, stateChange):
         pass
 
+    security.declarePrivate('doMark_not_applicable')
+
+    def doMark_not_applicable(self, stateChange):
+        pass
+
     security.declarePrivate('doPostpone_next_meeting')
 
     def doPostpone_next_meeting(self, stateChange):

@@ -2000,7 +2000,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                      'only_creator_may_delete', 'pre_validation',  'pre_validation_keep_reviewer_permissions',
                      'items_come_validated', 'archiving', 'no_publication', 'no_proposal', 'everyone_reads_all',
                      'creator_edits_unless_closed', 'return_to_proposing_group', 'hide_decisions_when_under_writing',
-                     'waiting_advices', 'postpone_next_meeting')
+                     'waiting_advices', 'postpone_next_meeting', 'mark_not_applicable')
 
     def _searchesInfo(self):
         """Informations used to create DashboardCollections in the searches."""
@@ -2994,6 +2994,21 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 return translate('wa_removed_hide_decisions_when_under_writing_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
+        if 'postpone_next_meeting' in removed:
+            # this will remove the 'postponed_next_meeting' state for Item
+            # check that no more items are in this state
+            if catalog(portal_type=self.getItemTypeName(), review_state='postponed_next_meeting'):
+                return translate('wa_removed_postpone_next_meeting_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+        if 'mark_not_applicable' in removed:
+            # this will remove the 'marked_not_applicable' state for Item
+            # check that no more items are in this state
+            if catalog(portal_type=self.getItemTypeName(), review_state='marked_not_applicable'):
+                return translate('wa_removed_mark_not_applicable_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+
         return self.adapted().custom_validate_workflowAdaptations()
 
     def custom_validate_workflowAdaptations(self):
