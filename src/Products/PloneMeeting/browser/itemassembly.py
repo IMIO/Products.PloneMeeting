@@ -149,7 +149,10 @@ class DisplayAssemblyFromMeetingProvider(ContentProviderBase):
           Return Meeting.assembly
         """
         meeting = self.context.getMeeting()
-        return meeting.getAssembly() or '-'
+        nothing_defined_msg = translate('nothing_defined_on_meeting',
+                                        domain='PloneMeeting',
+                                        context=self.request)
+        return meeting.getAssembly() or u'<p class="discreet">{0}</p>'.format(nothing_defined_msg)
 
     def get_msgid_assembly_or_attendees(self):
         """
@@ -188,7 +191,10 @@ class DisplayExcusedFromMeetingProvider(ContentProviderBase):
           Return Meeting.assemblyExcused
         """
         meeting = self.context.getMeeting()
-        return meeting.getAssemblyExcused() or '-'
+        nothing_defined_msg = translate('nothing_defined_on_meeting',
+                                        domain='PloneMeeting',
+                                        context=self.request)
+        return meeting.getAssemblyExcused() or u'<p class="discreet">{0}</p>'.format(nothing_defined_msg)
 
     def render(self):
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -218,7 +224,10 @@ class DisplayAbsentsFromMeetingProvider(ContentProviderBase):
           Return Meeting.assemblyAbsents
         """
         meeting = self.context.getMeeting()
-        return meeting.getAssemblyAbsents() or '-'
+        nothing_defined_msg = translate('nothing_defined_on_meeting',
+                                        domain='PloneMeeting',
+                                        context=self.request)
+        return meeting.getAssemblyAbsents() or u'<p class="discreet">{0}</p>'.format(nothing_defined_msg)
 
     def render(self):
         tool = api.portal.get_tool('portal_plonemeeting')
