@@ -3580,17 +3580,40 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             advices.append(adviceInfo.__dict__['data'])
         return res
 
+    security.declarePublic('getInheritatedAdvices')
+
+    def getInheritatedAdvices(self):
+        """ """
+        res = []
+        predecessor = self.getPredecessor()
+        if not predecessor:
+            return res
+
+        for adviceInfo in self.adviceIndex.itervalues():
+            if adviceInfo['inheritated']:
+                adviceObj = None
+                while predecessor and not adviceObj:
+                    adviceObj = predecessor.getAdviceObj(adviceInfo['id'])
+                    predecessor = predecessor.getPredecessor()
+                if adviceObj:
+                    res.append(adviceObj)
+        return res
+
     security.declarePublic('getGivenAdvices')
 
-    def getGivenAdvices(self):
+    def getGivenAdvices(self, inheritated=False):
         '''Returns the list of advices that has already been given by
-           computing a data dict from contained meetingadvices.'''
+           computing a data dict from contained meetingadvices.
+           If p_inheritated is True, it returns also inheritated advices.'''
         # for now, only contained elements in a MeetingItem of
         # meta_type 'Dexterity Container' are meetingadvices...
         res = {}
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        for advice in self.getAdvices():
+        advices = self.getAdvices()
+        if inheritated:
+            advices += self.getInheritatedAdvices()
+        for advice in advices:
             optional = True
             gives_auto_advice_on_help_message = delay = delay_left_alert = delay_label = ''
             # find the relevant row in customAdvisers if advice has a row_id
@@ -3949,6 +3972,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             saved_stored_data[groupId]['delay_changes_history'] = \
                 'delay_changes_history' in adviceInfo and \
                 adviceInfo['delay_changes_history'] or []
+            saved_stored_data[groupId]['inheritated'] = \
+                'inheritated' in adviceInfo and \
+                adviceInfo['inheritated'] or False
             if 'isConfidential' in adviceInfo:
                 saved_stored_data[groupId]['isConfidential'] = adviceInfo['isConfidential']
             else:
@@ -4004,10 +4030,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         saved_stored_data[groupId]['delay_for_automatic_adviser_changed_manually']
                     d['delay_changes_history'] = saved_stored_data[groupId]['delay_changes_history']
                     d['isConfidential'] = saved_stored_data[groupId]['isConfidential']
+                    d['inheritated'] = saved_stored_data[groupId]['inheritated']
                 else:
                     d['delay_for_automatic_adviser_changed_manually'] = False
                     d['delay_changes_history'] = []
                     d['isConfidential'] = cfg.getAdviceConfidentialityDefault()
+                    d['inheritated'] = False
                 # index view/add/edit access
                 d['item_viewable_by_advisers'] = False
                 d['advice_addable'] = False
