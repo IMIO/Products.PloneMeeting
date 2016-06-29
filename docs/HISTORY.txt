@@ -9,7 +9,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 
 4.0 (unreleased)
 ----------------
-- Moved to Plone 4.3.7
+- Moved to Plone 4.3.8
 - Moved to collective.ckeditor 4.4.0
 - Moved to collective.documentviewer 3.0.3
 - Rely on beautifulsoup4, Products.CPUtils, collective.messagesviewlet
