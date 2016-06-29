@@ -65,13 +65,13 @@
           </span>
       </dt>
       <dd class="collapsibleContent"
-               tal:define="usedAssemblyFields python: ((context.getAssembly() and 'assembly') or 'assembly' in usedAttrs and 'assembly',
-                                                       (context.getAssemblyExcused() and 'assemblyExcused') or 'assemblyExcused' in usedAttrs and 'assemblyExcused',
-                                                       (context.getAssemblyAbsents() and 'assemblyAbsents') or 'assemblyAbsents' in usedAttrs and 'assemblyAbsents',
-                                                       (context.getAssemblyGuests() and 'assemblyGuests') or 'assemblyGuests' in usedAttrs and 'assemblyGuests',
-                                                       (context.getAssemblyProxies() and 'assemblyProxies') or 'assemblyProxies' in usedAttrs and 'assemblyProxies',
-                                                       (context.getAssemblyStaves() and 'assemblyStaves') or 'assemblyStaves' in usedAttrs and 'assemblyStaves',
-                                                       (context.getSignatures() and 'signatures') or 'signatures' in usedAttrs and 'signatures',);
+               tal:define="usedAssemblyFields python: ((context.getAssembly() or 'assembly' in usedAttrs) and 'assembly',
+                                                       (context.getAssemblyExcused() or 'assemblyExcused' in usedAttrs) and 'assemblyExcused',
+                                                       (context.getAssemblyAbsents() or 'assemblyAbsents' in usedAttrs) and 'assemblyAbsents',
+                                                       (context.getAssemblyGuests() or 'assemblyGuests' in usedAttrs) and 'assemblyGuests',
+                                                       (context.getAssemblyProxies() or 'assemblyProxies' in usedAttrs) and 'assemblyProxies',
+                                                       (context.getAssemblyStaves() or 'assemblyStaves' in usedAttrs) and 'assemblyStaves',
+                                                       (context.getSignatures() or 'signatures' in usedAttrs) and 'signatures',);
                            colWidthPercentage python: int(100/len(usedAssemblyFields));">
         <fieldset tal:condition="python: 'assembly' in usedAssemblyFields">
             <legend tal:content="context/getLabelAssembly">Assembly</legend>
