@@ -558,10 +558,10 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
             # if item sent to the other mc is inserted into a meeting,
             # we display the meeting date
             emergency = clonedToOtherMCId in self.context.getOtherMeetingConfigsClonableToEmergency()
+            clonedToOtherMC = getattr(tool, clonedToOtherMCId)
             msgid = emergency and 'sentto_othermeetingconfig_emergency' or 'sentto_othermeetingconfig'
             msg = translate(msgid,
-                            mapping={'meetingConfigTitle': safe_unicode(getattr(tool,
-                                                                        clonedToOtherMCId).Title())},
+                            mapping={'meetingConfigTitle': safe_unicode(clonedToOtherMC.Title())},
                             domain="PloneMeeting",
                             context=self.request)
 
@@ -573,28 +573,48 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                 toLocalizedTime = toLocalizedTime or self.context.restrictedTraverse('@@plone').toLocalizedTime
                 long_format = clonedBrain.linkedMeetingDate.hour() and True or False
                 msg = msg + u' ({0})'.format(toLocalizedTime(clonedBrain.linkedMeetingDate, long_format=long_format))
-            iconName = emergency and "clone_to_other_mc_emergency.png" or "clone_to_other_mc.png"
-            res.append((iconName, msg))
+            iconName = emergency and "clone_to_other_mc_emergency" or "clone_to_other_mc"
+            # manage the otherMeetingConfigsClonableToPrivacy
+            if 'privacy' in clonedToOtherMC.getUsedItemAttributes():
+                iconName += "_{0}".format(clonedBrain.privacy)
+                msg = msg + u' ({0})'.format(translate(clonedBrain.privacy,
+                                                       domain="PloneMeeting",
+                                                       context=self.request))
+            res.append(("{0}.png".format(iconName), msg))
 
         # if not already cloned to another mc, maybe it will be?
         # we could have an item to clone to 2 other MCs, one already sent, not the other...
         otherMeetingConfigsClonableTo = self.context.getOtherMeetingConfigsClonableTo()
-        for otherMeetingConfigClonableTo in otherMeetingConfigsClonableTo:
+        for otherMeetingConfigClonableToId in otherMeetingConfigsClonableTo:
             # already cloned?
-            if otherMeetingConfigClonableTo in clonedToOtherMCIds:
+            if otherMeetingConfigClonableToId in clonedToOtherMCIds:
                 continue
+
             # Append a tuple with name of the icon and a list containing
             # the msgid and the mapping as a dict
-            emergency = otherMeetingConfigClonableTo in self.context.getOtherMeetingConfigsClonableToEmergency()
+            otherMeetingConfigClonableTo = getattr(tool, otherMeetingConfigClonableToId)
+            emergency = otherMeetingConfigClonableToId in self.context.getOtherMeetingConfigsClonableToEmergency()
             msgid = emergency and 'will_be_sentto_othermeetingconfig_emergency' or \
                 'will_be_sentto_othermeetingconfig'
-            iconName = emergency and "will_be_cloned_to_other_mc_emergency.png" or "will_be_cloned_to_other_mc.png"
-            res.append((iconName,
-                        translate(msgid,
-                                  mapping={'meetingConfigTitle': safe_unicode(
-                                           getattr(tool, otherMeetingConfigClonableTo).Title())},
-                                  domain="PloneMeeting",
-                                  context=self.request)))
+            iconName = emergency and "will_be_cloned_to_other_mc_emergency" or "will_be_cloned_to_other_mc"
+            msg = translate(msgid,
+                            mapping={'meetingConfigTitle': safe_unicode(
+                                     otherMeetingConfigClonableTo.Title())},
+                            domain="PloneMeeting",
+                            context=self.request)
+            # manage the otherMeetingConfigsClonableToPrivacy
+            suffix = ''
+            if 'otherMeetingConfigsClonableToPrivacy' in usedItemAttributes and \
+               'privacy' in otherMeetingConfigClonableTo.getUsedItemAttributes():
+                if otherMeetingConfigClonableToId in self.context.getOtherMeetingConfigsClonableToPrivacy():
+                    suffix = "_secret"
+                else:
+                    suffix = "_public"
+                msg = msg + u' ({0})'.format(translate(suffix[1:],
+                                                       domain="PloneMeeting",
+                                                       context=self.request))
+            res.append(("{0}{1}.png".format(iconName, suffix),
+                        msg))
 
         # display an icon if item is sent from another mc
         predecessor = self.context.getPredecessor()
