@@ -575,19 +575,12 @@ class Migrate_To_4_0(Migrator):
 
     def _initNewHTMLFields(self):
         '''The MeetingItem and Meeting receive to new HTML fields 'notes' and 'inAndOutMoves',
-           make sure the content_type is correctly set to 'text/html'.'''
+           make sure the content_type is correctly set to 'text/html'.
+           It also manage new field Meeting.authorityNotice.'''
         logger.info('Initializing new HTML fields on meeting and items...')
         brains = self.portal.portal_catalog(meta_type=('Meeting', 'MeetingItem', ))
-        check_already_migrated = False
         for brain in brains:
             itemOrMeeting = brain.getObject()
-            # check if already migrated
-            if not check_already_migrated:
-                field = itemOrMeeting.getField('notes')
-                if field.getContentType(itemOrMeeting, fromBaseUnit=False) == 'text/html':
-                    break
-                check_already_migrated = True
-            # not already migrated, do it...
             forceHTMLContentTypeForEmptyRichFields(itemOrMeeting)
         logger.info('Done.')
 
