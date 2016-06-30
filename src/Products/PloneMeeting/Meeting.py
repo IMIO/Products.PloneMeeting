@@ -687,6 +687,20 @@ schema = Schema((
         default_output_type="text/x-html-safe",
         optional=True,
     ),
+    TextField(
+        name='authorityNotice',
+        allowable_content_types=('text/html',),
+        widget=RichWidget(
+            condition="python: here.showMeetingManagerReservedField('authorityNotice')",
+            rows=15,
+            label='Authoritynotice',
+            label_msgid='PloneMeeting_label_authorityNotice',
+            i18n_domain='PloneMeeting',
+        ),
+        default_content_type="text/html",
+        default_output_type="text/x-html-safe",
+        optional=True,
+    ),
     ReferenceField(
         name='items',
         widget=ReferenceBrowserWidget(

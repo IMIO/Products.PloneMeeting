@@ -311,6 +311,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   state 'delayed') and additionally it will duplicate the item and automatically set the new item to "validated"
 - Added workflowAdaptation 'mark_not_applicable', it adds a decided state 'marked_not_applicable' (based on the already existing
   state 'delayed')
+- Added optional RichText field Meeting.authorityNotice
 
 3.3 (2015-02-27)
 ----------------
