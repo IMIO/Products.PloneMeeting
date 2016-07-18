@@ -138,10 +138,15 @@
     <tal:field define="fieldName python: 'notes'">
       <metal:f use-macro="context/@@pm-macros/editContentField"/>
     </tal:field>
+    <tal:field define="fieldName python: 'internalNotes'"
+               condition="python: 'internalNotes' in usedAttrs" >
+      <metal:f use-macro="context/@@pm-macros/editContentField"/>
+    </tal:field>
     <tal:field define="fieldName python: 'observations'"
                condition="python: 'observations' in usedAttrs" >
       <metal:f use-macro="context/@@pm-macros/editContentField"/>
     </tal:field>
+
     <metal:field use-macro="python:here.widget('itemTags', mode='edit')"/>
     <table cellpadding="0" cellspacing="0" width="100%">
       <tr valign="top">

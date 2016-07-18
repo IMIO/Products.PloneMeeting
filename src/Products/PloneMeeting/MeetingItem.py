@@ -1548,11 +1548,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('showInternalNotes')
 
     def showInternalNotes(self):
-        '''When must field 'internalNotes' be shown?'''
-        if self.isTemporary() or not self.attributeIsUsed('internalNotes'):
+        '''Show field 'internalNotes' if attribute is used,
+           and only to members of the proposingGroup (+ real Managers).'''
+        if not self.attributeIsUsed('internalNotes'):
             return False
 
-        # by pass for Managers
+        # creating new item, show field
+        if self.isTemporary():
+            return True
+
+        # bypass for Managers
         tool = api.portal.get_tool('portal_plonemeeting')
         if tool.isManager(self, realManagers=True):
             return True
