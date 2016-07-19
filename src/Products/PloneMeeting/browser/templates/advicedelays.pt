@@ -19,9 +19,9 @@
         <tal:selectableDelays condition="selectableDelays">
             <div style="clear: left; display: table;" tal:repeat="delay selectableDelays">
                 <a href="#"
-                   tal:attributes="href python: '%s/@@change-advice-delay?new_advice_row_id=%s&current_advice_row_id=%s' % (view.context.absolute_url(),
-                                                                                                                           delay[0],
-                                                                                                                           view.advice['row_id']);
+                   tal:attributes="href python: '%s/advice_delay_change_form?new_delay_row_id=%s&current_delay_row_id=%s' % (view.context.absolute_url(),
+                                                                                                                             delay[0],
+                                                                                                                             view.advice['row_id']);
                                    class python: 'link-overlay-pm advice_delay_change_value'">
                     <img src="advice_with_delay_big.png"
                          tal:attributes="src string:${view/portal_url}/advice_with_delay_big.png">
