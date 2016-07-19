@@ -122,7 +122,7 @@
     <tal:comment replace="nothing">Budget-related information</tal:comment>
     <metal:field use-macro="python:here.widget('budgetRelated', mode='edit')"/>
     <metal:field use-macro="python:here.widget('budgetInfos', mode='edit')"/>
- 
+
     <metal:field use-macro="python:here.widget('oralQuestion', mode='edit')"/>
     <metal:field use-macro="python:here.widget('itemInitiator', mode='edit')"/>
 

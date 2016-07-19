@@ -1368,12 +1368,15 @@ p.item-before-budget-related {
     padding-bottom: 0.5em;
 }
 
-#content table.meetingConfigActions {
+#content table.configActions {
     margin: 0;
 }
-
-table.meetingConfigActions td {
+table.configActions td {
     padding-right: 1em;
+}
+.configActions form {
+    margin-bottom: 0.5em;
+    margin-top: 0.5em;
 }
 
 div.advice_popup_label {
@@ -1490,11 +1493,6 @@ div.customAdviceMessage {
 #content-core p.tool_pm_descr,
 #content-core p.backToItem {
     margin-bottom: 0.5em;
-}
-
-.meetingConfigActions form {
-    margin-bottom: 0.5em;
-    margin-top: 0.5em;
 }
 
 .tooltip.pb-ajax {

@@ -141,7 +141,7 @@
       <p class="discreet" style="color: red;" i18n:translate="pm_tool_updates_warning">
       Warning: take care that launching these proceedings may take time, depending on the number of existing elements!  Do not launch during period of hig use!
       </p>
-      <table class="meetingConfigActions">
+      <table class="configActions">
         <tr valign="top">
           <td width=33%>
             <form name="updateAnnexConfidentialityForm" action="updateAnnexConfidentiality">
