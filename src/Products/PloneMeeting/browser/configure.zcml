@@ -709,12 +709,4 @@
         permission="zope2.View"
         />
 
-
-
-    <!-- Display the imio.actionspanel viewlet on the meetingadvice -->
-    <configure package="imio.actionspanel">
-    </configure>
-
-
-
 </configure>

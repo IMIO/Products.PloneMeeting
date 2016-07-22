@@ -1,7 +1,6 @@
 from Products.Five.browser import BrowserView
 from plone import api
 from plone.memoize.view import memoize
-from imio.prettylink.interfaces import IPrettyLink
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 
 

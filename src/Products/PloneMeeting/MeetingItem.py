@@ -4795,8 +4795,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             else:
                 newItem.setPredecessor(self)
 
-        # notify that item has been duplicated so subproducts
-        # may interact if necessary
+        # notify that item has been duplicated so subproducts may interact if necessary
         notify(ItemDuplicatedEvent(self, newItem))
         newItem.reindexObject()
         logger.info('Item at %s cloned (%s) by "%s" from %s.' %
