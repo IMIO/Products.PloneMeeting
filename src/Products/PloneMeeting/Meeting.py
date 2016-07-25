@@ -1247,7 +1247,6 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
             # append additional_catalog_query
             query.update(additional_catalog_query)
-            import ipdb; ipdb.set_trace()
             if unrestricted:
                 res = catalog.unrestrictedSearchResults(**query)
             else:

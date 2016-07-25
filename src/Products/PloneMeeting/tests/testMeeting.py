@@ -2115,7 +2115,7 @@ class testMeeting(PloneMeetingTestCase):
                                                  domain='plone',
                                                  context=self.request)
         self.assertEquals(
-            meeting.getPrettyLink(),
+            meeting.getPrettyLink(showContentIcon=True),
             u"<a class='pretty_link state-created' title='' "
             "href='http://nohost/plone/Members/pmManager/mymeetings/{0}/o1' "
             "target='_self'><span class='pretty_link_icons'><img title='{1}' "

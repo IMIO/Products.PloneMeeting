@@ -920,6 +920,8 @@ class testMeetingItem(PloneMeetingTestCase):
         now = DateTime()
         # create 2 meetings in cfg2
         createdMeeting = self.create('Meeting', date=now+10, meetingConfig=cfg2)
+        # createdMeeting will only be viewable by Managers
+        createdMeeting.manage_permission(View, ['Manager', ])
         frozenMeeting = self.create('Meeting', date=now+5, meetingConfig=cfg2)
         self.freezeMeeting(frozenMeeting)
 
