@@ -4034,13 +4034,21 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setOtherMeetingConfigsClonableTo((cfg2Id, cfg3Id))
-        self.assertEquals(item.displayOtherMeetingConfigsClonableTo(),
-                          unicode('{0}, {1}'.format(cfg2Title, cfg3Title), 'utf-8'))
+        noneTheoricalMeeting = "<img class='logical_meeting' src='http://nohost/plone/greyedMeeting.png' " \
+            "title='Theorical date into which item should be presented'></img>&nbsp;<span>None</span>"
+        self.assertEquals(
+            item.displayOtherMeetingConfigsClonableTo(),
+            unicode('{0} ({1}), {2} ({3})'.format(
+                    cfg2Title, noneTheoricalMeeting,
+                    cfg3Title, noneTheoricalMeeting),
+                    'utf-8'))
         # ask emergency for sending to cfg3
         item.setOtherMeetingConfigsClonableToEmergency((cfg3Id, ))
-        self.assertEquals(item.displayOtherMeetingConfigsClonableTo(),
-                          unicode("{0}, {1} (<span class='item_clone_to_emergency'>Emergency</span>)".format(
-                                  cfg2Title, cfg3Title), 'utf-8'))
+        self.assertEquals(
+            item.displayOtherMeetingConfigsClonableTo(),
+            unicode("{0} ({1}), {2} (<span class='item_clone_to_emergency'>Emergency</span> - {3})".format(
+                    cfg2Title, noneTheoricalMeeting,
+                    cfg3Title, noneTheoricalMeeting), 'utf-8'))
 
         # enable 'otherMeetingConfigsClonableToPrivacy' that is also displayed
         cfg.setUsedItemAttributes(cfg.getUsedItemAttributes() +
@@ -4049,24 +4057,58 @@ class testMeetingItem(PloneMeetingTestCase):
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attributeIsUsed')
         self.assertEquals(
             item.displayOtherMeetingConfigsClonableTo(),
-            unicode("{0} (<span class='item_privacy_public'>Public meeting</span>), "
-                    "{1} (<span class='item_clone_to_emergency'>Emergency</span> - "
-                    "<span class='item_privacy_public'>Public meeting</span>)".format(
-                        cfg2Title, cfg3Title), 'utf-8'))
+            unicode("{0} (<span class='item_privacy_public'>Public meeting</span> - {1}), "
+                    "{2} (<span class='item_clone_to_emergency'>Emergency</span> - "
+                    "<span class='item_privacy_public'>Public meeting</span> - {3})".format(
+                        cfg2Title, noneTheoricalMeeting,
+                        cfg3Title, noneTheoricalMeeting), 'utf-8'))
         item.setOtherMeetingConfigsClonableToPrivacy((cfg2Id, ))
         self.assertEquals(
             item.displayOtherMeetingConfigsClonableTo(),
-            unicode("{0} (<span class='item_privacy_secret'>Closed door</span>), "
-                    "{1} (<span class='item_clone_to_emergency'>Emergency</span> - "
-                    "<span class='item_privacy_public'>Public meeting</span>)".format(
-                        cfg2Title, cfg3Title), 'utf-8'))
+            unicode("{0} (<span class='item_privacy_secret'>Closed door</span> - {1}), "
+                    "{2} (<span class='item_clone_to_emergency'>Emergency</span> - "
+                    "<span class='item_privacy_public'>Public meeting</span> - {3})".format(
+                        cfg2Title, noneTheoricalMeeting,
+                        cfg3Title, noneTheoricalMeeting), 'utf-8'))
         item.setOtherMeetingConfigsClonableToPrivacy((cfg2Id, cfg3Id))
         self.assertEquals(
             item.displayOtherMeetingConfigsClonableTo(),
-            unicode("{0} (<span class='item_privacy_secret'>Closed door</span>), "
-                    "{1} (<span class='item_clone_to_emergency'>Emergency</span> - "
-                    "<span class='item_privacy_secret'>Closed door</span>)".format(
-                        cfg2Title, cfg3Title), 'utf-8'))
+            unicode("{0} (<span class='item_privacy_secret'>Closed door</span> - {1}), "
+                    "{2} (<span class='item_clone_to_emergency'>Emergency</span> - "
+                    "<span class='item_privacy_secret'>Closed door</span> - {3})".format(
+                        cfg2Title, noneTheoricalMeeting,
+                        cfg3Title, noneTheoricalMeeting), 'utf-8'))
+
+        # now test when meetings exist in cfg2
+        self.changeUser('pmManager')
+        now = DateTime()
+        item.setOtherMeetingConfigsClonableTo((cfg2Id, ))
+        item.setOtherMeetingConfigsClonableToPrivacy(())
+        item.setOtherMeetingConfigsClonableToEmergency(())
+        item.setOtherMeetingConfigsClonableTo((cfg2Id, ))
+        createdMeeting = self.create('Meeting', date=now+10, meetingConfig=cfg2)
+        frozenMeeting = self.create('Meeting', date=now+5, meetingConfig=cfg2)
+        self.freezeMeeting(frozenMeeting)
+        self.assertEquals(
+            item.displayOtherMeetingConfigsClonableTo(),
+            unicode("{0} (<span class='item_privacy_public'>Public meeting</span> - "
+                    "<img class='logical_meeting' src='http://nohost/plone/greyedMeeting.png' "
+                    "title='Theorical date into which item should be presented'></img>&nbsp;<span>{1}</span>)".format(
+                        cfg2Title,
+                        createdMeeting.getPrettyLink(prefixed=False,
+                                                     showContentIcon=False).encode('utf-8')),
+                    'utf-8'))
+        item.setOtherMeetingConfigsClonableToEmergency((cfg2Id, ))
+        self.assertEquals(
+            item.displayOtherMeetingConfigsClonableTo(),
+            unicode("{0} (<span class='item_clone_to_emergency'>Emergency</span> - "
+                    "<span class='item_privacy_public'>Public meeting</span> - "
+                    "<img class='logical_meeting' src='http://nohost/plone/greyedMeeting.png' "
+                    "title='Theorical date into which item should be presented'></img>&nbsp;<span>{1}</span>)".format(
+                        cfg2Title,
+                        frozenMeeting.getPrettyLink(prefixed=False,
+                                                    showContentIcon=False).encode('utf-8')),
+                    'utf-8'))
 
     def test_pm_InternalNotesIsRestrictedToProposingGroupOnly(self, ):
         """Field MeetingItem.internalNotes is only available to members

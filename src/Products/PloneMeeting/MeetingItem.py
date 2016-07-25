@@ -3679,10 +3679,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if self.attributeIsUsed('otherMeetingConfigsClonableToPrivacy'):
                 displayPrivacy = True
 
-            PATTERN = u"{0} ({1})"
-            if displayEmergency or displayPrivacy:
-                PATTERN = u"{0} ({1} - {2})"
-
             emergencyAndPrivacyInfos = []
             if displayEmergency:
                 emergencyAndPrivacyInfos.append(
@@ -3717,7 +3713,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                                           title_help_msg,
                                                           logicalMeetingLink)
 
-            tmp = PATTERN.format(cfgTitle, " - ".join(emergencyAndPrivacyInfos), logicalDateInfo)
+            tmp = u"{0} ({1})".format(cfgTitle, " - ".join(emergencyAndPrivacyInfos + [logicalDateInfo]))
             res.append(tmp)
         return u", ".join(res) or "-"
 
