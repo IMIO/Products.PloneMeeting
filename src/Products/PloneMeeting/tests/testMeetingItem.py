@@ -49,6 +49,7 @@ from Products.PloneMeeting.browser.itemsignatures import item_signatures_default
 from Products.PloneMeeting.config import DEFAULT_COPIED_FIELDS
 from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_SAME_MC
 from Products.PloneMeeting.config import HISTORY_COMMENT_NOT_VIEWABLE
+from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import READER_USECASES
@@ -791,9 +792,6 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg2Id = cfg2.getId()
         cfg.setUsedItemAttributes(cfg.getUsedItemAttributes() +
                                   ('otherMeetingConfigsClonableToEmergency', ))
-        # field 'otherMeetingConfigsClonableToEmergency' is
-        # only available to MeetingManagers if item will be presented
-        # while it is sent to the other MC
         cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
                                          'trigger_workflow_transitions_until': '%s.%s' %
                                          (cfg2Id, 'present')},))
@@ -877,6 +875,66 @@ class testMeetingItem(PloneMeetingTestCase):
         sentItem = item.getItemClonedToOtherMC(cfg2Id)
         self.assertIsNone(sentItem.getMeeting())
         self.assertEqual(sentItem.queryState(), 'validated')
+
+    def test_pm_SendItemToOtherMCUsingEmergencyInitializePreferredMeeting(self):
+        """When an item is sent to another meeting configuration and emergency
+           is selected, the preferred meeting is automatically selected to the next
+           available meeting, including frozen meetings, this way the item may be presented
+           in a frozen meeting."""
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        cfg2Id = cfg2.getId()
+        cfg.setUsedItemAttributes(cfg.getUsedItemAttributes() +
+                                  ('otherMeetingConfigsClonableToEmergency', ))
+        # sendable when itemcreated
+        cfg.setItemManualSentToOtherMCStates(('itemcreated', ))
+        cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
+                                         'trigger_workflow_transitions_until':
+                                         NO_TRIGGER_WF_TRANSITION_UNTIL},))
+        # use insertion on groups for cfg2
+        cfg2.setUseGroupsAsCategories(True)
+        cfg2.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_proposing_groups',
+                                            'reverse': '0'}, ))
+
+        # create item, meeting in cfg2
+        self.changeUser('pmCreator1')
+        self.tool.getPloneMeetingFolder(cfg2Id)
+        emergencyItem = self.create('MeetingItem')
+        emergencyItem.setDecision('<p>My decision</p>', mimetype='text/html')
+        emergencyItem.setOtherMeetingConfigsClonableTo((cfg2Id,))
+        emergencyItem.setOtherMeetingConfigsClonableToEmergency((cfg2Id,))
+        normalItem = self.create('MeetingItem')
+        normalItem.setDecision('<p>My decision</p>', mimetype='text/html')
+        normalItem.setOtherMeetingConfigsClonableTo((cfg2Id,))
+
+        self.changeUser('pmManager')
+        now = DateTime()
+        # create 2 meetings in cfg2
+        createdMeeting = self.create('Meeting', date=now+10, meetingConfig=cfg2)
+        frozenMeeting = self.create('Meeting', date=now+5, meetingConfig=cfg2)
+        self.freezeMeeting(frozenMeeting)
+
+        # send items
+        self.changeUser('pmCreator1')
+        normalItem.cloneToOtherMeetingConfig(cfg2Id)
+        emergencyItem.cloneToOtherMeetingConfig(cfg2Id)
+        # createdMeeting may be set as preferredMeeting even if not viewable by user
+        clonedNormalItem = normalItem.getItemClonedToOtherMC(cfg2Id)
+        self.assertFalse(self.hasPermission(View, createdMeeting))
+        self.assertEqual(clonedNormalItem.getPreferredMeeting(),
+                         createdMeeting.UID())
+        clonedEmergencyItem = emergencyItem.getItemClonedToOtherMC(cfg2Id)
+        self.assertTrue(self.hasPermission(View, frozenMeeting))
+        self.assertEqual(clonedEmergencyItem.getPreferredMeeting(),
+                         frozenMeeting.UID())
+
+        # now present items to check it is correctly inserted in relevant meeting
+        self.changeUser('pmManager')
+        self.setCurrentMeeting(None)
+        self.presentItem(clonedNormalItem)
+        self.assertEqual(clonedNormalItem.getMeeting(), createdMeeting)
+        self.presentItem(clonedEmergencyItem)
+        self.assertEqual(clonedEmergencyItem.getMeeting(), frozenMeeting)
 
     def test_pm_SendItemToOtherMCUsingPrivacy(self):
         '''Test when sending an item to another MeetingConfig and privacy is defined
@@ -1999,7 +2057,8 @@ class testMeetingItem(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         # we havbe 3 meetings and one special element "whatever"
         self.assertEquals(len(item.listMeetingsAcceptingItems()), 4)
-        self.assertTrue("whatever" in item.listMeetingsAcceptingItems().keys())
+        self.assertTrue(ITEM_NO_PREFERRED_MEETING_VALUE in
+                        item.listMeetingsAcceptingItems().keys())
         # now do m1 a meeting that do not accept any items anymore
         self.closeMeeting(m1)
         self.assertEquals(len(item.listMeetingsAcceptingItems()), 3)

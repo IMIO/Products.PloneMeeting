@@ -4864,7 +4864,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 inTheFuture=True)
         res = None
         if meetingsAcceptingItems:
-            res = meetingsAcceptingItems[0].getObject()
+            res = meetingsAcceptingItems[0]._unrestrictedGetObject()
         return res
 
     security.declarePrivate('cloneToOtherMeetingConfig')
@@ -4935,6 +4935,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     newItem.setCategory(newCat.getId())
                     break
 
+        # find meeting to present the item in and set is as preferred
+        # this way if newItem needs to be presented in a frozen meeting, it works
+        # at it requires the preferredMeeting to be the frozen meeting
+        meeting = self._otherMCMeetingToBePresentedIn(destMeetingConfig)
+        newItem.setPreferredMeeting(meeting.UID())
+
         # execute some transitions on the newItem if it was defined in the cfg
         # find the transitions to trigger
         triggerUntil = NO_TRIGGER_WF_TRANSITION_UNTIL
@@ -4962,16 +4968,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         # special handling for the 'present' transition
                         # that needs a meeting as 'PUBLISHED' object to work
                         if tr == 'present':
-                            # find meeting to present the item in
-                            meeting = self._otherMCMeetingToBePresentedIn(destMeetingConfig)
                             if not meeting:
                                 plone_utils.addPortalMessage(
                                     _('could_not_present_item_no_meeting_accepting_items',
                                       mapping={'destMeetingConfigTitle': destMeetingConfig.Title()}),
                                     'warning')
                                 break
-                            newItem.setPreferredMeeting(meeting.UID())
-                            newItem.reindexObject(idxs=['getPreferredMeeting', 'getPreferredMeetingDate'])
                             newItem.REQUEST['PUBLISHED'] = meeting
 
                         wfTool.doActionFor(newItem, tr, comment=wf_comment)
