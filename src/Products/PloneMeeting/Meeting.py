@@ -1213,8 +1213,14 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             label = 'pre_date_after_meeting_date'
             return translate(label, domain='PloneMeeting', context=self.REQUEST)
 
-    def getItems(self, uids=[], listTypes=[], ordered=False, useCatalog=False,
-                 additional_catalog_query=[], unrestricted=False, **kwargs):
+    def getItems(self,
+                 uids=[],
+                 listTypes=[],
+                 ordered=False,
+                 useCatalog=False,
+                 additional_catalog_query={},
+                 unrestricted=False,
+                 **kwargs):
         '''Overrides the Meeting.items accessor.
            Items can be filtered depending on :
            - list of given p_uids;
@@ -1234,12 +1240,14 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                 catalog_query.append({'i': 'UID',
                                       'o': 'plone.app.querystring.operation.selection.is',
                                       'v': uids},)
-            # append additional_catalog_query
-            catalog_query += additional_catalog_query
             if ordered:
                 query = queryparser.parseFormquery(self, catalog_query, sort_on=self.getSort_on())
             else:
                 query = queryparser.parseFormquery(self, catalog_query)
+
+            # append additional_catalog_query
+            query.update(additional_catalog_query)
+            import ipdb; ipdb.set_trace()
             if unrestricted:
                 res = catalog.unrestrictedSearchResults(**query)
             else:
