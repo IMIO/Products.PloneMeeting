@@ -127,7 +127,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   Added also relevant leading icons to show what privacy will use the item that will be created in the other MC
 - Added possibility to manually clone an item to another config.  It is now possible to define states in
   which an item may be sent manually and states in which an item will be sent automatically.  Take care that when
-  an item is cloned manually, the transitions to tigger on new item will NOT be triggered, this is reserved to
+  an item is cloned manually, the transitions to trigger on new item will NOT be triggered, this is reserved to
   items cloned automatically
 - Added leading icon 'sent from' that shows on an item if it is the result of another item sent from another
   configuration.  This way we have the leading icon on the original item with informations about the resulting item
