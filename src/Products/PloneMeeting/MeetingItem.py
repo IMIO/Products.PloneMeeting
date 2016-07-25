@@ -4935,7 +4935,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # this way if newItem needs to be presented in a frozen meeting, it works
         # at it requires the preferredMeeting to be the frozen meeting
         meeting = self._otherMCMeetingToBePresentedIn(destMeetingConfig)
-        newItem.setPreferredMeeting(meeting.UID())
+        if meeting:
+            newItem.setPreferredMeeting(meeting.UID())
 
         # execute some transitions on the newItem if it was defined in the cfg
         # find the transitions to trigger

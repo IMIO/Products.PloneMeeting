@@ -896,9 +896,18 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg2.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_proposing_groups',
                                             'reverse': '0'}, ))
 
-        # create item, meeting in cfg2
+        # create items in cfg1 and meetings in cfg2
         self.changeUser('pmCreator1')
         self.tool.getPloneMeetingFolder(cfg2Id)
+        # no meeting available in cfg2
+        noAvailableMeetingItem = self.create('MeetingItem')
+        noAvailableMeetingItem.setDecision('<p>My decision</p>', mimetype='text/html')
+        noAvailableMeetingItem.setOtherMeetingConfigsClonableTo((cfg2Id,))
+        noAvailableMeetingItem.setOtherMeetingConfigsClonableToEmergency((cfg2Id,))
+        noAvailableMeetingItem.cloneToOtherMeetingConfig(cfg2Id)
+        self.assertEqual(noAvailableMeetingItem.getPreferredMeeting(),
+                         ITEM_NO_PREFERRED_MEETING_VALUE)
+
         emergencyItem = self.create('MeetingItem')
         emergencyItem.setDecision('<p>My decision</p>', mimetype='text/html')
         emergencyItem.setOtherMeetingConfigsClonableTo((cfg2Id,))
