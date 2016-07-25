@@ -13,6 +13,9 @@ table.listing tbody tr.even.meeting_item_privacy_secret td {
 table.listing tbody tr.odd.meeting_item_privacy_secret td {
     background-color: #ffff99;
 }
+img.logical_meeting {
+    cursor: help;
+}
 
 table.listing tr[class][class] td[class^='meeting_item_listType_'] {
     padding: 0em;

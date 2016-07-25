@@ -120,11 +120,13 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Added field MeetingItem.otherMeetingConfigsClonableToEmergency, this way when an item is sent to another meeting
   configuration and it is specified in the configuration that the sent item must be automatically presented in
   a next available meeting, if emergency is specified, the sent item will also be presented in a meeting that is
-  no more in 'created' state.
+  no more in 'created' state
   Added also relevant leading icons to show an item 'to send' with emergency
 - Added field MeetingItem.otherMeetingConfigsClonableToPrivacy, that let's user specify if sent item will use
   privacy 'Closed meeting' in the destination configuration
   Added also relevant leading icons to show what privacy will use the item that will be created in the other MC
+- Display every informations about the otherMeetingConfigsClonable : other configuration title, selected privacy and
+  emergency and theorical/effective meeting date into which item is or will be presented
 - Added possibility to manually clone an item to another config.  It is now possible to define states in
   which an item may be sent manually and states in which an item will be sent automatically.  Take care that when
   an item is cloned manually, the transitions to trigger on new item will NOT be triggered, this is reserved to

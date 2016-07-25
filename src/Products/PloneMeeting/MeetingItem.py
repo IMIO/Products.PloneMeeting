@@ -3641,6 +3641,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def displayOtherMeetingConfigsClonableTo(self):
         '''Display otherMeetingConfigsClonableTo with eventual
            emergency and privacy informations.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
         vocab = self.listOtherMeetingConfigsClonableTo()
 
         # emergency
@@ -3654,6 +3655,19 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         public_msg = translate('public',
                                domain='PloneMeeting',
                                context=self.REQUEST)
+
+        # effective/theorical meeting informations
+        effective_meeting_msg = translate('effective_meeting_help',
+                                          domain='PloneMeeting',
+                                          context=self.REQUEST)
+        theorical_meeting_msg = translate('theorical_meeting_help',
+                                          domain='PloneMeeting',
+                                          context=self.REQUEST)
+        no_meeting_available_msg = translate('no_meeting_available',
+                                             domain='PloneMeeting',
+                                             context=self.REQUEST)
+        portal_url = api.portal.get().absolute_url()
+
         res = []
         for otherMC in self.getOtherMeetingConfigsClonableTo():
             isSecret = otherMC in self.getOtherMeetingConfigsClonableToPrivacy()
@@ -3665,9 +3679,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if self.attributeIsUsed('otherMeetingConfigsClonableToPrivacy'):
                 displayPrivacy = True
 
-            PATTERN = u"{0}"
+            PATTERN = u"{0} ({1})"
             if displayEmergency or displayPrivacy:
-                PATTERN = u"{0} ({1})"
+                PATTERN = u"{0} ({1} - {2})"
 
             emergencyAndPrivacyInfos = []
             if displayEmergency:
@@ -3678,7 +3692,32 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     isSecret and 'secret' or 'public',
                     isSecret and secret_msg or public_msg)
                 emergencyAndPrivacyInfos.append(privacyInfo)
-            tmp = PATTERN.format(cfgTitle, " - ".join(emergencyAndPrivacyInfos))
+
+            # if sendable, display logical meeting into which it could be presented
+            # if already sent, just display the "sent" information
+            LOGICAL_DATE_PATTERN = u"<img class='logical_meeting' src='{0}' title='{1}'></img>&nbsp;<span>{2}</span>"
+            clonedItem = self.getItemClonedToOtherMC(otherMC)
+            if not clonedItem or not clonedItem.hasMeeting():
+                logicalMeeting = self._otherMCMeetingToBePresentedIn(getattr(tool, otherMC))
+                if logicalMeeting:
+                    logicalMeetingLink = logicalMeeting.getPrettyLink(prefixed=False,
+                                                                      showContentIcon=False)
+                else:
+                    logicalMeetingLink = no_meeting_available_msg
+                iconName = 'greyedMeeting.png'
+                title_help_msg = theorical_meeting_msg
+            else:
+                clonedItemMeeting = clonedItem.getMeeting()
+                logicalMeetingLink = clonedItemMeeting.getPrettyLink(prefixed=False,
+                                                                     showContentIcon=False)
+                iconName = 'Meeting.png'
+                title_help_msg = effective_meeting_msg
+
+            logicalDateInfo = LOGICAL_DATE_PATTERN.format('/'.join((portal_url, iconName)),
+                                                          title_help_msg,
+                                                          logicalMeetingLink)
+
+            tmp = PATTERN.format(cfgTitle, " - ".join(emergencyAndPrivacyInfos), logicalDateInfo)
             res.append(tmp)
         return u", ".join(res) or "-"
 
@@ -4811,6 +4850,23 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Action used by the 'clone to other config' button.'''
         self.cloneToOtherMeetingConfig(destMeetingConfigId)
 
+    def _otherMCMeetingToBePresentedIn(self, destMeetingConfig):
+        """Returns the logical meeting the item should be presented in
+           when it will be sent to given p_destMeetingConfig."""
+        if destMeetingConfig.getId() in self.getOtherMeetingConfigsClonableToEmergency():
+            meetingsAcceptingItems = destMeetingConfig.adapted().getMeetingsAcceptingItems(
+                inTheFuture=True)
+        else:
+            wfTool = api.portal.get_tool('portal_workflow')
+            meetingWF = wfTool.getWorkflowsFor(destMeetingConfig.getMeetingTypeName())[0]
+            meetingsAcceptingItems = destMeetingConfig.adapted().getMeetingsAcceptingItems(
+                review_states=(wfTool[meetingWF.getId()].initial_state, ),
+                inTheFuture=True)
+        res = None
+        if meetingsAcceptingItems:
+            res = meetingsAcceptingItems[0].getObject()
+        return res
+
     security.declarePrivate('cloneToOtherMeetingConfig')
 
     def cloneToOtherMeetingConfig(self, destMeetingConfigId, automatically=False):
@@ -4899,7 +4955,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # several items in a meeting and some are sent to another MC then presented
             # to a meeting of this other MB
             originalPublishedObject = self.REQUEST.get('PUBLISHED')
-            meetingWF = wfTool.getWorkflowsFor(cfg.getMeetingTypeName())[0]
             # do this as Manager to be sure that transitions may be triggered
             with api.env.adopt_roles(roles=['Manager']):
                 for tr in destMeetingConfig.getTransitionsForPresentingAnItem():
@@ -4907,22 +4962,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         # special handling for the 'present' transition
                         # that needs a meeting as 'PUBLISHED' object to work
                         if tr == 'present':
-                            # find next meeting accepting items, only query meetings that
-                            # are in the initial workflow state if not otherMeetingConfigsClonableToEmergency
-                            if destMeetingConfigId in self.getOtherMeetingConfigsClonableToEmergency():
-                                meetingsAcceptingItems = destMeetingConfig.adapted().getMeetingsAcceptingItems(
-                                    inTheFuture=True)
-                            else:
-                                meetingsAcceptingItems = destMeetingConfig.adapted().getMeetingsAcceptingItems(
-                                    review_states=(wfTool[meetingWF.getId()].initial_state, ),
-                                    inTheFuture=True)
-                            if not meetingsAcceptingItems:
+                            # find meeting to present the item in
+                            meeting = self._otherMCMeetingToBePresentedIn(destMeetingConfig)
+                            if not meeting:
                                 plone_utils.addPortalMessage(
                                     _('could_not_present_item_no_meeting_accepting_items',
                                       mapping={'destMeetingConfigTitle': destMeetingConfig.Title()}),
                                     'warning')
                                 break
-                            meeting = meetingsAcceptingItems[0].getObject()
                             newItem.setPreferredMeeting(meeting.UID())
                             newItem.reindexObject(idxs=['getPreferredMeeting', 'getPreferredMeetingDate'])
                             newItem.REQUEST['PUBLISHED'] = meeting
