@@ -12,6 +12,8 @@
   </hidden>
   <hidden manager="plone.belowcontenttitle" skinname="*">
     <viewlet name="document-generation-link" />
+    <!-- Should be done by imio.history but does not seem to work anymore? Plone 4.3.8? -->
+    <viewlet name="plone.belowcontenttitle.documentbyline" />
   </hidden>
   <hidden manager="plone.belowcontentbody" skinname="*">
     <viewlet name="plone.belowcontentbody.contenthistory" />
