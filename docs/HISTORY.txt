@@ -17,7 +17,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Replaced own PODTemplate by the ConfigurablePODTemplate of collective.documentgenerator, removed appy.pod
   parameters from portal_plonemeeting and use the collective.documentgenerator control panel. Added back
   "mailing lists" functionnality that does not exist in collective.documentgenerator.  It is now possible to
-  use email addresses in addition to userIds to specify to who send the generated document
+  use email addresses and TAL expressions in addition to userIds to specify whom to send the generated document
 - Moved dashboards and meeting view to imio.dashboard (see imio.dashboard package regarding required changes)
 - MeetingFiles title is now indexed in items's SearchableText so it is possible to do a search on an annex
   title directly in the 'Search' field available on every dashboard searches (my items, all items, ...)

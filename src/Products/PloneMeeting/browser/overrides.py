@@ -19,6 +19,7 @@ from plone.app.layout.viewlets.common import GlobalSectionsViewlet
 from plone.memoize import ram
 from plone.memoize.view import memoize_contextless
 
+from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.ckeditor.browser.ckeditorfinder import CKFinder
 from collective.documentgenerator.content.pod_template import IPODTemplate
 from collective.eeafaceted.collectionwidget.browser.views import RenderCategoryView
@@ -717,17 +718,39 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
         pod_template = self.get_pod_template(self.request.get('template_uid'))
         mailing_lists = pod_template.mailing_lists and pod_template.mailing_lists.strip()
         for line in mailing_lists.split('\n'):
-            name, condition, userIds = line.split(';')
+            name, condition, values = line.split(';')
             if name != mailinglist_name:
                 continue
-            for userId in userIds.strip().split(','):
-                # recipient may either be a userId having an email address or an email address directly
-                recipient = tool.getMailRecipient(userId.strip()) or ('@' in userId and userId)
+            # compile userIds in case we have a TAL expression
+            userIdsOrEmailAddresses = []
+            for value in values.strip().split(','):
+                # value may either be a userId
+                # or an email address directly
+                # or a TAL expression returning a list of userIds or email addresses
+                if value.startswith('python:') or '/' in value:
+                    evaluatedExpr = _evaluateExpression(self.context,
+                                                        expression=value.strip(),
+                                                        extra_expr_ctx={'obj': self.context,
+                                                                        'member': api.user.get_current(),
+                                                                        'tool': tool,
+                                                                        'cfg': tool.getMeetingConfig(self.context)},)
+                    userIdsOrEmailAddresses += list(evaluatedExpr)
+                else:
+                    userIdsOrEmailAddresses.append(value)
+            # now we have userIds or email addresse, we want email addresses
+            for userIdOrEmailAddress in userIdsOrEmailAddresses:
+                recipient = tool.getMailRecipient(userIdOrEmailAddress.strip()) or \
+                    ('@' in userIdOrEmailAddress and userIdOrEmailAddress)
                 if not recipient:
                     continue
                 recipients.append(recipient)
         if not recipients:
             raise Exception(self.BAD_MAILINGLIST)
+        self._sendToRecipients(recipients, pod_template, rendered_template)
+
+    def _sendToRecipients(self, recipients, pod_template, rendered_template):
+        '''Send given p_rendered_template of p_pod_template to p_recipients.
+           This is extracted so it can be called from other places than self._sendPodTemplate.'''
         # Send the mail with the document as attachment
         docName = '%s.%s' % (self._get_filename(pod_template), self.get_generation_format())
         # generate event name depending on obj type
