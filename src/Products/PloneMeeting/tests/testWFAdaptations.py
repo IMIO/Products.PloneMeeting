@@ -787,12 +787,12 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertEquals(item.queryState(), 'itemcreated')
         # we have transitions
         self.failUnless(self.hasPermission(DeleteObjects, item))
-        self.do(item, 'propose')
+        self.proposeItem(item)
         self.failIf(self.hasPermission(DeleteObjects, item))
         self.changeUser('pmReviewer2')
         # the Reviewer can delete
         self.failUnless(self.hasPermission(DeleteObjects, item))
-        self.do(item, 'validate')
+        self.validateItem(item)
         self.failIf(self.hasPermission(DeleteObjects, item))
         self.changeUser('pmManager')
         # the MeetingManager can delete
