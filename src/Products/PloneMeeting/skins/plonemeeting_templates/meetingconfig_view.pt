@@ -873,8 +873,15 @@
                   <span metal:use-macro="here/widgets/field/macros/view" />
             </fieldset>
           </td>
-          <td>
+          <td></td>
+          <td></td>
+        </tr>
+        <tr valign="top">
+          <td tal:define="field python:here.getField('powerAdvisersGroups')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
+          <td></td>
+          <td></td>
         </tr>
         <tr valign="top">
           <td tal:define="field python:here.getField('itemPowerObserversStates')">
@@ -898,7 +905,7 @@
           <td tal:define="field python:here.getField('itemBudgetInfosStates')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td tal:define="field python:here.getField('powerAdvisersGroups')">
+          <td tal:define="field python:here.getField('itemGroupInChargeStates')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <td></td>

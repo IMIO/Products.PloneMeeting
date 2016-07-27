@@ -1555,6 +1555,49 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(self.hasPermission(ModifyPortalContent, item))
         self.assertTrue(self.hasPermission(WriteBudgetInfos, item))
 
+    def test_pm_GroupInChargeLocalRoles(self):
+        '''Group in charge will have access of groups they have in charge in states
+           defined in MeetingConfig.itemGroupInChargeStates.'''
+        cfg = self.meetingConfig
+        cfg.setItemGroupInChargeStates(self.WF_STATE_NAME_MAPPINGS['itemcreated'],)
+
+        # first test : no group in charge
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        proposingGroup = item.getProposingGroup(theObject=True)
+        self.assertFalse(proposingGroup.getGroupInChargeAt())
+        # this does not fail...
+        item.updateLocalRoles()
+        self.assertFalse('vendors_observers' in item.__ac_local_roles__)
+
+        # define a group in charge
+        proposingGroup.setGroupInCharge(({'group_id': 'vendors', 'date_to': ''},))
+        self.assertEqual(proposingGroup.getGroupInChargeAt(), self.tool.vendors)
+        item.updateLocalRoles()
+        self.assertTrue(READER_USECASES['groupincharge'] in item.__ac_local_roles__['vendors_observers'])
+
+        # not right state in the configuration
+        cfg.setItemGroupInChargeStates(self.WF_STATE_NAME_MAPPINGS['proposed'],)
+        item.updateLocalRoles()
+        self.assertFalse('vendors_observers' in item.__ac_local_roles__)
+
+        # right, back to correct configuration but make group in charge no more valid
+        cfg.setItemGroupInChargeStates(self.WF_STATE_NAME_MAPPINGS['itemcreated'],)
+        item.updateLocalRoles()
+        self.assertTrue(READER_USECASES['groupincharge'] in item.__ac_local_roles__['vendors_observers'])
+        proposingGroup.setGroupInCharge(({'group_id': 'vendors', 'date_to': '2016/01/01'},))
+        self.assertFalse(proposingGroup.getGroupInChargeAt())
+        item.updateLocalRoles()
+        self.assertFalse('vendors_observers' in item.__ac_local_roles__)
+
+        # check that changing item's state works, back to correct configuration
+        proposingGroup.setGroupInCharge(({'group_id': 'vendors', 'date_to': ''},))
+        self.assertEqual(proposingGroup.getGroupInChargeAt(), self.tool.vendors)
+        item.updateLocalRoles()
+        self.assertTrue(READER_USECASES['groupincharge'] in item.__ac_local_roles__['vendors_observers'])
+        self.proposeItem(item)
+        self.assertFalse('vendors_observers' in item.__ac_local_roles__)
+
     def test_pm_ItemIsSigned(self):
         '''Test the functionnality around MeetingItem.itemIsSigned field.
            Check also the @@toggle_item_is_signed view that do some unrestricted things...'''

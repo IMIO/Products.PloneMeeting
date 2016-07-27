@@ -144,6 +144,7 @@ READER_USECASES = {
     'advices': 'Reader',
     'powerobservers': 'Reader',
     'restrictedpowerobservers': 'Reader',
+    'groupincharge': 'Reader',
 }
 
 ploneMeetingRoles = (

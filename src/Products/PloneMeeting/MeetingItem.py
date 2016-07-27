@@ -4542,6 +4542,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # actually it could be enough to do in in the onItemTransition but as it is
         # always done after updateLocalRoles, we do it here as it is trivial
         self._updateBudgetImpactEditorsLocalRoles()
+        # update group in charge local roles
+        # we will give the current groupInCharge _observers sub group access to this item
+        self._updateGroupInChargeLocalRoles()
+
         # manage the 'ATContentTypes: Add Image' permission
         _addImagePermission(self)
         # notify that localRoles have been updated
@@ -4601,6 +4605,20 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return
         budgetImpactEditorsGroupId = "%s_%s" % (cfg.getId(), BUDGETIMPACTEDITORS_GROUP_SUFFIX)
         self.manage_addLocalRoles(budgetImpactEditorsGroupId, ('MeetingBudgetImpactEditor',))
+
+    def _updateGroupInChargeLocalRoles(self):
+        '''Get the current groupInCharge and give View access to the _observers Plone group.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        itemState = self.queryState()
+        if itemState not in cfg.getItemGroupInChargeStates():
+            return
+        proposingGroup = self.getProposingGroup(True)
+        groupInCharge = proposingGroup.getGroupInChargeAt()
+        if not groupInCharge:
+            return
+        observersPloneGroupId = groupInCharge.getPloneGroupId('observers')
+        self.manage_addLocalRoles(observersPloneGroupId, (READER_USECASES['groupincharge'],))
 
     def _versionateAdvicesOnItemEdit(self):
         """When item is edited, versionate advices if necessary, it is the case if advice was
