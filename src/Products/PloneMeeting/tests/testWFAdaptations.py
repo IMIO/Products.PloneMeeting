@@ -67,6 +67,7 @@ class testWFAdaptations(PloneMeetingTestCase):
                                'mark_not_applicable',
                                'pre_validation',
                                'pre_validation_keep_reviewer_permissions',
+                               'removed',
                                'return_to_proposing_group',
                                )))
 
@@ -397,6 +398,38 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertEquals(
             cfg.validate_workflowAdaptations(()),
             mark_not_applicable_removed_error)
+
+        # make wfAdaptation selectable
+        self.do(item, 'backToItemFrozen')
+        self.failIf(cfg.validate_workflowAdaptations(()))
+
+    def test_pm_Validate_workflowAdaptations_removed_removed(self):
+        """Test MeetingConfig.validate_workflowAdaptations that manage removal
+           of wfAdaptations 'removed' that is not possible if
+           some items are 'removed'."""
+        # ease override by subproducts
+        cfg = self.meetingConfig
+        if not 'removed' in cfg.listWorkflowAdaptations():
+            return
+
+        removed_removed_error = translate('wa_removed_removed_error',
+                                          domain='PloneMeeting',
+                                          context=self.request)
+        self.changeUser('pmManager')
+        cfg.setWorkflowAdaptations(('removed', ))
+        performWorkflowAdaptations(cfg, logger=pm_logger)
+
+        meeting = self.create('Meeting', date=DateTime('2016/06/06'))
+        item = self.create('MeetingItem')
+        item.setDecision('<p>Decision</p>')
+        self.presentItem(item)
+        self.decideMeeting(meeting)
+        self.do(item, 'remove')
+        self.assertEqual(item.queryState(), 'removed')
+        self.failIf(cfg.validate_workflowAdaptations(('removed', )))
+        self.assertEquals(
+            cfg.validate_workflowAdaptations(()),
+            removed_removed_error)
 
         # make wfAdaptation selectable
         self.do(item, 'backToItemFrozen')
@@ -1884,6 +1917,43 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.decideMeeting(meeting)
         self.do(item, 'mark_not_applicable')
         self.assertEqual(item.queryState(), 'marked_not_applicable')
+        # back transition
+        self.do(item, 'backToItemFrozen')
+
+    def test_pm_WFA_removed(self):
+        '''Test the workflowAdaptation 'removed'.'''
+        # ease override by subproducts
+        cfg = self.meetingConfig
+        if not 'removed' in cfg.listWorkflowAdaptations():
+            return
+        self.changeUser('pmManager')
+        # check while the wfAdaptation is not activated
+        self._removed_inactive()
+        # activate the wfAdaptation and check
+        cfg.setWorkflowAdaptations(('removed', ))
+        performWorkflowAdaptations(cfg, logger=pm_logger)
+        self._removed_active()
+
+    def _removed_inactive(self):
+        '''Tests while 'removed' wfAdaptation is inactive.'''
+        itemWF = self.wfTool.getWorkflowsFor(self.meetingConfig.getItemTypeName())[0]
+        self.assertFalse('remove' in itemWF.transitions)
+        self.assertFalse('removed' in itemWF.states)
+
+    def _removed_active(self):
+        '''Tests while 'mark_not_applicable' wfAdaptation is active.'''
+        itemWF = self.wfTool.getWorkflowsFor(self.meetingConfig.getItemTypeName())[0]
+        self.assertTrue('remove' in itemWF.transitions)
+        self.assertTrue('removed' in itemWF.states)
+        # test it
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2016/06/06'))
+        item = self.create('MeetingItem')
+        item.setDecision('<p>A decision</p>')
+        self.presentItem(item)
+        self.decideMeeting(meeting)
+        self.do(item, 'remove')
+        self.assertEqual(item.queryState(), 'removed')
         # back transition
         self.do(item, 'backToItemFrozen')
 

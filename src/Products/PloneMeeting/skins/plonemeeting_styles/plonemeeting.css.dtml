@@ -175,7 +175,7 @@ table[border='0'],
 table[border='0'] tr,
 table[border='0'] td,
 table[border='0'] th {
-    border: 1px dotted lightgrey;
+    border: 1px dotted darkgrey;
 }
 
 
@@ -263,7 +263,8 @@ div.pm_search_no_result_info {
 .state-confirmed, .label-state-confirmed { color: green !important; }
 .state-delayed, .label-state-delayed,
 .state-marked_not_applicable, .label-state-marked_not_applicable,
-.state-postponed_next_meeting, .label-state-postponed_next_meeting {
+.state-postponed_next_meeting, .label-state-postponed_next_meeting,
+.state-removed, .label-state-removed {
     color: grey !important; }
 .state-refused, .label-state-refused { color: violet !important; }
 .state-closed, .label-state-closed { color: grey !important; }

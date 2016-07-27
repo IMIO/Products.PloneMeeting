@@ -2000,7 +2000,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                      'only_creator_may_delete', 'pre_validation',  'pre_validation_keep_reviewer_permissions',
                      'items_come_validated', 'archiving', 'no_publication', 'no_proposal', 'everyone_reads_all',
                      'creator_edits_unless_closed', 'return_to_proposing_group', 'hide_decisions_when_under_writing',
-                     'waiting_advices', 'postpone_next_meeting', 'mark_not_applicable')
+                     'waiting_advices', 'postpone_next_meeting', 'mark_not_applicable', 'removed')
 
     def _searchesInfo(self):
         """Informations used to create DashboardCollections in the searches."""
@@ -3006,6 +3006,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # check that no more items are in this state
             if catalog(portal_type=self.getItemTypeName(), review_state='marked_not_applicable'):
                 return translate('wa_removed_mark_not_applicable_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+        if 'removed' in removed:
+            # this will remove the 'removed' state for Item
+            # check that no more items are in this state
+            if catalog(portal_type=self.getItemTypeName(), review_state='removed'):
+                return translate('wa_removed_removed_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
 

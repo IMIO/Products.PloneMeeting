@@ -528,6 +528,11 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                         translate('icon_help_marked_not_applicable',
                                   domain="PloneMeeting",
                                   context=self.request)))
+        elif itemState == 'removed':
+            res.append(('removed.png',
+                        translate('icon_help_removed',
+                                  domain="PloneMeeting",
+                                  context=self.request)))
         elif itemState == 'waiting_advices':
             res.append(('wait_advices_from_proposed.png',
                         translate('icon_help_waiting_advices',

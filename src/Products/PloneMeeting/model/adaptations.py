@@ -769,6 +769,12 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                              transition_id='mark_not_applicable')
             logger.info(WF_APPLIED % ("mark_not_applicable", meetingConfig.getId()))
 
+        # "removed" add state 'removed' in the item workflow
+        elif wfAdaptation == 'removed':
+            _addDecidedState(new_state_id='removed',
+                             transition_id='remove')
+            logger.info(WF_APPLIED % ("removed", meetingConfig.getId()))
+
 
 # Stuff for performing model adaptations ---------------------------------------
 def companionField(name, type='simple', label=None, searchable=False,
