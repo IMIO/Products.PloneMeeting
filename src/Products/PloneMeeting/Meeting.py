@@ -481,7 +481,7 @@ schema = Schema((
             description="MeetingAssemblyExcused",
             description_msgid="assembly_excused_meeting_descr",
             label='Assemblyexcused',
-            label_msgid='PloneMeeting_label_assemblyExcused',
+            label_msgid='meeting_assemblyExcused',
             i18n_domain='PloneMeeting',
         ),
         default_output_type="text/html",
@@ -496,7 +496,7 @@ schema = Schema((
             description="MeetingAssemblyAbsents",
             description_msgid="assembly_absents_meeting_descr",
             label='Assemblyabsents',
-            label_msgid='PloneMeeting_label_assemblyAbsents',
+            label_msgid='meeting_assemblyAbsents',
             i18n_domain='PloneMeeting',
         ),
         default_output_type="text/html",
@@ -509,7 +509,7 @@ schema = Schema((
         widget=TextAreaWidget(
             condition="python: here.attributeIsUsed('assemblyGuests')",
             label='Assemblyguests',
-            label_msgid='PloneMeeting_label_assemblyGuests',
+            label_msgid='meeting_assemblyGuests',
             i18n_domain='PloneMeeting',
         ),
         default_output_type="text/html",
@@ -522,7 +522,7 @@ schema = Schema((
         widget=TextAreaWidget(
             condition="python: here.attributeIsUsed('assemblyProxies')",
             label='Assemblyproxies',
-            label_msgid='PloneMeeting_label_assemblyProxies',
+            label_msgid='meeting_assemblyProxies',
             i18n_domain='PloneMeeting',
         ),
         default_output_type="text/html",
@@ -535,10 +535,11 @@ schema = Schema((
         widget=TextAreaWidget(
             condition="python: here.attributeIsUsed('assemblyStaves')",
             label='Assemblystaves',
-            label_msgid='PloneMeeting_label_assemblyStaves',
+            label_msgid='meeting_assemblyStaves',
             i18n_domain='PloneMeeting',
         ),
         default_output_type="text/html",
+        default_method="getDefaultAssemblyStaves",
         default_content_type="text/plain",
     ),
     LinesField(
@@ -1445,7 +1446,16 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getDefaultAssembly(self):
         if self.attributeIsUsed('assembly'):
-            return self.portal_plonemeeting.getMeetingConfig(self).getAssembly()
+            tool = api.portal.get_tool('portal_plonemeeting')
+            return tool.getMeetingConfig(self).getAssembly()
+        return ''
+
+    security.declarePrivate('getDefaultAssemblyStaves')
+
+    def getDefaultAssemblyStaves(self):
+        if self.attributeIsUsed('assemblyStaves'):
+            tool = api.portal.get_tool('portal_plonemeeting')
+            return tool.getMeetingConfig(self).getAssemblyStaves()
         return ''
 
     security.declarePublic('getStrikedAssembly')

@@ -190,23 +190,33 @@
       <p i18n:translate="meetingconfig_assembly_and_signatures_descr" class='pageNameDescr'></p><br />
       <table width="100%" class="discreet">
         <tr valign="top">
-          <td width="33%">
+          <td width="50%">
             <span class="warningInMeetingConfig" i18n:translate="" tal:condition="python: not 'assembly' in context.getUsedMeetingAttributes()">
               The field here above is not used, check the 'users' tab.
             </span>
             <tal:comment replace="nothing">We do not use the widget macro to be able to render 'assembly' using mimetype='text/x-html-safe'</tal:comment>
             <label class="formQuestion"><span i18n:translate="PloneMeeting_label_assembly"></span>:</label>
-            <span tal:replace="structure python: context.getAssembly(mimetype='text/x-html-safe') or '-'"/>
+            <div class="field" tal:content="structure python: context.getAssembly(mimetype='text/x-html-safe') or '-'">Assembly</div>
           </td>
-          <td width="34%">
+          <td width="50%">
+            <span class="warningInMeetingConfig" i18n:translate="" tal:condition="python: not 'assembly' in context.getUsedMeetingAttributes()">
+              The field here above is not used, check the 'users' tab.
+            </span>
+            <tal:comment replace="nothing">We do not use the widget macro to be able to render 'assemblyStaves' using mimetype='text/x-html-safe'</tal:comment>
+            <label class="formQuestion"><span i18n:translate="PloneMeeting_label_assemblyStaves"></span>:</label>
+            <div class="field" tal:content="structure python: context.getAssemblyStaves(mimetype='text/x-html-safe') or '-'">Assembly staves</div>
+          </td>
+        </tr>
+        <tr>
+          <td width="50%">
             <span class="warningInMeetingConfig" i18n:translate="" tal:condition="python: not 'assembly' in context.getUsedMeetingAttributes()">
               The field here above is not used, check the 'users' tab.
             </span>
             <tal:comment replace="nothing">We do not use the widget macro to be able to render 'signatures' using mimetype='text/x-html-safe'</tal:comment>
             <label class="formQuestion"><span i18n:translate="PloneMeeting_label_signatures"></span>:</label>
-            <span tal:replace="structure python: context.getSignatures(mimetype='text/x-html-safe') or '-'"/>
+            <div class="field" tal:content="structure python: context.getSignatures(mimetype='text/x-html-safe') or '-'">Assembly staves</div>
           </td>
-          <td width="33%" tal:define="field python:here.getField('certifiedSignatures')">
+          <td width="50%" tal:define="field python:here.getField('certifiedSignatures')">
             <span class="warningInMeetingConfig" i18n:translate="" tal:condition="python: not 'assembly' in context.getUsedMeetingAttributes()">
               The field here above is not used, check the 'users' tab.
             </span>

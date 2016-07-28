@@ -138,6 +138,21 @@ schema = Schema((
         write_permission="PloneMeeting: Write harmless config",
     ),
     TextField(
+        name='assemblyStaves',
+        allowable_content_types=('text/plain',),
+        widget=TextAreaWidget(
+            description="AssemblyStaves",
+            description_msgid="assembly_staves_descr",
+            label='AssemblyStaves',
+            label_msgid='PloneMeeting_label_assemblyStaves',
+            i18n_domain='PloneMeeting',
+        ),
+        default_content_type='text/plain',
+        default=defValues.assemblyStaves,
+        schemata="assembly_and_signatures",
+        write_permission="PloneMeeting: Write harmless config",
+    ),
+    TextField(
         name='signatures',
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(

@@ -272,6 +272,7 @@ class MeetingConfigDescriptor(Descriptor):
 
         # General parameters ---------------------------------------------------
         self.assembly = 'Person 1, Person 2'
+        self.assemblyStaves = 'Staff 1, Staff 2'
         self.signatures = 'Person 1, Person 2, Person 3'
         self.certifiedSignatures = []
         # "Places" describe some predefined places where meetings occur. It is a
