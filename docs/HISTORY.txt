@@ -302,8 +302,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   it is possible to know who was in charge 2 years ago and to print relevant informations on a document for example.
   Added also 'on_groups_in_charge' item insertion method into a meeting (MeetingConfig.insertingMethodsOnAddItem) and added possibilty
   to define item states in which subgroup 'observers' of the group in charge will have access
-- Added optiona fields Meeting.assemblyGuest, Meeting.assemblyProxies and Meeting.assemblyStaves on the meeting to use if necessary.
-  Meeting.assemblyXXX fields are now displayed one under the other on the meeting_view and it is hidden using a collapsible widget
+- Added optional fields Meeting.assemblyGuest, Meeting.assemblyProxies and Meeting.assemblyStaves on the meeting to use if necessary.
+  Meeting.assemblyXXX fields are now displayed one under the other on the meeting_view and it is hidden using a collapsible widget.
+  A default value for Meeting.assemblyStaves may be defined in the MeetingConfig.assemblyStaves attribute
 - Reindex item (reindexObject) when an advice is added/edited/deleted, this way if some custom indexes are managed depending on
   a value of the advice, it is updated if necessary
 - Changed the way MeetingConfig.customAdvisers 'available_on' value works.  Before, it was only evaluated if user could effectively
