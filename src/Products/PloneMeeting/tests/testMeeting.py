@@ -2139,6 +2139,32 @@ class testMeeting(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         self.assertFalse(meeting.showMeetingManagerReservedField('notes'))
 
+    def test_pm_DefaultTextValuesFromConfig(self):
+        """Some values may be defined in the configuration and used when the meeting is created :
+           - Meeting.assembly;
+           - Meeting.assemblyStaves;
+           - Meeting.signatures."""
+        cfg = self.meetingConfig
+        self.changeUser('pmManager')
+        cfg.setAssembly('Default assembly')
+        cfg.setAssemblyStaves('Default assembly staves')
+        cfg.setSignatures('Default signatures')
+
+        # only done if used
+        cfg.setUsedMeetingAttributes(('place', ))
+        meeting = self.create('Meeting', date=DateTime())
+        self.assertEqual(meeting.getAssembly(), '')
+        self.assertEqual(meeting.getAssemblyStaves(), '')
+        self.assertEqual(meeting.getSignatures(), '')
+
+        # enable fields and test
+        cfg.setUsedMeetingAttributes(('assembly', 'assemblyStaves', 'signatures'))
+        meeting = self.create('Meeting', date=DateTime())
+        # assembly fields are turned to HTML as default_output_type is text/html
+        self.assertEqual(meeting.getAssembly(), '<p>Default assembly</p>')
+        self.assertEqual(meeting.getAssemblyStaves(), '<p>Default assembly staves</p>')
+        self.assertEqual(meeting.getSignatures(), 'Default signatures')
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
