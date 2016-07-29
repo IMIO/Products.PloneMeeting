@@ -541,7 +541,7 @@ class testMeeting(PloneMeetingTestCase):
                            ('developers', 'groupincharge1'),
                            ('developers', 'groupincharge1')])
 
-    def test_pm_InsertItemPrivacyThenProposingGroups(self):
+    def test_pm_InsertItemOnPrivacyThenProposingGroups(self):
         '''Sort method tested here is "on_privacy" not reverse and reverse then "on_proposing_groups".'''
         cfg = self.meetingConfig
         self.changeUser('pmManager')
@@ -568,7 +568,25 @@ class testMeeting(PloneMeetingTestCase):
         self.assertEquals([item.getPrivacy() for item in meeting.getItems(ordered=True)],
                           ['secret', 'secret', 'public', 'public', 'public', 'public', 'public'])
 
-    def test_pm_InsertItemPrivacyThenProposingGroupsWithDisabledGroup(self):
+    def test_pm_InsertItemOnPollType(self):
+        '''Sort method tested here is "on_poll_type" not reverse and reverse.'''
+        cfg = self.meetingConfig
+        self.changeUser('pmManager')
+
+        # on_polltype not reverse
+        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_poll_type',
+                                           'reverse': '0'}, ))
+        meeting = self._createMeetingWithItems()
+        self.assertEquals([item.getPollType() for item in meeting.getItems(ordered=True)],
+                          ['freehand', 'freehand', 'freehand', 'freehand', 'no_vote', 'secret', 'secret_separated'])
+        # on_polltype reverse
+        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_poll_type',
+                                           'reverse': '1'}, ))
+        meeting = self._createMeetingWithItems()
+        self.assertEquals([item.getPollType() for item in meeting.getItems(ordered=True)],
+                          ['secret_separated', 'secret', 'no_vote', 'freehand', 'freehand', 'freehand', 'freehand'])
+
+    def test_pm_InsertItemOnPrivacyThenProposingGroupsWithDisabledGroup(self):
         '''Sort method tested here is "on_privacy_then_proposing_groups" but
            with a deactivated group used as proposing group.'''
         self.changeUser('pmManager')
@@ -595,7 +613,7 @@ class testMeeting(PloneMeetingTestCase):
         self.assertEquals([item.getPrivacy() for item in meeting.getItems(ordered=True)],
                           ['public', 'public', 'public', 'public', 'public', 'public', 'secret', 'secret'])
 
-    def test_pm_InsertItemPrivacyThenCategories(self):
+    def test_pm_InsertItemOnPrivacyThenCategories(self):
         '''Sort method tested here is "on_privacy_then_categories".'''
         self.changeUser('pmManager')
         self.setMeetingConfig(self.meetingConfig2.getId())
@@ -641,7 +659,7 @@ class testMeeting(PloneMeetingTestCase):
                            ('public', 'events'),
                            ('public', 'research')])
 
-    def test_pm_InsertItemPrivacyThenCategoriesWithDisabledCategory(self):
+    def test_pm_InsertItemOnPrivacyThenCategoriesWithDisabledCategory(self):
         '''Sort method tested here is "on_privacy_then_categories" but
            with a deactivated category used.'''
         self.changeUser('pmManager')

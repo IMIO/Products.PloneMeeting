@@ -87,22 +87,27 @@ class PloneMeetingTestingHelpers:
             item1.setProposingGroup('vendors')
             item1.setAssociatedGroups(('developers',))
             item1.setPrivacy('public')
+            item1.setPollType('secret_separated')
             item1.setCategory('research')
             item2 = self.create('MeetingItem')  # id=o3
             item2.setProposingGroup('developers')
             item2.setPrivacy('public')
+            item2.setPollType('no_vote')
             item2.setCategory('development')
             item3 = self.create('MeetingItem')  # id=o4
             item3.setProposingGroup('vendors')
             item3.setPrivacy('secret')
+            item3.setPollType('freehand')
             item3.setCategory('development')
             item4 = self.create('MeetingItem')  # id=o5
             item4.setProposingGroup('developers')
             item4.setPrivacy('secret')
+            item4.setPollType('freehand')
             item4.setCategory('events')
             item5 = self.create('MeetingItem')  # id=o6
             item5.setProposingGroup('vendors')
             item5.setPrivacy('public')
+            item5.setPollType('secret')
             item5.setCategory('events')
             for item in (item1, item2, item3, item4, item5):
                 item.setDecision('<p>A decision</p>')

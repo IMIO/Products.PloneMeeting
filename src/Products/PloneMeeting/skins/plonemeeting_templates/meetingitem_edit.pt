@@ -43,16 +43,13 @@
         <td><metal:field use-macro="python:here.widget('classifier', mode='edit')"/></td>
         <td><metal:field use-macro="python:here.widget('category', mode='edit')"/></td>
       </tr>
-      <tr>
-        <td width="160px"><metal:field use-macro="python:here.widget('toDiscuss', mode='edit')"/></td>
-        <td><metal:field use-macro="python:here.widget('itemIsSigned', mode='edit')"/></td>
-      </tr>
-      <tr>
-        <td colspan="5">
-          <metal:field use-macro="python:here.widget('manuallyLinkedItems', mode='edit')"/>
-        </td>
-      </tr>
     </table>
+
+    <metal:field use-macro="python:here.widget('toDiscuss', mode='edit')"/>
+    <metal:field use-macro="python:here.widget('itemIsSigned', mode='edit')"/>
+    <metal:field use-macro="python:here.widget('pollType', mode='edit')"/>
+    <metal:field use-macro="python:here.widget('manuallyLinkedItems', mode='edit')"/>
+
     <tal:comment replace="nothing">Associated groups, optional advisers and copyGroups</tal:comment>
     <table cellpadding="0" cellspacing="0">
       <tr valign="top">
@@ -117,7 +114,7 @@
                 </tal:scriptForOtherMeetingConfigsClonableToSpecificFields>
             </td>
         </tr>
-    </table>
+    </table><br />
 
     <tal:comment replace="nothing">Budget-related information</tal:comment>
     <metal:field use-macro="python:here.widget('budgetRelated', mode='edit')"/>

@@ -762,14 +762,45 @@ class testMeetingConfig(PloneMeetingTestCase):
         # this time it validates as redefining it to using categories
         self.failIf(cfg.validate_insertingMethodsOnAddItem(values))
 
+        # test when selecting 'on_poll_type' without using the 'pollType' field
+        inserting_methods_not_using_poll_type_error_msg = \
+            translate('inserting_methods_not_using_poll_type_error',
+                      domain='PloneMeeting',
+                      context=self.request)
+        values = ({'insertingMethod': 'on_poll_type',
+                   'reverse': '0'}, )
+        if not 'pollType' in cfg.getUsedItemAttributes():
+            cfg.setUsedItemAttributes(cfg.getUsedItemAttributes() + ('pollType', ))
+        self.assertTrue('pollType' in cfg.getUsedItemAttributes())
+        # it validates
+        self.failIf(cfg.validate_insertingMethodsOnAddItem(values))
+        # check on using 'pollType' is made on presence of 'pollType' in 'usedItemAttributes' in the
+        # REQUEST, or if not found, on the value defined on the MeetingConfig object
+        # unselect 'pollType', validation fails
+        usedItemAttrs = list(cfg.getUsedItemAttributes())
+        usedItemAttrsWithoutPollType = usedItemAttrs
+        usedItemAttrsWithoutPollType.remove('pollType')
+        cfg.setUsedItemAttributes(usedItemAttrsWithoutPollType)
+        self.assertEqual(cfg.validate_insertingMethodsOnAddItem(values),
+                         inserting_methods_not_using_poll_type_error_msg)
+        # it validates if 'usedItemAttributes' found in the REQUEST
+        # and 'pollType' in the 'usedItemAttributes', if not it fails...
+        self.portal.REQUEST.set('usedItemAttributes', usedItemAttrsWithoutPollType)
+        self.assertEqual(cfg.validate_insertingMethodsOnAddItem(values),
+                         inserting_methods_not_using_poll_type_error_msg)
+        # but validates if 'pollType' in 'usedItemAttributes' found in the REQUEST
+        self.portal.REQUEST.set('usedItemAttributes', usedItemAttrsWithoutPollType + ['pollType', ])
+        self.failIf(cfg.validate_insertingMethodsOnAddItem(values))
+
         # test when selecting 'on_to_discuss' without using the 'toDiscuss' field
-        not_using_categories_error_msg = translate('inserting_methods_not_using_to_discuss_error',
-                                                   domain='PloneMeeting',
-                                                   context=self.request)
+        inserting_methods_not_using_to_discuss_error_msg = \
+            translate('inserting_methods_not_using_to_discuss_error',
+                      domain='PloneMeeting',
+                      context=self.request)
         values = ({'insertingMethod': 'on_to_discuss',
                    'reverse': '0'}, )
         self.assertTrue('toDiscuss' in cfg.getUsedItemAttributes())
-        # it valdiates
+        # it validates
         self.failIf(cfg.validate_insertingMethodsOnAddItem(values))
         # check on using 'toDiscuss' is made on presence of 'toDiscuss' in 'usedItemAttributes' in the
         # REQUEST, or if not found, on the value defined on the MeetingConfig object
@@ -778,14 +809,18 @@ class testMeetingConfig(PloneMeetingTestCase):
         usedItemAttrsWithoutToDiscuss = usedItemAttrs
         usedItemAttrsWithoutToDiscuss.remove('toDiscuss')
         cfg.setUsedItemAttributes(usedItemAttrsWithoutToDiscuss)
-        self.assertTrue(cfg.validate_insertingMethodsOnAddItem(values) == not_using_categories_error_msg)
+        self.portal.REQUEST.set('usedItemAttributes', ())
+        self.assertEqual(cfg.validate_insertingMethodsOnAddItem(values),
+                         inserting_methods_not_using_to_discuss_error_msg)
         # it validates if 'usedItemAttributes' found in the REQUEST
         # and 'toDiscuss' in the 'usedItemAttributes', if not it fails...
         self.portal.REQUEST.set('usedItemAttributes', usedItemAttrsWithoutToDiscuss)
-        self.assertTrue(cfg.validate_insertingMethodsOnAddItem(values) == not_using_categories_error_msg)
+        self.assertEqual(cfg.validate_insertingMethodsOnAddItem(values),
+                         inserting_methods_not_using_to_discuss_error_msg)
         # but validates if 'toDiscuss' in 'usedItemAttributes' found in the REQUEST
         self.portal.REQUEST.set('usedItemAttributes', usedItemAttrsWithoutToDiscuss + ['toDiscuss', ])
         self.failIf(cfg.validate_insertingMethodsOnAddItem(values))
+
         # if we have a 'orderindex_' key with value 'template_row_marker'
         # it validates, it is the case when using DataGridField in the UI
         # here it works even if 'at_the_end' is used together with 'on_to_discuss'

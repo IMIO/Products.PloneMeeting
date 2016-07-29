@@ -35,6 +35,8 @@
            name="Products.PloneMeeting.vocabularies.listtypesvocabulary" />
   <utility component=".vocabularies.PrivaciesVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.privaciesvocabulary" />
+  <utility component=".vocabularies.PollTypesVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.polltypesvocabulary" />
 
   <!-- Vocabulary used in collectionwidget and inheritating from the imio.dashboard vocabulary -->
   <utility component=".vocabularies.PMConditionAwareCollectionVocabularyFactory"

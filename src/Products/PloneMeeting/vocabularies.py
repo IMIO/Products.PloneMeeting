@@ -518,6 +518,25 @@ class PrivaciesVocabulary(object):
 PrivaciesVocabularyFactory = PrivaciesVocabulary()
 
 
+class PollTypesVocabulary(object):
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """ """
+        res = []
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        for usedPollType in cfg.getUsedPollTypes():
+            res.append(SimpleTerm(usedPollType,
+                                  usedPollType,
+                                  safe_unicode(translate("polltype_{0}".format(usedPollType),
+                                                         domain='PloneMeeting',
+                                                         context=context.REQUEST))))
+        return SimpleVocabulary(res)
+
+PollTypesVocabularyFactory = PollTypesVocabulary()
+
+
 class PMPortalTypesVocabulary(PortalTypesVocabularyFactory):
     """
     Vocabulary factory for 'pod_portal_types' field, make it MeetingConfig aware.

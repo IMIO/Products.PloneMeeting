@@ -319,6 +319,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Added workflowAdaptation 'removed', it adds a decided state 'removed' to the item (based on the already existing
   state 'delayed')
 - Added optional RichText field Meeting.authorityNotice
+- Added optional field MeetingItem.pollType, it relies on MeetingConfig.usedPollTypes and MeetingConfig.defaultPollType.
+  Added also relevant dashboard column and faceted filter
 
 3.3 (2015-02-27)
 ----------------

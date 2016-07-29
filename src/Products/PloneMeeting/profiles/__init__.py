@@ -506,6 +506,8 @@ class MeetingConfigDescriptor(Descriptor):
         self.customAdvisers = []
 
         # Votes parameters -----------------------------------------------------
+        self.usedPollTypes = ('freehand', 'no_vote', 'secret', 'secret_separated')
+        self.defaultPollType = 'freehand'
         self.useVotes = False
         self.votesEncoder = ('theVoterHimself',)
         self.usedVoteValues = ('not_yet', 'yes', 'no', 'abstain')

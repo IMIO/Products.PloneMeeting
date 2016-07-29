@@ -295,6 +295,12 @@
                  tal:condition="python: ('privacy' in usedAttrs) and privacy">
               <span class="#" tal:attributes="class string:item_privacy_${privacy}" tal:content="privacy" i18n:translate="" />
             </div>
+            <tal:comment replace="nothing">Poll type</tal:comment>
+            <div class="discreet" tal:condition="python: 'pollType' in usedAttrs">
+                <span class="item_attribute_label"
+                      i18n:translate="PloneMeeting_label_pollType"></span>:&nbsp;&nbsp;
+                <span metal:use-macro="python: here.widget('pollType', mode='view')" />
+            </div>
             <tal:comment replace="nothing">Oral question or item</tal:comment>
             <div class="discreet" tal:condition="python: 'oralQuestion' in usedAttrs">
              <tal:defines define="oq context/getOralQuestion">

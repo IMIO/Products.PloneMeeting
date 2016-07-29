@@ -1140,6 +1140,19 @@ schema = Schema((
         multiValued=1,
         vocabulary='listCopyGroups',
     ),
+    StringField(
+        name='pollType',
+        widget=SelectionWidget(
+            condition="python: here.attributeIsUsed('pollType')",
+            label='Polltype',
+            label_msgid='PloneMeeting_label_pollType',
+            i18n_domain='PloneMeeting',
+        ),
+        optional=True,
+        default_method="getDefaultPollType",
+        enforceVocabulary=True,
+        vocabulary_factory='Products.PloneMeeting.vocabularies.polltypesvocabulary'
+    ),
     BooleanField(
         name='votesAreSecret',
         default=False,
@@ -2013,17 +2026,25 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getDefaultToDiscuss')
 
     def getDefaultToDiscuss(self):
-        '''What is the default value for the "toDiscuss" field ? Look in the
-           meeting config.'''
+        '''Get default value for field 'toDiscuss' from the MeetingConfig.'''
         res = True
-        meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
-        if meetingConfig:
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        if cfg:
             # When creating a meeting through invokeFactory (like recurring
             # items), getMeetingConfig does not work because the Archetypes
             # object is not properly initialized yet (portal_type is not set
             # correctly yet)
-            res = meetingConfig.getToDiscussDefault()
+            res = cfg.getToDiscussDefault()
         return res
+
+    security.declarePublic('getDefaultPollType')
+
+    def getDefaultPollType(self):
+        '''Get default value for field 'pollType' from the MeetingConfig.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        return cfg.getDefaultPollType()
 
     def getMeeting(self, brain=False):
         '''Returns the linked meeting if it exists.'''
@@ -2341,8 +2362,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def listItemTags(self):
         '''Lists the available tags from the meeting config.'''
         res = []
-        meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
-        for tag in meetingConfig.getAllItemTags().split('\n'):
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        for tag in cfg.getAllItemTags().split('\n'):
             res.append((tag, tag))
         return DisplayList(tuple(res))
 
@@ -3034,6 +3056,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # can be sent to + the fact that an item is not
             # to send to another MC
             return len(self.listOtherMeetingConfigsClonableTo()) + 1
+        elif insertMethod == 'on_poll_type':
+            factory = queryUtility(IVocabularyFactory,
+                                   'Products.PloneMeeting.vocabularies.polltypesvocabulary')
+            return len(factory(self))
         else:
             return self.adapted()._findCustomOneLevelFor(insertMethod)
 
@@ -3097,6 +3123,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if not groupInCharge:
                 raise Exception("No valid groupInCharge defined for {0}".format(proposingGroup.getId()))
             return groupInCharge.getOrder(onlyActive=False)
+        elif insertMethod == 'on_poll_type':
+            pollType = self.getPollType()
+            factory = queryUtility(IVocabularyFactory,
+                                   'Products.PloneMeeting.vocabularies.polltypesvocabulary')
+            pollTypes = [term.token for term in factory(self)._terms]
+            # Get the order of the pollType
+            res = pollTypes.index(pollType)
         else:
             res = self.adapted()._findCustomOrderFor(insertMethod)
         return res
@@ -3447,7 +3480,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def listItemInitiators(self):
         '''Returns the active MeetingUsers having usage "asker".'''
-        meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        meetingConfig = tool.getMeetingConfig(self)
         res = []
         for u in meetingConfig.getMeetingUsers(usages=['asker', ]):
             value = ''
@@ -3470,7 +3504,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Returns the itemInitiator id or the MeetingUser object if p_theObject is True.'''
         res = self.getField('itemInitiator').get(self, **kwargs)
         if res and theObject:
-            mc = self.portal_plonemeeting.getMeetingConfig(self)
+            tool = api.portal.get_tool('portal_plonemeeting')
+            mc = tool.getMeetingConfig(self)
             res = getattr(mc.meetingusers, res)
         return res
 
@@ -3807,7 +3842,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def enforceAdviceMandatoriness(self):
         '''Checks in the configuration if we must enforce advice mandatoriness.'''
-        meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        meetingConfig = tool.getMeetingConfig(self)
         if meetingConfig.getUseAdvices() and \
            meetingConfig.getEnforceAdviceMandatoriness():
             return True

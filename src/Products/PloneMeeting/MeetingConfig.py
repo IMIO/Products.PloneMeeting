@@ -1873,6 +1873,39 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
+    LinesField(
+        name='usedPollTypes',
+        widget=MultiSelectionWidget(
+            description="UsedPollTypes",
+            description_msgid="used_poll_types_descr",
+            format="checkbox",
+            label='Usedpolltypes',
+            label_msgid='PloneMeeting_label_usedPollTypes',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="votes",
+        multiValued=1,
+        vocabulary='listPollTypes',
+        default=defValues.usedPollTypes,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    StringField(
+        name='defaultPollType',
+        widget=SelectionWidget(
+            description="DefaultPollType",
+            description_msgid="default_poll_type_descr",
+            format="select",
+            label='Defaultpolltype',
+            label_msgid='PloneMeeting_label_defaultPollType',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="votes",
+        vocabulary='listPollTypes',
+        default=defValues.defaultPollType,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
     BooleanField(
         name='useVotes',
         default=defValues.useVotes,
@@ -3131,6 +3164,17 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
 
+        # check that if we selected 'on_poll_type', we actually use the field 'pollType'...
+        if 'on_poll_type' in res:
+            if hasattr(self.REQUEST, 'usedItemAttributes'):
+                notUsingToPollType = 'pollType' not in self.REQUEST.get('usedItemAttributes')
+            else:
+                notUsingToPollType = 'pollType' not in self.getUsedItemAttributes()
+            if notUsingToPollType:
+                return translate('inserting_methods_not_using_poll_type_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+
     def _dataForCustomAdviserRowId(self, row_id):
         '''Returns the data for the given p_row_id from the field 'customAdvisers'.'''
         for adviser in self.getCustomAdvisers():
@@ -3263,14 +3307,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 translate("header_getGroupInCharge", domain=d, context=self.REQUEST)),
             ("group_in_charge_acronym",
                 translate("header_group_in_charge_acronym", domain=d, context=self.REQUEST)),
-            ("advices",
-                translate("header_advices", domain=d, context=self.REQUEST)),
-            ("toDiscuss",
-                translate('header_toDiscuss', domain=d, context=self.REQUEST)),
-            ("getItemIsSigned",
-                translate('header_getItemIsSigned', domain=d, context=self.REQUEST)),
             ("privacy",
                 translate("header_privacy", domain=d, context=self.REQUEST)),
+            ("pollType",
+                translate("header_pollType", domain=d, context=self.REQUEST)),
+            ("advices",
+                translate("header_advices", domain=d, context=self.REQUEST)),
+            ("getItemIsSigned",
+                translate('header_getItemIsSigned', domain=d, context=self.REQUEST)),
+            ("toDiscuss",
+                translate('header_toDiscuss', domain=d, context=self.REQUEST)),
             ("actions",
                 translate("header_actions", domain=d, context=self.REQUEST)),
         ]
@@ -3354,6 +3400,29 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ("hands", translate('advices_hands', domain=d, context=self.REQUEST)),
         ))
         return res
+
+    security.declarePrivate('listPollTypes')
+
+    def listPollTypes(self):
+        res = [
+            ("freehand",
+             translate('polltype_freehand',
+                       domain='PloneMeeting',
+                       context=self.REQUEST)),
+            ("no_vote",
+             translate('polltype_no_vote',
+                       domain='PloneMeeting',
+                       context=self.REQUEST)),
+            ("secret",
+             translate('polltype_secret',
+                       domain='PloneMeeting',
+                       context=self.REQUEST)),
+            ("secret_separated",
+             translate('polltype_secret_separated',
+                       domain='PloneMeeting',
+                       context=self.REQUEST)),
+        ]
+        return DisplayList(res)
 
     security.declarePrivate('listTransitions')
 
@@ -4460,6 +4529,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             'on_to_discuss',
             # according to items that need to be sent to another meeting config;
             'on_other_mc_to_clone_to',
+            # according to poll type;
+            'on_poll_type',
         )
         for itemInsertMethod in ITEM_INSERT_METHODS:
             res.append((itemInsertMethod,
