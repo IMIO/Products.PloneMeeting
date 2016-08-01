@@ -197,14 +197,16 @@ ITEM_NO_PREFERRED_MEETING_VALUE = "whatever"
 DEFAULT_COPIED_FIELDS = ['title', 'description', 'detailedDescription', 'motivation',
                          'decision', 'budgetInfos', 'budgetRelated', 'sendToAuthority']
 # extra fields kept when an item is cloned in the same meeting config,
-# so not send to another meeting config
+# so not the case when sent to another meeting config
 EXTRA_COPIED_FIELDS_SAME_MC = ['associatedGroups', 'copyGroups', 'classifier', 'category',
                                'optionalAdvisers', 'otherMeetingConfigsClonableTo',
                                'otherMeetingConfigsClonableToPrivacy', 'oralQuestion',
-                               'toDiscuss', 'privacy']
+                               'toDiscuss', 'privacy', 'pollType']
 
-# to differenciate items, we can use a different icon color
-ITEM_ICON_COLORS = ("azur", "black", "green", "grey", "orange", "pink", "purple", "red", "yellow")
+# to differenciate items of different meeting configs,
+# use a different icon color (MeetingConfig.itemIconColor)
+ITEM_ICON_COLORS = ("azur", "black", "green", "grey", "orange",
+                    "pink", "purple", "red", "yellow")
 
 NOT_ENCODED_VOTE_VALUE = 'not_yet'
 NOT_CONSULTABLE_VOTE_VALUE = 'not_consultable'
