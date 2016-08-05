@@ -22,6 +22,11 @@
     <metal:f use-macro="context/@@pm-macros/viewContentField"/>
   </tal:field>
 
+  <tal:comment replace="nothing">Authority notice</tal:comment>
+  <tal:field define="fieldName python: 'authorityNotice'; ajaxEdit python:True">
+    <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+  </tal:field>
+
   <tal:comment replace="nothing">Observations</tal:comment>
   <tal:field define="fieldName python: 'observations'; ajaxEdit python:True">
     <metal:f use-macro="context/@@pm-macros/viewContentField"/>

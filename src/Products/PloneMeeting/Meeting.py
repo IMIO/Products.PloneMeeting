@@ -481,7 +481,7 @@ schema = Schema((
             description="MeetingAssemblyExcused",
             description_msgid="assembly_excused_meeting_descr",
             label='Assemblyexcused',
-            label_msgid='PloneMeeting_label_assemblyExcused',
+            label_msgid='meeting_assemblyExcused',
             i18n_domain='PloneMeeting',
         ),
         default_output_type="text/html",
@@ -496,7 +496,7 @@ schema = Schema((
             description="MeetingAssemblyAbsents",
             description_msgid="assembly_absents_meeting_descr",
             label='Assemblyabsents',
-            label_msgid='PloneMeeting_label_assemblyAbsents',
+            label_msgid='meeting_assemblyAbsents',
             i18n_domain='PloneMeeting',
         ),
         default_output_type="text/html",
@@ -509,7 +509,7 @@ schema = Schema((
         widget=TextAreaWidget(
             condition="python: here.attributeIsUsed('assemblyGuests')",
             label='Assemblyguests',
-            label_msgid='PloneMeeting_label_assemblyGuests',
+            label_msgid='meeting_assemblyGuests',
             i18n_domain='PloneMeeting',
         ),
         default_output_type="text/html",
@@ -522,7 +522,7 @@ schema = Schema((
         widget=TextAreaWidget(
             condition="python: here.attributeIsUsed('assemblyProxies')",
             label='Assemblyproxies',
-            label_msgid='PloneMeeting_label_assemblyProxies',
+            label_msgid='meeting_assemblyProxies',
             i18n_domain='PloneMeeting',
         ),
         default_output_type="text/html",
@@ -535,10 +535,11 @@ schema = Schema((
         widget=TextAreaWidget(
             condition="python: here.attributeIsUsed('assemblyStaves')",
             label='Assemblystaves',
-            label_msgid='PloneMeeting_label_assemblyStaves',
+            label_msgid='meeting_assemblyStaves',
             i18n_domain='PloneMeeting',
         ),
         default_output_type="text/html",
+        default_method="getDefaultAssemblyStaves",
         default_content_type="text/plain",
     ),
     LinesField(
@@ -616,6 +617,8 @@ schema = Schema((
         allowable_content_types=('text/html',),
         widget=RichWidget(
             condition="python: here.showMeetingManagerReservedField('inAndOutMoves')",
+            description="InAndOutMoves",
+            description_msgid="in_and_out_moves_descr",
             label_msgid="PloneMeeting_inAndOutMoves",
             rows=15,
             label='Inandoutmoves',
@@ -630,6 +633,8 @@ schema = Schema((
         allowable_content_types=('text/html',),
         widget=RichWidget(
             condition="python: here.showMeetingManagerReservedField('notes')",
+            description="Notes",
+            description_msgid="notes_descr",
             label_msgid="PloneMeeting_notes",
             rows=15,
             label='Notes',
@@ -643,7 +648,7 @@ schema = Schema((
         name='observations',
         allowable_content_types=('text/html',),
         widget=RichWidget(
-            condition="python: here.showMeetingManagerReservedField('observations')",
+            condition="python: here.attributeIsUsed('observations')",
             label_msgid="PloneMeeting_meetingObservations",
             rows=15,
             label='Observations',
@@ -677,10 +682,26 @@ schema = Schema((
         name='preObservations',
         allowable_content_types=('text/html',),
         widget=RichWidget(
-            condition="python: here.showMeetingManagerReservedField('preObservations')",
+            condition="python: here.attributeIsUsed('preObservations')",
             rows=15,
             label='Preobservations',
             label_msgid='PloneMeeting_label_preObservations',
+            i18n_domain='PloneMeeting',
+        ),
+        default_content_type="text/html",
+        default_output_type="text/x-html-safe",
+        optional=True,
+    ),
+    TextField(
+        name='authorityNotice',
+        allowable_content_types=('text/html',),
+        widget=RichWidget(
+            condition="python: here.showMeetingManagerReservedField('authorityNotice')",
+            description="AuthorityNotice",
+            description_msgid="authority_notice_descr",
+            rows=15,
+            label='Authoritynotice',
+            label_msgid='PloneMeeting_label_authorityNotice',
             i18n_domain='PloneMeeting',
         ),
         default_content_type="text/html",
@@ -781,7 +802,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
     def getPrettyLink(self,
                       prefixed=True,
                       short=False,
-                      showContentIcon=True,
+                      showContentIcon=False,
                       isViewable=True,
                       notViewableHelpMessage=''):
         """Return the IPrettyLink version of the title."""
@@ -1191,8 +1212,14 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             label = 'pre_date_after_meeting_date'
             return translate(label, domain='PloneMeeting', context=self.REQUEST)
 
-    def getItems(self, uids=[], listTypes=[], ordered=False, useCatalog=False,
-                 additional_catalog_query=[], unrestricted=False, **kwargs):
+    def getItems(self,
+                 uids=[],
+                 listTypes=[],
+                 ordered=False,
+                 useCatalog=False,
+                 additional_catalog_query={},
+                 unrestricted=False,
+                 **kwargs):
         '''Overrides the Meeting.items accessor.
            Items can be filtered depending on :
            - list of given p_uids;
@@ -1212,12 +1239,13 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                 catalog_query.append({'i': 'UID',
                                       'o': 'plone.app.querystring.operation.selection.is',
                                       'v': uids},)
-            # append additional_catalog_query
-            catalog_query += additional_catalog_query
             if ordered:
                 query = queryparser.parseFormquery(self, catalog_query, sort_on=self.getSort_on())
             else:
                 query = queryparser.parseFormquery(self, catalog_query)
+
+            # append additional_catalog_query
+            query.update(additional_catalog_query)
             if unrestricted:
                 res = catalog.unrestrictedSearchResults(**query)
             else:
@@ -1416,7 +1444,16 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getDefaultAssembly(self):
         if self.attributeIsUsed('assembly'):
-            return self.portal_plonemeeting.getMeetingConfig(self).getAssembly()
+            tool = api.portal.get_tool('portal_plonemeeting')
+            return tool.getMeetingConfig(self).getAssembly()
+        return ''
+
+    security.declarePrivate('getDefaultAssemblyStaves')
+
+    def getDefaultAssemblyStaves(self):
+        if self.attributeIsUsed('assemblyStaves'):
+            tool = api.portal.get_tool('portal_plonemeeting')
+            return tool.getMeetingConfig(self).getAssemblyStaves()
         return ''
 
     security.declarePublic('getStrikedAssembly')

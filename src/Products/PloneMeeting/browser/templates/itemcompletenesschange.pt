@@ -16,7 +16,7 @@
     <input type="hidden" name="new_completeness_value" tal:attributes="value view/request/new_completeness_value"/>
     <tal:comment replace="nothing">Optional comment</tal:comment>
     <p class="popups_field_descr" i18n:translate="change_completeness_comment">You are about to set completeness to <span style="font-weight: bold;" i18n:name="completeness_value" i18n:domain="PloneMeeting" i18n:translate="" tal:content="view/request/new_completeness_value">completeness value</span>, you can add a comment if necessary.</p>
-    <label for="comment" i18n:translate="completeness_comment">Comment</label>
+    <label for="comment" i18n:translate="">Comment</label>
     <textarea name="comment" rows="8"></textarea><br/><br/>
     <div align="center">
       <input type="hidden" name="form.submitted:boolean" value="True" />

@@ -73,6 +73,11 @@ class ItemPrivacyColumn(I18nColumn):
     i18n_domain = 'PloneMeeting'
 
 
+class ItemPollTypeColumn(VocabularyColumn):
+    """A column that display the MeetingItem.pollType."""
+    vocabulary = u'Products.PloneMeeting.vocabularies.polltypesvocabulary'
+
+
 class PMPrettyLinkColumn(PrettyLinkColumn):
     """A column that display the IPrettyLink.getLink column."""
 

@@ -1,11 +1,24 @@
+# -*- coding: utf-8 -*-
+
 from DateTime import DateTime
 from AccessControl import Unauthorized
+from zope import interface
+from zope import schema
+from zope.component.hooks import getSite
+from zope.i18n import translate
+from z3c.form import button
+from z3c.form import field
+from z3c.form import form
+
+from plone import api
 from Products.CMFCore.Expression import Expression, createExprContext
 from Products.CMFCore.utils import getToolByName
 from Products.Five.browser import BrowserView
+from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.MeetingItem import ADVICE_AVAILABLE_ON_CONDITION_ERROR
 from Products.PloneMeeting.utils import checkPermission
+
 import logging
 logger = logging.getLogger('PloneMeeting')
 
@@ -104,84 +117,156 @@ class AdviceDelaysView(BrowserView):
             return False
 
 
-class AdviceChangeDelayView(BrowserView):
-    '''This manage the overlay popup displayed to enter a comment when the delay is changed.'''
+def current_delay_row_id_default():
+    """
+      Get the value from the REQUEST as it is passed when calling the
+      form : form?current_delay_row_id=new_value.
+    """
+    request = getSite().REQUEST
+    return request.get('current_delay_row_id', '')
+
+
+def new_delay_row_id_default():
+    """
+      Get the value from the REQUEST as it is passed when calling the
+      form : form?new_delay_row_id=new_value.
+    """
+    request = getSite().REQUEST
+    return request.get('new_delay_row_id', '')
+
+
+class IAdviceChangeDelayComment(interface.Interface):
+    comment = schema.Text(
+        title=_(u"Comment"),
+        description=_(u""),
+        required=True)
+
+    current_delay_row_id = schema.TextLine(
+        title=_(u"Current delay row_id"),
+        description=_(u""),
+        defaultFactory=current_delay_row_id_default,
+        required=False)
+
+    new_delay_row_id = schema.TextLine(
+        title=_(u"New delay row_id"),
+        description=_(u""),
+        defaultFactory=new_delay_row_id_default,
+        required=False)
+
+
+class AdviceChangeDelayForm(form.Form):
+    """
+      This form will give the possibility to add a
+      required comment while changing advice delay.
+    """
+    label = _(u"Change delay")
+    description = u''
+
+    fields = field.Fields(IAdviceChangeDelayComment)
+    ignoreContext = True  # don't use context to get widget data
 
     def __init__(self, context, request):
-        super(BrowserView, self).__init__(context, request)
         self.context = context
         self.request = request
-        tool = getToolByName(self.context, 'portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
-        self.cfg = cfg
+        self.label = translate(self.label,
+                               domain='PloneMeeting',
+                               context=self.request)
 
     def getDataForRowId(self, row_id):
         '''Return relevant advice infos for given p_row_id.'''
-        return self.cfg._dataForCustomAdviserRowId(row_id)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        return cfg._dataForCustomAdviserRowId(row_id)
 
-    def __call__(self):
-        form = self.request.form
-        submitted = form.get('form.buttons.save', False) or form.get('form.submitted', False)
-        cancelled = form.get('form.buttons.cancel', False)
-        if cancelled:
-            # the only way to enter here is the popup overlay not to be shown
-            # because while using the popup overlay, the jQ function take care of hidding it
-            # while the Cancel button is hit
-            return self.request.response.redirect(self.context.absolute_url())
-        elif submitted:
-            # check that given 'new_advice_delay' is available
-            # if not available, just raise Unauthorized
-            current_advice_row_id = self.request.get('current_advice_row_id')
-            new_advice_row_id = self.request.get('new_advice_row_id')
-            listAvailableDelaysView = self.context.restrictedTraverse('@@advice-available-delays')
-            listAvailableDelaysView.cfg = self.cfg
-            # find right advice in MeetingItem.adviceIndex
-            currentAdviceData = self.getDataForRowId(current_advice_row_id)
-            listAvailableDelaysView.advice = self.context.adviceIndex[currentAdviceData['group']]
-            isAutomatic, linkedRows = self.cfg._findLinkedRowsFor(current_advice_row_id)
-            selectableDelays = listAvailableDelaysView.listSelectableDelays(current_advice_row_id)
-            # selectableDelays is a list of tuple containing 3 elements, the first is the row_id
-            selectableDelays = [selectableDelay[0] for selectableDelay in selectableDelays]
-            if not new_advice_row_id in selectableDelays:
-                raise Unauthorized
-            # update the advice with new delay and relevant data
+    @button.buttonAndHandler(_('save'), name='save_advice_delay')
+    def handleSaveAdviceDelay(self, action):
+        data, errors = self.extractData()
+        if errors:
+            self.status = self.formErrorsMessage
+            return
 
-            newAdviceData = self.getDataForRowId(new_advice_row_id)
-            # just keep relevant infos
-            dataToUpdate = ('delay',
-                            'delay_label',
-                            'gives_auto_advice_on_help_message',
-                            'row_id')
-            for elt in dataToUpdate:
-                self.context.adviceIndex[currentAdviceData['group']][elt] = newAdviceData[elt]
-            # if the advice was already given, we need to update row_id on the given advice object too
-            if not self.context.adviceIndex[currentAdviceData['group']]['type'] == NOT_GIVEN_ADVICE_VALUE:
-                adviceObj = getattr(self.context, self.context.adviceIndex[currentAdviceData['group']]['advice_id'])
-                adviceObj.advice_row_id = newAdviceData['row_id']
-            # if it is an optional advice, update the MeetingItem.optionalAdvisers
-            if not isAutomatic:
-                optionalAdvisers = list(self.context.getOptionalAdvisers())
-                # remove old value
-                optionalAdvisers.remove('%s__rowid__%s' % (currentAdviceData['group'],
-                                                           currentAdviceData['row_id']))
-                # append new value
-                optionalAdvisers.append('%s__rowid__%s' % (newAdviceData['group'],
-                                                           newAdviceData['row_id']))
-                self.context.setOptionalAdvisers(tuple(optionalAdvisers))
-            else:
-                # if it is an automatic advice, set the 'delay_for_automatic_adviser_changed_manually' to True
-                self.context.adviceIndex[currentAdviceData['group']]['delay_for_automatic_adviser_changed_manually'] = True
-            self.context.updateLocalRoles()
-            # add a line to the item's emergency_change_history
-            membershipTool = getToolByName(self.context, 'portal_membership')
-            member = membershipTool.getAuthenticatedMember()
-            history_data = {'action': (currentAdviceData['delay'], newAdviceData['delay']),
-                            'actor': member.getId(),
-                            'time': DateTime(),
-                            'comments': self.request.get('comment', '')}
-            self.context.adviceIndex[currentAdviceData['group']]['delay_changes_history'].append(history_data)
-            self.request.response.redirect(self.context.absolute_url() + '/#adviceAndAnnexes')
-        return self.index()
+        # check that given 'new_advice_delay' is available
+        # if not available, just raise Unauthorized
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        listAvailableDelaysView = self.context.restrictedTraverse('@@advice-available-delays')
+        listAvailableDelaysView.cfg = cfg
+        # find right advice in MeetingItem.adviceIndex
+        currentAdviceData = self.getDataForRowId(data['current_delay_row_id'])
+        listAvailableDelaysView.advice = self.context.adviceIndex[currentAdviceData['group']]
+        isAutomatic, linkedRows = cfg._findLinkedRowsFor(data['current_delay_row_id'])
+        selectableDelays = listAvailableDelaysView.listSelectableDelays(data['current_delay_row_id'])
+        # selectableDelays is a list of tuple containing 3 elements, the first is the row_id
+        selectableDelays = [selectableDelay[0] for selectableDelay in selectableDelays]
+        if not data['new_delay_row_id'] in selectableDelays:
+            raise Unauthorized
+        # update the advice with new delay and relevant data
+
+        newAdviceData = self.getDataForRowId(data['new_delay_row_id'])
+        # just keep relevant infos
+        dataToUpdate = ('delay',
+                        'delay_label',
+                        'gives_auto_advice_on_help_message',
+                        'row_id')
+        for elt in dataToUpdate:
+            self.context.adviceIndex[currentAdviceData['group']][elt] = newAdviceData[elt]
+        # if the advice was already given, we need to update row_id on the given advice object too
+        if not self.context.adviceIndex[currentAdviceData['group']]['type'] == NOT_GIVEN_ADVICE_VALUE:
+            adviceObj = getattr(self.context, self.context.adviceIndex[currentAdviceData['group']]['advice_id'])
+            adviceObj.advice_row_id = newAdviceData['row_id']
+        # if it is an optional advice, update the MeetingItem.optionalAdvisers
+        if not isAutomatic:
+            optionalAdvisers = list(self.context.getOptionalAdvisers())
+            # remove old value
+            optionalAdvisers.remove('%s__rowid__%s' % (currentAdviceData['group'],
+                                                       currentAdviceData['row_id']))
+            # append new value
+            optionalAdvisers.append('%s__rowid__%s' % (newAdviceData['group'],
+                                                       newAdviceData['row_id']))
+            self.context.setOptionalAdvisers(tuple(optionalAdvisers))
+        else:
+            # if it is an automatic advice, set the 'delay_for_automatic_adviser_changed_manually' to True
+            self.context.adviceIndex[currentAdviceData['group']]['delay_for_automatic_adviser_changed_manually'] = True
+        self.context.updateLocalRoles()
+        # add a line to the item's emergency_change_history
+        member = api.user.get_current()
+        history_data = {'action': (currentAdviceData['delay'], newAdviceData['delay']),
+                        'actor': member.getId(),
+                        'time': DateTime(),
+                        'comments': data['comment']}
+        self.context.adviceIndex[currentAdviceData['group']]['delay_changes_history'].append(history_data)
+        self.request.response.redirect(self.context.absolute_url() + '/#adviceAndAnnexes')
+
+    @button.buttonAndHandler(_('Cancel'), name='cancel')
+    def handleCancel(self, action):
+        self.request.RESPONSE.redirect(self.context.absolute_url())
+
+    def update(self):
+        """ """
+        super(AdviceChangeDelayForm, self).update()
+        # after calling parent's update, self.actions are available
+        self.actions.get('cancel').addClass('standalone')
+
+    def updateWidgets(self):
+        # hide fields '..._row_id'
+        self.fields['current_delay_row_id'].mode = 'hidden'
+        self.fields['new_delay_row_id'].mode = 'hidden'
+
+        super(AdviceChangeDelayForm, self).updateWidgets()
+        newAdviceData = self.getDataForRowId(self.widgets['new_delay_row_id'].value)
+        if not newAdviceData:
+            raise Unauthorized
+
+        self.fields['comment'].field.description = translate(
+            'change_advice_delay_descr',
+            domain='PloneMeeting',
+            mapping={'new_advice_delay': newAdviceData['delay']},
+            context=self.request,
+            default=u"You are about to change advice delay for this item to <span style='font-weight: bold;'>"
+            u"${new_delay_value}</span> days, please enter a comment.")
+
+from plone.z3cform.layout import wrap_form
+AdviceChangeDelayFormWrapper = wrap_form(AdviceChangeDelayForm)
 
 
 class AdviceChangeDelayHistoryView(BrowserView):

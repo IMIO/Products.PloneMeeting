@@ -1,7 +1,6 @@
 from Products.Five.browser import BrowserView
 from plone import api
 from plone.memoize.view import memoize
-from imio.prettylink.interfaces import IPrettyLink
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 
 
@@ -121,7 +120,7 @@ class GoToMeetingImgSelectBoxView(BaseImgSelectBoxView):
         """ """
         link = self.selected_value().getPrettyLink(prefixed=False,
                                                    short=True,
-                                                   showContentIcon=True,
+                                                   showContentIcon=False,
                                                    isViewable=False,
                                                    notViewableHelpMessage=u'')
         return u"""
@@ -140,7 +139,9 @@ class GoToMeetingImgSelectBoxView(BaseImgSelectBoxView):
 
     def selectable_value_html(self, num, selectable_value):
         """ """
-        return selectable_value.getPrettyLink(prefixed=False, short=True)
+        return selectable_value.getPrettyLink(prefixed=False,
+                                              short=True,
+                                              showContentIcon=False,)
 
     def getSelectableValues(self):
         """ """

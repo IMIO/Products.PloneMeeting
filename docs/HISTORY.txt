@@ -9,7 +9,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 
 4.0 (unreleased)
 ----------------
-- Moved to Plone 4.3.7
+- Moved to Plone 4.3.8
 - Moved to collective.ckeditor 4.4.0
 - Moved to collective.documentviewer 3.0.3
 - Rely on beautifulsoup4, Products.CPUtils, collective.messagesviewlet
@@ -17,7 +17,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Replaced own PODTemplate by the ConfigurablePODTemplate of collective.documentgenerator, removed appy.pod
   parameters from portal_plonemeeting and use the collective.documentgenerator control panel. Added back
   "mailing lists" functionnality that does not exist in collective.documentgenerator.  It is now possible to
-  use email addresses in addition to userIds to specify to who send the generated document
+  use email addresses and TAL expressions in addition to userIds to specify whom to send the generated document
 - Moved dashboards and meeting view to imio.dashboard (see imio.dashboard package regarding required changes)
 - MeetingFiles title is now indexed in items's SearchableText so it is possible to do a search on an annex
   title directly in the 'Search' field available on every dashboard searches (my items, all items, ...)
@@ -120,13 +120,16 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Added field MeetingItem.otherMeetingConfigsClonableToEmergency, this way when an item is sent to another meeting
   configuration and it is specified in the configuration that the sent item must be automatically presented in
   a next available meeting, if emergency is specified, the sent item will also be presented in a meeting that is
-  no more in 'created' state.
+  no more in 'created' state
   Added also relevant leading icons to show an item 'to send' with emergency
 - Added field MeetingItem.otherMeetingConfigsClonableToPrivacy, that let's user specify if sent item will use
   privacy 'Closed meeting' in the destination configuration
+  Added also relevant leading icons to show what privacy will use the item that will be created in the other MC
+- Display every informations about the otherMeetingConfigsClonable : other configuration title, selected privacy and
+  emergency and theorical/effective meeting date into which item is or will be presented
 - Added possibility to manually clone an item to another config.  It is now possible to define states in
   which an item may be sent manually and states in which an item will be sent automatically.  Take care that when
-  an item is cloned manually, the transitions to tigger on new item will NOT be triggered, this is reserved to
+  an item is cloned manually, the transitions to trigger on new item will NOT be triggered, this is reserved to
   items cloned automatically
 - Added leading icon 'sent from' that shows on an item if it is the result of another item sent from another
   configuration.  This way we have the leading icon on the original item with informations about the resulting item
@@ -284,7 +287,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   Added constant EXTRA_ADVICE_SUFFIXES to config.py to define extra suffixes to use for groups giving advice using a custom workflow
 - Meeting and MeetingItem WorkflowCondition 'mayCorrect' now receive an extra parameter 'destinationState' that is useful
   when a state has several 'back' transitions to know which transition we are working on
-- Moved emergency change comment popup to z3c.form to be able to define that comment is now required
+- Moved emergency change comment popup and advice delay change comment popup to z3c.form
+  to be able to define that comment is now required
 - Added helpe method MeetingItem.getAdviceObj(advId) that will return the 'meetingadvice' object for the given p_advId adviser
   id.  If advice object exists, it is returned, otherwise 'None' is returned
 - Display a "group users" icon next to the displayed copy groups and asked advices on the item view to be able to get informations
@@ -296,9 +300,11 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   that were already linked to the original item are also linked to the new duplicated item (virtual folder)
 - Added field MeetingGroup.groupInCharge to be able to define a group in charge of another.  It keeps history of groupInCharge so
   it is possible to know who was in charge 2 years ago and to print relevant informations on a document for example.
-  Added also 'on_groups_in_charge' item insertion method into a meeting
-- Added optiona fields Meeting.assemblyGuest, Meeting.assemblyProxies and Meeting.assemblyStaves on the meeting to use if necessary.
-  Meeting.assemblyXXX fields are now displayed one under the other on the meeting_view and it is hidden using a collapsible widget
+  Added also 'on_groups_in_charge' item insertion method into a meeting (MeetingConfig.insertingMethodsOnAddItem) and added possibilty
+  to define item states in which subgroup 'observers' of the group in charge will have access
+- Added optional fields Meeting.assemblyGuest, Meeting.assemblyProxies and Meeting.assemblyStaves on the meeting to use if necessary.
+  Meeting.assemblyXXX fields are now displayed one under the other on the meeting_view and it is hidden using a collapsible widget.
+  A default value for Meeting.assemblyStaves may be defined in the MeetingConfig.assemblyStaves attribute
 - Reindex item (reindexObject) when an advice is added/edited/deleted, this way if some custom indexes are managed depending on
   a value of the advice, it is updated if necessary
 - Changed the way MeetingConfig.customAdvisers 'available_on' value works.  Before, it was only evaluated if user could effectively
@@ -308,6 +314,13 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Added optional field Meeting.approvalDate made to encode the date the current meeting was approved
 - Added workflowAdaptation 'postpone_next_meeting', it adds a decided state 'postponed_next_meeting' (based on the already existing
   state 'delayed') and additionally it will duplicate the item and automatically set the new item to "validated"
+- Added workflowAdaptation 'mark_not_applicable', it adds a decided state 'marked_not_applicable' to the item (based on the already existing
+  state 'delayed')
+- Added workflowAdaptation 'removed', it adds a decided state 'removed' to the item (based on the already existing
+  state 'delayed')
+- Added optional RichText field Meeting.authorityNotice
+- Added optional field MeetingItem.pollType, it relies on MeetingConfig.usedPollTypes and MeetingConfig.defaultPollType.
+  Added also relevant dashboard column and faceted filter
 
 3.3 (2015-02-27)
 ----------------

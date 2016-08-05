@@ -49,6 +49,7 @@ from Products.PloneMeeting.browser.itemsignatures import item_signatures_default
 from Products.PloneMeeting.config import DEFAULT_COPIED_FIELDS
 from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_SAME_MC
 from Products.PloneMeeting.config import HISTORY_COMMENT_NOT_VIEWABLE
+from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import READER_USECASES
@@ -791,9 +792,6 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg2Id = cfg2.getId()
         cfg.setUsedItemAttributes(cfg.getUsedItemAttributes() +
                                   ('otherMeetingConfigsClonableToEmergency', ))
-        # field 'otherMeetingConfigsClonableToEmergency' is
-        # only available to MeetingManagers if item will be presented
-        # while it is sent to the other MC
         cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
                                          'trigger_workflow_transitions_until': '%s.%s' %
                                          (cfg2Id, 'present')},))
@@ -877,6 +875,77 @@ class testMeetingItem(PloneMeetingTestCase):
         sentItem = item.getItemClonedToOtherMC(cfg2Id)
         self.assertIsNone(sentItem.getMeeting())
         self.assertEqual(sentItem.queryState(), 'validated')
+
+    def test_pm_SendItemToOtherMCUsingEmergencyInitializePreferredMeeting(self):
+        """When an item is sent to another meeting configuration and emergency
+           is selected, the preferred meeting is automatically selected to the next
+           available meeting, including frozen meetings, this way the item may be presented
+           in a frozen meeting."""
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        cfg2Id = cfg2.getId()
+        cfg.setUsedItemAttributes(cfg.getUsedItemAttributes() +
+                                  ('otherMeetingConfigsClonableToEmergency', ))
+        # sendable when itemcreated
+        cfg.setItemManualSentToOtherMCStates(('itemcreated', ))
+        cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
+                                         'trigger_workflow_transitions_until':
+                                         NO_TRIGGER_WF_TRANSITION_UNTIL},))
+        # use insertion on groups for cfg2
+        cfg2.setUseGroupsAsCategories(True)
+        cfg2.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_proposing_groups',
+                                            'reverse': '0'}, ))
+
+        # create items in cfg1 and meetings in cfg2
+        self.changeUser('pmCreator1')
+        self.tool.getPloneMeetingFolder(cfg2Id)
+        # no meeting available in cfg2
+        noAvailableMeetingItem = self.create('MeetingItem')
+        noAvailableMeetingItem.setDecision('<p>My decision</p>', mimetype='text/html')
+        noAvailableMeetingItem.setOtherMeetingConfigsClonableTo((cfg2Id,))
+        noAvailableMeetingItem.setOtherMeetingConfigsClonableToEmergency((cfg2Id,))
+        noAvailableMeetingItem.cloneToOtherMeetingConfig(cfg2Id)
+        self.assertEqual(noAvailableMeetingItem.getPreferredMeeting(),
+                         ITEM_NO_PREFERRED_MEETING_VALUE)
+
+        emergencyItem = self.create('MeetingItem')
+        emergencyItem.setDecision('<p>My decision</p>', mimetype='text/html')
+        emergencyItem.setOtherMeetingConfigsClonableTo((cfg2Id,))
+        emergencyItem.setOtherMeetingConfigsClonableToEmergency((cfg2Id,))
+        normalItem = self.create('MeetingItem')
+        normalItem.setDecision('<p>My decision</p>', mimetype='text/html')
+        normalItem.setOtherMeetingConfigsClonableTo((cfg2Id,))
+
+        self.changeUser('pmManager')
+        now = DateTime()
+        # create 2 meetings in cfg2
+        createdMeeting = self.create('Meeting', date=now+10, meetingConfig=cfg2)
+        # createdMeeting will only be viewable by Managers
+        createdMeeting.manage_permission(View, ['Manager', ])
+        frozenMeeting = self.create('Meeting', date=now+5, meetingConfig=cfg2)
+        self.freezeMeeting(frozenMeeting)
+
+        # send items
+        self.changeUser('pmCreator1')
+        normalItem.cloneToOtherMeetingConfig(cfg2Id)
+        emergencyItem.cloneToOtherMeetingConfig(cfg2Id)
+        # createdMeeting may be set as preferredMeeting even if not viewable by user
+        clonedNormalItem = normalItem.getItemClonedToOtherMC(cfg2Id)
+        self.assertFalse(self.hasPermission(View, createdMeeting))
+        self.assertEqual(clonedNormalItem.getPreferredMeeting(),
+                         createdMeeting.UID())
+        clonedEmergencyItem = emergencyItem.getItemClonedToOtherMC(cfg2Id)
+        self.assertTrue(self.hasPermission(View, frozenMeeting))
+        self.assertEqual(clonedEmergencyItem.getPreferredMeeting(),
+                         frozenMeeting.UID())
+
+        # now present items to check it is correctly inserted in relevant meeting
+        self.changeUser('pmManager')
+        self.setCurrentMeeting(None)
+        self.presentItem(clonedNormalItem)
+        self.assertEqual(clonedNormalItem.getMeeting(), createdMeeting)
+        self.presentItem(clonedEmergencyItem)
+        self.assertEqual(clonedEmergencyItem.getMeeting(), frozenMeeting)
 
     def test_pm_SendItemToOtherMCUsingPrivacy(self):
         '''Test when sending an item to another MeetingConfig and privacy is defined
@@ -1486,6 +1555,49 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(self.hasPermission(ModifyPortalContent, item))
         self.assertTrue(self.hasPermission(WriteBudgetInfos, item))
 
+    def test_pm_GroupInChargeLocalRoles(self):
+        '''Group in charge will have access of groups they have in charge in states
+           defined in MeetingConfig.itemGroupInChargeStates.'''
+        cfg = self.meetingConfig
+        cfg.setItemGroupInChargeStates(self.WF_STATE_NAME_MAPPINGS['itemcreated'],)
+
+        # first test : no group in charge
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        proposingGroup = item.getProposingGroup(theObject=True)
+        self.assertFalse(proposingGroup.getGroupInChargeAt())
+        # this does not fail...
+        item.updateLocalRoles()
+        self.assertFalse('vendors_observers' in item.__ac_local_roles__)
+
+        # define a group in charge
+        proposingGroup.setGroupInCharge(({'group_id': 'vendors', 'date_to': ''},))
+        self.assertEqual(proposingGroup.getGroupInChargeAt(), self.tool.vendors)
+        item.updateLocalRoles()
+        self.assertTrue(READER_USECASES['groupincharge'] in item.__ac_local_roles__['vendors_observers'])
+
+        # not right state in the configuration
+        cfg.setItemGroupInChargeStates(self.WF_STATE_NAME_MAPPINGS['proposed'],)
+        item.updateLocalRoles()
+        self.assertFalse('vendors_observers' in item.__ac_local_roles__)
+
+        # right, back to correct configuration but make group in charge no more valid
+        cfg.setItemGroupInChargeStates(self.WF_STATE_NAME_MAPPINGS['itemcreated'],)
+        item.updateLocalRoles()
+        self.assertTrue(READER_USECASES['groupincharge'] in item.__ac_local_roles__['vendors_observers'])
+        proposingGroup.setGroupInCharge(({'group_id': 'vendors', 'date_to': '2016/01/01'},))
+        self.assertFalse(proposingGroup.getGroupInChargeAt())
+        item.updateLocalRoles()
+        self.assertFalse('vendors_observers' in item.__ac_local_roles__)
+
+        # check that changing item's state works, back to correct configuration
+        proposingGroup.setGroupInCharge(({'group_id': 'vendors', 'date_to': ''},))
+        self.assertEqual(proposingGroup.getGroupInChargeAt(), self.tool.vendors)
+        item.updateLocalRoles()
+        self.assertTrue(READER_USECASES['groupincharge'] in item.__ac_local_roles__['vendors_observers'])
+        self.proposeItem(item)
+        self.assertFalse('vendors_observers' in item.__ac_local_roles__)
+
     def test_pm_ItemIsSigned(self):
         '''Test the functionnality around MeetingItem.itemIsSigned field.
            Check also the @@toggle_item_is_signed view that do some unrestricted things...'''
@@ -1999,7 +2111,8 @@ class testMeetingItem(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         # we havbe 3 meetings and one special element "whatever"
         self.assertEquals(len(item.listMeetingsAcceptingItems()), 4)
-        self.assertTrue("whatever" in item.listMeetingsAcceptingItems().keys())
+        self.assertTrue(ITEM_NO_PREFERRED_MEETING_VALUE in
+                        item.listMeetingsAcceptingItems().keys())
         # now do m1 a meeting that do not accept any items anymore
         self.closeMeeting(m1)
         self.assertEquals(len(item.listMeetingsAcceptingItems()), 3)
@@ -3975,13 +4088,21 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setOtherMeetingConfigsClonableTo((cfg2Id, cfg3Id))
-        self.assertEquals(item.displayOtherMeetingConfigsClonableTo(),
-                          unicode('{0}, {1}'.format(cfg2Title, cfg3Title), 'utf-8'))
+        noneTheoricalMeeting = "<img class='logical_meeting' src='http://nohost/plone/greyedMeeting.png' " \
+            "title='Theorical date into which item should be presented'></img>&nbsp;<span>None</span>"
+        self.assertEquals(
+            item.displayOtherMeetingConfigsClonableTo(),
+            unicode('{0} ({1}), {2} ({3})'.format(
+                    cfg2Title, noneTheoricalMeeting,
+                    cfg3Title, noneTheoricalMeeting),
+                    'utf-8'))
         # ask emergency for sending to cfg3
         item.setOtherMeetingConfigsClonableToEmergency((cfg3Id, ))
-        self.assertEquals(item.displayOtherMeetingConfigsClonableTo(),
-                          unicode("{0}, {1} (<span class='item_clone_to_emergency'>Emergency</span>)".format(
-                                  cfg2Title, cfg3Title), 'utf-8'))
+        self.assertEquals(
+            item.displayOtherMeetingConfigsClonableTo(),
+            unicode("{0} ({1}), {2} (<span class='item_clone_to_emergency'>Emergency</span> - {3})".format(
+                    cfg2Title, noneTheoricalMeeting,
+                    cfg3Title, noneTheoricalMeeting), 'utf-8'))
 
         # enable 'otherMeetingConfigsClonableToPrivacy' that is also displayed
         cfg.setUsedItemAttributes(cfg.getUsedItemAttributes() +
@@ -3990,24 +4111,58 @@ class testMeetingItem(PloneMeetingTestCase):
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attributeIsUsed')
         self.assertEquals(
             item.displayOtherMeetingConfigsClonableTo(),
-            unicode("{0} (<span class='item_privacy_public'>Public meeting</span>), "
-                    "{1} (<span class='item_clone_to_emergency'>Emergency</span> - "
-                    "<span class='item_privacy_public'>Public meeting</span>)".format(
-                        cfg2Title, cfg3Title), 'utf-8'))
+            unicode("{0} (<span class='item_privacy_public'>Public meeting</span> - {1}), "
+                    "{2} (<span class='item_clone_to_emergency'>Emergency</span> - "
+                    "<span class='item_privacy_public'>Public meeting</span> - {3})".format(
+                        cfg2Title, noneTheoricalMeeting,
+                        cfg3Title, noneTheoricalMeeting), 'utf-8'))
         item.setOtherMeetingConfigsClonableToPrivacy((cfg2Id, ))
         self.assertEquals(
             item.displayOtherMeetingConfigsClonableTo(),
-            unicode("{0} (<span class='item_privacy_secret'>Closed door</span>), "
-                    "{1} (<span class='item_clone_to_emergency'>Emergency</span> - "
-                    "<span class='item_privacy_public'>Public meeting</span>)".format(
-                        cfg2Title, cfg3Title), 'utf-8'))
+            unicode("{0} (<span class='item_privacy_secret'>Closed door</span> - {1}), "
+                    "{2} (<span class='item_clone_to_emergency'>Emergency</span> - "
+                    "<span class='item_privacy_public'>Public meeting</span> - {3})".format(
+                        cfg2Title, noneTheoricalMeeting,
+                        cfg3Title, noneTheoricalMeeting), 'utf-8'))
         item.setOtherMeetingConfigsClonableToPrivacy((cfg2Id, cfg3Id))
         self.assertEquals(
             item.displayOtherMeetingConfigsClonableTo(),
-            unicode("{0} (<span class='item_privacy_secret'>Closed door</span>), "
-                    "{1} (<span class='item_clone_to_emergency'>Emergency</span> - "
-                    "<span class='item_privacy_secret'>Closed door</span>)".format(
-                        cfg2Title, cfg3Title), 'utf-8'))
+            unicode("{0} (<span class='item_privacy_secret'>Closed door</span> - {1}), "
+                    "{2} (<span class='item_clone_to_emergency'>Emergency</span> - "
+                    "<span class='item_privacy_secret'>Closed door</span> - {3})".format(
+                        cfg2Title, noneTheoricalMeeting,
+                        cfg3Title, noneTheoricalMeeting), 'utf-8'))
+
+        # now test when meetings exist in cfg2
+        self.changeUser('pmManager')
+        now = DateTime()
+        item.setOtherMeetingConfigsClonableTo((cfg2Id, ))
+        item.setOtherMeetingConfigsClonableToPrivacy(())
+        item.setOtherMeetingConfigsClonableToEmergency(())
+        item.setOtherMeetingConfigsClonableTo((cfg2Id, ))
+        createdMeeting = self.create('Meeting', date=now+10, meetingConfig=cfg2)
+        frozenMeeting = self.create('Meeting', date=now+5, meetingConfig=cfg2)
+        self.freezeMeeting(frozenMeeting)
+        self.assertEquals(
+            item.displayOtherMeetingConfigsClonableTo(),
+            unicode("{0} (<span class='item_privacy_public'>Public meeting</span> - "
+                    "<img class='logical_meeting' src='http://nohost/plone/greyedMeeting.png' "
+                    "title='Theorical date into which item should be presented'></img>&nbsp;<span>{1}</span>)".format(
+                        cfg2Title,
+                        createdMeeting.getPrettyLink(prefixed=False,
+                                                     showContentIcon=False).encode('utf-8')),
+                    'utf-8'))
+        item.setOtherMeetingConfigsClonableToEmergency((cfg2Id, ))
+        self.assertEquals(
+            item.displayOtherMeetingConfigsClonableTo(),
+            unicode("{0} (<span class='item_clone_to_emergency'>Emergency</span> - "
+                    "<span class='item_privacy_public'>Public meeting</span> - "
+                    "<img class='logical_meeting' src='http://nohost/plone/greyedMeeting.png' "
+                    "title='Theorical date into which item should be presented'></img>&nbsp;<span>{1}</span>)".format(
+                        cfg2Title,
+                        frozenMeeting.getPrettyLink(prefixed=False,
+                                                    showContentIcon=False).encode('utf-8')),
+                    'utf-8'))
 
     def test_pm_InternalNotesIsRestrictedToProposingGroupOnly(self, ):
         """Field MeetingItem.internalNotes is only available to members

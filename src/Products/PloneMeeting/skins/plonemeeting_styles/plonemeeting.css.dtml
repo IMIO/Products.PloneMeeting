@@ -13,6 +13,9 @@ table.listing tbody tr.even.meeting_item_privacy_secret td {
 table.listing tbody tr.odd.meeting_item_privacy_secret td {
     background-color: #ffff99;
 }
+img.logical_meeting {
+    cursor: help;
+}
 
 table.listing tr[class][class] td[class^='meeting_item_listType_'] {
     padding: 0em;
@@ -172,7 +175,7 @@ table[border='0'],
 table[border='0'] tr,
 table[border='0'] td,
 table[border='0'] th {
-    border: 1px dotted lightgrey;
+    border: 1px dotted darkgrey;
 }
 
 
@@ -184,16 +187,6 @@ table[border='0'] th {
     padding-top: 0.5em;
 }
 
-/* used for extra infos displayed on items listings or on the meeting view when using 'glasses icon action' */
-body.template-plonemeeting_topic_view label.formQuestion > span,
-body.template-plonemeeting_topic_view label.formQuestion,
-body.template-meeting_view label.formQuestion > span,
-body.template-meeting_view label.formQuestion,
-body.template-meeting_available_items_view label.formQuestion > span,
-body.template-meeting_available_items_view label.formQuestion {
-    font-style: italic;
-    color: &dtml-discreetColor;;
-}
 table.no-style-table td {
     border: 0 !important;
 }
@@ -269,7 +262,9 @@ div.pm_search_no_result_info {
 .state-accepted, .label-state-accepted,
 .state-confirmed, .label-state-confirmed { color: green !important; }
 .state-delayed, .label-state-delayed,
-.state-postponed_next_meeting, .label-state-postponed_next_meeting {
+.state-marked_not_applicable, .label-state-marked_not_applicable,
+.state-postponed_next_meeting, .label-state-postponed_next_meeting,
+.state-removed, .label-state-removed {
     color: grey !important; }
 .state-refused, .label-state-refused { color: violet !important; }
 .state-closed, .label-state-closed { color: grey !important; }
@@ -1367,12 +1362,15 @@ p.item-before-budget-related {
     padding-bottom: 0.5em;
 }
 
-#content table.meetingConfigActions {
+#content table.configActions {
     margin: 0;
 }
-
-table.meetingConfigActions td {
+table.configActions td {
     padding-right: 1em;
+}
+.configActions form {
+    margin-bottom: 0.5em;
+    margin-top: 0.5em;
 }
 
 div.advice_popup_label {
@@ -1489,11 +1487,6 @@ div.customAdviceMessage {
 #content-core p.tool_pm_descr,
 #content-core p.backToItem {
     margin-bottom: 0.5em;
-}
-
-.meetingConfigActions form {
-    margin-bottom: 0.5em;
-    margin-top: 0.5em;
 }
 
 .tooltip.pb-ajax {

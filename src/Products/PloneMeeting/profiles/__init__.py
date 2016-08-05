@@ -272,6 +272,7 @@ class MeetingConfigDescriptor(Descriptor):
 
         # General parameters ---------------------------------------------------
         self.assembly = 'Person 1, Person 2'
+        self.assemblyStaves = 'Staff 1, Staff 2'
         self.signatures = 'Person 1, Person 2, Person 3'
         self.certifiedSignatures = []
         # "Places" describe some predefined places where meetings occur. It is a
@@ -474,6 +475,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.itemAdviceViewStates = []
         # List of item states when it is possible for 'Budget impact reviewers' to edit the budgetInfos
         self.itemBudgetInfosStates = []
+        self.itemGroupInChargeStates = []
         # List of MeetingGroup ids to consider as Power advisers
         self.powerAdvisersGroups = []
         # List of item and meeting states the users in the MeetingConfig
@@ -504,6 +506,8 @@ class MeetingConfigDescriptor(Descriptor):
         self.customAdvisers = []
 
         # Votes parameters -----------------------------------------------------
+        self.usedPollTypes = ('freehand', 'no_vote', 'secret', 'secret_separated')
+        self.defaultPollType = 'freehand'
         self.useVotes = False
         self.votesEncoder = ('theVoterHimself',)
         self.usedVoteValues = ('not_yet', 'yes', 'no', 'abstain')

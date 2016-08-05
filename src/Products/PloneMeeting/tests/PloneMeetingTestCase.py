@@ -138,7 +138,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
            in the Plone site. Within this test system, it returns None. This
            method allows to simulate that p_meeting is the currently published
            object.'''
-        meeting.REQUEST['PUBLISHED'] = meeting
+        self.portal.REQUEST['PUBLISHED'] = meeting
 
     def hasPermission(self, permission, obj):
         '''Checks if the currently logged user has the p_permission on p_obj.

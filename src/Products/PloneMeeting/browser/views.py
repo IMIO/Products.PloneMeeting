@@ -653,6 +653,18 @@ class MeetingDocumentGenerationHelperView(FolderDocumentGenerationHelperView):
 
 class ItemDocumentGenerationHelperView(PMDocumentGenerationHelperView):
     """ """
+    def printMeetingDate(self, returnDateTime=False, noMeetingMarker='-'):
+        """Print meeting date, manage fact that item is not linked to a meeting,
+           in this case p_noMeetingMarker is returned.
+           If p_returnDateTime is True, it returns the meeting date DateTime,
+           otherwise it returns the meeting title containing formatted date."""
+        meeting = self.context.getMeeting()
+        if meeting:
+            if returnDateTime:
+                return meeting.getDate()
+            return meeting.Title()
+        else:
+            return noMeetingMarker
 
 
 class AdviceDocumentGenerationHelperView(PMDocumentGenerationHelperView):

@@ -138,6 +138,21 @@ schema = Schema((
         write_permission="PloneMeeting: Write harmless config",
     ),
     TextField(
+        name='assemblyStaves',
+        allowable_content_types=('text/plain',),
+        widget=TextAreaWidget(
+            description="AssemblyStaves",
+            description_msgid="assembly_staves_descr",
+            label='AssemblyStaves',
+            label_msgid='PloneMeeting_label_assemblyStaves',
+            i18n_domain='PloneMeeting',
+        ),
+        default_content_type='text/plain',
+        default=defValues.assemblyStaves,
+        schemata="assembly_and_signatures",
+        write_permission="PloneMeeting: Write harmless config",
+    ),
+    TextField(
         name='signatures',
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
@@ -1594,6 +1609,23 @@ schema = Schema((
         allow_empty_rows=False,
     ),
     LinesField(
+        name='powerAdvisersGroups',
+        widget=MultiSelectionWidget(
+            description="PowerAdvisersGroups",
+            description_msgid="power_advisers_groups_descr",
+            size=10,
+            format="checkbox",
+            label='Poweradvisersgroups',
+            label_msgid='PloneMeeting_label_powerAdvisersGroups',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        multiValued=1,
+        vocabulary='listActiveMeetingGroupsForPowerAdvisers',
+        default=defValues.powerAdvisersGroups,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
         name='itemPowerObserversStates',
         widget=MultiSelectionWidget(
             description="ItemPowerObserversStates",
@@ -1679,20 +1711,20 @@ schema = Schema((
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
-        name='powerAdvisersGroups',
+        name='itemGroupInChargeStates',
         widget=MultiSelectionWidget(
-            description="PowerAdvisersGroups",
-            description_msgid="power_advisers_groups_descr",
-            size=10,
+            description="ItemGroupInChargeStates",
+            description_msgid="item_group_in_charge_states_descr",
             format="checkbox",
-            label='Poweradvisersgroups',
-            label_msgid='PloneMeeting_label_powerAdvisersGroups',
+            label='Itemgroupinchargestates',
+            label_msgid='PloneMeeting_label_itemGroupInChargeStates',
             i18n_domain='PloneMeeting',
         ),
         schemata="advices",
         multiValued=1,
-        vocabulary='listActiveMeetingGroupsForPowerAdvisers',
-        default=defValues.powerAdvisersGroups,
+        vocabulary='listItemStates',
+        default=defValues.itemGroupInChargeStates,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
@@ -1838,6 +1870,39 @@ schema = Schema((
         multiValued=1,
         vocabulary='listConfidentialFor',
         default=defValues.annexConfidentialFor,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
+        name='usedPollTypes',
+        widget=MultiSelectionWidget(
+            description="UsedPollTypes",
+            description_msgid="used_poll_types_descr",
+            format="checkbox",
+            label='Usedpolltypes',
+            label_msgid='PloneMeeting_label_usedPollTypes',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="votes",
+        multiValued=1,
+        vocabulary='listPollTypes',
+        default=defValues.usedPollTypes,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    StringField(
+        name='defaultPollType',
+        widget=SelectionWidget(
+            description="DefaultPollType",
+            description_msgid="default_poll_type_descr",
+            format="select",
+            label='Defaultpolltype',
+            label_msgid='PloneMeeting_label_defaultPollType',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="votes",
+        vocabulary='listPollTypes',
+        default=defValues.defaultPollType,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
@@ -2000,7 +2065,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                      'only_creator_may_delete', 'pre_validation',  'pre_validation_keep_reviewer_permissions',
                      'items_come_validated', 'archiving', 'no_publication', 'no_proposal', 'everyone_reads_all',
                      'creator_edits_unless_closed', 'return_to_proposing_group', 'hide_decisions_when_under_writing',
-                     'waiting_advices', 'postpone_next_meeting')
+                     'waiting_advices', 'postpone_next_meeting', 'mark_not_applicable', 'removed')
 
     def _searchesInfo(self):
         """Informations used to create DashboardCollections in the searches."""
@@ -2994,6 +3059,28 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 return translate('wa_removed_hide_decisions_when_under_writing_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
+        if 'postpone_next_meeting' in removed:
+            # this will remove the 'postponed_next_meeting' state for Item
+            # check that no more items are in this state
+            if catalog(portal_type=self.getItemTypeName(), review_state='postponed_next_meeting'):
+                return translate('wa_removed_postpone_next_meeting_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+        if 'mark_not_applicable' in removed:
+            # this will remove the 'marked_not_applicable' state for Item
+            # check that no more items are in this state
+            if catalog(portal_type=self.getItemTypeName(), review_state='marked_not_applicable'):
+                return translate('wa_removed_mark_not_applicable_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+        if 'removed' in removed:
+            # this will remove the 'removed' state for Item
+            # check that no more items are in this state
+            if catalog(portal_type=self.getItemTypeName(), review_state='removed'):
+                return translate('wa_removed_removed_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+
         return self.adapted().custom_validate_workflowAdaptations()
 
     def custom_validate_workflowAdaptations(self):
@@ -3074,6 +3161,17 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 notUsingToDiscuss = 'toDiscuss' not in self.getUsedItemAttributes()
             if notUsingToDiscuss:
                 return translate('inserting_methods_not_using_to_discuss_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+
+        # check that if we selected 'on_poll_type', we actually use the field 'pollType'...
+        if 'on_poll_type' in res:
+            if hasattr(self.REQUEST, 'usedItemAttributes'):
+                notUsingToPollType = 'pollType' not in self.REQUEST.get('usedItemAttributes')
+            else:
+                notUsingToPollType = 'pollType' not in self.getUsedItemAttributes()
+            if notUsingToPollType:
+                return translate('inserting_methods_not_using_poll_type_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
 
@@ -3209,14 +3307,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 translate("header_getGroupInCharge", domain=d, context=self.REQUEST)),
             ("group_in_charge_acronym",
                 translate("header_group_in_charge_acronym", domain=d, context=self.REQUEST)),
-            ("advices",
-                translate("header_advices", domain=d, context=self.REQUEST)),
-            ("toDiscuss",
-                translate('header_toDiscuss', domain=d, context=self.REQUEST)),
-            ("getItemIsSigned",
-                translate('header_getItemIsSigned', domain=d, context=self.REQUEST)),
             ("privacy",
                 translate("header_privacy", domain=d, context=self.REQUEST)),
+            ("pollType",
+                translate("header_pollType", domain=d, context=self.REQUEST)),
+            ("advices",
+                translate("header_advices", domain=d, context=self.REQUEST)),
+            ("getItemIsSigned",
+                translate('header_getItemIsSigned', domain=d, context=self.REQUEST)),
+            ("toDiscuss",
+                translate('header_toDiscuss', domain=d, context=self.REQUEST)),
             ("actions",
                 translate("header_actions", domain=d, context=self.REQUEST)),
         ]
@@ -3300,6 +3400,29 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ("hands", translate('advices_hands', domain=d, context=self.REQUEST)),
         ))
         return res
+
+    security.declarePrivate('listPollTypes')
+
+    def listPollTypes(self):
+        res = [
+            ("freehand",
+             translate('polltype_freehand',
+                       domain='PloneMeeting',
+                       context=self.REQUEST)),
+            ("no_vote",
+             translate('polltype_no_vote',
+                       domain='PloneMeeting',
+                       context=self.REQUEST)),
+            ("secret",
+             translate('polltype_secret',
+                       domain='PloneMeeting',
+                       context=self.REQUEST)),
+            ("secret_separated",
+             translate('polltype_secret_separated',
+                       domain='PloneMeeting',
+                       context=self.REQUEST)),
+        ]
+        return DisplayList(res)
 
     security.declarePrivate('listTransitions')
 
@@ -4406,6 +4529,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             'on_to_discuss',
             # according to items that need to be sent to another meeting config;
             'on_other_mc_to_clone_to',
+            # according to poll type;
+            'on_poll_type',
         )
         for itemInsertMethod in ITEM_INSERT_METHODS:
             res.append((itemInsertMethod,

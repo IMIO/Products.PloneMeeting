@@ -538,6 +538,16 @@ class MeetingItemWorkflowActions:
     def doRefuse(self, stateChange):
         pass
 
+    security.declarePrivate('doMark_not_applicable')
+
+    def doMark_not_applicable(self, stateChange):
+        pass
+
+    security.declarePrivate('doRemove')
+
+    def doRemove(self, stateChange):
+        pass
+
     security.declarePrivate('doPostpone_next_meeting')
 
     def doPostpone_next_meeting(self, stateChange):
@@ -922,6 +932,8 @@ schema = Schema((
         allowable_content_types=('text/html',),
         widget=RichWidget(
             condition="python: here.showMeetingManagerReservedField('inAndOutMoves')",
+            description="InAndOutMoves",
+            description_msgid="in_and_out_moves_descr",
             label_msgid="PloneMeeting_inAndOutMoves",
             rows=20,
             label='Inandoutmoves',
@@ -937,6 +949,8 @@ schema = Schema((
         allowable_content_types=('text/html',),
         widget=RichWidget(
             condition="python: here.showMeetingManagerReservedField('notes')",
+            description="Notes",
+            description_msgid="notes_descr",
             label_msgid="PloneMeeting_notes",
             rows=20,
             label='Notes',
@@ -1125,6 +1139,19 @@ schema = Schema((
         enforceVocabulary=True,
         multiValued=1,
         vocabulary='listCopyGroups',
+    ),
+    StringField(
+        name='pollType',
+        widget=SelectionWidget(
+            condition="python: here.attributeIsUsed('pollType')",
+            label='Polltype',
+            label_msgid='PloneMeeting_label_pollType',
+            i18n_domain='PloneMeeting',
+        ),
+        optional=True,
+        default_method="getDefaultPollType",
+        enforceVocabulary=True,
+        vocabulary_factory='Products.PloneMeeting.vocabularies.polltypesvocabulary'
     ),
     BooleanField(
         name='votesAreSecret',
@@ -1543,11 +1570,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('showInternalNotes')
 
     def showInternalNotes(self):
-        '''When must field 'internalNotes' be shown?'''
-        if self.isTemporary() or not self.attributeIsUsed('internalNotes'):
+        '''Show field 'internalNotes' if attribute is used,
+           and only to members of the proposingGroup (+ real Managers).'''
+        if not self.attributeIsUsed('internalNotes'):
             return False
 
-        # by pass for Managers
+        # creating new item, show field
+        if self.isTemporary():
+            return True
+
+        # bypass for Managers
         tool = api.portal.get_tool('portal_plonemeeting')
         if tool.isManager(self, realManagers=True):
             return True
@@ -1994,17 +2026,25 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getDefaultToDiscuss')
 
     def getDefaultToDiscuss(self):
-        '''What is the default value for the "toDiscuss" field ? Look in the
-           meeting config.'''
+        '''Get default value for field 'toDiscuss' from the MeetingConfig.'''
         res = True
-        meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
-        if meetingConfig:
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        if cfg:
             # When creating a meeting through invokeFactory (like recurring
             # items), getMeetingConfig does not work because the Archetypes
             # object is not properly initialized yet (portal_type is not set
             # correctly yet)
-            res = meetingConfig.getToDiscussDefault()
+            res = cfg.getToDiscussDefault()
         return res
+
+    security.declarePublic('getDefaultPollType')
+
+    def getDefaultPollType(self):
+        '''Get default value for field 'pollType' from the MeetingConfig.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        return cfg.getDefaultPollType()
 
     def getMeeting(self, brain=False):
         '''Returns the linked meeting if it exists.'''
@@ -2322,8 +2362,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def listItemTags(self):
         '''Lists the available tags from the meeting config.'''
         res = []
-        meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
-        for tag in meetingConfig.getAllItemTags().split('\n'):
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        for tag in cfg.getAllItemTags().split('\n'):
             res.append((tag, tag))
         return DisplayList(tuple(res))
 
@@ -3015,6 +3056,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # can be sent to + the fact that an item is not
             # to send to another MC
             return len(self.listOtherMeetingConfigsClonableTo()) + 1
+        elif insertMethod == 'on_poll_type':
+            factory = queryUtility(IVocabularyFactory,
+                                   'Products.PloneMeeting.vocabularies.polltypesvocabulary')
+            return len(factory(self))
         else:
             return self.adapted()._findCustomOneLevelFor(insertMethod)
 
@@ -3078,6 +3123,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if not groupInCharge:
                 raise Exception("No valid groupInCharge defined for {0}".format(proposingGroup.getId()))
             return groupInCharge.getOrder(onlyActive=False)
+        elif insertMethod == 'on_poll_type':
+            pollType = self.getPollType()
+            factory = queryUtility(IVocabularyFactory,
+                                   'Products.PloneMeeting.vocabularies.polltypesvocabulary')
+            pollTypes = [term.token for term in factory(self)._terms]
+            # Get the order of the pollType
+            res = pollTypes.index(pollType)
         else:
             res = self.adapted()._findCustomOrderFor(insertMethod)
         return res
@@ -3428,7 +3480,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def listItemInitiators(self):
         '''Returns the active MeetingUsers having usage "asker".'''
-        meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        meetingConfig = tool.getMeetingConfig(self)
         res = []
         for u in meetingConfig.getMeetingUsers(usages=['asker', ]):
             value = ''
@@ -3451,7 +3504,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Returns the itemInitiator id or the MeetingUser object if p_theObject is True.'''
         res = self.getField('itemInitiator').get(self, **kwargs)
         if res and theObject:
-            mc = self.portal_plonemeeting.getMeetingConfig(self)
+            tool = api.portal.get_tool('portal_plonemeeting')
+            mc = tool.getMeetingConfig(self)
             res = getattr(mc.meetingusers, res)
         return res
 
@@ -3654,6 +3708,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def displayOtherMeetingConfigsClonableTo(self):
         '''Display otherMeetingConfigsClonableTo with eventual
            emergency and privacy informations.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
         vocab = self.listOtherMeetingConfigsClonableTo()
 
         # emergency
@@ -3667,6 +3722,19 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         public_msg = translate('public',
                                domain='PloneMeeting',
                                context=self.REQUEST)
+
+        # effective/theorical meeting informations
+        effective_meeting_msg = translate('effective_meeting_help',
+                                          domain='PloneMeeting',
+                                          context=self.REQUEST)
+        theorical_meeting_msg = translate('theorical_meeting_help',
+                                          domain='PloneMeeting',
+                                          context=self.REQUEST)
+        no_meeting_available_msg = translate('no_meeting_available',
+                                             domain='PloneMeeting',
+                                             context=self.REQUEST)
+        portal_url = api.portal.get().absolute_url()
+
         res = []
         for otherMC in self.getOtherMeetingConfigsClonableTo():
             isSecret = otherMC in self.getOtherMeetingConfigsClonableToPrivacy()
@@ -3678,10 +3746,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if self.attributeIsUsed('otherMeetingConfigsClonableToPrivacy'):
                 displayPrivacy = True
 
-            PATTERN = u"{0}"
-            if displayEmergency or displayPrivacy:
-                PATTERN = u"{0} ({1})"
-
             emergencyAndPrivacyInfos = []
             if displayEmergency:
                 emergencyAndPrivacyInfos.append(
@@ -3691,7 +3755,32 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     isSecret and 'secret' or 'public',
                     isSecret and secret_msg or public_msg)
                 emergencyAndPrivacyInfos.append(privacyInfo)
-            tmp = PATTERN.format(cfgTitle, " - ".join(emergencyAndPrivacyInfos))
+
+            # if sendable, display logical meeting into which it could be presented
+            # if already sent, just display the "sent" information
+            LOGICAL_DATE_PATTERN = u"<img class='logical_meeting' src='{0}' title='{1}'></img>&nbsp;<span>{2}</span>"
+            clonedItem = self.getItemClonedToOtherMC(otherMC)
+            if not clonedItem or not clonedItem.hasMeeting():
+                logicalMeeting = self._otherMCMeetingToBePresentedIn(getattr(tool, otherMC))
+                if logicalMeeting:
+                    logicalMeetingLink = logicalMeeting.getPrettyLink(prefixed=False,
+                                                                      showContentIcon=False)
+                else:
+                    logicalMeetingLink = no_meeting_available_msg
+                iconName = 'greyedMeeting.png'
+                title_help_msg = theorical_meeting_msg
+            else:
+                clonedItemMeeting = clonedItem.getMeeting()
+                logicalMeetingLink = clonedItemMeeting.getPrettyLink(prefixed=False,
+                                                                     showContentIcon=False)
+                iconName = 'Meeting.png'
+                title_help_msg = effective_meeting_msg
+
+            logicalDateInfo = LOGICAL_DATE_PATTERN.format('/'.join((portal_url, iconName)),
+                                                          title_help_msg,
+                                                          logicalMeetingLink)
+
+            tmp = u"{0} ({1})".format(cfgTitle, " - ".join(emergencyAndPrivacyInfos + [logicalDateInfo]))
             res.append(tmp)
         return u", ".join(res) or "-"
 
@@ -3776,7 +3865,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def enforceAdviceMandatoriness(self):
         '''Checks in the configuration if we must enforce advice mandatoriness.'''
-        meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        meetingConfig = tool.getMeetingConfig(self)
         if meetingConfig.getUseAdvices() and \
            meetingConfig.getEnforceAdviceMandatoriness():
             return True
@@ -4516,6 +4606,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # actually it could be enough to do in in the onItemTransition but as it is
         # always done after updateLocalRoles, we do it here as it is trivial
         self._updateBudgetImpactEditorsLocalRoles()
+        # update group in charge local roles
+        # we will give the current groupInCharge _observers sub group access to this item
+        self._updateGroupInChargeLocalRoles()
+
         # manage the 'ATContentTypes: Add Image' permission
         _addImagePermission(self)
         # notify that localRoles have been updated
@@ -4575,6 +4669,20 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return
         budgetImpactEditorsGroupId = "%s_%s" % (cfg.getId(), BUDGETIMPACTEDITORS_GROUP_SUFFIX)
         self.manage_addLocalRoles(budgetImpactEditorsGroupId, ('MeetingBudgetImpactEditor',))
+
+    def _updateGroupInChargeLocalRoles(self):
+        '''Get the current groupInCharge and give View access to the _observers Plone group.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        itemState = self.queryState()
+        if itemState not in cfg.getItemGroupInChargeStates():
+            return
+        proposingGroup = self.getProposingGroup(True)
+        groupInCharge = proposingGroup.getGroupInChargeAt()
+        if not groupInCharge:
+            return
+        observersPloneGroupId = groupInCharge.getPloneGroupId('observers')
+        self.manage_addLocalRoles(observersPloneGroupId, (READER_USECASES['groupincharge'],))
 
     def _versionateAdvicesOnItemEdit(self):
         """When item is edited, versionate advices if necessary, it is the case if advice was
@@ -4813,8 +4921,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             else:
                 newItem.setPredecessor(self)
 
-        # notify that item has been duplicated so subproducts
-        # may interact if necessary
+        # notify that item has been duplicated so subproducts may interact if necessary
         notify(ItemDuplicatedEvent(self, newItem))
         newItem.reindexObject()
         logger.info('Item at %s cloned (%s) by "%s" from %s.' %
@@ -4829,6 +4936,23 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def doCloneToOtherMeetingConfig(self, destMeetingConfigId):
         '''Action used by the 'clone to other config' button.'''
         self.cloneToOtherMeetingConfig(destMeetingConfigId)
+
+    def _otherMCMeetingToBePresentedIn(self, destMeetingConfig):
+        """Returns the logical meeting the item should be presented in
+           when it will be sent to given p_destMeetingConfig."""
+        if destMeetingConfig.getId() in self.getOtherMeetingConfigsClonableToEmergency():
+            meetingsAcceptingItems = destMeetingConfig.adapted().getMeetingsAcceptingItems(
+                inTheFuture=True)
+        else:
+            wfTool = api.portal.get_tool('portal_workflow')
+            meetingWF = wfTool.getWorkflowsFor(destMeetingConfig.getMeetingTypeName())[0]
+            meetingsAcceptingItems = destMeetingConfig.adapted().getMeetingsAcceptingItems(
+                review_states=(wfTool[meetingWF.getId()].initial_state, ),
+                inTheFuture=True)
+        res = None
+        if meetingsAcceptingItems:
+            res = meetingsAcceptingItems[0]._unrestrictedGetObject()
+        return res
 
     security.declarePrivate('cloneToOtherMeetingConfig')
 
@@ -4898,6 +5022,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     newItem.setCategory(newCat.getId())
                     break
 
+        # find meeting to present the item in and set is as preferred
+        # this way if newItem needs to be presented in a frozen meeting, it works
+        # at it requires the preferredMeeting to be the frozen meeting
+        meeting = self._otherMCMeetingToBePresentedIn(destMeetingConfig)
+        if meeting:
+            newItem.setPreferredMeeting(meeting.UID())
+
         # execute some transitions on the newItem if it was defined in the cfg
         # find the transitions to trigger
         triggerUntil = NO_TRIGGER_WF_TRANSITION_UNTIL
@@ -4918,7 +5049,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # several items in a meeting and some are sent to another MC then presented
             # to a meeting of this other MB
             originalPublishedObject = self.REQUEST.get('PUBLISHED')
-            meetingWF = wfTool.getWorkflowsFor(cfg.getMeetingTypeName())[0]
             # do this as Manager to be sure that transitions may be triggered
             with api.env.adopt_roles(roles=['Manager']):
                 for tr in destMeetingConfig.getTransitionsForPresentingAnItem():
@@ -4926,24 +5056,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         # special handling for the 'present' transition
                         # that needs a meeting as 'PUBLISHED' object to work
                         if tr == 'present':
-                            # find next meeting accepting items, only query meetings that
-                            # are in the initial workflow state if not otherMeetingConfigsClonableToEmergency
-                            if destMeetingConfigId in self.getOtherMeetingConfigsClonableToEmergency():
-                                meetingsAcceptingItems = destMeetingConfig.adapted().getMeetingsAcceptingItems(
-                                    inTheFuture=True)
-                            else:
-                                meetingsAcceptingItems = destMeetingConfig.adapted().getMeetingsAcceptingItems(
-                                    review_states=(wfTool[meetingWF.getId()].initial_state, ),
-                                    inTheFuture=True)
-                            if not meetingsAcceptingItems:
+                            if not meeting:
                                 plone_utils.addPortalMessage(
                                     _('could_not_present_item_no_meeting_accepting_items',
                                       mapping={'destMeetingConfigTitle': destMeetingConfig.Title()}),
                                     'warning')
                                 break
-                            meeting = meetingsAcceptingItems[0].getObject()
-                            newItem.setPreferredMeeting(meeting.UID())
-                            newItem.reindexObject(idxs=['getPreferredMeeting', 'getPreferredMeetingDate'])
                             newItem.REQUEST['PUBLISHED'] = meeting
 
                         wfTool.doActionFor(newItem, tr, comment=wf_comment)
