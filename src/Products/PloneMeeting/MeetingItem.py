@@ -3634,26 +3634,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             advices.append(adviceInfo.__dict__['data'])
         return res
 
-    security.declarePublic('getInheritatedAdvices')
-
-    def getInheritatedAdvices(self):
-        """ """
-        res = []
-        predecessor = self.getPredecessor()
-        if not predecessor:
-            return res
-
-        for adviceInfo in self.adviceIndex.itervalues():
-            if adviceInfo['inheritated']:
-                adviceObj = None
-                while predecessor and (not adviceObj and
-                                       predecessor.adviceIndex[adviceInfo['id']]['inheritated']):
-                    adviceObj = predecessor.getAdviceObj(adviceInfo['id'])
-                    predecessor = predecessor.getPredecessor()
-                if adviceObj:
-                    res.append(adviceObj)
-        return res
-
     security.declarePublic('getGivenAdvices')
 
     def getGivenAdvices(self):
