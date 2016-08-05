@@ -67,7 +67,7 @@
               <li tal:repeat="advice python:advicesByType[adviceType]">
                 <fieldset tal:define="mGroup python: getattr(view.tool, advice['id']);
                                       memberIsAdviserForGroup python:  advice['id'] in userAdviserGroupIds;
-                                      obj python: advice.get('advice_id', None) and getattr(context, advice['advice_id']) or None;
+                                      obj python: advice.get('advice_id', None) and getattr(advice.get('adviceHolder', context), advice['advice_id']) or None;
                                       mayEdit python: (advicesToEdit and advice['id'] in advicesToEdit) or (isRealManager and not adviceType == 'not_given');
                                       customMessageInfos python: context.adapted().getCustomAdviceMessageFor(advice);
                                       displayDefaultComplementaryMessage customMessageInfos/displayDefaultComplementaryMessage;

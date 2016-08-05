@@ -3618,6 +3618,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         isPowerObserver = tool.isPowerObserverForCfg(cfg)
         isRestrictedPowerObserver = tool.isPowerObserverForCfg(cfg, isRestricted=True)
         for groupId, adviceInfo in self.adviceIndex.iteritems():
+            # manage inheritated advice
+            if adviceInfo['inheritated']:
+                adviceInfo = self.getInheritatedAdviceInfo(groupId)
             # Create the entry for this type of advice if not yet created.
             # first check if current user may access advice, aka advice is not confidential to him
             if not self._adviceIsViewableForCurrentUser(cfg,
@@ -3634,39 +3637,43 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             advices.append(adviceInfo.__dict__['data'])
         return res
 
-    security.declarePublic('getInheritatedAdvices')
+    security.declarePublic('getInheritatedAdviceInfo')
 
-    def getInheritatedAdvices(self):
+    def getInheritatedAdviceInfo(self, adviserId):
         """ """
-        res = []
+        res = None
         predecessor = self.getPredecessor()
         if not predecessor:
             return res
 
-        for adviceInfo in self.adviceIndex.itervalues():
-            if adviceInfo['inheritated']:
-                adviceObj = None
-                while predecessor and not adviceObj:
-                    adviceObj = predecessor.getAdviceObj(adviceInfo['id'])
-                    predecessor = predecessor.getPredecessor()
-                if adviceObj:
-                    res.append(adviceObj)
+        adviceInfo = self.adviceIndex.get(adviserId)
+        if not adviceInfo:
+            return res
+
+        if adviceInfo['inheritated']:
+            inheritatedAdviceInfo = predecessor.adviceIndex.get(adviserId)
+            while predecessor and (
+                    not (inheritatedAdviceInfo or inheritatedAdviceInfo['type'] != NOT_GIVEN_ADVICE_VALUE) and
+                    predecessor.adviceIndex[adviceInfo['id']]['inheritated']):
+                predecessor = predecessor.getPredecessor()
+                inheritatedAdviceInfo = predecessor.adviceIndex.get(adviserId)
+            if inheritatedAdviceInfo:
+                res = inheritatedAdviceInfo
+                res['adviceHolder'] = predecessor
+
         return res
 
     security.declarePublic('getGivenAdvices')
 
-    def getGivenAdvices(self, inheritated=False):
+    def getGivenAdvices(self):
         '''Returns the list of advices that has already been given by
-           computing a data dict from contained meetingadvices.
-           If p_inheritated is True, it returns also inheritated advices.'''
+           computing a data dict from contained meetingadvices.'''
         # for now, only contained elements in a MeetingItem of
         # meta_type 'Dexterity Container' are meetingadvices...
         res = {}
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         advices = self.getAdvices()
-        if inheritated:
-            advices += self.getInheritatedAdvices()
         for advice in advices:
             optional = True
             gives_auto_advice_on_help_message = delay = delay_left_alert = delay_label = ''
@@ -3682,6 +3689,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             advice_given_on = advice.get_advice_given_on()
             res[advice.advice_group] = {'type': advice.advice_type,
                                         'optional': optional,
+                                        'not_asked': False,
                                         'not_asked': False,
                                         'id': advice.advice_group,
                                         'name': getattr(tool, advice.advice_group).getName().decode('utf-8'),
@@ -3893,16 +3901,21 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            but it is still callable using a Script (Python) or useable in a TAL expression...'''
         if not isinstance(item, MeetingItem) or not item.UID() == self.UID():
             raise Unauthorized
+
         data = {}
         for adviceInfo in self.adviceIndex.values():
             advId = adviceInfo['id']
+            # if advice is inheritated get real adviceInfo
+            if adviceInfo['inheritated']:
+                adviceInfo = self.getInheritatedAdviceInfo(advId)
             data[advId] = adviceInfo.copy()
             # optimize some saved data
             data[advId]['type_translated'] = translate(data[advId]['type'],
                                                        domain='PloneMeeting',
                                                        context=self.REQUEST)
             # add meetingadvice object if given
-            data[advId]['given_advice'] = self.getAdviceObj(advId)
+            adviceHolder = adviceInfo.get('adviceHolder', self)
+            data[advId]['given_advice'] = adviceHolder.getAdviceObj(advId)
         if adviserId:
             data = data[adviserId]
         return data
@@ -4163,6 +4176,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 adviceInfo['advice_addable'] = False
                 adviceInfo['advice_editable'] = False
                 adviceInfo['annexIndex'] = []
+                adviceInfo['inheritated'] = False
             self.adviceIndex[groupId].update(adviceInfo)
 
         # and remove specific permissions given to add advices
@@ -4195,115 +4209,119 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Then, add local roles regarding asked advices
         wfTool = api.portal.get_tool('portal_workflow')
         for groupId in self.adviceIndex.iterkeys():
-            mGroup = getattr(tool, groupId)
-            itemAdviceStates = mGroup.getItemAdviceStates(cfg)
-            itemAdviceEditStates = mGroup.getItemAdviceEditStates(cfg)
-            itemAdviceViewStates = mGroup.getItemAdviceViewStates(cfg)
-            ploneGroup = '%s_advisers' % groupId
-            adviceObj = None
-            if 'advice_id' in self.adviceIndex[groupId]:
-                adviceObj = getattr(self, self.adviceIndex[groupId]['advice_id'])
-            giveReaderAccess = True
-            if itemState not in itemAdviceStates and \
-               itemState not in itemAdviceEditStates and \
-               itemState not in itemAdviceViewStates:
-                giveReaderAccess = False
-                # in this case, the advice is no more accessible in any way by the adviser
-                # make sure the advice given by groupId is no more editable
-                if adviceObj and not adviceObj.queryState() == 'advice_given':
-                    self.REQUEST.set('mayGiveAdvice', True)
-                    # add a comment for this transition triggered by the application,
-                    # we want to show why it was triggered : item state change or delay exceeded
-                    wf_comment = _('wf_transition_triggered_by_application')
-                    wfTool.doActionFor(adviceObj, 'giveAdvice', comment=wf_comment)
-                    self.REQUEST.set('mayGiveAdvice', False)
-                # in case advice was not given or access to given advice is not kept,
-                # we are done with this one
-                if adviceObj and mGroup.getKeepAccessToItemWhenAdviceIsGiven(cfg):
-                    giveReaderAccess = True
+            # bypass if advice is inheritated
+            if not self.adviceIndex[groupId]['inheritated']:
+                mGroup = getattr(tool, groupId)
+                itemAdviceStates = mGroup.getItemAdviceStates(cfg)
+                itemAdviceEditStates = mGroup.getItemAdviceEditStates(cfg)
+                itemAdviceViewStates = mGroup.getItemAdviceViewStates(cfg)
+                ploneGroup = '%s_advisers' % groupId
+                adviceObj = None
+                if 'advice_id' in self.adviceIndex[groupId]:
+                    adviceObj = getattr(self, self.adviceIndex[groupId]['advice_id'])
+                giveReaderAccess = True
+                if itemState not in itemAdviceStates and \
+                   itemState not in itemAdviceEditStates and \
+                   itemState not in itemAdviceViewStates:
+                    giveReaderAccess = False
+                    # in this case, the advice is no more accessible in any way by the adviser
+                    # make sure the advice given by groupId is no more editable
+                    if adviceObj and not adviceObj.queryState() == 'advice_given':
+                        self.REQUEST.set('mayGiveAdvice', True)
+                        # add a comment for this transition triggered by the application,
+                        # we want to show why it was triggered : item state change or delay exceeded
+                        wf_comment = _('wf_transition_triggered_by_application')
+                        wfTool.doActionFor(adviceObj, 'giveAdvice', comment=wf_comment)
+                        self.REQUEST.set('mayGiveAdvice', False)
+                    # in case advice was not given or access to given advice is not kept,
+                    # we are done with this one
+                    if adviceObj and mGroup.getKeepAccessToItemWhenAdviceIsGiven(cfg):
+                        giveReaderAccess = True
 
-            if self.adapted()._itemToAdviceIsViewable(groupId) and giveReaderAccess:
-                # give access to the item if adviser can see it
-                self.manage_addLocalRoles(ploneGroup, (READER_USECASES['advices'],))
-                self.adviceIndex[groupId]['item_viewable_by_advisers'] = True
+                if self.adapted()._itemToAdviceIsViewable(groupId) and giveReaderAccess:
+                    # give access to the item if adviser can see it
+                    self.manage_addLocalRoles(ploneGroup, (READER_USECASES['advices'],))
+                    self.adviceIndex[groupId]['item_viewable_by_advisers'] = True
 
-            # manage delay-aware advice, we start the delay if not already started
-            if itemState in itemAdviceStates and \
-               self.adviceIndex[groupId]['delay'] and not \
-               self.adviceIndex[groupId]['delay_started_on']:
-                self.adviceIndex[groupId]['delay_started_on'] = datetime.now()
+                # manage delay-aware advice, we start the delay if not already started
+                if itemState in itemAdviceStates and \
+                   self.adviceIndex[groupId]['delay'] and not \
+                   self.adviceIndex[groupId]['delay_started_on']:
+                    self.adviceIndex[groupId]['delay_started_on'] = datetime.now()
 
-            # check if user must be able to add an advice, if not already given
-            # check also if the delay is not exceeded, in this case the advice can not be given anymore
-            delayIsNotExceeded = not self._adviceDelayIsTimedOut(groupId, computeNewDelayInfos=True)
-            if itemState in itemAdviceStates and \
-               not adviceObj and \
-               delayIsNotExceeded and \
-               self.adapted()._adviceIsAddable(groupId):
-                # advisers must be able to add a 'meetingadvice', give
-                # relevant permissions to 'Contributor' role
-                # the 'Add portal content' permission is given by default to 'Contributor', so
-                # we need to give 'PloneMeeting: Add advice' permission too
-                self.manage_addLocalRoles(ploneGroup, ('Contributor', ))
-                self._grantPermissionToRole(permission=AddAdvice,
-                                            role_to_give='Contributor',
-                                            obj=self)
-                self.adviceIndex[groupId]['advice_addable'] = True
+                # check if user must be able to add an advice, if not already given
+                # check also if the delay is not exceeded, in this case the advice can not be given anymore
+                delayIsNotExceeded = not self._adviceDelayIsTimedOut(groupId, computeNewDelayInfos=True)
+                if itemState in itemAdviceStates and \
+                   not adviceObj and \
+                   delayIsNotExceeded and \
+                   self.adapted()._adviceIsAddable(groupId):
+                    # advisers must be able to add a 'meetingadvice', give
+                    # relevant permissions to 'Contributor' role
+                    # the 'Add portal content' permission is given by default to 'Contributor', so
+                    # we need to give 'PloneMeeting: Add advice' permission too
+                    self.manage_addLocalRoles(ploneGroup, ('Contributor', ))
+                    self._grantPermissionToRole(permission=AddAdvice,
+                                                role_to_give='Contributor',
+                                                obj=self)
+                    self.adviceIndex[groupId]['advice_addable'] = True
 
-            # is advice still editable?
-            if itemState in itemAdviceEditStates and \
-               delayIsNotExceeded and \
-               adviceObj and \
-               self.adapted()._adviceIsEditable(groupId):
-                # make sure the advice given by groupId is no more in state 'advice_given'
-                # if it is the case, we set it back to the advice initial_state
-                if adviceObj.queryState() == 'advice_given':
-                    try:
-                        # make the guard_expr protecting 'mayBackToAdviceInitialState' alright
-                        self.REQUEST.set('mayBackToAdviceInitialState', True)
+                # is advice still editable?
+                if itemState in itemAdviceEditStates and \
+                   delayIsNotExceeded and \
+                   adviceObj and \
+                   self.adapted()._adviceIsEditable(groupId):
+                    # make sure the advice given by groupId is no more in state 'advice_given'
+                    # if it is the case, we set it back to the advice initial_state
+                    if adviceObj.queryState() == 'advice_given':
+                        try:
+                            # make the guard_expr protecting 'mayBackToAdviceInitialState' alright
+                            self.REQUEST.set('mayBackToAdviceInitialState', True)
+                            # add a comment for this transition triggered by the application
+                            wf_comment = _('wf_transition_triggered_by_application')
+                            wfTool.doActionFor(adviceObj, 'backToAdviceInitialState', comment=wf_comment)
+                        except WorkflowException:
+                            # if we have another workflow than default meetingadvice_workflow
+                            # maybe we can not 'backToAdviceUnderEdit'
+                            pass
+                        self.REQUEST.set('mayBackToAdviceInitialState', False)
+                    self.adviceIndex[groupId]['advice_editable'] = True
+                else:
+                    # make sure it is no more editable
+                    if adviceObj and not adviceObj.queryState() == 'advice_given':
+                        self.REQUEST.set('mayGiveAdvice', True)
                         # add a comment for this transition triggered by the application
                         wf_comment = _('wf_transition_triggered_by_application')
-                        wfTool.doActionFor(adviceObj, 'backToAdviceInitialState', comment=wf_comment)
-                    except WorkflowException:
-                        # if we have another workflow than default meetingadvice_workflow
-                        # maybe we can not 'backToAdviceUnderEdit'
-                        pass
-                    self.REQUEST.set('mayBackToAdviceInitialState', False)
-                self.adviceIndex[groupId]['advice_editable'] = True
-            else:
-                # make sure it is no more editable
-                if adviceObj and not adviceObj.queryState() == 'advice_given':
-                    self.REQUEST.set('mayGiveAdvice', True)
-                    # add a comment for this transition triggered by the application
-                    wf_comment = _('wf_transition_triggered_by_application')
-                    wfTool.doActionFor(adviceObj, 'giveAdvice', comment=wf_comment)
-                    self.REQUEST.set('mayGiveAdvice', False)
-            # if item needs to be accessible by advisers, it is already
-            # done by self.manage_addLocalRoles here above because it is necessary in any case
-            if itemState in itemAdviceViewStates:
-                pass
+                        wfTool.doActionFor(adviceObj, 'giveAdvice', comment=wf_comment)
+                        self.REQUEST.set('mayGiveAdvice', False)
+                # if item needs to be accessible by advisers, it is already
+                # done by self.manage_addLocalRoles here above because it is necessary in any case
+                if itemState in itemAdviceViewStates:
+                    pass
 
-            # make sure there is no 'delay_stopped_on' date if advice still giveable
-            if itemState in itemAdviceStates:
-                self.adviceIndex[groupId]['delay_stopped_on'] = None
-            # the delay is stopped for advices
-            # when the advice can not be given anymore due to a workflow transition
-            # we only do that if not already done (a stopped date is already defined)
-            # and if we are not on the transition that reinitialize delays
-            # and if ever delay was started
-            if itemState not in itemAdviceStates and \
-               self.adviceIndex[groupId]['delay'] and \
-               self.adviceIndex[groupId]['delay_started_on'] and \
-               not isTransitionReinitializingDelays and \
-               not bool(groupId in saved_stored_data and
-                        saved_stored_data[groupId]['delay_stopped_on']):
-                self.adviceIndex[groupId]['delay_stopped_on'] = datetime.now()
-            # now index advice annexes
-            if self.adviceIndex[groupId]['type'] != NOT_GIVEN_ADVICE_VALUE:
-                self.adviceIndex[groupId]['annexIndex'] = adviceObj.annexIndex
-        # compute and store delay_infos
-        for groupId in self.adviceIndex.iterkeys():
+                # make sure there is no 'delay_stopped_on' date if advice still giveable
+                if itemState in itemAdviceStates:
+                    self.adviceIndex[groupId]['delay_stopped_on'] = None
+                # the delay is stopped for advices
+                # when the advice can not be given anymore due to a workflow transition
+                # we only do that if not already done (a stopped date is already defined)
+                # and if we are not on the transition that reinitialize delays
+                # and if ever delay was started
+                if itemState not in itemAdviceStates and \
+                   self.adviceIndex[groupId]['delay'] and \
+                   self.adviceIndex[groupId]['delay_started_on'] and \
+                   not isTransitionReinitializingDelays and \
+                   not bool(groupId in saved_stored_data and
+                            saved_stored_data[groupId]['delay_stopped_on']):
+                    self.adviceIndex[groupId]['delay_stopped_on'] = datetime.now()
+
+                # now index advice annexes
+                if self.adviceIndex[groupId]['type'] != NOT_GIVEN_ADVICE_VALUE:
+                    self.adviceIndex[groupId]['annexIndex'] = adviceObj.annexIndex
+
+            # compute and store delay_infos
             self.adviceIndex[groupId]['delay_infos'] = self.getDelayInfosForAdvice(groupId)
+
         # notify that advices have been updated so subproducts
         # may interact if necessary
         notify(AdvicesUpdatedEvent(self,
