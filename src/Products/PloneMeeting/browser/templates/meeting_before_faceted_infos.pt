@@ -78,23 +78,23 @@
             <span tal:replace="structure python: context.getRawAssembly() and context.getStrikedAssembly() or '<p>-</p>'"/>
         </fieldset>
         <fieldset tal:condition="python: 'assemblyExcused' in usedAssemblyFields">
-            <legend i18n:translate="PloneMeeting_label_assemblyExcused">Excused</legend>
+            <legend i18n:translate="meeting_assemblyExcused">Excused</legend>
             <span tal:replace="structure python: context.getAssemblyExcused() or '<p>-</p>'"/>
         </fieldset>
         <fieldset tal:condition="python: 'assemblyAbsents' in usedAssemblyFields">
-            <legend i18n:translate="PloneMeeting_label_assemblyAbsents">Absents</legend>
+            <legend i18n:translate="meeting_assemblyAbsents">Absents</legend>
             <span tal:replace="structure python: context.getAssemblyAbsents() or '<p>-</p>'"/>
         </fieldset>
         <fieldset tal:condition="python: 'assemblyGuests' in usedAssemblyFields">
-            <legend i18n:translate="PloneMeeting_label_assemblyGuests">Guests</legend>
+            <legend i18n:translate="meeting_assemblyGuests">Guests</legend>
             <span tal:replace="structure python: context.getAssemblyGuests() or '<p>-</p>'"/>
         </fieldset>
         <fieldset tal:condition="python: 'assemblyProxies' in usedAssemblyFields">
-            <legend i18n:translate="PloneMeeting_label_assemblyProxies">Proxies</legend>
+            <legend i18n:translate="meeting_assemblyProxies">Proxies</legend>
             <span tal:replace="structure python: context.getAssemblyProxies() or '<p>-</p>'"/>
         </fieldset>
         <fieldset tal:condition="python: 'assemblyStaves' in usedAssemblyFields">
-            <legend i18n:translate="PloneMeeting_label_assemblyStaves">Staves</legend>
+            <legend i18n:translate="meeting_assemblyStaves">Staves</legend>
             <span tal:replace="structure python: context.getAssemblyStaves() or '<p>-</p>'"/>
         </fieldset>
         <fieldset tal:condition="python: 'signatures' in usedAssemblyFields">
