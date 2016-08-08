@@ -83,6 +83,13 @@
                                     tal:attributes="class python: (advice['type'] in ('not_given', 'asked_again') or advice['hidden_during_redaction']) and class_if_not_given or 'advice_delay'" />
                             </tal:defines>
                          </span>
+                         <tal:not_asked_advice_icon condition="advice/not_asked">
+                             <img src="advice_not_asked.png"
+                                  title="This advice was given as personal initiative."
+                                  style="cursor: help;"
+                                  i18n:attributes="title"
+                                  tal:attributes="src string:${view/portal_url}/advice_not_asked.png"/>
+                         </tal:not_asked_advice_icon>
                          <div class="advice_popup_label">
                          <span tal:condition="advice/optional">(</span><b tal:content="structure advice/name"></b>
                               <tal:showDelayLabel condition="python: advice['delay'] and advice['delay_label']">
