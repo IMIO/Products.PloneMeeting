@@ -203,9 +203,11 @@ def postInstall(context):
     site.portal_properties.site_properties.manage_changeProperties(
         disable_folder_sections=True)
 
-    # Now Plone is ready to show many groups everywhere
+    # Display the search box for groups and users
     site.portal_properties.site_properties.manage_changeProperties(
-        many_groups=False)
+        many_users=True)
+    site.portal_properties.site_properties.manage_changeProperties(
+        many_groups=True)
 
     # portal_quickinstaller removes some installed elements when reinstalling...
     # re-add them manually here...
