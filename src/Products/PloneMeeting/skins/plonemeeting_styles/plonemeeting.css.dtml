@@ -1327,6 +1327,11 @@ dl.portlet.portletWidgetCollection div.widget-portlet li a {
     text-transform: lowercase;
 }
 
+/* pretty link displayed to inherited item in advice popup */
+#content td.itemAdvicesCell a.pretty_link {
+    display: inline;
+}
+
 /* align annexes icons displayed in the pretty_link column to the right */
 td.pretty_link table.contentActionsAX {
     float: right;

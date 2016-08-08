@@ -14,6 +14,7 @@ from AccessControl import Unauthorized
 from persistent.list import PersistentList
 from zope.annotation import IAnnotations
 from zope.i18n import translate
+from zope.globalrequest import getRequest
 
 from plone.memoize import ram
 
@@ -52,10 +53,7 @@ class AnnexableAdapter(object):
 
     def __init__(self, context):
         self.context = context
-        # check for REQUEST when using async
-        self.request = None
-        if hasattr(self.context, 'REQUEST'):
-            self.request = self.context.REQUEST
+        self.request = getRequest()
 
     def addAnnex(self, idCandidate, annex_title, annex_file,
                  relatedTo, meetingFileTypeUID, **kwargs):
@@ -258,10 +256,10 @@ class AnnexableAdapter(object):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
         return (self.context, relatedTo, makeSubLists, typesIds,
-                realAnnexes, self.context.annexIndex, self.request['AUTHENTICATED_USER'],
+                realAnnexes, self.context.annexIndex, self.request.get('AUTHENTICATED_USER', None),
                 cfg.modified())
 
-    @ram.cache(getAnnexesByType_cachekey)
+    #@ram.cache(getAnnexesByType_cachekey)
     def getAnnexesByType(self, relatedTo, makeSubLists=True,
                          typesIds=[], realAnnexes=False):
         '''See docstring in interfaces.py'''

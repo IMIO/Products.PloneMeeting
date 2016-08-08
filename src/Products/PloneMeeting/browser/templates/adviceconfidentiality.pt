@@ -1,6 +1,6 @@
 <tal:isConfidential i18n:domain="PloneMeeting"
-                    tal:define="mayEdit python: context.adapted().mayEditAdviceConfidentiality();
-                                advice python: view.advice;
+                    tal:define="advice python: view.advice;
+                                mayEdit python: context.adapted().mayEditAdviceConfidentiality(advice['id']);
                                 portal_url view/portal_url;
                                 isConfidential advice/isConfidential;">
   <acronym tal:condition="mayEdit"

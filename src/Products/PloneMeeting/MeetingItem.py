@@ -59,7 +59,10 @@ from plone.memoize import ram
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.Expression import Expression, createExprContext
 from Products.CMFCore.WorkflowCore import WorkflowException
-from Products.CMFCore.permissions import ModifyPortalContent, ReviewPortalContent
+from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFCore.permissions import ReviewPortalContent
+from Products.CMFCore.permissions import View
+from Products.CMFCore.utils import _checkPermission
 from Products.CMFPlone.utils import safe_unicode
 from collective.behavior.talcondition.utils import _evaluateExpression
 from imio.prettylink.interfaces import IPrettyLink
@@ -1396,10 +1399,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getPrettyLink')
 
-    def getPrettyLink(self):
+    def getPrettyLink(self, **kwargs):
         """Return the IPrettyLink version of the title."""
         adapted = IPrettyLink(self)
         adapted.showContentIcon = True
+        for k, v in kwargs.items():
+            setattr(adapted, k, v)
         return adapted.getLink()
 
     def _mayNotViewDecisionMsg(self):
@@ -1787,16 +1792,25 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('mayEditAdviceConfidentiality')
 
-    def mayEditAdviceConfidentiality(self):
+    def mayEditAdviceConfidentiality(self, adviserId):
         '''Check doc in interfaces.py.'''
         item = self.getSelf()
         tool = api.portal.get_tool('portal_plonemeeting')
         member = api.user.get_current()
         # user must be able to edit the item and must be a Manager
-        if not member.has_permission(ModifyPortalContent, item) or \
+        if item.adviceIsInherited(adviserId) or \
+           not member.has_permission(ModifyPortalContent, item) or \
            not tool.isManager(item):
             return False
         return True
+
+    def adviceIsInherited(self, advice_id):
+        """ """
+        res = False
+        if self.adviceIndex.get(advice_id) and \
+           self.adviceIndex[advice_id]['inherited']:
+            res = True
+        return res
 
     security.declarePublic('mayAskAdviceAgain')
 
@@ -1809,7 +1823,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         item = self.getSelf()
 
-        if advice.advice_type == 'asked_again':
+        if advice.advice_type == 'asked_again' or \
+           item.adviceIsInherited(advice.advice_group):
             return False
 
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -2146,6 +2161,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if meetingGroupId in item.adviceIndex and \
                item.adviceIndex[meetingGroupId]['item_viewable_by_advisers']:
                 return True
+
+    def isViewable(self):
+        """ """
+        return _checkPermission(View, self)
 
     security.declarePublic('getAllCopyGroups')
 
@@ -3618,9 +3637,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         isPowerObserver = tool.isPowerObserverForCfg(cfg)
         isRestrictedPowerObserver = tool.isPowerObserverForCfg(cfg, isRestricted=True)
         for groupId, adviceInfo in self.adviceIndex.iteritems():
-            # manage inheritated advice
-            if adviceInfo['inheritated']:
-                adviceInfo = self.getInheritatedAdviceInfo(groupId)
+            # manage inherited advice
+            if adviceInfo['inherited']:
+                adviceInfo = adviceInfo.copy()
+                adviceInfo = self.getInheritedAdviceInfo(groupId)
             # Create the entry for this type of advice if not yet created.
             # first check if current user may access advice, aka advice is not confidential to him
             if not self._adviceIsViewableForCurrentUser(cfg,
@@ -3637,30 +3657,25 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             advices.append(adviceInfo.__dict__['data'])
         return res
 
-    security.declarePublic('getInheritatedAdviceInfo')
+    security.declarePublic('getInheritedAdviceInfo')
 
-    def getInheritatedAdviceInfo(self, adviserId):
+    def getInheritedAdviceInfo(self, adviserId):
         """ """
         res = None
         predecessor = self.getPredecessor()
         if not predecessor:
             return res
 
-        adviceInfo = self.adviceIndex.get(adviserId)
-        if not adviceInfo:
-            return res
-
-        if adviceInfo['inheritated']:
-            inheritatedAdviceInfo = predecessor.adviceIndex.get(adviserId)
+        if self.adviceIsInherited(adviserId):
+            inheritedAdviceInfo = predecessor.adviceIndex.get(adviserId).copy()
             while predecessor and (
-                    not (inheritatedAdviceInfo or inheritatedAdviceInfo['type'] != NOT_GIVEN_ADVICE_VALUE) and
-                    predecessor.adviceIndex[adviceInfo['id']]['inheritated']):
+                    not (inheritedAdviceInfo or inheritedAdviceInfo['type'] != NOT_GIVEN_ADVICE_VALUE) and
+                    predecessor.adviceIndex[adviserId]['inherited']):
                 predecessor = predecessor.getPredecessor()
-                inheritatedAdviceInfo = predecessor.adviceIndex.get(adviserId)
-            if inheritatedAdviceInfo:
-                res = inheritatedAdviceInfo
+                inheritedAdviceInfo = predecessor.adviceIndex.get(adviserId)
+            if inheritedAdviceInfo:
+                res = inheritedAdviceInfo
                 res['adviceHolder'] = predecessor
-
         return res
 
     security.declarePublic('getGivenAdvices')
@@ -3905,9 +3920,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         data = {}
         for adviceInfo in self.adviceIndex.values():
             advId = adviceInfo['id']
-            # if advice is inheritated get real adviceInfo
-            if adviceInfo['inheritated']:
-                adviceInfo = self.getInheritatedAdviceInfo(advId)
+            # if advice is inherited get real adviceInfo
+            if adviceInfo['inherited']:
+                adviceInfo = self.getInheritedAdviceInfo(advId)
             data[advId] = adviceInfo.copy()
             # optimize some saved data
             data[advId]['type_translated'] = translate(data[advId]['type'],
@@ -4075,9 +4090,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             saved_stored_data[groupId]['delay_changes_history'] = \
                 'delay_changes_history' in adviceInfo and \
                 adviceInfo['delay_changes_history'] or []
-            saved_stored_data[groupId]['inheritated'] = \
-                'inheritated' in adviceInfo and \
-                adviceInfo['inheritated'] or False
+            saved_stored_data[groupId]['inherited'] = \
+                'inherited' in adviceInfo and \
+                adviceInfo['inherited'] or False
             if 'isConfidential' in adviceInfo:
                 saved_stored_data[groupId]['isConfidential'] = adviceInfo['isConfidential']
             else:
@@ -4133,12 +4148,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         saved_stored_data[groupId]['delay_for_automatic_adviser_changed_manually']
                     d['delay_changes_history'] = saved_stored_data[groupId]['delay_changes_history']
                     d['isConfidential'] = saved_stored_data[groupId]['isConfidential']
-                    d['inheritated'] = saved_stored_data[groupId]['inheritated']
+                    d['inherited'] = saved_stored_data[groupId]['inherited']
                 else:
                     d['delay_for_automatic_adviser_changed_manually'] = False
                     d['delay_changes_history'] = []
                     d['isConfidential'] = cfg.getAdviceConfidentialityDefault()
-                    d['inheritated'] = False
+                    d['inherited'] = False
                 # index view/add/edit access
                 d['item_viewable_by_advisers'] = False
                 d['advice_addable'] = False
@@ -4176,7 +4191,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 adviceInfo['advice_addable'] = False
                 adviceInfo['advice_editable'] = False
                 adviceInfo['annexIndex'] = []
-                adviceInfo['inheritated'] = False
+                adviceInfo['inherited'] = False
             self.adviceIndex[groupId].update(adviceInfo)
 
         # and remove specific permissions given to add advices
@@ -4209,8 +4224,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Then, add local roles regarding asked advices
         wfTool = api.portal.get_tool('portal_workflow')
         for groupId in self.adviceIndex.iterkeys():
-            # bypass if advice is inheritated
-            if not self.adviceIndex[groupId]['inheritated']:
+            # bypass if advice is inherited
+            if not self.adviceIndex[groupId]['inherited']:
                 mGroup = getattr(tool, groupId)
                 itemAdviceStates = mGroup.getItemAdviceStates(cfg)
                 itemAdviceEditStates = mGroup.getItemAdviceEditStates(cfg)
