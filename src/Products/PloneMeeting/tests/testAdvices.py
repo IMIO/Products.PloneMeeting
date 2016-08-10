@@ -476,7 +476,10 @@ class testAdvices(PloneMeetingTestCase):
         cfg.setCustomAdvisers(
             [{'row_id': 'unique_id_123',
               'group': 'vendors',
-              'delay': '5', }, ])
+              'gives_auto_advice_on': '',
+              'for_item_created_from': '2016/08/08',
+              'delay': '',
+              'delay_label': ''}, ])
         cfg.setUsedAdviceTypes(cfg.getUsedAdviceTypes() + ('asked_again', ))
         # an advice can be given or edited when an item is 'proposed'
         cfg.setItemAdviceStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
@@ -774,7 +777,8 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue('developers' in item.getOptionalAdvisers())
 
         # now make sure an adviser of 'vendors' may add his advice and updateLocalRoles
-        # in MeetingItem._updateAdvices, this is why we call getAutomaticAdvisers with api.env.adopt_roles(['Reader', ])
+        # in MeetingItem._updateAdvices, this is why we call getAutomaticAdvisersData
+        # with api.env.adopt_roles(['Reader', ])
         self.proposeItem(item)
         item.updateLocalRoles()
         self.assertTrue('vendors' in item.adviceIndex)
@@ -806,7 +810,7 @@ class testAdvices(PloneMeetingTestCase):
         # the automatic advice is asked
         self.assertTrue('vendors' in item.adviceIndex)
         self.assertTrue(not item.adviceIndex['vendors']['optional'])
-        self.assertTrue(item.getAutomaticAdvisers()[0]['meetingGroupId'] == 'vendors')
+        self.assertTrue(item.getAutomaticAdvisersData()[0]['meetingGroupId'] == 'vendors')
         # now give the advice
         self.proposeItem(item)
         self.changeUser('pmReviewer2')
@@ -817,19 +821,19 @@ class testAdvices(PloneMeetingTestCase):
                                     'advice_comment': RichTextValue(u'My comment')})
         item.setBudgetRelated(False)
         item.at_post_edit_script()
-        # the automatic advice is still there even if no more returned by getAutomaticAdvisers
+        # the automatic advice is still there even if no more returned by getAutomaticAdvisersData
         self.assertTrue('vendors' in item.adviceIndex)
         self.assertTrue(not item.adviceIndex['vendors']['optional'])
-        self.assertTrue(not item.getAutomaticAdvisers())
+        self.assertTrue(not item.getAutomaticAdvisersData())
 
     def test_pm_GetAutomaticAdvisers(self):
-        '''Test the getAutomaticAdvisers method that compute automatic advices to ask.'''
+        '''Test the getAutomaticAdvisersData method that compute automatic advices to ask.'''
         cfg = self.meetingConfig
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         cfg.setCustomAdvisers([])
-        # if nothing defined, getAutomaticAdvisers returns nothing...
-        self.failIf(item.getAutomaticAdvisers())
+        # if nothing defined, getAutomaticAdvisersData returns nothing...
+        self.failIf(item.getAutomaticAdvisersData())
         # define some customAdvisers
         cfg.setCustomAdvisers([])
         cfg.setCustomAdvisers(
@@ -853,10 +857,10 @@ class testAdvices(PloneMeetingTestCase):
               'delay': '10',
               'delay_label': ''}])
         # one wrong condition (raising an error when evaluated) and one returning False
-        self.failIf(item.getAutomaticAdvisers())
+        self.failIf(item.getAutomaticAdvisersData())
         # now make the second row expression return True, set item.budgetRelated
         item.setBudgetRelated(True)
-        self.assertEquals(item.getAutomaticAdvisers(),
+        self.assertEquals(item.getAutomaticAdvisersData(),
                           [{'gives_auto_advice_on_help_message': '',
                             'meetingGroupId': 'developers',
                             'meetingGroupName': 'Developers',
@@ -876,7 +880,7 @@ class testAdvices(PloneMeetingTestCase):
               'delay_label': ''}, ])
         # nothing should be returned as defined date is bigger than current item's date
         self.assertTrue(futureDate > item.created())
-        self.failIf(item.getAutomaticAdvisers())
+        self.failIf(item.getAutomaticAdvisersData())
         # define an old 'for_item_created_from' and a 'for_item_created_until' in the future
         # the advice should be considered as automatic advice to ask
         cfg.setCustomAdvisers(
@@ -888,7 +892,7 @@ class testAdvices(PloneMeetingTestCase):
               'delay': '',
               'delay_left_alert': '',
               'delay_label': ''}, ])
-        self.assertEquals(item.getAutomaticAdvisers(),
+        self.assertEquals(item.getAutomaticAdvisersData(),
                           [{'gives_auto_advice_on_help_message': '',
                             'meetingGroupId': 'developers',
                             'meetingGroupName': 'Developers',
@@ -907,7 +911,7 @@ class testAdvices(PloneMeetingTestCase):
               'delay': '',
               'delay_left_alert': '',
               'delay_label': ''}, ])
-        self.failIf(item.getAutomaticAdvisers())
+        self.failIf(item.getAutomaticAdvisersData())
 
     def test_pm_RowIdSetOnAdvices(self):
         '''Test that if we are adding an automatic and/or delay-aware advice,
@@ -1661,7 +1665,7 @@ class testAdvices(PloneMeetingTestCase):
         item.setOptionalAdvisers(('developers', ))
         item.at_post_edit_script()
         # must be MeetingManager to be able to change advice confidentiality
-        self.assertFalse(item.adapted().mayEditAdviceConfidentiality())
+        self.assertFalse(item.adapted().mayEditAdviceConfidentiality('developers'))
         # if creator tries to change advice confidentiality, he gets Unauthorized
         toggleView = item.restrictedTraverse('@@toggle_advice_is_confidential')
         self.assertRaises(Unauthorized, toggleView.toggle, UID='%s__%s' % (item.UID(), 'developers'))
@@ -1705,7 +1709,7 @@ class testAdvices(PloneMeetingTestCase):
         # a MeetingManager may toggle advice confidentiality
         # a MeetingManager would be able to change advice confidentiality
         self.changeUser('pmManager')
-        self.assertTrue(item.adapted().mayEditAdviceConfidentiality())
+        self.assertTrue(item.adapted().mayEditAdviceConfidentiality('developers'))
         self.assertTrue(item.adviceIndex['developers']['isConfidential'])
         toggleView.toggle(UID='%s__%s' % (item.UID(), 'developers'))
         self.assertFalse(item.adviceIndex['developers']['isConfidential'])
@@ -2327,6 +2331,118 @@ class testAdvices(PloneMeetingTestCase):
                                                      'advice_comment': RichTextValue(u'My comment')})
         self.assertEqual(item.getAdviceObj('vendors'), vendors_advice)
         self.assertIsNone(item.getAdviceObj('developers'))
+
+    def test_pm_SetInheritedAdvice(self, ):
+        """Method for testing an inherited advice, this will check that an advice
+           may be marked as inherited."""
+        cfg = self.meetingConfig
+        cfg.setCustomAdvisers([])
+        cfg.setItemAdviceStates(('itemcreated', ))
+        cfg.setItemAdviceEditStates(('itemcreated', ))
+        cfg.setItemAdviceViewStates(('itemcreated', ))
+
+        # create 2 items
+        self.changeUser('pmCreator1')
+        item1 = self.create('MeetingItem')
+        item1.setOptionalAdvisers(('vendors', ))
+        item1.updateLocalRoles()
+        item2 = self.create('MeetingItem')
+        item2.setOptionalAdvisers(('vendors', ))
+        item2.updateLocalRoles()
+        self.changeUser('pmReviewer2')
+        createContentInContainer(item1,
+                                 'meetingadvice',
+                                 **{'advice_group': 'vendors',
+                                    'advice_type': u'positive',
+                                    'advice_hide_during_redaction': False,
+                                    'advice_comment': RichTextValue(u'My comment')})
+        # not linked
+        self.assertFalse(item2.setInheritedAdvice('vendors'))
+        self.assertFalse(item2.adviceIndex['vendors']['inherited'])
+        # link items and try again
+        item2.setPredecessor(item1)
+
+        # if advice is given on item2, it does not work
+        vendors_advice2 = createContentInContainer(item2,
+                                                   'meetingadvice',
+                                                   **{'advice_group': 'vendors',
+                                                      'advice_type': u'positive',
+                                                      'advice_hide_during_redaction': False,
+                                                      'advice_comment': RichTextValue(u'My comment')})
+        self.assertFalse(item2.setInheritedAdvice('vendors'))
+        self.assertFalse(item2.adviceIndex['vendors']['inherited'])
+
+        # remove given advice on item2, then it will work
+        item2.restrictedTraverse('@@delete_givenuid')(vendors_advice2.UID())
+        self.assertTrue(item2.setInheritedAdvice('vendors'))
+        self.assertTrue(item2.adviceIndex['vendors']['inherited'])
+
+    def _setupInheritedAdvice(self):
+        """ """
+        cfg = self.meetingConfig
+        cfg.setCustomAdvisers(
+            [{'row_id': 'unique_id_123',
+              'group': 'vendors',
+              'gives_auto_advice_on': '',
+              'for_item_created_from': '2016/08/08',
+              'delay': '',
+              'delay_label': ''}, ])
+        cfg.setItemAdviceStates(('itemcreated', ))
+        cfg.setItemAdviceEditStates(('itemcreated', ))
+        cfg.setItemAdviceViewStates(('itemcreated', ))
+
+        # create 2 items and inheritate from an advice
+        self.changeUser('pmCreator1')
+        item1 = self.create('MeetingItem')
+        item1.setOptionalAdvisers(('vendors', 'developers__rowid__unique_id_123'))
+        item1.updateLocalRoles()
+        item2 = self.create('MeetingItem')
+        item2.setOptionalAdvisers(('vendors', 'developers__rowid__unique_id_123'))
+        item2.updateLocalRoles()
+        self.changeUser('pmAdviser1')
+        vendors_advice = createContentInContainer(item1,
+                                                  'meetingadvice',
+                                                  **{'advice_group': 'developers',
+                                                     'advice_type': u'positive',
+                                                     'advice_hide_during_redaction': False,
+                                                     'advice_comment': RichTextValue(u'My comment')})
+        self.changeUser('pmReviewer2')
+        developers_advices = createContentInContainer(item1,
+                                                      'meetingadvice',
+                                                      **{'advice_group': 'vendors',
+                                                         'advice_type': u'positive',
+                                                         'advice_hide_during_redaction': False,
+                                                         'advice_comment': RichTextValue(u'My comment')})
+        # link items and inherit
+        item2.setPredecessor(item1)
+        item2.setInheritedAdvice('vendors')
+        item2.setInheritedAdvice('developers')
+        item2.updateLocalRoles()
+        return item1, item2, vendors_advice, developers_advices
+
+    def test_pm_InheritedAdviceAccesses(self, ):
+        """While an advice is marked as 'inherited', it will show another advice
+           coming from another item, in this case, read access to current item are same as
+           usual but advisers of the inherited advice will never be able to add/edit it."""
+        item1, item2, vendors_advices, developers_advice = self._setupInheritedAdvice()
+        self.assertTrue(item2.adviceIndex['vendors']['inherited'])
+        # advisers of vendors are able to see item2 but not able to add advice
+        self.changeUser('pmAdviser1')
+        self.assertTrue(self.hasPermission(View, item1))
+        self.assertTrue(self.hasPermission(View, item2))
+        self.changeUser('pmReviewer2')
+        self.assertTrue(self.hasPermission(View, item1))
+        self.assertTrue(self.hasPermission(View, item2))
+
+        # not addable
+        self.assertFalse(item2.adviceIndex['vendors']['advice_addable'])
+        self.assertFalse(item2.adviceIndex['developers']['advice_addable'])
+
+        # delay for delay aware advices are not started
+        # delay aware
+        self.assertTrue(item2.adviceIndex['developers']['delay'])
+        # not started
+        self.assertIsNone(item2.adviceIndex['developers']['delay_started_on'])
 
 
 def test_suite():

@@ -2192,6 +2192,19 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Check doc in interfaces.py.'''
         return []
 
+    def _optionalAndAutomaticAdvisersData(self):
+        """ """
+        return self.getOptionalAdvisersData() + self.getAutomaticAdvisersData()
+
+    security.declarePublic('getInheritedAdviserIdsWhenCloning')
+
+    def getInheritedAdviserIdsWhenCloning(self, cloneEventAction):
+        '''Check doc in interfaces.py.'''
+        res = []
+        if cloneEventAction == 'create_from_postponed_next_meeting':
+            res = [data['meetingGroupId'] for data in self._optionalAndAutomaticAdvisersData()]
+        return res
+
     security.declarePublic('listTemplateUsingGroups')
 
     def listTemplateUsingGroups(self):
@@ -3214,7 +3227,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getOptionalAdvisersData')
 
     def getOptionalAdvisersData(self):
-        '''Get optional advisers but with same format as getAutomaticAdvisers
+        '''Get optional advisers but with same format as getAutomaticAdvisersData
            so it can be handled easily by the updateAdvices method.
            We need to return a list of dict with relevant informations.'''
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -3240,9 +3253,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         'delay_label': delay_label, })
         return res
 
-    security.declarePublic('getAutomaticAdvisers')
+    security.declarePublic('getAutomaticAdvisersData')
 
-    def getAutomaticAdvisers(self):
+    def getAutomaticAdvisersData(self):
         '''Who are the automatic advisers for this item? We get it by
            evaluating the TAL expression on current MeetingConfig.customAdvisers and checking if
            corresponding group contains at least one adviser. The method returns a list of MeetingGroup
@@ -3657,23 +3670,30 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             advices.append(adviceInfo.__dict__['data'])
         return res
 
+    def couldInheritAdvice(self, adviserId, dry_run=False):
+        """For given p_adivserId, could it be set to 'inherited'?
+           Not possible if advice already given or no given advice to inherit from."""
+        if (self.adviceIndex.get(adviserId) and self.adviceIndex[adviserId]['type'] != NOT_GIVEN_ADVICE_VALUE) or \
+           not self.getInheritedAdviceInfo(adviserId, checkIsInherited=False):
+            return False
+        return True
+
     security.declarePublic('getInheritedAdviceInfo')
 
-    def getInheritedAdviceInfo(self, adviserId):
-        """ """
+    def getInheritedAdviceInfo(self, adviserId, checkIsInherited=True):
+        """Return the eventual inherited advice (original advice) for p_adviserId.
+           If p_checkIsInherited is True, it will check that current advice is actually inherited,
+           otherwise, it will not check and return the potential inherited advice."""
         res = None
-        predecessor = self.getPredecessor()
-        if not predecessor:
-            return res
-
-        if self.adviceIsInherited(adviserId):
+        if not checkIsInherited or self.adviceIsInherited(adviserId):
+            predecessor = self
             inheritedAdviceInfo = predecessor.adviceIndex.get(adviserId).copy()
             while predecessor and (
-                    not (inheritedAdviceInfo or inheritedAdviceInfo['type'] != NOT_GIVEN_ADVICE_VALUE) and
-                    predecessor.adviceIndex[adviserId]['inherited']):
+                    inheritedAdviceInfo['type'] == NOT_GIVEN_ADVICE_VALUE and
+                    (predecessor == self or predecessor.adviceIndex[adviserId]['inherited'])):
                 predecessor = predecessor.getPredecessor()
                 inheritedAdviceInfo = predecessor.adviceIndex.get(adviserId)
-            if inheritedAdviceInfo:
+            if not predecessor == self:
                 res = inheritedAdviceInfo
                 res['adviceHolder'] = predecessor
         return res
@@ -3989,7 +4009,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return delay_infos['delay_status'] == 'timed_out' or \
             delay_infos['delay_status_when_stopped'] == 'stopped_timed_out'
 
-    def _updateAdvices(self, invalidate=False, triggered_by_transition=None):
+    def _updateAdvices(self, invalidate=False, triggered_by_transition=None, inheritedAdviserIds=[]):
         '''Every time an item is created or updated, this method updates the
            dictionary self.adviceIndex: a key is added for every advice that needs
            to be given, a key is removed for every advice that does not need to
@@ -4062,7 +4082,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # make sure the automatic advisers (where a TAL expression is evaluated)
             # may access the item correctly
             with api.env.adopt_roles(['Manager', ]):
-                automaticAdvisers = self.getAutomaticAdvisers()
+                automaticAdvisers = self.getAutomaticAdvisersData()
         # get formatted optionalAdvisers to be coherent with automaticAdvisers data format
         optionalAdvisers = self.getOptionalAdvisersData()
 
@@ -4092,7 +4112,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 adviceInfo['delay_changes_history'] or []
             saved_stored_data[groupId]['inherited'] = \
                 'inherited' in adviceInfo and \
-                adviceInfo['inherited'] or False
+                adviceInfo['inherited'] or groupId in inheritedAdviserIds
             if 'isConfidential' in adviceInfo:
                 saved_stored_data[groupId]['isConfidential'] = adviceInfo['isConfidential']
             else:
@@ -4225,39 +4245,40 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         wfTool = api.portal.get_tool('portal_workflow')
         for groupId in self.adviceIndex.iterkeys():
             # bypass if advice is inherited
-            if not self.adviceIndex[groupId]['inherited']:
-                mGroup = getattr(tool, groupId)
-                itemAdviceStates = mGroup.getItemAdviceStates(cfg)
-                itemAdviceEditStates = mGroup.getItemAdviceEditStates(cfg)
-                itemAdviceViewStates = mGroup.getItemAdviceViewStates(cfg)
-                ploneGroup = '%s_advisers' % groupId
-                adviceObj = None
-                if 'advice_id' in self.adviceIndex[groupId]:
-                    adviceObj = getattr(self, self.adviceIndex[groupId]['advice_id'])
-                giveReaderAccess = True
-                if itemState not in itemAdviceStates and \
-                   itemState not in itemAdviceEditStates and \
-                   itemState not in itemAdviceViewStates:
-                    giveReaderAccess = False
-                    # in this case, the advice is no more accessible in any way by the adviser
-                    # make sure the advice given by groupId is no more editable
-                    if adviceObj and not adviceObj.queryState() == 'advice_given':
-                        self.REQUEST.set('mayGiveAdvice', True)
-                        # add a comment for this transition triggered by the application,
-                        # we want to show why it was triggered : item state change or delay exceeded
-                        wf_comment = _('wf_transition_triggered_by_application')
-                        wfTool.doActionFor(adviceObj, 'giveAdvice', comment=wf_comment)
-                        self.REQUEST.set('mayGiveAdvice', False)
-                    # in case advice was not given or access to given advice is not kept,
-                    # we are done with this one
-                    if adviceObj and mGroup.getKeepAccessToItemWhenAdviceIsGiven(cfg):
-                        giveReaderAccess = True
+            mGroup = getattr(tool, groupId)
+            itemAdviceStates = mGroup.getItemAdviceStates(cfg)
+            itemAdviceEditStates = mGroup.getItemAdviceEditStates(cfg)
+            itemAdviceViewStates = mGroup.getItemAdviceViewStates(cfg)
+            ploneGroup = '%s_advisers' % groupId
+            adviceObj = None
+            if 'advice_id' in self.adviceIndex[groupId]:
+                adviceObj = getattr(self, self.adviceIndex[groupId]['advice_id'])
+            giveReaderAccess = True
+            if itemState not in itemAdviceStates and \
+               itemState not in itemAdviceEditStates and \
+               itemState not in itemAdviceViewStates:
+                giveReaderAccess = False
+                # in this case, the advice is no more accessible in any way by the adviser
+                # make sure the advice given by groupId is no more editable
+                if adviceObj and not adviceObj.queryState() == 'advice_given':
+                    self.REQUEST.set('mayGiveAdvice', True)
+                    # add a comment for this transition triggered by the application,
+                    # we want to show why it was triggered : item state change or delay exceeded
+                    wf_comment = _('wf_transition_triggered_by_application')
+                    wfTool.doActionFor(adviceObj, 'giveAdvice', comment=wf_comment)
+                    self.REQUEST.set('mayGiveAdvice', False)
+                # in case advice was not given or access to given advice is not kept,
+                # we are done with this one
+                if adviceObj and mGroup.getKeepAccessToItemWhenAdviceIsGiven(cfg):
+                    giveReaderAccess = True
 
-                if self.adapted()._itemToAdviceIsViewable(groupId) and giveReaderAccess:
-                    # give access to the item if adviser can see it
-                    self.manage_addLocalRoles(ploneGroup, (READER_USECASES['advices'],))
-                    self.adviceIndex[groupId]['item_viewable_by_advisers'] = True
+            if self.adapted()._itemToAdviceIsViewable(groupId) and giveReaderAccess:
+                # give access to the item if adviser can see it
+                self.manage_addLocalRoles(ploneGroup, (READER_USECASES['advices'],))
+                self.adviceIndex[groupId]['item_viewable_by_advisers'] = True
 
+            # manage delay, add/edit access only if advice is not inherited
+            if not self.adviceIsInherited(groupId):
                 # manage delay-aware advice, we start the delay if not already started
                 if itemState in itemAdviceStates and \
                    self.adviceIndex[groupId]['delay'] and not \
@@ -4334,8 +4355,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 if self.adviceIndex[groupId]['type'] != NOT_GIVEN_ADVICE_VALUE:
                     self.adviceIndex[groupId]['annexIndex'] = adviceObj.annexIndex
 
-            # compute and store delay_infos
-            self.adviceIndex[groupId]['delay_infos'] = self.getDelayInfosForAdvice(groupId)
+                # compute and store delay_infos
+                self.adviceIndex[groupId]['delay_infos'] = self.getDelayInfosForAdvice(groupId)
 
         # notify that advices have been updated so subproducts
         # may interact if necessary
@@ -4627,8 +4648,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # reinitialize existing local roles
         triggered_by_transition = kwargs.get('triggered_by_transition', None)
         invalidate = kwargs.get('invalidate', False)
+        inheritedAdviserIds = kwargs.get('inheritedAdviserIds', [])
         self._updateAdvices(invalidate=invalidate,
-                            triggered_by_transition=triggered_by_transition)
+                            triggered_by_transition=triggered_by_transition,
+                            inheritedAdviserIds=inheritedAdviserIds)
         # Update '(restricted) power observers' local roles given to the
         # corresponding MeetingConfig powerobsevers group in case the 'initial_wf_state'
         # is selected in MeetingConfig.item(Restricted)PowerObserversStates
@@ -4870,7 +4893,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            duplicating an item).  p_copyFields will contains a list of fields
            we want to keep value of, if not in this list, the new field value
            will be the default value for this field.
-           If p_keepProposingGroup, the proposingGroup in ToolPloneMeeting.pasteItems
+           If p_keepProposingGroup, the proposingGroup in ToolPloneMeeting.pasteItem
            no matter current user is not member of that group.
            If p_setCurrentAsPredecessor, current item will be set as predecessor
            for the new item, concomitantly if p_manualLinkToPredecessor is True and
@@ -4912,10 +4935,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         copyFields = copyFields + self.adapted().getExtraFieldsToCopyWhenCloning(cloned_to_same_mc)
 
         # clone
-        newItem = tool.pasteItems(destFolder, copiedData, copyAnnexes=copyAnnexes,
-                                  newOwnerId=newOwnerId, copyFields=copyFields,
-                                  newPortalType=newPortalType,
-                                  keepProposingGroup=keepProposingGroup)[0]
+        newItem = tool.pasteItem(destFolder, copiedData, copyAnnexes=copyAnnexes,
+                                 newOwnerId=newOwnerId, copyFields=copyFields,
+                                 newPortalType=newPortalType,
+                                 keepProposingGroup=keepProposingGroup)
 
         # special handling for some fields kept when cloned_to_same_mc
         # we check that used values on original item are still useable for cloned item
@@ -4933,9 +4956,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             newItem.setCopyGroups(
                 tuple(set(copyGroups).intersection(set(selectableCopyGroups))))
 
+        # automatically set current item as predecessor for newItem?
+        if setCurrentAsPredecessor:
+            if manualLinkToPredecessor:
+                newItem.setManuallyLinkedItems([self.UID()])
+            else:
+                newItem.setPredecessor(self)
+
         if cloneEventAction:
             # We are sure that there is only one key in the workflow_history
-            # because it was cleaned by ToolPloneMeeting.pasteItems.
+            # because it was cleaned by ToolPloneMeeting.pasteItem
             wfName = wfTool.getWorkflowsFor(newItem)[0].id
             firstEvent = newItem.workflow_history[wfName][0]
             cloneEvent = firstEvent.copy()
@@ -4947,16 +4977,22 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             cloneEvent['actor'] = userId
             newItem.workflow_history[wfName] = (firstEvent, cloneEvent)
 
-        # automatically set current item as predecessor for newItem?
-        if setCurrentAsPredecessor:
-            if manualLinkToPredecessor:
-                newItem.setManuallyLinkedItems([self.UID()])
-            else:
-                newItem.setPredecessor(self)
+        newItem.at_post_create_script()
 
         # notify that item has been duplicated so subproducts may interact if necessary
         notify(ItemDuplicatedEvent(self, newItem))
+        if copyAnnexes:
+            IAnnexable(newItem).updateAnnexIndex()
+
+        # manage inherited adviceIds
+        inheritedAdviserIds = [adviserId for adviserId in
+                               newItem.adapted().getInheritedAdviserIdsWhenCloning(cloneEventAction)
+                               if newItem.couldInheritAdvice(adviserId)]
+
+        import ipdb; ipdb.set_trace()
+        newItem.updateLocalRoles(inheritedAdviserIds=inheritedAdviserIds)
         newItem.reindexObject()
+
         logger.info('Item at %s cloned (%s) by "%s" from %s.' %
                     (newItem.absolute_url_path(),
                      cloneEventAction,

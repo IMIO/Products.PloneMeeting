@@ -283,12 +283,12 @@ class AdviceIsConfidential(BrowserView):
         self.portal = self.portal_state.portal()
 
     def toggle(self, UID):
-        # check if current user may edit advice confidentiality
-        if not self.context.adapted().mayEditAdviceConfidentiality():
-            raise Unauthorized
-
-        # get the adviceInfo
+        # get the adviceId
         adviceId = UID.split('__')[1]
+
+        # check if current user may edit advice confidentiality
+        if not self.context.adapted().mayEditAdviceConfidentiality(adviceId):
+            raise Unauthorized
 
         isConfidential = self.context.adviceIndex[adviceId]['isConfidential']
         # toggle value

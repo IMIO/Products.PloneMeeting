@@ -1099,13 +1099,14 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             url += '#%s' % context.meta_type
         return url
 
-    security.declarePrivate('pasteItems')
+    security.declarePrivate('pasteItem')
 
-    def pasteItems(self, destFolder, copiedData, copyAnnexes=False,
-                   newOwnerId=None, copyFields=DEFAULT_COPIED_FIELDS,
-                   newPortalType=None, keepProposingGroup=False):
+    def pasteItem(self, destFolder, copiedData, copyAnnexes=False,
+                  newOwnerId=None, copyFields=DEFAULT_COPIED_FIELDS,
+                  newPortalType=None, keepProposingGroup=False):
         '''Paste objects (previously copied) in destFolder. If p_newOwnerId
-           is specified, it will become the new owner of the item.'''
+           is specified, it will become the new owner of the item.
+           This method does NOT manage after creation calls like at_post_create_script.'''
         # warn that we are pasting items
         # so it is not necessary to perform some methods
         # like updating advices as it will be removed here under
@@ -1133,7 +1134,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             # The new owner will become the currently logged user
             newOwnerId = loggedUserId
         wftool = api.portal.get_tool('portal_workflow')
-        res = []
         i = -1
         for itemId in pasteResult:
             i += 1
@@ -1264,21 +1264,12 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     if userGroups:
                         newItem.setProposingGroup(userGroups[0].getId())
 
-            res.append(newItem)
+        if newOwnerId != loggedUserId:
+            plone_utils = api.portal.get_tool('plone_utils')
+            plone_utils.changeOwnershipOf(newItem, newOwnerId)
 
-        # now trigger post creation methods on result
         self.REQUEST.set('currentlyPastingItems', False)
-        for item in res:
-            # call at_post_create_script again that updates the local roles (so removes role
-            # 'Manager' that we've set above) by calling MeetingItem.updateLocalRoles,
-            # and also gives role "Owner" to the logged user.
-            item.at_post_create_script()
-            IAnnexable(item).updateAnnexIndex()
-            if newOwnerId != loggedUserId:
-                self.plone_utils.changeOwnershipOf(item, newOwnerId)
-            # Append the new item to the result.
-            item.reindexObject()
-        return res
+        return newItem
 
     def _updateMeetingFileTypesAfterSentToOtherMeetingConfig(self, annex):
         '''

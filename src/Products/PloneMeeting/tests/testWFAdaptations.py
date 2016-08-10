@@ -26,6 +26,9 @@ from DateTime.DateTime import DateTime
 
 from zope.i18n import translate
 
+from plone.app.textfield.value import RichTextValue
+from plone.dexterity.utils import createContentInContainer
+
 from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
@@ -1860,9 +1863,90 @@ class testWFAdaptations(PloneMeetingTestCase):
                 else:
                     self.assertFalse('postpone_next_meeting' in state.transitions)
 
-    def test_pm_WFA_postpone_next_meeting_duplicated_and_validated(self):
+    def test_pm_WFA_postpone_next_meeting_duplicated_and_validated_advices_inherited(self):
         '''When an item is set to 'postponed_next_meeting', it is automatically duplicated
-           and the duplicated item is automatically validated.'''
+           and the duplicated item is automatically validated.
+           Moreover, advices on the duplicated item are inherited from original item.'''
+        cfg = self.meetingConfig
+        if not 'postpone_next_meeting' in cfg.listWorkflowAdaptations():
+            return
+
+        self.changeUser('admin')
+        self.create('MeetingGroup', id='group1',  title='NewGroup1', acronym='N.G.1')
+        self.create('MeetingGroup', id='group2',  title='NewGroup2', acronym='N.G.2')
+        self.create('MeetingGroup', id='poweradvisers',  title='Power advisers', acronym='PA')
+        cfg.setSelectableAdvisers(('vendors', 'group1', 'group2', 'poweradvisers'))
+        self.portal.portal_groups.addPrincipalToGroup('pmAdviser1', 'poweradvisers_advisers')
+        cfg.setCustomAdvisers(
+            [{'row_id': 'unique_id_123',
+              'group': 'vendors',
+              'gives_auto_advice_on': '',
+              'for_item_created_from': '2016/08/08',
+              'delay': '5',
+              'delay_label': ''},
+             {'row_id': 'unique_id_456',
+              'group': 'group2',
+              'gives_auto_advice_on': '',
+              'for_item_created_from': '2016/08/08',
+              'delay': '5',
+              'delay_label': ''}, ])
+        cfg.setPowerAdvisersGroups(('poweradvisers', ))
+        cfg.setItemPowerObserversStates(('itemcreated', ))
+        cfg.setItemAdviceStates(('itemcreated', ))
+        cfg.setItemAdviceEditStates(('itemcreated', ))
+        cfg.setItemAdviceViewStates(('itemcreated', ))
+        originalWFAdaptations = cfg.getWorkflowAdaptations()
+        if not 'postpone_next_meeting' in originalWFAdaptations:
+            cfg.setWorkflowAdaptations(originalWFAdaptations + ('postpone_next_meeting', ))
+        cfg.at_post_edit_script()
+
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.setDecision('<p>Decision</p>')
+        item.setOptionalAdvisers(('vendors', 'developers__rowid__unique_id_123',
+                                  'group2__rowid__unique_id_456', 'group1'))
+        item.at_post_edit_script()
+        # give advices
+        self.changeUser('pmAdviser1')
+        createContentInContainer(item,
+                                 'meetingadvice',
+                                 **{'advice_group': 'developers',
+                                    'advice_type': u'positive',
+                                    'advice_hide_during_redaction': False,
+                                    'advice_comment': RichTextValue(u'My comment')})
+        self.changeUser('pmReviewer2')
+        createContentInContainer(item,
+                                 'meetingadvice',
+                                 **{'advice_group': 'vendors',
+                                    'advice_type': u'positive',
+                                    'advice_hide_during_redaction': False,
+                                    'advice_comment': RichTextValue(u'My comment')})
+        self.changeUser('pmAdviser1')
+        createContentInContainer(item,
+                                 'meetingadvice',
+                                 **{'advice_group': 'poweradvisers',
+                                    'advice_type': u'positive',
+                                    'advice_hide_during_redaction': False,
+                                    'advice_comment': RichTextValue(u'My comment')})
+
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2016/06/06'))
+        self.presentItem(item)
+        self.decideMeeting(meeting)
+        self.do(item, 'postpone_next_meeting')
+        # duplicated and duplicated item is validated
+        clonedItem = item.getBRefs('ItemPredecessor')[0]
+        self.assertEqual(clonedItem.getPredecessor(), item)
+        self.assertEqual(clonedItem.queryState(), 'validated')
+        # optional and automatic given advices were inherited but not the initiative advice
+        self.assertTrue(clonedItem.adviceIsInherited('vendors'))
+        self.assertTrue(clonedItem.adviceIsInherited('developers'))
+        self.assertFalse(clonedItem.adviceIsInherited('group1'))
+        self.assertFalse(clonedItem.adviceIsInherited('group2'))
+        self.assertFalse(clonedItem.adviceIsInherited('poweradvisers'))
+
+    def test_pm_WFA_postpone_next_meeting_advices_inherited(self):
+        '''When an item is set to 'postponed_next_meeting', cloned item inherits from every advices.'''
         cfg = self.meetingConfig
         if not 'postpone_next_meeting' in cfg.listWorkflowAdaptations():
             return
