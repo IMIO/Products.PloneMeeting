@@ -2201,7 +2201,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def getInheritedAdviserIdsWhenCloning(self, cloneEventAction):
         '''Check doc in interfaces.py.'''
         res = []
-        if cloneEventAction == 'create_from_postponed_next_meeting':
+        if cloneEventAction in ['force_inherit_relevant_advivces',
+                                'create_from_postponed_next_meeting']:
             res = [data['meetingGroupId'] for data in self._optionalAndAutomaticAdvisersData()]
         return res
 
@@ -3685,17 +3686,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            If p_checkIsInherited is True, it will check that current advice is actually inherited,
            otherwise, it will not check and return the potential inherited advice."""
         res = None
-        if not checkIsInherited or self.adviceIsInherited(adviserId):
-            predecessor = self
+        predecessor = self.getPredecessor()
+        if not predecessor:
+            return res
+
+        inheritedAdviceInfo = predecessor.adviceIndex.get(adviserId).copy()
+        while (predecessor and predecessor.adviceIndex[adviserId]['inherited']):
+            predecessor = predecessor.getPredecessor()
             inheritedAdviceInfo = predecessor.adviceIndex.get(adviserId).copy()
-            while predecessor and (
-                    inheritedAdviceInfo['type'] == NOT_GIVEN_ADVICE_VALUE and
-                    (predecessor == self or predecessor.adviceIndex[adviserId]['inherited'])):
-                predecessor = predecessor.getPredecessor()
-                inheritedAdviceInfo = predecessor.adviceIndex.get(adviserId)
-            if not predecessor == self:
-                res = inheritedAdviceInfo
-                res['adviceHolder'] = predecessor
+        if inheritedAdviceInfo and inheritedAdviceInfo['type'] != NOT_GIVEN_ADVICE_VALUE:
+            res = inheritedAdviceInfo
+            res['adviceHolder'] = predecessor
         return res
 
     security.declarePublic('getGivenAdvices')
@@ -4096,7 +4097,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         saved_stored_data = {}
         for groupId, adviceInfo in self.adviceIndex.iteritems():
             saved_stored_data[groupId] = {}
-            if isTransitionReinitializingDelays:
+            if isTransitionReinitializingDelays or groupId in inheritedAdviserIds:
                 saved_stored_data[groupId]['delay_started_on'] = None
                 saved_stored_data[groupId]['delay_stopped_on'] = None
             else:
@@ -4112,7 +4113,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 adviceInfo['delay_changes_history'] or []
             saved_stored_data[groupId]['inherited'] = \
                 'inherited' in adviceInfo and \
-                adviceInfo['inherited'] or groupId in inheritedAdviserIds
+                adviceInfo['inherited'] or bool(groupId in inheritedAdviserIds)
             if 'isConfidential' in adviceInfo:
                 saved_stored_data[groupId]['isConfidential'] = adviceInfo['isConfidential']
             else:
@@ -4957,11 +4958,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 tuple(set(copyGroups).intersection(set(selectableCopyGroups))))
 
         # automatically set current item as predecessor for newItem?
+        inheritedAdviserIds = []
         if setCurrentAsPredecessor:
             if manualLinkToPredecessor:
                 newItem.setManuallyLinkedItems([self.UID()])
             else:
                 newItem.setPredecessor(self)
+            # manage inherited adviceIds
+            inheritedAdviserIds = [adviserId for adviserId in
+                                   newItem.adapted().getInheritedAdviserIdsWhenCloning(cloneEventAction)
+                                   if newItem.couldInheritAdvice(adviserId)]
 
         if cloneEventAction:
             # We are sure that there is only one key in the workflow_history
@@ -4984,12 +4990,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if copyAnnexes:
             IAnnexable(newItem).updateAnnexIndex()
 
-        # manage inherited adviceIds
-        inheritedAdviserIds = [adviserId for adviserId in
-                               newItem.adapted().getInheritedAdviserIdsWhenCloning(cloneEventAction)
-                               if newItem.couldInheritAdvice(adviserId)]
-
-        import ipdb; ipdb.set_trace()
         newItem.updateLocalRoles(inheritedAdviserIds=inheritedAdviserIds)
         newItem.reindexObject()
 

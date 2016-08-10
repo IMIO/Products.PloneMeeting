@@ -478,7 +478,7 @@ class testAdvices(PloneMeetingTestCase):
               'group': 'vendors',
               'gives_auto_advice_on': '',
               'for_item_created_from': '2016/08/08',
-              'delay': '',
+              'delay': '5',
               'delay_label': ''}, ])
         cfg.setUsedAdviceTypes(cfg.getUsedAdviceTypes() + ('asked_again', ))
         # an advice can be given or edited when an item is 'proposed'
@@ -2332,60 +2332,15 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEqual(item.getAdviceObj('vendors'), vendors_advice)
         self.assertIsNone(item.getAdviceObj('developers'))
 
-    def test_pm_SetInheritedAdvice(self, ):
-        """Method for testing an inherited advice, this will check that an advice
-           may be marked as inherited."""
-        cfg = self.meetingConfig
-        cfg.setCustomAdvisers([])
-        cfg.setItemAdviceStates(('itemcreated', ))
-        cfg.setItemAdviceEditStates(('itemcreated', ))
-        cfg.setItemAdviceViewStates(('itemcreated', ))
-
-        # create 2 items
-        self.changeUser('pmCreator1')
-        item1 = self.create('MeetingItem')
-        item1.setOptionalAdvisers(('vendors', ))
-        item1.updateLocalRoles()
-        item2 = self.create('MeetingItem')
-        item2.setOptionalAdvisers(('vendors', ))
-        item2.updateLocalRoles()
-        self.changeUser('pmReviewer2')
-        createContentInContainer(item1,
-                                 'meetingadvice',
-                                 **{'advice_group': 'vendors',
-                                    'advice_type': u'positive',
-                                    'advice_hide_during_redaction': False,
-                                    'advice_comment': RichTextValue(u'My comment')})
-        # not linked
-        self.assertFalse(item2.setInheritedAdvice('vendors'))
-        self.assertFalse(item2.adviceIndex['vendors']['inherited'])
-        # link items and try again
-        item2.setPredecessor(item1)
-
-        # if advice is given on item2, it does not work
-        vendors_advice2 = createContentInContainer(item2,
-                                                   'meetingadvice',
-                                                   **{'advice_group': 'vendors',
-                                                      'advice_type': u'positive',
-                                                      'advice_hide_during_redaction': False,
-                                                      'advice_comment': RichTextValue(u'My comment')})
-        self.assertFalse(item2.setInheritedAdvice('vendors'))
-        self.assertFalse(item2.adviceIndex['vendors']['inherited'])
-
-        # remove given advice on item2, then it will work
-        item2.restrictedTraverse('@@delete_givenuid')(vendors_advice2.UID())
-        self.assertTrue(item2.setInheritedAdvice('vendors'))
-        self.assertTrue(item2.adviceIndex['vendors']['inherited'])
-
     def _setupInheritedAdvice(self):
         """ """
         cfg = self.meetingConfig
         cfg.setCustomAdvisers(
             [{'row_id': 'unique_id_123',
-              'group': 'vendors',
+              'group': 'developers',
               'gives_auto_advice_on': '',
               'for_item_created_from': '2016/08/08',
-              'delay': '',
+              'delay': '5',
               'delay_label': ''}, ])
         cfg.setItemAdviceStates(('itemcreated', ))
         cfg.setItemAdviceEditStates(('itemcreated', ))
@@ -2396,9 +2351,6 @@ class testAdvices(PloneMeetingTestCase):
         item1 = self.create('MeetingItem')
         item1.setOptionalAdvisers(('vendors', 'developers__rowid__unique_id_123'))
         item1.updateLocalRoles()
-        item2 = self.create('MeetingItem')
-        item2.setOptionalAdvisers(('vendors', 'developers__rowid__unique_id_123'))
-        item2.updateLocalRoles()
         self.changeUser('pmAdviser1')
         vendors_advice = createContentInContainer(item1,
                                                   'meetingadvice',
@@ -2414,10 +2366,9 @@ class testAdvices(PloneMeetingTestCase):
                                                          'advice_hide_during_redaction': False,
                                                          'advice_comment': RichTextValue(u'My comment')})
         # link items and inherit
-        item2.setPredecessor(item1)
-        item2.setInheritedAdvice('vendors')
-        item2.setInheritedAdvice('developers')
-        item2.updateLocalRoles()
+        self.changeUser('pmCreator1')
+        item2 = item1.clone(cloneEventAction='force_inherit_relevant_advivces',
+                            setCurrentAsPredecessor=True)
         return item1, item2, vendors_advice, developers_advices
 
     def test_pm_InheritedAdviceAccesses(self, ):
@@ -2426,6 +2377,7 @@ class testAdvices(PloneMeetingTestCase):
            usual but advisers of the inherited advice will never be able to add/edit it."""
         item1, item2, vendors_advices, developers_advice = self._setupInheritedAdvice()
         self.assertTrue(item2.adviceIndex['vendors']['inherited'])
+        self.assertTrue(item2.adviceIndex['developers']['inherited'])
         # advisers of vendors are able to see item2 but not able to add advice
         self.changeUser('pmAdviser1')
         self.assertTrue(self.hasPermission(View, item1))

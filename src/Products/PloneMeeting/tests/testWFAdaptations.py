@@ -1938,9 +1938,10 @@ class testWFAdaptations(PloneMeetingTestCase):
         clonedItem = item.getBRefs('ItemPredecessor')[0]
         self.assertEqual(clonedItem.getPredecessor(), item)
         self.assertEqual(clonedItem.queryState(), 'validated')
-        # optional and automatic given advices were inherited but not the initiative advice
+        # optional and automatic given advices were inherited
         self.assertTrue(clonedItem.adviceIsInherited('vendors'))
         self.assertTrue(clonedItem.adviceIsInherited('developers'))
+        # optional and automatic advices that were not given and power adviser advice is not inherited
         self.assertFalse(clonedItem.adviceIsInherited('group1'))
         self.assertFalse(clonedItem.adviceIsInherited('group2'))
         self.assertFalse(clonedItem.adviceIsInherited('poweradvisers'))
