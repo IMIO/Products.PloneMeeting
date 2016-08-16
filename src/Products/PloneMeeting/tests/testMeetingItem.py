@@ -1118,6 +1118,76 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEquals(itemWithManualLink.getRawManuallyLinkedItems(),
                           [item.UID()])
 
+    def test_pm_CloneItemWithInheritAdvices(self):
+        '''When an item is cloned with option inheritAdvices=True.
+           It also needs to be linked to predecessor by an automatic link,
+           so setCurrentAsPredecessor=True and manualLinkToPredecessor=False.'''
+        cfg = self.meetingConfig
+        self.changeUser('admin')
+        self.create('MeetingGroup', id='group1',  title='NewGroup1', acronym='N.G.1')
+        self.create('MeetingGroup', id='group2',  title='NewGroup2', acronym='N.G.2')
+        self.create('MeetingGroup', id='poweradvisers',  title='Power advisers', acronym='PA')
+        cfg.setSelectableAdvisers(('vendors', 'group1', 'group2', 'poweradvisers'))
+        self.portal.portal_groups.addPrincipalToGroup('pmAdviser1', 'poweradvisers_advisers')
+        cfg.setCustomAdvisers(
+            [{'row_id': 'unique_id_123',
+              'group': 'vendors',
+              'gives_auto_advice_on': '',
+              'for_item_created_from': '2016/08/08',
+              'delay': '5',
+              'delay_label': ''},
+             {'row_id': 'unique_id_456',
+              'group': 'group2',
+              'gives_auto_advice_on': '',
+              'for_item_created_from': '2016/08/08',
+              'delay': '5',
+              'delay_label': ''}, ])
+        cfg.setPowerAdvisersGroups(('poweradvisers', ))
+        cfg.setItemPowerObserversStates(('itemcreated', ))
+        cfg.setItemAdviceStates(('itemcreated', ))
+        cfg.setItemAdviceEditStates(('itemcreated', ))
+        cfg.setItemAdviceViewStates(('itemcreated', ))
+        cfg.at_post_edit_script()
+
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.setDecision('<p>Decision</p>')
+        item.setOptionalAdvisers(('vendors', 'developers__rowid__unique_id_123',
+                                  'group2__rowid__unique_id_456', 'group1'))
+        item.at_post_edit_script()
+        # give advices
+        self.changeUser('pmAdviser1')
+        createContentInContainer(item,
+                                 'meetingadvice',
+                                 **{'advice_group': 'developers',
+                                    'advice_type': u'positive',
+                                    'advice_hide_during_redaction': False,
+                                    'advice_comment': RichTextValue(u'My comment')})
+        self.changeUser('pmReviewer2')
+        createContentInContainer(item,
+                                 'meetingadvice',
+                                 **{'advice_group': 'vendors',
+                                    'advice_type': u'positive',
+                                    'advice_hide_during_redaction': False,
+                                    'advice_comment': RichTextValue(u'My comment')})
+        self.changeUser('pmAdviser1')
+        createContentInContainer(item,
+                                 'meetingadvice',
+                                 **{'advice_group': 'poweradvisers',
+                                    'advice_type': u'positive',
+                                    'advice_hide_during_redaction': False,
+                                    'advice_comment': RichTextValue(u'My comment')})
+
+        # clone and keep advices
+        self.changeUser('pmCreator1')
+        clonedItem = item.clone(setCurrentAsPredecessor=True, inheritAdvices=True)
+        self.assertTrue(clonedItem.adviceIsInherited('vendors'))
+        self.assertTrue(clonedItem.adviceIsInherited('developers'))
+        # optional and automatic advices that were not given and power adviser advice is not inherited
+        self.assertFalse(clonedItem.adviceIsInherited('group1'))
+        self.assertFalse(clonedItem.adviceIsInherited('group2'))
+        self.assertFalse(clonedItem.adviceIsInherited('poweradvisers'))
+
     def test_pm_AddAutoCopyGroups(self):
         '''Test the functionnality of automatically adding some copyGroups depending on
            the TAL expression defined on every MeetingGroup.asCopyGroupOn.'''
@@ -3122,19 +3192,6 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(recItem._at_creation_flag)
         # using the edit form will not raise Unauthorized
         self.assertIsNone(recItem.restrictedTraverse('@@at_lifecycle_view').begin_edit())
-
-    def test_pm_GetAdviceDataFor(self):
-        '''Test the getAdviceDataFor method, essentially the fact that it needs the item
-           we are calling the method on as first parameter, this will avoid this method
-           being callable TTW.'''
-        self.changeUser('pmCreator1')
-        item = self.create('MeetingItem')
-        item2 = self.create('MeetingItem')
-        # raises Unauthorized if item is not passed as first parameter
-        self.assertRaises(Unauthorized, item.getAdviceDataFor, '')
-        self.assertRaises(Unauthorized, item.getAdviceDataFor, item2)
-        # but works if right parameters are passed
-        self.assertTrue(item.getAdviceDataFor(item) == {})
 
     def test_pm_CopiedFieldsWhenDuplicated(self):
         '''This test will test constants DEFAULT_COPIED_FIELDS and EXTRA_COPIED_FIELDS_SAME_MC

@@ -562,7 +562,8 @@ class MeetingItemWorkflowActions:
                                         newOwnerId=creator,
                                         cloneEventAction='create_from_postponed_next_meeting',
                                         keepProposingGroup=True,
-                                        setCurrentAsPredecessor=True)
+                                        setCurrentAsPredecessor=True,
+                                        inheritAdvices=True)
         # set clonedItem to state 'validated'
         wfTool = api.portal.get_tool('portal_workflow')
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -2192,20 +2193,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Check doc in interfaces.py.'''
         return []
 
-    def _optionalAndAutomaticAdvisersData(self):
-        """ """
-        return self.getOptionalAdvisersData() + self.getAutomaticAdvisersData()
-
-    security.declarePublic('getInheritedAdviserIdsWhenCloning')
-
-    def getInheritedAdviserIdsWhenCloning(self, cloneEventAction):
-        '''Check doc in interfaces.py.'''
-        res = []
-        if cloneEventAction in ['force_inherit_relevant_advivces',
-                                'create_from_postponed_next_meeting']:
-            res = [data['meetingGroupId'] for data in self._optionalAndAutomaticAdvisersData()]
-        return res
-
     security.declarePublic('listTemplateUsingGroups')
 
     def listTemplateUsingGroups(self):
@@ -3694,7 +3681,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         while (predecessor and predecessor.adviceIndex[adviserId]['inherited']):
             predecessor = predecessor.getPredecessor()
             inheritedAdviceInfo = predecessor.adviceIndex.get(adviserId).copy()
-        if inheritedAdviceInfo and inheritedAdviceInfo['type'] != NOT_GIVEN_ADVICE_VALUE:
+        if inheritedAdviceInfo.get('type', NOT_GIVEN_ADVICE_VALUE) != NOT_GIVEN_ADVICE_VALUE:
             res = inheritedAdviceInfo
             res['adviceHolder'] = predecessor
         return res
@@ -4885,7 +4872,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def clone(self, copyAnnexes=True, newOwnerId=None, cloneEventAction=None,
               destFolder=None, copyFields=DEFAULT_COPIED_FIELDS, newPortalType=None,
               keepProposingGroup=False, setCurrentAsPredecessor=False,
-              manualLinkToPredecessor=False):
+              manualLinkToPredecessor=False, inheritAdvices=False):
         '''Clones me in the PloneMeetingFolder of the current user, or
            p_newOwnerId if given (this guy will also become owner of this
            item). If there is a p_cloneEventAction, an event will be included
@@ -4900,7 +4887,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            for the new item, concomitantly if p_manualLinkToPredecessor is True and
            optional field MeetingItem.manuallyLinkedItems is enabled, this will create
            a manualLink to the predecessor, otherwise, the 'ItemPredecessor' reference is used
-           and the link is unbreakable (at least thru the UI).'''
+           and the link is unbreakable (at least thru the UI).
+           If p_inheritAdvices is True, advices will be inherited from predecessor,
+           this also needs p_setCurrentAsPredecessor=True and p_manualLinkToPredecessor=False.'''
         # first check that we are not trying to clone an item
         # we can not access because of privacy status
         # do thsi check if we are not creating an item from an itemTemplate
@@ -4964,10 +4953,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 newItem.setManuallyLinkedItems([self.UID()])
             else:
                 newItem.setPredecessor(self)
-            # manage inherited adviceIds
-            inheritedAdviserIds = [adviserId for adviserId in
-                                   newItem.adapted().getInheritedAdviserIdsWhenCloning(cloneEventAction)
-                                   if newItem.couldInheritAdvice(adviserId)]
+                # manage inherited adviceIds
+                if inheritAdvices:
+                    advicesData = [data['meetingGroupId'] for data in
+                                   self.getOptionalAdvisersData() + self.getAutomaticAdvisersData()]
+                    inheritedAdviserIds = [adviserId for adviserId in advicesData
+                                           if newItem.couldInheritAdvice(adviserId)]
 
         if cloneEventAction:
             # We are sure that there is only one key in the workflow_history

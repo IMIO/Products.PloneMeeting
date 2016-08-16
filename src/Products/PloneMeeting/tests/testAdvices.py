@@ -2367,11 +2367,10 @@ class testAdvices(PloneMeetingTestCase):
                                                          'advice_comment': RichTextValue(u'My comment')})
         # link items and inherit
         self.changeUser('pmCreator1')
-        item2 = item1.clone(cloneEventAction='force_inherit_relevant_advivces',
-                            setCurrentAsPredecessor=True)
+        item2 = item1.clone(setCurrentAsPredecessor=True, inheritAdvices=True)
         return item1, item2, vendors_advice, developers_advices
 
-    def test_pm_InheritedAdviceAccesses(self, ):
+    def test_pm_InheritedAdviceAccesses(self):
         """While an advice is marked as 'inherited', it will show another advice
            coming from another item, in this case, read access to current item are same as
            usual but advisers of the inherited advice will never be able to add/edit it."""
@@ -2395,6 +2394,143 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(item2.adviceIndex['developers']['delay'])
         # not started
         self.assertIsNone(item2.adviceIndex['developers']['delay_started_on'])
+
+    def test_pm_GetAdviceDataFor(self):
+        '''Test the getAdviceDataFor method, essentially the fact that it needs the item
+           we are calling the method on as first parameter, this will avoid this method
+           being callable TTW.'''
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item2 = self.create('MeetingItem')
+        # raises Unauthorized if item is not passed as first parameter
+        self.assertRaises(Unauthorized, item.getAdviceDataFor, '')
+        self.assertRaises(Unauthorized, item.getAdviceDataFor, item2)
+        # but works if right parameters are passed
+        self.assertTrue(item.getAdviceDataFor(item) == {})
+
+    def test_pm_GetAdviceDataForInheritedAdvice(self):
+        '''Test the getAdviceDataFor method when the advice is inherited.'''
+        item1, item2, vendors_advices, developers_advice = self._setupInheritedAdvice()
+        # item1 and item2 have same values except that inherited advice have a 'adviceHolder'
+        item1VendorsData = item1.getAdviceDataFor(item1, 'vendors').copy()
+        item1VendorsData['adviceHolder'] = item1
+        item1DevData = item1.getAdviceDataFor(item1, 'developers').copy()
+        item1DevData['adviceHolder'] = item1
+        item2VendorsData = item2.getAdviceDataFor(item2, 'vendors').copy()
+        item2DevData = item2.getAdviceDataFor(item2, 'developers').copy()
+        self.assertEqual(item1VendorsData, item2VendorsData)
+        self.assertEqual(item1DevData, item2DevData)
+        # adviceIndex is not impacted
+        self.assertFalse('adviceHolder' in item1.adviceIndex)
+        self.assertFalse('adviceHolder' in item2.adviceIndex)
+
+    def test_pm_GetInheritedAdviceInfo(self):
+        '''MeetingItem.getInheritedAdviceInfo will return advice info of original
+           advice when inherit from.  Advice inheritance may be multiple as long as
+           original advice exist, so we may have several chained predecessors.'''
+        cfg = self.meetingConfig
+        cfg.setCustomAdvisers(
+            [{'row_id': 'unique_id_123',
+              'group': 'developers',
+              'gives_auto_advice_on': '',
+              'for_item_created_from': '2016/08/10',
+              'delay': '5',
+              'delay_label': ''}, ])
+        cfg.setItemAdviceStates(('itemcreated', ))
+        cfg.setItemAdviceEditStates(('itemcreated', ))
+        cfg.setItemAdviceViewStates(('itemcreated', ))
+
+        self.changeUser('pmCreator1')
+        # item without predecessor
+        item1WithoutAdvice = self.create('MeetingItem')
+        item1WithoutAdvice.setOptionalAdvisers(('vendors', 'developers__rowid__unique_id_123'))
+        item1WithoutAdvice.at_post_edit_script()
+        self.assertIsNone(item1WithoutAdvice.getInheritedAdviceInfo('vendors'))
+        self.assertIsNone(item1WithoutAdvice.getInheritedAdviceInfo('developers'))
+
+        # predecessor does not have given advices
+        item2WithAdvices = item1WithoutAdvice.clone(setCurrentAsPredecessor=True, inheritAdvices=True)
+        self.changeUser('pmReviewer2')
+        createContentInContainer(item2WithAdvices,
+                                 'meetingadvice',
+                                 **{'advice_group': 'vendors',
+                                    'advice_type': u'positive',
+                                    'advice_hide_during_redaction': False,
+                                    'advice_comment': RichTextValue(u'My comment')})
+        self.assertIsNone(item2WithAdvices.getInheritedAdviceInfo('vendors'))
+        self.assertIsNone(item2WithAdvices.getInheritedAdviceInfo('developers'))
+
+        # direct predecessor holds advices
+        self.changeUser('pmCreator1')
+        item3DirectPredecessor = item2WithAdvices.clone(setCurrentAsPredecessor=True, inheritAdvices=True)
+        # we get adviceInfos + 'adviceHolder'
+        inheritedItem3AdviceInfos = item3DirectPredecessor.getInheritedAdviceInfo('vendors')
+        self.assertEqual(inheritedItem3AdviceInfos['adviceHolder'], item2WithAdvices)
+        inheritedItem3AdviceInfos.pop('adviceHolder')
+        self.assertEqual(inheritedItem3AdviceInfos, item2WithAdvices.adviceIndex['vendors'])
+        # nothing for 'developers'
+        self.assertIsNone(item3DirectPredecessor.getInheritedAdviceInfo('developers'))
+
+        # now tries with a chain of predecessors, new item predecessor holding advice
+        # is not the direct predecessor, we have one item in between
+        item4ChainedPredecessor = item3DirectPredecessor.clone(setCurrentAsPredecessor=True, inheritAdvices=True)
+        inheritedItem4AdviceInfos = item4ChainedPredecessor.getInheritedAdviceInfo('vendors')
+        self.assertEqual(inheritedItem4AdviceInfos['adviceHolder'], item2WithAdvices)
+        inheritedItem4AdviceInfos.pop('adviceHolder')
+        self.assertEqual(inheritedItem4AdviceInfos, item2WithAdvices.adviceIndex['vendors'])
+        # nothing for 'developers'
+        self.assertIsNone(item4ChainedPredecessor.getInheritedAdviceInfo('developers'))
+
+    def test_pm_InheritedAdviceStoppedWhenInheritedAdviceRemoved(self):
+        '''When advices are inherited, it is only valid as long as the original
+           advice is still given, if removed, every inherited advice of the chain
+           of predecessors are automatically set back to not inherited.'''
+        item1, item2, vendors_advices, developers_advice = self._setupInheritedAdvice()
+        # add more items so we use multiple chains where predecessors may go
+        # into varipus ways, for now we have :
+        # item1 --- item1b --- item1b2
+        #     --- item1c
+        #     --- item2 --- item3
+        # item1b, item1c and item2 have item1 as predecessor
+        item1b = item1.clone(setCurrentAsPredecessor=True, inheritAdvices=True)
+        item1b2 = item1b.clone(setCurrentAsPredecessor=True, inheritAdvices=True)
+        item1c = item1.clone(setCurrentAsPredecessor=True, inheritAdvices=True)
+        self.assertEqual(item1b.getPredecessor(), item1)
+        self.assertEqual(item1b.getInheritedAdviceInfo('vendors')['adviceHolder'], item1)
+        item3 = item2.clone(setCurrentAsPredecessor=True, inheritAdvices=True)
+        self.assertEqual(item3.getInheritedAdviceInfo('vendors')['adviceHolder'], item1)
+
+        # remove item2, chain of predecessors is broken to item3,
+        # it will not inherit of advice anymore
+        self.portal.restrictedTraverse('@@delete_givenuid')(item2.UID())
+        self.assertFalse(item3.adviceIndex['vendors']['inherited'])
+        self.assertFalse(item3.adviceIndex['developers']['inherited'])
+        # recomputed, advice is addable, ...
+        self.assertTrue(item3.adviceIndex['vendors']['advice_addable'])
+        self.assertTrue(item3.adviceIndex['developers']['advice_addable'])
+        # but still ok for item1b, item1b2 and item1c
+        self.assertTrue(item1b.adviceIndex['vendors']['inherited'])
+        self.assertTrue(item1b.adviceIndex['developers']['inherited'])
+        self.assertTrue(item1b2.adviceIndex['vendors']['inherited'])
+        self.assertTrue(item1b2.adviceIndex['developers']['inherited'])
+        self.assertTrue(item1c.adviceIndex['vendors']['inherited'])
+        self.assertTrue(item1c.adviceIndex['developers']['inherited'])
+
+        # remove 'vendors' advice of item1, this time item1b, item1b2 and item1c are updated
+        # it will no longer inherits from item1
+        self.changeUser('pmReviewer2')
+        self.portal.restrictedTraverse('@@delete_givenuid')(item1.getAdviceObj('vendors').UID())
+        self.assertFalse(item1b.adviceIndex['vendors']['inherited'])
+        self.assertFalse(item1b2.adviceIndex['vendors']['inherited'])
+        self.assertFalse(item1c.adviceIndex['vendors']['inherited'])
+        # still ok for 'developers' advice
+        self.assertTrue(item1b.adviceIndex['developers']['inherited'])
+        self.assertTrue(item1b2.adviceIndex['developers']['inherited'])
+        self.assertTrue(item1c.adviceIndex['developers']['inherited'])
+        # recomputed, advice is addable, ...
+        self.assertTrue(item1b.adviceIndex['vendors']['advice_addable'])
+        self.assertTrue(item1b2.adviceIndex['vendors']['advice_addable'])
+        self.assertTrue(item1c.adviceIndex['vendors']['advice_addable'])
 
 
 def test_suite():
