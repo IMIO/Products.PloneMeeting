@@ -1328,8 +1328,14 @@ dl.portlet.portletWidgetCollection div.widget-portlet li a {
 }
 
 /* pretty link displayed to inherited item in advice popup */
-#content td.itemAdvicesCell a.pretty_link {
+#content dd.actionMenuContentAdvice a.pretty_link,
+#content dd.actionMenuContentAdvice div.pretty_link {
     display: inline;
+}
+/* pretty link displayed to inherited item in advice popup */
+/* highlight 'can not access element' */
+#content div.pretty_link span.no_access {
+    color: red;
 }
 
 /* align annexes icons displayed in the pretty_link column to the right */

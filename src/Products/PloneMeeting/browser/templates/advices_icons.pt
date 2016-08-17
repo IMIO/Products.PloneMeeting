@@ -68,6 +68,7 @@
                 <fieldset tal:define="mGroup python: getattr(view.tool, advice['id']);
                                       memberIsAdviserForGroup python:  advice['id'] in userAdviserGroupIds;
                                       adviceHolder python: advice.get('adviceHolder', None) or view.context;
+                                      adviceHolderIsViewable adviceHolder/isViewable;
                                       obj python: advice.get('advice_id', None) and adviceHolder.get(advice['advice_id'], None);
                                       obj_absolute_url python: obj and obj.absolute_url() or '';
                                       adviceIsInherited python: context.adviceIsInherited(advice['id']);
@@ -128,7 +129,7 @@
                               tal:define="dummy python: context.REQUEST.set('advice_change_delay_advice', advice);
                                           dummy python: context.REQUEST.set('advice_change_delay_cfg', cfg);"
                               replace="structure context/@@advice-available-delays/index" />
-                            <acronym tal:condition="advice/advice_id|nothing">
+                            <acronym tal:condition="python: adviceHolderIsViewable and advice.get('advice_id', None)">
                                <a class="overlay-history"
                                   title="History"
                                   i18n:domain="plone"
@@ -201,10 +202,11 @@
                     </td>
                   </tr>
                   <tr tal:condition="adviceIsInherited">
-                    <td tal:condition="adviceHolder/isViewable" colspan="5">
-                        <p i18n:translate="">
-                            <img src="advice_inherited.png" tal:attributes="src string:${view/portal_url}/advice_inherited.png"/>This advice is inherited from item
-                            <span i18n:name="linkToItem" tal:content="structure python: adviceHolder.getPrettyLink(**{'maxLength': 120})">Link to advice holder cropped...</span></p>
+                    <td colspan="5">
+                        <div>
+                            <img src="advice_inherited.png" tal:attributes="src string:${view/portal_url}/advice_inherited.png"/>
+                            <span  i18n:translate="">This advice is inherited from <span i18n:name="linkToItem" tal:replace="structure python: adviceHolder.getPrettyLink(**{'maxLength': 120})">Link to advice holder cropped...</span></span>
+                        </div>
                     </td>
                   </tr>
                   <tr tal:condition="python: adviceType != 'not_given'">
@@ -231,7 +233,7 @@
                            tal:condition="not: comment"
                            i18n:translate="">No complementary comment has been given on this advice.</p>
                         <p class="discreet"
-                           tal:condition="needToCrop"
+                           tal:condition="python: needToCrop and adviceHolderIsViewable"
                            i18n:translate="">This is an extract of the comment, access full comment if necessary...</p>
                     </td>
                   </tr>
@@ -239,6 +241,7 @@
                     <td>
                         <a href="#"
                            class="link-overlay-pm"
+                           tal:condition="adviceHolderIsViewable"
                            tal:attributes="href string:${obj_absolute_url}/view">
                             <img src="blue_arrow.gif"
                                  tal:attributes="src string:${view/portal_url}/blue_arrow.gif"/>&nbsp;<span i18n:translate="">Preview detailled advice</span>
@@ -249,7 +252,7 @@
                         class="advice_annexes">
                         <tal:defines define="relatedTo string:advice;
                                              extra_css_class string:annexIcon;"
-                                     condition="python: bool(obj.annexIndex)">
+                                     condition="python: bool(obj.annexIndex) and adviceHolderIsViewable">
                             <tal:annexes replace="structure python: obj.restrictedTraverse('@@annexes-icons')(relatedTo='advice')" />
                         </tal:defines>
                     </td>
