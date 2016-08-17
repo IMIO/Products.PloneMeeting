@@ -50,6 +50,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Added parameter 'setCurrentAsPredecessor' to MeetingItem.clone method, making it possible to specify if we
   want the current item to be the predecessor of the newly created item.  This formalize something that is often
   done, and when 'ItemDuplicatedEvent' is called at the end of the 'clone', we have the set predecessor if necessary
+- Added parameter 'inheritAdvices' to MeetingItem.clone method, this way, if paramater 'setCurrentAsPredecessor=True'
+  and 'manualLinkToPredecessor=False', advices that were given on the original item are inherited, it is shown on the
+  new item, every informations are actually taken from original item
 - Hide the plone.contentactions viewlet on every PloneMeeting content types
 - Field MeetingItem.observations is no more kept when an item is cloned
 - Added icon to select/unselect every checkboxes of available items to present in a meeting like it is already
@@ -313,7 +316,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   The value 'mayEdit' has been added to the available variables in the expression and is True if current user may edit the item
 - Added optional field Meeting.approvalDate made to encode the date the current meeting was approved
 - Added workflowAdaptation 'postpone_next_meeting', it adds a decided state 'postponed_next_meeting' (based on the already existing
-  state 'delayed') and additionally it will duplicate the item and automatically set the new item to "validated"
+  state 'delayed') and additionally it will duplicate the item and automatically set the new item to "validated", moreover advices or
+  original item are inherited
 - Added workflowAdaptation 'mark_not_applicable', it adds a decided state 'marked_not_applicable' to the item (based on the already existing
   state 'delayed')
 - Added workflowAdaptation 'removed', it adds a decided state 'removed' to the item (based on the already existing

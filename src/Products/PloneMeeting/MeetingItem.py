@@ -4161,7 +4161,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     d['delay_for_automatic_adviser_changed_manually'] = False
                     d['delay_changes_history'] = []
                     d['isConfidential'] = cfg.getAdviceConfidentialityDefault()
-                    d['inherited'] = False
+                    d['inherited'] = bool(groupId in inheritedAdviserIds)
                 # index view/add/edit access
                 d['item_viewable_by_advisers'] = False
                 d['advice_addable'] = False
@@ -4523,7 +4523,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePrivate('at_post_create_script')
 
-    def at_post_create_script(self):
+    def at_post_create_script(self, **kwargs):
         # Create a "black list" of annex names. Every time an annex will be
         # created for this item, the name used for it (=id) will be stored here
         # and will not be removed even if the annex is removed. This way, two
@@ -4546,7 +4546,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         userId = api.user.get_current().getId()
         self.manage_delLocalRoles([userId])
         self.manage_addLocalRoles(userId, ('Owner',))
-        self.updateLocalRoles(isCreated=True)
+        self.updateLocalRoles(isCreated=True,
+                              inheritedAdviserIds=kwargs.get('inheritedAdviserIds', []))
+        # update annexIndex
+        IAnnexable(self).updateAnnexIndex()
         # Apply potential transformations to richtext fields
         transformAllRichTextFields(self)
         # Make sure we have 'text/html' for every Rich fields
@@ -4974,15 +4977,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             cloneEvent['actor'] = userId
             newItem.workflow_history[wfName] = (firstEvent, cloneEvent)
 
-        newItem.at_post_create_script()
+        newItem.at_post_create_script(inheritedAdviserIds=inheritedAdviserIds)
 
         # notify that item has been duplicated so subproducts may interact if necessary
         notify(ItemDuplicatedEvent(self, newItem))
-        if copyAnnexes:
-            IAnnexable(newItem).updateAnnexIndex()
-
-        newItem.updateLocalRoles(inheritedAdviserIds=inheritedAdviserIds)
-        newItem.reindexObject()
 
         logger.info('Item at %s cloned (%s) by "%s" from %s.' %
                     (newItem.absolute_url_path(),
