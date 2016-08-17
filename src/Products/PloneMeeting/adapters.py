@@ -256,10 +256,10 @@ class AnnexableAdapter(object):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
         return (self.context, relatedTo, makeSubLists, typesIds,
-                realAnnexes, self.context.annexIndex, self.request.get('AUTHENTICATED_USER', None),
+                realAnnexes, self.context.annexIndex, self.request['AUTHENTICATED_USER'],
                 cfg.modified())
 
-    #@ram.cache(getAnnexesByType_cachekey)
+    @ram.cache(getAnnexesByType_cachekey)
     def getAnnexesByType(self, relatedTo, makeSubLists=True,
                          typesIds=[], realAnnexes=False):
         '''See docstring in interfaces.py'''

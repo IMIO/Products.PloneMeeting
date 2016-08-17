@@ -3696,8 +3696,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = {}
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        advices = self.getAdvices()
-        for advice in advices:
+        for advice in self.getAdvices():
             optional = True
             gives_auto_advice_on_help_message = delay = delay_left_alert = delay_label = ''
             # find the relevant row in customAdvisers if advice has a row_id
@@ -3712,7 +3711,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             advice_given_on = advice.get_advice_given_on()
             res[advice.advice_group] = {'type': advice.advice_type,
                                         'optional': optional,
-                                        'not_asked': False,
                                         'not_asked': False,
                                         'id': advice.advice_group,
                                         'name': getattr(tool, advice.advice_group).getName().decode('utf-8'),
