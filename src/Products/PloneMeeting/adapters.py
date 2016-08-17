@@ -14,6 +14,7 @@ from AccessControl import Unauthorized
 from persistent.list import PersistentList
 from zope.annotation import IAnnotations
 from zope.i18n import translate
+from zope.globalrequest import getRequest
 
 from plone.memoize import ram
 
@@ -52,10 +53,7 @@ class AnnexableAdapter(object):
 
     def __init__(self, context):
         self.context = context
-        # check for REQUEST when using async
-        self.request = None
-        if hasattr(self.context, 'REQUEST'):
-            self.request = self.context.REQUEST
+        self.request = getRequest()
 
     def addAnnex(self, idCandidate, annex_title, annex_file,
                  relatedTo, meetingFileTypeUID, **kwargs):

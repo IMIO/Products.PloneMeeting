@@ -274,8 +274,8 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         clonedItem = item.clone(keepProposingGroup=True)
         self.assertTrue(clonedItem.getProposingGroup() == 'vendors')
 
-    def test_pm_PasteItems(self):
-        '''Paste objects (previously copied) in destFolder.'''
+    def test_pm_PasteItem(self):
+        '''Paste an item (previously copied) in destFolder.'''
         self.changeUser('pmCreator1')
         item1 = self.create('MeetingItem')
         # Add annexes to item1
@@ -299,13 +299,15 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # Copy items
         copiedData1 = destFolder.manage_copyObjects(ids=[item1.id, ])
         copiedData2 = destFolder.manage_copyObjects(ids=[item2.id, ])
-        res1 = self.tool.pasteItems(destFolder, copiedData1, copyAnnexes=True)[0]
-        res2 = self.tool.pasteItems(destFolder, copiedData2)[0]
+        res1 = self.tool.pasteItem(destFolder, copiedData1, copyAnnexes=True)
+        res1.at_post_create_script()
+        res2 = self.tool.pasteItem(destFolder, copiedData2)
+        res2.at_post_create_script()
         self.assertEquals(set([item1, item2, res1, res2]),
                           set(destFolder.objectValues('MeetingItem')))
         # By default, the history is kept by the copy/paste so we should have 2
         # values relative to the 'itemcreated' action
-        # But here, the workflow_history is cleaned by ToolPloneMeeting.pasteItems
+        # But here, the workflow_history is cleaned by ToolPloneMeeting.pasteItem
         # and only contains informations about the current workflow and the actions in it
         itemWorkflowId = self.wfTool.getWorkflowsFor(res1)[0].getId()
         # The workflow_history only contains one action, the 'itemcreated' action

@@ -1487,7 +1487,7 @@ def getTransitionToReachState(obj, state):
     wfTool = api.portal.get_tool('portal_workflow')
     wf = wfTool.getWorkflowsFor(obj)[0]
     res = ''
-    availableTransitions = wfTool.getTransitionsFor(obj)
+    availableTransitions = [t['id'] for t in wfTool.getTransitionsFor(obj)]
     for transition in wf.transitions.values():
         if not transition.id in availableTransitions:
             continue

@@ -40,7 +40,7 @@ class AdviceDelaysView(BrowserView):
         # find linked rows in the MeetingConfig.customAdvisers
         isAutomatic, linkedRows = self.cfg._findLinkedRowsFor(row_id)
         # check if current user may change delays for advice
-        mayEdit = self._mayEditDelays(isAutomatic)
+        mayEdit = not self.context.adviceIsInherited(self.advice['id']) and self._mayEditDelays(isAutomatic)
         return self._availableDelays(linkedRows, row_id, mayEdit)
 
     def _mayEditDelays(self, isAutomatic):
