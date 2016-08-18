@@ -1254,3 +1254,30 @@ class DecidedItemsAdapter(CompoundCriterionBaseAdapter):
 
     # we may not ram.cache methods in same file with same name...
     query = query_decideditems
+
+
+class IconifiedCategoryConfigAdapter(object):
+    """ """
+    def __init__(self, context):
+        """ """
+        self.context = context
+
+    def get_config(self):
+        """ """
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context.portal_plonemeeting.get('meeting-config-college'))
+        return cfg.annexes_types
+
+
+class IconifiedCategoryGroupAdapter(object):
+    """ """
+    def __init__(self, config, context):
+        """ """
+        self.config = config
+        self.context = context
+
+    def get_group(self):
+        """ """
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context.portal_plonemeeting.get('meeting-config-college'))
+        return cfg.annexes_types.item_annexes

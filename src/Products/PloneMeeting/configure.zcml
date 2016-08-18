@@ -164,6 +164,15 @@
            factory=".adapters.MeetingPrettyLinkAdapter"
            provides="imio.prettylink.interfaces.IPrettyLink" />
 
+  <adapter for="*"
+           factory=".adapters.IconifiedCategoryConfigAdapter"
+           provides="collective.iconifiedcategory.interfaces.IIconifiedCategoryConfig" />
+
+  <adapter for="plone.app.contenttypes.interfaces.IFolder
+                imio.annex.content.annex.IAnnex"
+           factory=".adapters.IconifiedCategoryGroupAdapter"
+           provides="collective.iconifiedcategory.interfaces.IIconifiedCategoryGroup" />
+
   <five:deprecatedManageAddDelete class=".MeetingItem.MeetingItem" />
   <five:deprecatedManageAddDelete class=".Meeting.Meeting" />
   <five:deprecatedManageAddDelete class=".MeetingFile.MeetingFile" />
