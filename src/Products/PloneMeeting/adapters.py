@@ -1267,8 +1267,8 @@ class IconifiedCategoryConfigAdapter(object):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
         # manage the css.py file generation necessary CSS, in this case, context is the portal
-        if self.context.portal_type == 'Plone Site':
-            referer = self.context.REQUEST['HTTP_REFERER']
+        referer = self.context.REQUEST['HTTP_REFERER']
+        if self.context.portal_type == 'Plone Site' and 'mymeetings' in referer:
             referer_path = referer.lstrip(self.context.absolute_url())
             referer_obj = self.context.unrestrictedTraverse(referer_path)
             # in case we are adding/editing annex, referer_obj is the form
