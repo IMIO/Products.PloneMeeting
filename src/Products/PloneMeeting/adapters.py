@@ -29,6 +29,7 @@ from eea.facetednavigation.criteria.handler import Criteria as eeaCriteria
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
 from imio.actionspanel.adapters import ContentDeletableAdapter as APContentDeletableAdapter
+from imio.annex.content.annex import IAnnex
 from imio.history.adapters import ImioWfHistoryAdapter
 from imio.prettylink.adapters import PrettyLinkAdapter
 from Products.PloneMeeting import PMMessageFactory as _
@@ -1265,8 +1266,22 @@ class IconifiedCategoryConfigAdapter(object):
     def get_config(self):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context.portal_plonemeeting.get('meeting-config-college'))
-        return cfg.annexes_types
+        # manage the css.py file generation necessary CSS, in this case, context is the portal
+        if self.context.portal_type == 'Plone Site':
+            referer = self.context.REQUEST['HTTP_REFERER']
+            referer_path = referer.lstrip(self.context.absolute_url())
+            referer_obj = self.context.unrestrictedTraverse(referer_path)
+            # in case we are adding/editing annex, referer_obj is the form
+            if referer_obj.__module__ in ('Products.Five.metaclass',
+                                          'plone.dexterity.browser.add'):
+                referer_obj = referer_obj.context
+            self.context = referer_obj
+        # if self.context is finally not what we want, getMeetingConfig will raise an AttributeError
+        try:
+            cfg = tool.getMeetingConfig(self.context)
+        except AttributeError:
+            cfg = None
+        return cfg and cfg.annexes_types or None
 
 
 class IconifiedCategoryGroupAdapter(object):
@@ -1277,7 +1292,26 @@ class IconifiedCategoryGroupAdapter(object):
         self.context = context
 
     def get_group(self):
-        """ """
+        """Return right group, depends on :
+           - while adding in an item, annex or decisionAnnex;
+           - while adding in a meeting or an advice."""
         tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context.portal_plonemeeting.get('meeting-config-college'))
-        return cfg.annexes_types.item_annexes
+        cfg = tool.getMeetingConfig(self.context)
+        isDecisionAnnex = False
+        if not IAnnex.providedBy(self.context):
+            # we are adding a new annex, get annex portal_type from form_instance
+            # manage also the InlineValidation view
+            if hasattr(self.context.REQUEST['PUBLISHED'], 'form_instance'):
+                form_instance = self.context.REQUEST['PUBLISHED'].form_instance
+            else:
+                form_instance = self.context.REQUEST['PUBLISHED'].context.form_instance
+
+            if form_instance.portal_type == 'annexDecision':
+                isDecisionAnnex = True
+        else:
+            if self.context.portal_type == 'annexDecision':
+                isDecisionAnnex = True
+        if not isDecisionAnnex:
+            return cfg.annexes_types.item_annexes
+        else:
+            return cfg.annexes_types.item_decision_annexes

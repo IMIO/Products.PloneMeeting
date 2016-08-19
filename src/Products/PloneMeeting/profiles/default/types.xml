@@ -28,4 +28,5 @@
          meta_type="Factory-based Type Information with dynamic views"/>
  <object name="ConfigurablePODTemplate" meta_type="Dexterity FTI"/>
  <object name="DashboardPODTemplate" meta_type="Dexterity FTI"/>
+ <object name="annexDecision" meta_type="Dexterity FTI"/>
 </object>

@@ -35,6 +35,10 @@
 
   <permission id="PloneMeeting.AddAdvice"
               title="PloneMeeting: Add advice"/>
+  <permission id="PloneMeeting.AddAnnex"
+              title="PloneMeeting: Add annex"/>
+  <permission id="PloneMeeting.WriteDecisionAnnex"
+              title="PloneMeeting: Write decision annex"/>
 
   <adapter for=".interfaces.IMeetingItem"
            factory=".MeetingItem.MeetingItemWorkflowConditions"
@@ -172,6 +176,11 @@
                 imio.annex.content.annex.IAnnex"
            factory=".adapters.IconifiedCategoryGroupAdapter"
            provides="collective.iconifiedcategory.interfaces.IIconifiedCategoryGroup" />
+  <adapter for="plone.app.contenttypes.interfaces.IFolder
+                Products.PloneMeeting.interfaces.IMeetingItem"
+           factory=".adapters.IconifiedCategoryGroupAdapter"
+           provides="collective.iconifiedcategory.interfaces.IIconifiedCategoryGroup" />
+
 
   <five:deprecatedManageAddDelete class=".MeetingItem.MeetingItem" />
   <five:deprecatedManageAddDelete class=".Meeting.Meeting" />

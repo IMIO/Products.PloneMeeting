@@ -18,6 +18,8 @@
    <element value="meetingadvice"/>
    <element value="File"/>
    <element value="Image"/>
+   <element value="annex"/>
+   <element value="annexDecision"/>
  </property>
  <property name="allow_discussion">False</property>
  <property name="default_view">meetingitem_view</property>
