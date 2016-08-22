@@ -1495,6 +1495,13 @@ div.customAdviceMessage {
     color: red;
 }
 
+/* doc displayed in a fieldset using the '?' js click image */
+#content-core div#groupDoc,
+#content-core div#customAdvisersDoc,
+#content-core div#usersDoc {
+    margin-top: 2.3em;
+}
+
 #content-core p.tool_pm_descr,
 #content-core p.backToItem {
     margin-bottom: 0.5em;

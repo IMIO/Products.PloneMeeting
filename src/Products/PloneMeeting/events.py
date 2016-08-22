@@ -486,6 +486,19 @@ def onAdviceTransition(advice, event):
 
 
 def onAnnexAdded(annex, event):
+    ''' '''
+    # redirect to referer after add if it is not the edit form
+    http_referer = annex.REQUEST['HTTP_REFERER']
+    if not http_referer.endswith('/edit') and not http_referer.endswith('/@@edit'):
+        annex.REQUEST.RESPONSE.redirect(http_referer)
+
+    # log
+    userId = api.user.get_current().getId()
+    logger.info('Annex at %s created by "%s".' %
+                (annex.absolute_url_path(), userId))
+
+
+def onMeetingFileAdded(annex, event):
     '''When an annex is added, we need to update item modification date and SearchableText.'''
     parent = annex.getParentNode()
     # if it is an annex added on an item, versionate given advices if necessary

@@ -89,6 +89,10 @@
                    Products.DCWorkflow.interfaces.IAfterTransitionEvent"
               handler=".events.onAdviceTransition"/>
 
+  <subscriber for="imio.annex.content.annex.IAnnex
+                   zope.lifecycleevent.interfaces.IObjectAddedEvent"
+              handler=".events.onAnnexAdded"/>
+
   <!-- if 'auto-conversion' is enabled in collective.documentviewer, convert MeetingFiles upon creation -->
   <subscriber for=".interfaces.IMeetingFile
                    Products.Archetypes.interfaces.IObjectInitializedEvent"
@@ -106,7 +110,7 @@
 
   <subscriber for=".interfaces.IMeetingFile
                    zope.lifecycleevent.interfaces.IObjectAddedEvent"
-              handler=".events.onAnnexAdded"/>
+              handler=".events.onMeetingFileAdded"/>
 
   <subscriber for=".interfaces.IMeetingFile
                    zope.container.interfaces.IObjectRemovedEvent"

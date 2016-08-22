@@ -14,6 +14,7 @@ from collective.eeafaceted.z3ctable.columns import CheckBoxColumn
 from collective.eeafaceted.z3ctable.columns import ColorColumn
 from collective.eeafaceted.z3ctable.columns import I18nColumn
 from collective.eeafaceted.z3ctable.columns import VocabularyColumn
+from imio.annex.columns import ActionsColumn as AnnexActionsColumn
 from imio.dashboard.columns import ActionsColumn
 from imio.dashboard.columns import PrettyLinkColumn
 from imio.prettylink.interfaces import IPrettyLink
@@ -235,3 +236,8 @@ class ItemCheckBoxColumn(CheckBoxColumn):
     <img src="{3}/removeSeveral.png">
     </button></td></tr></table>'''.format(head, self.context.absolute_url(), unpresent_msg, self.table.portal_url)
         return head
+
+
+class AnnexesActionsColumn(AnnexActionsColumn):
+    """ """
+    params = {'edit_action_class': 'link-overlay-pm-annex'}

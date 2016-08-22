@@ -127,23 +127,6 @@ jQuery(function($) {
         closeselector: '[name="form.buttons.cancel"]',
   });
 });
-// as this method is called on the onmousover event of the ajax-frame
-// remove the event after first call to avoid it being called more than once
-$('div.ajax-pm-frame').each(function(){
-    $(this).removeAttr('onmouseover');
-    })
-}
-
-// When on a meething view, we have to handle some more parameters to keep on wich page we are
-// Adapt the link that will show a popup for confirming a transition
-// to pass iStartNumber and lStartNumber that are global JS variables defined on the meeting_view
-function initializePMOverlaysOnMeeting(){
-jQuery(function($) {
-$('a.link-overlay-actionspanel.transition-overlay').each(function(){
-    $(this).attr('href',$(this).attr('href') + '&iStartNumber=' + iStartNumber + '&lStartNumber=' + lStartNumber);
-    })
-  })
-  initializePMOverlays()
 }
 
 // Open every links having the classicpopup class in a... classic popup...
@@ -153,4 +136,34 @@ jQuery(document).ready(function($) {
         if (window.focus) {newwindow.focus()}
         return false;
     });
+});
+
+
+jQuery(function($) {
+  $('a.link-overlay-pm-annex').prepOverlay({
+        subtype: 'ajax',
+        closeselector: '[name="form.buttons.cancel"]',
+        config: {
+            onLoad : function (e) {
+                // initialize select2 widget
+                initializeSelect2Widgets();
+                return true;
+            },
+            onClose : function (e) {
+                // unlock current element
+                // compute url, find link to advice edit and remove trailing '/edit'
+                var rel_num = this.getOverlay().attr('id');
+                obj_url = $("[rel='#" + rel_num + "']").attr('href')
+                // do not unlock if we were on the '++add++annex' form
+                if (obj_url.indexOf('++add++annex') === -1) {
+                    // remove '/edit'
+                    obj_url = obj_url.slice(0, -5);
+                    // now we have the right url, append the unlock view name
+                    $.ajax({
+                        url: obj_url + "/@@plone_lock_operations/safe_unlock", });
+                }
+                return true;
+            }
+        }
+  });
 });

@@ -20,6 +20,7 @@ from plone.memoize import ram
 from plone.memoize.view import memoize_contextless
 
 from collective.behavior.talcondition.utils import _evaluateExpression
+from collective.iconifiedcategory.browser.tabview import CategorizedTabView
 from collective.ckeditor.browser.ckeditorfinder import CKFinder
 from collective.documentgenerator.content.pod_template import IPODTemplate
 from collective.eeafaceted.collectionwidget.browser.views import RenderCategoryView
@@ -767,6 +768,15 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
         plone_utils = api.portal.get_tool('plone_utils')
         plone_utils.addPortalMessage(msg)
         return self.request.RESPONSE.redirect(self.request['HTTP_REFERER'])
+
+
+class CategorizedAnnexesView(CategorizedTabView):
+    """ """
+
+    def __init__(self, context, request):
+        """ """
+        super(CategorizedAnnexesView, self).__init__(context, request)
+        self.portal_url = api.portal.get().absolute_url()
 
 
 class PMCKFinder(CKFinder):

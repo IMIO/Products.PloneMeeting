@@ -70,6 +70,15 @@
             permission="zope2.View" />
     </configure>
 
+    <!-- Annexes table view -->
+    <browser:page
+        for="*"
+        name="categorized-annexes"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        class=".overrides.CategorizedAnnexesView"
+        permission="zope2.View"
+        template="templates/categorized_annexes.pt" />
+
     <!-- Use our own actionspanel viewlet for elements of the configuration -->
     <browser:viewlet
         name="plonemeeting.actionspanel"
