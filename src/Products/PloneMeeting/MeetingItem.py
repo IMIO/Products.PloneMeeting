@@ -69,6 +69,7 @@ from imio.prettylink.interfaces import IPrettyLink
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting import PloneMeetingError
 from Products.PloneMeeting.config import AddAdvice
+from Products.PloneMeeting.config import AUTO_COPY_GROUP_PREFIX
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import DEFAULT_COPIED_FIELDS
@@ -2172,10 +2173,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def getAllCopyGroups(self, auto_real_group_ids=False):
         """Return manually selected copyGroups and automatically added ones.
            If p_auto_real_group_ids is True, the real Plone groupId is returned for
-           automatically added groups instead of the 'auto__' prefixed name."""
+           automatically added groups instead of the AUTO_COPY_GROUP_PREFIX prefixed name."""
         allGroups = self.getCopyGroups()
         if auto_real_group_ids:
-            allGroups += tuple([groupId.replace('auto__', '') for groupId in self.autoCopyGroups])
+            allGroups += tuple([groupId.replace(AUTO_COPY_GROUP_PREFIX, '') for groupId in self.autoCopyGroups])
         else:
             allGroups += tuple(self.autoCopyGroups)
         return allGroups
@@ -3314,7 +3315,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            We get it by evaluating the TAL expression on every active
            MeetingGroup.asCopyGroupOn. The expression returns a list of suffixes
            or an empty list.  The method update existing copyGroups and add groups
-           prefixed with 'auto__'.'''
+           prefixed with AUTO_COPY_GROUP_PREFIX.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         self.autoCopyGroups = PersistentList()
 
@@ -3338,7 +3339,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                                                  mGroup.getId()))
                         continue
                     ploneGroupId = mGroup.getPloneGroupId(suffix)
-                    autoPloneGroupId = 'auto__{0}'.format(ploneGroupId)
+                    autoPloneGroupId = '{0}{1}'.format(AUTO_COPY_GROUP_PREFIX, ploneGroupId)
                     self.autoCopyGroups.append(autoPloneGroupId)
             except Exception, e:
                 logger.warning(AS_COPYGROUP_CONDITION_ERROR % str(e))
@@ -3836,8 +3837,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         copyGroupsVocab = self.listCopyGroups(include_auto=True)
         patched_vocab = []
         for term_id, term_title in copyGroupsVocab.items():
-            # auto copyGroups are prefixed with 'auto__'
-            real_group_id = term_id.split('auto__')[-1]
+            # auto copyGroups are prefixed with AUTO_COPY_GROUP_PREFIX
+            real_group_id = term_id.split(AUTO_COPY_GROUP_PREFIX)[-1]
             patched_vocab.append((term_id, '{0} {1}'.format(
                 term_title,
                 "<a onclick='event.preventDefault();' class='link-tooltip' "
@@ -4682,8 +4683,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         copyGroups = self.getCopyGroups() + tuple(self.autoCopyGroups)
         if copyGroups:
             for copyGroup in copyGroups:
-                # auto added copy groups are prefixed by 'auto__'
-                copyGroupId = copyGroup.split('auto__')[-1]
+                # auto added copy groups are prefixed by AUTO_COPY_GROUP_PREFIX
+                copyGroupId = copyGroup.split(AUTO_COPY_GROUP_PREFIX)[-1]
                 self.manage_addLocalRoles(copyGroupId, (READER_USECASES['copy_groups'],))
 
     def _updatePowerObserversLocalRoles(self):
@@ -4840,7 +4841,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # include terms for autoCopyGroups if relevant
         if include_auto and self.autoCopyGroups:
             for autoGroupId in self.autoCopyGroups:
-                groupId = autoGroupId.split('auto__')[-1]
+                groupId = autoGroupId.split(AUTO_COPY_GROUP_PREFIX)[-1]
                 group = portal_groups.getGroupById(groupId)
                 if group:
                     res.append((autoGroupId, group.getProperty('title') + ' [auto]'))

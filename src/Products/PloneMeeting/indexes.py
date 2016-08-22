@@ -95,6 +95,14 @@ def getGroupInCharge(obj):
 
 
 @indexer(IMeetingItem)
+def getCopyGroups(obj):
+    """
+      Compute getCopyGroups to take auto copyGroups into account.
+    """
+    return obj.getAllCopyGroups(auto_real_group_ids=True)
+
+
+@indexer(IMeetingItem)
 def reviewProcessInfo(obj):
     """
       Compute a reviewProcessInfo, this concatenate the proposingGroup

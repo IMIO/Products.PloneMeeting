@@ -377,6 +377,27 @@ class testSearches(PloneMeetingTestCase):
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemsincopy')
         self.failUnless(collection.getQuery())
 
+    def test_pm_SearchItemsInCopyWithAutoCopyGroups(self):
+        '''Test the 'search-items-in-copy' adapter when using auto copyGroups.'''
+        self.changeUser('admin')
+        # specify that copyGroups can see the item when it is proposed
+        cfg = self.meetingConfig
+        cfg.setUseCopies(True)
+        cfg.setItemCopyGroupsStates((self.WF_STATE_NAME_MAPPINGS['proposed'], 'validated', ))
+        # configure an auto copyGroup, vendors_reviewers will be set
+        # as auto copyGroup for every items
+        self.tool.vendors.setAsCopyGroupOn("python: ['reviewers']")
+
+        # this adapter is used by the "searchallitemsincopy"
+        collection = cfg.searches.searches_items.searchallitemsincopy
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.assertEqual(item.getAllCopyGroups(auto_real_group_ids=True),
+                         ('vendors_reviewers', ))
+        self.proposeItem(item)
+        self.changeUser('pmReviewer2')
+        self.failUnless(collection.getQuery())
+
     def test_pm_SearchMyItemsTakenOver(self):
         '''Test the 'search-my-items-taken-over' method.  This should return
            a list of items a user has taken over.'''

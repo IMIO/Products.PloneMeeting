@@ -264,6 +264,8 @@ DEFAULT_LIST_TYPES = [
 
 NO_TRIGGER_WF_TRANSITION_UNTIL = '__nothing__'
 
+AUTO_COPY_GROUP_PREFIX = 'auto__'
+
 HIDE_DECISION_UNDER_WRITING_MSG = \
     "<p class='highlightValue'>The decision is currently under edit by managers, you can not access it.</p>"
 
