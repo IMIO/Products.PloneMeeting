@@ -197,7 +197,7 @@ def onGroupWillBeRemoved(group, event):
     tool = api.portal.get_tool('portal_plonemeeting')
     groupId = group.getId()
     for mc in tool.objectValues('MeetingConfig'):
-        # The meetingGroup can be referenced in selectableCopyGroups.
+        # The meetingGroup can be referenced in selectableAdvisers/selectableCopyGroups.
         customAdvisersGroupIds = [customAdviser['group'] for customAdviser in mc.getCustomAdvisers()]
         if groupId in customAdvisersGroupIds or \
            groupId in mc.getPowerAdvisersGroups() or \
