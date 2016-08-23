@@ -17,6 +17,7 @@ from zope.i18n import translate
 from zope.globalrequest import getRequest
 
 from plone.memoize import ram
+from plone.memoize.instance import memoize
 
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.MimetypesRegistry.common import MimeTypeException
@@ -1263,6 +1264,7 @@ class IconifiedCategoryConfigAdapter(object):
         """ """
         self.context = context
 
+    @memoize
     def get_config(self):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -1270,10 +1272,13 @@ class IconifiedCategoryConfigAdapter(object):
         referer = self.context.REQUEST['HTTP_REFERER']
         if self.context.portal_type == 'Plone Site' and 'mymeetings' in referer:
             referer_path = referer.lstrip(self.context.absolute_url())
-            referer_obj = self.context.unrestrictedTraverse(referer_path)
+            try:
+                referer_obj = self.context.unrestrictedTraverse(referer_path)
+            except:
+                referer_obj = None
             # in case we are adding/editing annex, referer_obj is the form
-            if referer_obj.__module__ in ('Products.Five.metaclass',
-                                          'plone.dexterity.browser.add'):
+            if referer_obj and referer_obj.__module__ in ('Products.Five.metaclass',
+                                                          'plone.dexterity.browser.add'):
                 referer_obj = referer_obj.context
             self.context = referer_obj
         # if self.context is finally not what we want, getMeetingConfig will raise an AttributeError
@@ -1291,6 +1296,7 @@ class IconifiedCategoryGroupAdapter(object):
         self.config = config
         self.context = context
 
+    @memoize
     def get_group(self):
         """Return right group, depends on :
            - while adding in an item, annex or decisionAnnex;

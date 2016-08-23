@@ -371,6 +371,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
                           showAddContent=False,
                           showHistory=False,
                           showHistoryLastEventHasComments=True,
+                          showArrows=False,
                           **kwargs):
         '''cachekey method for self.__call__ method.
            The cache is invalidated if :
@@ -400,7 +401,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
                 user.getId(), userGroups, userRoles, annotations,
                 meetingModified, useIcons, showTransitions, appendTypeNameToTransitionLabel, showEdit,
                 showOwnDelete, showActions, showAddContent, showHistory, showHistoryLastEventHasComments,
-                isPresentable, kwargs)
+                showArrows, isPresentable, kwargs)
 
     @ram.cache(__call___cachekey)
     def __call__(self,
@@ -413,6 +414,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
                  showAddContent=False,
                  showHistory=False,
                  showHistoryLastEventHasComments=True,
+                 showArrows=False,
                  **kwargs):
         """
           Redefined to add ram.cache...
@@ -431,6 +433,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
                      showAddContent=showAddContent,
                      showHistory=showHistory,
                      showHistoryLastEventHasComments=showHistoryLastEventHasComments,
+                     showArrows=showArrows,
                      **kwargs)
 
     def renderArrows(self):
@@ -440,10 +443,9 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
             config_actions_panel = self.context.restrictedTraverse('@@config_actions_panel')
             config_actions_panel()
             return config_actions_panel.renderArrows()
-        showArrows = self.kwargs.get('showArrows', False)
-        if showArrows and self.mayChangeOrder():
+        if self.showArrows and self.mayChangeOrder():
             self.lastItemUID = self.kwargs['lastItemUID']
-            return ViewPageTemplateFile("templates/actions_panel_arrows.pt")(self)
+            return ViewPageTemplateFile("templates/actions_panel_item_arrows.pt")(self)
         return ''
 
     def showHistoryForContext(self):
@@ -484,6 +486,7 @@ class MeetingActionsPanelView(BaseActionsPanelView):
                           showAddContent=False,
                           showHistory=False,
                           showHistoryLastEventHasComments=True,
+                          showArrows=False,
                           **kwargs):
         '''cachekey method for self.__call__ method.
            The cache is invalidated if :
@@ -502,7 +505,7 @@ class MeetingActionsPanelView(BaseActionsPanelView):
                 user.getId(), userGroups, userRoles, invalidate_meeting_actions_panel_cache,
                 useIcons, showTransitions, appendTypeNameToTransitionLabel, showEdit,
                 showOwnDelete, showActions, showAddContent, showHistory, showHistoryLastEventHasComments,
-                kwargs)
+                showArrows, kwargs)
 
     @ram.cache(__call___cachekey)
     def __call__(self,
@@ -515,6 +518,7 @@ class MeetingActionsPanelView(BaseActionsPanelView):
                  showAddContent=False,
                  showHistory=False,
                  showHistoryLastEventHasComments=True,
+                 showArrows=False,
                  **kwargs):
         """
           Redefined to add ram.cache...
@@ -529,6 +533,7 @@ class MeetingActionsPanelView(BaseActionsPanelView):
                      showAddContent=showAddContent,
                      showHistory=showHistory,
                      showHistoryLastEventHasComments=showHistoryLastEventHasComments,
+                     showArrows=showArrows,
                      **kwargs)
 
     def renderDeleteWholeMeeting(self):
@@ -582,23 +587,21 @@ class ConfigActionsPanelView(ActionsPanelView):
                                    'renderTransitions')
         if self.context.meta_type == 'MeetingGroup':
             self.SECTIONS_TO_RENDER = self.SECTIONS_TO_RENDER + ('renderLinkedPloneGroups', )
-        self.folder = self.context.getParentNode()
+
+    def renderArrows(self):
+        """ """
         # objectIds is used for moving elements, we actually only want
         # to move elements of same portal_type
         # exception for Pod templates where we have ConfigurablePodTemplate
         # and DashboardTemplate objects
-        if self.folder.getId() == 'podtemplates':
-            self.objectIds = self.folder.objectIds()
-        else:
-            self.objectIds = self.folder.objectIds(self.context.meta_type)
-        self.objId = self.context.getId()
-        self.moveUrl = "{0}/folder_position?position=%s&id=%s&template_id={1}".format(
-            self.folder.absolute_url(), self.returnTo())
+        if not self.parent.getId() == 'podtemplates':
+            self.arrowsPortalTypeAware = True
+        return super(ConfigActionsPanelView, self).renderArrows()
 
-    def returnTo(self, ):
+    def _returnTo(self, ):
         """What URL should I return to after moving the element and page is refreshed."""
         # return to the right fieldset the element we are moving is used on
-        folderId = self.folder.getId()
+        folderId = self.parent.getId()
         if folderId == 'topics':
             return "../?pageName=gui#topics"
         # searches
@@ -632,29 +635,6 @@ class ConfigActionsPanelView(ActionsPanelView):
         if tool.isManager(self.context, True):
             return ViewPageTemplateFile("templates/actions_panel_config_linkedplonegroups.pt")(self)
         return ''
-
-    def renderArrows(self):
-        """
-          Render arrows if user may change order of elements.
-        """
-        if not self.useIcons:
-            return ''
-        showArrows = self.kwargs.get('showArrows', False)
-        if showArrows and self.member.has_permission(ModifyPortalContent, self.folder):
-            return ViewPageTemplateFile("templates/actions_panel_config_arrows.pt")(self)
-        return ''
-
-    def _isLastId(self):
-        """
-          Is current element last id of folder container?
-        """
-        return bool(self.context.getId() == self.objectIds[-1])
-
-    def _isFirstId(self):
-        """
-          Is current element first id of folder container?
-        """
-        return bool(self.context.getId() == self.objectIds[0])
 
 
 class PMDocumentGenerationView(IDDocumentGenerationView):

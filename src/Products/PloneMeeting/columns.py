@@ -240,4 +240,6 @@ class ItemCheckBoxColumn(CheckBoxColumn):
 
 class AnnexesActionsColumn(AnnexActionsColumn):
     """ """
-    params = {'edit_action_class': 'link-overlay-pm-annex'}
+    params = AnnexActionsColumn.params
+    params.update({'edit_action_class': 'link-overlay-pm-annex'})
+    params.update({'arrowsPortalTypeAware': True})
