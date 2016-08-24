@@ -18,10 +18,10 @@
  <property name="default_view_fallback">False</property>
   <property name="add_permission">PloneMeeting.WriteDecisionAnnex</property>
  <property name="klass">imio.annex.content.annex.Annex</property>
- <property name="behaviors" purge="False">
+ <property name="behaviors">
   <element value="plone.app.content.interfaces.INameFromTitle"/>
-  <element value="plone.app.dexterity.behaviors.metadata.IOwnership"/>
-  <element value="collective.dms.scanbehavior.behaviors.behaviors.IScanFields"/>
+  <element value="plone.app.lockingbehavior.behaviors.ILocking" />
+  <element value="plone.app.dexterity.behaviors.metadata.IBasic"/>
   <element value="collective.iconifiedcategory.behaviors.iconifiedcategorization.IIconifiedCategorization"/>
  </property>
  <property name="schema" />
