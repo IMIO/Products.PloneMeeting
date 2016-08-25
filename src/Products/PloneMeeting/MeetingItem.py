@@ -2590,23 +2590,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(self)
         return (name in cfg.getUsedItemAttributes())
 
-    def showAnnexesTab_cachekey(method, self, decisionRelated):
-        '''cachekey method for self.showAnnexesTab.'''
-        return (decisionRelated, str(self.REQUEST._debug))
-
-    security.declarePublic('showAnnexesTab')
-
-    @ram.cache(showAnnexesTab_cachekey)
-    def showAnnexesTab(self, decisionRelated):
-        '''Must we show the "Annexes" (or "Decision-related annexes") tab ?'''
-        if self.isTemporary() or self.isDefinedInTool():
-            return False
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-        if cfg.getFileTypes(relatedTo=(decisionRelated and 'item_decision' or 'item')):
-            return True
-        return False
-
     security.declarePublic('hasAnnexesWhere')
 
     def hasAnnexesWhere(self, relatedTo='item'):
@@ -5093,9 +5076,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if mctct['meeting_config'] == destMeetingConfigId:
                 triggerUntil = mctct['trigger_workflow_transitions_until']
         # if transitions to trigger, trigger them!
-        # this is only done when item is cloned automatically and current user isManager
+        # this is only done when item is cloned automatically or manually and is already in a meeting
+        # and current user isManager
         if not triggerUntil == NO_TRIGGER_WF_TRANSITION_UNTIL and \
-           automatically and \
+           (automatically or self.hasMeeting()) and \
            tool.isManager(self):
             # triggerUntil is like meeting-config-xxx.validate, get the real transition
             triggerUntil = triggerUntil.split('.')[1]

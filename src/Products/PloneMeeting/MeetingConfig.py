@@ -61,6 +61,8 @@ from plone.portlets.interfaces import IPortletAssignmentMapping
 from Products.CMFCore.ActionInformation import Action
 from Products.CMFCore.Expression import Expression
 from Products.CMFPlone import PloneMessageFactory
+from Products.CMFPlone.interfaces.constrains import IConstrainTypes
+from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
 from plone import api
 from eea.facetednavigation.interfaces import ICriteria
@@ -85,7 +87,7 @@ from Products.PloneMeeting.config import RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import ROOT_FOLDER
 from Products.PloneMeeting.config import TOOL_FOLDER_CATEGORIES
 from Products.PloneMeeting.config import TOOL_FOLDER_CLASSIFIERS
-from Products.PloneMeeting.config import TOOL_FOLDER_FILE_TYPES
+from Products.PloneMeeting.config import TOOL_FOLDER_ANNEX_TYPES
 from Products.PloneMeeting.config import TOOL_FOLDER_SEARCHES
 from Products.PloneMeeting.config import TOOL_FOLDER_RECURRING_ITEMS
 from Products.PloneMeeting.config import TOOL_FOLDER_ITEM_TEMPLATES
@@ -2019,38 +2021,41 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     # config.
 
     subFoldersInfo = {
-        TOOL_FOLDER_CATEGORIES: ('Categories',
+        TOOL_FOLDER_CATEGORIES: (('Categories', 'Folder'),
                                  ('MeetingCategory', ),
                                  ()
                                  ),
-        TOOL_FOLDER_CLASSIFIERS: ('Classifiers',
+        TOOL_FOLDER_CLASSIFIERS: (('Classifiers', 'Folder'),
                                   ('MeetingCategory', ),
                                   ()
                                   ),
-        TOOL_FOLDER_SEARCHES: ('Searches',
+        TOOL_FOLDER_SEARCHES: (('Searches', 'Folder'),
                                ('Folder', 'DashboardCollection', ),
                                # 'items' is a reserved word
-                               (('searches_items', 'Meeting items'),
-                                ('searches_meetings', 'Meetings'),
-                                ('searches_decisions', 'Decisions'))
+                               (('searches_items', 'Meeting items', 'Folder'),
+                                ('searches_meetings', 'Meetings', 'Folder'),
+                                ('searches_decisions', 'Decisions', 'Folder'))
                                ),
-        TOOL_FOLDER_RECURRING_ITEMS: ('RecurringItems',
+        TOOL_FOLDER_RECURRING_ITEMS: (('RecurringItems', 'Folder'),
                                       ('itemTypeRecurring', ),
                                       ()
                                       ),
-        TOOL_FOLDER_ITEM_TEMPLATES: ('Item templates',
+        TOOL_FOLDER_ITEM_TEMPLATES: (('Item templates', 'Folder'),
                                      ('Folder', 'itemTypeTemplate'),
                                      ()
                                      ),
-        TOOL_FOLDER_FILE_TYPES: ('MeetingFileTypes',
-                                 ('MeetingFileType', ),
-                                 ()
-                                 ),
-        TOOL_FOLDER_POD_TEMPLATES: ('Document templates',
+        TOOL_FOLDER_ANNEX_TYPES: (('Annex types', 'ContentCategoryConfiguration'),
+                                  (),
+                                  (('item_annexes', 'Item annexes', 'ContentCategoryGroup'),
+                                   ('item_decision_annexes', 'Item decision annexes', 'ContentCategoryGroup'),
+                                   ('advice_annexes', 'Advice annexes', 'ContentCategoryGroup'),
+                                   ('meeting_annexes', 'Meeting annexes', 'ContentCategoryGroup'))
+                                  ),
+        TOOL_FOLDER_POD_TEMPLATES: (('Document templates', 'Folder'),
                                     ('ConfigurablePODTemplate', 'DashboardPODTemplate'),
                                     ()
                                     ),
-        TOOL_FOLDER_MEETING_USERS: ('Meeting users',
+        TOOL_FOLDER_MEETING_USERS: (('Meeting users', 'Folder'),
                                     ('MeetingUser', ),
                                     ()
                                     )
@@ -3989,12 +3994,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         default_language = api.portal.get_tool('portal_languages').getDefaultLanguage()
         for folderId, folderInfo in self.subFoldersInfo.iteritems():
+            folderTitle = folderInfo[0][0]
+            folderType = folderInfo[0][1]
             # if a folder already exists, we continue
             # this is done because this method is used as helper
             # method during migrations (while adding an extra new folder)
-            if folderId in self.objectIds('ATFolder'):
+            if folderId in self.objectIds():
                 continue
-            self.invokeFactory('Folder', folderId)
+
+            self.invokeFactory(folderType, folderId)
             folder = getattr(self, folderId)
 
             if folderId == TOOL_FOLDER_SEARCHES:
@@ -4020,28 +4028,33 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # use folder_contents layout
                 folder.setLayout('folder_contents')
 
-            folder.setTitle(translate(folderInfo[0],
+            folder.setTitle(translate(folderTitle,
                                       domain="PloneMeeting",
                                       context=self.REQUEST,
                                       target_language=default_language,
-                                      default=folderInfo[0]))
-            folder.setConstrainTypesMode(1)
-            allowedTypes = list(folderInfo[1])
-            if 'itemType' in allowedTypes:
-                allowedTypes.remove('itemType')
-                allowedTypes.append(self.getItemTypeName())
-            elif 'itemTypeTemplate' in allowedTypes:
-                allowedTypes.remove('itemTypeTemplate')
-                allowedTypes.append(self.getItemTypeName(configType='MeetingItemTemplate'))
-            elif 'itemTypeRecurring' in allowedTypes:
-                allowedTypes.remove('itemTypeRecurring')
-                allowedTypes.append(self.getItemTypeName(configType='MeetingItemRecurring'))
-            folder.setLocallyAllowedTypes(allowedTypes)
-            folder.setImmediatelyAddableTypes(allowedTypes)
+                                      default=folderTitle))
+            if folderInfo[1]:
+                constrain = IConstrainTypes(folder)
+                constrain.setConstrainTypesMode(1)
+                allowedTypes = list(folderInfo[1])
+                if 'itemType' in allowedTypes:
+                    allowedTypes.remove('itemType')
+                    allowedTypes.append(self.getItemTypeName())
+                elif 'itemTypeTemplate' in allowedTypes:
+                    allowedTypes.remove('itemTypeTemplate')
+                    allowedTypes.append(self.getItemTypeName(configType='MeetingItemTemplate'))
+                elif 'itemTypeRecurring' in allowedTypes:
+                    allowedTypes.remove('itemTypeRecurring')
+                    allowedTypes.append(self.getItemTypeName(configType='MeetingItemRecurring'))
+                constrain.setLocallyAllowedTypes(allowedTypes)
+                constrain.setImmediatelyAddableTypes(allowedTypes)
+
             # call processForm passing dummy values so existing values are not touched
-            folder.processForm(values={'dummy': None})
-            for subFolderId, subFolderTitle in folderInfo[2]:
-                folder.invokeFactory('Folder', subFolderId)
+            if base_hasattr(folder, 'processForm'):
+                folder.processForm(values={'dummy': None})
+
+            for subFolderId, subFolderTitle, subFolderType in folderInfo[2]:
+                folder.invokeFactory(subFolderType, subFolderId)
                 subFolder = getattr(folder, subFolderId)
                 if subFolderId == 'searches_items':
                     tool._enableFacetedDashboardFor(subFolder,
@@ -4713,26 +4726,39 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         item.processForm(values={'dummy': None})
         return item
 
-    security.declarePrivate('addFileType')
+    security.declarePrivate('addContentCategory')
 
-    def addFileType(self, ft, source):
-        '''Adds a file type from a FileTypeDescriptor p_ft.'''
-        folder = getattr(self, TOOL_FOLDER_FILE_TYPES)
+    def addContentCategory(self, cc, source):
+        '''Adds an annex type from a AnnexTypeDescriptor p_cc.'''
+        folder = getattr(self, TOOL_FOLDER_ANNEX_TYPES)
+        # create ContentCategory in right subfolder (ContentCategoryGroup)
+        if cc.relatedTo == 'item':
+            categoryGroupId = 'item_annexes'
+        elif cc.relatedTo == 'item_decision':
+            categoryGroupId = 'item_decision_annexes'
+        elif cc.relatedTo == 'advice':
+            categoryGroupId = 'advice_annexes'
+        elif cc.relatedTo == 'meeting':
+            categoryGroupId = 'meeting_annexes'
+
         # The image must be retrieved on disk from a profile
-        iconPath = '%s/images/%s' % (source, ft.theIcon)
-        f = file(iconPath, 'rb')
-        iconContent = f.read()
-        data = ft.getData(theIcon=iconContent)
-        folder.invokeFactory('MeetingFileType',
-                             **data)
-        if isinstance(source, basestring):
-            f.close()
-        fileType = getattr(folder, ft.id)
-        if not ft.active:
-            self.portal_workflow.doActionFor(fileType, 'deactivate')
-        # call processForm passing dummy values so existing values are not touched
-        fileType.processForm(values={'dummy': None})
-        return fileType
+        iconPath = '%s/images/%s' % (source, cc.icon)
+        f = open(iconPath, 'r')
+        contentCategoryFile = NamedBlobFile(f.read(), filename=cc.icon)
+        f.close()
+        annexType = api.content.create(
+            id=cc.id,
+            type='ContentCategory',
+            title=cc.title,
+            icon=contentCategoryFile,
+            container=getattr(folder, categoryGroupId),
+            to_print=cc.to_print,
+            confidential=cc.confidential,
+        )
+        if not cc.active:
+            wfTool = api.portal.get_tool('portal_workflow')
+            wfTool.doActionFor(annexType, 'deactivate')
+        return annexType
 
     security.declarePrivate('addPodTemplate')
 

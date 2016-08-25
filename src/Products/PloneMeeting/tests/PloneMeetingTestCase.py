@@ -23,12 +23,12 @@
 import unittest
 import os.path
 from AccessControl.SecurityManagement import getSecurityManager
-from ZPublisher.HTTPRequest import FileUpload
 
 from zope.event import notify
 from zope.traversing.interfaces import BeforeTraverseEvent
 
 from plone import api
+from plone import namedfile
 from plone.app.testing.helpers import setRoles
 from plone.app.testing import login, logout
 
@@ -42,7 +42,6 @@ from Products.PloneMeeting.config import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.config import MEETINGREVIEWERS
 from Products.PloneMeeting.MeetingItem import MeetingItem_schema
 from Products.PloneMeeting.Meeting import Meeting_schema
-from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.testing import PM_TESTING_PROFILE_FUNCTIONAL
 from Products.PloneMeeting.tests.helpers import PloneMeetingTestingHelpers
 from Products.PloneMeeting.utils import cleanMemoize
@@ -111,10 +110,11 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         self.meetingConfig = getattr(self.tool, 'plonemeeting-assembly', None)
         self.meetingConfig2 = getattr(self.tool, 'plonegov-assembly', None)
         # Set the default file and file type for adding annexes
-        self.annexFile = 'INSTALL.TXT'
-        self.annexFileType = 'financial-analysis'
-        self.annexFileTypeDecision = 'decision-annex'
-        self.annexFileTypeAdvice = 'advice-annex'
+        self.annexFile = u'FILE.txt'
+        self.annexFileType = 'annexes_types_-_item_annexes_-_financial-analysis'
+        self.annexFileTypeDecision = 'annexes_types_-_item_decision_annexes_-_decision-annex'
+        self.annexFileTypeAdvice = 'annexes_types_-_advice_annexes_-_advice-annex'
+        self.annexFileTypeMeeting = 'annexes_types_-_meeting_annexes_-_meeting-annex'
 
     def tearDown(self):
         self._cleanExistingTmpAnnexFile()
@@ -276,23 +276,19 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         if os.path.exists(newAnnexPath):
             os.remove(newAnnexPath)
 
-    def addAnnex(self, item, annexType=None, annexTitle=None,
+    def addAnnex(self,
+                 context,
+                 annexType=None,
+                 annexTitle=None,
                  relatedTo='item'):
-        '''Adds an annex to p_item. The uploaded file has name p_annexPath,
-           which is a path relative to the folder that corresponds to package
-           Products.PloneMeeting. If None is provided, a default file is
-           uploaded (see self.annexFile). If no p_annexType is provided,
-           self.annexFileType is used. If no p_annexTitle is specified, the
-           predefined title of the annex type is used.'''
-        # copy the default annexFile because ZODB.blob removes (os.remove) a FileUpload
-        # after having used it...
-        from shutil import copyfile
-        originalAnnexPath = os.path.join(self.pmFolder, self.annexFile)
-        newAnnexPath = originalAnnexPath[:-4] + '_tmp_for_tests.%s' % originalAnnexPath[-3:]
-        copyfile(originalAnnexPath, newAnnexPath)
-        annexPath = newAnnexPath
-        annexFile = FileUpload(TestFile(
-            file(os.path.join(self.pmFolder, annexPath)), annexPath))
+        '''Adds an annex to p_item.
+           If no p_annexType is provided, self.annexFileType is used.
+           If no p_annexTitle is specified, the predefined title of the annex type is used.'''
+
+        current_path = os.path.dirname(__file__)
+        f = open(os.path.join(current_path, self.annexFile), 'r')
+        annex_file = namedfile.NamedBlobFile(f.read(), filename=self.annexFile)
+
         if annexType is None:
             if relatedTo == 'item':
                 annexType = self.annexFileType
@@ -300,23 +296,22 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                 annexType = self.annexFileTypeDecision
             elif relatedTo == 'advice':
                 annexType = self.annexFileTypeAdvice
-        fileType = getattr(self.meetingConfig.meetingfiletypes, annexType)
-        if annexTitle is None:
-            annexTitle = fileType.getPredefinedTitle() or 'Annex title'
-        # Create the annex
-        idCandidate = None
-        IAnnexable(item).addAnnex(idCandidate,
-                                  annexTitle,
-                                  annexFile,
-                                  relatedTo,
-                                  meetingFileTypeUID=fileType.UID())
-        # Find the last created annex
-        annexUid = IAnnexable(item).getAnnexesByType(relatedTo,
-                                                     makeSubLists=False,
-                                                     typesIds=[annexType])[-1]['UID']
-        uid_catalog = self.portal.uid_catalog
-        theAnnex = uid_catalog(UID=annexUid)[0].getObject()
-        self.assertNotEquals(theAnnex.size(), 0)
+            elif relatedTo == 'meeting':
+                annexType = self.annexFileTypeMeeting
+
+        annexContentType = 'annex'
+        if relatedTo == 'item_decision':
+            annexContentType = 'annexDecision'
+
+        theAnnex = api.content.create(
+            id='file',
+            type=annexContentType,
+            file=annex_file,
+            container=context,
+            content_category=annexType,
+            to_print=False,
+            confidential=False,
+        )
         return theAnnex
 
     def deleteAsManager(self, uid):

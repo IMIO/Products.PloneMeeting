@@ -45,8 +45,6 @@ ADD_CONTENT_PERMISSIONS = {
     'Meeting': 'PloneMeeting: Add Meeting',
     'MeetingCategory': 'PloneMeeting: Manage configuration',
     'MeetingConfig': 'PloneMeeting: Manage configuration',
-    'MeetingFileType': 'PloneMeeting: Manage configuration',
-    'MeetingFile': 'PloneMeeting: Add MeetingFile',
     'MeetingGroup': 'PloneMeeting: Manage configuration',
     'PodTemplate': 'PloneMeeting: Manage configuration',
     'MeetingUser': 'PloneMeeting: Add MeetingUser',
@@ -187,7 +185,7 @@ TOOL_FOLDER_CLASSIFIERS = 'classifiers'
 TOOL_FOLDER_SEARCHES = 'searches'
 TOOL_FOLDER_RECURRING_ITEMS = "recurringitems"
 TOOL_FOLDER_ITEM_TEMPLATES = "itemtemplates"
-TOOL_FOLDER_FILE_TYPES = 'meetingfiletypes'
+TOOL_FOLDER_ANNEX_TYPES = 'annexes_types'
 TOOL_FOLDER_POD_TEMPLATES = 'podtemplates'
 TOOL_FOLDER_MEETING_USERS = 'meetingusers'
 

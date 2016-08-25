@@ -27,6 +27,7 @@ from zope.event import notify
 from zope.i18n import translate
 from zope.lifecycleevent import IObjectRemovedEvent
 from Products.CMFCore.WorkflowCore import WorkflowException
+from collective.iconifiedcategory.utils import warn_filesize
 from plone.app.textfield import RichText
 from plone.app.textfield.value import RichTextValue
 from plone import api
@@ -487,27 +488,35 @@ def onAdviceTransition(advice, event):
 
 def onAnnexAdded(annex, event):
     ''' '''
-    # redirect to referer after add if it is not the edit form
-    http_referer = annex.REQUEST['HTTP_REFERER']
-    if not http_referer.endswith('/edit') and not http_referer.endswith('/@@edit'):
-        annex.REQUEST.RESPONSE.redirect(http_referer)
+    # redirect to the annexes table view
+    parent = annex.getParentNode()
+    annex.REQUEST.RESPONSE.redirect(parent.absolute_url() + '/@@categorized-annexes')
+
+    # if it is an annex added on an item, versionate given advices if necessary
+    if parent.meta_type == 'MeetingItem':
+        parent._versionateAdvicesOnItemEdit()
+
+        # Add the annex creation to item history
+        parent.updateHistory('add',
+                             annex,
+                             decisionRelated=annex.portal_type == 'annexDecision' and True or False)
+        # Invalidate advices if needed and adding a normal annex
+        if annex.portal_type == 'annex' and parent.willInvalidateAdvices():
+            parent.updateLocalRoles(invalidate=True)
+
+        # Potentially I must notify MeetingManagers through email.
+        if parent.wfConditions().meetingIsPublished():
+            parent.sendMailIfRelevant('annexAdded', 'MeetingManager', isRole=True)
+
+    # update modificationDate, it is used for caching and co
+    parent.setModificationDate(DateTime())
+    # just reindex the entire object
+    parent.reindexObject()
 
     # log
     userId = api.user.get_current().getId()
     logger.info('Annex at %s created by "%s".' %
                 (annex.absolute_url_path(), userId))
-
-
-def onMeetingFileAdded(annex, event):
-    '''When an annex is added, we need to update item modification date and SearchableText.'''
-    parent = annex.getParentNode()
-    # if it is an annex added on an item, versionate given advices if necessary
-    if parent.meta_type == 'MeetingItem':
-        parent._versionateAdvicesOnItemEdit()
-    # update modificationDate, it is used for caching and co
-    parent.setModificationDate(DateTime())
-    # just reindex the entire object
-    parent.reindexObject()
 
 
 def onAnnexRemoved(annex, event):
@@ -525,10 +534,10 @@ def onAnnexRemoved(annex, event):
     if parent.meta_type == 'MeetingItem':
         parent._versionateAdvicesOnItemEdit()
 
-    IAnnexable(parent).updateAnnexIndex(annex, removeAnnex=True)
     parent.updateHistory('delete',
                          annex,
-                         decisionRelated=annex.findRelatedTo() == 'item_decision' and True or False)
+                         decisionRelated=annex.portal_type == 'annexDecision' and True or False)
+
     if parent.willInvalidateAdvices():
         parent.updateLocalRoles(invalidate=True)
 

@@ -659,9 +659,9 @@ class Migrate_To_4_0(Migrator):
         logger.info('Done.')
 
     def _removeUnusedIndexes(self):
-        """Index 'getDeliberation' is no more used."""
+        """Index 'getDeliberation' and 'indexExtractedText' are no more used."""
         logger.info('Removing no more used indexes...')
-        removeIndexes(self.portal, indexes=('getDeliberation', ))
+        removeIndexes(self.portal, indexes=('getDeliberation', 'indexExtractedText'))
         logger.info('Done.')
 
     def _initSelectableAdvisers(self):

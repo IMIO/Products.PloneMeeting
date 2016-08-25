@@ -63,8 +63,6 @@ indexInfos = {
     'hasAnnexesToPrint': ('FieldIndex', {}),
     # Meeting-related indexes
     'getDate': ('DateIndex', {}),
-    # MeetingFile-related indexes
-    'indexExtractedText': ('ZCTextIndex', {}),
     # MeetingUser-related indexes
     'getConfigId': ('FieldIndex', {}),
     'indexUsages': ('KeywordIndex', {}),
@@ -186,8 +184,7 @@ def postInstall(context):
     pol.setTitle(_(u'PloneMeeting tool policy'))
     pol.setChain('DashboardCollection', ('plonemeeting_activity_managers_workflow',))
     pol.setChainForPortalTypes(
-        ('MeetingGroup', 'MeetingConfig', 'MeetingFileType',
-         'MeetingCategory'), ('plonemeeting_activity_workflow',))
+        ('MeetingGroup', 'MeetingConfig', 'MeetingCategory'), ('plonemeeting_activity_workflow',))
     # use onestate workflow for Folders contained in the tool/MeetingConfigs
     pol.setChain('Folder', ('plonemeeting_onestate_workflow',))
     pc = getattr(site.portal_plonemeeting, WorkflowPolicyConfig_id)
@@ -215,9 +212,6 @@ def postInstall(context):
         meetingConfig.registerPortalTypes()
         # add default portal_tabs
         meetingConfig.createTab()
-
-    # Make sure that no workflow is set for the MeetingFile type
-    site.portal_workflow.setChainForPortalTypes(['MeetingFile'], '')
 
     # Check if the personal folder creation of users is enabled
     # check if the creation flag is set to 0, change it if necessary
@@ -264,7 +258,7 @@ def postInstall(context):
                                                  'word', 'rft', 'excel', 'html',
                                                  'visio']
     # do not auto_convert, we will have our own event that will check in portal_plonemeeting
-    # if we need to convert the MeetingFiles (annexes) that will be added to an item
+    # if we need to convert the annexes that will be added to an item
     viewer_settings['auto_convert'] = False
     viewer_settings['pdf_image_format'] = 'png'
     viewer_settings['enable_indexation'] = False

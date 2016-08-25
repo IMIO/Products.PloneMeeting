@@ -24,7 +24,7 @@ from Products.PloneMeeting.profiles import CategoryDescriptor
 from Products.PloneMeeting.profiles import GroupDescriptor
 from Products.PloneMeeting.profiles import ItemTemplateDescriptor
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
-from Products.PloneMeeting.profiles import MeetingFileTypeDescriptor
+from Products.PloneMeeting.profiles import ContentCategoryDescriptor
 from Products.PloneMeeting.profiles import MeetingUserDescriptor
 from Products.PloneMeeting.profiles import PloneGroupDescriptor
 from Products.PloneMeeting.profiles import PloneMeetingConfiguration
@@ -47,31 +47,31 @@ marketing = CategoryDescriptor('marketing', 'Marketing', active=False)
 subproducts = CategoryDescriptor('subproducts', 'Subproducts wishes', usingGroups=('vendors',))
 
 # File types
-financialAnalysis = MeetingFileTypeDescriptor(
-    'financial-analysis', 'Financial analysis', 'financialAnalysis.png',
+financialAnalysis = ContentCategoryDescriptor(
+    'financial-analysis', 'Financial analysis', u'financialAnalysis.png',
     'Predefined title for financial analysis')
-legalAnalysis = MeetingFileTypeDescriptor(
-    'legal-analysis', 'Legal analysis', 'legalAnalysis.png', '')
-budgetAnalysis = MeetingFileTypeDescriptor(
-    'budget-analysis', 'Budget analysis', 'budgetAnalysis.png', '')
-itemAnnex = MeetingFileTypeDescriptor(
-    'item-annex', 'Other annex(es)', 'itemAnnex.png', '')
+legalAnalysis = ContentCategoryDescriptor(
+    'legal-analysis', 'Legal analysis', u'legalAnalysis.png', '')
+budgetAnalysis = ContentCategoryDescriptor(
+    'budget-analysis', 'Budget analysis', u'budgetAnalysis.png', '')
+itemAnnex = ContentCategoryDescriptor(
+    'item-annex', 'Other annex(es)', u'itemAnnex.png', '')
 # Could be used once we
 # will digitally sign decisions ? Indeed, once signed, we will need to
 # store them (together with the signature) as separate files.
-decision = MeetingFileTypeDescriptor(
-    'decision', 'Decision', 'decision.png', '', 'item_decision')
-decisionAnnex = MeetingFileTypeDescriptor(
-    'decision-annex', 'Decision annex(es)', 'decisionAnnex.png', '', 'item_decision')
+decision = ContentCategoryDescriptor(
+    'decision', 'Decision', u'decision.png', '', 'item_decision')
+decisionAnnex = ContentCategoryDescriptor(
+    'decision-annex', 'Decision annex(es)', u'decisionAnnex.png', '', 'item_decision')
 # A vintage file type
-marketingAnalysis = MeetingFileTypeDescriptor(
-    'marketing-annex', 'Marketing annex(es)', 'legalAnalysis.png', '', 'item_decision',
+marketingAnalysis = ContentCategoryDescriptor(
+    'marketing-annex', 'Marketing annex(es)', u'legalAnalysis.png', '', 'item_decision',
     active=False)
 # Advice file types
-adviceAnnex = MeetingFileTypeDescriptor(
-    'advice-annex', 'Advice annex(es)', 'itemAnnex.png', '', 'advice')
-adviceLegalAnalysis = MeetingFileTypeDescriptor(
-    'advice-legal-analysis', 'Advice legal analysis', 'legalAnalysis.png', '', 'advice')
+adviceAnnex = ContentCategoryDescriptor(
+    'advice-annex', 'Advice annex(es)', u'itemAnnex.png', '', 'advice')
+adviceLegalAnalysis = ContentCategoryDescriptor(
+    'advice-legal-analysis', 'Advice legal analysis', u'legalAnalysis.png', '', 'advice')
 
 # Pod templates
 agendaTemplate = PodTemplateDescriptor('agendaTemplate', 'Meeting agenda')
@@ -224,9 +224,9 @@ template2 = ItemTemplateDescriptor(
     decision='<p>Template1 decision</p>', templateUsingGroups=['vendors', ])
 
 # File types
-overheadAnalysis = MeetingFileTypeDescriptor(
+overheadAnalysis = ContentCategoryDescriptor(
     'overhead-analysis', 'Administrative overhead analysis',
-    'overheadAnalysis.png', '')
+    u'overheadAnalysis.png', '')
 
 meetingPma = MeetingConfigDescriptor(
     'plonemeeting-assembly', 'PloneMeeting assembly', 'PloneMeeting assembly', isDefault=True)

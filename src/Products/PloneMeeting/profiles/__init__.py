@@ -113,19 +113,20 @@ class CategoryDescriptor(Descriptor):
         self.active = active
 
 
-class MeetingFileTypeDescriptor(Descriptor):
+class ContentCategoryDescriptor(Descriptor):
     multiSelectFields = ('otherMCCorrespondences', 'subTypes', )
 
-    def __init__(self, id, title, theIcon, predefinedTitle,
+    def __init__(self, id, title, icon, predefined_title,
                  relatedTo='item', otherMCCorrespondences=(),
-                 active=True, subTypes=(), isConfidentialDefault=False):
+                 active=True, subTypes=(), confidential=False, to_print=False):
         self.id = id
-        self.setBilingual('title', title)
-        self.theIcon = theIcon
-        self.setBilingual('predefinedTitle', predefinedTitle)
+        self.title = title
+        self.icon = icon
+        self.predefined_title = predefined_title
         self.relatedTo = relatedTo
         self.subTypes = subTypes
-        self.isConfidentialDefault = isConfidentialDefault
+        self.confidential = confidential
+        self.to_print = to_print
         self.active = active
         self.otherMCCorrespondences = otherMCCorrespondences
 

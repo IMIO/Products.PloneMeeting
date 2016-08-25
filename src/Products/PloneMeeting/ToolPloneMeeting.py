@@ -611,7 +611,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         for descr in configData.itemTemplates:
             cfg.addItemToConfig(descr, isRecurring=False)
         for descr in configData.meetingFileTypes:
-            cfg.addFileType(descr, source)
+            cfg.addContentCategory(descr, source)
         for descr in configData.podTemplates:
             cfg.addPodTemplate(descr, source)
         for mud in configData.meetingUsers:
@@ -862,6 +862,20 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if meetingConfigId not in [activeConfig.getId() for activeConfig in activeConfigs]:
             return False
         return True
+
+    def showAnnexesTab_cachekey(method, self, context):
+        '''cachekey method for self.showAnnexesTab.'''
+        return (context, str(self.REQUEST._debug))
+
+    security.declarePublic('showAnnexesTab')
+
+    @ram.cache(showAnnexesTab_cachekey)
+    def showAnnexesTab(self, context):
+        '''Must we show the "Annexes" on given p_context ?'''
+        if context.meta_type in ('Meeting', 'MeetingItem') and \
+           (context.isTemporary() or context.isDefinedInTool()):
+            return False
+        return False
 
     security.declarePublic('showFacetedCriteriaAction')
 

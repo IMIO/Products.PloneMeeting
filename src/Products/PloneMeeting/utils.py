@@ -382,13 +382,6 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         translationMapping['itemState'] = translate(obj.queryState(),
                                                     domain='plone',
                                                     context=obj.REQUEST)
-        translationMapping['lastAnnexTitle'] = ''
-        translationMapping['lastAnnexTypeTitle'] = ''
-        lastAnnex = IAnnexable(obj).getLastInsertedAnnex()
-        if lastAnnex:
-            translationMapping['lastAnnexTitle'] = safe_unicode(lastAnnex.Title())
-            translationMapping['lastAnnexTypeTitle'] = \
-                safe_unicode(lastAnnex.getMeetingFileType(theData=True)['name'])
         meeting = obj.getMeeting(brain=True)
         if meeting:
             translationMapping['meetingTitle'] = safe_unicode(meeting.Title())

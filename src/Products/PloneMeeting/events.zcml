@@ -108,11 +108,7 @@
                    collective.documentviewer.interfaces.IConversionFinishedEvent"
               handler=".MeetingFile.checkAfterConversion" />
 
-  <subscriber for=".interfaces.IMeetingFile
-                   zope.lifecycleevent.interfaces.IObjectAddedEvent"
-              handler=".events.onMeetingFileAdded"/>
-
-  <subscriber for=".interfaces.IMeetingFile
+  <subscriber for="imio.annex.content.annex.IAnnex
                    zope.container.interfaces.IObjectRemovedEvent"
               handler=".events.onAnnexRemoved"/>
 

@@ -30,7 +30,6 @@ from eea.facetednavigation.criteria.handler import Criteria as eeaCriteria
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
 from imio.actionspanel.adapters import ContentDeletableAdapter as APContentDeletableAdapter
-from imio.annex.content.annex import IAnnex
 from imio.history.adapters import ImioWfHistoryAdapter
 from imio.prettylink.adapters import PrettyLinkAdapter
 from Products.PloneMeeting import PMMessageFactory as _
@@ -1303,21 +1302,34 @@ class IconifiedCategoryGroupAdapter(object):
            - while adding in a meeting or an advice."""
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
-        isDecisionAnnex = False
-        if not IAnnex.providedBy(self.context):
-            # we are adding a new annex, get annex portal_type from form_instance
-            # manage also the InlineValidation view
-            if hasattr(self.context.REQUEST['PUBLISHED'], 'form_instance'):
-                form_instance = self.context.REQUEST['PUBLISHED'].form_instance
-            else:
-                form_instance = self.context.REQUEST['PUBLISHED'].context.form_instance
+        parent = self.context.getParentNode()
 
-            if form_instance.portal_type == 'annexDecision':
-                isDecisionAnnex = True
-        else:
-            if self.context.portal_type == 'annexDecision':
-                isDecisionAnnex = True
-        if not isDecisionAnnex:
-            return cfg.annexes_types.item_annexes
-        else:
-            return cfg.annexes_types.item_decision_annexes
+        # adding annex to an item
+        if self.context.meta_type == 'MeetingItem' or parent.meta_type == 'MeetingItem':
+            isItemDecisionAnnex = False
+            if self.context.meta_type == 'MeetingItem':
+                # we are adding a new annex, get annex portal_type from form_instance
+                # manage also the InlineValidation view
+                if hasattr(self.context.REQUEST['PUBLISHED'], 'form_instance'):
+                    form_instance = self.context.REQUEST['PUBLISHED'].form_instance
+                else:
+                    form_instance = self.context.REQUEST['PUBLISHED'].context.form_instance
+
+                if form_instance.portal_type == 'annexDecision':
+                    isItemDecisionAnnex = True
+            else:
+                if self.context.portal_type == 'annexDecision':
+                    isItemDecisionAnnex = True
+
+            if not isItemDecisionAnnex:
+                return cfg.annexes_types.item_annexes
+            else:
+                return cfg.annexes_types.item_decision_annexes
+
+        # adding annex to an advice
+        if self.context.portal_type == 'meetingadvice' or parent.portal_type == 'meetingadvice':
+                return cfg.annexes_types.advice_annexes
+
+        # adding annex to a meeting
+        if self.context.meta_type == 'Meeting' or parent.meta_type == 'Meeting':
+                return cfg.annexes_types.meeting_annexes
