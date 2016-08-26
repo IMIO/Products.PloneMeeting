@@ -381,8 +381,8 @@
     <tal:comment replace="nothing">Annexes and advices</tal:comment>
     <a name="adviceAndAnnexes"></a>
     <table width="100%" cellpadding="1" cellspacing="1"
-           tal:define="hasAnnexes python: context.hasAnnexesWhere(relatedTo='item');
-                       hasAnnexesDecision python: context.hasAnnexesWhere(relatedTo='item_decision');
+           tal:define="hasAnnexes python: tool.hasAnnexes(context, portal_type='annex');
+                       hasAnnexesDecision python: tool.hasAnnexes(context, portal_type='annexDecision');
                        hasAdvices python: (meetingConfig.getUseAdvices() or context.displayAdvices())">
         <tr style="vertical-align: top;">
             <td class="itemAnnexesCell" width="50%">
@@ -391,10 +391,15 @@
                     <table width="100%" class="no-style-table" cellpadding="0" cellspacing="0" style="margin: 0;">
                         <tr tal:define="obj python: context">
                             <td tal:condition="hasAnnexes">
-                                <tal:annexes replace="structure python: context.restrictedTraverse('@@annexes-icons')(relatedTo='item')" />
+                                <tal:annexes replace="structure python: context.restrictedTraverse('categorized-childs')(portal_type='annex')" />
                             </td>
                             <td tal:condition="python: member.has_permission('PloneMeeting: Read decision annex', context) and hasAnnexesDecision">
-                                <tal:annexesDecision replace="structure python: context.restrictedTraverse('@@annexes-icons')(relatedTo='item_decision')" />
+                                <div class="decisionAnnexDescription">
+                                    <span class="discreet" style="padding-left: 0.7em;"
+                                          i18n:translate="AnnexesDecisionShort"></span>
+                                    <span class="discreet">:</span>&nbsp;
+                                </div>
+                                <tal:annexesDecision replace="structure python: context.restrictedTraverse('categorized-childs')(portal_type='annexDecision')" />
                             </td>
                             <td tal:condition="python: not hasAnnexes and not hasAnnexesDecision">
                                 <span>-</span>
@@ -403,7 +408,6 @@
                     </table>
                 </fieldset>
             </td>
-
             <tal:comment replace="nothing">Advices</tal:comment>
             <td class="itemAdvicesCell" tal:condition="hasAdvices" width="50%">
                 <fieldset tal:define="meetingItem python: context">

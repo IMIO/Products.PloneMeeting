@@ -55,7 +55,7 @@ from Products.DataGridField.Column import Column
 from plone.memoize import ram
 from plone import api
 from collective.behavior.talcondition.utils import _evaluateExpression
-from collective.iconifiedcategory.utils import get_categories
+from collective.iconifiedcategory.utils import get_categorized_elements
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.dashboard.utils import enableFacetedDashboardFor
 from imio.helpers.cache import invalidate_cachekey_volatile_for
@@ -868,10 +868,15 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     def showAnnexesTab(self, context):
         '''Must we show the "Annexes" on given p_context ?'''
-        if context.meta_type in ('Meeting', 'MeetingItem') and \
+        if context.meta_type == 'MeetingItem' and \
            (context.isTemporary() or context.isDefinedInTool()):
             return False
-        return bool(get_categories(context))
+        elif context.meta_type == 'Meeting' and context.isTemporary():
+            return False
+        elif context.meta_type in ('MeetingItem', 'Meeting') or \
+                context.portal_type.startswith('meetingadvice'):
+            return True
+        return False
 
     security.declarePublic('showFacetedCriteriaAction')
 
@@ -1640,6 +1645,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     convertToImages(annex, None, force=force)
             self.plone_utils.addPortalMessage('Done.')
         return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
+
+    def hasAnnexes(self, context, portal_type='annex'):
+        ''' '''
+        return bool(get_categorized_elements(context, portal_type=portal_type))
 
     security.declarePublic('updateAllLocalRoles')
 

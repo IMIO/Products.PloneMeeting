@@ -1288,6 +1288,10 @@ td[class^="meeting_item_listType_"] div.item_listType.Editable {
     text-decoration: underline;
 }
 
+div.decisionAnnexDescription {
+    float: left;
+}
+
 /* highlight empty lines in an XHTML content */
 .highlightBlankRow {
     border: 1px dotted red;

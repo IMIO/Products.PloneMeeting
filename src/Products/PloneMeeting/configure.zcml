@@ -183,6 +183,10 @@
            factory=".adapters.IconifiedCategoryGroupAdapter"
            provides="collective.iconifiedcategory.interfaces.IIconifiedCategoryGroup" />
   <adapter for="plone.app.contenttypes.interfaces.IFolder
+                Products.PloneMeeting.interfaces.IMeeting"
+           factory=".adapters.IconifiedCategoryGroupAdapter"
+           provides="collective.iconifiedcategory.interfaces.IIconifiedCategoryGroup" />
+  <adapter for="plone.app.contenttypes.interfaces.IFolder
                 Products.PloneMeeting.content.advice.IMeetingAdvice"
            factory=".adapters.IconifiedCategoryGroupAdapter"
            provides="collective.iconifiedcategory.interfaces.IIconifiedCategoryGroup" />

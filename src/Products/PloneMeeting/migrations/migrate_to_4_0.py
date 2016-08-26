@@ -317,20 +317,15 @@ class Migrate_To_4_0(Migrator):
             meeting.deleteReferences('MeetingLateItems')
         logger.info('Done.')
 
-    def _cleanPMModificationDateOnItemsAndAnnexes(self):
-        '''The colorization on 'modification date' has been removed, clean items and
-           annexes.'''
-        logger.info('Removing \'pm_modification_date\' from items and annexes...')
+    def _cleanPMModificationDateOnItems(self):
+        '''The colorization on 'modification date' has been removed, clean items.'''
+        logger.info('Removing \'pm_modification_date\' from items...')
         brains = self.portal.portal_catalog(meta_type='MeetingItem')
         for brain in brains:
             item = brain.getObject()
             if hasattr(aq_base(item), 'pm_modification_date'):
                 delattr(aq_base(item), 'pm_modification_date')
-        brains = self.portal.portal_catalog(meta_type='MeetingFile')
-        for brain in brains:
-            annex = brain.getObject()
-            if hasattr(aq_base(annex), 'pm_modification_date'):
-                delattr(aq_base(annex), 'pm_modification_date')
+
         # remove the 'accessInfo' stored on portal_plonemeeting
         if hasattr(aq_base(self.tool), 'accessInfo'):
             delattr(aq_base(self.tool), 'accessInfo')
@@ -715,11 +710,47 @@ class Migrate_To_4_0(Migrator):
                                                 item.getRawManuallyLinkedItems())
         logger.info('Done.')
 
+    def _adaptAppForImioAnnex(self):
+        """Migrate Archetypes 'MeetingFile' and 'MeetingFileType' to
+           Dexterity 'annex' and 'ContentCategory'."""
+        logger.info('Moving to imio.annex...')
+        # necessary for versions in between...
+        tool = api.portal.get_tool('portal_plonemeeting')
+        for cfg in tool.objectValues('MeetingConfig'):
+            cfg._createSubFolders()
+            # first create categories and subcategories then in a second pass
+            # update the otherMCCorrespondences attribute
+            for mft in cfg.meetingfiletypes:
+                folder = None
+                if mft.getRelatedTo() == 'item':
+                    folder = cfg.annexes_types.item_annexes
+                elif mft.getRelatedTo() == 'item_decision':
+                    folder = cfg.annexes_types.item_decision_annexes
+                elif mft.getRelatedTo() == 'advice':
+                    folder = cfg.annexes_types.advice_annexes
+                # create the category
+                category = api.content.create(
+                    id=mft.getId(),
+                    type='ContentCategory',
+                    container=folder,
+                    title=mft.Title(),
+                    file=NamedBlobFile(mft.theIcon.data, filename=mft.theIcon.filename),
+                    predefined_title=mft.getPredefinedTitle(),
+                    confidential=mft.getIsConfidentialDefault())
+                for subType in mft.getSubTypes():
+                    subcat = api.content.create(
+                        type='ContentSubcategory',
+                        container=category,
+                        title=subType['title'],
+                        predefined_title=subType['predefinedTitle'],
+                        confidential=subType['isConfidentialDefault'])
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 4.0...')
+        self._adaptAppForImioAnnex()
         # reinstall so versions are correctly shown in portal_quickinstaller
         # and new stuffs are added (portal_catalog metadata especially, imio.history is installed)
-        self._updateAnnexIndex()
         # reinstall PloneMeeting without dependencies, we want to reapply entire PM
         # but not dependencies that are managed by upgradeDependencies
         self.reinstall(profiles=['profile-Products.PloneMeeting:default', ],
@@ -735,7 +766,7 @@ class Migrate_To_4_0(Migrator):
         self._adaptAppForImioDashboard()
         self._moveToItemTemplateRecurringOwnPortalTypes()
         self._changeWFUsedForItemAndMeeting()
-        self._cleanPMModificationDateOnItemsAndAnnexes()
+        self._cleanPMModificationDateOnItems()
         self._cleanMeetingFolderLayout()
         self._adaptAppForCollectiveDocumentGenerator()
         self._adaptMeetingItemsNumber()

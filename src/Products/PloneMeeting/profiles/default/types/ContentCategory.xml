@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<object name="ContentCategory" meta_type="Dexterity FTI" i18n:domain="collective.iconifiedcategory"
+   xmlns:i18n="http://xml.zope.org/namespaces/i18n">
+ <property name="schema"></property>
+ <property name="model_source">
+    &lt;model xmlns:i18n=&quot;http://xml.zope.org/namespaces/i18n&quot; xmlns:security=&quot;http://namespaces.plone.org/supermodel/security&quot; xmlns:marshal=&quot;http://namespaces.plone.org/supermodel/marshal&quot; xmlns:form=&quot;http://namespaces.plone.org/supermodel/form&quot; xmlns=&quot;http://namespaces.plone.org/supermodel/schema&quot;&gt;
+      &lt;schema based-on=&quot;collective.iconifiedcategory.content.category.ICategory collective.iconifiedcategory.content.category.ICategory&quot;&gt;
+        &lt;field name=&quot;othermccorrespondences&quot; type=&quot;zope.schema.Set&quot;&gt;
+          &lt;description/&gt;
+          &lt;required&gt;False&lt;/required&gt;
+          &lt;title&gt;otherMCCorrespondences&lt;/title&gt;
+          &lt;value_type type=&quot;zope.schema.Choice&quot;&gt;
+            &lt;vocabulary&gt;Products.PloneMeeting.vocabularies.othermccorrespondencevocabulary&lt;/vocabulary&gt;
+          &lt;/value_type&gt;
+        &lt;/field&gt;
+      &lt;/schema&gt;
+    &lt;/model&gt;
+ </property>
+</object>

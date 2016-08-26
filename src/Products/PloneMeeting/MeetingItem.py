@@ -2595,7 +2595,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def hasAnnexesWhere(self, relatedTo='item'):
         '''Have I some annexes?  If p_relatedTo is whatever, consider every annexes
            no matter their 'relatedTo', either, only consider relevant relatedTo annexes.'''
-        return bool(IAnnexable(self).getAnnexesByType(relatedTo=relatedTo))
+        portal_type = None
+        if relatedTo == 'item':
+            portal_type = 'annex'
+        else:
+            portal_type = 'annexDecision'
+        tool = api.portal.get_tool('portal_plonemeeting')
+        return tool.hasAnnexes(self, portal_type)
 
     def queryState_cachekey(method, self):
         '''cachekey method for self.queryState.'''

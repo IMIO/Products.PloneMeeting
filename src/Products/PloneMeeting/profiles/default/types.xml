@@ -25,4 +25,5 @@
  <object name="ConfigurablePODTemplate" meta_type="Dexterity FTI"/>
  <object name="DashboardPODTemplate" meta_type="Dexterity FTI"/>
  <object name="annexDecision" meta_type="Dexterity FTI"/>
+ <object name="ContentCategory" meta_type="Dexterity FTI"/>
 </object>
