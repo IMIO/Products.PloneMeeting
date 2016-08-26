@@ -55,6 +55,7 @@ from Products.DataGridField.Column import Column
 from plone.memoize import ram
 from plone import api
 from collective.behavior.talcondition.utils import _evaluateExpression
+from collective.iconifiedcategory.utils import get_categories
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.dashboard.utils import enableFacetedDashboardFor
 from imio.helpers.cache import invalidate_cachekey_volatile_for
@@ -863,19 +864,14 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             return False
         return True
 
-    def showAnnexesTab_cachekey(method, self, context):
-        '''cachekey method for self.showAnnexesTab.'''
-        return (context, str(self.REQUEST._debug))
-
     security.declarePublic('showAnnexesTab')
 
-    @ram.cache(showAnnexesTab_cachekey)
     def showAnnexesTab(self, context):
         '''Must we show the "Annexes" on given p_context ?'''
         if context.meta_type in ('Meeting', 'MeetingItem') and \
            (context.isTemporary() or context.isDefinedInTool()):
             return False
-        return False
+        return bool(get_categories(context))
 
     security.declarePublic('showFacetedCriteriaAction')
 

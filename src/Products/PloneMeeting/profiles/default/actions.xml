@@ -119,6 +119,9 @@
    <object name="faceted.search.enable" meta_type="CMF Action">
     <property name="visible">False</property>
    </object>
+   <object name="iconifiedcategory" meta_type="CMF Action">
+    <property name="visible">False</property>
+   </object>
   </object>
 
   <!-- Manage portal_tabs actions. -->

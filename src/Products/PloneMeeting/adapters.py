@@ -1312,8 +1312,13 @@ class IconifiedCategoryGroupAdapter(object):
                 # manage also the InlineValidation view
                 if hasattr(self.context.REQUEST['PUBLISHED'], 'form_instance'):
                     form_instance = self.context.REQUEST['PUBLISHED'].form_instance
-                else:
+                elif (hasattr(self.context.REQUEST['PUBLISHED'], 'context',) and
+                      hasattr(self.context.REQUEST['PUBLISHED'].context, 'form_instance')):
                     form_instance = self.context.REQUEST['PUBLISHED'].context.form_instance
+                else:
+                    # calling with MeetingItem as context, this is the case when checking
+                    # if categories exist and if annexes tab should be displayed
+                    return cfg.annexes_types.item_annexes
 
                 if form_instance.portal_type == 'annexDecision':
                     isItemDecisionAnnex = True

@@ -12,6 +12,7 @@ from plone.namedfile.file import NamedBlobFile
 from Products.CMFPlone.utils import safe_unicode
 from imio.dashboard.utils import _updateDefaultCollectionFor
 from imio.helpers.catalog import removeIndexes
+from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_REAPPLY
 
 from Products.PloneMeeting.migrations import Migrator
 from Products.PloneMeeting.utils import _addImagePermission
@@ -719,7 +720,13 @@ class Migrate_To_4_0(Migrator):
         # reinstall so versions are correctly shown in portal_quickinstaller
         # and new stuffs are added (portal_catalog metadata especially, imio.history is installed)
         self._updateAnnexIndex()
-        self.reinstall(profiles=[self.profile_name, ])
+        # reinstall PloneMeeting without dependencies, we want to reapply entire PM
+        # but not dependencies that are managed by upgradeDependencies
+        self.reinstall(profiles=['profile-Products.PloneMeeting:default', ],
+                       ignore_dependencies=True,
+                       dependency_strategy=DEPENDENCY_STRATEGY_REAPPLY)
+        if self.profile_name != 'profile-Products.PloneMeeting:default':
+            self.reinstall(profiles=[self.profile_name, ])
         self.upgradeDependencies()
         self.cleanRegistries()
         self.updateHolidays()
