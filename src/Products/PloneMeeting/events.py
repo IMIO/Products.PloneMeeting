@@ -27,7 +27,6 @@ from zope.event import notify
 from zope.i18n import translate
 from zope.lifecycleevent import IObjectRemovedEvent
 from Products.CMFCore.WorkflowCore import WorkflowException
-from collective.iconifiedcategory.utils import warn_filesize
 from plone.app.textfield import RichText
 from plone.app.textfield.value import RichTextValue
 from plone import api
@@ -495,12 +494,9 @@ def onAnnexAdded(annex, event):
     # if it is an annex added on an item, versionate given advices if necessary
     if parent.meta_type == 'MeetingItem':
         parent._versionateAdvicesOnItemEdit()
-
-        # Add the annex creation to item history
         parent.updateHistory('add',
                              annex,
                              decisionRelated=annex.portal_type == 'annexDecision' and True or False)
-        # Invalidate advices if needed and adding a normal annex
         if annex.portal_type == 'annex' and parent.willInvalidateAdvices():
             parent.updateLocalRoles(invalidate=True)
 
@@ -533,13 +529,11 @@ def onAnnexRemoved(annex, event):
     # if it is an annex added on an item, versionate given advices if necessary
     if parent.meta_type == 'MeetingItem':
         parent._versionateAdvicesOnItemEdit()
-
-    parent.updateHistory('delete',
-                         annex,
-                         decisionRelated=annex.portal_type == 'annexDecision' and True or False)
-
-    if parent.willInvalidateAdvices():
-        parent.updateLocalRoles(invalidate=True)
+        parent.updateHistory('delete',
+                             annex,
+                             decisionRelated=annex.portal_type == 'annexDecision' and True or False)
+        if parent.willInvalidateAdvices():
+            parent.updateLocalRoles(invalidate=True)
 
     # update modification date and SearchableText
     parent.setModificationDate(DateTime())

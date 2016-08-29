@@ -546,20 +546,21 @@ class OtherMCCorrespondenceVocabulary(object):
     def __call__(self, context):
         tool = api.portal.get_tool('portal_plonemeeting')
         currentCfg = tool.getMeetingConfig(context)
-        currentCfgId = currentCfg.getId()
         res = []
-        for cfg in tool.objectValues('MeetingConfig'):
-            if cfg.getId() == currentCfgId:
-                continue
-            item_annexes = cfg.annexes_types.item_annexes
-            for cat in item_annexes.objectValues():
-                res.append(SimpleTerm(
-                    cat.UID(),
-                    cat.UID(),
-                    u'%s -> %s -> %s' % (safe_unicode(cfg.Title()),
-                                         'Item annex',
-                                         cat.Title())))
-            return SimpleVocabulary(res)
+        if currentCfg:
+            currentCfgId = currentCfg.getId()
+            for cfg in tool.objectValues('MeetingConfig'):
+                if cfg.getId() == currentCfgId:
+                    continue
+                item_annexes = cfg.annexes_types.item_annexes
+                for cat in item_annexes.objectValues():
+                    res.append(SimpleTerm(
+                        cat.UID(),
+                        cat.UID(),
+                        u'%s -> %s -> %s' % (safe_unicode(cfg.Title()),
+                                             'Item annex',
+                                             safe_unicode(cat.Title()))))
+        return SimpleVocabulary(res)
 
 OtherMCCorrespondenceVocabularyFactory = OtherMCCorrespondenceVocabulary()
 

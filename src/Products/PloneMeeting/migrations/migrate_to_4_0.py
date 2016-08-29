@@ -9,6 +9,7 @@ from zope.i18n import translate
 from Products.CMFCore.utils import getToolByName
 from plone import api
 from plone.namedfile.file import NamedBlobFile
+from plone.namedfile.file import NamedBlobImage
 from Products.CMFPlone.utils import safe_unicode
 from imio.dashboard.utils import _updateDefaultCollectionFor
 from imio.helpers.catalog import removeIndexes
@@ -712,43 +713,120 @@ class Migrate_To_4_0(Migrator):
 
     def _adaptAppForImioAnnex(self):
         """Migrate Archetypes 'MeetingFile' and 'MeetingFileType' to
-           Dexterity 'annex' and 'ContentCategory'."""
+           Dexterity 'annex' and 'ContentCategory'.
+           Remove no more used attributes :
+           - MeetingConfig.annexToPrintDefault;
+           - MeetingConfig.annexDecisionToPrintDefault;
+           - MeetingConfig.annexAdviceToPrintDefault.
+           """
+        def _getCurrentCatFromOldUID(portal_type, old_mft):
+            """ """
+            catalog = api.portal.get_tool('portal_catalog')
+            brains = catalog(portal_type=portal_type)
+            for brain in brains:
+                obj = brain.getObject()
+                if obj._v_old_mft == old_mft:
+                    return obj
+
         logger.info('Moving to imio.annex...')
         # necessary for versions in between...
         tool = api.portal.get_tool('portal_plonemeeting')
         for cfg in tool.objectValues('MeetingConfig'):
             cfg._createSubFolders()
+            cfg.updateContentCategoryGroups()
+            if cfg.annexes_types.item_annexes.objectIds() or \
+               cfg.annexes_types.item_decision_annexes.objectIds() or \
+               cfg.annexes_types.advice_annexes.objectIds():
+                logger.info('Done.')
+                return
+
             # first create categories and subcategories then in a second pass
             # update the otherMCCorrespondences attribute
-            for mft in cfg.meetingfiletypes:
+            for mft in cfg.meetingfiletypes.objectValues():
                 folder = None
+                to_print_default = None
                 if mft.getRelatedTo() == 'item':
                     folder = cfg.annexes_types.item_annexes
+                    to_print_default = cfg.getAnnexToPrintDefault()
                 elif mft.getRelatedTo() == 'item_decision':
                     folder = cfg.annexes_types.item_decision_annexes
+                    to_print_default = cfg.getAnnexDecisionToPrintDefault()
                 elif mft.getRelatedTo() == 'advice':
                     folder = cfg.annexes_types.advice_annexes
+                    to_print_default = cfg.getAnnexAdviceToPrintDefault()
                 # create the category
+                icon = NamedBlobImage(
+                    data=mft.theIcon.data,
+                    contentType=mft.theIcon.content_type,
+                    filename=unicode(mft.theIcon.filename, 'utf-8'))
                 category = api.content.create(
                     id=mft.getId(),
                     type='ContentCategory',
                     container=folder,
                     title=mft.Title(),
-                    file=NamedBlobFile(mft.theIcon.data, filename=mft.theIcon.filename),
+                    icon=icon,
                     predefined_title=mft.getPredefinedTitle(),
+                    to_print=to_print_default,
                     confidential=mft.getIsConfidentialDefault())
+                category._v_old_mft = mft.UID()
                 for subType in mft.getSubTypes():
                     subcat = api.content.create(
                         type='ContentSubcategory',
                         container=category,
                         title=subType['title'],
+                        icon=icon,
                         predefined_title=subType['predefinedTitle'],
+                        to_print=to_print_default,
                         confidential=subType['isConfidentialDefault'])
+                    subcat._v_old_mft = subType['row_id']
+
+        # now that categories and subcategories are created, we are
+        # able to update the otherMCCorrespondences attribute
+        for cfg in tool.objectValues('MeetingConfig'):
+            for mft in cfg.meetingfiletypes.objectValues():
+                otherMCCorrespondences = mft.getOtherMCCorrespondences()
+                if otherMCCorrespondences:
+                    otherUIDs = []
+                    for otherMCCorrespondence in otherMCCorrespondences:
+                        if '__subtype__' in otherMCCorrespondence:
+                            # send to a subtype, find the subType
+                            otherUIDs.append(
+                                _getCurrentCatFromOldUID('ContentSubcategory',
+                                                         otherMCCorrespondence.split('__subtype__')[-1]).UID())
+                        else:
+                            otherUIDs.append(
+                                _getCurrentCatFromOldUID('ContentCategory',
+                                                         otherMCCorrespondence.split('__filetype__')[-1]).UID())
+                    _getCurrentCatFromOldUID(
+                        'ContentCategory',
+                        mft.UID()).other_mc_correspondences = otherUIDs
+                for subType in mft.getSubTypes():
+                    if subType['otherMCCorrespondences']:
+                        otherUIDs = []
+                        for otherMCCorrespondence in subType['otherMCCorrespondences']:
+                            if '__subtype__' in otherMCCorrespondence:
+                                # send to a subtype, find the subType
+                                otherUIDs.append(
+                                    _getCurrentCatFromOldUID('ContentSubcategory',
+                                                             otherMCCorrespondence.split('__subtype__')[-1]).UID())
+                            else:
+                                otherUIDs.append(
+                                    _getCurrentCatFromOldUID('ContentCategory',
+                                                             otherMCCorrespondence.split('__filetype__')[-1]).UID())
+                        _getCurrentCatFromOldUID(
+                            'ContentSubcategory',
+                            subType['row_id']).other_mc_correspondences = otherUIDs
+
+        # clean no more used attributes
+        for cfg in tool.objectValues('MeetingConfig'):
+            raise
+            delattr(cfg, 'annexToPrintDefault')
+            delattr(cfg, 'annexDecisionToPrintDefault')
+            delattr(cfg, 'annexAdviceToPrintDefault')
         logger.info('Done.')
 
     def run(self):
         logger.info('Migrating to PloneMeeting 4.0...')
-        self._adaptAppForImioAnnex()
         # reinstall so versions are correctly shown in portal_quickinstaller
         # and new stuffs are added (portal_catalog metadata especially, imio.history is installed)
         # reinstall PloneMeeting without dependencies, we want to reapply entire PM
@@ -759,6 +837,8 @@ class Migrate_To_4_0(Migrator):
         if self.profile_name != 'profile-Products.PloneMeeting:default':
             self.reinstall(profiles=[self.profile_name, ])
         self.upgradeDependencies()
+        self._adaptAppForImioAnnex()
+        return
         self.cleanRegistries()
         self.updateHolidays()
         self._updateItemsListVisibleFields()

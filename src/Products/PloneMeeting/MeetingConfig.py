@@ -4075,15 +4075,21 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                              default=subFolderTitle))
                 subFolder.processForm(values={'dummy': None})
 
-    def _manageEnableAnnexToPrint(self):
+    def _manageAnnexRelatedFunctionnalities(self):
         '''
-          If the parameter enableAnnexToPrint is set to False,
-          set 2 other linked parameters annexToPrintDefault and annexDecisionToPrintDefault
-          to False too...
+          If the parameter MeetingConfig.enableAnnexToPrint is set to False,
+          disable 'to_print' on every ContentCategoryGroup.
+          If parameter MeetingConfig.enableAnnexConfidentiality is False,
+          disable 'confidentiality' on the 'item_annexes' and 'item_decision_annexes' ContentCategoryGroups.
+          If parameter MeetingConfig.enableMeetingConfidentiality is False,
+          disable 'confidentiality' on the 'meeting_annexes' ContentCategoryGroup.
         '''
-        if self.getEnableAnnexToPrint() == 'disabled':
-            self.setAnnexToPrintDefault(False)
-            self.setAnnexDecisionToPrintDefault(False)
+        # manage 'to_print' and 'confidential'
+        to_be_printed_activated = self.getEnableAnnexToPrint() == 'disabled' and True or False
+        confidentiality_activated = self.getEnableAnnexConfidentiality()
+        for cat_group in self.annexes_types.objectValues():
+            cat_group.to_be_printed_activated = to_be_printed_activated
+            cat_group.confidentiality_activated = confidentiality_activated
 
     security.declarePublic('getItemTypeName')
 
