@@ -351,18 +351,18 @@ schema = Schema((
         write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
-        name='enableAnnexToPrint',
-        default=defValues.enableAnnexToPrint,
+        name='annexToPrintMode',
+        default=defValues.annexToPrintMode,
         widget=SelectionWidget(
-            description="EnableAnnexToPrint",
-            description_msgid="enable_annex_to_print_descr",
-            label='Enableannextoprint',
-            label_msgid='PloneMeeting_label_enableAnnexToPrint',
+            description="AnnexToPrintMode",
+            description_msgid="annex_to_print_mode_descr",
+            label='Annextoprintmode',
+            label_msgid='PloneMeeting_label_annexToPrintMode',
             i18n_domain='PloneMeeting',
         ),
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
-        vocabulary='listEnableAnnexToPrint',
+        vocabulary='listAnnexToPrintModes',
     ),
     BooleanField(
         name='keepOriginalToPrintOfClonedItems',
@@ -372,42 +372,6 @@ schema = Schema((
             description_msgid="keep_original_to_print_of_cloned_items_descr",
             label='Keeporiginaltoprintofcloneditems',
             label_msgid='PloneMeeting_label_keepOriginalToPrintOfClonedItems',
-            i18n_domain='PloneMeeting',
-        ),
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    BooleanField(
-        name='annexToPrintDefault',
-        default=defValues.annexToPrintDefault,
-        widget=BooleanField._properties['widget'](
-            description="AnnexToPrintDefault",
-            description_msgid="annex_to_print_default_descr",
-            label='Annextoprintdefault',
-            label_msgid='PloneMeeting_label_annexToPrintDefault',
-            i18n_domain='PloneMeeting',
-        ),
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    BooleanField(
-        name='annexDecisionToPrintDefault',
-        default=defValues.annexDecisionToPrintDefault,
-        widget=BooleanField._properties['widget'](
-            description="AnnexDecisionToPrintDefault",
-            description_msgid="annex_decision_to_print_default_descr",
-            label='Annexdecisiontoprintdefault',
-            label_msgid='PloneMeeting_label_annexDecisionToPrintDefault',
-            i18n_domain='PloneMeeting',
-        ),
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    BooleanField(
-        name='annexAdviceToPrintDefault',
-        default=defValues.annexAdviceToPrintDefault,
-        widget=BooleanField._properties['widget'](
-            description="AnnexAdviceToPrintDefault",
-            description_msgid="annex_advice_to_print_default_descr",
-            label='Annexadvicetoprintdefault',
-            label_msgid='PloneMeeting_label_annexAdviceToPrintDefault',
             i18n_domain='PloneMeeting',
         ),
         write_permission="PloneMeeting: Write risky config",
@@ -1797,19 +1761,6 @@ schema = Schema((
             description_msgid="restrict_access_to_secret_items_descr",
             label='Restrictaccesstosecretitems',
             label_msgid='PloneMeeting_label_restrictAccessToSecretItems',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="advices",
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    BooleanField(
-        name='enableAnnexConfidentiality',
-        default=defValues.enableAnnexConfidentiality,
-        widget=BooleanField._properties['widget'](
-            description="EnableAnnexConfidentiality",
-            description_msgid="enable_annex_confidentiality_descr",
-            label='Enableannexconfidentiality',
-            label_msgid='PloneMeeting_label_enableAnnexConfidentiality',
             i18n_domain='PloneMeeting',
         ),
         schemata="advices",
@@ -3267,19 +3218,20 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                          context=self.REQUEST)))
         return DisplayList(tuple(res)).sortedByValue()
 
-    security.declarePrivate('listEnableAnnexToPrint')
+    security.declarePrivate('listAnnexToPrintModes')
 
-    def listEnableAnnexToPrint(self):
-        '''Vocabulary for field 'enableAnnexToPrint'.'''
-        res = [('disabled', translate('enable_annex_to_print_disabled',
-                                      domain='PloneMeeting',
-                                      context=self.REQUEST)),
-               ('enabled_for_info', translate('enable_annex_to_print_enabled_for_info',
-                                              domain='PloneMeeting',
-                                              context=self.REQUEST)),
-               ('enabled_for_printing', translate('enable_annex_to_print_enabled_for_printing',
-                                                  domain='PloneMeeting',
-                                                  context=self.REQUEST)),
+    def listAnnexToPrintModes(self):
+        '''Vocabulary for field 'annexToPrintMode'.'''
+        res = [('enabled_for_info',
+                translate('annex_to_print_mode_info',
+                          domain='PloneMeeting',
+                          context=self.REQUEST,
+                          default="For information (annexes are printed manually)")),
+               ('enabled_for_printing',
+                translate('annex_to_print_mode_automated',
+                          domain='PloneMeeting',
+                          context=self.REQUEST,
+                          default="Automated (annexes are printed by the application)")),
                ]
         return DisplayList(tuple(res))
 
@@ -3956,9 +3908,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         self.updateIsDefaultFields()
         # Make sure we have 'text/html' for every Rich fields
         forceHTMLContentTypeForEmptyRichFields(self)
-        # if the enableAnnexToPrint is set to False, make sure 2 other relevant parameters
-        # annexToPrintDefault and annexDecisionToPrintDefault are set to False too...
-        self._manageEnableAnnexToPrint()
         # Create the corresponding group that will contain MeetingPowerObservers
         self.createPowerObserversGroup()
         # Create the corresponding group that will contain MeetingBudgetImpactEditors
@@ -3982,9 +3931,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         self.updateIsDefaultFields()
         # Make sure we have 'text/html' for every Rich fields
         forceHTMLContentTypeForEmptyRichFields(self)
-        # if the enableAnnexToPrint is set to False, make sure 2 other relevant parameters
-        # annexToPrintDefault and annexDecisionToPrintDefault are set to False too...
-        self._manageEnableAnnexToPrint()
         self.adapted().onEdit(isCreated=False)  # Call sub-product code if any
 
     def _createSubFolders(self):
@@ -4074,22 +4020,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                              target_language=default_language,
                                              default=subFolderTitle))
                 subFolder.processForm(values={'dummy': None})
-
-    def _manageAnnexRelatedFunctionnalities(self):
-        '''
-          If the parameter MeetingConfig.enableAnnexToPrint is set to False,
-          disable 'to_print' on every ContentCategoryGroup.
-          If parameter MeetingConfig.enableAnnexConfidentiality is False,
-          disable 'confidentiality' on the 'item_annexes' and 'item_decision_annexes' ContentCategoryGroups.
-          If parameter MeetingConfig.enableMeetingConfidentiality is False,
-          disable 'confidentiality' on the 'meeting_annexes' ContentCategoryGroup.
-        '''
-        # manage 'to_print' and 'confidential'
-        to_be_printed_activated = self.getEnableAnnexToPrint() == 'disabled' and True or False
-        confidentiality_activated = self.getEnableAnnexConfidentiality()
-        for cat_group in self.annexes_types.objectValues():
-            cat_group.to_be_printed_activated = to_be_printed_activated
-            cat_group.confidentiality_activated = confidentiality_activated
 
     security.declarePublic('getItemTypeName')
 

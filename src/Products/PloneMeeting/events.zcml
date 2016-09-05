@@ -93,6 +93,11 @@
                    zope.lifecycleevent.interfaces.IObjectAddedEvent"
               handler=".events.onAnnexAdded"/>
 
+  <subscriber for="imio.annex.content.annex.IAnnex
+                   zope.lifecycleevent.IObjectModifiedEvent"
+              handler=".events.onAnnexModified"/>
+
+
   <!-- if 'auto-conversion' is enabled in collective.documentviewer, convert MeetingFiles upon creation -->
   <subscriber for=".interfaces.IMeetingFile
                    Products.Archetypes.interfaces.IObjectInitializedEvent"

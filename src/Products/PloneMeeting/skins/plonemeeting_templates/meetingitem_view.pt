@@ -404,6 +404,13 @@
                             <td tal:condition="python: not hasAnnexes and not hasAnnexesDecision">
                                 <span>-</span>
                             </td>
+                            <td width="1%">
+                                <a href='@@categorized-annexes'>
+                                 <img src='manage.png'
+                                      tal:attributes="src string:${portal_url}/manage.png"
+                                      title='Manage item annexes'
+                                      i18n:attributes="title"/></a>
+                            </td>
                         </tr>
                     </table>
                 </fieldset>

@@ -149,8 +149,9 @@ class Migrate_To_4_0(Migrator):
                     if topic.getId() in collectionIds:
                         toDoListSearches.append(getattr(cfg.searches.searches_items, topic.getId()))
                     else:
-                        logger.warn('Moving to imio.dashboard : could not select a '
-                                    'collection with id "%s" for portlet_todo!' % topic.getId())
+                        warning_msg = 'Moving to imio.dashboard : could not select a collection with ' \
+                            'id "%s" for portlet_todo!' % topic.getId()
+                        self.warn(logger, warning_msg)
                 cfg.setToDoListSearches(toDoListSearches)
                 cfg.deleteReferences('ToDoTopics')
 
@@ -644,7 +645,7 @@ class Migrate_To_4_0(Migrator):
             elif 'Table' in toolbar:
                 toolbar.replace("'Table'", "'Table','Image'")
             else:
-                logger.warn("Could not add new button 'Image' to the ckeditor toolbar!")
+                self.warn(logger, "Could not add new button 'Image' to the ckeditor toolbar!")
         if not 'Link' in toolbar and not 'Unlink' in toolbar:
             # try to insert these buttons after 'SpecialChar' or 'Table'
             if 'SpecialChar' in toolbar:
@@ -652,7 +653,7 @@ class Migrate_To_4_0(Migrator):
             elif 'Table' in toolbar:
                 toolbar.replace("'Table'", "'Table','Link','Unlink'")
             else:
-                logger.warn("Could not add new buttons 'Link' and 'Unlink' to the ckeditor toolbar!")
+                self.warn(logger, "Could not add new buttons 'Link' and 'Unlink' to the ckeditor toolbar!")
         logger.info('Done.')
 
     def _removeUnusedIndexes(self):
@@ -733,7 +734,6 @@ class Migrate_To_4_0(Migrator):
         tool = api.portal.get_tool('portal_plonemeeting')
         for cfg in tool.objectValues('MeetingConfig'):
             cfg._createSubFolders()
-            cfg.updateContentCategoryGroups()
             if cfg.annexes_types.item_annexes.objectIds() or \
                cfg.annexes_types.item_decision_annexes.objectIds() or \
                cfg.annexes_types.advice_annexes.objectIds():
@@ -747,13 +747,13 @@ class Migrate_To_4_0(Migrator):
                 to_print_default = None
                 if mft.getRelatedTo() == 'item':
                     folder = cfg.annexes_types.item_annexes
-                    to_print_default = cfg.getAnnexToPrintDefault()
+                    to_print_default = cfg.annexToPrintDefault
                 elif mft.getRelatedTo() == 'item_decision':
                     folder = cfg.annexes_types.item_decision_annexes
-                    to_print_default = cfg.getAnnexDecisionToPrintDefault()
+                    to_print_default = cfg.annexDecisionToPrintDefault
                 elif mft.getRelatedTo() == 'advice':
                     folder = cfg.annexes_types.advice_annexes
-                    to_print_default = cfg.getAnnexAdviceToPrintDefault()
+                    to_print_default = cfg.annexAdviceToPrintDefault
                 # create the category
                 icon = NamedBlobImage(
                     data=mft.theIcon.data,
@@ -777,7 +777,8 @@ class Migrate_To_4_0(Migrator):
                         icon=icon,
                         predefined_title=subType['predefinedTitle'],
                         to_print=to_print_default,
-                        confidential=subType['isConfidentialDefault'])
+                        confidential=bool(subType['isConfidentialDefault'] == '1')
+                    )
                     subcat._v_old_mft = subType['row_id']
 
         # now that categories and subcategories are created, we are
@@ -819,10 +820,44 @@ class Migrate_To_4_0(Migrator):
 
         # clean no more used attributes
         for cfg in tool.objectValues('MeetingConfig'):
-            raise
+            if not hasattr(cfg, 'enableAnnexToPrint'):
+                # already migrated
+                continue
+
+            # manage 'enableAnnexToPrint'
+            if cfg.enableAnnexToPrint.startswith('enabled_'):
+                cfg.setAnnexToPrintMode(cfg.enableAnnexToPrint)
+                # update every ContentCategoryGroup to enable 'to_print'
+                for cat_group in cfg.annexes_types.objectValues():
+                    cat_group.to_be_printed_activated = True
+
+                # manage 'annexToPrintDefault'
+                if cfg.annexToPrintDefault:
+                    # update every 'item_annexes' ContentCategory to enable 'to_print'
+                    for cat in cfg.annexes_types.item_annexes.objectValues():
+                        cat.to_print = True
+                # manage 'annexDecisionToPrintDefault'
+                if cfg.annexDecisionToPrintDefault:
+                    # update every 'item_decision_annexes' ContentCategory to enable 'to_print'
+                    for cat in cfg.annexes_types.item_decision_annexes.objectValues():
+                        cat.to_print = True
+                # manage 'annexAdviceToPrintDefault'
+                if cfg.annexAdviceToPrintDefault:
+                    # update every 'advice_annexes' ContentCategory to enable 'to_print'
+                    for cat in cfg.annexes_types.advice_annexes.objectValues():
+                        cat.to_print = True
+
+            # manage 'enableAnnexConfidentiality'
+            if cfg.enableAnnexConfidentiality:
+                # enable it on every ContentCategoryGroups
+                for cat_group in cfg.annexes_types.objectValues():
+                    cat_group.confidentiality_activated = True
+
+            delattr(cfg, 'enableAnnexToPrint')
             delattr(cfg, 'annexToPrintDefault')
             delattr(cfg, 'annexDecisionToPrintDefault')
             delattr(cfg, 'annexAdviceToPrintDefault')
+            delattr(cfg, 'enableAnnexConfidentiality')
         logger.info('Done.')
 
     def run(self):

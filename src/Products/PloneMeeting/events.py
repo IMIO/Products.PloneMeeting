@@ -515,6 +515,13 @@ def onAnnexAdded(annex, event):
                 (annex.absolute_url_path(), userId))
 
 
+def onAnnexModified(annex, event):
+    ''' '''
+    # redirect to the annexes table view
+    parent = annex.getParentNode()
+    annex.REQUEST.RESPONSE.redirect(parent.absolute_url() + '/@@categorized-annexes')
+
+
 def onAnnexRemoved(annex, event):
     '''When an annex is removed, we need to update item (parent) annexIndex.'''
     # bypass this if we are actually removing the 'Plone Site'

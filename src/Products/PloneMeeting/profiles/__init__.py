@@ -296,13 +296,10 @@ class MeetingConfigDescriptor(Descriptor):
         # (ie 'P5', 'CC00_06'...)
         self.configVersion = ''
         self.itemCreatedOnlyUsingTemplate = False
-        self.enableAnnexToPrint = 'disabled'
+        self.annexToPrintMode = 'enabled_for_info'
         self.keepOriginalToPrintOfClonedItems = True
 
         # Data-related parameters ----------------------------------------------
-        self.annexToPrintDefault = False
-        self.annexDecisionToPrintDefault = False
-        self.annexAdviceToPrintDefault = False
         # Some attributes on an item are optional. In the field
         # "usedItemAttributes", you specify which of those optional attributes
         # you will use in your meeting configuration.
@@ -362,7 +359,6 @@ class MeetingConfigDescriptor(Descriptor):
         # Will we manage replacements of users ?
         self.useUserReplacements = False
         # annex confidentiality
-        self.enableAnnexConfidentiality = False
         self.annexConfidentialFor = ()
         # advice confidentiality
         self.enableAdviceConfidentiality = False

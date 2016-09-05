@@ -92,26 +92,13 @@
           </td>
         </tr>
         <tr valign="top">
-          <td tal:define="field python:here.getField('enableAnnexToPrint')">
+          <td tal:define="field python:here.getField('annexToPrintMode')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <td tal:define="field python:here.getField('keepOriginalToPrintOfClonedItems')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <td>
-          </td>
-          <td>
-          </td>
-        </tr>
-        <tr valign="top">
-          <td tal:define="field python:here.getField('annexToPrintDefault')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
-          <td tal:define="field python:here.getField('annexDecisionToPrintDefault')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
-          <td tal:define="field python:here.getField('annexAdviceToPrintDefault')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <td>
           </td>
