@@ -757,6 +757,7 @@ class CategorizedAnnexesView(CategorizedTabView):
         """ """
         super(CategorizedAnnexesView, self).__init__(context, request)
         self.portal_url = api.portal.get().absolute_url()
+        self.tool = api.portal.get_tool('portal_plonemeeting')
 
 
 class PMCKFinder(CKFinder):

@@ -14,7 +14,16 @@
                                      title string:add_new_annex" />
               </a>
         </legend>
+
         <div class="content" tal:content="structure python: view.table_render(portal_type='annex')"></div>
+
+        <div id="preview_annexes" tal:condition="python: view.tool.hasAnnexes(context, portal_type='annex')">
+          <br />
+          <p class="discreet">Preview of annexes grouped by type :</p>
+          <br />
+          <tal:annexes replace="structure python: context.restrictedTraverse('categorized-childs')(portal_type='annex')" />
+        </div>
+
       </fieldset>
       <fieldset>
         <legend>
@@ -27,7 +36,16 @@
                                      title string:add_new_annex_decision" />
               </a>
         </legend>
+
         <div class="content" tal:content="structure python: view.table_render(portal_type='annexDecision')"></div>
+
+        <div id="preview_annexes" tal:condition="python: view.tool.hasAnnexes(context, portal_type='annexDecision')">
+          <br />
+          <p class="discreet">Preview of decision annexes grouped by type :</p>
+          <br />
+          <tal:annexes replace="structure python: context.restrictedTraverse('categorized-childs')(portal_type='annexDecision')" />
+        </div>
+
       </fieldset>
     </div>
   </body>

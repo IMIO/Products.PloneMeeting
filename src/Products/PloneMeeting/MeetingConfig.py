@@ -3998,6 +3998,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # call processForm passing dummy values so existing values are not touched
             if base_hasattr(folder, 'processForm'):
                 folder.processForm(values={'dummy': None})
+            folder.reindexObject()
 
             for subFolderId, subFolderTitle, subFolderType in folderInfo[2]:
                 folder.invokeFactory(subFolderType, subFolderId)
@@ -4020,6 +4021,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                              target_language=default_language,
                                              default=subFolderTitle))
                 subFolder.processForm(values={'dummy': None})
+                subFolder.reindexObject()
 
     security.declarePublic('getItemTypeName')
 

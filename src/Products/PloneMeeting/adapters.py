@@ -244,7 +244,7 @@ class AnnexableAdapter(object):
         '''
         # if confidentiality is used and annex is marked as confidential,
         # annexes could be hidden to power observers and/or restricted power observers
-        if cfg.getEnableAnnexConfidentiality() and annexInfo['isConfidential'] and \
+        if False and annexInfo['isConfidential'] and \
             ((isPowerObserver and 'power_observers' in cfg.getAnnexConfidentialFor()) or
              (isRestrictedPowerObserver and 'restricted_power_observers' in cfg.getAnnexConfidentialFor())):
             return False
@@ -275,7 +275,7 @@ class AnnexableAdapter(object):
                                             typesIds=typesIds,
                                             onlySelectable=False,
                                             includeSubTypes=False)
-        useConfidentiality = cfg.getEnableAnnexConfidentiality()
+        useConfidentiality = False
         isPowerObserver = False
         if useConfidentiality:
             isPowerObserver = tool.isPowerObserverForCfg(cfg, isRestricted=False)

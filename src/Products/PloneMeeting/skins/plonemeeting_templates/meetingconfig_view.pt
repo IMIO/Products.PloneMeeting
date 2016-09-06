@@ -312,57 +312,98 @@
       </table>
 
       <tal:comment replace="nothing">Annex types</tal:comment>
-      <a name="meetingfiletypes"></a>
+      <p>&nbsp;</p>
+      <a name="annextypes"></a>
       <fieldset>
         <legend>
-         <span i18n:translate="MeetingFileTypes"></span>
-         <input type="image" style="cursor:pointer" class="imageInput"
-                tal:attributes="onClick python: 'href: window.location=\'%s/meetingfiletypes/createObject?type_name=MeetingFileType\'' % context.absolute_url();
-                                src string: $portal_url/plus.png"
-                title="add_object" i18n:attributes="title"
-                tal:condition="isRealManager"/>
+         <span i18n:translate="">Annex types</span>
         </legend>
-        <p class="discreet" i18n:translate="meeting_file_types_descr"></p><br />
-          <table class="listing nosort" align="right" width="100%"
-                 tal:define="fFolder python:context.meetingfiletypes;
-                             fFolderUrl fFolder/absolute_url">
-            <tr>
-              <th class="plain" i18n:translate="listingheader_title">Title</th>
-              <th width="200px" i18n:translate="PloneMeeting_label_relatedTo">Related to</th>
-              <th width="50px" i18n:translate="heading_is_active">Active?</th>
-              <th width="130px" i18n:translate="heading_actions">Actions</th>
-            </tr>
-            <tr tal:condition="python: not fFolder.objectValues('MeetingFileType')">
-              <td colspan="3" align="center" i18n:translate="">no_meeting_file_type</td>
-            </tr>
-            <tal:loop repeat="obj python:fFolder.objectValues('MeetingFileType')">
-            <tr tal:define="isActive python: here.portal_workflow.getInfoFor(obj, 'review_state') == 'active';
-                            oddrow repeat/obj/odd;
-                            classOddEven python: oddrow and 'even' or 'odd';" valign="top"
-                tal:attributes="class python: not isActive and classOddEven+' state-inactive' or classOddEven"
-                class="#">
-                <td><img tal:attributes="src python: obj.absolute_url() + '/at_download/theIcon'"/>&nbsp;
-                    <a tal:attributes="href obj/absolute_url" tal:content="obj/getName"></a>
-                    <div class="discreet" tal:define="descr obj/Description" tal:condition="descr" tal:content="descr"></div>
-                    <tal:additionalInformations
-                        define="context python: obj;
-                                excludedFields python: ('id', 'description', 'title', 'theIcon', 'relatedTo')">
-                        <metal:addtionalInformations use-macro="here/@@pm-macros/additionalInformations" />
-                    </tal:additionalInformations>
-                </td>
+        <p class="discreet" i18n:translate="annex_types_descr"></p><br />
+        <tal:annexesCategories repeat="cat_group python: context.annexes_types.objectValues()">
+            <table class="listing nosort" style="text-align: right;" width="100%"
+                   tal:define="cat_group_url cat_group/absolute_url" width="100%;">
+              <tr>
+                <th class="nosort" width="200px">
+                    <span tal:content="cat_group/Title">Group category title</span>
+                    <input type="image"
+                           style="cursor:pointer"
+                           class="imageInput"
+                           tal:attributes="onClick python: 'href: window.location=\'%s/++add++ContentCategory\'' % cat_group_url;
+                                           src string: $portal_url/new.png"
+                           title="add_object"
+                           i18n:attributes="title"
+                           tal:condition="isRealManager"/>
+                </th>
+                <th class="nosort" width="50px" i18n:translate="heading_is_active">Active?</th>
+                <th class="nosort" width="130px" i18n:translate="heading_actions">Actions</th>
+              </tr>
+              <tr tal:condition="python: not cat_group.objectValues()">
+                <td colspan="5" align="center" i18n:translate="">No annex types.</td>
+              </tr>
+              <tal:loop repeat="cat python:cat_group.objectValues()">
+              <tr tal:define="isActive python: here.portal_workflow.getInfoFor(cat, 'review_state') == 'active';
+                              oddrow repeat/cat/odd;
+                              classOddEven python: oddrow and 'even' or 'odd';"
+                  tal:attributes="class python: not isActive and classOddEven+' state-inactive' or classOddEven"
+                  valign="top">
                 <td>
-                    <span i18n:translate="" tal:content="string:meetingfiletype_related_to_${obj/relatedTo}">Related to</span>
+                  <a tal:attributes="href cat/absolute_url" tal:content="cat/Title">Category title</a>
+                  <div class="discreet" tal:define="descr cat/Description" tal:condition="descr" tal:content="descr">Collection description</div>
+                  <tal:additionalInformations
+                    define="obj python: cat;
+                            excludedFields python: ('id', 'description', 'title')">
+                    <metal:addtionalInformations use-macro="here/@@pm-macros/additionalInformations" />
+                  </tal:additionalInformations>
+
+                  <tal:annexesSubcategories>
+                    <table class="listing nosort" style="text-align: right;" width="100%">
+                      <tr>
+                        <th class="nosort" width="200px" i18n:translate="heading_subtypes">Sub types</th>
+                        <th class="nosort" width="50px" i18n:translate="heading_is_active">Active?</th>
+                        <th class="nosort" width="130px" i18n:translate="heading_actions">Actions</th>
+                      </tr>
+                      <tr tal:condition="python: not cat.objectValues()">
+                        <td colspan="5" align="center" i18n:translate="">No annex subtypes.</td>
+                      </tr>
+                      <tal:loop repeat="sub_cat python: cat.objectValues()">
+                        <tr tal:define="isActive python: here.portal_workflow.getInfoFor(sub_cat, 'review_state') == 'active';
+                                        oddrow repeat/sub_cat/odd;
+                                        classOddEven python: oddrow and 'even' or 'odd';"
+                            tal:attributes="class python: not isActive and classOddEven+' state-inactive' or classOddEven"
+                            valign="top">
+                          <td>
+                            <a tal:attributes="href sub_cat/absolute_url" tal:content="sub_cat/Title">Subcategory title</a>
+                            <div class="discreet" tal:define="descr sub_cat/Description" tal:condition="descr" tal:content="descr">Collection description</div>
+                            <tal:additionalInformations
+                              define="obj python: sub_cat;
+                                      excludedFields python: ('id', 'description', 'title')">
+                              <metal:addtionalInformations use-macro="here/@@pm-macros/additionalInformations" />
+                            </tal:additionalInformations>
+                          </td>
+                          <td i18n:domain="plone">
+                            <span tal:condition="isActive" i18n:translate="">Yes</span>
+                            <span tal:condition="not: isActive" i18n:translate="">No</span>
+                          </td>
+                          <td align="right">
+                            <!--tal:actions replace="structure python: obj.restrictedTraverse('@@config_actions_panel')(showActions=False, showTransitions=False, showArrows=True)" /-->
+                          </td>
+                        </tr>
+                      </tal:loop>
+                    </table>
+                  </tal:annexesSubcategories>
                 </td>
                 <td i18n:domain="plone">
-                    <span tal:condition="isActive" i18n:translate="">Yes</span>
-                    <span tal:condition="not: isActive" i18n:translate="">No</span>
+                  <span tal:condition="isActive" i18n:translate="">Yes</span>
+                  <span tal:condition="not: isActive" i18n:translate="">No</span>
                 </td>
-                <td align="center">
-                    <tal:actions replace="structure python: obj.restrictedTraverse('@@config_actions_panel')(showActions=False, showTransitions=False, showArrows=True)" />
+                <td align="right">
+                  <!--tal:actions replace="structure python: obj.restrictedTraverse('@@config_actions_panel')(showActions=False, showTransitions=False, showArrows=True)" /-->
                 </td>
-            </tr>
-            </tal:loop>
+              </tr>
+              </tal:loop>
             </table>
+            <p>&nbsp;</p>
+        </tal:annexesCategories>
 
       </fieldset>
 
@@ -373,7 +414,7 @@
          <span i18n:translate="Categories"></span>
          <input type="image" style="cursor:pointer" class="imageInput"
                 tal:attributes="onClick python: 'href: window.location=\'%s/categories/createObject?type_name=MeetingCategory\'' % context.absolute_url();
-                                src string: $portal_url/plus.png"
+                                src string: $portal_url/new.png"
                 title="add_object" i18n:attributes="title"
                 tal:condition="isRealManager"/>
         </legend>
@@ -424,7 +465,7 @@
          <span i18n:translate="Classifiers"></span>
          <input type="image" style="cursor:pointer" class="imageInput"
                 tal:attributes="onClick python: 'href: window.location=\'%s/classifiers/createObject?type_name=MeetingCategory\'' % context.absolute_url();
-                                src string: $portal_url/plus.png"
+                                src string: $portal_url/new.png"
                 title="add_object" i18n:attributes="title"
                 tal:condition="isRealManager"/>
         </legend>
@@ -476,7 +517,7 @@
          <input type="image" style="cursor:pointer" class="imageInput"
                 tal:define="itemType python: context.getItemTypeName(configType='MeetingItemRecurring')"
                 tal:attributes="onClick python: 'href: window.location=\'%s/recurringitems/createObject?type_name=%s\'' % (context.absolute_url(), itemType);
-                                src string: $portal_url/plus.png"
+                                src string: $portal_url/new.png"
                 title="add_object" i18n:attributes="title"
                 tal:condition="isRealManager"/>
         </legend>
@@ -661,7 +702,7 @@
                            style="cursor:pointer"
                            class="imageInput"
                            tal:attributes="onClick python: 'href: window.location=\'%s/createObject?type_name=DashboardCollection\'' % cFolderUrl;
-                                 src string: $portal_url/plus.png"
+                                 src string: $portal_url/new.png"
                  title="add_object" i18n:attributes="title"
                  tal:condition="isRealManager"/>
                 </th>
@@ -1053,7 +1094,7 @@
             class="link-overlay-pm"
             tal:condition="isRealManager"
             tal:attributes="href string:${context/podtemplates/absolute_url}/folder_factories">
-          <img src="#" tal:attributes="src string: $portal_url/plus.png;" />
+          <img src="#" tal:attributes="src string: $portal_url/new.png;" />
          </a>
         </legend>
         <p class="discreet" i18n:translate="pod_templates_descr"></p><br />

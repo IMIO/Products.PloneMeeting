@@ -515,11 +515,12 @@ def onAnnexAdded(annex, event):
                 (annex.absolute_url_path(), userId))
 
 
-def onAnnexModified(annex, event):
+def onAnnexEditFinished(annex, event):
     ''' '''
-    # redirect to the annexes table view
-    parent = annex.getParentNode()
-    annex.REQUEST.RESPONSE.redirect(parent.absolute_url() + '/@@categorized-annexes')
+    # redirect to the annexes table view after edit
+    if event.object.REQUEST['PUBLISHED'].__name__ == 'edit':
+        parent = annex.getParentNode()
+        return annex.REQUEST.RESPONSE.redirect(parent.absolute_url() + '/@@categorized-annexes')
 
 
 def onAnnexRemoved(annex, event):

@@ -147,6 +147,7 @@ jQuery(function($) {
             onLoad : function (e) {
                 // initialize select2 widget
                 initializeSelect2Widgets();
+                initializeIconifiedCategoryWidget();
                 return true;
             },
             onClose : function (e) {

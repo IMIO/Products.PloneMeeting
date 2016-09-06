@@ -763,9 +763,9 @@ class Migrate_To_4_0(Migrator):
                     id=mft.getId(),
                     type='ContentCategory',
                     container=folder,
-                    title=mft.Title(),
+                    title=safe_unicode(mft.Title()),
                     icon=icon,
-                    predefined_title=mft.getPredefinedTitle(),
+                    predefined_title=safe_unicode(mft.getPredefinedTitle()),
                     to_print=to_print_default,
                     confidential=mft.getIsConfidentialDefault())
                 category._v_old_mft = mft.UID()
@@ -773,9 +773,9 @@ class Migrate_To_4_0(Migrator):
                     subcat = api.content.create(
                         type='ContentSubcategory',
                         container=category,
-                        title=subType['title'],
+                        title=safe_unicode(subType['title']),
                         icon=icon,
-                        predefined_title=subType['predefinedTitle'],
+                        predefined_title=safe_unicode(subType['predefinedTitle']),
                         to_print=to_print_default,
                         confidential=bool(subType['isConfidentialDefault'] == '1')
                     )
