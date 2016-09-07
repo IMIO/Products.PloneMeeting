@@ -732,6 +732,7 @@ class Migrate_To_4_0(Migrator):
         logger.info('Moving to imio.annex...')
         # necessary for versions in between...
         tool = api.portal.get_tool('portal_plonemeeting')
+        wfTool = api.portal.get_tool('portal_workflow')
         for cfg in tool.objectValues('MeetingConfig'):
             cfg._createSubFolders()
             if cfg.annexes_types.item_annexes.objectIds() or \
@@ -767,7 +768,8 @@ class Migrate_To_4_0(Migrator):
                     icon=icon,
                     predefined_title=safe_unicode(mft.getPredefinedTitle()),
                     to_print=to_print_default,
-                    confidential=mft.getIsConfidentialDefault())
+                    confidential=mft.getIsConfidentialDefault(),
+                    enabled=bool(wfTool.getInfoFor(mft, 'review_state') == 'active'))
                 category._v_old_mft = mft.UID()
                 for subType in mft.getSubTypes():
                     subcat = api.content.create(
@@ -777,10 +779,10 @@ class Migrate_To_4_0(Migrator):
                         icon=icon,
                         predefined_title=safe_unicode(subType['predefinedTitle']),
                         to_print=to_print_default,
-                        confidential=bool(subType['isConfidentialDefault'] == '1')
+                        confidential=bool(subType['isConfidentialDefault'] == '1'),
+                        enabled=bool(subType['isActive'] == '1')
                     )
                     subcat._v_old_mft = subType['row_id']
-
         # now that categories and subcategories are created, we are
         # able to update the otherMCCorrespondences attribute
         for cfg in tool.objectValues('MeetingConfig'):

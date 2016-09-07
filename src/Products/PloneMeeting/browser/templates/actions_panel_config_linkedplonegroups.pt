@@ -1,6 +1,16 @@
-<td class="noPadding" i18n:domain="plone">
-  <a tal:define="dummy view/saveHasActions;"
+<td class="noPadding" i18n:domain="PloneMeeting" tal:define="dummy view/saveHasActions;">
+
+  <tal:comment replace="nothing">Icon</tal:comment>
+  <a tal:condition="view/useIcons"
      tal:attributes="href string:${view/portal_url}/@@usergroup-groupprefs?searchstring=${view/context/Title} (">
-    <img src="group.png" tal:attributes="src string:${view/portal_url}/group.png" title="Edit" i18n:attributes="title" />
+    <img src="group.png" tal:attributes="src string:${view/portal_url}/group.png" title="View linked Plone groups" i18n:attributes="title" />
   </a>
+
+  <tal:comment replace="nothing">Button</tal:comment>
+  <input class="apButton apButtonAction apButtonAction_linkedplonegroups"
+         tal:condition="python: not view.useIcons"
+         type="button"
+         i18n:attributes="value"
+         value="View linked Plone groups"
+         tal:attributes="onClick string:window.open('${view/portal_url}/@@usergroup-groupprefs?searchstring=${view/context/Title} (', '_parent');"/>
 </td>

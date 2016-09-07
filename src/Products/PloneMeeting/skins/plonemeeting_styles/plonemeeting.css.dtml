@@ -974,6 +974,10 @@ body[class*="itemtemplates"].template-manage-portlets a.link-parent {
     width: 97%;
 }
 
+.apButtonAction_linkedplonegroups {
+    background-image: url("group.png");
+}
+
 /* style for the 'Back' link displayed in the elements of the configuration next to the 'de/activate' button
    We use same height as .apButton height */
 .pm_back_to_tool_link {

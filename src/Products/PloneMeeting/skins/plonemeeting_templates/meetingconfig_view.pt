@@ -313,13 +313,15 @@
 
       <tal:comment replace="nothing">Annex types</tal:comment>
       <p>&nbsp;</p>
-      <a name="annextypes"></a>
+      <a name="annexes_types"></a>
       <fieldset>
         <legend>
          <span i18n:translate="">Annex types</span>
         </legend>
         <p class="discreet" i18n:translate="annex_types_descr"></p><br />
-        <tal:annexesCategories repeat="cat_group python: context.annexes_types.objectValues()">
+        <tal:annexesCategories repeat="cat_group context/annexes_types/objectValues">
+            <a name="#"
+               tal:attributes="name cat_group/getId"></a>
             <table class="listing nosort" style="text-align: right;" width="100%"
                    tal:define="cat_group_url cat_group/absolute_url" width="100%;">
               <tr>
@@ -337,17 +339,19 @@
                 <th class="nosort" width="50px" i18n:translate="heading_is_active">Active?</th>
                 <th class="nosort" width="130px" i18n:translate="heading_actions">Actions</th>
               </tr>
-              <tr tal:condition="python: not cat_group.objectValues()">
+              <tr tal:condition="not: cat_group/objectValues">
                 <td colspan="5" align="center" i18n:translate="">No annex types.</td>
               </tr>
               <tal:loop repeat="cat python:cat_group.objectValues()">
-              <tr tal:define="isActive python: here.portal_workflow.getInfoFor(cat, 'review_state') == 'active';
+              <tr tal:define="isActive cat/enabled;
                               oddrow repeat/cat/odd;
                               classOddEven python: oddrow and 'even' or 'odd';"
-                  tal:attributes="class python: not isActive and classOddEven+' state-inactive' or classOddEven"
+                  tal:attributes="class classOddEven"
                   valign="top">
                 <td>
-                  <a tal:attributes="href cat/absolute_url" tal:content="cat/Title">Category title</a>
+                  <a tal:attributes="href cat/absolute_url;
+                                     class python: not isActive and 'state-inactive' or ''"
+                     tal:content="cat/Title">Category title</a>
                   <div class="discreet" tal:define="descr cat/Description" tal:condition="descr" tal:content="descr">Collection description</div>
                   <tal:additionalInformations
                     define="obj python: cat;
@@ -366,13 +370,15 @@
                         <td colspan="5" align="center" i18n:translate="">No annex subtypes.</td>
                       </tr>
                       <tal:loop repeat="sub_cat python: cat.objectValues()">
-                        <tr tal:define="isActive python: here.portal_workflow.getInfoFor(sub_cat, 'review_state') == 'active';
+                        <tr tal:define="isActive sub_cat/enabled;
                                         oddrow repeat/sub_cat/odd;
                                         classOddEven python: oddrow and 'even' or 'odd';"
-                            tal:attributes="class python: not isActive and classOddEven+' state-inactive' or classOddEven"
+                            tal:attributes="class classOddEven"
                             valign="top">
                           <td>
-                            <a tal:attributes="href sub_cat/absolute_url" tal:content="sub_cat/Title">Subcategory title</a>
+                            <a tal:attributes="href sub_cat/absolute_url;
+                                               class python: not isActive and 'state-inactive' or ''"
+                               tal:content="sub_cat/Title">Subcategory title</a>
                             <div class="discreet" tal:define="descr sub_cat/Description" tal:condition="descr" tal:content="descr">Collection description</div>
                             <tal:additionalInformations
                               define="obj python: sub_cat;
@@ -382,10 +388,10 @@
                           </td>
                           <td i18n:domain="plone">
                             <span tal:condition="isActive" i18n:translate="">Yes</span>
-                            <span tal:condition="not: isActive" i18n:translate="">No</span>
+                            <span class="state-inactive" tal:condition="not: isActive" i18n:translate="">No</span>
                           </td>
                           <td align="right">
-                            <!--tal:actions replace="structure python: obj.restrictedTraverse('@@config_actions_panel')(showActions=False, showTransitions=False, showArrows=True)" /-->
+                            <tal:actions replace="structure python: sub_cat.restrictedTraverse('@@actions_panel')(showActions=False, showTransitions=False, showArrows=True)" />
                           </td>
                         </tr>
                       </tal:loop>
@@ -394,10 +400,10 @@
                 </td>
                 <td i18n:domain="plone">
                   <span tal:condition="isActive" i18n:translate="">Yes</span>
-                  <span tal:condition="not: isActive" i18n:translate="">No</span>
+                  <span class="state-inactive" tal:condition="not: isActive" i18n:translate="">No</span>
                 </td>
                 <td align="right">
-                  <!--tal:actions replace="structure python: obj.restrictedTraverse('@@config_actions_panel')(showActions=False, showTransitions=False, showArrows=True)" /-->
+                  <tal:actions replace="structure python: cat.restrictedTraverse('@@actions_panel')(showActions=False, showTransitions=False, showArrows=True)" />
                 </td>
               </tr>
               </tal:loop>
@@ -450,7 +456,7 @@
               <span tal:condition="not: isActive" i18n:translate="">No</span>
             </td>
             <td align="right">
-              <tal:actions replace="structure python: obj.restrictedTraverse('@@config_actions_panel')(showActions=False, showTransitions=False, showArrows=True)" />
+              <tal:actions replace="structure python: obj.restrictedTraverse('@@actions_panel')(showActions=False, showTransitions=False, showArrows=True)" />
             </td>
           </tr>
           </tal:loop>
@@ -502,7 +508,7 @@
               <span tal:condition="not: isActive" i18n:translate="">No</span>
             </td>
             <td align="right">
-              <tal:actions replace="structure python: obj.restrictedTraverse('@@config_actions_panel')(showActions=False, showTransitions=False, showArrows=True)" />
+              <tal:actions replace="structure python: obj.restrictedTraverse('@@actions_panel')(showActions=False, showTransitions=False, showArrows=True)" />
             </td>
           </tr>
           </tal:loop>
@@ -756,7 +762,7 @@
                   <span tal:condition="not: isActive" i18n:translate="">No</span>
                 </td>
                 <td align="right">
-                  <tal:actions replace="structure python: obj.restrictedTraverse('@@config_actions_panel')(showActions=False, showTransitions=False, showArrows=True)" />
+                  <tal:actions replace="structure python: obj.restrictedTraverse('@@actions_panel')(showActions=False, showTransitions=False, showArrows=True)" />
                 </td>
               </tr>
               </tal:loop>
@@ -803,7 +809,7 @@
               <span tal:condition="not: isActive" i18n:translate="">No</span>
             </td>
             <td align="right">
-              <tal:actions replace="structure python: obj.restrictedTraverse('@@config_actions_panel')(showActions=False, showTransitions=False, showArrows=True)" />
+              -
             </td>
           </tr>
           </tal:loop>
@@ -970,13 +976,12 @@
           </td>
         </tr>
         <tr valign="top">
-          <td>
-          </td>
-          <td tal:define="field python:here.getField('enableAnnexConfidentiality')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
           <td tal:define="field python:here.getField('annexConfidentialFor')">
             <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td>
+          </td>
+          <td>
           </td>
         </tr>
         <tr>
@@ -1066,7 +1071,7 @@
           <span tal:condition="not: isActive" i18n:translate="">No</span>
         </td>
         <td align="right">
-          <tal:actions replace="structure python: obj.restrictedTraverse('@@config_actions_panel')(showActions=False, showTransitions=False, showArrows=True)" />
+          <tal:actions replace="structure python: obj.restrictedTraverse('@@actions_panel')(showActions=False, showTransitions=False, showArrows=True)" />
         </td>
       </tr>
       </tal:loop>
@@ -1135,7 +1140,7 @@
               <span tal:condition="not: obj/enabled" i18n:translate="">No</span>
             </td>
             <td align="right">
-              <tal:actions replace="structure python: obj.restrictedTraverse('@@config_actions_panel')(showActions=False, showTransitions=False, showArrows=True)" />
+              <tal:actions replace="structure python: obj.restrictedTraverse('@@actions_panel')(showActions=False, showTransitions=False, showArrows=True)" />
             </td>
           </tr>
           </tal:loop>

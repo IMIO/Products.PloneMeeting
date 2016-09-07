@@ -55,19 +55,16 @@
    <bound-workflow workflow_id="meetingadvice_workflow" />
   </type>
   <type type_id="ContentCategoryConfiguration">
-     <bound-workflow workflow_id="plonemeeting_activity_workflow" />
-  </type>
-  <type type_id="ContentCategoryConfiguration">
-     <bound-workflow workflow_id="plonemeeting_activity_workflow" />
+     <bound-workflow workflow_id="plonemeeting_onestate_workflow" />
   </type>
   <type type_id="ContentCategoryGroup">
-     <bound-workflow workflow_id="plonemeeting_activity_workflow" />
+     <bound-workflow workflow_id="plonemeeting_onestate_workflow" />
   </type>
   <type type_id="ContentCategory">
-     <bound-workflow workflow_id="plonemeeting_activity_workflow" />
+     <bound-workflow workflow_id="plonemeeting_onestate_workflow" />
   </type>
   <type type_id="ContentSubcategory">
-     <bound-workflow workflow_id="plonemeeting_activity_workflow" />
+     <bound-workflow workflow_id="plonemeeting_onestate_workflow" />
   </type>
   <type type_id="ToolPloneMeeting">
      <bound-workflow workflow_id="plonemeeting_onestate_workflow" />
@@ -75,6 +72,5 @@
   <type type_id="annexDecision">
      <bound-workflow workflow_id="" />
   </type>
-<!-- ##/code-section workflowbindings -->
  </bindings>
 </object>

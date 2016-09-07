@@ -57,7 +57,7 @@
               <span tal:condition="not: isActive" i18n:translate="">No</span>
             </td>
             <td align="right">
-                <tal:actions replace="structure python: obj.restrictedTraverse('@@config_actions_panel')(showActions=False, showTransitions=False, showArrows=True)" />
+                <tal:actions replace="structure python: obj.restrictedTraverse('@@actions_panel')(showActions=False, showTransitions=False, showArrows=True)" />
             </td>
           </tr>
           </tal:loop>
@@ -115,7 +115,7 @@
               <span tal:condition="not: isActive" i18n:translate="">No</span>
             </td>
             <td align="right">
-                <tal:actions replace="structure python: obj.restrictedTraverse('@@config_actions_panel')(showActions=False, showTransitions=False, showArrows=True)" />
+                <tal:actions replace="structure python: obj.restrictedTraverse('@@actions_panel')(showActions=False, showTransitions=False, showArrows=True)" />
             </td>
           </tr>
           </tal:loop>

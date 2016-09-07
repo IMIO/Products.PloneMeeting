@@ -1,12 +1,12 @@
 <?xml version="1.0"?>
-<object name="ContentCategory" meta_type="Dexterity FTI" i18n:domain="PloneMeeting"
+<object name="ContentCategory" meta_type="Dexterity FTI"
    xmlns:i18n="http://xml.zope.org/namespaces/i18n">
  <property name="schema"></property>
  <property name="model_source">
     &lt;model xmlns:i18n=&quot;http://xml.zope.org/namespaces/i18n&quot; xmlns:security=&quot;http://namespaces.plone.org/supermodel/security&quot; xmlns:marshal=&quot;http://namespaces.plone.org/supermodel/marshal&quot; xmlns:form=&quot;http://namespaces.plone.org/supermodel/form&quot; xmlns=&quot;http://namespaces.plone.org/supermodel/schema&quot; i18n:domain=&quot;PloneMeeting&quot;&gt;
       &lt;schema based-on=&quot;collective.iconifiedcategory.content.category.ICategory&quot;&gt;
         &lt;field name=&quot;other_mc_correspondences&quot; type=&quot;zope.schema.Set&quot;&gt; 
-          &lt;description/&gt;
+          &lt;description i18n:translate=&quot;&quot;&gt;other_mc_correspondences_descr&lt;/description&gt;
           &lt;required&gt;False&lt;/required&gt;
           &lt;title i18n:translate=&quot;&quot;&gt;PloneMeeting_label_otherMCCorrespondences&lt;/title&gt;
           &lt;form:widget type="z3c.form.browser.checkbox.CheckBoxWidget"&gt;&lt;/form:widget&gt;

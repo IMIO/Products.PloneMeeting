@@ -3,10 +3,8 @@
 <tal:back define="parent context/getParentNode;
                   parentIsTool python: parent.meta_type == 'ToolPloneMeeting'"
           i18n:domain="PloneMeeting">
-  <div class="pm_back_to_tool_link" tal:condition="python: parentIsTool or
-                                                   (parent.getParentNode().meta_type == 'MeetingConfig') or
-                                                   (context.meta_type == 'DashboardCollection')">
-    &nbsp;<a tal:attributes="href python: context.portal_plonemeeting.getBackUrl(context);"
+  <div class="pm_back_to_tool_link">
+    &nbsp;<a tal:attributes="href python: view.getBackUrl();"
              i18n:translate="back">Back to parent</a>
   </div>
 </tal:back>

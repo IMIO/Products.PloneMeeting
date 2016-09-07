@@ -11,6 +11,7 @@
   <include package="collective.documentviewer"/>
   <include package="collective.datagridcolumns"/>
   <include package="collective.iconifieddocumentactions"/>
+  <include package="collective.iconifiedcategory"/>
   <include package="collective.js.fancytree"/>
   <include package="collective.js.jqueryui"/>
   <include package="collective.messagesviewlet"/>
@@ -236,5 +237,18 @@
     <implements interface="collective.plonefinder.browser.interfaces.IFinderUploadCapable" />
     <implements interface="collective.quickupload.interfaces.IQuickUploadCapable" />
   </class>
+  <!-- makes the annex ContentCategory and ContentSubcategory added in the configuration
+       act like elements of the configuration... -->
+  <class class="collective.iconifiedcategory.content.categorygroup.CategoryGroup">
+    <implements interface="Products.PloneMeeting.interfaces.IConfigElement" />
+  </class>
+  <class class="collective.iconifiedcategory.content.category.Category">
+    <implements interface="Products.PloneMeeting.interfaces.IConfigElement" />
+  </class>
+  <class class="collective.iconifiedcategory.content.subcategory.Subcategory">
+    <implements interface="Products.PloneMeeting.interfaces.IConfigElement" />
+  </class>
+    
+
 
 </configure>

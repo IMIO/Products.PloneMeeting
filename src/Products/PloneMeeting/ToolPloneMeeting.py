@@ -309,9 +309,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     ploneMeetingTypes = ('MeetingItem', 'MeetingFile')
     ocrLanguages = ('eng', 'fra', 'deu', 'ita', 'nld', 'por', 'spa', 'vie')
-    backPages = {'categories': 'data', 'classifiers': 'data',
-                 'meetingfiletypes': 'data', 'meetingusers': 'users',
-                 'podtemplates': 'doc'}
 
     # tool should not appear in portal_catalog
     def at_post_edit_script(self):
@@ -1094,25 +1091,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 if user.id not in [u.strip() for u in self.getUnrestrictedUsers().split('\n')]:
                     res = False
         return res
-
-    security.declarePublic('getBackUrl')
-
-    def getBackUrl(self, context):
-        '''Computes the URL for "back" links in the tool or in a config.'''
-        url = ''
-        if context.meta_type == 'DashboardCollection':
-            url = context.getMeetingConfig(context).absolute_url()
-            url += '?pageName=%s#%s' % ('gui', 'searches')
-        elif context.getParentNode().meta_type == 'ATFolder':
-            # p_context is a sub-object in a sub-folder within a config
-            folderName = context.getParentNode().id
-            url = context.getParentNode().getParentNode().absolute_url()
-            url += '?pageName=%s#%s' % (self.backPages[folderName], folderName)
-        else:
-            # We are in a subobject from the tool.
-            url = context.getParentNode().absolute_url()
-            url += '#%s' % context.meta_type
-        return url
 
     security.declarePrivate('pasteItem')
 

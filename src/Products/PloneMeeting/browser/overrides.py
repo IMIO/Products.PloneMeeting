@@ -79,7 +79,8 @@ class PloneMeetingGlobalSectionsViewlet(GlobalSectionsViewlet):
         path = url[plone_url_len:]
 
         #XXX change by PM
-        mc = self.context.portal_plonemeeting.getMeetingConfig(self.context)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        mc = tool.getMeetingConfig(self.context)
         #XXX end of change by PM
 
         for action in portal_tabs:
@@ -137,13 +138,18 @@ class PloneMeetingContentActionsViewlet(ContentActionsViewlet):
         if self.context.meta_type in ('ATTopic', 'Meeting', 'MeetingItem',  'MeetingCategory',
                                       'MeetingConfig', 'MeetingGroup', 'MeetingFileType', 'MeetingUser',
                                       'PodTemplate', 'ToolPloneMeeting',) or \
-           self.context.portal_type.startswith('meetingadvice', ):
+           self.context.portal_type.startswith(('meetingadvice', 'ContentCategory',)):
             return ''
         return self.index()
 
 
 class PMConfigActionsPanelViewlet(ActionsPanelViewlet):
     """Render actionspanel viewlet differently for elements of the MeetingConfig."""
+
+    backPages = {'categories': 'data',
+                 'classifiers': 'data',
+                 'meetingusers': 'users',
+                 'podtemplates': 'doc', }
 
     def renderViewlet(self):
         """ """
@@ -154,6 +160,32 @@ class PMConfigActionsPanelViewlet(ActionsPanelViewlet):
                                                                   showEdit=False,
                                                                   showDelete=False,
                                                                   showActions=False)
+
+    def getBackUrl(self):
+        '''Computes the URL for "back" links in the tool or in a config.'''
+        url = ''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        cfg_url = ''
+        if cfg:
+            cfg_url = cfg.absolute_url()
+        parent = self.context.getParentNode()
+        if self.context.meta_type == 'DashboardCollection':
+            url = '{0}?pageName=gui#searches'.format(cfg_url)
+        elif parent.meta_type == 'ATFolder':
+            # p_context is a sub-object in a sub-folder within a config
+            folderName = parent.getId()
+            url = '{0}?pageName={1}#{2}'.format(cfg_url, self.backPages[folderName], folderName)
+        elif self.context.portal_type in ('ContentCategoryConfiguration',
+                                          'ContentCategoryGroup',
+                                          'ContentCategory',
+                                          'ContentSubcategory'):
+            url = '{0}?pageName=data#annexes_types'.format(cfg_url, )
+        else:
+            # We are in a subobject from the tool.
+            url = tool.absolute_url()
+            url += '#%s' % self.context.meta_type
+        return url
 
 
 class BaseGeneratorLinksViewlet():
@@ -228,7 +260,8 @@ class PloneMeetingOverviewControlPanel(OverviewControlPanel):
     '''
     def version_overview(self):
         versions = super(PloneMeetingOverviewControlPanel, self).version_overview()
-        pm_version = self.context.portal_setup.getProfileInfo('profile-Products.PloneMeeting:default')['version']
+        portal_setup = api.portal.get_tool('portal_setup')
+        pm_version = portal_setup.getProfileInfo('profile-Products.PloneMeeting:default')['version']
         versions.insert(0, 'PloneMeeting %s' % pm_version)
         return versions
 
@@ -582,9 +615,9 @@ class ConfigActionsPanelView(ActionsPanelView):
     def __init__(self, context, request):
         super(ConfigActionsPanelView, self).__init__(context, request)
         self.SECTIONS_TO_RENDER = ('renderEdit',
-                                   'renderOwnDelete',
                                    'renderArrows',
-                                   'renderTransitions')
+                                   'renderTransitions',
+                                   'renderOwnDelete')
         if self.context.meta_type == 'MeetingGroup':
             self.SECTIONS_TO_RENDER = self.SECTIONS_TO_RENDER + ('renderLinkedPloneGroups', )
 
@@ -616,7 +649,9 @@ class ConfigActionsPanelView(ActionsPanelView):
         if self.context.meta_type == "MeetingGroup":
             return "#meetinggroups"
         # most are used on the 'data' fieldset, use this as default
-        return "../?pageName=data#{0}".format(folderId)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        return "{0}/?pageName=data#{1}".format(cfg.absolute_url(), folderId)
 
     def mayEdit(self):
         """
