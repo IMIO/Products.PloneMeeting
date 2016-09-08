@@ -1308,6 +1308,11 @@ class IconifiedCategoryGroupAdapter(object):
         if self.context.meta_type == 'MeetingItem' or parent.meta_type == 'MeetingItem':
             isItemDecisionAnnex = False
             if self.context.meta_type == 'MeetingItem':
+
+                # it is possible to force to use the item_decision_annexes group
+                if self.context.REQUEST.get('force_use_item_decision_annexes_group', False):
+                    return cfg.annexes_types.item_decision_annexes
+
                 # we are adding a new annex, get annex portal_type from form_instance
                 # manage also the InlineValidation view
                 if hasattr(self.context.REQUEST['PUBLISHED'], 'form_instance'):

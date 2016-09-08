@@ -20,10 +20,11 @@ from plone.memoize import ram
 from plone.memoize.view import memoize_contextless
 
 from collective.behavior.talcondition.utils import _evaluateExpression
-from collective.iconifiedcategory.browser.tabview import CategorizedTabView
 from collective.ckeditor.browser.ckeditorfinder import CKFinder
 from collective.documentgenerator.content.pod_template import IPODTemplate
 from collective.eeafaceted.collectionwidget.browser.views import RenderCategoryView
+from collective.iconifiedcategory.browser.tabview import CategorizedTabView
+from collective.iconifiedcategory.utils import get_categories
 from eea.facetednavigation.browser.app.view import FacetedContainerView
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.actionspanel.browser.viewlets import ActionsPanelViewlet
@@ -793,6 +794,19 @@ class CategorizedAnnexesView(CategorizedTabView):
         super(CategorizedAnnexesView, self).__init__(context, request)
         self.portal_url = api.portal.get().absolute_url()
         self.tool = api.portal.get_tool('portal_plonemeeting')
+
+    def showAnnexesSection(self):
+        """ """
+        return get_categories(self.context) or \
+            self.tool.hasAnnexes(self.context)
+
+    def showDecisionAnnexesSection(self):
+        """ """
+        self.request.set('force_use_item_decision_annexes_group', True)
+        hasDecisionAnnexesTypes = get_categories(self.context)
+        self.request.set('force_use_item_decision_annexes_group', False)
+        return hasDecisionAnnexesTypes or \
+            self.tool.hasAnnexes(self.context, portal_type='annexDecision')
 
 
 class PMCKFinder(CKFinder):

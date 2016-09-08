@@ -56,6 +56,7 @@ from plone.memoize import ram
 from plone import api
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.iconifiedcategory.utils import get_categorized_elements
+from collective.iconifiedcategory.utils import get_categories
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.dashboard.utils import enableFacetedDashboardFor
 from imio.helpers.cache import invalidate_cachekey_volatile_for
@@ -872,7 +873,22 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             return False
         elif context.meta_type in ('MeetingItem', 'Meeting') or \
                 context.portal_type.startswith('meetingadvice'):
-            return True
+            # check that there are categories defined in the configuration
+            hasAnnexesTypes = get_categories(self)
+            hasDecisionAnnexesTypes = False
+            if not hasAnnexesTypes:
+                # maybe we have decision related annexes types?
+                self.REQUEST.set('force_use_item_decision_annexes_group', True)
+                hasDecisionAnnexesTypes = get_categories(self)
+                self.REQUEST.set('force_use_item_decision_annexes_group', False)
+            if hasAnnexesTypes or hasDecisionAnnexesTypes:
+                return True
+
+            # last thing, eventually check that there are annexes in self
+            # even if annexes types are no longer used...
+            if self.hasAnnexes(context) or \
+               self.hasAnnexes(context, portal_type='annexDecision'):
+                return True
         return False
 
     security.declarePublic('showFacetedCriteriaAction')

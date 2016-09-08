@@ -2,10 +2,12 @@
       i18n:domain="PloneMeeting">
   <body>
     <div metal:fill-slot="main">
-      <h1 i18n:translate="" class="documentFirstHeading">Categorized elements</h1>
-      <fieldset>
+      <h1 class="documentFirstHeading">
+       <span tal:content="structure here/getPrettyLink">Item pretty title</span>
+      </h1>
+      <fieldset tal:condition="view/showAnnexesSection">
         <legend>
-          <span>Annexes</span>
+          <span i18n:translate="">Annexes</span>
             <a href="++add++annex"
                  class="link-overlay-pm-annex">
                 <img i18n:attributes="title"
@@ -23,11 +25,11 @@
           <br />
           <tal:annexes replace="structure python: context.restrictedTraverse('categorized-childs')(portal_type='annex')" />
         </div>
-
       </fieldset>
-      <fieldset>
+
+      <fieldset tal:condition="view/showDecisionAnnexesSection">
         <legend>
-          <span>Decision annexes</span>
+          <span i18n:translate="">AnnexesDecisionShort</span>
             <a href="++add++annexDecision"
                  class="link-overlay-pm-annex">
                 <img i18n:attributes="title"
@@ -45,7 +47,6 @@
           <br />
           <tal:annexes replace="structure python: context.restrictedTraverse('categorized-childs')(portal_type='annexDecision')" />
         </div>
-
       </fieldset>
     </div>
   </body>

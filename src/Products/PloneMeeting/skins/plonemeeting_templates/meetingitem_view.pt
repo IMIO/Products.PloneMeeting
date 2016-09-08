@@ -9,7 +9,16 @@
 
   <body>
   <metal:title fill-slot="content-title">
-   <metal:header use-macro="here/@@pm-macros/itemHeader"/>
+   <h1 class="documentFirstHeading">
+    <span tal:content="structure here/getPrettyLink">Item pretty title</span>
+    <tal:itemRef define="itemNumber python: context.getItemNumber(relativeTo='meeting', for_display=True)"
+                 condition="python: context.adapted().mustShowItemReference()">
+      <br />
+      <span class="discreet" tal:condition="python: itemNumber != None"
+                             tal:content="python: str(itemNumber) + '.'"></span>
+      <span class="discreet" tal:content="python: context.adapted().getItemReference()"></span>
+    </tal:itemRef>
+   </h1>
   </metal:title>
   <metal:description fill-slot="content-description">
    <tal:comment replace="nothing">Just hide the description as shown by default by Plone</tal:comment>
@@ -295,6 +304,19 @@
                  tal:condition="python: ('privacy' in usedAttrs) and privacy">
               <span class="#" tal:attributes="class string:item_privacy_${privacy}" tal:content="privacy" i18n:translate="" />
             </div>
+
+            <tal:comment replace="nothing">To discuss?</tal:comment>
+            <div class="discreet" tal:condition="python: 'toDiscuss' in usedAttrs">
+             <tal:defines define="td context/getToDiscuss">
+              <tal:to_discuss condition="td">
+               <img src="#" tal:attributes="src string:${portal_url}/toDiscussYes.png">&nbsp;<span class="item_attribute_label" i18n:translate="to_discuss_yes">This item is to discuss</span>
+              </tal:to_discuss>
+              <tal:not_to_discuss condition="not: td">
+               <img src="#" tal:attributes="src string:${portal_url}/toDiscussNo.png">&nbsp;<span class="item_attribute_label" i18n:translate="to_discuss_no">This item is not to discuss</span>
+              </tal:not_to_discuss>
+             </tal:defines>
+            </div>
+
             <tal:comment replace="nothing">Poll type</tal:comment>
             <div class="discreet" tal:condition="python: 'pollType' in usedAttrs">
                 <span class="item_attribute_label"
@@ -312,6 +334,7 @@
               </tal:not_oral_question>
              </tal:defines>
             </div>
+
             <tal:comment replace="nothing">Item initiator</tal:comment>
             <div class="discreet" tal:condition="python: 'itemInitiator' in usedAttrs">
                 <tal:defines define="itemInitiator context/getItemInitiator">

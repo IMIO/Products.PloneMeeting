@@ -916,6 +916,17 @@ schema = Schema((
         ),
         optional=True,
     ),
+    BooleanField(
+        name='toDiscuss',
+        widget=BooleanField._properties['widget'](
+            condition="here/showToDiscuss",
+            label='Todiscuss',
+            label_msgid='PloneMeeting_label_toDiscuss',
+            i18n_domain='PloneMeeting',
+        ),
+        optional=True,
+        default_method="getDefaultToDiscuss",
+    ),
     LinesField(
         name='itemInitiator',
         widget=MultiSelectionWidget(
@@ -998,17 +1009,6 @@ schema = Schema((
         default_output_type="text/x-html-safe",
         optional=True,
         write_permission="PloneMeeting: Write item MeetingManager reserved fields",
-    ),
-    BooleanField(
-        name='toDiscuss',
-        widget=BooleanField._properties['widget'](
-            condition="here/showToDiscuss",
-            label='Todiscuss',
-            label_msgid='PloneMeeting_label_toDiscuss',
-            i18n_domain='PloneMeeting',
-        ),
-        optional=True,
-        default_method="getDefaultToDiscuss",
     ),
     LinesField(
         name='templateUsingGroups',

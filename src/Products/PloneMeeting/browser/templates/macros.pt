@@ -217,34 +217,6 @@ document.location.reload(true);
 </metal:field>
 
 <tal:comment replace="nothing">
-  This macro displays item title and reference on several item-related pages
-  (view, annexes, etc).
-</tal:comment>
-<metal:itemHeader define-macro="itemHeader" i18n:domain="PloneMeeting">
-<h1 class="documentFirstHeading">
-  <tal:comment replace="nothing">toDiscuss field</tal:comment>
-  <tal:discuss condition="context/showToDiscuss">
-    <img tal:condition="context/getToDiscuss"
-         tal:attributes="src string: $portal_url/toDiscussYes.png"
-         title="to_discuss_yes" i18n:attributes="title"/>
-    <img tal:condition="not: context/getToDiscuss"
-         tal:attributes="src string: $portal_url/toDiscussNo.png"
-         title="to_discuss_no" i18n:attributes="title"/>
-  </tal:discuss>
-  <tal:comment replace="nothing">Item title</tal:comment>
-  <span tal:replace="structure here/getPrettyLink"/>
-  <br/>
-  <tal:comment replace="nothing">Item number and reference</tal:comment>
-  <tal:itemRef define="itemNumber python: context.getItemNumber(relativeTo='meeting', for_display=True)"
-               condition="python: context.adapted().mustShowItemReference()">
-    <span class="discreet" tal:condition="python: itemNumber != None"
-                           tal:content="python: str(itemNumber) + '.'"></span>
-    <span class="discreet" tal:content="python: context.adapted().getItemReference()"></span>
-  </tal:itemRef>
-</h1>
-</metal:itemHeader>
-
-<tal:comment replace="nothing">
   This macro manage the takenOverBy attribute of MeetingItem viewed on different views.
   It manage the fact that it can be Ajax-edited in several context.
   This macro need :
