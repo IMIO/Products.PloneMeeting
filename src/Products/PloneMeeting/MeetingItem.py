@@ -4512,12 +4512,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('at_post_create_script')
 
     def at_post_create_script(self, **kwargs):
-        # Create a "black list" of annex names. Every time an annex will be
-        # created for this item, the name used for it (=id) will be stored here
-        # and will not be removed even if the annex is removed. This way, two
-        # annexes (or two versions of it) will always have different URLs, so
-        # we avoid problems due to browser caches.
-        self.alreadyUsedAnnexNames = PersistentList()
         # The following field allows to store events that occurred in the life
         # of an item, like annex deletions or additions.
         self.itemHistory = PersistentList()
@@ -4536,8 +4530,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self.manage_addLocalRoles(userId, ('Owner',))
         self.updateLocalRoles(isCreated=True,
                               inheritedAdviserIds=kwargs.get('inheritedAdviserIds', []))
-        # update annexIndex
-        IAnnexable(self).updateAnnexIndex()
         # Apply potential transformations to richtext fields
         transformAllRichTextFields(self)
         # Make sure we have 'text/html' for every Rich fields

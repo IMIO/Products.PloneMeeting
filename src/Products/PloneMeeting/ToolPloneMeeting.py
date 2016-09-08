@@ -1641,7 +1641,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 
     def hasAnnexes(self, context, portal_type='annex'):
-        ''' '''
+        '''Does given p_context contains annexes of type p_portal_type?'''
         return bool(get_categorized_elements(context, portal_type=portal_type))
 
     security.declarePublic('updateAllLocalRoles')

@@ -285,9 +285,7 @@ def onItemMoved(item, event):
     # this is also called when removing an item, in this case, we do nothing
     if IObjectRemovedEvent.providedBy(event):
         return
-    if not hasattr(aq_base(item), 'annexIndex'):
-        item.annexIndex = PersistentList()
-    IAnnexable(item).updateAnnexIndex()
+    # ???
 
 
 def onItemAdded(item, event):
@@ -300,8 +298,6 @@ def onItemAdded(item, event):
        role.'''
     user = api.user.get_current()
     item.manage_addLocalRoles(user.getId(), ('MeetingMember',))
-    # Add a place to store annexIndex
-    item.annexIndex = PersistentList()
     # Add a place to store adviceIndex
     item.adviceIndex = PersistentMapping()
     # Add a place to store emergency changes history
@@ -357,15 +353,6 @@ def onAdviceAdded(advice, event):
     # before the onAdviceAdded...
     if not advice.advice_row_id:
         advice._updateAdviceRowId()
-
-    # Add a place to store annexIndex
-    advice.annexIndex = PersistentList()
-    # Create a "black list" of annex names. Every time an annex will be
-    # created for this item, the name used for it (=id) will be stored here
-    # and will not be removed even if the annex is removed. This way, two
-    # annexes (or two versions of it) will always have different URLs, so
-    # we avoid problems due to browser caches.
-    advice.alreadyUsedAnnexNames = PersistentList()
 
     item = advice.getParentNode()
     item.updateLocalRoles()
@@ -524,7 +511,7 @@ def onAnnexEditFinished(annex, event):
 
 
 def onAnnexRemoved(annex, event):
-    '''When an annex is removed, we need to update item (parent) annexIndex.'''
+    '''When an annex is removed, we need to update item (parent).'''
     # bypass this if we are actually removing the 'Plone Site'
     if event.object.meta_type == 'Plone Site':
         return

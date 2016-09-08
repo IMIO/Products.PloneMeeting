@@ -11,6 +11,7 @@ from plone import api
 from plone.namedfile.file import NamedBlobFile
 from plone.namedfile.file import NamedBlobImage
 from Products.CMFPlone.utils import safe_unicode
+from collective.iconifiedcategory.utils import calculate_category_id
 from imio.dashboard.utils import _updateDefaultCollectionFor
 from imio.helpers.catalog import removeIndexes
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_REAPPLY
@@ -733,6 +734,7 @@ class Migrate_To_4_0(Migrator):
         # necessary for versions in between...
         tool = api.portal.get_tool('portal_plonemeeting')
         wfTool = api.portal.get_tool('portal_workflow')
+        old_mft_new_cat_id_mappings = {}
         for cfg in tool.objectValues('MeetingConfig'):
             cfg._createSubFolders()
             if cfg.annexes_types.item_annexes.objectIds() or \
@@ -770,6 +772,7 @@ class Migrate_To_4_0(Migrator):
                     to_print=to_print_default,
                     confidential=mft.getIsConfidentialDefault(),
                     enabled=bool(wfTool.getInfoFor(mft, 'review_state') == 'active'))
+                old_mft_new_cat_id_mappings[mft.UID()] = calculate_category_id(category)
                 category._v_old_mft = mft.UID()
                 for subType in mft.getSubTypes():
                     subcat = api.content.create(
@@ -782,6 +785,8 @@ class Migrate_To_4_0(Migrator):
                         confidential=bool(subType['isConfidentialDefault'] == '1'),
                         enabled=bool(subType['isActive'] == '1')
                     )
+                    old_mft_new_cat_id_mappings[mft.UID() + '__subtype__' + subType['row_id']] = \
+                        calculate_category_id(category)
                     subcat._v_old_mft = subType['row_id']
         # now that categories and subcategories are created, we are
         # able to update the otherMCCorrespondences attribute
@@ -860,6 +865,48 @@ class Migrate_To_4_0(Migrator):
             delattr(cfg, 'annexDecisionToPrintDefault')
             delattr(cfg, 'annexAdviceToPrintDefault')
             delattr(cfg, 'enableAnnexConfidentiality')
+
+        # migrate MeetingFiles
+        logger.info('Moving MeetingFiles to annexes...')
+        catalog = api.portal.get_tool('portal_catalog')
+        brains = catalog(meta_type=('MeetingItem', ))
+        brains = brains + catalog(object_provides='Products.PloneMeeting.content.advice.IMeetingAdvice')
+        total = len(brains)
+        i = 1
+        for brain in brains:
+            logger.info('Migrating element {1}/{2}...'.format(brain.portal_type,
+                                                              i, total))
+            i = i + 1
+            obj = brain.getObject()
+            mfs = obj.objectValues('MeetingFile')
+            if mfs:
+                for mf in mfs:
+                    annex_id = mf.getId()
+                    annex_type = mf.findRelatedTo() == 'item_decision' and 'annexDecision' or 'annex'
+                    annex_title = mf.Title()
+                    mf_file = mf.getFile()
+                    annex_file = NamedBlobFile(
+                        data=mf_file.data,
+                        contentType=mf_file.getContentType(),
+                        filename=safe_unicode(mf_file.filename))
+                    annex_to_print = mf.getToPrint()
+                    annex_confidential = mf.getIsConfidential()
+                    annex_content_category = old_mft_new_cat_id_mappings[mf.getMeetingFileType()]
+                    # remove mf before creating new annex because we will use same id
+                    obj.manage_delObjects(ids=[annex_id])
+                    api.content.create(
+                        id=annex_id,
+                        type=annex_type,
+                        container=obj,
+                        title=safe_unicode(annex_title),
+                        file=annex_file,
+                        to_print=annex_to_print,
+                        confidential=annex_confidential,
+                        content_category=annex_content_category,
+                        )
+                delattr(obj, 'alreadyUsedAnnexNames')
+                delattr(obj, 'annexIndex')
+
         logger.info('Done.')
 
     def run(self):
