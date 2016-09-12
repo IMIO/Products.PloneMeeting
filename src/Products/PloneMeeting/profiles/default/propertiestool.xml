@@ -30,4 +30,11 @@
    <element value="Topic"/>
   </property>
  </object>
+ <object name="ckeditor_properties" meta_type="Plone Property Sheet">
+  <property name="plugins" type="lines">
+   <element value="ajaxsave;/++resource++cke_ajaxsave/plugin.js"/>
+   <element
+      value="tableresize;/++resource++ckeditor/plugins/tableresize/plugin.js"/>
+  </property>
+ </object>
 </object>
