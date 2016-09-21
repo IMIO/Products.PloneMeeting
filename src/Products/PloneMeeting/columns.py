@@ -2,9 +2,10 @@
 from DateTime import DateTime
 from zope.i18n import translate
 
+from plone import api
+
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
-from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.interfaces import IMeeting
 
 from collective.eeafaceted.z3ctable.columns import AbbrColumn
@@ -93,7 +94,8 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
                 # avoid problems while concataining None and unicode
                 self.header_js = u''
             self.header_js += u'<script type="text/javascript">jQuery(document).ready' + \
-                u'(initializeMenusAXStartingAt($("#content")));initializePMOverlays()</script>'
+                u'(initializeMenusAXStartingAt($("#content")));initializePMOverlays();' + \
+                u'initializeIconifiedCategoryWidget();</script>'
             showHideMsg = translate("show_or_hide_details",
                                     domain="PloneMeeting",
                                     context=self.request,
@@ -114,12 +116,20 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
         annexes = staticInfos = moreInfos = ''
 
         if obj.meta_type == 'MeetingItem':
-            tool = getToolByName(self.context, 'portal_plonemeeting')
+            tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self.context)
             # display annexes and infos if item and item isPrivacyViewable
             if obj.adapted().isPrivacyViewable():
-                annexes = obj.restrictedTraverse('@@annexes-icons')(relatedTo='item_decision') + \
-                    obj.restrictedTraverse('@@annexes-icons')(relatedTo='item')
+                annexes = ''
+                if tool.hasAnnexes(obj, portal_type='annex'):
+                    annexes += obj.restrictedTraverse('categorized-childs')(portal_type='annex')
+                member = api.user.get_current()
+                if member.has_permission('PloneMeeting: Read decision annex', obj) and \
+                   tool.hasAnnexes(obj, portal_type='annexDecision'):
+                    annexes += translate("AnnexesDecisionShort",
+                                         domain='PloneMeeting',
+                                         context=obj.REQUEST)
+                    annexes += obj.restrictedTraverse('categorized-childs')(portal_type='annexDecision')
                 # display moreInfos about item
                 # visible columns are one define for items listings or when the meeting is displayed
                 # so check where we are
@@ -160,7 +170,7 @@ class ItemLinkedMeetingColumn(BaseColumn):
         if not value or value == DateTime('1950/01/01'):
             return u'-'
         else:
-            catalog = getToolByName(item, 'uid_catalog')
+            catalog = api.portal.get_tool('uid_catalog')
             meeting = catalog(UID=getattr(item, self.meeting_uid_attr))[0].getObject()
             prettyLinker = IPrettyLink(meeting)
             pretty_link = prettyLinker.getLink()
