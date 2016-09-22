@@ -474,9 +474,9 @@ def onAdviceTransition(advice, event):
 
 def onAnnexAdded(annex, event):
     ''' '''
-    # redirect to the annexes table view
     parent = annex.getParentNode()
-    annex.REQUEST.RESPONSE.redirect(parent.absolute_url() + '/@@categorized-annexes')
+    if '/++add++annex' in annex.REQUEST.getURL():
+        annex.REQUEST.RESPONSE.redirect(parent.absolute_url() + '/@@categorized-annexes')
 
     # if it is an annex added on an item, versionate given advices if necessary
     if parent.meta_type == 'MeetingItem':
