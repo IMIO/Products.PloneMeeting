@@ -1525,6 +1525,11 @@ input[id^='value_moveAction_'] {
     width: 35px;
 }
 
+div.dashboard_annexes {
+    width: 100%;
+    text-align: right;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */
