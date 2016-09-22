@@ -55,8 +55,11 @@ from Products.DataGridField.Column import Column
 from plone.memoize import ram
 from plone import api
 from collective.behavior.talcondition.utils import _evaluateExpression
+from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.utils import get_categorized_elements
 from collective.iconifiedcategory.utils import get_categories
+from collective.iconifiedcategory.utils import get_category_object
+from collective.iconifiedcategory.utils import update_categorized_elements
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.dashboard.utils import enableFacetedDashboardFor
 from imio.helpers.cache import invalidate_cachekey_volatile_for
@@ -79,7 +82,6 @@ from Products.PloneMeeting.config import PY_DATETIME_WEEKDAYS
 from Products.PloneMeeting.config import RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import ROOT_FOLDER
 from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
-from Products.PloneMeeting.interfaces import IAnnexable, IMeetingFile
 from Products.PloneMeeting.profiles import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.profiles import PloneMeetingConfiguration
 from Products.PloneMeeting.utils import getCustomAdapter, \
@@ -932,7 +934,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def getColoredLink(self, obj, showColors=True, showContentIcon=False, contentValue='',
                        target='_self', maxLength=0, inMeeting=True,
                        meeting=None, appendToUrl='', additionalCSSClasses='',
-                       tag_title=None, annexInfo=False):
+                       tag_title=None):
         '''Produces the link to an item or annex with the right color (if the
            colors must be shown depending on p_showColors). p_target optionally
            specifies the 'target' attribute of the 'a' tag. p_maxLength
@@ -975,26 +977,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if obj.meta_type == 'MeetingItem' and not obj.adapted().isPrivacyViewable():
             params['isViewable'] = False
 
-        # if we received annexInfo, the adapted element is the meetingItem but we want actually
-        # to display a link to an annex and for performance reason, we received the annexIndex
-        if annexInfo:
-            # do not display colors
-            params['showColors'] = False
-            # do not showIcons or icons of the item are shown...
-            params['showIcons'] = False
-            # annexInfo is either an annexInfo or a MeetingFile instance...
-            if IMeetingFile.providedBy(annexInfo):
-                annexInfo = annexInfo.getAnnexInfo()
-            params['contentValue'] = annexInfo['Title']
-            if annexInfo['warnSize']:
-                params['contentValue'] += \
-                    "&nbsp;<span title='{0}' style='color: red; cursor: help;'>({1})</span>".format(
-                        translate("annex_size_warning",
-                                  domain="PloneMeeting",
-                                  context=self.REQUEST,
-                                  default="Annex size is huge, it could be difficult "
-                                  "to be downloaded!").encode('utf-8'),
-                        annexInfo['friendlySize'])
         adapted.__init__(obj, **params)
         return adapted.getLink()
 
@@ -1213,7 +1195,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             # defined meetingFileTypes in the destMeetingConfig
             noMeetingFileTypes = False
             if copyAnnexes and \
-               IAnnexable(newItem).getAnnexes() and \
+               get_categorized_elements(newItem) and \
                not destMeetingConfig.getFileTypes():
                 noMeetingFileTypes = True
                 plone_utils = api.portal.get_tool('plone_utils')
@@ -1224,33 +1206,29 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 plone_utils.addPortalMessage(msg, 'warning')
             if not copyAnnexes or noMeetingFileTypes:
                 # Delete the annexes that have been copied.
-                for annex in IAnnexable(newItem).getAnnexes():
+                for annex in get_categorized_elements(newItem, the_objects=True):
                     unrestrictedRemoveGivenObject(annex)
             else:
-                # Recreate the references to annexes: the references can NOT be kept
-                # on copy because it would be references to original annexes
-                # and we need references to freshly created annexes
-                # moreover set a correct value for annex.toPrint
-                for annexTypeRelatedTo in ('item', 'item_decision'):
-                    if annexTypeRelatedTo == 'item':
-                        toPrintDefault = destMeetingConfig.getAnnexToPrintDefault()
-                    else:
-                        toPrintDefault = destMeetingConfig.getAnnexDecisionToPrintDefault()
-                    oldAnnexes = IAnnexable(copiedItem).getAnnexes(relatedTo=annexTypeRelatedTo)
-                    for oldAnnex in oldAnnexes:
-                        newAnnex = getattr(newItem, oldAnnex.id)
-                        # In case the item is copied from another MeetingConfig, we need
-                        # to update every annex.meetingFileType because it still refers
-                        # the meetingFileType in the old MeetingConfig the item is copied from
-                        if newPortalType:
-                            if not self._updateMeetingFileTypesAfterSentToOtherMeetingConfig(newAnnex):
-                                raise Exception('Could not update meeting file type of copied annex at %s!'
-                                                % oldAnnex.absolute_url())
-                        # initialize toPrint correctly regarding configuration
-                        if not destMeetingConfig.getKeepOriginalToPrintOfClonedItems():
-                            newAnnex.setToPrint(toPrintDefault)
-                        # call processForm on the newAnnex so it is fully initialized
-                        newAnnex.processForm()
+                # manage the otherMCCorrespondence
+                oldAnnexes = get_categorized_elements(copiedItem, the_objects=True)
+                for oldAnnex in oldAnnexes:
+                    newAnnex = getattr(newItem, oldAnnex.getId())
+                    # In case the item is copied from another MeetingConfig, we need
+                    # to update every annex.meetingFileType because it still refers
+                    # the meetingFileType in the old MeetingConfig the item is copied from
+                    if newPortalType:
+                        if not self._updateContentCategoryAfterSentToOtherMeetingConfig(newAnnex):
+                            raise Exception('Could not update meeting file type of copied annex at %s!'
+                                            % oldAnnex.absolute_url())
+                    # initialize toPrint correctly regarding configuration
+                    if not destMeetingConfig.getKeepOriginalToPrintOfClonedItems():
+                        newAnnex.to_print = get_category_object(newAnnex).to_print
+                    # update annex index
+                    update_categorized_elements(newAnnex.getParentNode(),
+                                                newAnnex,
+                                                get_category_object(newAnnex,
+                                                                    newAnnex.content_category))
+
             # The copy/paste has transferred history. We must clean the history
             # of the cloned object.
             wfName = wftool.getWorkflowsFor(newItem)[0].id
@@ -1280,55 +1258,33 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         self.REQUEST.set('currentlyPastingItems', False)
         return newItem
 
-    def _updateMeetingFileTypesAfterSentToOtherMeetingConfig(self, annex):
+    def _updateContentCategoryAfterSentToOtherMeetingConfig(self, annex):
         '''
-          Update the linked MeetingFileType of the annex while an item is sent from
-          a MeetingConfig to another : find a corresponding MeetingFileType in the new MeetingConfig :
-          - either we have a correspondence defined on the original MeetingFileType specifying what is the MFT
-            to use in the new MeetingConfig;
-          - or if we can not get a correspondence, we use the default MFT of the new MeetingConfig.
-          Returns True if the meetingFileType was actually updated, False if no correspondence could be found.
+          Update the content_category of the annex while an item is sent from
+          a MeetingConfig to another : find a corresponding content_category in the new MeetingConfig :
+          - either we have a correspondence defined on the original ContentCategory specifying what is the
+            ContentCategory to use in the new MeetingConfig;
+          - or if we can not get a correspondence, we use the default ContentCategory of the new MeetingConfig.
+          Returns True if the content_category was actually updated, False if no correspondence could be found.
         '''
-        # for now, the stored MFT on the annex is the MFT UID of the MeetingConfig
-        # the item was sent from
-        mcFromMftUID = annex.getMeetingFileType()
-        isSubType = bool('__subtype__' in mcFromMftUID)
-        # get the MeetingFileType
-        uid_catalog = api.portal.get_tool('uid_catalog')
-        row_id = None
-        if isSubType:
-            mcFromMftUID, row_id = mcFromMftUID.split('__subtype__')
-        fromMft = uid_catalog(UID=mcFromMftUID)[0].getObject()
-        # check if a mft correspondence was defined when sent to this new MeetingConfig
-        cfg = self.getMeetingConfig(annex)
-        correspondenceIdStartWith = '%s__filetype__' % cfg.getId()
-        hasCorrespondence = False
-        correspondenceId = None
-        if isSubType:
-            fromMftSubTypes = fromMft.getSubTypes()
-            for subType in fromMftSubTypes:
-                for correspondence in subType['otherMCCorrespondences']:
-                    if correspondence.startswith(correspondenceIdStartWith):
-                        hasCorrespondence = True
-                        # a correspondence is like idOfTheMeetingConfig__filetype__uidOfMFT__subtype__row_id
-                        correspondenceId = correspondence.split('__filetype__')[1]
+        catalog = api.portal.get_tool('portal_catalog')
+        tool = api.portal.get_tool('portal_plonemeeting')
+        annex_category = get_category_object(annex, annex.content_category)
+        correspondences = []
+        if annex_category.other_mc_correspondences:
+            correspondences = [brain.getObject() for brain in catalog(UID=annex_category.other_mc_correspondences)]
+        annex_cfg = tool.getMeetingConfig(annex)
+        other_mc_correspondences = [cat for cat in correspondences if tool.getMeetingConfig(cat) == annex_cfg]
+        if other_mc_correspondences:
+            other_mc_correspondence = other_mc_correspondences[0]
+            annex.content_category = calculate_category_id(other_mc_correspondence)
         else:
-            for correspondence in fromMft.getOtherMCCorrespondences():
-                if correspondence.startswith(correspondenceIdStartWith):
-                    hasCorrespondence = True
-                    # a correspondence is like idOfTheMeetingConfig__filetype__uidOfMFT
-                    correspondenceId = correspondence.split('__filetype__')[1]
-        # if we did not find a correspondence, then we take the default MFT of same relatedTo
-        if not hasCorrespondence:
-            fromRelatedTo = fromMft.getRelatedTo()
-            destFileTypes = cfg.getFileTypes(relatedTo=fromRelatedTo)
-            if not destFileTypes:
-                # no correspondence could be found, we return False
+            # use default category
+            categories = get_categories(annex)
+            if not categories:
                 return False
-            correspondenceId = destFileTypes[0]['id']
-        # now we have a correspondence in correspondenceId that can be a
-        # correspondence to a real MFT object or to a MFT subType
-        annex.setMeetingFileType(correspondenceId)
+            else:
+                annex.content_category = calculate_category_id(categories[0])
         return True
 
     security.declarePublic('getSelf')
@@ -1603,7 +1559,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 obj = brain.getObject()
             except AttributeError:
                 continue
-            IAnnexable(obj).updateAnnexIndex()
+            update_categorized_elements(obj.getParentNode(), obj, get_category_object(obj, obj.content_category))
             logger.info('%d/%d Updating annexIndex of %s at %s' % (i,
                                                                    numberOfBrains,
                                                                    brain.portal_type,
@@ -1632,7 +1588,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 catalog(object_provides='Products.PloneMeeting.content.advice.IMeetingAdvice')
             for brain in brains:
                 obj = brain.getObject()
-                annexes = IAnnexable(obj).getAnnexes()
+                annexes = get_categorized_elements(obj, the_objects=True)
                 cfg = self.getMeetingConfig(obj)
                 force = bool(cfg.getEnableAnnexToPrint() == 'enabled_for_printing')
                 for annex in annexes:
