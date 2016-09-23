@@ -5079,12 +5079,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     newItem.setCategory(newCat.getId())
                     break
 
-        # find meeting to present the item in and set is as preferred
+        # find meeting to present the item in and set it as preferred
         # this way if newItem needs to be presented in a frozen meeting, it works
-        # at it requires the preferredMeeting to be the frozen meeting
+        # as it requires the preferredMeeting to be the frozen meeting
         meeting = self._otherMCMeetingToBePresentedIn(destMeetingConfig)
         if meeting:
             newItem.setPreferredMeeting(meeting.UID())
+
+        # handle 'otherMeetingConfigsClonableToPrivacy' of original item
+        if destMeetingConfigId in self.getOtherMeetingConfigsClonableToPrivacy() and \
+           'privacy' in destMeetingConfig.getUsedItemAttributes():
+            newItem.setPrivacy('secret')
 
         # execute some transitions on the newItem if it was defined in the cfg
         # find the transitions to trigger
@@ -5136,18 +5141,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # set back originally PUBLISHED object
             self.REQUEST.set('PUBLISHED', originalPublishedObject)
 
-        # handle 'otherMeetingConfigsClonableToPrivacy' of original item
-        if destMeetingConfigId in self.getOtherMeetingConfigsClonableToPrivacy() and \
-           'privacy' in destMeetingConfig.getUsedItemAttributes():
-            newItem.setPrivacy('secret')
-
-        newItem.reindexObject()
         # Save that the element has been cloned to another meetingConfig
         annotation_key = self._getSentToOtherMCAnnotationKey(destMeetingConfigId)
         ann = IAnnotations(self)
         ann[annotation_key] = newItem.UID()
-        # reindex sentToInfos
-        self.reindexObject(idxs=['sentToInfos'])
+
+        newItem.reindexObject()
 
         # When an item is duplicated, if it was sent from a MeetingConfig to
         # another, we will add a line in the original item history specifying that

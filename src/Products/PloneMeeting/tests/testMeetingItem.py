@@ -1118,6 +1118,64 @@ class testMeetingItem(PloneMeetingTestCase):
         # transitions were triggered, and manualItemLinkedToMeeting is 'validated'
         self.assertEqual(clonedManualItem2.queryState(), 'validated')
 
+    def test_pm_SendItemToOtherMCTransitionsTriggeredUntilPresented(self):
+        '''Test when an item is sent to another MC and transitions are triggered
+           until the 'presented' state, it is correctly inserted in the available meeting.
+           If no meeting available, a warning message is displayed and resulting item
+           is left in state 'validated'.'''
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        cfg2Id = cfg2.getId()
+        cfg2.setUseGroupsAsCategories(True)
+        if not 'privacy' in cfg2.getUsedItemAttributes():
+            cfg2.setUsedItemAttributes(cfg2.getUsedItemAttributes() + ('privacy', ))
+        cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
+                                         'trigger_workflow_transitions_until': '%s.%s' %
+                                         (cfg2Id, 'present')},))
+        cfg.setItemManualSentToOtherMCStates(('itemcreated', ))
+        cfg2.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_privacy',
+                                            'reverse': '0'},
+                                           {'insertingMethod': 'on_proposing_groups',
+                                            'reverse': '0'},))
+
+        # send an item and no meeting is available
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        item.setDecision('<p>My decision</p>', mimetype='text/html')
+        item.setOtherMeetingConfigsClonableTo((cfg2Id,))
+        clonedItem = item.cloneToOtherMeetingConfig(cfg2Id)
+        # transitions were triggered, but only to validated as no meeting available
+        self.assertEqual(clonedItem.queryState(), 'validated')
+        messages = IStatusMessage(self.request).show()
+        no_available_meeting_msg = translate(
+            'could_not_present_item_no_meeting_accepting_items',
+            domain='PloneMeeting',
+            mapping={'destMeetingConfigTitle': cfg2.Title()},
+            context=self.request)
+        self.assertEqual(messages[-2].message, no_available_meeting_msg)
+
+        # with an existing meeting
+        # insert on privacy
+        self.setMeetingConfig(cfg2Id)
+        meeting = self._createMeetingWithItems()
+        # make meeting still accepting items
+        meeting.setDate(meeting.getDate() + 1)
+        meeting.reindexObject(idxs=['getDate'])
+        self.assertEqual(self.tool.getMeetingConfig(meeting), cfg2)
+        self.assertEquals([anItem.getPrivacy() for anItem in meeting.getItems(ordered=True)],
+                          ['public', 'public', 'public', 'secret', 'secret'])
+        # insert an item using privacy 'secret'
+        self.setMeetingConfig(cfg.getId())
+        item2 = self.create('MeetingItem')
+        item2.setDecision('<p>My decision</p>', mimetype='text/html')
+        item2.setOtherMeetingConfigsClonableTo((cfg2Id,))
+        item2.setOtherMeetingConfigsClonableToPrivacy((cfg2Id,))
+        clonedItem2 = item2.cloneToOtherMeetingConfig(cfg2Id)
+        self.assertEqual(clonedItem2.queryState(), 'presented')
+        cleanRamCacheFor('Products.PloneMeeting.Meeting.getItems')
+        self.assertEquals([anItem.getPrivacy() for anItem in meeting.getItems(ordered=True)],
+                          ['public', 'public', 'public', 'secret', 'secret', 'secret'])
+
     def test_pm_CloneItemWithSetCurrentAsPredecessor(self):
         '''When an item is cloned with option setCurrentAsPredecessor=True,
            items are linked together, with an automatic link if option
