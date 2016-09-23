@@ -1044,21 +1044,18 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(item.queryState() in cfg.getItemManualSentToOtherMCStates())
         self.assertTrue(item.mayCloneToOtherMeetingConfig(cfg2Id))
         # if we send it, every other things works like if it was sent automatically
-        # except transitions that are not triggered when item is sent manually
-        # item stays in it's initial_state
         self.changeUser('pmManager')
-        clonedItem = item.cloneToOtherMeetingConfig(cfg2Id)
-        wf_name = self.wfTool.getWorkflowsFor(clonedItem)[0].getId()
-        initial_state = self.wfTool[wf_name].initial_state
-        self.assertEquals(clonedItem.queryState(), initial_state)
+        self.assertTrue(item.cloneToOtherMeetingConfig(cfg2Id))
         # make sure sentToInfos index was updated
         cloned_to_cfg2 = '{0}__cloned_to'.format(cfg2Id)
         self.assertEquals(sentToInfos(item)(), [cloned_to_cfg2])
         self.assertTrue(self.portal.portal_catalog(UID=item.UID(), sentToInfos=[cloned_to_cfg2]))
 
-    def test_pm_SendItemToOtherMCTransitionsTriggeredOnlyWhenAutomatic(self):
-        '''When an item is sent manually to another MC, the transitions are not
-           triggered on the resulting item, only when it is sent automatically.'''
+    def test_pm_SendItemToOtherMCTransitionsTriggeredOnlyWhenAutomaticOrHasMeeting(self):
+        '''When an item is sent manually to another MC, the transitions are triggered
+           on the resulting item :
+           - if it is sent automatically;
+           - or if current user isManager.'''
         cfg = self.meetingConfig
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
@@ -1071,17 +1068,37 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # automatically
         # create an item and validate it
+        # as it is an automatic sent, the transitions are triggered
         self.changeUser('pmCreator1')
         self.tool.getPloneMeetingFolder(cfg2Id)
         autoItem = self.create('MeetingItem')
         autoItem.setDecision('<p>My decision</p>', mimetype='text/html')
         autoItem.setOtherMeetingConfigsClonableTo((cfg2Id,))
-        self.validateItem(autoItem)
+        # do not use validateItem or it is done as Manager and transitions are triggered
+        self.proposeItem(autoItem)
+        self.changeUser('pmReviewer1')
+        self.do(autoItem, 'validate')
+        self.changeUser('pmCreator1')
         clonedAutoItem = autoItem.getItemClonedToOtherMC(cfg2Id)
         self.assertEquals(clonedAutoItem.queryState(), 'validated')
 
+        # automatically
+        # create an item and validate it as a MeetingManager
+        self.changeUser('pmCreator1')
+        self.tool.getPloneMeetingFolder(cfg2Id)
+        autoItem2 = self.create('MeetingItem')
+        autoItem2.setDecision('<p>My decision</p>', mimetype='text/html')
+        autoItem2.setOtherMeetingConfigsClonableTo((cfg2Id,))
+        self.proposeItem(autoItem2)
+        self.changeUser('pmManager')
+        self.do(autoItem2, 'validate')
+        clonedAutoItem2 = autoItem2.getItemClonedToOtherMC(cfg2Id)
+        # this time transitions were triggered
+        self.assertEquals(clonedAutoItem2.queryState(), 'validated')
+
         # manually
-        # create an item and send it
+        # transitions not triggered as non MeetingManager
+        self.changeUser('pmCreator1')
         manualItem = self.create('MeetingItem')
         manualItem.setDecision('<p>My decision</p>', mimetype='text/html')
         manualItem.setOtherMeetingConfigsClonableTo((cfg2Id,))
@@ -1090,6 +1107,16 @@ class testMeetingItem(PloneMeetingTestCase):
         wf_name = self.wfTool.getWorkflowsFor(clonedManualItem)[0].getId()
         initial_state = self.wfTool[wf_name].initial_state
         self.assertEquals(clonedManualItem.queryState(), initial_state)
+
+        # manually
+        # user is MeetingManager, transitions are triggered
+        self.changeUser('pmManager')
+        manualItem2 = self.create('MeetingItem')
+        manualItem2.setDecision('<p>My decision</p>', mimetype='text/html')
+        manualItem2.setOtherMeetingConfigsClonableTo((cfg2Id,))
+        clonedManualItem2 = manualItem2.cloneToOtherMeetingConfig(cfg2Id)
+        # transitions were triggered, and manualItemLinkedToMeeting is 'validated'
+        self.assertEqual(clonedManualItem2.queryState(), 'validated')
 
     def test_pm_CloneItemWithSetCurrentAsPredecessor(self):
         '''When an item is cloned with option setCurrentAsPredecessor=True,

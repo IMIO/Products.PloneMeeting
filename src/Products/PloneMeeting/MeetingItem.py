@@ -5021,7 +5021,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            If defined in the configuration, different transitions will be triggered on
            the cloned item if p_automatically is True.
            In any case, a link to the source item is made.'''
-        if not self.adapted().mayCloneToOtherMeetingConfig(destMeetingConfigId):
+        if not self.adapted().mayCloneToOtherMeetingConfig(destMeetingConfigId, automatically):
             # If the user came here, he even does not deserve a clear message ;-)
             raise Unauthorized
 
@@ -5093,10 +5093,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if mctct['meeting_config'] == destMeetingConfigId:
                 triggerUntil = mctct['trigger_workflow_transitions_until']
         # if transitions to trigger, trigger them!
-        # this is only done when item is cloned automatically and current user isManager
+        # this is only done when item is cloned automatically or current user isManager
         if not triggerUntil == NO_TRIGGER_WF_TRANSITION_UNTIL and \
-           automatically and \
-           tool.isManager(self):
+           (automatically or tool.isManager(self)):
             # triggerUntil is like meeting-config-xxx.validate, get the real transition
             triggerUntil = triggerUntil.split('.')[1]
             wf_comment = translate('transition_auto_triggered_item_sent_to_this_config',
@@ -5188,7 +5187,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('mayCloneToOtherMeetingConfig')
 
-    def mayCloneToOtherMeetingConfig(self, destMeetingConfigId):
+    def mayCloneToOtherMeetingConfig(self, destMeetingConfigId, automatically=False):
         '''Checks that we can clone the item to another meetingConfigFolder.
            These are light checks as this could be called several times. This
            method can be adapted.'''
@@ -5202,15 +5201,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return False
 
         # Regarding item state, the item has to be :
-        # - current state in itemAutoSentToOtherMCStates and
-        #   user must have 'Modify portal content' or be a MeetingManager;
-        # - current state in itemManualSentToOtherMCStates and
-        #   user must have 'Modify portal content'.
+        # - current state in itemAutoSentToOtherMCStates;
+        # - current state in itemManualSentToOtherMCStates/itemAutoSentToOtherMCStates
+        #   and user have 'Modify portal content'.
         item_state = item.queryState()
-        if not ((item_state in cfg.getItemAutoSentToOtherMCStates() and
-                (checkPermission(ModifyPortalContent, item) or tool.isManager(item))) or
-                (item_state in cfg.getItemManualSentToOtherMCStates() and
-                 checkPermission(ModifyPortalContent, item))):
+        if not ((automatically and
+                 item_state in cfg.getItemAutoSentToOtherMCStates()) or
+                (not automatically and
+                 (item_state in cfg.getItemManualSentToOtherMCStates() or
+                  item_state in cfg.getItemAutoSentToOtherMCStates()) and
+                 checkPermission(ModifyPortalContent, item))
+                ):
             return False
 
         # Can not clone an item to the same meetingConfig as the original item,
