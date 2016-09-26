@@ -3814,19 +3814,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res.append(tmp)
         return u", ".join(res) or "-"
 
-    security.declarePublic('displayAdvices')
+    security.declarePublic('showAdvices')
 
-    def displayAdvices(self):
-        '''Is there at least one advice that needs to be displayed on this item?'''
-        if bool(self.adviceIndex):
+    def showAdvices(self):
+        """This control if advices need to be shown on the item view."""
+        item = self.getSelf()
+        if bool(item.adviceIndex):
             return True
-        # in case current user is a PowerAdviser, we need
-        # to display advices on the item view
-        tool = api.portal.get_tool('portal_plonemeeting')
-        userAdviserGroupIds = set([group.getId() for group in tool.getGroupsForUser(suffixes=['advisers'])])
-        cfg = tool.getMeetingConfig(self)
-        powerAdviserGroupIds = set(cfg.getPowerAdvisersGroups())
-        return bool(userAdviserGroupIds.intersection(powerAdviserGroupIds))
 
     security.declarePublic('displayCopyGroups')
 

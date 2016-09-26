@@ -133,10 +133,10 @@ class testAdvices(PloneMeetingTestCase):
             'category': 'maintenance'
         }
         item1 = self.create('MeetingItem', **data)
-        self.assertEquals(item1.displayAdvices(), False)
+        self.assertEquals(item1.adapted().showAdvices(), False)
         item1.setOptionalAdvisers(('vendors',))
         item1.at_post_edit_script()
-        self.assertEquals(item1.displayAdvices(), True)
+        self.assertEquals(item1.adapted().showAdvices(), True)
         # 'pmCreator1' has no addable nor editable advice to give
         self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([], []))
         self.changeUser('pmReviewer2')
@@ -358,7 +358,7 @@ class testAdvices(PloneMeetingTestCase):
             'optionalAdvisers': ('vendors',)
         }
         item1 = self.create('MeetingItem', **data)
-        self.assertEquals(item1.displayAdvices(), True)
+        self.assertEquals(item1.adapted().showAdvices(), True)
         # check than the adviser can see the item
         self.changeUser('pmReviewer2')
         self.failUnless(self.hasPermission(View, item1))
@@ -380,7 +380,7 @@ class testAdvices(PloneMeetingTestCase):
             'optionalAdvisers': ('vendors',)
         }
         item = self.create('MeetingItem', **data)
-        self.assertEquals(item.displayAdvices(), True)
+        self.assertEquals(item.adapted().showAdvices(), True)
         self.failIf(item.willInvalidateAdvices())
         self.proposeItem(item)
         # login as adviser and add an advice
