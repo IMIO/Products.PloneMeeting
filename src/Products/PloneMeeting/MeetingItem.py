@@ -5140,7 +5140,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         ann = IAnnotations(self)
         ann[annotation_key] = newItem.UID()
 
+        # reindex, everything for newItem and 'sentToInfos' for self
         newItem.reindexObject()
+        self.reindexObject(idxs=['sentToInfos'])
 
         # When an item is duplicated, if it was sent from a MeetingConfig to
         # another, we will add a line in the original item history specifying that

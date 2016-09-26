@@ -1046,10 +1046,12 @@ class testMeetingItem(PloneMeetingTestCase):
         # if we send it, every other things works like if it was sent automatically
         self.changeUser('pmManager')
         self.assertTrue(item.cloneToOtherMeetingConfig(cfg2Id))
-        # make sure sentToInfos index was updated
+        # make sure sentToInfos index was updated on original item
         cloned_to_cfg2 = '{0}__cloned_to'.format(cfg2Id)
         self.assertEquals(sentToInfos(item)(), [cloned_to_cfg2])
-        self.assertTrue(self.portal.portal_catalog(UID=item.UID(), sentToInfos=[cloned_to_cfg2]))
+        self.assertEqual(self.portal.portal_catalog(UID=item.UID(),
+                                                    sentToInfos=[cloned_to_cfg2])[0].UID,
+                         item.UID())
 
     def test_pm_SendItemToOtherMCTransitionsTriggeredOnlyWhenAutomaticOrHasMeeting(self):
         '''When an item is sent manually to another MC, the transitions are triggered
