@@ -3817,10 +3817,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('showAdvices')
 
     def showAdvices(self):
-        """This control if advices need to be shown on the item view."""
+        """This controls if advices need to be shown on the item view."""
         item = self.getSelf()
         if bool(item.adviceIndex):
             return True
+        return False
 
     security.declarePublic('displayCopyGroups')
 
@@ -5198,14 +5199,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Regarding item state, the item has to be :
         # - current state in itemAutoSentToOtherMCStates;
         # - current state in itemManualSentToOtherMCStates/itemAutoSentToOtherMCStates
-        #   and user have 'Modify portal content'.
+        #   and user have 'Modify portal content' or is a MeetingManager.
         item_state = item.queryState()
         if not ((automatically and
                  item_state in cfg.getItemAutoSentToOtherMCStates()) or
                 (not automatically and
                  (item_state in cfg.getItemManualSentToOtherMCStates() or
                   item_state in cfg.getItemAutoSentToOtherMCStates()) and
-                 checkPermission(ModifyPortalContent, item))
+                 (checkPermission(ModifyPortalContent, item) or tool.isManager(item)))
                 ):
             return False
 
