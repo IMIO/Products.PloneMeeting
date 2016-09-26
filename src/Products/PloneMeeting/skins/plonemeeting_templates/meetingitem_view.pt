@@ -382,8 +382,7 @@
     <a name="adviceAndAnnexes"></a>
     <table width="100%" cellpadding="1" cellspacing="1"
            tal:define="hasAnnexes python: context.hasAnnexesWhere(relatedTo='item');
-                       hasAnnexesDecision python: context.hasAnnexesWhere(relatedTo='item_decision');
-                       hasAdvices python: (meetingConfig.getUseAdvices() or context.adapted().showAdvices())">
+                       hasAnnexesDecision python: context.hasAnnexesWhere(relatedTo='item_decision')">
         <tr style="vertical-align: top;">
             <td class="itemAnnexesCell" width="50%">
                 <fieldset>
@@ -405,7 +404,7 @@
             </td>
 
             <tal:comment replace="nothing">Advices</tal:comment>
-            <td class="itemAdvicesCell" tal:condition="hasAdvices" width="50%">
+            <td class="itemAdvicesCell" tal:condition="python: context.adapted().showAdvices()" width="50%">
                 <fieldset tal:define="meetingItem python: context">
                 <legend i18n:translate="PloneMeeting_label_advices">Advices</legend>
                     <tal:advice replace="structure context/@@advices-icons" />

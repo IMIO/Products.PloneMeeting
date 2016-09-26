@@ -3819,8 +3819,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def showAdvices(self):
         """This controls if advices need to be shown on the item view."""
         item = self.getSelf()
+
+        # something in adviceIndex?
         if bool(item.adviceIndex):
             return True
+
+        # MeetingConfig using advices?
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(item)
+        if cfg.getUseAdvices():
+            return True
+
         return False
 
     security.declarePublic('displayCopyGroups')

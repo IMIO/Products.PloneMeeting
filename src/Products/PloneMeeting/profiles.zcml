@@ -57,17 +57,6 @@
       handler="Products.PloneMeeting.migrations.migrate_to_4_0.migrate"
       profile="Products.PloneMeeting:default" />
 
-  <genericsetup:upgradeSteps
-    source="*"
-    destination="4.001"
-    profile="Products.PloneMeeting:default">
-
-    <genericsetup:upgradeDepends
-      title="Install CKEditor Tableresize plugin"
-      import_steps="propertiestool"
-      />
-  </genericsetup:upgradeSteps> 
-
   <!-- ##/code-section profiles.zcml-bottom -->
 
 </configure>
