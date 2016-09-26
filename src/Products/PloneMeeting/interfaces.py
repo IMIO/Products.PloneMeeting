@@ -414,6 +414,8 @@ class IMeetingItemDocumentation:
     def extraInsertingMethods(self):
         """Method for defining extra inserting methods, needs to return a list of
            ids that will be used for id and translated for title."""
+    def showAdvices(self):
+        """This controls if advices need to be shown on the item view."""
 
 
 class IMeetingItemWorkflowConditions(Interface):

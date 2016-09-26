@@ -401,7 +401,7 @@
     <table width="100%" cellpadding="1" cellspacing="1"
            tal:define="hasAnnexes python: tool.hasAnnexes(context, portal_type='annex');
                        hasAnnexesDecision python: tool.hasAnnexes(context, portal_type='annexDecision');
-                       hasAdvices python: (meetingConfig.getUseAdvices() or context.displayAdvices())">
+                       hasAdvices python: (meetingConfig.getUseAdvices() or context.adapted().showAdvices())">
         <tr style="vertical-align: top;">
             <td class="itemAnnexesCell" width="50%">
                 <fieldset>

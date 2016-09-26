@@ -3803,19 +3803,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res.append(tmp)
         return u", ".join(res) or "-"
 
-    security.declarePublic('displayAdvices')
+    security.declarePublic('showAdvices')
 
-    def displayAdvices(self):
-        '''Is there at least one advice that needs to be displayed on this item?'''
-        if bool(self.adviceIndex):
+    def showAdvices(self):
+        """This controls if advices need to be shown on the item view."""
+        item = self.getSelf()
+        if bool(item.adviceIndex):
             return True
-        # in case current user is a PowerAdviser, we need
-        # to display advices on the item view
-        tool = api.portal.get_tool('portal_plonemeeting')
-        userAdviserGroupIds = set([group.getId() for group in tool.getGroupsForUser(suffixes=['advisers'])])
-        cfg = tool.getMeetingConfig(self)
-        powerAdviserGroupIds = set(cfg.getPowerAdvisersGroups())
-        return bool(userAdviserGroupIds.intersection(powerAdviserGroupIds))
+        return False
 
     security.declarePublic('displayCopyGroups')
 
@@ -5002,7 +4997,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            If defined in the configuration, different transitions will be triggered on
            the cloned item if p_automatically is True.
            In any case, a link to the source item is made.'''
-        if not self.adapted().mayCloneToOtherMeetingConfig(destMeetingConfigId):
+        if not self.adapted().mayCloneToOtherMeetingConfig(destMeetingConfigId, automatically):
             # If the user came here, he even does not deserve a clear message ;-)
             raise Unauthorized
 
@@ -5060,12 +5055,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     newItem.setCategory(newCat.getId())
                     break
 
-        # find meeting to present the item in and set is as preferred
+        # find meeting to present the item in and set it as preferred
         # this way if newItem needs to be presented in a frozen meeting, it works
-        # at it requires the preferredMeeting to be the frozen meeting
+        # as it requires the preferredMeeting to be the frozen meeting
         meeting = self._otherMCMeetingToBePresentedIn(destMeetingConfig)
         if meeting:
             newItem.setPreferredMeeting(meeting.UID())
+
+        # handle 'otherMeetingConfigsClonableToPrivacy' of original item
+        if destMeetingConfigId in self.getOtherMeetingConfigsClonableToPrivacy() and \
+           'privacy' in destMeetingConfig.getUsedItemAttributes():
+            newItem.setPrivacy('secret')
 
         # execute some transitions on the newItem if it was defined in the cfg
         # find the transitions to trigger
@@ -5074,11 +5074,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if mctct['meeting_config'] == destMeetingConfigId:
                 triggerUntil = mctct['trigger_workflow_transitions_until']
         # if transitions to trigger, trigger them!
-        # this is only done when item is cloned automatically or manually and is already in a meeting
-        # and current user isManager
+        # this is only done when item is cloned automatically or current user isManager
         if not triggerUntil == NO_TRIGGER_WF_TRANSITION_UNTIL and \
-           (automatically or self.hasMeeting()) and \
-           tool.isManager(self):
+           (automatically or tool.isManager(self)):
             # triggerUntil is like meeting-config-xxx.validate, get the real transition
             triggerUntil = triggerUntil.split('.')[1]
             wf_comment = translate('transition_auto_triggered_item_sent_to_this_config',
@@ -5119,17 +5117,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # set back originally PUBLISHED object
             self.REQUEST.set('PUBLISHED', originalPublishedObject)
 
-        # handle 'otherMeetingConfigsClonableToPrivacy' of original item
-        if destMeetingConfigId in self.getOtherMeetingConfigsClonableToPrivacy() and \
-           'privacy' in destMeetingConfig.getUsedItemAttributes():
-            newItem.setPrivacy('secret')
-
-        newItem.reindexObject()
         # Save that the element has been cloned to another meetingConfig
         annotation_key = self._getSentToOtherMCAnnotationKey(destMeetingConfigId)
         ann = IAnnotations(self)
         ann[annotation_key] = newItem.UID()
-        # reindex sentToInfos
+
+        # reindex, everything for newItem and 'sentToInfos' for self
+        newItem.reindexObject()
         self.reindexObject(idxs=['sentToInfos'])
 
         # When an item is duplicated, if it was sent from a MeetingConfig to
@@ -5170,7 +5164,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('mayCloneToOtherMeetingConfig')
 
-    def mayCloneToOtherMeetingConfig(self, destMeetingConfigId):
+    def mayCloneToOtherMeetingConfig(self, destMeetingConfigId, automatically=False):
         '''Checks that we can clone the item to another meetingConfigFolder.
            These are light checks as this could be called several times. This
            method can be adapted.'''
@@ -5184,15 +5178,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return False
 
         # Regarding item state, the item has to be :
-        # - current state in itemAutoSentToOtherMCStates and
-        #   user must have 'Modify portal content' or be a MeetingManager;
-        # - current state in itemManualSentToOtherMCStates and
-        #   user must have 'Modify portal content'.
+        # - current state in itemAutoSentToOtherMCStates;
+        # - current state in itemManualSentToOtherMCStates/itemAutoSentToOtherMCStates
+        #   and user have 'Modify portal content' or is a MeetingManager.
         item_state = item.queryState()
-        if not ((item_state in cfg.getItemAutoSentToOtherMCStates() and
-                (checkPermission(ModifyPortalContent, item) or tool.isManager(item))) or
-                (item_state in cfg.getItemManualSentToOtherMCStates() and
-                 checkPermission(ModifyPortalContent, item))):
+        if not ((automatically and
+                 item_state in cfg.getItemAutoSentToOtherMCStates()) or
+                (not automatically and
+                 (item_state in cfg.getItemManualSentToOtherMCStates() or
+                  item_state in cfg.getItemAutoSentToOtherMCStates()) and
+                 (checkPermission(ModifyPortalContent, item) or tool.isManager(item)))
+                ):
             return False
 
         # Can not clone an item to the same meetingConfig as the original item,
