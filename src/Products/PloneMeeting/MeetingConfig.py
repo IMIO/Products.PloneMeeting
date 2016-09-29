@@ -350,32 +350,6 @@ schema = Schema((
         ),
         write_permission="PloneMeeting: Write risky config",
     ),
-    StringField(
-        name='annexToPrintMode',
-        default=defValues.annexToPrintMode,
-        widget=SelectionWidget(
-            description="AnnexToPrintMode",
-            description_msgid="annex_to_print_mode_descr",
-            label='Annextoprintmode',
-            label_msgid='PloneMeeting_label_annexToPrintMode',
-            i18n_domain='PloneMeeting',
-        ),
-        enforceVocabulary=True,
-        write_permission="PloneMeeting: Write risky config",
-        vocabulary='listAnnexToPrintModes',
-    ),
-    BooleanField(
-        name='keepOriginalToPrintOfClonedItems',
-        default=defValues.keepOriginalToPrintOfClonedItems,
-        widget=BooleanField._properties['widget'](
-            description="KeepOriginalToPrintOfClonedItems",
-            description_msgid="keep_original_to_print_of_cloned_items_descr",
-            label='Keeporiginaltoprintofcloneditems',
-            label_msgid='PloneMeeting_label_keepOriginalToPrintOfClonedItems',
-            i18n_domain='PloneMeeting',
-        ),
-        write_permission="PloneMeeting: Write risky config",
-    ),
     LinesField(
         name='usedItemAttributes',
         widget=MultiSelectionWidget(
@@ -783,6 +757,34 @@ schema = Schema((
         vocabulary='listItemStates',
         default=defValues.itemManualSentToOtherMCStates,
         enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    StringField(
+        name='annexToPrintMode',
+        default=defValues.annexToPrintMode,
+        widget=SelectionWidget(
+            description="AnnexToPrintMode",
+            description_msgid="annex_to_print_mode_descr",
+            label='Annextoprintmode',
+            label_msgid='PloneMeeting_label_annexToPrintMode',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="data",
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+        vocabulary='listAnnexToPrintModes',
+    ),
+    BooleanField(
+        name='keepOriginalToPrintOfClonedItems',
+        default=defValues.keepOriginalToPrintOfClonedItems,
+        widget=BooleanField._properties['widget'](
+            description="KeepOriginalToPrintOfClonedItems",
+            description_msgid="keep_original_to_print_of_cloned_items_descr",
+            label='Keeporiginaltoprintofcloneditems',
+            label_msgid='PloneMeeting_label_keepOriginalToPrintOfClonedItems',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="data",
         write_permission="PloneMeeting: Write risky config",
     ),
     StringField(

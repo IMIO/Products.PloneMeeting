@@ -718,4 +718,23 @@
         permission="zope2.View"
         />
 
+    <configure package="collective.iconifiedcategory">
+        <browser:page
+            for="Products.PloneMeeting.interfaces.IMeeting"
+            name="categorized-childs"
+            permission="zope2.View"
+            class="Products.PloneMeeting.browser.overrides.PMCategorizedChildView"
+            layer="collective.iconifiedcategory.interfaces.ICollectiveIconifiedCategoryLayer"
+            template="browser/templates/categorized-childs.pt"
+          />
+        <browser:page
+            for="Products.PloneMeeting.interfaces.IMeetingItem"
+            name="categorized-childs"
+            permission="zope2.View"
+            class="Products.PloneMeeting.browser.overrides.PMCategorizedChildView"
+            layer="collective.iconifiedcategory.interfaces.ICollectiveIconifiedCategoryLayer"
+            template="browser/templates/categorized-childs.pt"
+          />
+    </configure>
+
 </configure>

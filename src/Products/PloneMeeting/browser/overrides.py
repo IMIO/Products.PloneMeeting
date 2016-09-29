@@ -22,8 +22,10 @@ from plone.memoize.view import memoize_contextless
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.ckeditor.browser.ckeditorfinder import CKFinder
 from collective.documentgenerator.content.pod_template import IPODTemplate
+from collective.documentviewer.settings import GlobalSettings
 from collective.eeafaceted.collectionwidget.browser.views import RenderCategoryView
 from collective.iconifiedcategory.browser.tabview import CategorizedTabView
+from collective.iconifiedcategory.browser.views import CategorizedChildView
 from collective.iconifiedcategory.utils import get_categories
 from eea.facetednavigation.browser.app.view import FacetedContainerView
 from eea.facetednavigation.interfaces import IFacetedNavigable
@@ -820,3 +822,15 @@ class PMCKFinder(CKFinder):
         self.allowaddfolder = False
         self.showsearchbox = False
         self.openuploadwidgetdefault = True
+
+
+class PMCategorizedChildView(CategorizedChildView):
+    """ """
+    def showPreviewLink(self):
+        """Show link if preview is enabled, aka the auto_convert in collective.documentviewer."""
+        portal = api.portal.get()
+        gsettings = GlobalSettings(portal)
+
+        if gsettings.auto_convert:
+            return True
+        return False

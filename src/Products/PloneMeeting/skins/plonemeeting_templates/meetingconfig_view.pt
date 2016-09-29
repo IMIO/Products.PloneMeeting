@@ -91,18 +91,6 @@
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
         </tr>
-        <tr valign="top">
-          <td tal:define="field python:here.getField('annexToPrintMode')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
-          <td tal:define="field python:here.getField('keepOriginalToPrintOfClonedItems')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
-          <td>
-          </td>
-          <td>
-          </td>
-        </tr>
       </table>
 
     <tal:comment replace="nothing">Display custom fields</tal:comment>
@@ -309,6 +297,15 @@
           <td tal:define="field python:here.getField('itemManualSentToOtherMCStates')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
+        </tr>
+        <tr valign="top">
+          <td tal:define="field python:here.getField('annexToPrintMode')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td tal:define="field python:here.getField('keepOriginalToPrintOfClonedItems')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td></td>
       </table>
 
       <tal:comment replace="nothing">Annex types</tal:comment>
@@ -326,15 +323,29 @@
                    tal:define="cat_group_url cat_group/absolute_url" width="100%;">
               <tr>
                 <th class="nosort" width="200px">
-                    <span tal:content="cat_group/Title">Group category title</span>
-                    <input type="image"
-                           style="cursor:pointer"
-                           class="imageInput"
-                           tal:attributes="onClick python: 'href: window.location=\'%s/++add++ContentCategory\'' % cat_group_url;
-                                           src string: $portal_url/new.png"
-                           title="add_object"
-                           i18n:attributes="title"
-                           tal:condition="isRealManager"/>
+                  <span tal:content="cat_group/Title">Group category title</span>
+                  <a href="#"
+                     title="add_object"
+                     i18n:attributes="title"
+                     tal:attributes="href string:${cat_group_url}/++add++ContentCategory"
+                     tal:condition="isRealManager">
+                    <img src="#" tal:attributes="src string: $portal_url/new.png" />
+                  </a>
+                  <a href="#"
+                     title="Edit attributes of this group of categories"
+                     i18n:attributes="title"
+                     tal:attributes="href string:${cat_group_url}/edit"
+                     tal:condition="isRealManager">
+                    <img src="#" tal:attributes="src string: $portal_url/edit.png" />
+                  </a>
+
+                  <tal:additionalInformations
+                    define="obj python: cat_group;
+                            excludedFields python: ('id', 'description', 'title')">
+                    <metal:addtionalInformations use-macro="here/@@pm-macros/additionalInformations" />
+                  </tal:additionalInformations>
+
+                    
                 </th>
                 <th class="nosort" width="50px" i18n:translate="heading_is_active">Active?</th>
                 <th class="nosort" width="130px" i18n:translate="heading_actions">Actions</th>

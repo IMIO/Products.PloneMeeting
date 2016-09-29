@@ -16,13 +16,14 @@ __docformat__ = 'plaintext'
 
 import logging
 logger = logging.getLogger('PloneMeeting')
+import md5
 
 from AccessControl import Unauthorized
-from Acquisition import aq_base
 from DateTime import DateTime
 from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
 from OFS.ObjectManager import BeforeDeleteException
+from zope.annotation import IAnnotations
 from zope.event import notify
 from zope.i18n import translate
 from zope.lifecycleevent import IObjectRemovedEvent
@@ -30,6 +31,9 @@ from Products.CMFCore.WorkflowCore import WorkflowException
 from plone.app.textfield import RichText
 from plone.app.textfield.value import RichTextValue
 from plone import api
+from collective.documentviewer.async import queueJob
+from collective.documentviewer.settings import STORAGE_VERSION
+from collective.iconifiedcategory.interfaces import IIconifiedPreview
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.cache import invalidate_cachekey_volatile_for
 from imio.helpers.xhtml import storeExternalImagesLocally
@@ -37,7 +41,6 @@ from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import ADVICE_GIVEN_HISTORIZED_COMMENT
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
-from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.utils import _addImagePermission
 from Products.PloneMeeting.utils import addRecurringItemsIfRelevant
 from Products.PloneMeeting.utils import AdviceAfterAddEvent
@@ -534,6 +537,37 @@ def onAnnexRemoved(annex, event):
     parent.setModificationDate(DateTime())
     # just reindex the entire object
     parent.reindexObject()
+
+
+def _annexWasUpdatedAfterConversion(annex):
+    """If annex.modified is > 'last_updated' value, check that md5 of
+       stored file correspond to 'filehash' stored in c.documentviewer annotation."""
+    ann = IAnnotations(annex)['collective.documentviewer']
+    if annex.modified() > DateTime(ann['last_updated']) and \
+       md5.md5(annex.file.data) != ann['filehash']:
+        return True
+    return False
+
+
+def onAnnexToPrintChanged(annex, event):
+    """ """
+    annex = event.object
+
+    # None (deactivated) or False, we return
+    if event.new_value is not True:
+        # set c.documentviewer back to not converted
+        ann = IAnnotations(annex)
+        ann['collective.documentviewer'] = PersistentMapping()
+        ann['last_updated'] = DateTime('1901/01/01').ISO8601()
+        ann['storage_version'] = STORAGE_VERSION
+    tool = api.portal.get_tool('portal_plonemeeting')
+    cfg = tool.getMeetingConfig(annex)
+    # in case we are updating an annex that was already converted,
+    # c.documentviewer does not manage that, so check if annex.modified
+    # after c.documentviewer 'last_updated' value
+    if cfg.getAnnexToPrintMode() == 'enabled_for_printing' and \
+       (not IIconifiedPreview(annex).converted or _annexWasUpdatedAfterConversion(annex)):
+        queueJob(annex)
 
 
 def onItemEditBegun(item, event):

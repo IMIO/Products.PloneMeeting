@@ -55,10 +55,14 @@ from Products.DataGridField.Column import Column
 from plone.memoize import ram
 from plone import api
 from collective.behavior.talcondition.utils import _evaluateExpression
+from collective.documentviewer.async import queueJob
+from collective.documentviewer.settings import GlobalSettings
+from collective.iconifiedcategory.interfaces import IIconifiedPreview
 from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.utils import get_categorized_elements
 from collective.iconifiedcategory.utils import get_categories
 from collective.iconifiedcategory.utils import get_category_object
+from collective.iconifiedcategory.utils import get_config_root
 from collective.iconifiedcategory.utils import update_categorized_elements
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.dashboard.utils import enableFacetedDashboardFor
@@ -1545,8 +1549,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     def reindexAnnexes(self):
         '''Reindexes all annexes.'''
-        user = self.portal_membership.getAuthenticatedMember()
-        if not user.has_role('Manager'):
+        if not self.isManager(self, realManagers=True):
             raise Unauthorized
         catalog = api.portal.get_tool('portal_catalog')
         # update items and advices
@@ -1559,7 +1562,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 obj = brain.getObject()
             except AttributeError:
                 continue
-            update_categorized_elements(obj.getParentNode(), obj, get_category_object(obj, obj.content_category))
+            for annex in get_categorized_elements(obj, the_objects=True):
+                update_categorized_elements(obj, annex, get_category_object(annex, annex.content_category))
             logger.info('%d/%d Updating annexIndex of %s at %s' % (i,
                                                                    numberOfBrains,
                                                                    brain.portal_type,
@@ -1572,28 +1576,28 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     def convertAnnexes(self):
         '''Convert all annexes using collective.documentviewer.'''
-        user = self.portal_membership.getAuthenticatedMember()
-        if not user.has_role('Manager'):
+        if not self.isManager(self, realManagers=True):
             raise Unauthorized
-        if not self.getEnableAnnexPreview():
-            msg = translate('Annexes preview must be enabled to launch complete annexes conversion process.',
-                            domain='PloneMeeting',
-                            context=self.REQUEST, )
-            self.plone_utils.addPortalMessage(msg, 'warning')
-        else:
-            from Products.PloneMeeting.MeetingFile import convertToImages
-            catalog = api.portal.get_tool('portal_catalog')
-            # update annexes in items and advices
-            brains = catalog(meta_type='MeetingItem') + \
-                catalog(object_provides='Products.PloneMeeting.content.advice.IMeetingAdvice')
-            for brain in brains:
-                obj = brain.getObject()
-                annexes = get_categorized_elements(obj, the_objects=True)
-                cfg = self.getMeetingConfig(obj)
-                force = bool(cfg.getEnableAnnexToPrint() == 'enabled_for_printing')
-                for annex in annexes:
-                    convertToImages(annex, None, force=force)
-            self.plone_utils.addPortalMessage('Done.')
+
+        portal = api.portal.get()
+        gsettings = GlobalSettings(portal)
+
+        catalog = api.portal.get_tool('portal_catalog')
+        # update annexes in items and advices
+        brains = catalog(meta_type='MeetingItem') + \
+            catalog(object_provides='Products.PloneMeeting.content.advice.IMeetingAdvice')
+        for brain in brains:
+            obj = brain.getObject()
+            annexes = get_categorized_elements(obj, the_objects=True)
+            cfg = self.getMeetingConfig(obj, caching=False)
+            for annex in annexes:
+                to_be_printed_activated = get_config_root(annex)
+                # convert if auto_convert is enabled or to_print is enabled for printing
+                if (gsettings.auto_convert or
+                    (to_be_printed_activated and cfg.getAnnexToPrintMode() == 'enabled_for_printing')) and \
+                   not IIconifiedPreview(annex).converted:
+                    queueJob(annex)
+        self.plone_utils.addPortalMessage('Done.')
         return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 
     def hasAnnexes(self, context, portal_type='annex'):

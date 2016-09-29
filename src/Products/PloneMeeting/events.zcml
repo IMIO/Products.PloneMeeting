@@ -6,15 +6,15 @@
 
   <subscriber for=".interfaces.IMeetingItem
                    zope.lifecycleevent.interfaces.IObjectAddedEvent"
-              handler=".events.onItemAdded"/>
+              handler=".events.onItemAdded" />
 
   <subscriber for=".interfaces.IMeetingItem
                    zope.lifecycleevent.IObjectModifiedEvent"
-              handler=".events.onItemModified"/>
+              handler=".events.onItemModified" />
 
   <subscriber for=".interfaces.IMeetingItem
                    zope.container.interfaces.IObjectRemovedEvent"
-              handler=".events.onItemRemoved"/>
+              handler=".events.onItemRemoved" />
 
   <subscriber for=".interfaces.IMeetingItem
                    zope.lifecycleevent.ObjectMovedEvent"
@@ -22,80 +22,84 @@
 
   <subscriber for=".interfaces.IMeetingItem
                    Products.DCWorkflow.interfaces.IAfterTransitionEvent"
-              handler=".events.onItemTransition"/>
+              handler=".events.onItemTransition" />
 
   <subscriber for=".interfaces.IMeetingItem
                    Products.DCWorkflow.interfaces.IBeforeTransitionEvent"
-              handler=".events.onItemBeforeTransition"/>
+              handler=".events.onItemBeforeTransition" />
 
   <subscriber for=".interfaces.IMeeting
                    Products.DCWorkflow.interfaces.IBeforeTransitionEvent"
-              handler=".events.onMeetingBeforeTransition"/>
+              handler=".events.onMeetingBeforeTransition" />
 
   <subscriber for=".interfaces.IMeetingItem
                    Products.Archetypes.interfaces.IEditBegunEvent"
-              handler=".events.onItemEditBegun"/>
+              handler=".events.onItemEditBegun" />
 
   <subscriber for=".interfaces.IMeetingItem
                    Products.Archetypes.interfaces.IEditCancelledEvent"
-              handler=".events.onItemEditCancelled"/>
+              handler=".events.onItemEditCancelled" />
 
   <subscriber for=".interfaces.IMeeting
                    zope.lifecycleevent.interfaces.IObjectAddedEvent"
-              handler=".events.onMeetingAdded"/>
+              handler=".events.onMeetingAdded" />
 
   <subscriber for=".interfaces.IMeeting
                    Products.DCWorkflow.interfaces.IAfterTransitionEvent"
-              handler=".events.onMeetingTransition"/>
+              handler=".events.onMeetingTransition" />
 
   <subscriber for=".interfaces.IMeeting
                    zope.container.interfaces.IObjectRemovedEvent"
-              handler=".events.onMeetingRemoved"/>
+              handler=".events.onMeetingRemoved" />
 
   <subscriber for=".interfaces.IMeetingGroup
                    Products.DCWorkflow.interfaces.IAfterTransitionEvent"
-              handler=".events.onGroupTransition"/>
+              handler=".events.onGroupTransition" />
 
   <subscriber for=".interfaces.IMeetingGroup
                    OFS.interfaces.IObjectWillBeRemovedEvent"
-              handler=".events.onGroupWillBeRemoved"/>
+              handler=".events.onGroupWillBeRemoved" />
 
   <subscriber for=".interfaces.IMeetingGroup
                    zope.container.interfaces.IObjectRemovedEvent"
-              handler=".events.onGroupRemoved"/>
+              handler=".events.onGroupRemoved" />
 
   <subscriber for=".interfaces.IMeetingCategory
                    zope.container.interfaces.IObjectRemovedEvent"
-              handler=".events.onCategoryRemoved"/>
+              handler=".events.onCategoryRemoved" />
 
   <!-- meetingadvice events -->
   <subscriber for=".content.advice.IMeetingAdvice
                    zope.lifecycleevent.IObjectModifiedEvent"
-              handler=".events.onAdviceModified"/>
+              handler=".events.onAdviceModified" />
 
   <subscriber for=".content.advice.IMeetingAdvice
                    plone.dexterity.events.EditFinishedEvent"
-              handler=".events.onAdviceEditFinished"/>
+              handler=".events.onAdviceEditFinished" />
 
   <subscriber for=".content.advice.IMeetingAdvice
                    zope.lifecycleevent.interfaces.IObjectAddedEvent"
-              handler=".events.onAdviceAdded"/>
+              handler=".events.onAdviceAdded" />
 
   <subscriber for=".content.advice.IMeetingAdvice
                    zope.container.interfaces.IObjectRemovedEvent"
-              handler=".events.onAdviceRemoved"/>
+              handler=".events.onAdviceRemoved" />
 
   <subscriber for=".content.advice.IMeetingAdvice
                    Products.DCWorkflow.interfaces.IAfterTransitionEvent"
-              handler=".events.onAdviceTransition"/>
+              handler=".events.onAdviceTransition" />
 
   <subscriber for="imio.annex.content.annex.IAnnex
                    zope.lifecycleevent.interfaces.IObjectAddedEvent"
-              handler=".events.onAnnexAdded"/>
+              handler=".events.onAnnexAdded" />
 
   <subscriber for="imio.annex.content.annex.IAnnex
                    plone.dexterity.events.EditFinishedEvent"
-              handler=".events.onAnnexEditFinished"/>
+              handler=".events.onAnnexEditFinished" />
+
+ <subscriber for="imio.annex.content.annex.IAnnex
+                  collective.iconifiedcategory.interfaces.IIconifiedPrintChangedEvent"
+             handler=".events.onAnnexToPrintChanged" />
 
   <!-- if 'auto-conversion' is enabled in collective.documentviewer, convert MeetingFiles upon creation -->
   <subscriber for=".interfaces.IMeetingFile
@@ -114,11 +118,11 @@
 
   <subscriber for="imio.annex.content.annex.IAnnex
                    zope.container.interfaces.IObjectRemovedEvent"
-              handler=".events.onAnnexRemoved"/>
+              handler=".events.onAnnexRemoved" />
 
   <!-- DashboardCollection events -->
   <subscriber for="imio.dashboard.interfaces.IDashboardCollection
                    Products.Archetypes.interfaces.IObjectInitializedEvent"
-              handler=".events.onDashboardCollectionAdded"/>
+              handler=".events.onDashboardCollectionAdded" />
 
 </configure>
