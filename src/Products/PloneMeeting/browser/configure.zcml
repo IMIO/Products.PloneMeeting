@@ -661,6 +661,18 @@
         class=".views.PortletTodoUpdateView"
         permission="zope.Public" />
 
+    <!-- Override collective.documentgenerator document-generation-link viewlet -->
+    <configure package="collective.documentgenerator">
+        <browser:viewlet
+            for="OFS.interfaces.IItem"
+            name="document-generation-link"
+            manager="plone.app.layout.viewlets.interfaces.IAboveContentBody"
+            class="Products.PloneMeeting.browser.overrides.PMDocumentGeneratorLinksViewlet"
+            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+            permission="zope2.View"
+            />
+    </configure>
+
     <!-- collective.documentgenerator helper view for Folder -->
     <browser:page
         for="Products.ATContentTypes.interfaces.folder.IATBTreeFolder"
