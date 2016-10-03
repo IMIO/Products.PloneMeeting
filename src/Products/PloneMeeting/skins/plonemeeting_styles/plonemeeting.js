@@ -23,14 +23,6 @@ function hidePloneMeetingSelectBox(selectName, idImage, inner_tag, value, predef
   document.getElementById(ploneMeetingSelectBoxes[selectName]["button"]).style.borderStyle = "outset";
   document.getElementById(ploneMeetingSelectBoxes[selectName]["box"]).style.display="none";
   btnText.innerHTML = inner_tag.innerHTML;
-
-  // Display
-  // if (newImage!=null) {btnImage.src = newImage.src;};
-  document.getElementById(ploneMeetingSelectBoxes[selectName]["hidden"]).value = value;
-  annex_title = document.getElementById("annex_title");
-  if (annex_title) {
-   annex_title.value = predefined_title;
-  }
 }
 
 /* The functions below are derived from Plone's dropdown.js for using a dropdown

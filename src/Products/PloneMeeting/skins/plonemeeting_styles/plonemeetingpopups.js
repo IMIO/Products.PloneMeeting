@@ -150,6 +150,11 @@ jQuery(function($) {
                 initializeIconifiedCategoryWidget();
                 return true;
             },
+            onBeforeClose : function (e) {
+                // close every opened select2 widgets
+                $('.single-select2-widget').select2("close");
+                $('.multi-select2-widget').select2("close");
+            },
             onClose : function (e) {
                 // unlock current element
                 // compute url, find link to advice edit and remove trailing '/edit'

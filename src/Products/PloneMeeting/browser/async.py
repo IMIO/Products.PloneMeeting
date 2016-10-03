@@ -5,7 +5,6 @@ from zope.i18n import translate
 from AccessControl import Unauthorized
 from Products.Five import BrowserView
 from Products.CMFCore.utils import getToolByName
-from Products.PloneMeeting.interfaces import IAnnexable
 
 
 class Discuss(BrowserView):
@@ -90,67 +89,6 @@ class Discuss(BrowserView):
         return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 
 
-class AnnexToPrint(BrowserView):
-    """
-      View that switch the annex 'toPrint' attribute using an ajax call.
-    """
-    IMG_TEMPLATE = u'<img class="annexToPrintEditable" src="%s" title="%s" name="%s" />'
-
-    def __init__(self, context, request):
-        self.context = context
-        self.request = request
-        self.portal_state = getMultiAdapter((self.context, self.request), name=u'plone_portal_state')
-        self.portal = self.portal_state.portal()
-
-    def toggle(self):
-        if not self.context.adapted().mayChangeToPrint():
-            raise Unauthorized
-
-        try:
-            item = self.context.getParentNode()
-            annexToPrint = self.context.getToPrint()
-            # toggle value
-            self.context.setToPrint(not annexToPrint)
-
-            # check that this annex is printable
-            # in case last conversion failed, we should not let the user
-            # specify that the annex is toPrint
-            if IAnnexable(item).conversionFailed(self.context):
-                raise Exception('This annex can not be printed because the conversion to a printable format failed!')
-
-            if annexToPrint:
-                filename = 'annexToPrintNo.png'
-                name = 'annexToPrintYes'
-                title_msgid = 'annex_to_print_no_edit'
-            else:
-                filename = 'annexToPrintYes.png'
-                name = 'annexToPrintNo'
-                title_msgid = 'annex_to_print_yes_edit'
-
-            title = translate(title_msgid,
-                              domain="PloneMeeting",
-                              context=self.request)
-            portal_url = self.portal_state.portal_url()
-            src = "%s/%s" % (portal_url, filename)
-            html = self.IMG_TEMPLATE % (src, title, name)
-            self.context.at_post_edit_script()
-            IAnnexable(item).updateAnnexIndex()
-            item.reindexObject(idxs=['hasAnnexesToPrint', ])
-            return html
-        except Exception, exc:
-            # set an error status in request.RESPONSE so the ajax call knows
-            # that something wrong happened and redirect the page so portalMessages are displayed
-            plone_utils = getToolByName(self.context, 'plone_utils')
-            plone_utils.addPortalMessage(
-                self.context.translate("There was an error while trying to set this annex to printable. "
-                                       "The error message was : ${error}. Please contact system administrator.",
-                                       mapping={'error': str(exc)},
-                                       domain="PloneMeeting"),
-                type='error')
-            self.request.RESPONSE.status = 500
-            return
-
-
 class TakenOverBy(BrowserView):
     """
       View that switch the item 'takenOverBy' from None to current user and from current user to None.
@@ -225,48 +163,6 @@ class TakenOverBy(BrowserView):
 
         html = self.IMG_TEMPLATE % (css_class, title, name, taken_over_by)
         self.context.reindexObject(idxs=['getTakenOverBy', ])
-        return html
-
-
-class AnnexIsConfidential(BrowserView):
-    """
-      View that switch the annex 'isConfidential' attribute using an ajax call.
-    """
-    IMG_TEMPLATE = u'<img class="annexIsConfidentialEditable" src="%s" title="%s" name="%s" />'
-
-    def __init__(self, context, request):
-        self.context = context
-        self.request = request
-        self.portal_state = getMultiAdapter((self.context, self.request), name=u'plone_portal_state')
-        self.portal = self.portal_state.portal()
-
-    def toggle(self):
-        if not self.context.adapted().mayChangeConfidentiality():
-            raise Unauthorized
-
-        isConfidential = self.context.getIsConfidential()
-        # toggle value
-        self.context.setIsConfidential(not isConfidential)
-        # update parent item's annexIndex
-        item = self.context.getParentNode()
-        IAnnexable(item).updateAnnexIndex()
-
-        if isConfidential:
-            filename = 'isConfidentialNo.png'
-            name = 'isConfidentialYes'
-            title_msgid = 'annex_is_confidential_no_edit'
-        else:
-            filename = 'isConfidentialYes.png'
-            name = 'isConfidentialNo'
-            title_msgid = 'annex_is_confidential_yes_edit'
-
-        title = translate(title_msgid,
-                          domain="PloneMeeting",
-                          context=self.request)
-        portal_url = self.portal_state.portal_url()
-        src = "%s/%s" % (portal_url, filename)
-        html = self.IMG_TEMPLATE % (src, title, name)
-        self.context.at_post_edit_script()
         return html
 
 

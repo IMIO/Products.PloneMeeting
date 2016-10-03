@@ -1305,7 +1305,8 @@ class IconifiedCategoryGroupAdapter(object):
         parent = self.context.getParentNode()
 
         # adding annex to an item
-        if self.context.meta_type == 'MeetingItem' or parent.meta_type == 'MeetingItem':
+        if self.context.meta_type == 'MeetingItem' or \
+           (self.context.portal_type in ('annex', 'annexDecision') and parent.meta_type == 'MeetingItem'):
             isItemDecisionAnnex = False
             if self.context.meta_type == 'MeetingItem':
 
@@ -1338,8 +1339,8 @@ class IconifiedCategoryGroupAdapter(object):
 
         # adding annex to an advice
         if self.context.portal_type == 'meetingadvice' or parent.portal_type == 'meetingadvice':
-                return cfg.annexes_types.advice_annexes
+            return cfg.annexes_types.advice_annexes
 
         # adding annex to a meeting
         if self.context.meta_type == 'Meeting' or parent.meta_type == 'Meeting':
-                return cfg.annexes_types.meeting_annexes
+            return cfg.annexes_types.meeting_annexes

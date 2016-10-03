@@ -204,8 +204,9 @@ class BaseGeneratorLinksViewlet():
 class PMDocumentGeneratorLinksViewlet(DocumentGeneratorLinksViewlet, BaseGeneratorLinksViewlet):
     """Override the 'generatelinks' viewlet to restrict templates by MeetingConfig."""
 
-    from imio.dashboard import browser
-    render = ViewPageTemplateFile(path_to_package(browser, 'generationlinks.pt'))
+    from imio.dashboard import browser as imio_dashboard_browser
+    render = ViewPageTemplateFile(path_to_package(imio_dashboard_browser,
+                                                  'templates/generationlinks.pt'))
 
     def available(self):
         """
@@ -391,10 +392,10 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
     """
     def __init__(self, context, request):
         super(MeetingItemActionsPanelView, self).__init__(context, request)
-        self.SECTIONS_TO_RENDER = ('renderTransitions',
+        self.SECTIONS_TO_RENDER = ('renderEdit',
+                                   'renderTransitions',
                                    'renderArrows',
                                    'renderOwnDelete',
-                                   'renderEdit',
                                    'renderActions',
                                    'renderHistory', )
 
@@ -507,10 +508,10 @@ class MeetingActionsPanelView(BaseActionsPanelView):
     """
     def __init__(self, context, request):
         super(MeetingActionsPanelView, self).__init__(context, request)
-        self.SECTIONS_TO_RENDER = ['renderTransitions',
+        self.SECTIONS_TO_RENDER = ['renderEdit',
+                                   'renderTransitions',
                                    'renderOwnDelete',
                                    'renderDeleteWholeMeeting',
-                                   'renderEdit',
                                    'renderActions', ]
 
     def __call___cachekey(method,
@@ -620,8 +621,8 @@ class ConfigActionsPanelView(ActionsPanelView):
     def __init__(self, context, request):
         super(ConfigActionsPanelView, self).__init__(context, request)
         self.SECTIONS_TO_RENDER = ('renderEdit',
-                                   'renderArrows',
                                    'renderTransitions',
+                                   'renderArrows',
                                    'renderOwnDelete')
         if self.context.meta_type == 'MeetingGroup':
             self.SECTIONS_TO_RENDER = self.SECTIONS_TO_RENDER + ('renderLinkedPloneGroups', )
@@ -806,11 +807,19 @@ class CategorizedAnnexesView(CategorizedTabView):
 
     def showDecisionAnnexesSection(self):
         """ """
+        if not self.context.meta_type == 'MeetingItem':
+            return False
+
         self.request.set('force_use_item_decision_annexes_group', True)
         hasDecisionAnnexesTypes = get_categories(self.context)
         self.request.set('force_use_item_decision_annexes_group', False)
         return hasDecisionAnnexesTypes or \
             self.tool.hasAnnexes(self.context, portal_type='annexDecision')
+
+    def numberOfAnnexes(self, portal_type='annex'):
+        '''Return the number of viewable annexes.'''
+        catalog = api.portal.get_tool('portal_catalog')
+        return len(catalog(portal_type=portal_type, path='/'.join(self.context.getPhysicalPath())))
 
 
 class PMCKFinder(CKFinder):

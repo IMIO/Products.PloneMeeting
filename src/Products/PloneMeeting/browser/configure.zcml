@@ -235,20 +235,6 @@
         attribute="synchToggle"
         permission="zope2.View"/>
     <browser:page
-        name="toggle_annex_to_print"
-        attribute="toggle"
-        allowed_attributes="toggle"
-        class=".async.AnnexToPrint"
-        for="Products.PloneMeeting.interfaces.IMeetingFile"
-        permission="zope2.View" />
-    <browser:page
-        name="toggle_annex_is_confidential"
-        attribute="toggle"
-        allowed_attributes="toggle"
-        class=".async.AnnexIsConfidential"
-        for="Products.PloneMeeting.interfaces.IMeetingFile"
-        permission="zope2.View" />
-    <browser:page
         name="toggle_advice_is_confidential"
         attribute="toggle"
         allowed_attributes="toggle"
@@ -523,38 +509,6 @@
         class=".advices.AdvicesIcons"
         template="templates/advices_icons.pt"
         permission="zope2.View"/>
-    <!-- Annexes -->
-    <browser:page
-        name="annexes-macros"
-        for="*"
-        class=".annexes.AnnexesMacros"
-        template="templates/annexes_macros.pt"
-        permission="zope2.View"/>
-    <browser:page
-        name="annexes-icons"
-        for="*"
-        class=".annexes.AnnexesIcons"
-        template="templates/annexes_icons.pt"
-        permission="zope2.View"/>
-    <browser:view
-        name="annexes"
-        class=".annexes.AnnexesView"
-        for="*"
-        permission="zope.Public"
-        allowed_attributes="addAnnex
-                            isValidAnnexId"/>
-    <browser:page
-        name="annex-to-print"
-        class=".annexes.AnnexToPrintView"
-        for="Products.PloneMeeting.interfaces.IMeetingFile"
-        template="templates/annextoprint.pt"
-        permission="zope.Public"/>
-    <browser:page
-        name="annex-title"
-        class=".annexes.AnnexTitleView"
-        for="*"
-        template="templates/annextitle.pt"
-        permission="zope.Public"/>
     <browser:view
         name="pm-notify-event"
         class=".notify.NotifyEvent"
@@ -590,16 +544,6 @@
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         name="manage_item_signatures_form"
         class=".itemsignatures.ManageItemSignaturesFormWrapper"
-        permission="zope2.View"
-      />
-
-    <!-- Display the annex_type imgSelectBox on the annexes_form -->
-    <browser:page
-        for="*"
-        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        name="annex_type_img_select_box"
-        class=".imgselectbox.AnnexTypeImgSelectBoxView"
-        template="templates/imgselectbox.pt"
         permission="zope2.View"
       />
 
@@ -732,15 +676,7 @@
 
     <configure package="collective.iconifiedcategory">
         <browser:page
-            for="Products.PloneMeeting.interfaces.IMeeting"
-            name="categorized-childs"
-            permission="zope2.View"
-            class="Products.PloneMeeting.browser.overrides.PMCategorizedChildView"
-            layer="collective.iconifiedcategory.interfaces.ICollectiveIconifiedCategoryLayer"
-            template="browser/templates/categorized-childs.pt"
-          />
-        <browser:page
-            for="Products.PloneMeeting.interfaces.IMeetingItem"
+            for="OFS.interfaces.IItem"
             name="categorized-childs"
             permission="zope2.View"
             class="Products.PloneMeeting.browser.overrides.PMCategorizedChildView"

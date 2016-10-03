@@ -138,11 +138,6 @@ class MeetingAdvice(Container):
         wfTool = api.portal.get_tool('portal_workflow')
         return wfTool.getInfoFor(self, 'review_state')
 
-    def numberOfAnnexes(self):
-        '''Return the number of viewable annexes.'''
-        catalog = api.portal.get_tool('portal_catalog')
-        return len(catalog(Type='MeetingFile', path='/'.join(self.getPhysicalPath())))
-
     def _updateAdviceRowId(self):
         '''Make sure advice_row_id is correct.'''
         # the row_id is stored in parent (item) adviceIndex

@@ -122,12 +122,30 @@
         </table>
       </fieldset>
 
-      <!-- OpenOffice configuration -->
+      <!-- collective.documentgenerator configuration -->
       <fieldset>
         <legend>
-           <span i18n:translate="oo_config"></span>
+           <span i18n:translate="documentgenerator_config"></span>
         </legend>
-        <p class="discreet" i18n:translate="oo_config_descr">These parameters are now managed in the <a i18n:name="docgen_url" tal:attributes="href string:${portal_url}/@@collective.documentgenerator-controlpanel">collective.documentgenerator</a> control panel.</p><br />
+        <p class="discreet" i18n:translate="documentgenerator_config_descr">These parameters are now managed in the <a i18n:name="docgen_url" i18n:domain="collective.documentgenerator" i18n:translate="" tal:attributes="href string:${portal_url}/@@collective.documentgenerator-controlpanel">Document Generator settings</a>.</p><br />
+      </fieldset>
+
+      <!-- collective.documentviewer configuration -->
+      <fieldset>
+        <legend>
+           <span i18n:translate="annexes_preview"></span>
+        </legend>
+        <p class="discreet" i18n:translate="annexes_preview_descr"></p><br />
+        <tal:auto_convert_enabled condition="context/auto_convert_annexes">
+          <p class="discreet" i18n:translate="annexes_preview_enabled">
+            <span style='color: green;'>Annexes preview is enabled in the <a i18n:name="documentviewer_url" i18n:domain="collective.documentviewer" i18n:translate="heading_documentviewer_global_settings_form" href="" tal:attributes="href string:${portal_url}/@@global-documentviewer-settings">Global Document Viewer Settings</a>.</span>
+          </p>
+        </tal:auto_convert_enabled>
+        <tal:auto_convert_enabled condition="not: context/auto_convert_annexes">
+          <p class="discreet" i18n:translate="annexes_preview_disabled">
+            <span style='color: green;'>Annexes preview is disabled in the <a i18n:name="documentviewer_url" i18n:domain="collective.documentviewer" i18n:translate="heading_documentviewer_global_settings_form" href="" tal:attributes="href string:${portal_url}/@@global-documentviewer-settings">Global Document Viewer Settings</a>.</span>
+          </p>
+        </tal:auto_convert_enabled>
       </fieldset>
 
       <!-- Misc -->
@@ -169,11 +187,9 @@
             <td tal:define="field python:here.getField('enableUserPreferences')">
               <span metal:use-macro="here/widgets/field/macros/view" />
             </td>
-            <td tal:define="field python:here.getField('enableAnnexPreview')">
-              <span metal:use-macro="here/widgets/field/macros/view" />
-            </td>
             <td tal:define="field python:here.getField('modelAdaptations')">
               <span metal:use-macro="here/widgets/field/macros/view" /></td>
+            <td></td>
             <td></td>
           </tr>
           <tr valign="top">

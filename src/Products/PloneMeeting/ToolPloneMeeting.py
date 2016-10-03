@@ -227,17 +227,6 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
     ),
-    BooleanField(
-        name='enableAnnexPreview',
-        default=defValues.enableAnnexPreview,
-        widget=BooleanField._properties['widget'](
-            description="EnableAnnexPreview",
-            description_msgid="enable_annex_preview_descr",
-            label='Enableannexpreview',
-            label_msgid='PloneMeeting_label_enableAnnexPreview',
-            i18n_domain='PloneMeeting',
-        ),
-    ),
     LinesField(
         name='workingDays',
         default=defValues.workingDays,
@@ -1579,9 +1568,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if not self.isManager(self, realManagers=True):
             raise Unauthorized
 
-        portal = api.portal.get()
-        gsettings = GlobalSettings(portal)
-
         catalog = api.portal.get_tool('portal_catalog')
         # update annexes in items and advices
         brains = catalog(meta_type='MeetingItem') + \
@@ -1593,12 +1579,18 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             for annex in annexes:
                 to_be_printed_activated = get_config_root(annex)
                 # convert if auto_convert is enabled or to_print is enabled for printing
-                if (gsettings.auto_convert or
+                if (self.auto_convert_annexes() or
                     (to_be_printed_activated and cfg.getAnnexToPrintMode() == 'enabled_for_printing')) and \
                    not IIconifiedPreview(annex).converted:
                     queueJob(annex)
         self.plone_utils.addPortalMessage('Done.')
         return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
+
+    def auto_convert_annexes(self):
+        """Return True if auto_convert is enabled in the c.documentviewer settings."""
+        portal = api.portal.get()
+        gsettings = GlobalSettings(portal)
+        return gsettings.auto_convert
 
     def hasAnnexes(self, context, portal_type='annex'):
         '''Does given p_context contains annexes of type p_portal_type?'''

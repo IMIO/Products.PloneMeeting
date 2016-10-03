@@ -749,95 +749,95 @@ class Migrate_To_4_0(Migrator):
         tool = api.portal.get_tool('portal_plonemeeting')
         wfTool = api.portal.get_tool('portal_workflow')
         old_mft_new_cat_id_mappings = {}
-        for cfg in tool.objectValues('MeetingConfig'):
-            cfg._createSubFolders()
-            if cfg.annexes_types.item_annexes.objectIds() or \
-               cfg.annexes_types.item_decision_annexes.objectIds() or \
-               cfg.annexes_types.advice_annexes.objectIds():
-                logger.info('Done.')
-                return
-
-            # first create categories and subcategories then in a second pass
-            # update the otherMCCorrespondences attribute
-            for mft in cfg.meetingfiletypes.objectValues():
-                folder = None
-                to_print_default = None
-                if mft.getRelatedTo() == 'item':
-                    folder = cfg.annexes_types.item_annexes
-                    to_print_default = cfg.annexToPrintDefault
-                elif mft.getRelatedTo() == 'item_decision':
-                    folder = cfg.annexes_types.item_decision_annexes
-                    to_print_default = cfg.annexDecisionToPrintDefault
-                elif mft.getRelatedTo() == 'advice':
-                    folder = cfg.annexes_types.advice_annexes
-                    to_print_default = cfg.annexAdviceToPrintDefault
-                # create the category
-                icon = NamedBlobImage(
-                    data=mft.theIcon.data,
-                    contentType=mft.theIcon.content_type,
-                    filename=unicode(mft.theIcon.filename, 'utf-8'))
-                category = api.content.create(
-                    id=mft.getId(),
-                    type='ContentCategory',
-                    container=folder,
-                    title=safe_unicode(mft.Title()),
-                    icon=icon,
-                    predefined_title=safe_unicode(mft.getPredefinedTitle()),
-                    to_print=to_print_default,
-                    confidential=mft.getIsConfidentialDefault(),
-                    enabled=bool(wfTool.getInfoFor(mft, 'review_state') == 'active'))
-                old_mft_new_cat_id_mappings[mft.UID()] = calculate_category_id(category)
-                category._v_old_mft = mft.UID()
-                for subType in mft.getSubTypes():
-                    subcat = api.content.create(
-                        type='ContentSubcategory',
-                        container=category,
-                        title=safe_unicode(subType['title']),
-                        icon=icon,
-                        predefined_title=safe_unicode(subType['predefinedTitle']),
-                        to_print=to_print_default,
-                        confidential=bool(subType['isConfidentialDefault'] == '1'),
-                        enabled=bool(subType['isActive'] == '1')
-                    )
-                    old_mft_new_cat_id_mappings[mft.UID() + '__subtype__' + subType['row_id']] = \
-                        calculate_category_id(category)
-                    subcat._v_old_mft = subType['row_id']
-        # now that categories and subcategories are created, we are
-        # able to update the otherMCCorrespondences attribute
-        for cfg in tool.objectValues('MeetingConfig'):
-            for mft in cfg.meetingfiletypes.objectValues():
-                otherMCCorrespondences = mft.getOtherMCCorrespondences()
-                if otherMCCorrespondences:
-                    otherUIDs = []
-                    for otherMCCorrespondence in otherMCCorrespondences:
-                        if '__subtype__' in otherMCCorrespondence:
-                            # send to a subtype, find the subType
-                            otherUIDs.append(
-                                _getCurrentCatFromOldUID('ContentSubcategory',
-                                                         otherMCCorrespondence.split('__subtype__')[-1]).UID())
-                        else:
-                            otherUIDs.append(
-                                _getCurrentCatFromOldUID('ContentCategory',
-                                                         otherMCCorrespondence.split('__filetype__')[-1]).UID())
-                    _getCurrentCatFromOldUID(
-                        'ContentCategory',
-                        mft.UID()).other_mc_correspondences = otherUIDs
-                for subType in mft.getSubTypes():
-                    if subType['otherMCCorrespondences']:
-                        otherUIDs = []
-                        for otherMCCorrespondence in subType['otherMCCorrespondences']:
-                            if '__subtype__' in otherMCCorrespondence:
-                                # send to a subtype, find the subType
-                                otherUIDs.append(
-                                    _getCurrentCatFromOldUID('ContentSubcategory',
-                                                             otherMCCorrespondence.split('__subtype__')[-1]).UID())
-                            else:
-                                otherUIDs.append(
-                                    _getCurrentCatFromOldUID('ContentCategory',
-                                                             otherMCCorrespondence.split('__filetype__')[-1]).UID())
-                        _getCurrentCatFromOldUID(
-                            'ContentSubcategory',
-                            subType['row_id']).other_mc_correspondences = otherUIDs
+        # for cfg in tool.objectValues('MeetingConfig'):
+        #     cfg._createSubFolders()
+        #     if cfg.annexes_types.item_annexes.objectIds() or \
+        #        cfg.annexes_types.item_decision_annexes.objectIds() or \
+        #        cfg.annexes_types.advice_annexes.objectIds():
+        #         logger.info('Done.')
+        #         continue
+        # 
+        #     # first create categories and subcategories then in a second pass
+        #     # update the otherMCCorrespondences attribute
+        #     for mft in cfg.meetingfiletypes.objectValues():
+        #         folder = None
+        #         to_print_default = None
+        #         if mft.getRelatedTo() == 'item':
+        #             folder = cfg.annexes_types.item_annexes
+        #             to_print_default = cfg.annexToPrintDefault
+        #         elif mft.getRelatedTo() == 'item_decision':
+        #             folder = cfg.annexes_types.item_decision_annexes
+        #             to_print_default = cfg.annexDecisionToPrintDefault
+        #         elif mft.getRelatedTo() == 'advice':
+        #             folder = cfg.annexes_types.advice_annexes
+        #             to_print_default = cfg.annexAdviceToPrintDefault
+        #         # create the category
+        #         icon = NamedBlobImage(
+        #             data=mft.theIcon.data,
+        #             contentType=mft.theIcon.content_type,
+        #             filename=unicode(mft.theIcon.filename, 'utf-8'))
+        #         category = api.content.create(
+        #             id=mft.getId(),
+        #             type='ContentCategory',
+        #             container=folder,
+        #             title=safe_unicode(mft.Title()),
+        #             icon=icon,
+        #             predefined_title=safe_unicode(mft.getPredefinedTitle()),
+        #             to_print=to_print_default,
+        #             confidential=mft.getIsConfidentialDefault(),
+        #             enabled=bool(wfTool.getInfoFor(mft, 'review_state') == 'active'))
+        #         old_mft_new_cat_id_mappings[mft.UID()] = calculate_category_id(category)
+        #         category._v_old_mft = mft.UID()
+        #         for subType in mft.getSubTypes():
+        #             subcat = api.content.create(
+        #                 type='ContentSubcategory',
+        #                 container=category,
+        #                 title=safe_unicode(subType['title']),
+        #                 icon=icon,
+        #                 predefined_title=safe_unicode(subType['predefinedTitle']),
+        #                 to_print=to_print_default,
+        #                 confidential=bool(subType['isConfidentialDefault'] == '1'),
+        #                 enabled=bool(subType['isActive'] == '1')
+        #             )
+        #             old_mft_new_cat_id_mappings[mft.UID() + '__subtype__' + subType['row_id']] = \
+        #                 calculate_category_id(category)
+        #             subcat._v_old_mft = subType['row_id']
+        # # now that categories and subcategories are created, we are
+        # # able to update the otherMCCorrespondences attribute
+        # for cfg in tool.objectValues('MeetingConfig'):
+        #     for mft in cfg.meetingfiletypes.objectValues():
+        #         otherMCCorrespondences = mft.getOtherMCCorrespondences()
+        #         if otherMCCorrespondences:
+        #             otherUIDs = []
+        #             for otherMCCorrespondence in otherMCCorrespondences:
+        #                 if '__subtype__' in otherMCCorrespondence:
+        #                     # send to a subtype, find the subType
+        #                     otherUIDs.append(
+        #                         _getCurrentCatFromOldUID('ContentSubcategory',
+        #                                                  otherMCCorrespondence.split('__subtype__')[-1]).UID())
+        #                 else:
+        #                     otherUIDs.append(
+        #                         _getCurrentCatFromOldUID('ContentCategory',
+        #                                                  otherMCCorrespondence.split('__filetype__')[-1]).UID())
+        #             _getCurrentCatFromOldUID(
+        #                 'ContentCategory',
+        #                 mft.UID()).other_mc_correspondences = otherUIDs
+        #         for subType in mft.getSubTypes():
+        #             if subType['otherMCCorrespondences']:
+        #                 otherUIDs = []
+        #                 for otherMCCorrespondence in subType['otherMCCorrespondences']:
+        #                     if '__subtype__' in otherMCCorrespondence:
+        #                         # send to a subtype, find the subType
+        #                         otherUIDs.append(
+        #                             _getCurrentCatFromOldUID('ContentSubcategory',
+        #                                                      otherMCCorrespondence.split('__subtype__')[-1]).UID())
+        #                     else:
+        #                         otherUIDs.append(
+        #                             _getCurrentCatFromOldUID('ContentCategory',
+        #                                                      otherMCCorrespondence.split('__filetype__')[-1]).UID())
+        #                 _getCurrentCatFromOldUID(
+        #                     'ContentSubcategory',
+        #                     subType['row_id']).other_mc_correspondences = otherUIDs
 
         # clean no more used attributes
         for cfg in tool.objectValues('MeetingConfig'):
@@ -920,6 +920,18 @@ class Migrate_To_4_0(Migrator):
                         )
                 delattr(obj, 'alreadyUsedAnnexNames')
                 delattr(obj, 'annexIndex')
+
+        # clean unused attribute, we now use the 'auto_convert' parameter of c.documentviewer
+        if hasattr(self.tool, 'enableAnnexPreview'):
+            delattr(self.tool, 'enableAnnexPreview')
+
+        # clean portal_types to remove the 'annexes_form' action
+        for type_info in self.portal.portal_types.values():
+            action_ids = [act.id for act in type_info._actions]
+            if not 'annexes_form' in action_ids:
+                continue
+            action_number = action_ids.index('annexes_form')
+            type_info.deleteActions([action_number])
 
         logger.info('Done.')
 

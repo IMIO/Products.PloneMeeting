@@ -1,7 +1,0 @@
-[validators]
-validators..=annexes_validate
-validators..Select=annexes_validate
-
-[actions]
-action.success=traverse_to:string:do_add_annex
-action.failure=traverse_to:string:annexes_form

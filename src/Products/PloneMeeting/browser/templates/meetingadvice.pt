@@ -65,11 +65,13 @@
                     </tal:loop>
                 </table>
             </dd>
-            <dt><span i18n:translate="">Annexes</span>&nbsp;(<span tal:replace="context/numberOfAnnexes" />)</dt>
-            <dd tal:define="relatedTo string:advice;
-                            showColors python: False;">
-              <metal:showAnnexes use-macro="here/@@annexes-macros/annexesShowMacro" />
+
+            <tal:annexes define="categorized_annexes python: context.restrictedTraverse('categorized-annexes')">
+            <dt><span i18n:translate="">Annexes</span>&nbsp;(<span tal:replace="categorized_annexes/numberOfAnnexes" />)</dt>
+            <dd>
+              <div class="content" tal:content="structure python: categorized_annexes.table_render(portal_type='annex')"></div>
             </dd>
+            </tal:annexes>
         </dl>
 
         <div class="visualClear"></div>

@@ -537,7 +537,6 @@ class PloneMeetingConfiguration(Descriptor):
         self.defaultOcrLanguage = 'eng'
         self.modelAdaptations = []
         self.enableUserPreferences = False
-        self.enableAnnexPreview = False
         self.workingDays = ('mon', 'tue', 'wed', 'thu', 'fri')
         self.holidays = [{'date': '2016/01/01', },  # 2016
                          {'date': '2016/03/28', },

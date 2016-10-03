@@ -188,7 +188,7 @@
                     </td>
                     <td tal:condition="python: adviceFileTypes or view.tool.hasAnnexes(advice)" align="right" width="20px" class="noPadding">
                       <a href="#"
-                         tal:attributes="href string:${obj_absolute_url}/annexes_form">
+                         tal:attributes="href string:${obj_absolute_url}/@@categorized-annexes">
                         <img src="manage_annexes.gif"
                              i18n:attributes="title" title="Manage advice annexes"
                              tal:attributes="src string:${view/portal_url}/manage_annexes.gif"/>
