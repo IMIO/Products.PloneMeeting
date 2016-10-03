@@ -55,6 +55,7 @@ from Products.CMFCore.utils import getToolByName, _checkPermission
 from Products.CMFCore.permissions import View
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFPlone.PloneBatch import Batch
+from Products.CMFPlone.utils import safe_unicode
 from Products.DCWorkflow.Transitions import TRIGGER_USER_ACTION
 from Products.DCWorkflow.Expression import StateChangeInfo, createExprContext
 from Products.ATContentTypes import permission as ATCTPermissions
@@ -1638,7 +1639,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 noMeetingFileTypes = True
                 plone_utils = getToolByName(self, 'plone_utils')
                 msg = translate('annexes_not_kept_because_no_available_mft_warning',
-                                mapping={'cfg': destMeetingConfig.Title()},
+                                mapping={'cfg': safe_unicode(destMeetingConfig.Title())},
                                 domain='PloneMeeting',
                                 context=self.REQUEST)
                 plone_utils.addPortalMessage(msg, 'warning')
