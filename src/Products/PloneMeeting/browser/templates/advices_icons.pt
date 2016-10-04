@@ -240,7 +240,7 @@
                   <tr tal:condition="python: adviceType != 'not_given'">
                     <td>
                         <a href="#"
-                           class="link-overlay-pm"
+                           class="link-overlay-pm-preview-advice"
                            tal:condition="adviceHolderIsViewable"
                            tal:attributes="href string:${obj_absolute_url}/view">
                             <img src="blue_arrow.gif"

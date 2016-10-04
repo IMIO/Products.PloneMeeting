@@ -1,7 +1,7 @@
 /* The jQuery here above will load a jQuery popup */
 
-// function that initialize advice add, edit or view advice popup
-function advicePopup() {
+// function that initialize advice add/edit advice popup
+function adviceAddEdit() {
   $('a.link-overlay-pm-advice').prepOverlay({
         subtype: 'ajax',
         closeselector: '[name="form.buttons.cancel"]',
@@ -9,6 +9,7 @@ function advicePopup() {
             onBeforeLoad : function (e) {
                 // CKeditor instances need to be initialized
                 launchCKInstances();
+                // add an event handler onclick on the save button
                 saveAdvice();
                 return true;
             },
@@ -34,6 +35,24 @@ function advicePopup() {
             }
         }
   });
+};
+
+
+// opening the advice preview from the advice tooltip
+function advicePreview() {
+    jQuery(function($){
+        $('a.link-overlay-pm-preview-advice').prepOverlay({
+            subtype: 'ajax',
+            closeselector: '[name="form.buttons.cancel"]',
+            config: {
+                onBeforeLoad : function (e) {
+                    // initialize iconifiedActions
+                    initializeIconifiedActions();
+                    return true;
+                },
+            }
+       });
+    });
 };
 
 // when opened in an overlay, save advice using an ajax call, this is done for faceted
@@ -78,8 +97,9 @@ function saveAdvice() {
 // prepare overlays for normal (non-ajax) pages
 // like meetingitem_view or overlays that you can raise from the portlet_plonemeeting
 jQuery(document).ready(function($) {
-    // advice popup
-    advicePopup();
+    // advice popups
+    adviceAddEdit();
+    advicePreview();
 
     jQuery(function($){
         // Every common overelays, must stay at the bottom of every defined overlays!!!
@@ -99,8 +119,9 @@ jQuery(document).ready(function($) {
 // "onmouseover" we initialize the overlays than remove the "onmouseover" event
 // so overlays are only initialized once...
 function initializePMOverlays(){
-    // advice popup
-    advicePopup();
+    // advice popups
+    adviceAddEdit();
+    advicePreview();
 
     jQuery(function($) {
         // Content history popup
