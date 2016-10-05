@@ -39,18 +39,9 @@
         permission="zope2.View"
         />
 
-    <!-- Override imio.dashboard document-generation-link viewlet -->
-    <browser:viewlet
-        for="OFS.interfaces.IItem"
-        name="document-generation-link"
-        manager="plone.app.layout.viewlets.interfaces.IAboveContentBody"
-        class="Products.PloneMeeting.browser.overrides.PMDocumentGeneratorLinksViewlet"
-        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        permission="zope2.View"
-        />
     <browser:viewlet
         for="eea.facetednavigation.interfaces.IFacetedNavigable"
-        name="document-generation-link"
+        name="dashboard-document-generation-link"
         manager="collective.eeafaceted.z3ctable.interfaces.ITopAboveNavManager"
         class="Products.PloneMeeting.browser.overrides.PMDashboardDocumentGeneratorLinksViewlet"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"

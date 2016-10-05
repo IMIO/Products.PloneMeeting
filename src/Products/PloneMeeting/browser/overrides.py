@@ -22,6 +22,7 @@ from plone.memoize.view import memoize_contextless
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.ckeditor.browser.ckeditorfinder import CKFinder
 from collective.documentgenerator.content.pod_template import IPODTemplate
+from collective.documentgenerator.viewlets.generationlinks import DocumentGeneratorLinksViewlet
 from collective.eeafaceted.collectionwidget.browser.views import RenderCategoryView
 from eea.facetednavigation.browser.app.view import FacetedContainerView
 from eea.facetednavigation.interfaces import IFacetedNavigable
@@ -29,10 +30,10 @@ from imio.actionspanel.browser.viewlets import ActionsPanelViewlet
 from imio.actionspanel.browser.views import ActionsPanelView
 from imio.dashboard.browser.overrides import IDDocumentGenerationView
 from imio.dashboard.browser.overrides import IDFacetedTableView
-from imio.dashboard.browser.overrides import IDDocumentGeneratorLinksViewlet
 from imio.dashboard.browser.overrides import IDDashboardDocumentGeneratorLinksViewlet
 from imio.dashboard.browser.views import RenderTermPortletView
 from imio.dashboard.content.pod_template import IDashboardPODTemplate
+from imio.helpers.path import path_to_package
 from imio.history.browser.views import IHDocumentBylineViewlet
 from imio.prettylink.interfaces import IPrettyLink
 
@@ -164,17 +165,18 @@ class BaseGeneratorLinksViewlet():
         return tool.getAvailableMailingLists(self.context, template_uid)
 
 
-class PMDocumentGeneratorLinksViewlet(IDDocumentGeneratorLinksViewlet, BaseGeneratorLinksViewlet):
+class PMDocumentGeneratorLinksViewlet(DocumentGeneratorLinksViewlet, BaseGeneratorLinksViewlet):
     """Override the 'generatelinks' viewlet to restrict templates by MeetingConfig."""
 
-    render = ViewPageTemplateFile('templates/generationlinks.pt')
+    from imio.dashboard import browser
+    render = ViewPageTemplateFile(path_to_package(browser, 'templates/generationlinks.pt'))
 
     def available(self):
         """
         Exclude this viewlet from faceted contexts except IMeeting.
         """
         # warning, we take super of IDDocumentGeneratorLinksViewlet
-        available = super(IDDocumentGeneratorLinksViewlet, self).available()
+        available = super(PMDocumentGeneratorLinksViewlet, self).available()
         # we accept IMeeting (that is a faceted...) or elements that are not a faceted
         no_faceted_context = IMeeting.providedBy(self.context) or not IFacetedNavigable.providedBy(self.context)
         return no_faceted_context and available
