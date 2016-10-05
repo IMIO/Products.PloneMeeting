@@ -3623,9 +3623,9 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         item.setDecision('<p>Text before space</p><p>&nbsp;</p><p>Text after space</p><p>&nbsp;</p>')
-        self.assertTrue(getFieldVersion(item, 'decision', None) ==
-                        '<p>Text before space</p>\n<p>\xc2\xa0</p>\n<p>Text after space</p>\n'
-                        '<p class="highlightBlankRow" title="Blank line">\xc2\xa0</p>\n')
+        self.assertEqual(getFieldVersion(item, 'decision', None),
+                         '<p>Text before space</p><p>\xc2\xa0</p><p>Text after space</p>'
+                         '<p class="highlightBlankRow" title="Blank line">\xc2\xa0</p>')
 
     def test_pm_ManuallyLinkedItems(self):
         '''Test the MeetingItem.manuallyLinkedItems field : as mutator is overrided,

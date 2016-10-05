@@ -509,10 +509,9 @@ class testViews(PloneMeetingTestCase):
         self.assertEquals(helper.printXhtml(item,
                                             [motivation, 'separator', decision],
                                             keepWithNext=True),
-                          """<p class="pmParaKeepWithNext">The motivation using UTF-8 characters : &#232;&#224;.</p>
-<p class="pmParaKeepWithNext">&#160;</p>
-<p class="pmParaKeepWithNext">The d&#233;cision using UTF-8 characters.</p>
-""")
+                          '<p class="pmParaKeepWithNext">The motivation using UTF-8 characters : &#232;&#224;.</p>'
+                          '<p class="pmParaKeepWithNext">&#160;</p>'
+                          '<p class="pmParaKeepWithNext">The d&#233;cision using UTF-8 characters.</p>')
 
         # use image_src_to_paths
         file_path = path.join(path.dirname(__file__), 'dot.gif')
@@ -524,13 +523,13 @@ class testViews(PloneMeetingTestCase):
         self.assertEquals(helper.printXhtml(item,
                                             [motivation, 'separator', decision, 'separator', text],
                                             image_src_to_paths=True,
-                                            keepWithNext=True).replace('\n', ''),
-                          """<p>The motivation using UTF-8 characters : &#232;&#224;.</p>
-<p>&#160;</p>
-<p class="pmParaKeepWithNext">The d&#233;cision using UTF-8 characters.</p>
-<p class="pmParaKeepWithNext">&#160;</p>
-<p class="pmParaKeepWithNext">Text with image <img src="{0}"/> and more text.</p>
-""".format(img_blob_path).replace('\n', ''))
+                                            keepWithNext=True),
+                          '<p>The motivation using UTF-8 characters : &#232;&#224;.</p>'
+                          '<p>&#160;</p>'
+                          '<p class="pmParaKeepWithNext">The d&#233;cision using UTF-8 characters.</p>'
+                          '<p class="pmParaKeepWithNext">&#160;</p>'
+                          '<p class="pmParaKeepWithNext">Text with image <img src="{0}"/> and more text.</p>'
+                          .format(img_blob_path))
 
 
 def test_suite():
