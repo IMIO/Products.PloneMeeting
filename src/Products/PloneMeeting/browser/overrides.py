@@ -685,7 +685,7 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
     def _get_generation_context(self, helper_view):
         """We backwardly use 'itemUids' instead of 'uids' for list of uids..."""
         generation_context = super(PMDocumentGenerationView, self)._get_generation_context(helper_view)
-        generation_context['itemUids'] = generation_context['uids']
+        generation_context['itemUids'] = generation_context.get('uids', [])
         return generation_context
 
     def generate_and_download_doc(self, pod_template, output_format):
