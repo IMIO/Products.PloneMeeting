@@ -845,3 +845,7 @@ class PMCategorizedChildView(CategorizedChildView):
         if gsettings.auto_convert:
             return True
         return False
+
+    def categorized_elements_more_infos_url(self):
+        """ """
+        return "{0}/{1}".format(self.context.absolute_url(), "@@categorized-annexes")
