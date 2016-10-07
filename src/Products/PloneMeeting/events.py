@@ -558,8 +558,10 @@ def onAnnexToPrintChanged(annex, event):
         # set c.documentviewer back to not converted
         ann = IAnnotations(annex)
         ann['collective.documentviewer'] = PersistentMapping()
-        ann['last_updated'] = DateTime('1901/01/01').ISO8601()
-        ann['storage_version'] = STORAGE_VERSION
+        ann['collective.documentviewer']['last_updated'] = DateTime('1901/01/01').ISO8601()
+        ann['collective.documentviewer']['storage_version'] = STORAGE_VERSION
+        return
+
     tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(annex)
     # in case we are updating an annex that was already converted,
