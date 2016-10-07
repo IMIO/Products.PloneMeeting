@@ -40,13 +40,6 @@
             tal:content="python: 'ploneEditor = \'%s\';' % (member.getProperty('wysiwyg_editor') or here.portal_properties.site_properties.default_editor)">
     </script>
 
-    <tal:comment replace="nothing">Form used for going to meetingitem_view for an item
-        whose number is given by the user.</tal:comment>
-
-    <form name="formGotoItem" tal:attributes="action python: context.absolute_url_path() + '/object_goto'">
-        <input type="hidden" name="uid"/>
-    </form>
-
     <tal:comment replace="nothing">Show navigation between items of the same meeting</tal:comment>
     <tal:itemNavigation tal:condition="python: meeting">
       <tal:itemNavigation replace="structure context/@@item-navigation-widget" />
@@ -471,17 +464,21 @@
     <tal:itemInConfig condition="context/isDefinedInTool">
 
       <tal:templateUsingGroups condition="python: 'itemtemplates' in context.absolute_url()">
-        <span class="discreet item_attribute_label"
-              i18n:translate="PloneMeeting_label_templateUsingGroups">Template using groups</span>&nbsp:<br />
-        <span metal:use-macro="python: here.widget('templateUsingGroups', mode='view')" /><p>&nbsp;</p>
-        <a tal:attributes="href python: meetingConfig.absolute_url() + '?pageName=data#itemTemplates'" i18n:translate="back"></a><br /><br />
+        <div class="discreet">
+         <span class="item_attribute_label" i18n:translate="PloneMeeting_label_templateUsingGroups">Template using groups</span>:&nbsp;&nbsp;
+         <span metal:use-macro="python: here.widget('templateUsingGroups', mode='view')" />
+        </div>
+        <p>&nbsp;</p>
+        <a tal:attributes="href string:${meetingConfig/absolute_url}?pageName=data#itemTemplates" i18n:translate="back"></a><br /><br />
       </tal:templateUsingGroups>
 
       <tal:transitionsForRecurring condition="python: context.getParentNode().getId() == 'recurringitems'">
-        <span class="discreet item_attribute_label"
-              i18n:translate="PloneMeeting_label_meetingTransitionInsertingMe" />&nbsp:<br />
-        <span metal:use-macro="python: here.widget('meetingTransitionInsertingMe', mode='view')" /><p>&nbsp;</p>
-        <a tal:attributes="href python: meetingConfig.absolute_url() + '?pageName=data#recurringitems'" i18n:translate="back"></a><br /><br />
+        <div class="discreet">
+         <span class="item_attribute_label" i18n:translate="PloneMeeting_label_meetingTransitionInsertingMe">Meeting transition inserting me</span>:&nbsp;&nbsp;
+         <span metal:use-macro="python: here.widget('meetingTransitionInsertingMe', mode='view')" />
+        </div>
+        <p>&nbsp;</p>
+        <a tal:attributes="href string:${meetingConfig/absolute_url}?pageName=data#recurringitems" i18n:translate="back"></a><br /><br />
       </tal:transitionsForRecurring>
 
     </tal:itemInConfig>
