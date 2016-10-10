@@ -13,7 +13,7 @@
                 <img i18n:attributes="title"
                      title="#"
                      tal:attributes="src string:${view/portal_url}/new.png;
-                                     title string:add_new_annex" />
+                                     title string:add_annex" />
               </a>
         </legend>
 
@@ -34,7 +34,7 @@
                 <img i18n:attributes="title"
                      title="#"
                      tal:attributes="src string:${view/portal_url}/new.png;
-                                     title string:add_new_annex_decision" />
+                                     title string:add_decision_annex" />
               </a>
         </legend>
 
