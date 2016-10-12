@@ -39,7 +39,7 @@ class PloneMeetingContentHistoryView(ContentHistoryView):
           as it is what is really displayed in the template.
         """
         currentWF = self._getCurrentContextWorkflow()
-        if hasattr(currentWF.transitions, transitionName):
+        if transitionName in currentWF.transitions:
             return currentWF.transitions[transitionName].title
         else:
             return transitionName
