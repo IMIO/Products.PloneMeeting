@@ -256,3 +256,8 @@ class PloneMeetingTestingHelpers:
         for member in members:
             group.addMember(member)
         setRoles(self.portal, currentMember.getId(), currentMemberRoles)
+
+    def _initial_state(self, obj):
+        """Return the workflow initial_state of given p_obj."""
+        wf_name = self.wfTool.getWorkflowsFor(obj)[0].getId()
+        return self.wfTool[wf_name].initial_state
