@@ -1919,9 +1919,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return False
 
     security.declarePublic('formatMeetingDate')
-    def formatMeetingDate(self, meeting, lang=None, short=False,
+    def formatMeetingDate(self, meeting, date_attr='getDate', lang=None, short=False,
                           withHour=False, prefixed=False):
-        '''Returns p_meeting.getDate as formatted by the user-defined date format defined
+        '''Returns p_meeting, p_date_attr as formatted by the user-defined date format defined
            in field dateFormat.
            - If p_lang is specified, it translates translatable elements (if
              any), like day of week or month, in p_lang. Else, it translates it
@@ -1932,11 +1932,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
              prepended to the result.'''
         # Received meeting could be a brain or an object
         if meeting.__class__.__name__ == 'mybrains':
-            # It is a meeting brain, take the 'getDate' metadata
-            date = meeting.getDate
+            # It is a meeting brain, take the 'date_attr' metadata
+            date = getattr(meeting, date_attr)
         else:
             # received meeting is a Meeting instance
-            date = meeting.getDate()
+            date = getattr(meeting, date_attr)()
         # Get the format for the rendering of p_aDate
         if short:
             fmt = '%d/%m/%Y'
