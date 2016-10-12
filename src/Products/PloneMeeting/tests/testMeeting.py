@@ -1188,8 +1188,7 @@ class testMeeting(PloneMeetingTestCase):
         m1_query = queryparser.parseFormquery(m1, m1.adapted()._availableItemsQuery())
         m2_query = queryparser.parseFormquery(m2, m2.adapted()._availableItemsQuery())
         m3_query = queryparser.parseFormquery(m3, m3.adapted()._availableItemsQuery())
-        wf_name = self.wfTool.getWorkflowsFor(i1)[0].getId()
-        if not self.wfTool[wf_name].initial_state == 'validated':
+        if not self._initial_state(i1) == 'validated':
             self.assertEquals(len(catalog(m1_query)), 0)
             self.assertEquals(len(catalog(m2_query)), 0)
             self.assertEquals(len(catalog(m3_query)), 0)

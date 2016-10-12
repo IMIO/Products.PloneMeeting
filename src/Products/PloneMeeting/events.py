@@ -328,7 +328,11 @@ def onItemModified(item, event):
             # he does not have the 'Add portal content' permission that is necessary
             # when renaming so do this as Manager
             with api.env.adopt_roles(['Manager']):
+                # set _at_creation_flag to True so MeetingItem.manage_beforeDelete
+                # ignores it and does not break predecessor and link to meeting
+                item._at_creation_flag = True
                 item._renameAfterCreation(check_auto_id=False)
+                item._at_creation_flag = False
 
 
 def storeExternalImagesLocallyDexterity(advice):
