@@ -379,7 +379,10 @@ class MeetingItemWorkflowActions:
             wTool.doActionFor(self.context, 'itempublish')
         except:
             pass  # Maybe does state 'itempublish' not exist.
-        wTool.doActionFor(self.context, 'itemfreeze')
+        try:
+            wTool.doActionFor(self.context, 'itemfreeze')
+        except:
+            pass  # Maybe does state 'itempublish' not exist.
 
     security.declarePrivate('doItemPublish')
     def doItemPublish(self, stateChange):
