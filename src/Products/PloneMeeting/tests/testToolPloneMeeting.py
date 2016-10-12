@@ -676,6 +676,16 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertEquals(self.tool.formatMeetingDate(meeting, short=True, withHour=True, prefixed=True),
                           u'Meeting of 05/05/2015 (14:30)')
 
+        # check using date_attr, default is 'getDate'
+        meeting.setPreMeetingDate(DateTime('2015/05/02'))
+        self.assertEquals(self.tool.formatMeetingDate(meeting, date_attr='getPreMeetingDate'),
+                          u'02 may 2015')
+
+        # formatMeetingDate may also receive a catalog brain instead a Meeting object
+        meeting_brain = self.portal.portal_catalog(UID=meeting.UID())[0]
+        self.assertEquals(self.tool.formatMeetingDate(meeting_brain),
+                          u'05 may 2015')
+
     def test_pm_ShowHolidaysWarning(self):
         """Method that shows the 'warning holidays' message."""
         # only available to MeetingManagers if last defined holidays is < 60 days in the future

@@ -329,6 +329,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Added specific icon before title of advice that are given as personal initiative
 - MeetingItem.displayAdvices is now MeetingItem.showAdvices and is an adaptable method that controls the fact that advices
   are shown or not on the item view
+- ToolPloneMeeting.formatMeetingDate now accepts a new parameter 'date_attr' that defaults to 'getDate' to be able to format
+  another date attribute available on the Meeting (like 'getPreMeetingDate', 'getStartDate', 'getMidDate', 'getEndDate', ...)
 
 3.3 (2015-02-27)
 ----------------
