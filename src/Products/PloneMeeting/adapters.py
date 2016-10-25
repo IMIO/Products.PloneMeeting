@@ -26,6 +26,7 @@ from plone import api
 from plone.api.exc import InvalidParameterError
 
 from collective.documentviewer.settings import GlobalSettings
+from collective.iconifiedcategory.adapter import CategorizedObjectAdapter
 from eea.facetednavigation.criteria.handler import Criteria as eeaCriteria
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
@@ -1255,6 +1256,36 @@ class DecidedItemsAdapter(CompoundCriterionBaseAdapter):
 
     # we may not ram.cache methods in same file with same name...
     query = query_decideditems
+
+
+class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
+    """ """
+
+    def __init__(self, context, request, brain):
+        super(PMCategorizedObjectAdapter, self).__init__(context, request, brain)
+
+    def can_view(self):
+        return True
+        infos = self.context.categorized_elements[self.brain.UID]
+        if not infos['confidential']:
+            return True
+        # element is confidential, check if current user may access it
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        isPowerObserver = tool.isPowerObserverForCfg(cfg)
+        isRestrictedPowerObserver = tool.isPowerObserverForCfg(cfg, isRestricted=True)
+        return self._isViewableForCurrentUser(cfg, isPowerObserver, isRestrictedPowerObserver)
+
+    def _isViewableForCurrentUser(self, cfg, isPowerObserver, isRestrictedPowerObserver):
+        '''
+          Returns True if current user may view the annex
+        '''
+        # if confidentiality is used and annex is marked as confidential,
+        # annexes could be hidden to power observers and/or restricted power observers
+        if ((isPowerObserver and 'power_observers' in cfg.getAnnexConfidentialFor()) or
+           (isRestrictedPowerObserver and 'restricted_power_observers' in cfg.getAnnexConfidentialFor())):
+            return False
+        return True
 
 
 class IconifiedCategoryConfigAdapter(object):

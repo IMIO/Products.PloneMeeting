@@ -158,6 +158,14 @@
   <adapter name="sendToAuthority" factory=".indexes.sendToAuthority" />
   <adapter name="SearchableText" factory=".indexes.SearchableText" />
 
+  <adapter
+    for="Products.PloneMeeting.interfaces.IMeetingContent
+         zope.publisher.interfaces.browser.IBrowserRequest
+         Products.ZCatalog.interfaces.ICatalogBrain"
+    provides="collective.iconifiedcategory.interfaces.IIconifiedContent"
+    factory=".adapters.PMCategorizedObjectAdapter"
+    />
+
   <!-- add the blob field to MeetingFile -->
   <adapter name="plone.app.blob.subtypes.file"
            for="Products.PloneMeeting.interfaces.IMeetingFile"
