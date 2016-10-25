@@ -142,7 +142,7 @@
   <!-- Action column for the annexes table -->
   <adapter
     name="action-column"
-    for=".interfaces.IMeetingItem
+    for=".interfaces.IMeetingContent
          zope.interface.Interface
          collective.iconifiedcategory.interfaces.ICategorizedTable"
     provides="z3c.table.interfaces.IColumn"

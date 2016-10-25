@@ -3,7 +3,7 @@
 from AccessControl import Unauthorized
 from DateTime import DateTime
 from persistent.list import PersistentList
-from zope.interface import implements, Interface
+from zope.interface import implements
 from zope import schema
 from zope.i18n import translate
 from zope.schema.interfaces import IVocabularyFactory
@@ -18,13 +18,15 @@ from plone.directives import form
 
 from plone import api
 from Products.PloneMeeting import PMMessageFactory as _
+from Products.PloneMeeting.interfaces import IMeetingContent
 from Products.PloneMeeting.utils import findMeetingAdvicePortalType
 from Products.PloneMeeting.utils import getHistory
 from Products.PloneMeeting.utils import getLastEvent
 from Products.PloneMeeting.utils import isModifiedSinceLastVersion
+from imio.prettylink.interfaces import IPrettyLink
 
 
-class IMeetingAdvice(Interface):
+class IMeetingAdvice(IMeetingContent):
     """
         MeetingAdvice schema
     """
@@ -102,6 +104,14 @@ class MeetingAdvice(Container):
     """ """
 
     implements(IMeetingAdvice)
+
+    def getPrettyLink(self, **kwargs):
+        """Return the IPrettyLink version of the title."""
+        adapted = IPrettyLink(self)
+        adapted.showContentIcon = True
+        for k, v in kwargs.items():
+            setattr(adapted, k, v)
+        return adapted.getLink()
 
     def Title(self):
         '''

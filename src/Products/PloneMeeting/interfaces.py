@@ -158,12 +158,17 @@ class IConfigElement(Interface):
     """
 
 
-class IMeetingItem(Interface):
+class IMeetingContent(Interface):
+    """Base marker interface for every content related elements
+    """
+
+
+class IMeetingItem(IMeetingContent):
     """Marker interface for .MeetingItem.MeetingItem
     """
 
 
-class IMeeting(Interface):
+class IMeeting(IMeetingContent):
     """Marker interface for .Meeting.Meeting
     """
 
