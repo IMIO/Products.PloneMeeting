@@ -11,6 +11,7 @@ from AccessControl import Unauthorized
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from zope.annotation import IAnnotations
 from zope.i18n import translate
+from zope.interface import alsoProvides
 from plone import api
 from plone.app.content.browser.foldercontents import FolderContentsView
 from plone.app.controlpanel.overview import OverviewControlPanel
@@ -27,7 +28,10 @@ from collective.documentviewer.settings import GlobalSettings
 from collective.eeafaceted.collectionwidget.browser.views import RenderCategoryView
 from collective.iconifiedcategory.browser.tabview import CategorizedTabView
 from collective.iconifiedcategory.browser.views import CategorizedChildView
+from collective.iconifiedcategory.interfaces import ICategorizedPrint
+from collective.iconifiedcategory.interfaces import ICategorizedConfidential
 from collective.iconifiedcategory.utils import get_categories
+from collective.iconifiedcategory.utils import get_config_root
 from eea.facetednavigation.browser.app.view import FacetedContainerView
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.actionspanel.browser.viewlets import ActionsPanelViewlet
@@ -799,6 +803,21 @@ class CategorizedAnnexesView(CategorizedTabView):
         super(CategorizedAnnexesView, self).__init__(context, request)
         self.portal_url = api.portal.get().absolute_url()
         self.tool = api.portal.get_tool('portal_plonemeeting')
+
+    def _prepare_table_render(self, table, portal_type):
+        if portal_type == 'annexDecision':
+            self.request.set('force_use_item_decision_annexes_group', True)
+            config = get_config_root(self.context)
+            self.request.set('force_use_item_decision_annexes_group', False)
+        else:
+            config = get_config_root(self.context)
+
+        if config.to_be_printed_activated:
+            alsoProvides(table, ICategorizedPrint)
+        if config.confidentiality_activated:
+            tool = api.portal.get_tool('portal_plonemeeting')
+            if tool.isManager(self.context):
+                alsoProvides(table, ICategorizedConfidential)
 
     def showAnnexesSection(self):
         """ """
