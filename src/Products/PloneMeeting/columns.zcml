@@ -144,7 +144,7 @@
     name="action-column"
     for=".interfaces.IMeetingItem
          zope.interface.Interface
-         collective.iconifiedcategory.interfaces.ICategorizedConfidential"
+         collective.iconifiedcategory.interfaces.ICategorizedTable"
     provides="z3c.table.interfaces.IColumn"
     factory=".columns.AnnexesActionsColumn"
     />
