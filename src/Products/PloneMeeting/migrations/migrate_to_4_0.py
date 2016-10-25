@@ -755,7 +755,7 @@ class Migrate_To_4_0(Migrator):
                cfg.annexes_types.item_decision_annexes.objectIds() or \
                cfg.annexes_types.advice_annexes.objectIds():
                 logger.info('Done.')
-                continue
+                return
 
             # first create categories and subcategories then in a second pass
             # update the otherMCCorrespondences attribute
