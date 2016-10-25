@@ -921,6 +921,12 @@ class Migrate_To_4_0(Migrator):
                 delattr(obj, 'alreadyUsedAnnexNames')
                 delattr(obj, 'annexIndex')
 
+        # now that MeetingFileTypes and MeetingFiles are migrated
+        # we are able to remove the MeetingConfig.meetingfiletypes folder
+        for cfg in tool.objectValues('MeetingConfig'):
+            if hasattr(cfg, 'meetingfiletypes'):
+                cfg.manage_delObjects(ids=['meetingfiletypes'])
+
         # clean unused attribute, we now use the 'auto_convert' parameter of c.documentviewer
         if hasattr(self.tool, 'enableAnnexPreview'):
             delattr(self.tool, 'enableAnnexPreview')
@@ -932,9 +938,9 @@ class Migrate_To_4_0(Migrator):
             if 'annexes_form' in action_ids:
                 action_numbers.append(action_ids.index('annexes_form'))
             if 'annexes_decision_form' in action_ids:
-                action_numbers.append(action_ids.index('annexes_form'))
+                action_numbers.append(action_ids.index('annexes_decision_form'))
             if action_numbers:
-                type_info.deleteActions([action_numbers])
+                type_info.deleteActions(action_numbers)
 
         logger.info('Done.')
 
