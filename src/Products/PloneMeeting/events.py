@@ -26,6 +26,7 @@ from zope.event import notify
 from zope.i18n import translate
 from zope.lifecycleevent import IObjectRemovedEvent
 from Products.CMFCore.utils import getToolByName
+from Products.CMFPlone.utils import safe_unicode
 from plone import api
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from Products.PloneMeeting import PMMessageFactory as _
@@ -317,7 +318,7 @@ def onItemDuplicated(item, event):
     label = translate('sentto_othermeetingconfig',
                       domain="PloneMeeting",
                       context=item.REQUEST,
-                      mapping={'meetingConfigTitle': newItemConfig.Title()})
+                      mapping={'meetingConfigTitle': safe_unicode(newItemConfig.Title())})
     action = translate(newItemConfig._getCloneToOtherMCActionTitle(newItemConfig.getId(), itemConfig.getId()),
                        domain="plone",
                        context=item.REQUEST)
