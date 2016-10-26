@@ -4666,38 +4666,36 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         item.processForm(values={'dummy': None})
         return item
 
-    security.declarePrivate('addContentCategory')
+    security.declarePrivate('addAnnexType')
 
-    def addContentCategory(self, cc, source):
-        '''Adds an annex type from a AnnexTypeDescriptor p_cc.'''
+    def addAnnexType(self, at, source):
+        '''Adds an annex type from a AnnexTypeDescriptor p_at.'''
         folder = getattr(self, TOOL_FOLDER_ANNEX_TYPES)
         # create ContentCategory in right subfolder (ContentCategoryGroup)
-        if cc.relatedTo == 'item':
+        if at.relatedTo == 'item':
             categoryGroupId = 'item_annexes'
-        elif cc.relatedTo == 'item_decision':
+        elif at.relatedTo == 'item_decision':
             categoryGroupId = 'item_decision_annexes'
-        elif cc.relatedTo == 'advice':
+        elif at.relatedTo == 'advice':
             categoryGroupId = 'advice_annexes'
-        elif cc.relatedTo == 'meeting':
+        elif at.relatedTo == 'meeting':
             categoryGroupId = 'meeting_annexes'
 
         # The image must be retrieved on disk from a profile
-        iconPath = '%s/images/%s' % (source, cc.icon)
+        iconPath = '%s/images/%s' % (source, at.icon)
         f = open(iconPath, 'r')
-        contentCategoryFile = NamedBlobFile(f.read(), filename=cc.icon)
+        contentCategoryFile = NamedBlobFile(f.read(), filename=at.icon)
         f.close()
         annexType = api.content.create(
-            id=cc.id,
+            id=at.id,
             type='ContentCategory',
-            title=cc.title,
+            title=at.title,
             icon=contentCategoryFile,
             container=getattr(folder, categoryGroupId),
-            to_print=cc.to_print,
-            confidential=cc.confidential,
+            to_print=at.to_print,
+            confidential=at.confidential,
+            enabled=at.enabled,
         )
-        if not cc.active:
-            wfTool = api.portal.get_tool('portal_workflow')
-            wfTool.doActionFor(annexType, 'deactivate')
         return annexType
 
     security.declarePrivate('addPodTemplate')

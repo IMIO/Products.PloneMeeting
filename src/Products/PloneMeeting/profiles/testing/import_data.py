@@ -20,11 +20,11 @@
 
 from Products.PloneMeeting.config import MEETINGREVIEWERS
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
+from Products.PloneMeeting.profiles import AnnexTypeDescriptor
 from Products.PloneMeeting.profiles import CategoryDescriptor
 from Products.PloneMeeting.profiles import GroupDescriptor
 from Products.PloneMeeting.profiles import ItemTemplateDescriptor
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
-from Products.PloneMeeting.profiles import ContentCategoryDescriptor
 from Products.PloneMeeting.profiles import MeetingUserDescriptor
 from Products.PloneMeeting.profiles import PloneGroupDescriptor
 from Products.PloneMeeting.profiles import PloneMeetingConfiguration
@@ -47,30 +47,30 @@ marketing = CategoryDescriptor('marketing', 'Marketing', active=False)
 subproducts = CategoryDescriptor('subproducts', 'Subproducts wishes', usingGroups=('vendors',))
 
 # File types
-financialAnalysis = ContentCategoryDescriptor(
+financialAnalysis = AnnexTypeDescriptor(
     'financial-analysis', 'Financial analysis', u'financialAnalysis.png',
     'Predefined title for financial analysis')
-legalAnalysis = ContentCategoryDescriptor(
+legalAnalysis = AnnexTypeDescriptor(
     'legal-analysis', 'Legal analysis', u'legalAnalysis.png', '')
-budgetAnalysis = ContentCategoryDescriptor(
+budgetAnalysis = AnnexTypeDescriptor(
     'budget-analysis', 'Budget analysis', u'budgetAnalysis.png', '')
-itemAnnex = ContentCategoryDescriptor(
+itemAnnex = AnnexTypeDescriptor(
     'item-annex', 'Other annex(es)', u'itemAnnex.png', '')
 # Could be used once we
 # will digitally sign decisions ? Indeed, once signed, we will need to
 # store them (together with the signature) as separate files.
-decision = ContentCategoryDescriptor(
+decision = AnnexTypeDescriptor(
     'decision', 'Decision', u'decision.png', '', 'item_decision')
-decisionAnnex = ContentCategoryDescriptor(
+decisionAnnex = AnnexTypeDescriptor(
     'decision-annex', 'Decision annex(es)', u'decisionAnnex.png', '', 'item_decision')
 # A vintage file type
-marketingAnalysis = ContentCategoryDescriptor(
+marketingAnalysis = AnnexTypeDescriptor(
     'marketing-annex', 'Marketing annex(es)', u'legalAnalysis.png', '', 'item_decision',
-    active=False)
+    enabled=False)
 # Advice file types
-adviceAnnex = ContentCategoryDescriptor(
+adviceAnnex = AnnexTypeDescriptor(
     'advice-annex', 'Advice annex(es)', u'itemAnnex.png', '', 'advice')
-adviceLegalAnalysis = ContentCategoryDescriptor(
+adviceLegalAnalysis = AnnexTypeDescriptor(
     'advice-legal-analysis', 'Advice legal analysis', u'legalAnalysis.png', '', 'advice')
 
 # Pod templates
@@ -224,7 +224,7 @@ template2 = ItemTemplateDescriptor(
     decision='<p>Template1 decision</p>', templateUsingGroups=['vendors', ])
 
 # File types
-overheadAnalysis = ContentCategoryDescriptor(
+overheadAnalysis = AnnexTypeDescriptor(
     'overhead-analysis', 'Administrative overhead analysis',
     u'overheadAnalysis.png', '')
 

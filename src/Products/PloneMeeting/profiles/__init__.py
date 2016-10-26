@@ -113,12 +113,12 @@ class CategoryDescriptor(Descriptor):
         self.active = active
 
 
-class ContentCategoryDescriptor(Descriptor):
+class AnnexTypeDescriptor(Descriptor):
     multiSelectFields = ('otherMCCorrespondences', 'subTypes', )
 
     def __init__(self, id, title, icon, predefined_title,
                  relatedTo='item', otherMCCorrespondences=(),
-                 active=True, subTypes=(), confidential=False, to_print=False):
+                 enabled=True, subTypes=(), confidential=False, to_print=False):
         self.id = id
         self.title = title
         self.icon = icon
@@ -127,7 +127,7 @@ class ContentCategoryDescriptor(Descriptor):
         self.subTypes = subTypes
         self.confidential = confidential
         self.to_print = to_print
-        self.active = active
+        self.enabled = enabled
         self.otherMCCorrespondences = otherMCCorrespondences
 
 

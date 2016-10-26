@@ -92,7 +92,6 @@ from Products.PloneMeeting.config import RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
 from Products.PloneMeeting.model.adaptations import RETURN_TO_PROPOSING_GROUP_MAPPINGS
 from Products.PloneMeeting.Meeting import Meeting
-from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowConditions
 from Products.PloneMeeting.utils import _addImagePermission
@@ -4115,7 +4114,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 d['gives_auto_advice_on_help_message'] = adviceInfo['gives_auto_advice_on_help_message']
                 d['row_id'] = adviceInfo['row_id']
                 d['hidden_during_redaction'] = False
-                d['annexIndex'] = []
                 # manage the 'delay_started_on' data that was saved prior
                 if adviceInfo['delay'] and groupId in saved_stored_data:
                     d['delay_started_on'] = saved_stored_data[groupId]['delay_started_on']
@@ -4181,7 +4179,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 adviceInfo['item_viewable_by_advisers'] = False
                 adviceInfo['advice_addable'] = False
                 adviceInfo['advice_editable'] = False
-                adviceInfo['annexIndex'] = []
                 adviceInfo['inherited'] = False
             self.adviceIndex[groupId].update(adviceInfo)
 
@@ -4321,10 +4318,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                    not bool(groupId in saved_stored_data and
                             saved_stored_data[groupId]['delay_stopped_on']):
                     self.adviceIndex[groupId]['delay_stopped_on'] = datetime.now()
-
-                # now index advice annexes
-                if self.adviceIndex[groupId]['type'] != NOT_GIVEN_ADVICE_VALUE:
-                    self.adviceIndex[groupId]['annexIndex'] = adviceObj.annexIndex
 
                 # compute and store delay_infos
                 self.adviceIndex[groupId]['delay_infos'] = self.getDelayInfosForAdvice(groupId)
