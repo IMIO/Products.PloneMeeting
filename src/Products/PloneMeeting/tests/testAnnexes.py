@@ -29,6 +29,7 @@ from collective.iconifiedcategory.utils import get_categorized_elements
 from collective.iconifiedcategory.utils import get_config_root
 from collective.iconifiedcategory.utils import get_group
 from Products.CMFCore.permissions import ModifyPortalContent
+from Products.PloneMeeting.indexes import SearchableText
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 
 
@@ -122,6 +123,49 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertEqual(len(get_categorized_elements(item)), 3)
         self.assertTrue('Annex 1 confidential' in annexes_table())
         self.assertTrue('Annex 1 confidential' in categorized_child())
+
+    def test_pm_AnnexesTitleFoundInItemSearchableText(self, ):
+        '''MeetingFiles title is indexed in the item SearchableText.'''
+        ANNEX_TITLE = "SpecialAnnexTitle"
+        ITEM_TITLE = "SpecialItemTitle"
+        ITEM_DESCRIPTION = "Item description"
+        ITEM_DECISION = "Item decision"
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem', title=ITEM_TITLE)
+        item.setDescription(ITEM_DESCRIPTION)
+        item.setDecision(ITEM_DECISION)
+        item.reindexObject(idxs=['SearchableText', ])
+        catalog = self.portal.portal_catalog
+        index = catalog.Indexes['SearchableText']
+        self.assertTrue(len(catalog(SearchableText=ITEM_TITLE)) == 1)
+        self.assertTrue(len(catalog(SearchableText=ITEM_DESCRIPTION)) == 1)
+        self.assertTrue(len(catalog(SearchableText=ITEM_DECISION)) == 1)
+        self.assertFalse(catalog(SearchableText=ANNEX_TITLE))
+        self.assertEquals(SearchableText(item)(),
+                          'SpecialItemTitle  <p>Item description</p>  <p>Item decision</p> ')
+        itemRID = catalog(UID=item.UID())[0].getRID()
+        self.assertEquals(index.getEntryForObject(itemRID),
+                          ['specialitemtitle', 'p', 'item', 'description', 'p',
+                           'p', 'item', 'decision', 'p'])
+
+        # add an annex and test that the annex title is found in the item's SearchableText
+        annex = self.addAnnex(item, annexTitle=ANNEX_TITLE)
+        # now querying for ANNEX_TITLE will return the relevant item
+        self.assertTrue(len(catalog(SearchableText=ITEM_TITLE)) == 1)
+        self.assertTrue(len(catalog(SearchableText=ITEM_DESCRIPTION)) == 1)
+        self.assertTrue(len(catalog(SearchableText=ITEM_DECISION)) == 1)
+        self.assertTrue(len(catalog(SearchableText=ANNEX_TITLE)) == 2)
+        self.assertEquals(SearchableText(item)(),
+                          'SpecialItemTitle  <p>Item description</p>  <p>Item decision</p>  SpecialAnnexTitle ')
+        itemRID = catalog(UID=item.UID())[0].getRID()
+        self.assertEquals(index.getEntryForObject(itemRID),
+                          ['specialitemtitle', 'p', 'item', 'description', 'p',
+                           'p', 'item', 'decision', 'p', 'specialannextitle'])
+        # if we remove the annex, the item is not found anymore when querying
+        # on removed annex's title
+        self.portal.restrictedTraverse('@@delete_givenuid')(annex.UID())
+        self.assertTrue(catalog(SearchableText=ITEM_TITLE))
+        self.assertFalse(catalog(SearchableText=ANNEX_TITLE))
 
 
 def test_suite():

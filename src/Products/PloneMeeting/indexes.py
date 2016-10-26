@@ -11,10 +11,10 @@ from DateTime import DateTime
 
 from OFS.interfaces import IItem
 
+from collective.iconifiedcategory.utils import get_categorized_elements
+from plone import api
 from plone.indexer import indexer
 from Products.PluginIndexes.common.UnIndex import _marker
-from Products.CMFCore.utils import getToolByName
-from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.interfaces import IMeeting
 from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
@@ -148,7 +148,7 @@ def getPreferredMeetingDate(obj):
     if preferredMeetingUID != ITEM_NO_PREFERRED_MEETING_VALUE:
         # use uid_catalog because as getPreferredMeetingDate is in the portal_catalog
         # if we clear and rebuild the portal_catalog, preferredMeetingUID will not be found...
-        uid_catalog = getToolByName(obj, 'uid_catalog')
+        uid_catalog = api.portal.get_tool('uid_catalog')
         res = uid_catalog(UID=preferredMeetingUID)[0].getObject().getDate()
     else:
         res = DateTime('1950/01/01')
@@ -192,7 +192,9 @@ def SearchableText(obj):
     """
     res = []
     res.append(obj.SearchableText())
-    for annex in IAnnexable(obj).getAnnexes():
+    annexes = get_categorized_elements(obj, result_type='objects', portal_type='annex')
+    annexes += get_categorized_elements(obj, result_type='objects', portal_type='annexDecision')
+    for annex in annexes:
         res.append(annex.SearchableText())
     res = ' '.join(res)
     return res or _marker
