@@ -304,7 +304,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             annexContentType = 'annexDecision'
 
         theAnnex = api.content.create(
-            id='file',
+            title=annexTitle or 'Annex',
             type=annexContentType,
             file=annex_file,
             container=context,

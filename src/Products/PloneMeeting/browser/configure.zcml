@@ -683,6 +683,13 @@
             layer="collective.iconifiedcategory.interfaces.ICollectiveIconifiedCategoryLayer"
             template="browser/templates/categorized-childs.pt"
           />
+        <browser:page
+          name="iconified-confidential"
+          for="imio.annex.content.annex.IAnnex"
+          layer="collective.iconifiedcategory.interfaces.ICollectiveIconifiedCategoryLayer"
+          class="Products.PloneMeeting.browser.overrides.PMConfidentialChangeView"
+          permission="zope2.View"
+          />
     </configure>
 
 </configure>

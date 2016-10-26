@@ -26,6 +26,7 @@ from collective.documentgenerator.content.pod_template import IPODTemplate
 from collective.documentgenerator.viewlets.generationlinks import DocumentGeneratorLinksViewlet
 from collective.documentviewer.settings import GlobalSettings
 from collective.eeafaceted.collectionwidget.browser.views import RenderCategoryView
+from collective.iconifiedcategory.browser.actionview import ConfidentialChangeView
 from collective.iconifiedcategory.browser.tabview import CategorizedTabView
 from collective.iconifiedcategory.browser.views import CategorizedChildView
 from collective.iconifiedcategory.interfaces import ICategorizedPrint
@@ -868,3 +869,15 @@ class PMCategorizedChildView(CategorizedChildView):
     def categorized_elements_more_infos_url(self):
         """ """
         return "{0}/{1}".format(self.context.absolute_url(), "@@categorized-annexes")
+
+
+class PMConfidentialChangeView(ConfidentialChangeView):
+    """Only available to Managers."""
+
+    def _may_set_values(self, values):
+        res = super(PMConfidentialChangeView, self)._may_set_values(values)
+        if res:
+            # user must be MeetingManager
+            tool = api.portal.get_tool('portal_plonemeeting')
+            res = tool.isManager(self.context)
+        return res
