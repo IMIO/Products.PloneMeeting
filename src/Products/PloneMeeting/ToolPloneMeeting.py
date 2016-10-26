@@ -1199,11 +1199,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 plone_utils.addPortalMessage(msg, 'warning')
             if not copyAnnexes or noMeetingFileTypes:
                 # Delete the annexes that have been copied.
-                for annex in get_categorized_elements(newItem, the_objects=True):
+                for annex in get_categorized_elements(newItem, result_type='objects'):
                     unrestrictedRemoveGivenObject(annex)
             else:
                 # manage the otherMCCorrespondence
-                oldAnnexes = get_categorized_elements(copiedItem, the_objects=True)
+                oldAnnexes = get_categorized_elements(copiedItem, result_type='objects')
                 for oldAnnex in oldAnnexes:
                     newAnnex = getattr(newItem, oldAnnex.getId())
                     # In case the item is copied from another MeetingConfig, we need
@@ -1551,7 +1551,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 obj = brain.getObject()
             except AttributeError:
                 continue
-            for annex in get_categorized_elements(obj, the_objects=True):
+            for annex in get_categorized_elements(obj, result_type='objects'):
                 update_categorized_elements(obj, annex, get_category_object(annex, annex.content_category))
             logger.info('%d/%d Updating annexIndex of %s at %s' % (i,
                                                                    numberOfBrains,
@@ -1574,7 +1574,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             catalog(object_provides='Products.PloneMeeting.content.advice.IMeetingAdvice')
         for brain in brains:
             obj = brain.getObject()
-            annexes = get_categorized_elements(obj, the_objects=True)
+            annexes = get_categorized_elements(obj, result_type='objects')
             cfg = self.getMeetingConfig(obj, caching=False)
             for annex in annexes:
                 to_be_printed_activated = get_config_root(annex)
