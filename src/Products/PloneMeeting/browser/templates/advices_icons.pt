@@ -249,9 +249,7 @@
                     <td colspan="5"
                         align="right"
                         class="advice_annexes">
-                        <tal:defines define="relatedTo string:advice;
-                                             extra_css_class string:annexIcon;"
-                                     condition="python: view.tool.hasAnnexes(obj) and adviceHolderIsViewable">
+                        <tal:defines condition="python: view.tool.hasAnnexes(obj) and adviceHolderIsViewable">
                             <tal:annexes replace="structure python: obj.restrictedTraverse('categorized-childs')(portal_type='annex')" />
                         </tal:defines>
                     </td>

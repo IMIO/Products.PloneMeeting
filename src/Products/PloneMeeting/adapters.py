@@ -1265,7 +1265,6 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
         super(PMCategorizedObjectAdapter, self).__init__(context, request, brain)
 
     def can_view(self):
-        return True
         infos = self.context.categorized_elements[self.brain.UID]
         if not infos['confidential']:
             return True

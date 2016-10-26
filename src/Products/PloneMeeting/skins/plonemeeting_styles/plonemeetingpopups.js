@@ -46,8 +46,8 @@ function advicePreview() {
             closeselector: '[name="form.buttons.cancel"]',
             config: {
                 onBeforeLoad : function (e) {
-                    // initialize iconifiedActions
-                    initializeIconifiedActions();
+                    // tooltipster for annexes
+                    initializeIconifiedCategoryWidget();
                     return true;
                 },
             }

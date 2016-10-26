@@ -370,11 +370,6 @@ td.td_cell_advices .actionMenuAX .actionMenuContentAX {
     right: 70px;
     top: 0;
 }
-/* but display annexes of advices correctly */
-td.td_cell_advices td.advice_annexes .actionMenuAX .actionMenuContentAX  {
-    right: -1px;
-    top: 1.7em;
-}
 
 /* skin menu displayed but avoid skinning contained <ul> */
 #content .actionMenuAX .actionMenuContentAX > ul:first-of-type {
@@ -397,9 +392,8 @@ td.td_cell_advices td.advice_annexes .actionMenuAX .actionMenuContentAX  {
     padding-bottom: 0.5em;
 }
 
-/* specifically do not use a padding-bottom at the AX panel displaying annexes of advices */
-#content .actionMenuContentAdvice .advice_annexes dd.actionMenuContentAX {
-    padding-bottom: 0;
+#content td.advice_annexes {
+    padding-top: 0.3em;
 }
 
 .actionMenuAX.activated { z-index: 20; }
@@ -1528,6 +1522,13 @@ input[id^='value_moveAction_'] {
 div.dashboard_annexes {
     width: 100%;
     text-align: right;
+}
+
+/* use important! so it is correctly displayed in the advice popup */
+#content div.categorized-elements a:link,
+#content div.categorized-elements a:hover,
+#content div.categorized-elements a:visited {
+    padding: 0.1em 0.2em 0.3em !important;
 }
 
 /* </dtml-with> */

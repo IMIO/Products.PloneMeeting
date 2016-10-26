@@ -26,8 +26,10 @@
               <div tal:replace="structure provider:plone.abovecontentbody" />
           </div>
       </tal:overlayViewlets>
-      <div tal:condition="python: not 'ajax_load' in context.REQUEST">
-        <metal:backToItem use-macro='here/@@pm-macros/backToItem' />
+      <div>
+        <tal:back_to_item condition="python: not 'ajax_load' in context.REQUEST">
+          <metal:backToItem use-macro='here/@@pm-macros/backToItem' />
+        </tal:back_to_item>
         <table class="no-style-table" width="100%">
             <tal:loop repeat="widget view/widgets/values">
             <tr tal:condition="python: widget.mode != 'hidden'">
@@ -46,43 +48,34 @@
             </tr>
             </tal:loop>
         </table>
-      </div>
-  
-      <div tal:condition="python: 'ajax_load' in context.REQUEST">
-          <dl class="enableFormTabbing">
-              <dt i18n:translate="MeetingAdvice">Advice</dt>
-              <dd>
-                  <table class="no-style-table" width="100%">
-                      <tal:loop repeat="widget view/widgets/values">
-                      <tr tal:condition="python: widget.mode != 'hidden'">
-                          <td class="table_widget_label"><label tal:content="widget/label">Label</label></td>
-                          <td class="table_widget_value">
-                              <tal:adviceType condition="python: widget.name == 'form.widgets.advice_type'">
-                                  <img src="#"
-                                       tal:define="adviceStyle python: context.portal_plonemeeting.getMeetingConfig(context).getAdviceStyle()"
-                                       tal:attributes="src string:$portal_url/advice_${adviceStyle}_${context/advice_type}.png" />
-                              </tal:adviceType>
-                              <tal:render tal:content="structure widget/render">Value</tal:render>
-                              <tal:previousAdviceType condition="python: widget.name == 'form.widgets.advice_type' and context.advice_type == 'asked_again'">
-                                <metal:previousAdviceType use-macro="context/@@pm-macros/previousAdviceType" />
-                              </tal:previousAdviceType>
-                          </td>
-                      </tr>
-                      </tal:loop>
-                  </table>
-              </dd>
-  
-              <tal:annexes define="categorized_annexes python: context.restrictedTraverse('categorized-annexes')">
-              <dt><span i18n:translate="">Annexes</span>&nbsp;(<span tal:replace="categorized_annexes/numberOfAnnexes" />)</dt>
-              <dd>
-                <div class="content" tal:content="structure python: categorized_annexes.table_render(portal_type='annex')"></div>
-              </dd>
-              </tal:annexes>
-          </dl>
-  
+        <fieldset tal:define="tool python: context.portal_plonemeeting;
+                              hasAnnexes python: tool.hasAnnexes(context, portal_type='annex');">
+            <legend i18n:translate="existing_annexes">Annexes</legend>
+            <table width="100%" class="no-style-table" cellpadding="0" cellspacing="0" style="margin: 0;">
+                <tr tal:define="obj python: context">
+                    <td tal:condition="hasAnnexes">
+                        <tal:annexes replace="structure python: context.restrictedTraverse('categorized-childs')(portal_type='annex')" />
+                    </td>
+                    <td tal:condition="python: not hasAnnexes">
+                        <span>-</span>
+                    </td>
+                    <td width="110px">
+                     <a href="#" tal:attributes="href string:${context/absolute_url}/@@categorized-annexes">
+                      <img class="categorized_elements_more_infos_icon"
+                           src="more_infos.png"
+                           tal:attributes="src string:${portal_url}/++resource++collective.iconifiedcategory/more_infos.png" />
+                      <span i18n:domain="collective.iconifiedcategory" i18n:translate="">More infos</span>
+                     </a>
+                    </td>
+                </tr>
+            </table>
+        </fieldset>
+
+        <tal:close_button condition="python: 'ajax_load' in context.REQUEST">
           <div class="visualClear"></div>
-  
           <metal:closeButton use-macro="here/@@pm-macros/closeButtonMacro" />
+        </tal:close_button>
+
       </div>
   
     </metal:content-core>
