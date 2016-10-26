@@ -2129,7 +2129,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: cfg.getUseCopies() and not tool.userIsAmong('powerobservers')",
+                    'tal_condition': "cfg/getUseCopies",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items to prevalidate
