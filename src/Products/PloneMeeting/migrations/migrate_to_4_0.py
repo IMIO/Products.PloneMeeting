@@ -547,13 +547,6 @@ class Migrate_To_4_0(Migrator):
                     delattr(aq_base(user), 'mailFormat')
         logger.info('Done.')
 
-    def _updateAnnexIndex(self):
-        '''The annexIndex changed (removed key 'modification_date', added 'mftTitle'),
-           we need to update it on every items and advices.'''
-        logger.info('Updating annexIndex...')
-        self.tool.reindexAnnexes()
-        logger.info('Done.')
-
     def _updateAllLocalRoles(self):
         '''updateAllLocalRoles so especially the advices are updated because the 'comment'
            is always available in the adviceIndex now, even on still not given advices.'''
@@ -581,20 +574,6 @@ class Migrate_To_4_0(Migrator):
         for brain in brains:
             itemOrMeeting = brain.getObject()
             forceHTMLContentTypeForEmptyRichFields(itemOrMeeting)
-        logger.info('Done.')
-
-    def _updateEnableAnnexToPrint(self):
-        """MeetingConfig.enableAnnexToPrint was a BooleanField, it is now a StringField.
-           Move 'False' to 'disabled' and 'True' to 'enabled_for_info'.
-        """
-        logger.info('Updating every MeetingConfigs \'enableAnnexToPrint\' from boolean to string...')
-        for cfg in self.tool.objectValues('MeetingConfig'):
-            enableAnnexToPrint = cfg.enableAnnexToPrint
-            if isinstance(enableAnnexToPrint, bool):
-                if enableAnnexToPrint is True:
-                    cfg.setEnableAnnexToPrint('enabled_for_info')
-                else:
-                    cfg.setEnableAnnexToPrint('disabled')
         logger.info('Done.')
 
     def _updateHistoryComments(self):
@@ -698,7 +677,7 @@ class Migrate_To_4_0(Migrator):
         self.tool.setTitle(translate('pm_configuration',
                            domain='PloneMeeting',
                            context=self.portal.REQUEST))
-        frontPage = getattr(self.portal, 'front-page')
+        frontPage = getattr(self.portal, 'front-page', None)
         if frontPage:
             frontPage.setTitle(translate('front_page_title',
                                domain='PloneMeeting',
@@ -845,6 +824,13 @@ class Migrate_To_4_0(Migrator):
                 # already migrated
                 continue
 
+            enableAnnexToPrint = cfg.enableAnnexToPrint
+            if isinstance(enableAnnexToPrint, bool):
+                if enableAnnexToPrint is True:
+                    cfg.enableAnnexToPrint = 'enabled_for_info'
+                else:
+                    cfg.enableAnnexToPrint = 'disabled'
+
             # manage 'enableAnnexToPrint'
             if cfg.enableAnnexToPrint.startswith('enabled_'):
                 cfg.setAnnexToPrintMode(cfg.enableAnnexToPrint)
@@ -957,7 +943,6 @@ class Migrate_To_4_0(Migrator):
             self.reinstall(profiles=[self.profile_name, ])
         self.upgradeDependencies()
         self._adaptAppForImioAnnex()
-        return
         self.cleanRegistries()
         self.updateHolidays()
         self._updateItemsListVisibleFields()
@@ -975,7 +960,6 @@ class Migrate_To_4_0(Migrator):
         self._updateAllLocalRoles()
         self._manageAddImagePermission()
         self._initNewHTMLFields()
-        self._updateEnableAnnexToPrint()
         self._updateHistoryComments()
         self._updateCKeditorCustomToolbar()
         self._removeUnusedIndexes()
@@ -994,29 +978,28 @@ def migrate(context):
     '''This migration function will:
 
        1) Reinstall PloneMeeting and upgrade dependencies;
-       2) Clean registries;
-       3) Update holidays defined on portal_plonemeeting;
-       4) Update MeetingConfig.itemsListVisibleFields stored values;
-       5) Migrate late items;
-       6) Move to imio.dashboard;
-       7) Clean pm_modification_date on items and annexes;
-       8) Move item templates and recurring items to their own portal_type;
-       9) Make sure no layout is defined on users MeetingFolders;
-       10) Move to collective.documentgenerator;
-       11) Adapt every items itemNumber;
-       12) Adapt every configs itemReferenceFormat;
-       13) Clean MeetingConfigs from unused attributes;
-       14) Clean MeetingUsers from unused attributes;
-       15) Reindex annexIndex;
+       2) Move to imio.annex;
+       3) Clean registries;
+       4) Update holidays defined on portal_plonemeeting;
+       5) Update MeetingConfig.itemsListVisibleFields stored values;
+       6) Migrate late items;
+       7) Move to imio.dashboard;
+       8) Clean pm_modification_date on items and annexes;
+       9) Move item templates and recurring items to their own portal_type;
+       10) Make sure no layout is defined on users MeetingFolders;
+       11) Move to collective.documentgenerator;
+       12) Adapt every items itemNumber;
+       13) Adapt every configs itemReferenceFormat;
+       14) Clean MeetingConfigs from unused attributes;
+       15) Clean MeetingUsers from unused attributes;
        16) Update all local_roles of Meeting and MeetingItems;
        17) Init new HTML fields;
-       18) Update MeetingConfig.enableAnnexToPrint attribute;
-       19) Update history comments;
-       20) Update CKEditor custom toolbar;
-       21) Remove unused catalog indexes;
-       22) Initialize MeetingConfig.selectableAdvisers field;
-       23) Adapt application name;
-       24) Refresh catalogs.
+       18) Update history comments;
+       19) Update CKEditor custom toolbar;
+       20) Remove unused catalog indexes;
+       21) Initialize MeetingConfig.selectableAdvisers field;
+       22) Adapt application name;
+       23) Refresh catalogs.
     '''
     migrator = Migrate_To_4_0(context)
     migrator.run()
