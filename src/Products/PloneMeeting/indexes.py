@@ -11,7 +11,6 @@ from DateTime import DateTime
 
 from OFS.interfaces import IItem
 
-from collective.iconifiedcategory.utils import get_categorized_elements
 from plone import api
 from plone.indexer import indexer
 from Products.PluginIndexes.common.UnIndex import _marker
@@ -192,8 +191,12 @@ def SearchableText(obj):
     """
     res = []
     res.append(obj.SearchableText())
-    annexes = get_categorized_elements(obj, result_type='objects', portal_type='annex')
-    annexes += get_categorized_elements(obj, result_type='objects', portal_type='annexDecision')
+    # do not use get_categorized_elements because it query catalog
+    annexes = []
+    contents = obj.objectValues()
+    for content in contents:
+        if content.portal_type in ('annex', 'annexDecision'):
+            annexes.append(content)
     for annex in annexes:
         res.append(annex.SearchableText())
     res = ' '.join(res)

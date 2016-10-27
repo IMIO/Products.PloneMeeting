@@ -161,6 +161,12 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertEquals(index.getEntryForObject(itemRID),
                           ['specialitemtitle', 'p', 'item', 'description', 'p',
                            'p', 'item', 'decision', 'p', 'specialannextitle'])
+        # works also when clear and rebuild catalog
+        self.portal.portal_catalog.clearFindAndRebuild()
+        itemRID = catalog(UID=item.UID())[0].getRID()
+        self.assertEquals(index.getEntryForObject(itemRID),
+                          ['specialitemtitle', 'p', 'item', 'description', 'p',
+                           'p', 'item', 'decision', 'p', 'specialannextitle'])
         # if we remove the annex, the item is not found anymore when querying
         # on removed annex's title
         self.portal.restrictedTraverse('@@delete_givenuid')(annex.UID())
