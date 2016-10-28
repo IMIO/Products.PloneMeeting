@@ -184,6 +184,13 @@
       class=".views.DisplayGroupUsersView"
       permission="zope2.View"
       />
+    <browser:page
+      for="Products.PloneMeeting.interfaces.IMeetingContent"
+      name="display-annexes"
+      template="templates/display_annexes.pt"
+      class=".views.DisplayAnnexesView"
+      permission="zope2.View"
+      />
 
     <!-- a view that will make some utils available -->
     <browser:page

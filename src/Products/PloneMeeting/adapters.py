@@ -1333,7 +1333,6 @@ class IconifiedCategoryGroupAdapter(object):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
         parent = self.context.getParentNode()
-
         # adding annex to an item
         if self.context.meta_type == 'MeetingItem' or \
            (self.context.portal_type in ('annex', 'annexDecision') and parent.meta_type == 'MeetingItem'):

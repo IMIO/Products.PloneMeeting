@@ -869,9 +869,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         elif context.meta_type in ('MeetingItem', 'Meeting') or \
                 context.portal_type.startswith('meetingadvice'):
             # check that there are categories defined in the configuration
-            hasAnnexesTypes = get_categories(self)
+            hasAnnexesTypes = get_categories(context)
             hasDecisionAnnexesTypes = False
-            if not hasAnnexesTypes:
+            if not hasAnnexesTypes and context.meta_type == 'MeetingItem':
                 # maybe we have decision related annexes types?
                 self.REQUEST.set('force_use_item_decision_annexes_group', True)
                 hasDecisionAnnexesTypes = get_categories(self)

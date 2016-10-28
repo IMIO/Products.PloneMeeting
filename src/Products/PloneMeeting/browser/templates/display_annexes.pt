@@ -1,0 +1,23 @@
+<tal:annexes condition="view/show">
+  <fieldset tal:define="hasAnnexes python: view.tool.hasAnnexes(context, portal_type='annex');">
+      <legend i18n:translate="existing_annexes">Annexes</legend>
+      <table width="100%" class="no-style-table" cellpadding="0" cellspacing="0" style="margin: 0;">
+          <tr tal:define="obj python: context">
+              <td tal:condition="hasAnnexes">
+                  <tal:annexes replace="structure python: context.restrictedTraverse('categorized-childs')(portal_type='annex')" />
+              </td>
+              <td tal:condition="python: not hasAnnexes">
+                  <span>-</span>
+              </td>
+              <td width="110px">
+               <a href="#" tal:attributes="href string:${context/absolute_url}/@@categorized-annexes">
+                <img class="categorized_elements_more_infos_icon"
+                     src="more_infos.png"
+                     tal:attributes="src string:${view/portal_url}/++resource++collective.iconifiedcategory/more_infos.png" />
+                <span i18n:domain="collective.iconifiedcategory" i18n:translate="">More infos</span>
+               </a>
+              </td>
+          </tr>
+      </table>
+  </fieldset>
+</tal:annexes>

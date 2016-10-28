@@ -789,3 +789,16 @@ class DisplayGroupUsersView(BrowserView):
             res.append(memberInfos and memberInfos['fullname'] or member_id)
         res.sort()
         return "<br />".join(res)
+
+
+class DisplayAnnexesView(BrowserView):
+    """ """
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.portal_url = api.portal.get().absolute_url()
+
+    def show(self):
+        """ """
+        return self.tool.showAnnexesTab(self.context)
