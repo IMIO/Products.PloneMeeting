@@ -27,6 +27,7 @@ from plone.api.exc import InvalidParameterError
 
 from collective.documentviewer.settings import GlobalSettings
 from collective.iconifiedcategory.adapter import CategorizedObjectAdapter
+from collective.iconifiedcategory.adapter import CategorizedObjectInfoAdapter
 from eea.facetednavigation.criteria.handler import Criteria as eeaCriteria
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
@@ -39,6 +40,10 @@ from Products.PloneMeeting.config import MEETINGROLES
 from Products.PloneMeeting.interfaces import IMeeting
 from Products.PloneMeeting.utils import checkPermission
 from Products.PloneMeeting.utils import getCurrentMeetingObject
+from Products.PloneMeeting.MeetingConfig import CONFIGGROUPPREFIX
+from Products.PloneMeeting.MeetingConfig import PROPOSINGGROUPPREFIX
+from Products.PloneMeeting.MeetingConfig import READERPREFIX
+from Products.PloneMeeting.MeetingConfig import SUFFIXPROFILEPREFIX
 
 CONTENT_TYPE_NOT_FOUND = 'The content_type for MeetingFile at %s was not found in mimetypes_registry!'
 FILE_EXTENSION_NOT_FOUND = 'The extension used by MeetingFile at %s does not correspond to ' \
@@ -1258,6 +1263,107 @@ class DecidedItemsAdapter(CompoundCriterionBaseAdapter):
     query = query_decideditems
 
 
+class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
+    """ """
+
+    def __init__(self, context):
+        super(PMCategorizedObjectInfoAdapter, self).__init__(context)
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(context)
+        self.parent = self.context.getParentNode()
+
+    def get_infos(self, category):
+        """A the 'visible_for_groups' info."""
+        infos = super(PMCategorizedObjectInfoAdapter, self).get_infos(category)
+        infos['visible_for_groups'] = self._visible_for_groups()
+        return infos
+
+    def _visible_for_groups(self):
+        """ """
+        parent_meta_type = self.parent.meta_type
+        if parent_meta_type == 'MeetingItem':
+            groups = self._item_visible_for_groups()
+        elif parent_meta_type == 'Meeting':
+            groups = self._meeting_visible_for_groups()
+        else:
+            # advice
+            groups = self._advice_visible_for_groups()
+        return groups
+
+    def _item_visible_for_groups(self):
+        """ """
+        visible_fors = self.cfg.getItemAnnexConfidentialVisibleFor()
+        res = []
+        res += self._configgroup_groups(visible_fors)
+        res += self._reader_groups(visible_fors)
+        res += self._suffix_proposinggroup(visible_fors)
+        return res
+
+    def _meeting_visible_for_groups(self):
+        """ """
+        visible_fors = self.cfg.getMeetingAnnexConfidentialVisibleFor()
+        res = []
+        res += self._configgroup_groups(visible_fors)
+        res += self._suffix_profile_proposinggroup(visible_fors)
+        return res
+
+    def _advice_visible_for_groups(self):
+        """ """
+        visible_fors = self.cfg.getAdviceAnnexConfidentialVisibleFor()
+        res = []
+        res += self._configgroup_groups(visible_fors)
+        res += self._reader_groups(visible_fors)
+        res += self._suffix_proposinggroup(visible_fors)
+        if 'adviser_group' in visible_fors:
+            group = self.tool[self.parent.advice_group]
+            res.append(group.getPloneGroupId(suffix='advisers'))
+        return res
+
+    def _configgroup_groups(self, visible_fors):
+        """ """
+        res = []
+        for visible_for in visible_fors:
+            if visible_for.startswith(CONFIGGROUPPREFIX):
+                suffix = visible_for.replace(CONFIGGROUPPREFIX, '')
+                res.append('{0}_{1}'.format(self.cfg.getId(), suffix))
+        return res
+
+    def _suffix_proposinggroup(self, visible_fors):
+        """ """
+        res = []
+        proposingGroup = self.parent.getProposingGroup(theObject=True)
+        for visible_for in visible_fors:
+            if visible_for.startswith(PROPOSINGGROUPPREFIX):
+                suffix = visible_for.replace(PROPOSINGGROUPPREFIX, '')
+                res.append(proposingGroup.getPloneGroupId(suffix))
+        return res
+
+    def _suffix_profile_proposinggroup(self, visible_fors):
+        """ """
+        res = []
+        for visible_for in visible_fors:
+            if visible_for.startswith(SUFFIXPROFILEPREFIX):
+                res.append(visible_for)
+        return res
+
+    def _reader_groups(self, visible_fors):
+        """ """
+        res = []
+        for visible_for in visible_fors:
+            if visible_for == '{0}advices'.format(READERPREFIX):
+                for groupId in self.parent.adviceIndex.keys():
+                    group = self.tool[groupId]
+                    res.append(group.getPloneGroupId(suffix='advisers'))
+            elif visible_for == '{0}copy_groups'.format(READERPREFIX):
+                res = res + list(self.parent.getAllCopyGroups(auto_real_group_ids=True))
+            elif visible_for == '{0}groupincharge'.format(READERPREFIX):
+                proposingGroup = self.parent.getProposingGroup(True)
+                groupInCharge = proposingGroup.getGroupInChargeAt()
+                if groupInCharge:
+                    res.append(groupInCharge.getPloneGroupId(suffix='observers'))
+        return res
+
+
 class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
     """ """
 
@@ -1266,25 +1372,14 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
 
     def can_view(self):
         infos = self.context.categorized_elements[self.brain.UID]
-        if not infos['confidential']:
+        if not infos['confidential'] or \
+           api.portal.get_tool('portal_plonemeeting').isManager(self.context):
             return True
-        # element is confidential, check if current user may access it
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
-        isPowerObserver = tool.isPowerObserverForCfg(cfg)
-        isRestrictedPowerObserver = tool.isPowerObserverForCfg(cfg, isRestricted=True)
-        return self._isViewableForCurrentUser(cfg, isPowerObserver, isRestrictedPowerObserver)
-
-    def _isViewableForCurrentUser(self, cfg, isPowerObserver, isRestrictedPowerObserver):
-        '''
-          Returns True if current user may view the annex
-        '''
-        # if confidentiality is used and annex is marked as confidential,
-        # annexes could be hidden to power observers and/or restricted power observers
-        if ((isPowerObserver and 'power_observers' in cfg.getAnnexConfidentialFor()) or
-           (isRestrictedPowerObserver and 'restricted_power_observers' in cfg.getAnnexConfidentialFor())):
-            return False
-        return True
+        user = api.user.get_current()
+        user_groups = user.getGroups()
+        if set(user_groups).intersection(infos['visible_for_groups']):
+            return True
+        return False
 
 
 class IconifiedCategoryConfigAdapter(object):

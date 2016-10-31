@@ -88,8 +88,12 @@ from Products.PloneMeeting.config import ROOT_FOLDER
 from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
 from Products.PloneMeeting.profiles import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.profiles import PloneMeetingConfiguration
-from Products.PloneMeeting.utils import getCustomAdapter, \
-    monthsIds, weekdaysIds, getCustomSchemaFields, workday
+from Products.PloneMeeting.utils import getCustomAdapter
+from Products.PloneMeeting.utils import getCustomSchemaFields
+from Products.PloneMeeting.utils import monthsIds
+from Products.PloneMeeting.utils import update_annexes
+from Products.PloneMeeting.utils import weekdaysIds
+from Products.PloneMeeting.utils import workday
 from Products.PloneMeeting.model.adaptations import performModelAdaptations
 
 # Some constants ---------------------------------------------------------------
@@ -764,7 +768,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def isPloneMeetingUser(self):
         '''Is the current user a PloneMeeting user (ie, does it have at least
            one of the roles used in PloneMeeting ?'''
-        user = self.portal_membership.getAuthenticatedMember()
+        user = api.user.get_current()
         if not user:
             return
         for role in user.getRoles():
@@ -791,8 +795,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''Is the current user a 'MeetingManager' on context?  If p_realManagers is True,
            only returns True if user has role Manager/Site Administrator, either
            (by default) MeetingManager is also considered as a 'Manager'?'''
-        membershipTool = api.portal.get_tool('portal_membership')
-        user = membershipTool.getAuthenticatedMember()
+        user = api.user.get_current()
         userRoles = user.getRolesInContext(context)
         return 'Manager' in userRoles or \
             'Site Administrator' in userRoles or \
@@ -910,7 +913,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def getUserName(self, userId):
         '''Returns the full name of user having id p_userId.'''
         res = userId
-        user = self.portal_membership.getMemberById(userId)
+        user = api.user.get(userid=userId)
         if user:
             fullName = user.getProperty('fullname')
             if fullName:
@@ -1077,7 +1080,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         res = True
         if restrictMode:
             if not self.isManager(self):
-                user = self.portal_membership.getAuthenticatedMember()
+                user = api.user.get_current()
                 # Check if the user is in specific list
                 if user.id not in [u.strip() for u in self.getUnrestrictedUsers().split('\n')]:
                     res = False
@@ -1098,7 +1101,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         destMeetingConfig = self.getMeetingConfig(destFolder)
         # Current user may not have the right to create object in destFolder.
         # We will grant him the right temporarily
-        loggedUserId = self.portal_membership.getAuthenticatedMember().getId()
+        loggedUserId = api.user.get_current().getId()
         userLocalRoles = destFolder.get_local_roles_for_userid(loggedUserId)
         destFolder.manage_addLocalRoles(loggedUserId, ('Owner',))
         # save in the REQUEST if we want to copyAnnexes so conversion
@@ -1337,7 +1340,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            call to portal_membership.getMemberById.'''
         if isinstance(userIdOrInfo, basestring):
             # It is a user ID. Get the corresponding UserInfo instance
-            userInfo = self.portal_membership.getMemberById(userIdOrInfo)
+            userInfo = api.user.get(userIdOrInfo)
         else:
             userInfo = userIdOrInfo
         # We return None if the user does not exist or has no defined email.
@@ -1534,31 +1537,33 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             res = res[:res.find('-')]
         return res
 
-    security.declarePublic('reindexAnnexes')
+    security.declarePublic('updateAnnexes')
 
-    def reindexAnnexes(self):
-        '''Reindexes all annexes.'''
+    def updateAnnexes(self):
+        '''Update the 'categorized_elements' on every annexes container.'''
         if not self.isManager(self, realManagers=True):
             raise Unauthorized
         catalog = api.portal.get_tool('portal_catalog')
-        # update items and advices
-        brains = catalog(meta_type=('MeetingItem', ))
+        # update meetings, items and advices
+        brains = catalog(meta_type=('MeetingItem', 'Meeting'))
         brains = brains + catalog(object_provides='Products.PloneMeeting.content.advice.IMeetingAdvice')
         numberOfBrains = len(brains)
         i = 1
         for brain in brains:
             try:
-                obj = brain.getObject()
+                if isinstance(brain, AbstractCatalogBrain):
+                    obj = brain.getObject()
             except AttributeError:
                 continue
-            for annex in get_categorized_elements(obj, result_type='objects'):
-                update_categorized_elements(obj, annex, get_category_object(annex, annex.content_category))
-            logger.info('%d/%d Updating annexIndex of %s at %s' % (i,
-                                                                   numberOfBrains,
-                                                                   brain.portal_type,
-                                                                   brain.getPath()))
+            update_annexes(obj)
+            logger.info('%d/%d Updating categorized_elements of %s at %s' % (
+                i,
+                numberOfBrains,
+                brain.portal_type,
+                brain.getPath()))
             i = i + 1
-        self.plone_utils.addPortalMessage('Done.')
+        plone_utils = api.portal.get_tool('plone_utils')
+        plone_utils.addPortalMessage('Done.')
         return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 
     security.declarePublic('convertAnnexes')

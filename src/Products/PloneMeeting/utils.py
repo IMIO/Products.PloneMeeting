@@ -40,6 +40,8 @@ from zope.component.interfaces import ObjectEvent
 from zope.event import notify
 from zope.interface import implements
 from zope.security.interfaces import IPermission
+from collective.iconifiedcategory.utils import get_category_object
+from collective.iconifiedcategory.utils import update_categorized_elements
 from plone.app.textfield import RichText
 from plone.autoform.interfaces import WRITE_PERMISSIONS_KEY
 from plone.dexterity.interfaces import IDexterityContent
@@ -68,7 +70,6 @@ from Products.PloneMeeting.config import TOOL_ID
 from Products.PloneMeeting.interfaces import IAdviceAfterAddEvent
 from Products.PloneMeeting.interfaces import IAdviceAfterModifyEvent
 from Products.PloneMeeting.interfaces import IAdvicesUpdatedEvent
-from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.interfaces import IItemAfterTransitionEvent
 from Products.PloneMeeting.interfaces import IItemDuplicatedEvent
 from Products.PloneMeeting.interfaces import IItemDuplicatedFromConfigEvent
@@ -1519,6 +1520,12 @@ def findMeetingAdvicePortalType(context):
     else:
         current_portal_type = published.portal_type
     return current_portal_type
+
+
+def update_annexes(obj):
+    for annex in obj.objectValues():
+        if annex.portal_type in ('annex', 'annexDecision'):
+            update_categorized_elements(obj, annex, get_category_object(annex, annex.content_category))
 
 
 class AdvicesUpdatedEvent(ObjectEvent):

@@ -820,6 +820,30 @@ class Migrate_To_4_0(Migrator):
 
         # clean no more used attributes
         for cfg in tool.objectValues('MeetingConfig'):
+
+            if not hasattr(cfg, 'annexConfidentialFor'):
+                # already migrated
+                continue
+
+            annexConfidentialFor = cfg.annexConfidentialFor
+            # values changed from power_observers to configgroup_powerobservers
+            # and from restricted_power_observers to configgroup_restrictedpowerobservers
+            mapped_annexConfidentialFor = []
+            if 'power_observers' in annexConfidentialFor:
+                mapped_annexConfidentialFor.append('configgroup_powerobservers')
+            if 'restricted_power_observers' in annexConfidentialFor:
+                mapped_annexConfidentialFor.append('configgroup_restrictedpowerobservers')
+
+            cfg.setItemAnnexConfidentialVisibleFor(
+                [k for k in cfg.listItemAnnexConfidentialVisibleFor().keys()
+                 if not k in mapped_annexConfidentialFor])
+            cfg.setAdviceAnnexConfidentialVisibleFor(
+                [k for k in cfg.listAdviceAnnexConfidentialVisibleFor().keys()
+                 if not k in mapped_annexConfidentialFor])
+            cfg.setMeetingAnnexConfidentialVisibleFor(
+                [k for k in cfg.listMeetingAnnexConfidentialVisibleFor().keys()
+                 if not k in mapped_annexConfidentialFor])
+
             if not hasattr(cfg, 'enableAnnexToPrint'):
                 # already migrated
                 continue
@@ -860,6 +884,7 @@ class Migrate_To_4_0(Migrator):
                 for cat_group in cfg.annexes_types.objectValues():
                     cat_group.confidentiality_activated = True
 
+            delattr(cfg, 'annexConfidentialFor')
             delattr(cfg, 'enableAnnexToPrint')
             delattr(cfg, 'annexToPrintDefault')
             delattr(cfg, 'annexDecisionToPrintDefault')

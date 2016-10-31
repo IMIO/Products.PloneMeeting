@@ -25,12 +25,20 @@
 from AccessControl import Unauthorized
 from zope.event import notify
 from zope.lifecycleevent import ObjectModifiedEvent
+from plone.app.textfield.value import RichTextValue
+from plone.dexterity.utils import createContentInContainer
 from collective.iconifiedcategory.utils import get_categorized_elements
 from collective.iconifiedcategory.utils import get_config_root
 from collective.iconifiedcategory.utils import get_group
 from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFCore.permissions import View
+from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from Products.PloneMeeting.indexes import SearchableText
+from Products.PloneMeeting.profiles.testing.import_data import developers
+from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from Products.PloneMeeting.utils import update_annexes
+from Products.PloneMeeting.MeetingConfig import PROPOSINGGROUPPREFIX
 
 
 class testAnnexes(PloneMeetingTestCase):
@@ -66,65 +74,362 @@ class testAnnexes(PloneMeetingTestCase):
         view.set_values({'confidential': 'true'})
         self.assertTrue(annex.confidential)
 
-    def test_pm_GetCategorizedElementsWithConfidentiality(self):
-        '''While getting categorized content, the confidentiality is taken into account.
-           Also used in the annexes table view and the annexes tooltipster view.'''
+    def _setupConfidentialityOnItemAnnexes(self):
+        """ """
         cfg = self.meetingConfig
         cfgItemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
         item_initial_state = self.wfTool[cfgItemWF.getId()].initial_state
-        cfg.setItemRestrictedPowerObserversStates((item_initial_state))
         annex_config = get_config_root(cfg)
         annex_group = get_group(annex_config, cfg)
         annex_group.confidentiality_activated = True
-
-        # hide confidential annexes to restricted power observers
-        cfg.setAnnexConfidentialFor(('restricted_power_observers', ))
 
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         annexes_table = item.restrictedTraverse('@@iconifiedcategory')
         categorized_child = item.restrictedTraverse('@@categorized-childs')
 
-        annexNotConfidential1 = self.addAnnex(item, annexTitle='Annex 1 not confidential')
-        annexNotConfidential2 = self.addAnnex(item, annexTitle='Annex 2 not confidential')
-        annexConfidential1 = self.addAnnex(item, annexTitle='Annex 1 confidential')
-        annexConfidential1.confidential = True
-        notify(ObjectModifiedEvent(annexConfidential1))
+        annexNotConfidential = self.addAnnex(item, annexTitle='Annex not confidential')
+        annexConfidential = self.addAnnex(item, annexTitle='Annex confidential')
+        annexConfidential.confidential = True
+        notify(ObjectModifiedEvent(annexConfidential))
+        return item_initial_state, item, annexes_table, categorized_child, \
+            annexNotConfidential, annexConfidential
 
-        # current user see every annexes as not restricted power observer
-        self.assertFalse(self.tool.isPowerObserverForCfg(cfg, isRestricted=True))
-        self.assertEqual(set([elt['UID'] for elt in get_categorized_elements(item)]),
-                         set((annexNotConfidential1.UID(),
-                              annexNotConfidential2.UID(),
-                              annexConfidential1.UID())))
-        self.assertTrue('Annex 1 confidential' in annexes_table())
-        self.assertTrue('Annex 1 confidential' in categorized_child())
+    def test_pm_ItemGetCategorizedElementsWithConfidentialityForBudgetImpactEditors(self):
+        ''' '''
+        cfg = self.meetingConfig
+        item_initial_state, item, annexes_table, categorized_child, \
+            annexNotConfidential, annexConfidential = self._setupConfidentialityOnItemAnnexes()
 
-        # not viewable by restricted power observers
-        self.changeUser('restrictedpowerobserver1')
-        self.assertTrue(self.tool.isPowerObserverForCfg(cfg, isRestricted=True))
-        self.assertEqual(len(get_categorized_elements(item)), 2)
-        self.assertFalse('Annex 1 confidential' in annexes_table())
-        self.assertFalse('Annex 1 confidential' in categorized_child())
+        # give budget impact editors view on item
+        item.__ac_local_roles__['{0}_{1}'.format(cfg.getId(), BUDGETIMPACTEDITORS_GROUP_SUFFIX)] = 'Reader'
 
-        # test also for power observers
-        cfg.setAnnexConfidentialFor(('power_observers', ))
-        # now the restricted power observer may access annexes
-        self.assertEqual(len(get_categorized_elements(item)), 3)
-        self.assertTrue('Annex 1 confidential' in annexes_table())
-        self.assertTrue('Annex 1 confidential' in categorized_child())
+        cfg.setItemAnnexConfidentialVisibleFor(('configgroup_budgetimpacteditors', ))
+        update_annexes(item)
+
+        self.changeUser('budgetimpacteditor')
+        self._checkElementConfidentialAnnexAccess(cfg, item, annexNotConfidential, annexConfidential,
+                                                  annexes_table, categorized_child)
+
+    def test_pm_ItemGetCategorizedElementsWithConfidentialityForPowerObservers(self):
+        ''' '''
+        cfg = self.meetingConfig
+        item_initial_state, item, annexes_table, categorized_child, \
+            annexNotConfidential, annexConfidential = self._setupConfidentialityOnItemAnnexes()
+
+        cfg.setItemPowerObserversStates((item_initial_state, ))
+        cfg.setItemAnnexConfidentialVisibleFor(('configgroup_powerobservers', ))
+        item.updateLocalRoles()
+
         self.changeUser('powerobserver1')
-        self.assertEqual(len(get_categorized_elements(item)), 2)
-        self.assertFalse('Annex 1 confidential' in annexes_table())
-        self.assertFalse('Annex 1 confidential' in categorized_child())
-        # remove confidentiality on annex
-        annexConfidential1.confidential = False
-        notify(ObjectModifiedEvent(annexConfidential1))
-        self.assertEqual(len(get_categorized_elements(item)), 3)
-        self.assertTrue('Annex 1 confidential' in annexes_table())
-        self.assertTrue('Annex 1 confidential' in categorized_child())
+        self._checkElementConfidentialAnnexAccess(cfg, item, annexNotConfidential, annexConfidential,
+                                                  annexes_table, categorized_child)
 
-    def test_pm_AnnexesTitleFoundInItemSearchableText(self, ):
+    def test_pm_ItemGetCategorizedElementsWithConfidentialityForRestrictedPowerObservers(self):
+        ''' '''
+        cfg = self.meetingConfig
+        item_initial_state, item, annexes_table, categorized_child, \
+            annexNotConfidential, annexConfidential = self._setupConfidentialityOnItemAnnexes()
+
+        cfg.setItemRestrictedPowerObserversStates((item_initial_state, ))
+        cfg.setItemAnnexConfidentialVisibleFor(('configgroup_restrictedpowerobservers', ))
+        item.updateLocalRoles()
+
+        self.changeUser('restrictedpowerobserver1')
+        self._checkElementConfidentialAnnexAccess(cfg, item, annexNotConfidential, annexConfidential,
+                                                  annexes_table, categorized_child)
+
+    def test_pm_ItemGetCategorizedElementsWithConfidentialityForAdvisers(self):
+        ''' '''
+        cfg = self.meetingConfig
+        item_initial_state, item, annexes_table, categorized_child, \
+            annexNotConfidential, annexConfidential = self._setupConfidentialityOnItemAnnexes()
+
+        cfg.setItemAdviceStates((item_initial_state, ))
+        cfg.setItemAdviceEditStates((item_initial_state, ))
+        cfg.setItemAnnexConfidentialVisibleFor(('reader_advices', ))
+        item.setOptionalAdvisers(('developers', ))
+        item.updateLocalRoles()
+
+        self.changeUser('pmAdviser1')
+        self._checkElementConfidentialAnnexAccess(cfg, item, annexNotConfidential, annexConfidential,
+                                                  annexes_table, categorized_child)
+
+    def test_pm_ItemGetCategorizedElementsWithConfidentialityForCopyGroups(self):
+        ''' '''
+        cfg = self.meetingConfig
+        item_initial_state, item, annexes_table, categorized_child, \
+            annexNotConfidential, annexConfidential = self._setupConfidentialityOnItemAnnexes()
+
+        cfg.setUseCopies(True)
+        cfg.setItemCopyGroupsStates((item_initial_state, ))
+        cfg.setItemAnnexConfidentialVisibleFor(('reader_copy_groups', ))
+        item.setCopyGroups(('vendors_reviewers', ))
+        item.updateLocalRoles()
+
+        self.changeUser('pmReviewer2')
+        self._checkElementConfidentialAnnexAccess(cfg, item, annexNotConfidential, annexConfidential,
+                                                  annexes_table, categorized_child)
+
+    def test_pm_ItemGetCategorizedElementsWithConfidentialityForGroupInCharge(self):
+        ''' '''
+        cfg = self.meetingConfig
+        item_initial_state, item, annexes_table, categorized_child, \
+            annexNotConfidential, annexConfidential = self._setupConfidentialityOnItemAnnexes()
+
+        proposingGroup = item.getProposingGroup(theObject=True)
+        cfg.setItemGroupInChargeStates(item_initial_state)
+
+        # does not fail in no group in charge
+        self.assertFalse(proposingGroup.getGroupInChargeAt())
+        cfg.setItemAnnexConfidentialVisibleFor(('reader_groupincharge', ))
+        update_annexes(item)
+        proposingGroup.setGroupInCharge(({'group_id': 'vendors', 'date_to': ''},))
+        item.updateLocalRoles()
+
+        self.changeUser('pmReviewer2')
+        self._checkElementConfidentialAnnexAccess(cfg, item, annexNotConfidential, annexConfidential,
+                                                  annexes_table, categorized_child)
+
+    def test_pm_ItemGetCategorizedElementsWithConfidentialityForProposingGroupSuffixes(self):
+        ''' '''
+        cfg = self.meetingConfig
+        item_initial_state, item, annexes_table, categorized_child, \
+            annexNotConfidential, annexConfidential = self._setupConfidentialityOnItemAnnexes()
+
+        # validate the item so it is visible by every roles of the proposing group
+        self.validateItem(item)
+        self.assertEqual(item.queryState(), 'validated')
+
+        proposingGroupSuffixes = [k for k in cfg.listItemAnnexConfidentialVisibleFor()
+                                  if k.startswith(PROPOSINGGROUPPREFIX)]
+        for proposingGroupSuffix in proposingGroupSuffixes:
+            cfg.setItemAnnexConfidentialVisibleFor((proposingGroupSuffix, ))
+            update_annexes(item)
+            # get a user from the right 'developers' subgroup
+            username = getattr(developers, proposingGroupSuffix.replace(PROPOSINGGROUPPREFIX, ''))[0].id
+            self.changeUser(username)
+            if not self.hasPermission(View, item):
+                pm_logger.info("Could not test if '%s' can access confidential "
+                               "annexes because he may not see the item !" % self.member.getId())
+                continue
+            self._checkElementConfidentialAnnexAccess(cfg, item, annexNotConfidential, annexConfidential,
+                                                      annexes_table, categorized_child)
+
+    def _checkElementConfidentialAnnexAccess(self,
+                                             cfg,
+                                             obj,
+                                             annexNotConfidential,
+                                             annexConfidential,
+                                             annexes_table,
+                                             categorized_child):
+        """ """
+        self.assertTrue(self.hasPermission(View, obj))
+        self._checkMayAccessConfidentialAnnexes(obj, annexNotConfidential, annexConfidential,
+                                                annexes_table, categorized_child)
+        cfg.setItemAnnexConfidentialVisibleFor(())
+        cfg.setAdviceAnnexConfidentialVisibleFor(())
+        cfg.setMeetingAnnexConfidentialVisibleFor(())
+        update_annexes(obj)
+        self._checkMayNotAccessConfidentialAnnexes(obj, annexNotConfidential, annexConfidential,
+                                                   annexes_table, categorized_child)
+
+    def _checkMayAccessConfidentialAnnexes(self,
+                                           obj,
+                                           annexNotConfidential,
+                                           annexConfidential,
+                                           annexes_table,
+                                           categorized_child):
+        """ """
+        # current user may see every annexes
+        self.assertEqual(set([elt['UID'] for elt in get_categorized_elements(obj)]),
+                         set((annexNotConfidential.UID(),
+                              annexConfidential.UID())))
+        self.assertTrue('Annex not confidential' in annexes_table())
+        self.assertTrue('Annex confidential' in annexes_table())
+        self.assertTrue('Annex not confidential' in categorized_child())
+        self.assertTrue('Annex confidential' in categorized_child())
+
+    def _checkMayNotAccessConfidentialAnnexes(self,
+                                              item,
+                                              annexNotConfidential,
+                                              annexConfidential,
+                                              annexes_table,
+                                              categorized_child):
+        """ """
+        # confidential annexes not viewable
+        self.assertEqual([elt['UID'] for elt in get_categorized_elements(item)],
+                         [annexNotConfidential.UID()])
+        self.assertTrue('Annex not confidential' in annexes_table())
+        self.assertFalse('Annex confidential' in annexes_table())
+        self.assertTrue('Annex not confidential' in categorized_child())
+        self.assertFalse('Annex confidential' in categorized_child())
+
+    def _setupConfidentialityOnAdviceAnnexes(self):
+        """ """
+        cfg = self.meetingConfig
+        cfgItemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
+        item_initial_state = self.wfTool[cfgItemWF.getId()].initial_state
+        annex_config = get_config_root(cfg)
+        annex_group = get_group(annex_config, cfg)
+        annex_group.confidentiality_activated = True
+
+        cfg.setItemAdviceStates((item_initial_state, ))
+        cfg.setItemAdviceEditStates((item_initial_state, ))
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.setOptionalAdvisers(('vendors', ))
+        item.updateLocalRoles()
+        self.changeUser('pmReviewer2')
+        advice = createContentInContainer(
+            item,
+            'meetingadvice',
+            **{'advice_group': self.tool.vendors.getId(),
+               'advice_type': u'positive',
+               'advice_comment': RichTextValue(u'My comment')})
+
+        annexes_table = advice.restrictedTraverse('@@iconifiedcategory')
+        categorized_child = advice.restrictedTraverse('@@categorized-childs')
+
+        annexNotConfidential = self.addAnnex(advice, annexTitle='Annex not confidential')
+        annexConfidential = self.addAnnex(advice, annexTitle='Annex confidential')
+        annexConfidential.confidential = True
+        notify(ObjectModifiedEvent(annexConfidential))
+        return item_initial_state, item, advice, annexes_table, categorized_child, \
+            annexNotConfidential, annexConfidential
+
+    def test_pm_AdviceGetCategorizedElementsWithConfidentialityForAdviserGroup(self):
+        ''' '''
+        cfg = self.meetingConfig
+        item_initial_state, item, advice, annexes_table, categorized_child, \
+            annexNotConfidential, annexConfidential = self._setupConfidentialityOnAdviceAnnexes()
+
+        cfg.setAdviceAnnexConfidentialVisibleFor(('adviser_group', ))
+        update_annexes(advice)
+
+        self.changeUser('pmReviewer2')
+        self._checkElementConfidentialAnnexAccess(cfg, advice, annexNotConfidential, annexConfidential,
+                                                  annexes_table, categorized_child)
+
+    def test_pm_AdviceGetCategorizedElementsWithConfidentialityForBudgetImpactEditors(self):
+        ''' '''
+        cfg = self.meetingConfig
+        item_initial_state, item, advice, annexes_table, categorized_child, \
+            annexNotConfidential, annexConfidential = self._setupConfidentialityOnAdviceAnnexes()
+
+        # give budget impact editors view on item
+        item.__ac_local_roles__['{0}_{1}'.format(cfg.getId(), BUDGETIMPACTEDITORS_GROUP_SUFFIX)] = 'Reader'
+
+        cfg.setAdviceAnnexConfidentialVisibleFor(('configgroup_budgetimpacteditors', ))
+        update_annexes(advice)
+
+        self.changeUser('budgetimpacteditor')
+        self._checkElementConfidentialAnnexAccess(cfg, advice, annexNotConfidential, annexConfidential,
+                                                  annexes_table, categorized_child)
+
+    def test_pm_AdviceGetCategorizedElementsWithConfidentialityForAdvisers(self):
+        ''' '''
+        cfg = self.meetingConfig
+        item_initial_state, item, advice, annexes_table, categorized_child, \
+            annexNotConfidential, annexConfidential = self._setupConfidentialityOnAdviceAnnexes()
+
+        cfg.setAdviceAnnexConfidentialVisibleFor(('reader_advices', ))
+        update_annexes(advice)
+
+        self.changeUser('pmReviewer2')
+        self._checkElementConfidentialAnnexAccess(cfg, advice, annexNotConfidential, annexConfidential,
+                                                  annexes_table, categorized_child)
+
+    def test_pm_AdviceGetCategorizedElementsWithConfidentialityForCopyGroups(self):
+        ''' '''
+        cfg = self.meetingConfig
+        item_initial_state, item, advice, annexes_table, categorized_child, \
+            annexNotConfidential, annexConfidential = self._setupConfidentialityOnAdviceAnnexes()
+
+        cfg.setUseCopies(True)
+        cfg.setItemCopyGroupsStates((item_initial_state, ))
+        cfg.setAdviceAnnexConfidentialVisibleFor(('reader_copy_groups', ))
+        item.setCopyGroups(('vendors_reviewers', ))
+        item.updateLocalRoles()
+
+        self.changeUser('pmReviewer2')
+        self._checkElementConfidentialAnnexAccess(cfg, advice, annexNotConfidential, annexConfidential,
+                                                  annexes_table, categorized_child)
+
+    def test_pm_AdviceGetCategorizedElementsWithConfidentialityForGroupInCharge(self):
+        ''' '''
+        cfg = self.meetingConfig
+        item_initial_state, item, advice, annexes_table, categorized_child, \
+            annexNotConfidential, annexConfidential = self._setupConfidentialityOnAdviceAnnexes()
+
+        proposingGroup = item.getProposingGroup(theObject=True)
+        cfg.setItemGroupInChargeStates(item_initial_state)
+
+        # does not fail in no group in charge
+        self.assertFalse(proposingGroup.getGroupInChargeAt())
+        cfg.setAdviceAnnexConfidentialVisibleFor(('reader_groupincharge', ))
+        update_annexes(item)
+        proposingGroup.setGroupInCharge(({'group_id': 'vendors', 'date_to': ''},))
+        item.updateLocalRoles()
+
+        self.changeUser('pmReviewer2')
+        self._checkElementConfidentialAnnexAccess(cfg, advice, annexNotConfidential, annexConfidential,
+                                                  annexes_table, categorized_child)
+
+    def test_pm_AdviceGetCategorizedElementsWithConfidentialityForPowerObservers(self):
+        ''' '''
+        cfg = self.meetingConfig
+        item_initial_state, item, advice, annexes_table, categorized_child, \
+            annexNotConfidential, annexConfidential = self._setupConfidentialityOnAdviceAnnexes()
+
+        cfg.setItemPowerObserversStates((item_initial_state, ))
+        cfg.setAdviceAnnexConfidentialVisibleFor(('configgroup_powerobservers', ))
+        item.updateLocalRoles()
+
+        self.changeUser('powerobserver1')
+        self._checkElementConfidentialAnnexAccess(cfg, advice, annexNotConfidential, annexConfidential,
+                                                  annexes_table, categorized_child)
+
+    def test_pm_AdviceGetCategorizedElementsWithConfidentialityForRestrictedPowerObservers(self):
+        ''' '''
+        cfg = self.meetingConfig
+        item_initial_state, item, advice, annexes_table, categorized_child, \
+            annexNotConfidential, annexConfidential = self._setupConfidentialityOnAdviceAnnexes()
+
+        cfg.setItemRestrictedPowerObserversStates((item_initial_state, ))
+        cfg.setAdviceAnnexConfidentialVisibleFor(('configgroup_restrictedpowerobservers', ))
+        item.updateLocalRoles()
+
+        self.changeUser('restrictedpowerobserver1')
+        self._checkElementConfidentialAnnexAccess(cfg, advice, annexNotConfidential, annexConfidential,
+                                                  annexes_table, categorized_child)
+
+    def test_pm_AdviceGetCategorizedElementsWithConfidentialityForProposingGroupSuffixes(self):
+        ''' '''
+        cfg = self.meetingConfig
+        item_initial_state, item, advice, annexes_table, categorized_child, \
+            annexNotConfidential, annexConfidential = self._setupConfidentialityOnAdviceAnnexes()
+
+        # validate the item so it is visible by every roles of the proposing group
+        self.validateItem(item)
+        self.assertEqual(item.queryState(), 'validated')
+
+        proposingGroupSuffixes = [k for k in cfg.listItemAnnexConfidentialVisibleFor()
+                                  if k.startswith(PROPOSINGGROUPPREFIX)]
+        for proposingGroupSuffix in proposingGroupSuffixes:
+            cfg.setAdviceAnnexConfidentialVisibleFor((proposingGroupSuffix, ))
+            update_annexes(advice)
+            # get a user from the right 'developers' subgroup
+            username = getattr(developers, proposingGroupSuffix.replace(PROPOSINGGROUPPREFIX, ''))[0].id
+            self.changeUser(username)
+            if not self.hasPermission(View, advice):
+                pm_logger.info("Could not test if '%s' can access confidential "
+                               "annexes because he may not see the item !" % self.member.getId())
+                continue
+            self._checkElementConfidentialAnnexAccess(cfg, advice, annexNotConfidential, annexConfidential,
+                                                      annexes_table, categorized_child)
+
+    def test_pm_AnnexesTitleFoundInItemSearchableText(self):
         '''MeetingFiles title is indexed in the item SearchableText.'''
         ANNEX_TITLE = "SpecialAnnexTitle"
         ITEM_TITLE = "SpecialItemTitle"

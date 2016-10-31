@@ -359,7 +359,9 @@ class MeetingConfigDescriptor(Descriptor):
         # Will we manage replacements of users ?
         self.useUserReplacements = False
         # annex confidentiality
-        self.annexConfidentialFor = ()
+        self.itemAnnexConfidentialVisibleFor = ()
+        self.adviceAnnexConfidentialVisibleFor = ()
+        self.meetingAnnexConfidentialVisibleFor = ()
         # advice confidentiality
         self.enableAdviceConfidentiality = False
         self.adviceConfidentialityDefault = False

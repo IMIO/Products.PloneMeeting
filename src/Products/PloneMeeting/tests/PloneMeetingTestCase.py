@@ -280,7 +280,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                  context,
                  annexType=None,
                  annexTitle=None,
-                 relatedTo='item'):
+                 relatedTo=None):
         '''Adds an annex to p_item.
            If no p_annexType is provided, self.annexFileType is used.
            If no p_annexTitle is specified, the predefined title of the annex type is used.'''
@@ -290,13 +290,14 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         annex_file = namedfile.NamedBlobFile(f.read(), filename=self.annexFile)
 
         if annexType is None:
-            if relatedTo == 'item':
-                annexType = self.annexFileType
-            elif relatedTo == 'item_decision':
-                annexType = self.annexFileTypeDecision
-            elif relatedTo == 'advice':
+            if context.meta_type == 'MeetingItem':
+                if not relatedTo:
+                    annexType = self.annexFileType
+                if relatedTo == 'item_decision':
+                    annexType = self.annexFileTypeDecision
+            elif context.portal_type.startswith('meetingadvice'):
                 annexType = self.annexFileTypeAdvice
-            elif relatedTo == 'meeting':
+            elif context.meta_type == 'Meeting':
                 annexType = self.annexFileTypeMeeting
 
         annexContentType = 'annex'

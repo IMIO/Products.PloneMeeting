@@ -119,6 +119,7 @@ from Products.PloneMeeting.utils import sendMailIfRelevant
 from Products.PloneMeeting.utils import setFieldFromAjax
 from Products.PloneMeeting.utils import toHTMLStrikedContent
 from Products.PloneMeeting.utils import transformAllRichTextFields
+from Products.PloneMeeting.utils import update_annexes
 from Products.PloneMeeting.utils import workday
 
 import logging
@@ -4588,9 +4589,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if meetingGroup:
             portal_groups = api.portal.get_tool('portal_groups')
             for groupSuffix in MEETING_GROUP_SUFFIXES:
-                # adviser-related local roles are managed in method
-                # MeetingItem._updateAdvices.
-                if groupSuffix == 'advisers':
+                # like it is the case for groupSuffix 'advisers'
+                if not MEETINGROLES[groupSuffix]:
                     continue
                 # if we have a Plone group related to this suffix, apply a local role for it
                 groupId = meetingGroup.getPloneGroupId(groupSuffix)
@@ -4624,6 +4624,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # update group in charge local roles
         # we will give the current groupInCharge _observers sub group access to this item
         self._updateGroupInChargeLocalRoles()
+        # update annexes categorized_elements to store 'visible_for_groups'
+        update_annexes(self)
+        # update categorized elements on contained advices too
+        for advice in self.getAdvices():
+            update_annexes(advice)
 
         # manage the 'ATContentTypes: Add Image' permission
         _addImagePermission(self)

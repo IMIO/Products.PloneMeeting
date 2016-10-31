@@ -77,8 +77,10 @@ from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
 from Products.PloneMeeting.config import DEFAULT_MEETING_COLUMNS
 from Products.PloneMeeting.config import ITEM_ICON_COLORS
 from Products.PloneMeeting.config import MEETING_CONFIG
+from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETINGREVIEWERS
+from Products.PloneMeeting.config import MEETINGROLES
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import PROJECTNAME
@@ -121,6 +123,11 @@ import logging
 logger = logging.getLogger('PloneMeeting')
 DUPLICATE_SHORT_NAME = 'Short name "%s" is already used by another meeting ' \
                        'configuration. Please choose another one.'
+
+CONFIGGROUPPREFIX = 'configgroup_'
+PROPOSINGGROUPPREFIX = 'suffix_proposing_group_'
+READERPREFIX = 'reader_'
+SUFFIXPROFILEPREFIX = 'suffix_profile_'
 
 schema = Schema((
 
@@ -1769,19 +1776,53 @@ schema = Schema((
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
-        name='annexConfidentialFor',
+        name='itemAnnexConfidentialVisibleFor',
         widget=MultiSelectionWidget(
             format="checkbox",
-            description="AnnexConfidentialFor",
-            description_msgid="annex_confidential_for_descr",
-            label='Annexconfidentialfor',
-            label_msgid='PloneMeeting_label_annexConfidentialFor',
+            description="ItemAnnexConfidentialVisibleFor",
+            description_msgid="item_annex_confidential_visible_for_descr",
+            label='Itemannexconfidentialvisiblefor',
+            label_msgid='PloneMeeting_label_itemAnnexConfidentialVisibleFor',
             i18n_domain='PloneMeeting',
         ),
         schemata="advices",
         multiValued=1,
-        vocabulary='listConfidentialFor',
-        default=defValues.annexConfidentialFor,
+        vocabulary='listItemAnnexConfidentialVisibleFor',
+        default=defValues.itemAnnexConfidentialVisibleFor,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
+        name='adviceAnnexConfidentialVisibleFor',
+        widget=MultiSelectionWidget(
+            format="checkbox",
+            description="AdviceAnnexConfidentialVisibleFor",
+            description_msgid="advice_annex_confidential_visible_for_descr",
+            label='Adviceannexconfidentialvisiblefor',
+            label_msgid='PloneMeeting_label_adviceAnnexConfidentialVisibleFor',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        multiValued=1,
+        vocabulary='listAdviceAnnexConfidentialVisibleFor',
+        default=defValues.adviceAnnexConfidentialVisibleFor,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
+        name='meetingAnnexConfidentialVisibleFor',
+        widget=MultiSelectionWidget(
+            format="checkbox",
+            description="meetingAnnexConfidentialVisibleFor",
+            description_msgid="meeting_annex_confidential_visible_for_descr",
+            label='Meetingannexconfidentialvisiblefor',
+            label_msgid='PloneMeeting_label_meetingAnnexConfidentialVisibleFor',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        multiValued=1,
+        vocabulary='listMeetingAnnexConfidentialVisibleFor',
+        default=defValues.meetingAnnexConfidentialVisibleFor,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
@@ -1823,8 +1864,8 @@ schema = Schema((
         ),
         schemata="advices",
         multiValued=1,
-        vocabulary='listConfidentialFor',
-        default=defValues.annexConfidentialFor,
+        vocabulary='listAdviceConfidentialFor',
+        default=defValues.adviceConfidentialFor,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
@@ -3485,11 +3526,92 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         ))
         return res
 
-    security.declarePrivate('listConfidentialFor')
+    security.declarePrivate('listItemAnnexConfidentialVisibleFor')
 
-    def listConfidentialFor(self):
+    def listItemAnnexConfidentialVisibleFor(self):
         '''
-          Vocabulary for the 'annexConfidentialFor' and 'adviceConfidentialFor' fields.
+          Vocabulary for the 'itemAnnexConfidentialVisibleFor' field.
+        '''
+        confidential_profiles = ['{0}{1}'.format(CONFIGGROUPPREFIX,
+                                                 BUDGETIMPACTEDITORS_GROUP_SUFFIX)]
+        for suffix in READER_USECASES:
+            if suffix in (POWEROBSERVERS_GROUP_SUFFIX, RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX):
+                confidential_profiles.append('{0}{1}'.format(CONFIGGROUPPREFIX, suffix))
+            else:
+                confidential_profiles.append('{0}{1}'.format(READERPREFIX, suffix))
+        for suffix in MEETING_GROUP_SUFFIXES:
+            # bypass suffixes that do not give a role, like it is the case for groupSuffix 'advisers'
+            if not MEETINGROLES[suffix]:
+                continue
+            confidential_profiles.append('{0}{1}'.format(PROPOSINGGROUPPREFIX, suffix))
+
+        res = []
+        for profile in confidential_profiles:
+            res.append(
+                (profile, translate('visible_for_{0}'.format(profile),
+                                    domain="PloneMeeting",
+                                    context=self.REQUEST))
+            )
+        return DisplayList(res)
+
+    security.declarePrivate('listAdviceAnnexConfidentialVisibleFor')
+
+    def listAdviceAnnexConfidentialVisibleFor(self):
+        '''
+          Vocabulary for the 'adviceAnnexConfidentialVisibleFor' field.
+        '''
+        confidential_profiles = ['adviser_group',
+                                 '{0}{1}'.format(CONFIGGROUPPREFIX,
+                                                 BUDGETIMPACTEDITORS_GROUP_SUFFIX)]
+        for suffix in READER_USECASES:
+            if suffix in (POWEROBSERVERS_GROUP_SUFFIX, RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX):
+                confidential_profiles.append('{0}{1}'.format(CONFIGGROUPPREFIX,
+                                                             suffix))
+            else:
+                confidential_profiles.append('{0}{1}'.format(READERPREFIX, suffix))
+        for suffix in MEETING_GROUP_SUFFIXES:
+            # bypass suffixes that do not give a role, like it is the case for groupSuffix 'advisers'
+            if not MEETINGROLES[suffix]:
+                continue
+            confidential_profiles.append('{0}{1}'.format(PROPOSINGGROUPPREFIX, suffix))
+
+        res = []
+        for profile in confidential_profiles:
+            res.append(
+                (profile, translate('visible_for_{0}'.format(profile),
+                                    domain="PloneMeeting",
+                                    context=self.REQUEST))
+            )
+        return DisplayList(res)
+
+    security.declarePrivate('listMeetingAnnexConfidentialVisibleFor')
+
+    def listMeetingAnnexConfidentialVisibleFor(self):
+        '''
+          Vocabulary for the 'meetingAnnexConfidentialVisibleFor' field.
+        '''
+        confidential_profiles = ['{0}{1}'.format(CONFIGGROUPPREFIX, 'powerobservers'),
+                                 '{0}{1}'.format(CONFIGGROUPPREFIX, 'restrictedpowerobservers')]
+        for suffix in MEETING_GROUP_SUFFIXES:
+            # bypass suffixes that do not give a role, like it is the case for groupSuffix 'advisers'
+            if not MEETINGROLES[suffix]:
+                continue
+            confidential_profiles.append('{0}{1}'.format(SUFFIXPROFILEPREFIX, suffix))
+
+        res = []
+        for profile in confidential_profiles:
+            res.append(
+                (profile, translate('visible_for_{0}'.format(profile),
+                                    domain="PloneMeeting",
+                                    context=self.REQUEST))
+            )
+        return DisplayList(res)
+
+    security.declarePrivate('listAdviceConfidentialFor')
+
+    def listAdviceConfidentialFor(self):
+        '''
+          Vocabulary for the 'adviceConfidentialFor' field.
         '''
         res = DisplayList((
             ('power_observers', translate('confidential_for_power_observers',
@@ -4872,13 +4994,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             editUrl = getattr(self.meetingusers, userId).absolute_url() + '/edit'
             rq.RESPONSE.redirect(editUrl)
 
-    def getUserName_cachekey(method, self, param, request, userId=None, caching=True):
+    def getUserParam_cachekey(method, self, param, request, userId=None, caching=True):
         '''cachekey method for self.getUserParam.'''
         return (param, str(request._debug), userId)
 
     security.declarePublic('getUserParam')
 
-    @ram.cache(getUserName_cachekey)
+    @ram.cache(getUserParam_cachekey)
     def getUserParam(self, param, request, userId=None, caching=True):
         '''Gets the value of the user-specific p_param, for p_userId if given,
            for the currently logged user if not. If user preferences are not

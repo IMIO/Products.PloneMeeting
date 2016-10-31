@@ -266,7 +266,7 @@ class testAdvices(PloneMeetingTestCase):
         # annexes are addable if advice is editable
         self.assertTrue(self.hasPermission(ModifyPortalContent, advice))
         self.assertTrue(self.hasPermission(DeleteObjects, advice))
-        annex = self.addAnnex(advice, relatedTo='advice')
+        annex = self.addAnnex(advice)
         self.assertEqual(len(get_categorized_elements(advice)), 1)
         self.assertEqual(get_categorized_elements(advice)[0]['id'], annex.getId())
         # annex is removable
