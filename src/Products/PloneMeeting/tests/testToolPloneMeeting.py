@@ -26,13 +26,13 @@ from DateTime import DateTime
 from AccessControl import Unauthorized
 from zope.testing.testrunner.find import find_test_files
 
+from collective.iconifiedcategory.utils import get_categorized_elements
 from Products.CMFCore.permissions import ManagePortal
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.interfaces import IDexterityContent
 from plone.dexterity.utils import createContentInContainer
 
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
-from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 
 
@@ -183,24 +183,27 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         annex1 = self.addAnnex(item1)
         # set the annex as 'toPrint', it is not to print by default
         # this way we check that cloned annexes toPrint value is correctly handled
-        self.assertEquals(annex1.getToPrint(), False)
-        annex1.setToPrint(True)
+        self.assertIsNone(annex1.to_print, None)
+        annex1.to_print = True
         workingFolder = item1.getParentNode()
         clonedItem = item1.clone()
         self.assertEquals(
             set([item1, clonedItem]), set(workingFolder.objectValues('MeetingItem')))
         # Check that the annexes have been cloned, too.
-        self.assertEquals(len(IAnnexable(clonedItem).getAnnexes()), 1)
-        newAnnex = clonedItem.objectValues('MeetingFile')[0]
-        # toPrint is kept as cfg.keepOriginalToPrintOfClonedItems is True by default
-        self.assertTrue(newAnnex.getToPrint())
+        self.assertEqual(len(get_categorized_elements(clonedItem)), 1)
+        newAnnex = clonedItem.objectValues()[0]
+        self.assertEqual(newAnnex.portal_type, 'annex')
+        # to_print is kept as cfg.keepOriginalToPrintOfClonedItems is True by default
+        self.assertTrue(self.meetingConfig.getKeepOriginalToPrintOfClonedItems())
+        self.assertTrue(newAnnex.to_print)
         # check that annexes returned by the IAnnexable.getAnnexes method
         # and stored in annexIndex correspond to new cloned annexes
-        newAnnexesUids = [annex.UID() for annex in clonedItem.objectValues('MeetingFile')]
-        self.assertEquals([annex.UID() for annex in IAnnexable(clonedItem).getAnnexes()], newAnnexesUids)
-        self.assertEquals([annex['UID'] for annex in clonedItem.annexIndex], newAnnexesUids)
-        # The annexIndex must be filled
-        self.assertEquals(len(clonedItem.annexIndex), 1)
+        newAnnexesUids = [annex.UID() for annex in clonedItem.objectValues()]
+        self.assertEquals(
+            [annex.UID() for annex in get_categorized_elements(clonedItem, result_type='objects')],
+            newAnnexesUids)
+        self.assertEquals(clonedItem.categorized_elements.keys(), newAnnexesUids)
+        self.assertEquals(len(clonedItem.categorized_elements), 1)
         # Test that an item viewable by a different user (another member of the
         # same group) can be pasted too if it contains things. item1 is viewable
         # by pmCreator1 too. And Also tests cloning without annex copying.
@@ -208,7 +211,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         clonedItem = item1.clone(copyAnnexes=False)
         self.assertEquals(set([clonedItem]),
                           set(clonedItem.getParentNode().objectValues('MeetingItem')))
-        self.assertEquals(len(IAnnexable(clonedItem).getAnnexes()), 0)
+        self.assertEqual(len(get_categorized_elements(clonedItem)), 1)
 
     def test_pm_CloneItemWithContentNotRemovableByPermission(self):
         '''Clones a given item in parent item folder. Here we test that even
