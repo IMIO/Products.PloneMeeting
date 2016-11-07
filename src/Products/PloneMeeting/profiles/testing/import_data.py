@@ -63,15 +63,18 @@ decision = AnnexTypeDescriptor(
     'decision', 'Decision', u'decision.png', '', 'item_decision')
 decisionAnnex = AnnexTypeDescriptor(
     'decision-annex', 'Decision annex(es)', u'decisionAnnex.png', '', 'item_decision')
-# A vintage file type
+# A vintage annex type
 marketingAnalysis = AnnexTypeDescriptor(
     'marketing-annex', 'Marketing annex(es)', u'legalAnalysis.png', '', 'item_decision',
     enabled=False)
-# Advice file types
+# Advice annex types
 adviceAnnex = AnnexTypeDescriptor(
     'advice-annex', 'Advice annex(es)', u'itemAnnex.png', '', 'advice')
 adviceLegalAnalysis = AnnexTypeDescriptor(
     'advice-legal-analysis', 'Advice legal analysis', u'legalAnalysis.png', '', 'advice')
+# Meeting annex types
+meetingAnnex = AnnexTypeDescriptor(
+    'meeting-annex', 'Meeting annex(es)', u'itemAnnex.png', '', 'meeting')
 
 # Pod templates
 agendaTemplate = PodTemplateDescriptor('agendaTemplate', 'Meeting agenda')
@@ -237,9 +240,9 @@ meetingPma.assembly = 'Gauthier Bastien, Gilles Demaret, Kilian Soree, ' \
                       'Godefroid Chapelle, Gaetan Deberdt, Gaetan Delannay'
 meetingPma.signatures = 'Bill Gates, Steve Jobs'
 meetingPma.categories = [development, research]
-meetingPma.meetingFileTypes = [financialAnalysis, overheadAnalysis,
-                               itemAnnex, decisionAnnex, marketingAnalysis,
-                               adviceAnnex, adviceLegalAnalysis]
+meetingPma.annexTypes = [financialAnalysis, overheadAnalysis,
+                         itemAnnex, decisionAnnex, marketingAnalysis,
+                         adviceAnnex, adviceLegalAnalysis, meetingAnnex]
 meetingPma.usedItemAttributes = ('toDiscuss', 'itemTags', 'itemIsSigned',)
 meetingPma.usedMeetingAttributes = ('place',)
 meetingPma.itemDecidedStates = ('accepted', 'refused', 'delayed', 'confirmed', 'itemarchived')
@@ -315,9 +318,9 @@ meetingPga.assembly = 'Bill Gates, Steve Jobs'
 meetingPga.signatures = 'Bill Gates, Steve Jobs'
 meetingPga.categories = [deployment, maintenance, development, events,
                          research, projects, marketing, subproducts]
-meetingPga.meetingFileTypes = [financialAnalysis, legalAnalysis,
-                               budgetAnalysis, itemAnnex,
-                               decisionAnnex, adviceAnnex, adviceLegalAnalysis]
+meetingPga.annexTypes = [financialAnalysis, legalAnalysis,
+                         budgetAnalysis, itemAnnex, decisionAnnex,
+                         adviceAnnex, adviceLegalAnalysis, meetingAnnex]
 meetingPga.usedItemAttributes = ('toDiscuss', 'associatedGroups', 'itemIsSigned',)
 meetingPga.transitionsForPresentingAnItem = ('propose', 'validate', 'present', )
 meetingPga.onMeetingTransitionItemTransitionToTrigger = ({'meeting_transition': 'publish',

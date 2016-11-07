@@ -608,7 +608,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             cfg.addItemToConfig(descr)
         for descr in configData.itemTemplates:
             cfg.addItemToConfig(descr, isRecurring=False)
-        for descr in configData.meetingFileTypes:
+        for descr in configData.annexTypes:
             cfg.addAnnexType(descr, source)
         for descr in configData.podTemplates:
             cfg.addPodTemplate(descr, source)

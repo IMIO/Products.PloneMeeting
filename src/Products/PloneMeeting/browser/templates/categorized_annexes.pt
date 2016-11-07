@@ -7,7 +7,7 @@
       </h1>
       <fieldset tal:condition="view/showAnnexesSection">
         <legend>
-          <span i18n:translate="">Annexes</span>
+          <a name="annexes"><span i18n:translate="">Annexes</span></a>
             <a href="++add++annex"
                  class="link-overlay-pm-annex">
                 <img i18n:attributes="title"
@@ -28,7 +28,7 @@
 
       <fieldset tal:condition="view/showDecisionAnnexesSection">
         <legend>
-          <span i18n:translate="">AnnexesDecisionShort</span>
+          <a name="annexes_decision"><span i18n:translate="">AnnexesDecisionShort</span></a>
             <a href="++add++annexDecision"
                  class="link-overlay-pm-annex">
                 <img i18n:attributes="title"

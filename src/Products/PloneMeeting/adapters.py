@@ -1379,6 +1379,15 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
         user_groups = user.getGroups()
         if set(user_groups).intersection(infos['visible_for_groups']):
             return True
+        # if we have a SUFFIXPROFILEPREFIX profixed group,
+        # check using "userIsAmong", this is only done for Meetings
+        if self.context.meta_type == 'Meeting':
+            tool = api.portal.get_tool('portal_plonemeeting')
+            for group in infos['visible_for_groups']:
+                if group.startswith(SUFFIXPROFILEPREFIX):
+                    suffix = group.replace(SUFFIXPROFILEPREFIX, '')
+                    if tool.userIsAmong(suffix):
+                        return True
         return False
 
 

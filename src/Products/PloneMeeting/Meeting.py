@@ -89,6 +89,8 @@ from Products.PloneMeeting.utils import rememberPreviousData
 from Products.PloneMeeting.utils import setFieldFromAjax
 from Products.PloneMeeting.utils import toHTMLStrikedContent
 from Products.PloneMeeting.utils import transformAllRichTextFields
+from Products.PloneMeeting.utils import update_annexes
+
 from Products.PloneMeeting import PMMessageFactory as _
 import logging
 logger = logging.getLogger('PloneMeeting')
@@ -1730,6 +1732,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         self.manage_addLocalRoles(self.owner_info()['id'], ('Owner',))
         # add powerObservers local roles
         self._updatePowerObserversLocalRoles()
+        # update annexes categorized_elements to store 'visible_for_groups'
+        update_annexes(self)
         # manage the 'ATContentTypes: Add Image' permission
         _addImagePermission(self)
         # notify that localRoles have been updated

@@ -463,7 +463,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.classifiers = []  # ~[CategoryDescriptor]~
         self.recurringItems = []  # ~[RecurringItemDescriptor]~
         self.itemTemplates = []  # ~[ItemTemplateDescriptor]~
-        self.meetingFileTypes = []
+        self.annexTypes = []
 
         # Advices parameters ---------------------------------------------------
         # Enable / disable advices

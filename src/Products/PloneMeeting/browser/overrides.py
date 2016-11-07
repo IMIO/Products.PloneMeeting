@@ -868,7 +868,11 @@ class PMCategorizedChildView(CategorizedChildView):
 
     def categorized_elements_more_infos_url(self):
         """ """
-        return "{0}/{1}".format(self.context.absolute_url(), "@@categorized-annexes")
+        anchor_name = 'annexes'
+        if self.portal_type == 'annexDecision':
+            anchor_name = 'annexes_decision'
+        return "{0}/@@categorized-annexes#{1}".format(self.context.absolute_url(),
+                                                      anchor_name)
 
 
 class PMConfidentialChangeView(ConfidentialChangeView):

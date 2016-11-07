@@ -23,6 +23,7 @@
 #
 
 from AccessControl import Unauthorized
+from DateTime import DateTime
 from zope.event import notify
 from zope.lifecycleevent import ObjectModifiedEvent
 from plone.app.textfield.value import RichTextValue
@@ -34,11 +35,12 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from Products.PloneMeeting.indexes import SearchableText
-from Products.PloneMeeting.profiles.testing.import_data import developers
+from Products.PloneMeeting.profiles.testing import import_data
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.utils import update_annexes
 from Products.PloneMeeting.MeetingConfig import PROPOSINGGROUPPREFIX
+from Products.PloneMeeting.MeetingConfig import SUFFIXPROFILEPREFIX
 
 
 class testAnnexes(PloneMeetingTestCase):
@@ -79,12 +81,12 @@ class testAnnexes(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfgItemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
         item_initial_state = self.wfTool[cfgItemWF.getId()].initial_state
-        annex_config = get_config_root(cfg)
-        annex_group = get_group(annex_config, cfg)
-        annex_group.confidentiality_activated = True
 
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
+        annex_config = get_config_root(item)
+        annex_group = get_group(annex_config, item)
+        annex_group.confidentiality_activated = True
         annexes_table = item.restrictedTraverse('@@iconifiedcategory')
         categorized_child = item.restrictedTraverse('@@categorized-childs')
 
@@ -207,7 +209,8 @@ class testAnnexes(PloneMeetingTestCase):
             cfg.setItemAnnexConfidentialVisibleFor((proposingGroupSuffix, ))
             update_annexes(item)
             # get a user from the right 'developers' subgroup
-            username = getattr(developers, proposingGroupSuffix.replace(PROPOSINGGROUPPREFIX, ''))[0].id
+            username = getattr(import_data.developers,
+                               proposingGroupSuffix.replace(PROPOSINGGROUPPREFIX, ''))[0].id
             self.changeUser(username)
             if not self.hasPermission(View, item):
                 pm_logger.info("Could not test if '%s' can access confidential "
@@ -270,9 +273,6 @@ class testAnnexes(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfgItemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
         item_initial_state = self.wfTool[cfgItemWF.getId()].initial_state
-        annex_config = get_config_root(cfg)
-        annex_group = get_group(annex_config, cfg)
-        annex_group.confidentiality_activated = True
 
         cfg.setItemAdviceStates((item_initial_state, ))
         cfg.setItemAdviceEditStates((item_initial_state, ))
@@ -287,6 +287,9 @@ class testAnnexes(PloneMeetingTestCase):
             **{'advice_group': self.tool.vendors.getId(),
                'advice_type': u'positive',
                'advice_comment': RichTextValue(u'My comment')})
+        annex_config = get_config_root(advice)
+        annex_group = get_group(annex_config, advice)
+        annex_group.confidentiality_activated = True
 
         annexes_table = advice.restrictedTraverse('@@iconifiedcategory')
         categorized_child = advice.restrictedTraverse('@@categorized-childs')
@@ -420,7 +423,8 @@ class testAnnexes(PloneMeetingTestCase):
             cfg.setAdviceAnnexConfidentialVisibleFor((proposingGroupSuffix, ))
             update_annexes(advice)
             # get a user from the right 'developers' subgroup
-            username = getattr(developers, proposingGroupSuffix.replace(PROPOSINGGROUPPREFIX, ''))[0].id
+            username = getattr(import_data.developers,
+                               proposingGroupSuffix.replace(PROPOSINGGROUPPREFIX, ''))[0].id
             self.changeUser(username)
             if not self.hasPermission(View, advice):
                 pm_logger.info("Could not test if '%s' can access confidential "
@@ -428,6 +432,90 @@ class testAnnexes(PloneMeetingTestCase):
                 continue
             self._checkElementConfidentialAnnexAccess(cfg, advice, annexNotConfidential, annexConfidential,
                                                       annexes_table, categorized_child)
+
+    def _setupConfidentialityOnMeetingAnnexes(self):
+        """ """
+        cfg = self.meetingConfig
+        cfgMeetingWF = self.wfTool.getWorkflowsFor(cfg.getMeetingTypeName())[0]
+        meeting_initial_state = self.wfTool[cfgMeetingWF.getId()].initial_state
+
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2016/10/10'))
+        annex_config = get_config_root(meeting)
+        annex_group = get_group(annex_config, meeting)
+        annex_group.confidentiality_activated = True
+
+        annexes_table = meeting.restrictedTraverse('@@iconifiedcategory')
+        categorized_child = meeting.restrictedTraverse('@@categorized-childs')
+
+        annexNotConfidential = self.addAnnex(meeting, annexTitle='Annex not confidential')
+        annexConfidential = self.addAnnex(meeting, annexTitle='Annex confidential')
+        annexConfidential.confidential = True
+        notify(ObjectModifiedEvent(annexConfidential))
+        return meeting_initial_state, meeting, annexes_table, categorized_child, \
+            annexNotConfidential, annexConfidential
+
+    def test_pm_MeetingGetCategorizedElementsWithConfidentialityForPowerObservers(self):
+        ''' '''
+        cfg = self.meetingConfig
+        meeting_initial_state, meeting, annexes_table, categorized_child, \
+            annexNotConfidential, annexConfidential = self._setupConfidentialityOnMeetingAnnexes()
+
+        cfg.setMeetingPowerObserversStates((meeting_initial_state, ))
+        cfg.setMeetingAnnexConfidentialVisibleFor(('configgroup_powerobservers', ))
+        meeting.updateLocalRoles()
+
+        self.changeUser('powerobserver1')
+        self._checkElementConfidentialAnnexAccess(cfg, meeting, annexNotConfidential, annexConfidential,
+                                                  annexes_table, categorized_child)
+
+    def test_pm_MeetingGetCategorizedElementsWithConfidentialityForRestrictedPowerObservers(self):
+        ''' '''
+        cfg = self.meetingConfig
+        meeting_initial_state, meeting, annexes_table, categorized_child, \
+            annexNotConfidential, annexConfidential = self._setupConfidentialityOnMeetingAnnexes()
+
+        cfg.setMeetingRestrictedPowerObserversStates((meeting_initial_state, ))
+        cfg.setMeetingAnnexConfidentialVisibleFor(('configgroup_restrictedpowerobservers', ))
+        meeting.updateLocalRoles()
+
+        self.changeUser('restrictedpowerobserver1')
+        self._checkElementConfidentialAnnexAccess(cfg, meeting, annexNotConfidential, annexConfidential,
+                                                  annexes_table, categorized_child)
+
+    def test_pm_MeetingGetCategorizedElementsWithConfidentialityForProposingGroupProfiles(self):
+        ''' '''
+        cfg = self.meetingConfig
+        meeting_initial_state, meeting, annexes_table, categorized_child, \
+            annexNotConfidential, annexConfidential = self._setupConfidentialityOnMeetingAnnexes()
+
+        # freeze the meeting so it is visible by every profiles
+        self.freezeMeeting(meeting)
+        self.assertEqual(meeting.queryState(), 'frozen')
+
+        profileSuffixes = [k for k in cfg.listMeetingAnnexConfidentialVisibleFor()
+                           if k.startswith(SUFFIXPROFILEPREFIX)]
+        for profileSuffix in profileSuffixes:
+            # every users of a Plone subgroup profileSuffix will have access
+            for groupConfig in (import_data.developers, import_data.vendors):
+                cfg.setMeetingAnnexConfidentialVisibleFor((profileSuffix, ))
+                update_annexes(meeting)
+                # get a user from the right 'developers' subgroup
+                users = getattr(groupConfig,
+                                profileSuffix.replace(SUFFIXPROFILEPREFIX, ''))
+                if not users:
+                    pm_logger.info("Could not test if profile '%s' can access confidential "
+                                   "annexes for group '%s' because no users is defined in this profile !"
+                                   % (profileSuffix.replace(SUFFIXPROFILEPREFIX, ''), groupConfig.id))
+                    continue
+                username = users[0].id
+                self.changeUser(username)
+                if not self.hasPermission(View, meeting):
+                    pm_logger.info("Could not test if '%s' can access confidential "
+                                   "annexes because he may not see the item !" % self.member.getId())
+                    continue
+                self._checkElementConfidentialAnnexAccess(cfg, meeting, annexNotConfidential, annexConfidential,
+                                                          annexes_table, categorized_child)
 
     def test_pm_AnnexesTitleFoundInItemSearchableText(self):
         '''MeetingFiles title is indexed in the item SearchableText.'''

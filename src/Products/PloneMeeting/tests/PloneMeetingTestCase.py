@@ -172,6 +172,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.getGroupsForUser')
         cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.isPowerObserverForCfg')
         cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.isManager')
+        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.userIsAmong')
         if loginName == 'admin':
             login(self.app, loginName)
         else:
