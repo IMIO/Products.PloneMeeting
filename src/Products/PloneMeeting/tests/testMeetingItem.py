@@ -31,6 +31,9 @@ from Products.Five import zcml
 from zope.annotation.interfaces import IAnnotations
 from zope.i18n import translate
 
+from collective.iconifiedcategory.utils import calculate_category_id
+from collective.iconifiedcategory.utils import get_categorized_elements
+from collective.iconifiedcategory.utils import get_context_categories
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 
@@ -399,7 +402,7 @@ class testMeetingItem(PloneMeetingTestCase):
         if with_annexes:
             # Add annexes
             annex1 = self.addAnnex(item)
-            annex2 = self.addAnnex(item, annexType='overhead-analysis')
+            annex2 = self.addAnnex(item)
         # Propose the item
         self.proposeItem(item)
         if with_advices:
@@ -442,7 +445,9 @@ class testMeetingItem(PloneMeetingTestCase):
             self.failIf(item.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
         if with_annexes:
             decisionAnnex1 = self.addAnnex(item, relatedTo='item_decision')
-            decisionAnnex2 = self.addAnnex(item, annexType='marketing-annex', relatedTo='item_decision')
+            decisionAnnex2 = self.addAnnex(item,
+                                           annexType='marketing-annex',
+                                           relatedTo='item_decision')
         self.do(item, 'accept')
         # Get the new item
         annotations = IAnnotations(item)
@@ -466,52 +471,40 @@ class testMeetingItem(PloneMeetingTestCase):
         '''Test that sending an item to another MeetingConfig behaves normaly with annexes.
            This is a complementary test to testToolPloneMeeting.testCloneItemWithContent.
            Here we test the fact that the item is sent to another MeetingConfig.'''
+        cfg2 = self.meetingConfig2
+        cfg2Id = cfg2.getId()
         data = self._setupSendItemToOtherMC(with_annexes=True)
         newItem = data['newItem']
-        annex1 = data['annex1']
-        annex2 = data['annex2']
-        decisionAnnex1 = data['decisionAnnex1']
         decisionAnnex2 = data['decisionAnnex2']
-        # Check that annexes are actually correctly sent too
+        # Check that annexes are correctly sent too
         # we had 2 normal annexes and 2 decision annexes
-        self.failUnless(len(IAnnexable(newItem).getAnnexes()) == 4)
-        self.failUnless(len(IAnnexable(newItem).getAnnexes(relatedTo='item')) == 2)
-        self.failUnless(len(IAnnexable(newItem).getAnnexes(relatedTo='item_decision')) == 2)
+        self.assertEqual(len(get_categorized_elements(newItem)), 4)
+        self.assertEqual(len(get_categorized_elements(newItem, portal_type='annex')), 2)
+        self.assertEqual(len(get_categorized_elements(newItem, portal_type='annexDecision')), 2)
         # As annexes are references from the item, check that these are not
-        self.assertEquals(set([newItem]), set(newItem.getParentNode().objectValues('MeetingItem')))
-        # Especially test that references are ok about the MeetingFileTypes
-        existingMeetingFileTypeIds = [ft['id'] for ft in self.meetingConfig.getFileTypes(relatedTo='item')]
-        existingMeetingFileTypeDecisionIds = [ft['id'] for ft in
-                                              self.meetingConfig.getFileTypes(relatedTo='item_decision')]
-        self.failUnless(annex1.getMeetingFileType() in existingMeetingFileTypeIds)
-        self.failUnless(annex2.getMeetingFileType() in existingMeetingFileTypeIds)
-        self.failUnless(decisionAnnex1.getMeetingFileType() in existingMeetingFileTypeDecisionIds)
-        # the MeetingFileType of decisionAnnex1 is deactivated
-        self.failIf(decisionAnnex2.getMeetingFileType() in existingMeetingFileTypeDecisionIds)
-        # query existing MFT even disabled ones
-        existingMeetingFileTypeIncludingNotSelectableIds = [ft['id'] for ft in
-                                                            self.meetingConfig.getFileTypes(relatedTo='item_decision',
-                                                                                            onlySelectable=False)]
-        self.failUnless(decisionAnnex2.getMeetingFileType() in existingMeetingFileTypeIncludingNotSelectableIds)
-        # Now check the MeetingFileType of new annexes
-        # annex1 has no correspondence on the new MeetingConfig so the
-        # frist MFT of same relatedTo is used
-        defaultMC2ItemMFT = self.meetingConfig2.getFileTypes(annex1.findRelatedTo())[0]
-        self.assertEquals(newItem.objectValues('MeetingFile')[0].getMeetingFileType(),
-                          defaultMC2ItemMFT['id'])
-        # annex2 was of annexType "overhead-analysis" that does NOT have correspondence
-        # frist MFT of same relatedTo is used
-        self.assertEquals(newItem.objectValues('MeetingFile')[1].getMeetingFileType(),
-                          defaultMC2ItemMFT['id'])
-        # decisionAnnex1 was 'item_decision' relatedTo
-        # frist MFT of same relatedTo is used
-        defaultMC2ItemDecisionMFT = self.meetingConfig2.getFileTypes(decisionAnnex1.findRelatedTo())[0]
-        self.assertEquals(newItem.objectValues('MeetingFile')[2].getMeetingFileType(),
-                          defaultMC2ItemDecisionMFT['id'])
-        # decisionAnnex2 was 'item_decision' relatedTo
-        # frist MFT of same relatedTo is used
-        self.assertEquals(newItem.objectValues('MeetingFile')[3].getMeetingFileType(),
-                          defaultMC2ItemDecisionMFT['id'])
+        self.assertEqual(
+            (newItem, ),
+            tuple(newItem.getParentNode().objectValues('MeetingItem'))
+            )
+        # Especially test that use content_category is correct on the duplicated annexes
+        for v in get_categorized_elements(newItem):
+            self.assertTrue(cfg2Id in v['icon_url'])
+
+        # Now check the annexType of new annexes
+        # annexes have no correspondences so default one is used each time
+        defaultMC2ItemAT = get_context_categories(newItem.objectValues()[0])[0]
+        self.assertEqual(newItem.objectValues()[0].content_category,
+                         calculate_category_id(defaultMC2ItemAT))
+        self.assertEqual(newItem.objectValues()[1].content_category,
+                         calculate_category_id(defaultMC2ItemAT))
+        # decision annexes
+        defaultMC2ItemDecisionAT = get_context_categories(newItem.objectValues()[2])[0]
+        self.assertEquals(newItem.objectValues()[2].content_category,
+                          calculate_category_id(defaultMC2ItemDecisionAT))
+        # decisionAnnex2 was 'marketing-annex', default is used
+        self.assertTrue(decisionAnnex2.content_category.endswith('marketing-annex'))
+        self.assertEquals(newItem.objectValues()[3].content_category,
+                          calculate_category_id(defaultMC2ItemDecisionAT))
 
     def test_pm_SentToInfosIndex(self):
         """The fact that an item is sendable/sent to another MC is indexed."""
@@ -541,11 +534,13 @@ class testMeetingItem(PloneMeetingTestCase):
            if we have annexes on the original item and destination meetingConfig (that could be same
            as original item or another) does not have annex types defined,
            it does not fail but annexes are not kept and a portal message is displayed.'''
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
         # first test when sending to another meetingConfig
-        # remove every fileTypes from meetingConfig2
+        # remove every annexTypes from meetingConfig2
         self.changeUser('admin')
-        self._removeConfigObjectsFor(self.meetingConfig2, folders=['meetingfiletypes', ])
-        self.assertTrue(not self.meetingConfig2.getFileTypes(onlySelectable=False))
+        self._removeConfigObjectsFor(cfg2, folders=['annexes_types/item_annexes', ])
+        self.assertTrue(not cfg2.annexes_types.item_annexes.objectValues())
         # a portal message will be added, for now there is no message
         messages = IStatusMessage(self.request).show()
         self.assertTrue(not messages)
@@ -560,7 +555,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # moreover a message was added
         messages = IStatusMessage(self.request).show()
         expectedMessage = translate("annexes_not_kept_because_no_available_mft_warning",
-                                    mapping={'cfg': self.meetingConfig2.Title()},
+                                    mapping={'cfg': cfg2.Title()},
                                     domain='PloneMeeting',
                                     context=self.request)
         # 2 messages, the expected and the message 'item successfully sent to other mc'
@@ -568,7 +563,7 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # now test when cloning locally, just disable every available mft
         self.changeUser('admin')
-        for mft in self.meetingConfig.meetingfiletypes.objectValues():
+        for mft in cfg.meetingfiletypes.objectValues():
             if 'deactivate' in self.transitions(mft):
                 self.do(mft, 'deactivate')
         # no available mft, try to clone newItem now
@@ -581,7 +576,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # moreover a message was added
         messages = IStatusMessage(self.request).show()
         expectedMessage = translate("annexes_not_kept_because_no_available_mft_warning",
-                                    mapping={'cfg': self.meetingConfig.Title()},
+                                    mapping={'cfg': cfg.Title()},
                                     domain='PloneMeeting',
                                     context=self.request)
         self.assertTrue(messages[0].message == expectedMessage)

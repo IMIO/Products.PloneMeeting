@@ -60,9 +60,9 @@ from collective.documentviewer.settings import GlobalSettings
 from collective.iconifiedcategory.interfaces import IIconifiedPreview
 from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.utils import get_categorized_elements
-from collective.iconifiedcategory.utils import get_categories
 from collective.iconifiedcategory.utils import get_category_object
 from collective.iconifiedcategory.utils import get_config_root
+from collective.iconifiedcategory.utils import get_context_categories
 from collective.iconifiedcategory.utils import update_categorized_elements
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.dashboard.utils import enableFacetedDashboardFor
@@ -872,12 +872,12 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         elif context.meta_type in ('MeetingItem', 'Meeting') or \
                 context.portal_type.startswith('meetingadvice'):
             # check that there are categories defined in the configuration
-            hasAnnexesTypes = get_categories(context)
+            hasAnnexesTypes = get_context_categories(context)
             hasDecisionAnnexesTypes = False
             if not hasAnnexesTypes and context.meta_type == 'MeetingItem':
                 # maybe we have decision related annexes types?
                 self.REQUEST.set('force_use_item_decision_annexes_group', True)
-                hasDecisionAnnexesTypes = get_categories(self)
+                hasDecisionAnnexesTypes = get_context_categories(context)
                 self.REQUEST.set('force_use_item_decision_annexes_group', False)
             if hasAnnexesTypes or hasDecisionAnnexesTypes:
                 return True
@@ -1121,131 +1121,133 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             # The new owner will become the currently logged user
             newOwnerId = loggedUserId
         wftool = api.portal.get_tool('portal_workflow')
-        i = -1
-        for itemId in pasteResult:
-            i += 1
-            newItem = getattr(destFolder, itemId['new_id'])
-            # Get the copied item, we will need information from it
-            copiedItem = None
-            copiedId = CopySupport._cb_decode(copiedData)[1][i]
-            m = OFS.Moniker.loadMoniker(copiedId)
-            try:
-                copiedItem = m.bind(destFolder.getPhysicalRoot())
-            except ConflictError:
-                raise
-            except:
-                raise PloneMeetingError('Could not copy.')
-            if newItem.__class__.__name__ != "MeetingItem":
-                continue
-            # Let the logged user do everything on the newly created item
-            newItem.manage_addLocalRoles(loggedUserId, ('Manager',))
-            newItem.setCreators((newOwnerId,))
-            # The creation date is kept, redefine it
-            newItem.setCreationDate(DateTime())
+        newItem = getattr(destFolder, pasteResult[0]['new_id'])
+        # Get the copied item, we will need information from it
+        copiedItem = None
+        copiedId = CopySupport._cb_decode(copiedData)[1][0]
+        m = OFS.Moniker.loadMoniker(copiedId)
+        try:
+            copiedItem = m.bind(destFolder.getPhysicalRoot())
+        except ConflictError:
+            raise
+        except:
+            raise PloneMeetingError('Could not copy.')
 
-            # Change the new item portal_type dynamically (wooow) if needed
-            if newPortalType:
-                newItem.portal_type = newPortalType
-                # Rename the workflow used in workflow_history because the used workflow
-                # has changed (more than probably)
-                oldWFName = wftool.getWorkflowsFor(copiedItem)[0].id
-                newWFName = wftool.getWorkflowsFor(newItem)[0].id
-                oldHistory = newItem.workflow_history
-                tmpDict = {newWFName: oldHistory[oldWFName]}
+        # Let the logged user do everything on the newly created item
+        newItem.manage_addLocalRoles(loggedUserId, ('Manager',))
+        newItem.setCreators((newOwnerId,))
+        # The creation date is kept, redefine it
+        newItem.setCreationDate(DateTime())
+
+        # Change the new item portal_type dynamically (wooow) if needed
+        if newPortalType:
+            newItem.portal_type = newPortalType
+            # Rename the workflow used in workflow_history because the used workflow
+            # has changed (more than probably)
+            oldWFName = wftool.getWorkflowsFor(copiedItem)[0].id
+            newWFName = wftool.getWorkflowsFor(newItem)[0].id
+            oldHistory = newItem.workflow_history
+            tmpDict = {newWFName: oldHistory[oldWFName]}
+            newItem.workflow_history = tmpDict
+            # make sure current review_state is right, in case initial_state
+            # of newPortalType WF is not the same as original portal_type WF, correct this
+            newItemWF = wftool.getWorkflowsFor(newItem)[0]
+            if not newItemWF._getWorkflowStateOf(newItem) or not \
+               wftool.getInfoFor(newItem, 'review_state') == newItemWF.initial_state:
+                # in this case, the current wf state is wrong, we will correct it
+                newItem.workflow_history = {}
+                # this will initialize wf initial state if workflow_history is empty
+                initial_state = wftool.getWorkflowsFor(newItem)[0]._getWorkflowStateOf(newItem)
+                tmpDict[newWFName][0]['review_state'] = initial_state.id
                 newItem.workflow_history = tmpDict
-                # make sure current review_state is right, in case initial_state
-                # of newPortalType WF is not the same as original portal_type WF, correct this
-                newItemWF = wftool.getWorkflowsFor(newItem)[0]
-                if not newItemWF._getWorkflowStateOf(newItem) or not \
-                   wftool.getInfoFor(newItem, 'review_state') == newItemWF.initial_state:
-                    # in this case, the current wf state is wrong, we will correct it
-                    newItem.workflow_history = {}
-                    # this will initialize wf initial state if workflow_history is empty
-                    initial_state = wftool.getWorkflowsFor(newItem)[0]._getWorkflowStateOf(newItem)
-                    tmpDict[newWFName][0]['review_state'] = initial_state.id
-                    newItem.workflow_history = tmpDict
-                # update security settings of new item has workflow permissions could have changed...
-                newItemWF.updateRoleMappingsFor(newItem)
+            # update security settings of new item has workflow permissions could have changed...
+            newItemWF.updateRoleMappingsFor(newItem)
 
-            # remove contained meetingadvices
-            newItem._removeEveryContainedAdvices()
+        # remove contained meetingadvices
+        newItem._removeEveryContainedAdvices()
 
-            # Set fields not in the copyFields list to their default value
-            # 'id' and  'proposingGroup' will be kept in anyway
-            fieldsToKeep = ['id', 'proposingGroup', ] + copyFields
-            for field in newItem.Schema().filterFields(isMetadata=False):
-                if not field.getName() in fieldsToKeep:
-                    # Set the field to his default value
-                    field.set(newItem, field.getDefault(newItem))
+        # Set fields not in the copyFields list to their default value
+        # 'id' and  'proposingGroup' will be kept in anyway
+        fieldsToKeep = ['id', 'proposingGroup', ] + copyFields
+        for field in newItem.Schema().filterFields(isMetadata=False):
+            if not field.getName() in fieldsToKeep:
+                # Set the field to his default value
+                field.set(newItem, field.getDefault(newItem))
 
-            # Set some default values that could not be initialized properly
-            if 'toDiscuss' in copyFields and destMeetingConfig.getToDiscussSetOnItemInsert():
-                toDiscussDefault = destMeetingConfig.getToDiscussDefault()
-                newItem.setToDiscuss(toDiscussDefault)
-            if 'classifier' in copyFields:
-                newItem.getField('classifier').set(
-                    newItem, copiedItem.getClassifier())
+        # Set some default values that could not be initialized properly
+        if 'toDiscuss' in copyFields and destMeetingConfig.getToDiscussSetOnItemInsert():
+            toDiscussDefault = destMeetingConfig.getToDiscussDefault()
+            newItem.setToDiscuss(toDiscussDefault)
+        if 'classifier' in copyFields:
+            newItem.getField('classifier').set(
+                newItem, copiedItem.getClassifier())
 
-            # Manage annexes.
-            # we will remove annexes if copyAnnexes is False or if we could not find
-            # defined meetingFileTypes in the destMeetingConfig
-            noMeetingFileTypes = False
-            if copyAnnexes and \
-               get_categorized_elements(newItem) and \
-               not destMeetingConfig.getFileTypes():
-                noMeetingFileTypes = True
-                plone_utils = api.portal.get_tool('plone_utils')
-                msg = translate('annexes_not_kept_because_no_available_mft_warning',
-                                mapping={'cfg': safe_unicode(destMeetingConfig.Title())},
-                                domain='PloneMeeting',
-                                context=self.REQUEST)
-                plone_utils.addPortalMessage(msg, 'warning')
-            if not copyAnnexes or noMeetingFileTypes:
-                # Delete the annexes that have been copied.
-                for annex in get_categorized_elements(newItem, result_type='objects'):
-                    unrestrictedRemoveGivenObject(annex)
-            else:
-                # manage the otherMCCorrespondence
-                oldAnnexes = get_categorized_elements(copiedItem, result_type='objects')
-                for oldAnnex in oldAnnexes:
-                    newAnnex = getattr(newItem, oldAnnex.getId())
-                    # In case the item is copied from another MeetingConfig, we need
-                    # to update every annex.meetingFileType because it still refers
-                    # the meetingFileType in the old MeetingConfig the item is copied from
-                    if newPortalType:
-                        if not self._updateContentCategoryAfterSentToOtherMeetingConfig(newAnnex):
-                            raise Exception('Could not update meeting file type of copied annex at %s!'
-                                            % oldAnnex.absolute_url())
-                    # initialize toPrint correctly regarding configuration
-                    if not destMeetingConfig.getKeepOriginalToPrintOfClonedItems():
-                        newAnnex.to_print = get_category_object(newAnnex).to_print
-                    # update annex index
-                    update_categorized_elements(newAnnex.getParentNode(),
-                                                newAnnex,
-                                                get_category_object(newAnnex,
-                                                                    newAnnex.content_category))
+        # Manage annexes.
+        # we will remove annexes if copyAnnexes is False or if we could not find
+        # defined annexTypes in the destMeetingConfig
+        noAnnexTypes = False
+        annexes_config = get_config_root(newItem)
+        # check if it contains annexes, can not use get_categorized_elements
+        # nor access to the 'categorized_elements' dict as it is empty
+        contained_annexes = [obj for obj in newItem.objectValues()
+                             if obj.portal_type in ('annex', 'annexDecision')]
+        if copyAnnexes and \
+           contained_annexes and \
+           not annexes_config.objectValues():
+            noAnnexTypes = True
+            plone_utils = api.portal.get_tool('plone_utils')
+            msg = translate('annexes_not_kept_because_no_available_mft_warning',
+                            mapping={'cfg': safe_unicode(destMeetingConfig.Title())},
+                            domain='PloneMeeting',
+                            context=self.REQUEST)
+            plone_utils.addPortalMessage(msg, 'warning')
+        if not copyAnnexes or noAnnexTypes:
+            # Delete the annexes that have been copied.
+            for annex in get_categorized_elements(newItem, result_type='objects'):
+                unrestrictedRemoveGivenObject(annex)
+        else:
+            # manage the otherMCCorrespondence
+            oldAnnexes = get_categorized_elements(copiedItem, result_type='objects')
+            for oldAnnex in oldAnnexes:
+                newAnnex = getattr(newItem, oldAnnex.getId())
+                # In case the item is copied from another MeetingConfig, we need
+                # to update every annex.meetingFileType because it still refers
+                # the meetingFileType in the old MeetingConfig the item is copied from
+                if newPortalType:
+                    originCfg = self.getMeetingConfig(copiedItem)
+                    if not self._updateContentCategoryAfterSentToOtherMeetingConfig(newAnnex, originCfg):
+                        raise Exception('Could not update meeting file type of copied annex at %s!'
+                                        % oldAnnex.absolute_url())
+                # initialize toPrint correctly regarding configuration
+                if not destMeetingConfig.getKeepOriginalToPrintOfClonedItems():
+                    newAnnex.to_print = get_category_object(newAnnex).to_print
+                # update annex index
+                update_categorized_elements(newAnnex.getParentNode(),
+                                            newAnnex,
+                                            get_category_object(newAnnex,
+                                                                newAnnex.content_category))
 
-            # The copy/paste has transferred history. We must clean the history
-            # of the cloned object.
-            wfName = wftool.getWorkflowsFor(newItem)[0].id
-            firstEvent = newItem.workflow_history[wfName][0]
-            firstEvent['actor'] = newOwnerId or self.Creator()
-            firstEvent['time'] = DateTime()
-            newItem.workflow_history[wfName] = (firstEvent, )
+        # The copy/paste has transferred history. We must clean the history
+        # of the cloned object.
+        wfName = wftool.getWorkflowsFor(newItem)[0].id
+        firstEvent = newItem.workflow_history[wfName][0]
+        firstEvent['actor'] = newOwnerId or self.Creator()
+        firstEvent['time'] = DateTime()
+        newItem.workflow_history[wfName] = (firstEvent, )
 
-            # The copy/paste has transferred annotations, we do not need them.
-            annotations = IAnnotations(newItem)
-            for ann in annotations:
-                if ann.startswith(SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY):
-                    del annotations[ann]
+        # The copy/paste has transferred annotations, we do not need them.
+        annotations = IAnnotations(newItem)
+        for ann in annotations:
+            if ann.startswith(SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY):
+                del annotations[ann]
 
-            # Change the proposing group if the item owner does not belong to
-            # the defined proposing group, except if p_keepProposingGroup is True
-            if not keepProposingGroup:
-                userGroups = self.getGroupsForUser(userId=newOwnerId, suffixes=['creators', ])
-                if newItem.getProposingGroup(True) not in userGroups:
-                    if userGroups:
-                        newItem.setProposingGroup(userGroups[0].getId())
+        # Change the proposing group if the item owner does not belong to
+        # the defined proposing group, except if p_keepProposingGroup is True
+        if not keepProposingGroup:
+            userGroups = self.getGroupsForUser(userId=newOwnerId, suffixes=['creators', ])
+            if newItem.getProposingGroup(True) not in userGroups:
+                if userGroups:
+                    newItem.setProposingGroup(userGroups[0].getId())
 
         if newOwnerId != loggedUserId:
             plone_utils = api.portal.get_tool('plone_utils')
@@ -1254,7 +1256,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         self.REQUEST.set('currentlyPastingItems', False)
         return newItem
 
-    def _updateContentCategoryAfterSentToOtherMeetingConfig(self, annex):
+    def _updateContentCategoryAfterSentToOtherMeetingConfig(self, annex, originCfg):
         '''
           Update the content_category of the annex while an item is sent from
           a MeetingConfig to another : find a corresponding content_category in the new MeetingConfig :
@@ -1265,7 +1267,12 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''
         catalog = api.portal.get_tool('portal_catalog')
         tool = api.portal.get_tool('portal_plonemeeting')
-        annex_category = get_category_object(annex, annex.content_category)
+        if annex.portal_type == 'annexDecision':
+            self.REQUEST.set('force_use_item_decision_annexes_group', True)
+            annex_category = get_category_object(originCfg, annex.content_category)
+            self.REQUEST.set('force_use_item_decision_annexes_group', False)
+        else:
+            annex_category = get_category_object(originCfg, annex.content_category)
         correspondences = []
         if annex_category.other_mc_correspondences:
             correspondences = [brain.getObject() for brain in catalog(UID=annex_category.other_mc_correspondences)]
@@ -1276,7 +1283,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             annex.content_category = calculate_category_id(other_mc_correspondence)
         else:
             # use default category
-            categories = get_categories(annex)
+            categories = get_context_categories(annex)
             if not categories:
                 return False
             else:

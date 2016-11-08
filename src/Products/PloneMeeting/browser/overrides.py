@@ -31,7 +31,7 @@ from collective.iconifiedcategory.browser.tabview import CategorizedTabView
 from collective.iconifiedcategory.browser.views import CategorizedChildView
 from collective.iconifiedcategory.interfaces import ICategorizedPrint
 from collective.iconifiedcategory.interfaces import ICategorizedConfidential
-from collective.iconifiedcategory.utils import get_categories
+from collective.iconifiedcategory.utils import get_context_categories
 from collective.iconifiedcategory.utils import get_config_root
 from eea.facetednavigation.browser.app.view import FacetedContainerView
 from eea.facetednavigation.interfaces import IFacetedNavigable
@@ -822,7 +822,7 @@ class CategorizedAnnexesView(CategorizedTabView):
 
     def showAnnexesSection(self):
         """ """
-        return get_categories(self.context) or \
+        return get_context_categories(self.context) or \
             self.tool.hasAnnexes(self.context)
 
     def showDecisionAnnexesSection(self):
@@ -831,7 +831,7 @@ class CategorizedAnnexesView(CategorizedTabView):
             return False
 
         self.request.set('force_use_item_decision_annexes_group', True)
-        hasDecisionAnnexesTypes = get_categories(self.context)
+        hasDecisionAnnexesTypes = get_context_categories(self.context)
         self.request.set('force_use_item_decision_annexes_group', False)
         return hasDecisionAnnexesTypes or \
             self.tool.hasAnnexes(self.context, portal_type='annexDecision')

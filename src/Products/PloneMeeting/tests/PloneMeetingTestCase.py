@@ -34,6 +34,9 @@ from plone.app.testing import login, logout
 
 from Products.PloneTestCase.setup import _createHomeFolder
 
+from collective.iconifiedcategory.utils import calculate_category_id
+from collective.iconifiedcategory.utils import get_config_root
+from collective.iconifiedcategory.utils import get_group
 from imio.helpers.cache import cleanRamCacheFor
 import Products.PloneMeeting
 # If I do not remove this method, some tests crash.
@@ -111,10 +114,10 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         self.meetingConfig2 = getattr(self.tool, 'plonegov-assembly', None)
         # Set the default file and file type for adding annexes
         self.annexFile = u'FILE.txt'
-        self.annexFileType = 'annexes_types_-_item_annexes_-_financial-analysis'
-        self.annexFileTypeDecision = 'annexes_types_-_item_decision_annexes_-_decision-annex'
-        self.annexFileTypeAdvice = 'annexes_types_-_advice_annexes_-_advice-annex'
-        self.annexFileTypeMeeting = 'annexes_types_-_meeting_annexes_-_meeting-annex'
+        self.annexFileType = 'financial-analysis'
+        self.annexFileTypeDecision = 'decision-annex'
+        self.annexFileTypeAdvice = 'advice-annex'
+        self.annexFileTypeMeeting = 'meeting-annex'
 
     def tearDown(self):
         self._cleanExistingTmpAnnexFile()
@@ -301,6 +304,14 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             elif context.meta_type == 'Meeting':
                 annexType = self.annexFileTypeMeeting
 
+        # get complete annexType id that is like 'annexes_types_-_item_annexes_-_financial-analysis'
+        if relatedTo == 'item_decision':
+            context.REQUEST.set('force_use_item_decision_annexes_group', True)
+        annexes_config_root = get_config_root(context)
+        if relatedTo == 'item_decision':
+            context.REQUEST.set('force_use_item_decision_annexes_group', False)
+        annexTypeId = calculate_category_id(annexes_config_root.get(annexType))
+
         annexContentType = 'annex'
         if relatedTo == 'item_decision':
             annexContentType = 'annexDecision'
@@ -310,7 +321,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             type=annexContentType,
             file=annex_file,
             container=context,
-            content_category=annexType,
+            content_category=annexTypeId,
             to_print=False,
             confidential=False,
         )
@@ -344,12 +355,15 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         """
         currentUser = self.member.getId()
         self.changeUser('admin')
-        for folder in folders:
-            configFolder = getattr(meetingConfig, folder)
+        for folderId in folders:
+            # folder could be subfolder/subsubfolder
+            subfolder = meetingConfig
+            for subfolderId in folderId.split('/'):
+                subfolder = getattr(subfolder, subfolderId)
             objectIds_to_remove = []
-            for item in configFolder.objectValues():
-                objectIds_to_remove.append(item.getId())
-            configFolder.manage_delObjects(ids=objectIds_to_remove)
+            for obj in subfolder.objectValues():
+                objectIds_to_remove.append(obj.getId())
+            subfolder.manage_delObjects(ids=objectIds_to_remove)
         self.changeUser(currentUser)
 
     def _turnUserIntoPrereviewer(self, member):

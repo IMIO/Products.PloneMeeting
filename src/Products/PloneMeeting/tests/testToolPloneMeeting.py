@@ -294,7 +294,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.changeUser('pmReviewer2')
         createContentInContainer(item2,
                                  'meetingadvice',
-                                 **{'advice_group': self.portal.portal_plonemeeting.vendors.getId(),
+                                 **{'advice_group': u'vendors',
                                     'advice_type': u'positive',
                                     'advice_comment': RichTextValue(u'My comment')})
         self.changeUser('pmCreator1')
