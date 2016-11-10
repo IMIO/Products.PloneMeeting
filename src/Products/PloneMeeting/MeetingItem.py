@@ -35,7 +35,6 @@ from Products.Archetypes.atapi import TextAreaWidget
 from Products.Archetypes.atapi import TextField
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 
-##code-section module-header #fill in your manual code here
 from datetime import datetime
 from collections import OrderedDict
 from copy import deepcopy
@@ -54,6 +53,7 @@ from zope.component import queryUtility
 from zope.event import notify
 from zope.i18n import translate
 from zope.schema.interfaces import IVocabularyFactory
+from collective.iconifiedcategory.utils import update_all_categorized_elements
 from plone import api
 from plone.memoize import ram
 from Products.Archetypes.event import ObjectEditedEvent
@@ -119,7 +119,6 @@ from Products.PloneMeeting.utils import sendMailIfRelevant
 from Products.PloneMeeting.utils import setFieldFromAjax
 from Products.PloneMeeting.utils import toHTMLStrikedContent
 from Products.PloneMeeting.utils import transformAllRichTextFields
-from Products.PloneMeeting.utils import update_annexes
 from Products.PloneMeeting.utils import workday
 
 import logging
@@ -4625,10 +4624,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # we will give the current groupInCharge _observers sub group access to this item
         self._updateGroupInChargeLocalRoles()
         # update annexes categorized_elements to store 'visible_for_groups'
-        update_annexes(self)
+        update_all_categorized_elements(self)
         # update categorized elements on contained advices too
         for advice in self.getAdvices():
-            update_annexes(advice)
+            update_all_categorized_elements(advice)
 
         # manage the 'ATContentTypes: Add Image' permission
         _addImagePermission(self)

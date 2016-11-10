@@ -34,6 +34,7 @@ from plone.dexterity.utils import createContentInContainer
 
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from Products.PloneMeeting.utils import get_annexes
 
 
 class testToolPloneMeeting(PloneMeetingTestCase):
@@ -318,23 +319,19 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertEquals(len(res2.workflow_history[itemWorkflowId]), 1)
         # Annexes are copied for item1
         # and that existing references are correctly kept
-        self.assertEquals(len(IAnnexable(res1).getAnnexes()), 2)
+        self.assertEquals(len(get_annexes(res1)), 2)
         # Check also that the annexIndex is correct
-        self.assertEquals(len(res1.annexIndex), 2)
-        # And that indexed and references values are actually the right ones...
-        self.failUnless(IAnnexable(res1).getAnnexes()[0].absolute_url().startswith(res1.absolute_url()))
-        res1AnnexesUids = [annex.UID() for annex in IAnnexable(res1).getAnnexes()]
-        item1AnnexesUids = [annex.UID() for annex in IAnnexable(item1).getAnnexes()]
-        self.failUnless(res1.annexIndex[0]['UID'] in res1AnnexesUids)
+        self.assertEquals(len(get_categorized_elements(res1)), 2)
+        res1AnnexesUids = [annex['UID'] for annex in get_categorized_elements(res1)]
+        item1AnnexesUids = [annex['UID'] for annex in get_categorized_elements(item1)]
         self.failIf(len(set(item1AnnexesUids).intersection(set(res1AnnexesUids))) != 0)
         #Now check item2 : no annexes nor given advices
-        self.assertEquals(len(IAnnexable(res2).getAnnexes()), 0)
-        self.assertEquals(len(res2.annexIndex), 0)
+        self.assertEquals(len(get_categorized_elements(res2)), 0)
         self.assertEquals(len(res2.getGivenAdvices()), 0)
         self.assertEquals(len(res2.adviceIndex), 0)
-        # Now check that meetingFileTypes are kept
-        self.failUnless(IAnnexable(res1).getAnnexes()[0].getMeetingFileType())
-        self.failUnless(IAnnexable(res1).getAnnexes()[1].getMeetingFileType())
+        # Now check that annex types are kept
+        self.failUnless(get_annexes(res1)[0].content_category)
+        self.failUnless(get_annexes(res1)[1].content_category)
 
     def test_pm_ShowPloneMeetingTab(self):
         '''Test when PM tabs are shown'''

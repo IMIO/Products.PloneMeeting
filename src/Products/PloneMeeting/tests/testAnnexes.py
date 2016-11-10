@@ -31,6 +31,7 @@ from plone.dexterity.utils import createContentInContainer
 from collective.iconifiedcategory.utils import get_categorized_elements
 from collective.iconifiedcategory.utils import get_config_root
 from collective.iconifiedcategory.utils import get_group
+from collective.iconifiedcategory.utils import update_all_categorized_elements
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
@@ -38,7 +39,6 @@ from Products.PloneMeeting.indexes import SearchableText
 from Products.PloneMeeting.profiles.testing import import_data
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
-from Products.PloneMeeting.utils import update_annexes
 from Products.PloneMeeting.MeetingConfig import PROPOSINGGROUPPREFIX
 from Products.PloneMeeting.MeetingConfig import SUFFIXPROFILEPREFIX
 
@@ -107,7 +107,7 @@ class testAnnexes(PloneMeetingTestCase):
         item.__ac_local_roles__['{0}_{1}'.format(cfg.getId(), BUDGETIMPACTEDITORS_GROUP_SUFFIX)] = 'Reader'
 
         cfg.setItemAnnexConfidentialVisibleFor(('configgroup_budgetimpacteditors', ))
-        update_annexes(item)
+        update_all_categorized_elements(item)
 
         self.changeUser('budgetimpacteditor')
         self._checkElementConfidentialAnnexAccess(cfg, item, annexNotConfidential, annexConfidential,
@@ -185,7 +185,7 @@ class testAnnexes(PloneMeetingTestCase):
         # does not fail in no group in charge
         self.assertFalse(proposingGroup.getGroupInChargeAt())
         cfg.setItemAnnexConfidentialVisibleFor(('reader_groupincharge', ))
-        update_annexes(item)
+        update_all_categorized_elements(item)
         proposingGroup.setGroupInCharge(({'group_id': 'vendors', 'date_to': ''},))
         item.updateLocalRoles()
 
@@ -207,7 +207,7 @@ class testAnnexes(PloneMeetingTestCase):
                                   if k.startswith(PROPOSINGGROUPPREFIX)]
         for proposingGroupSuffix in proposingGroupSuffixes:
             cfg.setItemAnnexConfidentialVisibleFor((proposingGroupSuffix, ))
-            update_annexes(item)
+            update_all_categorized_elements(item)
             # get a user from the right 'developers' subgroup
             username = getattr(import_data.developers,
                                proposingGroupSuffix.replace(PROPOSINGGROUPPREFIX, ''))[0].id
@@ -233,7 +233,7 @@ class testAnnexes(PloneMeetingTestCase):
         cfg.setItemAnnexConfidentialVisibleFor(())
         cfg.setAdviceAnnexConfidentialVisibleFor(())
         cfg.setMeetingAnnexConfidentialVisibleFor(())
-        update_annexes(obj)
+        update_all_categorized_elements(obj)
         self._checkMayNotAccessConfidentialAnnexes(obj, annexNotConfidential, annexConfidential,
                                                    annexes_table, categorized_child)
 
@@ -308,7 +308,7 @@ class testAnnexes(PloneMeetingTestCase):
             annexNotConfidential, annexConfidential = self._setupConfidentialityOnAdviceAnnexes()
 
         cfg.setAdviceAnnexConfidentialVisibleFor(('adviser_group', ))
-        update_annexes(advice)
+        update_all_categorized_elements(advice)
 
         self.changeUser('pmReviewer2')
         self._checkElementConfidentialAnnexAccess(cfg, advice, annexNotConfidential, annexConfidential,
@@ -324,7 +324,7 @@ class testAnnexes(PloneMeetingTestCase):
         item.__ac_local_roles__['{0}_{1}'.format(cfg.getId(), BUDGETIMPACTEDITORS_GROUP_SUFFIX)] = 'Reader'
 
         cfg.setAdviceAnnexConfidentialVisibleFor(('configgroup_budgetimpacteditors', ))
-        update_annexes(advice)
+        update_all_categorized_elements(advice)
 
         self.changeUser('budgetimpacteditor')
         self._checkElementConfidentialAnnexAccess(cfg, advice, annexNotConfidential, annexConfidential,
@@ -337,7 +337,7 @@ class testAnnexes(PloneMeetingTestCase):
             annexNotConfidential, annexConfidential = self._setupConfidentialityOnAdviceAnnexes()
 
         cfg.setAdviceAnnexConfidentialVisibleFor(('reader_advices', ))
-        update_annexes(advice)
+        update_all_categorized_elements(advice)
 
         self.changeUser('pmReviewer2')
         self._checkElementConfidentialAnnexAccess(cfg, advice, annexNotConfidential, annexConfidential,
@@ -371,7 +371,7 @@ class testAnnexes(PloneMeetingTestCase):
         # does not fail in no group in charge
         self.assertFalse(proposingGroup.getGroupInChargeAt())
         cfg.setAdviceAnnexConfidentialVisibleFor(('reader_groupincharge', ))
-        update_annexes(item)
+        update_all_categorized_elements(item)
         proposingGroup.setGroupInCharge(({'group_id': 'vendors', 'date_to': ''},))
         item.updateLocalRoles()
 
@@ -421,7 +421,7 @@ class testAnnexes(PloneMeetingTestCase):
                                   if k.startswith(PROPOSINGGROUPPREFIX)]
         for proposingGroupSuffix in proposingGroupSuffixes:
             cfg.setAdviceAnnexConfidentialVisibleFor((proposingGroupSuffix, ))
-            update_annexes(advice)
+            update_all_categorized_elements(advice)
             # get a user from the right 'developers' subgroup
             username = getattr(import_data.developers,
                                proposingGroupSuffix.replace(PROPOSINGGROUPPREFIX, ''))[0].id
@@ -499,7 +499,7 @@ class testAnnexes(PloneMeetingTestCase):
             # every users of a Plone subgroup profileSuffix will have access
             for groupConfig in (import_data.developers, import_data.vendors):
                 cfg.setMeetingAnnexConfidentialVisibleFor((profileSuffix, ))
-                update_annexes(meeting)
+                update_all_categorized_elements(meeting)
                 # get a user from the right 'developers' subgroup
                 users = getattr(groupConfig,
                                 profileSuffix.replace(SUFFIXPROFILEPREFIX, ''))

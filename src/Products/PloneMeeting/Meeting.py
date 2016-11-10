@@ -46,6 +46,7 @@ from OFS.ObjectManager import BeforeDeleteException
 from zope.component import getMultiAdapter
 from zope.event import notify
 from zope.i18n import translate
+from collective.iconifiedcategory.utils import update_all_categorized_elements
 from plone.app.querystring.querybuilder import queryparser
 from plone.memoize import ram
 from imio.helpers.cache import cleanRamCacheFor
@@ -89,7 +90,6 @@ from Products.PloneMeeting.utils import rememberPreviousData
 from Products.PloneMeeting.utils import setFieldFromAjax
 from Products.PloneMeeting.utils import toHTMLStrikedContent
 from Products.PloneMeeting.utils import transformAllRichTextFields
-from Products.PloneMeeting.utils import update_annexes
 
 from Products.PloneMeeting import PMMessageFactory as _
 import logging
@@ -1733,7 +1733,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         # add powerObservers local roles
         self._updatePowerObserversLocalRoles()
         # update annexes categorized_elements to store 'visible_for_groups'
-        update_annexes(self)
+        update_all_categorized_elements(self)
         # manage the 'ATContentTypes: Add Image' permission
         _addImagePermission(self)
         # notify that localRoles have been updated

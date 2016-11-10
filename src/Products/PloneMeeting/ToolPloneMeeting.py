@@ -64,6 +64,7 @@ from collective.iconifiedcategory.utils import get_category_object
 from collective.iconifiedcategory.utils import get_config_root
 from collective.iconifiedcategory.utils import get_context_categories
 from collective.iconifiedcategory.utils import update_categorized_elements
+from collective.iconifiedcategory.utils import update_all_categorized_elements
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.dashboard.utils import enableFacetedDashboardFor
 from imio.helpers.cache import invalidate_cachekey_volatile_for
@@ -88,10 +89,10 @@ from Products.PloneMeeting.config import ROOT_FOLDER
 from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
 from Products.PloneMeeting.profiles import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.profiles import PloneMeetingConfiguration
+from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
 from Products.PloneMeeting.utils import monthsIds
-from Products.PloneMeeting.utils import update_annexes
 from Products.PloneMeeting.utils import weekdaysIds
 from Products.PloneMeeting.utils import workday
 from Products.PloneMeeting.model.adaptations import performModelAdaptations
@@ -1184,26 +1185,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
         # Manage annexes.
         # we will remove annexes if copyAnnexes is False or if we could not find
-        # defined annexTypes in the destMeetingConfig
-        noAnnexTypes = False
-        annexes_config = get_config_root(newItem)
-        # check if it contains annexes, can not use get_categorized_elements
-        # nor access to the 'categorized_elements' dict as it is empty
-        contained_annexes = [obj for obj in newItem.objectValues()
-                             if obj.portal_type in ('annex', 'annexDecision')]
-        if copyAnnexes and \
-           contained_annexes and \
-           not annexes_config.objectValues():
-            noAnnexTypes = True
-            plone_utils = api.portal.get_tool('plone_utils')
-            msg = translate('annexes_not_kept_because_no_available_mft_warning',
-                            mapping={'cfg': safe_unicode(destMeetingConfig.Title())},
-                            domain='PloneMeeting',
-                            context=self.REQUEST)
-            plone_utils.addPortalMessage(msg, 'warning')
-        if not copyAnnexes or noAnnexTypes:
+        # a corresponding annexType in the destMeetingConfig
+        plone_utils = api.portal.get_tool('plone_utils')
+        if not copyAnnexes:
             # Delete the annexes that have been copied.
-            for annex in get_categorized_elements(newItem, result_type='objects'):
+            for annex in get_annexes(newItem):
                 unrestrictedRemoveGivenObject(annex)
         else:
             # manage the otherMCCorrespondence
@@ -1211,13 +1197,20 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             for oldAnnex in oldAnnexes:
                 newAnnex = getattr(newItem, oldAnnex.getId())
                 # In case the item is copied from another MeetingConfig, we need
-                # to update every annex.meetingFileType because it still refers
-                # the meetingFileType in the old MeetingConfig the item is copied from
+                # to update every annex.content_category because it still refers
+                # the annexType in the old MeetingConfig the item is copied from
                 if newPortalType:
                     originCfg = self.getMeetingConfig(copiedItem)
                     if not self._updateContentCategoryAfterSentToOtherMeetingConfig(newAnnex, originCfg):
-                        raise Exception('Could not update meeting file type of copied annex at %s!'
-                                        % oldAnnex.absolute_url())
+                        msg = translate('annex_not_kept_because_no_available_annex_type_warning',
+                                        mapping={'annexTitle': safe_unicode(newAnnex.Title()),
+                                                 'cfg': safe_unicode(destMeetingConfig.Title())},
+                                        domain='PloneMeeting',
+                                        context=self.REQUEST)
+                        plone_utils.addPortalMessage(msg, 'warning')
+                        unrestrictedRemoveGivenObject(newAnnex)
+                        continue
+
                 # initialize toPrint correctly regarding configuration
                 if not destMeetingConfig.getKeepOriginalToPrintOfClonedItems():
                     newAnnex.to_print = get_category_object(newAnnex).to_print
@@ -1273,17 +1266,18 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             self.REQUEST.set('force_use_item_decision_annexes_group', False)
         else:
             annex_category = get_category_object(originCfg, annex.content_category)
-        correspondences = []
+        other_mc_correspondences = []
         if annex_category.other_mc_correspondences:
-            correspondences = [brain.getObject() for brain in catalog(UID=annex_category.other_mc_correspondences)]
-        annex_cfg = tool.getMeetingConfig(annex)
-        other_mc_correspondences = [cat for cat in correspondences if tool.getMeetingConfig(cat) == annex_cfg]
+            annex_cfg_id = tool.getMeetingConfig(annex).getId()
+            other_mc_correspondences = [
+                brain.getObject() for brain in catalog(UID=annex_category.other_mc_correspondences)
+                if brain.enabled and "/portal_plonemeeting/{0}".format(annex_cfg_id) in brain.getPath()]
         if other_mc_correspondences:
             other_mc_correspondence = other_mc_correspondences[0]
             annex.content_category = calculate_category_id(other_mc_correspondence)
         else:
             # use default category
-            categories = get_context_categories(annex)
+            categories = get_context_categories(annex, only_enabled=True)
             if not categories:
                 return False
             else:
@@ -1562,7 +1556,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     obj = brain.getObject()
             except AttributeError:
                 continue
-            update_annexes(obj)
+            update_all_categorized_elements(obj)
             logger.info('%d/%d Updating categorized_elements of %s at %s' % (
                 i,
                 numberOfBrains,

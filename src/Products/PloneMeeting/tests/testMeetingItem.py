@@ -62,6 +62,7 @@ from Products.PloneMeeting.indexes import sentToInfos
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
+from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import getFieldVersion
 from Products.PloneMeeting.utils import getLastEvent
 from Products.PloneMeeting.utils import getTransitionToReachState
@@ -549,37 +550,35 @@ class testMeetingItem(PloneMeetingTestCase):
         originalItem = data['originalItem']
         newItem = data['newItem']
         # original item had annexes
-        self.assertTrue(IAnnexable(originalItem).getAnnexes())
-        # but new item does not have anymore
-        self.assertTrue(not IAnnexable(newItem).getAnnexes())
+        self.assertEqual(len(get_annexes(originalItem, portal_types=['annex'])), 2)
+        self.assertEqual(len(get_annexes(originalItem, portal_types=['annexDecision'])), 2)
+        # but new item is missing the normal annexes because
+        # no annexType for normal annexes are defined in the cfg2
+        self.assertEqual(len(get_annexes(newItem, portal_types=['annex'])), 0)
+        self.assertEqual(len(get_annexes(newItem, portal_types=['annexDecision'])), 2)
         # moreover a message was added
         messages = IStatusMessage(self.request).show()
-        expectedMessage = translate("annexes_not_kept_because_no_available_mft_warning",
-                                    mapping={'cfg': cfg2.Title()},
+        expectedMessage = translate("annex_not_kept_because_no_available_annex_type_warning",
+                                    mapping={'annexTitle': data['annex2'].Title()},
                                     domain='PloneMeeting',
                                     context=self.request)
-        # 2 messages, the expected and the message 'item successfully sent to other mc'
-        self.assertTrue(messages[-2].message == expectedMessage)
+        self.assertEqual(messages[-2].message, expectedMessage)
 
-        # now test when cloning locally, just disable every available mft
+        # now test when cloning locally, even if annexes types are not enabled
+        # it works, this is the expected behavior, backward compatibility when an annex type
+        # is no more enabled but no more able to create new annexes with this annex type
         self.changeUser('admin')
-        for mft in cfg.meetingfiletypes.objectValues():
-            if 'deactivate' in self.transitions(mft):
-                self.do(mft, 'deactivate')
-        # no available mft, try to clone newItem now
+        for at in (cfg.annexes_types.item_annexes.objectValues() +
+                   cfg.annexes_types.item_decision_annexes.objectValues()):
+            at.enabled = False
+        # no available annex types, try to clone newItem now
         self.changeUser('pmManager')
         # clean status message so we check that a new one is added
         del IAnnotations(self.request)['statusmessages']
         clonedItem = originalItem.clone(copyAnnexes=True)
         # annexes were not kept
-        self.assertTrue(not IAnnexable(clonedItem).getAnnexes())
-        # moreover a message was added
-        messages = IStatusMessage(self.request).show()
-        expectedMessage = translate("annexes_not_kept_because_no_available_mft_warning",
-                                    mapping={'cfg': cfg.Title()},
-                                    domain='PloneMeeting',
-                                    context=self.request)
-        self.assertTrue(messages[0].message == expectedMessage)
+        self.assertEqual(len(get_annexes(clonedItem, portal_types=['annex'])), 2)
+        self.assertEqual(len(get_annexes(clonedItem, portal_types=['annexDecision'])), 2)
 
     def test_pm_SendItemToOtherMCWithAdvices(self):
         '''Test that sending an item to another MeetingConfig behaves normaly with advices.
