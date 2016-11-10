@@ -62,7 +62,7 @@ from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.utils import get_categorized_elements
 from collective.iconifiedcategory.utils import get_category_object
 from collective.iconifiedcategory.utils import get_config_root
-from collective.iconifiedcategory.utils import get_context_categories
+from collective.iconifiedcategory.utils import get_categories
 from collective.iconifiedcategory.utils import update_categorized_elements
 from collective.iconifiedcategory.utils import update_all_categorized_elements
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
@@ -873,12 +873,12 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         elif context.meta_type in ('MeetingItem', 'Meeting') or \
                 context.portal_type.startswith('meetingadvice'):
             # check that there are categories defined in the configuration
-            hasAnnexesTypes = get_context_categories(context)
+            hasAnnexesTypes = get_categories(context)
             hasDecisionAnnexesTypes = False
             if not hasAnnexesTypes and context.meta_type == 'MeetingItem':
                 # maybe we have decision related annexes types?
                 self.REQUEST.set('force_use_item_decision_annexes_group', True)
-                hasDecisionAnnexesTypes = get_context_categories(context)
+                hasDecisionAnnexesTypes = get_categories(context)
                 self.REQUEST.set('force_use_item_decision_annexes_group', False)
             if hasAnnexesTypes or hasDecisionAnnexesTypes:
                 return True
@@ -1277,11 +1277,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             annex.content_category = calculate_category_id(other_mc_correspondence)
         else:
             # use default category
-            categories = get_context_categories(annex, only_enabled=True)
+            categories = get_categories(annex)
             if not categories:
                 return False
             else:
-                annex.content_category = calculate_category_id(categories[0])
+                annex.content_category = calculate_category_id(categories[0].getObject())
         return True
 
     security.declarePublic('getSelf')

@@ -33,7 +33,7 @@ from zope.i18n import translate
 
 from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.utils import get_categorized_elements
-from collective.iconifiedcategory.utils import get_context_categories
+from collective.iconifiedcategory.utils import get_categories
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 
@@ -493,13 +493,13 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # Now check the annexType of new annexes
         # annexes have no correspondences so default one is used each time
-        defaultMC2ItemAT = get_context_categories(newItem.objectValues()[0])[0]
+        defaultMC2ItemAT = get_categories(newItem.objectValues()[0], the_objects=True)[0]
         self.assertEqual(newItem.objectValues()[0].content_category,
                          calculate_category_id(defaultMC2ItemAT))
         self.assertEqual(newItem.objectValues()[1].content_category,
                          calculate_category_id(defaultMC2ItemAT))
         # decision annexes
-        defaultMC2ItemDecisionAT = get_context_categories(newItem.objectValues()[2])[0]
+        defaultMC2ItemDecisionAT = get_categories(newItem.objectValues()[2], the_objects=True)[0]
         self.assertEquals(newItem.objectValues()[2].content_category,
                           calculate_category_id(defaultMC2ItemDecisionAT))
         # decisionAnnex2 was 'marketing-annex', default is used

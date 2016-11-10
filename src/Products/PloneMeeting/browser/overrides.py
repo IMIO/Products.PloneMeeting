@@ -31,7 +31,7 @@ from collective.iconifiedcategory.browser.tabview import CategorizedTabView
 from collective.iconifiedcategory.browser.views import CategorizedChildView
 from collective.iconifiedcategory.interfaces import ICategorizedPrint
 from collective.iconifiedcategory.interfaces import ICategorizedConfidential
-from collective.iconifiedcategory.utils import get_context_categories
+from collective.iconifiedcategory.utils import get_categories
 from collective.iconifiedcategory.utils import get_config_root
 from eea.facetednavigation.browser.app.view import FacetedContainerView
 from eea.facetednavigation.interfaces import IFacetedNavigable
@@ -710,7 +710,7 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
     def _get_generation_context(self, helper_view):
         """We backwardly use 'itemUids' instead of 'uids' for list of uids..."""
         generation_context = super(PMDocumentGenerationView, self)._get_generation_context(helper_view)
-        generation_context['itemUids'] = generation_context['uids']
+        generation_context['itemUids'] = generation_context.get('uids', [])
         return generation_context
 
     def generate_and_download_doc(self, pod_template, output_format):
@@ -822,7 +822,7 @@ class CategorizedAnnexesView(CategorizedTabView):
 
     def showAnnexesSection(self):
         """ """
-        return get_context_categories(self.context) or \
+        return bool(get_categories(self.context)) or \
             self.tool.hasAnnexes(self.context)
 
     def showDecisionAnnexesSection(self):
@@ -831,7 +831,7 @@ class CategorizedAnnexesView(CategorizedTabView):
             return False
 
         self.request.set('force_use_item_decision_annexes_group', True)
-        hasDecisionAnnexesTypes = get_context_categories(self.context)
+        hasDecisionAnnexesTypes = bool(get_categories(self.context))
         self.request.set('force_use_item_decision_annexes_group', False)
         return hasDecisionAnnexesTypes or \
             self.tool.hasAnnexes(self.context, portal_type='annexDecision')
