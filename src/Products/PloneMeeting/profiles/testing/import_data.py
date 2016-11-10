@@ -20,6 +20,7 @@
 
 from Products.PloneMeeting.config import MEETINGREVIEWERS
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
+from Products.PloneMeeting.profiles import AnnexSubTypeDescriptor
 from Products.PloneMeeting.profiles import AnnexTypeDescriptor
 from Products.PloneMeeting.profiles import CategoryDescriptor
 from Products.PloneMeeting.profiles import GroupDescriptor
@@ -47,13 +48,33 @@ marketing = CategoryDescriptor('marketing', 'Marketing', active=False)
 subproducts = CategoryDescriptor('subproducts', 'Subproducts wishes', usingGroups=('vendors',))
 
 # File types
+financialAnalysisSubAnnex = AnnexSubTypeDescriptor(
+    'financial-analysis-sub-annex',
+    'Financial analysis sub annex', '')
 financialAnalysis = AnnexTypeDescriptor(
     'financial-analysis', 'Financial analysis', u'financialAnalysis.png',
-    'Predefined title for financial analysis')
+    'Predefined title for financial analysis', subTypes=[financialAnalysisSubAnnex])
 legalAnalysis = AnnexTypeDescriptor(
     'legal-analysis', 'Legal analysis', u'legalAnalysis.png', '')
-budgetAnalysis = AnnexTypeDescriptor(
-    'budget-analysis', 'Budget analysis', u'budgetAnalysis.png', '')
+
+budgetAnalysisCfg2Subtype = AnnexSubTypeDescriptor(
+    'budget-analysis-sub-annex',
+    'Budget analysis sub annex', '')
+budgetAnalysisCfg2 = AnnexTypeDescriptor(
+    'budget-analysis', 'Budget analysis', u'budgetAnalysis.png', '',
+    subTypes=[budgetAnalysisCfg2Subtype])
+
+budgetAnalysisCfg1Subtype = AnnexSubTypeDescriptor(
+    'budget-analysis-sub-annex',
+    'Budget analysis sub annex', '',
+    other_mc_correspondences=(
+        'plonegov-assembly_-_annexes_types_-_item_annexes_-_budget-analysis_-_budget-analysis-sub-annex', ))
+
+budgetAnalysisCfg1 = AnnexTypeDescriptor(
+    'budget-analysis', 'Budget analysis', u'budgetAnalysis.png', '',
+    subTypes=[budgetAnalysisCfg1Subtype],
+    other_mc_correspondences=('plonegov-assembly_-_annexes_types_-_item_annexes_-_budget-analysis', ))
+
 itemAnnex = AnnexTypeDescriptor(
     'item-annex', 'Other annex(es)', u'itemAnnex.png', '')
 # Could be used once we
@@ -227,9 +248,18 @@ template2 = ItemTemplateDescriptor(
     decision='<p>Template1 decision</p>', templateUsingGroups=['vendors', ])
 
 # File types
+overheadAnalysisSubtype = AnnexSubTypeDescriptor(
+    'overhead-analysis-sub-annex',
+    'Overhead analysis sub annex', '',
+    other_mc_correspondences=(
+        'plonegov-assembly_-_annexes_types_-_item_annexes_-_budget-analysis', ))
+
 overheadAnalysis = AnnexTypeDescriptor(
     'overhead-analysis', 'Administrative overhead analysis',
-    u'overheadAnalysis.png', '')
+    u'overheadAnalysis.png', '',
+    subTypes=[overheadAnalysisSubtype],
+    other_mc_correspondences=(
+        'plonegov-assembly_-_annexes_types_-_item_annexes_-_budget-analysis_-_budget-analysis-sub-annex', ))
 
 meetingPma = MeetingConfigDescriptor(
     'plonemeeting-assembly', 'PloneMeeting assembly', 'PloneMeeting assembly', isDefault=True)
@@ -240,7 +270,7 @@ meetingPma.assembly = 'Gauthier Bastien, Gilles Demaret, Kilian Soree, ' \
                       'Godefroid Chapelle, Gaetan Deberdt, Gaetan Delannay'
 meetingPma.signatures = 'Bill Gates, Steve Jobs'
 meetingPma.categories = [development, research]
-meetingPma.annexTypes = [financialAnalysis, overheadAnalysis,
+meetingPma.annexTypes = [financialAnalysis, budgetAnalysisCfg1, overheadAnalysis,
                          itemAnnex, decisionAnnex, marketingAnalysis,
                          adviceAnnex, adviceLegalAnalysis, meetingAnnex]
 meetingPma.usedItemAttributes = ('toDiscuss', 'itemTags', 'itemIsSigned',)
@@ -319,7 +349,7 @@ meetingPga.signatures = 'Bill Gates, Steve Jobs'
 meetingPga.categories = [deployment, maintenance, development, events,
                          research, projects, marketing, subproducts]
 meetingPga.annexTypes = [financialAnalysis, legalAnalysis,
-                         budgetAnalysis, itemAnnex, decisionAnnex,
+                         budgetAnalysisCfg2, itemAnnex, decisionAnnex,
                          adviceAnnex, adviceLegalAnalysis, meetingAnnex]
 meetingPga.usedItemAttributes = ('toDiscuss', 'associatedGroups', 'itemIsSigned',)
 meetingPga.transitionsForPresentingAnItem = ('propose', 'validate', 'present', )

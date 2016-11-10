@@ -114,21 +114,37 @@ class CategoryDescriptor(Descriptor):
 
 
 class AnnexTypeDescriptor(Descriptor):
-    multiSelectFields = ('otherMCCorrespondences', 'subTypes', )
+    multiSelectFields = ('other_mc_correspondences', 'subTypes', )
 
     def __init__(self, id, title, icon, predefined_title,
-                 relatedTo='item', otherMCCorrespondences=(),
+                 relatedTo='item', other_mc_correspondences=(),
                  enabled=True, subTypes=(), confidential=False, to_print=False):
         self.id = id
         self.title = title
         self.icon = icon
         self.predefined_title = predefined_title
         self.relatedTo = relatedTo
+        # a list of AnnexSubTypeDescriptors
         self.subTypes = subTypes
         self.confidential = confidential
         self.to_print = to_print
         self.enabled = enabled
-        self.otherMCCorrespondences = otherMCCorrespondences
+        self.other_mc_correspondences = other_mc_correspondences
+
+
+class AnnexSubTypeDescriptor(Descriptor):
+    multiSelectFields = ('other_mc_correspondences', )
+
+    def __init__(self, id, title, predefined_title,
+                 other_mc_correspondences=(), enabled=True,
+                 confidential=False, to_print=False):
+        self.id = id
+        self.title = title
+        self.predefined_title = predefined_title
+        self.confidential = confidential
+        self.to_print = to_print
+        self.enabled = enabled
+        self.other_mc_correspondences = other_mc_correspondences
 
 
 class PodTemplateDescriptor(Descriptor):

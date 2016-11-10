@@ -1270,8 +1270,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if annex_category.other_mc_correspondences:
             annex_cfg_id = tool.getMeetingConfig(annex).getId()
             other_mc_correspondences = [
-                brain.getObject() for brain in catalog(UID=annex_category.other_mc_correspondences)
-                if brain.enabled and "/portal_plonemeeting/{0}".format(annex_cfg_id) in brain.getPath()]
+                brain.getObject() for brain in catalog(UID=annex_category.other_mc_correspondences, enabled=True)
+                if "/portal_plonemeeting/{0}".format(annex_cfg_id) in brain.getPath()]
         if other_mc_correspondences:
             other_mc_correspondence = other_mc_correspondences[0]
             annex.content_category = calculate_category_id(other_mc_correspondence)

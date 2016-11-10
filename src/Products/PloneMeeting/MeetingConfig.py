@@ -4817,7 +4817,19 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             to_print=at.to_print,
             confidential=at.confidential,
             enabled=at.enabled,
+            other_mc_correspondences=at.other_mc_correspondences
         )
+        for subType in at.subTypes:
+            api.content.create(
+                id=subType.id,
+                type='ContentSubcategory',
+                title=subType.title,
+                container=annexType,
+                to_print=subType.to_print,
+                confidential=subType.confidential,
+                enabled=subType.enabled,
+                other_mc_correspondences=subType.other_mc_correspondences
+            )
         return annexType
 
     security.declarePrivate('addPodTemplate')

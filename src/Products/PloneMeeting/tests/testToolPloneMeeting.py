@@ -26,7 +26,10 @@ from DateTime import DateTime
 from AccessControl import Unauthorized
 from zope.testing.testrunner.find import find_test_files
 
+from collective.iconifiedcategory.utils import calculate_category_id
+from collective.iconifiedcategory.utils import get_categories
 from collective.iconifiedcategory.utils import get_categorized_elements
+from collective.iconifiedcategory.utils import get_category_object
 from Products.CMFCore.permissions import ManagePortal
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.interfaces import IDexterityContent
@@ -122,7 +125,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         meetingGroup = self.tool.getMeetingGroup('developers_advisers')
         self.assertEquals(meetingGroup.id, 'developers')
 
-    def test_pm_MoveMeetingGroups(self):
+    def test_pm_ChangeMeetingGroupsPosition(self):
         '''Tests changing MeetingGroup and MeetingConfig order within the tool.
            This is more coplex than it seems at first glance because groups and
            configs are mixed together within the tool.'''
@@ -132,14 +135,11 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         newGroup = self.create('MeetingGroup', title='NewGroup', acronym='N.G.')
         newGroupId = newGroup.getId()
         self.tool.REQUEST['template_id'] = '.'
-        # As scripts in portal_skins are not acquirable in tests, make like if it was a method of the tool
-        folder_position = self.portal.portal_skins.plonemeeting_plone.folder_position
-        self.tool.folder_position = folder_position
         # After creation, the new MeetingGroup is in last position
         self.assertEquals(self.tool.objectIds('MeetingGroup'),
                           existingGroupIds + [newGroupId, ])
         # Move the new MeetingGroup one position up
-        self.tool.folder_position(position='up', id=newGroupId, template_id='.')
+        self.tool.folder_position_typeaware(position='up', id=newGroupId, template_id='.')
         self.assertEquals(self.tool.objectIds('MeetingGroup'),
                           existingGroupIds[:-1] + [newGroupId, ] + existingGroupIds[-1:])
 
@@ -209,10 +209,10 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # same group) can be pasted too if it contains things. item1 is viewable
         # by pmCreator1 too. And Also tests cloning without annex copying.
         self.changeUser('pmCreator1')
-        clonedItem = item1.clone(copyAnnexes=False)
-        self.assertEquals(set([clonedItem]),
-                          set(clonedItem.getParentNode().objectValues('MeetingItem')))
-        self.assertEqual(len(get_categorized_elements(clonedItem)), 1)
+        clonedItem2 = item1.clone(copyAnnexes=False)
+        self.assertEquals(len(clonedItem2.categorized_elements), 0)
+        self.assertEquals(set([clonedItem2]),
+                          set(clonedItem2.getParentNode().objectValues('MeetingItem')))
 
     def test_pm_CloneItemWithContentNotRemovableByPermission(self):
         '''Clones a given item in parent item folder. Here we test that even
@@ -384,6 +384,8 @@ class testToolPloneMeeting(PloneMeetingTestCase):
             # there are 2 levels of elements in the MeetingConfig
             firstLevelElements = mc.objectValues()
             for firstLevelElement in firstLevelElements:
+                if IDexterityContent.providedBy(firstLevelElement):
+                    continue
                 self.failIf(firstLevelElement._at_creation_flag)
                 self.failIf(firstLevelElement.Title() == 'Site')
                 secondLevelElements = firstLevelElement.objectValues()
@@ -396,95 +398,87 @@ class testToolPloneMeeting(PloneMeetingTestCase):
 
     def test_pm_UpdateMeetingFileTypesAfterSentToOtherMeetingConfig(self):
         '''Test the ToolPloneMeeting._updateMeetingFileTypesAfterSentToOtherMeetingConfig method.
-           This method take care of updating the MeetingFileType used by annexes of an item
-           that is sent to another MeetingConfig.  The annexes of the new item will use MeetingFileTypes
-           of the destination MeetingConfig using the MeetingFileType.otherMCCorrespondences values.
+           This method take care of updating the annex type used by annexes of an item
+           that is sent to another MeetingConfig.
         '''
-        # create an item with one annex and manipulate the stored MeetingFileType
-        self.changeUser('pmManager')
-        item = self.create('MeetingItem')
-        # Add one annex
-        annex = self.addAnnex(item)
-        # now set a MFT UID existing in self.meetingConfig2
-        anItemMFTOfMC2Data = self.meetingConfig2.getFileTypes(relatedTo='item')[0]
         cfg = self.meetingConfig
-        uid_catalog = self.portal.uid_catalog
+        cfg2 = self.meetingConfig2
+        self.changeUser('pmManager')
+        itemCfg1 = self.create('MeetingItem')
+        annexCfg1 = self.addAnnex(itemCfg1)
+        self.setMeetingConfig(cfg2.getId())
+        itemCfg2 = self.create('MeetingItem')
+        annexCfg2 = self.addAnnex(itemCfg2)
 
-        # 1) normal MFT with no correspondence
-        # so the default (first found) MFT will be used
-        annex.setMeetingFileType(anItemMFTOfMC2Data['id'])
-        self.assertTrue(annex.getMeetingFileType() == anItemMFTOfMC2Data['id'])
-        self.assertTrue(self.tool._updateMeetingFileTypesAfterSentToOtherMeetingConfig(annex))
-        # now annex.getMeetingFileType is the first relatedTo item MFT
-        # of self.meetingConfig
-        self.assertTrue(annex.getMeetingFileType() == cfg.getFileTypes(relatedTo='item')[0]['id'])
+        # 1) normal annex type no correspondence
+        # so the default (first found) annex type will be used
+        annexCfg1Cat = get_category_object(annexCfg1, annexCfg1.content_category)
+        self.assertFalse(annexCfg1Cat.other_mc_correspondences)
+        # manipulate annexCfg2 content_category to use one coming from cfg1
+        annexCfg2.content_category = annexCfg1.content_category
+        self.assertTrue(self.tool._updateContentCategoryAfterSentToOtherMeetingConfig(annexCfg2, cfg))
+        # default annex is used
+        cfg2NormalAnnexCategories = get_categories(annexCfg2, the_objects=True)
+        defaultCfg2NormalAnnexCat = cfg2NormalAnnexCategories[0]
+        self.assertEqual(calculate_category_id(defaultCfg2NormalAnnexCat),
+                         annexCfg2.content_category)
 
-        # 2) subType MFT with no correspondence
-        # so the default (first found) MFT will be used
-        anItemMFTOfMC2Obj = uid_catalog(UID=anItemMFTOfMC2Data['id'])[0].getObject()
-        anItemMFTOfMC2Obj.setSubTypes(({'row_id': 'unique_row_id_123',
-                                        'title': 'Annex sub type',
-                                        'predefinedTitle': 'Annex sub type predefined title',
-                                        'otherMCCorrespondences': (),
-                                        'isActive': '1', }, ))
-        subTypeIdOfMFTOfMC2 = '%s__subtype__unique_row_id_123' % anItemMFTOfMC2Data['id']
-        annex.setMeetingFileType(subTypeIdOfMFTOfMC2)
-        self.assertTrue(annex.getMeetingFileType() == subTypeIdOfMFTOfMC2)
-        # after update, it will be linked to first available MFT...
-        self.assertTrue(self.tool._updateMeetingFileTypesAfterSentToOtherMeetingConfig(annex))
-        self.assertTrue(annex.getMeetingFileType() == cfg.getFileTypes(relatedTo='item')[0]['id'])
+        # 2) sub category with no correspondence
+        # so the default (first found) annex type will be used
+        subCatCfg1 = get_category_object(annexCfg1, annexCfg1.content_category).objectValues()[0]
+        self.assertEqual(subCatCfg1.portal_type, 'ContentSubcategory')
+        # manipulate annexCfg2 content_category to use the subcategory from cfg1
+        annexCfg2.content_category = calculate_category_id(subCatCfg1)
+        self.assertTrue(self.tool._updateContentCategoryAfterSentToOtherMeetingConfig(annexCfg2, cfg))
+        self.assertEqual(calculate_category_id(defaultCfg2NormalAnnexCat),
+                         annexCfg2.content_category)
 
-        # 3) normal MFT with correspondence, we will set the correspondence to
-        # second relatedTo item of self.meetingConfig
-        mftMC1Correspondence = '%s__filetype__%s' % (cfg.getId(),
-                                                     cfg.getFileTypes(relatedTo='item')[1]['id'])
-        anItemMFTOfMC2Obj.setOtherMCCorrespondences((mftMC1Correspondence, ))
-        annex.setMeetingFileType(anItemMFTOfMC2Obj.UID())
-        self.assertTrue(self.tool._updateMeetingFileTypesAfterSentToOtherMeetingConfig(annex))
-        # now annex.getMeetingFileType is the second relatedTo item MFT as defined as correspondence
-        self.assertTrue(annex.getMeetingFileType() == cfg.getFileTypes(relatedTo='item')[1]['id'])
+        # 3) normal annex type with correspondence
+        # 'budget-analysis' in cfg1 corresponds to 'budget-analysis' in cfg2
+        annexCfg2.content_category = 'annexes_types_-_item_annexes_-_budget-analysis'
+        budgetAnalysisAnnexTypeCfg1 = get_category_object(annexCfg1, annexCfg2.content_category)
+        budgetAnalysisAnnexTypeCfg2 = get_category_object(annexCfg2, annexCfg2.content_category)
+        self.assertEqual(budgetAnalysisAnnexTypeCfg1.other_mc_correspondences,
+                         [budgetAnalysisAnnexTypeCfg2.UID()])
+        # corresponding annexType has been used
+        self.assertTrue(self.tool._updateContentCategoryAfterSentToOtherMeetingConfig(annexCfg2, cfg))
+        self.assertEqual(annexCfg2.content_category,
+                         'annexes_types_-_item_annexes_-_budget-analysis')
 
-        # 4) normal MFT with correspondence to a subType, we will set the correspondence to
-        # second relatedTo first subType item of self.meetingConfig
-        anItemMFTOfMC1Obj = uid_catalog(UID=cfg.getFileTypes(relatedTo='item')[1]['id'])[0].getObject()
-        anItemMFTOfMC1Obj.setSubTypes(({'row_id': 'unique_row_id_456',
-                                        'title': 'Annex2 sub type',
-                                        'predefinedTitle': 'Annex2 sub type predefined title',
-                                        'otherMCCorrespondences': (),
-                                        'isActive': '1', }, ))
-        subTypeMC1Correspondence = '%s__filetype__%s__subtype__unique_row_id_456' % (cfg.getId(),
-                                   cfg.getFileTypes(relatedTo='item')[1]['id'])
-        anItemMFTOfMC2Obj.setOtherMCCorrespondences((subTypeMC1Correspondence, ))
-        annex.setMeetingFileType(anItemMFTOfMC2Obj.UID())
-        self.assertTrue(self.tool._updateMeetingFileTypesAfterSentToOtherMeetingConfig(annex))
-        # now annex.getMeetingFileType is the second relatedTo item MFT as defined as correspondence
-        self.assertTrue(annex.getMeetingFileType() == subTypeMC1Correspondence.split('__filetype__')[1])
+        # 4) normal annexType with correspondence to a subType
+        # 'overhead-analysis' in cfg1 corresponds to subType 'budget-analysis-sub-annex' in cfg2
+        annexCfg2.content_category = 'annexes_types_-_item_annexes_-_overhead-analysis'
+        overheadAnalysisAnnexTypeCfg1 = get_category_object(annexCfg1, annexCfg2.content_category)
+        self.assertEqual(overheadAnalysisAnnexTypeCfg1.other_mc_correspondences,
+                         [budgetAnalysisAnnexTypeCfg2['budget-analysis-sub-annex'].UID()])
+        # corresponding annexType has been used, aka the subType
+        self.assertTrue(self.tool._updateContentCategoryAfterSentToOtherMeetingConfig(annexCfg2, cfg))
+        self.assertEqual(annexCfg2.content_category,
+                         'annexes_types_-_item_annexes_-_budget-analysis_-_budget-analysis-sub-annex')
 
-        # 5) subType MFT with correspondence to a normal MFT, we will set the correspondence to
-        # second relatedTo item of self.meetingConfig
-        anItemMFTOfMC2Obj.setSubTypes(({'row_id': 'unique_row_id_123',
-                                        'title': 'Annex sub type',
-                                        'predefinedTitle': 'Annex sub type predefined title',
-                                        'otherMCCorrespondences': (mftMC1Correspondence, ),
-                                        'isActive': '1', }, ))
-        annex.setMeetingFileType(subTypeIdOfMFTOfMC2)
-        self.assertTrue(annex.getMeetingFileType() == subTypeIdOfMFTOfMC2)
-        self.assertTrue(self.tool._updateMeetingFileTypesAfterSentToOtherMeetingConfig(annex))
-        # the MFT now should be the given subType otherMCCorrespondences
-        self.assertTrue(annex.getMeetingFileType() == mftMC1Correspondence.split('__filetype__')[1])
+        # 5) subType with correspondence to a normal annexType
+        # subType 'overhead-analysis-sub-annex' in cfg1 corresponds to annex type 'budget-analysis' in cfg2
+        annexCfg2.content_category = 'annexes_types_-_item_annexes_-_overhead-analysis_-_overhead-analysis-sub-annex'
+        overheadAnalysisSubAnnexTypeCfg1 = get_category_object(annexCfg1, annexCfg2.content_category)
+        self.assertEqual(overheadAnalysisSubAnnexTypeCfg1.other_mc_correspondences,
+                         [budgetAnalysisAnnexTypeCfg2.UID()])
+        # corresponding annexType has been used, aka the subType
+        self.assertTrue(self.tool._updateContentCategoryAfterSentToOtherMeetingConfig(annexCfg2, cfg))
+        self.assertEqual(annexCfg2.content_category,
+                         'annexes_types_-_item_annexes_-_budget-analysis')
 
-        # 6) subType MFT with correspondence to a subType MFT, we will set the correspondence to
-        # second relatedTo first subType item of self.meetingConfig
-        anItemMFTOfMC2Obj.setSubTypes(({'row_id': 'unique_row_id_123',
-                                        'title': 'Annex sub type',
-                                        'predefinedTitle': 'Annex sub type predefined title',
-                                        'otherMCCorrespondences': (subTypeMC1Correspondence, ),
-                                        'isActive': '1', }, ))
-        annex.setMeetingFileType(subTypeIdOfMFTOfMC2)
-        self.assertTrue(annex.getMeetingFileType() == subTypeIdOfMFTOfMC2)
-        self.assertTrue(self.tool._updateMeetingFileTypesAfterSentToOtherMeetingConfig(annex))
-        # the MFT now should be the given subType otherMCCorrespondences
-        self.assertTrue(annex.getMeetingFileType() == subTypeMC1Correspondence.split('__filetype__')[1])
+        # 6) subType with correspondence to a subType
+        # subType 'budget-analysis-sub-annex' in cfg1 corresponds to subType 'budget-analysis-sub-annex' in cfg2
+        annexCfg2.content_category = 'annexes_types_-_item_annexes_-_budget-analysis_-_budget-analysis-sub-annex'
+        budgetAnalysisSubAnnexTypeCfg1 = get_category_object(annexCfg1, annexCfg2.content_category)
+        self.assertEqual(budgetAnalysisSubAnnexTypeCfg1.other_mc_correspondences,
+                         [budgetAnalysisAnnexTypeCfg2['budget-analysis-sub-annex'].UID()])
+        # corresponding annexType has been used, aka the subType
+        self.assertTrue(self.tool._updateContentCategoryAfterSentToOtherMeetingConfig(annexCfg2, cfg))
+        self.assertEqual(annexCfg2.content_category,
+                         'annexes_types_-_item_annexes_-_budget-analysis_-_budget-analysis-sub-annex')
+
+
 
     def test_pm_GetGroupsForUser(self):
         '''getGroupsForUser check in with Plone subgroups a user is and
@@ -630,25 +624,31 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertTrue('%s_restrictedpowerobservers' % cfg.getId() in meeting.__ac_local_roles__)
         self.assertTrue(catalog(UID=meeting.UID()))
 
-    def test_pm_ReindexAnnexes(self):
-        """Test the reindexAnnexes that will reindex every annexes on items.
-           This is usefull especially if a user change a MeetingFileType title."""
+    def test_pm_UpdateAnnexes(self):
+        """Test updateAnnexes that will reindex every annexes on items.
+           This is usefull especially if a user change an annex type title."""
         # only available to 'Managers'
         self.changeUser('pmCreator1')
-        self.assertRaises(Unauthorized, self.tool.reindexAnnexes)
+        self.assertRaises(Unauthorized, self.tool.updateAnnexes)
         # create item with annex
         item = self.create('MeetingItem')
         annex = self.addAnnex(item)
-        currentIndexedAnnexTitle = item.annexIndex[0]['Title']
-        NEW_ANNEX_TITLE = 'New annex title'
-        annex.setTitle(NEW_ANNEX_TITLE)
-        # annexIndex was not changed
-        self.assertEquals(item.annexIndex[0]['Title'], currentIndexedAnnexTitle)
+        category = get_category_object(annex, annex.content_category)
+        currentIndexedCategoryTitle = category.Title()
+        self.assertEqual(item.categorized_elements[annex.UID()]['category_title'],
+                         currentIndexedCategoryTitle)
+        NEW_CATEGORY_TITLE = 'New category title'
+        category.title = NEW_CATEGORY_TITLE
+        self.assertNotEqual(currentIndexedCategoryTitle, NEW_CATEGORY_TITLE)
+        # categorized_elements was not updated
+        self.assertNotEqual(item.categorized_elements[annex.UID()]['category_title'],
+                            NEW_CATEGORY_TITLE)
 
-        # reindexAnnexes then check again
+        # updateAnnexes then check again
         self.changeUser('siteadmin')
-        self.tool.reindexAnnexes()
-        self.assertEquals(item.annexIndex[0]['Title'], NEW_ANNEX_TITLE)
+        self.tool.updateAnnexes()
+        self.assertEqual(item.categorized_elements[annex.UID()]['category_title'],
+                         NEW_CATEGORY_TITLE)
 
     def test_pm_FormatMeetingDate(self):
         """Test the formatMeetingDate method."""
