@@ -11,13 +11,15 @@ from z3c.form import field
 from z3c.form import form
 
 from plone import api
-from Products.CMFCore.Expression import Expression, createExprContext
+from Products.CMFCore.Expression import createExprContext
+from Products.CMFCore.Expression import Expression
+from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFCore.utils import _checkPermission
 from Products.CMFCore.utils import getToolByName
 from Products.Five.browser import BrowserView
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.MeetingItem import ADVICE_AVAILABLE_ON_CONDITION_ERROR
-from Products.PloneMeeting.utils import checkPermission
 
 import logging
 logger = logging.getLogger('PloneMeeting')
@@ -52,13 +54,13 @@ class AdviceDelaysView(BrowserView):
            - An automatic advice delay can only be edited by Managers (and MeetingManagers).'''
         # advice is not automatic, the user must have 'PloneMeeting: Write optional advisers' permission
         if not isAutomatic:
-            if not checkPermission('PloneMeeting: Write optional advisers', self.context):
+            if not _checkPermission('PloneMeeting: Write optional advisers', self.context):
                 return False
         else:
             # advice is automatic, only Managers and MeetingManagers can change an automatic advice delay
             # and only if the advice still could not be given or if it is currently editable
             tool = getToolByName(self.context, 'portal_plonemeeting')
-            if not tool.isManager(self.context) or not checkPermission('Modify portal content', self.context):
+            if not tool.isManager(self.context) or not _checkPermission(ModifyPortalContent, self.context):
                 return False
 
         return True

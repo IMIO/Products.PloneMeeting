@@ -20,6 +20,7 @@ from plone.memoize import ram
 from plone.memoize.instance import memoize
 
 from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFCore.utils import _checkPermission
 from Products.MimetypesRegistry.common import MimeTypeException
 from Products.CMFPlone.utils import safe_unicode
 from plone import api
@@ -38,7 +39,6 @@ from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import MEETINGREVIEWERS
 from Products.PloneMeeting.config import MEETINGROLES
 from Products.PloneMeeting.interfaces import IMeeting
-from Products.PloneMeeting.utils import checkPermission
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.MeetingConfig import CONFIGGROUPPREFIX
 from Products.PloneMeeting.MeetingConfig import PROPOSINGGROUPPREFIX
@@ -67,10 +67,10 @@ class AnnexableAdapter(object):
         '''See docstring in interfaces.py'''
         # first of all, check if we can actually add the annex
         if relatedTo == 'item_decision' and \
-           not checkPermission("PloneMeeting: Write decision annex", self.context):
+           not _checkPermission("PloneMeeting: Write decision annex", self.context):
             raise Unauthorized
         elif (not relatedTo == 'item_decision' and
-              not checkPermission("PloneMeeting: Add annex", self.context)):
+              not _checkPermission("PloneMeeting: Add annex", self.context)):
             # we use the "PloneMeeting: Add annex" permission for item normal annexes and advice annexes
             raise Unauthorized
 
@@ -451,7 +451,7 @@ class MeetingFileContentDeletableAdapter(APContentDeletableAdapter):
     def mayDelete(self):
         '''See docstring in interfaces.py.'''
         parent = self.context.getParentNode()
-        if checkPermission(ModifyPortalContent, parent):
+        if _checkPermission(ModifyPortalContent, parent):
             return True
         return False
 
@@ -1371,6 +1371,10 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
         super(PMCategorizedObjectAdapter, self).__init__(context, request, brain)
 
     def can_view(self):
+        # is the context a MeetingItem and privacy viewable?
+        if self.context.meta_type == 'MeetingItem' and not self.context.adapted().isPrivacyViewable():
+            return False
+
         infos = self.context.categorized_elements[self.brain.UID]
         if not infos['confidential'] or \
            api.portal.get_tool('portal_plonemeeting').isManager(self.context):

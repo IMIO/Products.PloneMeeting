@@ -33,6 +33,7 @@ from zope.i18n import translate
 
 from Products.CMFCore.permissions import AddPortalContent
 from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFCore.permissions import ReviewPortalContent
 from Products.ZCatalog.Catalog import AbstractCatalogBrain
 
 from plone.app.textfield.value import RichTextValue
@@ -1908,7 +1909,8 @@ class testMeeting(PloneMeetingTestCase):
                                                                                          MEETINGMANAGERS_GROUP_SUFFIX))
         # we need to reconnect for groups changes to take effect
         self.changeUser('pmManager')
-        self.assertTrue(not self.member.has_role('MeetingManager', meeting))
+        self.assertTrue(not 'MeetingManager' in self.member.getRolesInContext(meeting))
+        self.assertFalse(self.hasPermission(ReviewPortalContent, meeting))
         self.assertTrue(not meetingManager_rendered_actions_panel == actions_panel())
 
     def test_pm_GetNextMeeting(self):

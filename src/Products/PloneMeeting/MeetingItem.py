@@ -98,7 +98,6 @@ from Products.PloneMeeting.utils import _addImagePermission
 from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
 from Products.PloneMeeting.utils import addDataChange
 from Products.PloneMeeting.utils import AdvicesUpdatedEvent
-from Products.PloneMeeting.utils import checkPermission
 from Products.PloneMeeting.utils import fieldIsEmpty
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import getCustomAdapter
@@ -182,21 +181,21 @@ class MeetingItemWorkflowConditions:
             return No(translate('required_category_ko',
                                 domain="PloneMeeting",
                                 context=self.context.REQUEST))
-        if checkPermission(ReviewPortalContent, self.context) and \
+        if _checkPermission(ReviewPortalContent, self.context) and \
            (not self.context.isDefinedInTool()):
             return True
 
     security.declarePublic('mayPrevalidate')
 
     def mayPrevalidate(self):
-        if checkPermission(ReviewPortalContent, self.context) and \
+        if _checkPermission(ReviewPortalContent, self.context) and \
            (not self.context.isDefinedInTool()):
             return True
 
     security.declarePublic('mayValidate')
 
     def mayValidate(self):
-        if checkPermission(ReviewPortalContent, self.context) and \
+        if _checkPermission(ReviewPortalContent, self.context) and \
            not self.context.isDefinedInTool():
             return True
 
@@ -205,7 +204,7 @@ class MeetingItemWorkflowConditions:
     def mayPresent(self):
         # We may present the item if Plone currently publishes a meeting.
         # Indeed, an item may only be presented within a meeting.
-        if not checkPermission(ReviewPortalContent, self.context):
+        if not _checkPermission(ReviewPortalContent, self.context):
             return False
         # if we are not on a meeting, try to get the next meeting accepting items
         if not self._publishedObjectIsMeeting():
@@ -233,7 +232,7 @@ class MeetingItemWorkflowConditions:
     def mayDecide(self):
         '''May this item be "decided" ?'''
         res = False
-        if checkPermission(ReviewPortalContent, self.context) and \
+        if _checkPermission(ReviewPortalContent, self.context) and \
            self.context.hasMeeting():
             meeting = self.context.getMeeting()
             if meeting.getDate().isPast():
@@ -252,13 +251,13 @@ class MeetingItemWorkflowConditions:
     security.declarePublic('mayDelay')
 
     def mayDelay(self):
-        if checkPermission(ReviewPortalContent, self.context):
+        if _checkPermission(ReviewPortalContent, self.context):
             return True
 
     security.declarePublic('mayConfirm')
 
     def mayConfirm(self):
-        if checkPermission(ReviewPortalContent, self.context) and \
+        if _checkPermission(ReviewPortalContent, self.context) and \
            self.context.getMeeting().queryState() in ('decided', 'decisions_published', 'closed'):
             return True
 
@@ -274,7 +273,7 @@ class MeetingItemWorkflowConditions:
         if not meeting or (meeting and meeting.queryState() != 'closed'):
             # item is not linked to a meeting, or in a meeting that is not 'closed',
             # just check for 'Review portal content' permission
-            if checkPermission(ReviewPortalContent, self.context):
+            if _checkPermission(ReviewPortalContent, self.context):
                 res = True
         return res
 
@@ -285,7 +284,7 @@ class MeetingItemWorkflowConditions:
            As we have only one guard_expr for potentially several transitions departing
            from the 'returned_to_proposing_group' state, we receive the p_transitionName."""
         tool = api.portal.get_tool('portal_plonemeeting')
-        if not checkPermission(ReviewPortalContent, self.context) and not \
+        if not _checkPermission(ReviewPortalContent, self.context) and not \
            tool.isManager(self.context):
             return
         # get the linked meeting
@@ -327,7 +326,7 @@ class MeetingItemWorkflowConditions:
 
     def mayPublish(self):
         res = False
-        if checkPermission(ReviewPortalContent, self.context) and \
+        if _checkPermission(ReviewPortalContent, self.context) and \
            self.meetingIsPublished():
             res = True
         return res
@@ -336,7 +335,7 @@ class MeetingItemWorkflowConditions:
 
     def mayFreeze(self):
         res = False
-        if checkPermission(ReviewPortalContent, self.context):
+        if _checkPermission(ReviewPortalContent, self.context):
             meeting = self.context.hasMeeting() and self.context.getMeeting() or None
             if meeting and not meeting.queryState() in meeting.getBeforeFrozenStates():
                 res = True
@@ -346,7 +345,7 @@ class MeetingItemWorkflowConditions:
 
     def mayArchive(self):
         res = False
-        if checkPermission(ReviewPortalContent, self.context):
+        if _checkPermission(ReviewPortalContent, self.context):
             if self.context.hasMeeting() and \
                (self.context.getMeeting().queryState() == 'archived'):
                 res = True
@@ -356,7 +355,7 @@ class MeetingItemWorkflowConditions:
 
     def mayReturnToProposingGroup(self):
         res = False
-        if checkPermission(ReviewPortalContent, self.context):
+        if _checkPermission(ReviewPortalContent, self.context):
             res = True
         return res
 
@@ -401,7 +400,7 @@ class MeetingItemWorkflowConditions:
             res = No(translate('advice_required_to_ask_advices',
                                domain='PloneMeeting',
                                context=self.context.REQUEST))
-        elif checkPermission(ReviewPortalContent, self.context):
+        elif _checkPermission(ReviewPortalContent, self.context):
             res = True
         return res
 
@@ -1417,7 +1416,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         adaptations = cfg.getWorkflowAdaptations()
         if 'hide_decisions_when_under_writing' in adaptations and \
            self.hasMeeting() and self.getMeeting().queryState() == 'decided' and \
-           not checkPermission(ModifyPortalContent, self):
+           not _checkPermission(ModifyPortalContent, self):
             return translate('decision_under_edit',
                              domain='PloneMeeting',
                              context=self.REQUEST,
@@ -5184,7 +5183,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 (not automatically and
                  (item_state in cfg.getItemManualSentToOtherMCStates() or
                   item_state in cfg.getItemAutoSentToOtherMCStates()) and
-                 (checkPermission(ModifyPortalContent, item) or tool.isManager(item)))
+                 (_checkPermission(ModifyPortalContent, item) or tool.isManager(item)))
                 ):
             return False
 
@@ -5677,7 +5676,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            discussing this item: we will record this info, excepted if
            request["action"] tells us to remove the info instead.'''
         tool = api.portal.get_tool('portal_plonemeeting')
-        if not tool.isManager(self) or not checkPermission(ModifyPortalContent, self):
+        if not tool.isManager(self) or not _checkPermission(ModifyPortalContent, self):
             raise Unauthorized
         rq = self.REQUEST
         userId = rq['userId']
@@ -5700,7 +5699,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            We will record this info, excepted if request["action"] tells us to
            remove it instead.'''
         tool = api.portal.get_tool('portal_plonemeeting')
-        if not tool.isManager(self) or not checkPermission(ModifyPortalContent, self):
+        if not tool.isManager(self) or not _checkPermission(ModifyPortalContent, self):
             raise Unauthorized
         rq = self.REQUEST
         userId = rq['userId']

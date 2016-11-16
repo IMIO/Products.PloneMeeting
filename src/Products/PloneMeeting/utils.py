@@ -31,7 +31,6 @@ from email.MIMEBase import MIMEBase
 from email.MIMEText import MIMEText
 from email import Encoders
 from DateTime import DateTime
-from AccessControl import getSecurityManager
 from zope.annotation import IAnnotations
 from zope.i18n import translate
 from zope.component import getAdapter
@@ -263,13 +262,6 @@ def fieldIsEmpty(name, obj, useParamValue=False, value=None):
         return value is None
     else:
         return not value
-
-
-def checkPermission(permission, obj):
-    '''We must call getSecurityManager() each time we need to check a
-       permission.'''
-    sm = getSecurityManager()
-    return sm.checkPermission(permission, obj)
 
 
 # Mail sending machinery -------------------------------------------------------

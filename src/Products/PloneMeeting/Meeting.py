@@ -54,6 +54,7 @@ from imio.helpers.cache import invalidate_cachekey_volatile_for
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import ModifyPortalContent, ReviewPortalContent, View
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
+from Products.CMFCore.utils import _checkPermission
 from Products.CMFCore.utils import getToolByName
 from plone import api
 from imio.prettylink.interfaces import IPrettyLink
@@ -73,7 +74,6 @@ from Products.PloneMeeting.interfaces import IMeetingWorkflowConditions
 from Products.PloneMeeting.utils import _addImagePermission
 from Products.PloneMeeting.utils import addDataChange
 from Products.PloneMeeting.utils import addRecurringItemsIfRelevant
-from Products.PloneMeeting.utils import checkPermission
 from Products.PloneMeeting.utils import fieldIsEmpty
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import getWorkflowAdapter
@@ -137,14 +137,14 @@ class MeetingWorkflowConditions:
     security.declarePublic('mayAcceptItems')
 
     def mayAcceptItems(self):
-        if checkPermission(ReviewPortalContent, self.context) and \
+        if _checkPermission(ReviewPortalContent, self.context) and \
            (self.context.queryState() in self.acceptItemsStates):
             return True
 
     security.declarePublic('mayPublish')
 
     def mayPublish(self):
-        if checkPermission(ReviewPortalContent, self.context):
+        if _checkPermission(ReviewPortalContent, self.context):
             return True
 
     security.declarePublic('mayPublishDecisions')
@@ -153,21 +153,21 @@ class MeetingWorkflowConditions:
         '''Used when 'hide_decisions_when_under_writing' wfAdaptation is active.'''
         res = False
         # The user just needs the "Review portal content" permission on the object
-        if checkPermission(ReviewPortalContent, self.context):
+        if _checkPermission(ReviewPortalContent, self.context):
             res = True
         return res
 
     security.declarePublic('mayFreeze')
 
     def mayFreeze(self):
-        if checkPermission(ReviewPortalContent, self.context):
+        if _checkPermission(ReviewPortalContent, self.context):
             return True
 
     security.declarePublic('mayDecide')
 
     def mayDecide(self):
         '''May decisions on this meeting be taken?'''
-        if checkPermission(ReviewPortalContent, self.context):
+        if _checkPermission(ReviewPortalContent, self.context):
             if not self.context.getDate().isPast():
                 return No(translate('meeting_in_past', domain="PloneMeeting", context=self.context.REQUEST))
             # Check that all items are OK.
@@ -190,7 +190,7 @@ class MeetingWorkflowConditions:
 
     def mayCorrect(self, destinationState=None):
         '''See doc in interfaces.py.'''
-        if not checkPermission(ReviewPortalContent, self.context):
+        if not _checkPermission(ReviewPortalContent, self.context):
             return
         if self.context.queryState() == 'decided':
             # Going back from "decided" to previous state is not a true "undo".
@@ -205,13 +205,13 @@ class MeetingWorkflowConditions:
     security.declarePublic('mayClose')
 
     def mayClose(self):
-        if checkPermission(ReviewPortalContent, self.context):
+        if _checkPermission(ReviewPortalContent, self.context):
             return True
 
     security.declarePublic('mayArchive')
 
     def mayArchive(self):
-        if checkPermission(ReviewPortalContent, self.context) and \
+        if _checkPermission(ReviewPortalContent, self.context) and \
            self._decisionsAreArchivable():
             return True
 
@@ -223,7 +223,7 @@ class MeetingWorkflowConditions:
     security.declarePublic('mayChangeItemsOrder')
 
     def mayChangeItemsOrder(self):
-        if not checkPermission(ModifyPortalContent, self.context):
+        if not _checkPermission(ModifyPortalContent, self.context):
             return
         # the meeting can not be in a closed state
         if self.context.queryState() in Meeting.meetingClosedStates:

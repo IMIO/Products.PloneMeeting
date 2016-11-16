@@ -31,6 +31,7 @@ from collective.iconifiedcategory.browser.tabview import CategorizedTabView
 from collective.iconifiedcategory.browser.views import CategorizedChildView
 from collective.iconifiedcategory.interfaces import ICategorizedPrint
 from collective.iconifiedcategory.interfaces import ICategorizedConfidential
+from collective.iconifiedcategory import utils as iconifiedcategory_utils
 from collective.iconifiedcategory.utils import get_categories
 from collective.iconifiedcategory.utils import get_config_root
 from eea.facetednavigation.browser.app.view import FacetedContainerView
@@ -50,7 +51,6 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFPlone.utils import safe_unicode
 from Products.CPUtils.Extensions.utils import check_zope_admin
 from Products.PloneMeeting import utils as pm_utils
-from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.interfaces import IMeeting
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import sendMail
@@ -701,7 +701,7 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
             'user': currentUser,
             'podTemplate': self.get_pod_template(self.request.get('template_uid')),
             # give ability to access annexes related methods
-            'IAnnexable': IAnnexable,
+            'iconifiedcategory_utils': iconifiedcategory_utils,
             # make methods defined in utils available
             'utils': pm_utils
         }

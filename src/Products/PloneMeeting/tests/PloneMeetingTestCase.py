@@ -20,8 +20,9 @@
 # 02110-1301, USA.
 #
 
-import unittest
 import os.path
+import transaction
+import unittest
 from AccessControl.SecurityManagement import getSecurityManager
 
 from zope.event import notify
@@ -36,7 +37,6 @@ from Products.PloneTestCase.setup import _createHomeFolder
 
 from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.utils import get_config_root
-from collective.iconifiedcategory.utils import get_group
 from imio.helpers.cache import cleanRamCacheFor
 import Products.PloneMeeting
 # If I do not remove this method, some tests crash.
@@ -325,6 +325,9 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             to_print=False,
             confidential=False,
         )
+        # need to commit the transaction so the stored blob is correct
+        # if not done, accessing the blob will raise 'BlobError: Uncommitted changes'
+        transaction.commit()
         return theAnnex
 
     def deleteAsManager(self, uid):

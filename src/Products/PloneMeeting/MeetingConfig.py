@@ -65,6 +65,8 @@ from Products.CMFPlone.interfaces.constrains import IConstrainTypes
 from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
 from plone import api
+from collective.iconifiedcategory.utils import get_category_object
+from collective.iconifiedcategory.utils import update_all_categorized_elements
 from eea.facetednavigation.interfaces import ICriteria
 from imio.helpers.cache import cleanRamCache
 from Products.PloneMeeting import PMMessageFactory as _
@@ -96,7 +98,6 @@ from Products.PloneMeeting.config import TOOL_FOLDER_ITEM_TEMPLATES
 from Products.PloneMeeting.config import TOOL_FOLDER_POD_TEMPLATES
 from Products.PloneMeeting.config import TOOL_FOLDER_MEETING_USERS
 from Products.PloneMeeting.config import WriteRiskyConfig
-from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.interfaces import IMeetingConfig
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowConditions
 from Products.PloneMeeting.interfaces import IMeetingItem
@@ -106,6 +107,7 @@ from Products.PloneMeeting.interfaces import IMeetingItemWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingWorkflowActions
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
 from Products.PloneMeeting.utils import computeCertifiedSignatures
+from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
 from Products.PloneMeeting.utils import getFieldContent
@@ -5066,16 +5068,20 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                          numberOfBrains,
                          '/'.join(item.getPhysicalPath())))
             i = i + 1
-            annexes = IAnnexable(item).getAnnexes()
+            annexes = get_annexes(item)
             if not annexes:
                 continue
             for annex in annexes:
-                # get default confidential value from corresponding MeetingFileType
-                mft = annex.getMeetingFileType(theData=True)
-                annex.setIsConfidential(mft['isConfidentialDefault'])
-            # update annexIndex as isConfidential is into it
-            IAnnexable(item).updateAnnexIndex()
-        self.plone_utils.addPortalMessage('Done.')
+                category = get_category_object(annex, annex.content_category)
+                category_group = category.get_category_group()
+                if category_group.confidentiality_activated:
+                    annex.confidential = category.confidential
+                else:
+                    annex.confidential = False
+            update_all_categorized_elements(item)
+
+        plone_utils = api.portal.get_tool('plone_utils')
+        plone_utils.addPortalMessage('Done.')
         return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 
     security.declarePublic('updateAdviceConfidentiality')

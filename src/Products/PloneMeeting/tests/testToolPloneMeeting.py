@@ -197,8 +197,6 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # to_print is kept as cfg.keepOriginalToPrintOfClonedItems is True by default
         self.assertTrue(self.meetingConfig.getKeepOriginalToPrintOfClonedItems())
         self.assertTrue(newAnnex.to_print)
-        # check that annexes returned by the IAnnexable.getAnnexes method
-        # and stored in annexIndex correspond to new cloned annexes
         newAnnexesUids = [annex.UID() for annex in clonedItem.objectValues()]
         self.assertEquals(
             [annex.UID() for annex in get_categorized_elements(clonedItem, result_type='objects')],
@@ -477,8 +475,6 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertTrue(self.tool._updateContentCategoryAfterSentToOtherMeetingConfig(annexCfg2, cfg))
         self.assertEqual(annexCfg2.content_category,
                          'annexes_types_-_item_annexes_-_budget-analysis_-_budget-analysis-sub-annex')
-
-
 
     def test_pm_GetGroupsForUser(self):
         '''getGroupsForUser check in with Plone subgroups a user is and

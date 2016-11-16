@@ -19,7 +19,6 @@ import OFS.Moniker
 
 from datetime import datetime
 from AccessControl import ClassSecurityInfo
-from AccessControl import getSecurityManager
 from AccessControl import Unauthorized
 from Acquisition import aq_base
 from DateTime import DateTime
@@ -31,6 +30,7 @@ from zope.interface import implements
 
 from Products.ZCatalog.Catalog import AbstractCatalogBrain
 from Products.CMFCore.permissions import View
+from Products.CMFCore.utils import _checkPermission
 from Products.CMFCore.utils import UniqueObject
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from Products.CMFPlone.utils import safe_unicode
@@ -762,7 +762,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         else:
             # It is a brain
             obj = self.unrestrictedTraverse(value.getPath())
-        return getSecurityManager().checkPermission(View, obj)
+        return _checkPermission(View, obj)
 
     security.declarePublic('isPloneMeetingUser')
 
@@ -1211,9 +1211,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                         unrestrictedRemoveGivenObject(newAnnex)
                         continue
 
-                # initialize toPrint correctly regarding configuration
+                # initialize to_print correctly regarding configuration
                 if not destMeetingConfig.getKeepOriginalToPrintOfClonedItems():
-                    newAnnex.to_print = get_category_object(newAnnex).to_print
+                    newAnnex.to_print = \
+                        get_category_object(newAnnex, newAnnex.content_category).to_print
                 # update annex index
                 update_categorized_elements(newAnnex.getParentNode(),
                                             newAnnex,

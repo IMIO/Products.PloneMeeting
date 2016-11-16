@@ -2,7 +2,7 @@
 #
 # File: testMeetingItem.py
 #
-# Copyright (c) 2015 by Imio.be
+# Copyright (c) 2016 by Imio.be
 #
 # GNU General Public License (GPL)
 #
@@ -34,6 +34,8 @@ from zope.i18n import translate
 from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.utils import get_categorized_elements
 from collective.iconifiedcategory.utils import get_categories
+from collective.iconifiedcategory.utils import get_config_root
+from collective.iconifiedcategory.utils import get_group
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 
@@ -57,7 +59,6 @@ from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import WriteBudgetInfos
-from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.indexes import sentToInfos
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
@@ -1815,14 +1816,15 @@ class testMeetingItem(PloneMeetingTestCase):
           by everyone but we want to control access to secret items nevertheless.
         '''
         self.setMeetingConfig(self.meetingConfig2.getId())
+        cfg = self.meetingConfig
         # copyGroups can access item
-        self.meetingConfig.setItemCopyGroupsStates(('validated', ))
+        cfg.setItemCopyGroupsStates(('validated', ))
         # activate privacy check
-        self.meetingConfig.setRestrictAccessToSecretItems(True)
-        self.meetingConfig.setItemCopyGroupsStates(('validated', ))
+        cfg.setRestrictAccessToSecretItems(True)
+        cfg.setItemCopyGroupsStates(('validated', ))
         # make powerobserver1 a PowerObserver
         self.portal.portal_groups.addPrincipalToGroup('powerobserver1', '%s_%s' %
-                                                      (self.meetingConfig.getId(), POWEROBSERVERS_GROUP_SUFFIX))
+                                                      (cfg.getId(), POWEROBSERVERS_GROUP_SUFFIX))
         # create a 'public' and a 'secret' item
         self.changeUser('pmManager')
         # add copyGroups that check that 'external' viewers can access the item but not isPrivacyViewable
@@ -1845,6 +1847,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # give the 'Reader' role to 'pmReviewer2' so he can access the item
         # this is a bit like a 'itempublished' state
         secretItem.manage_addLocalRoles('pmReviewer2', ('Reader', ))
+        secretItem.reindexObjectSecurity()
         self.assertTrue(self.hasPermission('View', secretItem))
         # but not isPrivacyViewable
         self.assertTrue(not secretItem.adapted().isPrivacyViewable())
@@ -1853,16 +1856,16 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertRaises(Unauthorized, secretItem.onDuplicateAndKeepLink)
         self.assertRaises(Unauthorized, secretItem.checkPrivacyViewable)
         # if we try to download an annex of a private item, it raises Unauthorized
-        self.assertRaises(Unauthorized, secretAnnex.index_html)
-        self.assertRaises(Unauthorized, secretAnnex.download)
+        self.assertRaises(Unauthorized, secretAnnex.restrictedTraverse('@@download'))
+        self.assertRaises(Unauthorized, secretAnnex.restrictedTraverse('@@display-file'))
         # set 'copyGroups' for publicItem, 'pmReviewer2' will be able to access it
         # and so it will be privacyViewable
         publicItem.setCopyGroups('vendors_reviewers')
         publicItem.at_post_edit_script()
         self.assertTrue(self.hasPermission('View', publicItem))
         self.failUnless(publicItem.adapted().isPrivacyViewable())
-        self.assertTrue(publicAnnex.index_html())
-        self.assertTrue(publicAnnex.download())
+        self.assertTrue(publicAnnex.restrictedTraverse('@@download'))
+        self.assertTrue(publicAnnex.restrictedTraverse('@@display-file'))
         # a user in the same proposingGroup can fully access the secret item
         self.changeUser('pmCreator1')
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.isPrivacyViewable')
@@ -3515,15 +3518,16 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg2Id = cfg2.getId()
         cfg.setKeepOriginalToPrintOfClonedItems(False)
         cfg2.setKeepOriginalToPrintOfClonedItems(False)
-        cfg.setAnnexToPrintDefault(False)
-        cfg.setAnnexDecisionToPrintDefault(False)
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=DateTime('2016/02/02'))
         item = self.create('MeetingItem')
         annex = self.addAnnex(item)
-        self.assertFalse(annex.getToPrint())
-        annex.setToPrint(True)
-        self.assertTrue(annex.getToPrint())
+        annex_config = get_config_root(annex)
+        annex_group = get_group(annex_config, annex)
+        self.assertFalse(annex_group.to_be_printed_activated)
+        self.assertFalse(annex.to_print)
+        annex.to_print = True
+        self.assertTrue(annex.to_print)
         # decide the item so we may add decision annex
         item.setDecision(self.decisionText)
         self.presentItem(item)
@@ -3531,24 +3535,27 @@ class testMeetingItem(PloneMeetingTestCase):
         self.do(item, 'accept')
         self.assertEquals(item.queryState(), 'accepted')
         annexDec = self.addAnnex(item, relatedTo='item_decision')
-        self.assertFalse(annexDec.getToPrint())
-        annexDec.setToPrint(True)
-        self.assertTrue(annexDec.getToPrint())
+        annexDec_config = get_config_root(annexDec)
+        annexDec_group = get_group(annexDec_config, annexDec)
+        self.assertFalse(annexDec_group.to_be_printed_activated)
+        self.assertFalse(annexDec.to_print)
+        annexDec.to_print = True
+        self.assertTrue(annexDec.to_print)
 
         # clone item locally, as keepOriginalToPrintOfClonedItems is False
         # default values defined in the config will be used
         self.assertFalse(cfg.getKeepOriginalToPrintOfClonedItems())
         clonedItem = item.clone()
-        annexes = IAnnexable(clonedItem).getAnnexes(relatedTo='item')
+        annexes = get_annexes(clonedItem, portal_types=['annex'])
         if not annexes:
             pm_logger.info('No annexes found on duplicated item clonedItem')
         cloneItemAnnex = annexes and annexes[0]
-        annexesDec = IAnnexable(clonedItem).getAnnexes(relatedTo='item_decision')
+        annexesDec = get_annexes(clonedItem, portal_types=['annexDecision'])
         if not annexesDec:
             pm_logger.info('No decision annexes found on duplicated item clonedItem')
         cloneItemAnnexDec = annexesDec and annexesDec[0]
-        self.assertFalse(cloneItemAnnex and cloneItemAnnex.getToPrint())
-        self.assertFalse(cloneItemAnnexDec and cloneItemAnnexDec.getToPrint())
+        self.assertFalse(cloneItemAnnex and cloneItemAnnex.to_print)
+        self.assertFalse(cloneItemAnnexDec and cloneItemAnnexDec.to_print)
 
         # enable keepOriginalToPrintOfClonedItems
         # some plugins remove annexes/decision annexes on duplication
@@ -3557,32 +3564,32 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.setKeepOriginalToPrintOfClonedItems(True)
         self.changeUser('pmManager')
         clonedItem2 = item.clone()
-        annexes = IAnnexable(clonedItem2).getAnnexes(relatedTo='item')
+        annexes = get_annexes(clonedItem2, portal_types=['annex'])
         if not annexes:
             pm_logger.info('No annexes found on duplicated item clonedItem2')
         cloneItem2Annex = annexes and annexes[0]
-        annexesDec = IAnnexable(clonedItem2).getAnnexes(relatedTo='item_decision')
+        annexesDec = get_annexes(clonedItem2, portal_types=['annexDecision'])
         if not annexesDec:
             pm_logger.info('No decision annexes found on duplicated item clonedItem2')
         cloneItem2AnnexDec = annexesDec and annexesDec[0]
-        self.assertTrue(cloneItem2Annex and cloneItem2Annex.getToPrint() or True)
-        self.assertTrue(cloneItem2AnnexDec and cloneItem2AnnexDec.getToPrint() or True)
+        self.assertTrue(cloneItem2Annex and cloneItem2Annex.to_print or True)
+        self.assertTrue(cloneItem2AnnexDec and cloneItem2AnnexDec.to_print or True)
 
         # clone item to another MC and test again
         # cfg2.keepOriginalToPrintOfClonedItems is True
         self.assertFalse(cfg2.getKeepOriginalToPrintOfClonedItems())
         item.setOtherMeetingConfigsClonableTo((cfg2Id,))
         clonedToCfg2 = item.cloneToOtherMeetingConfig(cfg2Id)
-        annexes = IAnnexable(clonedToCfg2).getAnnexes(relatedTo='item')
+        annexes = get_annexes(clonedToCfg2, portal_types=['annex'])
         if not annexes:
             pm_logger.info('No annexes found on duplicated item clonedToCfg2')
         clonedToCfg2Annex = annexes and annexes[0]
-        annexesDec = IAnnexable(clonedToCfg2).getAnnexes(relatedTo='item_decision')
+        annexesDec = get_annexes(clonedToCfg2, portal_types=['annexDecision'])
         if not annexesDec:
             pm_logger.info('No decision annexes found on duplicated item clonedToCfg2')
         clonedToCfg2AnnexDec = annexesDec and annexesDec[0]
-        self.assertFalse(clonedToCfg2Annex and clonedToCfg2Annex.getToPrint())
-        self.assertFalse(clonedToCfg2Annex and clonedToCfg2AnnexDec.getToPrint())
+        self.assertFalse(clonedToCfg2Annex and clonedToCfg2Annex.to_print)
+        self.assertFalse(clonedToCfg2Annex and clonedToCfg2AnnexDec.to_print)
 
         # enable keepOriginalToPrintOfClonedItems
         self.changeUser('siteadmin')
@@ -3591,16 +3598,16 @@ class testMeetingItem(PloneMeetingTestCase):
         # send to cfg2 again
         self.changeUser('pmManager')
         clonedToCfg2Again = item.cloneToOtherMeetingConfig(cfg2Id)
-        annexes = IAnnexable(clonedToCfg2Again).getAnnexes(relatedTo='item')
+        annexes = get_annexes(clonedToCfg2Again, portal_types=['annex'])
         if not annexes:
             pm_logger.info('No annexes found on duplicated item clonedToCfg2Again')
         clonedToCfg2AgainAnnex = annexes and annexes[0]
-        annexesDec = IAnnexable(clonedToCfg2Again).getAnnexes(relatedTo='item_decision')
+        annexesDec = get_annexes(clonedToCfg2Again, portal_types=['annexDecision'])
         if not annexesDec:
             pm_logger.info('No decision annexes found on duplicated item clonedToCfg2Again')
         clonedToCfg2AgainAnnexDec = annexesDec and annexesDec[0]
-        self.assertTrue(clonedToCfg2AgainAnnex and clonedToCfg2AgainAnnex.getToPrint() or True)
-        self.assertTrue(clonedToCfg2AgainAnnexDec and clonedToCfg2AgainAnnexDec.getToPrint() or True)
+        self.assertTrue(clonedToCfg2AgainAnnex and clonedToCfg2AgainAnnex.to_print or True)
+        self.assertTrue(clonedToCfg2AgainAnnexDec and clonedToCfg2AgainAnnexDec.to_print or True)
 
     def test_pm_CustomInsertingMethodRaisesNotImplementedErrorIfNotImplemented(self):
         '''Test that we can use a custom inserting method, relevant code is called.
@@ -3618,8 +3625,8 @@ class testMeetingItem(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         item.setDecision('<p>Text before space</p><p>&nbsp;</p><p>Text after space</p><p>&nbsp;</p>')
         self.assertTrue(getFieldVersion(item, 'decision', None) ==
-                        '<p>Text before space</p>\n<p>\xc2\xa0</p>\n<p>Text after space</p>\n'
-                        '<p class="highlightBlankRow" title="Blank line">\xc2\xa0</p>\n')
+                        '<p>Text before space</p><p>\xc2\xa0</p><p>Text after space</p>'
+                        '<p class="highlightBlankRow" title="Blank line">\xc2\xa0</p>')
 
     def test_pm_ManuallyLinkedItems(self):
         '''Test the MeetingItem.manuallyLinkedItems field : as mutator is overrided,

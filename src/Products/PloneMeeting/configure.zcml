@@ -54,9 +54,6 @@
   <adapter for=".interfaces.IMeeting"
            factory=".Meeting.MeetingWorkflowActions"
            provides=".interfaces.IMeetingWorkflowActions" />
-  <adapter for="OFS.interfaces.IItem"
-           factory=".adapters.AnnexableAdapter"
-           provides=".interfaces.IAnnexable" />
   <adapter for="Products.PloneMeeting.interfaces.IMeeting"
            factory=".adapters.PMWfHistoryAdapter"
            name="workflow"
