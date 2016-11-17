@@ -73,7 +73,7 @@ RETURN_TO_PROPOSING_GROUP_MAPPINGS = {'backTo_presented_from_returned_to_proposi
                                       }
 
 viewPermissions = ('View', 'Access contents information')
-WF_APPLIED = 'Workflow change "%s" applied for meetingConfig "%s".'
+WF_APPLIED = 'Workflow adaptation "%s" applied for meetingConfig "%s".'
 WF_DOES_NOT_EXIST_WARNING = "Could not apply workflow adaptations because the workflow '%s' does not exist."
 
 # list of states the creator can no more edit the item even while using the 'creator_edits_unless_closed' wfAdaptation
@@ -102,8 +102,7 @@ def grantPermission(state, perm, role):
 
 
 def performWorkflowAdaptations(meetingConfig, logger=logger):
-    '''This function applies workflow changes as specified by the
-       p_meetingConfig.'''
+    '''This function applies workflow adaptations as specified by the p_meetingConfig.'''
 
     def _apply_pre_validation(keepReviewerPermissions=False):
         """Helper method to apply the 'pre_validation' or 'pre_validation_keep_reviewer_permissions' wfAdaptation,

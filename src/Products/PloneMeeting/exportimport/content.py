@@ -79,15 +79,10 @@ class ToolInitializer:
             return
         profileModule = pp[pp.rfind(self.productname.replace('.', '/')):].replace('/', '.')
         profileModule = profileModule.replace('\\', '.')
-        try:
-            data = ''
-            module_path = 'from %s.import_data import data' % profileModule
-            exec module_path
-            return data
-        except ImportError:
-            # This is the case if we reinstall PloneMeeting, no data is defined
-            # in the default profile.
-            logger.warn("Unable to import %s" % module_path)
+        data = ''
+        module_path = 'from %s.import_data import data' % profileModule
+        exec module_path
+        return data
 
     def run(self):
         d = self.profileData
