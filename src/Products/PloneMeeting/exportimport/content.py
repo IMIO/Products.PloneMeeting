@@ -103,6 +103,7 @@ class ToolInitializer:
             self.tool.addUsersAndGroups(d.groups)
         savedMeetingConfigsToCloneTo = {}
 
+        created_cfgs = []
         for mConfig in d.meetingConfigs:
             # XXX we need to defer the management of the 'meetingConfigsToCloneTo'
             # defined on the mConfig after the creation of every mConfigs because
@@ -113,7 +114,13 @@ class ToolInitializer:
             mConfig.meetingConfigsToCloneTo = []
             cfg = self.tool.createMeetingConfig(mConfig, source=self.profilePath)
             if cfg:
-                self.finishConfigFor(cfg, data=mConfig)
+                created_cfgs.append(cfg)
+                self._finishConfigFor(cfg, data=mConfig)
+
+        # manage other_mc_correspondences
+        for created_cfg in created_cfgs:
+            self._manageOtherMCCorrespondences(created_cfg)
+
         # now that every meetingConfigs have been created, we can manage the meetingConfigsToCloneTo
         for mConfigId in savedMeetingConfigsToCloneTo:
             if not savedMeetingConfigsToCloneTo[mConfigId]:
@@ -134,7 +141,7 @@ class ToolInitializer:
             self.tool.addUsersOutsideGroups(d.usersOutsideGroups)
         return self.successMessage
 
-    def finishConfigFor(self, cfg, data):
+    def _finishConfigFor(self, cfg, data):
         """When the MeetingConfig has been created, some parameters still need to be applied
            because they need the MeetingConfig to exist."""
         # apply the meetingTopicStates to the 'searchallmeetings' DashboardCollection
@@ -175,6 +182,7 @@ class ToolInitializer:
             if error:
                 raise PloneMeetingError(MEETING_CONFIG_ERROR % (cfg.getId(), error))
 
+    def _manageOtherMCCorrespondences(self, cfg):
         def _convert_to_real_other_mc_correspondences(annex_type):
             """ """
             tool = api.portal.get_tool('portal_plonemeeting')

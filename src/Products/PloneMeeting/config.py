@@ -53,7 +53,6 @@ ADD_CONTENT_PERMISSIONS = {
 setDefaultRoles('PloneMeeting: Add MeetingItem', ('Manager', ))
 setDefaultRoles('PloneMeeting: Add Meeting', ('Manager', ))
 setDefaultRoles('PloneMeeting: Manage configuration', ('Manager', ))
-setDefaultRoles('PloneMeeting: Add MeetingFile', ('Manager', ))
 setDefaultRoles('PloneMeeting: Add MeetingUser', ('Manager', ))
 
 product_globals = globals()
@@ -67,28 +66,29 @@ DEPENDENCIES = []
 PRODUCT_DEPENDENCIES = []
 
 # Define PloneMeeting-specific permissions
-AddAnnex = 'PloneMeeting: Add annex'
-setDefaultRoles(AddAnnex, ('Manager', 'Owner'))
-# We need 'AddAnnex', which is a more specific permission than
-# 'PloneMeeting: Add MeetingFile', because decision-related annexes, which are
-# also MeetingFile instances, must be secured differently.
-# There is no permission linked to annex deletion. Deletion of annexes is
-# allowed if one has the permission 'Modify portal content' on the
-# corresponding item.
 ReadDecision = 'PloneMeeting: Read decision'
 WriteDecision = 'PloneMeeting: Write decision'
 ReadObservations = 'PloneMeeting: Read item observations'
 WriteItemMeetingManagerFields = 'PloneMeeting: Write item MeetingManager reserved fields'
 ReadDecisionAnnex = 'PloneMeeting: Read decision annex'
-WriteDecisionAnnex = 'PloneMeeting: Write decision annex'
 ReadBudgetInfos = 'PloneMeeting: Read budget infos'
 WriteBudgetInfos = 'PloneMeeting: Write budget infos'
 WriteHarmlessConfig = 'PloneMeeting: Write harmless config'
 WriteRiskyConfig = 'PloneMeeting: Write risky config'
 AddAdvice = 'PloneMeeting: Add advice'
-CopyOrMove = 'Copy or Move'
+AddAnnex = 'PloneMeeting: Add annex'
+AddAnnexDecision = 'PloneMeeting: Add annexDecision'
 setDefaultRoles(ReadDecision, ('Manager',))
 setDefaultRoles(WriteDecision, ('Manager',))
+setDefaultRoles(AddAnnex, ('Manager', 'Owner'))
+setDefaultRoles(AddAnnexDecision, ('Manager', 'Owner'))
+
+# list of add content permissions for content added to Meeting base contents
+ADD_SUBCONTENT_PERMISSIONS = [
+    AddAdvice,
+    AddAnnex,
+    AddAnnexDecision,
+    'ATContentTypes: Add Image']
 
 MEETINGROLES = {'creators': 'MeetingMember',
                 'prereviewers': 'MeetingPreReviewer',
@@ -163,11 +163,6 @@ ploneMeetingRoles = (
     # Guy who may see meetings and items once published (global role).
     'MeetingObserverGlobal',
 )
-
-# Roles that may create or edit item and/or meetings in PloneMeeting
-# Constant defined here so it can be easily overrided by an extension profile
-PLONEMEETING_UPDATERS = ('MeetingManager', 'Manager', 'Owner',
-                         'MeetingMember', 'MeetingPreReviewer', 'MeetingReviewer', )
 
 # Roles that can evaluate MeetingItem.completeness
 ITEM_COMPLETENESS_EVALUATORS = ('MeetingManager', 'Manager', 'MeetingReviewer', 'MeetingPreReviewer', )

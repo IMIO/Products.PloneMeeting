@@ -39,8 +39,8 @@
               title="PloneMeeting: Add advice"/>
   <permission id="PloneMeeting.AddAnnex"
               title="PloneMeeting: Add annex"/>
-  <permission id="PloneMeeting.WriteDecisionAnnex"
-              title="PloneMeeting: Write decision annex"/>
+  <permission id="PloneMeeting.AddAnnexDecision"
+              title="PloneMeeting: Add annexDecision"/>
 
   <adapter for=".interfaces.IMeetingItem"
            factory=".MeetingItem.MeetingItemWorkflowConditions"

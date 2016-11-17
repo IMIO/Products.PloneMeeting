@@ -62,6 +62,7 @@ from Products.CMFCore.permissions import View
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting import PloneMeetingError
 from Products.PloneMeeting import PMMessageFactory as _
+from Products.PloneMeeting.config import ADD_SUBCONTENT_PERMISSIONS
 from Products.PloneMeeting.config import HISTORY_COMMENT_NOT_VIEWABLE
 from Products.PloneMeeting.config import TOOL_ID
 from Products.PloneMeeting.interfaces import IAdviceAfterAddEvent
@@ -1422,10 +1423,17 @@ def workday(start_date, days=0, holidays=[], weekends=[], unavailable_weekdays=[
     return new_date
 
 
-def _addImagePermission(obj):
-    """Give the ability of users able to edit at least one XHTML field.
-       Every roles having the 'Modify portal content' or a RichText
-       field.write_permission must be able to add images."""
+def _addContentPermissions(obj):
+    """Manage the 'ATContentTypes: Add Image' and 'Add portal content' permission :
+       - first compute permission to Add Image, give to users able to edit at least one
+         XHTML field, this means every roles having the 'Modify portal content' or a RichText
+         field.write_permission must be able to add images;
+       - then compute the 'Add portal content' permission,
+         give it to people having a "Add something" permission.
+       Other 'Add' permissions are managed in other places :
+       - Add advice in MeetingItem._updateAdvices;
+       - Add annex and Add annexDecision in the WF.
+       """
     write_perms = []
     # get every RichText fields using a write_permission
     if IDexterityContent.providedBy(obj):
@@ -1448,7 +1456,7 @@ def _addImagePermission(obj):
         try:
             rolesOfPerm = obj.rolesOfPermission(write_perm)
         except ValueError:
-            # we have a the id of a Zope3 style permission, get the title
+            # we have the id of a Zope3 style permission, get the title
             write_perm = queryUtility(IPermission, write_perm)
             rolesOfPerm = obj.rolesOfPermission(write_perm)
         roles_of_perm = [p['name'] for p in rolesOfPerm
@@ -1461,9 +1469,16 @@ def _addImagePermission(obj):
     roles += roles_of_perm
     # remove duplicates
     roles = tuple(set(roles))
-    # the AddPortalContent is given on the portal to 'Contributor', keep this and add local ones
-    obj.manage_permission(AddPortalContent, roles, acquire=True)
     obj.manage_permission("ATContentTypes: Add Image", roles, acquire=False)
+
+    # now manage the AddPortalContent permission
+    # the AddPortalContent is given on the portal to 'Contributor', keep this and add local ones
+    # if a role is able to add something, it also needs the AddPortalContent permission
+    roles = []
+    for add_subcontent_permission in ADD_SUBCONTENT_PERMISSIONS:
+        roles += [role['name'] for role in obj.rolesOfPermission(add_subcontent_permission)
+                  if role['selected']]
+    obj.manage_permission(AddPortalContent, roles, acquire=True)
 
 
 def getTransitionToReachState(obj, state):

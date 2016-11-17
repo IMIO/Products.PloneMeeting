@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2012 by PloneGov
+#
+# Copyright (c) 2016 by PloneGov
 #
 # GNU General Public License (GPL)
 #
@@ -47,19 +48,35 @@ marketing = CategoryDescriptor('marketing', 'Marketing', active=False)
 # usingGroups category
 subproducts = CategoryDescriptor('subproducts', 'Subproducts wishes', usingGroups=('vendors',))
 
-# File types
+# Annex types
+overheadAnalysisSubtype = AnnexSubTypeDescriptor(
+    'overhead-analysis-sub-annex',
+    'Overhead analysis sub annex', '',
+    other_mc_correspondences=(
+        'plonegov-assembly_-_annexes_types_-_item_annexes_-_budget-analysis', ))
+
+overheadAnalysis = AnnexTypeDescriptor(
+    'overhead-analysis', 'Administrative overhead analysis',
+    u'overheadAnalysis.png', '',
+    subTypes=[overheadAnalysisSubtype],
+    other_mc_correspondences=(
+        'plonegov-assembly_-_annexes_types_-_item_annexes_-_budget-analysis_-_budget-analysis-sub-annex', ))
+
 financialAnalysisSubAnnex = AnnexSubTypeDescriptor(
     'financial-analysis-sub-annex',
     'Financial analysis sub annex', '')
+
 financialAnalysis = AnnexTypeDescriptor(
     'financial-analysis', 'Financial analysis', u'financialAnalysis.png',
     'Predefined title for financial analysis', subTypes=[financialAnalysisSubAnnex])
+
 legalAnalysis = AnnexTypeDescriptor(
     'legal-analysis', 'Legal analysis', u'legalAnalysis.png', '')
 
 budgetAnalysisCfg2Subtype = AnnexSubTypeDescriptor(
     'budget-analysis-sub-annex',
     'Budget analysis sub annex', '')
+
 budgetAnalysisCfg2 = AnnexTypeDescriptor(
     'budget-analysis', 'Budget analysis', u'budgetAnalysis.png', '',
     subTypes=[budgetAnalysisCfg2Subtype])
@@ -221,9 +238,6 @@ muser_voter1 = MeetingUserDescriptor('voter1', duty='Voter1',
 muser_voter2 = MeetingUserDescriptor('voter2', duty='Voter2',
                                      usages=['assemblyMember', 'voter', ])
 
-# Meeting configuration
-# PloneMeeting assembly
-
 # Recurring items
 recItem1 = RecurringItemDescriptor(
     'recItem1',
@@ -247,20 +261,8 @@ template2 = ItemTemplateDescriptor(
     'vendors', category='developers', description='<p>This is template2.</p>',
     decision='<p>Template1 decision</p>', templateUsingGroups=['vendors', ])
 
-# File types
-overheadAnalysisSubtype = AnnexSubTypeDescriptor(
-    'overhead-analysis-sub-annex',
-    'Overhead analysis sub annex', '',
-    other_mc_correspondences=(
-        'plonegov-assembly_-_annexes_types_-_item_annexes_-_budget-analysis', ))
-
-overheadAnalysis = AnnexTypeDescriptor(
-    'overhead-analysis', 'Administrative overhead analysis',
-    u'overheadAnalysis.png', '',
-    subTypes=[overheadAnalysisSubtype],
-    other_mc_correspondences=(
-        'plonegov-assembly_-_annexes_types_-_item_annexes_-_budget-analysis_-_budget-analysis-sub-annex', ))
-
+# Meeting configuration
+# PloneMeeting assembly
 meetingPma = MeetingConfigDescriptor(
     'plonemeeting-assembly', 'PloneMeeting assembly', 'PloneMeeting assembly', isDefault=True)
 meetingPma.meetingManagers = ['pmManager', ]
@@ -405,7 +407,7 @@ meetingPga.selectableCopyGroups = [developers.getIdSuffixed('reviewers'), vendor
 meetingPga.itemCopyGroupsStates = ['validated', 'itempublished', 'itemfrozen', 'accepted', 'refused', 'delayed', ]
 
 # The whole configuration object -----------------------------------------------
-data = PloneMeetingConfiguration('My meetings', (meetingPga, meetingPma),
+data = PloneMeetingConfiguration('My meetings', (meetingPma, meetingPga),
                                  (developers, vendors, endUsers))
 # necessary for testSetup.test_pm_ToolAttributesAreOnlySetOnFirstImportData
 data.restrictUsers = False

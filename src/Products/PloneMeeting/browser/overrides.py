@@ -836,6 +836,18 @@ class CategorizedAnnexesView(CategorizedTabView):
         return hasDecisionAnnexesTypes or \
             self.tool.hasAnnexes(self.context, portal_type='annexDecision')
 
+    def showAddAnnex(self):
+        """ """
+        portal_types = api.portal.get_tool('portal_types')
+        annexTypeInfo = portal_types['annex']
+        return annexTypeInfo in self.context.allowedContentTypes()
+
+    def showAddAnnexDecision(self):
+        """ """
+        portal_types = api.portal.get_tool('portal_types')
+        annexTypeInfo = portal_types['annexDecision']
+        return annexTypeInfo in self.context.allowedContentTypes()
+
     def numberOfAnnexes(self, portal_type='annex'):
         '''Return the number of viewable annexes.'''
         catalog = api.portal.get_tool('portal_catalog')

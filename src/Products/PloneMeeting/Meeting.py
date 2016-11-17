@@ -71,7 +71,7 @@ from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.interfaces import IMeetingWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingWorkflowConditions
-from Products.PloneMeeting.utils import _addImagePermission
+from Products.PloneMeeting.utils import _addContentPermissions
 from Products.PloneMeeting.utils import addDataChange
 from Products.PloneMeeting.utils import addRecurringItemsIfRelevant
 from Products.PloneMeeting.utils import fieldIsEmpty
@@ -1734,8 +1734,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         self._updatePowerObserversLocalRoles()
         # update annexes categorized_elements to store 'visible_for_groups'
         update_all_categorized_elements(self)
-        # manage the 'ATContentTypes: Add Image' permission
-        _addImagePermission(self)
+        _addContentPermissions(self)
         # notify that localRoles have been updated
         notify(MeetingLocalRolesUpdatedEvent(self, old_local_roles))
         # reindex relevant indexes

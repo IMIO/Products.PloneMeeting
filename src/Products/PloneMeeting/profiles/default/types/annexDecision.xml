@@ -16,7 +16,7 @@
   <element value="documentviewer"/>
  </property>
  <property name="default_view_fallback">False</property>
- <property name="add_permission">PloneMeeting.WriteDecisionAnnex</property>
+ <property name="add_permission">PloneMeeting.AddAnnexDecision</property>
  <property name="klass">imio.annex.content.annex.Annex</property>
  <property name="behaviors">
   <element value="plone.app.content.interfaces.INameFromTitle"/>

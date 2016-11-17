@@ -17,7 +17,7 @@ from imio.helpers.catalog import removeIndexes
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_REAPPLY
 
 from Products.PloneMeeting.migrations import Migrator
-from Products.PloneMeeting.utils import _addImagePermission
+from Products.PloneMeeting.utils import _addContentPermissions
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import updateCollectionCriterion
 
@@ -554,15 +554,16 @@ class Migrate_To_4_0(Migrator):
         self.tool.updateAllLocalRoles()
         logger.info('Done.')
 
-    def _manageAddImagePermission(self):
-        '''Configure the 'ATContentTypes: Add Image' permission on meetings, items and advices.'''
-        logger.info('Updating the \'ATContentTypes: Add Image\' permission...')
+    def _manageAddContentPermissions(self):
+        '''Configure the permissions to add content, inlcuding 'ATContentTypes: Add Image'
+           permission on meetings, items and advices.'''
+        logger.info('Updating add content permissions...')
         # manage multiple 'meetingadvice' portal_types
         brains = self.portal.portal_catalog(meta_type=['Meeting', 'MeetingItem'] +
                                             self.tool.getAdvicePortalTypes(as_ids=True))
         for brain in brains:
             obj = brain.getObject()
-            _addImagePermission(obj)
+            _addContentPermissions(obj)
         logger.info('Done.')
 
     def _initNewHTMLFields(self):
@@ -955,6 +956,19 @@ class Migrate_To_4_0(Migrator):
 
         logger.info('Done.')
 
+    def _removeAddFilePermissionOnMeetingConfigFolders(self):
+        '''Remove 'Add File' permission on each meetingConfig folder.'''
+        logger.info('Removing the \'Add File\' permission for every meetingConfig folders...')
+        for userFolder in self.portal.Members.objectValues():
+            # if something else than a userFolder, pass
+            if not hasattr(aq_base(userFolder), 'mymeetings'):
+                continue
+            for mConfigFolder in userFolder.mymeetings.objectValues():
+                mConfigFolder.manage_permission('ATContentTypes: Add File',
+                                                [],
+                                                acquire=True)
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 4.0...')
         # reinstall so versions are correctly shown in portal_quickinstaller
@@ -983,7 +997,7 @@ class Migrate_To_4_0(Migrator):
         self._cleanMeetingConfigs()
         self._cleanMeetingUsers()
         self._updateAllLocalRoles()
-        self._manageAddImagePermission()
+        self._manageAddContentPermissions()
         self._initNewHTMLFields()
         self._updateHistoryComments()
         self._updateCKeditorCustomToolbar()
@@ -991,6 +1005,7 @@ class Migrate_To_4_0(Migrator):
         self._initSelectableAdvisers()
         self._moveAppName()
         self._moveDuplicatedItemLinkFromAutoToManual()
+        self._removeAddFilePermissionOnMeetingConfigFolders()
         # update workflow, needed for items moved to item templates and recurring items
         # update reference_catalog as ReferenceFied "MeetingConfig.toDoListTopics"
         # and "Meeting.lateItems" were removed
@@ -1024,7 +1039,9 @@ def migrate(context):
        20) Remove unused catalog indexes;
        21) Initialize MeetingConfig.selectableAdvisers field;
        22) Adapt application name;
-       23) Refresh catalogs.
+       23) Move 'duplicated and keep link' link from automatic to manual link;
+       24) Remove the 'Add File' permission on user folders;
+       25) Refresh catalogs.
     '''
     migrator = Migrate_To_4_0(context)
     migrator.run()

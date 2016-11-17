@@ -9,11 +9,12 @@
         <legend>
           <a name="annexes"><span i18n:translate="">Annexes</span></a>
             <a href="++add++annex"
-                 class="link-overlay-pm-annex">
-                <img i18n:attributes="title"
-                     title="#"
-                     tal:attributes="src string:${view/portal_url}/new.png;
-                                     title string:add_annex" />
+               class="link-overlay-pm-annex"
+               tal:condition="view/showAddAnnex">
+              <img i18n:attributes="title"
+                   title="#"
+                   tal:attributes="src string:${view/portal_url}/new.png;
+                                   title string:add_annex" />
               </a>
         </legend>
 
@@ -30,11 +31,12 @@
         <legend>
           <a name="annexes_decision"><span i18n:translate="">AnnexesDecisionShort</span></a>
             <a href="++add++annexDecision"
-                 class="link-overlay-pm-annex">
-                <img i18n:attributes="title"
-                     title="#"
-                     tal:attributes="src string:${view/portal_url}/new.png;
-                                     title string:add_decision_annex" />
+               class="link-overlay-pm-annex"
+               tal:condition="view/showAddAnnexDecision">
+              <img i18n:attributes="title"
+                   title="#"
+                   tal:attributes="src string:${view/portal_url}/new.png;
+                                   title string:add_decision_annex" />
               </a>
         </legend>
 

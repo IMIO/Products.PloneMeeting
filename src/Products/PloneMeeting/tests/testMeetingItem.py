@@ -51,6 +51,8 @@ from imio.helpers.cache import cleanRamCacheFor
 from Products import PloneMeeting as products_plonemeeting
 from Products.PloneMeeting.browser.itemassembly import item_assembly_default
 from Products.PloneMeeting.browser.itemsignatures import item_signatures_default
+from Products.PloneMeeting.config import ADD_SUBCONTENT_PERMISSIONS
+from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import DEFAULT_COPIED_FIELDS
 from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_SAME_MC
 from Products.PloneMeeting.config import HISTORY_COMMENT_NOT_VIEWABLE
@@ -4038,6 +4040,10 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEquals(newItem2.getId(), 'my-new-title-2')
         self.assertEquals(newItem2.getPredecessor(), item)
 
+    def _notAbleToAddSubContent(self, item):
+        for add_subcontent_perm in ADD_SUBCONTENT_PERMISSIONS:
+            self.assertFalse(self.hasPermission(add_subcontent_perm, item))
+
     def test_pm_ItemAddImagePermission(self):
         """A user able to edit at least one RichText field must be able to add images."""
         # configure so different access are enabled when item is validated
@@ -4102,15 +4108,19 @@ class testMeetingItem(PloneMeetingTestCase):
         # copyGroup not able to view
         self.changeUser('pmCreator2')
         self.assertFalse(self.hasPermission('ATContentTypes: Add Image', item))
+        # not able to add any kind of subobject, user does not have AddPortalContent
         self.assertFalse(self.hasPermission(AddPortalContent, item))
+        self._notAbleToAddSubContent(item)
         # adviser not able to view
         self.changeUser('pmReviewer2')
         self.assertFalse(self.hasPermission('ATContentTypes: Add Image', item))
         self.assertFalse(self.hasPermission(AddPortalContent, item))
+        self._notAbleToAddSubContent(item)
         # budgetimpacteditor
         self.changeUser('budgetimpacteditor')
         self.assertFalse(self.hasPermission('ATContentTypes: Add Image', item))
         self.assertFalse(self.hasPermission(AddPortalContent, item))
+        self._notAbleToAddSubContent(item)
         # only one editor left
         self.changeUser('pmReviewer1')
         self.assertTrue(self.hasPermission('ATContentTypes: Add Image', item))
@@ -4129,14 +4139,22 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmCreator2')
         self.assertFalse(self.hasPermission('ATContentTypes: Add Image', item))
         self.assertFalse(self.hasPermission(AddPortalContent, item))
+        self._notAbleToAddSubContent(item)
         # adviser
         self.changeUser('pmReviewer2')
         self.assertFalse(self.hasPermission('ATContentTypes: Add Image', item))
         self.assertFalse(self.hasPermission(AddPortalContent, item))
+        self._notAbleToAddSubContent(item)
         # reviewer
         self.changeUser('pmReviewer1')
         self.assertFalse(self.hasPermission('ATContentTypes: Add Image', item))
-        self.assertFalse(self.hasPermission(AddPortalContent, item))
+        # in some WF 'pmReviewer1' has the AddPortalContent permission because able to add annex
+        if self.hasPermission(AddAnnex, item):
+            self.assertTrue(self.hasPermission(AddPortalContent, item))
+        else:
+            self.assertFalse(self.hasPermission(AddPortalContent, item))
+            self._notAbleToAddSubContent(item)
+
         # MeetingManager and budgetimpacteditor
         self.changeUser('budgetimpacteditor')
         self.assertTrue(self.hasPermission('ATContentTypes: Add Image', item))

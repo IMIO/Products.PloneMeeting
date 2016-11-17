@@ -79,7 +79,6 @@ from Products.PloneMeeting.config import DEFAULT_COPIED_FIELDS
 from Products.PloneMeeting.config import MEETING_CONFIG
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
-from Products.PloneMeeting.config import PLONEMEETING_UPDATERS
 from Products.PloneMeeting.config import ploneMeetingRoles
 from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import PROJECTNAME
@@ -666,10 +665,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         #   permission may also disassociate annexes from items.
         mc_folder.manage_permission(ADD_CONTENT_PERMISSIONS['MeetingItem'], ('Owner', 'Manager', ), acquire=0)
         mc_folder.manage_permission(ADD_CONTENT_PERMISSIONS['Meeting'], ('MeetingManager', 'Manager', ), acquire=0)
-        # The following permission is needed for storing pod-generated documents
-        # representing items or meetings directly into the ZODB (useful for
-        # exporting data through WebDAV or for freezing the generated doc)
-        mc_folder.manage_permission('ATContentTypes: Add File', PLONEMEETING_UPDATERS, acquire=0)
         # Only Manager may change the set of allowable types in folders.
         mc_folder.manage_permission(ATCTPermissions.ModifyConstrainTypes, ['Manager'], acquire=0)
         # Give MeetingManager localrole to relevant _meetingmanagers group
