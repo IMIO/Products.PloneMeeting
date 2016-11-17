@@ -4146,7 +4146,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                              context=self.REQUEST,
                                              target_language=default_language,
                                              default=subFolderTitle))
-                subFolder.processForm(values={'dummy': None})
+                # do only processForm for AT
+                if base_hasattr(subFolder, 'processForm'):
+                    subFolder.processForm(values={'dummy': None})
                 subFolder.reindexObject()
 
     security.declarePublic('getItemTypeName')
