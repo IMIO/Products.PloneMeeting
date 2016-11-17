@@ -146,7 +146,7 @@
          zope.interface.Interface
          collective.iconifiedcategory.interfaces.ICategorizedTable"
     provides="z3c.table.interfaces.IColumn"
-    factory=".columns.AnnexesActionsColumn"
+    factory=".columns.PMAnnexActionsColumn"
     />
 
 </configure>

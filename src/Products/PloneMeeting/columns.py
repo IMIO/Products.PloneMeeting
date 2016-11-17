@@ -253,7 +253,7 @@ class ItemCheckBoxColumn(CheckBoxColumn):
         return head
 
 
-class AnnexesActionsColumn(AnnexActionsColumn):
+class PMAnnexActionsColumn(AnnexActionsColumn):
     """ """
     params = AnnexActionsColumn.params
     params.update({'edit_action_class': 'link-overlay-pm-annex'})
