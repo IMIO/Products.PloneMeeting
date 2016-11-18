@@ -330,7 +330,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - MeetingItem.displayAdvices is now MeetingItem.showAdvices and is an adaptable method that controls the fact that advices
   are shown or not on the item view
 - Moved to imio.annex : in WFs, renamed permission "PloneMeeting: Write decision annex" to "PloneMeeting: Add annexDecision" and
-  removed the "PloneMeeting: Add MeetingFile" permission
+  removed the "PloneMeeting: Add MeetingFile" and "PloneMeeting: Read decision annex" permissions.  Annexes may now be added on Meetings
+  and are displayed in dashboards like for items.  On items, there is now one single tab 'annexes' where annexes and decision annexes
+  are managed.  Moreover annexes are reorderable in the 'annexes' tab
 
 3.3 (2015-02-27)
 ----------------

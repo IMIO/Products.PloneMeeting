@@ -86,6 +86,14 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
     def renderHeadCell(self):
         """Override rendering of head of the cell to include jQuery
            call to initialize annexes menu and to show the 'more/less details' if we are listing items."""
+
+        if not self.header_js:
+            # avoid problems while concataining None and unicode
+            self.header_js = u''
+        self.header_js += u'<script type="text/javascript">jQuery(document).ready' + \
+            u'(initializeMenusAXStartingAt($("#content")));initializePMOverlays();' + \
+            u'initializeIconifiedCategoryWidget();</script>'
+
         if self.table.batch and self.table.batch[0].meta_type == 'MeetingItem':
             # change header title to "Purpose"
             self.header = "header_purpose"
@@ -115,8 +123,8 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
 
         annexes = staticInfos = moreInfos = ''
 
+        tool = api.portal.get_tool('portal_plonemeeting')
         if obj.meta_type == 'MeetingItem':
-            tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self.context)
             # display annexes and infos if item and item isPrivacyViewable
             if obj.adapted().isPrivacyViewable():
@@ -132,19 +140,19 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
                 moreInfos = obj.restrictedTraverse('@@item-more-infos')(visibleColumns=visibleColumns)
 
                 # display annexes
-                annexes = ''
                 if tool.hasAnnexes(obj, portal_type='annex'):
                     annexes += obj.restrictedTraverse('categorized-childs')(portal_type='annex')
-                member = api.user.get_current()
-                if member.has_permission('PloneMeeting: Read decision annex', obj) and \
-                   tool.hasAnnexes(obj, portal_type='annexDecision'):
+                if tool.hasAnnexes(obj, portal_type='annexDecision'):
                     decision_term = translate("AnnexesDecisionShort",
                                               domain='PloneMeeting',
                                               context=obj.REQUEST)
                     annexes += u"<span class='discreet'>{0}&nbsp;:&nbsp;</span>".format(decision_term)
                     annexes += obj.restrictedTraverse('categorized-childs')(portal_type='annexDecision')
-                if annexes:
-                    annexes = u"<div class='dashboard_annexes'>{0}</div>".format(annexes)
+        elif obj.meta_type == 'Meeting':
+            if tool.hasAnnexes(obj, portal_type='annex'):
+                annexes += obj.restrictedTraverse('categorized-childs')(portal_type='annex')
+        if annexes:
+            annexes = u"<div class='dashboard_annexes'>{0}</div>".format(annexes)
         return pretty_link + staticInfos + moreInfos + annexes
 
 

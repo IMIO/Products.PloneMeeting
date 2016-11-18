@@ -851,7 +851,8 @@ class CategorizedAnnexesView(CategorizedTabView):
     def numberOfAnnexes(self, portal_type='annex'):
         '''Return the number of viewable annexes.'''
         catalog = api.portal.get_tool('portal_catalog')
-        return len(catalog(portal_type=portal_type, path='/'.join(self.context.getPhysicalPath())))
+        return len(catalog(portal_type=portal_type,
+                           path='/'.join(self.context.getPhysicalPath())))
 
 
 class PMCKFinder(CKFinder):

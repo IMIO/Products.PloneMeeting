@@ -403,7 +403,7 @@
                             <td tal:condition="hasAnnexes">
                                 <tal:annexes replace="structure python: context.restrictedTraverse('categorized-childs')(portal_type='annex')" />
                             </td>
-                            <td tal:condition="python: member.has_permission('PloneMeeting: Read decision annex', context) and hasAnnexesDecision">
+                            <td tal:condition="hasAnnexesDecision">
                                 <div class="decisionAnnexDescription">
                                     <span class="discreet" style="padding-left: 0.7em;"
                                           i18n:translate="AnnexesDecisionShort"></span>
