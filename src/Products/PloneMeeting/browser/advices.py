@@ -46,7 +46,7 @@ class AdvicesIcons(BrowserView):
 
     def __call__(self):
         if not self.context.adapted().isPrivacyViewable():
-            return '-'
+            return '<div style="display: inline">&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;</div>'
         return super(AdvicesIcons, self).__call__()
 
     def advicesDelayToWarn(self, advicesByType, userAdviserGroupIds):
