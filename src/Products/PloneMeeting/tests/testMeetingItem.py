@@ -1852,7 +1852,8 @@ class testMeetingItem(PloneMeetingTestCase):
         secretItem.reindexObjectSecurity()
         self.assertTrue(self.hasPermission('View', secretItem))
         # but not isPrivacyViewable
-        self.assertTrue(not secretItem.adapted().isPrivacyViewable())
+        self.failIf(secretItem.adapted().isPrivacyViewable())
+        self.assertRaises(Unauthorized, secretItem.meetingitem_view)
         # if we try to clone a not privacy viewable item, it raises Unauthorized
         self.assertRaises(Unauthorized, secretItem.onDuplicate)
         self.assertRaises(Unauthorized, secretItem.onDuplicateAndKeepLink)

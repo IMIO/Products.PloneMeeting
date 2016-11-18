@@ -30,6 +30,7 @@
  </property>
  <property name="default_view_fallback">False</property>
  <alias from="(Default)" to="(dynamic view)"/>
+ <alias from="base_view" to="meetingitem_view"/>
  <alias from="view" to="(selected layout)"/>
  <alias from="edit" to="base_edit"/>
  <alias from="sharing" to="@@sharing"/>

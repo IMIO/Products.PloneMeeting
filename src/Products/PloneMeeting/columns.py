@@ -119,6 +119,8 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
         obj = self._getObject(item)
         prettyLinker = IPrettyLink(obj)
         prettyLinker.target = '_parent'
+        isPrivacyViewable = obj.adapted().isPrivacyViewable()
+        prettyLinker.isViewable = isPrivacyViewable
         pretty_link = prettyLinker.getLink()
 
         annexes = staticInfos = moreInfos = ''
@@ -127,7 +129,7 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
         if obj.meta_type == 'MeetingItem':
             cfg = tool.getMeetingConfig(self.context)
             # display annexes and infos if item and item isPrivacyViewable
-            if obj.adapted().isPrivacyViewable():
+            if isPrivacyViewable:
                 # display moreInfos about item
                 # visible columns are one define for items listings or when the meeting is displayed
                 # so check where we are
