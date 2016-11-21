@@ -22,14 +22,20 @@
 # 02110-1301, USA.
 #
 
+from time import sleep
 from AccessControl import Unauthorized
 from DateTime import DateTime
+from zope.annotation import IAnnotations
 from zope.event import notify
 from zope.lifecycleevent import ObjectModifiedEvent
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
+from collective.documentviewer.config import CONVERTABLE_TYPES
+from collective.documentviewer.settings import GlobalSettings
+from collective.iconifiedcategory.interfaces import IIconifiedPreview
 from collective.iconifiedcategory.utils import get_categorized_elements
 from collective.iconifiedcategory.utils import get_config_root
+from collective.iconifiedcategory.utils import get_category_object
 from collective.iconifiedcategory.utils import get_group
 from collective.iconifiedcategory.utils import update_all_categorized_elements
 from Products.CMFCore.permissions import ModifyPortalContent
@@ -565,6 +571,136 @@ class testAnnexes(PloneMeetingTestCase):
         self.portal.restrictedTraverse('@@delete_givenuid')(annex.UID())
         self.assertTrue(catalog(SearchableText=ITEM_TITLE))
         self.assertFalse(catalog(SearchableText=ANNEX_TITLE))
+
+    def test_pm_AnnexesConvertedIfAutoConvertIsEnabled(self):
+        """If collective.documentviewer 'auto_convert' is enabled,
+           the annexes and decision annexes are converted."""
+        gsettings = GlobalSettings(self.portal)
+        gsettings.auto_convert = True
+        gsettings.auto_layout_file_types = CONVERTABLE_TYPES.keys()
+
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.annexFile = u'file_correct.pdf'
+        annex = self.addAnnex(item)
+        # annex has been converted no matter 'to_print' value
+        self.assertFalse(annex.to_print)
+        self.assertTrue(IIconifiedPreview(annex).converted)
+
+        # annex is not converted if auto_convert is disabled
+        gsettings.auto_convert = False
+        not_converted_annex = self.addAnnex(item)
+        self.assertFalse(not_converted_annex.to_print)
+        self.assertFalse(IIconifiedPreview(not_converted_annex).converted)
+
+    def test_pm_AnnexesConvertedDependingOnAnnexToPrintMode(self):
+        """If collective.documentviewer 'auto_convert' is disabled,
+           annexes set 'to_print' is only converted if
+           MeetingConfig.annexToPrintMode is 'enabled_for_printing'."""
+        gsettings = GlobalSettings(self.portal)
+        gsettings.auto_convert = False
+        gsettings.auto_layout_file_types = CONVERTABLE_TYPES.keys()
+        cfg = self.meetingConfig
+        cfg.setAnnexToPrintMode('enabled_for_info')
+
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.annexFile = u'file_correct.pdf'
+        not_converted_annex = self.addAnnex(item)
+        # annex 'to_print' was set to False because 'to_be_printed_activated'
+        # is not enabled on the category group
+        category = get_category_object(not_converted_annex, not_converted_annex.content_category)
+        category_group = category.get_category_group()
+        self.assertFalse(category_group.to_be_printed_activated)
+        self.assertFalse(not_converted_annex.to_print)
+        self.assertFalse(IIconifiedPreview(not_converted_annex).converted)
+
+        # no matter 'to_be_printed_activated' is enabled
+        # if MeetingConfig.annexToPrintMode is not 'enabled_for_printing'
+        # the annex is not converted
+        category_group.to_be_printed_activated = True
+        not_converted_annex2 = self.addAnnex(item)
+        self.assertFalse(not_converted_annex2.to_print)
+        self.assertFalse(IIconifiedPreview(not_converted_annex2).converted)
+
+        # annex is converted if 'to_be_printed_activated' enabled and
+        # MeetingConfig.annexToPrintMode is 'enabled_for_printing'
+        cfg.setAnnexToPrintMode('enabled_for_printing')
+        converted_annex = self.addAnnex(item)
+        # as 'to_print' is in a behavior, it is not set by plone.api
+        # set it now and notify modified
+        self.assertIsNone(converted_annex.to_print)
+        self.assertFalse(IIconifiedPreview(converted_annex).converted)
+        converted_annex.to_print = True
+        notify(ObjectModifiedEvent(converted_annex))
+        self.assertTrue(converted_annex.to_print)
+        self.assertTrue(IIconifiedPreview(converted_annex).converted)
+
+        # if an annex is not 'to_print', it is not converted
+        converted_annex2 = self.addAnnex(item)
+        converted_annex2.to_print = False
+        notify(ObjectModifiedEvent(converted_annex2))
+        self.assertFalse(converted_annex2.to_print)
+        self.assertFalse(IIconifiedPreview(converted_annex2).converted)
+
+    def test_pm_AnnexOnlyConvertedAgainWhenNecessary(self):
+        """When conversion is enabled, either by 'auto_convert' or
+           when MeetingConfig.annexToPrintMode is 'enabled_for_printing',
+           if an annex is updated, it will be converted again onModified."""
+        gsettings = GlobalSettings(self.portal)
+        gsettings.auto_convert = True
+        gsettings.auto_layout_file_types = CONVERTABLE_TYPES.keys()
+        default_category = get_category_object(
+            self.meetingConfig,
+            'annexes_types_-_item_annexes_-_financial-analysis')
+        default_category_group = default_category.get_category_group()
+        default_category_group.to_be_printed_activated = True
+
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.annexFile = u'file_correct.pdf'
+        annex = self.addAnnex(item)
+        # has been converted
+        self.assertTrue(IIconifiedPreview(annex).converted)
+        ann = IAnnotations(annex)['collective.documentviewer']
+        initial_conversion_date = ann['last_updated']
+
+        # now play with 'to_print', it will not be converted again
+        sleep(2)
+        annex.to_print = False
+        notify(ObjectModifiedEvent(annex))
+        self.assertEqual(initial_conversion_date,
+                         IAnnotations(annex)['collective.documentviewer']['last_updated'])
+        annex.to_print = True
+        notify(ObjectModifiedEvent(annex))
+        self.assertEqual(initial_conversion_date,
+                         IAnnotations(annex)['collective.documentviewer']['last_updated'])
+
+        # if contents really changed, not only the ModificationDate then it is converted again
+        modified = annex.modified()
+        annex.notifyModified()
+        self.assertNotEqual(modified, annex.modified())
+        notify(ObjectModifiedEvent(annex))
+        # still not converted again as file content did not changed
+        self.assertEqual(initial_conversion_date,
+                         IAnnotations(annex)['collective.documentviewer']['last_updated'])
+        # if file content changed, then annex is converted again
+        self.annexFile = u'file_correct2.pdf'
+        annex.file = self._annex_file_content()
+        notify(ObjectModifiedEvent(annex))
+        self.assertNotEqual(initial_conversion_date,
+                            IAnnotations(annex)['collective.documentviewer']['last_updated'])
+
+        # works also if auto_convert not enabled but
+        # MeetingConfig.annexToPrintMode is 'enabled_for_printing'
+        gsettings.auto_convert = False
+        self.meetingConfig.setAnnexToPrintMode('enabled_for_printing')
+        sleep(2)
+        self.annexFile = u'file_correct.pdf'
+        annex.file = self._annex_file_content()
+        notify(ObjectModifiedEvent(annex))
+        self.assertNotEqual(initial_conversion_date,
+                            IAnnotations(annex)['collective.documentviewer']['last_updated'])
 
 
 def test_suite():

@@ -35,6 +35,7 @@ from plone.app.testing import login, logout
 
 from Products.PloneTestCase.setup import _createHomeFolder
 
+from collective.documentviewer.settings import Settings
 from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.utils import get_config_root
 from imio.helpers.cache import cleanRamCacheFor
@@ -280,6 +281,12 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         if os.path.exists(newAnnexPath):
             os.remove(newAnnexPath)
 
+    def _annex_file_content(self):
+        current_path = os.path.dirname(__file__)
+        f = open(os.path.join(current_path, self.annexFile), 'r')
+        annex_file = namedfile.NamedBlobFile(f.read(), filename=self.annexFile)
+        return annex_file
+
     def addAnnex(self,
                  context,
                  annexType=None,
@@ -288,10 +295,6 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         '''Adds an annex to p_item.
            If no p_annexType is provided, self.annexFileType is used.
            If no p_annexTitle is specified, the predefined title of the annex type is used.'''
-
-        current_path = os.path.dirname(__file__)
-        f = open(os.path.join(current_path, self.annexFile), 'r')
-        annex_file = namedfile.NamedBlobFile(f.read(), filename=self.annexFile)
 
         if annexType is None:
             if context.meta_type == 'MeetingItem':
@@ -319,12 +322,13 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         theAnnex = api.content.create(
             title=annexTitle or 'Annex',
             type=annexContentType,
-            file=annex_file,
+            file=self._annex_file_content(),
             container=context,
             content_category=annexTypeId,
             to_print=False,
             confidential=False,
         )
+        Settings(theAnnex)
         # need to commit the transaction so the stored blob is correct
         # if not done, accessing the blob will raise 'BlobError: Uncommitted changes'
         transaction.commit()
