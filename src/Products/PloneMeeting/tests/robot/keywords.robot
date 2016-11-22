@@ -16,5 +16,10 @@ Select collection
 Click and Screenshot overlayForm
     [Arguments]  ${locator}  ${image_title}  ${screen_zone}
     Click element  ${locator}
-    Sleep  0.5
+    wait until element is visible  ${screen_zone}  2
+    Sleep  0.3
     Capture and crop page screenshot  ${image_title}  ${screen_zone}
+
+Scroll Page
+    [Arguments]  ${x_location}  ${y_location}
+    Execute JavaScript  window.scrollTo(${x_location},${y_location})
