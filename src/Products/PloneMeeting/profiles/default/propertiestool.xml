@@ -2,9 +2,15 @@
 <object name="portal_properties" meta_type="Plone Properties Tool">
  <object name="site_properties" meta_type="Plone Property Sheet">
   <property name="types_not_searched" type="lines" purge="False">
+   <element value="annex"/>
+   <element value="annexDecision"/>
    <element value="Collection"/>
-   <element value="ConfigurablePODTemplate"/>
-   <element value="DashboardPODTemplate"/>
+   <element value="ConfigurablePodTemplate"/>
+   <element value="ContentCategory"/>
+   <element value="ContentCategoryConfiguration"/>
+   <element value="ContentCategoryGroup"/>
+   <element value="ContentSubcategory"/>
+   <element value="DashboardPodTemplate"/>
    <element value="Document"/>
    <element value="Event"/>
    <element value="File"/>

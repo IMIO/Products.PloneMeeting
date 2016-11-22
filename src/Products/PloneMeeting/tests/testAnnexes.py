@@ -527,8 +527,8 @@ class testAnnexes(PloneMeetingTestCase):
         '''MeetingFiles title is indexed in the item SearchableText.'''
         ANNEX_TITLE = "SpecialAnnexTitle"
         ITEM_TITLE = "SpecialItemTitle"
-        ITEM_DESCRIPTION = "Item description"
-        ITEM_DECISION = "Item decision"
+        ITEM_DESCRIPTION = "Item description text"
+        ITEM_DECISION = "Item decision text"
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem', title=ITEM_TITLE)
         item.setDescription(ITEM_DESCRIPTION)
@@ -540,12 +540,15 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertTrue(len(catalog(SearchableText=ITEM_DESCRIPTION)) == 1)
         self.assertTrue(len(catalog(SearchableText=ITEM_DECISION)) == 1)
         self.assertFalse(catalog(SearchableText=ANNEX_TITLE))
-        self.assertEquals(SearchableText(item)(),
-                          'SpecialItemTitle  <p>Item description</p>  <p>Item decision</p> ')
+        self.assertEquals(
+            SearchableText(item)(),
+            '{0}  <p>{1}</p>  <p>{2}</p> '.format(
+                ITEM_TITLE, ITEM_DESCRIPTION, ITEM_DECISION)
+        )
         itemRID = catalog(UID=item.UID())[0].getRID()
         self.assertEquals(index.getEntryForObject(itemRID),
-                          ['specialitemtitle', 'p', 'item', 'description', 'p',
-                           'p', 'item', 'decision', 'p'])
+                          [ITEM_TITLE.lower(), 'p', 'item', 'description', 'text', 'p',
+                           'p', 'item', 'decision', 'text', 'p'])
 
         # add an annex and test that the annex title is found in the item's SearchableText
         annex = self.addAnnex(item, annexTitle=ANNEX_TITLE)
@@ -554,18 +557,20 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertTrue(len(catalog(SearchableText=ITEM_DESCRIPTION)) == 1)
         self.assertTrue(len(catalog(SearchableText=ITEM_DECISION)) == 1)
         self.assertTrue(len(catalog(SearchableText=ANNEX_TITLE)) == 2)
-        self.assertEquals(SearchableText(item)(),
-                          'SpecialItemTitle  <p>Item description</p>  <p>Item decision</p>  SpecialAnnexTitle ')
+        self.assertEquals(
+            SearchableText(item)(),
+            '{0}  <p>{1}</p>  <p>{2}</p>  {3} '.format(
+                ITEM_TITLE, ITEM_DESCRIPTION, ITEM_DECISION, ANNEX_TITLE))
         itemRID = catalog(UID=item.UID())[0].getRID()
         self.assertEquals(index.getEntryForObject(itemRID),
-                          ['specialitemtitle', 'p', 'item', 'description', 'p',
-                           'p', 'item', 'decision', 'p', 'specialannextitle'])
+                          [ITEM_TITLE.lower(), 'p', 'item', 'description', 'text', 'p',
+                           'p', 'item', 'decision', 'text', 'p', ANNEX_TITLE.lower()])
         # works also when clear and rebuild catalog
         self.portal.portal_catalog.clearFindAndRebuild()
         itemRID = catalog(UID=item.UID())[0].getRID()
         self.assertEquals(index.getEntryForObject(itemRID),
-                          ['specialitemtitle', 'p', 'item', 'description', 'p',
-                           'p', 'item', 'decision', 'p', 'specialannextitle'])
+                          [ITEM_TITLE.lower(), 'p', 'item', 'description', 'text', 'p',
+                           'p', 'item', 'decision', 'text', 'p', ANNEX_TITLE.lower()])
         # if we remove the annex, the item is not found anymore when querying
         # on removed annex's title
         self.portal.restrictedTraverse('@@delete_givenuid')(annex.UID())

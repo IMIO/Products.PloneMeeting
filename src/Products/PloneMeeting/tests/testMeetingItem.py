@@ -34,6 +34,7 @@ from zope.i18n import translate
 from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.utils import get_categorized_elements
 from collective.iconifiedcategory.utils import get_categories
+from collective.iconifiedcategory.utils import get_category_object
 from collective.iconifiedcategory.utils import get_config_root
 from collective.iconifiedcategory.utils import get_group
 from plone.app.textfield.value import RichTextValue
@@ -390,8 +391,9 @@ class testMeetingItem(PloneMeetingTestCase):
           It returns a dict with several informations.
         '''
         # Activate the functionnality
+        cfg = self.meetingConfig
         self.changeUser('admin')
-        self.meetingConfig.setUseGroupsAsCategories(False)
+        cfg.setUseGroupsAsCategories(False)
         otherMeetingConfigId = self.meetingConfig2.getId()
         self.changeUser('pmManager')
         meetingDate = DateTime('2008/06/12 08:00:00')
@@ -400,7 +402,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         self.tool.getPloneMeetingFolder(otherMeetingConfigId)
         item = self.create('MeetingItem')
-        item.setCategory(self.meetingConfig.categories.objectValues()[1].getId())
+        item.setCategory(cfg.categories.objectValues()[1].getId())
         item.setDecision('<p>My decision</p>', mimetype='text/html')
         item.setOtherMeetingConfigsClonableTo((otherMeetingConfigId,))
         if with_annexes:
@@ -412,11 +414,11 @@ class testMeetingItem(PloneMeetingTestCase):
         if with_advices:
             # add a normal and a delay-aware advice
             self.changeUser('admin')
-            self.meetingConfig.setUseAdvices(True)
-            self.meetingConfig.setItemAdviceStates([self.WF_STATE_NAME_MAPPINGS['proposed'], ])
-            self.meetingConfig.setItemAdviceEditStates([self.WF_STATE_NAME_MAPPINGS['proposed'], 'validated', ])
-            self.meetingConfig.setItemAdviceViewStates(['presented', ])
-            self.meetingConfig.setCustomAdvisers(
+            cfg.setUseAdvices(True)
+            cfg.setItemAdviceStates([self.WF_STATE_NAME_MAPPINGS['proposed'], ])
+            cfg.setItemAdviceEditStates([self.WF_STATE_NAME_MAPPINGS['proposed'], 'validated', ])
+            cfg.setItemAdviceViewStates(['presented', ])
+            cfg.setCustomAdvisers(
                 [{'row_id': 'unique_id_123',
                   'group': 'developers',
                   'gives_auto_advice_on': '',
@@ -509,6 +511,31 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(decisionAnnex2.content_category.endswith('marketing-annex'))
         self.assertEquals(newItem.objectValues()[3].content_category,
                           calculate_category_id(defaultMC2ItemDecisionAT))
+
+    def test_pm_SendItemToOtherMCAnnexContentCategoryIsIndexed(self):
+        """When an item is sent to another MC and contains annexes,
+           if content_category does not exist in destination MC,
+           it is not indexed at creation time but after correct content_category
+           has been set.
+           Test if a corresponding annexType exist (with same id) and when using
+           an annexType with a different id between origin/destination MCs."""
+        data = self._setupSendItemToOtherMC(with_annexes=True)
+        decisionAnnexes = [annex for annex in data['newItem'].objectValues()
+                           if annex.portal_type == 'annexDecision']
+        self.assertTrue(len(decisionAnnexes) == 2)
+        decisionAnnex1 = decisionAnnexes[0]
+        decisionAnnex2 = decisionAnnexes[1]
+        # using same cat
+        cat1 = get_category_object(decisionAnnex1,
+                                   decisionAnnex1.content_category)
+        cat2 = get_category_object(decisionAnnex2,
+                                   decisionAnnex2.content_category)
+        self.assertEqual(cat1, cat2)
+        # correctly used for content_category_uid index
+        catalog = self.portal.portal_catalog
+        uids_using_cat = [brain.UID for brain in catalog(content_category_uid=cat1.UID())]
+        self.assertTrue(decisionAnnex1.UID() in uids_using_cat)
+        self.assertTrue(decisionAnnex2.UID() in uids_using_cat)
 
     def test_pm_SentToInfosIndex(self):
         """The fact that an item is sendable/sent to another MC is indexed."""

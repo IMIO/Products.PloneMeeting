@@ -57,6 +57,7 @@ from plone import api
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.documentviewer.async import queueJob
 from collective.documentviewer.settings import GlobalSettings
+from collective.iconifiedcategory.behaviors.iconifiedcategorization import IconifiedCategorization
 from collective.iconifiedcategory.interfaces import IIconifiedPreview
 from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.utils import get_categorized_elements
@@ -1270,14 +1271,20 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 if "/portal_plonemeeting/{0}".format(annex_cfg_id) in brain.getPath()]
         if other_mc_correspondences:
             other_mc_correspondence = other_mc_correspondences[0]
-            annex.content_category = calculate_category_id(other_mc_correspondence)
+            adapted_annex = IconifiedCategorization(annex)
+            setattr(adapted_annex,
+                    'content_category',
+                    calculate_category_id(other_mc_correspondence))
         else:
             # use default category
-            categories = get_categories(annex)
+            categories = get_categories(annex, sort_on='getObjPositionInParent')
             if not categories:
                 return False
             else:
-                annex.content_category = calculate_category_id(categories[0].getObject())
+                adapted_annex = IconifiedCategorization(annex)
+                setattr(adapted_annex,
+                        'content_category',
+                        calculate_category_id(categories[0].getObject()))
         return True
 
     security.declarePublic('getSelf')
