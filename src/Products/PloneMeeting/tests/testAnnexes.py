@@ -730,6 +730,17 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(View, item))
         self.assertRaises(Unauthorized, item.folder_position_typeaware, position='up', id=annex1.getId())
 
+    def test_pm_AnnexesCreationDateKeptWhenItemDuplicated(self):
+        """When an item is duplicated, if annexes are kept,
+           the annexes creation date is also kept."""
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        annex1 = self.addAnnex(item)
+        annex2 = self.addAnnex(item)
+        clonedItem = item.clone()
+        self.assertEqual(annex1.created(), clonedItem.objectValues()[0].created())
+        self.assertEqual(annex2.created(), clonedItem.objectValues()[1].created())
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
