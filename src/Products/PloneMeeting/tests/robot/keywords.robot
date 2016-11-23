@@ -16,8 +16,9 @@ Select collection
 Click and Screenshot overlayForm
     [Arguments]  ${locator}  ${image_title}  ${screen_zone}
     Click element  ${locator}
+    Sleep  1
     wait until element is visible  ${screen_zone}  2
-    Sleep  0.3
+    Sleep  1
     Capture and crop page screenshot  ${image_title}  ${screen_zone}
 
 Scroll Page
@@ -26,4 +27,4 @@ Scroll Page
 
 Wait Until Page Loaded
     Wait Until Element Is Not Visible  css=.faceted-lock-overlay  10
-    Sleep  0.2
+    Sleep  1
