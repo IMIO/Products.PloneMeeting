@@ -125,13 +125,15 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
 
     def createUser(self, username, roles):
         '''Creates a user named p_username with some p_roles.'''
-        api.user.create(email='test@test.be',
-                        username=username,
-                        password=DEFAULT_USER_PASSWORD,
-                        roles=[],
-                        properties={})
+        newUser = api.user.create(
+            email='test@test.be',
+            username=username,
+            password=DEFAULT_USER_PASSWORD,
+            roles=[],
+            properties={})
         setRoles(self.portal, username, roles)
         _createHomeFolder(self.portal, username)
+        return newUser
 
     def setMeetingConfig(self, meetingConfigId):
         '''On which meeting config must we work?'''

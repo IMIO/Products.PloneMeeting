@@ -126,6 +126,9 @@
            name="decided-items" />
 
   <!-- IContentDeletable adapter override for PloneMeeting -->
+  <adapter for="imio.annex.content.annex.IAnnex"
+           factory=".adapters.AnnexDecisionContentDeletableAdapter"
+           provides="imio.actionspanel.interfaces.IContentDeletable" />
   <adapter for="Products.PloneMeeting.Meeting.Meeting"
            factory=".adapters.MeetingContentDeletableAdapter"
            provides="imio.actionspanel.interfaces.IContentDeletable" />

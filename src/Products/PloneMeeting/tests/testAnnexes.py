@@ -741,6 +741,20 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertEqual(annex1.created(), clonedItem.objectValues()[0].created())
         self.assertEqual(annex2.created(), clonedItem.objectValues()[1].created())
 
+    def test_pm_DecisionAnnexesDeletableByOwner(self):
+        """annexDecision may be deleted by the Owner, aka the user that added the annex."""
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.validateItem(item)
+        decisionAnnex1 = self.addAnnex(item, relatedTo='item_decision')
+        self.assertTrue(decisionAnnex1 in item.objectValues())
+        item.restrictedTraverse('@@delete_givenuid')(decisionAnnex1.UID())
+        self.assertFalse(decisionAnnex1 in item.objectValues())
+        # add an annex and another user having same groups for item can not remove it
+        decisionAnnex2 = self.addAnnex(item, relatedTo='item_decision')
+        self.changeUser('pmCreator1b')
+        self.assertRaises(Unauthorized, item.restrictedTraverse('@@delete_givenuid'), decisionAnnex2.UID())
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

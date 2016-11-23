@@ -403,6 +403,26 @@ class AnnexableAdapter(object):
         return 'successfully_converted'
 
 
+class AnnexDecisionContentDeletableAdapter(APContentDeletableAdapter):
+    """
+      Manage the mayDelete for annexDecision.
+      A decision annex is deletable by the annexDecision Owner ad vitam.
+    """
+    def __init__(self, context):
+        self.context = context
+
+    def mayDelete(self):
+        '''See docstring in interfaces.py.'''
+        # check 'Delete objects' permission
+        mayDelete = super(AnnexDecisionContentDeletableAdapter, self).mayDelete()
+        if not mayDelete:
+            if self.context.portal_type == 'annexDecision':
+                member = api.user.get_current()
+                if 'Owner' in member.getRolesInContext(self.context):
+                    return True
+        return mayDelete
+
+
 class MeetingItemContentDeletableAdapter(APContentDeletableAdapter):
     """
       Manage the mayDelete for MeetingItem.
