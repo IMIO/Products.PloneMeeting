@@ -38,7 +38,7 @@ from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import ADVICE_GIVEN_HISTORIZED_COMMENT
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
-from Products.PloneMeeting.utils import _addContentPermissions
+from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import addRecurringItemsIfRelevant
 from Products.PloneMeeting.utils import AdviceAfterAddEvent
 from Products.PloneMeeting.utils import AdviceAfterModifyEvent
@@ -359,7 +359,7 @@ def onAdviceAdded(advice, event):
     # make the entire _advisers group able to edit the meetingadvice
     advice.manage_addLocalRoles('%s_advisers' % advice.advice_group, ('Editor', ))
 
-    _addContentPermissions(advice)
+    _addManagedPermissions(advice)
 
     # make sure external images used in RichText fields are stored locally
     storeExternalImagesLocallyDexterity(advice)
@@ -468,7 +468,7 @@ def onAdviceTransition(advice, event):
         parent.adviceIndex[advice.advice_group]['advice_given_on'] = advice_given_on
         parent.adviceIndex[advice.advice_group]['advice_given_on_localized'] = toLocalizedTime(advice_given_on)
 
-    _addContentPermissions(advice)
+    _addManagedPermissions(advice)
 
 
 def onAnnexAdded(annex, event):

@@ -17,7 +17,7 @@ from imio.helpers.catalog import removeIndexes
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_REAPPLY
 
 from Products.PloneMeeting.migrations import Migrator
-from Products.PloneMeeting.utils import _addContentPermissions
+from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import updateCollectionCriterion
 
@@ -554,16 +554,15 @@ class Migrate_To_4_0(Migrator):
         self.tool.updateAllLocalRoles()
         logger.info('Done.')
 
-    def _manageAddContentPermissions(self):
-        '''Configure the permissions to add content, inlcuding 'ATContentTypes: Add Image'
-           permission on meetings, items and advices.'''
-        logger.info('Updating add content permissions...')
+    def _updateManagedPermissions(self):
+        '''Add some permissions managed automatically.'''
+        logger.info('Updating permissions managed automatically...')
         # manage multiple 'meetingadvice' portal_types
         brains = self.portal.portal_catalog(meta_type=['Meeting', 'MeetingItem'] +
                                             self.tool.getAdvicePortalTypes(as_ids=True))
         for brain in brains:
             obj = brain.getObject()
-            _addContentPermissions(obj)
+            _addManagedPermissions(obj)
         logger.info('Done.')
 
     def _initNewHTMLFields(self):
@@ -997,7 +996,7 @@ class Migrate_To_4_0(Migrator):
         self._cleanMeetingConfigs()
         self._cleanMeetingUsers()
         self._updateAllLocalRoles()
-        self._manageAddContentPermissions()
+        self._updateManagedPermissions()
         self._initNewHTMLFields()
         self._updateHistoryComments()
         self._updateCKeditorCustomToolbar()

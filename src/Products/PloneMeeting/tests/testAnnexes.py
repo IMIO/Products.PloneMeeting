@@ -707,6 +707,29 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertNotEqual(initial_conversion_date,
                             IAnnotations(annex)['collective.documentviewer']['last_updated'])
 
+    def test_pm_ChangeAnnexPosition(self):
+        """Annexes are orderable by the user able to add annexes."""
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        annex1 = self.addAnnex(item)
+        annex2 = self.addAnnex(item)
+        annex3 = self.addAnnex(item)
+        self.assertEqual(item.objectValues(), [annex1, annex2, annex3])
+        item.folder_position_typeaware(position='down', id=annex1.getId())
+        self.assertEqual(item.objectValues(), [annex2, annex1, annex3])
+        # member of the same group are able to change annexes position
+        self.assertTrue('developers_creators' in self.member.getGroups())
+        self.changeUser('pmCreator1b')
+        self.assertTrue('developers_creators' in self.member.getGroups())
+        item.folder_position_typeaware(position='down', id=annex1.getId())
+        self.assertEqual(item.objectValues(), [annex2, annex3, annex1])
+        # only members able to add annexes are able to change position
+        self.validateItem(item)
+        self.assertEqual(item.queryState(), 'validated')
+        self.changeUser('pmObserver1')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertRaises(Unauthorized, item.folder_position_typeaware, position='up', id=annex1.getId())
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

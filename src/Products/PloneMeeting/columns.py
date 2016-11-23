@@ -6,6 +6,8 @@ from plone import api
 
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
+from Products.PloneMeeting.config import AddAnnex
+from Products.PloneMeeting.config import AddAnnexDecision
 from Products.PloneMeeting.interfaces import IMeeting
 
 from collective.eeafaceted.z3ctable.columns import AbbrColumn
@@ -265,6 +267,20 @@ class ItemCheckBoxColumn(CheckBoxColumn):
 
 class PMAnnexActionsColumn(AnnexActionsColumn):
     """ """
-    params = AnnexActionsColumn.params
+    params = AnnexActionsColumn.params.copy()
     params.update({'edit_action_class': 'link-overlay-pm-annex'})
     params.update({'arrowsPortalTypeAware': True})
+
+    def renderCell(self, item):
+        # display arrows for annex and/or annexDecision depending on relevant add permissions
+        obj = self._getObject(item)
+        parent = obj.aq_parent
+        if obj.portal_type == 'annex' and \
+           not _checkPermission(AddAnnex, parent):
+            self.params['showArrows'] = False
+        elif obj.portal_type == 'annexDecision' and \
+                not _checkPermission(AddAnnexDecision, parent):
+            self.params['showArrows'] = False
+        else:
+            self.params['showArrows'] = True
+        return super(AnnexActionsColumn, self).renderCell(item)

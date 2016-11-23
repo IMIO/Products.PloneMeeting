@@ -94,7 +94,7 @@ from Products.PloneMeeting.model.adaptations import RETURN_TO_PROPOSING_GROUP_MA
 from Products.PloneMeeting.Meeting import Meeting
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowConditions
-from Products.PloneMeeting.utils import _addContentPermissions
+from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
 from Products.PloneMeeting.utils import addDataChange
 from Products.PloneMeeting.utils import AdvicesUpdatedEvent
@@ -4628,9 +4628,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         for advice in self.getAdvices():
             update_all_categorized_elements(advice)
 
-        # manage the 'ATContentTypes: Add Image'
-        # and the 'Add portal content' permissions
-        _addContentPermissions(self)
+        # manage automatically given permissions
+        _addManagedPermissions(self)
         # notify that localRoles have been updated
         notify(ItemLocalRolesUpdatedEvent(self, old_local_roles))
         # reindex relevant indexes
