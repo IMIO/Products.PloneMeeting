@@ -25,6 +25,8 @@ Scroll Page
     [Arguments]  ${x_location}  ${y_location}
     Execute JavaScript  window.scrollTo(${x_location},${y_location})
 
-Wait Until Page Loaded
+Wait Until Page Loaded And Element Enabled
+    [Arguments]  ${locator}
+    Wait Until Element Is Visible  ${locator}  10
     Wait Until Element Is Not Visible  css=.faceted-lock-overlay  10
-    Sleep  1
+    Wait Until Element Is Enabled  ${locator}  10
