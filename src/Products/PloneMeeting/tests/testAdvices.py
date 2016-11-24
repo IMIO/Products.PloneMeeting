@@ -121,6 +121,25 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmReviewer2')
         self.failIf(self.hasPermission(View, (item1, item2, item3)))
 
+    def test_pm_ShowAdvices(self):
+        """Shown if MeetingConfig.useAdvices or MeetingItem.adviceIndex."""
+        cfg = self.meetingConfig
+
+        self.changeUser('pmCreator1')
+        cfg.setUseAdvices(False)
+        item = self.create('MeetingItem')
+        self.assertFalse(item.adapted().showAdvices())
+        # if an advice is asked, it will be shown
+        item.setOptionalAdvisers(('vendors',))
+        item.at_post_edit_script()
+        self.assertTrue(item.adapted().showAdvices())
+        # shown if cfg.useAdvices
+        item.setOptionalAdvisers(())
+        item.at_post_edit_script()
+        self.assertFalse(item.adapted().showAdvices())
+        cfg.setUseAdvices(True)
+        self.assertTrue(item.adapted().showAdvices())
+
     def test_pm_AddEditDeleteAdvices(self):
         '''This test the MeetingItem.getAdvicesGroupsInfosForUser method.
            MeetingItem.getAdvicesGroupsInfosForUser returns 2 lists : first with addable advices and
@@ -133,10 +152,8 @@ class testAdvices(PloneMeetingTestCase):
             'category': 'maintenance'
         }
         item1 = self.create('MeetingItem', **data)
-        self.assertEquals(item1.adapted().showAdvices(), False)
         item1.setOptionalAdvisers(('vendors',))
         item1.at_post_edit_script()
-        self.assertEquals(item1.adapted().showAdvices(), True)
         # 'pmCreator1' has no addable nor editable advice to give
         self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([], []))
         self.changeUser('pmReviewer2')
@@ -359,7 +376,6 @@ class testAdvices(PloneMeetingTestCase):
             'optionalAdvisers': ('vendors',)
         }
         item1 = self.create('MeetingItem', **data)
-        self.assertEquals(item1.adapted().showAdvices(), True)
         # check than the adviser can see the item
         self.changeUser('pmReviewer2')
         self.failUnless(self.hasPermission(View, item1))
@@ -381,7 +397,6 @@ class testAdvices(PloneMeetingTestCase):
             'optionalAdvisers': ('vendors',)
         }
         item = self.create('MeetingItem', **data)
-        self.assertEquals(item.adapted().showAdvices(), True)
         self.failIf(item.willInvalidateAdvices())
         self.proposeItem(item)
         # login as adviser and add an advice
