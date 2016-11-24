@@ -69,7 +69,9 @@ class ItemCategoriesVocabulary(object):
     def __call___cachekey(method, self, context):
         '''cachekey method for self.__call__.'''
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.categoriesvocabulary')
-        return date
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        return date, cfg
 
     @ram.cache(__call___cachekey)
     def __call__(self, context):
@@ -211,7 +213,9 @@ class MeetingDatesVocabulary(object):
     def __call___cachekey(method, self, context):
         '''cachekey method for self.__call__.'''
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.meetingdatesvocabulary')
-        return date
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        return date, cfg
 
     @ram.cache(__call___cachekey)
     def __call__(self, context):
@@ -260,7 +264,9 @@ class AskedAdvicesVocabulary(object):
     def __call___cachekey(method, self, context):
         '''cachekey method for self.__call__.'''
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.askedadvicesvocabulary')
-        return date
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        return date, cfg
 
     @ram.cache(__call___cachekey)
     def __call__(self, context):
@@ -329,7 +335,9 @@ class AdviceTypesVocabulary(object):
     def __call___cachekey(method, self, context):
         '''cachekey method for self.__call__.'''
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.advicetypesvocabulary')
-        return date
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        return date, cfg
 
     @ram.cache(__call___cachekey)
     def __call__(self, context):

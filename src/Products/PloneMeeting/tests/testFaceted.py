@@ -114,6 +114,24 @@ class testFaceted(PloneMeetingTestCase):
         terms = vocab(pmFolder)
         self.assertEquals(len(terms), nbOfCategories)
 
+    def test_pm_ItemCategoriesVocabularyMCAware(self):
+        '''Test that "Products.PloneMeeting.vocabularies.categoriesvocabulary"
+           vocabulary, is MeetingConfig aware, especially because it is cached.'''
+        self.changeUser('siteadmin')
+        pmFolder = self.getMeetingFolder()
+        cfg = self.meetingConfig
+        cfg.setUseGroupsAsCategories(False)
+        vocab = queryUtility(IVocabularyFactory,
+                             "Products.PloneMeeting.vocabularies.categoriesvocabulary")
+        terms_cfg1 = [term.token for term in vocab(pmFolder)]
+        # now in cfg2
+        cfg2 = self.meetingConfig2
+        self.setMeetingConfig(cfg2.getId())
+        cfg2.setUseGroupsAsCategories(False)
+        pmFolder = self.getMeetingFolder()
+        terms_cfg2 = [term.token for term in vocab(pmFolder)]
+        self.assertNotEqual(terms_cfg1, terms_cfg2)
+
     def test_pm_MeetingDatesVocabulary(self):
         '''Test the "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
            vocabulary, especially because it is cached.'''
@@ -145,6 +163,31 @@ class testFaceted(PloneMeetingTestCase):
         self.portal.restrictedTraverse('@@delete_givenuid')(meeting.UID())
         # cache was cleaned
         self.assertEquals(len(vocab(pmFolder)), 1)
+
+    def test_pm_MeetingDatesVocabularyMCAware(self):
+        '''Test that "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
+           vocabulary, is MeetingConfig aware, especially because it is cached.'''
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        self.changeUser('pmManager')
+        pmFolder = self.getMeetingFolder()
+        vocab = queryUtility(IVocabularyFactory,
+                             "Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
+        # create Meetings in cfg1
+        self.create('Meeting', date=DateTime('2015/05/05'))
+        self.create('Meeting', date=DateTime('2015/05/06'))
+        # create Meetings in cfg2
+        self.setMeetingConfig(cfg2.getId())
+        self.create('Meeting', date=DateTime('2016/05/05'))
+        self.create('Meeting', date=DateTime('2016/05/06'))
+
+        self.setMeetingConfig(cfg.getId())
+        pmFolder = self.getMeetingFolder()
+        terms_cfg1 = [term.token for term in vocab(pmFolder)]
+        self.setMeetingConfig(cfg2.getId())
+        pmFolder = self.getMeetingFolder()
+        terms_cfg2 = [term.token for term in vocab(pmFolder)]
+        self.assertNotEqual(terms_cfg1, terms_cfg2)
 
     def test_pm_ProposingGroupsVocabularies(self):
         '''Test the "Products.PloneMeeting.vocabularies.proposinggroupsvocabulary"
@@ -281,6 +324,52 @@ class testFaceted(PloneMeetingTestCase):
         cfg.at_post_edit_script()
         self.assertEquals(len(vocab(pmFolder)), 6)
 
+    def test_pm_AskedAdvicesVocabulariesMCAware(self):
+        '''Test the "Products.PloneMeeting.vocabularies.askedadvicesvocabulary"
+           vocabulary, is MeetingConfig aware, especially because it is cached.'''
+        self.changeUser('siteadmin')
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        customAdvisers = [{'row_id': 'unique_id_000',
+                           'group': 'developers',
+                           'gives_auto_advice_on': '',
+                           'for_item_created_from': '2012/01/01',
+                           'delay': '2',
+                           'delay_label': ''},
+                          {'row_id': 'unique_id_123',
+                           'group': 'vendors',
+                           'gives_auto_advice_on': '',
+                           'for_item_created_from': '2012/01/01',
+                           'delay': '5',
+                           'delay_label': ''},
+                          {'row_id': 'unique_id_456',
+                           'group': 'vendors',
+                           'gives_auto_advice_on': '',
+                           'for_item_created_from': '2012/01/01',
+                           'delay': '10',
+                           'delay_label': ''},
+                          {'row_id': 'unique_id_789',
+                           'group': 'vendors',
+                           'gives_auto_advice_on': '',
+                           'for_item_created_from': '2012/01/01',
+                           'delay': '20',
+                           'delay_label': ''}]
+        cfg.setCustomAdvisers(customAdvisers)
+        customAdvisers = [{'row_id': 'unique_id_999',
+                           'group': 'developers',
+                           'gives_auto_advice_on': '',
+                           'for_item_created_from': '2012/01/01',
+                           'delay': '20',
+                           'delay_label': ''}]
+        cfg2.setCustomAdvisers(customAdvisers)
+        pmFolder = self.getMeetingFolder()
+        vocab = queryUtility(IVocabularyFactory, "Products.PloneMeeting.vocabularies.askedadvicesvocabulary")
+        terms_cfg1 = [term.token for term in vocab(pmFolder)]
+        self.setMeetingConfig(cfg2.getId())
+        pmFolder = self.getMeetingFolder()
+        terms_cfg2 = [term.token for term in vocab(pmFolder)]
+        self.assertNotEqual(terms_cfg1, terms_cfg2)
+
     def test_pm_AdviceTypesVocabulary(self):
         '''Test the "Products.PloneMeeting.vocabularies.advicetypesvocabulary"
            vocabulary, especially because it is cached.'''
@@ -296,6 +385,23 @@ class testFaceted(PloneMeetingTestCase):
         cfg.setUsedAdviceTypes(('positive', ))
         cfg.at_post_edit_script()
         self.assertEquals(len(vocab(pmFolder)), 4)
+
+    def test_pm_AdviceTypesVocabularyMCAware(self):
+        '''Test the "Products.PloneMeeting.vocabularies.advicetypesvocabulary"
+           vocabulary, is MeetingConfig aware, especially because it is cached.'''
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        self.changeUser('siteadmin')
+        cfg.setUsedAdviceTypes(('positive', 'negative'))
+        cfg2.setUsedAdviceTypes(('positive', ))
+        vocab = queryUtility(IVocabularyFactory, "Products.PloneMeeting.vocabularies.advicetypesvocabulary")
+
+        pmFolder = self.getMeetingFolder()
+        terms_cfg1 = [term.token for term in vocab(pmFolder)]
+        self.setMeetingConfig(cfg2.getId())
+        pmFolder = self.getMeetingFolder()
+        terms_cfg2 = [term.token for term in vocab(pmFolder)]
+        self.assertNotEqual(terms_cfg1, terms_cfg2)
 
     def test_pm_RedirectedToDefaultSearchPMFolderOnlyIfNecessary(self):
         """This test portlet_plonemeeting.widget_render where we manipulate the redirection,

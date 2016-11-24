@@ -722,7 +722,6 @@ class CheckPodTemplatesView(BrowserView):
                 messages['no_obj_found'].append((pod_template, None))
                 continue
 
-            document_template = pod_template.get_file()
             kwargs = {}
             kwargs['raiseOnError'] = True
             for obj in objs:
@@ -730,7 +729,7 @@ class CheckPodTemplatesView(BrowserView):
                 self.request.set('template_uid', pod_template.UID())
                 self.request.set('output_format', 'odt')
                 try:
-                    view._render_document(document_template,
+                    view._render_document(pod_template,
                                           output_format='odt',
                                           sub_documents=[],
                                           **kwargs)
