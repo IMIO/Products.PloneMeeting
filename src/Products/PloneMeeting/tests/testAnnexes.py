@@ -743,11 +743,16 @@ class testAnnexes(PloneMeetingTestCase):
 
     def test_pm_DecisionAnnexesDeletableByOwner(self):
         """annexDecision may be deleted by the Owner, aka the user that added the annex."""
+        cfg = self.meetingConfig
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         self.validateItem(item)
         decisionAnnex1 = self.addAnnex(item, relatedTo='item_decision')
         self.assertTrue(decisionAnnex1 in item.objectValues())
+        # doable if cfg.ownerMayDeleteAnnexDecision is True
+        self.assertFalse(cfg.getOwnerMayDeleteAnnexDecision())
+        self.assertRaises(Unauthorized, item.restrictedTraverse('@@delete_givenuid'), decisionAnnex1.UID())
+        cfg.setOwnerMayDeleteAnnexDecision(True)
         item.restrictedTraverse('@@delete_givenuid')(decisionAnnex1.UID())
         self.assertFalse(decisionAnnex1 in item.objectValues())
         # add an annex and another user having same groups for item can not remove it

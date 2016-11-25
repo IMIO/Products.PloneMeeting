@@ -36,6 +36,7 @@ from imio.actionspanel.adapters import ContentDeletableAdapter as APContentDelet
 from imio.history.adapters import ImioWfHistoryAdapter
 from imio.prettylink.adapters import PrettyLinkAdapter
 from Products.PloneMeeting import PMMessageFactory as _
+from Products.PloneMeeting.config import AddAnnexDecision
 from Products.PloneMeeting.config import MEETINGREVIEWERS
 from Products.PloneMeeting.config import MEETINGROLES
 from Products.PloneMeeting.interfaces import IMeeting
@@ -416,10 +417,16 @@ class AnnexDecisionContentDeletableAdapter(APContentDeletableAdapter):
         # check 'Delete objects' permission
         mayDelete = super(AnnexDecisionContentDeletableAdapter, self).mayDelete()
         if not mayDelete:
+            # a 'Owner' may still remove an 'annexDecision' if enabled
+            # in the cfg and if still able to add 'annexDecision'
             if self.context.portal_type == 'annexDecision':
-                member = api.user.get_current()
-                if 'Owner' in member.getRolesInContext(self.context):
-                    return True
+                tool = api.portal.get_tool('portal_plonemeeting')
+                cfg = tool.getMeetingConfig(self.context)
+                if cfg.getOwnerMayDeleteAnnexDecision() and \
+                   _checkPermission(AddAnnexDecision, self.context):
+                    member = api.user.get_current()
+                    if 'Owner' in member.getRolesInContext(self.context):
+                        return True
         return mayDelete
 
 
