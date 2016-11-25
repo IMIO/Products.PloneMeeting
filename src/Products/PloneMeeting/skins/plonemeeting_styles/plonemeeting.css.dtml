@@ -360,6 +360,12 @@ div.pm_search_no_result_info {
     margin: 0;
 }
 
+/* the number displayed in the table of annexes */
+.td_cell_number-column {
+    font-size: 90%;
+    color: &dtml-tableHeaderTextColor;;
+}
+
 #faceted-form table.listing td.td_cell_advices {
     padding-left: 0.3em;
     padding-right: 0;
