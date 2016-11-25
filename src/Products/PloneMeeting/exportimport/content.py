@@ -30,6 +30,7 @@ __docformat__ = 'plaintext'
 from zope.i18n import translate
 from plone import api
 from collective.iconifiedcategory import CAT_SEPARATOR
+from Products.CMFPlone.interfaces.constrains import IConstrainTypes
 from imio.dashboard.utils import _updateDefaultCollectionFor
 from Products.PloneMeeting.config import registerClasses, PROJECTNAME
 from Products.PloneMeeting.model.adaptations import performModelAdaptations
@@ -195,12 +196,14 @@ class ToolInitializer:
             annex_type.other_mc_correspondences = real_other_mc_correspondences
 
         # finish configuration of annexType.other_mc_correspondences
+        # for ItemAnnexContentCategory and ItemAnnexContentSubcategory
         for annex_group in cfg.annexes_types.objectValues():
-            for annex_type in annex_group.objectValues():
-                if annex_type.other_mc_correspondences:
-                    _convert_to_real_other_mc_correspondences(annex_type)
-                    for subType in annex_type.objectValues():
-                        _convert_to_real_other_mc_correspondences(subType)
+            if not 'ItemAnnexContentCategory' in IConstrainTypes(annex_group).getLocallyAllowedTypes():
+                for annex_type in annex_group.objectValues():
+                    if annex_type.other_mc_correspondences:
+                        _convert_to_real_other_mc_correspondences(annex_type)
+                        for subType in annex_type.objectValues():
+                            _convert_to_real_other_mc_correspondences(subType)
 
 
 def isTestOrArchiveProfile(context):

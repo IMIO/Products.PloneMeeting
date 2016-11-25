@@ -35,7 +35,6 @@ from plone.app.testing import login, logout
 
 from Products.PloneTestCase.setup import _createHomeFolder
 
-from collective.documentviewer.settings import Settings
 from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.utils import get_config_root
 from imio.helpers.cache import cleanRamCacheFor
@@ -330,7 +329,6 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             to_print=False,
             confidential=False,
         )
-        Settings(theAnnex)
         # need to commit the transaction so the stored blob is correct
         # if not done, accessing the blob will raise 'BlobError: Uncommitted changes'
         transaction.commit()

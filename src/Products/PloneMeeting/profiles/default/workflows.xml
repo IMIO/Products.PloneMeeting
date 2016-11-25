@@ -66,6 +66,12 @@
   <type type_id="ContentSubcategory">
      <bound-workflow workflow_id="plonemeeting_onestate_workflow" />
   </type>
+  <type type_id="ItemAnnexContentCategory">
+     <bound-workflow workflow_id="plonemeeting_onestate_workflow" />
+  </type>
+  <type type_id="ItemAnnexContentSubcategory">
+     <bound-workflow workflow_id="plonemeeting_onestate_workflow" />
+  </type>
   <type type_id="ToolPloneMeeting">
      <bound-workflow workflow_id="plonemeeting_onestate_workflow" />
   </type>

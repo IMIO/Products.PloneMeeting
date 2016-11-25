@@ -147,7 +147,8 @@ class PloneMeetingContentActionsViewlet(ContentActionsViewlet):
         if self.context.meta_type in ('ATTopic', 'Meeting', 'MeetingItem',  'MeetingCategory',
                                       'MeetingConfig', 'MeetingGroup', 'MeetingFileType', 'MeetingUser',
                                       'PodTemplate', 'ToolPloneMeeting',) or \
-           self.context.portal_type.startswith(('meetingadvice', 'ContentCategory',)):
+           self.context.portal_type.startswith(('meetingadvice',)) or \
+           self.context.portal_type.endswith(('ContentCategory', 'ContentSubcategory')):
             return ''
         return self.index()
 
@@ -188,7 +189,10 @@ class PMConfigActionsPanelViewlet(ActionsPanelViewlet):
         elif self.context.portal_type in ('ContentCategoryConfiguration',
                                           'ContentCategoryGroup',
                                           'ContentCategory',
-                                          'ContentSubcategory'):
+                                          'ContentSubcategory',
+                                          'ItemAnnexContentCategory',
+                                          'ItemAnnexContentSubcategory',
+                                          ):
             url = '{0}?pageName=data#annexes_types'.format(cfg_url, )
         else:
             # We are in a subobject from the tool.

@@ -632,9 +632,7 @@ class testAnnexes(PloneMeetingTestCase):
         # MeetingConfig.annexToPrintMode is 'enabled_for_printing'
         cfg.setAnnexToPrintMode('enabled_for_printing')
         converted_annex = self.addAnnex(item)
-        # as 'to_print' is in a behavior, it is not set by plone.api
-        # set it now and notify modified
-        self.assertIsNone(converted_annex.to_print)
+        self.assertFalse(converted_annex.to_print)
         self.assertFalse(IIconifiedPreview(converted_annex).converted)
         converted_annex.to_print = True
         notify(ObjectModifiedEvent(converted_annex))

@@ -23,7 +23,7 @@ from Products.PloneMeeting.config import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
 
 
-class Descriptor:
+class Descriptor(object):
     '''This abstract class represents Python data that will be used for
        initializing an Archetypes object.'''
     multiSelectFields = []
@@ -114,11 +114,18 @@ class CategoryDescriptor(Descriptor):
 
 
 class AnnexTypeDescriptor(Descriptor):
-    multiSelectFields = ('other_mc_correspondences', 'subTypes', )
+    multiSelectFields = ('subTypes', )
 
-    def __init__(self, id, title, icon, predefined_title,
-                 relatedTo='item', other_mc_correspondences=(),
-                 enabled=True, subTypes=(), confidential=False, to_print=False):
+    def __init__(self,
+                 id,
+                 title,
+                 icon,
+                 predefined_title,
+                 relatedTo='advice',
+                 enabled=True,
+                 subTypes=(),
+                 confidential=False,
+                 to_print=False):
         self.id = id
         self.title = title
         self.icon = icon
@@ -129,21 +136,57 @@ class AnnexTypeDescriptor(Descriptor):
         self.confidential = confidential
         self.to_print = to_print
         self.enabled = enabled
+
+
+class ItemAnnexTypeDescriptor(AnnexTypeDescriptor):
+
+    multiSelectFields = ('other_mc_correspondences', 'subTypes', )
+
+    def __init__(self,
+                 id,
+                 title,
+                 icon,
+                 predefined_title,
+                 relatedTo='item',
+                 other_mc_correspondences=(),
+                 enabled=True,
+                 subTypes=(),
+                 confidential=False,
+                 to_print=False):
+        super(ItemAnnexTypeDescriptor, self).__init__(
+            id=id,
+            title=title,
+            icon=icon,
+            predefined_title=predefined_title,
+            relatedTo=relatedTo,
+            enabled=enabled,
+            subTypes=subTypes,
+            confidential=confidential,
+            to_print=to_print)
         self.other_mc_correspondences = other_mc_correspondences
 
 
 class AnnexSubTypeDescriptor(Descriptor):
-    multiSelectFields = ('other_mc_correspondences', )
 
     def __init__(self, id, title, predefined_title,
-                 other_mc_correspondences=(), enabled=True,
-                 confidential=False, to_print=False):
+                 enabled=True, confidential=False, to_print=False):
         self.id = id
         self.title = title
         self.predefined_title = predefined_title
         self.confidential = confidential
         self.to_print = to_print
         self.enabled = enabled
+
+
+class ItemAnnexSubTypeDescriptor(AnnexSubTypeDescriptor):
+    multiSelectFields = ('other_mc_correspondences', )
+
+    def __init__(self, id, title, predefined_title,
+                 other_mc_correspondences=(), enabled=True,
+                 confidential=False, to_print=False):
+        super(ItemAnnexSubTypeDescriptor, self).__init__(
+            id=id, title=title, predefined_title=predefined_title,
+            enabled=enabled, confidential=confidential, to_print=to_print)
         self.other_mc_correspondences = other_mc_correspondences
 
 

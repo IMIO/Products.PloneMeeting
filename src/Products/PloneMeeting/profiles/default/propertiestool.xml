@@ -16,6 +16,8 @@
    <element value="File"/>
    <element value="Folder"/>
    <element value="Image"/>
+   <element value="ItemAnnexContentCategory"/>
+   <element value="ItemAnnexContentSubcategory"/>
    <element value="Link"/>
    <element value="News Item"/>
    <element value="meetingadvice"/>

@@ -324,20 +324,22 @@
               <tr>
                 <th class="nosort" width="200px">
                   <span tal:content="cat_group/Title">Group category title</span>
-                  <a href="#"
-                     title="add_object"
-                     i18n:attributes="title"
-                     tal:attributes="href string:${cat_group_url}/++add++ContentCategory"
-                     tal:condition="isRealManager">
-                    <img src="#" tal:attributes="src string: $portal_url/new.png" />
-                  </a>
-                  <a href="#"
-                     title="Edit attributes of this group of categories"
-                     i18n:attributes="title"
-                     tal:attributes="href string:${cat_group_url}/edit"
-                     tal:condition="isRealManager">
-                    <img src="#" tal:attributes="src string: $portal_url/edit.png" />
-                  </a>
+                  <tal:forRealManagers condition="isRealManager">
+                    <a href="#"
+                       title="add_object"
+                       i18n:attributes="title"
+                       tal:define="addable_content_category_type python: cat_group.allowedContentTypes()[0].id"
+                       tal:attributes="href string:${cat_group_url}/++add++${addable_content_category_type}">
+                      <img src="#" tal:attributes="src string: $portal_url/new.png" />
+                    </a>
+                    <a href="#"
+                       title="Edit attributes of this group of categories"
+                       i18n:attributes="title"
+                       tal:attributes="href string:${cat_group_url}/edit"
+                       tal:condition="isRealManager">
+                      <img src="#" tal:attributes="src string: $portal_url/edit.png" />
+                    </a>
+                  </tal:forRealManagers>
 
                   <tal:additionalInformations
                     define="obj python: cat_group;

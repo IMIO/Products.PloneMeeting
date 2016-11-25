@@ -2041,9 +2041,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         TOOL_FOLDER_SEARCHES: (('Searches', 'Folder'),
                                ('Folder', 'DashboardCollection', ),
                                # 'items' is a reserved word
-                               (('searches_items', 'Meeting items', 'Folder'),
-                                ('searches_meetings', 'Meetings', 'Folder'),
-                                ('searches_decisions', 'Decisions', 'Folder'))
+                               (('searches_items', 'Meeting items', 'Folder', ()),
+                                ('searches_meetings', 'Meetings', 'Folder', ()),
+                                ('searches_decisions', 'Decisions', 'Folder', ()))
                                ),
         TOOL_FOLDER_RECURRING_ITEMS: (('RecurringItems', 'Folder'),
                                       ('itemTypeRecurring', ),
@@ -2055,10 +2055,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                      ),
         TOOL_FOLDER_ANNEX_TYPES: (('Annex types', 'ContentCategoryConfiguration'),
                                   (),
-                                  (('item_annexes', 'Item annexes', 'ContentCategoryGroup'),
-                                   ('item_decision_annexes', 'Item decision annexes', 'ContentCategoryGroup'),
-                                   ('advice_annexes', 'Advice annexes', 'ContentCategoryGroup'),
-                                   ('meeting_annexes', 'Meeting annexes', 'ContentCategoryGroup'))
+                                  (('item_annexes', 'Item annexes',
+                                    'ContentCategoryGroup', ('ItemAnnexContentCategory', )),
+                                   ('item_decision_annexes', 'Item decision annexes',
+                                    'ContentCategoryGroup', ('ItemAnnexContentCategory', )),
+                                   ('advice_annexes', 'Advice annexes', 'ContentCategoryGroup', ()),
+                                   ('meeting_annexes', 'Meeting annexes', 'ContentCategoryGroup', ()))
                                   ),
         TOOL_FOLDER_POD_TEMPLATES: (('Document templates', 'Folder'),
                                     ('ConfigurablePODTemplate', 'DashboardPODTemplate'),
@@ -4139,9 +4141,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 folder.processForm(values={'dummy': None})
             folder.reindexObject()
 
-            for subFolderId, subFolderTitle, subFolderType in folderInfo[2]:
+            for subFolderId, subFolderTitle, subFolderType, subFolderConstrainTypes in folderInfo[2]:
                 folder.invokeFactory(subFolderType, subFolderId)
                 subFolder = getattr(folder, subFolderId)
+                if subFolderConstrainTypes:
+                    constrain = IConstrainTypes(subFolder)
+                    constrain.setConstrainTypesMode(1)
+                    allowedTypes = list(subFolderConstrainTypes)
+                    constrain.setLocallyAllowedTypes(allowedTypes)
+                    constrain.setImmediatelyAddableTypes(allowedTypes)
+
                 if subFolderId == 'searches_items':
                     tool._enableFacetedDashboardFor(subFolder,
                                                     xmlpath=os.path.dirname(__file__) +
@@ -4810,10 +4819,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def addAnnexType(self, at, source):
         '''Adds an annex type from a AnnexTypeDescriptor p_at.'''
         folder = getattr(self, TOOL_FOLDER_ANNEX_TYPES)
-        # create ContentCategory in right subfolder (ContentCategoryGroup)
+        # create (ItemAnnex)ContentCategory in right subfolder (ContentCategoryGroup)
+        portal_type = 'ContentCategory'
+        sub_portal_type = 'ContentSubcategory'
         if at.relatedTo == 'item':
+            portal_type = 'ItemAnnexContentCategory'
+            sub_portal_type = 'ItemAnnexContentSubcategory'
             categoryGroupId = 'item_annexes'
         elif at.relatedTo == 'item_decision':
+            portal_type = 'ItemAnnexContentCategory'
+            sub_portal_type = 'ItemAnnexContentSubcategory'
             categoryGroupId = 'item_decision_annexes'
         elif at.relatedTo == 'advice':
             categoryGroupId = 'advice_annexes'
@@ -4827,19 +4842,21 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         f.close()
         annexType = api.content.create(
             id=at.id,
-            type='ContentCategory',
+            type=portal_type,
             title=at.title,
             icon=contentCategoryFile,
             container=getattr(folder, categoryGroupId),
             to_print=at.to_print,
             confidential=at.confidential,
-            enabled=at.enabled,
-            other_mc_correspondences=at.other_mc_correspondences
+            enabled=at.enabled
         )
+        if portal_type == 'ItemAnnexContentCategory':
+            annexType.other_mc_correspondences = at.other_mc_correspondences
+
         for subType in at.subTypes:
-            api.content.create(
+            annexSubType = api.content.create(
                 id=subType.id,
-                type='ContentSubcategory',
+                type=sub_portal_type,
                 title=subType.title,
                 container=annexType,
                 to_print=subType.to_print,
@@ -4847,6 +4864,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 enabled=subType.enabled,
                 other_mc_correspondences=subType.other_mc_correspondences
             )
+            if portal_type == 'ItemAnnexContentSubcategory':
+                annexSubType.other_mc_correspondences = subType.other_mc_correspondences
         return annexType
 
     security.declarePrivate('addPodTemplate')
