@@ -198,7 +198,7 @@ class ToolInitializer:
         # finish configuration of annexType.other_mc_correspondences
         # for ItemAnnexContentCategory and ItemAnnexContentSubcategory
         for annex_group in cfg.annexes_types.objectValues():
-            if not 'ItemAnnexContentCategory' in IConstrainTypes(annex_group).getLocallyAllowedTypes():
+            if 'ItemAnnexContentCategory' in IConstrainTypes(annex_group).getLocallyAllowedTypes():
                 for annex_type in annex_group.objectValues():
                     if annex_type.other_mc_correspondences:
                         _convert_to_real_other_mc_correspondences(annex_type)

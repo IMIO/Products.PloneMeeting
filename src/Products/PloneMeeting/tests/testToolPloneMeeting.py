@@ -182,9 +182,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         item1 = self.create('MeetingItem')
         # Add one annex
         annex1 = self.addAnnex(item1)
-        # set the annex as 'toPrint', it is not to print by default
-        # this way we check that cloned annexes toPrint value is correctly handled
-        self.assertIsNone(annex1.to_print, None)
+        self.assertFalse(annex1.to_print, None)
         annex1.to_print = True
         workingFolder = item1.getParentNode()
         clonedItem = item1.clone()
@@ -424,7 +422,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # 2) sub category with no correspondence
         # so the default (first found) annex type will be used
         subCatCfg1 = get_category_object(annexCfg1, annexCfg1.content_category).objectValues()[0]
-        self.assertEqual(subCatCfg1.portal_type, 'ContentSubcategory')
+        self.assertEqual(subCatCfg1.portal_type, 'ItemAnnexContentSubcategory')
         # manipulate annexCfg2 content_category to use the subcategory from cfg1
         annexCfg2.content_category = calculate_category_id(subCatCfg1)
         self.assertTrue(self.tool._updateContentCategoryAfterSentToOtherMeetingConfig(annexCfg2, cfg))

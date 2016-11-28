@@ -2059,8 +2059,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                     'ContentCategoryGroup', ('ItemAnnexContentCategory', )),
                                    ('item_decision_annexes', 'Item decision annexes',
                                     'ContentCategoryGroup', ('ItemAnnexContentCategory', )),
-                                   ('advice_annexes', 'Advice annexes', 'ContentCategoryGroup', ()),
-                                   ('meeting_annexes', 'Meeting annexes', 'ContentCategoryGroup', ()))
+                                   ('advice_annexes', 'Advice annexes',
+                                    'ContentCategoryGroup', ('ContentCategory', )),
+                                   ('meeting_annexes', 'Meeting annexes',
+                                    'ContentCategoryGroup', ('ContentCategory', )))
                                   ),
         TOOL_FOLDER_POD_TEMPLATES: (('Document templates', 'Folder'),
                                     ('ConfigurablePODTemplate', 'DashboardPODTemplate'),
