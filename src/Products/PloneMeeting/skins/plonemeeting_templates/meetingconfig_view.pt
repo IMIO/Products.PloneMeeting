@@ -375,7 +375,20 @@
                   <tal:annexesSubcategories>
                     <table class="listing nosort" style="text-align: right;" width="100%">
                       <tr>
-                        <th class="nosort" width="200px" i18n:translate="heading_subtypes">Sub types</th>
+                        <th class="nosort" width="200px">
+                  <span i18n:translate="heading_subtypes">Sub types</span>
+                  <tal:forRealManagers condition="isRealManager">
+                    <a href="#"
+                       title="add_object"
+                       i18n:attributes="title"
+                       tal:define="cat_url cat/absolute_url;
+                                   addable_content_category_type python: cat.allowedContentTypes()[0].id"
+                       tal:attributes="href string:${cat_url}/++add++${addable_content_category_type}">
+                      <img src="#" tal:attributes="src string: $portal_url/new.png" />
+                    </a>
+                  </tal:forRealManagers>
+
+                        </th>
                         <th class="nosort" width="50px" i18n:translate="heading_is_active">Active?</th>
                         <th class="nosort" width="130px" i18n:translate="heading_actions">Actions</th>
                       </tr>

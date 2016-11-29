@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
 <object name="ItemAnnexContentSubcategory" meta_type="Dexterity FTI" i18n:domain="collective.iconifiedcategory"
    xmlns:i18n="http://xml.zope.org/namespaces/i18n">
-  <property name="title" i18n:translate="">ContentSubcategory</property>
+  <property name="title" i18n:translate="">ItemAnnexContentSubcategory</property>
   <property name="description" i18n:translate=""></property>
   <property name="content_icon"></property>
   <property name="factory">Subcategory</property>
-  <property name="add_view_expr">string:${folder_url}/++add++ContentSubcategory</property>
+  <property name="add_view_expr">string:${folder_url}/++add++ItemAnnexContentSubcategory</property>
   <property name="link_target"></property>
   <property name="immediate_view">view</property>
   <property name="global_allow">False</property>
