@@ -1537,6 +1537,14 @@ div.dashboard_annexes {
     padding: 0.1em 0.2em 0.3em !important;
 }
 
+/* add cell padding to tables written in rich text fields (CKeditor) */
+body.cke_editable table tr td,
+body.cke_editable table tr th,
+div[id^='hook_'] table tr td,
+div[id^='hook_'] table tr th {
+    padding: 0.3em;    
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */
