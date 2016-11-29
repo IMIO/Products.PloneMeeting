@@ -147,8 +147,9 @@ class PloneMeetingContentActionsViewlet(ContentActionsViewlet):
         if self.context.meta_type in ('ATTopic', 'Meeting', 'MeetingItem',  'MeetingCategory',
                                       'MeetingConfig', 'MeetingGroup', 'MeetingFileType', 'MeetingUser',
                                       'PodTemplate', 'ToolPloneMeeting',) or \
+           self.context.portal_type in ('ContentCategoryConfiguration', 'ContentCategoryGroup',) or \
            self.context.portal_type.startswith(('meetingadvice',)) or \
-           self.context.portal_type.endswith(('ContentCategory', 'ContentSubcategory')):
+           self.context.portal_type.endswith(('ContentCategory', 'ContentSubcategory',)):
             return ''
         return self.index()
 
@@ -163,13 +164,17 @@ class PMConfigActionsPanelViewlet(ActionsPanelViewlet):
 
     def renderViewlet(self):
         """ """
+        showAddContent = False
+        if 'ContentCategory' in self.context.portal_type:
+            showAddContent = True
         return self.context.restrictedTraverse("@@actions_panel")(useIcons=False,
                                                                   showTransitions=True,
                                                                   appendTypeNameToTransitionLabel=True,
                                                                   showArrows=False,
                                                                   showEdit=False,
                                                                   showDelete=False,
-                                                                  showActions=False)
+                                                                  showActions=False,
+                                                                  showAddContent=showAddContent)
 
     def getBackUrl(self):
         '''Computes the URL for "back" links in the tool or in a config.'''
@@ -632,7 +637,8 @@ class ConfigActionsPanelView(ActionsPanelView):
         self.SECTIONS_TO_RENDER = ('renderEdit',
                                    'renderTransitions',
                                    'renderArrows',
-                                   'renderOwnDelete')
+                                   'renderOwnDelete',
+                                   'renderAddContent')
         if self.context.meta_type == 'MeetingGroup':
             self.SECTIONS_TO_RENDER = self.SECTIONS_TO_RENDER + ('renderLinkedPloneGroups', )
 
