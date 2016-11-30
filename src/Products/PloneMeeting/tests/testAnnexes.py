@@ -744,7 +744,16 @@ class testAnnexes(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
+        item.setDecision('<p>Decision</p>')
         self.validateItem(item)
+        # when an item is 'accepted', the MeetingMember may add annexDecision
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2016/11/11'))
+        self.presentItem(item)
+        self.decideMeeting(meeting)
+        self.do(item, 'accept')
+        self.assertEqual(item.queryState(), 'accepted')
+        self.changeUser('pmCreator1')
         decisionAnnex1 = self.addAnnex(item, relatedTo='item_decision')
         self.assertTrue(decisionAnnex1 in item.objectValues())
         # doable if cfg.ownerMayDeleteAnnexDecision is True
