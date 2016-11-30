@@ -758,6 +758,42 @@ class testAnnexes(PloneMeetingTestCase):
         self.changeUser('pmCreator1b')
         self.assertRaises(Unauthorized, item.restrictedTraverse('@@delete_givenuid'), decisionAnnex2.UID())
 
+    def test_pm_ItemAnnexFormVocabularies(self):
+        """The vocabularies used for MeetingItem is different if used for annex or annexDecision."""
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        # set item in a state where both annex and annexDecision are addable
+        self.validateItem(item)
+
+        # check with form, context is the MeetingItem
+        form_annex = item.restrictedTraverse('++add++annex')
+        self.request['PUBLISHED'] = form_annex
+        form_annex_instance = form_annex.form_instance
+        form_annex_instance.update()
+        form_annex_widget = form_annex_instance.widgets['IIconifiedCategorization.content_category']
+        form_annex_widget_terms = form_annex_widget.terms.terms.by_token.keys()
+        self.assertEqual(
+            form_annex_widget_terms,
+            ['annexes_types_-_item_annexes_-_budget-analysis_-_budget-analysis-sub-annex',
+             'annexes_types_-_item_annexes_-_overhead-analysis',
+             'annexes_types_-_item_annexes_-_financial-analysis_-_financial-analysis-sub-annex',
+             'annexes_types_-_item_annexes_-_financial-analysis',
+             'annexes_types_-_item_annexes_-_item-annex',
+             'annexes_types_-_item_annexes_-_budget-analysis',
+             'annexes_types_-_item_annexes_-_overhead-analysis_-_overhead-analysis-sub-annex'])
+
+        # now for decisionAnnex
+        # check with form, context is the MeetingItem
+        form_annexDecision = item.restrictedTraverse('++add++annexDecision')
+        self.request['PUBLISHED'] = form_annexDecision
+        form_annexDecision_instance = form_annexDecision.form_instance
+        form_annexDecision_instance.update()
+        form_annexDecision_widget = form_annexDecision_instance.widgets['IIconifiedCategorization.content_category']
+        form_annexDecision_widget_terms = form_annexDecision_widget.terms.terms.by_token.keys()
+        self.assertEqual(
+            form_annexDecision_widget_terms,
+            ['annexes_types_-_item_decision_annexes_-_decision-annex'])
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
