@@ -16,6 +16,9 @@
     <viewlet name="plone.belowcontenttitle.documentbyline" />
   </hidden>
   <hidden manager="plone.belowcontentbody" skinname="*">
+    <viewlet name="iconifiedcategory.childs" />
+  </hidden>
+  <hidden manager="plone.belowcontentbody" skinname="*">
     <viewlet name="plone.belowcontentbody.contenthistory" />
   </hidden>
   <hidden manager="plone.belowcontentbody" skinname="*">

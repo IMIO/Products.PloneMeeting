@@ -52,44 +52,12 @@
  </action>
  <action title="Annexes"
          i18n:attributes="title"
-         action_id="annexes_form"
+         action_id="annexes"
          category="object"
-         condition_expr="python:here.showAnnexesTab(decisionRelated=False)"
+         condition_expr="python: here.portal_plonemeeting.showAnnexesTab(here)"
          icon_expr=""
-         url_expr="string:${object_url}/annexes_form"
+         url_expr="string:${object_url}/@@categorized-annexes"
          visible="True">
   <permission value="View"/>
  </action>
- <action title="AnnexesDecision"
-         i18n:attributes="title"
-         action_id="annexes_decision_form"
-         category="object"
-         condition_expr="python:here.showAnnexesTab(decisionRelated=True)"
-         icon_expr=""
-         url_expr="string:${object_url}/annexes_decision_form"
-         visible="True">
-  <permission value="PloneMeeting: Read decision annex"/>
- </action>
- <action title="Duplicate"
-         i18n:attributes="title"
-         action_id="duplicate"
-         category="object_buttons"
-         condition_expr="python:object.showDuplicateItemAction()"
-         icon_expr="string:${portal_url}/copy_icon.gif"
-         url_expr="string:${object_url}/onDuplicate"
-         visible="True">
-  <permission value="Copy or Move"/>
- </action>
- <action title="Duplicate and keep link"
-         i18n:attributes="title"
-         action_id="duplicate_and_keep_link"
-         category="object_buttons"
-         condition_expr="python:object.showDuplicateItemAction()"
-         icon_expr="string:${portal_url}/duplicate_and_keep_link.gif"
-         url_expr="string:${object_url}/onDuplicateAndKeepLink"
-         visible="True">
-  <permission value="Copy or Move"/>
- </action>
-<!-- ##code-section FOOT -->
-<!-- ##/code-section FOOT -->
 </object>

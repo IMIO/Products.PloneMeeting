@@ -9,12 +9,15 @@ from zope.i18n import translate
 from Products.CMFCore.utils import getToolByName
 from plone import api
 from plone.namedfile.file import NamedBlobFile
+from plone.namedfile.file import NamedBlobImage
 from Products.CMFPlone.utils import safe_unicode
+from collective.iconifiedcategory.utils import calculate_category_id
 from imio.dashboard.utils import _updateDefaultCollectionFor
 from imio.helpers.catalog import removeIndexes
+from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_REAPPLY
 
 from Products.PloneMeeting.migrations import Migrator
-from Products.PloneMeeting.utils import _addImagePermission
+from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import updateCollectionCriterion
 
@@ -147,8 +150,9 @@ class Migrate_To_4_0(Migrator):
                     if topic.getId() in collectionIds:
                         toDoListSearches.append(getattr(cfg.searches.searches_items, topic.getId()))
                     else:
-                        logger.warn('Moving to imio.dashboard : could not select a '
-                                    'collection with id "%s" for portlet_todo!' % topic.getId())
+                        warning_msg = 'Moving to imio.dashboard : could not select a collection with ' \
+                            'id "%s" for portlet_todo!' % topic.getId()
+                        self.warn(logger, warning_msg)
                 cfg.setToDoListSearches(toDoListSearches)
                 cfg.deleteReferences('ToDoTopics')
 
@@ -316,20 +320,15 @@ class Migrate_To_4_0(Migrator):
             meeting.deleteReferences('MeetingLateItems')
         logger.info('Done.')
 
-    def _cleanPMModificationDateOnItemsAndAnnexes(self):
-        '''The colorization on 'modification date' has been removed, clean items and
-           annexes.'''
-        logger.info('Removing \'pm_modification_date\' from items and annexes...')
+    def _cleanPMModificationDateOnItems(self):
+        '''The colorization on 'modification date' has been removed, clean items.'''
+        logger.info('Removing \'pm_modification_date\' from items...')
         brains = self.portal.portal_catalog(meta_type='MeetingItem')
         for brain in brains:
             item = brain.getObject()
             if hasattr(aq_base(item), 'pm_modification_date'):
                 delattr(aq_base(item), 'pm_modification_date')
-        brains = self.portal.portal_catalog(meta_type='MeetingFile')
-        for brain in brains:
-            annex = brain.getObject()
-            if hasattr(aq_base(annex), 'pm_modification_date'):
-                delattr(aq_base(annex), 'pm_modification_date')
+
         # remove the 'accessInfo' stored on portal_plonemeeting
         if hasattr(aq_base(self.tool), 'accessInfo'):
             delattr(aq_base(self.tool), 'accessInfo')
@@ -548,13 +547,6 @@ class Migrate_To_4_0(Migrator):
                     delattr(aq_base(user), 'mailFormat')
         logger.info('Done.')
 
-    def _updateAnnexIndex(self):
-        '''The annexIndex changed (removed key 'modification_date', added 'mftTitle'),
-           we need to update it on every items and advices.'''
-        logger.info('Updating annexIndex...')
-        self.tool.reindexAnnexes()
-        logger.info('Done.')
-
     def _updateAllLocalRoles(self):
         '''updateAllLocalRoles so especially the advices are updated because the 'comment'
            is always available in the adviceIndex now, even on still not given advices.'''
@@ -562,15 +554,15 @@ class Migrate_To_4_0(Migrator):
         self.tool.updateAllLocalRoles()
         logger.info('Done.')
 
-    def _manageAddImagePermission(self):
-        '''Configure the 'ATContentTypes: Add Image' permission on meetings, items and advices.'''
-        logger.info('Updating the \'ATContentTypes: Add Image\' permission...')
+    def _updateManagedPermissions(self):
+        '''Add some permissions managed automatically.'''
+        logger.info('Updating permissions managed automatically...')
         # manage multiple 'meetingadvice' portal_types
         brains = self.portal.portal_catalog(meta_type=['Meeting', 'MeetingItem'] +
                                             self.tool.getAdvicePortalTypes(as_ids=True))
         for brain in brains:
             obj = brain.getObject()
-            _addImagePermission(obj)
+            _addManagedPermissions(obj)
         logger.info('Done.')
 
     def _initNewHTMLFields(self):
@@ -582,20 +574,6 @@ class Migrate_To_4_0(Migrator):
         for brain in brains:
             itemOrMeeting = brain.getObject()
             forceHTMLContentTypeForEmptyRichFields(itemOrMeeting)
-        logger.info('Done.')
-
-    def _updateEnableAnnexToPrint(self):
-        """MeetingConfig.enableAnnexToPrint was a BooleanField, it is now a StringField.
-           Move 'False' to 'disabled' and 'True' to 'enabled_for_info'.
-        """
-        logger.info('Updating every MeetingConfigs \'enableAnnexToPrint\' from boolean to string...')
-        for cfg in self.tool.objectValues('MeetingConfig'):
-            enableAnnexToPrint = cfg.enableAnnexToPrint
-            if isinstance(enableAnnexToPrint, bool):
-                if enableAnnexToPrint is True:
-                    cfg.setEnableAnnexToPrint('enabled_for_info')
-                else:
-                    cfg.setEnableAnnexToPrint('disabled')
         logger.info('Done.')
 
     def _updateHistoryComments(self):
@@ -637,31 +615,45 @@ class Migrate_To_4_0(Migrator):
 
     def _updateCKeditorCustomToolbar(self):
         """If still using the old default toolbar, move to the new toolbar
-           where buttons 'link', 'Unlink' and 'Image' are added."""
-        logger.info('Updating ckeditor custom toolbar, adding buttons \'Link\', \'Unlink\' and \'Image\'...')
+           where buttons ,'NbSpace','NbHyphen', 'link', 'Unlink' and 'Image' are added."""
+        logger.info('Updating ckeditor custom toolbar, adding buttons'
+                    '\'NbSpace\', \'NbHyphen\', \'Link\', \'Unlink\' and \'Image\'...')
         toolbar = self.portal.portal_properties.ckeditor_properties.toolbar_Custom
+        if not 'NbSpace' in toolbar and not 'NbHyphen' in toolbar:
+            # try to insert these buttons after 'Format' or 'Styles'
+            if 'Format' in toolbar:
+                toolbar = toolbar.replace("'Format'", "'Format','NbSpace','NbHyphen'")
+            elif 'Styles' in toolbar:
+                toolbar = toolbar.replace("'Styles'", "'Styles','NbSpace','NbHyphen'")
+            else:
+                self.warn(logger, "Could not add new buttons 'NbSpace' and 'NbHyphen' to the ckeditor toolbar!")
+
         if not 'Image' in toolbar:
             # try to insert these buttons after 'SpecialChar' or 'Table'
             if 'SpecialChar' in toolbar:
-                toolbar.replace("'SpecialChar'", "'SpecialChar','Image'")
+                toolbar = toolbar.replace("'SpecialChar'", "'SpecialChar','Image'")
             elif 'Table' in toolbar:
-                toolbar.replace("'Table'", "'Table','Image'")
+                toolbar = toolbar.replace("'Table'", "'Table','Image'")
             else:
-                logger.warn("Could not add new button 'Image' to the ckeditor toolbar!")
+                self.warn(logger, "Could not add new button 'Image' to the ckeditor toolbar!")
+
         if not 'Link' in toolbar and not 'Unlink' in toolbar:
             # try to insert these buttons after 'SpecialChar' or 'Table'
             if 'SpecialChar' in toolbar:
-                toolbar.replace("'SpecialChar'", "'SpecialChar','Link','Unlink'")
+                toolbar = toolbar.replace("'SpecialChar'", "'SpecialChar','Link','Unlink'")
             elif 'Table' in toolbar:
-                toolbar.replace("'Table'", "'Table','Link','Unlink'")
+                toolbar = toolbar.replace("'Table'", "'Table','Link','Unlink'")
             else:
-                logger.warn("Could not add new buttons 'Link' and 'Unlink' to the ckeditor toolbar!")
+                self.warn(logger, "Could not add new buttons 'Link' and 'Unlink' to the ckeditor toolbar!")
+
+        self.portal.portal_properties.ckeditor_properties.manage_changeProperties(
+            toolbar_Custom=toolbar)
         logger.info('Done.')
 
     def _removeUnusedIndexes(self):
-        """Index 'getDeliberation' is no more used."""
+        """Index 'getDeliberation' and 'indexExtractedText' are no more used."""
         logger.info('Removing no more used indexes...')
-        removeIndexes(self.portal, indexes=('getDeliberation', ))
+        removeIndexes(self.portal, indexes=('getDeliberation', 'indexExtractedText'))
         logger.info('Done.')
 
     def _initSelectableAdvisers(self):
@@ -685,7 +677,7 @@ class Migrate_To_4_0(Migrator):
         self.tool.setTitle(translate('pm_configuration',
                            domain='PloneMeeting',
                            context=self.portal.REQUEST))
-        frontPage = getattr(self.portal, 'front-page')
+        frontPage = getattr(self.portal, 'front-page', None)
         if frontPage:
             frontPage.setTitle(translate('front_page_title',
                                domain='PloneMeeting',
@@ -714,13 +706,281 @@ class Migrate_To_4_0(Migrator):
                                                 item.getRawManuallyLinkedItems())
         logger.info('Done.')
 
+    def _adaptAppForImioAnnex(self):
+        """Migrate Archetypes 'MeetingFile' and 'MeetingFileType' to
+           Dexterity 'annex' and 'ContentCategory'.
+           Remove no more used attributes :
+           - MeetingConfig.annexToPrintDefault;
+           - MeetingConfig.annexDecisionToPrintDefault;
+           - MeetingConfig.annexAdviceToPrintDefault.
+           """
+        def _getCurrentCatFromOldUID(portal_type, old_mft):
+            """ """
+            catalog = api.portal.get_tool('portal_catalog')
+            brains = catalog(portal_type=portal_type)
+            for brain in brains:
+                obj = brain.getObject()
+                if obj._v_old_mft == old_mft:
+                    return obj
+
+        logger.info('Moving to imio.annex...')
+        # necessary for versions in between...
+        tool = api.portal.get_tool('portal_plonemeeting')
+        wfTool = api.portal.get_tool('portal_workflow')
+        old_mft_new_cat_id_mappings = {}
+        for cfg in tool.objectValues('MeetingConfig'):
+            cfg._createSubFolders()
+            if cfg.annexes_types.item_annexes.objectIds() or \
+               cfg.annexes_types.item_decision_annexes.objectIds() or \
+               cfg.annexes_types.advice_annexes.objectIds():
+                logger.info('Done.')
+                return
+
+            # first create categories and subcategories then in a second pass
+            # update the otherMCCorrespondences attribute
+            for mft in cfg.meetingfiletypes.objectValues():
+                folder = None
+                to_print_default = None
+                if mft.getRelatedTo() == 'item':
+                    folder = cfg.annexes_types.item_annexes
+                    to_print_default = cfg.annexToPrintDefault
+                elif mft.getRelatedTo() == 'item_decision':
+                    folder = cfg.annexes_types.item_decision_annexes
+                    to_print_default = cfg.annexDecisionToPrintDefault
+                elif mft.getRelatedTo() == 'advice':
+                    folder = cfg.annexes_types.advice_annexes
+                    to_print_default = cfg.annexAdviceToPrintDefault
+                # create the category
+                icon = NamedBlobImage(
+                    data=mft.theIcon.data,
+                    contentType=mft.theIcon.content_type,
+                    filename=unicode(mft.theIcon.filename, 'utf-8'))
+                category = api.content.create(
+                    id=mft.getId(),
+                    type='ContentCategory',
+                    container=folder,
+                    title=safe_unicode(mft.Title()),
+                    icon=icon,
+                    predefined_title=safe_unicode(mft.getPredefinedTitle()),
+                    to_print=to_print_default,
+                    confidential=mft.getIsConfidentialDefault(),
+                    enabled=bool(wfTool.getInfoFor(mft, 'review_state') == 'active'))
+                old_mft_new_cat_id_mappings[mft.UID()] = calculate_category_id(category)
+                category._v_old_mft = mft.UID()
+                for subType in mft.getSubTypes():
+                    subcat = api.content.create(
+                        type='ContentSubcategory',
+                        container=category,
+                        title=safe_unicode(subType['title']),
+                        icon=icon,
+                        predefined_title=safe_unicode(subType['predefinedTitle']),
+                        to_print=to_print_default,
+                        confidential=bool(subType['isConfidentialDefault'] == '1'),
+                        enabled=bool(subType['isActive'] == '1')
+                    )
+                    old_mft_new_cat_id_mappings[mft.UID() + '__subtype__' + subType['row_id']] = \
+                        calculate_category_id(category)
+                    subcat._v_old_mft = subType['row_id']
+        # now that categories and subcategories are created, we are
+        # able to update the otherMCCorrespondences attribute
+        for cfg in tool.objectValues('MeetingConfig'):
+            for mft in cfg.meetingfiletypes.objectValues():
+                otherMCCorrespondences = mft.getOtherMCCorrespondences()
+                if otherMCCorrespondences:
+                    otherUIDs = []
+                    for otherMCCorrespondence in otherMCCorrespondences:
+                        if '__subtype__' in otherMCCorrespondence:
+                            # send to a subtype, find the subType
+                            otherUIDs.append(
+                                _getCurrentCatFromOldUID('ContentSubcategory',
+                                                         otherMCCorrespondence.split('__subtype__')[-1]).UID())
+                        else:
+                            otherUIDs.append(
+                                _getCurrentCatFromOldUID('ContentCategory',
+                                                         otherMCCorrespondence.split('__filetype__')[-1]).UID())
+                    _getCurrentCatFromOldUID(
+                        'ContentCategory',
+                        mft.UID()).other_mc_correspondences = otherUIDs
+                for subType in mft.getSubTypes():
+                    if subType['otherMCCorrespondences']:
+                        otherUIDs = []
+                        for otherMCCorrespondence in subType['otherMCCorrespondences']:
+                            if '__subtype__' in otherMCCorrespondence:
+                                # send to a subtype, find the subType
+                                otherUIDs.append(
+                                    _getCurrentCatFromOldUID('ContentSubcategory',
+                                                             otherMCCorrespondence.split('__subtype__')[-1]).UID())
+                            else:
+                                otherUIDs.append(
+                                    _getCurrentCatFromOldUID('ContentCategory',
+                                                             otherMCCorrespondence.split('__filetype__')[-1]).UID())
+                        _getCurrentCatFromOldUID(
+                            'ContentSubcategory',
+                            subType['row_id']).other_mc_correspondences = otherUIDs
+
+        # clean no more used attributes
+        for cfg in tool.objectValues('MeetingConfig'):
+
+            if not hasattr(cfg, 'annexConfidentialFor'):
+                # already migrated
+                continue
+
+            annexConfidentialFor = cfg.annexConfidentialFor
+            # values changed from power_observers to configgroup_powerobservers
+            # and from restricted_power_observers to configgroup_restrictedpowerobservers
+            mapped_annexConfidentialFor = []
+            if 'power_observers' in annexConfidentialFor:
+                mapped_annexConfidentialFor.append('configgroup_powerobservers')
+            if 'restricted_power_observers' in annexConfidentialFor:
+                mapped_annexConfidentialFor.append('configgroup_restrictedpowerobservers')
+
+            cfg.setItemAnnexConfidentialVisibleFor(
+                [k for k in cfg.listItemAnnexConfidentialVisibleFor().keys()
+                 if not k in mapped_annexConfidentialFor])
+            cfg.setAdviceAnnexConfidentialVisibleFor(
+                [k for k in cfg.listAdviceAnnexConfidentialVisibleFor().keys()
+                 if not k in mapped_annexConfidentialFor])
+            cfg.setMeetingAnnexConfidentialVisibleFor(
+                [k for k in cfg.listMeetingAnnexConfidentialVisibleFor().keys()
+                 if not k in mapped_annexConfidentialFor])
+
+            if not hasattr(cfg, 'enableAnnexToPrint'):
+                # already migrated
+                continue
+
+            enableAnnexToPrint = cfg.enableAnnexToPrint
+            if isinstance(enableAnnexToPrint, bool):
+                if enableAnnexToPrint is True:
+                    cfg.enableAnnexToPrint = 'enabled_for_info'
+                else:
+                    cfg.enableAnnexToPrint = 'disabled'
+
+            # manage 'enableAnnexToPrint'
+            if cfg.enableAnnexToPrint.startswith('enabled_'):
+                cfg.setAnnexToPrintMode(cfg.enableAnnexToPrint)
+                # update every ContentCategoryGroup to enable 'to_print'
+                for cat_group in cfg.annexes_types.objectValues():
+                    cat_group.to_be_printed_activated = True
+
+                # manage 'annexToPrintDefault'
+                if cfg.annexToPrintDefault:
+                    # update every 'item_annexes' ContentCategory to enable 'to_print'
+                    for cat in cfg.annexes_types.item_annexes.objectValues():
+                        cat.to_print = True
+                # manage 'annexDecisionToPrintDefault'
+                if cfg.annexDecisionToPrintDefault:
+                    # update every 'item_decision_annexes' ContentCategory to enable 'to_print'
+                    for cat in cfg.annexes_types.item_decision_annexes.objectValues():
+                        cat.to_print = True
+                # manage 'annexAdviceToPrintDefault'
+                if cfg.annexAdviceToPrintDefault:
+                    # update every 'advice_annexes' ContentCategory to enable 'to_print'
+                    for cat in cfg.annexes_types.advice_annexes.objectValues():
+                        cat.to_print = True
+
+            # manage 'enableAnnexConfidentiality'
+            if cfg.enableAnnexConfidentiality:
+                # enable it on every ContentCategoryGroups
+                for cat_group in cfg.annexes_types.objectValues():
+                    cat_group.confidentiality_activated = True
+
+            delattr(cfg, 'annexConfidentialFor')
+            delattr(cfg, 'enableAnnexToPrint')
+            delattr(cfg, 'annexToPrintDefault')
+            delattr(cfg, 'annexDecisionToPrintDefault')
+            delattr(cfg, 'annexAdviceToPrintDefault')
+            delattr(cfg, 'enableAnnexConfidentiality')
+
+        # migrate MeetingFiles
+        logger.info('Moving MeetingFiles to annexes...')
+        catalog = api.portal.get_tool('portal_catalog')
+        brains = catalog(meta_type=('MeetingItem', ))
+        brains = brains + catalog(object_provides='Products.PloneMeeting.content.advice.IMeetingAdvice')
+        total = len(brains)
+        i = 1
+        for brain in brains:
+            logger.info('Migrating element {1}/{2}...'.format(brain.portal_type,
+                                                              i, total))
+            i = i + 1
+            obj = brain.getObject()
+            mfs = obj.objectValues('MeetingFile')
+            if mfs:
+                for mf in mfs:
+                    annex_id = mf.getId()
+                    annex_type = mf.findRelatedTo() == 'item_decision' and 'annexDecision' or 'annex'
+                    annex_title = mf.Title()
+                    mf_file = mf.getFile()
+                    annex_file = NamedBlobFile(
+                        data=mf_file.data,
+                        contentType=mf_file.getContentType(),
+                        filename=safe_unicode(mf_file.filename))
+                    annex_to_print = mf.getToPrint()
+                    annex_confidential = mf.getIsConfidential()
+                    annex_content_category = old_mft_new_cat_id_mappings[mf.getMeetingFileType()]
+                    # remove mf before creating new annex because we will use same id
+                    obj.manage_delObjects(ids=[annex_id])
+                    api.content.create(
+                        id=annex_id,
+                        type=annex_type,
+                        container=obj,
+                        title=safe_unicode(annex_title),
+                        file=annex_file,
+                        to_print=annex_to_print,
+                        confidential=annex_confidential,
+                        content_category=annex_content_category,
+                        )
+                delattr(obj, 'alreadyUsedAnnexNames')
+                delattr(obj, 'annexIndex')
+
+        # now that MeetingFileTypes and MeetingFiles are migrated
+        # we are able to remove the MeetingConfig.meetingfiletypes folder
+        for cfg in tool.objectValues('MeetingConfig'):
+            if hasattr(cfg, 'meetingfiletypes'):
+                cfg.manage_delObjects(ids=['meetingfiletypes'])
+
+        # clean unused attribute, we now use the 'auto_convert' parameter of c.documentviewer
+        if hasattr(self.tool, 'enableAnnexPreview'):
+            delattr(self.tool, 'enableAnnexPreview')
+
+        # clean portal_types to remove the 'annexes_form' and 'annexes_decision_form' actions
+        for type_info in self.portal.portal_types.values():
+            action_ids = [act.id for act in type_info._actions]
+            action_numbers = []
+            if 'annexes_form' in action_ids:
+                action_numbers.append(action_ids.index('annexes_form'))
+            if 'annexes_decision_form' in action_ids:
+                action_numbers.append(action_ids.index('annexes_decision_form'))
+            if action_numbers:
+                type_info.deleteActions(action_numbers)
+
+        logger.info('Done.')
+
+    def _removeAddFilePermissionOnMeetingConfigFolders(self):
+        '''Remove 'Add File' permission on each meetingConfig folder.'''
+        logger.info('Removing the \'Add File\' permission for every meetingConfig folders...')
+        for userFolder in self.portal.Members.objectValues():
+            # if something else than a userFolder, pass
+            if not hasattr(aq_base(userFolder), 'mymeetings'):
+                continue
+            for mConfigFolder in userFolder.mymeetings.objectValues():
+                mConfigFolder.manage_permission('ATContentTypes: Add File',
+                                                [],
+                                                acquire=True)
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 4.0...')
         # reinstall so versions are correctly shown in portal_quickinstaller
         # and new stuffs are added (portal_catalog metadata especially, imio.history is installed)
-        self._updateAnnexIndex()
-        self.reinstall(profiles=[self.profile_name, ])
+        # reinstall PloneMeeting without dependencies, we want to reapply entire PM
+        # but not dependencies that are managed by upgradeDependencies
+        self.reinstall(profiles=['profile-Products.PloneMeeting:default', ],
+                       ignore_dependencies=True,
+                       dependency_strategy=DEPENDENCY_STRATEGY_REAPPLY)
+        if self.profile_name != 'profile-Products.PloneMeeting:default':
+            self.reinstall(profiles=[self.profile_name, ])
         self.upgradeDependencies()
+        self._adaptAppForImioAnnex()
         self.cleanRegistries()
         self.updateHolidays()
         self._updateItemsListVisibleFields()
@@ -728,7 +988,7 @@ class Migrate_To_4_0(Migrator):
         self._adaptAppForImioDashboard()
         self._moveToItemTemplateRecurringOwnPortalTypes()
         self._changeWFUsedForItemAndMeeting()
-        self._cleanPMModificationDateOnItemsAndAnnexes()
+        self._cleanPMModificationDateOnItems()
         self._cleanMeetingFolderLayout()
         self._adaptAppForCollectiveDocumentGenerator()
         self._adaptMeetingItemsNumber()
@@ -736,15 +996,15 @@ class Migrate_To_4_0(Migrator):
         self._cleanMeetingConfigs()
         self._cleanMeetingUsers()
         self._updateAllLocalRoles()
-        self._manageAddImagePermission()
+        self._updateManagedPermissions()
         self._initNewHTMLFields()
-        self._updateEnableAnnexToPrint()
         self._updateHistoryComments()
         self._updateCKeditorCustomToolbar()
         self._removeUnusedIndexes()
         self._initSelectableAdvisers()
         self._moveAppName()
         self._moveDuplicatedItemLinkFromAutoToManual()
+        self._removeAddFilePermissionOnMeetingConfigFolders()
         # update workflow, needed for items moved to item templates and recurring items
         # update reference_catalog as ReferenceFied "MeetingConfig.toDoListTopics"
         # and "Meeting.lateItems" were removed
@@ -757,29 +1017,30 @@ def migrate(context):
     '''This migration function will:
 
        1) Reinstall PloneMeeting and upgrade dependencies;
-       2) Clean registries;
-       3) Update holidays defined on portal_plonemeeting;
-       4) Update MeetingConfig.itemsListVisibleFields stored values;
-       5) Migrate late items;
-       6) Move to imio.dashboard;
-       7) Clean pm_modification_date on items and annexes;
-       8) Move item templates and recurring items to their own portal_type;
-       9) Make sure no layout is defined on users MeetingFolders;
-       10) Move to collective.documentgenerator;
-       11) Adapt every items itemNumber;
-       12) Adapt every configs itemReferenceFormat;
-       13) Clean MeetingConfigs from unused attributes;
-       14) Clean MeetingUsers from unused attributes;
-       15) Reindex annexIndex;
+       2) Move to imio.annex;
+       3) Clean registries;
+       4) Update holidays defined on portal_plonemeeting;
+       5) Update MeetingConfig.itemsListVisibleFields stored values;
+       6) Migrate late items;
+       7) Move to imio.dashboard;
+       8) Clean pm_modification_date on items and annexes;
+       9) Move item templates and recurring items to their own portal_type;
+       10) Make sure no layout is defined on users MeetingFolders;
+       11) Move to collective.documentgenerator;
+       12) Adapt every items itemNumber;
+       13) Adapt every configs itemReferenceFormat;
+       14) Clean MeetingConfigs from unused attributes;
+       15) Clean MeetingUsers from unused attributes;
        16) Update all local_roles of Meeting and MeetingItems;
        17) Init new HTML fields;
-       18) Update MeetingConfig.enableAnnexToPrint attribute;
-       19) Update history comments;
-       20) Update CKEditor custom toolbar;
-       21) Remove unused catalog indexes;
-       22) Initialize MeetingConfig.selectableAdvisers field;
-       23) Adapt application name;
-       24) Refresh catalogs.
+       18) Update history comments;
+       19) Update CKEditor custom toolbar;
+       20) Remove unused catalog indexes;
+       21) Initialize MeetingConfig.selectableAdvisers field;
+       22) Adapt application name;
+       23) Move 'duplicated and keep link' link from automatic to manual link;
+       24) Remove the 'Add File' permission on user folders;
+       25) Refresh catalogs.
     '''
     migrator = Migrate_To_4_0(context)
     migrator.run()

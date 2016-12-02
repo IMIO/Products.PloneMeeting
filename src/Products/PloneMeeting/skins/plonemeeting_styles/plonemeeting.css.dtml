@@ -36,8 +36,8 @@ td span.subnumber {
 table.listing tr.odd td.itemnumber,
 table.listing tr.even td.itemnumber {
     text-align: center;
-    padding-left: 0.2em;
-    padding-right: 0.2em;
+    padding-left: 0em;
+    padding-right: 0.3em;
 }
 
 /* show div of the ColorColumn for other listTypes */
@@ -360,6 +360,12 @@ div.pm_search_no_result_info {
     margin: 0;
 }
 
+/* the number displayed in the table of annexes */
+.td_cell_number-column {
+    font-size: 80%;
+    color: &dtml-tableHeaderTextColor;;
+}
+
 #faceted-form table.listing td.td_cell_advices {
     padding-left: 0.3em;
     padding-right: 0;
@@ -369,11 +375,6 @@ div.pm_search_no_result_info {
 td.td_cell_advices .actionMenuAX .actionMenuContentAX {
     right: 70px;
     top: 0;
-}
-/* but display annexes of advices correctly */
-td.td_cell_advices td.advice_annexes .actionMenuAX .actionMenuContentAX  {
-    right: -1px;
-    top: 1.7em;
 }
 
 /* skin menu displayed but avoid skinning contained <ul> */
@@ -397,9 +398,8 @@ td.td_cell_advices td.advice_annexes .actionMenuAX .actionMenuContentAX  {
     padding-bottom: 0.5em;
 }
 
-/* specifically do not use a padding-bottom at the AX panel displaying annexes of advices */
-#content .actionMenuContentAdvice .advice_annexes dd.actionMenuContentAX {
-    padding-bottom: 0;
+#content td.advice_annexes {
+    padding-top: 0.3em;
 }
 
 .actionMenuAX.activated { z-index: 20; }
@@ -974,6 +974,10 @@ body[class*="itemtemplates"].template-manage-portlets a.link-parent {
     width: 97%;
 }
 
+.apButtonAction_linkedplonegroups {
+    background-image: url("group.png");
+}
+
 /* style for the 'Back' link displayed in the elements of the configuration next to the 'de/activate' button
    We use same height as .apButton height */
 .pm_back_to_tool_link {
@@ -1288,10 +1292,8 @@ td[class^="meeting_item_listType_"] div.item_listType.Editable {
     text-decoration: underline;
 }
 
-td.pmAnnexSizeWarning {
-    background-color: red !important;
-    color: white;
-    cursor: help;
+div.decisionAnnexDescription {
+    float: left;
 }
 
 /* highlight empty lines in an XHTML content */
@@ -1495,6 +1497,13 @@ div.customAdviceMessage {
     color: red;
 }
 
+/* doc displayed in a fieldset using the '?' js click image */
+#content-core div#groupDoc,
+#content-core div#customAdvisersDoc,
+#content-core div#usersDoc {
+    margin-top: 2.3em;
+}
+
 #content-core p.tool_pm_descr,
 #content-core p.backToItem {
     margin-bottom: 0.5em;
@@ -1513,7 +1522,27 @@ span.no_users {
 
 /* width of input used on the meeting_view to change item number */
 input[id^='value_moveAction_'] {
-    width: 40px;
+    width: 35px;
+}
+
+div.dashboard_annexes {
+    width: 100%;
+    text-align: right;
+}
+
+/* use important! so it is correctly displayed in the advice popup */
+#content div.categorized-elements a:link,
+#content div.categorized-elements a:hover,
+#content div.categorized-elements a:visited {
+    padding: 0.1em 0.2em 0.3em !important;
+}
+
+/* add cell padding to tables written in rich text fields (CKeditor) */
+body.cke_editable table tr td,
+body.cke_editable table tr th,
+div[id^='hook_'] table tr td,
+div[id^='hook_'] table tr th {
+    padding: 0.3em;    
 }
 
 /* </dtml-with> */

@@ -46,6 +46,7 @@ from OFS.ObjectManager import BeforeDeleteException
 from zope.component import getMultiAdapter
 from zope.event import notify
 from zope.i18n import translate
+from collective.iconifiedcategory.utils import update_all_categorized_elements
 from plone.app.querystring.querybuilder import queryparser
 from plone.memoize import ram
 from imio.helpers.cache import cleanRamCacheFor
@@ -53,6 +54,7 @@ from imio.helpers.cache import invalidate_cachekey_volatile_for
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import ModifyPortalContent, ReviewPortalContent, View
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
+from Products.CMFCore.utils import _checkPermission
 from Products.CMFCore.utils import getToolByName
 from plone import api
 from imio.prettylink.interfaces import IPrettyLink
@@ -69,10 +71,9 @@ from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.interfaces import IMeetingWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingWorkflowConditions
-from Products.PloneMeeting.utils import _addImagePermission
+from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import addDataChange
 from Products.PloneMeeting.utils import addRecurringItemsIfRelevant
-from Products.PloneMeeting.utils import checkPermission
 from Products.PloneMeeting.utils import fieldIsEmpty
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import getWorkflowAdapter
@@ -89,6 +90,7 @@ from Products.PloneMeeting.utils import rememberPreviousData
 from Products.PloneMeeting.utils import setFieldFromAjax
 from Products.PloneMeeting.utils import toHTMLStrikedContent
 from Products.PloneMeeting.utils import transformAllRichTextFields
+
 from Products.PloneMeeting import PMMessageFactory as _
 import logging
 logger = logging.getLogger('PloneMeeting')
@@ -135,14 +137,14 @@ class MeetingWorkflowConditions:
     security.declarePublic('mayAcceptItems')
 
     def mayAcceptItems(self):
-        if checkPermission(ReviewPortalContent, self.context) and \
+        if _checkPermission(ReviewPortalContent, self.context) and \
            (self.context.queryState() in self.acceptItemsStates):
             return True
 
     security.declarePublic('mayPublish')
 
     def mayPublish(self):
-        if checkPermission(ReviewPortalContent, self.context):
+        if _checkPermission(ReviewPortalContent, self.context):
             return True
 
     security.declarePublic('mayPublishDecisions')
@@ -151,21 +153,21 @@ class MeetingWorkflowConditions:
         '''Used when 'hide_decisions_when_under_writing' wfAdaptation is active.'''
         res = False
         # The user just needs the "Review portal content" permission on the object
-        if checkPermission(ReviewPortalContent, self.context):
+        if _checkPermission(ReviewPortalContent, self.context):
             res = True
         return res
 
     security.declarePublic('mayFreeze')
 
     def mayFreeze(self):
-        if checkPermission(ReviewPortalContent, self.context):
+        if _checkPermission(ReviewPortalContent, self.context):
             return True
 
     security.declarePublic('mayDecide')
 
     def mayDecide(self):
         '''May decisions on this meeting be taken?'''
-        if checkPermission(ReviewPortalContent, self.context):
+        if _checkPermission(ReviewPortalContent, self.context):
             if not self.context.getDate().isPast():
                 return No(translate('meeting_in_past', domain="PloneMeeting", context=self.context.REQUEST))
             # Check that all items are OK.
@@ -188,7 +190,7 @@ class MeetingWorkflowConditions:
 
     def mayCorrect(self, destinationState=None):
         '''See doc in interfaces.py.'''
-        if not checkPermission(ReviewPortalContent, self.context):
+        if not _checkPermission(ReviewPortalContent, self.context):
             return
         if self.context.queryState() == 'decided':
             # Going back from "decided" to previous state is not a true "undo".
@@ -203,13 +205,13 @@ class MeetingWorkflowConditions:
     security.declarePublic('mayClose')
 
     def mayClose(self):
-        if checkPermission(ReviewPortalContent, self.context):
+        if _checkPermission(ReviewPortalContent, self.context):
             return True
 
     security.declarePublic('mayArchive')
 
     def mayArchive(self):
-        if checkPermission(ReviewPortalContent, self.context) and \
+        if _checkPermission(ReviewPortalContent, self.context) and \
            self._decisionsAreArchivable():
             return True
 
@@ -221,7 +223,7 @@ class MeetingWorkflowConditions:
     security.declarePublic('mayChangeItemsOrder')
 
     def mayChangeItemsOrder(self):
-        if not checkPermission(ModifyPortalContent, self.context):
+        if not _checkPermission(ModifyPortalContent, self.context):
             return
         # the meeting can not be in a closed state
         if self.context.queryState() in Meeting.meetingClosedStates:
@@ -1730,8 +1732,9 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         self.manage_addLocalRoles(self.owner_info()['id'], ('Owner',))
         # add powerObservers local roles
         self._updatePowerObserversLocalRoles()
-        # manage the 'ATContentTypes: Add Image' permission
-        _addImagePermission(self)
+        # update annexes categorized_elements to store 'visible_for_groups'
+        update_all_categorized_elements(self)
+        _addManagedPermissions(self)
         # notify that localRoles have been updated
         notify(MeetingLocalRolesUpdatedEvent(self, old_local_roles))
         # reindex relevant indexes

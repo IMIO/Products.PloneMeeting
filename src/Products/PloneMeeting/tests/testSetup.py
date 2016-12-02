@@ -132,6 +132,24 @@ class testSetup(PloneMeetingTestCase):
         # restrictUsers is still True
         self.assertTrue(self.tool.restrictUsers)
 
+    def test_pm_TypesNotSearched(self):
+        """Searchable types are only items and meetings of existing MeetingConfigs."""
+        plone_utils = api.portal.get_tool('plone_utils')
+        expected = []
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            expected.append(cfg.getItemTypeName())
+            expected.append(cfg.getMeetingTypeName())
+        self.assertEqual(set(plone_utils.getUserFriendlyTypes()),
+                         set(expected))
+
+        # if a new MeetingConfig is created, types_not_searched are updated accordingly
+        self.changeUser('admin')
+        newCfg = self.create('MeetingConfig', shortName='New')
+        expected.append(newCfg.getItemTypeName())
+        expected.append(newCfg.getMeetingTypeName())
+        self.assertEqual(set(plone_utils.getUserFriendlyTypes()),
+                         set(expected))
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

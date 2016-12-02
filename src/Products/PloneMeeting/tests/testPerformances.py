@@ -67,7 +67,8 @@ class testPerformances(PloneMeetingTestCase):
             created_items += 1
             total_created_items += 1
             if created_items == logger_threshold:
-                pm_logger.info('Created %d out of %d' % (total_created_items, number_of_items))
+                if not number_of_annexes:
+                    pm_logger.info('Created %d out of %d items' % (total_created_items, number_of_items))
                 created_items = 0
 
             # create the item
@@ -76,8 +77,11 @@ class testPerformances(PloneMeetingTestCase):
             uids.append(item.UID())
             item.setDecision('<p>A decision</p>')
             # add annexes
-            for j in range(number_of_annexes):
-                self.addAnnex(item, annexTitle="Annex number %d" % j)
+            if number_of_annexes:
+                for j in range(number_of_annexes):
+                    self.addAnnex(item, annexTitle="Annex number %d" % j)
+                pm_logger.info('Added %d annexes to the item number %s' %
+                               (number_of_annexes, total_created_items))
             if present_items:
                 self.presentItem(item)
         return meeting, uids

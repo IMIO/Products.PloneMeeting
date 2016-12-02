@@ -8,7 +8,7 @@
              title="move_item_up"
              i18n:domain="PloneMeeting"
              i18n:attributes="title" style="cursor:pointer"
-             tal:attributes="src string: $portal_url/arrowUp.png;
+             tal:attributes="src string:${view/portal_url}/++resource++imio.actionspanel/arrowUp.png;
                              onClick string:moveItem(baseUrl='${context/absolute_url}', moveType='up', this);"/>
       </td>
       <td tal:condition="python: context.UID() != view.lastItemUID" class="noPadding">
@@ -16,7 +16,7 @@
              title="move_item_down"
              i18n:domain="PloneMeeting"
              i18n:attributes="title" style="cursor:pointer"
-             tal:attributes="src string: $portal_url/arrowDown.png;
+             tal:attributes="src string:${view/portal_url}/++resource++imio.actionspanel/arrowDown.png;
                              onClick string:moveItem(baseUrl='${context/absolute_url}', moveType='down', this);"/>
       </td>
     </tr>

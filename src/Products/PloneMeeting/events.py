@@ -18,7 +18,6 @@ import logging
 logger = logging.getLogger('PloneMeeting')
 
 from AccessControl import Unauthorized
-from Acquisition import aq_base
 from DateTime import DateTime
 from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
@@ -30,6 +29,7 @@ from Products.CMFCore.WorkflowCore import WorkflowException
 from plone.app.textfield import RichText
 from plone.app.textfield.value import RichTextValue
 from plone import api
+from collective.documentviewer.async import queueJob
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.cache import invalidate_cachekey_volatile_for
 from imio.helpers.xhtml import storeExternalImagesLocally
@@ -37,8 +37,7 @@ from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import ADVICE_GIVEN_HISTORIZED_COMMENT
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
-from Products.PloneMeeting.interfaces import IAnnexable
-from Products.PloneMeeting.utils import _addImagePermission
+from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import addRecurringItemsIfRelevant
 from Products.PloneMeeting.utils import AdviceAfterAddEvent
 from Products.PloneMeeting.utils import AdviceAfterModifyEvent
@@ -281,13 +280,10 @@ def onGroupRemoved(group, event):
 
 
 def onItemMoved(item, event):
-    '''Called when an item is pasted cut/pasted, we need to update annexIndex.'''
+    '''Called when an item is pasted cut/pasted.'''
     # this is also called when removing an item, in this case, we do nothing
     if IObjectRemovedEvent.providedBy(event):
         return
-    if not hasattr(aq_base(item), 'annexIndex'):
-        item.annexIndex = PersistentList()
-    IAnnexable(item).updateAnnexIndex()
 
 
 def onItemAdded(item, event):
@@ -300,8 +296,6 @@ def onItemAdded(item, event):
        role.'''
     user = api.user.get_current()
     item.manage_addLocalRoles(user.getId(), ('MeetingMember',))
-    # Add a place to store annexIndex
-    item.annexIndex = PersistentList()
     # Add a place to store adviceIndex
     item.adviceIndex = PersistentMapping()
     # Add a place to store emergency changes history
@@ -362,22 +356,12 @@ def onAdviceAdded(advice, event):
     if not advice.advice_row_id:
         advice._updateAdviceRowId()
 
-    # Add a place to store annexIndex
-    advice.annexIndex = PersistentList()
-    # Create a "black list" of annex names. Every time an annex will be
-    # created for this item, the name used for it (=id) will be stored here
-    # and will not be removed even if the annex is removed. This way, two
-    # annexes (or two versions of it) will always have different URLs, so
-    # we avoid problems due to browser caches.
-    advice.alreadyUsedAnnexNames = PersistentList()
-
     item = advice.getParentNode()
     item.updateLocalRoles()
     # make the entire _advisers group able to edit the meetingadvice
     advice.manage_addLocalRoles('%s_advisers' % advice.advice_group, ('Editor', ))
 
-    # ATContentTypes: Add Image permission
-    _addImagePermission(advice)
+    _addManagedPermissions(advice)
 
     # make sure external images used in RichText fields are stored locally
     storeExternalImagesLocallyDexterity(advice)
@@ -486,23 +470,49 @@ def onAdviceTransition(advice, event):
         parent.adviceIndex[advice.advice_group]['advice_given_on'] = advice_given_on
         parent.adviceIndex[advice.advice_group]['advice_given_on_localized'] = toLocalizedTime(advice_given_on)
 
-    _addImagePermission(advice)
+    _addManagedPermissions(advice)
 
 
 def onAnnexAdded(annex, event):
-    '''When an annex is added, we need to update item modification date and SearchableText.'''
+    ''' '''
     parent = annex.getParentNode()
+    if '/++add++annex' in annex.REQUEST.getURL():
+        annex.REQUEST.RESPONSE.redirect(parent.absolute_url() + '/@@categorized-annexes')
+
     # if it is an annex added on an item, versionate given advices if necessary
     if parent.meta_type == 'MeetingItem':
         parent._versionateAdvicesOnItemEdit()
+        parent.updateHistory('add',
+                             annex,
+                             decisionRelated=annex.portal_type == 'annexDecision' and True or False)
+        if annex.portal_type == 'annex' and parent.willInvalidateAdvices():
+            parent.updateLocalRoles(invalidate=True)
+
+        # Potentially I must notify MeetingManagers through email.
+        if parent.wfConditions().meetingIsPublished():
+            parent.sendMailIfRelevant('annexAdded', 'MeetingManager', isRole=True)
+
     # update modificationDate, it is used for caching and co
     parent.setModificationDate(DateTime())
     # just reindex the entire object
     parent.reindexObject()
 
+    # log
+    userId = api.user.get_current().getId()
+    logger.info('Annex at %s created by "%s".' %
+                (annex.absolute_url_path(), userId))
+
+
+def onAnnexEditFinished(annex, event):
+    ''' '''
+    # redirect to the annexes table view after edit
+    if event.object.REQUEST['PUBLISHED'].__name__ == 'edit':
+        parent = annex.getParentNode()
+        return annex.REQUEST.RESPONSE.redirect(parent.absolute_url() + '/@@categorized-annexes')
+
 
 def onAnnexRemoved(annex, event):
-    '''When an annex is removed, we need to update item (parent) annexIndex.'''
+    '''When an annex is removed, we need to update item (parent).'''
     # bypass this if we are actually removing the 'Plone Site'
     if event.object.meta_type == 'Plone Site':
         return
@@ -515,18 +525,37 @@ def onAnnexRemoved(annex, event):
     # if it is an annex added on an item, versionate given advices if necessary
     if parent.meta_type == 'MeetingItem':
         parent._versionateAdvicesOnItemEdit()
-
-    IAnnexable(parent).updateAnnexIndex(annex, removeAnnex=True)
-    parent.updateHistory('delete',
-                         annex,
-                         decisionRelated=annex.findRelatedTo() == 'item_decision' and True or False)
-    if parent.willInvalidateAdvices():
-        parent.updateLocalRoles(invalidate=True)
+        parent.updateHistory('delete',
+                             annex,
+                             decisionRelated=annex.portal_type == 'annexDecision' and True or False)
+        if parent.willInvalidateAdvices():
+            parent.updateLocalRoles(invalidate=True)
 
     # update modification date and SearchableText
     parent.setModificationDate(DateTime())
     # just reindex the entire object
     parent.reindexObject()
+
+
+def onAnnexToPrintChanged(annex, event):
+    """ """
+    annex = event.object
+
+    # if not set to True, we return
+    if event.new_value is True:
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(annex)
+        # in case we are updating an annex that was already converted,
+        # c.documentviewer does not manage that
+        if tool.auto_convert_annexes() or cfg.getAnnexToPrintMode() == 'enabled_for_printing':
+            # queueJob manages the fact that annex is only converted again
+            # if it was really modified (ModificationDate + md5 filehash)
+            queueJob(annex)
+
+    # if parent is a MeetingItem, update the 'hasAnnexesToPrint' index
+    parent = annex.getParentNode()
+    if parent.meta_type == 'MeetingItem':
+        parent.reindexObject(idxs=['hasAnnexesToPrint'])
 
 
 def onItemEditBegun(item, event):

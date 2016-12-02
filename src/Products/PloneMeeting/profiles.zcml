@@ -26,30 +26,6 @@
       for="Products.CMFPlone.interfaces.IPloneSiteRoot" />
 
   <genericsetup:upgradeStep
-      title="Go to PloneMeeting 3.2.0"
-      description=""
-      source="3.1.0"
-      destination="3.2.0"
-      handler="Products.PloneMeeting.migrations.migrate_to_3_2_0.migrate"
-      profile="Products.PloneMeeting:default" />
-
-  <genericsetup:upgradeStep
-      title="Go to PloneMeeting 3.2.0.1"
-      description=""
-      source="3.2.0"
-      destination="3.2.0.1"
-      handler="Products.PloneMeeting.migrations.migrate_to_3_2_0_1.migrate"
-      profile="Products.PloneMeeting:default" />
-
-  <genericsetup:upgradeStep
-      title="Go to PloneMeeting 3.3"
-      description=""
-      source="3.2.0.1"
-      destination="3.3"
-      handler="Products.PloneMeeting.migrations.migrate_to_3_3.migrate"
-      profile="Products.PloneMeeting:default" />
-
-  <genericsetup:upgradeStep
       title="Go to PloneMeeting 4.0"
       description=""
       source="3.3"

@@ -23,7 +23,7 @@ from Products.PloneMeeting.config import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
 
 
-class Descriptor:
+class Descriptor(object):
     '''This abstract class represents Python data that will be used for
        initializing an Archetypes object.'''
     multiSelectFields = []
@@ -113,21 +113,81 @@ class CategoryDescriptor(Descriptor):
         self.active = active
 
 
-class MeetingFileTypeDescriptor(Descriptor):
-    multiSelectFields = ('otherMCCorrespondences', 'subTypes', )
+class AnnexTypeDescriptor(Descriptor):
+    multiSelectFields = ('subTypes', )
 
-    def __init__(self, id, title, theIcon, predefinedTitle,
-                 relatedTo='item', otherMCCorrespondences=(),
-                 active=True, subTypes=(), isConfidentialDefault=False):
+    def __init__(self,
+                 id,
+                 title,
+                 icon,
+                 predefined_title,
+                 relatedTo='advice',
+                 enabled=True,
+                 subTypes=(),
+                 confidential=False,
+                 to_print=False):
         self.id = id
-        self.setBilingual('title', title)
-        self.theIcon = theIcon
-        self.setBilingual('predefinedTitle', predefinedTitle)
+        self.title = title
+        self.icon = icon
+        self.predefined_title = predefined_title
         self.relatedTo = relatedTo
+        # a list of AnnexSubTypeDescriptors
         self.subTypes = subTypes
-        self.isConfidentialDefault = isConfidentialDefault
-        self.active = active
-        self.otherMCCorrespondences = otherMCCorrespondences
+        self.confidential = confidential
+        self.to_print = to_print
+        self.enabled = enabled
+
+
+class ItemAnnexTypeDescriptor(AnnexTypeDescriptor):
+
+    multiSelectFields = ('other_mc_correspondences', 'subTypes', )
+
+    def __init__(self,
+                 id,
+                 title,
+                 icon,
+                 predefined_title,
+                 relatedTo='item',
+                 other_mc_correspondences=(),
+                 enabled=True,
+                 subTypes=(),
+                 confidential=False,
+                 to_print=False):
+        super(ItemAnnexTypeDescriptor, self).__init__(
+            id=id,
+            title=title,
+            icon=icon,
+            predefined_title=predefined_title,
+            relatedTo=relatedTo,
+            enabled=enabled,
+            subTypes=subTypes,
+            confidential=confidential,
+            to_print=to_print)
+        self.other_mc_correspondences = other_mc_correspondences
+
+
+class AnnexSubTypeDescriptor(Descriptor):
+
+    def __init__(self, id, title, predefined_title,
+                 enabled=True, confidential=False, to_print=False):
+        self.id = id
+        self.title = title
+        self.predefined_title = predefined_title
+        self.confidential = confidential
+        self.to_print = to_print
+        self.enabled = enabled
+
+
+class ItemAnnexSubTypeDescriptor(AnnexSubTypeDescriptor):
+    multiSelectFields = ('other_mc_correspondences', )
+
+    def __init__(self, id, title, predefined_title,
+                 other_mc_correspondences=(), enabled=True,
+                 confidential=False, to_print=False):
+        super(ItemAnnexSubTypeDescriptor, self).__init__(
+            id=id, title=title, predefined_title=predefined_title,
+            enabled=enabled, confidential=confidential, to_print=to_print)
+        self.other_mc_correspondences = other_mc_correspondences
 
 
 class PodTemplateDescriptor(Descriptor):
@@ -295,13 +355,10 @@ class MeetingConfigDescriptor(Descriptor):
         # (ie 'P5', 'CC00_06'...)
         self.configVersion = ''
         self.itemCreatedOnlyUsingTemplate = False
-        self.enableAnnexToPrint = 'disabled'
+        self.annexToPrintMode = 'enabled_for_info'
         self.keepOriginalToPrintOfClonedItems = True
 
         # Data-related parameters ----------------------------------------------
-        self.annexToPrintDefault = False
-        self.annexDecisionToPrintDefault = False
-        self.annexAdviceToPrintDefault = False
         # Some attributes on an item are optional. In the field
         # "usedItemAttributes", you specify which of those optional attributes
         # you will use in your meeting configuration.
@@ -361,8 +418,9 @@ class MeetingConfigDescriptor(Descriptor):
         # Will we manage replacements of users ?
         self.useUserReplacements = False
         # annex confidentiality
-        self.enableAnnexConfidentiality = False
-        self.annexConfidentialFor = ()
+        self.itemAnnexConfidentialVisibleFor = ()
+        self.adviceAnnexConfidentialVisibleFor = ()
+        self.meetingAnnexConfidentialVisibleFor = ()
         # advice confidentiality
         self.enableAdviceConfidentiality = False
         self.adviceConfidentialityDefault = False
@@ -408,6 +466,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.itemCopyGroupsStates = ['accepted', 'refused', 'delayed', ]
         self.hideItemHistoryCommentsToUsersOutsideProposingGroup = False
         self.restrictAccessToSecretItems = False
+        self.ownerMayDeleteAnnexDecision = False
 
         # GUI-related parameters -----------------------------------------------
         # When the system displays the list of all meetings (the "all meetings"
@@ -464,7 +523,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.classifiers = []  # ~[CategoryDescriptor]~
         self.recurringItems = []  # ~[RecurringItemDescriptor]~
         self.itemTemplates = []  # ~[ItemTemplateDescriptor]~
-        self.meetingFileTypes = []
+        self.annexTypes = []
 
         # Advices parameters ---------------------------------------------------
         # Enable / disable advices
@@ -540,7 +599,6 @@ class PloneMeetingConfiguration(Descriptor):
         self.defaultOcrLanguage = 'eng'
         self.modelAdaptations = []
         self.enableUserPreferences = False
-        self.enableAnnexPreview = False
         self.workingDays = ('mon', 'tue', 'wed', 'thu', 'fri')
         self.holidays = [{'date': '2016/01/01', },  # 2016
                          {'date': '2016/03/28', },

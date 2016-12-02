@@ -37,6 +37,7 @@ from zope.schema.interfaces import IVocabularyFactory
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 
+from collective.iconifiedcategory.utils import get_categorized_elements
 from imio.helpers.cache import cleanRamCacheFor
 
 from Products.CMFCore.permissions import AddPortalContent
@@ -51,7 +52,6 @@ from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
-from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.indexes import indexAdvisers
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 
@@ -262,10 +262,11 @@ class testAdvices(PloneMeetingTestCase):
           Test that we can add annexes to an advice.
         '''
         # advice are addable/editable when item is 'proposed'
-        self.meetingConfig.setItemAdviceStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
-        self.meetingConfig.setItemAdviceEditStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
-        self.meetingConfig.setItemAdviceViewStates((self.WF_STATE_NAME_MAPPINGS['proposed'],
-                                                    self.WF_STATE_NAME_MAPPINGS['validated'], ))
+        cfg = self.meetingConfig
+        cfg.setItemAdviceStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+        cfg.setItemAdviceEditStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+        cfg.setItemAdviceViewStates((self.WF_STATE_NAME_MAPPINGS['proposed'],
+                                     self.WF_STATE_NAME_MAPPINGS['validated'], ))
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         item.setOptionalAdvisers(('vendors', ))
@@ -282,9 +283,9 @@ class testAdvices(PloneMeetingTestCase):
         # annexes are addable if advice is editable
         self.assertTrue(self.hasPermission(ModifyPortalContent, advice))
         self.assertTrue(self.hasPermission(DeleteObjects, advice))
-        annex = self.addAnnex(advice, relatedTo='advice')
-        self.assertTrue(len(IAnnexable(advice).getAnnexes()) == 1)
-        self.assertTrue(IAnnexable(advice).getAnnexes()[0].UID() == annex.UID())
+        annex = self.addAnnex(advice)
+        self.assertEqual(len(get_categorized_elements(advice)), 1)
+        self.assertEqual(get_categorized_elements(advice)[0]['id'], annex.getId())
         # annex is removable
         self.assertTrue(self.hasPermission(DeleteObjects, annex))
         # if we validate the item, the advice is no more editable

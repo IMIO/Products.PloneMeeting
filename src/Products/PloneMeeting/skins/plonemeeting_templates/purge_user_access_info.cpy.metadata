@@ -1,4 +1,0 @@
-[validators]
-
-[actions]
-action.success=redirect_to_action:string:view

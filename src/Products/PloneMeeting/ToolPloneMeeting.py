@@ -19,7 +19,6 @@ import OFS.Moniker
 
 from datetime import datetime
 from AccessControl import ClassSecurityInfo
-from AccessControl import getSecurityManager
 from AccessControl import Unauthorized
 from Acquisition import aq_base
 from DateTime import DateTime
@@ -31,6 +30,7 @@ from zope.interface import implements
 
 from Products.ZCatalog.Catalog import AbstractCatalogBrain
 from Products.CMFCore.permissions import View
+from Products.CMFCore.utils import _checkPermission
 from Products.CMFCore.utils import UniqueObject
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from Products.CMFPlone.utils import safe_unicode
@@ -55,6 +55,17 @@ from Products.DataGridField.Column import Column
 from plone.memoize import ram
 from plone import api
 from collective.behavior.talcondition.utils import _evaluateExpression
+from collective.documentviewer.async import queueJob
+from collective.documentviewer.settings import GlobalSettings
+from collective.iconifiedcategory.behaviors.iconifiedcategorization import IconifiedCategorization
+from collective.iconifiedcategory.interfaces import IIconifiedPreview
+from collective.iconifiedcategory.utils import calculate_category_id
+from collective.iconifiedcategory.utils import get_categorized_elements
+from collective.iconifiedcategory.utils import get_category_object
+from collective.iconifiedcategory.utils import get_config_root
+from collective.iconifiedcategory.utils import get_categories
+from collective.iconifiedcategory.utils import update_categorized_elements
+from collective.iconifiedcategory.utils import update_all_categorized_elements
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.dashboard.utils import enableFacetedDashboardFor
 from imio.helpers.cache import invalidate_cachekey_volatile_for
@@ -69,7 +80,6 @@ from Products.PloneMeeting.config import DEFAULT_COPIED_FIELDS
 from Products.PloneMeeting.config import MEETING_CONFIG
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
-from Products.PloneMeeting.config import PLONEMEETING_UPDATERS
 from Products.PloneMeeting.config import ploneMeetingRoles
 from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import PROJECTNAME
@@ -77,11 +87,14 @@ from Products.PloneMeeting.config import PY_DATETIME_WEEKDAYS
 from Products.PloneMeeting.config import RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import ROOT_FOLDER
 from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
-from Products.PloneMeeting.interfaces import IAnnexable, IMeetingFile
 from Products.PloneMeeting.profiles import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.profiles import PloneMeetingConfiguration
-from Products.PloneMeeting.utils import getCustomAdapter, \
-    monthsIds, weekdaysIds, getCustomSchemaFields, workday
+from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import getCustomAdapter
+from Products.PloneMeeting.utils import getCustomSchemaFields
+from Products.PloneMeeting.utils import monthsIds
+from Products.PloneMeeting.utils import weekdaysIds
+from Products.PloneMeeting.utils import workday
 from Products.PloneMeeting.model.adaptations import performModelAdaptations
 
 # Some constants ---------------------------------------------------------------
@@ -219,17 +232,6 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
     ),
-    BooleanField(
-        name='enableAnnexPreview',
-        default=defValues.enableAnnexPreview,
-        widget=BooleanField._properties['widget'](
-            description="EnableAnnexPreview",
-            description_msgid="enable_annex_preview_descr",
-            label='Enableannexpreview',
-            label_msgid='PloneMeeting_label_enableAnnexPreview',
-            i18n_domain='PloneMeeting',
-        ),
-    ),
     LinesField(
         name='workingDays',
         default=defValues.workingDays,
@@ -308,9 +310,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     ploneMeetingTypes = ('MeetingItem', 'MeetingFile')
     ocrLanguages = ('eng', 'fra', 'deu', 'ita', 'nld', 'por', 'spa', 'vie')
-    backPages = {'categories': 'data', 'classifiers': 'data',
-                 'meetingfiletypes': 'data', 'meetingusers': 'users',
-                 'podtemplates': 'doc'}
 
     # tool should not appear in portal_catalog
     def at_post_edit_script(self):
@@ -610,8 +609,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             cfg.addItemToConfig(descr)
         for descr in configData.itemTemplates:
             cfg.addItemToConfig(descr, isRecurring=False)
-        for descr in configData.meetingFileTypes:
-            cfg.addFileType(descr, source)
+        for descr in configData.annexTypes:
+            cfg.addAnnexType(descr, source)
         for descr in configData.podTemplates:
             cfg.addPodTemplate(descr, source)
         for mud in configData.meetingUsers:
@@ -667,10 +666,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         #   permission may also disassociate annexes from items.
         mc_folder.manage_permission(ADD_CONTENT_PERMISSIONS['MeetingItem'], ('Owner', 'Manager', ), acquire=0)
         mc_folder.manage_permission(ADD_CONTENT_PERMISSIONS['Meeting'], ('MeetingManager', 'Manager', ), acquire=0)
-        # The following permission is needed for storing pod-generated documents
-        # representing items or meetings directly into the ZODB (useful for
-        # exporting data through WebDAV or for freezing the generated doc)
-        mc_folder.manage_permission('ATContentTypes: Add File', PLONEMEETING_UPDATERS, acquire=0)
         # Only Manager may change the set of allowable types in folders.
         mc_folder.manage_permission(ATCTPermissions.ModifyConstrainTypes, ['Manager'], acquire=0)
         # Give MeetingManager localrole to relevant _meetingmanagers group
@@ -763,14 +758,14 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         else:
             # It is a brain
             obj = self.unrestrictedTraverse(value.getPath())
-        return getSecurityManager().checkPermission(View, obj)
+        return _checkPermission(View, obj)
 
     security.declarePublic('isPloneMeetingUser')
 
     def isPloneMeetingUser(self):
         '''Is the current user a PloneMeeting user (ie, does it have at least
            one of the roles used in PloneMeeting ?'''
-        user = self.portal_membership.getAuthenticatedMember()
+        user = api.user.get_current()
         if not user:
             return
         for role in user.getRoles():
@@ -797,8 +792,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''Is the current user a 'MeetingManager' on context?  If p_realManagers is True,
            only returns True if user has role Manager/Site Administrator, either
            (by default) MeetingManager is also considered as a 'Manager'?'''
-        membershipTool = api.portal.get_tool('portal_membership')
-        user = membershipTool.getAuthenticatedMember()
+        user = api.user.get_current()
         userRoles = user.getRolesInContext(context)
         return 'Manager' in userRoles or \
             'Site Administrator' in userRoles or \
@@ -863,6 +857,35 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             return False
         return True
 
+    security.declarePublic('showAnnexesTab')
+
+    def showAnnexesTab(self, context):
+        '''Must we show the "Annexes" on given p_context ?'''
+        if context.meta_type == 'MeetingItem' and \
+           (context.isTemporary() or context.isDefinedInTool()):
+            return False
+        elif context.meta_type == 'Meeting' and context.isTemporary():
+            return False
+        elif context.meta_type in ('MeetingItem', 'Meeting') or \
+                context.portal_type.startswith('meetingadvice'):
+            # check that there are categories defined in the configuration
+            hasAnnexesTypes = get_categories(context)
+            hasDecisionAnnexesTypes = False
+            if not hasAnnexesTypes and context.meta_type == 'MeetingItem':
+                # maybe we have decision related annexes types?
+                self.REQUEST.set('force_use_item_decision_annexes_group', True)
+                hasDecisionAnnexesTypes = get_categories(context)
+                self.REQUEST.set('force_use_item_decision_annexes_group', False)
+            if hasAnnexesTypes or hasDecisionAnnexesTypes:
+                return True
+
+            # last thing, eventually check that there are annexes in self
+            # even if annexes types are no longer used...
+            if self.hasAnnexes(context) or \
+               self.hasAnnexes(context, portal_type='annexDecision'):
+                return True
+        return False
+
     security.declarePublic('showFacetedCriteriaAction')
 
     def showFacetedCriteriaAction(self, context):
@@ -887,7 +910,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def getUserName(self, userId):
         '''Returns the full name of user having id p_userId.'''
         res = userId
-        user = self.portal_membership.getMemberById(userId)
+        user = api.user.get(userid=userId)
         if user:
             fullName = user.getProperty('fullname')
             if fullName:
@@ -904,7 +927,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def getColoredLink(self, obj, showColors=True, showContentIcon=False, contentValue='',
                        target='_self', maxLength=0, inMeeting=True,
                        meeting=None, appendToUrl='', additionalCSSClasses='',
-                       tag_title=None, annexInfo=False):
+                       tag_title=None):
         '''Produces the link to an item or annex with the right color (if the
            colors must be shown depending on p_showColors). p_target optionally
            specifies the 'target' attribute of the 'a' tag. p_maxLength
@@ -947,26 +970,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if obj.meta_type == 'MeetingItem' and not obj.adapted().isPrivacyViewable():
             params['isViewable'] = False
 
-        # if we received annexInfo, the adapted element is the meetingItem but we want actually
-        # to display a link to an annex and for performance reason, we received the annexIndex
-        if annexInfo:
-            # do not display colors
-            params['showColors'] = False
-            # do not showIcons or icons of the item are shown...
-            params['showIcons'] = False
-            # annexInfo is either an annexInfo or a MeetingFile instance...
-            if IMeetingFile.providedBy(annexInfo):
-                annexInfo = annexInfo.getAnnexInfo()
-            params['contentValue'] = annexInfo['Title']
-            if annexInfo['warnSize']:
-                params['contentValue'] += \
-                    "&nbsp;<span title='{0}' style='color: red; cursor: help;'>({1})</span>".format(
-                        translate("annex_size_warning",
-                                  domain="PloneMeeting",
-                                  context=self.REQUEST,
-                                  default="Annex size is huge, it could be difficult "
-                                  "to be downloaded!").encode('utf-8'),
-                        annexInfo['friendlySize'])
         adapted.__init__(obj, **params)
         return adapted.getLink()
 
@@ -1074,30 +1077,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         res = True
         if restrictMode:
             if not self.isManager(self):
-                user = self.portal_membership.getAuthenticatedMember()
+                user = api.user.get_current()
                 # Check if the user is in specific list
                 if user.id not in [u.strip() for u in self.getUnrestrictedUsers().split('\n')]:
                     res = False
         return res
-
-    security.declarePublic('getBackUrl')
-
-    def getBackUrl(self, context):
-        '''Computes the URL for "back" links in the tool or in a config.'''
-        url = ''
-        if context.meta_type == 'DashboardCollection':
-            url = context.getMeetingConfig(context).absolute_url()
-            url += '?pageName=%s#%s' % ('gui', 'searches')
-        elif context.getParentNode().meta_type == 'ATFolder':
-            # p_context is a sub-object in a sub-folder within a config
-            folderName = context.getParentNode().id
-            url = context.getParentNode().getParentNode().absolute_url()
-            url += '?pageName=%s#%s' % (self.backPages[folderName], folderName)
-        else:
-            # We are in a subobject from the tool.
-            url = context.getParentNode().absolute_url()
-            url += '#%s' % context.meta_type
-        return url
 
     security.declarePrivate('pasteItem')
 
@@ -1114,7 +1098,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         destMeetingConfig = self.getMeetingConfig(destFolder)
         # Current user may not have the right to create object in destFolder.
         # We will grant him the right temporarily
-        loggedUserId = self.portal_membership.getAuthenticatedMember().getId()
+        loggedUserId = api.user.get_current().getId()
         userLocalRoles = destFolder.get_local_roles_for_userid(loggedUserId)
         destFolder.manage_addLocalRoles(loggedUserId, ('Owner',))
         # save in the REQUEST if we want to copyAnnexes so conversion
@@ -1134,135 +1118,126 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             # The new owner will become the currently logged user
             newOwnerId = loggedUserId
         wftool = api.portal.get_tool('portal_workflow')
-        i = -1
-        for itemId in pasteResult:
-            i += 1
-            newItem = getattr(destFolder, itemId['new_id'])
-            # Get the copied item, we will need information from it
-            copiedItem = None
-            copiedId = CopySupport._cb_decode(copiedData)[1][i]
-            m = OFS.Moniker.loadMoniker(copiedId)
-            try:
-                copiedItem = m.bind(destFolder.getPhysicalRoot())
-            except ConflictError:
-                raise
-            except:
-                raise PloneMeetingError('Could not copy.')
-            if newItem.__class__.__name__ != "MeetingItem":
-                continue
-            # Let the logged user do everything on the newly created item
-            newItem.manage_addLocalRoles(loggedUserId, ('Manager',))
-            newItem.setCreators((newOwnerId,))
-            # The creation date is kept, redefine it
-            newItem.setCreationDate(DateTime())
+        newItem = getattr(destFolder, pasteResult[0]['new_id'])
+        # Get the copied item, we will need information from it
+        copiedItem = None
+        copiedId = CopySupport._cb_decode(copiedData)[1][0]
+        m = OFS.Moniker.loadMoniker(copiedId)
+        try:
+            copiedItem = m.bind(destFolder.getPhysicalRoot())
+        except ConflictError:
+            raise
+        except:
+            raise PloneMeetingError('Could not copy.')
 
-            # Change the new item portal_type dynamically (wooow) if needed
-            if newPortalType:
-                newItem.portal_type = newPortalType
-                # Rename the workflow used in workflow_history because the used workflow
-                # has changed (more than probably)
-                oldWFName = wftool.getWorkflowsFor(copiedItem)[0].id
-                newWFName = wftool.getWorkflowsFor(newItem)[0].id
-                oldHistory = newItem.workflow_history
-                tmpDict = {newWFName: oldHistory[oldWFName]}
+        # Let the logged user do everything on the newly created item
+        newItem.manage_addLocalRoles(loggedUserId, ('Manager',))
+        newItem.setCreators((newOwnerId,))
+        # The creation date is kept, redefine it
+        newItem.setCreationDate(DateTime())
+
+        # Change the new item portal_type dynamically (wooow) if needed
+        if newPortalType:
+            newItem.portal_type = newPortalType
+            # Rename the workflow used in workflow_history because the used workflow
+            # has changed (more than probably)
+            oldWFName = wftool.getWorkflowsFor(copiedItem)[0].id
+            newWFName = wftool.getWorkflowsFor(newItem)[0].id
+            oldHistory = newItem.workflow_history
+            tmpDict = {newWFName: oldHistory[oldWFName]}
+            newItem.workflow_history = tmpDict
+            # make sure current review_state is right, in case initial_state
+            # of newPortalType WF is not the same as original portal_type WF, correct this
+            newItemWF = wftool.getWorkflowsFor(newItem)[0]
+            if not newItemWF._getWorkflowStateOf(newItem) or not \
+               wftool.getInfoFor(newItem, 'review_state') == newItemWF.initial_state:
+                # in this case, the current wf state is wrong, we will correct it
+                newItem.workflow_history = {}
+                # this will initialize wf initial state if workflow_history is empty
+                initial_state = wftool.getWorkflowsFor(newItem)[0]._getWorkflowStateOf(newItem)
+                tmpDict[newWFName][0]['review_state'] = initial_state.id
                 newItem.workflow_history = tmpDict
-                # make sure current review_state is right, in case initial_state
-                # of newPortalType WF is not the same as original portal_type WF, correct this
-                newItemWF = wftool.getWorkflowsFor(newItem)[0]
-                if not newItemWF._getWorkflowStateOf(newItem) or not \
-                   wftool.getInfoFor(newItem, 'review_state') == newItemWF.initial_state:
-                    # in this case, the current wf state is wrong, we will correct it
-                    newItem.workflow_history = {}
-                    # this will initialize wf initial state if workflow_history is empty
-                    initial_state = wftool.getWorkflowsFor(newItem)[0]._getWorkflowStateOf(newItem)
-                    tmpDict[newWFName][0]['review_state'] = initial_state.id
-                    newItem.workflow_history = tmpDict
-                # update security settings of new item has workflow permissions could have changed...
-                newItemWF.updateRoleMappingsFor(newItem)
+            # update security settings of new item has workflow permissions could have changed...
+            newItemWF.updateRoleMappingsFor(newItem)
 
-            # remove contained meetingadvices
-            newItem._removeEveryContainedAdvices()
+        # remove contained meetingadvices
+        newItem._removeEveryContainedAdvices()
 
-            # Set fields not in the copyFields list to their default value
-            # 'id' and  'proposingGroup' will be kept in anyway
-            fieldsToKeep = ['id', 'proposingGroup', ] + copyFields
-            for field in newItem.Schema().filterFields(isMetadata=False):
-                if not field.getName() in fieldsToKeep:
-                    # Set the field to his default value
-                    field.set(newItem, field.getDefault(newItem))
+        # Set fields not in the copyFields list to their default value
+        # 'id' and  'proposingGroup' will be kept in anyway
+        fieldsToKeep = ['id', 'proposingGroup', ] + copyFields
+        for field in newItem.Schema().filterFields(isMetadata=False):
+            if not field.getName() in fieldsToKeep:
+                # Set the field to his default value
+                field.set(newItem, field.getDefault(newItem))
 
-            # Set some default values that could not be initialized properly
-            if 'toDiscuss' in copyFields and destMeetingConfig.getToDiscussSetOnItemInsert():
-                toDiscussDefault = destMeetingConfig.getToDiscussDefault()
-                newItem.setToDiscuss(toDiscussDefault)
-            if 'classifier' in copyFields:
-                newItem.getField('classifier').set(
-                    newItem, copiedItem.getClassifier())
+        # Set some default values that could not be initialized properly
+        if 'toDiscuss' in copyFields and destMeetingConfig.getToDiscussSetOnItemInsert():
+            toDiscussDefault = destMeetingConfig.getToDiscussDefault()
+            newItem.setToDiscuss(toDiscussDefault)
+        if 'classifier' in copyFields:
+            newItem.getField('classifier').set(
+                newItem, copiedItem.getClassifier())
 
-            # Manage annexes.
-            # we will remove annexes if copyAnnexes is False or if we could not find
-            # defined meetingFileTypes in the destMeetingConfig
-            noMeetingFileTypes = False
-            if copyAnnexes and \
-               IAnnexable(newItem).getAnnexes() and \
-               not destMeetingConfig.getFileTypes():
-                noMeetingFileTypes = True
-                plone_utils = api.portal.get_tool('plone_utils')
-                msg = translate('annexes_not_kept_because_no_available_mft_warning',
-                                mapping={'cfg': safe_unicode(destMeetingConfig.Title())},
-                                domain='PloneMeeting',
-                                context=self.REQUEST)
-                plone_utils.addPortalMessage(msg, 'warning')
-            if not copyAnnexes or noMeetingFileTypes:
-                # Delete the annexes that have been copied.
-                for annex in IAnnexable(newItem).getAnnexes():
-                    unrestrictedRemoveGivenObject(annex)
-            else:
-                # Recreate the references to annexes: the references can NOT be kept
-                # on copy because it would be references to original annexes
-                # and we need references to freshly created annexes
-                # moreover set a correct value for annex.toPrint
-                for annexTypeRelatedTo in ('item', 'item_decision'):
-                    if annexTypeRelatedTo == 'item':
-                        toPrintDefault = destMeetingConfig.getAnnexToPrintDefault()
-                    else:
-                        toPrintDefault = destMeetingConfig.getAnnexDecisionToPrintDefault()
-                    oldAnnexes = IAnnexable(copiedItem).getAnnexes(relatedTo=annexTypeRelatedTo)
-                    for oldAnnex in oldAnnexes:
-                        newAnnex = getattr(newItem, oldAnnex.id)
-                        # In case the item is copied from another MeetingConfig, we need
-                        # to update every annex.meetingFileType because it still refers
-                        # the meetingFileType in the old MeetingConfig the item is copied from
-                        if newPortalType:
-                            if not self._updateMeetingFileTypesAfterSentToOtherMeetingConfig(newAnnex):
-                                raise Exception('Could not update meeting file type of copied annex at %s!'
-                                                % oldAnnex.absolute_url())
-                        # initialize toPrint correctly regarding configuration
-                        if not destMeetingConfig.getKeepOriginalToPrintOfClonedItems():
-                            newAnnex.setToPrint(toPrintDefault)
-                        # call processForm on the newAnnex so it is fully initialized
-                        newAnnex.processForm()
-            # The copy/paste has transferred history. We must clean the history
-            # of the cloned object.
-            wfName = wftool.getWorkflowsFor(newItem)[0].id
-            firstEvent = newItem.workflow_history[wfName][0]
-            firstEvent['actor'] = newOwnerId or self.Creator()
-            firstEvent['time'] = DateTime()
-            newItem.workflow_history[wfName] = (firstEvent, )
+        # Manage annexes.
+        # we will remove annexes if copyAnnexes is False or if we could not find
+        # a corresponding annexType in the destMeetingConfig
+        plone_utils = api.portal.get_tool('plone_utils')
+        if not copyAnnexes:
+            # Delete the annexes that have been copied.
+            for annex in get_annexes(newItem):
+                unrestrictedRemoveGivenObject(annex)
+        else:
+            # manage the otherMCCorrespondence
+            oldAnnexes = get_categorized_elements(copiedItem, result_type='objects')
+            for oldAnnex in oldAnnexes:
+                newAnnex = getattr(newItem, oldAnnex.getId())
+                # In case the item is copied from another MeetingConfig, we need
+                # to update every annex.content_category because it still refers
+                # the annexType in the old MeetingConfig the item is copied from
+                if newPortalType:
+                    originCfg = self.getMeetingConfig(copiedItem)
+                    if not self._updateContentCategoryAfterSentToOtherMeetingConfig(newAnnex, originCfg):
+                        msg = translate('annex_not_kept_because_no_available_annex_type_warning',
+                                        mapping={'annexTitle': safe_unicode(newAnnex.Title()),
+                                                 'cfg': safe_unicode(destMeetingConfig.Title())},
+                                        domain='PloneMeeting',
+                                        context=self.REQUEST)
+                        plone_utils.addPortalMessage(msg, 'warning')
+                        unrestrictedRemoveGivenObject(newAnnex)
+                        continue
 
-            # The copy/paste has transferred annotations, we do not need them.
-            annotations = IAnnotations(newItem)
-            for ann in annotations:
-                if ann.startswith(SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY):
-                    del annotations[ann]
+                # initialize to_print correctly regarding configuration
+                if not destMeetingConfig.getKeepOriginalToPrintOfClonedItems():
+                    newAnnex.to_print = \
+                        get_category_object(newAnnex, newAnnex.content_category).to_print
+                # update annex index
+                update_categorized_elements(newAnnex.getParentNode(),
+                                            newAnnex,
+                                            get_category_object(newAnnex,
+                                                                newAnnex.content_category))
 
-            # Change the proposing group if the item owner does not belong to
-            # the defined proposing group, except if p_keepProposingGroup is True
-            if not keepProposingGroup:
-                userGroups = self.getGroupsForUser(userId=newOwnerId, suffixes=['creators', ])
-                if newItem.getProposingGroup(True) not in userGroups:
-                    if userGroups:
-                        newItem.setProposingGroup(userGroups[0].getId())
+        # The copy/paste has transferred history. We must clean the history
+        # of the cloned object.
+        wfName = wftool.getWorkflowsFor(newItem)[0].id
+        firstEvent = newItem.workflow_history[wfName][0]
+        firstEvent['actor'] = newOwnerId or self.Creator()
+        firstEvent['time'] = DateTime()
+        newItem.workflow_history[wfName] = (firstEvent, )
+
+        # The copy/paste has transferred annotations, we do not need them.
+        annotations = IAnnotations(newItem)
+        for ann in annotations:
+            if ann.startswith(SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY):
+                del annotations[ann]
+
+        # Change the proposing group if the item owner does not belong to
+        # the defined proposing group, except if p_keepProposingGroup is True
+        if not keepProposingGroup:
+            userGroups = self.getGroupsForUser(userId=newOwnerId, suffixes=['creators', ])
+            if newItem.getProposingGroup(True) not in userGroups:
+                if userGroups:
+                    newItem.setProposingGroup(userGroups[0].getId())
 
         if newOwnerId != loggedUserId:
             plone_utils = api.portal.get_tool('plone_utils')
@@ -1271,55 +1246,45 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         self.REQUEST.set('currentlyPastingItems', False)
         return newItem
 
-    def _updateMeetingFileTypesAfterSentToOtherMeetingConfig(self, annex):
+    def _updateContentCategoryAfterSentToOtherMeetingConfig(self, annex, originCfg):
         '''
-          Update the linked MeetingFileType of the annex while an item is sent from
-          a MeetingConfig to another : find a corresponding MeetingFileType in the new MeetingConfig :
-          - either we have a correspondence defined on the original MeetingFileType specifying what is the MFT
-            to use in the new MeetingConfig;
-          - or if we can not get a correspondence, we use the default MFT of the new MeetingConfig.
-          Returns True if the meetingFileType was actually updated, False if no correspondence could be found.
+          Update the content_category of the annex while an item is sent from
+          a MeetingConfig to another : find a corresponding content_category in the new MeetingConfig :
+          - either we have a correspondence defined on the original ContentCategory specifying what is the
+            ContentCategory to use in the new MeetingConfig;
+          - or if we can not get a correspondence, we use the default ContentCategory of the new MeetingConfig.
+          Returns True if the content_category was actually updated, False if no correspondence could be found.
         '''
-        # for now, the stored MFT on the annex is the MFT UID of the MeetingConfig
-        # the item was sent from
-        mcFromMftUID = annex.getMeetingFileType()
-        isSubType = bool('__subtype__' in mcFromMftUID)
-        # get the MeetingFileType
-        uid_catalog = api.portal.get_tool('uid_catalog')
-        row_id = None
-        if isSubType:
-            mcFromMftUID, row_id = mcFromMftUID.split('__subtype__')
-        fromMft = uid_catalog(UID=mcFromMftUID)[0].getObject()
-        # check if a mft correspondence was defined when sent to this new MeetingConfig
-        cfg = self.getMeetingConfig(annex)
-        correspondenceIdStartWith = '%s__filetype__' % cfg.getId()
-        hasCorrespondence = False
-        correspondenceId = None
-        if isSubType:
-            fromMftSubTypes = fromMft.getSubTypes()
-            for subType in fromMftSubTypes:
-                for correspondence in subType['otherMCCorrespondences']:
-                    if correspondence.startswith(correspondenceIdStartWith):
-                        hasCorrespondence = True
-                        # a correspondence is like idOfTheMeetingConfig__filetype__uidOfMFT__subtype__row_id
-                        correspondenceId = correspondence.split('__filetype__')[1]
+        catalog = api.portal.get_tool('portal_catalog')
+        tool = api.portal.get_tool('portal_plonemeeting')
+        if annex.portal_type == 'annexDecision':
+            self.REQUEST.set('force_use_item_decision_annexes_group', True)
+            annex_category = get_category_object(originCfg, annex.content_category)
+            self.REQUEST.set('force_use_item_decision_annexes_group', False)
         else:
-            for correspondence in fromMft.getOtherMCCorrespondences():
-                if correspondence.startswith(correspondenceIdStartWith):
-                    hasCorrespondence = True
-                    # a correspondence is like idOfTheMeetingConfig__filetype__uidOfMFT
-                    correspondenceId = correspondence.split('__filetype__')[1]
-        # if we did not find a correspondence, then we take the default MFT of same relatedTo
-        if not hasCorrespondence:
-            fromRelatedTo = fromMft.getRelatedTo()
-            destFileTypes = cfg.getFileTypes(relatedTo=fromRelatedTo)
-            if not destFileTypes:
-                # no correspondence could be found, we return False
+            annex_category = get_category_object(originCfg, annex.content_category)
+        other_mc_correspondences = []
+        if annex_category.other_mc_correspondences:
+            annex_cfg_id = tool.getMeetingConfig(annex).getId()
+            other_mc_correspondences = [
+                brain.getObject() for brain in catalog(UID=annex_category.other_mc_correspondences, enabled=True)
+                if "/portal_plonemeeting/{0}".format(annex_cfg_id) in brain.getPath()]
+        if other_mc_correspondences:
+            other_mc_correspondence = other_mc_correspondences[0]
+            adapted_annex = IconifiedCategorization(annex)
+            setattr(adapted_annex,
+                    'content_category',
+                    calculate_category_id(other_mc_correspondence))
+        else:
+            # use default category
+            categories = get_categories(annex, sort_on='getObjPositionInParent')
+            if not categories:
                 return False
-            correspondenceId = destFileTypes[0]['id']
-        # now we have a correspondence in correspondenceId that can be a
-        # correspondence to a real MFT object or to a MFT subType
-        annex.setMeetingFileType(correspondenceId)
+            else:
+                adapted_annex = IconifiedCategorization(annex)
+                setattr(adapted_annex,
+                        'content_category',
+                        calculate_category_id(categories[0].getObject()))
         return True
 
     security.declarePublic('getSelf')
@@ -1379,7 +1344,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            call to portal_membership.getMemberById.'''
         if isinstance(userIdOrInfo, basestring):
             # It is a user ID. Get the corresponding UserInfo instance
-            userInfo = self.portal_membership.getMemberById(userIdOrInfo)
+            userInfo = api.user.get(userIdOrInfo)
         else:
             userInfo = userIdOrInfo
         # We return None if the user does not exist or has no defined email.
@@ -1478,14 +1443,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('formatMeetingDate')
 
-    def formatMeetingDate(self,
-                          meeting,
-                          date_attr='getDate',
-                          lang=None,
-                          short=False,
-                          withHour=False,
-                          prefixed=False):
-        '''Returns p_meeting, p_date_attr formatted.
+    def formatMeetingDate(self, meeting, lang=None, short=False,
+                          withHour=False, prefixed=False):
+        '''Returns p_meeting.getDate formatted.
            - If p_lang is specified, it translates translatable elements (if
              any), like day of week or month, in p_lang. Else, it translates it
              in the user language (see tool.getUserLanguage).
@@ -1495,11 +1455,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
              prepended to the result.'''
         # Received meeting could be a brain or an object
         if meeting.__class__.__name__ in ['mybrains', 'CatalogContentListingObject']:
-            # It is a meeting brain, take the 'date_attr' metadata
-            date = getattr(meeting, date_attr)
+            # It is a meeting brain, take the 'getDate' metadata
+            date = meeting.getDate
         else:
             # received meeting is a Meeting instance
-            date = getattr(meeting, date_attr)()
+            date = meeting.getDate()
         # Get the format for the rendering of p_aDate
         if short:
             fmt = '%d/%m/%Y'
@@ -1581,60 +1541,69 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             res = res[:res.find('-')]
         return res
 
-    security.declarePublic('reindexAnnexes')
+    security.declarePublic('updateAnnexes')
 
-    def reindexAnnexes(self):
-        '''Reindexes all annexes.'''
-        user = self.portal_membership.getAuthenticatedMember()
-        if not user.has_role('Manager'):
+    def updateAnnexes(self):
+        '''Update the 'categorized_elements' on every annexes container.'''
+        if not self.isManager(self, realManagers=True):
             raise Unauthorized
         catalog = api.portal.get_tool('portal_catalog')
-        # update items and advices
-        brains = catalog(meta_type=('MeetingItem', ))
+        # update meetings, items and advices
+        brains = catalog(meta_type=('MeetingItem', 'Meeting'))
         brains = brains + catalog(object_provides='Products.PloneMeeting.content.advice.IMeetingAdvice')
         numberOfBrains = len(brains)
         i = 1
         for brain in brains:
             try:
-                obj = brain.getObject()
+                if isinstance(brain, AbstractCatalogBrain):
+                    obj = brain.getObject()
             except AttributeError:
                 continue
-            IAnnexable(obj).updateAnnexIndex()
-            logger.info('%d/%d Updating annexIndex of %s at %s' % (i,
-                                                                   numberOfBrains,
-                                                                   brain.portal_type,
-                                                                   brain.getPath()))
+            update_all_categorized_elements(obj)
+            logger.info('%d/%d Updating categorized_elements of %s at %s' % (
+                i,
+                numberOfBrains,
+                brain.portal_type,
+                brain.getPath()))
             i = i + 1
-        self.plone_utils.addPortalMessage('Done.')
+        plone_utils = api.portal.get_tool('plone_utils')
+        plone_utils.addPortalMessage('Done.')
         return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 
     security.declarePublic('convertAnnexes')
 
     def convertAnnexes(self):
         '''Convert all annexes using collective.documentviewer.'''
-        user = self.portal_membership.getAuthenticatedMember()
-        if not user.has_role('Manager'):
+        if not self.isManager(self, realManagers=True):
             raise Unauthorized
-        if not self.getEnableAnnexPreview():
-            msg = translate('Annexes preview must be enabled to launch complete annexes conversion process.',
-                            domain='PloneMeeting',
-                            context=self.REQUEST, )
-            self.plone_utils.addPortalMessage(msg, 'warning')
-        else:
-            from Products.PloneMeeting.MeetingFile import convertToImages
-            catalog = api.portal.get_tool('portal_catalog')
-            # update annexes in items and advices
-            brains = catalog(meta_type='MeetingItem') + \
-                catalog(object_provides='Products.PloneMeeting.content.advice.IMeetingAdvice')
-            for brain in brains:
-                obj = brain.getObject()
-                annexes = IAnnexable(obj).getAnnexes()
-                cfg = self.getMeetingConfig(obj)
-                force = bool(cfg.getEnableAnnexToPrint() == 'enabled_for_printing')
-                for annex in annexes:
-                    convertToImages(annex, None, force=force)
-            self.plone_utils.addPortalMessage('Done.')
+
+        catalog = api.portal.get_tool('portal_catalog')
+        # update annexes in items and advices
+        brains = catalog(meta_type='MeetingItem') + \
+            catalog(object_provides='Products.PloneMeeting.content.advice.IMeetingAdvice')
+        for brain in brains:
+            obj = brain.getObject()
+            annexes = get_categorized_elements(obj, result_type='objects')
+            cfg = self.getMeetingConfig(obj, caching=False)
+            for annex in annexes:
+                to_be_printed_activated = get_config_root(annex)
+                # convert if auto_convert is enabled or to_print is enabled for printing
+                if (self.auto_convert_annexes() or
+                    (to_be_printed_activated and cfg.getAnnexToPrintMode() == 'enabled_for_printing')) and \
+                   not IIconifiedPreview(annex).converted:
+                    queueJob(annex)
+        self.plone_utils.addPortalMessage('Done.')
         return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
+
+    def auto_convert_annexes(self):
+        """Return True if auto_convert is enabled in the c.documentviewer settings."""
+        portal = api.portal.get()
+        gsettings = GlobalSettings(portal)
+        return gsettings.auto_convert
+
+    def hasAnnexes(self, context, portal_type='annex'):
+        '''Does given p_context contains annexes of type p_portal_type?'''
+        return bool(get_categorized_elements(context, portal_type=portal_type))
 
     security.declarePublic('updateAllLocalRoles')
 

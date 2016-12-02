@@ -30,6 +30,8 @@ from AccessControl import Unauthorized
 from OFS.ObjectManager import BeforeDeleteException
 from zope.i18n import translate
 
+from collective.iconifiedcategory.utils import get_category_object
+
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFPlone import PloneMessageFactory
 from Products.CMFPlone.CatalogTool import getIcon
@@ -1156,6 +1158,33 @@ class testMeetingConfig(PloneMeetingTestCase):
         itemTemplateWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName('MeetingItemTemplate'))[0]
         self.assertEquals(itemRecurringWF.id, 'plonemeeting_activity_managers_workflow')
         self.assertEquals(itemTemplateWF.id, 'plonemeeting_activity_managers_workflow')
+
+    def test_pm_UpdateAnnexConfidentiality(self):
+        """Test the 'updateAnnexConfidentiality' method that will initialize every existing
+           annexes to the default confidentiality defined on the annex type.  This is used
+           when enabling confidentialty on an existing application."""
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        annex = self.addAnnex(item)
+        # default value is used
+        category = get_category_object(annex, annex.content_category)
+        self.assertFalse(category.confidential)
+        self.assertFalse(annex.confidential)
+
+        # change default then update existing annexes
+        category.confidential = True
+        # raise Unauthorized if not Manager
+        self.assertRaises(Unauthorized, self.meetingConfig.updateAnnexConfidentiality)
+        self.changeUser('admin')
+        self.meetingConfig.updateAnnexConfidentiality()
+        # as the confidentiality was not enabled, nothing changed
+        category_group = category.get_category_group()
+        self.assertFalse(category_group.confidentiality_activated)
+        self.assertFalse(annex.confidential)
+        # now with confidentiality activated, default is set to True
+        category_group.confidentiality_activated = True
+        self.meetingConfig.updateAnnexConfidentiality()
+        self.assertTrue(annex.confidential)
 
 
 def test_suite():

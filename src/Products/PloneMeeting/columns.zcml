@@ -139,4 +139,14 @@
      name="check_box_item"
   />
 
+  <!-- Action column for the annexes table -->
+  <adapter
+    name="action-column"
+    for=".interfaces.IMeetingContent
+         zope.interface.Interface
+         collective.iconifiedcategory.interfaces.ICategorizedTable"
+    provides="z3c.table.interfaces.IColumn"
+    factory=".columns.PMAnnexActionsColumn"
+    />
+
 </configure>

@@ -1,3 +1,0 @@
-[actions]
-action.success=redirect_to:python:test(object.portal_type.startswith('meetingadvice'), request.get('HTTP_REFERER'), test(request.get('relatedTo')=='item', 'annexes_form', 'annexes_decision_form'))
-action.failure=traverse_to:python:test(request.get('decisionRelated')=='True', 'annexes_decision_form', 'annexes_form')

@@ -14,6 +14,7 @@
  <property name="global_allow">False</property>
  <property name="filter_content_types">True</property>
  <property name="allowed_content_types">
+   <element value="annex"/>
    <element value="Image"/>
  </property> <property name="allow_discussion">False</property>
  <property name="default_view">meeting_view</property>
@@ -43,6 +44,14 @@
          visible="True">
   <permission value="Modify portal content"/>
  </action>
-<!-- ##code-section FOOT -->
-<!-- ##/code-section FOOT -->
+ <action title="Annexes"
+         i18n:attributes="title"
+         action_id="annexes"
+         category="object"
+         condition_expr="python: here.portal_plonemeeting.showAnnexesTab(here)"
+         icon_expr=""
+         url_expr="string:${object_url}/@@categorized-annexes"
+         visible="True">
+  <permission value="View"/>
+ </action>
 </object>

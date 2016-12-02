@@ -20,20 +20,23 @@
 # 02110-1301, USA.
 #
 
-import unittest
 import os.path
+import transaction
+import unittest
 from AccessControl.SecurityManagement import getSecurityManager
-from ZPublisher.HTTPRequest import FileUpload
 
 from zope.event import notify
 from zope.traversing.interfaces import BeforeTraverseEvent
 
 from plone import api
+from plone import namedfile
 from plone.app.testing.helpers import setRoles
 from plone.app.testing import login, logout
 
 from Products.PloneTestCase.setup import _createHomeFolder
 
+from collective.iconifiedcategory.utils import calculate_category_id
+from collective.iconifiedcategory.utils import get_config_root
 from imio.helpers.cache import cleanRamCacheFor
 import Products.PloneMeeting
 # If I do not remove this method, some tests crash.
@@ -42,7 +45,6 @@ from Products.PloneMeeting.config import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.config import MEETINGREVIEWERS
 from Products.PloneMeeting.MeetingItem import MeetingItem_schema
 from Products.PloneMeeting.Meeting import Meeting_schema
-from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.testing import PM_TESTING_PROFILE_FUNCTIONAL
 from Products.PloneMeeting.tests.helpers import PloneMeetingTestingHelpers
 from Products.PloneMeeting.utils import cleanMemoize
@@ -111,23 +113,26 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         self.meetingConfig = getattr(self.tool, 'plonemeeting-assembly', None)
         self.meetingConfig2 = getattr(self.tool, 'plonegov-assembly', None)
         # Set the default file and file type for adding annexes
-        self.annexFile = 'INSTALL.TXT'
+        self.annexFile = u'FILE.txt'
         self.annexFileType = 'financial-analysis'
         self.annexFileTypeDecision = 'decision-annex'
         self.annexFileTypeAdvice = 'advice-annex'
+        self.annexFileTypeMeeting = 'meeting-annex'
 
     def tearDown(self):
         self._cleanExistingTmpAnnexFile()
 
     def createUser(self, username, roles):
         '''Creates a user named p_username with some p_roles.'''
-        api.user.create(email='test@test.be',
-                        username=username,
-                        password=DEFAULT_USER_PASSWORD,
-                        roles=[],
-                        properties={})
+        newUser = api.user.create(
+            email='test@test.be',
+            username=username,
+            password=DEFAULT_USER_PASSWORD,
+            roles=[],
+            properties={})
         setRoles(self.portal, username, roles)
         _createHomeFolder(self.portal, username)
+        return newUser
 
     def setMeetingConfig(self, meetingConfigId):
         '''On which meeting config must we work?'''
@@ -172,6 +177,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.getGroupsForUser')
         cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.isPowerObserverForCfg')
         cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.isManager')
+        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.userIsAmong')
         if loginName == 'admin':
             login(self.app, loginName)
         else:
@@ -276,47 +282,57 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         if os.path.exists(newAnnexPath):
             os.remove(newAnnexPath)
 
-    def addAnnex(self, item, annexType=None, annexTitle=None,
-                 relatedTo='item'):
-        '''Adds an annex to p_item. The uploaded file has name p_annexPath,
-           which is a path relative to the folder that corresponds to package
-           Products.PloneMeeting. If None is provided, a default file is
-           uploaded (see self.annexFile). If no p_annexType is provided,
-           self.annexFileType is used. If no p_annexTitle is specified, the
-           predefined title of the annex type is used.'''
-        # copy the default annexFile because ZODB.blob removes (os.remove) a FileUpload
-        # after having used it...
-        from shutil import copyfile
-        originalAnnexPath = os.path.join(self.pmFolder, self.annexFile)
-        newAnnexPath = originalAnnexPath[:-4] + '_tmp_for_tests.%s' % originalAnnexPath[-3:]
-        copyfile(originalAnnexPath, newAnnexPath)
-        annexPath = newAnnexPath
-        annexFile = FileUpload(TestFile(
-            file(os.path.join(self.pmFolder, annexPath)), annexPath))
+    def _annex_file_content(self):
+        current_path = os.path.dirname(__file__)
+        f = open(os.path.join(current_path, self.annexFile), 'r')
+        annex_file = namedfile.NamedBlobFile(f.read(), filename=self.annexFile)
+        return annex_file
+
+    def addAnnex(self,
+                 context,
+                 annexType=None,
+                 annexTitle=None,
+                 relatedTo=None,
+                 to_print=False,
+                 confidential=False):
+        '''Adds an annex to p_item.
+           If no p_annexType is provided, self.annexFileType is used.
+           If no p_annexTitle is specified, the predefined title of the annex type is used.'''
+
         if annexType is None:
-            if relatedTo == 'item':
-                annexType = self.annexFileType
-            elif relatedTo == 'item_decision':
-                annexType = self.annexFileTypeDecision
-            elif relatedTo == 'advice':
+            if context.meta_type == 'MeetingItem':
+                if not relatedTo:
+                    annexType = self.annexFileType
+                if relatedTo == 'item_decision':
+                    annexType = self.annexFileTypeDecision
+            elif context.portal_type.startswith('meetingadvice'):
                 annexType = self.annexFileTypeAdvice
-        fileType = getattr(self.meetingConfig.meetingfiletypes, annexType)
-        if annexTitle is None:
-            annexTitle = fileType.getPredefinedTitle() or 'Annex title'
-        # Create the annex
-        idCandidate = None
-        IAnnexable(item).addAnnex(idCandidate,
-                                  annexTitle,
-                                  annexFile,
-                                  relatedTo,
-                                  meetingFileTypeUID=fileType.UID())
-        # Find the last created annex
-        annexUid = IAnnexable(item).getAnnexesByType(relatedTo,
-                                                     makeSubLists=False,
-                                                     typesIds=[annexType])[-1]['UID']
-        uid_catalog = self.portal.uid_catalog
-        theAnnex = uid_catalog(UID=annexUid)[0].getObject()
-        self.assertNotEquals(theAnnex.size(), 0)
+            elif context.meta_type == 'Meeting':
+                annexType = self.annexFileTypeMeeting
+
+        # get complete annexType id that is like 'annexes_types_-_item_annexes_-_financial-analysis'
+        if relatedTo == 'item_decision':
+            context.REQUEST.set('force_use_item_decision_annexes_group', True)
+        annexes_config_root = get_config_root(context)
+        if relatedTo == 'item_decision':
+            context.REQUEST.set('force_use_item_decision_annexes_group', False)
+        annexTypeId = calculate_category_id(annexes_config_root.get(annexType))
+
+        annexContentType = 'annex'
+        if relatedTo == 'item_decision':
+            annexContentType = 'annexDecision'
+
+        theAnnex = api.content.create(
+            title=annexTitle or 'Annex',
+            type=annexContentType,
+            file=self._annex_file_content(),
+            container=context,
+            content_category=annexTypeId,
+            to_print=to_print,
+            confidential=confidential)
+        # need to commit the transaction so the stored blob is correct
+        # if not done, accessing the blob will raise 'BlobError: Uncommitted changes'
+        transaction.commit()
         return theAnnex
 
     def deleteAsManager(self, uid):
@@ -347,12 +363,15 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         """
         currentUser = self.member.getId()
         self.changeUser('admin')
-        for folder in folders:
-            configFolder = getattr(meetingConfig, folder)
+        for folderId in folders:
+            # folder could be subfolder/subsubfolder
+            subfolder = meetingConfig
+            for subfolderId in folderId.split('/'):
+                subfolder = getattr(subfolder, subfolderId)
             objectIds_to_remove = []
-            for item in configFolder.objectValues():
-                objectIds_to_remove.append(item.getId())
-            configFolder.manage_delObjects(ids=objectIds_to_remove)
+            for obj in subfolder.objectValues():
+                objectIds_to_remove.append(obj.getId())
+            subfolder.manage_delObjects(ids=objectIds_to_remove)
         self.changeUser(currentUser)
 
     def _turnUserIntoPrereviewer(self, member):

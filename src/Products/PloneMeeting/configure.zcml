@@ -11,10 +11,12 @@
   <include package="collective.documentviewer"/>
   <include package="collective.datagridcolumns"/>
   <include package="collective.iconifieddocumentactions"/>
+  <include package="collective.iconifiedcategory"/>
   <include package="collective.js.fancytree"/>
   <include package="collective.js.jqueryui"/>
   <include package="collective.messagesviewlet"/>
   <include package="communesplone.layout"/>
+  <include package="imio.annex"/>
   <include package="imio.dashboard"/>
   <include package="plone.app.dexterity" />
   <include package="plone.directives.form" file="meta.zcml" />
@@ -35,6 +37,10 @@
 
   <permission id="PloneMeeting.AddAdvice"
               title="PloneMeeting: Add advice"/>
+  <permission id="PloneMeeting.AddAnnex"
+              title="PloneMeeting: Add annex"/>
+  <permission id="PloneMeeting.AddAnnexDecision"
+              title="PloneMeeting: Add annexDecision"/>
 
   <adapter for=".interfaces.IMeetingItem"
            factory=".MeetingItem.MeetingItemWorkflowConditions"
@@ -48,9 +54,6 @@
   <adapter for=".interfaces.IMeeting"
            factory=".Meeting.MeetingWorkflowActions"
            provides=".interfaces.IMeetingWorkflowActions" />
-  <adapter for="OFS.interfaces.IItem"
-           factory=".adapters.AnnexableAdapter"
-           provides=".interfaces.IAnnexable" />
   <adapter for="Products.PloneMeeting.interfaces.IMeeting"
            factory=".adapters.PMWfHistoryAdapter"
            name="workflow"
@@ -123,6 +126,9 @@
            name="decided-items" />
 
   <!-- IContentDeletable adapter override for PloneMeeting -->
+  <adapter for="imio.annex.content.annex.IAnnex"
+           factory=".adapters.AnnexDecisionContentDeletableAdapter"
+           provides="imio.actionspanel.interfaces.IContentDeletable" />
   <adapter for="Products.PloneMeeting.Meeting.Meeting"
            factory=".adapters.MeetingContentDeletableAdapter"
            provides="imio.actionspanel.interfaces.IContentDeletable" />
@@ -152,6 +158,20 @@
   <adapter name="sendToAuthority" factory=".indexes.sendToAuthority" />
   <adapter name="SearchableText" factory=".indexes.SearchableText" />
 
+  <adapter
+    for="imio.annex.content.annex.IAnnex"
+    provides="collective.iconifiedcategory.interfaces.IIconifiedInfos"
+    factory=".adapters.PMCategorizedObjectInfoAdapter"
+    />
+
+  <adapter
+    for="Products.PloneMeeting.interfaces.IMeetingContent
+         zope.publisher.interfaces.browser.IBrowserRequest
+         Products.ZCatalog.interfaces.ICatalogBrain"
+    provides="collective.iconifiedcategory.interfaces.IIconifiedContent"
+    factory=".adapters.PMCategorizedObjectAdapter"
+    />
+
   <!-- add the blob field to MeetingFile -->
   <adapter name="plone.app.blob.subtypes.file"
            for="Products.PloneMeeting.interfaces.IMeetingFile"
@@ -164,6 +184,28 @@
   <adapter for="Products.PloneMeeting.interfaces.IMeeting"
            factory=".adapters.MeetingPrettyLinkAdapter"
            provides="imio.prettylink.interfaces.IPrettyLink" />
+
+  <adapter for="*"
+           factory=".adapters.IconifiedCategoryConfigAdapter"
+           provides="collective.iconifiedcategory.interfaces.IIconifiedCategoryConfig" />
+
+  <adapter for="plone.app.contenttypes.interfaces.IFolder
+                imio.annex.content.annex.IAnnex"
+           factory=".adapters.IconifiedCategoryGroupAdapter"
+           provides="collective.iconifiedcategory.interfaces.IIconifiedCategoryGroup" />
+  <adapter for="plone.app.contenttypes.interfaces.IFolder
+                Products.PloneMeeting.interfaces.IMeetingItem"
+           factory=".adapters.IconifiedCategoryGroupAdapter"
+           provides="collective.iconifiedcategory.interfaces.IIconifiedCategoryGroup" />
+  <adapter for="plone.app.contenttypes.interfaces.IFolder
+                Products.PloneMeeting.interfaces.IMeeting"
+           factory=".adapters.IconifiedCategoryGroupAdapter"
+           provides="collective.iconifiedcategory.interfaces.IIconifiedCategoryGroup" />
+  <adapter for="plone.app.contenttypes.interfaces.IFolder
+                Products.PloneMeeting.content.advice.IMeetingAdvice"
+           factory=".adapters.IconifiedCategoryGroupAdapter"
+           provides="collective.iconifiedcategory.interfaces.IIconifiedCategoryGroup" />
+
 
   <five:deprecatedManageAddDelete class=".MeetingItem.MeetingItem" />
   <five:deprecatedManageAddDelete class=".Meeting.Meeting" />
@@ -209,5 +251,18 @@
     <implements interface="collective.plonefinder.browser.interfaces.IFinderUploadCapable" />
     <implements interface="collective.quickupload.interfaces.IQuickUploadCapable" />
   </class>
+  <!-- makes the annex ContentCategory and ContentSubcategory added in the configuration
+       act like elements of the configuration... -->
+  <class class="collective.iconifiedcategory.content.categorygroup.CategoryGroup">
+    <implements interface="Products.PloneMeeting.interfaces.IConfigElement" />
+  </class>
+  <class class="collective.iconifiedcategory.content.category.Category">
+    <implements interface="Products.PloneMeeting.interfaces.IConfigElement" />
+  </class>
+  <class class="collective.iconifiedcategory.content.subcategory.Subcategory">
+    <implements interface="Products.PloneMeeting.interfaces.IConfigElement" />
+  </class>
+    
+
 
 </configure>

@@ -31,7 +31,6 @@ from email.MIMEBase import MIMEBase
 from email.MIMEText import MIMEText
 from email import Encoders
 from DateTime import DateTime
-from AccessControl import getSecurityManager
 from zope.annotation import IAnnotations
 from zope.i18n import translate
 from zope.component import getAdapter
@@ -58,17 +57,20 @@ from Products.MailHost.MailHost import MailHostError
 from Products.CMFCore.permissions import AccessContentsInformation
 from Products.CMFCore.permissions import AddPortalContent
 from Products.CMFCore.permissions import DeleteObjects
+from Products.CMFCore.permissions import ManageProperties
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting import PloneMeetingError
 from Products.PloneMeeting import PMMessageFactory as _
+from Products.PloneMeeting.config import AddAnnex
+from Products.PloneMeeting.config import AddAnnexDecision
+from Products.PloneMeeting.config import ADD_SUBCONTENT_PERMISSIONS
 from Products.PloneMeeting.config import HISTORY_COMMENT_NOT_VIEWABLE
 from Products.PloneMeeting.config import TOOL_ID
 from Products.PloneMeeting.interfaces import IAdviceAfterAddEvent
 from Products.PloneMeeting.interfaces import IAdviceAfterModifyEvent
 from Products.PloneMeeting.interfaces import IAdvicesUpdatedEvent
-from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.interfaces import IItemAfterTransitionEvent
 from Products.PloneMeeting.interfaces import IItemDuplicatedEvent
 from Products.PloneMeeting.interfaces import IItemDuplicatedFromConfigEvent
@@ -266,13 +268,6 @@ def fieldIsEmpty(name, obj, useParamValue=False, value=None):
         return not value
 
 
-def checkPermission(permission, obj):
-    '''We must call getSecurityManager() each time we need to check a
-       permission.'''
-    sm = getSecurityManager()
-    return sm.checkPermission(permission, obj)
-
-
 # Mail sending machinery -------------------------------------------------------
 class EmailError(Exception):
     pass
@@ -382,13 +377,6 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         translationMapping['itemState'] = translate(obj.queryState(),
                                                     domain='plone',
                                                     context=obj.REQUEST)
-        translationMapping['lastAnnexTitle'] = ''
-        translationMapping['lastAnnexTypeTitle'] = ''
-        lastAnnex = IAnnexable(obj).getLastInsertedAnnex()
-        if lastAnnex:
-            translationMapping['lastAnnexTitle'] = safe_unicode(lastAnnex.Title())
-            translationMapping['lastAnnexTypeTitle'] = \
-                safe_unicode(lastAnnex.getMeetingFileType(theData=True)['name'])
         meeting = obj.getMeeting(brain=True)
         if meeting:
             translationMapping['meetingTitle'] = safe_unicode(meeting.Title())
@@ -1438,48 +1426,80 @@ def workday(start_date, days=0, holidays=[], weekends=[], unavailable_weekdays=[
     return new_date
 
 
-def _addImagePermission(obj):
-    """Give the ability of users able to edit at least one XHTML field.
-       Every roles having the 'Modify portal content' or a RichText
-       field.write_permission must be able to add images."""
-    write_perms = []
-    # get every RichText fields using a write_permission
-    if IDexterityContent.providedBy(obj):
-        # dexterity
-        portal_types = api.portal.get_tool('portal_types')
-        fti = portal_types[obj.portal_type]
-        schema = fti.lookupSchema()
-        write_permissions = schema.queryTaggedValue(WRITE_PERMISSIONS_KEY, {})
-        for field_id, write_permission in write_permissions.items():
-            if isinstance(schema.get(field_id), RichText):
-                write_perms.append(write_permission)
-    else:
-        # Archetypes
-        for field in obj.Schema().filterFields(default_content_type='text/html'):
-            if field.write_permission:
-                write_perms.append(field.write_permission)
+def _addManagedPermissions(obj):
+    """Manage the 'ATContentTypes: Add Image' and 'Add portal content' permission :
+       - first compute permission to Add Image, give to users able to edit at least one
+         XHTML field, this means every roles having the 'Modify portal content' or a RichText
+         field.write_permission must be able to add images;
+       - then compute the 'Add portal content' permission,
+         give it to people having a "Add something" permission.
+       Other 'Add' permissions are managed in other places :
+       - Add advice in MeetingItem._updateAdvices;
+       - Add annex and Add annexDecision in the WF.
+       We also need to manage the 'Manage properties' permission automatically, this
+       let user change annexes position, give it to roles able having the 'PloneMeeting: Add annex'
+       or 'PloneMeeting: add annexDecision' permissions.
+       """
+    def _addImagePermission():
+        write_perms = []
+        # get every RichText fields using a write_permission
+        if IDexterityContent.providedBy(obj):
+            # dexterity
+            portal_types = api.portal.get_tool('portal_types')
+            fti = portal_types[obj.portal_type]
+            schema = fti.lookupSchema()
+            write_permissions = schema.queryTaggedValue(WRITE_PERMISSIONS_KEY, {})
+            for field_id, write_permission in write_permissions.items():
+                if isinstance(schema.get(field_id), RichText):
+                    write_perms.append(write_permission)
+        else:
+            # Archetypes
+            for field in obj.Schema().filterFields(default_content_type='text/html'):
+                if field.write_permission:
+                    write_perms.append(field.write_permission)
 
-    roles = []
-    for write_perm in write_perms:
-        try:
-            rolesOfPerm = obj.rolesOfPermission(write_perm)
-        except ValueError:
-            # we have a the id of a Zope3 style permission, get the title
-            write_perm = queryUtility(IPermission, write_perm)
-            rolesOfPerm = obj.rolesOfPermission(write_perm)
-        roles_of_perm = [p['name'] for p in rolesOfPerm
+        roles = []
+        for write_perm in write_perms:
+            try:
+                rolesOfPerm = obj.rolesOfPermission(write_perm)
+            except ValueError:
+                # we have the id of a Zope3 style permission, get the title
+                write_perm = queryUtility(IPermission, write_perm)
+                rolesOfPerm = obj.rolesOfPermission(write_perm)
+            roles_of_perm = [p['name'] for p in rolesOfPerm
+                             if p['selected'] == 'SELECTED']
+            roles += roles_of_perm
+
+        # check the 'Modify portal content' permission
+        roles_of_perm = [p['name'] for p in obj.rolesOfPermission(ModifyPortalContent)
                          if p['selected'] == 'SELECTED']
         roles += roles_of_perm
+        # remove duplicates
+        roles = tuple(set(roles))
+        obj.manage_permission("ATContentTypes: Add Image", roles, acquire=False)
 
-    # check the 'Modify portal content' permission
-    roles_of_perm = [p['name'] for p in obj.rolesOfPermission(ModifyPortalContent)
-                     if p['selected'] == 'SELECTED']
-    roles += roles_of_perm
-    # remove duplicates
-    roles = tuple(set(roles))
-    # the AddPortalContent is given on the portal to 'Contributor', keep this and add local ones
-    obj.manage_permission(AddPortalContent, roles, acquire=True)
-    obj.manage_permission("ATContentTypes: Add Image", roles, acquire=False)
+    def _addPortalContentPermission():
+        # now manage the AddPortalContent permission
+        # the AddPortalContent is given on the portal to 'Contributor', keep this and add local ones
+        # if a role is able to add something, it also needs the AddPortalContent permission
+        roles = []
+        for add_subcontent_permission in ADD_SUBCONTENT_PERMISSIONS:
+            roles += [role['name'] for role in obj.rolesOfPermission(add_subcontent_permission)
+                      if role['selected']]
+        obj.manage_permission(AddPortalContent, roles, acquire=True)
+
+    def _addManagePropertiesPermission():
+        # give it to roles having 'PloneMeeting: add annex' or 'PloneMeeting: add annexDecision' permission
+        roles = []
+        roles += [role['name'] for role in obj.rolesOfPermission(AddAnnex)
+                  if role['selected']]
+        roles += [role['name'] for role in obj.rolesOfPermission(AddAnnexDecision)
+                  if role['selected']]
+        obj.manage_permission(ManageProperties, roles, acquire=True)
+
+    _addImagePermission()
+    _addPortalContentPermission()
+    _addManagePropertiesPermission()
 
 
 def getTransitionToReachState(obj, state):
@@ -1526,6 +1546,11 @@ def findMeetingAdvicePortalType(context):
     else:
         current_portal_type = published.portal_type
     return current_portal_type
+
+
+def get_annexes(obj, portal_types=['annex', 'annexDecision']):
+    return [annex for annex in obj.objectValues()
+            if annex.portal_type in portal_types]
 
 
 class AdvicesUpdatedEvent(ObjectEvent):

@@ -61,8 +61,12 @@ from plone.portlets.interfaces import IPortletAssignmentMapping
 from Products.CMFCore.ActionInformation import Action
 from Products.CMFCore.Expression import Expression
 from Products.CMFPlone import PloneMessageFactory
+from Products.CMFPlone.interfaces.constrains import IConstrainTypes
+from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
 from plone import api
+from collective.iconifiedcategory.utils import get_category_object
+from collective.iconifiedcategory.utils import update_all_categorized_elements
 from eea.facetednavigation.interfaces import ICriteria
 from imio.helpers.cache import cleanRamCache
 from Products.PloneMeeting import PMMessageFactory as _
@@ -75,8 +79,10 @@ from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
 from Products.PloneMeeting.config import DEFAULT_MEETING_COLUMNS
 from Products.PloneMeeting.config import ITEM_ICON_COLORS
 from Products.PloneMeeting.config import MEETING_CONFIG
+from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETINGREVIEWERS
+from Products.PloneMeeting.config import MEETINGROLES
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import PROJECTNAME
@@ -85,14 +91,13 @@ from Products.PloneMeeting.config import RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import ROOT_FOLDER
 from Products.PloneMeeting.config import TOOL_FOLDER_CATEGORIES
 from Products.PloneMeeting.config import TOOL_FOLDER_CLASSIFIERS
-from Products.PloneMeeting.config import TOOL_FOLDER_FILE_TYPES
+from Products.PloneMeeting.config import TOOL_FOLDER_ANNEX_TYPES
 from Products.PloneMeeting.config import TOOL_FOLDER_SEARCHES
 from Products.PloneMeeting.config import TOOL_FOLDER_RECURRING_ITEMS
 from Products.PloneMeeting.config import TOOL_FOLDER_ITEM_TEMPLATES
 from Products.PloneMeeting.config import TOOL_FOLDER_POD_TEMPLATES
 from Products.PloneMeeting.config import TOOL_FOLDER_MEETING_USERS
 from Products.PloneMeeting.config import WriteRiskyConfig
-from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.interfaces import IMeetingConfig
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowConditions
 from Products.PloneMeeting.interfaces import IMeetingItem
@@ -102,6 +107,7 @@ from Products.PloneMeeting.interfaces import IMeetingItemWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingWorkflowActions
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
 from Products.PloneMeeting.utils import computeCertifiedSignatures
+from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
 from Products.PloneMeeting.utils import getFieldContent
@@ -119,6 +125,11 @@ import logging
 logger = logging.getLogger('PloneMeeting')
 DUPLICATE_SHORT_NAME = 'Short name "%s" is already used by another meeting ' \
                        'configuration. Please choose another one.'
+
+CONFIGGROUPPREFIX = 'configgroup_'
+PROPOSINGGROUPPREFIX = 'suffix_proposing_group_'
+READERPREFIX = 'reader_'
+SUFFIXPROFILEPREFIX = 'suffix_profile_'
 
 schema = Schema((
 
@@ -344,68 +355,6 @@ schema = Schema((
             description_msgid="item_created_only_using_template_descr",
             label='Itemcreatedonlyusingtemplate',
             label_msgid='PloneMeeting_label_itemCreatedOnlyUsingTemplate',
-            i18n_domain='PloneMeeting',
-        ),
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    StringField(
-        name='enableAnnexToPrint',
-        default=defValues.enableAnnexToPrint,
-        widget=SelectionWidget(
-            description="EnableAnnexToPrint",
-            description_msgid="enable_annex_to_print_descr",
-            label='Enableannextoprint',
-            label_msgid='PloneMeeting_label_enableAnnexToPrint',
-            i18n_domain='PloneMeeting',
-        ),
-        enforceVocabulary=True,
-        write_permission="PloneMeeting: Write risky config",
-        vocabulary='listEnableAnnexToPrint',
-    ),
-    BooleanField(
-        name='keepOriginalToPrintOfClonedItems',
-        default=defValues.keepOriginalToPrintOfClonedItems,
-        widget=BooleanField._properties['widget'](
-            description="KeepOriginalToPrintOfClonedItems",
-            description_msgid="keep_original_to_print_of_cloned_items_descr",
-            label='Keeporiginaltoprintofcloneditems',
-            label_msgid='PloneMeeting_label_keepOriginalToPrintOfClonedItems',
-            i18n_domain='PloneMeeting',
-        ),
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    BooleanField(
-        name='annexToPrintDefault',
-        default=defValues.annexToPrintDefault,
-        widget=BooleanField._properties['widget'](
-            description="AnnexToPrintDefault",
-            description_msgid="annex_to_print_default_descr",
-            label='Annextoprintdefault',
-            label_msgid='PloneMeeting_label_annexToPrintDefault',
-            i18n_domain='PloneMeeting',
-        ),
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    BooleanField(
-        name='annexDecisionToPrintDefault',
-        default=defValues.annexDecisionToPrintDefault,
-        widget=BooleanField._properties['widget'](
-            description="AnnexDecisionToPrintDefault",
-            description_msgid="annex_decision_to_print_default_descr",
-            label='Annexdecisiontoprintdefault',
-            label_msgid='PloneMeeting_label_annexDecisionToPrintDefault',
-            i18n_domain='PloneMeeting',
-        ),
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    BooleanField(
-        name='annexAdviceToPrintDefault',
-        default=defValues.annexAdviceToPrintDefault,
-        widget=BooleanField._properties['widget'](
-            description="AnnexAdviceToPrintDefault",
-            description_msgid="annex_advice_to_print_default_descr",
-            label='Annexadvicetoprintdefault',
-            label_msgid='PloneMeeting_label_annexAdviceToPrintDefault',
             i18n_domain='PloneMeeting',
         ),
         write_permission="PloneMeeting: Write risky config",
@@ -817,6 +766,34 @@ schema = Schema((
         vocabulary='listItemStates',
         default=defValues.itemManualSentToOtherMCStates,
         enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    StringField(
+        name='annexToPrintMode',
+        default=defValues.annexToPrintMode,
+        widget=SelectionWidget(
+            description="AnnexToPrintMode",
+            description_msgid="annex_to_print_mode_descr",
+            label='Annextoprintmode',
+            label_msgid='PloneMeeting_label_annexToPrintMode',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="data",
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+        vocabulary='listAnnexToPrintModes',
+    ),
+    BooleanField(
+        name='keepOriginalToPrintOfClonedItems',
+        default=defValues.keepOriginalToPrintOfClonedItems,
+        widget=BooleanField._properties['widget'](
+            description="KeepOriginalToPrintOfClonedItems",
+            description_msgid="keep_original_to_print_of_cloned_items_descr",
+            label='Keeporiginaltoprintofcloneditems',
+            label_msgid='PloneMeeting_label_keepOriginalToPrintOfClonedItems',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="data",
         write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
@@ -1801,32 +1778,66 @@ schema = Schema((
         write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
-        name='enableAnnexConfidentiality',
-        default=defValues.enableAnnexConfidentiality,
+        name='ownerMayDeleteAnnexDecision',
+        default=defValues.ownerMayDeleteAnnexDecision,
         widget=BooleanField._properties['widget'](
-            description="EnableAnnexConfidentiality",
-            description_msgid="enable_annex_confidentiality_descr",
-            label='Enableannexconfidentiality',
-            label_msgid='PloneMeeting_label_enableAnnexConfidentiality',
+            description="OwnerMayDeleteAnnexDecision",
+            description_msgid="owner_may_delete_annex_decision_descr",
+            label='Ownermaydeleteannexdecision',
+            label_msgid='PloneMeeting_label_ownerMayDeleteAnnexDecision',
             i18n_domain='PloneMeeting',
         ),
         schemata="advices",
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
-        name='annexConfidentialFor',
+        name='itemAnnexConfidentialVisibleFor',
         widget=MultiSelectionWidget(
             format="checkbox",
-            description="AnnexConfidentialFor",
-            description_msgid="annex_confidential_for_descr",
-            label='Annexconfidentialfor',
-            label_msgid='PloneMeeting_label_annexConfidentialFor',
+            description="ItemAnnexConfidentialVisibleFor",
+            description_msgid="item_annex_confidential_visible_for_descr",
+            label='Itemannexconfidentialvisiblefor',
+            label_msgid='PloneMeeting_label_itemAnnexConfidentialVisibleFor',
             i18n_domain='PloneMeeting',
         ),
         schemata="advices",
         multiValued=1,
-        vocabulary='listConfidentialFor',
-        default=defValues.annexConfidentialFor,
+        vocabulary='listItemAnnexConfidentialVisibleFor',
+        default=defValues.itemAnnexConfidentialVisibleFor,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
+        name='adviceAnnexConfidentialVisibleFor',
+        widget=MultiSelectionWidget(
+            format="checkbox",
+            description="AdviceAnnexConfidentialVisibleFor",
+            description_msgid="advice_annex_confidential_visible_for_descr",
+            label='Adviceannexconfidentialvisiblefor',
+            label_msgid='PloneMeeting_label_adviceAnnexConfidentialVisibleFor',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        multiValued=1,
+        vocabulary='listAdviceAnnexConfidentialVisibleFor',
+        default=defValues.adviceAnnexConfidentialVisibleFor,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
+        name='meetingAnnexConfidentialVisibleFor',
+        widget=MultiSelectionWidget(
+            format="checkbox",
+            description="meetingAnnexConfidentialVisibleFor",
+            description_msgid="meeting_annex_confidential_visible_for_descr",
+            label='Meetingannexconfidentialvisiblefor',
+            label_msgid='PloneMeeting_label_meetingAnnexConfidentialVisibleFor',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        multiValued=1,
+        vocabulary='listMeetingAnnexConfidentialVisibleFor',
+        default=defValues.meetingAnnexConfidentialVisibleFor,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
@@ -1868,8 +1879,8 @@ schema = Schema((
         ),
         schemata="advices",
         multiValued=1,
-        vocabulary='listConfidentialFor',
-        default=defValues.annexConfidentialFor,
+        vocabulary='listAdviceConfidentialFor',
+        default=defValues.adviceConfidentialFor,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
@@ -2019,38 +2030,45 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     # config.
 
     subFoldersInfo = {
-        TOOL_FOLDER_CATEGORIES: ('Categories',
+        TOOL_FOLDER_CATEGORIES: (('Categories', 'Folder'),
                                  ('MeetingCategory', ),
                                  ()
                                  ),
-        TOOL_FOLDER_CLASSIFIERS: ('Classifiers',
+        TOOL_FOLDER_CLASSIFIERS: (('Classifiers', 'Folder'),
                                   ('MeetingCategory', ),
                                   ()
                                   ),
-        TOOL_FOLDER_SEARCHES: ('Searches',
+        TOOL_FOLDER_SEARCHES: (('Searches', 'Folder'),
                                ('Folder', 'DashboardCollection', ),
                                # 'items' is a reserved word
-                               (('searches_items', 'Meeting items'),
-                                ('searches_meetings', 'Meetings'),
-                                ('searches_decisions', 'Decisions'))
+                               (('searches_items', 'Meeting items', 'Folder', ()),
+                                ('searches_meetings', 'Meetings', 'Folder', ()),
+                                ('searches_decisions', 'Decisions', 'Folder', ()))
                                ),
-        TOOL_FOLDER_RECURRING_ITEMS: ('RecurringItems',
+        TOOL_FOLDER_RECURRING_ITEMS: (('RecurringItems', 'Folder'),
                                       ('itemTypeRecurring', ),
                                       ()
                                       ),
-        TOOL_FOLDER_ITEM_TEMPLATES: ('Item templates',
+        TOOL_FOLDER_ITEM_TEMPLATES: (('Item templates', 'Folder'),
                                      ('Folder', 'itemTypeTemplate'),
                                      ()
                                      ),
-        TOOL_FOLDER_FILE_TYPES: ('MeetingFileTypes',
-                                 ('MeetingFileType', ),
-                                 ()
-                                 ),
-        TOOL_FOLDER_POD_TEMPLATES: ('Document templates',
+        TOOL_FOLDER_ANNEX_TYPES: (('Annex types', 'ContentCategoryConfiguration'),
+                                  (),
+                                  (('item_annexes', 'Item annexes',
+                                    'ContentCategoryGroup', ('ItemAnnexContentCategory', )),
+                                   ('item_decision_annexes', 'Item decision annexes',
+                                    'ContentCategoryGroup', ('ItemAnnexContentCategory', )),
+                                   ('advice_annexes', 'Advice annexes',
+                                    'ContentCategoryGroup', ('ContentCategory', )),
+                                   ('meeting_annexes', 'Meeting annexes',
+                                    'ContentCategoryGroup', ('ContentCategory', )))
+                                  ),
+        TOOL_FOLDER_POD_TEMPLATES: (('Document templates', 'Folder'),
                                     ('ConfigurablePODTemplate', 'DashboardPODTemplate'),
                                     ()
                                     ),
-        TOOL_FOLDER_MEETING_USERS: ('Meeting users',
+        TOOL_FOLDER_MEETING_USERS: (('Meeting users', 'Folder'),
                                     ('MeetingUser', ),
                                     ()
                                     )
@@ -2171,7 +2189,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: cfg.getUseCopies() and not tool.userIsAmong('powerobservers')",
+                    'tal_condition': "cfg/getUseCopies",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items to prevalidate
@@ -3262,19 +3280,20 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                          context=self.REQUEST)))
         return DisplayList(tuple(res)).sortedByValue()
 
-    security.declarePrivate('listEnableAnnexToPrint')
+    security.declarePrivate('listAnnexToPrintModes')
 
-    def listEnableAnnexToPrint(self):
-        '''Vocabulary for field 'enableAnnexToPrint'.'''
-        res = [('disabled', translate('enable_annex_to_print_disabled',
-                                      domain='PloneMeeting',
-                                      context=self.REQUEST)),
-               ('enabled_for_info', translate('enable_annex_to_print_enabled_for_info',
-                                              domain='PloneMeeting',
-                                              context=self.REQUEST)),
-               ('enabled_for_printing', translate('enable_annex_to_print_enabled_for_printing',
-                                                  domain='PloneMeeting',
-                                                  context=self.REQUEST)),
+    def listAnnexToPrintModes(self):
+        '''Vocabulary for field 'annexToPrintMode'.'''
+        res = [('enabled_for_info',
+                translate('annex_to_print_mode_info',
+                          domain='PloneMeeting',
+                          context=self.REQUEST,
+                          default="For information (annexes are printed manually)")),
+               ('enabled_for_printing',
+                translate('annex_to_print_mode_automated',
+                          domain='PloneMeeting',
+                          context=self.REQUEST,
+                          default="Automated (annexes are printed by the application)")),
                ]
         return DisplayList(tuple(res))
 
@@ -3526,11 +3545,92 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         ))
         return res
 
-    security.declarePrivate('listConfidentialFor')
+    security.declarePrivate('listItemAnnexConfidentialVisibleFor')
 
-    def listConfidentialFor(self):
+    def listItemAnnexConfidentialVisibleFor(self):
         '''
-          Vocabulary for the 'annexConfidentialFor' and 'adviceConfidentialFor' fields.
+          Vocabulary for the 'itemAnnexConfidentialVisibleFor' field.
+        '''
+        confidential_profiles = ['{0}{1}'.format(CONFIGGROUPPREFIX,
+                                                 BUDGETIMPACTEDITORS_GROUP_SUFFIX)]
+        for suffix in READER_USECASES:
+            if suffix in (POWEROBSERVERS_GROUP_SUFFIX, RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX):
+                confidential_profiles.append('{0}{1}'.format(CONFIGGROUPPREFIX, suffix))
+            else:
+                confidential_profiles.append('{0}{1}'.format(READERPREFIX, suffix))
+        for suffix in MEETING_GROUP_SUFFIXES:
+            # bypass suffixes that do not give a role, like it is the case for groupSuffix 'advisers'
+            if not MEETINGROLES[suffix]:
+                continue
+            confidential_profiles.append('{0}{1}'.format(PROPOSINGGROUPPREFIX, suffix))
+
+        res = []
+        for profile in confidential_profiles:
+            res.append(
+                (profile, translate('visible_for_{0}'.format(profile),
+                                    domain="PloneMeeting",
+                                    context=self.REQUEST))
+            )
+        return DisplayList(res)
+
+    security.declarePrivate('listAdviceAnnexConfidentialVisibleFor')
+
+    def listAdviceAnnexConfidentialVisibleFor(self):
+        '''
+          Vocabulary for the 'adviceAnnexConfidentialVisibleFor' field.
+        '''
+        confidential_profiles = ['adviser_group',
+                                 '{0}{1}'.format(CONFIGGROUPPREFIX,
+                                                 BUDGETIMPACTEDITORS_GROUP_SUFFIX)]
+        for suffix in READER_USECASES:
+            if suffix in (POWEROBSERVERS_GROUP_SUFFIX, RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX):
+                confidential_profiles.append('{0}{1}'.format(CONFIGGROUPPREFIX,
+                                                             suffix))
+            else:
+                confidential_profiles.append('{0}{1}'.format(READERPREFIX, suffix))
+        for suffix in MEETING_GROUP_SUFFIXES:
+            # bypass suffixes that do not give a role, like it is the case for groupSuffix 'advisers'
+            if not MEETINGROLES[suffix]:
+                continue
+            confidential_profiles.append('{0}{1}'.format(PROPOSINGGROUPPREFIX, suffix))
+
+        res = []
+        for profile in confidential_profiles:
+            res.append(
+                (profile, translate('visible_for_{0}'.format(profile),
+                                    domain="PloneMeeting",
+                                    context=self.REQUEST))
+            )
+        return DisplayList(res)
+
+    security.declarePrivate('listMeetingAnnexConfidentialVisibleFor')
+
+    def listMeetingAnnexConfidentialVisibleFor(self):
+        '''
+          Vocabulary for the 'meetingAnnexConfidentialVisibleFor' field.
+        '''
+        confidential_profiles = ['{0}{1}'.format(CONFIGGROUPPREFIX, 'powerobservers'),
+                                 '{0}{1}'.format(CONFIGGROUPPREFIX, 'restrictedpowerobservers')]
+        for suffix in MEETING_GROUP_SUFFIXES:
+            # bypass suffixes that do not give a role, like it is the case for groupSuffix 'advisers'
+            if not MEETINGROLES[suffix]:
+                continue
+            confidential_profiles.append('{0}{1}'.format(SUFFIXPROFILEPREFIX, suffix))
+
+        res = []
+        for profile in confidential_profiles:
+            res.append(
+                (profile, translate('visible_for_{0}'.format(profile),
+                                    domain="PloneMeeting",
+                                    context=self.REQUEST))
+            )
+        return DisplayList(res)
+
+    security.declarePrivate('listAdviceConfidentialFor')
+
+    def listAdviceConfidentialFor(self):
+        '''
+          Vocabulary for the 'adviceConfidentialFor' field.
         '''
         res = DisplayList((
             ('power_observers', translate('confidential_for_power_observers',
@@ -3951,9 +4051,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         self.updateIsDefaultFields()
         # Make sure we have 'text/html' for every Rich fields
         forceHTMLContentTypeForEmptyRichFields(self)
-        # if the enableAnnexToPrint is set to False, make sure 2 other relevant parameters
-        # annexToPrintDefault and annexDecisionToPrintDefault are set to False too...
-        self._manageEnableAnnexToPrint()
         # Create the corresponding group that will contain MeetingPowerObservers
         self.createPowerObserversGroup()
         # Create the corresponding group that will contain MeetingBudgetImpactEditors
@@ -3977,9 +4074,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         self.updateIsDefaultFields()
         # Make sure we have 'text/html' for every Rich fields
         forceHTMLContentTypeForEmptyRichFields(self)
-        # if the enableAnnexToPrint is set to False, make sure 2 other relevant parameters
-        # annexToPrintDefault and annexDecisionToPrintDefault are set to False too...
-        self._manageEnableAnnexToPrint()
         self.adapted().onEdit(isCreated=False)  # Call sub-product code if any
 
     def _createSubFolders(self):
@@ -3989,12 +4083,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         default_language = api.portal.get_tool('portal_languages').getDefaultLanguage()
         for folderId, folderInfo in self.subFoldersInfo.iteritems():
+            folderTitle = folderInfo[0][0]
+            folderType = folderInfo[0][1]
             # if a folder already exists, we continue
             # this is done because this method is used as helper
             # method during migrations (while adding an extra new folder)
-            if folderId in self.objectIds('ATFolder'):
+            if folderId in self.objectIds():
                 continue
-            self.invokeFactory('Folder', folderId)
+
+            self.invokeFactory(folderType, folderId)
             folder = getattr(self, folderId)
 
             if folderId == TOOL_FOLDER_SEARCHES:
@@ -4020,29 +4117,42 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # use folder_contents layout
                 folder.setLayout('folder_contents')
 
-            folder.setTitle(translate(folderInfo[0],
+            folder.setTitle(translate(folderTitle,
                                       domain="PloneMeeting",
                                       context=self.REQUEST,
                                       target_language=default_language,
-                                      default=folderInfo[0]))
-            folder.setConstrainTypesMode(1)
-            allowedTypes = list(folderInfo[1])
-            if 'itemType' in allowedTypes:
-                allowedTypes.remove('itemType')
-                allowedTypes.append(self.getItemTypeName())
-            elif 'itemTypeTemplate' in allowedTypes:
-                allowedTypes.remove('itemTypeTemplate')
-                allowedTypes.append(self.getItemTypeName(configType='MeetingItemTemplate'))
-            elif 'itemTypeRecurring' in allowedTypes:
-                allowedTypes.remove('itemTypeRecurring')
-                allowedTypes.append(self.getItemTypeName(configType='MeetingItemRecurring'))
-            folder.setLocallyAllowedTypes(allowedTypes)
-            folder.setImmediatelyAddableTypes(allowedTypes)
+                                      default=folderTitle))
+            if folderInfo[1]:
+                constrain = IConstrainTypes(folder)
+                constrain.setConstrainTypesMode(1)
+                allowedTypes = list(folderInfo[1])
+                if 'itemType' in allowedTypes:
+                    allowedTypes.remove('itemType')
+                    allowedTypes.append(self.getItemTypeName())
+                elif 'itemTypeTemplate' in allowedTypes:
+                    allowedTypes.remove('itemTypeTemplate')
+                    allowedTypes.append(self.getItemTypeName(configType='MeetingItemTemplate'))
+                elif 'itemTypeRecurring' in allowedTypes:
+                    allowedTypes.remove('itemTypeRecurring')
+                    allowedTypes.append(self.getItemTypeName(configType='MeetingItemRecurring'))
+                constrain.setLocallyAllowedTypes(allowedTypes)
+                constrain.setImmediatelyAddableTypes(allowedTypes)
+
             # call processForm passing dummy values so existing values are not touched
-            folder.processForm(values={'dummy': None})
-            for subFolderId, subFolderTitle in folderInfo[2]:
-                folder.invokeFactory('Folder', subFolderId)
+            if base_hasattr(folder, 'processForm'):
+                folder.processForm(values={'dummy': None})
+            folder.reindexObject()
+
+            for subFolderId, subFolderTitle, subFolderType, subFolderConstrainTypes in folderInfo[2]:
+                folder.invokeFactory(subFolderType, subFolderId)
                 subFolder = getattr(folder, subFolderId)
+                if subFolderConstrainTypes:
+                    constrain = IConstrainTypes(subFolder)
+                    constrain.setConstrainTypesMode(1)
+                    allowedTypes = list(subFolderConstrainTypes)
+                    constrain.setLocallyAllowedTypes(allowedTypes)
+                    constrain.setImmediatelyAddableTypes(allowedTypes)
+
                 if subFolderId == 'searches_items':
                     tool._enableFacetedDashboardFor(subFolder,
                                                     xmlpath=os.path.dirname(__file__) +
@@ -4060,17 +4170,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                              context=self.REQUEST,
                                              target_language=default_language,
                                              default=subFolderTitle))
-                subFolder.processForm(values={'dummy': None})
-
-    def _manageEnableAnnexToPrint(self):
-        '''
-          If the parameter enableAnnexToPrint is set to False,
-          set 2 other linked parameters annexToPrintDefault and annexDecisionToPrintDefault
-          to False too...
-        '''
-        if self.getEnableAnnexToPrint() == 'disabled':
-            self.setAnnexToPrintDefault(False)
-            self.setAnnexDecisionToPrintDefault(False)
+                # do only processForm for AT
+                if base_hasattr(subFolder, 'processForm'):
+                    subFolder.processForm(values={'dummy': None})
+                subFolder.reindexObject()
 
     security.declarePublic('getItemTypeName')
 
@@ -4713,26 +4816,59 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         item.processForm(values={'dummy': None})
         return item
 
-    security.declarePrivate('addFileType')
+    security.declarePrivate('addAnnexType')
 
-    def addFileType(self, ft, source):
-        '''Adds a file type from a FileTypeDescriptor p_ft.'''
-        folder = getattr(self, TOOL_FOLDER_FILE_TYPES)
+    def addAnnexType(self, at, source):
+        '''Adds an annex type from a AnnexTypeDescriptor p_at.'''
+        folder = getattr(self, TOOL_FOLDER_ANNEX_TYPES)
+        # create (ItemAnnex)ContentCategory in right subfolder (ContentCategoryGroup)
+        portal_type = 'ContentCategory'
+        sub_portal_type = 'ContentSubcategory'
+        if at.relatedTo == 'item':
+            portal_type = 'ItemAnnexContentCategory'
+            sub_portal_type = 'ItemAnnexContentSubcategory'
+            categoryGroupId = 'item_annexes'
+        elif at.relatedTo == 'item_decision':
+            portal_type = 'ItemAnnexContentCategory'
+            sub_portal_type = 'ItemAnnexContentSubcategory'
+            categoryGroupId = 'item_decision_annexes'
+        elif at.relatedTo == 'advice':
+            categoryGroupId = 'advice_annexes'
+        elif at.relatedTo == 'meeting':
+            categoryGroupId = 'meeting_annexes'
+
         # The image must be retrieved on disk from a profile
-        iconPath = '%s/images/%s' % (source, ft.theIcon)
-        f = file(iconPath, 'rb')
-        iconContent = f.read()
-        data = ft.getData(theIcon=iconContent)
-        folder.invokeFactory('MeetingFileType',
-                             **data)
-        if isinstance(source, basestring):
-            f.close()
-        fileType = getattr(folder, ft.id)
-        if not ft.active:
-            self.portal_workflow.doActionFor(fileType, 'deactivate')
-        # call processForm passing dummy values so existing values are not touched
-        fileType.processForm(values={'dummy': None})
-        return fileType
+        iconPath = '%s/images/%s' % (source, at.icon)
+        f = open(iconPath, 'r')
+        contentCategoryFile = NamedBlobFile(f.read(), filename=at.icon)
+        f.close()
+        annexType = api.content.create(
+            id=at.id,
+            type=portal_type,
+            title=at.title,
+            icon=contentCategoryFile,
+            container=getattr(folder, categoryGroupId),
+            to_print=at.to_print,
+            confidential=at.confidential,
+            enabled=at.enabled
+        )
+        if portal_type == 'ItemAnnexContentCategory':
+            annexType.other_mc_correspondences = at.other_mc_correspondences
+
+        for subType in at.subTypes:
+            annexSubType = api.content.create(
+                id=subType.id,
+                type=sub_portal_type,
+                title=subType.title,
+                container=annexType,
+                to_print=subType.to_print,
+                confidential=subType.confidential,
+                enabled=subType.enabled,
+                other_mc_correspondences=subType.other_mc_correspondences
+            )
+            if portal_type == 'ItemAnnexContentSubcategory':
+                annexSubType.other_mc_correspondences = subType.other_mc_correspondences
+        return annexType
 
     security.declarePrivate('addPodTemplate')
 
@@ -4908,13 +5044,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             editUrl = getattr(self.meetingusers, userId).absolute_url() + '/edit'
             rq.RESPONSE.redirect(editUrl)
 
-    def getUserName_cachekey(method, self, param, request, userId=None, caching=True):
+    def getUserParam_cachekey(method, self, param, request, userId=None, caching=True):
         '''cachekey method for self.getUserParam.'''
         return (param, str(request._debug), userId)
 
     security.declarePublic('getUserParam')
 
-    @ram.cache(getUserName_cachekey)
+    @ram.cache(getUserParam_cachekey)
     def getUserParam(self, param, request, userId=None, caching=True):
         '''Gets the value of the user-specific p_param, for p_userId if given,
            for the currently logged user if not. If user preferences are not
@@ -4968,16 +5104,20 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                          numberOfBrains,
                          '/'.join(item.getPhysicalPath())))
             i = i + 1
-            annexes = IAnnexable(item).getAnnexes()
+            annexes = get_annexes(item)
             if not annexes:
                 continue
             for annex in annexes:
-                # get default confidential value from corresponding MeetingFileType
-                mft = annex.getMeetingFileType(theData=True)
-                annex.setIsConfidential(mft['isConfidentialDefault'])
-            # update annexIndex as isConfidential is into it
-            IAnnexable(item).updateAnnexIndex()
-        self.plone_utils.addPortalMessage('Done.')
+                category = get_category_object(annex, annex.content_category)
+                category_group = category.get_category_group()
+                if category_group.confidentiality_activated:
+                    annex.confidential = category.confidential
+                else:
+                    annex.confidential = False
+            update_all_categorized_elements(item)
+
+        plone_utils = api.portal.get_tool('plone_utils')
+        plone_utils.addPortalMessage('Done.')
         return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 
     security.declarePublic('updateAdviceConfidentiality')

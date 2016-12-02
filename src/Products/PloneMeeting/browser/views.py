@@ -38,6 +38,7 @@ from plone import api
 from eea.facetednavigation.interfaces import ICriteria
 from collective.documentgenerator.helper.archetypes import ATDocumentGenerationHelperView
 from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
+from imio.helpers.xhtml import addClassToContent
 from imio.helpers.xhtml import imagesToPath
 from Products.PloneMeeting import logger
 from Products.PloneMeeting.config import ADVICE_STATES_ALIVE
@@ -482,11 +483,12 @@ class PMDocumentGenerationHelperView(ATDocumentGenerationHelperView):
             return '-rotate 90'
 
     def printXhtml(self, context, xhtmlContents,
-                   image_src_to_paths=False,
+                   image_src_to_paths=True,
                    separatorValue='<p>&nbsp;</p>',
                    keepWithNext=False,
                    keepWithNextNumberOfChars=CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT,
-                   checkNeedSeparator=True):
+                   checkNeedSeparator=True,
+                   addCSSClass=None):
         """Helper method to format a p_xhtmlContents.  The xhtmlContents is a list or a string containing
            either XHTML content or some specific recognized words like :
            - 'separator', in this case, it is replaced with the p_separatorValue;
@@ -494,9 +496,10 @@ class PMDocumentGenerationHelperView(ATDocumentGenerationHelperView):
            If p_keepWithNext is True, signatureNotAlone is applied on the resulting XHTML.
            If p_image_src_to_paths is True, if some <img> are contained in the XHTML, the link to the image
            is replaced with a path to the .blob of the image of the server so LibreOffice may access it.
+           Indeed, private images not accessible by anonymous may not be reached by LibreOffice.
            If p_checkNeedSeparator is True, it will only add the separator if previous
            xhtmlContent did not contain empty lines at the end.
-           Indeed, private images not accessible by anonymous may not be reahed by LibreOffice.
+           If addCSSClass is given, a CSS class will be added to every tags of p_chtmlContents.
            Finally, the separatorValue is used when word 'separator' is encountered in xhtmlContents.
            A call to printXHTML in a POD template with an item as context could be :
            view.printXHTML(self.getMotivation(), 'separator', '<p>DECIDE :</p>', 'separator', self.getDecision())
@@ -527,6 +530,10 @@ class PMDocumentGenerationHelperView(ATDocumentGenerationHelperView):
         # manage keepWithNext
         if keepWithNext:
             xhtmlFinal = signatureNotAlone(xhtmlFinal, numberOfChars=keepWithNextNumberOfChars)
+
+        # manage addCSSClass
+        if addCSSClass:
+            xhtmlFinal = addClassToContent(xhtmlFinal, addCSSClass)
 
         return xhtmlFinal
 
@@ -788,3 +795,16 @@ class DisplayGroupUsersView(BrowserView):
             res.append(memberInfos and memberInfos['fullname'] or member_id)
         res.sort()
         return "<br />".join(res)
+
+
+class DisplayAnnexesView(BrowserView):
+    """ """
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.portal_url = api.portal.get().absolute_url()
+
+    def show(self):
+        """ """
+        return self.tool.showAnnexesTab(self.context)

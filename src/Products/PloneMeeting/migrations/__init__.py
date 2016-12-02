@@ -48,10 +48,10 @@ class Migrator(BaseMigrator):
         for profile_name in profile_names:
             self.upgradeProfile(profile_name)
 
-    def reinstall(self, profiles):
+    def reinstall(self, profiles, ignore_dependencies=False, dependency_strategy=None):
         """Override to be able to call _after_reinstall at the end."""
         self._before_reinstall()
-        BaseMigrator.reinstall(self, profiles)
+        BaseMigrator.reinstall(self, profiles, ignore_dependencies, dependency_strategy)
         self._after_reinstall()
 
     def _before_reinstall(self):

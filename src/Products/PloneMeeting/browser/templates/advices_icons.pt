@@ -14,8 +14,7 @@
                                             pm_utils context/@@pm_utils;
                                             displayAdviceConfidentiality python: cfg.getEnableAdviceConfidentiality() and view.tool.isManager(context);
                                             isRealManager python: view.tool.isManager(context, realManagers=True);
-                                            item_review_state context/queryState;
-                                            adviceFileTypes python: cfg.getFileTypes('advice');">
+                                            item_review_state context/queryState;">
       <tal:comment replace="nothing">For history reasons, we use cfg.listAdviceTypes to be sure
                                      that a deactivated adviceType is still shown.</tal:comment>
       <tal:menu repeat="adviceType python: ['not_given', 'hidden_during_redaction', 'considered_not_given_hidden_during_redaction'] + cfg.listAdviceTypes().keys()">
@@ -186,9 +185,9 @@
                            tal:attributes="src string:${view/portal_url}/advice_manage.png;" />
                     </a>
                     </td>
-                    <td tal:condition="python: adviceFileTypes or bool(advice['annexIndex'])" align="right" width="20px" class="noPadding">
+                    <td tal:condition="python: view.tool.showAnnexesTab(obj)" align="right" width="20px" class="noPadding">
                       <a href="#"
-                         tal:attributes="href string:${obj_absolute_url}/annexes_form">
+                         tal:attributes="href string:${obj_absolute_url}/@@categorized-annexes">
                         <img src="manage_annexes.gif"
                              i18n:attributes="title" title="Manage advice annexes"
                              tal:attributes="src string:${view/portal_url}/manage_annexes.gif"/>
@@ -240,7 +239,7 @@
                   <tr tal:condition="python: adviceType != 'not_given'">
                     <td>
                         <a href="#"
-                           class="link-overlay-pm"
+                           class="link-overlay-pm-preview-advice"
                            tal:condition="adviceHolderIsViewable"
                            tal:attributes="href string:${obj_absolute_url}/view">
                             <img src="blue_arrow.gif"
@@ -250,10 +249,8 @@
                     <td colspan="5"
                         align="right"
                         class="advice_annexes">
-                        <tal:defines define="relatedTo string:advice;
-                                             extra_css_class string:annexIcon;"
-                                     condition="python: bool(obj.annexIndex) and adviceHolderIsViewable">
-                            <tal:annexes replace="structure python: obj.restrictedTraverse('@@annexes-icons')(relatedTo='advice')" />
+                        <tal:defines condition="python: view.tool.hasAnnexes(obj) and adviceHolderIsViewable">
+                            <tal:annexes replace="structure python: obj.restrictedTraverse('categorized-childs')(portal_type='annex')" />
                         </tal:defines>
                     </td>
                   </tr>
@@ -376,7 +373,7 @@
       </tal:advicesToAddOrExisting>
       <div tal:condition="not: advicesByType">
         <tal:comment replace="nothing">Icon for adding an advice for power advisers</tal:comment>
-        <div class="no_advice_asked" style="display: inline">&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;</div>
+        <div style="display: inline">&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;</div>
         <div tal:condition="python: advicesToAdd" style="display: inline">
           <a href="++add++meetingadvice" class="link-overlay-pm-advice" tal:attributes="href string:${item_url}/++add++meetingadvice">
             <img i18n:attributes="title"

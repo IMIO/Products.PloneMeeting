@@ -35,7 +35,6 @@ from Products.Archetypes.atapi import TextAreaWidget
 from Products.Archetypes.atapi import TextField
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 
-##code-section module-header #fill in your manual code here
 from datetime import datetime
 from collections import OrderedDict
 from copy import deepcopy
@@ -54,6 +53,7 @@ from zope.component import queryUtility
 from zope.event import notify
 from zope.i18n import translate
 from zope.schema.interfaces import IVocabularyFactory
+from collective.iconifiedcategory.utils import update_all_categorized_elements
 from plone import api
 from plone.memoize import ram
 from Products.Archetypes.event import ObjectEditedEvent
@@ -92,14 +92,12 @@ from Products.PloneMeeting.config import RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
 from Products.PloneMeeting.model.adaptations import RETURN_TO_PROPOSING_GROUP_MAPPINGS
 from Products.PloneMeeting.Meeting import Meeting
-from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowConditions
-from Products.PloneMeeting.utils import _addImagePermission
+from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
 from Products.PloneMeeting.utils import addDataChange
 from Products.PloneMeeting.utils import AdvicesUpdatedEvent
-from Products.PloneMeeting.utils import checkPermission
 from Products.PloneMeeting.utils import fieldIsEmpty
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import getCustomAdapter
@@ -183,21 +181,21 @@ class MeetingItemWorkflowConditions:
             return No(translate('required_category_ko',
                                 domain="PloneMeeting",
                                 context=self.context.REQUEST))
-        if checkPermission(ReviewPortalContent, self.context) and \
+        if _checkPermission(ReviewPortalContent, self.context) and \
            (not self.context.isDefinedInTool()):
             return True
 
     security.declarePublic('mayPrevalidate')
 
     def mayPrevalidate(self):
-        if checkPermission(ReviewPortalContent, self.context) and \
+        if _checkPermission(ReviewPortalContent, self.context) and \
            (not self.context.isDefinedInTool()):
             return True
 
     security.declarePublic('mayValidate')
 
     def mayValidate(self):
-        if checkPermission(ReviewPortalContent, self.context) and \
+        if _checkPermission(ReviewPortalContent, self.context) and \
            not self.context.isDefinedInTool():
             return True
 
@@ -206,7 +204,7 @@ class MeetingItemWorkflowConditions:
     def mayPresent(self):
         # We may present the item if Plone currently publishes a meeting.
         # Indeed, an item may only be presented within a meeting.
-        if not checkPermission(ReviewPortalContent, self.context):
+        if not _checkPermission(ReviewPortalContent, self.context):
             return False
         # if we are not on a meeting, try to get the next meeting accepting items
         if not self._publishedObjectIsMeeting():
@@ -234,7 +232,7 @@ class MeetingItemWorkflowConditions:
     def mayDecide(self):
         '''May this item be "decided" ?'''
         res = False
-        if checkPermission(ReviewPortalContent, self.context) and \
+        if _checkPermission(ReviewPortalContent, self.context) and \
            self.context.hasMeeting():
             meeting = self.context.getMeeting()
             if meeting.getDate().isPast():
@@ -253,13 +251,13 @@ class MeetingItemWorkflowConditions:
     security.declarePublic('mayDelay')
 
     def mayDelay(self):
-        if checkPermission(ReviewPortalContent, self.context):
+        if _checkPermission(ReviewPortalContent, self.context):
             return True
 
     security.declarePublic('mayConfirm')
 
     def mayConfirm(self):
-        if checkPermission(ReviewPortalContent, self.context) and \
+        if _checkPermission(ReviewPortalContent, self.context) and \
            self.context.getMeeting().queryState() in ('decided', 'decisions_published', 'closed'):
             return True
 
@@ -275,7 +273,7 @@ class MeetingItemWorkflowConditions:
         if not meeting or (meeting and meeting.queryState() != 'closed'):
             # item is not linked to a meeting, or in a meeting that is not 'closed',
             # just check for 'Review portal content' permission
-            if checkPermission(ReviewPortalContent, self.context):
+            if _checkPermission(ReviewPortalContent, self.context):
                 res = True
         return res
 
@@ -286,7 +284,7 @@ class MeetingItemWorkflowConditions:
            As we have only one guard_expr for potentially several transitions departing
            from the 'returned_to_proposing_group' state, we receive the p_transitionName."""
         tool = api.portal.get_tool('portal_plonemeeting')
-        if not checkPermission(ReviewPortalContent, self.context) and not \
+        if not _checkPermission(ReviewPortalContent, self.context) and not \
            tool.isManager(self.context):
             return
         # get the linked meeting
@@ -328,7 +326,7 @@ class MeetingItemWorkflowConditions:
 
     def mayPublish(self):
         res = False
-        if checkPermission(ReviewPortalContent, self.context) and \
+        if _checkPermission(ReviewPortalContent, self.context) and \
            self.meetingIsPublished():
             res = True
         return res
@@ -337,7 +335,7 @@ class MeetingItemWorkflowConditions:
 
     def mayFreeze(self):
         res = False
-        if checkPermission(ReviewPortalContent, self.context):
+        if _checkPermission(ReviewPortalContent, self.context):
             meeting = self.context.hasMeeting() and self.context.getMeeting() or None
             if meeting and not meeting.queryState() in meeting.getBeforeFrozenStates():
                 res = True
@@ -347,7 +345,7 @@ class MeetingItemWorkflowConditions:
 
     def mayArchive(self):
         res = False
-        if checkPermission(ReviewPortalContent, self.context):
+        if _checkPermission(ReviewPortalContent, self.context):
             if self.context.hasMeeting() and \
                (self.context.getMeeting().queryState() == 'archived'):
                 res = True
@@ -357,7 +355,7 @@ class MeetingItemWorkflowConditions:
 
     def mayReturnToProposingGroup(self):
         res = False
-        if checkPermission(ReviewPortalContent, self.context):
+        if _checkPermission(ReviewPortalContent, self.context):
             res = True
         return res
 
@@ -402,7 +400,7 @@ class MeetingItemWorkflowConditions:
             res = No(translate('advice_required_to_ask_advices',
                                domain='PloneMeeting',
                                context=self.context.REQUEST))
-        elif checkPermission(ReviewPortalContent, self.context):
+        elif _checkPermission(ReviewPortalContent, self.context):
             res = True
         return res
 
@@ -916,6 +914,17 @@ schema = Schema((
         ),
         optional=True,
     ),
+    BooleanField(
+        name='toDiscuss',
+        widget=BooleanField._properties['widget'](
+            condition="here/showToDiscuss",
+            label='Todiscuss',
+            label_msgid='PloneMeeting_label_toDiscuss',
+            i18n_domain='PloneMeeting',
+        ),
+        optional=True,
+        default_method="getDefaultToDiscuss",
+    ),
     LinesField(
         name='itemInitiator',
         widget=MultiSelectionWidget(
@@ -998,17 +1007,6 @@ schema = Schema((
         default_output_type="text/x-html-safe",
         optional=True,
         write_permission="PloneMeeting: Write item MeetingManager reserved fields",
-    ),
-    BooleanField(
-        name='toDiscuss',
-        widget=BooleanField._properties['widget'](
-            condition="here/showToDiscuss",
-            label='Todiscuss',
-            label_msgid='PloneMeeting_label_toDiscuss',
-            i18n_domain='PloneMeeting',
-        ),
-        optional=True,
-        default_method="getDefaultToDiscuss",
     ),
     LinesField(
         name='templateUsingGroups',
@@ -1418,7 +1416,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         adaptations = cfg.getWorkflowAdaptations()
         if 'hide_decisions_when_under_writing' in adaptations and \
            self.hasMeeting() and self.getMeeting().queryState() == 'decided' and \
-           not checkPermission(ModifyPortalContent, self):
+           not _checkPermission(ModifyPortalContent, self):
             return translate('decision_under_edit',
                              domain='PloneMeeting',
                              context=self.REQUEST,
@@ -2590,29 +2588,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(self)
         return (name in cfg.getUsedItemAttributes())
 
-    def showAnnexesTab_cachekey(method, self, decisionRelated):
-        '''cachekey method for self.showAnnexesTab.'''
-        return (decisionRelated, str(self.REQUEST._debug))
-
-    security.declarePublic('showAnnexesTab')
-
-    @ram.cache(showAnnexesTab_cachekey)
-    def showAnnexesTab(self, decisionRelated):
-        '''Must we show the "Annexes" (or "Decision-related annexes") tab ?'''
-        if self.isTemporary() or self.isDefinedInTool():
-            return False
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-        if cfg.getFileTypes(relatedTo=(decisionRelated and 'item_decision' or 'item')):
-            return True
-        return False
-
     security.declarePublic('hasAnnexesWhere')
 
     def hasAnnexesWhere(self, relatedTo='item'):
         '''Have I some annexes?  If p_relatedTo is whatever, consider every annexes
            no matter their 'relatedTo', either, only consider relevant relatedTo annexes.'''
-        return bool(IAnnexable(self).getAnnexesByType(relatedTo=relatedTo))
+        portal_type = None
+        if relatedTo == 'item':
+            portal_type = 'annex'
+        else:
+            portal_type = 'annexDecision'
+        tool = api.portal.get_tool('portal_plonemeeting')
+        return tool.hasAnnexes(self, portal_type)
 
     def queryState_cachekey(method, self):
         '''cachekey method for self.queryState.'''
@@ -4135,7 +4122,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 d['gives_auto_advice_on_help_message'] = adviceInfo['gives_auto_advice_on_help_message']
                 d['row_id'] = adviceInfo['row_id']
                 d['hidden_during_redaction'] = False
-                d['annexIndex'] = []
                 # manage the 'delay_started_on' data that was saved prior
                 if adviceInfo['delay'] and groupId in saved_stored_data:
                     d['delay_started_on'] = saved_stored_data[groupId]['delay_started_on']
@@ -4201,7 +4187,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 adviceInfo['item_viewable_by_advisers'] = False
                 adviceInfo['advice_addable'] = False
                 adviceInfo['advice_editable'] = False
-                adviceInfo['annexIndex'] = []
                 adviceInfo['inherited'] = False
             self.adviceIndex[groupId].update(adviceInfo)
 
@@ -4341,10 +4326,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                    not bool(groupId in saved_stored_data and
                             saved_stored_data[groupId]['delay_stopped_on']):
                     self.adviceIndex[groupId]['delay_stopped_on'] = datetime.now()
-
-                # now index advice annexes
-                if self.adviceIndex[groupId]['type'] != NOT_GIVEN_ADVICE_VALUE:
-                    self.adviceIndex[groupId]['annexIndex'] = adviceObj.annexIndex
 
                 # compute and store delay_infos
                 self.adviceIndex[groupId]['delay_infos'] = self.getDelayInfosForAdvice(groupId)
@@ -4527,12 +4508,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('at_post_create_script')
 
     def at_post_create_script(self, **kwargs):
-        # Create a "black list" of annex names. Every time an annex will be
-        # created for this item, the name used for it (=id) will be stored here
-        # and will not be removed even if the annex is removed. This way, two
-        # annexes (or two versions of it) will always have different URLs, so
-        # we avoid problems due to browser caches.
-        self.alreadyUsedAnnexNames = PersistentList()
         # The following field allows to store events that occurred in the life
         # of an item, like annex deletions or additions.
         self.itemHistory = PersistentList()
@@ -4551,8 +4526,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self.manage_addLocalRoles(userId, ('Owner',))
         self.updateLocalRoles(isCreated=True,
                               inheritedAdviserIds=kwargs.get('inheritedAdviserIds', []))
-        # update annexIndex
-        IAnnexable(self).updateAnnexIndex()
         # Apply potential transformations to richtext fields
         transformAllRichTextFields(self)
         # Make sure we have 'text/html' for every Rich fields
@@ -4623,9 +4596,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if meetingGroup:
             portal_groups = api.portal.get_tool('portal_groups')
             for groupSuffix in MEETING_GROUP_SUFFIXES:
-                # adviser-related local roles are managed in method
-                # MeetingItem._updateAdvices.
-                if groupSuffix == 'advisers':
+                # like it is the case for groupSuffix 'advisers'
+                if not MEETINGROLES[groupSuffix]:
                     continue
                 # if we have a Plone group related to this suffix, apply a local role for it
                 groupId = meetingGroup.getPloneGroupId(groupSuffix)
@@ -4659,9 +4631,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # update group in charge local roles
         # we will give the current groupInCharge _observers sub group access to this item
         self._updateGroupInChargeLocalRoles()
+        # update annexes categorized_elements to store 'visible_for_groups'
+        update_all_categorized_elements(self)
+        # update categorized elements on contained advices too
+        for advice in self.getAdvices():
+            update_all_categorized_elements(advice)
 
-        # manage the 'ATContentTypes: Add Image' permission
-        _addImagePermission(self)
+        # manage automatically given permissions
+        _addManagedPermissions(self)
         # notify that localRoles have been updated
         notify(ItemLocalRolesUpdatedEvent(self, old_local_roles))
         # reindex relevant indexes
@@ -5215,7 +5192,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 (not automatically and
                  (item_state in cfg.getItemManualSentToOtherMCStates() or
                   item_state in cfg.getItemAutoSentToOtherMCStates()) and
-                 (checkPermission(ModifyPortalContent, item) or tool.isManager(item)))
+                 (_checkPermission(ModifyPortalContent, item) or tool.isManager(item)))
                 ):
             return False
 
@@ -5708,7 +5685,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            discussing this item: we will record this info, excepted if
            request["action"] tells us to remove the info instead.'''
         tool = api.portal.get_tool('portal_plonemeeting')
-        if not tool.isManager(self) or not checkPermission(ModifyPortalContent, self):
+        if not tool.isManager(self) or not _checkPermission(ModifyPortalContent, self):
             raise Unauthorized
         rq = self.REQUEST
         userId = rq['userId']
@@ -5731,7 +5708,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            We will record this info, excepted if request["action"] tells us to
            remove it instead.'''
         tool = api.portal.get_tool('portal_plonemeeting')
-        if not tool.isManager(self) or not checkPermission(ModifyPortalContent, self):
+        if not tool.isManager(self) or not _checkPermission(ModifyPortalContent, self):
             raise Unauthorized
         rq = self.REQUEST
         userId = rq['userId']

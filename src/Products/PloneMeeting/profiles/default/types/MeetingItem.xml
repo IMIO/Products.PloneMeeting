@@ -14,10 +14,10 @@
  <property name="global_allow">False</property>
  <property name="filter_content_types">True</property>
  <property name="allowed_content_types">
-   <element value="MeetingFile"/>
    <element value="meetingadvice"/>
-   <element value="File"/>
    <element value="Image"/>
+   <element value="annex"/>
+   <element value="annexDecision"/>
  </property>
  <property name="allow_discussion">False</property>
  <property name="default_view">meetingitem_view</property>
@@ -30,6 +30,7 @@
  </property>
  <property name="default_view_fallback">False</property>
  <alias from="(Default)" to="(dynamic view)"/>
+ <alias from="base_view" to="meetingitem_view"/>
  <alias from="view" to="(selected layout)"/>
  <alias from="edit" to="base_edit"/>
  <alias from="sharing" to="@@sharing"/>
@@ -53,23 +54,13 @@
  </action>
  <action title="Annexes"
          i18n:attributes="title"
-         action_id="annexes_form"
+         action_id="annexes"
          category="object"
-         condition_expr="python:here.showAnnexesTab(decisionRelated=False)"
+         condition_expr="python: here.portal_plonemeeting.showAnnexesTab(here)"
          icon_expr=""
-         url_expr="string:${object_url}/annexes_form"
+         url_expr="string:${object_url}/@@categorized-annexes"
          visible="True">
   <permission value="View"/>
- </action>
- <action title="AnnexesDecision"
-         i18n:attributes="title"
-         action_id="annexes_decision_form"
-         category="object"
-         condition_expr="python:here.showAnnexesTab(decisionRelated=True)"
-         icon_expr=""
-         url_expr="string:${object_url}/annexes_decision_form"
-         visible="True">
-  <permission value="PloneMeeting: Read decision annex"/>
  </action>
  <action title="Duplicate"
          i18n:attributes="title"

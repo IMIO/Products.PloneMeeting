@@ -545,6 +545,34 @@ class PollTypesVocabulary(object):
 PollTypesVocabularyFactory = PollTypesVocabulary()
 
 
+class OtherMCCorrespondenceVocabulary(object):
+    """
+    Vocabulary factory for 'ContentCategory.othermccorrespondences' field.
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        tool = api.portal.get_tool('portal_plonemeeting')
+        currentCfg = tool.getMeetingConfig(context)
+        res = []
+        if currentCfg:
+            currentCfgId = currentCfg.getId()
+            for cfg in tool.objectValues('MeetingConfig'):
+                if cfg.getId() == currentCfgId:
+                    continue
+                item_annexes = cfg.annexes_types.item_annexes
+                for cat in item_annexes.objectValues():
+                    res.append(SimpleTerm(
+                        cat.UID(),
+                        cat.UID(),
+                        u'%s -> %s -> %s' % (safe_unicode(cfg.Title()),
+                                             'Item annex',
+                                             safe_unicode(cat.Title()))))
+        return SimpleVocabulary(res)
+
+OtherMCCorrespondenceVocabularyFactory = OtherMCCorrespondenceVocabulary()
+
+
 class PMPortalTypesVocabulary(PortalTypesVocabularyFactory):
     """
     Vocabulary factory for 'pod_portal_types' field, make it MeetingConfig aware.

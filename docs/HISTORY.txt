@@ -10,7 +10,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 4.0 (unreleased)
 ----------------
 - Moved to Plone 4.3.8
-- Moved to collective.ckeditor 4.4.0
+- Moved to collective.ckeditor 4.4.5
 - Moved to collective.documentviewer 3.0.3
 - Rely on beautifulsoup4, Products.CPUtils, collective.messagesviewlet
 - Get rid of ArchGenXML, just use it for workflows generation
@@ -265,9 +265,16 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Added action to 'Check Pod templates' of a given MeetingConfig.  This action can be triggered from the
   MeetingConfig [Default] tab and is especially made for Managers during migrations
 - Added method 'printXhtml' available in Pod templates on view.printXhtml to be able to print a xhtmlContent with some
-  options like being able to print several xhtml chunks (MeetingItem.motivation + Meeting.decision for example), to define
-  arbitrary xhtml chunks ('<p>DECIDE :</p>'), to manage 'space' between xhtml chunks, keepWithNext, ...  And thus, removed
-  method Meeting.getDeliberation that was used to contatenate 'motivation' and 'decision'.
+  options :
+    - parameter 'xhtmlContents' may be a single xhtml chunk or a list of xhtml chunks (MeetingItem.motivation + Meeting.decision
+      for example), and may contain arbitrary xhtml chunks ('<p>DECIDE :</p>').  It may also contain a special word 'space' that will insert
+      a space like defined in parameter 'separatorValue' that defaults to '<p>&nbsp;</p>';
+    - parameter 'image_src_to_paths' will turn <img> src to an absolute path to the .blob on the filesystem;
+    - parameters 'keepWithNext' and 'keepWithNextNumberOfChars' that manage possibility to stick to next paragraph when
+      Pod template is generated;
+    - parameter 'checkNeedSeparator' that defaults to True will only add separator if needed;
+    - parameter 'addCSSClass', is made to add a CSS class to every 'paragraph' like tags of the 'xhtmlContents'.
+  And thus, removed method Meeting.getDeliberation that was used to contatenate 'motivation' and 'decision'.
 - Added CKeditor custom style 'indent-firstline' to be able to apply a text-index: 40px; on a paragraph
 - Added hooks _before_reinstall and _after_reinstall made to do things before and after reinstalling the profile in a migration.
   By default it will save CKeditor custom styles (saved in _before_reinstall and stored again in _after_reinstall)
@@ -293,7 +300,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   when a state has several 'back' transitions to know which transition we are working on
 - Moved emergency change comment popup and advice delay change comment popup to z3c.form
   to be able to define that comment is now required
-- Added helpe method MeetingItem.getAdviceObj(advId) that will return the 'meetingadvice' object for the given p_advId adviser
+- Added helper method MeetingItem.getAdviceObj(advId) that will return the 'meetingadvice' object for the given p_advId adviser
   id.  If advice object exists, it is returned, otherwise 'None' is returned
 - Display a "group users" icon next to the displayed copy groups and asked advices on the item view to be able to get informations
   about users that are in the selected Plone groups, this way we know which users will have read access to the item and which will be
@@ -329,8 +336,10 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Added specific icon before title of advice that are given as personal initiative
 - MeetingItem.displayAdvices is now MeetingItem.showAdvices and is an adaptable method that controls the fact that advices
   are shown or not on the item view
-- ToolPloneMeeting.formatMeetingDate now accepts a new parameter 'date_attr' that defaults to 'getDate' to be able to format
-  another date attribute available on the Meeting (like 'getPreMeetingDate', 'getStartDate', 'getMidDate', 'getEndDate', ...)
+- Moved to imio.annex : in WFs, renamed permission "PloneMeeting: Write decision annex" to "PloneMeeting: Add annexDecision" and
+  removed the "PloneMeeting: Add MeetingFile" and "PloneMeeting: Read decision annex" permissions.  Annexes may now be added on Meetings
+  and are displayed in dashboards like for items.  On items, there is now one single tab 'annexes' where annexes and decision annexes
+  are managed.  Moreover annexes are reorderable in the 'annexes' tab
 
 3.3 (2015-02-27)
 ----------------

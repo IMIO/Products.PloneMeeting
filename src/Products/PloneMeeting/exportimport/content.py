@@ -28,6 +28,9 @@ __docformat__ = 'plaintext'
 
 # ------------------------------------------------------------------------------
 from zope.i18n import translate
+from plone import api
+from collective.iconifiedcategory import CAT_SEPARATOR
+from Products.CMFPlone.interfaces.constrains import IConstrainTypes
 from imio.dashboard.utils import _updateDefaultCollectionFor
 from Products.PloneMeeting.config import registerClasses, PROJECTNAME
 from Products.PloneMeeting.model.adaptations import performModelAdaptations
@@ -77,15 +80,10 @@ class ToolInitializer:
             return
         profileModule = pp[pp.rfind(self.productname.replace('.', '/')):].replace('/', '.')
         profileModule = profileModule.replace('\\', '.')
-        try:
-            data = ''
-            module_path = 'from %s.import_data import data' % profileModule
-            exec module_path
-            return data
-        except ImportError:
-            # This is the case if we reinstall PloneMeeting, no data is defined
-            # in the default profile.
-            logger.warn("Unable to import %s" % module_path)
+        data = ''
+        module_path = 'from %s.import_data import data' % profileModule
+        exec module_path
+        return data
 
     def run(self):
         d = self.profileData
@@ -101,6 +99,7 @@ class ToolInitializer:
             self.tool.addUsersAndGroups(d.groups)
         savedMeetingConfigsToCloneTo = {}
 
+        created_cfgs = []
         for mConfig in d.meetingConfigs:
             # XXX we need to defer the management of the 'meetingConfigsToCloneTo'
             # defined on the mConfig after the creation of every mConfigs because
@@ -111,7 +110,13 @@ class ToolInitializer:
             mConfig.meetingConfigsToCloneTo = []
             cfg = self.tool.createMeetingConfig(mConfig, source=self.profilePath)
             if cfg:
-                self.finishConfigFor(cfg, data=mConfig)
+                created_cfgs.append(cfg)
+                self._finishConfigFor(cfg, data=mConfig)
+
+        # manage other_mc_correspondences
+        for created_cfg in created_cfgs:
+            self._manageOtherMCCorrespondences(created_cfg)
+
         # now that every meetingConfigs have been created, we can manage the meetingConfigsToCloneTo
         for mConfigId in savedMeetingConfigsToCloneTo:
             if not savedMeetingConfigsToCloneTo[mConfigId]:
@@ -132,7 +137,7 @@ class ToolInitializer:
             self.tool.addUsersOutsideGroups(d.usersOutsideGroups)
         return self.successMessage
 
-    def finishConfigFor(self, cfg, data):
+    def _finishConfigFor(self, cfg, data):
         """When the MeetingConfig has been created, some parameters still need to be applied
            because they need the MeetingConfig to exist."""
         # apply the meetingTopicStates to the 'searchallmeetings' DashboardCollection
@@ -172,6 +177,33 @@ class ToolInitializer:
             error = field.validate_vocabulary(cfg, cfg.getField(field.getName()).get(cfg), {})
             if error:
                 raise PloneMeetingError(MEETING_CONFIG_ERROR % (cfg.getId(), error))
+
+    def _manageOtherMCCorrespondences(self, cfg):
+        def _convert_to_real_other_mc_correspondences(annex_type):
+            """ """
+            tool = api.portal.get_tool('portal_plonemeeting')
+            real_other_mc_correspondences = []
+            # we have a content_category id prefixed with cfg id
+            # like meeting-config-test_-_annexes_types_-_item_annexes_-_annex
+            # but we need the UID of the corresponding annexType
+            for other_mc_correspondence in annex_type.other_mc_correspondences:
+                steps = other_mc_correspondence.split(CAT_SEPARATOR)
+                other_cfg = tool.get(steps[0])
+                corresponding_annex_type = other_cfg
+                for step in steps[1:]:
+                    corresponding_annex_type = corresponding_annex_type[step]
+                real_other_mc_correspondences.append(corresponding_annex_type.UID())
+            annex_type.other_mc_correspondences = real_other_mc_correspondences
+
+        # finish configuration of annexType.other_mc_correspondences
+        # for ItemAnnexContentCategory and ItemAnnexContentSubcategory
+        for annex_group in cfg.annexes_types.objectValues():
+            if 'ItemAnnexContentCategory' in IConstrainTypes(annex_group).getLocallyAllowedTypes():
+                for annex_type in annex_group.objectValues():
+                    if annex_type.other_mc_correspondences:
+                        _convert_to_real_other_mc_correspondences(annex_type)
+                        for subType in annex_type.objectValues():
+                            _convert_to_real_other_mc_correspondences(subType)
 
 
 def isTestOrArchiveProfile(context):

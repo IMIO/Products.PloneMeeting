@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-# Copyright (c) 2012 by PloneGov
+#
+# Copyright (c) 2016 by PloneGov
 #
 # GNU General Public License (GPL)
 #
@@ -20,11 +21,13 @@
 
 from Products.PloneMeeting.config import MEETINGREVIEWERS
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
+from Products.PloneMeeting.profiles import AnnexTypeDescriptor
 from Products.PloneMeeting.profiles import CategoryDescriptor
 from Products.PloneMeeting.profiles import GroupDescriptor
+from Products.PloneMeeting.profiles import ItemAnnexSubTypeDescriptor
+from Products.PloneMeeting.profiles import ItemAnnexTypeDescriptor
 from Products.PloneMeeting.profiles import ItemTemplateDescriptor
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
-from Products.PloneMeeting.profiles import MeetingFileTypeDescriptor
 from Products.PloneMeeting.profiles import MeetingUserDescriptor
 from Products.PloneMeeting.profiles import PloneGroupDescriptor
 from Products.PloneMeeting.profiles import PloneMeetingConfiguration
@@ -46,32 +49,71 @@ marketing = CategoryDescriptor('marketing', 'Marketing', active=False)
 # usingGroups category
 subproducts = CategoryDescriptor('subproducts', 'Subproducts wishes', usingGroups=('vendors',))
 
-# File types
-financialAnalysis = MeetingFileTypeDescriptor(
-    'financial-analysis', 'Financial analysis', 'financialAnalysis.png',
-    'Predefined title for financial analysis')
-legalAnalysis = MeetingFileTypeDescriptor(
-    'legal-analysis', 'Legal analysis', 'legalAnalysis.png', '')
-budgetAnalysis = MeetingFileTypeDescriptor(
-    'budget-analysis', 'Budget analysis', 'budgetAnalysis.png', '')
-itemAnnex = MeetingFileTypeDescriptor(
-    'item-annex', 'Other annex(es)', 'itemAnnex.png', '')
+# Annex types
+overheadAnalysisSubtype = ItemAnnexSubTypeDescriptor(
+    'overhead-analysis-sub-annex',
+    'Overhead analysis sub annex', '',
+    other_mc_correspondences=(
+        'plonegov-assembly_-_annexes_types_-_item_annexes_-_budget-analysis', ))
+
+overheadAnalysis = ItemAnnexTypeDescriptor(
+    'overhead-analysis', 'Administrative overhead analysis',
+    u'overheadAnalysis.png', '',
+    subTypes=[overheadAnalysisSubtype],
+    other_mc_correspondences=(
+        'plonegov-assembly_-_annexes_types_-_item_annexes_-_budget-analysis_-_budget-analysis-sub-annex', ))
+
+financialAnalysisSubAnnex = ItemAnnexSubTypeDescriptor(
+    'financial-analysis-sub-annex',
+    'Financial analysis sub annex', '')
+
+financialAnalysis = ItemAnnexTypeDescriptor(
+    'financial-analysis', 'Financial analysis', u'financialAnalysis.png',
+    'Predefined title for financial analysis', subTypes=[financialAnalysisSubAnnex])
+
+legalAnalysis = ItemAnnexTypeDescriptor(
+    'legal-analysis', 'Legal analysis', u'legalAnalysis.png', '')
+
+budgetAnalysisCfg2Subtype = ItemAnnexSubTypeDescriptor(
+    'budget-analysis-sub-annex',
+    'Budget analysis sub annex', '')
+
+budgetAnalysisCfg2 = ItemAnnexTypeDescriptor(
+    'budget-analysis', 'Budget analysis', u'budgetAnalysis.png', '',
+    subTypes=[budgetAnalysisCfg2Subtype])
+
+budgetAnalysisCfg1Subtype = ItemAnnexSubTypeDescriptor(
+    'budget-analysis-sub-annex',
+    'Budget analysis sub annex', '',
+    other_mc_correspondences=(
+        'plonegov-assembly_-_annexes_types_-_item_annexes_-_budget-analysis_-_budget-analysis-sub-annex', ))
+
+budgetAnalysisCfg1 = ItemAnnexTypeDescriptor(
+    'budget-analysis', 'Budget analysis', u'budgetAnalysis.png', '',
+    subTypes=[budgetAnalysisCfg1Subtype],
+    other_mc_correspondences=('plonegov-assembly_-_annexes_types_-_item_annexes_-_budget-analysis', ))
+
+itemAnnex = ItemAnnexTypeDescriptor(
+    'item-annex', 'Other annex(es)', u'itemAnnex.png', '')
 # Could be used once we
 # will digitally sign decisions ? Indeed, once signed, we will need to
 # store them (together with the signature) as separate files.
-decision = MeetingFileTypeDescriptor(
-    'decision', 'Decision', 'decision.png', '', 'item_decision')
-decisionAnnex = MeetingFileTypeDescriptor(
-    'decision-annex', 'Decision annex(es)', 'decisionAnnex.png', '', 'item_decision')
-# A vintage file type
-marketingAnalysis = MeetingFileTypeDescriptor(
-    'marketing-annex', 'Marketing annex(es)', 'legalAnalysis.png', '', 'item_decision',
-    active=False)
-# Advice file types
-adviceAnnex = MeetingFileTypeDescriptor(
-    'advice-annex', 'Advice annex(es)', 'itemAnnex.png', '', 'advice')
-adviceLegalAnalysis = MeetingFileTypeDescriptor(
-    'advice-legal-analysis', 'Advice legal analysis', 'legalAnalysis.png', '', 'advice')
+decision = ItemAnnexTypeDescriptor(
+    'decision', 'Decision', u'decision.png', '', 'item_decision')
+decisionAnnex = ItemAnnexTypeDescriptor(
+    'decision-annex', 'Decision annex(es)', u'decisionAnnex.png', '', 'item_decision')
+# A vintage annex type
+marketingAnalysis = ItemAnnexTypeDescriptor(
+    'marketing-annex', 'Marketing annex(es)', u'legalAnalysis.png', '', 'item_decision',
+    enabled=False)
+# Advice annex types
+adviceAnnex = AnnexTypeDescriptor(
+    'advice-annex', 'Advice annex(es)', u'itemAnnex.png', '', 'advice')
+adviceLegalAnalysis = AnnexTypeDescriptor(
+    'advice-legal-analysis', 'Advice legal analysis', u'legalAnalysis.png', '', 'advice')
+# Meeting annex types
+meetingAnnex = AnnexTypeDescriptor(
+    'meeting-annex', 'Meeting annex(es)', u'itemAnnex.png', '', 'meeting')
 
 # Pod templates
 agendaTemplate = PodTemplateDescriptor('agendaTemplate', 'Meeting agenda')
@@ -99,6 +141,7 @@ dashboardTemplate.tal_condition = 'python: context.absolute_url().endswith("/sea
 pmManager = UserDescriptor('pmManager', [], email="pmmanager@plonemeeting.org", fullname='M. PMManager')
 pmCreator1 = UserDescriptor('pmCreator1', [], email="pmcreator1@plonemeeting.org", fullname='M. PMCreator One')
 pmCreator1b = UserDescriptor('pmCreator1b', [], email="pmcreator1b@plonemeeting.org", fullname='M. PMCreator One bee')
+pmObserver1 = UserDescriptor('pmObserver1', [], email="pmobserver1@plonemeeting.org", fullname='M. PMObserver One')
 pmReviewer1 = UserDescriptor('pmReviewer1', [], email="pmreviewer1@plonemeeting.org", fullname='M. PMReviewer One')
 pmReviewerLevel1 = UserDescriptor('pmReviewerLevel1', [],
                                   email="pmreviewerlevel1@plonemeeting.org", fullname='M. PMReviewer Level One')
@@ -155,6 +198,7 @@ developers.creators.append(pmCreator1b)
 developers.creators.append(pmManager)
 developers.reviewers.append(pmReviewer1)
 developers.reviewers.append(pmManager)
+developers.observers.append(pmObserver1)
 developers.observers.append(pmReviewer1)
 developers.observers.append(pmManager)
 developers.advisers.append(pmAdviser1)
@@ -197,9 +241,6 @@ muser_voter1 = MeetingUserDescriptor('voter1', duty='Voter1',
 muser_voter2 = MeetingUserDescriptor('voter2', duty='Voter2',
                                      usages=['assemblyMember', 'voter', ])
 
-# Meeting configuration
-# PloneMeeting assembly
-
 # Recurring items
 recItem1 = RecurringItemDescriptor(
     'recItem1',
@@ -223,11 +264,8 @@ template2 = ItemTemplateDescriptor(
     'vendors', category='developers', description='<p>This is template2.</p>',
     decision='<p>Template1 decision</p>', templateUsingGroups=['vendors', ])
 
-# File types
-overheadAnalysis = MeetingFileTypeDescriptor(
-    'overhead-analysis', 'Administrative overhead analysis',
-    'overheadAnalysis.png', '')
-
+# Meeting configuration
+# PloneMeeting assembly
 meetingPma = MeetingConfigDescriptor(
     'plonemeeting-assembly', 'PloneMeeting assembly', 'PloneMeeting assembly', isDefault=True)
 meetingPma.meetingManagers = ['pmManager', ]
@@ -237,9 +275,9 @@ meetingPma.assembly = 'Gauthier Bastien, Gilles Demaret, Kilian Soree, ' \
                       'Godefroid Chapelle, Gaetan Deberdt, Gaetan Delannay'
 meetingPma.signatures = 'Bill Gates, Steve Jobs'
 meetingPma.categories = [development, research]
-meetingPma.meetingFileTypes = [financialAnalysis, overheadAnalysis,
-                               itemAnnex, decisionAnnex, marketingAnalysis,
-                               adviceAnnex, adviceLegalAnalysis]
+meetingPma.annexTypes = [financialAnalysis, budgetAnalysisCfg1, overheadAnalysis,
+                         itemAnnex, decisionAnnex, marketingAnalysis,
+                         adviceAnnex, adviceLegalAnalysis, meetingAnnex]
 meetingPma.usedItemAttributes = ('toDiscuss', 'itemTags', 'itemIsSigned',)
 meetingPma.usedMeetingAttributes = ('place',)
 meetingPma.itemDecidedStates = ('accepted', 'refused', 'delayed', 'confirmed', 'itemarchived')
@@ -315,9 +353,9 @@ meetingPga.assembly = 'Bill Gates, Steve Jobs'
 meetingPga.signatures = 'Bill Gates, Steve Jobs'
 meetingPga.categories = [deployment, maintenance, development, events,
                          research, projects, marketing, subproducts]
-meetingPga.meetingFileTypes = [financialAnalysis, legalAnalysis,
-                               budgetAnalysis, itemAnnex,
-                               decisionAnnex, adviceAnnex, adviceLegalAnalysis]
+meetingPga.annexTypes = [financialAnalysis, legalAnalysis,
+                         budgetAnalysisCfg2, itemAnnex, decisionAnnex,
+                         adviceAnnex, adviceLegalAnalysis, meetingAnnex]
 meetingPga.usedItemAttributes = ('toDiscuss', 'associatedGroups', 'itemIsSigned',)
 meetingPga.transitionsForPresentingAnItem = ('propose', 'validate', 'present', )
 meetingPga.onMeetingTransitionItemTransitionToTrigger = ({'meeting_transition': 'publish',
@@ -372,7 +410,7 @@ meetingPga.selectableCopyGroups = [developers.getIdSuffixed('reviewers'), vendor
 meetingPga.itemCopyGroupsStates = ['validated', 'itempublished', 'itemfrozen', 'accepted', 'refused', 'delayed', ]
 
 # The whole configuration object -----------------------------------------------
-data = PloneMeetingConfiguration('My meetings', (meetingPga, meetingPma),
+data = PloneMeetingConfiguration('My meetings', (meetingPma, meetingPga),
                                  (developers, vendors, endUsers))
 # necessary for testSetup.test_pm_ToolAttributesAreOnlySetOnFirstImportData
 data.restrictUsers = False

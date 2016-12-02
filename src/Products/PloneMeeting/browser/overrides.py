@@ -11,6 +11,7 @@ from AccessControl import Unauthorized
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from zope.annotation import IAnnotations
 from zope.i18n import translate
+from zope.interface import alsoProvides
 from plone import api
 from plone.app.content.browser.foldercontents import FolderContentsView
 from plone.app.controlpanel.overview import OverviewControlPanel
@@ -24,6 +25,14 @@ from collective.ckeditor.browser.ckeditorfinder import CKFinder
 from collective.documentgenerator.content.pod_template import IPODTemplate
 from collective.documentgenerator.viewlets.generationlinks import DocumentGeneratorLinksViewlet
 from collective.eeafaceted.collectionwidget.browser.views import RenderCategoryView
+from collective.iconifiedcategory.browser.actionview import ConfidentialChangeView
+from collective.iconifiedcategory.browser.tabview import CategorizedTabView
+from collective.iconifiedcategory.browser.views import CategorizedChildView
+from collective.iconifiedcategory.interfaces import ICategorizedPrint
+from collective.iconifiedcategory.interfaces import ICategorizedConfidential
+from collective.iconifiedcategory import utils as iconifiedcategory_utils
+from collective.iconifiedcategory.utils import get_categories
+from collective.iconifiedcategory.utils import get_config_root
 from eea.facetednavigation.browser.app.view import FacetedContainerView
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.actionspanel.browser.viewlets import ActionsPanelViewlet
@@ -41,7 +50,6 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFPlone.utils import safe_unicode
 from Products.CPUtils.Extensions.utils import check_zope_admin
 from Products.PloneMeeting import utils as pm_utils
-from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.interfaces import IMeeting
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import sendMail
@@ -79,7 +87,8 @@ class PloneMeetingGlobalSectionsViewlet(GlobalSectionsViewlet):
         path = url[plone_url_len:]
 
         #XXX change by PM
-        mc = self.context.portal_plonemeeting.getMeetingConfig(self.context)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        mc = tool.getMeetingConfig(self.context)
         #XXX end of change by PM
 
         for action in portal_tabs:
@@ -137,7 +146,9 @@ class PloneMeetingContentActionsViewlet(ContentActionsViewlet):
         if self.context.meta_type in ('ATTopic', 'Meeting', 'MeetingItem',  'MeetingCategory',
                                       'MeetingConfig', 'MeetingGroup', 'MeetingFileType', 'MeetingUser',
                                       'PodTemplate', 'ToolPloneMeeting',) or \
-           self.context.portal_type.startswith('meetingadvice', ):
+           self.context.portal_type in ('ContentCategoryConfiguration', 'ContentCategoryGroup',) or \
+           self.context.portal_type.startswith(('meetingadvice',)) or \
+           self.context.portal_type.endswith(('ContentCategory', 'ContentSubcategory',)):
             return ''
         return self.index()
 
@@ -145,15 +156,53 @@ class PloneMeetingContentActionsViewlet(ContentActionsViewlet):
 class PMConfigActionsPanelViewlet(ActionsPanelViewlet):
     """Render actionspanel viewlet differently for elements of the MeetingConfig."""
 
+    backPages = {'categories': 'data',
+                 'classifiers': 'data',
+                 'meetingusers': 'users',
+                 'podtemplates': 'doc', }
+
     def renderViewlet(self):
         """ """
+        showAddContent = False
+        if 'ContentCategory' in self.context.portal_type:
+            showAddContent = True
         return self.context.restrictedTraverse("@@actions_panel")(useIcons=False,
                                                                   showTransitions=True,
                                                                   appendTypeNameToTransitionLabel=True,
                                                                   showArrows=False,
                                                                   showEdit=False,
                                                                   showDelete=False,
-                                                                  showActions=False)
+                                                                  showActions=False,
+                                                                  showAddContent=showAddContent)
+
+    def getBackUrl(self):
+        '''Computes the URL for "back" links in the tool or in a config.'''
+        url = ''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        cfg_url = ''
+        if cfg:
+            cfg_url = cfg.absolute_url()
+        parent = self.context.getParentNode()
+        if self.context.meta_type == 'DashboardCollection':
+            url = '{0}?pageName=gui#searches'.format(cfg_url)
+        elif parent.meta_type == 'ATFolder':
+            # p_context is a sub-object in a sub-folder within a config
+            folderName = parent.getId()
+            url = '{0}?pageName={1}#{2}'.format(cfg_url, self.backPages[folderName], folderName)
+        elif self.context.portal_type in ('ContentCategoryConfiguration',
+                                          'ContentCategoryGroup',
+                                          'ContentCategory',
+                                          'ContentSubcategory',
+                                          'ItemAnnexContentCategory',
+                                          'ItemAnnexContentSubcategory',
+                                          ):
+            url = '{0}?pageName=data#annexes_types'.format(cfg_url, )
+        else:
+            # We are in a subobject from the tool.
+            url = tool.absolute_url()
+            url += '#%s' % self.context.meta_type
+        return url
 
 
 class BaseGeneratorLinksViewlet():
@@ -168,8 +217,9 @@ class BaseGeneratorLinksViewlet():
 class PMDocumentGeneratorLinksViewlet(DocumentGeneratorLinksViewlet, BaseGeneratorLinksViewlet):
     """Override the 'generatelinks' viewlet to restrict templates by MeetingConfig."""
 
-    from imio.dashboard import browser
-    render = ViewPageTemplateFile(path_to_package(browser, 'templates/generationlinks.pt'))
+    from imio.dashboard import browser as imio_dashboard_browser
+    render = ViewPageTemplateFile(path_to_package(imio_dashboard_browser,
+                                                  'templates/generationlinks.pt'))
 
     def available(self):
         """
@@ -229,7 +279,8 @@ class PloneMeetingOverviewControlPanel(OverviewControlPanel):
     '''
     def version_overview(self):
         versions = super(PloneMeetingOverviewControlPanel, self).version_overview()
-        pm_version = self.context.portal_setup.getProfileInfo('profile-Products.PloneMeeting:default')['version']
+        portal_setup = api.portal.get_tool('portal_setup')
+        pm_version = portal_setup.getProfileInfo('profile-Products.PloneMeeting:default')['version']
         versions.insert(0, 'PloneMeeting %s' % pm_version)
         return versions
 
@@ -354,10 +405,10 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
     """
     def __init__(self, context, request):
         super(MeetingItemActionsPanelView, self).__init__(context, request)
-        self.SECTIONS_TO_RENDER = ('renderTransitions',
+        self.SECTIONS_TO_RENDER = ('renderEdit',
+                                   'renderTransitions',
                                    'renderArrows',
                                    'renderOwnDelete',
-                                   'renderEdit',
                                    'renderActions',
                                    'renderHistory', )
 
@@ -372,6 +423,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
                           showAddContent=False,
                           showHistory=False,
                           showHistoryLastEventHasComments=True,
+                          showArrows=False,
                           **kwargs):
         '''cachekey method for self.__call__ method.
            The cache is invalidated if :
@@ -401,7 +453,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
                 user.getId(), userGroups, userRoles, annotations,
                 meetingModified, useIcons, showTransitions, appendTypeNameToTransitionLabel, showEdit,
                 showOwnDelete, showActions, showAddContent, showHistory, showHistoryLastEventHasComments,
-                isPresentable, kwargs)
+                showArrows, isPresentable, kwargs)
 
     @ram.cache(__call___cachekey)
     def __call__(self,
@@ -414,6 +466,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
                  showAddContent=False,
                  showHistory=False,
                  showHistoryLastEventHasComments=True,
+                 showArrows=False,
                  **kwargs):
         """
           Redefined to add ram.cache...
@@ -432,6 +485,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
                      showAddContent=showAddContent,
                      showHistory=showHistory,
                      showHistoryLastEventHasComments=showHistoryLastEventHasComments,
+                     showArrows=showArrows,
                      **kwargs)
 
     def renderArrows(self):
@@ -441,10 +495,9 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
             config_actions_panel = self.context.restrictedTraverse('@@config_actions_panel')
             config_actions_panel()
             return config_actions_panel.renderArrows()
-        showArrows = self.kwargs.get('showArrows', False)
-        if showArrows and self.mayChangeOrder():
+        if self.showArrows and self.mayChangeOrder():
             self.lastItemUID = self.kwargs['lastItemUID']
-            return ViewPageTemplateFile("templates/actions_panel_arrows.pt")(self)
+            return ViewPageTemplateFile("templates/actions_panel_item_arrows.pt")(self)
         return ''
 
     def showHistoryForContext(self):
@@ -468,10 +521,10 @@ class MeetingActionsPanelView(BaseActionsPanelView):
     """
     def __init__(self, context, request):
         super(MeetingActionsPanelView, self).__init__(context, request)
-        self.SECTIONS_TO_RENDER = ['renderTransitions',
+        self.SECTIONS_TO_RENDER = ['renderEdit',
+                                   'renderTransitions',
                                    'renderOwnDelete',
                                    'renderDeleteWholeMeeting',
-                                   'renderEdit',
                                    'renderActions', ]
 
     def __call___cachekey(method,
@@ -485,6 +538,7 @@ class MeetingActionsPanelView(BaseActionsPanelView):
                           showAddContent=False,
                           showHistory=False,
                           showHistoryLastEventHasComments=True,
+                          showArrows=False,
                           **kwargs):
         '''cachekey method for self.__call__ method.
            The cache is invalidated if :
@@ -503,7 +557,7 @@ class MeetingActionsPanelView(BaseActionsPanelView):
                 user.getId(), userGroups, userRoles, invalidate_meeting_actions_panel_cache,
                 useIcons, showTransitions, appendTypeNameToTransitionLabel, showEdit,
                 showOwnDelete, showActions, showAddContent, showHistory, showHistoryLastEventHasComments,
-                kwargs)
+                showArrows, kwargs)
 
     @ram.cache(__call___cachekey)
     def __call__(self,
@@ -516,6 +570,7 @@ class MeetingActionsPanelView(BaseActionsPanelView):
                  showAddContent=False,
                  showHistory=False,
                  showHistoryLastEventHasComments=True,
+                 showArrows=False,
                  **kwargs):
         """
           Redefined to add ram.cache...
@@ -530,6 +585,7 @@ class MeetingActionsPanelView(BaseActionsPanelView):
                      showAddContent=showAddContent,
                      showHistory=showHistory,
                      showHistoryLastEventHasComments=showHistoryLastEventHasComments,
+                     showArrows=showArrows,
                      **kwargs)
 
     def renderDeleteWholeMeeting(self):
@@ -578,28 +634,27 @@ class ConfigActionsPanelView(ActionsPanelView):
     def __init__(self, context, request):
         super(ConfigActionsPanelView, self).__init__(context, request)
         self.SECTIONS_TO_RENDER = ('renderEdit',
-                                   'renderOwnDelete',
+                                   'renderTransitions',
                                    'renderArrows',
-                                   'renderTransitions')
+                                   'renderOwnDelete',
+                                   'renderAddContent')
         if self.context.meta_type == 'MeetingGroup':
             self.SECTIONS_TO_RENDER = self.SECTIONS_TO_RENDER + ('renderLinkedPloneGroups', )
-        self.folder = self.context.getParentNode()
+
+    def renderArrows(self):
+        """ """
         # objectIds is used for moving elements, we actually only want
         # to move elements of same portal_type
         # exception for Pod templates where we have ConfigurablePodTemplate
         # and DashboardTemplate objects
-        if self.folder.getId() == 'podtemplates':
-            self.objectIds = self.folder.objectIds()
-        else:
-            self.objectIds = self.folder.objectIds(self.context.meta_type)
-        self.objId = self.context.getId()
-        self.moveUrl = "{0}/folder_position?position=%s&id=%s&template_id={1}".format(
-            self.folder.absolute_url(), self.returnTo())
+        if not self.parent.getId() == 'podtemplates':
+            self.arrowsPortalTypeAware = True
+        return super(ConfigActionsPanelView, self).renderArrows()
 
-    def returnTo(self, ):
+    def _returnTo(self, ):
         """What URL should I return to after moving the element and page is refreshed."""
         # return to the right fieldset the element we are moving is used on
-        folderId = self.folder.getId()
+        folderId = self.parent.getId()
         if folderId == 'topics':
             return "../?pageName=gui#topics"
         # searches
@@ -614,7 +669,9 @@ class ConfigActionsPanelView(ActionsPanelView):
         if self.context.meta_type == "MeetingGroup":
             return "#meetinggroups"
         # most are used on the 'data' fieldset, use this as default
-        return "../?pageName=data#{0}".format(folderId)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        return "{0}/?pageName=data#{1}".format(cfg.absolute_url(), folderId)
 
     def mayEdit(self):
         """
@@ -633,29 +690,6 @@ class ConfigActionsPanelView(ActionsPanelView):
         if tool.isManager(self.context, True):
             return ViewPageTemplateFile("templates/actions_panel_config_linkedplonegroups.pt")(self)
         return ''
-
-    def renderArrows(self):
-        """
-          Render arrows if user may change order of elements.
-        """
-        if not self.useIcons:
-            return ''
-        showArrows = self.kwargs.get('showArrows', False)
-        if showArrows and self.member.has_permission(ModifyPortalContent, self.folder):
-            return ViewPageTemplateFile("templates/actions_panel_config_arrows.pt")(self)
-        return ''
-
-    def _isLastId(self):
-        """
-          Is current element last id of folder container?
-        """
-        return bool(self.context.getId() == self.objectIds[-1])
-
-    def _isFirstId(self):
-        """
-          Is current element first id of folder container?
-        """
-        return bool(self.context.getId() == self.objectIds[0])
 
 
 class PMDocumentGenerationView(IDDocumentGenerationView):
@@ -676,7 +710,7 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
             'user': currentUser,
             'podTemplate': self.get_pod_template(self.request.get('template_uid')),
             # give ability to access annexes related methods
-            'IAnnexable': IAnnexable,
+            'iconifiedcategory_utils': iconifiedcategory_utils,
             # make methods defined in utils available
             'utils': pm_utils
         }
@@ -772,6 +806,65 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
         return self.request.RESPONSE.redirect(self.request['HTTP_REFERER'])
 
 
+class CategorizedAnnexesView(CategorizedTabView):
+    """ """
+
+    def __init__(self, context, request):
+        """ """
+        super(CategorizedAnnexesView, self).__init__(context, request)
+        self.portal_url = api.portal.get().absolute_url()
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+
+    def _prepare_table_render(self, table, portal_type):
+        if portal_type == 'annexDecision':
+            self.request.set('force_use_item_decision_annexes_group', True)
+            config = get_config_root(self.context)
+            self.request.set('force_use_item_decision_annexes_group', False)
+        else:
+            config = get_config_root(self.context)
+
+        if config.to_be_printed_activated:
+            alsoProvides(table, ICategorizedPrint)
+        if config.confidentiality_activated:
+            tool = api.portal.get_tool('portal_plonemeeting')
+            if tool.isManager(self.context):
+                alsoProvides(table, ICategorizedConfidential)
+
+    def showAnnexesSection(self):
+        """ """
+        return bool(get_categories(self.context)) or \
+            self.tool.hasAnnexes(self.context)
+
+    def showDecisionAnnexesSection(self):
+        """ """
+        if not self.context.meta_type == 'MeetingItem':
+            return False
+
+        self.request.set('force_use_item_decision_annexes_group', True)
+        hasDecisionAnnexesTypes = bool(get_categories(self.context))
+        self.request.set('force_use_item_decision_annexes_group', False)
+        return hasDecisionAnnexesTypes or \
+            self.tool.hasAnnexes(self.context, portal_type='annexDecision')
+
+    def showAddAnnex(self):
+        """ """
+        portal_types = api.portal.get_tool('portal_types')
+        annexTypeInfo = portal_types['annex']
+        return annexTypeInfo in self.context.allowedContentTypes()
+
+    def showAddAnnexDecision(self):
+        """ """
+        portal_types = api.portal.get_tool('portal_types')
+        annexTypeInfo = portal_types['annexDecision']
+        return annexTypeInfo in self.context.allowedContentTypes()
+
+    def numberOfAnnexes(self, portal_type='annex'):
+        '''Return the number of viewable annexes.'''
+        catalog = api.portal.get_tool('portal_catalog')
+        return len(catalog(portal_type=portal_type,
+                           path='/'.join(self.context.getPhysicalPath())))
+
+
 class PMCKFinder(CKFinder):
 
     def __init__(self, context, request):
@@ -783,3 +876,33 @@ class PMCKFinder(CKFinder):
         self.allowaddfolder = False
         self.showsearchbox = False
         self.openuploadwidgetdefault = True
+
+
+class PMCategorizedChildView(CategorizedChildView):
+    """ """
+    def showPreviewLink(self):
+        """Show link if preview is enabled, aka the auto_convert in collective.documentviewer."""
+        tool = api.portal.get_tool('portal_plonemeeting')
+        if tool.auto_convert_annexes():
+            return True
+        return False
+
+    def categorized_elements_more_infos_url(self):
+        """ """
+        anchor_name = 'annexes'
+        if self.portal_type == 'annexDecision':
+            anchor_name = 'annexes_decision'
+        return "{0}/@@categorized-annexes#{1}".format(self.context.absolute_url(),
+                                                      anchor_name)
+
+
+class PMConfidentialChangeView(ConfidentialChangeView):
+    """Only available to Managers."""
+
+    def _may_set_values(self, values):
+        res = super(PMConfidentialChangeView, self)._may_set_values(values)
+        if res:
+            # user must be MeetingManager
+            tool = api.portal.get_tool('portal_plonemeeting')
+            res = tool.isManager(self.context)
+        return res

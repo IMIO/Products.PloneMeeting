@@ -103,36 +103,15 @@
             layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
             permission="zope2.View" />
         <browser:page
-            for="Products.PloneMeeting.interfaces.IMeetingCategory"
-            name="config_actions_panel"
-            class="Products.PloneMeeting.browser.overrides.ConfigActionsPanelView"
-            template="browser/actions_panel.pt"
-            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-            permission="zope2.View" />
-        <browser:page
-            for="Products.PloneMeeting.interfaces.IMeetingUser"
-            name="config_actions_panel"
+            for="Products.PloneMeeting.interfaces.IConfigElement"
+            name="actions_panel"
             class="Products.PloneMeeting.browser.overrides.ConfigActionsPanelView"
             template="browser/actions_panel.pt"
             layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
             permission="zope2.View" />
         <browser:page
             for="collective.documentgenerator.content.pod_template.IConfigurablePODTemplate"
-            name="config_actions_panel"
-            class="Products.PloneMeeting.browser.overrides.ConfigActionsPanelView"
-            template="browser/actions_panel.pt"
-            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-            permission="zope2.View" />
-        <browser:page
-            for="Products.PloneMeeting.interfaces.IMeetingConfig"
-            name="config_actions_panel"
-            class="Products.PloneMeeting.browser.overrides.ConfigActionsPanelView"
-            template="browser/actions_panel.pt"
-            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-            permission="zope2.View" />
-        <browser:page
-            for="Products.PloneMeeting.interfaces.IMeetingGroup"
-            name="config_actions_panel"
+            name="actions_panel"
             class="Products.PloneMeeting.browser.overrides.ConfigActionsPanelView"
             template="browser/actions_panel.pt"
             layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
@@ -145,15 +124,15 @@
             layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
             permission="zope2.View" />
         <browser:page
-            for="Products.ATContentTypes.interfaces.topic.IATTopic"
-            name="config_actions_panel"
+            for="plone.app.collection.interfaces.ICollection"
+            name="actions_panel"
             class="Products.PloneMeeting.browser.overrides.ConfigActionsPanelView"
             template="browser/actions_panel.pt"
             layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
             permission="zope2.View" />
         <browser:page
-            for="plone.app.collection.interfaces.ICollection"
-            name="config_actions_panel"
+            for="collective.iconifiedcategory.content.base.ICategorize"
+            name="actions_panel"
             class="Products.PloneMeeting.browser.overrides.ConfigActionsPanelView"
             template="browser/actions_panel.pt"
             layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"

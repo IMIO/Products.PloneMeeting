@@ -11,14 +11,14 @@ from DateTime import DateTime
 
 from OFS.interfaces import IItem
 
+from plone import api
 from plone.indexer import indexer
 from Products.PluginIndexes.common.UnIndex import _marker
-from Products.CMFCore.utils import getToolByName
-from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.interfaces import IMeeting
 from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
+from Products.PloneMeeting.utils import get_annexes
 
 REAL_GROUP_ID_PATTERN = 'real_group_id__{0}'
 DELAYAWARE_REAL_GROUP_ID_PATTERN = 'delay_real_group_id__{0}'
@@ -148,7 +148,7 @@ def getPreferredMeetingDate(obj):
     if preferredMeetingUID != ITEM_NO_PREFERRED_MEETING_VALUE:
         # use uid_catalog because as getPreferredMeetingDate is in the portal_catalog
         # if we clear and rebuild the portal_catalog, preferredMeetingUID will not be found...
-        uid_catalog = getToolByName(obj, 'uid_catalog')
+        uid_catalog = api.portal.get_tool('uid_catalog')
         res = uid_catalog(UID=preferredMeetingUID)[0].getObject().getDate()
     else:
         res = DateTime('1950/01/01')
@@ -192,7 +192,13 @@ def SearchableText(obj):
     """
     res = []
     res.append(obj.SearchableText())
-    for annex in IAnnexable(obj).getAnnexes():
+    # do not use get_categorized_elements because it query catalog
+    annexes = []
+    contents = obj.objectValues()
+    for content in contents:
+        if content.portal_type in ('annex', 'annexDecision'):
+            annexes.append(content)
+    for annex in annexes:
         res.append(annex.SearchableText())
     res = ' '.join(res)
     return res or _marker
@@ -212,10 +218,12 @@ def sendToAuthority(obj):
 @indexer(IMeetingItem)
 def hasAnnexesToPrint(obj):
     """
-      Index the fact that an item has annexes toPrint.
+      Index the fact that an item has annexes to_print.
     """
-    for annexInfo in obj.annexIndex:
-        if annexInfo['toPrint']:
+    # use objectValues because with events order, an annex
+    # could be added but still not registered in the categorized_elements dict
+    for annex in get_annexes(obj):
+        if annex.to_print:
             return '1'
     return '0'
 

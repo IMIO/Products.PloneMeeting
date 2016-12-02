@@ -2,9 +2,12 @@
 from DateTime import DateTime
 from zope.i18n import translate
 
+from plone import api
+
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
-from Products.CMFCore.utils import getToolByName
+from Products.PloneMeeting.config import AddAnnex
+from Products.PloneMeeting.config import AddAnnexDecision
 from Products.PloneMeeting.interfaces import IMeeting
 
 from collective.eeafaceted.z3ctable.columns import AbbrColumn
@@ -14,6 +17,7 @@ from collective.eeafaceted.z3ctable.columns import CheckBoxColumn
 from collective.eeafaceted.z3ctable.columns import ColorColumn
 from collective.eeafaceted.z3ctable.columns import I18nColumn
 from collective.eeafaceted.z3ctable.columns import VocabularyColumn
+from imio.annex.columns import ActionsColumn as AnnexActionsColumn
 from imio.dashboard.columns import ActionsColumn
 from imio.dashboard.columns import PrettyLinkColumn
 from imio.prettylink.interfaces import IPrettyLink
@@ -84,6 +88,14 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
     def renderHeadCell(self):
         """Override rendering of head of the cell to include jQuery
            call to initialize annexes menu and to show the 'more/less details' if we are listing items."""
+
+        if not self.header_js:
+            # avoid problems while concataining None and unicode
+            self.header_js = u''
+        self.header_js += u'<script type="text/javascript">jQuery(document).ready' + \
+            u'(initializeMenusAXStartingAt($("#content")));initializePMOverlays();' + \
+            u'initializeIconifiedCategoryWidget();</script>'
+
         if self.table.batch and self.table.batch[0].meta_type == 'MeetingItem':
             # change header title to "Purpose"
             self.header = "header_purpose"
@@ -92,7 +104,8 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
                 # avoid problems while concataining None and unicode
                 self.header_js = u''
             self.header_js += u'<script type="text/javascript">jQuery(document).ready' + \
-                u'(initializeMenusAXStartingAt($("#content")));initializePMOverlays()</script>'
+                u'(initializeMenusAXStartingAt($("#content")));initializePMOverlays();' + \
+                u'initializeIconifiedCategoryWidget();</script>'
             showHideMsg = translate("show_or_hide_details",
                                     domain="PloneMeeting",
                                     context=self.request,
@@ -108,17 +121,17 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
         obj = self._getObject(item)
         prettyLinker = IPrettyLink(obj)
         prettyLinker.target = '_parent'
+        isPrivacyViewable = obj.adapted().isPrivacyViewable()
+        prettyLinker.isViewable = isPrivacyViewable
         pretty_link = prettyLinker.getLink()
 
         annexes = staticInfos = moreInfos = ''
 
+        tool = api.portal.get_tool('portal_plonemeeting')
         if obj.meta_type == 'MeetingItem':
-            tool = getToolByName(self.context, 'portal_plonemeeting')
             cfg = tool.getMeetingConfig(self.context)
             # display annexes and infos if item and item isPrivacyViewable
-            if obj.adapted().isPrivacyViewable():
-                annexes = obj.restrictedTraverse('@@annexes-icons')(relatedTo='item_decision') + \
-                    obj.restrictedTraverse('@@annexes-icons')(relatedTo='item')
+            if isPrivacyViewable:
                 # display moreInfos about item
                 # visible columns are one define for items listings or when the meeting is displayed
                 # so check where we are
@@ -129,7 +142,22 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
                     visibleColumns = cfg.getItemColumns()
                 staticInfos = obj.restrictedTraverse('@@item-static-infos')(visibleColumns=visibleColumns)
                 moreInfos = obj.restrictedTraverse('@@item-more-infos')(visibleColumns=visibleColumns)
-        return pretty_link + annexes + staticInfos + moreInfos
+
+                # display annexes
+                if tool.hasAnnexes(obj, portal_type='annex'):
+                    annexes += obj.restrictedTraverse('categorized-childs')(portal_type='annex')
+                if tool.hasAnnexes(obj, portal_type='annexDecision'):
+                    decision_term = translate("AnnexesDecisionShort",
+                                              domain='PloneMeeting',
+                                              context=obj.REQUEST)
+                    annexes += u"<span class='discreet'>{0}&nbsp;:&nbsp;</span>".format(decision_term)
+                    annexes += obj.restrictedTraverse('categorized-childs')(portal_type='annexDecision')
+        elif obj.meta_type == 'Meeting':
+            if tool.hasAnnexes(obj, portal_type='annex'):
+                annexes += obj.restrictedTraverse('categorized-childs')(portal_type='annex')
+        if annexes:
+            annexes = u"<div class='dashboard_annexes'>{0}</div>".format(annexes)
+        return pretty_link + staticInfos + moreInfos + annexes
 
 
 class PMActionsColumn(ActionsColumn):
@@ -159,7 +187,7 @@ class ItemLinkedMeetingColumn(BaseColumn):
         if not value or value == DateTime('1950/01/01'):
             return u'-'
         else:
-            catalog = getToolByName(item, 'uid_catalog')
+            catalog = api.portal.get_tool('uid_catalog')
             meeting = catalog(UID=getattr(item, self.meeting_uid_attr))[0].getObject()
             prettyLinker = IPrettyLink(meeting)
             pretty_link = prettyLinker.getLink()
@@ -235,3 +263,24 @@ class ItemCheckBoxColumn(CheckBoxColumn):
     <img src="{3}/removeSeveral.png">
     </button></td></tr></table>'''.format(head, self.context.absolute_url(), unpresent_msg, self.table.portal_url)
         return head
+
+
+class PMAnnexActionsColumn(AnnexActionsColumn):
+    """ """
+    params = AnnexActionsColumn.params.copy()
+    params.update({'edit_action_class': 'link-overlay-pm-annex'})
+    params.update({'arrowsPortalTypeAware': True})
+
+    def renderCell(self, item):
+        # display arrows for annex and/or annexDecision depending on relevant add permissions
+        obj = self._getObject(item)
+        parent = obj.aq_parent
+        if obj.portal_type == 'annex' and \
+           not _checkPermission(AddAnnex, parent):
+            self.params['showArrows'] = False
+        elif obj.portal_type == 'annexDecision' and \
+                not _checkPermission(AddAnnexDecision, parent):
+            self.params['showArrows'] = False
+        else:
+            self.params['showArrows'] = True
+        return super(AnnexActionsColumn, self).renderCell(item)

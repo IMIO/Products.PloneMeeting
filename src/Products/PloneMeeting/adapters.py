@@ -17,14 +17,18 @@ from zope.i18n import translate
 from zope.globalrequest import getRequest
 
 from plone.memoize import ram
+from plone.memoize.instance import memoize
 
 from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFCore.utils import _checkPermission
 from Products.MimetypesRegistry.common import MimeTypeException
 from Products.CMFPlone.utils import safe_unicode
 from plone import api
 from plone.api.exc import InvalidParameterError
 
 from collective.documentviewer.settings import GlobalSettings
+from collective.iconifiedcategory.adapter import CategorizedObjectAdapter
+from collective.iconifiedcategory.adapter import CategorizedObjectInfoAdapter
 from eea.facetednavigation.criteria.handler import Criteria as eeaCriteria
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
@@ -32,11 +36,15 @@ from imio.actionspanel.adapters import ContentDeletableAdapter as APContentDelet
 from imio.history.adapters import ImioWfHistoryAdapter
 from imio.prettylink.adapters import PrettyLinkAdapter
 from Products.PloneMeeting import PMMessageFactory as _
+from Products.PloneMeeting.config import AddAnnexDecision
 from Products.PloneMeeting.config import MEETINGREVIEWERS
 from Products.PloneMeeting.config import MEETINGROLES
 from Products.PloneMeeting.interfaces import IMeeting
-from Products.PloneMeeting.utils import checkPermission
 from Products.PloneMeeting.utils import getCurrentMeetingObject
+from Products.PloneMeeting.MeetingConfig import CONFIGGROUPPREFIX
+from Products.PloneMeeting.MeetingConfig import PROPOSINGGROUPPREFIX
+from Products.PloneMeeting.MeetingConfig import READERPREFIX
+from Products.PloneMeeting.MeetingConfig import SUFFIXPROFILEPREFIX
 
 CONTENT_TYPE_NOT_FOUND = 'The content_type for MeetingFile at %s was not found in mimetypes_registry!'
 FILE_EXTENSION_NOT_FOUND = 'The extension used by MeetingFile at %s does not correspond to ' \
@@ -60,10 +68,10 @@ class AnnexableAdapter(object):
         '''See docstring in interfaces.py'''
         # first of all, check if we can actually add the annex
         if relatedTo == 'item_decision' and \
-           not checkPermission("PloneMeeting: Write decision annex", self.context):
+           not _checkPermission("PloneMeeting: Write decision annex", self.context):
             raise Unauthorized
         elif (not relatedTo == 'item_decision' and
-              not checkPermission("PloneMeeting: Add annex", self.context)):
+              not _checkPermission("PloneMeeting: Add annex", self.context)):
             # we use the "PloneMeeting: Add annex" permission for item normal annexes and advice annexes
             raise Unauthorized
 
@@ -243,7 +251,7 @@ class AnnexableAdapter(object):
         '''
         # if confidentiality is used and annex is marked as confidential,
         # annexes could be hidden to power observers and/or restricted power observers
-        if cfg.getEnableAnnexConfidentiality() and annexInfo['isConfidential'] and \
+        if False and annexInfo['isConfidential'] and \
             ((isPowerObserver and 'power_observers' in cfg.getAnnexConfidentialFor()) or
              (isRestrictedPowerObserver and 'restricted_power_observers' in cfg.getAnnexConfidentialFor())):
             return False
@@ -274,7 +282,7 @@ class AnnexableAdapter(object):
                                             typesIds=typesIds,
                                             onlySelectable=False,
                                             includeSubTypes=False)
-        useConfidentiality = cfg.getEnableAnnexConfidentiality()
+        useConfidentiality = False
         isPowerObserver = False
         if useConfidentiality:
             isPowerObserver = tool.isPowerObserverForCfg(cfg, isRestricted=False)
@@ -396,6 +404,32 @@ class AnnexableAdapter(object):
         return 'successfully_converted'
 
 
+class AnnexDecisionContentDeletableAdapter(APContentDeletableAdapter):
+    """
+      Manage the mayDelete for annexDecision.
+      A decision annex is deletable by the annexDecision Owner ad vitam.
+    """
+    def __init__(self, context):
+        self.context = context
+
+    def mayDelete(self):
+        '''See docstring in interfaces.py.'''
+        # check 'Delete objects' permission
+        mayDelete = super(AnnexDecisionContentDeletableAdapter, self).mayDelete()
+        if not mayDelete:
+            # a 'Owner' may still remove an 'annexDecision' if enabled
+            # in the cfg and if still able to add 'annexDecision'
+            if self.context.portal_type == 'annexDecision':
+                tool = api.portal.get_tool('portal_plonemeeting')
+                cfg = tool.getMeetingConfig(self.context)
+                if cfg.getOwnerMayDeleteAnnexDecision() and \
+                   _checkPermission(AddAnnexDecision, self.context):
+                    member = api.user.get_current()
+                    if 'Owner' in member.getRolesInContext(self.context):
+                        return True
+        return mayDelete
+
+
 class MeetingItemContentDeletableAdapter(APContentDeletableAdapter):
     """
       Manage the mayDelete for MeetingItem.
@@ -444,7 +478,7 @@ class MeetingFileContentDeletableAdapter(APContentDeletableAdapter):
     def mayDelete(self):
         '''See docstring in interfaces.py.'''
         parent = self.context.getParentNode()
-        if checkPermission(ModifyPortalContent, parent):
+        if _checkPermission(ModifyPortalContent, parent):
             return True
         return False
 
@@ -1254,3 +1288,223 @@ class DecidedItemsAdapter(CompoundCriterionBaseAdapter):
 
     # we may not ram.cache methods in same file with same name...
     query = query_decideditems
+
+
+class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
+    """ """
+
+    def __init__(self, context):
+        super(PMCategorizedObjectInfoAdapter, self).__init__(context)
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(context)
+        self.parent = self.context.getParentNode()
+
+    def get_infos(self, category):
+        """A the 'visible_for_groups' info."""
+        infos = super(PMCategorizedObjectInfoAdapter, self).get_infos(category)
+        infos['visible_for_groups'] = self._visible_for_groups()
+        return infos
+
+    def _visible_for_groups(self):
+        """ """
+        parent_meta_type = self.parent.meta_type
+        if parent_meta_type == 'MeetingItem':
+            groups = self._item_visible_for_groups()
+        elif parent_meta_type == 'Meeting':
+            groups = self._meeting_visible_for_groups()
+        else:
+            # advice
+            groups = self._advice_visible_for_groups()
+        return groups
+
+    def _item_visible_for_groups(self):
+        """ """
+        visible_fors = self.cfg.getItemAnnexConfidentialVisibleFor()
+        res = []
+        res += self._configgroup_groups(visible_fors)
+        res += self._reader_groups(visible_fors)
+        res += self._suffix_proposinggroup(visible_fors)
+        return res
+
+    def _meeting_visible_for_groups(self):
+        """ """
+        visible_fors = self.cfg.getMeetingAnnexConfidentialVisibleFor()
+        res = []
+        res += self._configgroup_groups(visible_fors)
+        res += self._suffix_profile_proposinggroup(visible_fors)
+        return res
+
+    def _advice_visible_for_groups(self):
+        """ """
+        visible_fors = self.cfg.getAdviceAnnexConfidentialVisibleFor()
+        res = []
+        res += self._configgroup_groups(visible_fors)
+        res += self._reader_groups(visible_fors)
+        res += self._suffix_proposinggroup(visible_fors)
+        if 'adviser_group' in visible_fors:
+            group = self.tool[self.parent.advice_group]
+            res.append(group.getPloneGroupId(suffix='advisers'))
+        return res
+
+    def _configgroup_groups(self, visible_fors):
+        """ """
+        res = []
+        for visible_for in visible_fors:
+            if visible_for.startswith(CONFIGGROUPPREFIX):
+                suffix = visible_for.replace(CONFIGGROUPPREFIX, '')
+                res.append('{0}_{1}'.format(self.cfg.getId(), suffix))
+        return res
+
+    def _suffix_proposinggroup(self, visible_fors):
+        """ """
+        res = []
+        proposingGroup = self.parent.getProposingGroup(theObject=True)
+        for visible_for in visible_fors:
+            if visible_for.startswith(PROPOSINGGROUPPREFIX):
+                suffix = visible_for.replace(PROPOSINGGROUPPREFIX, '')
+                res.append(proposingGroup.getPloneGroupId(suffix))
+        return res
+
+    def _suffix_profile_proposinggroup(self, visible_fors):
+        """ """
+        res = []
+        for visible_for in visible_fors:
+            if visible_for.startswith(SUFFIXPROFILEPREFIX):
+                res.append(visible_for)
+        return res
+
+    def _reader_groups(self, visible_fors):
+        """ """
+        res = []
+        for visible_for in visible_fors:
+            if visible_for == '{0}advices'.format(READERPREFIX):
+                for groupId in self.parent.adviceIndex.keys():
+                    group = self.tool[groupId]
+                    res.append(group.getPloneGroupId(suffix='advisers'))
+            elif visible_for == '{0}copy_groups'.format(READERPREFIX):
+                res = res + list(self.parent.getAllCopyGroups(auto_real_group_ids=True))
+            elif visible_for == '{0}groupincharge'.format(READERPREFIX):
+                proposingGroup = self.parent.getProposingGroup(True)
+                groupInCharge = proposingGroup.getGroupInChargeAt()
+                if groupInCharge:
+                    res.append(groupInCharge.getPloneGroupId(suffix='observers'))
+        return res
+
+
+class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
+    """ """
+
+    def __init__(self, context, request, brain):
+        super(PMCategorizedObjectAdapter, self).__init__(context, request, brain)
+
+    def can_view(self):
+        # is the context a MeetingItem and privacy viewable?
+        if self.context.meta_type == 'MeetingItem' and not self.context.adapted().isPrivacyViewable():
+            return False
+
+        infos = self.context.categorized_elements[self.brain.UID]
+        if not infos['confidential'] or \
+           api.portal.get_tool('portal_plonemeeting').isManager(self.context):
+            return True
+        user = api.user.get_current()
+        user_groups = user.getGroups()
+        if set(user_groups).intersection(infos['visible_for_groups']):
+            return True
+        # if we have a SUFFIXPROFILEPREFIX profixed group,
+        # check using "userIsAmong", this is only done for Meetings
+        if self.context.meta_type == 'Meeting':
+            tool = api.portal.get_tool('portal_plonemeeting')
+            for group in infos['visible_for_groups']:
+                if group.startswith(SUFFIXPROFILEPREFIX):
+                    suffix = group.replace(SUFFIXPROFILEPREFIX, '')
+                    if tool.userIsAmong(suffix):
+                        return True
+        return False
+
+
+class IconifiedCategoryConfigAdapter(object):
+    """ """
+    def __init__(self, context):
+        """ """
+        self.context = context
+
+    @memoize
+    def get_config(self):
+        """ """
+        tool = api.portal.get_tool('portal_plonemeeting')
+        # manage the css.py file generation necessary CSS, in this case, context is the portal
+        referer = self.context.REQUEST['HTTP_REFERER']
+        if self.context.portal_type == 'Plone Site' and 'mymeetings' in referer:
+            referer_path = referer.lstrip(self.context.absolute_url())
+            try:
+                referer_obj = self.context.unrestrictedTraverse(referer_path)
+            except:
+                referer_obj = None
+            # in case we are adding/editing annex, referer_obj is the form
+            if referer_obj and referer_obj.__module__ in ('Products.Five.metaclass',
+                                                          'plone.dexterity.browser.add'):
+                referer_obj = referer_obj.context
+            self.context = referer_obj
+        # if self.context is finally not what we want, getMeetingConfig will raise an AttributeError
+        try:
+            cfg = tool.getMeetingConfig(self.context)
+        except AttributeError:
+            cfg = None
+        return cfg and cfg.annexes_types or None
+
+
+class IconifiedCategoryGroupAdapter(object):
+    """ """
+    def __init__(self, config, context):
+        """ """
+        self.config = config
+        self.context = context
+
+    @memoize
+    def get_group(self):
+        """Return right group, depends on :
+           - while adding in an item, annex or decisionAnnex;
+           - while adding in a meeting or an advice."""
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        parent = self.context.getParentNode()
+        # adding annex to an item
+        if self.context.meta_type == 'MeetingItem' or \
+           (self.context.portal_type in ('annex', 'annexDecision') and parent.meta_type == 'MeetingItem'):
+            isItemDecisionAnnex = False
+            if self.context.meta_type == 'MeetingItem':
+
+                # it is possible to force to use the item_decision_annexes group
+                if self.context.REQUEST.get('force_use_item_decision_annexes_group', False):
+                    return cfg.annexes_types.item_decision_annexes
+
+                # we are adding a new annex, get annex portal_type from form_instance
+                # manage also the InlineValidation view
+                if hasattr(self.context.REQUEST.get('PUBLISHED'), 'form_instance'):
+                    form_instance = self.context.REQUEST.get('PUBLISHED').form_instance
+                elif (hasattr(self.context.REQUEST.get('PUBLISHED'), 'context',) and
+                      hasattr(self.context.REQUEST.get('PUBLISHED').context, 'form_instance')):
+                    form_instance = self.context.REQUEST.get('PUBLISHED').context.form_instance
+                else:
+                    # calling with MeetingItem as context, this is the case when checking
+                    # if categories exist and if annexes tab should be displayed
+                    return cfg.annexes_types.item_annexes
+
+                if form_instance.portal_type == 'annexDecision':
+                    isItemDecisionAnnex = True
+            else:
+                if self.context.portal_type == 'annexDecision':
+                    isItemDecisionAnnex = True
+
+            if not isItemDecisionAnnex:
+                return cfg.annexes_types.item_annexes
+            else:
+                return cfg.annexes_types.item_decision_annexes
+
+        # adding annex to an advice
+        if self.context.portal_type == 'meetingadvice' or parent.portal_type == 'meetingadvice':
+            return cfg.annexes_types.advice_annexes
+
+        # adding annex to a meeting
+        if self.context.meta_type == 'Meeting' or parent.meta_type == 'Meeting':
+            return cfg.annexes_types.meeting_annexes

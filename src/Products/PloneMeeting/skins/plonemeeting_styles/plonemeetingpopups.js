@@ -1,7 +1,7 @@
 /* The jQuery here above will load a jQuery popup */
 
-// function that initialize advice add, edit or view advice popup
-function advicePopup() {
+// function that initialize advice add/edit advice popup
+function adviceAddEdit() {
   $('a.link-overlay-pm-advice').prepOverlay({
         subtype: 'ajax',
         closeselector: '[name="form.buttons.cancel"]',
@@ -9,6 +9,7 @@ function advicePopup() {
             onBeforeLoad : function (e) {
                 // CKeditor instances need to be initialized
                 launchCKInstances();
+                // add an event handler onclick on the save button
                 saveAdvice();
                 return true;
             },
@@ -34,6 +35,24 @@ function advicePopup() {
             }
         }
   });
+};
+
+
+// opening the advice preview from the advice tooltip
+function advicePreview() {
+    jQuery(function($){
+        $('a.link-overlay-pm-preview-advice').prepOverlay({
+            subtype: 'ajax',
+            closeselector: '[name="form.buttons.cancel"]',
+            config: {
+                onBeforeLoad : function (e) {
+                    // tooltipster for annexes
+                    initializeIconifiedCategoryWidget();
+                    return true;
+                },
+            }
+       });
+    });
 };
 
 // when opened in an overlay, save advice using an ajax call, this is done for faceted
@@ -78,8 +97,9 @@ function saveAdvice() {
 // prepare overlays for normal (non-ajax) pages
 // like meetingitem_view or overlays that you can raise from the portlet_plonemeeting
 jQuery(document).ready(function($) {
-    // advice popup
-    advicePopup();
+    // advice popups
+    adviceAddEdit();
+    advicePreview();
 
     jQuery(function($){
         // Every common overelays, must stay at the bottom of every defined overlays!!!
@@ -99,8 +119,9 @@ jQuery(document).ready(function($) {
 // "onmouseover" we initialize the overlays than remove the "onmouseover" event
 // so overlays are only initialized once...
 function initializePMOverlays(){
-    // advice popup
-    advicePopup();
+    // advice popups
+    adviceAddEdit();
+    advicePreview();
 
     jQuery(function($) {
         // Content history popup
@@ -127,23 +148,6 @@ jQuery(function($) {
         closeselector: '[name="form.buttons.cancel"]',
   });
 });
-// as this method is called on the onmousover event of the ajax-frame
-// remove the event after first call to avoid it being called more than once
-$('div.ajax-pm-frame').each(function(){
-    $(this).removeAttr('onmouseover');
-    })
-}
-
-// When on a meething view, we have to handle some more parameters to keep on wich page we are
-// Adapt the link that will show a popup for confirming a transition
-// to pass iStartNumber and lStartNumber that are global JS variables defined on the meeting_view
-function initializePMOverlaysOnMeeting(){
-jQuery(function($) {
-$('a.link-overlay-actionspanel.transition-overlay').each(function(){
-    $(this).attr('href',$(this).attr('href') + '&iStartNumber=' + iStartNumber + '&lStartNumber=' + lStartNumber);
-    })
-  })
-  initializePMOverlays()
 }
 
 // Open every links having the classicpopup class in a... classic popup...
@@ -153,4 +157,40 @@ jQuery(document).ready(function($) {
         if (window.focus) {newwindow.focus()}
         return false;
     });
+});
+
+
+jQuery(function($) {
+  $('a.link-overlay-pm-annex').prepOverlay({
+        subtype: 'ajax',
+        closeselector: '[name="form.buttons.cancel"]',
+        config: {
+            onLoad : function (e) {
+                // initialize select2 widget
+                initializeSelect2Widgets(width='250px');
+                initializeIconifiedCategoryWidget();
+                return true;
+            },
+            onBeforeClose : function (e) {
+                // close every opened select2 widgets
+                $('.single-select2-widget').select2("close");
+                $('.multi-select2-widget').select2("close");
+            },
+            onClose : function (e) {
+                // unlock current element
+                // compute url, find link to advice edit and remove trailing '/edit'
+                var rel_num = this.getOverlay().attr('id');
+                obj_url = $("[rel='#" + rel_num + "']").attr('href')
+                // do not unlock if we were on the '++add++annex' form
+                if (obj_url.indexOf('++add++annex') === -1) {
+                    // remove '/edit'
+                    obj_url = obj_url.slice(0, -5);
+                    // now we have the right url, append the unlock view name
+                    $.ajax({
+                        url: obj_url + "/@@plone_lock_operations/safe_unlock", });
+                }
+                return true;
+            }
+        }
+  });
 });

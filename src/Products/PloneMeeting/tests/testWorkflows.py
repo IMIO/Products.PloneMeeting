@@ -29,6 +29,8 @@ from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.statusmessages.interfaces import IStatusMessage
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.cache import cleanRamCacheFor
+from Products.PloneMeeting.config import AddAnnex
+from Products.PloneMeeting.config import AddAnnexDecision
 from Products.PloneMeeting.config import WriteItemMeetingManagerFields
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
@@ -191,7 +193,9 @@ class testWorkflows(PloneMeetingTestCase):
         self.assertRaises(Unauthorized, self.addAnnex, item1, relatedTo='item_decision')
         self.do(item1, 'validate')
         # The reviewer cannot add a decision annex on validated item
+        self.assertFalse(self.hasPermission(AddAnnexDecision, item1))
         self.assertRaises(Unauthorized, self.addAnnex, item1, relatedTo='item_decision')
+        self.assertTrue(self.hasPermission(AddAnnex, item1))
         self.addAnnex(item1)
         # pmManager inserts item1 into the meeting and publishes it
         self.changeUser('pmManager')

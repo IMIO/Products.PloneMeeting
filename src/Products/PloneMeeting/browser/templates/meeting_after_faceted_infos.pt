@@ -37,6 +37,8 @@
     <metal:f use-macro="context/@@pm-macros/viewContentField"/>
   </tal:field>
 
+  <tal:annexes replace="structure context/@@display-annexes" />
+
   <tal:comment replace="nothing">For the admin only</tal:comment>
   <fieldset tal:condition="python: view.tool.isManager(context, realManagers=True)">
     <legend i18n:translate="for_admin_only" i18n:domain="PloneMeeting"></legend>

@@ -158,12 +158,17 @@ class IConfigElement(Interface):
     """
 
 
-class IMeetingItem(Interface):
+class IMeetingContent(Interface):
+    """Base marker interface for every content related elements
+    """
+
+
+class IMeetingItem(IMeetingContent):
     """Marker interface for .MeetingItem.MeetingItem
     """
 
 
-class IMeeting(Interface):
+class IMeeting(IMeetingContent):
     """Marker interface for .Meeting.Meeting
     """
 
@@ -253,10 +258,6 @@ class IMeetingItemDocumentation:
              - portalUrl          The full URL of your Plone site
              - portalTitle        The title your Plone site
              - itemTitle          The title of the meeting item
-             - lastAnnexTitle     The title of the last annex added to this item
-                                  (be it desision-related or not)
-             - lastAnnexTypeTitle The title of the annex type of the last annex
-                                  added to this item
              - meetingTitle       The title of the meeting to which this item
                                   belongs (only when relevant)
              - objectDavUrl       The WebDAV URL of the object
