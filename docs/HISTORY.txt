@@ -265,9 +265,16 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Added action to 'Check Pod templates' of a given MeetingConfig.  This action can be triggered from the
   MeetingConfig [Default] tab and is especially made for Managers during migrations
 - Added method 'printXhtml' available in Pod templates on view.printXhtml to be able to print a xhtmlContent with some
-  options like being able to print several xhtml chunks (MeetingItem.motivation + Meeting.decision for example), to define
-  arbitrary xhtml chunks ('<p>DECIDE :</p>'), to manage 'space' between xhtml chunks, keepWithNext, ...  And thus, removed
-  method Meeting.getDeliberation that was used to contatenate 'motivation' and 'decision'.
+  options :
+    - parameter 'xhtmlContents' may be a single xhtml chunk or a list of xhtml chunks (MeetingItem.motivation + Meeting.decision
+      for example), and may contain arbitrary xhtml chunks ('<p>DECIDE :</p>').  It may also contain a special word 'space' that will insert
+      a space like defined in parameter 'separatorValue' that defaults to '<p>&nbsp;</p>';
+    - parameter 'image_src_to_paths' will turn <img> src to an absolute path to the .blob on the filesystem;
+    - parameters 'keepWithNext' and 'keepWithNextNumberOfChars' that manage possibility to stick to next paragraph when
+      Pod template is generated;
+    - parameter 'checkNeedSeparator' that defaults to True will only add separator if needed;
+    - parameter 'addCSSClass', is made to add a CSS class to every 'paragraph' like tags of the 'xhtmlContents'.
+  And thus, removed method Meeting.getDeliberation that was used to contatenate 'motivation' and 'decision'.
 - Added CKeditor custom style 'indent-firstline' to be able to apply a text-index: 40px; on a paragraph
 - Added hooks _before_reinstall and _after_reinstall made to do things before and after reinstalling the profile in a migration.
   By default it will save CKeditor custom styles (saved in _before_reinstall and stored again in _after_reinstall)

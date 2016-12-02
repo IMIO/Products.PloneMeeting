@@ -466,8 +466,8 @@ class testViews(PloneMeetingTestCase):
         self.assertEquals(view.getItemsListVisibleFields().keys(),
                           ['description', 'motivation', 'decision'])
 
-    def test_pm_PrintXhtml(self):
-        '''Test the method that will ease print of XHTML content into Pod templates.'''
+    def _setupPrintXhtml(self):
+        """ """
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setMotivation('<p>The motivation using UTF-8 characters : \xc3\xa8\xc3\xa0.</p>')
@@ -481,7 +481,11 @@ class testViews(PloneMeetingTestCase):
         self.request.set('mailinglist_name', 'unknown_mailing_list')
         view = item.restrictedTraverse('@@document-generation')
         helper = view.get_generation_context_helper()
+        return item, motivation, decision, helper
 
+    def test_pm_PrintXhtmlContents(self):
+        '''Test the method that will ease print of XHTML content into Pod templates.'''
+        item, motivation, decision, helper = self._setupPrintXhtml()
         # test with one single xhtmlContent
         self.assertEquals(helper.printXhtml(item, decision),
                           item.getDecision())
@@ -499,6 +503,10 @@ class testViews(PloneMeetingTestCase):
                                                    decision]),
                           motivation + '<p>&nbsp;</p><p>DECIDE :</p><p>&nbsp;</p>' + decision)
 
+    def test_pm_PrintXhtmlSeparator(self):
+        ''' '''
+        item, motivation, decision, helper = self._setupPrintXhtml()
+
         # use 'separator' and change 'separatorValue', insert 2 empty lines
         self.assertEquals(helper.printXhtml(item,
                                             [motivation, 'separator', decision],
@@ -512,6 +520,10 @@ class testViews(PloneMeetingTestCase):
                           '<p class="pmParaKeepWithNext">The motivation using UTF-8 characters : &#232;&#224;.</p>'
                           '<p class="pmParaKeepWithNext">&#160;</p>'
                           '<p class="pmParaKeepWithNext">The d&#233;cision using UTF-8 characters.</p>')
+
+    def test_pm_PrintXhtmlImageSrcToPaths(self):
+        ''' '''
+        item, motivation, decision, helper = self._setupPrintXhtml()
 
         # use image_src_to_paths
         file_path = path.join(path.dirname(__file__), 'dot.gif')
@@ -530,6 +542,23 @@ class testViews(PloneMeetingTestCase):
                           '<p class="pmParaKeepWithNext">&#160;</p>'
                           '<p class="pmParaKeepWithNext">Text with image <img src="{0}"/> and more text.</p>'
                           .format(img_blob_path))
+
+    def test_pm_PrintXhtmlAddCSSClass(self):
+        ''' '''
+        item, motivation, decision, helper = self._setupPrintXhtml()
+        # use 'addCSSClass'
+        self.assertEquals(helper.printXhtml(item,
+                                            [motivation,
+                                             'separator',
+                                             '<p>DECIDE :</p>',
+                                             'separator',
+                                             decision],
+                                            addCSSClass='sample'),
+                          '<p class="sample">The motivation using UTF-8 characters : &#232;&#224;.</p>'
+                          '<p class="sample">&#160;</p>'
+                          '<p class="sample">DECIDE :</p>'
+                          '<p class="sample">&#160;</p>'
+                          '<p class="sample">The d&#233;cision using UTF-8 characters.</p>')
 
 
 def test_suite():
