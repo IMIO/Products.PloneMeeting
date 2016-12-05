@@ -1490,7 +1490,7 @@ class IconifiedCategoryGroupAdapter(object):
                     # if categories exist and if annexes tab should be displayed
                     return cfg.annexes_types.item_annexes
 
-                if form_instance.portal_type == 'annexDecision':
+                if getattr(form_instance, 'portal_type', '') == 'annexDecision':
                     isItemDecisionAnnex = True
             else:
                 if self.context.portal_type == 'annexDecision':

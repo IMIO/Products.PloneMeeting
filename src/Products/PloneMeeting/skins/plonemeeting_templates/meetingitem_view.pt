@@ -115,7 +115,7 @@
                             <span i18n:translate="item_assembly" class="item_attribute_label">
                                 Item assembly
                             </span>
-                            <a tal:condition="mayQuickEdit" href="manage_item_assembly_form" class="link-overlay-pm">
+                            <a tal:condition="mayQuickEdit" href="manage_item_assembly_form?initial_edit=1" class="link-overlay-pm">
                                 <img src="edit.gif"
                                      tal:attributes="src string:${portal_url}/edit.gif" />
                             </a>

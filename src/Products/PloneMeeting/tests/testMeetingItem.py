@@ -31,6 +31,7 @@ from Products.Five import zcml
 from zope.annotation.interfaces import IAnnotations
 from zope.event import notify
 from zope.i18n import translate
+from zope.interface import Invalid
 
 from collective.iconifiedcategory.event import IconifiedPrintChangedEvent
 from collective.iconifiedcategory.utils import calculate_category_id
@@ -53,6 +54,7 @@ from imio.helpers.cache import cleanRamCacheFor
 
 from Products import PloneMeeting as products_plonemeeting
 from Products.PloneMeeting.browser.itemassembly import item_assembly_default
+from Products.PloneMeeting.browser.itemassembly import validate_item_assembly
 from Products.PloneMeeting.browser.itemsignatures import item_signatures_default
 from Products.PloneMeeting.config import ADD_SUBCONTENT_PERMISSIONS
 from Products.PloneMeeting.config import AddAnnex
@@ -2172,6 +2174,36 @@ class testMeetingItem(PloneMeetingTestCase):
         self.closeMeeting(meeting)
         self.assertRaises(Unauthorized, formAssembly.update)
         self.assertRaises(Unauthorized, formSignatures.update)
+
+    def test_pm_ValidateItemAssembly(self):
+        """Test the method that validated item_assembly on the item_assembly_form."""
+        # empty value
+        self.assertTrue(validate_item_assembly(u''))
+        # correct values
+        self.assertTrue(validate_item_assembly(u'[[Text]][[Text]]'))
+        self.assertTrue(validate_item_assembly(u'[[Text]] Text Text [[Text]]'))
+        self.assertTrue(validate_item_assembly(u'[[Text]] Text Text [[Text]]'))
+        self.assertTrue(validate_item_assembly(u'Text Text Text [[Text]]'))
+        self.assertTrue(validate_item_assembly(u'[[Text]] Text Text Text'))
+        self.assertTrue(validate_item_assembly(u'Text Text [[Text]] Text'))
+        # wrong values
+        wrong_msg = translate(
+            'Please check that opening "[[" have corresponding closing "]]".',
+            domain='PloneMeeting',
+            context=self.request)
+        WRONG_VALUE = u'[[Text Text'
+        with self.assertRaises(Invalid) as cm:
+            validate_item_assembly(WRONG_VALUE)
+        self.assertEquals(cm.exception.message, wrong_msg)
+        self.assertRaises(Invalid, validate_item_assembly, u'[[Text [[Text')
+        self.assertRaises(Invalid, validate_item_assembly, u']]Text [[Text')
+        self.assertRaises(Invalid, validate_item_assembly, u'Text [[Text')
+        self.assertRaises(Invalid, validate_item_assembly, u'Text Text]]')
+
+        # we have a special case, if REQUEST contains 'initial_edit', then validation
+        # is bypassed, this let's edit an old wrong value
+        self.request.set('initial_edit', u'1')
+        self.assertTrue(validate_item_assembly(WRONG_VALUE))
 
     def test_pm_GetItemNumber(self):
         '''

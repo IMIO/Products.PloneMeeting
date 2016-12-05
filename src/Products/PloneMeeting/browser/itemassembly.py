@@ -20,12 +20,15 @@
 # 02110-1301, USA.
 #
 
+import re
 from AccessControl import Unauthorized
-from zope.contentprovider.provider import ContentProviderBase
-from zope.i18n import translate
 from zope import interface
 from zope import schema
+from zope.browserpage.viewpagetemplatefile import ViewPageTemplateFile
 from zope.component.hooks import getSite
+from zope.contentprovider.provider import ContentProviderBase
+from zope.globalrequest import getRequest
+from zope.i18n import translate
 from zope.interface import implements
 from z3c.form import button
 from z3c.form import field
@@ -33,7 +36,6 @@ from z3c.form import form
 from z3c.form.interfaces import IFieldsAndContentProvidersForm
 from z3c.form.contentprovider import ContentProviders
 
-from zope.browserpage.viewpagetemplatefile import ViewPageTemplateFile
 
 from Products.CMFCore.utils import getToolByName
 from Products.CMFPlone.utils import safe_unicode
@@ -98,12 +100,53 @@ def validate_apply_until_item_number(value):
     return True
 
 
+def validate_item_assembly(value):
+    '''This method does validate the 'item_assembly' field.
+       It will check that [[]] are correct.'''
+    # do not validate if we are calling the form, this way
+    # if some old value is wrong, the form can be shown and the validation
+    # is done when saving the form
+    req = getRequest()
+    if req.get('initial_edit', None) == u'1':
+        return True
+    # check that every opening [[ has a closing ]] and that it matches
+    # correctly regarding position, we do not want "Text [[Text [[Text]] Text]] Text"
+    opening_pos = []
+    closing_pos = []
+    for m in re.finditer('\[\[', value):
+        opening_pos.append(m.start())
+    for m in re.finditer('\]\]', value):
+        closing_pos.append(m.start())
+
+    if not opening_pos and not closing_pos:
+        return True
+
+    # create one single list an check number of elements and that elements
+    # are succedding each other in right order
+    try:
+        if len(opening_pos) != len(closing_pos):
+            raise
+        # check succession
+        res = zip(opening_pos, closing_pos)
+        # zip() will return a list of tuple and sum() will turn this into a list
+        res = sum(res, ())
+        if not sorted(res) == list(res):
+            raise ValueError
+        # check number of elements, dividable by 2
+        if not len(res) % 2 == 0:
+            raise ValueError
+    except:
+        raise interface.Invalid(_(u'Please check that opening "[[" have corresponding closing "]]".'))
+    return True
+
+
 class IManageItemAssembly(interface.Interface):
     item_assembly = schema.Text(
         title=_(u"Item assembly to apply"),
         description=_(USING_ONLY_ASSEMBLY_MSGID),
         defaultFactory=item_assembly_default,
-        required=False,)
+        required=False,
+        constraint=validate_item_assembly)
     item_excused = schema.Text(
         title=_(u"Item excused to apply"),
         description=_(u"Enter the item excused to be applied. "
