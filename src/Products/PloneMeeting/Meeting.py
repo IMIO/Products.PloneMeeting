@@ -265,7 +265,7 @@ class MeetingWorkflowActions:
                 cfg.setLastMeetingNumber(1)
                 return
         # If we are here, we must simply increment the meeting number.
-        meetingNumber = cfg.getLastMeetingNumber()+1
+        meetingNumber = cfg.getLastMeetingNumber() + 1
         self.context.setMeetingNumber(meetingNumber)
         cfg.setLastMeetingNumber(meetingNumber)
 
@@ -361,7 +361,6 @@ class MeetingWorkflowActions:
             wfTool.doActionFor(item, 'backTo' + previousState)
 
 InitializeClass(MeetingWorkflowActions)
-##/code-section module-header
 
 schema = Schema((
 
@@ -791,13 +790,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     schema = Meeting_schema
 
-    ##code-section class-header #fill in your manual code here
     meetingClosedStates = ['closed', 'archived']
-    ##/code-section class-header
-
-    # Methods
-
-    # Manually created methods
 
     security.declarePublic('getPrettyLink')
 
@@ -895,7 +888,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(self)
         # some columns are displayed in the 'Purpose' column
         itemsListVisibleColumns = [col for col in cfg.getItemsListVisibleColumns() if
-                                   not col in ('budget_infos', 'item_reference')]
+                                   col not in ('budget_infos', 'item_reference')]
         itemsListVisibleColumns.insert(0, u'pretty_link')
         if not self._displayingAvailableItems():
             itemsListVisibleColumns.insert(0, u'getItemNumber')
@@ -1306,7 +1299,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         wfTool = getToolByName(self, 'portal_workflow')
         meetingWF = wfTool.getWorkflowsFor(self)[0]
         # get the 'frozen' state
-        if not 'frozen' in meetingWF.states:
+        if 'frozen' not in meetingWF.states:
             return ''
         frozenState = meetingWF.states['frozen']
         # get back to the meeting WF initial state
@@ -1485,7 +1478,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                 # if we group by duty, create an OrderedDict where the key is the duty
                 # and the value is a list of meetingUsers having this duty
                 if groupByDuty:
-                    if not userDuty in groupedByDuty:
+                    if userDuty not in groupedByDuty:
                         groupedByDuty[userDuty] = []
                     if userId in attendeeIds:
                         groupedByDuty[userDuty].append(mUser.Title())
@@ -1554,7 +1547,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         '''Updates the place if it comes from special request field
            "place_other".'''
         rq = self.REQUEST
-        if (not 'place' in rq) or (rq.get('place', '') == 'other'):
+        if ('place' not in rq) or (rq.get('place', '') == 'other'):
             self.setPlace(rq.get('place_other', ''))
 
     security.declarePrivate('computeDates')
@@ -1570,10 +1563,10 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             self.setStartDate(meetingDate)
         # Set, by default, mid date to start date + 1 hour.
         if 'midDate' in usedAttrs:
-            self.setMidDate(meetingDate + 1/24.0)
+            self.setMidDate(meetingDate + 1 / 24.0)
         # Set, by default, end date to start date + 2 hours.
         if 'endDate' in usedAttrs:
-            self.setEndDate(meetingDate + 2/24.0)
+            self.setEndDate(meetingDate + 2 / 24.0)
         # Compute the publish deadline
         if 'deadlinePublish' in usedAttrs and not self.getDeadlinePublish():
             delta = cfg.getPublishDeadlineDefault()
@@ -1920,7 +1913,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         # If we are here, everything has already been checked before.
         # Just check that the meeting is myself or a Plone Site.
         # We can remove an meeting directly but not "through" his container.
-        if not item.meta_type in ('Plone Site', 'Meeting'):
+        if item.meta_type not in ('Plone Site', 'Meeting'):
             user = self.portal_membership.getAuthenticatedMember()
             logger.warn(BEFOREDELETE_ERROR % (user.getId(), self.id))
             raise BeforeDeleteException("can_not_delete_meeting_container")
@@ -2058,7 +2051,3 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
 
 registerType(Meeting, PROJECTNAME)
-# end of class Meeting
-
-##code-section module-footer #fill in your manual code here
-##/code-section module-footer

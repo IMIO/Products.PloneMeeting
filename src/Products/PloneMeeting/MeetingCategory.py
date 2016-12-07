@@ -82,13 +82,9 @@ schema = Schema((
 ),
 )
 
-##code-section after-local-schema #fill in your manual code here
-##/code-section after-local-schema
-
 MeetingCategory_schema = BaseSchema.copy() + \
     schema.copy()
 
-##code-section after-schema #fill in your manual code here
 # set write_permission for 'id' and 'title'
 MeetingCategory_schema['id'].write_permission = "PloneMeeting: Write risky config"
 MeetingCategory_schema['title'].write_permission = "PloneMeeting: Write risky config"
@@ -102,7 +98,6 @@ MeetingCategory_schema['description'].widget.description_msgid = "empty_descript
 for field in MeetingCategory_schema.getSchemataFields('metadata'):
     field.widget.visible = {'edit': 'invisible', 'view': 'invisible'}
     field.write_permission = WriteRiskyConfig
-##/code-section after-schema
 
 
 class MeetingCategory(BaseContent, BrowserDefaultMixin):
@@ -115,13 +110,6 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
     _at_rename_after_creation = True
 
     schema = MeetingCategory_schema
-
-    ##code-section class-header #fill in your manual code here
-    ##/code-section class-header
-
-    # Methods
-
-    # Manually created methods
 
     security.declarePublic('getName')
 
@@ -285,7 +273,3 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
 
 
 registerType(MeetingCategory, PROJECTNAME)
-# end of class MeetingCategory
-
-##code-section module-footer #fill in your manual code here
-##/code-section module-footer

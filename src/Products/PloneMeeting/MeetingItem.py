@@ -1477,7 +1477,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # for the same group is not selected too
             # we know that it is a delay-aware adviser because we have '__rowid__' in it's key
             if '__rowid__' in adviser:
-                #check that the same 'non-delay-aware' adviser has not be selected
+                # check that the same 'non-delay-aware' adviser has not be selected
                 nonDelayAwareAdviserPossibleId = adviser.split('__rowid__')[0]
                 if nonDelayAwareAdviserPossibleId in value:
                     return translate('can_not_select_several_optional_advisers_same_group',

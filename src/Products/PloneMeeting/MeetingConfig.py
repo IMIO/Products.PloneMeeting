@@ -1997,13 +1997,9 @@ schema = Schema((
 ),
 )
 
-##code-section after-local-schema #fill in your manual code here
-##/code-section after-local-schema
-
 MeetingConfig_schema = OrderedBaseFolderSchema.copy() + \
     schema.copy()
 
-##code-section after-schema #fill in your manual code here
 # set write_permission for 'id' and 'title'
 MeetingConfig_schema['id'].write_permission = "PloneMeeting: Write risky config"
 MeetingConfig_schema['title'].write_permission = "PloneMeeting: Write risky config"
@@ -2011,7 +2007,6 @@ MeetingConfig_schema['title'].write_permission = "PloneMeeting: Write risky conf
 for field in MeetingConfig_schema.getSchemataFields('metadata'):
     field.widget.visible = {'edit': 'invisible', 'view': 'invisible'}
     field.write_permission = WriteRiskyConfig
-##/code-section after-schema
 
 
 class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
@@ -2025,10 +2020,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     schema = MeetingConfig_schema
 
-    ##code-section class-header #fill in your manual code here
-    # Information about each sub-folder that will be created within a meeting
-    # config.
-
+    # Information about each sub-folder that will be created within a meeting config.
     subFoldersInfo = {
         TOOL_FOLDER_CATEGORIES: (('Categories', 'Folder'),
                                  ('MeetingCategory', ),
@@ -2080,7 +2072,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     # Names of workflow adaptations.
     wfAdaptations = ('no_global_observation', 'creator_initiated_decisions',
-                     'only_creator_may_delete', 'pre_validation',  'pre_validation_keep_reviewer_permissions',
+                     'only_creator_may_delete', 'pre_validation', 'pre_validation_keep_reviewer_permissions',
                      'items_come_validated', 'archiving', 'no_publication', 'no_proposal', 'everyone_reads_all',
                      'creator_edits_unless_closed', 'return_to_proposing_group', 'hide_decisions_when_under_writing',
                      'waiting_advices', 'postpone_next_meeting', 'mark_not_applicable', 'removed')
@@ -2569,7 +2561,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         for mGroup in activeGroups:
             # display if a group is disabled or empty
             title = safe_unicode(mGroup.getName())
-            if not mGroup in nonEmptyMeetingGroups:
+            if mGroup not in nonEmptyMeetingGroups:
                 title = title + ' (%s)' % non_empty_advisers_group_msg
             res.append((mGroup.getId(), title))
         return DisplayList(res).sortedByValue()
@@ -2648,7 +2640,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # sometimes, an empty '' is in the values?
             if not trId:
                 continue
-            if not trId in currentState.transitions:
+            if trId not in currentState.transitions:
                 return _('given_wf_path_does_not_lead_to_present')
             transition = itemWorkflow.transitions[trId]
             # now set current state to the state the transition is resulting to
@@ -2685,7 +2677,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if not customAdviser['is_linked_to_previous_row'] in self.listBooleanVocabulary().keys():
                 raise Exception('A value is required for \'is_linked_to_previous_row\'!')
             # a row_id, even empty is required
-            if not 'row_id' in customAdviser:
+            if 'row_id' not in customAdviser:
                 raise Exception('A row_id is required!')
             # pass 'template_row_marker'
             if 'orderindex_' in customAdviser and customAdviser['orderindex_'] == 'template_row_marker':
@@ -2812,7 +2804,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # save _checkIfConfigIsUsed and continue the 'if'
                 an_item_url = _checkIfConfigIsUsed(storedRow['row_id'])
                 if an_item_url:
-                    #... check that it was not moved in the new value
+                    # ... check that it was not moved in the new value
                     # we are on the second/third/... value of a used 'is_linked_to_previous_row' automatic adviser
                     # get the previous in stored value and check that it is the same in new value to set
                     previousStoredRow = storedCustomAdvisers[storedCustomAdvisers.index(storedRow) - 1]
@@ -2866,7 +2858,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                             # 3) or if we disabled the 'is_linked_to_previous_row' of a used automatic adviser
                             # that is not permitted
                             if not (k == 'for_item_created_until' and not v) and \
-                               not k in ['gives_auto_advice_on_help_message',
+                               k not in ['gives_auto_advice_on_help_message',
                                          'delay_left_alert',
                                          'delay_label',
                                          'available_on'] and \
@@ -3645,7 +3637,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('isVotable')
 
     def isVotable(self, item):
-        #exec 'condition = %s' % self.getVoteCondition()
+        # exec 'condition = %s' % self.getVoteCondition()
         return True
 
     security.declarePrivate('listDefaultSignatories')
@@ -4230,7 +4222,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         res = []
         for workflowName in self.portal_workflow.listWorkflows():
             if workflowName.startswith('meetingitem') and \
-               not '__' in workflowName:
+               '__' not in workflowName:
                 res.append((workflowName, workflowName))
         return DisplayList(tuple(res)).sortedByValue()
 
@@ -4246,7 +4238,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if workflowName.startswith('meeting') and \
                not workflowName.startswith('meetingadvice') and \
                not workflowName.startswith('meetingitem') and \
-               not '__' in workflowName:
+               '__' not in workflowName:
                 res.append((workflowName, workflowName))
         return DisplayList(tuple(res)).sortedByValue()
 

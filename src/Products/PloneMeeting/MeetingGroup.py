@@ -362,7 +362,7 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
            If some p_suffixes are defined, only these Plone groups are returned.'''
         res = []
         for suffix in self.getAllSuffixes():
-            if suffixes and not suffix in suffixes:
+            if suffixes and suffix not in suffixes:
                 continue
             groupId = self.getPloneGroupId(suffix)
             if idsOnly:
