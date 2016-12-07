@@ -121,15 +121,14 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
         obj = self._getObject(item)
         prettyLinker = IPrettyLink(obj)
         prettyLinker.target = '_parent'
-        isPrivacyViewable = obj.adapted().isPrivacyViewable()
-        prettyLinker.isViewable = isPrivacyViewable
-        pretty_link = prettyLinker.getLink()
 
         annexes = staticInfos = moreInfos = ''
 
         tool = api.portal.get_tool('portal_plonemeeting')
         if obj.meta_type == 'MeetingItem':
             cfg = tool.getMeetingConfig(self.context)
+            isPrivacyViewable = obj.adapted().isPrivacyViewable()
+            prettyLinker.isViewable = isPrivacyViewable
             # display annexes and infos if item and item isPrivacyViewable
             if isPrivacyViewable:
                 # display moreInfos about item
@@ -157,6 +156,8 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
                 annexes += obj.restrictedTraverse('categorized-childs')(portal_type='annex')
         if annexes:
             annexes = u"<div class='dashboard_annexes'>{0}</div>".format(annexes)
+
+        pretty_link = prettyLinker.getLink()
         return pretty_link + staticInfos + moreInfos + annexes
 
 
