@@ -45,7 +45,7 @@
       <tal:itemNavigation replace="structure context/@@item-navigation-widget" />
     </tal:itemNavigation>
 
-    <table width="100%" class="item-infos">
+    <table width="100%" border="0" class="item-infos">
       <tr valign="top">
         <td width="50%" style="padding-right: 0.5em;">
 
