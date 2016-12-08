@@ -215,8 +215,13 @@ class testAnnexes(PloneMeetingTestCase):
             cfg.setItemAnnexConfidentialVisibleFor((proposingGroupSuffix, ))
             update_all_categorized_elements(item)
             # get a user from the right 'developers' subgroup
-            username = getattr(import_data.developers,
-                               proposingGroupSuffix.replace(PROPOSINGGROUPPREFIX, ''))[0].id
+            group_suffix = proposingGroupSuffix.replace(PROPOSINGGROUPPREFIX, '')
+            users = getattr(import_data.developers, group_suffix)
+            if not users:
+                pm_logger.info("Could not test if developers.'%s' can access confidential "
+                               "annexes because there are no user in the group !" % group_suffix)
+                continue
+            username = users[0].id
             self.changeUser(username)
             if not self.hasPermission(View, item):
                 pm_logger.info("Could not test if '%s' can access confidential "
@@ -429,8 +434,13 @@ class testAnnexes(PloneMeetingTestCase):
             cfg.setAdviceAnnexConfidentialVisibleFor((proposingGroupSuffix, ))
             update_all_categorized_elements(advice)
             # get a user from the right 'developers' subgroup
-            username = getattr(import_data.developers,
-                               proposingGroupSuffix.replace(PROPOSINGGROUPPREFIX, ''))[0].id
+            group_suffix = proposingGroupSuffix.replace(PROPOSINGGROUPPREFIX, '')
+            users = getattr(import_data.developers, group_suffix)
+            if not users:
+                pm_logger.info("Could not test if developers.'%s' can access confidential "
+                               "annexes because there are no user in the group !" % group_suffix)
+                continue
+            username = users[0].id
             self.changeUser(username)
             if not self.hasPermission(View, advice):
                 pm_logger.info("Could not test if '%s' can access confidential "
