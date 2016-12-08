@@ -1502,7 +1502,9 @@ class IconifiedCategoryGroupAdapter(object):
                 return cfg.annexes_types.item_decision_annexes
 
         # adding annex to an advice
-        if self.context.portal_type == 'meetingadvice' or parent.portal_type == 'meetingadvice':
+        advicePortalTypeIds = tool.getAdvicePortalTypes(as_ids=True)
+        if self.context.portal_type in advicePortalTypeIds \
+           or parent.portal_type in advicePortalTypeIds:
             return cfg.annexes_types.advice_annexes
 
         # adding annex to a meeting

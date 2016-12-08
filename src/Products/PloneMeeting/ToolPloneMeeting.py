@@ -867,7 +867,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         elif context.meta_type == 'Meeting' and context.isTemporary():
             return False
         elif context.meta_type in ('MeetingItem', 'Meeting') or \
-                context.portal_type.startswith('meetingadvice'):
+                context.portal_type in self.getAdvicePortalTypes(as_ids=True):
             # check that there are categories defined in the configuration
             hasAnnexesTypes = get_categories(context)
             hasDecisionAnnexesTypes = False
@@ -1693,6 +1693,14 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         return False
 
+    def getAdvicePortalTypes_cachekey(method, self, as_ids=False):
+        '''cachekey method for self.getAdvicePortalTypes.'''
+        # we only recompute if param or REQUEST changed
+        return (str(self.REQUEST._debug), as_ids)
+
+    security.declarePublic('getAdvicePortalTypes')
+
+    @ram.cache(getAdvicePortalTypes_cachekey)
     def getAdvicePortalTypes(self, as_ids=False):
         """We may have several 'meetingadvice' portal_types."""
         typesTool = api.portal.get_tool('portal_types')

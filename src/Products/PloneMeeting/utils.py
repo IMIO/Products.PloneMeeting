@@ -1519,7 +1519,9 @@ def getTransitionToReachState(obj, state):
 
 def findMeetingAdvicePortalType(context):
     """ """
-    if context.portal_type.startswith('meetingadvice'):
+    tool = api.portal.get_tool('portal_plonemeeting')
+    advicePortalTypeIds = tool.getAdvicePortalTypes(as_ids=True)
+    if context.portal_type in advicePortalTypeIds:
         return context.portal_type
 
     # try to find the used portal_type from the published object, it is the case
@@ -1527,12 +1529,12 @@ def findMeetingAdvicePortalType(context):
     published = context.REQUEST.get('PUBLISHED')
     if not published:
         # try to get it from context
-        if context.portal_type.startswith('meetingadvice'):
+        if context.portal_type in advicePortalTypeIds:
             return context.portal_type
         return 'meetingadvice'
 
     # portal_type stored on published
-    if getattr(published, 'portal_type', None) and published.portal_type.startswith('meetingadvice'):
+    if getattr(published, 'portal_type', None) and published.portal_type in advicePortalTypeIds:
         return published.portal_type
 
     if not getattr(published, 'ti', None):

@@ -3522,8 +3522,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def getAdvices(self):
         '''Returns a list of contained meetingadvice objects.'''
         res = []
+        tool = api.portal.get_tool('portal_plonemeeting')
+        advicePortalTypeIds = tool.getAdvicePortalTypes(as_ids=True)
         for obj in self.objectValues('Dexterity Container'):
-            if obj.portal_type.startswith('meetingadvice'):
+            if obj.portal_type in advicePortalTypeIds:
                 res.append(obj)
         return res
 

@@ -234,6 +234,7 @@ class AdviceGroupVocabulary(object):
         """"""
         terms = []
         tool = api.portal.get_tool('portal_plonemeeting')
+        advicePortalTypeIds = tool.getAdvicePortalTypes(as_ids=True)
 
         # take into account groups for wich user can add an advice
         # while adding an advice, the context is his parent, aka a MeetingItem
@@ -241,7 +242,7 @@ class AdviceGroupVocabulary(object):
         if context.meta_type == 'MeetingItem':
             alterable_advices_groups = [groupId for groupId, groupTitle in context.getAdvicesGroupsInfosForUser()[0]]
         # take into account groups for which user can edit an advice
-        elif context.portal_type.startswith('meetingadvice'):
+        elif context.portal_type in advicePortalTypeIds:
             alterable_advices_groups = [groupId for groupId, groupTitle in context.getAdvicesGroupsInfosForUser()[1]]
             # make sure advice_group selected on advice is in the vocabulary
             if not context.advice_group in alterable_advices_groups:
@@ -254,7 +255,7 @@ class AdviceGroupVocabulary(object):
         alterable_advices_groups = [
             groupId for groupId in alterable_advices_groups
             if (itemObj.adapted()._advicePortalTypeForAdviser(groupId) == current_portal_type or
-                (context.portal_type.startswith('meetingadvice') and groupId == context.advice_group))]
+                (context.portal_type in advicePortalTypeIds and groupId == context.advice_group))]
 
         # create vocabulary
         for alterable_advices_group in alterable_advices_groups:
@@ -270,7 +271,10 @@ class AdviceTypeVocabulary(object):
     def __call__(self, context):
         """ """
         terms = []
-        cfg = context.portal_plonemeeting.getMeetingConfig(context)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        advicePortalTypeIds = tool.getAdvicePortalTypes(as_ids=True)
+
         # manage when portal_type accessed from the Dexterity types configuration
         if cfg:
             usedAdviceTypes = list(cfg.getUsedAdviceTypes())
@@ -287,7 +291,7 @@ class AdviceTypeVocabulary(object):
                 usedAdviceTypes.remove('asked_again', )
             # make sure if an adviceType was used for context and it is no more available, it
             # appears in the vocabulary and is so useable...
-            if context.portal_type.startswith('meetingadvice') and not context.advice_type in usedAdviceTypes:
+            if context.portal_type in advicePortalTypeIds and not context.advice_type in usedAdviceTypes:
                 usedAdviceTypes.append(context.advice_type)
             for advice_id, advice_title in cfg.listAdviceTypes().items():
                 if advice_id in usedAdviceTypes:
