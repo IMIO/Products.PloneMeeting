@@ -33,7 +33,7 @@ from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from Products.DataGridField import DataGridField, DataGridWidget
 from Products.DataGridField.Column import Column
 
-from OFS.ObjectManager import BeforeDeleteException
+#from OFS.ObjectManager import BeforeDeleteException
 from zope.i18n import translate
 from Products.CMFPlone.utils import safe_unicode
 from plone import api
@@ -422,32 +422,32 @@ class MeetingFileType(BaseContent, BrowserDefaultMixin):
         state = wfTool.getInfoFor(mft, 'review_state')
         return state == 'active'
 
-    security.declarePrivate('manage_beforeDelete')
-
-    def manage_beforeDelete(self, item, container):
-        '''Checks if the current meetingFile can be deleted:
-          - it can not be used in a MeetingFile.meetingFileType.'''
-        # If we are trying to remove the whole Plone Site, bypass this hook.
-        # bypass also if we are in the creation process
-        if not item.meta_type == "Plone Site" and not item._at_creation_flag:
-            tool = api.portal.get_tool('portal_plonemeeting')
-            catalog = api.portal.get_tool('portal_catalog')
-            cfg = tool.getMeetingConfig(self)
-            brains = catalog(portal_type=cfg.getItemTypeName())
-            # build mftUIDs made of mft UID and subTypes fake UIDs
-            UID = self.UID()
-            mftUIDs = [UID, ]
-            for subType in self.getSubTypes():
-                mftUIDs.append("%s__subtype__%s" % (UID, subType['row_id']))
-            for brain in brains:
-                item = brain.getObject()
-                # check item.annexIndex and every advices annexIndex too
-                toCheck = [item, ] + item.getAdvices()
-                for itemOrAdvice in toCheck:
-                    for annexInfo in itemOrAdvice.annexIndex:
-                        if annexInfo['meetingFileTypeObjectUID'] in mftUIDs:
-                            raise BeforeDeleteException("can_not_delete_meetingfiletype_meetingfile")
-        BaseContent.manage_beforeDelete(self, item, container)
+    # security.declarePrivate('manage_beforeDelete')
+    #
+    # def manage_beforeDelete(self, item, container):
+    #     '''Checks if the current meetingFile can be deleted:
+    #       - it can not be used in a MeetingFile.meetingFileType.'''
+    #     # If we are trying to remove the whole Plone Site, bypass this hook.
+    #     # bypass also if we are in the creation process
+    #     if not item.meta_type == "Plone Site" and not item._at_creation_flag:
+    #         tool = api.portal.get_tool('portal_plonemeeting')
+    #         catalog = api.portal.get_tool('portal_catalog')
+    #         cfg = tool.getMeetingConfig(self)
+    #         brains = catalog(portal_type=cfg.getItemTypeName())
+    #         # build mftUIDs made of mft UID and subTypes fake UIDs
+    #         UID = self.UID()
+    #         mftUIDs = [UID, ]
+    #         for subType in self.getSubTypes():
+    #             mftUIDs.append("%s__subtype__%s" % (UID, subType['row_id']))
+    #         for brain in brains:
+    #             item = brain.getObject()
+    #             # check item.annexIndex and every advices annexIndex too
+    #             toCheck = [item, ] + item.getAdvices()
+    #             for itemOrAdvice in toCheck:
+    #                 for annexInfo in itemOrAdvice.annexIndex:
+    #                     if annexInfo['meetingFileTypeObjectUID'] in mftUIDs:
+    #                         raise BeforeDeleteException("can_not_delete_meetingfiletype_meetingfile")
+    #     BaseContent.manage_beforeDelete(self, item, container)
 
 
 registerType(MeetingFileType, PROJECTNAME)

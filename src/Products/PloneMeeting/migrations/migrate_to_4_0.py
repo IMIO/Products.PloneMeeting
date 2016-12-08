@@ -744,12 +744,18 @@ class Migrate_To_4_0(Migrator):
                 if mft.getRelatedTo() == 'item':
                     folder = cfg.annexes_types.item_annexes
                     to_print_default = cfg.annexToPrintDefault
+                    category_type = 'ItemAnnexContentCategory'
+                    subcategory_type = 'ItemAnnexContentSubcategory'
                 elif mft.getRelatedTo() == 'item_decision':
                     folder = cfg.annexes_types.item_decision_annexes
                     to_print_default = cfg.annexDecisionToPrintDefault
+                    category_type = 'ItemAnnexContentCategory'
+                    subcategory_type = 'ItemAnnexContentSubcategory'
                 elif mft.getRelatedTo() == 'advice':
                     folder = cfg.annexes_types.advice_annexes
                     to_print_default = cfg.annexAdviceToPrintDefault
+                    category_type = 'ContentCategory'
+                    subcategory_type = 'ContentSubcategory'
                 # create the category
                 icon = NamedBlobImage(
                     data=mft.theIcon.data,
@@ -757,7 +763,7 @@ class Migrate_To_4_0(Migrator):
                     filename=unicode(mft.theIcon.filename, 'utf-8'))
                 category = api.content.create(
                     id=mft.getId(),
-                    type='ContentCategory',
+                    type=category_type,
                     container=folder,
                     title=safe_unicode(mft.Title()),
                     icon=icon,
@@ -769,7 +775,7 @@ class Migrate_To_4_0(Migrator):
                 category._v_old_mft = mft.UID()
                 for subType in mft.getSubTypes():
                     subcat = api.content.create(
-                        type='ContentSubcategory',
+                        type=subcategory_type,
                         container=category,
                         title=safe_unicode(subType['title']),
                         icon=icon,
@@ -785,6 +791,16 @@ class Migrate_To_4_0(Migrator):
         # able to update the otherMCCorrespondences attribute
         for cfg in tool.objectValues('MeetingConfig'):
             for mft in cfg.meetingfiletypes.objectValues():
+                if mft.getRelatedTo() == 'item':
+                    category_type = 'ItemAnnexContentCategory'
+                    subcategory_type = 'ItemAnnexContentSubcategory'
+                elif mft.getRelatedTo() == 'item_decision':
+                    category_type = 'ItemAnnexContentCategory'
+                    subcategory_type = 'ItemAnnexContentSubcategory'
+                elif mft.getRelatedTo() == 'advice':
+                    category_type = 'ContentCategory'
+                    subcategory_type = 'ContentSubcategory'
+
                 otherMCCorrespondences = mft.getOtherMCCorrespondences()
                 if otherMCCorrespondences:
                     otherUIDs = []
@@ -792,14 +808,14 @@ class Migrate_To_4_0(Migrator):
                         if '__subtype__' in otherMCCorrespondence:
                             # send to a subtype, find the subType
                             otherUIDs.append(
-                                _getCurrentCatFromOldUID('ContentSubcategory',
+                                _getCurrentCatFromOldUID(subcategory_type,
                                                          otherMCCorrespondence.split('__subtype__')[-1]).UID())
                         else:
                             otherUIDs.append(
-                                _getCurrentCatFromOldUID('ContentCategory',
+                                _getCurrentCatFromOldUID(category_type,
                                                          otherMCCorrespondence.split('__filetype__')[-1]).UID())
                     _getCurrentCatFromOldUID(
-                        'ContentCategory',
+                        category_type,
                         mft.UID()).other_mc_correspondences = otherUIDs
                 for subType in mft.getSubTypes():
                     if subType['otherMCCorrespondences']:
@@ -808,14 +824,14 @@ class Migrate_To_4_0(Migrator):
                             if '__subtype__' in otherMCCorrespondence:
                                 # send to a subtype, find the subType
                                 otherUIDs.append(
-                                    _getCurrentCatFromOldUID('ContentSubcategory',
+                                    _getCurrentCatFromOldUID(subcategory_type,
                                                              otherMCCorrespondence.split('__subtype__')[-1]).UID())
                             else:
                                 otherUIDs.append(
-                                    _getCurrentCatFromOldUID('ContentCategory',
+                                    _getCurrentCatFromOldUID(category_type,
                                                              otherMCCorrespondence.split('__filetype__')[-1]).UID())
                         _getCurrentCatFromOldUID(
-                            'ContentSubcategory',
+                            subcategory_type,
                             subType['row_id']).other_mc_correspondences = otherUIDs
 
         # clean no more used attributes
@@ -899,8 +915,9 @@ class Migrate_To_4_0(Migrator):
         total = len(brains)
         i = 1
         for brain in brains:
-            logger.info('Migrating element {1}/{2}...'.format(brain.portal_type,
-                                                              i, total))
+            logger.info('Migrating MeetingFiles of element {0}/{1}...'.format(
+                i,
+                total))
             i = i + 1
             obj = brain.getObject()
             mfs = obj.objectValues('MeetingFile')
@@ -908,6 +925,7 @@ class Migrate_To_4_0(Migrator):
                 for mf in mfs:
                     annex_id = mf.getId()
                     annex_type = mf.findRelatedTo() == 'item_decision' and 'annexDecision' or 'annex'
+                    logger.info('Migrating MeetingFile {0}...'.format(annex_id))
                     annex_title = mf.Title()
                     mf_file = mf.getFile()
                     annex_file = NamedBlobFile(
