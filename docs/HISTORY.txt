@@ -343,6 +343,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Added validation for field 'item_assembly' in the form for defining assembly for a specific item.  The validation takes care
   that opening "[[" have their corresponding "]]".  This is only done for field 'item_assembly' as brackets are not used
   for other fields (absents, excused)
+- Removed permissions "PloneMeeting: Read optional advisers" and "PloneMeeting: Write optional advisers", optional advisers will
+  be editable by users able to edit the MeetingItem
 
 3.3 (2015-02-27)
 ----------------

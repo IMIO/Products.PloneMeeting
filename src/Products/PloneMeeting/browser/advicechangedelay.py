@@ -49,12 +49,11 @@ class AdviceDelaysView(BrowserView):
         '''Check if current user may edit delays for advice.  Given p_isAutomatic
            is a boolean specifying if the advice is an automatic one or not.
            The rule managed here is :
-           - An optional (not isAutomatic) advice can be edited if the user,
-             has the 'PloneMeeting: Write optional advisers' permission on the item;
+           - An optional (not isAutomatic) advice can be edited if the user, may edit the item;
            - An automatic advice delay can only be edited by Managers (and MeetingManagers).'''
-        # advice is not automatic, the user must have 'PloneMeeting: Write optional advisers' permission
+        # advice is not automatic, the user must have 'Modify portal content' permission
         if not isAutomatic:
-            if not _checkPermission('PloneMeeting: Write optional advisers', self.context):
+            if not _checkPermission(ModifyPortalContent, self.context):
                 return False
         else:
             # advice is automatic, only Managers and MeetingManagers can change an automatic advice delay

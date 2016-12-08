@@ -9,11 +9,8 @@
     <role name="MeetingObserverLocal"/>
     <role name="MeetingObserverUnpublished"/>
     <role name="MeetingReviewer"/>
-<!-- ##code-section roles -->
-<!-- ##/code-section roles -->
   </roles>
   <permissions>
-<!-- ##code-section permissions -->
     <permission name="CMFEditions: Save new version"
                 acquire="False">
       <role name="Manager"/>
@@ -43,9 +40,5 @@
                 acquire="False">
       <role name="Manager"/>
     </permission>
-
-
-
-<!-- ##/code-section permissions -->
   </permissions>
 </rolemap>

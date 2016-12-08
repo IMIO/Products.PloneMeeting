@@ -13,8 +13,6 @@
  <permission>PloneMeeting: Add annex</permission>
  <permission>PloneMeeting: Write decision</permission>
  <permission>PloneMeeting: Read decision</permission>
- <permission>PloneMeeting: Read optional advisers</permission>
- <permission>PloneMeeting: Write optional advisers</permission>
  <permission>PloneMeeting: Add annexDecision</permission>
  <permission>PloneMeeting: Read item observations</permission>
  <permission>PloneMeeting: Write item MeetingManager reserved fields</permission>
@@ -86,15 +84,6 @@
    <permission-role>MeetingObserverGlobal</permission-role>
    <permission-role>Reader</permission-role>
   </permission-map>
-  <permission-map name="PloneMeeting: Read optional advisers"
-                  acquired="False">
-   <permission-role>Manager</permission-role>
-   <permission-role>MeetingMember</permission-role>
-   <permission-role>MeetingReviewer</permission-role>
-   <permission-role>MeetingObserverLocal</permission-role>
-   <permission-role>MeetingObserverGlobal</permission-role>
-   <permission-role>Reader</permission-role>
-  </permission-map>
   <permission-map name="PloneMeeting: Write budget infos"
                   acquired="False">
    <permission-role>Manager</permission-role>
@@ -107,11 +96,6 @@
    <permission-role>MeetingManager</permission-role>
   </permission-map>
   <permission-map name="PloneMeeting: Write item MeetingManager reserved fields"
-                  acquired="False">
-   <permission-role>Manager</permission-role>
-   <permission-role>MeetingManager</permission-role>
-  </permission-map>
-  <permission-map name="PloneMeeting: Write optional advisers"
                   acquired="False">
    <permission-role>Manager</permission-role>
    <permission-role>MeetingManager</permission-role>
@@ -192,15 +176,6 @@
    <permission-role>MeetingObserverGlobal</permission-role>
    <permission-role>Reader</permission-role>
   </permission-map>
-  <permission-map name="PloneMeeting: Read optional advisers"
-                  acquired="False">
-   <permission-role>Manager</permission-role>
-   <permission-role>MeetingMember</permission-role>
-   <permission-role>MeetingReviewer</permission-role>
-   <permission-role>MeetingObserverLocal</permission-role>
-   <permission-role>MeetingObserverGlobal</permission-role>
-   <permission-role>Reader</permission-role>
-  </permission-map>
   <permission-map name="PloneMeeting: Write budget infos"
                   acquired="False">
    <permission-role>Manager</permission-role>
@@ -215,11 +190,6 @@
   <permission-map name="PloneMeeting: Write item MeetingManager reserved fields"
                   acquired="False">
    <permission-role>Manager</permission-role>
-  </permission-map>
-  <permission-map name="PloneMeeting: Write optional advisers"
-                  acquired="False">
-   <permission-role>Manager</permission-role>
-   <permission-role>MeetingManager</permission-role>
   </permission-map>
   <permission-map name="Review portal content"
                   acquired="False">
@@ -298,15 +268,6 @@
    <permission-role>MeetingObserverGlobal</permission-role>
    <permission-role>Reader</permission-role>
   </permission-map>
-  <permission-map name="PloneMeeting: Read optional advisers"
-                  acquired="False">
-   <permission-role>Manager</permission-role>
-   <permission-role>MeetingMember</permission-role>
-   <permission-role>MeetingReviewer</permission-role>
-   <permission-role>MeetingObserverLocal</permission-role>
-   <permission-role>MeetingObserverGlobal</permission-role>
-   <permission-role>Reader</permission-role>
-  </permission-map>
   <permission-map name="PloneMeeting: Write budget infos"
                   acquired="False">
    <permission-role>Manager</permission-role>
@@ -319,11 +280,6 @@
    <permission-role>MeetingManager</permission-role>
   </permission-map>
   <permission-map name="PloneMeeting: Write item MeetingManager reserved fields"
-                  acquired="False">
-   <permission-role>Manager</permission-role>
-   <permission-role>MeetingManager</permission-role>
-  </permission-map>
-  <permission-map name="PloneMeeting: Write optional advisers"
                   acquired="False">
    <permission-role>Manager</permission-role>
    <permission-role>MeetingManager</permission-role>
@@ -405,15 +361,6 @@
    <permission-role>MeetingArchiveObserver</permission-role>
    <permission-role>Reader</permission-role>
   </permission-map>
-  <permission-map name="PloneMeeting: Read optional advisers"
-                  acquired="False">
-   <permission-role>Manager</permission-role>
-   <permission-role>MeetingMember</permission-role>
-   <permission-role>MeetingReviewer</permission-role>
-   <permission-role>MeetingObserverLocal</permission-role>
-   <permission-role>MeetingObserverGlobal</permission-role>
-   <permission-role>Reader</permission-role>
-  </permission-map>
   <permission-map name="PloneMeeting: Write budget infos"
                   acquired="False">
    <permission-role>Manager</permission-role>
@@ -424,10 +371,6 @@
    <permission-role>Manager</permission-role>
   </permission-map>
   <permission-map name="PloneMeeting: Write item MeetingManager reserved fields"
-                  acquired="False">
-   <permission-role>Manager</permission-role>
-  </permission-map>
-  <permission-map name="PloneMeeting: Write optional advisers"
                   acquired="False">
    <permission-role>Manager</permission-role>
   </permission-map>
@@ -489,11 +432,6 @@
                   acquired="False">
    <permission-role>Manager</permission-role>
   </permission-map>
-  <permission-map name="PloneMeeting: Read optional advisers"
-                  acquired="False">
-   <permission-role>Manager</permission-role>
-   <permission-role>MeetingMember</permission-role>
-  </permission-map>
   <permission-map name="PloneMeeting: Write budget infos"
                   acquired="False">
    <permission-role>Manager</permission-role>
@@ -507,11 +445,6 @@
   <permission-map name="PloneMeeting: Write item MeetingManager reserved fields"
                   acquired="False">
    <permission-role>Manager</permission-role>
-  </permission-map>
-  <permission-map name="PloneMeeting: Write optional advisers"
-                  acquired="False">
-   <permission-role>Manager</permission-role>
-   <permission-role>MeetingMember</permission-role>
   </permission-map>
   <permission-map name="Review portal content"
                   acquired="False">
@@ -583,15 +516,6 @@
    <permission-role>MeetingObserverGlobal</permission-role>
    <permission-role>Reader</permission-role>
   </permission-map>
-  <permission-map name="PloneMeeting: Read optional advisers"
-                  acquired="False">
-   <permission-role>Manager</permission-role>
-   <permission-role>MeetingMember</permission-role>
-   <permission-role>MeetingReviewer</permission-role>
-   <permission-role>MeetingObserverLocal</permission-role>
-   <permission-role>MeetingObserverGlobal</permission-role>
-   <permission-role>Reader</permission-role>
-  </permission-map>
   <permission-map name="PloneMeeting: Write budget infos"
                   acquired="False">
    <permission-role>Manager</permission-role>
@@ -604,11 +528,6 @@
    <permission-role>MeetingManager</permission-role>
   </permission-map>
   <permission-map name="PloneMeeting: Write item MeetingManager reserved fields"
-                  acquired="False">
-   <permission-role>Manager</permission-role>
-   <permission-role>MeetingManager</permission-role>
-  </permission-map>
-  <permission-map name="PloneMeeting: Write optional advisers"
                   acquired="False">
    <permission-role>Manager</permission-role>
    <permission-role>MeetingManager</permission-role>
@@ -684,15 +603,6 @@
    <permission-role>Manager</permission-role>
    <permission-role>MeetingManager</permission-role>
   </permission-map>
-  <permission-map name="PloneMeeting: Read optional advisers"
-                  acquired="False">
-   <permission-role>Manager</permission-role>
-   <permission-role>MeetingMember</permission-role>
-   <permission-role>MeetingReviewer</permission-role>
-   <permission-role>MeetingObserverLocal</permission-role>
-   <permission-role>MeetingObserverGlobal</permission-role>
-   <permission-role>Reader</permission-role>
-  </permission-map>
   <permission-map name="PloneMeeting: Write budget infos"
                   acquired="False">
    <permission-role>Manager</permission-role>
@@ -705,11 +615,6 @@
    <permission-role>MeetingManager</permission-role>
   </permission-map>
   <permission-map name="PloneMeeting: Write item MeetingManager reserved fields"
-                  acquired="False">
-   <permission-role>Manager</permission-role>
-   <permission-role>MeetingManager</permission-role>
-  </permission-map>
-  <permission-map name="PloneMeeting: Write optional advisers"
                   acquired="False">
    <permission-role>Manager</permission-role>
    <permission-role>MeetingManager</permission-role>
@@ -785,14 +690,6 @@
    <permission-role>Manager</permission-role>
    <permission-role>MeetingManager</permission-role>
   </permission-map>
-  <permission-map name="PloneMeeting: Read optional advisers"
-                  acquired="False">
-   <permission-role>Manager</permission-role>
-   <permission-role>MeetingMember</permission-role>
-   <permission-role>MeetingReviewer</permission-role>
-   <permission-role>MeetingObserverLocal</permission-role>
-   <permission-role>Reader</permission-role>
-  </permission-map>
   <permission-map name="PloneMeeting: Write budget infos"
                   acquired="False">
    <permission-role>Manager</permission-role>
@@ -805,11 +702,6 @@
    <permission-role>MeetingManager</permission-role>
   </permission-map>
   <permission-map name="PloneMeeting: Write item MeetingManager reserved fields"
-                  acquired="False">
-   <permission-role>Manager</permission-role>
-   <permission-role>MeetingManager</permission-role>
-  </permission-map>
-  <permission-map name="PloneMeeting: Write optional advisers"
                   acquired="False">
    <permission-role>Manager</permission-role>
    <permission-role>MeetingManager</permission-role>
@@ -879,14 +771,6 @@
                   acquired="False">
    <permission-role>Manager</permission-role>
   </permission-map>
-  <permission-map name="PloneMeeting: Read optional advisers"
-                  acquired="False">
-   <permission-role>Manager</permission-role>
-   <permission-role>MeetingMember</permission-role>
-   <permission-role>MeetingReviewer</permission-role>
-   <permission-role>MeetingObserverLocal</permission-role>
-   <permission-role>Reader</permission-role>
-  </permission-map>
   <permission-map name="PloneMeeting: Write budget infos"
                   acquired="False">
    <permission-role>Manager</permission-role>
@@ -900,11 +784,6 @@
   <permission-map name="PloneMeeting: Write item MeetingManager reserved fields"
                   acquired="False">
    <permission-role>Manager</permission-role>
-  </permission-map>
-  <permission-map name="PloneMeeting: Write optional advisers"
-                  acquired="False">
-   <permission-role>Manager</permission-role>
-   <permission-role>MeetingReviewer</permission-role>
   </permission-map>
   <permission-map name="Review portal content"
                   acquired="False">
@@ -981,15 +860,6 @@
    <permission-role>MeetingObserverGlobal</permission-role>
    <permission-role>Reader</permission-role>
   </permission-map>
-  <permission-map name="PloneMeeting: Read optional advisers"
-                  acquired="False">
-   <permission-role>Manager</permission-role>
-   <permission-role>MeetingMember</permission-role>
-   <permission-role>MeetingReviewer</permission-role>
-   <permission-role>MeetingObserverLocal</permission-role>
-   <permission-role>MeetingObserverGlobal</permission-role>
-   <permission-role>Reader</permission-role>
-  </permission-map>
   <permission-map name="PloneMeeting: Write budget infos"
                   acquired="False">
    <permission-role>Manager</permission-role>
@@ -1002,11 +872,6 @@
    <permission-role>MeetingManager</permission-role>
   </permission-map>
   <permission-map name="PloneMeeting: Write item MeetingManager reserved fields"
-                  acquired="False">
-   <permission-role>Manager</permission-role>
-   <permission-role>MeetingManager</permission-role>
-  </permission-map>
-  <permission-map name="PloneMeeting: Write optional advisers"
                   acquired="False">
    <permission-role>Manager</permission-role>
    <permission-role>MeetingManager</permission-role>
@@ -1083,14 +948,6 @@
    <permission-role>Manager</permission-role>
    <permission-role>MeetingManager</permission-role>
   </permission-map>
-  <permission-map name="PloneMeeting: Read optional advisers"
-                  acquired="False">
-   <permission-role>Manager</permission-role>
-   <permission-role>MeetingMember</permission-role>
-   <permission-role>MeetingReviewer</permission-role>
-   <permission-role>MeetingObserverLocal</permission-role>
-   <permission-role>Reader</permission-role>
-  </permission-map>
   <permission-map name="PloneMeeting: Write budget infos"
                   acquired="False">
    <permission-role>Manager</permission-role>
@@ -1103,11 +960,6 @@
    <permission-role>MeetingManager</permission-role>
   </permission-map>
   <permission-map name="PloneMeeting: Write item MeetingManager reserved fields"
-                  acquired="False">
-   <permission-role>Manager</permission-role>
-   <permission-role>MeetingManager</permission-role>
-  </permission-map>
-  <permission-map name="PloneMeeting: Write optional advisers"
                   acquired="False">
    <permission-role>Manager</permission-role>
    <permission-role>MeetingManager</permission-role>

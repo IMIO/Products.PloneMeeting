@@ -1483,12 +1483,12 @@ class testAdvices(PloneMeetingTestCase):
         # except if it is an automatic advice for wich only MeetingManagers may change delay
         self.assertEquals(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']),
                           [('unique_id_456', '10', u''), ('unique_id_789', '20', u'')])
-        # the creator may only edit the delays if it has the 'PloneMeeting: Write optional advisers' permission
+        # the creator may only edit the delays if it may edit the item
         # if pmCreator1 propose the item, it can no more edit it so it can not change delays
         # now propose the item, selectable delays should be empty
         self.proposeItem(item)
         self.assertFalse(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']))
-        # the pmReviewer1 can change delay as he can write optional advisers
+        # the pmReviewer1 can change delay as he may edit the item
         self.changeUser('pmReviewer1')
         self.assertEquals(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']),
                           [('unique_id_456', '10', u''), ('unique_id_789', '20', u'')])

@@ -864,8 +864,6 @@ schema = Schema((
         multiValued=1,
         vocabulary='listOptionalAdvisers',
         enforceVocabulary=False,
-        write_permission="PloneMeeting: Write optional advisers",
-        read_permission="PloneMeeting: Read optional advisers",
     ),
     TextField(
         name='motivation',
