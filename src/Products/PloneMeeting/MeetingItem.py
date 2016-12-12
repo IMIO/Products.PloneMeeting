@@ -570,8 +570,11 @@ class MeetingItemWorkflowActions:
         wf_comment = _('wf_transition_triggered_by_application')
         with api.env.adopt_roles(roles=['Manager']):
             # trigger transitions until 'validated', aka one step before 'presented'
+            # set a special value in the REQUEST so guards may use it if necessary
+            self.context.REQUEST.set('postponing_item', True)
             for tr in cfg.getTransitionsForPresentingAnItem()[0:-1]:
                 wfTool.doActionFor(clonedItem, tr, comment=wf_comment)
+            self.context.REQUEST.set('postponing_item', False)
         # Send, if configured, a mail to the person who created the item
         clonedItem.sendMailIfRelevant('itemPostponedNextMeeting', 'Owner', isRole=True)
 
