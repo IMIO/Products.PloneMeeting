@@ -988,6 +988,7 @@ class Migrate_To_4_0(Migrator):
 
     def run(self):
         logger.info('Migrating to PloneMeeting 4.0...')
+        # MIGRATION COMMON PARTS
         # reinstall so versions are correctly shown in portal_quickinstaller
         # and new stuffs are added (portal_catalog metadata especially, imio.history is installed)
         # reinstall PloneMeeting without dependencies, we want to reapply entire PM
@@ -996,11 +997,15 @@ class Migrate_To_4_0(Migrator):
                        ignore_dependencies=True,
                        dependency_strategy=DEPENDENCY_STRATEGY_REAPPLY)
         if self.profile_name != 'profile-Products.PloneMeeting:default':
-            self.reinstall(profiles=[self.profile_name, ])
+            self.reinstall(profiles=[self.profile_name, ],
+                           ignore_dependencies=False,
+                           dependency_strategy=DEPENDENCY_STRATEGY_REAPPLY)
         self.upgradeDependencies()
-        self._adaptAppForImioAnnex()
         self.cleanRegistries()
         self.updateHolidays()
+
+        # MIGRATION V4 SPECIFIC PARTS
+        self._adaptAppForImioAnnex()
         self._updateItemsListVisibleFields()
         self._migrateLateItems()
         self._adaptAppForImioDashboard()

@@ -47,6 +47,10 @@ class Migrator(BaseMigrator):
         profile_names = self.ps.getDependenciesForProfile(u'profile-Products.PloneMeeting:default')
         for profile_name in profile_names:
             self.upgradeProfile(profile_name)
+        if self.profile_name != 'profile-Products.PloneMeeting:default':
+            profile_names = self.ps.getDependenciesForProfile(self.profile_name)
+            for profile_name in profile_names:
+                self.upgradeProfile(profile_name)
 
     def reinstall(self, profiles, ignore_dependencies=False, dependency_strategy=None):
         """Override to be able to call _after_reinstall at the end."""
