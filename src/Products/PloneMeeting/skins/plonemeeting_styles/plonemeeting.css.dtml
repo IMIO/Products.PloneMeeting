@@ -1494,20 +1494,8 @@ iframe#iFrameResizer0 {
     overflow-y: hidden;
 }
 
-/* margin for content of fieldsets */
-div.customAdviceMessage,
-fieldset.field div {
-    margin-top: 2.3em;
-}
 div.customAdviceMessage {
     color: red;
-}
-
-/* doc displayed in a fieldset using the '?' js click image */
-#content-core div#groupDoc,
-#content-core div#customAdvisersDoc,
-#content-core div#usersDoc {
-    margin-top: 2.3em;
 }
 
 #content-core p.tool_pm_descr,

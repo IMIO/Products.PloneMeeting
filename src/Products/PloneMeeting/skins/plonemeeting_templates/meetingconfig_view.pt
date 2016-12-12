@@ -492,7 +492,6 @@
       <tal:comment replace="nothing">Classifiers</tal:comment>
       <a name="classifiers"></a>
       <fieldset>
-        <p class="discreet" i18n:translate="classifiers_descr"></p><br />
         <legend>
          <span i18n:translate="Classifiers"></span>
          <input type="image" style="cursor:pointer" class="imageInput"
@@ -501,6 +500,7 @@
                 title="add_object" i18n:attributes="title"
                 tal:condition="isRealManager"/>
         </legend>
+        <p class="discreet" i18n:translate="classifiers_descr"></p><br />
         <table tal:define="cFolder python:context.classifiers;
                            cFolderUrl cFolder/absolute_url"
                class="listing nosort" align="right" width="100%">
