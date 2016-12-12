@@ -671,7 +671,6 @@ td[class^="meeting_item_listType_"] div[id^="pm_menu_item_listType"].pmDropdown 
 
 div[id^="pm_menu_advice_change_delay"].pmDropdown {
     right: 25px;
-    top: 28px;
     font-weight: normal;
 }
 
