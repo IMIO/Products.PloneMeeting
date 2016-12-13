@@ -373,7 +373,7 @@
       </tal:advicesToAddOrExisting>
       <div tal:condition="not: advicesByType">
         <tal:comment replace="nothing">Icon for adding an advice for power advisers</tal:comment>
-        <div style="display: inline">&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;</div>
+        <div style="display: inline">&nbsp;-&nbsp;&nbsp;&nbsp;</div>
         <div tal:condition="python: advicesToAdd" style="display: inline">
           <a href="++add++meetingadvice" class="link-overlay-pm-advice" tal:attributes="href string:${item_url}/++add++meetingadvice">
             <img i18n:attributes="title"
