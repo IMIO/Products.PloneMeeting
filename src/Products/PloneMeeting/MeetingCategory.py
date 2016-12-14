@@ -205,16 +205,16 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         wfTool = api.portal.get_tool('portal_workflow')
         state = wfTool.getInfoFor(cat, 'review_state')
-        isUsing = True
+        isUsing = bool(state == 'active')
         usingGroups = cat.getUsingGroups()
         # If we have usingGroups make sure userId is creator for one of it
-        if usingGroups and not tool.isManager(cat, realManagers=True):
+        if isUsing and usingGroups and not tool.isManager(cat, realManagers=True):
             proposingGroupIds = tool.getSelectableGroups(userId=userId)
             keys = [proposingGroupId[0] for proposingGroupId in proposingGroupIds]
-            # Check intersection between self.usingGroups and groups for wich
+            # Check intersection between self.usingGroups and groups for which
             # the current user is creator
             isUsing = bool(set(usingGroups).intersection(keys))
-        return isUsing and state == 'active'
+        return isUsing
 
     security.declarePublic('listUsingGroups')
 

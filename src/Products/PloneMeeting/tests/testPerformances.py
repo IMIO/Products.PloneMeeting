@@ -426,7 +426,7 @@ class testPerformances(PloneMeetingTestCase):
 
         # first test with 10 groups with usingGroups
         self._setupForMeetingCategories(10, withUsingGroups=True)
-        pm_logger.info('getCategories called 100 times with %d activated groupsn with usingGroups.' % 10)
+        pm_logger.info('getCategories called 100 times with %d activated groups, with usingGroups.' % 10)
         pm_logger.info('No caching.')
         self._getCategoriesOnMeetingConfig(times=100, caching=False)
         # second time, cached
