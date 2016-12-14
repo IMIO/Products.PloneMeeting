@@ -717,24 +717,29 @@
           DO NOT CHANGE PARAMETERS DEFINED IN THIS SECTION UNLESS YOU ARE REALLY SURE WHAT YOU ARE DOING!
         </p>
         <p class="discreet" i18n:translate="searches_descr"></p>
+        <p>&nbsp;</p>
         <p><img src="manage.png"
                 tal:attributes="src string:${portal_url}/manage.png;"/>&nbsp;
             <a href="searches/folder_contents" i18n:translate="">
                 Manage dashboard
             </a>
         </p>
+        <p>&nbsp;</p>
 
         <tal:searchesCategories repeat="cFolder python: context.searches.objectValues()">
             <table class="listing nosort" style="text-align: right;" width="100%"
                    tal:define="cFolderUrl cFolder/absolute_url" width="100%;">
               <tr>
                 <th class="nosort" width="200px">
-                    <span tal:content="cFolder/Title">Folder title</span>
+                    <span i18n:translate="config_search_title">Searches
+                      <span i18n:name="search_title" tal:content="cFolder/Title">Folder title</span>
+                    </span>
                     <input type="image"
                            style="cursor:pointer"
                            class="imageInput"
-                           tal:attributes="onClick python: 'href: window.location=\'%s/createObject?type_name=DashboardCollection\'' % cFolderUrl;
-                                 src string: $portal_url/new.png"
+                           tal:attributes="
+                              onClick python: 'href: window.location=\'%s/createObject?type_name=DashboardCollection\'' % cFolderUrl;
+                              src string: $portal_url/new.png"
                  title="add_object" i18n:attributes="title"
                  tal:condition="isRealManager"/>
                 </th>
@@ -793,6 +798,7 @@
               </tr>
               </tal:loop>
             </table>
+            <p>&nbsp;</p>
         </tal:searchesCategories>
       </fieldset>
 
