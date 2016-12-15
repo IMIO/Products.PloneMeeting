@@ -2481,7 +2481,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         for cat in cfg.getCategories():
-            res.append((cat.id, cat.getName()))
+            res.append((cat.id, safe_unicode(cat.getName())))
         if len(res) > 4:
             res.insert(0, ('_none_', translate('make_a_choice',
                                                domain='PloneMeeting',
@@ -2490,8 +2490,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # make sure current category is listed here
         if self.getCategory() and not self.getCategory() in res.keys():
             current_cat = self.getCategory(theObject=True)
-            res.add(current_cat.getId(), current_cat.getName())
-        return res
+            res.add(current_cat.getId(), safe_unicode(current_cat.getName()))
+        return res.sortedByValue()
 
     security.declarePublic('getCategory')
 
