@@ -1157,6 +1157,22 @@ schema = Schema((
         enforceVocabulary=True,
         vocabulary_factory='Products.PloneMeeting.vocabularies.polltypesvocabulary'
     ),
+    TextField(
+        name='pollTypeObservations',
+        widget=RichWidget(
+            label_msgid="PloneMeeting_pollTypeObservations",
+            condition="python: here.attributeIsUsed('pollTypeObservations')",
+            rows=20,
+            label='Polltypeobservations',
+            i18n_domain='PloneMeeting',
+        ),
+        default_content_type="text/html",
+        searchable=True,
+        allowable_content_types=('text/html',),
+        default_output_type="text/x-html-safe",
+        optional=True,
+        write_permission="PloneMeeting: Write item MeetingManager reserved fields",
+    ),
     BooleanField(
         name='votesAreSecret',
         default=False,

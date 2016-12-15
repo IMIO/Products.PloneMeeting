@@ -310,7 +310,35 @@
                 <span class="item_attribute_label"
                       i18n:translate="PloneMeeting_label_pollType"></span>:&nbsp;&nbsp;
                 <span metal:use-macro="python: here.widget('pollType', mode='view')" />
+                <tal:displayPollTypeObservations tal:condition="python: 'pollTypeObservations' in usedAttrs">
+                    <img src="++resource++collective.iconifiedcategory/more_infos.png"
+                         id="showPollTypeObservations"
+                         style="cursor: pointer;"
+                         tal:attributes="src string:${portal_url}/++resource++collective.iconifiedcategory/more_infos.png"
+                         i18n:attributes="title" title="See/hide data used for council item" />
+                    <script type="text/javascript">
+                        $( "#showPollTypeObservations" ).bind( "click", function(event) {
+                            event.preventDefault();
+                            var dataPollTypeObservations = $('#dataPollTypeObservations');
+                            dataPollTypeObservations.fadeToggle();
+                            });
+                    </script>
+                    <fieldset id="dataPollTypeObservations" style="display: none; margin-top: 0;">
+                        <legend i18n:translate="PloneMeeting_label_pollTypeObservations">Poll type observations</legend>
+                        <span metal:use-macro="python: here.widget('pollTypeObservations', mode='view')" />
+                    </fieldset>
+                </tal:displayPollTypeObservations>
             </div>
+
+            <div class="discreet"
+                 tal:condition="python: otherMCs or context.isClonableToOtherMeetingConfigs()"
+                 tal:define="otherMCs context/getOtherMeetingConfigsClonableTo">
+                <span class="item_attribute_label"
+                      i18n:translate="PloneMeeting_label_otherMeetingConfigsClonableTo"></span>:&nbsp;&nbsp;
+
+                 <span tal:condition="not: otherMCs">-</span>
+            </div>
+
             <tal:comment replace="nothing">Oral question or item</tal:comment>
             <div class="discreet" tal:condition="python: 'oralQuestion' in usedAttrs">
              <tal:defines define="oq context/getOralQuestion">

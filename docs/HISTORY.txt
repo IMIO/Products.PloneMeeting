@@ -332,7 +332,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   state 'delayed')
 - Added optional RichText field Meeting.authorityNotice
 - Added optional field MeetingItem.pollType, it relies on MeetingConfig.usedPollTypes and MeetingConfig.defaultPollType.
-  Added also relevant dashboard column and faceted filter
+  Added also relevant dashboard column and faceted filter.  An additional optional field MeetingItem.pollTypeObservations
+  may also be enabled to define some observations about the selected poll type
 - Added specific icon before title of advice that are given as personal initiative
 - MeetingItem.displayAdvices is now MeetingItem.showAdvices and is an adaptable method that controls the fact that advices
   are shown or not on the item view

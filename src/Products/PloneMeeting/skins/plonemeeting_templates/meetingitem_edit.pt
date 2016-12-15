@@ -48,6 +48,7 @@
     <metal:field use-macro="python:here.widget('toDiscuss', mode='edit')"/>
     <metal:field use-macro="python:here.widget('itemIsSigned', mode='edit')"/>
     <metal:field use-macro="python:here.widget('pollType', mode='edit')"/>
+    <metal:field use-macro="python:here.widget('pollTypeObservations', mode='edit')"/>
     <metal:field use-macro="python:here.widget('manuallyLinkedItems', mode='edit')"/>
 
     <tal:comment replace="nothing">Associated groups, optional advisers and copyGroups</tal:comment>
