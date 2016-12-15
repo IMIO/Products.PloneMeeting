@@ -62,11 +62,23 @@
     <tal:comment replace="nothing">Preferred meeting, item keywords, privacy</tal:comment>
     <table cellpadding="0" cellspacing="0">
         <tr valign="top">
-           <td><metal:field use-macro="python:here.widget('preferredMeeting', mode='edit')"/></td>
-           <td><metal:field use-macro="python:here.widget('itemKeywords', mode='edit')"/></td>
-           <td><metal:field use-macro="python:here.widget('sendToAuthority', mode='edit')"/></td>
-           <td><metal:field use-macro="python:here.widget('privacy', mode='edit')"/></td>
-           <td><metal:field use-macro="python:here.widget('listType', mode='edit')"/></td>
+           <td>
+            <metal:field use-macro="python:here.widget('preferredMeeting', mode='edit')"/>
+           </td>
+        </tr>
+        <tr>
+           <td tal:condition="python:'sendToAuthority' in usedAttrs">
+            <metal:field use-macro="python:here.widget('sendToAuthority', mode='edit')"/>
+           </td>
+           <td tal:condition="python:'privacy' in usedAttrs">
+            <metal:field use-macro="python:here.widget('privacy', mode='edit')"/>
+           </td>
+           <td tal:condition="python:'listType' in usedAttrs">
+            <metal:field use-macro="python:here.widget('listType', mode='edit')"/>
+           </td>
+           <td tal:condition="python:'itemKeywords' in usedAttrs">
+            <metal:field use-macro="python:here.widget('itemKeywords', mode='edit')"/>
+           </td>
         </tr>
         <tr>
             <td colspan="5"
