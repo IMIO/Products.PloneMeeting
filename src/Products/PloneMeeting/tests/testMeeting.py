@@ -649,8 +649,8 @@ class testMeeting(PloneMeetingTestCase):
         newItem = self.create('MeetingItem')
         # use first privacy
         newItem.setPrivacy('secret')
-        # use last category
-        newItem.setCategory(item.listCategories().keys()[-1])
+        # use 'projects' category
+        newItem.setCategory('projects')
         self.presentItem(newItem)
         self.assertEquals([(item.getPrivacy(), item.getCategory()) for item in meeting.getItems(ordered=True)],
                           [('secret', 'development'),
