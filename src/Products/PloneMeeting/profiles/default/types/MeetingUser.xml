@@ -41,7 +41,7 @@
          condition_expr="python:1"
          icon_expr=""
          url_expr="string:$object_url/base_metadata"
-         visible="True">
+         visible="False">
   <permission value="Manage portal"/>
  </action>
  <action title="Edit"

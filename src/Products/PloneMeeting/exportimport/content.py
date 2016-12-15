@@ -135,6 +135,11 @@ class ToolInitializer:
         # they could have to be added in groups created by the MeetingConfig
         if not alreadyHaveGroups:
             self.tool.addUsersOutsideGroups(d.usersOutsideGroups)
+        # finally update MeetingUsers created if each MeetingConfig because
+        # title rely on Plone user that is often created in the usersOutsideGroups
+        for created_cfg in created_cfgs:
+            for mUser in created_cfg.meetingusers.objectValues('MeetingUser'):
+                mUser.at_post_edit_script()
         return self.successMessage
 
     def _finishConfigFor(self, cfg, data):

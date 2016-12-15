@@ -20,6 +20,7 @@ import interfaces
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 
 from zope.i18n import translate
+from plone import api
 from Products.CMFCore.utils import getToolByName
 from Products.Archetypes.atapi import AttributeStorage
 from Products.Archetypes.atapi import BaseContent
@@ -298,7 +299,8 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
     def updateMeetingUser(self):
         '''Updates this meeting user (local roles, title).'''
         # Updates the title
-        userInfo = self.portal_membership.getMemberById(self.id)
+        membershipTool = api.portal.get_tool('portal_membership')
+        userInfo = membershipTool.getMemberById(self.id)
         if userInfo and userInfo.getProperty('fullname'):
             title = userInfo.getProperty('fullname')
         else:
@@ -379,7 +381,8 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
 
     def isManager(self):
         '''Has logged user role Manager?'''
-        user = self.portal_membership.getAuthenticatedMember()
+        membershipTool = api.portal.get_tool('portal_membership')
+        user = membershipTool.getAuthenticatedMember()
         return user.has_role('Manager')
 
     def listAdviceStyles(self):
