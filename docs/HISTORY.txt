@@ -345,6 +345,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   for other fields (absents, excused)
 - Removed permissions "PloneMeeting: Read optional advisers" and "PloneMeeting: Write optional advisers", optional advisers will
   be editable by users able to edit the MeetingItem
+- If MeetingConfig.itemCreatedOnlyUsingTemplate is True and there is no available item template for current user,
+  the 'add item from a template' link is hidden, this way it makes it possible to restrict the addition of items in a MeetingConfig
 
 3.3 (2015-02-27)
 ----------------

@@ -4958,8 +4958,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             query['review_state'] = 'active'
         if filtered:
             tool = api.portal.get_tool('portal_plonemeeting')
-            membershipTool = api.portal.get_tool('portal_membership')
-            member = membershipTool.getAuthenticatedMember()
+            member = api.user.get_current()
             memberGroups = [group.getId() for group in
                             tool.getGroupsForUser(member.getId(), suffixes=['creators'])]
             query['templateUsingGroups'] = ('__nothing_selected__', '__folder_in_itemtemplates__', ) + \
