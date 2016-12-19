@@ -3365,7 +3365,7 @@ class testMeetingItem(PloneMeetingTestCase):
                           'itemKeywords', 'itemNumber', 'itemSignatories',
                           'itemSignatures', 'itemTags', 'listType', 'manuallyLinkedItems',
                           'meetingTransitionInsertingMe', 'inAndOutMoves', 'notes', 'observations',
-                          'predecessor', 'preferredMeeting', 'proposingGroup',
+                          'pollTypeObservations', 'predecessor', 'preferredMeeting', 'proposingGroup',
                           'questioners', 'takenOverBy', 'templateUsingGroups',
                           'toDiscuss', 'votesAreSecret', 'otherMeetingConfigsClonableToEmergency',
                           'internalNotes']
