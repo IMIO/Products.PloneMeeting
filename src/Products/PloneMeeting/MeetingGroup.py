@@ -382,28 +382,6 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
         member = api.user.get_current()
         return list(set(ploneGroups).intersection(set(member.getGroups())))
 
-    def _createOrUpdatePloneGroup(self, groupSuffix):
-        '''This will create the PloneGroup that corresponds to me
-           and p_groupSuffix, if group already exists, it will just update it's title.'''
-        groupId = self.getPloneGroupId(groupSuffix)
-        enc = self.portal_properties.site_properties.getProperty(
-            'default_charset')
-        groupTitle = '%s (%s)' % (
-            self.Title().decode(enc),
-            translate(groupSuffix, domain='PloneMeeting', context=self.REQUEST))
-        # a default Plone group title is NOT unicode.  If a Plone group title is
-        # edited TTW, his title is no more unicode if it was previously...
-        # make sure we behave like Plone...
-        groupTitle = groupTitle.encode(enc)
-        portal_groups = api.portal.get_tool('portal_groups')
-        group_created = portal_groups.addGroup(groupId, title=groupTitle)
-        if group_created:
-            portal_groups.setRolesForGroup(groupId, ('MeetingObserverGlobal',))
-        else:
-            # update the title so Plone groups title are coherent
-            # with MeetingGroup title in case it is updated thereafter
-            portal_groups.editGroup(groupId, title=groupTitle)
-
     def getOrder(self, associatedGroupIds=None, onlyActive=True):
         '''At what position am I among all the active groups ? If
            p_associatedGroupIds is not None or empty, this method must return
@@ -452,8 +430,7 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
                 raise PloneMeetingError("You can't create this MeetingGroup "
                                         "because a Plone groupe having id "
                                         "'%s' already exists." % groupId)
-        for groupSuffix in self.getAllSuffixes():
-            self._createOrUpdatePloneGroup(groupSuffix)
+        self._createPloneGroupForAllSuffixes()
         # clean cache for vocabularies using MeetingGroups
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary")
@@ -463,13 +440,39 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
     security.declarePrivate('at_post_edit_script')
 
     def at_post_edit_script(self):
-        for groupSuffix in self.getAllSuffixes():
-            self._createOrUpdatePloneGroup(groupSuffix)
+        self._createPloneGroupForAllSuffixes()
         # clean cache for vocabularies using MeetingGroups
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary")
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.askedadvicesvocabulary")
         self.adapted().onEdit(isCreated=False)
+
+    def _createPloneGroupForAllSuffixes(self):
+        """ """
+        for groupSuffix in self.getAllSuffixes():
+            self._createOrUpdatePloneGroup(groupSuffix)
+
+    def _createOrUpdatePloneGroup(self, groupSuffix):
+        '''This will create the PloneGroup that corresponds to me
+           and p_groupSuffix, if group already exists, it will just update it's title.'''
+        groupId = self.getPloneGroupId(groupSuffix)
+        enc = self.portal_properties.site_properties.getProperty(
+            'default_charset')
+        groupTitle = '%s (%s)' % (
+            self.Title().decode(enc),
+            translate(groupSuffix, domain='PloneMeeting', context=self.REQUEST))
+        # a default Plone group title is NOT unicode.  If a Plone group title is
+        # edited TTW, his title is no more unicode if it was previously...
+        # make sure we behave like Plone...
+        groupTitle = groupTitle.encode(enc)
+        portal_groups = api.portal.get_tool('portal_groups')
+        group_created = portal_groups.addGroup(groupId, title=groupTitle)
+        if group_created:
+            portal_groups.setRolesForGroup(groupId, ('MeetingObserverGlobal',))
+        else:
+            # update the title so Plone groups title are coherent
+            # with MeetingGroup title in case it is updated thereafter
+            portal_groups.editGroup(groupId, title=groupTitle)
 
     security.declarePublic('getSelf')
 

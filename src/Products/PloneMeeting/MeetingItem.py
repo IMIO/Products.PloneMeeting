@@ -1160,7 +1160,7 @@ schema = Schema((
     TextField(
         name='pollTypeObservations',
         widget=RichWidget(
-            label_msgid="PloneMeeting_pollTypeObservations",
+            label_msgid="PloneMeeting_label_pollTypeObservations",
             condition="python: here.attributeIsUsed('pollTypeObservations')",
             rows=20,
             label='Polltypeobservations',
