@@ -989,6 +989,10 @@ class Migrate_To_4_0(Migrator):
     def run(self):
         logger.info('Migrating to PloneMeeting 4.0...')
         # MIGRATION COMMON PARTS
+        # clean registries before reinstall because if a ressource if BrowserLayer aware
+        # as BrowserLayer is just installed, the REQUEST still not implements it and
+        # those resources are removed...  This is the case for collective.z3cform.select2
+        self.cleanRegistries()
         # reinstall so versions are correctly shown in portal_quickinstaller
         # and new stuffs are added (portal_catalog metadata especially, imio.history is installed)
         # reinstall PloneMeeting without dependencies, we want to reapply entire PM
@@ -1001,7 +1005,6 @@ class Migrate_To_4_0(Migrator):
                            ignore_dependencies=False,
                            dependency_strategy=DEPENDENCY_STRATEGY_REAPPLY)
         self.upgradeDependencies()
-        self.cleanRegistries()
         self.updateHolidays()
 
         # MIGRATION V4 SPECIFIC PARTS
