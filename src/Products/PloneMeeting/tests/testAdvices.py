@@ -428,7 +428,7 @@ class testAdvices(PloneMeetingTestCase):
         # now that the item is validated, editing it will invalidate advices
         self.failUnless(item.willInvalidateAdvices())
         # removing an annex will invalidate the advices
-        item.restrictedTraverse('@@delete_givenuid')(annex1.UID())
+        self.deleteAsManager(annex1.UID())
         self.failIf(item.hasAdvices())
         self.failIf(item.getGivenAdvices())
         # given the advice again so we can check other case where advices are invalidated
@@ -2123,7 +2123,7 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmReviewer2')
         notify(ObjectModifiedEvent(advice))
         self.changeUser('pmReviewer1')
-        item.restrictedTraverse('@@delete_givenuid')(annex.UID())
+        self.deleteAsManager(annex.UID())
         # advice was versioned again
         h_metadata = pr.getHistoryMetadata(advice)
         self.assertEquals(h_metadata._available, [0, 1, 2, 3])

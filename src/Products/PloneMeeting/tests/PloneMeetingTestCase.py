@@ -43,6 +43,7 @@ import Products.PloneMeeting
 #from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.config import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.config import MEETINGREVIEWERS
+from Products.PloneMeeting.config import TOOL_FOLDER_ANNEX_TYPES
 from Products.PloneMeeting.MeetingItem import MeetingItem_schema
 from Products.PloneMeeting.Meeting import Meeting_schema
 from Products.PloneMeeting.testing import PM_TESTING_PROFILE_FUNCTIONAL
@@ -334,6 +335,39 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         # if not done, accessing the blob will raise 'BlobError: Uncommitted changes'
         transaction.commit()
         return theAnnex
+
+    def addAnnexType(self,
+                     id,
+                     to_print=False,
+                     confidential=False,
+                     enabled=True,
+                     relatedTo='item'):
+        cfg = self.meetingConfig
+        folder = getattr(cfg, TOOL_FOLDER_ANNEX_TYPES)
+
+        portal_type = 'ContentCategory'
+        if relatedTo == 'item':
+            portal_type = 'ItemAnnexContentCategory'
+            categoryGroupId = 'item_annexes'
+        elif relatedTo == 'item_decision':
+            portal_type = 'ItemAnnexContentCategory'
+            categoryGroupId = 'item_decision_annexes'
+        elif relatedTo == 'advice':
+            categoryGroupId = 'advice_annexes'
+        elif relatedTo == 'meeting':
+            categoryGroupId = 'meeting_annexes'
+
+        annexType = api.content.create(
+            type=portal_type,
+            id=id,
+            title=id,
+            icon=self._annex_file_content(),
+            container=getattr(folder, categoryGroupId),
+            to_print=to_print,
+            confidential=confidential,
+            enabled=enabled
+        )
+        return annexType
 
     def deleteAsManager(self, uid):
         """When we want to remove an item the current user does not have permission to,
