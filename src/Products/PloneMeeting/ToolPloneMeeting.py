@@ -596,7 +596,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 errors.append("'%s': %s" % (field.getName(), error))
         if errors:
             raise PloneMeetingError(MEETING_CONFIG_ERROR % (cfg.getId(), '\n'.join(errors)))
-        # when the object is created through-the-web.
+
         if not configData.active:
             wfTool = api.portal.get_tool('portal_workflow')
             wfTool.doActionFor(cfg, 'deactivate')
@@ -626,6 +626,14 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         for userId in configData.meetingManagers:
             groupsTool.addPrincipalToGroup(userId, '{0}_{1}'.format(cfg.getId(),
                                                                     MEETINGMANAGERS_GROUP_SUFFIX))
+        # manage annex confidentiality, enable it on relevant CategoryGroup
+        if configData.itemAnnexConfidentialVisibleFor:
+            cfg.annexes_types.item_annexes.confidentiality_activated = True
+            cfg.annexes_types.item_decision_annexes.confidentiality_activated = True
+        if configData.adviceAnnexConfidentialVisibleFor:
+            cfg.annexes_types.advice_annexes.confidentiality_activated = True
+        if configData.meetingAnnexConfidentialVisibleFor:
+            cfg.annexes_types.meeting_annexes.confidentiality_activated = True
         return cfg
 
     security.declarePublic('createMeetingConfigFolder')
