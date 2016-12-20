@@ -610,7 +610,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # clean status message so we check that a new one is added
         del IAnnotations(self.request)['statusmessages']
         clonedItem = originalItem.clone(copyAnnexes=True)
-        # annexes were not kept
+        # annexes were kept
         self.assertEqual(len(get_annexes(clonedItem, portal_types=['annex'])), 2)
         self.assertEqual(len(get_annexes(clonedItem, portal_types=['annexDecision'])), 2)
 
