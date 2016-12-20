@@ -4457,6 +4457,28 @@ class testMeetingItem(PloneMeetingTestCase):
         annex = self.addAnnex(item, to_print=True)
         self.assertTrue(self.portal.portal_catalog(hasAnnexesToPrint='1', UID=item.UID()))
 
+    def test_pm_HideCssClasses(self):
+        """ """
+        self.changeUser('siteadmin')
+        cfg = self.meetingConfig
+        cfg.setHideCssClassesTo(('power_observers', ))
+        cfg.setItemPowerObserversStates(('itemcreated', ))
+        cfg.setItemRestrictedPowerObserversStates(('itemcreated', ))
+        self.assertTrue('highlight' in cfg.getCssClassesToHide().split('\n'))
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        TEXT = '<p>Text <span class="highlight">Highlighted text</span> some text</p>'
+        item.setDecision(TEXT)
+        # the creator will have the correct text
+        self.assertEqual(item.getDecision(), TEXT)
+        # a power observer will not get the classes
+        self.changeUser('powerobserver1')
+        self.assertEqual(item.getDecision(),
+                         '<p>Text <span>Highlighted text</span> some text</p>')
+        # a restricted power observer will get the classes
+        self.changeUser('restrictedpowerobserver1')
+        self.assertEqual(item.getDecision(), TEXT)
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

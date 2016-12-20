@@ -796,6 +796,38 @@ schema = Schema((
         schemata="data",
         write_permission="PloneMeeting: Write risky config",
     ),
+    TextField(
+        name='cssClassesToHide',
+        default=defValues.cssClassesToHide,
+        allowable_content_types=('text/plain',),
+        widget=TextAreaWidget(
+            description="CssClassesToHide",
+            description_msgid="css_classes_to_hide_descr",
+            label='Cssclassestohide',
+            label_msgid='PloneMeeting_label_cssClassesToHide',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="data",
+        default_content_type='text/plain',
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
+        name='hideCssClassesTo',
+        widget=MultiSelectionWidget(
+            description="HideCssClassesTo",
+            description_msgid="hide_css_classes_to_descr",
+            format="checkbox",
+            label='Hidecssclassesto',
+            label_msgid='PloneMeeting_label_hideCssClassesTo',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="data",
+        multiValued=1,
+        vocabulary='listHideCssClassesTo',
+        default=defValues.hideCssClassesTo,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
     StringField(
         name='itemWorkflow',
         widget=SelectionWidget(
@@ -3633,6 +3665,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                                      context=self.REQUEST)),
         ))
         return res
+
+    security.declarePrivate('listHideCssClassesTo')
+
+    def listHideCssClassesTo(self):
+        '''
+          Vocabulary for the 'hideCssClassesTo' field.
+        '''
+        return self.listAdviceConfidentialFor()
 
     security.declarePrivate('isVotable')
 

@@ -322,7 +322,7 @@ def _configureCKeditor(site):
                                context=site.REQUEST).encode('utf-8')
         menuStyles = unicode(
             "[\n{0}\n{{ name : '{1}'\t\t, element : 'span', attributes : {{ 'class' : 'highlight-red' }} }},\n"
-            "{{ name : '{2}'\t\t, element : 'span', styles : {{ 'background-color' : 'Yellow' }} }},\n"
+            "{{ name : '{2}'\t\t, element : 'span', attributes : {{ 'class' : 'highlight' }} }},\n"
             "{{ name : '{3}'\t\t, element : 'p', attributes : {{ 'class' : 'indent-firstline' }} }},\n]\n".
             format(CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG, msg_highlight_red, msg_highlight_yellow, msg_indent), enc)
         cke_props.menuStyles = menuStyles

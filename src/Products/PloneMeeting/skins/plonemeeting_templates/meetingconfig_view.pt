@@ -306,6 +306,16 @@
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <td></td>
+        </tr>
+        <tr valign="top">
+          <td tal:define="field python:here.getField('cssClassesToHide')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td tal:define="field python:here.getField('hideCssClassesTo')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td></td>
+        </tr>
       </table>
 
       <tal:comment replace="nothing">Annex types</tal:comment>

@@ -357,6 +357,8 @@ class MeetingConfigDescriptor(Descriptor):
         self.itemCreatedOnlyUsingTemplate = False
         self.annexToPrintMode = 'enabled_for_info'
         self.keepOriginalToPrintOfClonedItems = True
+        self.cssClassesToHide = 'highlight\nhighlight-red'
+        self.hideCssClassesTo = ()
 
         # Data-related parameters ----------------------------------------------
         # Some attributes on an item are optional. In the field

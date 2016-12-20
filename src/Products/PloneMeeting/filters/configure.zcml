@@ -1,0 +1,13 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:zcml="http://namespaces.zope.org/zcml"
+    xmlns:browser="http://namespaces.zope.org/browser">
+
+  <adapter
+    provides="plone.outputfilters.interfaces.IFilter"
+    name="highlight_remover"
+    for="* *"
+    factory=".remove_highlight.HighlightRemover"
+    />
+
+</configure>
