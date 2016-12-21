@@ -4484,6 +4484,13 @@ class testMeetingItem(PloneMeetingTestCase):
         logout()
         self.assertEqual(item.getDecision(), TEXT)
 
+        # nevertheless, if powerobserver1 may edit the item, he will see the classes
+        # add powerobserver1 to 'developers_creators' then check
+        self.portal.portal_groups.addPrincipalToGroup('powerobserver1', 'developers_creators')
+        self.changeUser('powerobserver1')
+        self.assertEqual(item.getProposingGroup(), 'developers')
+        self.assertEqual(item.getDecision(), TEXT)
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

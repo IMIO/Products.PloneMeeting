@@ -346,6 +346,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   for other fields (absents, excused)
 - Removed permissions "PloneMeeting: Read optional advisers" and "PloneMeeting: Write optional advisers", optional advisers will
   be editable by users able to edit the MeetingItem
+- Added fields MeetingConfig.cssClassesToHide and MeetingConfig.hideCssClassesTo that adds the possibility to no render some Css
+  classes of rich text content to (restricted) power observers profiles (except if this profile may edit the item)
 
 3.3 (2015-02-27)
 ----------------
