@@ -6,7 +6,8 @@
   <adapter
     provides="plone.outputfilters.interfaces.IFilter"
     name="highlight_remover"
-    for="* *"
+    for="Products.PloneMeeting.interfaces.IMeetingContent
+         *"
     factory=".remove_highlight.HighlightRemover"
     zcml:condition="installed Products.PloneMeeting" />
 
