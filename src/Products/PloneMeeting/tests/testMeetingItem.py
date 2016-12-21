@@ -40,6 +40,7 @@ from collective.iconifiedcategory.utils import get_categories
 from collective.iconifiedcategory.utils import get_category_object
 from collective.iconifiedcategory.utils import get_config_root
 from collective.iconifiedcategory.utils import get_group
+from plone.app.testing import logout
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 
@@ -4477,6 +4478,10 @@ class testMeetingItem(PloneMeetingTestCase):
                          '<p>Text <span>Highlighted text</span> some text</p>')
         # a restricted power observer will get the classes
         self.changeUser('restrictedpowerobserver1')
+        self.assertEqual(item.getDecision(), TEXT)
+
+        # test as Anonymous
+        logout()
         self.assertEqual(item.getDecision(), TEXT)
 
 

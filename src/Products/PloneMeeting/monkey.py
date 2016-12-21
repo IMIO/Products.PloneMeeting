@@ -21,7 +21,10 @@ def userAndGroupsAwarePortalTransformsCacheKey():
         from plone import api
         user = api.user.get_current()
         user_id = user.getId()
-        groups = user.getGroups()
+        groups = []
+        # user is not anonymous
+        if user_id:
+            groups = user.getGroups()
         key = '%s_%s_%s' % (key, user_id, '_'.join(groups))
         # XXX end of changes by PM
         if hasattr(aq_base(self.context), 'absolute_url'):
