@@ -20,7 +20,8 @@ class HighlightRemover(object):
         self.cfg = self.tool.getMeetingConfig(self.context)
 
     def is_enabled(self):
-        return bool(self.cfg.getCssClassesToHide() and self.cfg.getHideCssClassesTo()) and \
+        return bool(self.cfg) and \
+            bool(self.cfg.getCssClassesToHide() and self.cfg.getHideCssClassesTo()) and \
             not _checkPermission(ModifyPortalContent, self.context)
 
     def _hideCssClasses(self, hideCssClassesTo):

@@ -8,6 +8,6 @@
     name="highlight_remover"
     for="* *"
     factory=".remove_highlight.HighlightRemover"
-    />
+    zcml:condition="installed Products.PloneMeeting" />
 
 </configure>

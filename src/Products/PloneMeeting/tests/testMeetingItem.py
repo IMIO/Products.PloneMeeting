@@ -4491,6 +4491,12 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(item.getProposingGroup(), 'developers')
         self.assertEqual(item.getDecision(), TEXT)
 
+        # transforms still works outside the application, content is not influenced
+        self.changeUser('siteadmin')
+        self.portal.portal_setup.runAllImportStepsFromProfile('profile-Products.CMFPlone:plone-content')
+        frontpage = self.portal.get('front-page')
+        self.assertTrue(frontpage.getText())
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
