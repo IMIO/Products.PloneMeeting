@@ -2579,17 +2579,20 @@ class testAdvices(PloneMeetingTestCase):
         cfg.setItemRestrictedPowerObserversStates(('itemcreated', ))
 
         self.changeUser('powerobserver1')
-        advicesIconsView = item2.restrictedTraverse('advices-icons')
+        advicesIconsViewItem1 = item1.restrictedTraverse('advices-icons')
+        advicesIconsViewItem2 = item2.restrictedTraverse('advices-icons')
         # shown on the advices-icons
-        self.assertTrue(advicesIconsView.showLinkToInherited(item1))
-        self.assertTrue('data-advice_id' in advicesIconsView())
+        self.assertTrue(advicesIconsViewItem2.showLinkToInherited(True, item1))
+        self.assertTrue('data-advice_id' in advicesIconsViewItem2())
+        # not for adviceHolder
+        self.assertFalse('data-advice_id' in advicesIconsViewItem1())
 
         # do item1 no more visible
         self.proposeItem(item1)
         self.assertFalse(self.hasPermission(View, item1))
         # not more shown on the advices-icons
-        self.assertFalse(advicesIconsView.showLinkToInherited(item1))
-        self.assertFalse('data-advice_id' in advicesIconsView())
+        self.assertFalse(advicesIconsViewItem2.showLinkToInherited(True, item1))
+        self.assertFalse('data-advice_id' in advicesIconsViewItem2())
 
 
 def test_suite():

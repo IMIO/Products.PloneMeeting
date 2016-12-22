@@ -112,9 +112,9 @@ class AdvicesIcons(BrowserView):
                 res.append(advice_portal_type)
         return res
 
-    def showLinkToInherited(self, adviceHolder):
+    def showLinkToInherited(self, adviceIsInherited, adviceHolder):
         """ """
-        return self.context._appendLinkedItem(adviceHolder, only_viewable=True)
+        return bool(adviceIsInherited and self.context._appendLinkedItem(adviceHolder, only_viewable=True))
 
 
 class ChangeAdviceHiddenDuringRedactionView(BrowserView):

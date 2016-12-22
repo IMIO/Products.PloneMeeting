@@ -100,16 +100,21 @@
                               </tal:showDelayLabel><span tal:condition="advice/optional">)</span>
                          </div>
                          <div class="advice_popup_actions">
-                            &nbsp;&nbsp;<acronym style="margin-right: 2px;">
-                                <a href=""
-                                   tal:attributes="href string:${view/portal_url}/@@display-group-users?group_id=${advice/id}_advisers"
-                                   class="link-tooltip"
-                                   style="display: inline; padding: 0;"
-                                   onclick="event.preventDefault();">
-                                    <img src="group_users.png" tal:attributes="src string:${view/portal_url}/group_users.png">
-                                </a>
+                            &nbsp;&nbsp;
+                            <acronym>
+                               <a class="tooltipster-group-users deactivated"
+                                  title="View users of the group"
+                                  i18n:domain="PloneMeeting"
+                                  i18n:attributes="title"
+                                  style="display: inline-block; padding: 0"
+                                  href="#"
+                                  onclick="event.preventDefault()"
+                                  tal:attributes="data-group_id string:${advice/id}_advisers;
+                                                  data-base_url string:${view/portal_url}">
+                                <img src="group_users.png" tal:attributes="src string:${view/portal_url}/group_users.png"/>
+                               </a>
                             </acronym>
-                            <acronym tal:condition="python: view.showLinkToInherited(adviceHolder)">
+                            <acronym tal:condition="python: view.showLinkToInherited(adviceIsInherited, adviceHolder)">
                                <a class="tooltipster-inherited-advice deactivated"
                                   title="Advice inherited from another item"
                                   i18n:domain="PloneMeeting"
