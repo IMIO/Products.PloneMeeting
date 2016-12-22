@@ -4357,7 +4357,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
             # compute and store delay_infos
             if self.adviceIsInherited(groupId):
-                adviceHolder = self.getInheritedAdviceInfo(groupId)['adviceHolder']
+                # if we are removing the predecessor, advice is inherited but
+                # the predecessor is not available anymore, double check
+                inheritedAdviceInfos = self.getInheritedAdviceInfo(groupId)
+                adviceHolder = inheritedAdviceInfos and inheritedAdviceInfos['adviceHolder'] or self
             else:
                 adviceHolder = self
             self.adviceIndex[groupId]['delay_infos'] = adviceHolder.getDelayInfosForAdvice(groupId)

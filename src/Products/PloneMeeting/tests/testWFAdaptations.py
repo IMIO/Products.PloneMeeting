@@ -1941,9 +1941,10 @@ class testWFAdaptations(PloneMeetingTestCase):
         # optional and automatic given advices were inherited
         self.assertTrue(clonedItem.adviceIsInherited('vendors'))
         self.assertTrue(clonedItem.adviceIsInherited('developers'))
-        # optional and automatic advices that were not given and power adviser advice is not inherited
-        self.assertFalse(clonedItem.adviceIsInherited('group1'))
-        self.assertFalse(clonedItem.adviceIsInherited('group2'))
+        # optional and automatic advices that were not given are inherited
+        # but not the power adviser advice
+        self.assertTrue(clonedItem.adviceIsInherited('group1'))
+        self.assertTrue(clonedItem.adviceIsInherited('group2'))
         self.assertFalse(clonedItem.adviceIsInherited('poweradvisers'))
 
     def test_pm_WFA_postpone_next_meeting_advices_inherited(self):

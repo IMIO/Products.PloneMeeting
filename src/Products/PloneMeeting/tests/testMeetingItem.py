@@ -1299,9 +1299,10 @@ class testMeetingItem(PloneMeetingTestCase):
         clonedItem = item.clone(setCurrentAsPredecessor=True, inheritAdvices=True)
         self.assertTrue(clonedItem.adviceIsInherited('vendors'))
         self.assertTrue(clonedItem.adviceIsInherited('developers'))
-        # optional and automatic advices that were not given and power adviser advice is not inherited
-        self.assertFalse(clonedItem.adviceIsInherited('group1'))
-        self.assertFalse(clonedItem.adviceIsInherited('group2'))
+        # optional and automatic advices that were not given are inherited
+        # but not the power adviser advice
+        self.assertTrue(clonedItem.adviceIsInherited('group1'))
+        self.assertTrue(clonedItem.adviceIsInherited('group2'))
         self.assertFalse(clonedItem.adviceIsInherited('poweradvisers'))
 
     def test_pm_AddAutoCopyGroups(self):
