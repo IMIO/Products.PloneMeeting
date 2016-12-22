@@ -1040,6 +1040,11 @@
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
         </tr>
+        <tr>
+          <td tal:define="field python:here.getField('hideNotViewableLinkedItemsTo')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+        </tr>
       </table>
     </tal:advices>
 

@@ -1,0 +1,3 @@
+<div id="content" i18n:domain="PloneMeeting">
+    <span i18n:translate="">This advice is inherited from <span i18n:name="linkToItem" tal:replace="structure python: view.adviceHolder.getPrettyLink(**{'maxLength': 120})">Link to advice holder cropped...</span></span>
+</div>

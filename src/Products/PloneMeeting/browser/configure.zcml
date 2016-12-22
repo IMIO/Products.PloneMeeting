@@ -185,6 +185,13 @@
       permission="zope2.View"
       />
     <browser:page
+      for="Products.PloneMeeting.interfaces.IMeetingItem"
+      name="display-inherited-item-infos"
+      template="templates/display_inherited_advice_item_infos.pt"
+      class=".views.DisplayInheritedAdviceItemInfos"
+      permission="zope2.View"
+      />
+    <browser:page
       for="Products.PloneMeeting.interfaces.IMeetingContent"
       name="display-annexes"
       template="templates/display_annexes.pt"

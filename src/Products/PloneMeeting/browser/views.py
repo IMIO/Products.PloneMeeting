@@ -797,6 +797,25 @@ class DisplayGroupUsersView(BrowserView):
         return "<br />".join(res)
 
 
+class DisplayInheritedAdviceItemInfos(BrowserView):
+    """
+      View that display the users of a Plone group.
+    """
+
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+
+    def __call__(self, advice_id):
+        """ """
+        self.advice_id = advice_id
+        return self.index()
+
+    @property
+    def adviceHolder(self):
+        return self.context.getInheritedAdviceInfo(self.advice_id)['adviceHolder']
+
+
 class DisplayAnnexesView(BrowserView):
     """ """
     def __init__(self, context, request):

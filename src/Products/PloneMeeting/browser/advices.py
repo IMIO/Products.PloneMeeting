@@ -46,7 +46,7 @@ class AdvicesIcons(BrowserView):
 
     def __call__(self):
         if not self.context.adapted().isPrivacyViewable():
-            return '<div style="display: inline">&nbsp;&nbsp;&nbsp;-&nbsp;&nbsp;&nbsp;</div>'
+            return '<div style="display: inline">&nbsp;-&nbsp;&nbsp;&nbsp;</div>'
         return super(AdvicesIcons, self).__call__()
 
     def advicesDelayToWarn(self, advicesByType, userAdviserGroupIds):
@@ -111,6 +111,10 @@ class AdvicesIcons(BrowserView):
             if not advice_portal_type in res:
                 res.append(advice_portal_type)
         return res
+
+    def showLinkToInherited(self, adviceHolder):
+        """ """
+        return self.context._appendLinkedItem(adviceHolder, only_viewable=True)
 
 
 class ChangeAdviceHiddenDuringRedactionView(BrowserView):

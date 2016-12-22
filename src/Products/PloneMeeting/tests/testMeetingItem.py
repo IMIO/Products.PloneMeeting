@@ -4497,6 +4497,35 @@ class testMeetingItem(PloneMeetingTestCase):
         frontpage = self.portal.get('front-page')
         self.assertTrue(frontpage.getText())
 
+    def test_pm_HideNotViewableLinkedItemsTo(self):
+        """Linked items (manually or automatically) may be hidden
+           to (restricted) power observers if defined in the MeetingConfig."""
+        self.changeUser('siteadmin')
+        cfg = self.meetingConfig
+        cfg.setHideNotViewableLinkedItemsTo(('power_observers', ))
+        cfg.setItemPowerObserversStates(('itemcreated', ))
+        cfg.setItemRestrictedPowerObserversStates(('itemcreated', ))
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        itemLinkedManually = self.create('MeetingItem')
+        item.setManuallyLinkedItems([itemLinkedManually.UID()])
+        itemLinkedAuto = self.create('MeetingItem')
+        item.setPredecessor(itemLinkedAuto)
+        # items are viewable by powerobserver1 in the 'itemcreated' state
+        self.changeUser('powerobserver1')
+        self.assertEqual(item.getManuallyLinkedItems(), [itemLinkedManually])
+        self.assertEqual(item.getManuallyLinkedItems(only_viewable=True), [itemLinkedManually])
+        self.assertEqual(item.getPredecessors(), [itemLinkedAuto])
+        self.assertEqual(item.getPredecessors(only_viewable=True), [itemLinkedAuto])
+        # make linked items no more viewable by powerobserver1
+        self.proposeItem(itemLinkedManually)
+        self.proposeItem(itemLinkedAuto)
+        self.assertFalse(self.hasPermission(View, [itemLinkedManually, itemLinkedAuto]))
+        self.assertEqual(item.getManuallyLinkedItems(), [itemLinkedManually])
+        self.assertEqual(item.getManuallyLinkedItems(only_viewable=True), [])
+        self.assertEqual(item.getPredecessors(), [itemLinkedAuto])
+        self.assertEqual(item.getPredecessors(only_viewable=True), [])
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

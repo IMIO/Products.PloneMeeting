@@ -135,7 +135,7 @@ ADVICE_AVAILABLE_ON_CONDITION_ERROR = 'There was an error in the TAL expression 
     'defined in the \'Available on\' column of the MeetingConfig.customAdvisers. ' \
     'Please check this in your meeting config. %s'
 AS_COPYGROUP_CONDITION_ERROR = 'There was an error in the TAL expression ' \
-    'defining if the group must be set as copyGroup. ' \
+    'defining if the group must be set as copyGroup for group "%s". ' \
     'Please check this in your meeting config. %s'
 AS_COPYGROUP_RES_ERROR = 'While setting automatically added copyGroups, the Plone group suffix \'%s\' ' \
                          'returned by the expression on MeetingGroup \'%s\' does not exist.'
@@ -1989,6 +1989,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         self.getField('manuallyLinkedItems').set(self, valueToStore, **kwargs)
 
+    security.declareProtected('View', 'getManuallyLinkedItems')
+
+    def getManuallyLinkedItems(self, only_viewable=False, **kwargs):
+        '''Overrides the field 'manuallyLinkedItems' accessor to be able
+           to return only items for that are viewable by current user.'''
+        linkedItems = self.getField('manuallyLinkedItems').get(self, **kwargs)
+        linkedItems = [linkedItem for linkedItem in linkedItems if
+                       self._appendLinkedItem(linkedItem, only_viewable=only_viewable)]
+        return linkedItems
+
     security.declarePublic('onDiscussChanged')
 
     def onDiscussChanged(self, toDiscuss):
@@ -3346,7 +3356,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     autoPloneGroupId = '{0}{1}'.format(AUTO_COPY_GROUP_PREFIX, ploneGroupId)
                     self.autoCopyGroups.append(autoPloneGroupId)
             except Exception, e:
-                logger.warning(AS_COPYGROUP_CONDITION_ERROR % str(e))
+                logger.warning(AS_COPYGROUP_CONDITION_ERROR % (mGroup.getId(), str(e)))
 
     def _optionalDelayAwareAdvisers(self):
         '''Returns the 'delay-aware' advisers.
@@ -3667,9 +3677,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def couldInheritAdvice(self, adviserId, dry_run=False):
         """For given p_adivserId, could it be set to 'inherited'?
-           Not possible if advice already given or no given advice to inherit from."""
-        if (self.adviceIndex.get(adviserId) and self.adviceIndex[adviserId]['type'] != NOT_GIVEN_ADVICE_VALUE) or \
-           not self.getInheritedAdviceInfo(adviserId, checkIsInherited=False):
+           Not possible if advice already given."""
+        if not self.getInheritedAdviceInfo(adviserId, checkIsInherited=False):
             return False
         return True
 
@@ -3688,9 +3697,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         while (predecessor and predecessor.adviceIndex[adviserId]['inherited']):
             predecessor = predecessor.getPredecessor()
             inheritedAdviceInfo = predecessor.adviceIndex.get(adviserId).copy()
-        if inheritedAdviceInfo.get('type', NOT_GIVEN_ADVICE_VALUE) != NOT_GIVEN_ADVICE_VALUE:
-            res = inheritedAdviceInfo
-            res['adviceHolder'] = predecessor
+
+        res = inheritedAdviceInfo
+        res['adviceHolder'] = predecessor
         return res
 
     security.declarePublic('getGivenAdvices')
@@ -4012,7 +4021,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            to be given, a key is removed for every advice that does not need to
            be given anymore. If p_invalidate = True, it means that advice
            invalidation is enabled and someone has modified the item: it means
-           that all advices must be NOT_GIVEN_ADVICE_VALUE again.
+           that all advices will be NOT_GIVEN_ADVICE_VALUE again.
            If p_triggered_by_transition is given, we know that the advices are
            updated because of a workflow transition, we receive the transition name.
            WARNING : this method is a sub-method of self.updateLocalRoles and is not supposed
@@ -4239,7 +4248,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Then, add local roles regarding asked advices
         wfTool = api.portal.get_tool('portal_workflow')
         for groupId in self.adviceIndex.iterkeys():
-            # bypass if advice is inherited
             mGroup = getattr(tool, groupId)
             itemAdviceStates = mGroup.getItemAdviceStates(cfg)
             itemAdviceEditStates = mGroup.getItemAdviceEditStates(cfg)
@@ -4346,8 +4354,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                             saved_stored_data[groupId]['delay_stopped_on']):
                     self.adviceIndex[groupId]['delay_stopped_on'] = datetime.now()
 
-                # compute and store delay_infos
-                self.adviceIndex[groupId]['delay_infos'] = self.getDelayInfosForAdvice(groupId)
+            # compute and store delay_infos
+            if self.adviceIsInherited(groupId):
+                adviceHolder = self.getInheritedAdviceInfo(groupId)['adviceHolder']
+            else:
+                adviceHolder = self
+            self.adviceIndex[groupId]['delay_infos'] = adviceHolder.getDelayInfosForAdvice(groupId)
 
         # notify that advices have been updated so subproducts
         # may interact if necessary
@@ -5359,25 +5371,45 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return self.getMeeting().getAssembly()
         return ''
 
+    def _appendLinkedItem(self, item, only_viewable):
+        if not only_viewable:
+            return True
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        hideNotViewableLinkedItemsTo = cfg.getHideNotViewableLinkedItemsTo()
+        needCheckIsPowerObserver = needCheckIsRestrictedPowerObserver = False
+        needCheckIsPowerObserver = 'power_observers' in hideNotViewableLinkedItemsTo and \
+            tool.isPowerObserverForCfg(cfg)
+        needCheckIsRestrictedPowerObserver = 'restricted_power_observers' in hideNotViewableLinkedItemsTo and \
+            tool.isPowerObserverForCfg(cfg, isRestricted=True)
+        if (not needCheckIsPowerObserver and not needCheckIsRestrictedPowerObserver) or \
+           ((needCheckIsPowerObserver or needCheckIsRestrictedPowerObserver) and _checkPermission(View, item)):
+            return True
+        return False
+
     security.declarePublic('getPredecessors')
 
-    def getPredecessors(self):
+    def getPredecessors(self, only_viewable=False):
         '''Returns the list of dict that contains infos about a predecessor.
            This method can be adapted.'''
         item = self.getSelf()
+
         predecessor = item.getPredecessor()
         predecessors = []
         # retrieve every predecessors
         while predecessor:
-            predecessors.append(predecessor)
+            if item._appendLinkedItem(predecessor, only_viewable=only_viewable):
+                predecessors.append(predecessor)
             predecessor = predecessor.getPredecessor()
         # keep order
         predecessors.reverse()
         # retrieve backrefs too
         brefs = item.getBRefs('ItemPredecessor')
+        brefs = [bref for bref in brefs if item._appendLinkedItem(bref, only_viewable)]
         while brefs:
             predecessors = predecessors + brefs
             brefs = brefs[0].getBRefs('ItemPredecessor')
+            brefs = [bref for bref in brefs if item._appendLinkedItem(bref, only_viewable)]
         return predecessors
 
     security.declarePublic('displayLinkedItem')

@@ -2397,9 +2397,14 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmAdviser1')
         self.assertTrue(self.hasPermission(View, item1))
         self.assertTrue(self.hasPermission(View, item2))
+        # advices-icons view is correctly displayed
+        self.assertTrue(item1.restrictedTraverse('advices-icons')())
+        self.assertTrue(item2.restrictedTraverse('advices-icons')())
         self.changeUser('pmReviewer2')
         self.assertTrue(self.hasPermission(View, item1))
         self.assertTrue(self.hasPermission(View, item2))
+        self.assertTrue(item1.restrictedTraverse('advices-icons')())
+        self.assertTrue(item2.restrictedTraverse('advices-icons')())
 
         # not addable
         self.assertFalse(item2.adviceIndex['vendors']['advice_addable'])
@@ -2465,37 +2470,44 @@ class testAdvices(PloneMeetingTestCase):
         self.assertIsNone(item1WithoutAdvice.getInheritedAdviceInfo('developers'))
 
         # predecessor does not have given advices
+        # but a not given advice is also inherited and may no more be given on new item
         item2WithAdvices = item1WithoutAdvice.clone(setCurrentAsPredecessor=True, inheritAdvices=True)
         self.changeUser('pmReviewer2')
-        createContentInContainer(item2WithAdvices,
+        # may not add advice on item2WithAdvices
+        self.assertFalse(item2WithAdvices.adviceIndex['developers']['advice_addable'])
+        self.assertFalse(item2WithAdvices.adviceIndex['vendors']['advice_addable'])
+        # add 'vendors' advice on item1WithoutAdvice
+        createContentInContainer(item1WithoutAdvice,
                                  'meetingadvice',
                                  **{'advice_group': 'vendors',
                                     'advice_type': u'positive',
                                     'advice_hide_during_redaction': False,
                                     'advice_comment': RichTextValue(u'My comment')})
-        self.assertIsNone(item2WithAdvices.getInheritedAdviceInfo('vendors'))
-        self.assertIsNone(item2WithAdvices.getInheritedAdviceInfo('developers'))
+        self.assertTrue(item2WithAdvices.getInheritedAdviceInfo('vendors'))
+        self.assertTrue(item2WithAdvices.getInheritedAdviceInfo('developers'))
 
         # direct predecessor holds advices
         self.changeUser('pmCreator1')
         item3DirectPredecessor = item2WithAdvices.clone(setCurrentAsPredecessor=True, inheritAdvices=True)
         # we get adviceInfos + 'adviceHolder'
         inheritedItem3AdviceInfos = item3DirectPredecessor.getInheritedAdviceInfo('vendors')
-        self.assertEqual(inheritedItem3AdviceInfos['adviceHolder'], item2WithAdvices)
+        self.assertEqual(inheritedItem3AdviceInfos['adviceHolder'], item1WithoutAdvice)
         inheritedItem3AdviceInfos.pop('adviceHolder')
-        self.assertEqual(inheritedItem3AdviceInfos, item2WithAdvices.adviceIndex['vendors'])
-        # nothing for 'developers'
-        self.assertIsNone(item3DirectPredecessor.getInheritedAdviceInfo('developers'))
+        self.assertEqual(inheritedItem3AdviceInfos, item1WithoutAdvice.adviceIndex['vendors'])
 
         # now tries with a chain of predecessors, new item predecessor holding advice
         # is not the direct predecessor, we have one item in between
         item4ChainedPredecessor = item3DirectPredecessor.clone(setCurrentAsPredecessor=True, inheritAdvices=True)
-        inheritedItem4AdviceInfos = item4ChainedPredecessor.getInheritedAdviceInfo('vendors')
-        self.assertEqual(inheritedItem4AdviceInfos['adviceHolder'], item2WithAdvices)
-        inheritedItem4AdviceInfos.pop('adviceHolder')
-        self.assertEqual(inheritedItem4AdviceInfos, item2WithAdvices.adviceIndex['vendors'])
-        # nothing for 'developers'
-        self.assertIsNone(item4ChainedPredecessor.getInheritedAdviceInfo('developers'))
+        # vendors
+        inheritedItem4VendorsAdviceInfos = item4ChainedPredecessor.getInheritedAdviceInfo('vendors')
+        self.assertEqual(inheritedItem4VendorsAdviceInfos['adviceHolder'], item1WithoutAdvice)
+        inheritedItem4VendorsAdviceInfos.pop('adviceHolder')
+        self.assertEqual(inheritedItem4VendorsAdviceInfos, item1WithoutAdvice.adviceIndex['vendors'])
+        # developers
+        inheritedItem4DevAdviceInfos = item4ChainedPredecessor.getInheritedAdviceInfo('developers')
+        self.assertEqual(inheritedItem4DevAdviceInfos['adviceHolder'], item1WithoutAdvice)
+        inheritedItem4DevAdviceInfos.pop('adviceHolder')
+        self.assertEqual(inheritedItem4DevAdviceInfos, item1WithoutAdvice.adviceIndex['developers'])
 
     def test_pm_InheritedAdviceStoppedWhenInheritedAdviceRemoved(self):
         '''When advices are inherited, it is only valid as long as the original
@@ -2521,24 +2533,34 @@ class testAdvices(PloneMeetingTestCase):
         self.portal.restrictedTraverse('@@delete_givenuid')(item2.UID())
         self.assertFalse(item3.adviceIndex['vendors']['inherited'])
         self.assertFalse(item3.adviceIndex['developers']['inherited'])
+        # advices-icons view is correctly displayed
+        self.assertTrue(item3.restrictedTraverse('advices-icons')())
+
         # recomputed, advice is addable, ...
         self.assertTrue(item3.adviceIndex['vendors']['advice_addable'])
         self.assertTrue(item3.adviceIndex['developers']['advice_addable'])
+        self.assertTrue(item3.restrictedTraverse('advices-icons')())
         # but still ok for item1b, item1b2 and item1c
         self.assertTrue(item1b.adviceIndex['vendors']['inherited'])
         self.assertTrue(item1b.adviceIndex['developers']['inherited'])
+        self.assertTrue(item1b.restrictedTraverse('advices-icons')())
         self.assertTrue(item1b2.adviceIndex['vendors']['inherited'])
         self.assertTrue(item1b2.adviceIndex['developers']['inherited'])
+        self.assertTrue(item1b2.restrictedTraverse('advices-icons')())
         self.assertTrue(item1c.adviceIndex['vendors']['inherited'])
         self.assertTrue(item1c.adviceIndex['developers']['inherited'])
+        self.assertTrue(item1c.restrictedTraverse('advices-icons')())
 
         # remove 'vendors' advice of item1, this time item1b, item1b2 and item1c are updated
         # it will no longer inherits from item1
         self.changeUser('pmReviewer2')
         self.portal.restrictedTraverse('@@delete_givenuid')(item1.getAdviceObj('vendors').UID())
         self.assertFalse(item1b.adviceIndex['vendors']['inherited'])
+        self.assertTrue(item1b.restrictedTraverse('advices-icons')())
         self.assertFalse(item1b2.adviceIndex['vendors']['inherited'])
+        self.assertTrue(item1b2.restrictedTraverse('advices-icons')())
         self.assertFalse(item1c.adviceIndex['vendors']['inherited'])
+        self.assertTrue(item1c.restrictedTraverse('advices-icons')())
         # still ok for 'developers' advice
         self.assertTrue(item1b.adviceIndex['developers']['inherited'])
         self.assertTrue(item1b2.adviceIndex['developers']['inherited'])
@@ -2547,6 +2569,27 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(item1b.adviceIndex['vendors']['advice_addable'])
         self.assertTrue(item1b2.adviceIndex['vendors']['advice_addable'])
         self.assertTrue(item1c.adviceIndex['vendors']['advice_addable'])
+
+    def test_pm_InheritedWithHideNotViewableLinkedItemsTo(self):
+        '''Access to inherited item is taking into account MeetingConfig.hideNotViewableLinkedItemsTo.'''
+        item1, item2, vendors_advices, developers_advice = self._setupInheritedAdvice()
+        cfg = self.meetingConfig
+        cfg.setHideNotViewableLinkedItemsTo(('power_observers', ))
+        cfg.setItemPowerObserversStates(('itemcreated', ))
+        cfg.setItemRestrictedPowerObserversStates(('itemcreated', ))
+
+        self.changeUser('powerobserver1')
+        advicesIconsView = item2.restrictedTraverse('advices-icons')
+        # shown on the advices-icons
+        self.assertTrue(advicesIconsView.showLinkToInherited(item1))
+        self.assertTrue('data-advice_id' in advicesIconsView())
+
+        # do item1 no more visible
+        self.proposeItem(item1)
+        self.assertFalse(self.hasPermission(View, item1))
+        # not more shown on the advices-icons
+        self.assertFalse(advicesIconsView.showLinkToInherited(item1))
+        self.assertFalse('data-advice_id' in advicesIconsView())
 
 
 def test_suite():

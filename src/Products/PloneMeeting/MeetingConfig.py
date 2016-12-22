@@ -1917,6 +1917,23 @@ schema = Schema((
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
+        name='hideNotViewableLinkedItemsTo',
+        widget=MultiSelectionWidget(
+            description="HideNotViewableLinkedItemsTo",
+            description_msgid="hide_not_viewable_linked_items_to_descr",
+            format="checkbox",
+            label='Hidenotviewablelinkeditemsto',
+            label_msgid='PloneMeeting_label_hideNotViewableLinkedItemsTo',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        multiValued=1,
+        vocabulary='listHideNotViewableLinkedItemsTo',
+        default=defValues.hideNotViewableLinkedItemsTo,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
         name='usedPollTypes',
         widget=MultiSelectionWidget(
             description="UsedPollTypes",
@@ -3671,6 +3688,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def listHideCssClassesTo(self):
         '''
           Vocabulary for the 'hideCssClassesTo' field.
+        '''
+        return self.listAdviceConfidentialFor()
+
+    security.declarePrivate('listHideNotViewableLinkedItemsTo')
+
+    def listHideNotViewableLinkedItemsTo(self):
+        '''
+          Vocabulary for the 'hideNotViewableLinkedItemsTo' field.
         '''
         return self.listAdviceConfidentialFor()
 

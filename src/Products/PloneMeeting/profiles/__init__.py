@@ -428,6 +428,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.enableAdviceConfidentiality = False
         self.adviceConfidentialityDefault = False
         self.adviceConfidentialFor = ()
+        self.hideNotViewableLinkedItemsTo = ()
         # List of other meetingConfigs, item of this meetingConfig
         # will be clonable to
         self.meetingConfigsToCloneTo = []

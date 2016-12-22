@@ -476,7 +476,7 @@ body.template-meetingitem_view td.itemAnnexesCell dd.actionMenuContentAX {
 }
 
 .actionMenuContentAdvice {
-    width: 600px;
+    width: 700px;
 }
 
 /* annexes displayed in the annexes_form (table of annexes) */
@@ -1396,7 +1396,7 @@ table.configActions td {
 div.advice_popup_label {
     display: inline-block;
     vertical-align: middle;
-    max-width: 365px;
+    max-width: 500px;
 }
 div.advice_popup_actions {
     float: right;

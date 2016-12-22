@@ -324,7 +324,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   The value 'mayEdit' has been added to the available variables in the expression and is True if current user may edit the item
 - Added optional field Meeting.approvalDate made to encode the date the current meeting was approved
 - Added workflowAdaptation 'postpone_next_meeting', it adds a decided state 'postponed_next_meeting' (based on the already existing
-  state 'delayed') and additionally it will duplicate the item and automatically set the new item to "validated", moreover advices or
+  state 'delayed') and additionally it will duplicate the item and automatically set the new item to "validated", moreover advices of
   original item are inherited
 - Added workflowAdaptation 'mark_not_applicable', it adds a decided state 'marked_not_applicable' to the item (based on the already existing
   state 'delayed')
@@ -348,6 +348,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   be editable by users able to edit the MeetingItem
 - Added fields MeetingConfig.cssClassesToHide and MeetingConfig.hideCssClassesTo that adds the possibility to no render some Css
   classes of rich text content to (restricted) power observers profiles (except if this profile may edit the item)
+- Added field MeetingConfig.hideNotViewableLinkedItemsTo, it allows to hide linked items the selected profiles are not able to view
+  instead showing it and displaying the warning "You have not access to this element".  Linked items are not shown at all,
+  this is the case also for inherited advices for which the icon "Item inherited from another item" is not shown
 
 3.3 (2015-02-27)
 ----------------

@@ -100,6 +100,7 @@ jQuery(document).ready(function($) {
     // advice popups
     adviceAddEdit();
     advicePreview();
+    inheritedItemInfos();
 
     jQuery(function($){
         // Every common overelays, must stay at the bottom of every defined overlays!!!
@@ -122,6 +123,7 @@ function initializePMOverlays(){
     // advice popups
     adviceAddEdit();
     advicePreview();
+    inheritedItemInfos();
 
     jQuery(function($) {
         // Content history popup
@@ -194,3 +196,45 @@ jQuery(function($) {
         }
   });
 });
+
+function inheritedItemInfos() {
+    jQuery(function($){
+
+    $('.tooltipster-inherited-advice').tooltipster({
+    
+        contentAsHTML: true,
+        interactive: true,
+        position: 'top-left',
+        theme: 'tooltipster-shadow',
+        position: 'bottom',
+        speed: 100,
+        delay: 0,
+        animation: 'fade',
+        trigger: 'hover',    
+        
+        functionBefore: function (origin, helper) {
+            helper();
+            if (origin.data('loaded') !== true) {
+                var advice_id = $(origin).attr('data-advice_id');
+                var base_url = $(origin).attr('data-base_url');
+                
+                $.ajax({
+                    type: 'GET',
+                    url: base_url + '/@@display-inherited-item-infos',
+                    data: {
+                        html: 'An error occured...',
+                        advice_id: advice_id,
+                        ajax_load: new Date().getTime(),
+                    },
+                    success: function (data) {
+                        origin.tooltipster('update', data).data('ajax ', 'cached');
+                        origin.data('loaded', true);
+                    }
+                });
+    
+            }
+        }
+    });
+
+})
+};

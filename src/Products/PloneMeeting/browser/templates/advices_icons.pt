@@ -109,6 +109,19 @@
                                     <img src="group_users.png" tal:attributes="src string:${view/portal_url}/group_users.png">
                                 </a>
                             </acronym>
+                            <acronym tal:condition="python: view.showLinkToInherited(adviceHolder)">
+                               <a class="tooltipster-inherited-advice deactivated"
+                                  title="Advice inherited from another item"
+                                  i18n:domain="PloneMeeting"
+                                  i18n:attributes="title"
+                                  style="display: inline-block; padding: 0"
+                                  href="#"
+                                  onclick="event.preventDefault()"
+                                  tal:attributes="data-advice_id string:${advice/id};
+                                                  data-base_url string:${item_url}">
+                                <img src="advice_inherited.png" tal:attributes="src string:${view/portal_url}/advice_inherited.png"/>
+                               </a>
+                            </acronym>
                             <acronym tal:attributes="title python: context.getAdviceHelpMessageFor(**advice)"><img tal:attributes="src string:${view/portal_url}/help.png;"/></acronym>
                             <tal:confidentiality condition="displayAdviceConfidentiality" replace="structure python: context.restrictedTraverse('@@advice-confidentiality')(advice)" />
                             <acronym tal:condition="python: obj and context.adapted().mayAskAdviceAgain(obj)">
@@ -138,7 +151,8 @@
                                   tal:attributes="href string:${obj_absolute_url}/@@historyview">
                                    <img src="++resource++imio.actionspanel/history.gif"
                                         tal:attributes="src string:${view/portal_url}/++resource++imio.actionspanel/history.gif"/>
-                               </a></acronym>
+                               </a>
+                            </acronym>
                          </div>
                     </legend>
 
@@ -198,14 +212,6 @@
                              tal:attributes="src string: ${view/portal_url}/delete_icon.png;
                                              onClick string:javascript:confirmDeleteObject(base_url='${context/absolute_url}', object_uid='${advice/advice_uid}', this);;"
                              onClick="javascript:confirmDeleteObject(this)" style="cursor:pointer"/>
-                    </td>
-                  </tr>
-                  <tr tal:condition="adviceIsInherited">
-                    <td colspan="5">
-                        <div>
-                            <img src="advice_inherited.png" tal:attributes="src string:${view/portal_url}/advice_inherited.png"/>
-                            <span  i18n:translate="">This advice is inherited from <span i18n:name="linkToItem" tal:replace="structure python: adviceHolder.getPrettyLink(**{'maxLength': 120})">Link to advice holder cropped...</span></span>
-                        </div>
                     </td>
                   </tr>
                   <tr tal:condition="python: adviceType != 'not_given'">

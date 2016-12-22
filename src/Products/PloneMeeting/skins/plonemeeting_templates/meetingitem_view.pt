@@ -165,8 +165,8 @@
 
             <tal:comment replace="nothing">Linked items</tal:comment>
             <div class="discreet">
-                <tal:defines define="predecessors python: context.adapted().getPredecessors();
-                                     linkedItems context/getManuallyLinkedItems;
+                <tal:defines define="predecessors python: context.adapted().getPredecessors(only_viewable=True);
+                                     linkedItems python: context.getManuallyLinkedItems(only_viewable=True);
                                      showManuallyLinkedItems python: 'manuallyLinkedItems' in usedAttrs or linkedItems;
                                      class_to_use python: (predecessors or linkedItems) and 'item_attribute_label highlightValue' or 'item_attribute_label';">
                     <dl id="linkedItems"
@@ -419,8 +419,7 @@
 
     <tal:comment replace="nothing">Annexes and advices</tal:comment>
     <a name="adviceAndAnnexes"></a>
-    <table width="100%" cellpadding="1" cellspacing="1"
-           tal:define="hasAdvices python: (meetingConfig.getUseAdvices() or context.adapted().showAdvices())">
+    <table width="100%" cellpadding="1" cellspacing="1">
         <tr style="vertical-align: top;">
             <td class="itemAnnexesCell" width="50%" tal:condition="python: tool.showAnnexesTab(context)">
                 <fieldset tal:define="hasAnnexes python: tool.hasAnnexes(context, portal_type='annex');
