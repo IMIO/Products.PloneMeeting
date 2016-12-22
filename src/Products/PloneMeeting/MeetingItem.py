@@ -3860,9 +3860,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             real_group_id = term_id.split(AUTO_COPY_GROUP_PREFIX)[-1]
             patched_vocab.append((term_id, '{0} {1}'.format(
                 term_title,
-                "<a onclick='event.preventDefault();' class='link-tooltip' "
-                "href='{0}/@@display-group-users?group_id={1}'><img src='{0}/group_users.png' /></a>"
-                .format(portal_url, real_group_id))))
+                "<acronym><a onclick='event.preventDefault()' class='tooltipster-group-users deactivated' "
+                "style='display: inline-block; padding: 0'"
+                "href='#' data-group_id='{0}' data-base_url='{1}'><img src='{1}/group_users.png' /></a></acronym>"
+                .format(real_group_id, portal_url))))
         patched_vocab = DisplayList(patched_vocab)
         return self.displayValue(patched_vocab, self.getAllCopyGroups())
 

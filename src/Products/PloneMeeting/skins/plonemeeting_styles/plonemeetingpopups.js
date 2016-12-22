@@ -101,6 +101,7 @@ jQuery(document).ready(function($) {
     adviceAddEdit();
     advicePreview();
     inheritedItemInfos();
+    usersGroupInfos()
 
     jQuery(function($){
         // Every common overelays, must stay at the bottom of every defined overlays!!!
@@ -124,6 +125,7 @@ function initializePMOverlays(){
     adviceAddEdit();
     advicePreview();
     inheritedItemInfos();
+    usersGroupInfos();
 
     jQuery(function($) {
         // Content history popup
@@ -208,10 +210,9 @@ function inheritedItemInfos() {
         theme: 'tooltipster-shadow',
         position: 'bottom',
         speed: 100,
-        delay: 0,
+        delay: 50,
         animation: 'fade',
         trigger: 'hover',    
-        
         functionBefore: function (origin, helper) {
             helper();
             if (origin.data('loaded') !== true) {
@@ -222,13 +223,57 @@ function inheritedItemInfos() {
                     type: 'GET',
                     url: base_url + '/@@display-inherited-item-infos',
                     data: {
-                        html: 'An error occured...',
                         advice_id: advice_id,
                         ajax_load: new Date().getTime(),
                     },
                     success: function (data) {
                         origin.tooltipster('update', data).data('ajax ', 'cached');
                         origin.data('loaded', true);
+                        helper();
+                    }
+                });
+    
+            }
+        }
+    });
+
+})
+};
+
+function usersGroupInfos() {
+    jQuery(function($){
+
+    $('.tooltipster-group-users').tooltipster({
+    
+        contentAsHTML: true,
+        interactive: true,
+        position: 'top-left',
+        theme: 'tooltipster-shadow',
+        position: 'bottom',
+        speed: 100,
+        delay: 50,
+        animation: 'fade',
+        trigger: 'hover',    
+        
+        
+
+        
+        functionBefore: function (origin, helper) {
+            helper();
+            if (origin.data('loaded') !== true) {
+                var group_id = $(origin).attr('data-group_id');
+                var base_url = $(origin).attr('data-base_url');
+                $.ajax({
+                    type: 'GET',
+                    url: base_url + '/@@display-group-users',
+                    data: {
+                        group_id: group_id,
+                        ajax_load: new Date().getTime(),
+                    },
+                    success: function (data) {
+                        origin.tooltipster('update', data).data('ajax ', 'cached');
+                        origin.data('loaded', true);
+                        helper();
                     }
                 });
     

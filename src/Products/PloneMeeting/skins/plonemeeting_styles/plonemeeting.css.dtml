@@ -429,7 +429,6 @@ td.td_cell_advices .actionMenuAX .actionMenuContentAX {
 
 #content .actionMenuAX .actionMenuContentAX li a {
     display: block;
-    padding: 0 0.5em;
     margin: 0.0em 0;
 }
 
@@ -863,6 +862,7 @@ TD acronym {
 }
 
 acronym a {
+    cursor: help;
     padding: 0;
 }
 
