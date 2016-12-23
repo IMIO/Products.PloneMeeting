@@ -1529,7 +1529,7 @@ div.dashboard_annexes {
 #content div.categorized-elements a:link,
 #content div.categorized-elements a:hover,
 #content div.categorized-elements a:visited {
-    padding: 0.1em 0.2em 0.3em !important;
+    padding: 0.2em 0.2em 0.3em !important;
 }
 
 /* add cell padding to tables written in rich text fields (CKeditor) */

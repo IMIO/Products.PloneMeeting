@@ -203,7 +203,7 @@ function inheritedItemInfos() {
     jQuery(function($){
 
     $('.tooltipster-inherited-advice').tooltipster({
-    
+
         contentAsHTML: true,
         interactive: true,
         position: 'top-left',
@@ -212,7 +212,8 @@ function inheritedItemInfos() {
         speed: 100,
         delay: 50,
         animation: 'fade',
-        trigger: 'hover',    
+        trigger: 'hover',
+
         functionBefore: function (origin, helper) {
             helper();
             if (origin.data('loaded') !== true) {
@@ -232,11 +233,9 @@ function inheritedItemInfos() {
                         helper();
                     }
                 });
-    
             }
         }
     });
-
 })
 };
 
@@ -244,7 +243,7 @@ function usersGroupInfos() {
     jQuery(function($){
 
     $('.tooltipster-group-users').tooltipster({
-    
+
         contentAsHTML: true,
         interactive: true,
         position: 'top-left',
@@ -254,10 +253,7 @@ function usersGroupInfos() {
         delay: 50,
         animation: 'fade',
         trigger: 'hover',    
-        
-        
 
-        
         functionBefore: function (origin, helper) {
             helper();
             if (origin.data('loaded') !== true) {
@@ -276,10 +272,8 @@ function usersGroupInfos() {
                         helper();
                     }
                 });
-    
             }
         }
     });
-
 })
 };

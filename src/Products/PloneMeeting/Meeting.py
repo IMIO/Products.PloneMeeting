@@ -329,7 +329,7 @@ class MeetingWorkflowActions:
     security.declarePrivate('doBackToPublished')
 
     def doBackToPublished(self, stateChange):
-        wfTool = getToolByName(self.context, 'portal_workflow')
+        wfTool = api.portal.get_tool('portal_workflow')
         for item in self.context.getItems():
             if item.queryState() == 'itemfrozen':
                 wfTool.doActionFor(item, 'backToItemPublished')
@@ -816,7 +816,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getRawQuery(self):
         """ """
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         # available items?
 
@@ -844,7 +844,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             return [{'i': 'getPreferredMeeting',
                      'o': 'plone.app.querystring.operation.selection.is',
                      'v': 'dummy_unexisting_uid'}]
-        tool = getToolByName(meeting, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(meeting)
         res = [{'i': 'portal_type',
                 'o': 'plone.app.querystring.operation.selection.is',
@@ -1942,24 +1942,6 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                 res = True
         return res
 
-    security.declarePublic('getFrozenDocuments')
-
-    def getFrozenDocuments(self):
-        '''Gets the documents related to this meeting that were frozen.'''
-        res = []
-        meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
-        for podTemplate in meetingConfig.podtemplates.objectValues():
-            if not podTemplate.getFreezeEvent():
-                continue
-            # This template may have lead to the production of a frozen doc
-            docId = podTemplate.getDocumentId(self)
-            # Try to find this frozen document
-            folder = self.getParentNode()
-            if not hasattr(folder.aq_base, docId):
-                continue
-            res.append(getattr(folder, docId))
-        return res
-
     security.declarePublic('getPreviousMeeting')
 
     def getPreviousMeeting(self, searchMeetingsInterval=60):
@@ -1994,13 +1976,13 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
            p_dateGap is the number of 'dead days' following the date of
            the current meeting in which we do not look for next meeting'''
         meetingDate = self.getDate()
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         if not cfgId:
             cfg = tool.getMeetingConfig(self)
         else:
             cfg = getattr(tool, cfgId)
         meetingTypeName = cfg.getMeetingTypeName()
-        catalog = getToolByName(self, 'portal_catalog')
+        catalog = api.portal.get_tool('portal_catalog')
         # find every meetings after self.getDate
         brains = catalog(portal_type=meetingTypeName,
                          getDate={'query': meetingDate + dateGap, 'range': 'min'},
@@ -2028,7 +2010,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
     def showRemoveSelectedItemsAction(self):
         '''See doc in interfaces.py.'''
         meeting = self.getSelf()
-        member = getToolByName(meeting, 'portal_membership').getAuthenticatedMember()
+        member = api.user.get_current()
         return bool(member.has_permission(ModifyPortalContent, meeting) and
                     not meeting.queryState() in meeting.meetingClosedStates)
 
@@ -2040,7 +2022,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
           'assembly, excused, absents', we will translate the 'assembly' label
           a different way.
         '''
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         usedMeetingAttributes = cfg.getUsedMeetingAttributes()
         if 'assemblyExcused' in usedMeetingAttributes or \

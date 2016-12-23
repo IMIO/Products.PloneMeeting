@@ -2363,31 +2363,39 @@ class testMeetingItem(PloneMeetingTestCase):
           Check that we still have the stored value in the vocabulary, aka if the stored value
           is no more in the vocabulary, it is still in it tough ;-)
         '''
-        self.meetingConfig.setUseCopies(True)
+        cfg = self.meetingConfig
+        cfg.setUseCopies(True)
         self.changeUser('pmManager')
         # create an item to test the vocabulary
         item = self.create('MeetingItem')
-        self.assertEquals(item.listCopyGroups().keys(), ['developers_reviewers', 'vendors_reviewers'])
+        self.assertEqual(item.listCopyGroups().keys(), ['developers_reviewers', 'vendors_reviewers'])
+        self.assertEqual(item.listCopyGroups().values(), ['Developers (Reviewers)', 'Vendors (Reviewers)'])
         # now select the 'developers_reviewers' as copyGroup for the item
         item.setCopyGroups(('developers_reviewers', ))
         # still the complete vocabulary
-        self.assertEquals(item.listCopyGroups().keys(), ['developers_reviewers', 'vendors_reviewers'])
+        self.assertEqual(item.listCopyGroups().keys(), ['developers_reviewers', 'vendors_reviewers'])
+        self.assertEqual(item.listCopyGroups().values(), ['Developers (Reviewers)', 'Vendors (Reviewers)'])
         # remove developers_reviewers from selectableCopyGroups in the meetingConfig
-        self.meetingConfig.setSelectableCopyGroups(('vendors_reviewers', ))
+        cfg.setSelectableCopyGroups(('vendors_reviewers', ))
         # still in the vocabulary because selected on the item
-        self.assertEquals(item.listCopyGroups().keys(), ['developers_reviewers', 'vendors_reviewers'])
+        self.assertEqual(item.listCopyGroups().keys(), ['developers_reviewers', 'vendors_reviewers'])
+        self.assertEqual(item.listCopyGroups().values(), ['Developers (Reviewers)', 'Vendors (Reviewers)'])
         # unselect 'developers_reviewers' on the item, it will not appear anymore in the vocabulary
         item.setCopyGroups(())
-        self.assertEquals(item.listCopyGroups().keys(), ['vendors_reviewers', ])
+        self.assertEqual(item.listCopyGroups().keys(), ['vendors_reviewers', ])
+        self.assertEqual(item.listCopyGroups().values(), ['Vendors (Reviewers)'])
 
         # test with autoCopyGroups and the include_auto=False parameter
         self.tool.vendors.setAsCopyGroupOn(
             "python: item.getProposingGroup() == 'developers' and ['observers', 'advisers', ] or []")
         item.at_post_edit_script()
-        self.assertEquals(item.autoCopyGroups, ['auto__vendors_observers', 'auto__vendors_advisers'])
-        self.assertEquals(item.listCopyGroups().keys(), ['vendors_reviewers'])
-        self.assertEquals(item.listCopyGroups(include_auto=True).keys(),
-                          ['auto__vendors_advisers', 'auto__vendors_observers', 'vendors_reviewers'])
+        self.assertEqual(item.autoCopyGroups, ['auto__vendors_observers', 'auto__vendors_advisers'])
+        self.assertEqual(item.listCopyGroups().keys(), ['vendors_reviewers'])
+        self.assertEqual(item.listCopyGroups().values(), ['Vendors (Reviewers)'])
+        self.assertEqual(item.listCopyGroups(include_auto=True).keys(),
+                         ['auto__vendors_advisers', 'auto__vendors_observers', 'vendors_reviewers'])
+        self.assertEqual(item.listCopyGroups(include_auto=True).values(),
+                         ['Vendors (Advisers) [auto]', 'Vendors (Observers) [auto]', 'Vendors (Reviewers)'])
 
     def test_pm_ListAssociatedGroups(self):
         '''

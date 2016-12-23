@@ -2201,7 +2201,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            automatically added groups instead of the AUTO_COPY_GROUP_PREFIX prefixed name."""
         allGroups = self.getCopyGroups()
         if auto_real_group_ids:
-            allGroups += tuple([groupId.replace(AUTO_COPY_GROUP_PREFIX, '') for groupId in self.autoCopyGroups])
+            allGroups += tuple([self._realCopyGroupId(groupId) for groupId in self.autoCopyGroups])
         else:
             allGroups += tuple(self.autoCopyGroups)
         return allGroups
@@ -3847,6 +3847,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         return False
 
+    def _realCopyGroupId(self, groupId):
+        """Return the real group id, especially if given p_groupId
+           is an auto copy group."""
+        return groupId.split(AUTO_COPY_GROUP_PREFIX)[-1]
+
     security.declarePublic('displayCopyGroups')
 
     def displayCopyGroups(self):
@@ -3857,7 +3862,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         patched_vocab = []
         for term_id, term_title in copyGroupsVocab.items():
             # auto copyGroups are prefixed with AUTO_COPY_GROUP_PREFIX
-            real_group_id = term_id.split(AUTO_COPY_GROUP_PREFIX)[-1]
+            real_group_id = self._realCopyGroupId(term_id)
             patched_vocab.append((term_id, '{0} {1}'.format(
                 term_title,
                 "<acronym><a onclick='event.preventDefault()' class='tooltipster-group-users deactivated' "
@@ -4700,7 +4705,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if copyGroups:
             for copyGroup in copyGroups:
                 # auto added copy groups are prefixed by AUTO_COPY_GROUP_PREFIX
-                copyGroupId = copyGroup.split(AUTO_COPY_GROUP_PREFIX)[-1]
+                copyGroupId = self._realCopyGroupId(copyGroup)
                 self.manage_addLocalRoles(copyGroupId, (READER_USECASES['copy_groups'],))
 
     def _updatePowerObserversLocalRoles(self):
@@ -4849,20 +4854,27 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             copyGroupsInVocab = [copyGroup[0] for copyGroup in res]
             for groupId in copyGroups:
                 if not groupId in copyGroupsInVocab:
-                    group = portal_groups.getGroupById(groupId)
+                    realGroupId = self._realCopyGroupId(groupId)
+                    group = portal_groups.getGroupById(realGroupId)
                     if group:
-                        res.append((groupId, group.getProperty('title')))
+                        if realGroupId == groupId:
+                            res.append((groupId, group.getProperty('title')))
+                        else:
+                            # auto copy group
+                            res.append((groupId, group.getProperty('title') + ' [auto]'))
                     else:
                         res.append((groupId, groupId))
+
         # include terms for autoCopyGroups if relevant
         if include_auto and self.autoCopyGroups:
             for autoGroupId in self.autoCopyGroups:
-                groupId = autoGroupId.split(AUTO_COPY_GROUP_PREFIX)[-1]
+                groupId = self._realCopyGroupId(autoGroupId)
                 group = portal_groups.getGroupById(groupId)
                 if group:
                     res.append((autoGroupId, group.getProperty('title') + ' [auto]'))
                 else:
                     res.append((autoGroupId, autoGroupId))
+
         return DisplayList(tuple(res)).sortedByValue()
 
     def showDuplicateItemAction_cachekey(method, self, brain=False):
