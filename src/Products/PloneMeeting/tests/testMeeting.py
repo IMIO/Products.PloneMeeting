@@ -1295,7 +1295,7 @@ class testMeeting(PloneMeetingTestCase):
         cfg2Id = cfg2.getId()
         # when items are sent to cfg2, it will be 'presented'
         cfg.setMeetingConfigsToCloneTo(
-            ({'meeting_config': cfg2.getId(),
+            ({'meeting_config': cfg2Id,
               'trigger_workflow_transitions_until': '%s.%s' % (cfg2Id, 'present')}, ))
         # items of cfg1 are automatically sent to cfg2 when in state 'presented'
         cfg.setItemAutoSentToOtherMCStates(('presented', ))

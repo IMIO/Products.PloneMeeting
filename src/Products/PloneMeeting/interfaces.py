@@ -472,6 +472,10 @@ class IMeetingItemWorkflowConditions(Interface):
            know that there is a fixed part of items that were in the meeting
            when it was first published, and that there are additional "late"
            items that were added in a hurry.'''
+    def getListTypeLateValue(meeting):
+        '''Returns the late value to set on item while presented to the p_meeting.
+           By default this will be 'late', but this is made to manage various 'late-like'
+           values.'''
 
 
 class IMeetingItemWorkflowActions(Interface):

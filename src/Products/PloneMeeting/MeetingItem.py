@@ -362,14 +362,17 @@ class MeetingItemWorkflowConditions:
     security.declarePublic('isLateFor')
 
     def isLateFor(self, meeting):
-        '''
-          To be considered as late item for a meeting, the meeting must be in a frozen state,
-          and it must be selected as preferred meeting for the item.
-        '''
+        '''See doc in interfaces.py.'''
         if meeting and (not meeting.queryState() in meeting.getBeforeFrozenStates()) and \
            (meeting.UID() == self.context.getPreferredMeeting()):
             return True
         return False
+
+    security.declarePrivate()
+
+    def getListTypeLateValue(self, meeting):
+        '''See doc in interfaces.py.'''
+        return 'late'
 
     def _hasAdvicesToGive(self, destination_state):
         """Check if there are advice to give in p_destination_state."""

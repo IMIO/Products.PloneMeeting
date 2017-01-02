@@ -1329,7 +1329,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(self)
         isLate = not forceNormal and item.wfConditions().isLateFor(self)
         if isLate:
-            item.setListType('late')
+            item.setListType(item.adapted().getListTypeLateValue(self))
             toDiscussValue = cfg.getToDiscussLateDefault()
         else:
             toDiscussValue = cfg.getToDiscussDefault()
