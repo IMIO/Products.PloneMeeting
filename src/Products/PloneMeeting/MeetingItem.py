@@ -368,7 +368,7 @@ class MeetingItemWorkflowConditions:
             return True
         return False
 
-    security.declarePrivate()
+    security.declarePrivate('getListTypeLateValue')
 
     def getListTypeLateValue(self, meeting):
         '''See doc in interfaces.py.'''
