@@ -368,12 +368,6 @@ class MeetingItemWorkflowConditions:
             return True
         return False
 
-    security.declarePrivate('getListTypeLateValue')
-
-    def getListTypeLateValue(self, meeting):
-        '''See doc in interfaces.py.'''
-        return 'late'
-
     def _hasAdvicesToGive(self, destination_state):
         """Check if there are advice to give in p_destination_state."""
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -2491,6 +2485,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def isLate(self):
         '''Am I a late item?'''
         return bool(self.getListType() == 'late')
+
+    security.declarePrivate('getListTypeLateValue')
+
+    def getListTypeLateValue(self, meeting):
+        '''See doc in interfaces.py.'''
+        return 'late'
 
     security.declarePublic('showCategory')
 
