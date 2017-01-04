@@ -392,7 +392,7 @@ class MeetingConfigDescriptor(Descriptor):
         # Default is Ref. MeetingDate/ItemNumberInMeeting
         self.itemReferenceFormat = "python: 'Ref. ' + (here.hasMeeting() and " \
             "here.restrictedTraverse('pm_unrestricted_methods').getLinkedMeetingDate().strftime('%Y%m%d') or '') " \
-            "+ '/' + str(here.getItemNumber(relativeTo='meeting'))"
+            "+ '/' + str(here.getItemNumber(relativeTo='meeting', for_display=True))"
         # When adding items to a meeting, what sortingMethod must be applied successively?
         self.insertingMethodsOnAddItem = ({'insertingMethod': 'at_the_end', }, )
         # List if item tags defined for this meeting config
