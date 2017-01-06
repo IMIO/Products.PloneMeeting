@@ -5205,11 +5205,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         mapping = {'meetingConfigTitle': destMeetingConfig.Title(), }
         newItem.sendMailIfRelevant('itemClonedToThisMC', ModifyPortalContent,
                                    isRole=False, mapping=mapping)
-        msg = 'sendto_%s_success' % destMeetingConfigId
-        plone_utils.addPortalMessage(translate(msg,
-                                               domain="PloneMeeting",
-                                               context=self.REQUEST),
-                                     type='info')
+        plone_utils.addPortalMessage(
+            translate('sendto_success',
+                      mapping={'cfgTitle': safe_unicode(destMeetingConfig.Title())},
+                      domain="PloneMeeting",
+                      context=self.REQUEST),
+            type='info')
         return newItem
 
     def _getSentToOtherMCAnnotationKey(self, destMeetingConfigId):
