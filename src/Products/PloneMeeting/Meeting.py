@@ -492,6 +492,7 @@ schema = Schema((
         name='extraordinarySession',
         default=False,
         widget=BooleanField._properties['widget'](
+            condition="python: here.attributeIsUsed('extraordinarySession')",
             label='Extraordinarysession',
             label_msgid='PloneMeeting_label_extraordinarySession',
             i18n_domain='PloneMeeting',
