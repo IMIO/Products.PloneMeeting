@@ -915,9 +915,10 @@ class Migrate_To_4_0(Migrator):
         total = len(brains)
         i = 1
         for brain in brains:
-            logger.info('Migrating MeetingFiles of element {0}/{1}...'.format(
+            logger.info('Migrating MeetingFiles of element {0}/{1} ({2})...'.format(
                 i,
-                total))
+                total,
+                brain.getPath()))
             i = i + 1
             obj = brain.getObject()
             mfs = obj.objectValues('MeetingFile')
