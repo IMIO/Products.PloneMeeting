@@ -250,6 +250,12 @@
           <td tal:define="field python:here.getField('insertingMethodsOnAddItem')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
+          <td tal:define="field python:here.getField('selectablePrivacies')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td></td>
+        </tr>
+        <tr valign="top">
           <td tal:define="field python:here.getField('allItemTags')">
             <b i18n:translate="PloneMeeting_label_allItemTags"></b>:
             <span tal:content="python: ', '.join(context.getAllItemTags().split('\n'))" />
@@ -257,6 +263,7 @@
           <td tal:define="field python:here.getField('sortAllItemTags')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
+          <td></td>
         </tr>
         <tr valign="top">
           <td tal:define="field python:here.getField('listTypes')">

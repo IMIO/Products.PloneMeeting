@@ -309,7 +309,8 @@ class MeetingConfigDescriptor(Descriptor):
                          'itemRestrictedPowerObserversStates', 'meetingRestrictedPowerObserversStates',
                          'meetingConfigsToCloneTo', 'itemAdviceInvalidateStates', 'transitionsReinitializingDelays',
                          'customAdvisers', 'selectableCopyGroups', 'votesEncoder', 'meetingTopicStates',
-                         'decisionTopicStates', 'listTypes', 'xhtmlTransformFields', 'xhtmlTransformTypes',
+                         'decisionTopicStates', 'listTypes', 'selectablePrivacies',
+                         'xhtmlTransformFields', 'xhtmlTransformTypes',
                          'usedVoteValues', 'insertingMethodsOnAddItem')
     excludedFields = ['maxDaysDecisions', 'meetingAppDefaultView']
 
@@ -402,6 +403,8 @@ class MeetingConfigDescriptor(Descriptor):
         self.sortAllItemTags = False
         # used for MeetingItem.listType vocabulary
         self.listTypes = DEFAULT_LIST_TYPES
+        # used for MeetingItem.privacy vocabulary
+        self.selectablePrivacies = ('public', 'secret')
         # What rich text fields must undergo a transform ?
         self.xhtmlTransformFields = []
         # What kind(s) of transform(s) must be applied to these fields ?

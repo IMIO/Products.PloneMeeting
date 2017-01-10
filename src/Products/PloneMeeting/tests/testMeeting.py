@@ -543,15 +543,16 @@ class testMeeting(PloneMeetingTestCase):
                            ('developers', 'groupincharge1')])
 
     def test_pm_InsertItemOnPrivacyThenProposingGroups(self):
-        '''Sort method tested here is "on_privacy" not reverse and reverse then "on_proposing_groups".'''
+        '''Sort method tested here is "on_privacy" then "on_proposing_groups".'''
         cfg = self.meetingConfig
-        self.changeUser('pmManager')
-
-        # on_privacy_public
         cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_privacy',
                                            'reverse': '0'},
                                           {'insertingMethod': 'on_proposing_groups',
                                            'reverse': '0'},))
+
+        self.changeUser('pmManager')
+        # on_privacy_public
+        cfg.setSelectablePrivacies(('public', 'secret'))
         meeting = self._createMeetingWithItems()
         self.assertEquals([item.getId() for item in meeting.getItems(ordered=True)],
                           ['recItem1', 'recItem2', 'o3', 'o2', 'o6', 'o5', 'o4'])
@@ -559,15 +560,41 @@ class testMeeting(PloneMeetingTestCase):
                           ['public', 'public', 'public', 'public', 'public', 'secret', 'secret'])
 
         # on_privacy_secret
-        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_privacy',
-                                           'reverse': '1'},
-                                          {'insertingMethod': 'on_proposing_groups',
-                                           'reverse': '0'},))
+        cfg.setSelectablePrivacies(('secret', 'public'))
         meeting = self._createMeetingWithItems()
         self.assertEquals([item.getId() for item in meeting.getItems(ordered=True)],
                           ['o11', 'o10', 'copy_of_recItem1', 'copy_of_recItem2', 'o9', 'o8', 'o12'])
         self.assertEquals([item.getPrivacy() for item in meeting.getItems(ordered=True)],
                           ['secret', 'secret', 'public', 'public', 'public', 'public', 'public'])
+
+    def test_pm_InsertItemOnPrivacyUsingHeading(self):
+        '''Sort method tested here is "on_privacy" when values '_heading' are used.'''
+        cfg = self.meetingConfig
+        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_privacy',
+                                           'reverse': '0'}, ))
+
+        self.changeUser('pmManager')
+        # on_privacy with secret_heading before
+        cfg.setSelectablePrivacies(('secret_heading', 'public', 'secret'))
+        meeting = self._createMeetingWithItems()
+        # insert a 'secret_heading' item
+        secret_heading_item = self.create('MeetingItem',
+                                          privacy='secret_heading',
+                                          category='research')
+        self.presentItem(secret_heading_item)
+        self.assertEquals([item.getPrivacy() for item in meeting.getItems(ordered=True)],
+                          ['secret_heading', 'public', 'public', 'public', 'public', 'public', 'secret', 'secret'])
+
+        # on_privacy with public_heading before
+        cfg.setSelectablePrivacies(('public_heading', 'secret', 'public'))
+        meeting2 = self._createMeetingWithItems()
+        # insert a 'public_heading' item
+        public_heading_item = self.create('MeetingItem',
+                                          privacy='public_heading',
+                                          category='research')
+        self.presentItem(public_heading_item)
+        self.assertEquals([item.getPrivacy() for item in meeting2.getItems(ordered=True)],
+                          ['public_heading', 'secret', 'secret', 'public', 'public', 'public', 'public', 'public'])
 
     def test_pm_InsertItemOnPollType(self):
         '''Sort method tested here is "on_poll_type" not reverse and reverse.'''

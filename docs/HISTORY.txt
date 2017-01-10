@@ -353,6 +353,10 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   this is the case also for inherited advices for which the icon "Item inherited from another item" is not shown
 - Added adaptable method MeetingItem.getListTypeLateValue to be able to specify another value than 'late' for the listType of
   an item that isLate.  This way it is possible to manage different values for a late item
+- Added field MeetingConfig.selectablePrivacies to be able to select privacies to use for MeetingItem.privacy.  Added new privacies
+  'secret_heading' and 'public_heading' as selectable values.  MeetingConfig.insertingMethodsOnAddItem 'on_privacy' is now using
+  the order defined in MeetingConfig.selectablePrivacies.  This makes it possible to insert 'secret' items at the top of a meeting
+  in which items are displayed 'on_privacy' 'public' then 'secret', and have 'secret/public/secret' items
 
 3.3 (2015-02-27)
 ----------------

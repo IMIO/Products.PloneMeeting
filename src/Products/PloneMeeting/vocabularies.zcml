@@ -35,6 +35,8 @@
            name="Products.PloneMeeting.vocabularies.listtypesvocabulary" />
   <utility component=".vocabularies.PrivaciesVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.privaciesvocabulary" />
+  <utility component=".vocabularies.SelectablePrivaciesVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.selectableprivaciesvocabulary" />
   <utility component=".vocabularies.PollTypesVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.polltypesvocabulary" />
   <utility component=".vocabularies.OtherMCCorrespondenceVocabularyFactory"

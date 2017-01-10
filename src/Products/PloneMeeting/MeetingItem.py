@@ -3083,9 +3083,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # for 'on_groups_in_charge', for efficiency, we return len of every MeetingGroups
             return len(tool.getMeetingGroups(onlyActive=False))
         elif insertMethod == 'on_privacy':
-            factory = queryUtility(IVocabularyFactory,
-                                   'Products.PloneMeeting.vocabularies.privaciesvocabulary')
-            return len(factory(self))
+            return len(cfg.getSelectablePrivacies())
         elif insertMethod == 'on_to_discuss':
             # either 'toDiscuss' is True or False
             return 2
@@ -3113,9 +3111,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
           Find the order of given p_insertMethod.
         '''
         res = ''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
         if insertMethod == 'on_list_type':
-            tool = api.portal.get_tool('portal_plonemeeting')
-            cfg = tool.getMeetingConfig(self)
             listTypes = cfg.getListTypes()
             keptListTypes = [listType['identifier'] for listType in listTypes
                              if listType['used_in_inserting_method'] == '1']
@@ -3138,9 +3136,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res = self.getProposingGroup(True).getOrder(self.getAssociatedGroups(), onlyActive=False)
         elif insertMethod == 'on_privacy':
             privacy = self.getPrivacy()
-            factory = queryUtility(IVocabularyFactory,
-                                   'Products.PloneMeeting.vocabularies.privaciesvocabulary')
-            privacies = [term.token for term in factory(self)._terms]
+            privacies = cfg.getSelectablePrivacies()
             # Get the order of the privacy
             res = privacies.index(privacy)
         elif insertMethod == 'on_to_discuss':

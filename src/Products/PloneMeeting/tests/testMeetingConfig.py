@@ -724,6 +724,7 @@ class testMeetingConfig(PloneMeetingTestCase):
            - if categories are not used, we can not select the 'on_categories' method;
            - fi the 'toDiscuss' field is not used, we can not select the 'on_to_discuss' method.'''
         cfg = self.meetingConfig
+        cfg.setUsedItemAttributes(('pollType', 'toDiscuss', 'privacy'))
         # first test when using 'at_the_end' and something else
         at_the_end_error_msg = translate('inserting_methods_at_the_end_not_alone_error',
                                          domain='PloneMeeting',
@@ -823,11 +824,50 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.portal.REQUEST.set('usedItemAttributes', usedItemAttrsWithoutToDiscuss + ['toDiscuss', ])
         self.failIf(cfg.validate_insertingMethodsOnAddItem(values))
 
+        # test when selecting 'on_privacy' without using the 'privacy' field
+        inserting_methods_not_using_privacy_error_msg = \
+            translate('inserting_methods_not_using_privacy_error',
+                      domain='PloneMeeting',
+                      context=self.request)
+        values = ({'insertingMethod': 'on_privacy',
+                   'reverse': '0'}, )
+        self.assertTrue('privacy' in cfg.getUsedItemAttributes())
+        # it validates
+        self.failIf(cfg.validate_insertingMethodsOnAddItem(values))
+        # check on using 'privacy' is made on presence of 'privacy' in 'usedItemAttributes' in the
+        # REQUEST, or if not found, on the value defined on the MeetingConfig object
+        # unselect 'privacy', validation fails
+        usedItemAttrs = list(cfg.getUsedItemAttributes())
+        usedItemAttrsWithoutPrivacy = usedItemAttrs
+        usedItemAttrsWithoutPrivacy.remove('privacy')
+        cfg.setUsedItemAttributes(usedItemAttrsWithoutPrivacy)
+        self.portal.REQUEST.set('usedItemAttributes', ())
+        self.assertEqual(cfg.validate_insertingMethodsOnAddItem(values),
+                         inserting_methods_not_using_privacy_error_msg)
+        # it validates if 'usedItemAttributes' found in the REQUEST
+        # and 'privacy' in the 'usedItemAttributes', if not it fails...
+        self.portal.REQUEST.set('usedItemAttributes', usedItemAttrsWithoutPrivacy)
+        self.assertEqual(cfg.validate_insertingMethodsOnAddItem(values),
+                         inserting_methods_not_using_privacy_error_msg)
+        # but validates if 'privacy' in 'usedItemAttributes' found in the REQUEST
+        self.portal.REQUEST.set('usedItemAttributes', usedItemAttrsWithoutToDiscuss + ['privacy', ])
+        self.failIf(cfg.validate_insertingMethodsOnAddItem(values))
+
+        # 'on_privacy' may not be used with 'reverse'
+        values = ({'insertingMethod': 'on_privacy',
+                   'reverse': '1'}, )
+        inserting_methods_on_privacy_reverse_error_msg = \
+            translate('inserting_methods_on_privacy_reverse_error',
+                      domain='PloneMeeting',
+                      context=self.request)
+        self.assertEqual(cfg.validate_insertingMethodsOnAddItem(values),
+                         inserting_methods_on_privacy_reverse_error_msg)
+
         # if we have a 'orderindex_' key with value 'template_row_marker'
         # it validates, it is the case when using DataGridField in the UI
         # here it works even if 'at_the_end' is used together with 'on_to_discuss'
         # as the 'at_the_end' value has the 'orderindex_' key
-        values = ({'insertingMethod': 'on_to_discuss',
+        values = ({'insertingMethod': 'on_privacy',
                    'reverse': '0'},
                   {'insertingMethod': 'at_the_end',
                    'orderindex_': 'template_row_marker',

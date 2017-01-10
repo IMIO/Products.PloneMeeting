@@ -7,10 +7,12 @@ p {
     line-height: 1em;
 }
 
-table.listing tbody tr.even.meeting_item_privacy_secret td {
+table.listing tbody tr.even.meeting_item_privacy_secret td,
+table.listing tbody tr.even.meeting_item_privacy_secret_heading td {
     background-color: #ffcc33;
 }
-table.listing tbody tr.odd.meeting_item_privacy_secret td {
+table.listing tbody tr.odd.meeting_item_privacy_secret td,
+table.listing tbody tr.odd.meeting_item_privacy_secret_heading td {
     background-color: #ffff99;
 }
 img.logical_meeting {
@@ -707,10 +709,12 @@ p.indent-firstline {
 
 /* CSS for MeetingItem.privacy */
 /* While displayed as a single item (meetingitem_view) */
-.item_privacy_public {
+.item_privacy_public,
+.item_privacy_public_heading {
     color: green;
 }
-.item_privacy_secret {
+.item_privacy_secret,
+.item_privacy_secret_heading {
     color: #FF934A;
 }
 /* CSS for MeetingItem.otherMeetingConfigsClonableToEmergency */
@@ -720,10 +724,12 @@ p.indent-firstline {
 }
 
 /* While displayed in a Meeting */
-.meeting_item_privacy_secret {
+.meeting_item_privacy_secret,
+.meeting_item_privacy_secret_heading {
     background-color: #E8E8E8;
 }
-.meeting_item_privacy_public {
+.meeting_item_privacy_public,
+.meeting_item_privacy_public_heading {
     background-color: transparent;
 }
 

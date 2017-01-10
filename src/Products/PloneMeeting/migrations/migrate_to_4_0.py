@@ -6,7 +6,6 @@ logger = logging.getLogger('PloneMeeting')
 from Acquisition import aq_base
 from DateTime import DateTime
 from zope.i18n import translate
-from Products.CMFCore.utils import getToolByName
 from plone import api
 from plone.namedfile.file import NamedBlobFile
 from plone.namedfile.file import NamedBlobImage
@@ -89,8 +88,8 @@ class Migrate_To_4_0(Migrator):
            - remove the "meetingfolder_redirect_view" available for type Folder;
            - update MeetingConfig.itemsListVisibleColumns and MeetingConfig.itemColumns.'''
         logger.info('Moving to imio.dashboard...')
-        wft = getToolByName(self.portal, 'portal_workflow')
-        portal_tabs = getToolByName(self.portal, 'portal_actions').portal_tabs
+        wft = api.portal.get_tool('portal_workflow')
+        portal_tabs = api.portal.get_tool('portal_actions').portal_tabs
 
         for cfg in self.tool.objectValues('MeetingConfig'):
             # already migrated?
@@ -401,7 +400,7 @@ class Migrate_To_4_0(Migrator):
             types.manage_delObjects(ids=['PodTemplate', ])
 
             # migrate the PodTemplates to ConfigurablePODTemplates
-            wft = getToolByName(self.portal, 'portal_workflow')
+            wft = api.portal.get_tool('portal_workflow')
             for cfg in self.tool.objectValues('MeetingConfig'):
                 templatesFolder = cfg.podtemplates
                 templatesFolder.setLocallyAllowedTypes(['ConfigurablePODTemplate',
@@ -725,10 +724,9 @@ class Migrate_To_4_0(Migrator):
 
         logger.info('Moving to imio.annex...')
         # necessary for versions in between...
-        tool = api.portal.get_tool('portal_plonemeeting')
         wfTool = api.portal.get_tool('portal_workflow')
         old_mft_new_cat_id_mappings = {}
-        for cfg in tool.objectValues('MeetingConfig'):
+        for cfg in self.tool.objectValues('MeetingConfig'):
             cfg._createSubFolders()
             if cfg.annexes_types.item_annexes.objectIds() or \
                cfg.annexes_types.item_decision_annexes.objectIds() or \
@@ -789,7 +787,7 @@ class Migrate_To_4_0(Migrator):
                     subcat._v_old_mft = subType['row_id']
         # now that categories and subcategories are created, we are
         # able to update the otherMCCorrespondences attribute
-        for cfg in tool.objectValues('MeetingConfig'):
+        for cfg in self.tool.objectValues('MeetingConfig'):
             for mft in cfg.meetingfiletypes.objectValues():
                 if mft.getRelatedTo() == 'item':
                     category_type = 'ItemAnnexContentCategory'
@@ -835,7 +833,7 @@ class Migrate_To_4_0(Migrator):
                             subType['row_id']).other_mc_correspondences = otherUIDs
 
         # clean no more used attributes
-        for cfg in tool.objectValues('MeetingConfig'):
+        for cfg in self.tool.objectValues('MeetingConfig'):
 
             if not hasattr(cfg, 'annexConfidentialFor'):
                 # already migrated
@@ -953,7 +951,7 @@ class Migrate_To_4_0(Migrator):
 
         # now that MeetingFileTypes and MeetingFiles are migrated
         # we are able to remove the MeetingConfig.meetingfiletypes folder
-        for cfg in tool.objectValues('MeetingConfig'):
+        for cfg in self.tool.objectValues('MeetingConfig'):
             if hasattr(cfg, 'meetingfiletypes'):
                 cfg.manage_delObjects(ids=['meetingfiletypes'])
 
@@ -985,6 +983,27 @@ class Migrate_To_4_0(Migrator):
                 mConfigFolder.manage_permission('ATContentTypes: Add File',
                                                 [],
                                                 acquire=True)
+        logger.info('Done.')
+
+    def _initSelectablePrivacies(self):
+        """Make sure new field MeetingConfig.selectablePrivacies is correct :
+           - if inserting method 'on_privacy' not used or used and 'reverse' not '1',
+             default values is correct;
+           - but in case used and 'reverse' is '1', we need to set 'reverse' to '0',
+             and change MeetingConfig.selectablePrivacies order (from ['public', 'secret'] to ['secret', 'public'])."""
+        logger.info('Initializing new field MeetingConfig.selectablePrivacies...')
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            on_privacy = [insert for insert in cfg.getInsertingMethodsOnAddItem()
+                          if insert['insertingMethod'] == 'on_privacy']
+            import ipdb; ipdb.set_trace()
+            if on_privacy and on_privacy[0]['reverse'] == '1':
+                cfg.setSelectablePrivacies(['secret', 'public'])
+                inserts = cfg.getInsertingMethodsOnAddItem()
+                # patch 'on_privacy' to remove 'reverse'
+                for insert in inserts:
+                    if insert['insertingMethod'] == 'on_privacy':
+                        insert['reverse'] = '0'
+                cfg.setInsertingMethodsOnAddItem(inserts)
         logger.info('Done.')
 
     def run(self):
@@ -1032,6 +1051,7 @@ class Migrate_To_4_0(Migrator):
         self._moveAppName()
         self._moveDuplicatedItemLinkFromAutoToManual()
         self._removeAddFilePermissionOnMeetingConfigFolders()
+        self._initSelectablePrivacies()
         # update workflow, needed for items moved to item templates and recurring items
         # update reference_catalog as ReferenceFied "MeetingConfig.toDoListTopics"
         # and "Meeting.lateItems" were removed
@@ -1067,7 +1087,8 @@ def migrate(context):
        22) Adapt application name;
        23) Move 'duplicated and keep link' link from automatic to manual link;
        24) Remove the 'Add File' permission on user folders;
-       25) Refresh catalogs.
+       25) Migrate to MeetingConfig.selectablePrivacies;
+       26) Refresh catalogs.
     '''
     migrator = Migrate_To_4_0(context)
     migrator.run()

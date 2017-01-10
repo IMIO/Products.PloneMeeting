@@ -18,8 +18,8 @@
 # ------------------------------------------------------------------------------
 import logging
 logger = logging.getLogger('PloneMeeting')
-from Products.CMFCore.utils import getToolByName
 
+from plone import api
 from imio.migrator.migrator import Migrator as BaseMigrator
 
 
@@ -27,7 +27,7 @@ class Migrator(BaseMigrator):
     '''Abstract class for creating a migrator.'''
     def __init__(self, context):
         BaseMigrator.__init__(self, context)
-        self.tool = getToolByName(self.portal, 'portal_plonemeeting')
+        self.tool = api.portal.get_tool('portal_plonemeeting')
         # disable email notifications for every MeetingConfigs and save
         # current state to set it back after migration in self.finish
         self.cfgsMailMode = {}

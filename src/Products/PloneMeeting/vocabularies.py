@@ -502,25 +502,44 @@ class ListTypesVocabulary(object):
 ListTypesVocabularyFactory = ListTypesVocabulary()
 
 
-class PrivaciesVocabulary(object):
+class SelectablePrivaciesVocabulary(object):
     implements(IVocabularyFactory)
 
     def __call__(self, context):
         """ """
         res = []
-        res.append(SimpleTerm('public',
-                              'public',
-                              safe_unicode(translate('public',
-                                                     domain='PloneMeeting',
-                                                     context=context.REQUEST)))
-                   )
-        res.append(SimpleTerm('secret',
-                              'secret',
-                              safe_unicode(translate('secret',
-                                                     domain='PloneMeeting',
-                                                     context=context.REQUEST)))
-                   )
+        keys = ['public_heading', 'public', 'secret_heading', 'secret']
+        for key in keys:
+            res.append(SimpleTerm(
+                key,
+                key,
+                safe_unicode(translate(key,
+                             domain='PloneMeeting',
+                             context=context.REQUEST)))
+                       )
 
+        return SimpleVocabulary(res)
+
+SelectablePrivaciesVocabularyFactory = SelectablePrivaciesVocabulary()
+
+
+class PrivaciesVocabulary(object):
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """ """
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        res = []
+        keys = cfg.getSelectablePrivacies()
+        for key in keys:
+            res.append(SimpleTerm(
+                key,
+                key,
+                safe_unicode(translate(key,
+                             domain='PloneMeeting',
+                             context=context.REQUEST)))
+                       )
         return SimpleVocabulary(res)
 
 PrivaciesVocabularyFactory = PrivaciesVocabulary()

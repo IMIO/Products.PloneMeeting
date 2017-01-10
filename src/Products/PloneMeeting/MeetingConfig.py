@@ -2,7 +2,7 @@
 #
 # File: MeetingConfig.py
 #
-# Copyright (c) 2016 by Imio.be
+# Copyright (c) 2017 by Imio.be
 # Generator: ArchGenXML Version 2.7
 #            http://plone.org/products/archgenxml
 #
@@ -558,6 +558,23 @@ schema = Schema((
         schemata="data",
         write_permission="PloneMeeting: Write risky config",
         columns=('insertingMethod', 'reverse', ),
+    ),
+    LinesField(
+        name='selectablePrivacies',
+        widget=InAndOutWidget(
+            description="SelectablePrivacies",
+            description_msgid="selectable_privacies_descr",
+            format="checkbox",
+            label='selectableprivacies',
+            label_msgid='PloneMeeting_label_selectablePrivacies',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="data",
+        multiValued=1,
+        vocabulary_factory='Products.PloneMeeting.vocabularies.selectableprivaciesvocabulary',
+        default=defValues.selectablePrivacies,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
     ),
     TextField(
         name='allItemTags',
@@ -3181,7 +3198,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            - if sortingMethod 'at_the_end' is selected, no other sorting method can be selected;
            - a same sortingMethod can not be selected twice;
            - the 'on_categories' method can not be selected if we do not use categories;
-           - the 'on_to_discuss' mathod can not be selected if we do not use the toDicuss field.'''
+           - the 'on_to_discuss' method can not be selected if we do not use the toDicuss field;
+           - the 'on_privacy' method can not be selected if we do not use the privacy field,
+             moreover it can not be used with 'reverse'.'''
         # transform in a list so we can handle it easily
         res = []
         for value in values:
@@ -3226,11 +3245,28 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # check that if we selected 'on_poll_type', we actually use the field 'pollType'...
         if 'on_poll_type' in res:
             if hasattr(self.REQUEST, 'usedItemAttributes'):
-                notUsingToPollType = 'pollType' not in self.REQUEST.get('usedItemAttributes')
+                notUsingPollType = 'pollType' not in self.REQUEST.get('usedItemAttributes')
             else:
-                notUsingToPollType = 'pollType' not in self.getUsedItemAttributes()
-            if notUsingToPollType:
+                notUsingPollType = 'pollType' not in self.getUsedItemAttributes()
+            if notUsingPollType:
                 return translate('inserting_methods_not_using_poll_type_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+
+        if 'on_privacy' in res:
+            if hasattr(self.REQUEST, 'usedItemAttributes'):
+                notUsingPrivacy = 'privacy' not in self.REQUEST.get('usedItemAttributes')
+            else:
+                notUsingPrivacy = 'privacy' not in self.getUsedItemAttributes()
+            if notUsingPrivacy:
+                return translate('inserting_methods_not_using_privacy_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+            # may not use 'reverse'
+            privacy_reverse = [value['reverse'] for value in values
+                               if value['insertingMethod'] == 'on_privacy'][0]
+            if privacy_reverse == '1':
+                return translate('inserting_methods_on_privacy_reverse_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
 
