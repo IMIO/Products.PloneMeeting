@@ -313,12 +313,14 @@
                     </tal:itemViewableButNoMoreAdviseableWithoutDelay>
                     <tal:itemViewableButNoMoreAdviseableWithDelay condition="python: not adviceAlterable and advice['item_viewable_by_advisers'] and advice['delay_infos'] and not advice['delay_infos']['delay_status'] == 'timed_out' and not advice['advice_addable']">
                         <span class="discreet"
-                           i18n:translate="advice_can_no_more_be_given_in_current_item_state">This advice can no more be given in current item state (<span i18n:name="item_review_state"
-                                                                                                           i18n:translate=""
-                                                                                                           i18n:domain="plone"
-                                                                                                           tal:content="item_review_state"
-                                                                                                           tal:attributes="class string:label-state-${item_review_state}"></span>)
+                           i18n:translate="advice_can_no_more_be_given_in_current_item_state">This advice can no more be given in current item state (
+                           <span i18n:name="item_review_state"
+                                 i18n:translate=""
+                                 i18n:domain="plone"
+                                 tal:content="item_review_state"
+                                 tal:attributes="class string:label-state-${item_review_state}"></span>)
                         </span>,
+                        <tal:advice_was_not_given_during_delay tal:condition="advice/delay_stopped_on">
                         <span class="discreet"
                               i18n:translate="possibility_to_advice_stopped_on">the possiblity to give an advice was stopped on
                              <span style="font-weight: bold;"
@@ -333,6 +335,12 @@
                                   10
                              </span> day(s) left to give the advice.
                         </span>
+                        </tal:advice_was_not_given_during_delay>
+                        <tal:advice_was_never_giveable tal:condition="not:advice/delay_stopped_on">
+                        <span class="discreet"
+                              i18n:translate="advice_stopped_on_never_asked">
+                            the advice was never giveable because item was never in a state where advice could be given.</span>
+                        </tal:advice_was_never_giveable>
                         <span tal:attributes="class string:discreet advice_delay_${advice/delay_infos/delay_status_when_stopped};"
                               i18n:translate="delay_exceeded_when_stopped"
                               tal:condition="python: advice['delay_infos']['delay_when_stopped'] <= 0 and advice['delay_started_on']"> at this moment, the delay exceeded

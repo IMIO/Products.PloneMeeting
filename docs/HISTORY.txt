@@ -357,6 +357,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   'secret_heading' and 'public_heading' as selectable values.  MeetingConfig.insertingMethodsOnAddItem 'on_privacy' is now using
   the order defined in MeetingConfig.selectablePrivacies.  This makes it possible to insert 'secret' items at the top of a meeting
   in which items are displayed 'on_privacy' 'public' then 'secret', and have 'secret/public/secret' items
+- When an item is visible by advisers but advice was never giveable (especially when workflow is not linear or configuration is wrong
+  and items are visible by advisers before advice is giveable), adapted method on the item to specify that advice was never giveable
 
 3.3 (2015-02-27)
 ----------------
