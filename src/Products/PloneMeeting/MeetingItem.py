@@ -2156,7 +2156,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Checking the 'privacy condition' is only done if privacy is 'secret'.
         item = self.getSelf()
         privacy = item.getPrivacy()
-        if privacy == 'public':
+        # 'public' or 'public_heading' items
+        if privacy.startswith('public'):
             return True
         # check if privacy needs to be checked...
         tool = api.portal.get_tool('portal_plonemeeting')

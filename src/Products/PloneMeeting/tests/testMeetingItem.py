@@ -1849,6 +1849,7 @@ class testMeetingItem(PloneMeetingTestCase):
           - advisers.
           This is usefull in workflows where there is a 'publication' step where items are accessible
           by everyone but we want to control access to secret items nevertheless.
+          Restricted power_observers do not have access to secret items neither.
         '''
         self.setMeetingConfig(self.meetingConfig2.getId())
         cfg = self.meetingConfig
@@ -1860,61 +1861,108 @@ class testMeetingItem(PloneMeetingTestCase):
         # make powerobserver1 a PowerObserver
         self.portal.portal_groups.addPrincipalToGroup('powerobserver1', '%s_%s' %
                                                       (cfg.getId(), POWEROBSERVERS_GROUP_SUFFIX))
+
         # create a 'public' and a 'secret' item
         self.changeUser('pmManager')
         # add copyGroups that check that 'external' viewers can access the item but not isPrivacyViewable
         publicItem = self.create('MeetingItem')
+        publicItem.setPrivacy('public')
         publicItem.setCategory('development')
         publicItem.reindexObject()
         publicAnnex = self.addAnnex(publicItem)
+        publicHeadingItem = self.create('MeetingItem')
+        publicHeadingItem.setPrivacy('public_heading')
+        publicHeadingItem.setCategory('development')
+        publicHeadingItem.reindexObject()
+        publicHeadingAnnex = self.addAnnex(publicHeadingItem)
         secretItem = self.create('MeetingItem')
         secretItem.setPrivacy('secret')
         secretItem.setCategory('development')
         secretItem.reindexObject()
         secretAnnex = self.addAnnex(secretItem)
+        secretHeadingItem = self.create('MeetingItem')
+        secretHeadingItem.setPrivacy('secret_heading')
+        secretHeadingItem.setCategory('development')
+        secretHeadingItem.reindexObject()
+        secretHeadingAnnex = self.addAnnex(secretHeadingItem)
         self.validateItem(publicItem)
+        self.validateItem(publicHeadingItem)
         self.validateItem(secretItem)
+        self.validateItem(secretHeadingItem)
 
         # for now both items are not accessible by 'pmReviewer2'
         self.changeUser('pmReviewer2')
         self.failIf(self.hasPermission('View', secretItem))
         self.failIf(self.hasPermission('View', publicItem))
+        self.failIf(self.hasPermission('View', secretHeadingItem))
+        self.failIf(self.hasPermission('View', publicHeadingItem))
         # give the 'Reader' role to 'pmReviewer2' so he can access the item
         # this is a bit like a 'itempublished' state
         secretItem.manage_addLocalRoles('pmReviewer2', ('Reader', ))
         secretItem.reindexObjectSecurity()
+        secretHeadingItem.manage_addLocalRoles('pmReviewer2', ('Reader', ))
+        secretHeadingItem.reindexObjectSecurity()
         self.assertTrue(self.hasPermission('View', secretItem))
+        self.assertTrue(self.hasPermission('View', secretHeadingItem))
         # but not isPrivacyViewable
         self.failIf(secretItem.adapted().isPrivacyViewable())
         self.assertRaises(Unauthorized, secretItem.meetingitem_view)
+        self.failIf(secretHeadingItem.adapted().isPrivacyViewable())
+        self.assertRaises(Unauthorized, secretHeadingItem.meetingitem_view)
         # if we try to clone a not privacy viewable item, it raises Unauthorized
         self.assertRaises(Unauthorized, secretItem.onDuplicate)
         self.assertRaises(Unauthorized, secretItem.onDuplicateAndKeepLink)
         self.assertRaises(Unauthorized, secretItem.checkPrivacyViewable)
+        self.assertRaises(Unauthorized, secretHeadingItem.onDuplicate)
+        self.assertRaises(Unauthorized, secretHeadingItem.onDuplicateAndKeepLink)
+        self.assertRaises(Unauthorized, secretHeadingItem.checkPrivacyViewable)
         # if we try to download an annex of a private item, it raises Unauthorized
         self.assertRaises(Unauthorized, secretAnnex.restrictedTraverse('@@download'))
         self.assertRaises(Unauthorized, secretAnnex.restrictedTraverse('@@display-file'))
+        self.assertRaises(Unauthorized, secretHeadingAnnex.restrictedTraverse('@@download'))
+        self.assertRaises(Unauthorized, secretHeadingAnnex.restrictedTraverse('@@display-file'))
         # set 'copyGroups' for publicItem, 'pmReviewer2' will be able to access it
         # and so it will be privacyViewable
         publicItem.setCopyGroups('vendors_reviewers')
         publicItem.at_post_edit_script()
+        publicHeadingItem.setCopyGroups('vendors_reviewers')
+        publicHeadingItem.at_post_edit_script()
         self.assertTrue(self.hasPermission('View', publicItem))
         self.failUnless(publicItem.adapted().isPrivacyViewable())
         self.assertTrue(publicAnnex.restrictedTraverse('@@download'))
         self.assertTrue(publicAnnex.restrictedTraverse('@@display-file'))
+        self.assertTrue(self.hasPermission('View', publicHeadingItem))
+        self.failUnless(publicHeadingItem.adapted().isPrivacyViewable())
+        self.assertTrue(publicHeadingAnnex.restrictedTraverse('@@download'))
+        self.assertTrue(publicHeadingAnnex.restrictedTraverse('@@display-file'))
         # a user in the same proposingGroup can fully access the secret item
         self.changeUser('pmCreator1')
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.isPrivacyViewable')
         self.failUnless(secretItem.adapted().isPrivacyViewable())
         self.failUnless(publicItem.adapted().isPrivacyViewable())
+        self.failUnless(secretHeadingItem.adapted().isPrivacyViewable())
+        self.failUnless(publicHeadingItem.adapted().isPrivacyViewable())
         # MeetingManager
         self.changeUser('pmManager')
+        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.isPrivacyViewable')
         self.failUnless(secretItem.adapted().isPrivacyViewable())
         self.failUnless(publicItem.adapted().isPrivacyViewable())
+        self.failUnless(secretHeadingItem.adapted().isPrivacyViewable())
+        self.failUnless(publicHeadingItem.adapted().isPrivacyViewable())
         # PowerObserver
         self.changeUser('powerobserver1')
+        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.isPrivacyViewable')
         self.failUnless(secretItem.adapted().isPrivacyViewable())
         self.failUnless(publicItem.adapted().isPrivacyViewable())
+        self.failUnless(secretHeadingItem.adapted().isPrivacyViewable())
+        self.failUnless(publicHeadingItem.adapted().isPrivacyViewable())
+        # Restricted powerObserver, no access
+        self.changeUser('restrictedpowerobserver1')
+        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.isPrivacyViewable')
+        self.failIf(secretItem.adapted().isPrivacyViewable())
+        self.failUnless(publicItem.adapted().isPrivacyViewable())
+        self.failIf(secretHeadingItem.adapted().isPrivacyViewable())
+        self.failUnless(publicHeadingItem.adapted().isPrivacyViewable())
 
     def test_pm_IsLateFor(self):
         '''
