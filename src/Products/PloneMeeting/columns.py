@@ -276,11 +276,11 @@ class PMAnnexActionsColumn(AnnexActionsColumn):
         # display arrows for annex and/or annexDecision depending on relevant add permissions
         obj = self._getObject(item)
         parent = obj.aq_parent
-        if obj.portal_type == 'annex' and \
-           not _checkPermission(AddAnnex, parent):
+        if not self._showArrows() or \
+           (obj.portal_type == 'annex' and not _checkPermission(AddAnnex, parent)):
             self.params['showArrows'] = False
-        elif obj.portal_type == 'annexDecision' and \
-                not _checkPermission(AddAnnexDecision, parent):
+        elif not self._showArrows() or \
+                (obj.portal_type == 'annexDecision' and not _checkPermission(AddAnnexDecision, parent)):
             self.params['showArrows'] = False
         else:
             self.params['showArrows'] = True

@@ -29,6 +29,7 @@ from plone.api.exc import InvalidParameterError
 from collective.documentviewer.settings import GlobalSettings
 from collective.iconifiedcategory.adapter import CategorizedObjectAdapter
 from collective.iconifiedcategory.adapter import CategorizedObjectInfoAdapter
+from collective.iconifiedcategory.utils import get_categories
 from eea.facetednavigation.criteria.handler import Criteria as eeaCriteria
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
@@ -1510,3 +1511,10 @@ class IconifiedCategoryGroupAdapter(object):
         # adding annex to a meeting
         if self.context.meta_type == 'Meeting' or parent.meta_type == 'Meeting':
             return cfg.annexes_types.meeting_annexes
+
+    def get_every_categories(self):
+        categories = get_categories(self.context)
+        self.context.REQUEST.set('force_use_item_decision_annexes_group', True)
+        categories = categories + get_categories(self.context)
+        self.context.REQUEST.set('force_use_item_decision_annexes_group', False)
+        return categories
