@@ -263,7 +263,10 @@
   <class class="collective.iconifiedcategory.content.subcategory.Subcategory">
     <implements interface="Products.PloneMeeting.interfaces.IConfigElement" />
   </class>
-    
 
+  <!-- to be removed after migration to 4 -->
+  <adapter for="OFS.interfaces.IItem"
+           factory=".adapters.AnnexableAdapter"
+           provides=".interfaces.IAnnexable" />
 
 </configure>

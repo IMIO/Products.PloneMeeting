@@ -5,6 +5,12 @@
       <h1 class="documentFirstHeading">
        <span tal:content="structure here/getPrettyLink">Item pretty title</span>
       </h1>
+
+      <tal:back_to_item condition="python: context.portal_type.startswith('meetingadvice')">
+        <metal:backToItem use-macro='here/@@pm-macros/backToItem' />
+        <br />
+      </tal:back_to_item>
+
       <fieldset tal:condition="view/showAnnexesSection">
         <legend>
           <a name="annexes"><span i18n:translate="">Annexes</span></a>

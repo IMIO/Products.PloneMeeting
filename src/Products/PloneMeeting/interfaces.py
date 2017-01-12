@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from zope.interface import Interface
-
-##code-section HEAD
 from zope.component.interfaces import IObjectEvent
 from zope.publisher.interfaces.browser import IBrowserRequest
 
@@ -150,7 +148,6 @@ class IAnnexable(Interface):
           In all cases, within each annex type annexes are sorted by
           creation date (more recent last).
         """
-##/code-section HEAD
 
 
 class IConfigElement(Interface):
@@ -212,10 +209,8 @@ class IMeetingUser(IConfigElement):
     """Marker interface for .MeetingUser.MeetingUser
     """
 
-##code-section FOOT
+
 # Interfaces used for customizing the behaviour of meeting items ---------------
-
-
 class IMeetingItemDocumentation:
     '''Normally, the methods described here should be part of IMeetingItem.
        Because it is impossible to do so with an overengineered yet overrigid
@@ -764,4 +759,3 @@ class IMeetingUserDocumentation:
 
 class IMeetingUserCustom(IMeetingUser):
     pass
-##/code-section FOOT

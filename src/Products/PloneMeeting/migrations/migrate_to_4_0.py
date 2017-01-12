@@ -15,6 +15,7 @@ from imio.dashboard.utils import _updateDefaultCollectionFor
 from imio.helpers.catalog import removeIndexes
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_REAPPLY
 
+from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.migrations import Migrator
 from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
@@ -615,7 +616,7 @@ class Migrate_To_4_0(Migrator):
     def _updateCKeditorCustomToolbar(self):
         """If still using the old default toolbar, move to the new toolbar
            where buttons ,'NbSpace','NbHyphen', 'link', 'Unlink' and 'Image' are added."""
-        logger.info('Updating ckeditor custom toolbar, adding buttons'
+        logger.info('Updating ckeditor custom toolbar, adding buttons '
                     '\'NbSpace\', \'NbHyphen\', \'Link\', \'Unlink\' and \'Image\'...')
         toolbar = self.portal.portal_properties.ckeditor_properties.toolbar_Custom
         if not 'NbSpace' in toolbar and not 'NbHyphen' in toolbar:
@@ -732,35 +733,47 @@ class Migrate_To_4_0(Migrator):
                     brain.getPath()))
                 i = i + 1
                 obj = brain.getObject()
-                mfs = obj.objectValues('MeetingFile')
-                if mfs:
-                    for mf in mfs:
-                        annex_id = mf.getId()
-                        annex_type = mf.findRelatedTo() == 'item_decision' and 'annexDecision' or 'annex'
-                        logger.info('Migrating MeetingFile {0}...'.format(annex_id))
-                        annex_title = mf.Title()
-                        mf_file = mf.getFile()
-                        annex_file = NamedBlobFile(
-                            data=mf_file.data,
-                            contentType=mf_file.getContentType(),
-                            filename=safe_unicode(mf_file.filename))
-                        annex_to_print = mf.getToPrint()
-                        annex_confidential = mf.getIsConfidential()
-                        annex_content_category = old_mft_new_cat_id_mappings[mf.getMeetingFileType()]
-                        # remove mf before creating new annex because we will use same id
-                        obj.manage_delObjects(ids=[annex_id])
-                        api.content.create(
-                            id=annex_id,
-                            type=annex_type,
-                            container=obj,
-                            title=safe_unicode(annex_title),
-                            file=annex_file,
-                            to_print=annex_to_print,
-                            confidential=annex_confidential,
-                            content_category=annex_content_category,
-                            )
-                    delattr(obj, 'alreadyUsedAnnexNames')
-                    delattr(obj, 'annexIndex')
+                obj_modified = obj.modified()
+                if obj.portal_type.startswith('meetingadvice'):
+                    parent_modified = obj.aq_inner.aq_parent.modified()
+                for relatedTo in ['item', 'item_decision', 'advice']:
+                    mfs = IAnnexable(obj).getAnnexesByType(relatedTo=relatedTo,
+                                                           makeSubLists=False,
+                                                           realAnnexes=True)
+                    if mfs:
+                        for mf in mfs:
+                            annex_id = mf.getId()
+                            annex_type = mf.findRelatedTo() == 'item_decision' and 'annexDecision' or 'annex'
+                            logger.info('Migrating MeetingFile {0}...'.format(annex_id))
+                            annex_title = mf.Title()
+                            mf_file = mf.getFile()
+                            annex_file = NamedBlobFile(
+                                data=mf_file.data,
+                                contentType=mf_file.getContentType(),
+                                filename=safe_unicode(mf_file.filename))
+                            annex_to_print = mf.getToPrint()
+                            annex_confidential = mf.getIsConfidential()
+                            annex_content_category = old_mft_new_cat_id_mappings[mf.getMeetingFileType()]
+                            annex_created = mf.created()
+                            annex_modified = mf.modified()
+                            # remove mf before creating new annex because we will use same id
+                            obj.manage_delObjects(ids=[annex_id])
+                            new_annex = api.content.create(
+                                id=annex_id,
+                                type=annex_type,
+                                container=obj,
+                                title=safe_unicode(annex_title),
+                                file=annex_file,
+                                to_print=annex_to_print,
+                                confidential=annex_confidential,
+                                content_category=annex_content_category,
+                                creation_date=annex_created)
+                            new_annex.setModificationDate(annex_modified)
+                delattr(obj, 'alreadyUsedAnnexNames')
+                delattr(obj, 'annexIndex')
+                obj.setModificationDate(obj_modified)
+                if obj.portal_type.startswith('meetingadvice'):
+                    obj.aq_inner.aq_parent.setModificationDate(parent_modified)
 
         logger.info('Moving to imio.annex...')
         # necessary for versions in between...
