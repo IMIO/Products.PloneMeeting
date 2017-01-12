@@ -235,7 +235,7 @@ class MeetingUserDescriptor(Descriptor):
     multiSelectFields = ['usages']
     excludedFields = ['active', 'signatureImage']
 
-    def __init__(self, id, gender='m', duty=None, replacementDuty=None,
+    def __init__(self, id, gender='m', duty='', replacementDuty='',
                  usages=['voter'], signatureImage=None,
                  signatureIsDefault=False, active=True):
         self.id = id
