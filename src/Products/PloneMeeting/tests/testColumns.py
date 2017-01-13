@@ -22,8 +22,10 @@
 # 02110-1301, USA.
 #
 
+from collective.iconifiedcategory.interfaces import IIconifiedCategorySettings
 from DateTime import DateTime
 from imio.helpers.cache import cleanRamCacheFor
+from plone import api
 from Products.PloneMeeting.columns import PMAnnexActionsColumn
 from Products.PloneMeeting.columns import PMPrettyLinkColumn
 from Products.PloneMeeting.config import AddAnnex
@@ -120,6 +122,19 @@ class testColumns(PloneMeetingTestCase):
         renderedColumnAnnex1 = column.renderCell(annex1_brain)
         renderedColumnAnnex2 = column.renderCell(annex2_brain)
         self.assertTrue(self.hasPermission(AddAnnex, item))
+        # sort_categorized_tab must be False to show arrows
+        sort_categorized_tab = api.portal.get_registry_record(
+            'sort_categorized_tab',
+            interface=IIconifiedCategorySettings,
+        )
+        self.assertTrue(sort_categorized_tab)
+        self.assertFalse('folder_position_typeaware?position=down' in renderedColumnAnnex1)
+        self.assertFalse('folder_position_typeaware?position=up' in renderedColumnAnnex2)
+        api.portal.set_registry_record('sort_categorized_tab',
+                                       False,
+                                       interface=IIconifiedCategorySettings)
+        renderedColumnAnnex1 = column.renderCell(annex1_brain)
+        renderedColumnAnnex2 = column.renderCell(annex2_brain)
         self.assertTrue('folder_position_typeaware?position=down' in renderedColumnAnnex1)
         self.assertTrue('folder_position_typeaware?position=up' in renderedColumnAnnex2)
 
