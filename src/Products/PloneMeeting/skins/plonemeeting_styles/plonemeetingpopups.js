@@ -171,7 +171,7 @@ jQuery(function($) {
         config: {
             onLoad : function (e) {
                 // initialize select2 widget
-                initializeSelect2Widgets(width='250px');
+                initializeSelect2Widgets(width='400px');
                 initializeIconifiedCategoryWidget();
                 return true;
             },

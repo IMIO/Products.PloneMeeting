@@ -1546,6 +1546,14 @@ div[id^='hook_'] table tr th {
     padding: 0.3em;    
 }
 
+
+/* fix width of select2 widget to 400px as when calling initializeSelect2Widgets
+ * because when validation fails, the opened widget in fullscreen (out of the overlay)
+ * is shrinked */
+.select2-container {
+    width: 400px;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */
