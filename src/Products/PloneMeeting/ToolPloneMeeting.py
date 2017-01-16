@@ -874,25 +874,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             return False
         elif context.meta_type == 'Meeting' and context.isTemporary():
             return False
-        elif context.meta_type in ('MeetingItem', 'Meeting') or \
-                context.portal_type in self.getAdvicePortalTypes(as_ids=True):
-            # check that there are categories defined in the configuration
-            hasAnnexesTypes = get_categories(context)
-            hasDecisionAnnexesTypes = False
-            if not hasAnnexesTypes and context.meta_type == 'MeetingItem':
-                # maybe we have decision related annexes types?
-                self.REQUEST.set('force_use_item_decision_annexes_group', True)
-                hasDecisionAnnexesTypes = get_categories(context)
-                self.REQUEST.set('force_use_item_decision_annexes_group', False)
-            if hasAnnexesTypes or hasDecisionAnnexesTypes:
-                return True
-
-            # last thing, eventually check that there are annexes in self
-            # even if annexes types are no longer used...
-            if self.hasAnnexes(context) or \
-               self.hasAnnexes(context, portal_type='annexDecision'):
-                return True
-        return False
+        else:
+            return True
 
     security.declarePublic('showFacetedCriteriaAction')
 

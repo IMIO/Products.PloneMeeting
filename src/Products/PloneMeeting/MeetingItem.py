@@ -2619,19 +2619,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(self)
         return (name in cfg.getUsedItemAttributes())
 
-    security.declarePublic('hasAnnexesWhere')
-
-    def hasAnnexesWhere(self, relatedTo='item'):
-        '''Have I some annexes?  If p_relatedTo is whatever, consider every annexes
-           no matter their 'relatedTo', either, only consider relevant relatedTo annexes.'''
-        portal_type = None
-        if relatedTo == 'item':
-            portal_type = 'annex'
-        else:
-            portal_type = 'annexDecision'
-        tool = api.portal.get_tool('portal_plonemeeting')
-        return tool.hasAnnexes(self, portal_type)
-
     def queryState_cachekey(method, self):
         '''cachekey method for self.queryState.'''
         return self.workflow_history

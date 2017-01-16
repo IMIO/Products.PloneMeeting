@@ -31,7 +31,6 @@ from collective.iconifiedcategory.browser.views import CategorizedChildView
 from collective.iconifiedcategory.interfaces import ICategorizedPrint
 from collective.iconifiedcategory.interfaces import ICategorizedConfidential
 from collective.iconifiedcategory import utils as iconifiedcategory_utils
-from collective.iconifiedcategory.utils import get_categories
 from collective.iconifiedcategory.utils import get_config_root
 from eea.facetednavigation.browser.app.view import FacetedContainerView
 from eea.facetednavigation.interfaces import IFacetedNavigable
@@ -830,22 +829,6 @@ class CategorizedAnnexesView(CategorizedTabView):
             if tool.isManager(self.context):
                 alsoProvides(table, ICategorizedConfidential)
 
-    def showAnnexesSection(self):
-        """ """
-        return bool(get_categories(self.context)) or \
-            self.tool.hasAnnexes(self.context)
-
-    def showDecisionAnnexesSection(self):
-        """ """
-        if not self.context.meta_type == 'MeetingItem':
-            return False
-
-        self.request.set('force_use_item_decision_annexes_group', True)
-        hasDecisionAnnexesTypes = bool(get_categories(self.context))
-        self.request.set('force_use_item_decision_annexes_group', False)
-        return hasDecisionAnnexesTypes or \
-            self.tool.hasAnnexes(self.context, portal_type='annexDecision')
-
     def showAddAnnex(self):
         """ """
         portal_types = api.portal.get_tool('portal_types')
@@ -880,11 +863,15 @@ class PMCKFinder(CKFinder):
 
 class PMCategorizedChildView(CategorizedChildView):
     """ """
-    def showPreviewLink(self):
+    def show_preview_link(self):
         """Show link if preview is enabled, aka the auto_convert in collective.documentviewer."""
         tool = api.portal.get_tool('portal_plonemeeting')
         if tool.auto_convert_annexes():
             return True
+        return False
+
+    def show_nothing(self):
+        """Do not display the 'Nothing' label."""
         return False
 
     def categorized_elements_more_infos_url(self):

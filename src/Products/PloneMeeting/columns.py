@@ -143,8 +143,7 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
                 moreInfos = obj.restrictedTraverse('@@item-more-infos')(visibleColumns=visibleColumns)
 
                 # display annexes
-                if tool.hasAnnexes(obj, portal_type='annex'):
-                    annexes += obj.restrictedTraverse('categorized-childs')(portal_type='annex')
+                annexes += obj.restrictedTraverse('categorized-childs')(portal_type='annex', show_nothing=False)
                 if tool.hasAnnexes(obj, portal_type='annexDecision'):
                     decision_term = translate("AnnexesDecisionShort",
                                               domain='PloneMeeting',
@@ -152,8 +151,7 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
                     annexes += u"<span class='discreet'>{0}&nbsp;:&nbsp;</span>".format(decision_term)
                     annexes += obj.restrictedTraverse('categorized-childs')(portal_type='annexDecision')
         elif obj.meta_type == 'Meeting':
-            if tool.hasAnnexes(obj, portal_type='annex'):
-                annexes += obj.restrictedTraverse('categorized-childs')(portal_type='annex')
+            annexes += obj.restrictedTraverse('categorized-childs')(portal_type='annex')
         if annexes:
             annexes = u"<div class='dashboard_annexes'>{0}</div>".format(annexes)
 
