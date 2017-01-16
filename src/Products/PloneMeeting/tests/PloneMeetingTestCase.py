@@ -102,7 +102,11 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         # Import the test profile
         self.changeUser('admin')
         # Create some member areas
-        for userId in ('pmManager', 'pmCreator1', 'pmCreator2', 'siteadmin'):
+        for userId in ('pmManager',
+                       'pmCreator1',
+                       'pmCreator1b',
+                       'pmCreator2',
+                       'siteadmin'):
             _createHomeFolder(self.portal, userId)
         # Disable notifications mechanism. This way, the test suite may be
         # executed even on production sites that contain many real users.

@@ -416,8 +416,6 @@ td.td_cell_advices .actionMenuAX .actionMenuContentAX {
 .actionMenuAX.activated .actionMenuContentAX {
     z-index: 20;
     display: block;
-    /* so long menu does not 'touch' the screen bottom */
-    padding-bottom: 2em;
 }
 .actionMenuAX.deactivated .actionMenuContentAX { display: none !important; }
 

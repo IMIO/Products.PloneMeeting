@@ -101,7 +101,7 @@ jQuery(document).ready(function($) {
     adviceAddEdit();
     advicePreview();
     inheritedItemInfos();
-    usersGroupInfos()
+    usersGroupInfos();
 
     jQuery(function($){
         // Every common overelays, must stay at the bottom of every defined overlays!!!
@@ -126,6 +126,7 @@ function initializePMOverlays(){
     advicePreview();
     inheritedItemInfos();
     usersGroupInfos();
+    categorizedChildsInfos();
 
     jQuery(function($) {
         // Content history popup

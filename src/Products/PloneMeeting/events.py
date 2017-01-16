@@ -30,6 +30,7 @@ from plone.app.textfield import RichText
 from plone.app.textfield.value import RichTextValue
 from plone import api
 from collective.documentviewer.async import queueJob
+from collective.iconifiedcategory.utils import update_all_categorized_elements
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.cache import invalidate_cachekey_volatile_for
 from imio.helpers.xhtml import storeExternalImagesLocally
@@ -284,6 +285,9 @@ def onItemMoved(item, event):
     # this is also called when removing an item, in this case, we do nothing
     if IObjectRemovedEvent.providedBy(event):
         return
+
+    # update categorized_elements because path changed
+    update_all_categorized_elements(item)
 
 
 def onItemAdded(item, event):

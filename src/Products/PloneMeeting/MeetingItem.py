@@ -14,27 +14,9 @@ __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
 __docformat__ = 'plaintext'
 
 from AccessControl import ClassSecurityInfo
+from Acquisition import aq_base
 from zope.interface import implements
 import interfaces
-
-from Products.Archetypes.atapi import BaseFolder
-from Products.Archetypes.atapi import BooleanField
-from Products.Archetypes.atapi import DisplayList
-from Products.Archetypes.atapi import IntegerField
-from Products.Archetypes.atapi import LinesField
-from Products.Archetypes.atapi import MultiSelectionWidget
-from Products.Archetypes.atapi import OrderedBaseFolder
-from Products.Archetypes.atapi import OrderedBaseFolderSchema
-from Products.Archetypes.atapi import ReferenceField
-from Products.Archetypes.atapi import registerType
-from Products.Archetypes.atapi import RichWidget
-from Products.Archetypes.atapi import Schema
-from Products.Archetypes.atapi import SelectionWidget
-from Products.Archetypes.atapi import StringField
-from Products.Archetypes.atapi import TextAreaWidget
-from Products.Archetypes.atapi import TextField
-from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
-
 from datetime import datetime
 from collections import OrderedDict
 from copy import deepcopy
@@ -56,6 +38,22 @@ from zope.schema.interfaces import IVocabularyFactory
 from collective.iconifiedcategory.utils import update_all_categorized_elements
 from plone import api
 from plone.memoize import ram
+from Products.Archetypes.atapi import BaseFolder
+from Products.Archetypes.atapi import BooleanField
+from Products.Archetypes.atapi import DisplayList
+from Products.Archetypes.atapi import IntegerField
+from Products.Archetypes.atapi import LinesField
+from Products.Archetypes.atapi import MultiSelectionWidget
+from Products.Archetypes.atapi import OrderedBaseFolder
+from Products.Archetypes.atapi import OrderedBaseFolderSchema
+from Products.Archetypes.atapi import ReferenceField
+from Products.Archetypes.atapi import registerType
+from Products.Archetypes.atapi import RichWidget
+from Products.Archetypes.atapi import Schema
+from Products.Archetypes.atapi import SelectionWidget
+from Products.Archetypes.atapi import StringField
+from Products.Archetypes.atapi import TextAreaWidget
+from Products.Archetypes.atapi import TextField
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.Expression import Expression, createExprContext
 from Products.CMFCore.WorkflowCore import WorkflowException
@@ -63,6 +61,7 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import ReviewPortalContent
 from Products.CMFCore.permissions import View
 from Products.CMFCore.utils import _checkPermission
+from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from Products.CMFPlone.utils import safe_unicode
 from collective.behavior.talcondition.utils import _evaluateExpression
 from imio.prettylink.interfaces import IPrettyLink
@@ -2621,7 +2620,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def queryState_cachekey(method, self):
         '''cachekey method for self.queryState.'''
-        return self.workflow_history
+        return getattr(aq_base(self), 'workflow_history', {})
 
     security.declarePublic('queryState')
 

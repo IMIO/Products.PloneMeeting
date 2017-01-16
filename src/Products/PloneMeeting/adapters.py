@@ -1387,6 +1387,15 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
     def __init__(self, context, request, brain):
         super(PMCategorizedObjectAdapter, self).__init__(context, request, brain)
 
+    def _user_groups_cachekey(method, self, as_ids=False):
+        '''cachekey method for self._user_groups.'''
+        return str(self.request._debug)
+
+    @ram.cache(_user_groups_cachekey)
+    def _user_groups(self):
+        user = api.user.get_current()
+        return user.getGroups()
+
     def can_view(self):
         # is the context a MeetingItem and privacy viewable?
         if self.context.meta_type == 'MeetingItem' and not self.context.adapted().isPrivacyViewable():
@@ -1396,9 +1405,7 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
         if not infos['confidential'] or \
            api.portal.get_tool('portal_plonemeeting').isManager(self.context):
             return True
-        user = api.user.get_current()
-        user_groups = user.getGroups()
-        if set(user_groups).intersection(infos['visible_for_groups']):
+        if set(self._user_groups()).intersection(infos['visible_for_groups']):
             return True
         # if we have a SUFFIXPROFILEPREFIX profixed group,
         # check using "userIsAmong", this is only done for Meetings

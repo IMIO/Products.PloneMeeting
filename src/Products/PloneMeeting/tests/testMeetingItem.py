@@ -32,6 +32,7 @@ from zope.annotation.interfaces import IAnnotations
 from zope.event import notify
 from zope.i18n import translate
 from zope.interface import Invalid
+from zope.lifecycleevent import ObjectModifiedEvent
 
 from collective.iconifiedcategory.event import IconifiedPrintChangedEvent
 from collective.iconifiedcategory.utils import calculate_category_id
@@ -4148,17 +4149,33 @@ class testMeetingItem(PloneMeetingTestCase):
         # we do not processForm so title used for cloned item does not correspond
         # to id, and we may check if it has been renamed
         newItem = item.clone()
-        newItem.processForm()
-        self.assertEquals(newItem.getId(), 'my-new-title')
-        item.processForm()
-        self.assertEquals(item.getId(), 'my-new-title-1')
+        notify(ObjectModifiedEvent(newItem))
+        self.assertEqual(newItem.getId(), 'my-new-title')
+        notify(ObjectModifiedEvent(item))
+        self.assertEqual(item.getId(), 'my-new-title-1')
 
         # renaming process does not break linked items
         newItem2 = item.clone(setCurrentAsPredecessor=True)
-        self.assertEquals(newItem2.getId(), 'copy_of_' + item.getId())
-        newItem2.processForm()
-        self.assertEquals(newItem2.getId(), 'my-new-title-2')
-        self.assertEquals(newItem2.getPredecessor(), item)
+        self.assertEqual(newItem2.getId(), 'copy_of_' + item.getId())
+        notify(ObjectModifiedEvent(newItem2))
+        self.assertEqual(newItem2.getId(), 'my-new-title-2')
+        self.assertEqual(newItem2.getPredecessor(), item)
+
+    def test_pm_ItemRenamedUpdatesCategorizedElements(self):
+        """As path is stored in the categorized_elements, make sure
+           it behaves correctly when the item was renamed"""
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        annex = self.addAnnex(item)
+        item.setTitle('New title')
+        notify(ObjectModifiedEvent(item))
+
+        # id was updated as well as categorized_elements
+        self.assertEqual(item.getId(), 'new-title')
+        self.assertEqual(
+            item.categorized_elements.values()[0]['download_url'],
+            u'{0}/@@download/file/FILE.txt'.format(
+                self.portal.portal_url.getRelativeContentURL(annex)))
 
     def _notAbleToAddSubContent(self, item):
         for add_subcontent_perm in ADD_SUBCONTENT_PERMISSIONS:
