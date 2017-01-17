@@ -93,6 +93,19 @@
                                   i18n:attributes="title"
                                   tal:attributes="src string:${view/portal_url}/advice_not_asked.png"/>
                          </tal:not_asked_advice_icon>
+                         <acronym tal:condition="python: view.showLinkToInherited(adviceIsInherited, adviceHolder)">
+                            <a class="tooltipster-inherited-advice deactivated"
+                               title="Advice inherited from another item"
+                               i18n:domain="PloneMeeting"
+                               i18n:attributes="title"
+                               style="display: inline-block; padding: 0"
+                               href="#"
+                               onclick="event.preventDefault()"
+                               tal:attributes="data-advice_id string:${advice/id};
+                                               data-base_url string:${item_url}">
+                             <img src="advice_inherited.png" tal:attributes="src string:${view/portal_url}/advice_inherited.png"/>
+                            </a>
+                         </acronym>
                          <div class="advice_popup_label">
                          <span tal:condition="advice/optional">(</span><b tal:content="structure advice/name"></b>
                               <tal:showDelayLabel condition="python: advice['delay'] and advice['delay_label']">
@@ -112,19 +125,6 @@
                                   tal:attributes="data-group_id string:${advice/id}_advisers;
                                                   data-base_url string:${view/portal_url}">
                                 <img src="group_users.png" tal:attributes="src string:${view/portal_url}/group_users.png"/>
-                               </a>
-                            </acronym>
-                            <acronym tal:condition="python: view.showLinkToInherited(adviceIsInherited, adviceHolder)">
-                               <a class="tooltipster-inherited-advice deactivated"
-                                  title="Advice inherited from another item"
-                                  i18n:domain="PloneMeeting"
-                                  i18n:attributes="title"
-                                  style="display: inline-block; padding: 0"
-                                  href="#"
-                                  onclick="event.preventDefault()"
-                                  tal:attributes="data-advice_id string:${advice/id};
-                                                  data-base_url string:${item_url}">
-                                <img src="advice_inherited.png" tal:attributes="src string:${view/portal_url}/advice_inherited.png"/>
                                </a>
                             </acronym>
                             <acronym tal:attributes="title python: context.getAdviceHelpMessageFor(**advice)"><img tal:attributes="src string:${view/portal_url}/help.png;"/></acronym>
@@ -261,7 +261,7 @@
                         align="right"
                         class="advice_annexes">
                         <tal:defines condition="adviceHolderIsViewable">
-                            <tal:annexes replace="structure python: obj.restrictedTraverse('categorized-childs')(portal_type='annex')" />
+                            <tal:annexes replace="structure python: obj.restrictedTraverse('categorized-childs')(show_nothing=False)" />
                         </tal:defines>
                     </td>
                   </tr>

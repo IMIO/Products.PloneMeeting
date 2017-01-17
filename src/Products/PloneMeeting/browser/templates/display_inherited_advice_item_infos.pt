@@ -1,3 +1,5 @@
 <div id="content" i18n:domain="PloneMeeting">
     <span i18n:translate="">This advice is inherited from <span i18n:name="linkToItem" tal:replace="structure python: view.adviceHolder.getPrettyLink(**{'maxLength': 120})">Link to advice holder cropped...</span></span>
+    <p>&nbsp;</p>
+    <p i18n:translate="advice_inherited_popup_descr" style="float: right;" class="discreet">Informations displayed regarding advice are taken from the other item including informations about dates, delay and states.</p>
 </div>
