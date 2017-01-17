@@ -27,7 +27,7 @@ from collective.documentgenerator.viewlets.generationlinks import DocumentGenera
 from collective.eeafaceted.collectionwidget.browser.views import RenderCategoryView
 from collective.iconifiedcategory.browser.actionview import ConfidentialChangeView
 from collective.iconifiedcategory.browser.tabview import CategorizedTabView
-from collective.iconifiedcategory.browser.views import CategorizedChildView
+from collective.iconifiedcategory.browser.views import CategorizedChildInfosView
 from collective.iconifiedcategory.interfaces import ICategorizedPrint
 from collective.iconifiedcategory.interfaces import ICategorizedConfidential
 from collective.iconifiedcategory import utils as iconifiedcategory_utils
@@ -861,7 +861,7 @@ class PMCKFinder(CKFinder):
         self.openuploadwidgetdefault = True
 
 
-class PMCategorizedChildView(CategorizedChildView):
+class PMCategorizedChildInfosView(CategorizedChildInfosView):
     """ """
     def show_preview_link(self):
         """Show link if preview is enabled, aka the auto_convert in collective.documentviewer."""
@@ -876,11 +876,7 @@ class PMCategorizedChildView(CategorizedChildView):
 
     def categorized_elements_more_infos_url(self):
         """ """
-        anchor_name = 'annexes'
-        if self.portal_type == 'annexDecision':
-            anchor_name = 'annexes_decision'
-        return "{0}/@@categorized-annexes#{1}".format(self.context.absolute_url(),
-                                                      anchor_name)
+        return "{0}/@@categorized-annexes".format(self.context.absolute_url())
 
 
 class PMConfidentialChangeView(ConfidentialChangeView):

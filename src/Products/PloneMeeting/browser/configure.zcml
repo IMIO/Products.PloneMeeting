@@ -691,11 +691,11 @@
     <configure package="collective.iconifiedcategory">
         <browser:page
             for="OFS.interfaces.IItem"
-            name="categorized-childs"
+            name="categorized-childs-infos"
             permission="zope2.View"
-            class="Products.PloneMeeting.browser.overrides.PMCategorizedChildView"
+            class="Products.PloneMeeting.browser.overrides.PMCategorizedChildInfosView"
             layer="collective.iconifiedcategory.interfaces.ICollectiveIconifiedCategoryLayer"
-            template="browser/templates/categorized-childs.pt"
+            template="browser/templates/categorized-childs-infos.pt"
           />
         <browser:page
           name="iconified-confidential"
