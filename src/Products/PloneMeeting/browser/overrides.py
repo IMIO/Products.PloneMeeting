@@ -829,6 +829,11 @@ class CategorizedAnnexesView(CategorizedTabView):
             if tool.isManager(self.context):
                 alsoProvides(table, ICategorizedConfidential)
 
+    def showDecisionAnnexesSection(self):
+        """ """
+        if not self.context.meta_type == 'MeetingItem':
+            return False
+
     def showAddAnnex(self):
         """ """
         portal_types = api.portal.get_tool('portal_types')
