@@ -38,6 +38,7 @@ from collective.iconifiedcategory.utils import get_config_root
 from collective.iconifiedcategory.utils import get_category_object
 from collective.iconifiedcategory.utils import get_group
 from collective.iconifiedcategory.utils import update_all_categorized_elements
+from imio.helpers.cache import cleanRamCacheFor
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
@@ -94,7 +95,8 @@ class testAnnexes(PloneMeetingTestCase):
         annex_group = get_group(annex_config, item)
         annex_group.confidentiality_activated = True
         annexes_table = item.restrictedTraverse('@@iconifiedcategory')
-        categorized_child = item.restrictedTraverse('@@categorized-childs')
+        categorized_child = item.restrictedTraverse('@@categorized-childs-infos')
+        categorized_child.category_id = 'financial-analysis'
 
         annexNotConfidential = self.addAnnex(item, annexTitle='Annex not confidential')
         annexConfidential = self.addAnnex(item, annexTitle='Annex confidential')
@@ -256,13 +258,16 @@ class testAnnexes(PloneMeetingTestCase):
                                            categorized_child):
         """ """
         # current user may see every annexes
+        cleanRamCacheFor('Products.PloneMeeting.adapters._user_groups')
         self.assertEqual(set([elt['UID'] for elt in get_categorized_elements(obj)]),
                          set((annexNotConfidential.UID(),
                               annexConfidential.UID())))
         self.assertTrue('Annex not confidential' in annexes_table())
         self.assertTrue('Annex confidential' in annexes_table())
-        self.assertTrue('Annex not confidential' in categorized_child())
-        self.assertTrue('Annex confidential' in categorized_child())
+        categorized_child.update()
+        result = categorized_child.index()
+        self.assertTrue('Annex not confidential' in result)
+        self.assertTrue('Annex confidential' in result)
 
     def _checkMayNotAccessConfidentialAnnexes(self,
                                               item,
@@ -276,8 +281,10 @@ class testAnnexes(PloneMeetingTestCase):
                          [annexNotConfidential.UID()])
         self.assertTrue('Annex not confidential' in annexes_table())
         self.assertFalse('Annex confidential' in annexes_table())
-        self.assertTrue('Annex not confidential' in categorized_child())
-        self.assertFalse('Annex confidential' in categorized_child())
+        categorized_child.update()
+        result = categorized_child.index()
+        self.assertTrue('Annex not confidential' in result)
+        self.assertFalse('Annex confidential' in result)
 
     def _setupConfidentialityOnAdviceAnnexes(self):
         """ """
