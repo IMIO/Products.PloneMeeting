@@ -18,9 +18,15 @@
          tal:attributes="src string: $portal_url/isConfidentialNo.png;
                          onClick python: 'asyncToggleIcon(\''+UID + '__' + advice['id'] +'\', baseUrl=\'' + baseUrl + '\', viewName=\'@@toggle_advice_is_confidential\', baseSelector=\'#marker_toggle_advice_isconfidential_\')'"/></acronym>
   <tal:notMayEdit condition="not: mayEdit">
-    <img tal:condition="isConfidential" title="advice_is_confidential_yes" i18n:attributes="title"
+    <img tal:condition="isConfidential"
+         title="advice_is_confidential_yes"
+         class="adviceIsConfidentialNotEditable"
+         i18n:attributes="title"
          tal:attributes="src string: $portal_url/isConfidentialYes.png"/>
-    <img tal:condition="not: isConfidential" title="advice_is_confidential_no" i18n:attributes="title"
+    <img tal:condition="not: isConfidential"
+         title="advice_is_confidential_no"
+         class="adviceIsConfidentialNotEditable"
+         i18n:attributes="title"
          tal:attributes="src string: $portal_url/isConfidentialNo.png"/>
   </tal:notMayEdit>
 </tal:isConfidential>

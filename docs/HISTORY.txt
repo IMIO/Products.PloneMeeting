@@ -53,6 +53,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Added parameter 'inheritAdvices' to MeetingItem.clone method, this way, if paramater 'setCurrentAsPredecessor=True'
   and 'manualLinkToPredecessor=False', advices that were given on the original item are inherited, it is shown on the
   new item, every informations are actually taken from original item
+- Added parameters MeetingConfig.keepAdvicesOnSentToOtherMC and MeetingConfig.advicesKeptOnSentToOtherMC that allows
+  to specify if items sent to another MC will inherits from original items.  If only some specific advices must be kept
+  it can be defined in MeetingConfig.advicesKeptOnSentToOtherMC, if nothing is defined, every advices are kept
 - Hide the plone.contentactions viewlet on every PloneMeeting content types
 - Field MeetingItem.observations is no more kept when an item is cloned
 - Added icon to select/unselect every checkboxes of available items to present in a meeting like it is already

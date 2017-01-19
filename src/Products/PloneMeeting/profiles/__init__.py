@@ -302,8 +302,9 @@ class MeetingConfigDescriptor(Descriptor):
                          'workflowAdaptations', 'transitionsToConfirm', 'transitionsForPresentingAnItem',
                          'onTransitionFieldTransforms', 'onMeetingTransitionItemTransitionToTrigger',
                          'meetingPresentItemWhenNoCurrentMeetingStates',
-                         'itemAutoSentToOtherMCStates', 'itemManualSentToOtherMCStates', 'mailItemEvents',
-                         'mailMeetingEvents', 'usedAdviceTypes', 'selectableAdvisers', 'itemAdviceStates',
+                         'itemAutoSentToOtherMCStates', 'itemManualSentToOtherMCStates', 'advicesKeptOnSentToOtherMC',
+                         'mailItemEvents', 'mailMeetingEvents',
+                         'usedAdviceTypes', 'selectableAdvisers', 'itemAdviceStates',
                          'itemDecidedStates', 'itemAdviceEditStates', 'itemAdviceViewStates', 'itemBudgetInfosStates',
                          'powerAdvisersGroups', 'itemPowerObserversStates', 'meetingPowerObserversStates',
                          'itemRestrictedPowerObserversStates', 'meetingRestrictedPowerObserversStates',
@@ -468,6 +469,8 @@ class MeetingConfigDescriptor(Descriptor):
         self.meetingPresentItemWhenNoCurrentMeetingStates = []
         self.itemAutoSentToOtherMCStates = ['accepted', ]
         self.itemManualSentToOtherMCStates = []
+        self.keepAdvicesOnSentToOtherMC = False
+        self.advicesKeptOnSentToOtherMC = []
         self.useCopies = False
         self.selectableCopyGroups = []
         self.itemCopyGroupsStates = ['accepted', 'refused', 'delayed', ]

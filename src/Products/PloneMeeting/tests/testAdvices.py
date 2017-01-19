@@ -2386,6 +2386,38 @@ class testAdvices(PloneMeetingTestCase):
         item2 = item1.clone(setCurrentAsPredecessor=True, inheritAdvices=True)
         return item1, item2, vendors_advice, developers_advices
 
+    def test_pm_InheritedAdviceNotAskedAdvice(self):
+        """Check that not_asked advices are inherited as well."""
+        cfg = self.meetingConfig
+        item1, item2, vendors_advices, developers_advice = self._setupInheritedAdvice()
+        # enable endUsers group as add advice to it
+        self.changeUser('siteadmin')
+        self.do(self.tool.endUsers, 'activate')
+        self.portal.portal_groups.addPrincipalToGroup('pmAdviser1', 'endUsers_advisers')
+        cfg.setSelectableAdvisers(cfg.getSelectableAdvisers() + ('endUsers', ))
+        self.changeUser('pmAdviser1')
+        cfg.setPowerAdvisersGroups(('endUsers', ))
+        item1.updateLocalRoles()
+        createContentInContainer(item1,
+                                 'meetingadvice',
+                                 **{'advice_group': 'endUsers',
+                                    'advice_type': u'positive',
+                                    'advice_hide_during_redaction': False,
+                                    'advice_comment': RichTextValue(u'My comment')})
+        self.assertTrue('endUsers' in item1.adviceIndex)
+        self.changeUser('pmCreator1')
+        item3 = item1.clone(setCurrentAsPredecessor=True, inheritAdvices=True)
+        self.assertEqual(len(item3.adviceIndex), 3)
+        self.assertTrue(item3.adviceIndex['developers']['inherited'])
+        self.assertTrue(item3.adviceIndex['vendors']['inherited'])
+        self.assertTrue(item3.adviceIndex['endUsers']['inherited'])
+        # after an additional _updateAdvices, infos are still correct
+        item3.updateLocalRoles()
+        self.assertEqual(len(item3.adviceIndex), 3)
+        self.assertTrue(item3.adviceIndex['developers']['inherited'])
+        self.assertTrue(item3.adviceIndex['vendors']['inherited'])
+        self.assertTrue(item3.adviceIndex['endUsers']['inherited'])
+
     def test_pm_InheritedAdviceAccesses(self):
         """While an advice is marked as 'inherited', it will show another advice
            coming from another item, in this case, read access to current item are same as

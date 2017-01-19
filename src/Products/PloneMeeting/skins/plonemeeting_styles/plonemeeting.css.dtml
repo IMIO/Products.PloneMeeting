@@ -812,6 +812,11 @@ p.indent-firstline {
     cursor: pointer;
     padding-bottom: 2px;
 }
+
+.adviceIsConfidentialNotEditable {
+    cursor: help;
+}
+
 #content span.budgetRelated {
     color: green;
 }

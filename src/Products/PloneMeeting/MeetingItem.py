@@ -3213,6 +3213,24 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         """See docstring in interfaces.py"""
         return True
 
+    def getUnhandledInheritedAdvisersData(self, adviserIds, optional):
+        """ """
+        predecessor = self.getPredecessor()
+        res = []
+        for adviserId in adviserIds:
+            if (optional and not predecessor.adviceIndex[adviserId]['optional']):
+                continue
+            res.append(
+                {'meetingGroupId': predecessor.adviceIndex[adviserId]['id'],
+                 'meetingGroupName': predecessor.adviceIndex[adviserId]['name'],
+                 'gives_auto_advice_on_help_message':
+                    predecessor.adviceIndex[adviserId]['gives_auto_advice_on_help_message'],
+                 'row_id': predecessor.adviceIndex[adviserId]['row_id'],
+                 'delay': predecessor.adviceIndex[adviserId]['delay'],
+                 'delay_left_alert': predecessor.adviceIndex[adviserId]['delay_left_alert'],
+                 'delay_label': predecessor.adviceIndex[adviserId]['delay_label'], })
+        return res
+
     security.declarePublic('getOptionalAdvisersData')
 
     def getOptionalAdvisersData(self):
@@ -3643,8 +3661,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         for groupId, adviceInfo in self.adviceIndex.iteritems():
             # manage inherited advice
             if adviceInfo['inherited']:
+                # make sure we do not modify original data, use .copy()
                 adviceInfo = adviceInfo.copy()
                 adviceInfo = self.getInheritedAdviceInfo(groupId)
+                adviceInfo['inherited'] = True
             # Create the entry for this type of advice if not yet created.
             # first check if current user may access advice, aka advice is not confidential to him
             if not self._adviceIsViewableForCurrentUser(cfg,
@@ -4071,19 +4091,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # every meetingadvice to the role 'Authenticated', a role that current user has
             self._removeEveryContainedAdvices()
 
-        # Compute automatic
-        # no sense to compute automatic advice on items defined in the configuration
-        if isDefinedInTool:
-            automaticAdvisers = []
-        else:
-            # here, there are still no 'Reader' access for advisers to the item
-            # make sure the automatic advisers (where a TAL expression is evaluated)
-            # may access the item correctly
-            with api.env.adopt_roles(['Manager', ]):
-                automaticAdvisers = self.getAutomaticAdvisersData()
-        # get formatted optionalAdvisers to be coherent with automaticAdvisers data format
-        optionalAdvisers = self.getOptionalAdvisersData()
-
         # Update the dictionary self.adviceIndex with every advices to give
         i = -1
         # we will recompute the entire adviceIndex
@@ -4116,11 +4123,37 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             else:
                 saved_stored_data[groupId]['isConfidential'] = cfg.getAdviceConfidentialityDefault()
 
-        itemState = self.queryState()
-        self.adviceIndex = PersistentMapping()
+        # Compute automatic
+        # no sense to compute automatic advice on items defined in the configuration
+        if isDefinedInTool:
+            automaticAdvisers = []
+        else:
+            # here, there are still no 'Reader' access for advisers to the item
+            # make sure the automatic advisers (where a TAL expression is evaluated)
+            # may access the item correctly
+            with api.env.adopt_roles(['Manager', ]):
+                automaticAdvisers = self.getAutomaticAdvisersData()
+        # get formatted optionalAdvisers to be coherent with automaticAdvisers data format
+        optionalAdvisers = self.getOptionalAdvisersData()
+        # now get inherited advices that are not in optional advisers and
+        # automatic advisers, it is the case for not_asked advices or when sending
+        # an item to another MC
+        handledAdviserIds = [optAdviser['meetingGroupId'] for optAdviser in optionalAdvisers]
+        handledAdviserIds += [autoAdviser['meetingGroupId'] for autoAdviser in automaticAdvisers]
+        # when inheritedAdviserIds, adviceIndex is empty
+        unhandledAdviserIds = [adviserId for adviserId in inheritedAdviserIds
+                               if adviserId not in handledAdviserIds]
+        # if we have an adviceIndex, check that every inherited adviserIds are handled
+        unhandledAdviserIds += [
+            adviserId for adviserId in self.adviceIndex
+            if self.adviceIndex[adviserId]['inherited'] and adviserId not in handledAdviserIds]
+        if unhandledAdviserIds:
+            optionalAdvisers += self.getUnhandledInheritedAdvisersData(unhandledAdviserIds, optional=True)
+            automaticAdvisers += self.getUnhandledInheritedAdvisersData(unhandledAdviserIds, optional=False)
         # we keep the optional and automatic advisers separated because we need
         # to know what advices are optional or not
         # if an advice is in both optional and automatic advisers, the automatic is kept
+        self.adviceIndex = PersistentMapping()
         for adviceType in (optionalAdvisers, automaticAdvisers):
             i += 1
             optional = (i == 0)
@@ -4219,6 +4252,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # manage PowerAdvisers
         # we will give those groups the ability to give an advice on this item
         # even if the advice was not asked...
+        itemState = self.queryState()
         for mGroupId in cfg.getPowerAdvisersGroups():
             # if group already gave advice, we continue
             if mGroupId in self.adviceIndex:
@@ -4888,7 +4922,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def clone(self, copyAnnexes=True, newOwnerId=None, cloneEventAction=None,
               destFolder=None, copyFields=DEFAULT_COPIED_FIELDS, newPortalType=None,
               keepProposingGroup=False, setCurrentAsPredecessor=False,
-              manualLinkToPredecessor=False, inheritAdvices=False):
+              manualLinkToPredecessor=False, inheritAdvices=False, inheritedAdviceIds=[]):
         '''Clones me in the PloneMeetingFolder of the current user, or
            p_newOwnerId if given (this guy will also become owner of this
            item). If there is a p_cloneEventAction, an event will be included
@@ -4971,10 +5005,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 newItem.setPredecessor(self)
                 # manage inherited adviceIds
                 if inheritAdvices:
-                    advicesData = [data['meetingGroupId'] for data in
-                                   self.getOptionalAdvisersData() + self.getAutomaticAdvisersData()]
-                    inheritedAdviserIds = [adviserId for adviserId in advicesData
-                                           if newItem.couldInheritAdvice(adviserId)]
+                    inheritedAdviserIds = [adviserId for adviserId in self.adviceIndex.keys()
+                                           if newItem.couldInheritAdvice(adviserId) and
+                                           (not inheritedAdviceIds or adviserId in inheritedAdviceIds)]
 
         if cloneEventAction:
             # We are sure that there is only one key in the workflow_history
@@ -5074,11 +5107,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # special case for 'budgetRelated' that works together with 'budgetInfos'
                 if field == 'budgetInfos':
                     fieldsToCopy.remove('budgetRelated')
+        keepAdvices = cfg.getKeepAdvicesOnSentToOtherMC()
+        keptAdvices = keepAdvices and cfg.getAdvicesKeptOnSentToOtherMC() or []
         newItem = self.clone(copyAnnexes=True, newOwnerId=newOwnerId,
                              cloneEventAction=cloneEventAction,
                              destFolder=destFolder, copyFields=fieldsToCopy,
                              newPortalType=destMeetingConfig.getItemTypeName(),
-                             keepProposingGroup=True, setCurrentAsPredecessor=True)
+                             keepProposingGroup=True, setCurrentAsPredecessor=True,
+                             inheritAdvices=keepAdvices, inheritedAdviceIds=keptAdvices)
         # manage categories mapping, if original and new items use
         # categories, we check if a mapping is defined in the configuration of the original item
         if not cfg.getUseGroupsAsCategories() and \

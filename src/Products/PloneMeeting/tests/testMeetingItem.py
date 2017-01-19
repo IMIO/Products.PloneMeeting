@@ -388,7 +388,11 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failIf(clonedItem.getBudgetInfos())
         self.failIf(clonedItem.getOtherMeetingConfigsClonableTo())
 
-    def _setupSendItemToOtherMC(self, with_annexes=False, with_advices=False):
+    def _setupSendItemToOtherMC(self,
+                                with_annexes=False,
+                                with_advices=False,
+                                keep_advices=False,
+                                advices_to_keep=[]):
         '''
           This will do the setup of testing the send item to other MC functionnality.
           This will create an item, present it in a meeting and send it to another meeting.
@@ -460,12 +464,16 @@ class testMeetingItem(PloneMeetingTestCase):
             decisionAnnex2 = self.addAnnex(item,
                                            annexType='marketing-annex',
                                            relatedTo='item_decision')
+        if keep_advices:
+            cfg.setKeepAdvicesOnSentToOtherMC(True)
+        if advices_to_keep:
+            cfg.setAdvicesKeptOnSentToOtherMC(advices_to_keep)
         self.do(item, 'accept')
+        cfg.setKeepAdvicesOnSentToOtherMC(False)
+        cfg.setAdvicesKeptOnSentToOtherMC([])
+
         # Get the new item
-        annotations = IAnnotations(item)
-        annotationKey = item._getSentToOtherMCAnnotationKey(otherMeetingConfigId)
-        newUID = annotations[annotationKey]
-        newItem = self.portal.uid_catalog(UID=newUID)[0].getObject()
+        newItem = item.getItemClonedToOtherMC(destMeetingConfigId=otherMeetingConfigId)
         data = {'originalItem': item,
                 'meeting': meeting,
                 'newItem': newItem, }
@@ -629,6 +637,69 @@ class testMeetingItem(PloneMeetingTestCase):
         newItem = data['newItem']
         self.assertTrue(len(newItem.adviceIndex) == 0)
         self.assertTrue(len(newItem.getGivenAdvices()) == 0)
+
+    def test_pm_SendItemToOtherMCKeepAdvices(self):
+        '''Test when sending an item to another MeetingConfig and every advices are kept.'''
+        cfg = self.meetingConfig
+        cfg.setKeepAdvicesOnSentToOtherMC(True)
+        data = self._setupSendItemToOtherMC(with_advices=True,
+                                            keep_advices=True)
+        originalItem = data['originalItem']
+
+        # original item had 2 advices, one delay aware and one normal
+        self.assertTrue(len(originalItem.adviceIndex) == 2)
+        self.assertTrue(originalItem.adviceIndex['developers']['row_id'] == 'unique_id_123')
+        self.assertTrue(len(originalItem.getGivenAdvices()) == 2)
+        # advices were kept
+        newItem = data['newItem']
+        self.assertTrue(len(newItem.adviceIndex) == 2)
+        self.assertTrue(newItem.adviceIndex['developers']['inherited'])
+        self.assertTrue(newItem.adviceIndex['vendors']['inherited'])
+        self.assertTrue(len(newItem.getGivenAdvices()) == 0)
+        # after an additional _updateAdvices, infos are still correct
+        newItem.updateLocalRoles()
+        self.assertEqual(len(newItem.adviceIndex), 2)
+        self.assertTrue(newItem.adviceIndex['developers']['inherited'])
+        self.assertTrue(newItem.adviceIndex['vendors']['inherited'])
+
+    def test_pm_SendItemToOtherMCWithSomeKeptAdvices(self):
+        '''Test when sending an item to another MeetingConfig and some advices are kept.'''
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        cfg.setKeepAdvicesOnSentToOtherMC(True)
+        data = self._setupSendItemToOtherMC(with_advices=True,
+                                            keep_advices=True,
+                                            advices_to_keep=['developers'])
+        originalItem = data['originalItem']
+
+        # original item had 2 advices, one delay aware and one normal
+        self.assertTrue(len(originalItem.adviceIndex) == 2)
+        self.assertTrue(originalItem.adviceIndex['developers']['row_id'] == 'unique_id_123')
+        self.assertTrue(len(originalItem.getGivenAdvices()) == 2)
+        # advices were kept
+        newItem = data['newItem']
+        self.assertTrue(len(newItem.adviceIndex) == 1)
+        self.assertTrue(newItem.adviceIndex['developers']['inherited'])
+        self.assertTrue(len(newItem.getGivenAdvices()) == 0)
+
+        # after an additional _updateAdvices, infos are still correct
+        newItem.updateLocalRoles()
+        self.assertEqual(len(newItem.adviceIndex), 1)
+        self.assertTrue(newItem.adviceIndex['developers']['inherited'])
+
+        # a specific advice may be asked in addition to inherited ones
+        cfg2.setUseAdvices(True)
+        cfg2.setItemAdviceStates([self._initial_state(newItem)])
+        cfg2.setItemAdviceEditStates([self._initial_state(newItem)])
+        cfg2.setItemAdviceViewStates([self._initial_state(newItem)])
+        newItem.setOptionalAdvisers(('vendors', 'developers'))
+        newItem.updateLocalRoles()
+        # 'vendors' advice is asked and giveable but 'developers' is still the inherited one
+        self.assertTrue(newItem.adviceIndex['developers']['inherited'])
+        self.assertFalse(newItem.adviceIndex['developers']['advice_addable'])
+        self.assertFalse(newItem.adviceIndex['developers']['advice_editable'])
+        self.assertFalse(newItem.adviceIndex['vendors']['inherited'])
+        self.assertTrue(newItem.adviceIndex['vendors']['advice_addable'])
 
     def test_pm_SendItemToOtherMCRespectWFInitialState(self):
         '''Check that when an item is cloned to another MC, the new item

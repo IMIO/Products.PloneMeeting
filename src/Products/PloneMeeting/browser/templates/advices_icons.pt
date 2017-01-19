@@ -132,20 +132,23 @@
                             <acronym tal:condition="python: obj and context.adapted().mayAskAdviceAgain(obj)">
                                <img tal:condition="python: not advice['type'] == 'asked_again'"
                                     class="askAdviceAgainEditable"
-                                    i18n:attributes="title" title="to_advice_asked_again"
+                                    i18n:attributes="title"
+                                    title="to_advice_asked_again"
                                     tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_asked_again.png;
                                               onClick string:javascript:callViewAndReload(base_url='${obj_absolute_url}', view_name='@@change-advice-asked-again', this);;"/></acronym>
                             <acronym tal:condition="python: obj and context.adapted().mayBackToPreviousAdvice(obj)">
-                               <img tal:condition="python: advice['type'] == 'asked_again'"
-                                    class="askAdviceAgainEditable"
-                                    i18n:attributes="title" title="to_previous_given_advice"
-                                    tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_asked_again_back_to_previous.png;
-                                              onClick string:javascript:callViewAndReload(base_url='${obj_absolute_url}', view_name='@@change-advice-asked-again', this);;"/></acronym>
-                            <tal:advice-change-delay
-                              condition="advice/delay"
-                              tal:define="dummy python: context.REQUEST.set('advice_change_delay_advice', advice);
-                                          dummy python: context.REQUEST.set('advice_change_delay_cfg', cfg);"
-                              replace="structure context/@@advice-available-delays/index" />
+                                <img tal:condition="python: advice['type'] == 'asked_again'"
+                                     class="askAdviceAgainEditable"
+                                     i18n:attributes="title"
+                                     title="to_previous_given_advice"
+                                     tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_asked_again_back_to_previous.png;
+                                                     onClick string:javascript:callViewAndReload(base_url='${obj_absolute_url}', view_name='@@change-advice-asked-again', this);;"/></acronym>
+                            <tal:advice-change-delay-condition condition="python: advice['delay'] and not advice['inherited']">
+                                <tal:advice-change-delay
+                                    define="dummy python: context.REQUEST.set('advice_change_delay_advice', advice);
+                                            dummy python: context.REQUEST.set('advice_change_delay_cfg', cfg);"
+                                    replace="structure context/@@advice-available-delays/index" />
+                            </tal:advice-change-delay-condition>
                             <acronym tal:condition="python: adviceHolderIsViewable and advice.get('advice_id', None)">
                                <a class="overlay-history"
                                   title="History"
