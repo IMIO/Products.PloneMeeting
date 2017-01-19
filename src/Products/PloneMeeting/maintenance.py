@@ -63,7 +63,7 @@ def lookForCopyGroups(group_id):
     tool = api.portal.get_tool('portal_plonemeeting')
     catalog = api.portal.get_tool('portal_catalog')
     group = getattr(tool, group_id)
-    suffixes = group.getAllSuffixes()
+    suffixes = group.get_all_suffixes(group_id)
     res = {}
     for suffix in suffixes:
         ploneGroupId = group.getPloneGroupId(suffix)

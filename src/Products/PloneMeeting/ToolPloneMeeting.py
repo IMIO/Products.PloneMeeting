@@ -90,6 +90,7 @@ from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
 from Products.PloneMeeting.profiles import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.profiles import PloneMeetingConfiguration
 from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import get_all_suffixes
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
 from Products.PloneMeeting.utils import monthsIds
@@ -1394,7 +1395,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     userDescr.password = password
                 self.addUser(userDescr)
             # Add users in the correct Plone groups.
-            for groupSuffix in MEETING_GROUP_SUFFIXES:
+            for groupSuffix in get_all_suffixes(groupDescr.id):
                 groupId = group.getPloneGroupId(groupSuffix)
                 groupMembers = self.acl_users.getGroup(groupId).getMemberIds()
                 for userDescr in getattr(groupDescr, groupSuffix):

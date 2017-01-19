@@ -37,16 +37,15 @@ from Products.DataGridField.SelectColumn import SelectColumn
 
 from zope.i18n import translate
 from imio.helpers.cache import invalidate_cachekey_volatile_for
-from Products.PloneMeeting.config import EXTRA_ADVICE_SUFFIXES
-from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
+from Products.PloneMeeting import PloneMeetingError
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import WriteRiskyConfig
+from Products.PloneMeeting.profiles import GroupDescriptor
 from Products.PloneMeeting.utils import computeCertifiedSignatures
+from Products.PloneMeeting.utils import get_all_suffixes
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getFieldContent
 from Products.PloneMeeting.utils import listifySignatures
-from Products.PloneMeeting import PloneMeetingError
-from Products.PloneMeeting.profiles import GroupDescriptor
 defValues = GroupDescriptor.get()
 
 schema = Schema((
@@ -361,7 +360,7 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
            wrappers from portal_groups.
            If some p_suffixes are defined, only these Plone groups are returned.'''
         res = []
-        for suffix in self.getAllSuffixes():
+        for suffix in get_all_suffixes(self.getId()):
             if suffixes and suffix not in suffixes:
                 continue
             groupId = self.getPloneGroupId(suffix)
@@ -407,10 +406,6 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
                     break
         return i
 
-    def getAllSuffixes(self):
-        """ """
-        return MEETING_GROUP_SUFFIXES + EXTRA_ADVICE_SUFFIXES.get(self.getId(), [])
-
     security.declarePrivate('at_post_create_script')
 
     def at_post_create_script(self):
@@ -423,7 +418,7 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
            but there could be other suffixes, check MEETING_GROUP_SUFFIXES.'''
         # If a group with this id already exists, prevent creation from this
         # group.
-        for groupSuffix in self.getAllSuffixes():
+        for groupSuffix in get_all_suffixes(self.getId()):
             groupId = self.getPloneGroupId(groupSuffix)
             ploneGroup = self.portal_groups.getGroupById(groupId)
             if ploneGroup:
@@ -449,7 +444,7 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
 
     def _createPloneGroupForAllSuffixes(self):
         """ """
-        for groupSuffix in self.getAllSuffixes():
+        for groupSuffix in get_all_suffixes(self.getId()):
             self._createOrUpdatePloneGroup(groupSuffix)
 
     def _createOrUpdatePloneGroup(self, groupSuffix):
