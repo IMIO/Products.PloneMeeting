@@ -833,6 +833,7 @@ class CategorizedAnnexesView(CategorizedTabView):
         """ """
         if not self.context.meta_type == 'MeetingItem':
             return False
+        return True
 
     def showAddAnnex(self):
         """ """
