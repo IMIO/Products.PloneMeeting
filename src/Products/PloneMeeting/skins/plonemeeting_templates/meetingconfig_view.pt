@@ -306,6 +306,16 @@
           </td>
         </tr>
         <tr valign="top">
+          <td width="34%" tal:define="field python:here.getField('keepAdvicesOnSentToOtherMC')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td width="33%" tal:define="field python:here.getField('advicesKeptOnSentToOtherMC')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td>
+          </td>
+        </tr>
+        <tr valign="top">
           <td tal:define="field python:here.getField('annexToPrintMode')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>

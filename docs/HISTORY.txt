@@ -52,7 +52,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   done, and when 'ItemDuplicatedEvent' is called at the end of the 'clone', we have the set predecessor if necessary
 - Added parameter 'inheritAdvices' to MeetingItem.clone method, this way, if paramater 'setCurrentAsPredecessor=True'
   and 'manualLinkToPredecessor=False', advices that were given on the original item are inherited, it is shown on the
-  new item, every informations are actually taken from original item
+  new item, every informations are actually taken from original item.  Every advices including advices given by power
+  advisers are inherited
 - Added parameters MeetingConfig.keepAdvicesOnSentToOtherMC and MeetingConfig.advicesKeptOnSentToOtherMC that allows
   to specify if items sent to another MC will inherits from original items.  If only some specific advices must be kept
   it can be defined in MeetingConfig.advicesKeptOnSentToOtherMC, if nothing is defined, every advices are kept
