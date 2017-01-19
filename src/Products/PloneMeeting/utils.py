@@ -67,7 +67,6 @@ from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import AddAnnexDecision
 from Products.PloneMeeting.config import ADD_SUBCONTENT_PERMISSIONS
 from Products.PloneMeeting.config import HISTORY_COMMENT_NOT_VIEWABLE
-from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 from Products.PloneMeeting.config import TOOL_ID
 from Products.PloneMeeting.interfaces import IAdviceAfterAddEvent
 from Products.PloneMeeting.interfaces import IAdviceAfterModifyEvent
@@ -1519,8 +1518,10 @@ def getTransitionToReachState(obj, state):
 
 
 def get_all_suffixes(grp_id):
-    # import EXTRA_ADVICE_SUFFIXES here as it is monkeypatched by custom profiles
+    # import EXTRA_ADVICE_SUFFIXES and MEETING_GROUP_SUFFIXES here
+    # as it is monkeypatched by custom profiles
     from Products.PloneMeeting.config import EXTRA_ADVICE_SUFFIXES
+    from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
     return MEETING_GROUP_SUFFIXES + EXTRA_ADVICE_SUFFIXES.get(grp_id, [])
 
 
