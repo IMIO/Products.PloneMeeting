@@ -3501,7 +3501,7 @@ class testMeetingItem(PloneMeetingTestCase):
                           'pollTypeObservations', 'predecessor', 'preferredMeeting', 'proposingGroup',
                           'questioners', 'takenOverBy', 'templateUsingGroups',
                           'toDiscuss', 'votesAreSecret', 'otherMeetingConfigsClonableToEmergency',
-                          'internalNotes']
+                          'internalNotes', 'externalIdentifier']
         # neutral + default + extra + getExtraFieldsToCopyWhenCloning(True) +
         # getExtraFieldsToCopyWhenCloning(False) should equal itemFields
         copiedFields = set(NEUTRAL_FIELDS +

@@ -1160,7 +1160,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         fieldsToKeep = ['id', 'proposingGroup', ] + copyFields
         for field in newItem.Schema().filterFields(isMetadata=False):
             if not field.getName() in fieldsToKeep:
-                # Set the field to his default value
+                # Set the field to its default value
                 field.set(newItem, field.getDefault(newItem))
 
         # Set some default values that could not be initialized properly
