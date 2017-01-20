@@ -17,6 +17,7 @@
   <include package="collective.messagesviewlet"/>
   <include package="communesplone.layout"/>
   <include package="imio.annex"/>
+  <include package="imio.pm.ws"/>
   <include package="imio.dashboard"/>
   <include package="plone.app.dexterity" />
   <include package="plone.directives.form" file="meta.zcml" />
