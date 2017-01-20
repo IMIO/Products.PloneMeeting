@@ -1554,6 +1554,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(self)
         query = {}
         query['path'] = {'query': '/'.join(cfg.getPhysicalPath() + ('classifiers',))}
+        query['review_state'] = 'active'
         return query
 
     security.declarePublic('manuallyLinkedItemsBaseQuery')

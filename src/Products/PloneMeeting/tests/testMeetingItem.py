@@ -102,10 +102,7 @@ class testMeetingItem(PloneMeetingTestCase):
         expectedClassifiers = ['class1', 'class2', 'class3', ]
         # By default, every categories are selectable
         self.failUnless([cat.id for cat in cfg.getCategories()] == expectedCategories)
-        # Even for item
-        self.failUnless([cat.id for cat in cfg.getCategories()] == expectedCategories)
         # And the behaviour is the same for classifiers
-        self.failUnless([cat.id for cat in cfg.getCategories(classifiers=True)] == expectedClassifiers)
         self.failUnless([cat.id for cat in cfg.getCategories(classifiers=True)] == expectedClassifiers)
         # Deactivate a category and a classifier
         self.changeUser('admin')
@@ -117,8 +114,6 @@ class testMeetingItem(PloneMeetingTestCase):
         self.cleanMemoize()
         self.changeUser('pmCreator1')
         # A deactivated category will not be returned by getCategories no matter an item is given or not
-        self.failUnless([cat.id for cat in cfg.getCategories()] == expectedCategories)
-        self.failUnless([cat.id for cat in cfg.getCategories(classifiers=True)] == expectedClassifiers)
         self.failUnless([cat.id for cat in cfg.getCategories()] == expectedCategories)
         self.failUnless([cat.id for cat in cfg.getCategories(classifiers=True)] == expectedClassifiers)
         # Specify that a category is restricted to some groups pmCreator1 is not creator for
