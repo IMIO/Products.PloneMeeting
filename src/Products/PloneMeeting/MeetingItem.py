@@ -3971,7 +3971,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             adviceHolder = adviceInfo.get('adviceHolder', self)
             data[advId]['given_advice'] = adviceHolder.getAdviceObj(advId)
         if adviserId:
-            data = data[adviserId]
+            data = data.get(adviserId, {})
         return data
 
     def getAdviceObj(self, advId):
@@ -5007,8 +5007,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # manage inherited adviceIds
                 if inheritAdvices:
                     inheritedAdviserIds = [adviserId for adviserId in self.adviceIndex.keys()
-                                           if newItem.couldInheritAdvice(adviserId) and
-                                           (not inheritedAdviceIds or adviserId in inheritedAdviceIds)]
+                                           if (not inheritedAdviceIds or adviserId in inheritedAdviceIds) and
+                                           newItem.couldInheritAdvice(adviserId)]
 
         if cloneEventAction:
             # We are sure that there is only one key in the workflow_history
@@ -5109,7 +5109,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 if field == 'budgetInfos':
                     fieldsToCopy.remove('budgetRelated')
         keepAdvices = cfg.getKeepAdvicesOnSentToOtherMC()
-        keptAdvices = keepAdvices and cfg.getAdvicesKeptOnSentToOtherMC() or []
+        keptAdvices = keepAdvices and cfg.getAdvicesKeptOnSentToOtherMC(as_group_ids=True, item=self) or []
         newItem = self.clone(copyAnnexes=True, newOwnerId=newOwnerId,
                              cloneEventAction=cloneEventAction,
                              destFolder=destFolder, copyFields=fieldsToCopy,

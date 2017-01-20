@@ -385,9 +385,7 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def _setupSendItemToOtherMC(self,
                                 with_annexes=False,
-                                with_advices=False,
-                                keep_advices=False,
-                                advices_to_keep=[]):
+                                with_advices=False):
         '''
           This will do the setup of testing the send item to other MC functionnality.
           This will create an item, present it in a meeting and send it to another meeting.
@@ -459,13 +457,7 @@ class testMeetingItem(PloneMeetingTestCase):
             decisionAnnex2 = self.addAnnex(item,
                                            annexType='marketing-annex',
                                            relatedTo='item_decision')
-        if keep_advices:
-            cfg.setKeepAdvicesOnSentToOtherMC(True)
-        if advices_to_keep:
-            cfg.setAdvicesKeptOnSentToOtherMC(advices_to_keep)
         self.do(item, 'accept')
-        cfg.setKeepAdvicesOnSentToOtherMC(False)
-        cfg.setAdvicesKeptOnSentToOtherMC([])
 
         # Get the new item
         newItem = item.getItemClonedToOtherMC(destMeetingConfigId=otherMeetingConfigId)
@@ -637,8 +629,7 @@ class testMeetingItem(PloneMeetingTestCase):
         '''Test when sending an item to another MeetingConfig and every advices are kept.'''
         cfg = self.meetingConfig
         cfg.setKeepAdvicesOnSentToOtherMC(True)
-        data = self._setupSendItemToOtherMC(with_advices=True,
-                                            keep_advices=True)
+        data = self._setupSendItemToOtherMC(with_advices=True)
         originalItem = data['originalItem']
 
         # original item had 2 advices, one delay aware and one normal
@@ -657,14 +648,13 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(newItem.adviceIndex['developers']['inherited'])
         self.assertTrue(newItem.adviceIndex['vendors']['inherited'])
 
-    def test_pm_SendItemToOtherMCWithSomeKeptAdvices(self):
+    def test_pm_SendItemToOtherMCKeepAdvicesWithKeptAdvices(self):
         '''Test when sending an item to another MeetingConfig and some advices are kept.'''
         cfg = self.meetingConfig
         cfg2 = self.meetingConfig2
         cfg.setKeepAdvicesOnSentToOtherMC(True)
-        data = self._setupSendItemToOtherMC(with_advices=True,
-                                            keep_advices=True,
-                                            advices_to_keep=['developers'])
+        cfg.setAdvicesKeptOnSentToOtherMC(['delay_real_group_id__unique_id_123'])
+        data = self._setupSendItemToOtherMC(with_advices=True)
         originalItem = data['originalItem']
 
         # original item had 2 advices, one delay aware and one normal
@@ -695,6 +685,24 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(newItem.adviceIndex['developers']['advice_editable'])
         self.assertFalse(newItem.adviceIndex['vendors']['inherited'])
         self.assertTrue(newItem.adviceIndex['vendors']['advice_addable'])
+
+    def test_pm_SendItemToOtherMCKeepAdvicesWithKeptAdvicesRowIdAdviceNotMismatched(self):
+        '''Test when sending an item to another MeetingConfig and some advices are kept.
+           Here we test that 'developers' advice is NOT kept as the asked advice
+           is the 'row_id' developers advice and the one we keep is the normal developers advice.'''
+        cfg = self.meetingConfig
+        cfg.setKeepAdvicesOnSentToOtherMC(True)
+        cfg.setAdvicesKeptOnSentToOtherMC(['real_group_id__developers'])
+        data = self._setupSendItemToOtherMC(with_advices=True)
+        originalItem = data['originalItem']
+
+        # original item had 2 advices, one delay aware and one normal
+        self.assertTrue(len(originalItem.adviceIndex) == 2)
+        self.assertTrue(originalItem.adviceIndex['developers']['row_id'] == 'unique_id_123')
+        self.assertTrue(len(originalItem.getGivenAdvices()) == 2)
+        # advices were NOT kept
+        newItem = data['newItem']
+        self.assertTrue(len(newItem.adviceIndex) == 0)
 
     def test_pm_SendItemToOtherMCRespectWFInitialState(self):
         '''Check that when an item is cloned to another MC, the new item

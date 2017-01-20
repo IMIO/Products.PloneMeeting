@@ -98,6 +98,8 @@ from Products.PloneMeeting.config import TOOL_FOLDER_ITEM_TEMPLATES
 from Products.PloneMeeting.config import TOOL_FOLDER_POD_TEMPLATES
 from Products.PloneMeeting.config import TOOL_FOLDER_MEETING_USERS
 from Products.PloneMeeting.config import WriteRiskyConfig
+from Products.PloneMeeting.indexes import DELAYAWARE_REAL_GROUP_ID_PATTERN
+from Products.PloneMeeting.indexes import REAL_GROUP_ID_PATTERN
 from Products.PloneMeeting.interfaces import IMeetingConfig
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowConditions
 from Products.PloneMeeting.interfaces import IMeetingItem
@@ -5065,6 +5067,45 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def getMeetingUserFromPloneUser(self, userId):
         '''Returns the Meeting user that corresponds to p_userId.'''
         return getattr(self.meetingusers.aq_base, userId, None)
+
+    security.declarePublic('getAdvicesKeptOnSentToOtherMC')
+
+    def getAdvicesKeptOnSentToOtherMC(self, as_group_ids=False, item=None, **kwargs):
+        """If p_as_group_ids is True, we return group_ids from what is stored.
+           We store values as 'adviser pattern', it can looks like :
+           "real_group_id__group_id" or "delay_real_group_id__row_id".
+           We double check regarding item.adviceIndex, indeed, a same group_id can
+           be returned by the 2 patterns.
+        """
+        values = self.getField('advicesKeptOnSentToOtherMC').get(self, **kwargs)
+        if not as_group_ids:
+            return values
+
+        res = []
+        rendered_delay_pattern = DELAYAWARE_REAL_GROUP_ID_PATTERN.format('')
+        rendered_pattern = REAL_GROUP_ID_PATTERN.format('')
+        for value in values:
+            if value.startswith(rendered_delay_pattern):
+                # it ends with a row_id
+                row_id = value.replace(rendered_delay_pattern, '')
+                infos = self._dataForCustomAdviserRowId(row_id)
+                group_id = infos['group']
+                if group_id in item.adviceIndex and \
+                   item.adviceIndex[group_id]['row_id'] == row_id:
+                    res.append(infos['group'])
+            else:
+                # it ends with a group id
+                group_id = value.replace(rendered_pattern, '')
+                if group_id in item.adviceIndex and \
+                   not item.adviceIndex[group_id]['row_id']:
+                    res.append(group_id)
+        if values and not res:
+            # return at least a 'dummy_unexisting_value' because if we return an empty list,
+            # it corresponds to nothing selected in MeetingConfig.advicesKeptOnSentToOtherMC
+            # and it means 'keep every advices'
+            res = ['dummy_unexisting_value']
+
+        return res
 
     security.declarePublic('getRecurringItems')
 
