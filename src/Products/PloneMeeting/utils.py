@@ -1218,9 +1218,9 @@ def computeCertifiedSignatures(signatures):
         # walk thru every signatures and select available one
         # the first found active signature is kept
         # if we have a date_from, we append hours 0h01 to take entire day into account
-        date_from = signature['date_from'] and DateTime('{} 0:01'.format(signature['date_from'])) or None
+        date_from = signature['date_from'] and DateTime('{} 0:00:00'.format(signature['date_from'])) or None
         # if we have a date_to, we append hours 23h59 to take entire day into account
-        date_to = signature['date_to'] and DateTime('{} 23:59'.format(signature['date_to'])) or None
+        date_to = signature['date_to'] and DateTime('{} 23:59:59'.format(signature['date_to'])) or None
         # if dates are defined and not current, continue
         if (date_from and date_to) and not _in_between(date_from, date_to, now):
             continue
