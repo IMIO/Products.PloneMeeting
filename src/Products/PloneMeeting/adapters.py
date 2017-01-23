@@ -1297,6 +1297,8 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
 
     def _visible_for_groups(self):
         """ """
+        if not self.context.confidential:
+            return []
         parent_meta_type = self.parent.meta_type
         if parent_meta_type == 'MeetingItem':
             groups = self._item_visible_for_groups()

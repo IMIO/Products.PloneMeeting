@@ -32,6 +32,7 @@ from plone import api
 from plone import namedfile
 from plone.app.testing.helpers import setRoles
 from plone.app.testing import login, logout
+from plone.dexterity.utils import createContentInContainer
 
 from Products.PloneTestCase.setup import _createHomeFolder
 
@@ -327,11 +328,11 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         if relatedTo == 'item_decision':
             annexContentType = 'annexDecision'
 
-        theAnnex = api.content.create(
-            title=annexTitle or 'Annex',
-            type=annexContentType,
-            file=self._annex_file_content(),
+        theAnnex = createContentInContainer(
             container=context,
+            portal_type=annexContentType,
+            title=annexTitle or 'Annex',
+            file=self._annex_file_content(),
             content_category=annexTypeId,
             to_print=to_print,
             confidential=confidential)

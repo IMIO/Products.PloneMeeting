@@ -43,6 +43,7 @@ from plone.app.textfield import RichText
 from plone.autoform.interfaces import WRITE_PERMISSIONS_KEY
 from plone.dexterity.interfaces import IDexterityContent
 from plone import api
+from collective.iconifiedcategory.interfaces import IIconifiedInfos
 from imio.helpers.xhtml import addClassToLastChildren
 from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
 from imio.helpers.xhtml import markEmptyTags
@@ -1561,6 +1562,16 @@ def findMeetingAdvicePortalType(context):
 def get_annexes(obj, portal_types=['annex', 'annexDecision']):
     return [annex for annex in obj.objectValues()
             if annex.portal_type in portal_types]
+
+
+def updateAnnexesAccess(container):
+    """ """
+    portal = api.portal.get()
+    for k, v in getattr(container, 'categorized_elements', {}).items():
+        # do not fail on 'Members', use unrestrictedTraverse
+        annex = portal.unrestrictedTraverse(v['relative_url'])
+        adapter = getAdapter(annex, IIconifiedInfos)
+        v['visible_for_groups'] = adapter._visible_for_groups()
 
 
 class AdvicesUpdatedEvent(ObjectEvent):

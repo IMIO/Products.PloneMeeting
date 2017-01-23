@@ -13,19 +13,18 @@ __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
 <g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""
 __docformat__ = 'plaintext'
 
-from AccessControl import ClassSecurityInfo
-from Acquisition import aq_base
 from zope.interface import implements
-import interfaces
-from datetime import datetime
+from appy.gen import No
 from collections import OrderedDict
 from copy import deepcopy
-from appy.gen import No
+from datetime import datetime
+from DateTime import DateTime
 from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
+from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
 from AccessControl.PermissionRole import rolesForPermissionOn
-from DateTime import DateTime
+from Acquisition import aq_base
 from App.class_init import InitializeClass
 from OFS.ObjectManager import BeforeDeleteException
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
@@ -35,7 +34,6 @@ from zope.component import queryUtility
 from zope.event import notify
 from zope.i18n import translate
 from zope.schema.interfaces import IVocabularyFactory
-from collective.iconifiedcategory.utils import update_all_categorized_elements
 from plone import api
 from plone.memoize import ram
 from Products.Archetypes.atapi import BaseFolder
@@ -89,6 +87,7 @@ from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
+from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.model.adaptations import RETURN_TO_PROPOSING_GROUP_MAPPINGS
 from Products.PloneMeeting.Meeting import Meeting
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowActions
@@ -117,6 +116,7 @@ from Products.PloneMeeting.utils import sendMailIfRelevant
 from Products.PloneMeeting.utils import setFieldFromAjax
 from Products.PloneMeeting.utils import toHTMLStrikedContent
 from Products.PloneMeeting.utils import transformAllRichTextFields
+from Products.PloneMeeting.utils import updateAnnexesAccess
 from Products.PloneMeeting.utils import workday
 
 import logging
@@ -1364,7 +1364,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     """
     """
     security = ClassSecurityInfo()
-    implements(interfaces.IMeetingItem)
+    implements(IMeetingItem)
 
     meta_type = 'MeetingItem'
     _at_rename_after_creation = True
@@ -4660,6 +4660,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            - advices;
            - power observers;
            - budget impact editors;
+           - categorized elements (especially 'visible_for_groups');
            - then call a subscriber 'after local roles updated'.'''
         # remove every localRoles then recompute
         old_local_roles = self.__ac_local_roles__.copy()
@@ -4709,11 +4710,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self._updateGroupInChargeLocalRoles()
         # update annexes categorized_elements to store 'visible_for_groups'
         # do it only if local_roles changed
-        update_all_categorized_elements(self)
+        updateAnnexesAccess(self)
         # update categorized elements on contained advices too
         for advice in self.getAdvices():
-            update_all_categorized_elements(advice)
-
+            updateAnnexesAccess(advice)
         # manage automatically given permissions
         _addManagedPermissions(self)
         # notify that localRoles have been updated
