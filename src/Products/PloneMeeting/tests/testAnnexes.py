@@ -474,7 +474,7 @@ class testAnnexes(PloneMeetingTestCase):
         annexes_table = meeting.restrictedTraverse('@@iconifiedcategory')
         categorized_child = meeting.restrictedTraverse('@@categorized-childs-infos')
         annex_category = cfg.annexes_types.meeting_annexes.get('meeting-annex')
-        categorized_child.category_id = annex_category.UID()
+        categorized_child.category_uid = annex_category.UID()
 
         annexNotConfidential = self.addAnnex(meeting, annexTitle='Annex not confidential')
         annexConfidential = self.addAnnex(meeting, annexTitle='Annex confidential')
