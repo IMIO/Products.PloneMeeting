@@ -3219,6 +3219,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         predecessor = self.getPredecessor()
         res = []
         for adviserId in adviserIds:
+            # adviserId could not exist if we removed an inherited initiative advice for example
+            if not predecessor.adviceIndex.get(adviserId, None):
+                continue
             if (optional and not predecessor.adviceIndex[adviserId]['optional']):
                 continue
             res.append(
@@ -4391,6 +4394,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 adviceHolder = self
             self.adviceIndex[groupId]['delay_infos'] = adviceHolder.getDelayInfosForAdvice(groupId)
 
+        # update adviceIndex of every items for which I am the predecessor
+        # this way inherited advices are correct if any
+        backPredecessor = self.getBRefs('ItemPredecessor')
+        while backPredecessor:
+            backPredecessor = backPredecessor[0]
+            hasInheritedAdvices = [adviceInfo for adviceInfo in backPredecessor.adviceIndex.values()
+                                   if adviceInfo['inherited']]
+            if not hasInheritedAdvices:
+                break
+            backPredecessor.updateLocalRoles()
+            backPredecessor = backPredecessor.getBRefs('ItemPredecessor')
+
         # notify that advices have been updated so subproducts
         # may interact if necessary
         notify(AdvicesUpdatedEvent(self,
@@ -4693,6 +4708,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # we will give the current groupInCharge _observers sub group access to this item
         self._updateGroupInChargeLocalRoles()
         # update annexes categorized_elements to store 'visible_for_groups'
+        # do it only if local_roles changed
         update_all_categorized_elements(self)
         # update categorized elements on contained advices too
         for advice in self.getAdvices():
@@ -5365,7 +5381,21 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # the item from a meeting if it is inserted in there...
             if item.hasMeeting():
                 item.getMeeting().removeItem(item)
+            # and to clean advice inheritance
+            for adviceId in item.adviceIndex.keys():
+                self._cleanAdviceInheritance(item, adviceId)
+
         BaseFolder.manage_beforeDelete(self, item, container)
+
+    def _cleanAdviceInheritance(self, item, adviceId):
+        '''Clean advice inheritance for given p_adviceId on p_item.'''
+        def cleanAdviceInheritanceFor(backPredecessors):
+            for backPredecessor in backPredecessors:
+                if backPredecessor.adviceIndex[adviceId]['inherited']:
+                    backPredecessor.adviceIndex[adviceId]['inherited'] = False
+                    backPredecessor.updateLocalRoles()
+                    cleanAdviceInheritanceFor(backPredecessor.getBRefs('ItemPredecessor'))
+        cleanAdviceInheritanceFor(item.getBRefs('ItemPredecessor'))
 
     security.declarePublic('getAttendees')
 

@@ -436,9 +436,6 @@ def onAdviceRemoved(advice, event):
 
     item = advice.getParentNode()
 
-    # clean advice inheritance if necessary
-    _cleanAdviceInheritance(item, advice.advice_group)
-
     # do not call this if an advice is removed because the item is removed
     if item not in item.aq_inner.aq_parent.objectValues():
         return
@@ -583,22 +580,10 @@ def onItemEditCancelled(item, event):
         parent.manage_delObjects(ids=[item.getId()])
 
 
-def _cleanAdviceInheritance(item, adviceId):
-    '''Clean advice inheritance for given p_adviceId on p_item.'''
-    def cleanAdviceInheritanceFor(backPredecessors):
-        for backPredecessor in backPredecessors:
-            if backPredecessor.adviceIndex[adviceId]['inherited']:
-                backPredecessor.adviceIndex[adviceId]['inherited'] = False
-                backPredecessor.updateLocalRoles()
-                cleanAdviceInheritanceFor(backPredecessor.getBRefs('ItemPredecessor'))
-    cleanAdviceInheritanceFor(item.getBRefs('ItemPredecessor'))
-
-
 def onItemRemoved(item, event):
     '''When an item is removed, we check that every contained advices were not inherited
        by other items for which removed item is the predecessor.'''
-    for adviceId in item.adviceIndex.keys():
-        _cleanAdviceInheritance(item, adviceId)
+    pass
 
 
 def onMeetingAdded(meeting, event):
