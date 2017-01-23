@@ -311,9 +311,9 @@ class testAnnexes(PloneMeetingTestCase):
         annex_group.confidentiality_activated = True
 
         annexes_table = advice.restrictedTraverse('@@iconifiedcategory')
+        annex_category = cfg.annexes_types.advice_annexes.get('advice-annex')
         categorized_child = advice.restrictedTraverse('@@categorized-childs-infos')
-        annex_category = cfg.annexes_types.item_annexes.get('advice-annex')
-        categorized_child.category_uid = annex_category
+        categorized_child.category_uid = annex_category.UID()
 
         annexNotConfidential = self.addAnnex(advice, annexTitle='Annex not confidential')
         annexConfidential = self.addAnnex(advice, annexTitle='Annex confidential')
