@@ -192,7 +192,10 @@ class ItemAnnexSubTypeDescriptor(AnnexSubTypeDescriptor):
 
 
 class PodTemplateDescriptor(Descriptor):
-    multiSelectFields = ('pod_formats', 'pod_portal_types', 'dashboard_collections_ids')
+    multiSelectFields = ('pod_formats',
+                         'pod_portal_types',
+                         'dashboard_collections_ids',
+                         'context_variables')
 
     def __init__(self, id, title, description='', enabled=True, dashboard=False):
         self.id = id
