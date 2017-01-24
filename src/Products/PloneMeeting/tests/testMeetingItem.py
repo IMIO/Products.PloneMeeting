@@ -3474,6 +3474,11 @@ class testMeetingItem(PloneMeetingTestCase):
         # using the edit form will not raise Unauthorized
         self.assertIsNone(recItem.restrictedTraverse('@@at_lifecycle_view').begin_edit())
 
+    def _extraNeutralFields(self):
+        """This method is made to be overrided by subplugins that added
+           neutral fields to the MeetingItem schema."""
+        return []
+
     def test_pm_CopiedFieldsWhenDuplicated(self):
         '''This test will test constants DEFAULT_COPIED_FIELDS and EXTRA_COPIED_FIELDS_SAME_MC
            regarding current item schema.  This will ensure that when a new field is added, it
@@ -3502,6 +3507,7 @@ class testMeetingItem(PloneMeetingTestCase):
                           'questioners', 'takenOverBy', 'templateUsingGroups',
                           'toDiscuss', 'votesAreSecret', 'otherMeetingConfigsClonableToEmergency',
                           'internalNotes', 'externalIdentifier']
+        NEUTRAL_FIELDS += self._extraNeutralFields()
         # neutral + default + extra + getExtraFieldsToCopyWhenCloning(True) +
         # getExtraFieldsToCopyWhenCloning(False) should equal itemFields
         copiedFields = set(NEUTRAL_FIELDS +
