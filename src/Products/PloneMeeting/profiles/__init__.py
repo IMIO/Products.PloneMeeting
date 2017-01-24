@@ -32,7 +32,7 @@ class Descriptor(object):
 
     def getData(self, **kw):
         '''Gets data in the format needed for initializing the corresponding
-           Archetypes object. Any element ik p_kw will replace the value
+           Archetypes object. Any element in p_kw will replace the value
            from p_self.'''
         res = {}
         for k, v in self.__dict__.iteritems():

@@ -74,6 +74,7 @@ from Products.PloneMeeting.interfaces import IAdviceAfterModifyEvent
 from Products.PloneMeeting.interfaces import IAdvicesUpdatedEvent
 from Products.PloneMeeting.interfaces import IItemAfterTransitionEvent
 from Products.PloneMeeting.interfaces import IItemDuplicatedEvent
+from Products.PloneMeeting.interfaces import IItemDuplicatedToOtherMCEvent
 from Products.PloneMeeting.interfaces import IItemDuplicatedFromConfigEvent
 from Products.PloneMeeting.interfaces import IItemListTypeChangedEvent
 from Products.PloneMeeting.interfaces import IItemLocalRolesUpdatedEvent
@@ -1623,6 +1624,14 @@ class ItemAfterTransitionEvent(ObjectEvent):
 
 class ItemDuplicatedEvent(ObjectEvent):
     implements(IItemDuplicatedEvent)
+
+    def __init__(self, object, newItem):
+        self.object = object
+        self.newItem = newItem
+
+
+class ItemDuplicatedToOtherMCEvent(ObjectEvent):
+    implements(IItemDuplicatedToOtherMCEvent)
 
     def __init__(self, object, newItem):
         self.object = object

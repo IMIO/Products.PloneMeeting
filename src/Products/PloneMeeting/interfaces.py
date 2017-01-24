@@ -15,6 +15,11 @@ class IItemDuplicatedEvent(IObjectEvent):
     """
 
 
+class IItemDuplicatedToOtherMCEvent(IObjectEvent):
+    """
+    """
+
+
 class IItemDuplicatedFromConfigEvent(IObjectEvent):
     """
     """

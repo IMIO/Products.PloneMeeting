@@ -108,6 +108,7 @@ from Products.PloneMeeting.utils import getMeetingUsers
 from Products.PloneMeeting.utils import getWorkflowAdapter
 from Products.PloneMeeting.utils import hasHistory
 from Products.PloneMeeting.utils import ItemDuplicatedEvent
+from Products.PloneMeeting.utils import ItemDuplicatedToOtherMCEvent
 from Products.PloneMeeting.utils import ItemLocalRolesUpdatedEvent
 from Products.PloneMeeting.utils import networkdays
 from Products.PloneMeeting.utils import rememberPreviousData
@@ -5247,6 +5248,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                       domain="PloneMeeting",
                       context=self.REQUEST),
             type='info')
+
+        # notify that item has been duplicated to another meetingConfig
+        # so subproducts may interact if necessary
+        notify(ItemDuplicatedToOtherMCEvent(self, newItem))
+
         return newItem
 
     def _getSentToOtherMCAnnotationKey(self, destMeetingConfigId):
