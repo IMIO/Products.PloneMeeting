@@ -1569,7 +1569,13 @@ def updateAnnexesAccess(container):
     portal = api.portal.get()
     for k, v in getattr(container, 'categorized_elements', {}).items():
         # do not fail on 'Members', use unrestrictedTraverse
-        annex = portal.unrestrictedTraverse(v['relative_url'])
+        try:
+            annex = portal.unrestrictedTraverse(v['relative_url'])
+        except:
+            # in case we are removing an annex, this could be called
+            # before categorized_elements dict is updated
+            v['visible_for_groups'] = []
+            continue
         adapter = getAdapter(annex, IIconifiedInfos)
         v['visible_for_groups'] = adapter._visible_for_groups()
 
