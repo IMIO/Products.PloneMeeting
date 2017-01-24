@@ -210,6 +210,7 @@ class PodTemplateDescriptor(Descriptor):
         #self.mailingLists = ''
         self.enabled = enabled
         self.dashboard = dashboard
+        self.context_variables = []
 
 
 class PloneGroupDescriptor(Descriptor):

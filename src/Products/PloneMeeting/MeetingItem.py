@@ -2115,7 +2115,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # first, find meetings in the future still accepting items
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        # do a list fith meetingStates so it is not considered as a tuple by getMeetingsAcceptingItems
+        # do a list with meetingStates so it is not considered as a tuple by getMeetingsAcceptingItems
         # indeed, in some case the tuple ('created', 'frozen') behaves specifically
         meetingStates = list(cfg.getMeetingPresentItemWhenNoCurrentMeetingStates())
         brains = []
