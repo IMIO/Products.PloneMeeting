@@ -1037,6 +1037,11 @@ div[id^="archetypes-fieldname-subTypes-"] TH {
     text-align: center;
 }
 
+/* display DX datagrid column in grey */
+.datagridwidget-table-view {
+    border-color: #ddd;
+}
+
 /* hide the title of the customAdvisers DataGridField in view mode */
 div[id^="archetypes-fieldname-customAdvisers-"] label.formQuestion {
     display: none;
