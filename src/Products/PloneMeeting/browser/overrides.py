@@ -41,7 +41,6 @@ from imio.dashboard.browser.overrides import IDFacetedTableView
 from imio.dashboard.browser.overrides import IDDashboardDocumentGeneratorLinksViewlet
 from imio.dashboard.browser.views import RenderTermPortletView
 from imio.dashboard.content.pod_template import IDashboardPODTemplate
-from imio.helpers.path import path_to_package
 from imio.history.browser.views import IHDocumentBylineViewlet
 from imio.prettylink.interfaces import IPrettyLink
 
@@ -206,6 +205,7 @@ class PMConfigActionsPanelViewlet(ActionsPanelViewlet):
 
 class BaseGeneratorLinksViewlet():
     """ """
+
     def getAvailableMailingLists(self, template_uid):
         '''Gets the names of the (currently active) mailing lists defined for
            this template.'''
@@ -216,9 +216,7 @@ class BaseGeneratorLinksViewlet():
 class PMDocumentGeneratorLinksViewlet(DocumentGeneratorLinksViewlet, BaseGeneratorLinksViewlet):
     """Override the 'generatelinks' viewlet to restrict templates by MeetingConfig."""
 
-    from imio.dashboard import browser as imio_dashboard_browser
-    render = ViewPageTemplateFile(path_to_package(imio_dashboard_browser,
-                                                  'templates/generationlinks.pt'))
+    render = ViewPageTemplateFile('templates/generationlinks.pt')
 
     def available(self):
         """
