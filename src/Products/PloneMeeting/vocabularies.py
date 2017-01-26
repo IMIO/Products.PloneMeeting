@@ -259,7 +259,9 @@ class AskedAdvicesVocabulary(object):
             formatted = REAL_GROUP_ID_PATTERN.format(mGroup.getId())
             if formatted not in res:
                 res.append(REAL_GROUP_ID_PATTERN.format(mGroup.getId()))
-        return res
+        # remove duplicates, it can be the case when several custom advisers
+        # not delay aware are defined for the same group
+        return list(set(res))
 
     def __call___cachekey(method, self, context):
         '''cachekey method for self.__call__.'''
