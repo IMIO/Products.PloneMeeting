@@ -79,8 +79,8 @@ AddAnnex = 'PloneMeeting: Add annex'
 AddAnnexDecision = 'PloneMeeting: Add annexDecision'
 setDefaultRoles(ReadDecision, ('Manager',))
 setDefaultRoles(WriteDecision, ('Manager',))
-setDefaultRoles(AddAnnex, ('Manager', 'Owner'))
-setDefaultRoles(AddAnnexDecision, ('Manager', 'Owner'))
+setDefaultRoles(AddAnnex, ('Manager',))
+setDefaultRoles(AddAnnexDecision, ('Manager',))
 
 # list of add content permissions for content added to Meeting base contents
 ADD_SUBCONTENT_PERMISSIONS = [
