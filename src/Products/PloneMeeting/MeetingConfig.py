@@ -2658,7 +2658,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                                  context=self.REQUEST)
         for mGroup in activeGroups:
             # display if a group is disabled or empty
-            title = safe_unicode(mGroup.getName())
+            title = safe_unicode(mGroup.getName()) + u' (%s)' % mGroup.getId()
             if mGroup not in nonEmptyMeetingGroups:
                 title = title + ' (%s)' % non_empty_advisers_group_msg
             res.append((mGroup.getId(), title))
