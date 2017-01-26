@@ -549,17 +549,18 @@ class Migrate_To_4_0(Migrator):
 
     def _updateAllLocalRoles(self):
         '''updateAllLocalRoles so especially the advices are updated because the 'comment'
-           is always available in the adviceIndex now, even on still not given advices.'''
+           is always available in the adviceIndex now, even on still not given advices.
+           Moreover it will call _addManagedPermissions for Meetings and MeetingItems.'''
         logger.info('Updating allLocalRoles...')
         self.tool.updateAllLocalRoles()
         logger.info('Done.')
 
-    def _updateManagedPermissions(self):
-        '''Add some permissions managed automatically.'''
+    def _updateManagedPermissionsForAdvices(self):
+        '''Add permissions managed automatically to meetingadvices.'''
         logger.info('Updating permissions managed automatically...')
         # manage multiple 'meetingadvice' portal_types
-        brains = self.portal.portal_catalog(meta_type=['Meeting', 'MeetingItem'] +
-                                            self.tool.getAdvicePortalTypes(as_ids=True))
+        brains = self.portal.portal_catalog(
+            portal_type=self.tool.getAdvicePortalTypes(as_ids=True))
         for brain in brains:
             obj = brain.getObject()
             _addManagedPermissions(obj)
@@ -1059,7 +1060,7 @@ class Migrate_To_4_0(Migrator):
         self._cleanMeetingConfigs()
         self._cleanMeetingUsers()
         self._updateAllLocalRoles()
-        self._updateManagedPermissions()
+        self._updateManagedPermissionsForAdvices()
         self._initNewHTMLFields()
         self._updateHistoryComments()
         self._updateCKeditorCustomToolbar()
