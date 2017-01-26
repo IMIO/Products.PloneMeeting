@@ -151,7 +151,7 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
                     annexes += u"<span class='discreet'>{0}&nbsp;:&nbsp;</span>".format(decision_term)
                     annexes += obj.restrictedTraverse('categorized-childs')(portal_type='annexDecision')
         elif obj.meta_type == 'Meeting':
-            annexes += obj.restrictedTraverse('categorized-childs')(portal_type='annex')
+            annexes += obj.restrictedTraverse('categorized-childs')(portal_type='annex', show_nothing=False)
         if annexes:
             annexes = u"<div class='dashboard_annexes'>{0}</div>".format(annexes)
 
