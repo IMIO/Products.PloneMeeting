@@ -661,12 +661,14 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                     toConfirm.append('Meeting.backToDecisionsPublished')
                     meetingConfig.setTransitionsToConfirm(toConfirm)
                 # State "decisions_published" must be selected in decisions DashboardCollections
-                for collection in meetingConfig.searches.searches_decisions.objectValues('DashboardCollection'):
-                    for criterion in collection.query:
-                        if criterion['i'] == 'review_state' and \
-                           not 'decisions_published' in criterion['v']:
-                            updateCollectionCriterion(collection, criterion['i'],
-                                                      tuple(criterion['v']) + ('decisions_published', ))
+                # XXX to be removed in PloneMeeting 4.1, test on 'searches' will be no more necessary
+                if meetingConfig.get('searches'):
+                    for collection in meetingConfig.searches.searches_decisions.objectValues('DashboardCollection'):
+                        for criterion in collection.query:
+                            if criterion['i'] == 'review_state' and \
+                               not 'decisions_published' in criterion['v']:
+                                updateCollectionCriterion(collection, criterion['i'],
+                                                          tuple(criterion['v']) + ('decisions_published', ))
             logger.info(WF_APPLIED % ("hide_decisions_when_under_writing", meetingConfig.getId()))
         # "waiting_advices" add state 'xxx_waiting_advices' in the item workflow
         # it is a go/back state from the WAITING_ADVICES_FROM_STATES item list of states.

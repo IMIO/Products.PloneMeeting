@@ -13,7 +13,7 @@ from Products.CMFPlone.utils import safe_unicode
 from collective.iconifiedcategory.utils import calculate_category_id
 from imio.dashboard.utils import _updateDefaultCollectionFor
 from imio.helpers.catalog import removeIndexes
-from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_REAPPLY
+from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_NEW
 
 from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.migrations import Migrator
@@ -94,7 +94,9 @@ class Migrate_To_4_0(Migrator):
 
         for cfg in self.tool.objectValues('MeetingConfig'):
             # already migrated?
-            if 'searches' in cfg.objectIds():
+            if cfg.get('searches', None) and \
+               cfg.searches.get('searches_items', None) and \
+               cfg.searches.searches_items.objectIds():
                 continue
             logger.info('Moving to imio.dashboard : adding DashboardCollections and disabling Topics...')
             cfg._createSubFolders()
@@ -1033,15 +1035,24 @@ class Migrate_To_4_0(Migrator):
         self.cleanRegistries()
         # reinstall so versions are correctly shown in portal_quickinstaller
         # and new stuffs are added (portal_catalog metadata especially, imio.history is installed)
-        # reinstall PloneMeeting without dependencies, we want to reapply entire PM
-        # but not dependencies that are managed by upgradeDependencies
+        # reinstall PloneMeeting with dependencies, but install only new packages
+        # we want to reapply entire PM but upgrade existing dependencies
         self.reinstall(profiles=['profile-Products.PloneMeeting:default', ],
-                       ignore_dependencies=True,
-                       dependency_strategy=DEPENDENCY_STRATEGY_REAPPLY)
+                       ignore_dependencies=False,
+                       dependency_strategy=DEPENDENCY_STRATEGY_NEW)
         if self.profile_name != 'profile-Products.PloneMeeting:default':
             self.reinstall(profiles=[self.profile_name, ],
                            ignore_dependencies=False,
-                           dependency_strategy=DEPENDENCY_STRATEGY_REAPPLY)
+                           dependency_strategy=DEPENDENCY_STRATEGY_NEW)
+        # reapply the registry.xml step of plone.app.querystring
+        # that misses an upgrade step with new type
+        # 'plone.app.querystring.operation.selection.is.operation'
+        self.runProfileSteps('plone.app.querystring', steps=['plone.app.registry'])
+        # reapply the registry.xml step of imio.actionspanel
+        # for which there is a missing dependency to add record
+        # 'imio.actionspanel.browser.registry.IImioActionsPanelConfig'
+        self.runProfileSteps('imio.actionspanel', steps=['plone.app.registry'])
+        # upgrade dependencies
         self.upgradeDependencies()
         self.updateHolidays()
 

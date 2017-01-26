@@ -4151,7 +4151,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # if we have an adviceIndex, check that every inherited adviserIds are handled
         unhandledAdviserIds += [
             adviserId for adviserId in self.adviceIndex
-            if self.adviceIndex[adviserId]['inherited'] and adviserId not in handledAdviserIds]
+            if self.adviceIndex[adviserId].get('inherited', False) and adviserId not in handledAdviserIds]
         if unhandledAdviserIds:
             optionalAdvisers += self.getUnhandledInheritedAdvisersData(unhandledAdviserIds, optional=True)
             automaticAdvisers += self.getUnhandledInheritedAdvisersData(unhandledAdviserIds, optional=False)
@@ -4401,7 +4401,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         while backPredecessor:
             backPredecessor = backPredecessor[0]
             hasInheritedAdvices = [adviceInfo for adviceInfo in backPredecessor.adviceIndex.values()
-                                   if adviceInfo['inherited']]
+                                   if adviceInfo.get('inherited', False)]
             if not hasInheritedAdvices:
                 break
             backPredecessor.updateLocalRoles()
