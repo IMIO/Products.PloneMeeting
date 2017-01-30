@@ -476,6 +476,10 @@ def onAdviceTransition(advice, event):
 
 def onAnnexAdded(annex, event):
     ''' '''
+    # can be the case if migrating annexes or adding several annexes at once
+    if annex.REQUEST.get('defer_categorized_content_created_event'):
+        return
+
     parent = annex.getParentNode()
     if '/++add++annex' in annex.REQUEST.getURL():
         annex.REQUEST.RESPONSE.redirect(parent.absolute_url() + '/@@categorized-annexes')

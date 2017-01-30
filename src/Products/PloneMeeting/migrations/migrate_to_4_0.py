@@ -1,5 +1,6 @@
 # ------------------------------------------------------------------------------
 import os
+import time
 import logging
 logger = logging.getLogger('PloneMeeting')
 
@@ -11,6 +12,7 @@ from plone.namedfile.file import NamedBlobFile
 from plone.namedfile.file import NamedBlobImage
 from Products.CMFPlone.utils import safe_unicode
 from collective.iconifiedcategory.utils import calculate_category_id
+from collective.iconifiedcategory.utils import update_all_categorized_elements
 from imio.dashboard.utils import _updateDefaultCollectionFor
 from imio.helpers.catalog import removeIndexes
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_NEW
@@ -759,6 +761,7 @@ class Migrate_To_4_0(Migrator):
                             annex_content_category = old_mft_new_cat_id_mappings[mf.getMeetingFileType()]
                             annex_created = mf.created()
                             annex_modified = mf.modified()
+                            annex_creators = mf.Creators()
                             # remove mf before creating new annex because we will use same id
                             obj.manage_delObjects(ids=[annex_id])
                             new_annex = api.content.create(
@@ -772,11 +775,14 @@ class Migrate_To_4_0(Migrator):
                                 content_category=annex_content_category,
                                 creation_date=annex_created)
                             new_annex.setModificationDate(annex_modified)
+                            new_annex.setCreators(annex_creators)
                 delattr(obj, 'alreadyUsedAnnexNames')
                 delattr(obj, 'annexIndex')
                 obj.setModificationDate(obj_modified)
                 if obj.portal_type.startswith('meetingadvice'):
                     obj.aq_inner.aq_parent.setModificationDate(parent_modified)
+                # update categorized elements now as it is defered
+                update_all_categorized_elements(obj)
 
         logger.info('Moving to imio.annex...')
         # necessary for versions in between...
@@ -841,6 +847,7 @@ class Migrate_To_4_0(Migrator):
                     old_mft_new_cat_id_mappings[mft.UID() + '__subtype__' + subType['row_id']] = \
                         calculate_category_id(category)
                     subcat._v_old_mft = subType['row_id']
+
         # now that categories and subcategories are created, we are
         # able to update the otherMCCorrespondences attribute
         for cfg in self.tool.objectValues('MeetingConfig'):
@@ -965,10 +972,15 @@ class Migrate_To_4_0(Migrator):
         logger.info('Moving MeetingFiles to annexes...')
         catalog = api.portal.get_tool('portal_catalog')
         # do migrate separately to avoid fail on large number of elements
+        startTime = time.time()
+        self.portal.REQUEST.set('defer_categorized_content_created_event', True)
         brains = catalog(meta_type=('MeetingItem', ))
         _migrateFiles(brains)
         brains = catalog(object_provides='Products.PloneMeeting.content.advice.IMeetingAdvice')
         _migrateFiles(brains)
+        self.portal.REQUEST.set('defer_categorized_content_created_event', False)
+        seconds = time.time() - startTime
+        logger.info('Annexes were migrated in %d minute(s) (%d seconds).' % (seconds/60, seconds))
 
         # now that MeetingFileTypes and MeetingFiles are migrated
         # we are able to remove the MeetingConfig.meetingfiletypes folder
