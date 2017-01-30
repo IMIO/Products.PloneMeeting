@@ -12,7 +12,7 @@
    <property name="section">default</property>
    <property name="hidden">1</property>
    <property name="vocabulary"></property>
-   <property name="default"></property>
+   <property name="default">modified(reverse)</property>
   </criterion>
 
   <criterion name="c1" i18n:attributes="title">
