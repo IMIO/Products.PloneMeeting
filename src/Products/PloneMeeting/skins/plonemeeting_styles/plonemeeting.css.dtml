@@ -428,11 +428,6 @@ td.td_cell_advices .actionMenuAX .actionMenuContentAX {
     line-height: 1.5em;
 }
 
-#content .actionMenuAX .actionMenuContentAX li a {
-    display: block;
-    margin: 0.0em 0;
-}
-
 #content .actionMenuAX .actionMenuContentAX .selected {
     display: block;
     white-space: nowrap;

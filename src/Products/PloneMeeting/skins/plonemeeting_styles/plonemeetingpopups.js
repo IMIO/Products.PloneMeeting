@@ -47,7 +47,7 @@ function advicePreview() {
             config: {
                 onBeforeLoad : function (e) {
                     // tooltipster for annexes
-                    initializeIconifiedCategoryWidget();
+                    categorizedChildsInfos();
                     return true;
                 },
             }
