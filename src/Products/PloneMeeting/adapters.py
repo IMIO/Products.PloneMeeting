@@ -809,7 +809,9 @@ class Criteria(eeaCriteria):
         # meeting view
         kept_filters = []
         resultsperpagedefault = "20"
+        meeting_view = False
         if IMeeting.providedBy(context):
+            meeting_view = True
             self.context = cfg.searches.searches_items
             if context._displayingAvailableItems():
                 kept_filters = cfg.getDashboardMeetingAvailableItemsFilters()
@@ -842,6 +844,9 @@ class Criteria(eeaCriteria):
 
         res = PersistentList()
         for criterion in self.criteria:
+            # do not keep sorting criterion on the meeting_view
+            if meeting_view and criterion.widget == u'sorting':
+                continue
             if criterion.section != u'advanced' or \
                criterion.__name__ in kept_filters:
                 res.append(criterion)
