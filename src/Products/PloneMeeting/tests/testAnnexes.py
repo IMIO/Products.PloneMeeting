@@ -38,7 +38,6 @@ from collective.iconifiedcategory.utils import get_config_root
 from collective.iconifiedcategory.utils import get_category_object
 from collective.iconifiedcategory.utils import get_group
 from collective.iconifiedcategory.utils import update_all_categorized_elements
-from imio.helpers.cache import cleanRamCacheFor
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
@@ -259,7 +258,6 @@ class testAnnexes(PloneMeetingTestCase):
                                            categorized_child):
         """ """
         # current user may see every annexes
-        cleanRamCacheFor('Products.PloneMeeting.adapters._user_groups')
         self.assertEqual(set([elt['UID'] for elt in get_categorized_elements(obj)]),
                          set((annexNotConfidential.UID(),
                               annexConfidential.UID())))
@@ -544,6 +542,46 @@ class testAnnexes(PloneMeetingTestCase):
                     continue
                 self._checkElementConfidentialAnnexAccess(cfg, meeting, annexNotConfidential, annexConfidential,
                                                           annexes_table, categorized_child)
+
+    def test_pm_SwitchingConfidentialityUsingActionView(self):
+        """Test that enabling/disabling/enabling
+           confidentiality on an annex works correctly."""
+        cfg = self.meetingConfig
+        cfgItemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
+        item_initial_state = self.wfTool[cfgItemWF.getId()].initial_state
+        cfg.setItemPowerObserversStates((item_initial_state, ))
+        # confidential annexes are visible by proposing group creators
+        cfg.setItemAnnexConfidentialVisibleFor(('suffix_proposing_group_creators', ))
+
+        item_initial_state, item, annexes_table, categorized_child, \
+            annexNotConfidential, annexConfidential = self._setupConfidentialityOnItemAnnexes()
+
+        view = annexConfidential.restrictedTraverse('@@iconified-confidential')
+        view.attribute_mapping = {'confidential': 'confidential'}
+
+        # confidential for now
+        self.changeUser('powerobserver1')
+        self.assertFalse(annexConfidential.UID() in get_categorized_elements(item))
+        self.assertEqual(annexConfidential.__ac_local_roles__,
+                         {'pmCreator1': ['Owner'], 'developers_creators': ['AnnexReader']})
+        # remove confidentiality, only MeetingManagers may change confidentiality
+        self.changeUser('pmManager')
+        self.request.set('confidential', False)
+        view()
+        self.changeUser('powerobserver1')
+        self.assertTrue(annexConfidential.UID() in
+                        [elt['UID'] for elt in get_categorized_elements(item)])
+        self.assertEqual(annexConfidential.__ac_local_roles__,
+                         {'pmCreator1': ['Owner']})
+        # confidential again
+        self.changeUser('pmManager')
+        self.request.set('confidential', True)
+        view()
+        self.changeUser('powerobserver1')
+        self.assertFalse(annexConfidential.UID() in
+                         [elt['UID'] for elt in get_categorized_elements(item)])
+        self.assertEqual(annexConfidential.__ac_local_roles__,
+                         {'pmCreator1': ['Owner'], 'developers_creators': ['AnnexReader']})
 
     def test_pm_AnnexesTitleFoundInItemSearchableText(self):
         '''MeetingFiles title is indexed in the item SearchableText.'''

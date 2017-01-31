@@ -40,6 +40,7 @@ from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import AddAnnexDecision
 from Products.PloneMeeting.config import MEETINGREVIEWERS
 from Products.PloneMeeting.config import MEETINGROLES
+from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.interfaces import IMeeting
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.MeetingConfig import CONFIGGROUPPREFIX
@@ -1295,18 +1296,48 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
         infos['visible_for_groups'] = self._visible_for_groups()
         return infos
 
+    def _apply_visible_groups_security(self, group_ids):
+        """Compute 'View' permission if annex is confidential,
+           apply local_roles and give 'View' to 'AnnexReader' either,
+           remove every local_roles and acquire 'View'."""
+        if self.parent.meta_type == 'MeetingItem' or \
+           self.parent.portal_type in self.tool.getAdvicePortalTypes(as_ids=True):
+            # reinitialize permissions in case no more confidential
+            # or confidentiality configuration changed
+            self.context.__ac_local_roles_block__ = False
+            self.context.manage_permission("View", (), acquire=True)
+            self.context.manage_permission("Access contents information", (), acquire=True)
+            grp_reader_localroles = [
+                grp_id for grp_id in self.context.__ac_local_roles__
+                if self.context.__ac_local_roles__[grp_id] == [READER_USECASES['confidentialannex']]]
+            self.context.manage_delLocalRoles(grp_reader_localroles)
+            if self.context.confidential:
+                self.context.manage_permission(
+                    "View",
+                    (READER_USECASES['confidentialannex'], 'Manager', 'MeetingManager'),
+                    acquire=False)
+                self.context.manage_permission(
+                    "Access contents information",
+                    (READER_USECASES['confidentialannex'], 'Manager', 'MeetingManager'),
+                    acquire=False)
+                for grp_id in group_ids:
+                    self.context.manage_addLocalRoles(
+                        grp_id, (READER_USECASES['confidentialannex'], ))
+            self.context.reindexObjectSecurity()
+
     def _visible_for_groups(self):
         """ """
-        if not self.context.confidential:
-            return []
-        parent_meta_type = self.parent.meta_type
-        if parent_meta_type == 'MeetingItem':
-            groups = self._item_visible_for_groups()
-        elif parent_meta_type == 'Meeting':
-            groups = self._meeting_visible_for_groups()
-        else:
-            # advice
-            groups = self._advice_visible_for_groups()
+        groups = []
+        if self.context.confidential:
+            parent_meta_type = self.parent.meta_type
+            if parent_meta_type == 'MeetingItem':
+                groups = self._item_visible_for_groups()
+            elif parent_meta_type == 'Meeting':
+                groups = self._meeting_visible_for_groups()
+            else:
+                # advice
+                groups = self._advice_visible_for_groups()
+        self._apply_visible_groups_security(groups)
         return groups
 
     def _item_visible_for_groups(self):
@@ -1400,25 +1431,26 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
 
     def can_view(self):
         # is the context a MeetingItem and privacy viewable?
-        if self.context.meta_type == 'MeetingItem' and not self.context.adapted().isPrivacyViewable():
-            return False
+        if self.context.meta_type == 'MeetingItem':
+            if not self.context.adapted().isPrivacyViewable():
+                return False
 
-        infos = self.context.categorized_elements[self.brain.UID]
-        if not infos['confidential'] or \
-           api.portal.get_tool('portal_plonemeeting').isManager(self.context):
-            return True
-        if set(self._user_groups()).intersection(infos['visible_for_groups']):
-            return True
-        # if we have a SUFFIXPROFILEPREFIX profixed group,
-        # check using "userIsAmong", this is only done for Meetings
-        if self.context.meta_type == 'Meeting':
-            tool = api.portal.get_tool('portal_plonemeeting')
-            for group in infos['visible_for_groups']:
-                if group.startswith(SUFFIXPROFILEPREFIX):
-                    suffix = group.replace(SUFFIXPROFILEPREFIX, '')
-                    if tool.userIsAmong(suffix):
-                        return True
-        return False
+        elif self.context.meta_type == 'Meeting':
+            # if we have a SUFFIXPROFILEPREFIX profixed group,
+            # check using "userIsAmong", this is only done for Meetings
+            infos = self.context.categorized_elements[self.brain.UID]
+            if infos['confidential']:
+                if set(self._user_groups()).intersection(infos['visible_for_groups']):
+                    return True
+                tool = api.portal.get_tool('portal_plonemeeting')
+                for group in infos['visible_for_groups']:
+                    if group.startswith(SUFFIXPROFILEPREFIX):
+                        suffix = group.replace(SUFFIXPROFILEPREFIX, '')
+                        if tool.userIsAmong(suffix):
+                            return True
+                return False
+
+        return True
 
 
 class IconifiedCategoryConfigAdapter(object):

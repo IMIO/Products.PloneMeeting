@@ -142,6 +142,7 @@ READER_USECASES = {
     'powerobservers': 'Reader',
     'restrictedpowerobservers': 'Reader',
     'groupincharge': 'Reader',
+    'confidentialannex': 'AnnexReader',
 }
 
 ploneMeetingRoles = (
