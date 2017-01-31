@@ -3550,7 +3550,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if res and theObject:
             tool = api.portal.get_tool('portal_plonemeeting')
             mc = tool.getMeetingConfig(self)
-            res = getattr(mc.meetingusers, res)
+            users = []
+            for user_id in res:
+                users.append(getattr(mc.meetingusers, user_id))
+            res = users
         return res
 
     security.declarePrivate('getAdvices')
