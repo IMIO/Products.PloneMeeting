@@ -53,6 +53,7 @@ from Products.CMFCore.utils import getToolByName
 from Products.statusmessages.interfaces import IStatusMessage
 
 from imio.helpers.cache import cleanRamCacheFor
+from imio.prettylink.interfaces import IPrettyLink
 
 from Products import PloneMeeting as products_plonemeeting
 from Products.PloneMeeting.browser.itemassembly import item_assembly_default
@@ -4679,6 +4680,69 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(item.getManuallyLinkedItems(only_viewable=True), [])
         self.assertEqual(item.getPredecessors(), [itemLinkedAuto])
         self.assertEqual(item.getPredecessors(only_viewable=True), [])
+
+    def test_pm_GetLinkIsCached(self):
+        """imio.prettylink getLink is cached."""
+        # cache is active, if we change item title without notifying modified, we see it
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        item_new_title = 'My new title'
+        self.assertFalse(item_new_title in IPrettyLink(item).getLink())
+        item.setTitle('My new title')
+        self.assertFalse(item_new_title in IPrettyLink(item).getLink())
+        item.notifyModified()
+        self.assertTrue(item_new_title in IPrettyLink(item).getLink())
+
+    def test_pm_GetLinkCachingInvalidatedWhenOnAvailableItemsOfMeetingView(self):
+        """The imio.prettylink getLink caching is overrided and is invalidated when an
+           item is displayed in the 'available items' of the meeting_view because some
+           specific icons may be displayed."""
+        # a late item will receive a particular icon when displayed
+        # in the available items of a meeting
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime())
+        self.freezeMeeting(meeting)
+        item = self.create('MeetingItem')
+        item.setPreferredMeeting(meeting.UID())
+        self.validateItem(item)
+        self.assertTrue(item.wfConditions().isLateFor(meeting))
+        late_icon_html = u"<img title='Late' src='http://nohost/plone/late.png' />"
+        self.assertFalse(late_icon_html in IPrettyLink(item).getLink())
+        # right now change current URL so Meeting._displayingAvailableItems is True
+        self.assertFalse(late_icon_html in IPrettyLink(item).getLink())
+        self.request['URL'] = meeting.absolute_url() + '/@@meeting_available_items_view'
+        self.assertTrue(late_icon_html in IPrettyLink(item).getLink())
+
+    def test_pm_GetLinkCachingInvalidatedWhenPredecessorFromOtherMCIsModified(self):
+        """The imio.prettylink getLink caching is overrided and is invalidated when the
+           predecessor from another MC is modified.  Indeed an icon displays informations
+           about the item predecessor state, meeting, ..."""
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        cfg2Id = cfg2.getId()
+        cfg.setItemManualSentToOtherMCStates((self.WF_STATE_NAME_MAPPINGS['itemcreated']))
+        # create an item in cfg, send it to cfg2 and check
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        item.setOtherMeetingConfigsClonableTo((cfg2Id,))
+        item2 = item.cloneToOtherMeetingConfig(cfg2Id)
+        self.assertEqual(item.queryState(),
+                         self.WF_STATE_NAME_MAPPINGS['itemcreated'])
+        self.assertTrue(
+            u'<img title=\'Sent from PloneMeeting assembly, original item is "{0}".\' '
+            u'src=\'http://nohost/plone/cloned_not_decided.png\' />'.format(
+                translate(item.queryState(), domain="plone", context=self.request)
+            )
+            in IPrettyLink(item2).getLink())
+        self.proposeItem(item)
+        self.assertEqual(item.queryState(),
+                         self.WF_STATE_NAME_MAPPINGS['proposed'])
+        self.assertTrue(
+            u'<img title=\'Sent from PloneMeeting assembly, original item is "{0}".\' '
+            u'src=\'http://nohost/plone/cloned_not_decided.png\' />'.format(
+                translate(item.queryState(), domain="plone", context=self.request)
+            )
+            in IPrettyLink(item2).getLink())
 
 
 def test_suite():

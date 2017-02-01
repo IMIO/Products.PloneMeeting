@@ -479,6 +479,33 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
       Override to take into account PloneMeeting use cases...
     """
 
+    def getLink_cachekey(method, self):
+        '''cachekey method for self.getLink.'''
+        res = super(ItemPrettyLinkAdapter, self).getLink_cachekey(self)
+        meeting = getCurrentMeetingObject(self.context)
+        # manage when displayed in availableItems on the meeting_view
+        inAvailableItems = False
+        if meeting:
+            inAvailableItems = meeting._displayingAvailableItems()
+        # manage when displaying the icon with informations about
+        # the predecessor living in another MC
+        predecessor_modified = None
+        predecessor = self._predecessorFromOtherMC()
+        if predecessor:
+            predecessor_modified = predecessor.modified()
+        return res + (inAvailableItems, predecessor_modified)
+
+    @ram.cache(getLink_cachekey)
+    def getLink(self):
+        """Necessary to be able to override the cachekey."""
+        return self._getLink()
+
+    def _predecessorFromOtherMC(self):
+        predecessor = self.context.getPredecessor()
+        if predecessor and predecessor.portal_type != self.context.portal_type:
+            return predecessor
+        return None
+
     def _leadingIcons(self):
         """
           Manage icons to display before the icons managed by PrettyLink._icons.
@@ -497,8 +524,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
             # Item is in the list of available items, check if we
             # must show a deadline- or late-related icon.
             if self.context.wfConditions().isLateFor(meeting):
-                # A late item, or worse: a late item not respecting the freeze
-                # deadline.
+                # A late item, or worse: a late item not respecting the freeze deadline.
                 if meeting.attributeIsUsed('deadlineFreeze') and \
                    not self.context.lastValidatedBefore(meeting.getDeadlineFreeze()):
                     res.append(('deadlineKo.png', translate('icon_help_publish_freeze_ko',
@@ -645,8 +671,8 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                         msg))
 
         # display an icon if item is sent from another mc
-        predecessor = self.context.getPredecessor()
-        if predecessor and predecessor.portal_type != self.context.portal_type:
+        predecessor = self._predecessorFromOtherMC()
+        if predecessor:
             predecessorCfg = tool.getMeetingConfig(predecessor)
             predecessorMeeting = predecessor.getMeeting()
             predecessor_state = predecessor.queryState()
