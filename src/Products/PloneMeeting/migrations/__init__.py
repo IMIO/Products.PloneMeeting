@@ -34,6 +34,11 @@ class Migrator(BaseMigrator):
         for cfg in self.tool.objectValues('MeetingConfig'):
             self.cfgsMailMode[cfg.getId()] = cfg.getMailMode()
             cfg.setMailMode('deactivated')
+        # disable enable_link_integrity_checks
+        self.enable_link_integrity_checks = bool(self.portal.portal_properties.enable_link_integrity_checks)
+        self.portal.portal_properties.site_properties.manage_changeProperties(
+            enable_link_integrity_checks=False)
+        self.portal.portal_properties.enable_link_integrity_checks = False
         # disable advices invalidation for every MeetingConfigs and save
         # current state to set it back after migration in self.finish
         self.cfgsAdvicesInvalidation = {}
@@ -97,6 +102,9 @@ class Migrator(BaseMigrator):
         for cfgId in self.cfgsMailMode:
             cfg = getattr(self.tool, cfgId)
             cfg.setMailMode(self.cfgsMailMode[cfgId])
+        # set enable_link_integrity_checks back to original value
+        self.portal.portal_properties.site_properties.manage_changeProperties(
+            enable_link_integrity_checks=self.enable_link_integrity_checks)
         # set adviceInvalidation for every MeetingConfigs back to the right value
         for cfgId in self.cfgsAdvicesInvalidation:
             cfg = getattr(self.tool, cfgId)
