@@ -213,7 +213,8 @@ def getCurrentMeetingObject(context):
                     referer = referer[referer.index('/Members/'):]
                 # Then, add the real portal as URL prefix.
                 referer = portal_path + referer
-            res = context.portal_catalog(path=referer)
+            # take care that the Meeting may contains annexes
+            res = context.portal_catalog(path=referer, meta_type='Meeting')
             if res:
                 obj = res[0].getObject()
         else:

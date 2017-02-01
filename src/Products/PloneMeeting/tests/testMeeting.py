@@ -1484,6 +1484,28 @@ class testMeeting(PloneMeetingTestCase):
         self.assertTrue(item.isLate())
         self.assertTrue(item.getMeeting().UID() == meeting.UID())
 
+    def test_pm_PresentItemToMeetingFromAvailableItems(self):
+        """When no published meeting, getCurrentMeetingObject relies on a catalog query
+           if current URL is the available items URL.  As it use meeting path,
+           make sure we find the meeting especially if it contains annexes."""
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        meeting = self.create('Meeting', date='2014/01/01')
+        for i in range(0, 10):
+            self.addAnnex(meeting)
+        # if no PUBLISHED, it is None
+        self.request['PUBLISHED'] = None
+        self.assertIsNone(getCurrentMeetingObject(item))
+        # direct use of available items view
+        self.request['PUBLISHED'] = meeting.restrictedTraverse('@@meeting_available_items_view')
+        self.assertEqual(getCurrentMeetingObject(item), meeting)
+        # use from the actions_panel
+        self.request['PUBLISHED'] = item.restrictedTraverse('@@actions_panel')
+        self.request['HTTP_REFERER'] = meeting.absolute_url() + '/@@meeting_available_items_view'
+        self.assertEqual(getCurrentMeetingObject(item), meeting)
+        self.presentItem(item)
+        self.assertEqual(item.queryState(), 'presented')
+
     def test_pm_PresentItemWhenNoPublishedMeeting(self):
         '''Test the functionnality to present an item.
            It will be presented to the ['PUBLISHED'] meeting if any.
