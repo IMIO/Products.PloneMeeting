@@ -27,6 +27,12 @@ class ItemCategoryColumn(VocabularyColumn):
     """A column that display the MeetingItem.category."""
     vocabulary = u'Products.PloneMeeting.vocabularies.categoriesvocabulary'
 
+    def getCSSClasses(self, item):
+        """Add a class with category id so we can skin particular categories."""
+        css_classes = self.cssClasses
+        css_classes['td'] = css_classes['td'] + ' td_cell_{0}'.format(item.getCategory)
+        return css_classes
+
 
 class ItemProposingGroupColumn(VocabularyColumn):
     """A column that display the MeetingItem.proposingGroup."""
