@@ -1088,6 +1088,15 @@
           </td>
           <td></td>
         </tr>
+        <tr valign="top">
+          <td tal:define="field python:here.getField('usedPollTypes')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td tal:define="field python:here.getField('defaultPollType')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td></td>
+        </tr>
       </table>
     </tal:votes>
 
