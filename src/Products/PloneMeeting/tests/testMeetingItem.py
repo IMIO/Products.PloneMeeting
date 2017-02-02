@@ -4729,8 +4729,9 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(item.queryState(),
                          self.WF_STATE_NAME_MAPPINGS['itemcreated'])
         self.assertTrue(
-            u'<img title=\'Sent from PloneMeeting assembly, original item is "{0}".\' '
+            u'<img title=\'Sent from {0}, original item is "{1}".\' '
             u'src=\'http://nohost/plone/cloned_not_decided.png\' />'.format(
+                cfg.Title(),
                 translate(item.queryState(), domain="plone", context=self.request)
             )
             in IPrettyLink(item2).getLink())
@@ -4738,8 +4739,9 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(item.queryState(),
                          self.WF_STATE_NAME_MAPPINGS['proposed'])
         self.assertTrue(
-            u'<img title=\'Sent from PloneMeeting assembly, original item is "{0}".\' '
+            u'<img title=\'Sent from {0}, original item is "{1}".\' '
             u'src=\'http://nohost/plone/cloned_not_decided.png\' />'.format(
+                cfg.Title(),
                 translate(item.queryState(), domain="plone", context=self.request)
             )
             in IPrettyLink(item2).getLink())
