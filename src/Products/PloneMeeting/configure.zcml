@@ -6,6 +6,7 @@
 
   <!-- load "imio.pm.locales" first so translations are overrided -->
   <include package="imio.pm.locales"/>
+  <include package="communesplone.layout"/>
   <include package="Products.PasswordStrength" />
   <include package="collective.ckeditor"/>
   <include package="collective.documentviewer"/>
@@ -15,7 +16,6 @@
   <include package="collective.js.fancytree"/>
   <include package="collective.js.jqueryui"/>
   <include package="collective.messagesviewlet"/>
-  <include package="communesplone.layout"/>
   <include package="imio.annex"/>
   <include package="imio.pm.ws"/>
   <include package="imio.dashboard"/>
