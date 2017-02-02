@@ -7,14 +7,20 @@ p {
     line-height: 1em;
 }
 
-table.listing tbody tr.even.meeting_item_privacy_secret td,
-table.listing tbody tr.even.meeting_item_privacy_secret_heading td {
-    background-color: #ffcc33;
-}
-table.listing tbody tr.odd.meeting_item_privacy_secret td,
-table.listing tbody tr.odd.meeting_item_privacy_secret_heading td {
+/* background of secret items when displayed on the meeting */
+table.listing tbody tr.odd.meeting_item_privacy_secret td {
     background-color: #ffff99;
 }
+table.listing tbody tr.even.meeting_item_privacy_secret td{
+    background-color: #ffcc33;
+}
+table.listing tbody tr.odd.meeting_item_privacy_secret_heading td {
+    background-color: #d0ece7;
+}
+table.listing tbody tr.even.meeting_item_privacy_secret_heading td {
+    background-color: #a2d9ce;
+}
+
 img.logical_meeting {
     cursor: help;
 }
@@ -688,6 +694,7 @@ div[id^="pm_menu_advice_change_delay"].pmDropdown {
 .highlight {background-color: yellow}
 
 /* Hightlight that a value has been modified, for example the itemAssembly is overriden on a MeetingItem */
+span.highlightValue,
 dt.highlightValue span {
     color: red !important;
 }
@@ -715,16 +722,6 @@ p.indent-firstline {
 /* While displayed as a single item (meetingitem_view) */
 .item_clone_to_emergency {
     color: red;
-}
-
-/* While displayed in a Meeting */
-.meeting_item_privacy_secret,
-.meeting_item_privacy_secret_heading {
-    background-color: #E8E8E8;
-}
-.meeting_item_privacy_public,
-.meeting_item_privacy_public_heading {
-    background-color: transparent;
 }
 
 /* CSS for portlet todo */
