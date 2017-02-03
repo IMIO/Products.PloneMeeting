@@ -477,30 +477,28 @@ def onAdviceTransition(advice, event):
 def onAnnexAdded(annex, event):
     ''' '''
     # can be the case if migrating annexes or adding several annexes at once
-    if annex.REQUEST.get('defer_categorized_content_created_event'):
-        return
+    if not annex.REQUEST.get('defer_categorized_content_created_event'):
+        parent = annex.getParentNode()
+        if '/++add++annex' in annex.REQUEST.getURL():
+            annex.REQUEST.RESPONSE.redirect(parent.absolute_url() + '/@@categorized-annexes')
 
-    parent = annex.getParentNode()
-    if '/++add++annex' in annex.REQUEST.getURL():
-        annex.REQUEST.RESPONSE.redirect(parent.absolute_url() + '/@@categorized-annexes')
+        # if it is an annex added on an item, versionate given advices if necessary
+        if parent.meta_type == 'MeetingItem':
+            parent._versionateAdvicesOnItemEdit()
+            parent.updateHistory('add',
+                                 annex,
+                                 decisionRelated=annex.portal_type == 'annexDecision' and True or False)
+            if annex.portal_type == 'annex' and parent.willInvalidateAdvices():
+                parent.updateLocalRoles(invalidate=True)
 
-    # if it is an annex added on an item, versionate given advices if necessary
-    if parent.meta_type == 'MeetingItem':
-        parent._versionateAdvicesOnItemEdit()
-        parent.updateHistory('add',
-                             annex,
-                             decisionRelated=annex.portal_type == 'annexDecision' and True or False)
-        if annex.portal_type == 'annex' and parent.willInvalidateAdvices():
-            parent.updateLocalRoles(invalidate=True)
+            # Potentially I must notify MeetingManagers through email.
+            if parent.wfConditions().meetingIsPublished():
+                parent.sendMailIfRelevant('annexAdded', 'MeetingManager', isRole=True)
 
-        # Potentially I must notify MeetingManagers through email.
-        if parent.wfConditions().meetingIsPublished():
-            parent.sendMailIfRelevant('annexAdded', 'MeetingManager', isRole=True)
-
-    # update modificationDate, it is used for caching and co
-    parent.setModificationDate(DateTime())
-    # just reindex the entire object
-    parent.reindexObject()
+        # update modificationDate, it is used for caching and co
+        parent.setModificationDate(DateTime())
+        # just reindex the entire object
+        parent.reindexObject()
 
     # log
     userId = api.user.get_current().getId()
