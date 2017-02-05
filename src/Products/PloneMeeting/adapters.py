@@ -1470,16 +1470,15 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
             # if we have a SUFFIXPROFILEPREFIX profixed group,
             # check using "userIsAmong", this is only done for Meetings
             infos = self.context.categorized_elements[self.brain.UID]
-            if infos['confidential']:
-                if set(self._user_groups()).intersection(infos['visible_for_groups']):
-                    return True
-                tool = api.portal.get_tool('portal_plonemeeting')
-                for group in infos['visible_for_groups']:
-                    if group.startswith(SUFFIXPROFILEPREFIX):
-                        suffix = group.replace(SUFFIXPROFILEPREFIX, '')
-                        if tool.userIsAmong(suffix):
-                            return True
-                return False
+            if set(self._user_groups()).intersection(infos['visible_for_groups']):
+                return True
+            tool = api.portal.get_tool('portal_plonemeeting')
+            for group in infos['visible_for_groups']:
+                if group.startswith(SUFFIXPROFILEPREFIX):
+                    suffix = group.replace(SUFFIXPROFILEPREFIX, '')
+                    if tool.userIsAmong(suffix):
+                        return True
+            return False
 
         return True
 
