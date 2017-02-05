@@ -3660,7 +3660,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''
         confidential_profiles = ['{0}{1}'.format(CONFIGGROUPPREFIX,
                                                  BUDGETIMPACTEDITORS_GROUP_SUFFIX)]
-        for suffix in READER_USECASES:
+        # do not consider READER_USECASES 'confidentialannex'
+        reader_usecases = [usecase for usecase in READER_USECASES.keys()
+                           if usecase != 'confidentialannex']
+        for suffix in reader_usecases:
             if suffix in (POWEROBSERVERS_GROUP_SUFFIX, RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX):
                 confidential_profiles.append('{0}{1}'.format(CONFIGGROUPPREFIX, suffix))
             else:
@@ -3689,7 +3692,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         confidential_profiles = ['adviser_group',
                                  '{0}{1}'.format(CONFIGGROUPPREFIX,
                                                  BUDGETIMPACTEDITORS_GROUP_SUFFIX)]
-        for suffix in READER_USECASES:
+        # do not consider READER_USECASES 'confidentialannex'
+        reader_usecases = [usecase for usecase in READER_USECASES.keys()
+                           if usecase != 'confidentialannex']
+        for suffix in reader_usecases:
             if suffix in (POWEROBSERVERS_GROUP_SUFFIX, RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX):
                 confidential_profiles.append('{0}{1}'.format(CONFIGGROUPPREFIX,
                                                              suffix))
