@@ -1460,11 +1460,25 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
         user = api.user.get_current()
         return user.getGroups()
 
+    def _use_isPrivacyViewable_cachekey(method, self):
+        '''cachekey method for self._use_isPrivacyViewable.'''
+        return str(self.request._debug)
+
+    @ram.cache(_use_isPrivacyViewable_cachekey)
+    def _use_isPrivacyViewable(self):
+        """ """
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        if cfg.getRestrictAccessToSecretItems():
+            return True
+        return False
+
     def can_view(self):
         # is the context a MeetingItem and privacy viewable?
-        if self.context.meta_type == 'MeetingItem':
-            if not self.context.adapted().isPrivacyViewable():
-                return False
+        if self.context.meta_type == 'MeetingItem' and \
+           self._use_isPrivacyViewable() and \
+           not self.context.adapted().isPrivacyViewable():
+            return False
 
         elif self.context.meta_type == 'Meeting':
             # if we have a SUFFIXPROFILEPREFIX profixed group,
