@@ -142,7 +142,7 @@ document.location.reload(true);
     <span tal:condition="lang" class="pmLanguage" tal:content="lang"></span>
     <span tal:replace="python: field.widget.Label(context)"></span>
     <img style="cursor:pointer" tal:condition="mayEdit"
-         tal:attributes="src string:$portal_url/edit.gif;
+         tal:attributes="src string:$portal_url/edit.png;
                          onClick jsEdit;
                          onload python: needToRefreshPage and 'javascript:refreshPageIfNeeded()' or ''"/>
     <tal:history define="hasHistory python: context.hasHistory(fieldName)" condition="hasHistory">

@@ -177,7 +177,7 @@
                          class="link-overlay-pm-advice"
                          tal:attributes="href string:${obj_absolute_url}/edit">
                         <img i18n:attributes="title" title="advice_edit"
-                             tal:attributes="src string:${view/portal_url}/edit.gif;" />
+                             tal:attributes="src string:${view/portal_url}/edit.png;" />
                       </a>
                       <a href="view"
                          tal:condition="adviceIsLocked"

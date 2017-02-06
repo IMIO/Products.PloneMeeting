@@ -40,7 +40,7 @@
       <tal:edit condition="python: fieldset in fieldsets and schematas[fieldset].editableFields(here, visible_only=True)">
       <input type="image" title="Edit" i18n:attributes="title"
              style="cursor:pointer" class="imageInput"
-             tal:attributes="src string: $portal_url/edit.gif;
+             tal:attributes="src string: $portal_url/edit.png;
                              onClick python: 'href: window.location=\'%s/base_edit?fieldset=%s\'' % (context.absolute_url(), fieldset)"/>
     </tal:edit>]
     </span><br/><br/>
