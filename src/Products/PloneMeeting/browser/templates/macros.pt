@@ -815,7 +815,7 @@ This works for an AT and for a DX.</tal:comment>
         repeat="widget view/widgets/values">
         <div class="discreet"
               tal:condition="python: not widget.name.replace('form.widgets.', '') in excludedFields and widget.value">
-          <label tal:content="widget/label" />
+          <label class="horizontal" tal:content="widget/label" />
           <div tal:content="structure widget/render" />
         </div>
     </tal:loop>
