@@ -4715,6 +4715,47 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(item.wfConditions().isLateFor(meeting))
         self.assertTrue(late_icon_html in IPrettyLink(item).getLink())
 
+    def test_pm_GetLinkCachingIsCorrectWithTakenOverByIcon(self):
+        """The imio.prettylink getLink caching is overrided and it takes into account
+           the takenOverBy functionnality.  With this functionnality, an icon is displayed
+           if item is takenOverBy and the icon color change depending on the fact that
+           takenOverBy is the current user or not."""
+        self.meetingConfig.setUsedItemAttributes(('takenOverBy', ))
+        # create an item
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.assertTrue(item.adapted().mayTakeOver())
+        # for now, not taken over
+        self.assertTrue(not item.getTakenOverBy())
+        # take over by
+        view = item.restrictedTraverse('@@toggle_item_taken_over_by')
+        view.toggle(takenOverByFrom=item.getTakenOverBy())
+        self.assertTrue(item.getTakenOverBy() == self.member.getId())
+        # icon taken over by current user is shown
+        self.assertTrue(" src='http://nohost/plone/takenOverByCurrentUser.png' "
+                        in IPrettyLink(item).getLink())
+        # change user, the cache is invalidated and the icon displayed is
+        # the icon taken over by another user
+        self.changeUser('pmCreator1b')
+        self.assertTrue("' src='http://nohost/plone/takenOverByOtherUser.png' "
+                        in IPrettyLink(item).getLink())
+        # back to initial user
+        self.changeUser('pmCreator1')
+        self.assertTrue("' src='http://nohost/plone/takenOverByCurrentUser.png' "
+                        in IPrettyLink(item).getLink())
+        # remove taken over by
+        view.toggle(takenOverByFrom=item.getTakenOverBy())
+        self.assertFalse("http://nohost/plone/takenOverBy" in IPrettyLink(item).getLink())
+        # now pmCreator2 take over the item
+        self.changeUser('pmCreator1b')
+        self.assertTrue(item.adapted().mayTakeOver())
+        view.toggle(takenOverByFrom=item.getTakenOverBy())
+        self.assertTrue("' src='http://nohost/plone/takenOverByCurrentUser.png' "
+                        in IPrettyLink(item).getLink())
+        self.changeUser('pmCreator1')
+        self.assertTrue("' src='http://nohost/plone/takenOverByOtherUser.png' "
+                        in IPrettyLink(item).getLink())
+
     def test_pm_GetLinkCachingInvalidatedWhenPredecessorFromOtherMCIsModified(self):
         """The imio.prettylink getLink caching is overrided and is invalidated when the
            predecessor from another MC is modified.  Indeed an icon displays informations

@@ -489,13 +489,18 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
             meeting = getCurrentMeetingObject(self.context)
             if meeting:
                 meeting_modified = meeting.modified()
+        # manage takenOverBy
+        current_member = None
+        takenOverBy = self.context.getTakenOverBy()
+        if takenOverBy:
+            current_member = self.request['AUTHENTICATED_USER'].getId()
         # manage when displaying the icon with informations about
         # the predecessor living in another MC
         predecessor_modified = None
         predecessor = self._predecessorFromOtherMC()
         if predecessor:
             predecessor_modified = predecessor.modified()
-        return res + (meeting_modified, predecessor_modified)
+        return res + (meeting_modified, takenOverBy, current_member, predecessor_modified)
 
     @ram.cache(getLink_cachekey)
     def getLink(self):
