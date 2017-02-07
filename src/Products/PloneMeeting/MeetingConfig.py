@@ -5254,38 +5254,68 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('updateAnnexConfidentiality')
 
-    def updateAnnexConfidentiality(self):
+    def updateAnnexConfidentiality(self, annex_portal_types=['annex', 'annexDecision']):
         '''Update the confidentiality of existing annexes regarding default value
            for confidentiality defined in the corresponding annex type.'''
         if not self.isManager(self, realManagers=True):
             raise Unauthorized
-        # update every annexes of items of this MeetingConfig
-        catalog = api.portal.get_tool('portal_catalog')
-        brains = catalog(portal_type=self.getItemTypeName())
-        numberOfBrains = len(brains)
-        i = 1
-        for brain in brains:
-            item = brain.getObject()
-            logger.info('%d/%d Initializing annexes confidentiality of item at %s' %
-                        (i,
-                         numberOfBrains,
-                         '/'.join(item.getPhysicalPath())))
-            i = i + 1
-            annexes = get_annexes(item)
-            if not annexes:
-                continue
-            for annex in annexes:
-                category = get_category_object(annex, annex.content_category)
-                category_group = category.get_category_group()
-                if category_group.confidentiality_activated:
-                    annex.confidential = category.confidential
-                else:
-                    annex.confidential = False
-            update_all_categorized_elements(item)
+
+        # update every annexes of items, meeting and advices of this MeetingConfig
+        tool = api.portal.get_tool('portal_plonemeeting')
+        portal_types = []
+        portal_types.append(self.getItemTypeName())
+        portal_types.append(self.getMeetingTypeName())
+        portal_types += tool.getAdvicePortalTypes(as_ids=True)
+        self._updateAnnexConfidentiality(portal_types=portal_types)
 
         plone_utils = api.portal.get_tool('plone_utils')
         plone_utils.addPortalMessage('Done.')
         return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
+
+    def _updateAnnexConfidentiality(self,
+                                    portal_types=[],
+                                    annex_portal_types=['annex', 'annexDecision']):
+        '''Update the confidentiality of existing annexes regarding default value
+           for confidentiality defined in the corresponding annex type.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        advice_portal_types = tool.getAdvicePortalTypes()
+        cfgId = self.getId()
+
+        def _update(brains):
+            numberOfBrains = len(brains)
+            i = 1
+            for brain in brains:
+                # filter out advices to only update advices of current MeetingConfig
+                if brain.portal_type in advice_portal_types and \
+                   not cfgId in brain.getPath():
+                    import ipdb; ipdb.set_trace()
+                    continue
+
+                obj = brain.getObject()
+                logger.info(
+                    '%d/%d Initializing %s confidentiality of %s at %s' %
+                    (i,
+                     numberOfBrains,
+                     ', '.join(annex_portal_types),
+                     brain.portal_type,
+                     '/'.join(obj.getPhysicalPath())))
+                i = i + 1
+                annexes = get_annexes(obj, annex_portal_types)
+                if not annexes:
+                    continue
+                for annex in annexes:
+                    category = get_category_object(annex, annex.content_category)
+                    category_group = category.get_category_group()
+                    if category_group.confidentiality_activated:
+                        annex.confidential = category.confidential
+                    else:
+                        annex.confidential = False
+                update_all_categorized_elements(obj)
+
+        catalog = api.portal.get_tool('portal_catalog')
+        for portal_type in portal_types:
+            brains = catalog(portal_type=portal_type)
+            _update(brains)
 
     security.declarePublic('updateAdviceConfidentiality')
 
