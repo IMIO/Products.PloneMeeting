@@ -2878,12 +2878,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # we are setting another field, it is not permitted if
             # the rule is in use, check every items if the rule is used
             catalog = api.portal.get_tool('portal_catalog')
-            brains = catalog(Type=self.getItemTypeName())
-            for brain in brains:
-                item = brain.getObject()
-                for adviser in item.adviceIndex.values():
-                    if adviser['row_id'] == row_id:
-                        return item.absolute_url()
+            brains = catalog(Type=self.getItemTypeName(),
+                             indexAdvisers=[DELAYAWARE_REAL_GROUP_ID_PATTERN.format(row_id),
+                                            REAL_GROUP_ID_PATTERN.format(row_id)])
+            if brains:
+                item = brains[0].getObject()
+                return item.absolute_url()
 
         # we can not change the position of a row that 'is_linked_to_previous_row'
         # if it is in use and linked to an automatic adviser
@@ -5288,7 +5288,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # filter out advices to only update advices of current MeetingConfig
                 if brain.portal_type in advice_portal_types and \
                    not cfgId in brain.getPath():
-                    import ipdb; ipdb.set_trace()
                     continue
 
                 obj = brain.getObject()

@@ -288,7 +288,7 @@ def _to_coded_adviser_index(obj, groupId, advice):
         if isDelayAware:
             res.append('delay__' + groupId + suffix)
             # 'real_group_id_'
-            real_group_id = DELAYAWARE_REAL_GROUP_ID_PATTERN.format(advice['row_id'], groupId)
+            real_group_id = DELAYAWARE_REAL_GROUP_ID_PATTERN.format(advice['row_id'])
             res.append(real_group_id)
             # 'real_group_id_' with suffixed advice_type
             res.append(real_group_id + '__' + advice_type)
