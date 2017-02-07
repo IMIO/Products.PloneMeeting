@@ -24,6 +24,7 @@ from plone.app.layout.viewlets import ViewletBase
 from zope.component import getMultiAdapter
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.CMFCore.utils import getToolByName
+from Products.PloneMeeting.utils import displaying_available_items
 
 
 class WorkflowState(ViewletBase):
@@ -46,7 +47,7 @@ class ForceInsertNormal(ViewletBase):
 
     def available(self):
         """ """
-        return self.context._displayingAvailableItems() and self.view.brains
+        return displaying_available_items(self.context) and self.view.brains
 
     def render(self):
         if self.available():

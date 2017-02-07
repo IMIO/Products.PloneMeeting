@@ -4701,16 +4701,18 @@ class testMeetingItem(PloneMeetingTestCase):
         # in the available items of a meeting
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=DateTime())
-        self.freezeMeeting(meeting)
         item = self.create('MeetingItem')
         item.setPreferredMeeting(meeting.UID())
         self.validateItem(item)
-        self.assertTrue(item.wfConditions().isLateFor(meeting))
+        self.assertFalse(item.wfConditions().isLateFor(meeting))
         late_icon_html = u"<img title='Late' src='http://nohost/plone/late.png' />"
         self.assertFalse(late_icon_html in IPrettyLink(item).getLink())
-        # right now change current URL so Meeting._displayingAvailableItems is True
-        self.assertFalse(late_icon_html in IPrettyLink(item).getLink())
+        # right now change current URL so displaying_available_items is True
         self.request['URL'] = meeting.absolute_url() + '/@@meeting_available_items_view'
+        self.assertFalse(late_icon_html in IPrettyLink(item).getLink())
+        # now freeze the meeting, the late_icon will show on the item
+        self.freezeMeeting(meeting)
+        self.assertTrue(item.wfConditions().isLateFor(meeting))
         self.assertTrue(late_icon_html in IPrettyLink(item).getLink())
 
     def test_pm_GetLinkCachingInvalidatedWhenPredecessorFromOtherMCIsModified(self):

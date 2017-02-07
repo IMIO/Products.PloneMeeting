@@ -9,6 +9,7 @@ from Products.CMFCore.utils import _checkPermission
 from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import AddAnnexDecision
 from Products.PloneMeeting.interfaces import IMeeting
+from Products.PloneMeeting.utils import displaying_available_items
 
 from collective.eeafaceted.z3ctable.columns import AbbrColumn
 from collective.eeafaceted.z3ctable.columns import BaseColumn
@@ -170,7 +171,7 @@ class PMActionsColumn(ActionsColumn):
 
     def renderCell(self, item):
         # activate arrows while displaying meeting presented items
-        if self.context.meta_type == 'Meeting' and not self.context._displayingAvailableItems():
+        if self.context.meta_type == 'Meeting' and not displaying_available_items(self.context):
             self.params['showArrows'] = True
             self.params['lastItemUID'] = self.context.getItems(ordered=True, useCatalog=True)[-1].UID
             self.params['totalNbOfItems'] = self.context.numberOfItems()
@@ -250,7 +251,7 @@ class ItemCheckBoxColumn(CheckBoxColumn):
            on the faceted we are on, available or presented items."""
         head = super(ItemCheckBoxColumn, self).renderHeadCell()
         if self.context.meta_type == 'Meeting':
-            if self.context._displayingAvailableItems():
+            if displaying_available_items(self.context):
                     present_msg = translate('present_several_items',
                                             domain='PloneMeeting',
                                             context=self.request)

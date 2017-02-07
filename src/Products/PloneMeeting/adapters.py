@@ -42,6 +42,7 @@ from Products.PloneMeeting.config import MEETINGREVIEWERS
 from Products.PloneMeeting.config import MEETINGROLES
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.interfaces import IMeeting
+from Products.PloneMeeting.utils import displaying_available_items
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.MeetingConfig import CONFIGGROUPPREFIX
 from Products.PloneMeeting.MeetingConfig import PROPOSINGGROUPPREFIX
@@ -482,18 +483,19 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
     def getLink_cachekey(method, self):
         '''cachekey method for self.getLink.'''
         res = super(ItemPrettyLinkAdapter, self).getLink_cachekey(self)
-        meeting = getCurrentMeetingObject(self.context)
         # manage when displayed in availableItems on the meeting_view
-        inAvailableItems = False
-        if meeting:
-            inAvailableItems = meeting._displayingAvailableItems()
+        meeting_modified = None
+        if displaying_available_items(self.context):
+            meeting = getCurrentMeetingObject(self.context)
+            if meeting:
+                meeting_modified = meeting.modified()
         # manage when displaying the icon with informations about
         # the predecessor living in another MC
         predecessor_modified = None
         predecessor = self._predecessorFromOtherMC()
         if predecessor:
             predecessor_modified = predecessor.modified()
-        return res + (inAvailableItems, predecessor_modified)
+        return res + (meeting_modified, predecessor_modified)
 
     @ram.cache(getLink_cachekey)
     def getLink(self):
@@ -512,34 +514,33 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
         """
         res = []
 
-        meeting = getCurrentMeetingObject(self.context)
-        inAvailableItems = False
-        if meeting:
-            inAvailableItems = meeting._displayingAvailableItems()
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
         usedItemAttributes = cfg.getUsedItemAttributes()
 
-        if inAvailableItems:
-            # Item is in the list of available items, check if we
-            # must show a deadline- or late-related icon.
-            if self.context.wfConditions().isLateFor(meeting):
-                # A late item, or worse: a late item not respecting the freeze deadline.
-                if meeting.attributeIsUsed('deadlineFreeze') and \
-                   not self.context.lastValidatedBefore(meeting.getDeadlineFreeze()):
-                    res.append(('deadlineKo.png', translate('icon_help_publish_freeze_ko',
+        if displaying_available_items(self.context):
+            meeting = getCurrentMeetingObject(self.context)
+            # there could be no meeting if we opened an item from the available items view
+            if meeting:
+                # Item is in the list of available items, check if we
+                # must show a deadline- or late-related icon.
+                if self.context.wfConditions().isLateFor(meeting):
+                    # A late item, or worse: a late item not respecting the freeze deadline.
+                    if meeting.attributeIsUsed('deadlineFreeze') and \
+                       not self.context.lastValidatedBefore(meeting.getDeadlineFreeze()):
+                        res.append(('deadlineKo.png', translate('icon_help_publish_freeze_ko',
+                                                                domain="PloneMeeting",
+                                                                context=self.request)))
+                    else:
+                        res.append(('late.png', translate('icon_help_late',
+                                                          domain="PloneMeeting",
+                                                          context=self.request)))
+                elif (meeting.queryState() == 'created') and \
+                        meeting.attributeIsUsed('deadlinePublish') and \
+                        not self.context.lastValidatedBefore(meeting.getDeadlinePublish()):
+                    res.append(('deadlineKo.png', translate('icon_help_publish_deadline_ko',
                                                             domain="PloneMeeting",
                                                             context=self.request)))
-                else:
-                    res.append(('late.png', translate('icon_help_late',
-                                                      domain="PloneMeeting",
-                                                      context=self.request)))
-            elif (meeting.queryState() == 'created') and \
-                    meeting.attributeIsUsed('deadlinePublish') and \
-                    not self.context.lastValidatedBefore(meeting.getDeadlinePublish()):
-                res.append(('deadlineKo.png', translate('icon_help_publish_deadline_ko',
-                                                        domain="PloneMeeting",
-                                                        context=self.request)))
 
         itemState = self.context.queryState()
         if itemState == 'delayed':
@@ -839,7 +840,7 @@ class Criteria(eeaCriteria):
         if IMeeting.providedBy(context):
             meeting_view = True
             self.context = cfg.searches.searches_items
-            if context._displayingAvailableItems():
+            if displaying_available_items(context):
                 kept_filters = cfg.getDashboardMeetingAvailableItemsFilters()
                 resultsperpagedefault = cfg.getMaxShownAvailableItems()
             else:

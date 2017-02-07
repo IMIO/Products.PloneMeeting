@@ -73,6 +73,7 @@ from Products.PloneMeeting.interfaces import IMeetingWorkflowConditions
 from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import addDataChange
 from Products.PloneMeeting.utils import addRecurringItemsIfRelevant
+from Products.PloneMeeting.utils import displaying_available_items
 from Products.PloneMeeting.utils import fieldIsEmpty
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import getWorkflowAdapter
@@ -819,9 +820,9 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        # available items?
 
-        if self._displayingAvailableItems():
+        # available items?
+        if displaying_available_items(self):
             res = self._availableItemsQuery()
         else:
             res = [{'i': 'portal_type',
@@ -831,11 +832,6 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                     'o': 'plone.app.querystring.operation.selection.is',
                     'v': self.UID()}, ]
         return res
-
-    def _displayingAvailableItems(self):
-        """Is the meeting view displaying available items?"""
-        return bool("@@meeting_available_items_view" in self.REQUEST['HTTP_REFERER'] or
-                    "@@meeting_available_items_view" in self.REQUEST['URL'])
 
     def _availableItemsQuery(self):
         '''Check docstring in IMeeting.'''
@@ -876,7 +872,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getSort_on(self):
         """ """
-        if self._displayingAvailableItems():
+        if displaying_available_items(self):
             return 'getProposingGroup'
         else:
             return 'getItemNumber'
@@ -891,7 +887,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         itemsListVisibleColumns = [col for col in cfg.getItemsListVisibleColumns() if
                                    col not in ('budget_infos', 'item_reference')]
         itemsListVisibleColumns.insert(0, u'pretty_link')
-        if not self._displayingAvailableItems():
+        if not displaying_available_items(self):
             itemsListVisibleColumns.insert(0, u'getItemNumber')
             itemsListVisibleColumns.insert(0, u'listType')
         itemsListVisibleColumns.append(u'check_box_item')

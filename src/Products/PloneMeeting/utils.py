@@ -1561,6 +1561,12 @@ def findMeetingAdvicePortalType(context):
     return current_portal_type
 
 
+def displaying_available_items(context):
+    """Is the meeting view displaying available items?"""
+    return bool("@@meeting_available_items_view" in context.REQUEST['HTTP_REFERER'] or
+                "@@meeting_available_items_view" in context.REQUEST['URL'])
+
+
 def get_annexes(obj, portal_types=['annex', 'annexDecision']):
     return [annex for annex in obj.objectValues()
             if annex.portal_type in portal_types]
