@@ -5274,7 +5274,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _updateAnnexConfidentiality(self,
                                     portal_types=[],
-                                    annex_portal_types=['annex', 'annexDecision']):
+                                    annex_portal_types=['annex', 'annexDecision'],
+                                    force_confidential_to=None):
         '''Update the confidentiality of existing annexes regarding default value
            for confidentiality defined in the corresponding annex type.'''
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -5303,12 +5304,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 if not annexes:
                     continue
                 for annex in annexes:
-                    category = get_category_object(annex, annex.content_category)
-                    category_group = category.get_category_group()
-                    if category_group.confidentiality_activated:
-                        annex.confidential = category.confidential
+                    if force_confidential_to is not None:
+                        annex.confidential = force_confidential_to
                     else:
-                        annex.confidential = False
+                        category = get_category_object(annex, annex.content_category)
+                        category_group = category.get_category_group()
+                        if category_group.confidentiality_activated:
+                            annex.confidential = category.confidential
+                        else:
+                            annex.confidential = False
                 update_all_categorized_elements(obj)
 
         catalog = api.portal.get_tool('portal_catalog')
