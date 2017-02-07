@@ -5317,7 +5317,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # make change persistent
                 obj.categorized_elements = obj.categorized_elements
                 updateAnnexesAccess(obj)
-                obj.reindexObjectSecurity()
 
         catalog = api.portal.get_tool('portal_catalog')
         for portal_type in portal_types:
