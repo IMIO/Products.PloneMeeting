@@ -66,7 +66,6 @@ from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
 from plone import api
 from collective.iconifiedcategory.utils import get_category_object
-from collective.iconifiedcategory.utils import update_all_categorized_elements
 from eea.facetednavigation.interfaces import ICriteria
 from imio.helpers.cache import cleanRamCache
 from Products.PloneMeeting import PMMessageFactory as _
@@ -115,6 +114,7 @@ from Products.PloneMeeting.utils import getCustomSchemaFields
 from Products.PloneMeeting.utils import getFieldContent
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import listifySignatures
+from Products.PloneMeeting.utils import updateAnnexesAccess
 from Products.PloneMeeting.validators import WorkflowInterfacesValidator
 from Products.PloneMeeting.Meeting import Meeting
 from Products.PloneMeeting.MeetingItem import MeetingItem
@@ -5313,7 +5313,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                             annex.confidential = category.confidential
                         else:
                             annex.confidential = False
-                update_all_categorized_elements(obj)
+                    obj.categorized_elements[annex.UID()]['confidential'] = annex.confidential
+                # make change persistent
+                obj.categorized_elements = obj.categorized_elements
+                updateAnnexesAccess(obj)
+                obj.reindexObjectSecurity()
 
         catalog = api.portal.get_tool('portal_catalog')
         for portal_type in portal_types:
