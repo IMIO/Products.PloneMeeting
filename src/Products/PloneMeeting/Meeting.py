@@ -807,8 +807,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         adapted.contentValue = tool.formatMeetingDate(self,
                                                       withHour=True,
-                                                      prefixed=False,
-                                                      short=False)
+                                                      prefixed=prefixed,
+                                                      short=short)
         adapted.isViewable = isViewable
         adapted.notViewableHelpMessage = notViewableHelpMessage
         adapted.showContentIcon = showContentIcon
