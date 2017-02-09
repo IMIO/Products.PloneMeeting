@@ -11,7 +11,7 @@
  -->
 
  <!-- ##code-section jsregistry.xml -->
- <javascript cacheable="False"
+ <javascript cacheable="True"
              compression="safe"
              cookable="False"
              enabled="True"
