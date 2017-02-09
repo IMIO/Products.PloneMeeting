@@ -118,10 +118,7 @@ class GoToMeetingImgSelectBoxView(BaseImgSelectBoxView):
 
     def selected_value_html(self):
         """ """
-        link = self.selected_value().getPrettyLink(prefixed=False,
-                                                   short=True,
-                                                   showContentIcon=False,
-                                                   isViewable=False,
+        link = self.selected_value().getPrettyLink(isViewable=False,
                                                    notViewableHelpMessage=u'')
         return u"""
 <span id="idButtonText_{0}" class="ploneMeetingRef">{1}</span>
@@ -139,9 +136,7 @@ class GoToMeetingImgSelectBoxView(BaseImgSelectBoxView):
 
     def selectable_value_html(self, num, selectable_value):
         """ """
-        return selectable_value.getPrettyLink(prefixed=False,
-                                              short=True,
-                                              showContentIcon=False,)
+        return selectable_value.getPrettyLink()
 
     def getSelectableValues(self):
         """ """

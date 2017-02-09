@@ -195,9 +195,7 @@ class ItemLinkedMeetingColumn(BaseColumn):
         else:
             catalog = api.portal.get_tool('uid_catalog')
             meeting = catalog(UID=getattr(item, self.meeting_uid_attr))[0].getObject()
-            prettyLinker = IPrettyLink(meeting)
-            pretty_link = prettyLinker.getLink()
-            return pretty_link
+            return meeting.getPrettyLink()
 
 
 class ItemPreferredMeetingColumn(ItemLinkedMeetingColumn):

@@ -797,7 +797,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getPrettyLink')
 
     def getPrettyLink(self,
-                      prefixed=True,
+                      prefixed=False,
                       short=False,
                       showContentIcon=False,
                       isViewable=True,
@@ -807,8 +807,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         adapted.contentValue = tool.formatMeetingDate(self,
                                                       withHour=True,
-                                                      prefixed=prefixed,
-                                                      short=short)
+                                                      prefixed=False,
+                                                      short=False)
         adapted.isViewable = isViewable
         adapted.notViewableHelpMessage = notViewableHelpMessage
         adapted.showContentIcon = showContentIcon

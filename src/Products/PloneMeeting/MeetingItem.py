@@ -3822,16 +3822,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if not clonedItem or not clonedItem.hasMeeting():
                 logicalMeeting = self._otherMCMeetingToBePresentedIn(getattr(tool, otherMC))
                 if logicalMeeting:
-                    logicalMeetingLink = logicalMeeting.getPrettyLink(prefixed=False,
-                                                                      showContentIcon=False)
+                    logicalMeetingLink = logicalMeeting.getPrettyLink()
                 else:
                     logicalMeetingLink = no_meeting_available_msg
                 iconName = 'greyedMeeting.png'
                 title_help_msg = theorical_meeting_msg
             else:
                 clonedItemMeeting = clonedItem.getMeeting()
-                logicalMeetingLink = clonedItemMeeting.getPrettyLink(prefixed=False,
-                                                                     showContentIcon=False)
+                logicalMeetingLink = clonedItemMeeting.getPrettyLink()
                 iconName = 'Meeting.png'
                 title_help_msg = effective_meeting_msg
 
