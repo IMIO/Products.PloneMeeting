@@ -823,21 +823,32 @@ class Criteria(eeaCriteria):
       - for listing of meetings : filter out criteria no in MeetingConfig.getDashboardMeetingsFilters.
     """
 
+    def manage_criteria_cachekey(method, self, context):
+        '''cachekey method for self.compute_criteria.'''
+        return context, str(context.REQUEST._debug)
+
     def __init__(self, context):
         """ """
-        super(Criteria, self).__init__(context)
+        self.context, self.criteria = self.compute_criteria(context)
+
+    @ram.cache(manage_criteria_cachekey)
+    def compute_criteria(self, context):
+        """ """
         # return really stored widgets when necessary
         if 'portal_plonemeeting' in context.absolute_url() or \
            context.REQUEST.get('enablingFacetedDashboard', False):
-            return
+            super(Criteria, self).__init__(context)
+            return self.context, self.criteria
         try:
             tool = api.portal.get_tool('portal_plonemeeting')
         except InvalidParameterError:
             # in case 'portal_plonemeeting' is not available, use original criteria behaviour
-            return
+            super(Criteria, self).__init__(context)
+            return self.context, self.criteria
         cfg = tool.getMeetingConfig(context)
         if not cfg:
-            return
+            super(Criteria, self).__init__(context)
+            return self.context, self.criteria
         # meeting view
         kept_filters = []
         resultsperpagedefault = "20"
@@ -862,20 +873,18 @@ class Criteria(eeaCriteria):
                 elif context.getId() == 'searches_meetings':
                     self.context = cfg.searches.searches_meetings
                     self.criteria = self._criteria()
-                    return
+                    return self.context, self.criteria
                 elif context.getId() == 'searches_decisions':
                     self.context = cfg.searches.searches_decisions
                     self.criteria = self._criteria()
-                    return
+                    return self.context, self.criteria
                 else:
                     self.context = cfg.searches
                     self.criteria = self._criteria()
-                    return
-
-        self.criteria = self._criteria()
+                    return self.context, self.criteria
 
         res = PersistentList()
-        for criterion in self.criteria:
+        for criterion in self._criteria():
             # do not keep sorting criterion on the meeting_view
             if meeting_view and criterion.widget == u'sorting':
                 continue
@@ -886,6 +895,7 @@ class Criteria(eeaCriteria):
             if criterion.widget == ResultsPerPageWidget.widget_type:
                 criterion.default = resultsperpagedefault
         self.criteria = res
+        return self.context, self.criteria
 
 
 class CompoundCriterionBaseAdapter(object):
