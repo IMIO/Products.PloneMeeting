@@ -3,7 +3,6 @@ from zope.i18n import translate
 
 TEMPLATE = """\
 var plonemeeting_delete_meeting_confirm_message = "%(plonemeeting_delete_meeting_confirm_message)s";
-var no_selected_items = "%(no_selected_items)s";
 var sure_to_remove_selected_items = "%(sure_to_remove_selected_items)s";
 var sure_to_present_selected_items = "%(sure_to_present_selected_items)s";
 var sure_to_cancel_edit = "%(sure_to_cancel_edit)s";
@@ -22,9 +21,6 @@ class JSVariables(BrowserView):
         plonemeeting_delete_meeting_confirm_message = translate('plonemeeting_delete_meeting_confirm_message',
                                                                 domain='PloneMeeting',
                                                                 context=self.request)
-        no_selected_items = translate('no_selected_items',
-                                      domain='PloneMeeting',
-                                      context=self.request)
         sure_to_remove_selected_items = translate('sure_to_remove_selected_items',
                                                   domain='PloneMeeting',
                                                   context=self.request)
@@ -46,7 +42,6 @@ class JSVariables(BrowserView):
 
         return TEMPLATE % dict(
             plonemeeting_delete_meeting_confirm_message=plonemeeting_delete_meeting_confirm_message,
-            no_selected_items=no_selected_items,
             sure_to_remove_selected_items=sure_to_remove_selected_items,
             sure_to_present_selected_items=sure_to_present_selected_items,
             sure_to_cancel_edit=sure_to_cancel_edit,
