@@ -18,11 +18,11 @@ function adviceAddEdit() {
                 // it can not be initialized twice
                 $.each(CKEDITOR.tools.objectKeys(CKEDITOR.instances), function(k, v) {
                   CKEDITOR.instances[v].destroy();
-                })
+                });
                 // unlock current element
                 // compute url, find link to advice edit and remove trailing '/edit'
                 var rel_num = this.getOverlay().attr('id');
-                advice_url = $("[rel='#" + rel_num + "']").attr('href')
+                advice_url = $("[rel='#" + rel_num + "']").attr('href');
                 // do not unlock if we were on the '++add++meetingadvice' form
                 if (advice_url.indexOf('++add++meetingadvice') === -1) {
                     // remove '/edit'
@@ -35,7 +35,7 @@ function adviceAddEdit() {
             }
         }
   });
-};
+}
 
 
 // opening the advice preview from the advice tooltip
@@ -53,7 +53,7 @@ function advicePreview() {
             }
        });
     });
-};
+}
 
 // when opened in an overlay, save advice using an ajax call, this is done for faceted
 function saveAdvice() {
@@ -68,7 +68,7 @@ function saveAdvice() {
         }
         else if (this.id.match("-0$") || this.id.match("-1$")) {
           // pass some elements, like radio button subelements
-          data[this.name] = this.form.elements[this.name].value
+          data[this.name] = this.form.elements[this.name].value;
         }
         else {
           data[this.name] = this.value;
@@ -159,7 +159,7 @@ jQuery(function($) {
 jQuery(document).ready(function($) {
     jQuery('a.classicpopup').live('click', function(){
         newwindow=window.open($(this).attr('href'),'','height=auto,width=auto');
-        if (window.focus) {newwindow.focus()}
+        if (window.focus) {newwindow.focus();}
         return false;
     });
 });
@@ -185,7 +185,7 @@ jQuery(function($) {
                 // unlock current element
                 // compute url, find link to advice edit and remove trailing '/edit'
                 var rel_num = this.getOverlay().attr('id');
-                obj_url = $("[rel='#" + rel_num + "']").attr('href')
+                obj_url = $("[rel='#" + rel_num + "']").attr('href');
                 // do not unlock if we were on the '++add++annex' form
                 if (obj_url.indexOf('++add++annex') === -1) {
                     // remove '/edit'
@@ -207,7 +207,6 @@ function inheritedItemInfos() {
 
         contentAsHTML: true,
         interactive: true,
-        position: 'top-left',
         theme: 'tooltipster-shadow',
         position: 'bottom',
         speed: 100,
@@ -237,8 +236,8 @@ function inheritedItemInfos() {
             }
         }
     });
-})
-};
+});
+}
 
 function usersGroupInfos() {
     jQuery(function($){
@@ -247,7 +246,6 @@ function usersGroupInfos() {
 
         contentAsHTML: true,
         interactive: true,
-        position: 'top-left',
         theme: 'tooltipster-shadow',
         position: 'bottom',
         speed: 100,
@@ -276,5 +274,5 @@ function usersGroupInfos() {
             }
         }
     });
-})
-};
+});
+}
