@@ -286,8 +286,9 @@ def onItemMoved(item, event):
     if IObjectRemovedEvent.providedBy(event):
         return
 
-    # update categorized_elements because path changed
-    update_all_categorized_elements(item)
+    # update categorized_elements when renaming because path changed
+    if item._at_creation_flag:
+        update_all_categorized_elements(item)
 
 
 def onItemAdded(item, event):
