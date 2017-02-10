@@ -198,7 +198,7 @@ class ToolInitializer:
                 for step in steps[1:]:
                     corresponding_annex_type = corresponding_annex_type[step]
                 real_other_mc_correspondences.append(corresponding_annex_type.UID())
-            annex_type.other_mc_correspondences = real_other_mc_correspondences
+            annex_type.other_mc_correspondences = set(real_other_mc_correspondences)
 
         # finish configuration of annexType.other_mc_correspondences
         # for ItemAnnexContentCategory and ItemAnnexContentSubcategory

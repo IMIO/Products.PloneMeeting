@@ -877,7 +877,7 @@ class Migrate_To_4_0(Migrator):
                                                          otherMCCorrespondence.split('__filetype__')[-1]).UID())
                     _getCurrentCatFromOldUID(
                         category_type,
-                        mft.UID()).other_mc_correspondences = otherUIDs
+                        mft.UID()).other_mc_correspondences = set(otherUIDs)
                 for subType in mft.getSubTypes():
                     if subType['otherMCCorrespondences']:
                         otherUIDs = []
@@ -893,7 +893,7 @@ class Migrate_To_4_0(Migrator):
                                                              otherMCCorrespondence.split('__filetype__')[-1]).UID())
                         _getCurrentCatFromOldUID(
                             subcategory_type,
-                            subType['row_id']).other_mc_correspondences = otherUIDs
+                            subType['row_id']).other_mc_correspondences = set(otherUIDs)
 
         # clean no more used attributes
         for cfg in self.tool.objectValues('MeetingConfig'):

@@ -64,7 +64,6 @@ from collective.iconifiedcategory.utils import get_categorized_elements
 from collective.iconifiedcategory.utils import get_category_object
 from collective.iconifiedcategory.utils import get_config_root
 from collective.iconifiedcategory.utils import get_categories
-from collective.iconifiedcategory.utils import update_categorized_elements
 from collective.iconifiedcategory.utils import update_all_categorized_elements
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.dashboard.utils import enableFacetedDashboardFor
@@ -1099,6 +1098,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         # we have to do this to prevent annexes being converted uselessly...
         self.REQUEST.set('copyAnnexes', copyAnnexes)
 
+        # make sure 'update_all_categorized_elements' is not called while processing annexes
+        self.REQUEST.set('defer_update_categorized_elements', True)
         # Perform the paste
         pasteResult = destFolder.manage_pasteObjects(copiedData)
         # Restore the previous local roles for this user
@@ -1203,11 +1204,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 if not destMeetingConfig.getKeepOriginalToPrintOfClonedItems():
                     newAnnex.to_print = \
                         get_category_object(newAnnex, newAnnex.content_category).to_print
-                # update annex index
-                update_categorized_elements(newAnnex.getParentNode(),
-                                            newAnnex,
-                                            get_category_object(newAnnex,
-                                                                newAnnex.content_category))
+            # update annex index
+            update_all_categorized_elements(newItem)
+        # remove defered call to 'update_all_categorized_elements'
+        self.REQUEST.set('defer_update_categorized_elements', False)
 
         # The copy/paste has transferred history. We must clean the history
         # of the cloned object.
@@ -1259,7 +1259,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if annex_category.other_mc_correspondences:
             annex_cfg_id = tool.getMeetingConfig(annex).getId()
             other_mc_correspondences = [
-                brain.getObject() for brain in catalog(UID=annex_category.other_mc_correspondences, enabled=True)
+                brain.getObject() for brain in catalog(UID=tuple(annex_category.other_mc_correspondences),
+                                                       enabled=True)
                 if "/portal_plonemeeting/{0}".format(annex_cfg_id) in brain.getPath()]
         if other_mc_correspondences:
             other_mc_correspondence = other_mc_correspondences[0]

@@ -435,7 +435,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         budgetAnalysisAnnexTypeCfg1 = get_category_object(annexCfg1, annexCfg2.content_category)
         budgetAnalysisAnnexTypeCfg2 = get_category_object(annexCfg2, annexCfg2.content_category)
         self.assertEqual(budgetAnalysisAnnexTypeCfg1.other_mc_correspondences,
-                         [budgetAnalysisAnnexTypeCfg2.UID()])
+                         set([budgetAnalysisAnnexTypeCfg2.UID()]))
         # corresponding annexType has been used
         self.assertTrue(self.tool._updateContentCategoryAfterSentToOtherMeetingConfig(annexCfg2, cfg))
         self.assertEqual(annexCfg2.content_category,
@@ -446,7 +446,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         annexCfg2.content_category = 'annexes_types_-_item_annexes_-_overhead-analysis'
         overheadAnalysisAnnexTypeCfg1 = get_category_object(annexCfg1, annexCfg2.content_category)
         self.assertEqual(overheadAnalysisAnnexTypeCfg1.other_mc_correspondences,
-                         [budgetAnalysisAnnexTypeCfg2['budget-analysis-sub-annex'].UID()])
+                         set([budgetAnalysisAnnexTypeCfg2['budget-analysis-sub-annex'].UID()]))
         # corresponding annexType has been used, aka the subType
         self.assertTrue(self.tool._updateContentCategoryAfterSentToOtherMeetingConfig(annexCfg2, cfg))
         self.assertEqual(annexCfg2.content_category,
@@ -457,7 +457,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         annexCfg2.content_category = 'annexes_types_-_item_annexes_-_overhead-analysis_-_overhead-analysis-sub-annex'
         overheadAnalysisSubAnnexTypeCfg1 = get_category_object(annexCfg1, annexCfg2.content_category)
         self.assertEqual(overheadAnalysisSubAnnexTypeCfg1.other_mc_correspondences,
-                         [budgetAnalysisAnnexTypeCfg2.UID()])
+                         set([budgetAnalysisAnnexTypeCfg2.UID()]))
         # corresponding annexType has been used, aka the subType
         self.assertTrue(self.tool._updateContentCategoryAfterSentToOtherMeetingConfig(annexCfg2, cfg))
         self.assertEqual(annexCfg2.content_category,
@@ -468,7 +468,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         annexCfg2.content_category = 'annexes_types_-_item_annexes_-_budget-analysis_-_budget-analysis-sub-annex'
         budgetAnalysisSubAnnexTypeCfg1 = get_category_object(annexCfg1, annexCfg2.content_category)
         self.assertEqual(budgetAnalysisSubAnnexTypeCfg1.other_mc_correspondences,
-                         [budgetAnalysisAnnexTypeCfg2['budget-analysis-sub-annex'].UID()])
+                         set([budgetAnalysisAnnexTypeCfg2['budget-analysis-sub-annex'].UID()]))
         # corresponding annexType has been used, aka the subType
         self.assertTrue(self.tool._updateContentCategoryAfterSentToOtherMeetingConfig(annexCfg2, cfg))
         self.assertEqual(annexCfg2.content_category,
