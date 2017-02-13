@@ -4789,6 +4789,30 @@ class testMeetingItem(PloneMeetingTestCase):
             )
             in IPrettyLink(item2).getLink())
 
+    def test_pm_GetLinkCachingInvalidatedWhenItemSentToAnotherMC(self):
+        """The imio.prettylink getLink caching is overrided and is invalidated when the
+           predecessor from another MC is modified.  Indeed an icon displays informations
+           about the item predecessor state, meeting, ..."""
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        cfg2Id = cfg2.getId()
+        cfg.setItemManualSentToOtherMCStates((self.WF_STATE_NAME_MAPPINGS['itemcreated']))
+        # create an item in cfg, send it to cfg2 and check
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        item.setOtherMeetingConfigsClonableTo((cfg2Id,))
+
+        # send item
+        self.assertTrue("will_be_cloned_to_other_mc.png" in IPrettyLink(item).getLink())
+        item2 = item.cloneToOtherMeetingConfig(cfg2Id)
+        self.assertFalse("will_be_cloned_to_other_mc.png" in IPrettyLink(item).getLink())
+        self.assertTrue("clone_to_other_mc.png" in IPrettyLink(item).getLink())
+
+        # remove sent item
+        self.deleteAsManager(item2.UID())
+        self.assertFalse("clone_to_other_mc.png" in IPrettyLink(item).getLink())
+        self.assertTrue("will_be_cloned_to_other_mc.png" in IPrettyLink(item).getLink())
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

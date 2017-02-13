@@ -5390,7 +5390,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Clean advice inheritance for given p_adviceId on p_item.'''
         def cleanAdviceInheritanceFor(backPredecessors):
             for backPredecessor in backPredecessors:
-                if backPredecessor.adviceIndex[adviceId]['inherited']:
+                if backPredecessor.adviceIndex.get(adviceId, None) and \
+                   backPredecessor.adviceIndex[adviceId]['inherited']:
                     backPredecessor.adviceIndex[adviceId]['inherited'] = False
                     backPredecessor.updateLocalRoles()
                     cleanAdviceInheritanceFor(backPredecessor.getBRefs('ItemPredecessor'))
