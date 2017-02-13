@@ -1571,7 +1571,8 @@ class testWFAdaptations(PloneMeetingTestCase):
                                                    domain='PloneMeeting',
                                                    context=self.request)
         methodName = 'mayWait_advices_from_{0}'.format(self.WF_STATE_NAME_MAPPINGS['proposed_first_level'])
-        self.assertEqual(getattr(item.wfConditions(), methodName)().msg,
+        self.assertEqual(translate(getattr(item.wfConditions(), methodName)().msg,
+                                   context=self.request),
                          advice_required_to_ask_advices)
         # ask an advice so transition is available
         item.setOptionalAdvisers(('vendors', ))
