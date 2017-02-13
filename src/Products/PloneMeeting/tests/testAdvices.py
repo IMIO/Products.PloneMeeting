@@ -2612,7 +2612,7 @@ class testAdvices(PloneMeetingTestCase):
         # add following cases :
         # item1 --- item1b --- item1b2
         #     --- item1c
-        #     --- item2 --- item3
+        #     --- item2 --- item3 --- item4
         item1b = item1.clone(setCurrentAsPredecessor=True, inheritAdvices=True)
         item1b2 = item1b.clone(setCurrentAsPredecessor=True, inheritAdvices=True)
         item1c = item1.clone(setCurrentAsPredecessor=True, inheritAdvices=True)
@@ -2620,20 +2620,31 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEqual(item1b.getInheritedAdviceInfo('vendors')['adviceHolder'], item1)
         item3 = item2.clone(setCurrentAsPredecessor=True, inheritAdvices=True)
         self.assertEqual(item3.getInheritedAdviceInfo('vendors')['adviceHolder'], item1)
+        # item4 will inherits from both 'developers' and 'vendors' but
+        # change this to only keep the 'vendors' advice
+        item4 = item2.clone(setCurrentAsPredecessor=True, inheritAdvices=True)
+        item4.setOptionalAdvisers(('developers__rowid__unique_id_123', ))
+        del item4.adviceIndex['vendors']
+        item4.updateLocalRoles()
+        self.assertFalse('vendors' in item4.adviceIndex)
+        self.assertEqual(item4.getInheritedAdviceInfo('developers')['adviceHolder'], item1)
 
-        # remove item2, chain of predecessors is broken to item3,
-        # it will not inherit of advice anymore
+        # remove item2, chain of predecessors is broken to item3 and item4,
+        # these items will not inherit of any advice anymore
         self.assertTrue(item3.adviceIndex['vendors']['inherited'])
         self.assertTrue(item3.adviceIndex['developers']['inherited'])
         self.assertTrue(item3.restrictedTraverse('advices-icons')())
         self.portal.restrictedTraverse('@@delete_givenuid')(item2.UID())
         self.assertFalse(item3.adviceIndex['vendors']['inherited'])
         self.assertFalse(item3.adviceIndex['developers']['inherited'])
+        self.assertFalse(item4.adviceIndex['developers']['inherited'])
 
         # recomputed, advice is addable, ...
         self.assertTrue(item3.adviceIndex['vendors']['advice_addable'])
         self.assertTrue(item3.adviceIndex['developers']['advice_addable'])
         self.assertTrue(item3.restrictedTraverse('advices-icons')())
+        self.assertTrue(item4.adviceIndex['developers']['advice_addable'])
+        self.assertTrue(item4.restrictedTraverse('advices-icons')())
         # but still ok for item1b, item1b2 and item1c
         self.assertTrue(item1b.adviceIndex['vendors']['inherited'])
         self.assertTrue(item1b.adviceIndex['developers']['inherited'])
