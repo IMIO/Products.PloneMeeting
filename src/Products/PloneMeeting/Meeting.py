@@ -170,20 +170,18 @@ class MeetingWorkflowConditions:
         '''May decisions on this meeting be taken?'''
         if _checkPermission(ReviewPortalContent, self.context):
             if not self.context.getDate().isPast():
-                return No(translate('meeting_in_past', domain="PloneMeeting", context=self.context.REQUEST))
+                return No(_('meeting_in_past'))
             # Check that all items are OK.
             res = True
-            msgs = []
+            msg = None
             for item in self.context.getItems():
                 if item.queryState() == 'itemfrozen':
                     mayDecide = item.wfConditions().mayDecide()
                     if not mayDecide:
-                        if isinstance(mayDecide, No):
-                            msgs.append(mayDecide.msg)
-                        res = False
+                        msg = mayDecide.msg
                         break
-            if msgs:
-                res = No(u' - '.join(msgs))
+            if msg:
+                res = msg
             return res
         return False
 

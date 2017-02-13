@@ -178,9 +178,7 @@ class MeetingItemWorkflowConditions:
            necessary fields are filled.  In the case an item is transferred from
            another meetingConfig, the category could not be defined.'''
         if not self.context.getCategory():
-            return No(translate('required_category_ko',
-                                domain="PloneMeeting",
-                                context=self.context.REQUEST))
+            return No(_('required_category_ko'))
         if _checkPermission(ReviewPortalContent, self.context) and \
            (not self.context.isDefinedInTool()):
             return True
@@ -202,6 +200,10 @@ class MeetingItemWorkflowConditions:
     security.declarePublic('mayPresent')
 
     def mayPresent(self):
+        # if WFAdaptation 'items_come_validated' is enabled, an item
+        # could miss it's category
+        if not self.context.getCategory():
+            return No(_('required_category_ko'))
         # We may present the item if Plone currently publishes a meeting.
         # Indeed, an item may only be presented within a meeting.
         if not _checkPermission(ReviewPortalContent, self.context):
@@ -222,9 +224,7 @@ class MeetingItemWorkflowConditions:
         res = True  # for now...
         if self.context.enforceAdviceMandatoriness() and \
            not self.context.mandatoryAdvicesAreOk():
-            res = No(translate('mandatory_advice_ko',
-                               domain="PloneMeeting",
-                               context=self.context.REQUEST))
+            res = No(_('mandatory_advice_ko'))
         return res
 
     security.declarePublic('mayDecide')
@@ -242,10 +242,8 @@ class MeetingItemWorkflowConditions:
                 else:
                     itemNumber = self.context.getItemNumber(relativeTo='meeting',
                                                             for_display=True)
-                    res = No(translate('decision_is_empty',
-                                       mapping={'itemNumber': itemNumber},
-                                       domain="PloneMeeting",
-                                       context=self.context.REQUEST))
+                    res = No(_('decision_is_empty',
+                               mapping={'itemNumber': itemNumber}))
         return res
 
     security.declarePublic('mayDelay')
@@ -304,13 +302,11 @@ class MeetingItemWorkflowConditions:
             if 'may_not_back_to_meeting_warned_by' not in self.context.REQUEST:
                 self.context.REQUEST.set('may_not_back_to_meeting_warned_by', transitionName)
             if self.context.REQUEST.get('may_not_back_to_meeting_warned_by') == transitionName:
-                return No(translate('can_not_return_to_meeting_because_of_meeting_state',
-                                    mapping={'meetingState': translate(meetingState,
-                                                                       domain='plone',
-                                                                       context=self.context.REQUEST),
-                                             },
-                                    domain="PloneMeeting",
-                                    context=self.context.REQUEST))
+                return No(_('can_not_return_to_meeting_because_of_meeting_state',
+                            mapping={'meetingState': translate(
+                                meetingState,
+                                domain='plone',
+                                context=self.context.REQUEST)}))
         return False
 
     security.declarePublic('meetingIsPublished')
@@ -388,15 +384,11 @@ class MeetingItemWorkflowConditions:
         """Helper method used in every mayWait_advices_from_ guards."""
         res = False
         if not self.context.getCategory():
-            return No(translate('required_category_ko',
-                                domain="PloneMeeting",
-                                context=self.context.REQUEST))
+            return No(_('required_category_ko'))
         # check if there are advices to give in destination state
         hasAdvicesToGive = self._hasAdvicesToGive(destination_state)
         if not hasAdvicesToGive:
-            res = No(translate('advice_required_to_ask_advices',
-                               domain='PloneMeeting',
-                               context=self.context.REQUEST))
+            res = No(_('advice_required_to_ask_advices'))
         elif _checkPermission(ReviewPortalContent, self.context):
             res = True
         return res
