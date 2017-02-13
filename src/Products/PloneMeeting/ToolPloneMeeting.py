@@ -1204,8 +1204,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 if not destMeetingConfig.getKeepOriginalToPrintOfClonedItems():
                     newAnnex.to_print = \
                         get_category_object(newAnnex, newAnnex.content_category).to_print
-            # update annex index
-            update_all_categorized_elements(newItem)
+        # update annex index
+        update_all_categorized_elements(newItem)
         # remove defered call to 'update_all_categorized_elements'
         self.REQUEST.set('defer_update_categorized_elements', False)
 
