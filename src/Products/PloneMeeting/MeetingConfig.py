@@ -4994,25 +4994,32 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             confidential=at.confidential,
             enabled=at.enabled
         )
+        # store an empty set in other_mc_correspondences for validation
+        # then store intermediate value that will be reworked at the end
+        # of the MeetingConfig instanciation
+        if portal_type == 'ItemAnnexContentCategory':
+            annexType.other_mc_correspondences = set()
+        self._validate_dx_content(annexType)
         if portal_type == 'ItemAnnexContentCategory':
             annexType.other_mc_correspondences = at.other_mc_correspondences
-        self._validate_dx_content(annexType)
 
         for subType in at.subTypes:
             annexSubType = api.content.create(
                 id=subType.id,
                 type=sub_portal_type,
                 title=subType.title,
+                predefined_title=subType.predefined_title,
                 container=annexType,
                 to_print=subType.to_print,
                 confidential=subType.confidential,
-                enabled=subType.enabled,
-                other_mc_correspondences=subType.other_mc_correspondences
+                enabled=subType.enabled
             )
+            if sub_portal_type == 'ItemAnnexContentSubcategory':
+                annexSubType.other_mc_correspondences = set()
             self._validate_dx_content(annexSubType)
-
-            if portal_type == 'ItemAnnexContentSubcategory':
+            if sub_portal_type == 'ItemAnnexContentSubcategory':
                 annexSubType.other_mc_correspondences = subType.other_mc_correspondences
+
         return annexType
 
     security.declarePrivate('addPodTemplate')
