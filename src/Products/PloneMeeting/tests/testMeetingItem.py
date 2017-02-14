@@ -4794,8 +4794,20 @@ class testMeetingItem(PloneMeetingTestCase):
            predecessor from another MC is modified.  Indeed an icon displays informations
            about the item predecessor state, meeting, ..."""
         cfg = self.meetingConfig
+        # make sure 'otherMeetingConfigsClonableToPrivacy' is not in the usedItemAttributes
+        # or the will_be_cloned_to_other_mc.png is replaced by will_be_cloned_to_other_mc_public.png
+        usedItemAttributes = list(cfg.getUsedItemAttributes())
+        if 'otherMeetingConfigsClonableToPrivacy' in usedItemAttributes:
+            usedItemAttributes.remove('otherMeetingConfigsClonableToPrivacy')
+            cfg.setUsedItemAttributes(usedItemAttributes)
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
+        # make sure 'privacy' is not in the usedItemAttributes
+        # or the clone_to_other_mc.png is replaced by clone_to_other_mc_public.png
+        usedItemAttributes = list(cfg2.getUsedItemAttributes())
+        if 'privacy' in usedItemAttributes:
+            usedItemAttributes.remove('privacy')
+            cfg2.setUsedItemAttributes(usedItemAttributes)
         cfg.setItemManualSentToOtherMCStates((self.WF_STATE_NAME_MAPPINGS['itemcreated']))
         # create an item in cfg, send it to cfg2 and check
         self.changeUser('pmManager')
