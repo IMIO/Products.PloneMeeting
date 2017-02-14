@@ -52,68 +52,68 @@ subproducts = CategoryDescriptor('subproducts', 'Subproducts wishes', usingGroup
 # Annex types
 overheadAnalysisSubtype = ItemAnnexSubTypeDescriptor(
     'overhead-analysis-sub-annex',
-    'Overhead analysis sub annex', '',
+    'Overhead analysis sub annex',
     other_mc_correspondences=(
         'plonegov-assembly_-_annexes_types_-_item_annexes_-_budget-analysis', ))
 
 overheadAnalysis = ItemAnnexTypeDescriptor(
     'overhead-analysis', 'Administrative overhead analysis',
-    u'overheadAnalysis.png', '',
+    u'overheadAnalysis.png',
     subTypes=[overheadAnalysisSubtype],
     other_mc_correspondences=(
         'plonegov-assembly_-_annexes_types_-_item_annexes_-_budget-analysis_-_budget-analysis-sub-annex', ))
 
 financialAnalysisSubAnnex = ItemAnnexSubTypeDescriptor(
     'financial-analysis-sub-annex',
-    'Financial analysis sub annex', '')
+    'Financial analysis sub annex')
 
 financialAnalysis = ItemAnnexTypeDescriptor(
     'financial-analysis', 'Financial analysis', u'financialAnalysis.png',
     'Predefined title for financial analysis', subTypes=[financialAnalysisSubAnnex])
 
 legalAnalysis = ItemAnnexTypeDescriptor(
-    'legal-analysis', 'Legal analysis', u'legalAnalysis.png', '')
+    'legal-analysis', 'Legal analysis', u'legalAnalysis.png')
 
 budgetAnalysisCfg2Subtype = ItemAnnexSubTypeDescriptor(
     'budget-analysis-sub-annex',
-    'Budget analysis sub annex', '')
+    'Budget analysis sub annex')
 
 budgetAnalysisCfg2 = ItemAnnexTypeDescriptor(
-    'budget-analysis', 'Budget analysis', u'budgetAnalysis.png', '',
+    'budget-analysis', 'Budget analysis', u'budgetAnalysis.png',
     subTypes=[budgetAnalysisCfg2Subtype])
 
 budgetAnalysisCfg1Subtype = ItemAnnexSubTypeDescriptor(
     'budget-analysis-sub-annex',
-    'Budget analysis sub annex', '',
+    'Budget analysis sub annex',
     other_mc_correspondences=(
         'plonegov-assembly_-_annexes_types_-_item_annexes_-_budget-analysis_-_budget-analysis-sub-annex', ))
 
 budgetAnalysisCfg1 = ItemAnnexTypeDescriptor(
-    'budget-analysis', 'Budget analysis', u'budgetAnalysis.png', '',
+    'budget-analysis', 'Budget analysis', u'budgetAnalysis.png',
     subTypes=[budgetAnalysisCfg1Subtype],
     other_mc_correspondences=('plonegov-assembly_-_annexes_types_-_item_annexes_-_budget-analysis', ))
 
 itemAnnex = ItemAnnexTypeDescriptor(
-    'item-annex', 'Other annex(es)', u'itemAnnex.png', '')
+    'item-annex', 'Other annex(es)', u'itemAnnex.png')
 # Could be used once we
 # will digitally sign decisions ? Indeed, once signed, we will need to
 # store them (together with the signature) as separate files.
 decision = ItemAnnexTypeDescriptor(
-    'decision', 'Decision', u'decision.png', '', 'item_decision')
+    'decision', 'Decision', u'decision.png', relatedTo='item_decision')
 decisionAnnex = ItemAnnexTypeDescriptor(
-    'decision-annex', 'Decision annex(es)', u'decisionAnnex.png', '', 'item_decision')
+    'decision-annex', 'Decision annex(es)', u'decisionAnnex.png', relatedTo='item_decision')
 # A vintage annex type
 marketingAnalysis = ItemAnnexTypeDescriptor(
-    'marketing-annex', 'Marketing annex(es)', u'legalAnalysis.png', '', 'item_decision',
+    'marketing-annex', 'Marketing annex(es)', u'legalAnalysis.png', relatedTo='item_decision',
     enabled=False)
 # Advice annex types
 adviceAnnex = AnnexTypeDescriptor(
-    'advice-annex', 'Advice annex(es)', u'itemAnnex.png', '', 'advice')
+    'advice-annex', 'Advice annex(es)', u'itemAnnex.png', relatedTo='advice')
 adviceLegalAnalysis = AnnexTypeDescriptor(
-    'advice-legal-analysis', 'Advice legal analysis', u'legalAnalysis.png', '', 'advice')
+    'advice-legal-analysis', 'Advice legal analysis', u'legalAnalysis.png', relatedTo='advice')
 # Meeting annex types
 meetingAnnex = AnnexTypeDescriptor(
-    'meeting-annex', 'Meeting annex(es)', u'itemAnnex.png', '', 'meeting')
+    'meeting-annex', 'Meeting annex(es)', u'itemAnnex.png', relatedTo='meeting')
 
 # Pod templates
 agendaTemplate = PodTemplateDescriptor('agendaTemplate', 'Meeting agenda')

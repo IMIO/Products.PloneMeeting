@@ -56,6 +56,7 @@ from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from plone.memoize import ram
 from plone.app.portlets.portlets import navigation
 from plone.namedfile.file import NamedBlobFile
+from plone.namedfile.file import NamedBlobImage
 from plone.portlets.interfaces import IPortletManager
 from plone.portlets.interfaces import IPortletAssignmentMapping
 from Products.CMFCore.ActionInformation import Action
@@ -68,6 +69,8 @@ from plone import api
 from collective.iconifiedcategory.utils import get_category_object
 from eea.facetednavigation.interfaces import ICriteria
 from imio.helpers.cache import cleanRamCache
+from imio.helpers.content import validate_fields
+from Products.PloneMeeting import PloneMeetingError
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
@@ -125,8 +128,9 @@ defValues = MeetingConfigDescriptor.get()
 # for importing profiles.
 import logging
 logger = logging.getLogger('PloneMeeting')
-DUPLICATE_SHORT_NAME = 'Short name "%s" is already used by another meeting ' \
-                       'configuration. Please choose another one.'
+DUPLICATE_SHORT_NAME = 'Short name "%s" is already used by another meeting configuration. Please choose another one.'
+
+ADDED_TYPE_ERROR = 'A validation error occurred while instantiating "%s" with id "%s". %s'
 
 CONFIGGROUPPREFIX = 'configgroup_'
 PROPOSINGGROUPPREFIX = 'suffix_proposing_group_'
@@ -4945,6 +4949,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         item.processForm(values={'dummy': None})
         return item
 
+    def _validate_dx_content(self, obj):
+        errors = validate_fields(obj)
+        if errors:
+            raise PloneMeetingError(
+                ADDED_TYPE_ERROR % (obj.portal_type,
+                                    obj.id,
+                                    '\n'.join([repr(error) for error in errors])))
+
     security.declarePrivate('addAnnexType')
 
     def addAnnexType(self, at, source):
@@ -4969,12 +4981,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # The image must be retrieved on disk from a profile
         iconPath = '%s/images/%s' % (source, at.icon)
         f = open(iconPath, 'r')
-        contentCategoryFile = NamedBlobFile(f.read(), filename=at.icon)
+        contentCategoryFile = NamedBlobImage(f.read(), filename=at.icon)
         f.close()
         annexType = api.content.create(
             id=at.id,
             type=portal_type,
             title=at.title,
+            predefined_title=at.predefined_title,
             icon=contentCategoryFile,
             container=getattr(folder, categoryGroupId),
             to_print=at.to_print,
@@ -4983,6 +4996,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         )
         if portal_type == 'ItemAnnexContentCategory':
             annexType.other_mc_correspondences = at.other_mc_correspondences
+        self._validate_dx_content(annexType)
 
         for subType in at.subTypes:
             annexSubType = api.content.create(
@@ -4995,6 +5009,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 enabled=subType.enabled,
                 other_mc_correspondences=subType.other_mc_correspondences
             )
+            self._validate_dx_content(annexSubType)
+
             if portal_type == 'ItemAnnexContentSubcategory':
                 annexSubType.other_mc_correspondences = subType.other_mc_correspondences
         return annexType
@@ -5025,9 +5041,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 collection = getattr(self.searches.searches_items, coll_id)
                 res.append(collection.UID())
             data['dashboard_collections'] = res
-        folder.invokeFactory(podType, **data)
-        podTemplate = getattr(folder, pt.id)
-        podTemplate.processForm(values={'dummy': None})
+
+        podTemplate = api.content.create(
+            type=podType,
+            container=folder,
+            **data)
+        self._validate_dx_content(podTemplate)
         return podTemplate
 
     security.declarePrivate('addMeetingUser')

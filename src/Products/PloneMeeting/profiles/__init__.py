@@ -121,7 +121,7 @@ class AnnexTypeDescriptor(Descriptor):
                  id,
                  title,
                  icon,
-                 predefined_title,
+                 predefined_title=u'',
                  relatedTo='advice',
                  enabled=True,
                  subTypes=(),
@@ -147,9 +147,9 @@ class ItemAnnexTypeDescriptor(AnnexTypeDescriptor):
                  id,
                  title,
                  icon,
-                 predefined_title,
+                 predefined_title=u'',
                  relatedTo='item',
-                 other_mc_correspondences=(),
+                 other_mc_correspondences=set(),
                  enabled=True,
                  subTypes=(),
                  confidential=False,
@@ -169,7 +169,7 @@ class ItemAnnexTypeDescriptor(AnnexTypeDescriptor):
 
 class AnnexSubTypeDescriptor(Descriptor):
 
-    def __init__(self, id, title, predefined_title,
+    def __init__(self, id, title, predefined_title=u'',
                  enabled=True, confidential=False, to_print=False):
         self.id = id
         self.title = title
@@ -182,8 +182,8 @@ class AnnexSubTypeDescriptor(Descriptor):
 class ItemAnnexSubTypeDescriptor(AnnexSubTypeDescriptor):
     multiSelectFields = ('other_mc_correspondences', )
 
-    def __init__(self, id, title, predefined_title,
-                 other_mc_correspondences=(), enabled=True,
+    def __init__(self, id, title, predefined_title=u'',
+                 other_mc_correspondences=set(), enabled=True,
                  confidential=False, to_print=False):
         super(ItemAnnexSubTypeDescriptor, self).__init__(
             id=id, title=title, predefined_title=predefined_title,
@@ -195,7 +195,8 @@ class PodTemplateDescriptor(Descriptor):
     multiSelectFields = ('pod_formats',
                          'pod_portal_types',
                          'dashboard_collections_ids',
-                         'context_variables')
+                         'context_variables',
+                         'style_template')
 
     def __init__(self, id, title, description='', enabled=True, dashboard=False):
         self.id = id
@@ -209,11 +210,11 @@ class PodTemplateDescriptor(Descriptor):
         # ids of DashboardCollections to restrict the DashboardPODTemplate to
         self.dashboard_collections_ids = []
         self.tal_condition = ''
-        #self.freezeEvent = ''
-        #self.mailingLists = ''
+        self.mailing_lists = u''
         self.enabled = enabled
         self.dashboard = dashboard
         self.context_variables = []
+        self.style_template = []
 
 
 class PloneGroupDescriptor(Descriptor):
