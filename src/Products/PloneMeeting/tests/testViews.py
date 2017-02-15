@@ -427,7 +427,7 @@ class testViews(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         template = self.meetingConfig.podtemplates.itemTemplate
         # no mailing lists for now
-        self.assertIsNone(template.mailing_lists)
+        self.assertEqual(template.mailing_lists, u'')
         self.failIf(self.tool.getAvailableMailingLists(item, template.UID()))
 
         # define mailing_lists
