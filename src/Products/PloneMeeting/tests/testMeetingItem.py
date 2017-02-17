@@ -4255,8 +4255,11 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(item.getId(), 'new-title')
         self.assertEqual(
             item.categorized_elements.values()[0]['download_url'],
-            u'{0}/@@download/file/FILE.txt'.format(
+            u'{0}/@@download'.format(
                 self.portal.portal_url.getRelativeContentURL(annex)))
+        # file is correctly downloadable with given download_url
+        download_view = self.portal.unrestrictedTraverse(str(item.categorized_elements.values()[0]['download_url']))
+        self.assertEqual(download_view().read(), 'Testing file\n')
 
     def _notAbleToAddSubContent(self, item):
         for add_subcontent_perm in ADD_SUBCONTENT_PERMISSIONS:
