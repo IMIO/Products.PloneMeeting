@@ -154,9 +154,6 @@ document.location.reload(true);
          tal:attributes="src string:$portal_url/view.gif; onClick jsView"/>
     </tal:history>
   </legend>
-  <tal:comment replace="nothing">Add an empty paragraph at the top of displayed HTML to avoid
-  problems with fieldset legend that has a margin-top.</tal:comment>
-  <p></p>
   <div tal:replace="structure python: context.getFieldVersion(fieldName, changes)"></div>
  </fieldset>
 </div>
