@@ -1366,8 +1366,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     ##code-section class-header #fill in your manual code here
     meetingTransitionsAcceptingRecurringItems = ('_init_', 'publish', 'freeze', 'decide')
-    beforePublicationStates = ('itemcreated', 'proposed', 'prevalidated',
-                               'validated')
     ##/code-section class-header
 
     # Methods
@@ -1614,15 +1612,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('showToDiscuss')
 
     def showToDiscuss(self):
-        '''On edit or view page for an item, we must show field 'toDiscuss' in
-           early stages of item creation and validation if
-           config.toDiscussSetOnItemInsert is False.'''
+        '''On edit or view page for an item, we must show field 'toDiscuss' if :
+           - field is used and :
+               - MeetingConfig.toDiscussSetOnItemInsert is False or;
+               - MeetingConfig.toDiscussSetOnItemInsert is True and item is linked
+                 to a meeting.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         res = self.attributeIsUsed('toDiscuss') and \
-            not cfg.getToDiscussSetOnItemInsert() or \
-            (not self.isDefinedInTool() and cfg.getToDiscussSetOnItemInsert() and
-             not self.queryState() in self.beforePublicationStates)
+            (not cfg.getToDiscussSetOnItemInsert() or
+             (not self.isDefinedInTool() and
+              cfg.getToDiscussSetOnItemInsert() and
+              self.hasMeeting()))
         return res
 
     security.declarePublic('showItemIsSigned')
