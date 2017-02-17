@@ -4484,22 +4484,24 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         holidays = tool.getHolidaysAs_datetime()
         weekends = tool.getNonWorkingDayNumbers()
         unavailable_weekdays = tool.getUnavailableWeekDaysNumbers()
-        date_until = workday(delay_started_on,
+        limit_date = workday(delay_started_on,
                              delay,
                              holidays=holidays,
                              weekends=weekends,
                              unavailable_weekdays=unavailable_weekdays)
-        data['limit_date'] = date_until
-        data['limit_date_localized'] = toLocalizedTime(date_until)
+        data['limit_date'] = limit_date
+        data['limit_date_localized'] = toLocalizedTime(limit_date)
 
         # if delay is stopped, it means that we can no more give the advice
         if delay_stopped_on:
             data['left_delay'] = delay
             # compute how many days left/exceeded when the delay was stopped
             # find number of days between delay_started_on and delay_stopped_on
-            gap = (delay_stopped_on - delay_started_on).days
-            # now we can remove the found gap from delay that had the user to give his advice
-            data['delay_when_stopped'] = delay - gap
+            delay_when_stopped = networkdays(adviceInfos['delay_stopped_on'],
+                                             limit_date,
+                                             holidays=holidays,
+                                             weekends=weekends)
+            data['delay_when_stopped'] = delay_when_stopped
             if data['delay_when_stopped'] > 0:
                 data['delay_status_when_stopped'] = 'stopped_still_time'
             else:
@@ -4510,7 +4512,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # compute left delay taking holidays, and unavailable weekday into account
         left_delay = networkdays(datetime.now(),
-                                 date_until,
+                                 limit_date,
                                  holidays=holidays,
                                  weekends=weekends) - 1
         data['left_delay'] = left_delay

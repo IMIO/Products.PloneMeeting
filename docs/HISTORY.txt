@@ -309,6 +309,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Display a "group users" icon next to the displayed copy groups and asked advices on the item view to be able to get informations
   about users that are in the selected Plone groups, this way we know which users will have read access to the item and which will be
   able to give an advice
+- Display the limit date systematically on the advice popup if advice is with delay.  If delay is stopped before limit date, display
+  the delay that was left in clear days
 - Added method MeetingGroup.userPloneGroups to be able to get the Plone groups of a MeetingGroup the currently connected used is in
 - The 'Duplicate and keep link' action is now generating a manual link (MeetingItem.manuallyLinkedItems) between the items,
   no more an automatic link.  This way, the link is manageable by the creator, can be removed if necessary and the eventual items
