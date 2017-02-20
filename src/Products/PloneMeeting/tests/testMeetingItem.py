@@ -705,6 +705,29 @@ class testMeetingItem(PloneMeetingTestCase):
         newItem = data['newItem']
         self.assertTrue(len(newItem.adviceIndex) == 0)
 
+    def test_pm_SendItemToOtherMCAutoWhenValidated(self):
+        '''Test when sending an item automatically when it is just 'validated', in this case,
+           current user lost edit access to the item.'''
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        cfg2Id = cfg2.getId()
+        cfg.setItemAutoSentToOtherMCStates(('validated', ))
+        cfg.setMeetingConfigsToCloneTo(
+            ({'meeting_config': '%s' % cfg2Id,
+              'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},))
+        self.changeUser('pmCreator1')
+        self.tool.getPloneMeetingFolder(cfg2Id)
+        item = self.create('MeetingItem')
+        item.setOtherMeetingConfigsClonableTo((cfg2Id,))
+        self.proposeItem(item)
+        self.changeUser('pmReviewer1')
+        self.assertIsNone(item.getItemClonedToOtherMC(cfg2Id))
+        self.do(item, 'validate')
+        # no matter item is no more editable by 'pmReviewer1' when validated
+        # it was sent to cfg2Id
+        self.assertEqual(item.queryState(), 'validated')
+        self.assertTrue(item.getItemClonedToOtherMC(cfg2Id, theObject=False))
+
     def test_pm_SendItemToOtherMCRespectWFInitialState(self):
         '''Check that when an item is cloned to another MC, the new item
            WF intial state is coherent.'''
