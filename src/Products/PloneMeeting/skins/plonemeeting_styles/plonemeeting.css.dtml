@@ -22,6 +22,11 @@ img.logical_meeting {
     cursor: help;
 }
 
+/* display lines of the table on the meeting_view 100% height so the 'listType' column is displayed correctly */
+table.faceted-table-results > tbody > tr.odd {
+    height: 100%;
+}
+
 table.listing tr[class][class] td[class^='meeting_item_listType_'] {
     padding: 0em;
     border-right: 0px;
