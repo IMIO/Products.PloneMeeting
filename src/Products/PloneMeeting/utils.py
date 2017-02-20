@@ -1137,7 +1137,7 @@ def signatureNotAlone(xhtmlContent, numberOfChars=CLASS_TO_LAST_CHILDREN_NUMBER_
        to stand alone on their last page.'''
     # A paragraph may be a "p" or "li". If it is a "p", I will add style
     # (if not already done) "podItemKeepWithNext"; if it is a "li" I will
-    # add style "podParaKeepWithNext" (if not already done).
+    # add style "ParaKWN" (if not already done).
     return addClassToLastChildren(xhtmlContent, numberOfChars=numberOfChars)
 
 
