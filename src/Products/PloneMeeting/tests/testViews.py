@@ -517,9 +517,9 @@ class testViews(PloneMeetingTestCase):
         self.assertEquals(helper.printXhtml(item,
                                             [motivation, 'separator', decision],
                                             keepWithNext=True),
-                          '<p class="pmParaKeepWithNext">The motivation using UTF-8 characters : &#232;&#224;.</p>'
-                          '<p class="pmParaKeepWithNext">&#160;</p>'
-                          '<p class="pmParaKeepWithNext">The d&#233;cision using UTF-8 characters.</p>')
+                          '<p class="ParaKWN">The motivation using UTF-8 characters : &#232;&#224;.</p>'
+                          '<p class="ParaKWN">&#160;</p>'
+                          '<p class="ParaKWN">The d&#233;cision using UTF-8 characters.</p>')
 
     def test_pm_PrintXhtmlImageSrcToPaths(self):
         ''' '''
@@ -538,9 +538,9 @@ class testViews(PloneMeetingTestCase):
                                             keepWithNext=True),
                           '<p>The motivation using UTF-8 characters : &#232;&#224;.</p>'
                           '<p>&#160;</p>'
-                          '<p class="pmParaKeepWithNext">The d&#233;cision using UTF-8 characters.</p>'
-                          '<p class="pmParaKeepWithNext">&#160;</p>'
-                          '<p class="pmParaKeepWithNext">Text with image <img src="{0}"/> and more text.</p>'
+                          '<p class="ParaKWN">The d&#233;cision using UTF-8 characters.</p>'
+                          '<p class="ParaKWN">&#160;</p>'
+                          '<p class="ParaKWN">Text with image <img src="{0}"/> and more text.</p>'
                           .format(img_blob_path))
 
     def test_pm_PrintXhtmlAddCSSClass(self):
