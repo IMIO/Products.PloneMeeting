@@ -706,4 +706,11 @@
           />
     </configure>
 
+    <browser:page
+        name="refbrowser_popup"
+        permission="zope2.Public"
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        class=".overrides.PMReferenceBrowserPopup"
+        />
+
 </configure>

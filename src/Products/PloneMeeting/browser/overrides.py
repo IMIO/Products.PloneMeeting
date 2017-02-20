@@ -8,6 +8,7 @@
 #
 
 from AccessControl import Unauthorized
+from Acquisition import aq_base
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from zope.annotation import IAnnotations
 from zope.i18n import translate
@@ -20,6 +21,7 @@ from plone.app.layout.viewlets.common import GlobalSectionsViewlet
 from plone.memoize import ram
 from plone.memoize.view import memoize_contextless
 
+from archetypes.referencebrowserwidget.browser.view import ReferenceBrowserPopup
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.ckeditor.browser.ckeditorfinder import CKFinder
 from collective.documentgenerator.content.pod_template import IPODTemplate
@@ -893,3 +895,14 @@ class PMConfidentialChangeView(ConfidentialChangeView):
             tool = api.portal.get_tool('portal_plonemeeting')
             res = tool.isManager(self.context)
         return res
+
+
+class PMReferenceBrowserPopup(ReferenceBrowserPopup):
+    """ """
+
+    def title_or_id(self, item):
+        assert self._updated
+        item = aq_base(item)
+        return getattr(item, 'title_or_id', '') or \
+            getattr(item, 'Title', '') or \
+            getattr(item, 'getId', '')
