@@ -2594,12 +2594,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in utils.py.'''
         return getHistory(self, *args, **kwargs)
 
-    security.declarePublic('i18n')
-
-    def i18n(self, msg, domain="PloneMeeting"):
-        '''Shortcut for translating p_msg in domain PloneMeeting.'''
-        return translate(msg, domain=domain, context=self.REQUEST)
-
     def attributeIsUsed_cachekey(method, self, name):
         '''cachekey method for self.attributeIsUsed.'''
         return (name, str(self.REQUEST._debug))
@@ -5686,7 +5680,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     except ValueError:
                         inError = True
                     if inError:
-                        rq.set('peopleMsg', self.i18n('vote_count_not_int'))
+                        rq.set('peopleMsg',
+                               translate('vote_count_not_int',
+                                         domain='PloneMeeting',
+                                         context=rq))
                         return
                 numberOfVotes += v
                 requestVotes[voteValue] = v
@@ -5706,7 +5703,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Check the total number of votes
         if secret:
             if numberOfVotes != numberOfVoters:
-                rq.set('peopleMsg', self.i18n('vote_count_wrong'))
+                rq.set('peopleMsg', translate('vote_count_wrong',
+                                              domain='PloneMeeting',
+                                              context=rq))
                 return
         # Update the vote values
         rq.set('peopleMsg', translate('Changes saved.', domain="plone", context=self.REQUEST))

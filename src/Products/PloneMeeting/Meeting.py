@@ -908,7 +908,9 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         if otherMeetings:
             for m in otherMeetings:
                 if m.getObject() != self:
-                    return self.i18n('meeting_with_same_date_exists')
+                    return translate('meeting_with_same_date_exists',
+                                     domain='PloneMeeting',
+                                     context=self.REQUEST)
 
     security.declarePrivate('validate_place')
 
@@ -917,7 +919,9 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
            something.'''
         rq = self.REQUEST
         if (value == 'other') and not rq.get('place_other', None):
-            return self.i18n('place_other_required')
+            return translate('place_other_required',
+                             domain='PloneMeeting',
+                             context=rq)
 
     security.declarePublic('listAssemblyMembers')
 
@@ -1840,12 +1844,6 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
     def isDecided(self):
         meeting = self.getSelf()
         return meeting.queryState() in ('decided', 'closed', 'archived', 'decisions_published', )
-
-    security.declarePublic('i18n')
-
-    def i18n(self, msg, domain="PloneMeeting"):
-        '''Shortcut for translating p_msg in domain PloneMeeting.'''
-        return translate(msg, domain=domain, context=self.REQUEST)
 
     security.declarePublic('getSpecificDocumentContext')
 

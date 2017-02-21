@@ -24,6 +24,7 @@
 
 from DateTime import DateTime
 from AccessControl import Unauthorized
+from zope.i18n import translate
 
 from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
@@ -311,19 +312,25 @@ class testVotes(PloneMeetingTestCase):
         item1.onSaveItemPeopleInfos()
         # the value did not changed and a message is added to the request
         self.assertEquals(item1.votes['yes'], 2)
-        self.failUnless(self.request['peopleMsg'] == item1.i18n('vote_count_wrong'))
+        self.failUnless(self.request['peopleMsg'] == translate('vote_count_wrong',
+                                                               domain='PloneMeeting',
+                                                               context=self.request))
         # the same while doing wrong counts with other vote values
         self.request.set('vote_count_yes', 1)
         self.request.set('vote_count_no', 1)
         self.request.set('vote_count_not_yet', 1)
         self.assertEquals(item1.votes['yes'], 2)
-        self.failUnless(self.request['peopleMsg'] == item1.i18n('vote_count_wrong'))
+        self.failUnless(self.request['peopleMsg'] == translate('vote_count_wrong',
+                                                               domain='PloneMeeting',
+                                                               context=self.request))
         # if setting anything else but an integer for a vote_count_
         # does not change anything, but add a message to the request
         self.request.set('vote_count_yes', 'not_an_integer')
         item1.onSaveItemPeopleInfos()
         self.assertEquals(item1.votes['yes'], 2)
-        self.failUnless(self.request['peopleMsg'] == item1.i18n('vote_count_not_int'))
+        self.failUnless(self.request['peopleMsg'] == translate('vote_count_not_int',
+                                                               domain='PloneMeeting',
+                                                               context=self.request))
         # values are encoded so mayNotSwitch
         self.failIf(item1.maySwitchVotes())
         # remove encoded votes so MeetingManager can switch
