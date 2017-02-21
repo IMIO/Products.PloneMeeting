@@ -412,6 +412,18 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                     wf.states.deleteStates([st])
             logger.info(WF_APPLIED % ("items_come_validated", meetingConfig.getId()))
 
+        # "reviewers_take_back_validated_item" give the ability to reviewers to
+        # take back an item that is validated.  To do so, this wfAdaptation will
+        # extend roles having the 'Review portal content' permission in state 'validated'
+        # to add the 'MeetingReviewer' role
+        elif wfAdaptation == 'reviewers_take_back_validated_item':
+            wf = itemWorkflow
+            state = wf.states.validated
+            revPortalContentRoles = state.permission_roles[ReviewPortalContent]
+            if 'MeetingReviewer' not in revPortalContentRoles:
+                state.setPermission(ReviewPortalContent, 0, list(revPortalContentRoles) + ['MeetingReviewer'])
+            logger.info(WF_APPLIED % ("reviewers_take_back_validated_item", meetingConfig.getId()))
+
         # "archiving" transforms item and meeting workflow into simple, one-state
         # workflows for setting up an archive site.
         elif wfAdaptation == 'archiving':
