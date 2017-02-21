@@ -196,7 +196,8 @@ class PodTemplateDescriptor(Descriptor):
                          'pod_portal_types',
                          'dashboard_collections_ids',
                          'context_variables',
-                         'style_template')
+                         'style_template',
+                         'roles_bypassing_talcondition')
 
     def __init__(self, id, title, description='', enabled=True, dashboard=False):
         self.id = id
@@ -215,6 +216,7 @@ class PodTemplateDescriptor(Descriptor):
         self.dashboard = dashboard
         self.context_variables = []
         self.style_template = []
+        self.roles_bypassing_talcondition = []
 
 
 class PloneGroupDescriptor(Descriptor):

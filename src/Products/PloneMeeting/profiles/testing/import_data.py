@@ -126,6 +126,7 @@ decisionsTemplate = PodTemplateDescriptor('decisionsTemplate',
 decisionsTemplate.odt_file = 'Decisions.odt'
 decisionsTemplate.pod_portal_types = ['MeetingPma']
 decisionsTemplate.tal_condition = 'python:here.adapted().isDecided()'
+decisionsTemplate.roles_bypassing_talcondition = ['Manager']
 
 itemTemplate = PodTemplateDescriptor('itemTemplate', 'Meeting item')
 itemTemplate.odt_file = 'Item.odt'
