@@ -333,6 +333,8 @@ def _configureCKeditor(site):
     cke_props.allow_folder_creation = False
     # set 500px for editor height everywhere
     cke_props.height = '500px'
+    # do not use 'rows' of the field widget for editor height
+    cke_props.properties_overloaded = (u'width', u'height')
 
 
 def _congfigureSafeHtml(site):
