@@ -664,6 +664,8 @@ class IMeetingConfigDocumentation:
         '''Called when an object p_isCreated or edited.'''
     def getMeetingsAcceptingItems():
         '''Gets the meetings that can accept items.'''
+    def getMeetingsAcceptingItemsAdditionalManagerStates():
+        '''Additional states for MeetingManagers in which meetings are still accepting items.'''
 
 
 class IMeetingConfigCustom(IMeetingConfig):

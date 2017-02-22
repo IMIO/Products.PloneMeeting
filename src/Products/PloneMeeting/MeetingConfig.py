@@ -5436,8 +5436,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                                 xmlpath=os.path.dirname(__file__) +
                                                 '/faceted_conf/default_dashboard_widgets.xml')
 
+    def getMeetingsAcceptingItemsAdditionalManagerStates(self):
+        '''See doc in interfaces.py.'''
+        return ('decided', 'published', )
+
     def getMeetingsAcceptingItems(self, review_states=('created', 'frozen'), inTheFuture=False):
-        '''This returns meetings that are still accepting items.'''
+        '''See doc in interfaces.py.'''
         cfg = self.getSelf()
         tool = api.portal.get_tool('portal_plonemeeting')
         catalog = api.portal.get_tool('portal_catalog')
@@ -5445,7 +5449,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # he is able to add a meetingitem to a 'decided' meeting.
         # except if we specifically restricted given p_review_states.
         if review_states == ('created', 'frozen') and tool.isManager(cfg):
-            review_states += ('decided', 'published', )
+            review_states += cfg.adapted().getMeetingsAcceptingItemsAdditionalManagerStates()
 
         query = {'portal_type': cfg.getMeetingTypeName(),
                  'review_state': review_states,
