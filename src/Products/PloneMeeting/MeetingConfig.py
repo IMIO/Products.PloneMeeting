@@ -2172,10 +2172,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     # Names of workflow adaptations.
     wfAdaptations = ('no_global_observation', 'creator_initiated_decisions',
-                     'only_creator_may_delete', 'pre_validation', 'pre_validation_keep_reviewer_permissions',
-                     'items_come_validated', 'archiving', 'no_publication', 'no_proposal', 'everyone_reads_all',
-                     'creator_edits_unless_closed', 'return_to_proposing_group', 'hide_decisions_when_under_writing',
-                     'waiting_advices', 'postpone_next_meeting', 'mark_not_applicable', 'removed')
+                     'only_creator_may_delete', 'pre_validation',
+                     'pre_validation_keep_reviewer_permissions', 'items_come_validated',
+                     'archiving', 'no_publication', 'no_proposal', 'everyone_reads_all',
+                     'reviewers_take_back_validated_item', 'creator_edits_unless_closed',
+                     'return_to_proposing_group', 'hide_decisions_when_under_writing',
+                     'waiting_advices', 'postpone_next_meeting', 'mark_not_applicable',
+                     'removed')
 
     def _searchesInfo(self):
         """Informations used to create DashboardCollections in the searches."""
@@ -3087,10 +3090,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if '' in values:
             values.remove('')
         msg = translate('wa_conflicts', domain='PloneMeeting', context=self.REQUEST)
-        if 'items_come_validated' in values:
-            if 'creator_initiated_decisions' in values or \
-               'pre_validation' in values or \
-               'pre_validation_keep_reviewer_permissions' in values:
+        if 'items_come_validated' in values and \
+            ('creator_initiated_decisions' in values or
+             'pre_validation' in values or
+             'pre_validation_keep_reviewer_permissions' in values or
+             'reviewers_take_back_validated_item' in values):
                 return msg
         if ('archiving' in values) and (len(values) > 1):
             # Archiving is incompatible with any other workflow adaptation

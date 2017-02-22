@@ -2,7 +2,7 @@
 #
 # File: testWFAdaptations.py
 #
-# Copyright (c) 2015 by Imio.be
+# Copyright (c) 2017 by Imio.be
 #
 # GNU General Public License (GPL)
 #
@@ -72,6 +72,7 @@ class testWFAdaptations(PloneMeetingTestCase):
                                'pre_validation_keep_reviewer_permissions',
                                'removed',
                                'return_to_proposing_group',
+                               'reviewers_take_back_validated_item'
                                )))
 
     def test_pm_WFA_appliedOnMeetingConfigEdit(self):
@@ -167,7 +168,8 @@ class testWFAdaptations(PloneMeetingTestCase):
         # conflicts with some
         for otherWFA in ('creator_initiated_decisions',
                          'pre_validation',
-                         'pre_validation_keep_reviewer_permissions'):
+                         'pre_validation_keep_reviewer_permissions',
+                         'reviewers_take_back_validated_item'):
             self.assertEquals(
                 cfg.validate_workflowAdaptations(('items_come_validated', otherWFA)),
                 wa_conflicts)
@@ -2043,6 +2045,46 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertEqual(item.queryState(), 'removed')
         # back transition
         self.do(item, 'backToItemFrozen')
+
+    def test_pm_WFA_reviewers_take_back_validated_item(self):
+        '''Test the workflowAdaptation 'reviewers_take_back_validated_item'.'''
+        # ease override by subproducts
+        cfg = self.meetingConfig
+        if not 'reviewers_take_back_validated_item' in cfg.listWorkflowAdaptations():
+            return
+        self.changeUser('pmManager')
+        # check while the wfAdaptation is not activated
+        self._reviewers_take_back_validated_item_inactive()
+        # activate the wfAdaptation and check
+        cfg.setWorkflowAdaptations(('reviewers_take_back_validated_item', ))
+        performWorkflowAdaptations(cfg, logger=pm_logger)
+        self._reviewers_take_back_validated_item_active()
+
+    def _reviewers_take_back_validated_item_inactive(self):
+        '''Tests while 'reviewers_take_back_validated_item' wfAdaptation is inactive.'''
+        # validate an item, the MeetingReviewer is unable to take it back
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.proposeItem(item)
+        self.changeUser('pmReviewer1')
+        self.do(item, 'validate')
+        self.assertEqual(self.transitions(item), [])
+
+    def _reviewers_take_back_validated_item_active(self):
+        '''Tests while 'reviewers_take_back_validated_item' wfAdaptation is active.'''
+        # first create a meeting, we will check the MeetingReviewer may not present the item
+        self.changeUser('pmManager')
+        self.create('Meeting', date=DateTime()+1)
+        # validate an item, the MeetingReviewer will be able to take it back
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.proposeItem(item)
+        self.changeUser('pmReviewer1')
+        self.do(item, 'validate')
+        # make test defensive if used by subproducts, we have a 'backXXX' transition
+        self.assertTrue([tr for tr in self.transitions(item) if tr.startswith('back')])
+        # but he will not be able to present it
+        self.assertFalse('present' in self.transitions(item))
 
 
 def test_suite():

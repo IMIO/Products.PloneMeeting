@@ -179,22 +179,19 @@ class MeetingItemWorkflowConditions:
            another meetingConfig, the category could not be defined.'''
         if not self.context.getCategory():
             return No(_('required_category_ko'))
-        if _checkPermission(ReviewPortalContent, self.context) and \
-           (not self.context.isDefinedInTool()):
+        if _checkPermission(ReviewPortalContent, self.context):
             return True
 
     security.declarePublic('mayPrevalidate')
 
     def mayPrevalidate(self):
-        if _checkPermission(ReviewPortalContent, self.context) and \
-           (not self.context.isDefinedInTool()):
+        if _checkPermission(ReviewPortalContent, self.context):
             return True
 
     security.declarePublic('mayValidate')
 
     def mayValidate(self):
-        if _checkPermission(ReviewPortalContent, self.context) and \
-           not self.context.isDefinedInTool():
+        if _checkPermission(ReviewPortalContent, self.context):
             return True
 
     security.declarePublic('mayPresent')
@@ -204,10 +201,15 @@ class MeetingItemWorkflowConditions:
         # could miss it's category
         if not self.context.getCategory():
             return No(_('required_category_ko'))
+        # only MeetingManagers may present an item, the 'Review portal content'
+        # permission is not enough as MeetingReviewer may have the 'Review portal content'
+        # when using the 'reviewers_take_back_validated_item' wfAdaptation
+        tool = api.portal.get_tool('portal_plonemeeting')
+        if not _checkPermission(ReviewPortalContent, self.context) or \
+           not tool.isManager(self.context):
+            return False
         # We may present the item if Plone currently publishes a meeting.
         # Indeed, an item may only be presented within a meeting.
-        if not _checkPermission(ReviewPortalContent, self.context):
-            return False
         # if we are not on a meeting, try to get the next meeting accepting items
         if not self._publishedObjectIsMeeting():
             meeting = self.context.getMeetingToInsertIntoWhenNoCurrentMeetingObject(
