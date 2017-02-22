@@ -299,7 +299,7 @@
             </div>
 
             <tal:comment replace="nothing">To discuss?</tal:comment>
-            <div class="discreet" tal:condition="python: 'toDiscuss' in usedAttrs">
+            <div class="discreet" tal:condition="context/showToDiscuss">
                 <span class="item_attribute_label"
                       i18n:translate="PloneMeeting_label_toDiscuss"></span>:&nbsp;&nbsp;
                 <tal:to_discuss replace="structure python: context.restrictedTraverse('item-to-discuss')()" />
