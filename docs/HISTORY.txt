@@ -298,6 +298,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   sure that proposing group may no more edit the item.  By default, this state can be reached from states 'proposed' and
   'prevalidated' if available and item may go back to these states, but for custom configuration, it is possible to generate several
   'waiting_advices' states and to specify origin and back states
+- Added workflow adaptation 'reviewers_take_back_validated_item' that give the ability to the MeetingReviewer role to take back an
+  item that is 'validated'
 - It is now possible to register several 'meetingadvice' portal_types so we may use different workflows or define additional fields.
   Added constant EXTRA_ADVICE_SUFFIXES to config.py to define extra suffixes to use for groups giving advice using a custom workflow
 - Meeting and MeetingItem WorkflowCondition 'mayCorrect' now receive an extra parameter 'destinationState' that is useful
@@ -366,6 +368,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - When an item is visible by advisers but advice was never giveable (especially when workflow is not linear or configuration is wrong
   and items are visible by advisers before advice is giveable), adapted method on the item to specify that advice was never giveable
 - Removed Meeting.i18n and MeetingItem.i18n methods, use view.translate in Pod templates and zope.i18n.translate elsewhere
+- Added 
 
 3.3 (2015-02-27)
 ----------------
