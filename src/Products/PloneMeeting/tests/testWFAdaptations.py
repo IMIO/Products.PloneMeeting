@@ -54,26 +54,25 @@ class testWFAdaptations(PloneMeetingTestCase):
     def test_pm_WFA_availableWFAdaptations(self):
         '''Test what are the available wfAdaptations.
            This way, if we add a wfAdaptations, the test will 'break' until it is adapted...'''
-        self.assertEquals(set(self.meetingConfig.listWorkflowAdaptations()),
-                          set(('archiving',
-                               'creator_edits_unless_closed',
-                               'creator_initiated_decisions',
-                               'everyone_reads_all',
-                               'hide_decisions_when_under_writing',
-                               'items_come_validated',
-                               'waiting_advices',
-                               'no_global_observation',
-                               'no_proposal',
-                               'no_publication',
-                               'only_creator_may_delete',
-                               'postpone_next_meeting',
-                               'mark_not_applicable',
-                               'pre_validation',
-                               'pre_validation_keep_reviewer_permissions',
-                               'removed',
-                               'return_to_proposing_group',
-                               'reviewers_take_back_validated_item'
-                               )))
+        self.assertEquals(sorted(self.meetingConfig.listWorkflowAdaptations().keys()),
+                          ['archiving',
+                           'creator_edits_unless_closed',
+                           'creator_initiated_decisions',
+                           'everyone_reads_all',
+                           'hide_decisions_when_under_writing',
+                           'items_come_validated',
+                           'mark_not_applicable',
+                           'no_global_observation',
+                           'no_proposal',
+                           'no_publication',
+                           'only_creator_may_delete',
+                           'postpone_next_meeting',
+                           'pre_validation',
+                           'pre_validation_keep_reviewer_permissions',
+                           'removed',
+                           'return_to_proposing_group',
+                           'reviewers_take_back_validated_item',
+                           'waiting_advices'])
 
     def test_pm_WFA_appliedOnMeetingConfigEdit(self):
         """WFAdpatations are applied when the MeetingConfig is edited."""
