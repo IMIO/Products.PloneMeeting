@@ -18,6 +18,7 @@
  <permission>PloneMeeting: Write item MeetingManager reserved fields</permission>
  <permission>PloneMeeting: Read budget infos</permission>
  <permission>PloneMeeting: Write budget infos</permission>
+ <permission>PloneMeeting: Write marginal notes</permission>
  <state state_id="accepted"
         title="accepted"
         i18n:attributes="title">
@@ -100,6 +101,11 @@
    <permission-role>Manager</permission-role>
    <permission-role>MeetingManager</permission-role>
   </permission-map>
+  <permission-map name="PloneMeeting: Write marginal notes"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
   <permission-map name="Review portal content"
                   acquired="False">
    <permission-role>Manager</permission-role>
@@ -139,7 +145,6 @@
   <permission-map name="Modify portal content"
                   acquired="False">
    <permission-role>Manager</permission-role>
-   <permission-role>MeetingManager</permission-role>
   </permission-map>
   <permission-map name="PloneMeeting: Add annex"
                   acquired="False">
@@ -179,17 +184,20 @@
   <permission-map name="PloneMeeting: Write budget infos"
                   acquired="False">
    <permission-role>Manager</permission-role>
-   <permission-role>MeetingManager</permission-role>
    <permission-role>MeetingBudgetImpactEditor</permission-role>
   </permission-map>
   <permission-map name="PloneMeeting: Write decision"
                   acquired="False">
    <permission-role>Manager</permission-role>
-   <permission-role>MeetingManager</permission-role>
   </permission-map>
   <permission-map name="PloneMeeting: Write item MeetingManager reserved fields"
                   acquired="False">
    <permission-role>Manager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write marginal notes"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
   </permission-map>
   <permission-map name="Review portal content"
                   acquired="False">
@@ -284,6 +292,11 @@
    <permission-role>Manager</permission-role>
    <permission-role>MeetingManager</permission-role>
   </permission-map>
+  <permission-map name="PloneMeeting: Write marginal notes"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
   <permission-map name="Review portal content"
                   acquired="False">
    <permission-role>Manager</permission-role>
@@ -374,6 +387,11 @@
                   acquired="False">
    <permission-role>Manager</permission-role>
   </permission-map>
+  <permission-map name="PloneMeeting: Write marginal notes"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
   <permission-map name="Review portal content"
                   acquired="False">
    <permission-role>Manager</permission-role>
@@ -443,6 +461,10 @@
    <permission-role>Manager</permission-role>
   </permission-map>
   <permission-map name="PloneMeeting: Write item MeetingManager reserved fields"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write marginal notes"
                   acquired="False">
    <permission-role>Manager</permission-role>
   </permission-map>
@@ -528,6 +550,11 @@
    <permission-role>MeetingManager</permission-role>
   </permission-map>
   <permission-map name="PloneMeeting: Write item MeetingManager reserved fields"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write marginal notes"
                   acquired="False">
    <permission-role>Manager</permission-role>
    <permission-role>MeetingManager</permission-role>
@@ -619,6 +646,11 @@
    <permission-role>Manager</permission-role>
    <permission-role>MeetingManager</permission-role>
   </permission-map>
+  <permission-map name="PloneMeeting: Write marginal notes"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
   <permission-map name="Review portal content"
                   acquired="False">
    <permission-role>Manager</permission-role>
@@ -706,6 +738,10 @@
    <permission-role>Manager</permission-role>
    <permission-role>MeetingManager</permission-role>
   </permission-map>
+  <permission-map name="PloneMeeting: Write marginal notes"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+  </permission-map>
   <permission-map name="Review portal content"
                   acquired="False">
    <permission-role>Manager</permission-role>
@@ -782,6 +818,10 @@
    <permission-role>Manager</permission-role>
   </permission-map>
   <permission-map name="PloneMeeting: Write item MeetingManager reserved fields"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write marginal notes"
                   acquired="False">
    <permission-role>Manager</permission-role>
   </permission-map>
@@ -876,6 +916,11 @@
    <permission-role>Manager</permission-role>
    <permission-role>MeetingManager</permission-role>
   </permission-map>
+  <permission-map name="PloneMeeting: Write marginal notes"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
+   <permission-role>MeetingManager</permission-role>
+  </permission-map>
   <permission-map name="Review portal content"
                   acquired="False">
    <permission-role>Manager</permission-role>
@@ -963,6 +1008,10 @@
                   acquired="False">
    <permission-role>Manager</permission-role>
    <permission-role>MeetingManager</permission-role>
+  </permission-map>
+  <permission-map name="PloneMeeting: Write marginal notes"
+                  acquired="False">
+   <permission-role>Manager</permission-role>
   </permission-map>
   <permission-map name="Review portal content"
                   acquired="False">

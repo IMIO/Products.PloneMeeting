@@ -368,7 +368,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - When an item is visible by advisers but advice was never giveable (especially when workflow is not linear or configuration is wrong
   and items are visible by advisers before advice is giveable), adapted method on the item to specify that advice was never giveable
 - Removed Meeting.i18n and MeetingItem.i18n methods, use view.translate in Pod templates and zope.i18n.translate elsewhere
-- Added 
+- Do not define the 'rows' attribute on RichWidget anymore so we may use the CKeditor property 'editor height' to define the editor
+  height and it can be changed thru the UI in the CKeditor control panel
+- Added field MeetingItem.marginalNotes that is still editable by a MeetingManager even when item is decided and meeting is closed
 
 3.3 (2015-02-27)
 ----------------

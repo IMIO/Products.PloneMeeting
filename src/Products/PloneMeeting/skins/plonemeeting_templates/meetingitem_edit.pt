@@ -148,6 +148,9 @@
     <tal:field define="fieldName python: 'notes'">
       <metal:f use-macro="context/@@pm-macros/editContentField"/>
     </tal:field>
+    <tal:field define="fieldName python: 'marginalNotes'">
+      <metal:f use-macro="context/@@pm-macros/editContentField"/>
+    </tal:field>
     <tal:field define="fieldName python: 'internalNotes'"
                condition="python: 'internalNotes' in usedAttrs" >
       <metal:f use-macro="context/@@pm-macros/editContentField"/>

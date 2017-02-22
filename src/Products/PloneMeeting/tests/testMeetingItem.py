@@ -3521,16 +3521,18 @@ class testMeetingItem(PloneMeetingTestCase):
         # XXX toDiscuss is a neutral field because it is managed manually depending
         # on the parameter MeetingConfig.toDiscussSetOnItemInsert
         # check test test_pm_ToDiscussFieldBehaviourWhenCloned
-        NEUTRAL_FIELDS = ['answerers', 'completeness', 'emergency', 'id',
-                          'itemAbsents', 'itemAssembly', 'itemAssemblyAbsents',
-                          'itemAssemblyExcused', 'itemInitiator', 'itemIsSigned',
-                          'itemKeywords', 'itemNumber', 'itemSignatories',
-                          'itemSignatures', 'itemTags', 'listType', 'manuallyLinkedItems',
-                          'meetingTransitionInsertingMe', 'inAndOutMoves', 'notes', 'observations',
-                          'pollTypeObservations', 'predecessor', 'preferredMeeting', 'proposingGroup',
-                          'questioners', 'takenOverBy', 'templateUsingGroups',
-                          'toDiscuss', 'votesAreSecret', 'otherMeetingConfigsClonableToEmergency',
-                          'internalNotes', 'externalIdentifier']
+        NEUTRAL_FIELDS = [
+            'answerers', 'completeness', 'emergency', 'id',
+            'itemAbsents', 'itemAssembly', 'itemAssemblyAbsents',
+            'itemAssemblyExcused', 'itemInitiator', 'itemIsSigned',
+            'itemKeywords', 'itemNumber', 'itemSignatories',
+            'itemSignatures', 'itemTags', 'listType', 'manuallyLinkedItems',
+            'meetingTransitionInsertingMe', 'inAndOutMoves', 'notes',
+            'marginalNotes', 'observations', 'pollTypeObservations',
+            'predecessor', 'preferredMeeting', 'proposingGroup',
+            'questioners', 'takenOverBy', 'templateUsingGroups',
+            'toDiscuss', 'votesAreSecret', 'otherMeetingConfigsClonableToEmergency',
+            'internalNotes', 'externalIdentifier']
         NEUTRAL_FIELDS += self._extraNeutralFields()
         # neutral + default + extra + getExtraFieldsToCopyWhenCloning(True) +
         # getExtraFieldsToCopyWhenCloning(False) should equal itemFields

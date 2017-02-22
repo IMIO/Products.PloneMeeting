@@ -601,6 +601,43 @@ class testWorkflows(PloneMeetingTestCase):
             if field.write_permission == WriteItemMeetingManagerFields:
                 self.assertFalse(item.mayQuickEdit(field.getName()))
 
+    def test_pm_ItemMarginalNotes(self):
+        """Field MeetingItem.marginalNotes is writeable when item is decided."""
+        cfg = self.meetingConfig
+        cfg.setUsedItemAttributes(('marginalNotes', 'observations'))
+        cfg.setUseGroupsAsCategories(True)
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.setDecision(self.decisionText)
+        # field not writeable
+        marginalNotesField = item.getField('marginalNotes')
+        self.assertFalse(marginalNotesField.writeable(item))
+        self.validateItem(item)
+
+        # as MeetingManager
+        self.changeUser('pmManager')
+        # field not writeable
+        self.assertFalse(marginalNotesField.writeable(item))
+        meeting = self.create('Meeting', date=DateTime())
+        self.presentItem(item)
+        self.assertEqual(item.queryState(), 'presented')
+        self.assertFalse(marginalNotesField.writeable(item))
+
+        # writeable when meeting frozen
+        self.freezeMeeting(meeting)
+        self.assertEqual(item.queryState(), 'itemfrozen')
+        self.assertTrue(marginalNotesField.writeable(item))
+        # as other fields
+        obsField = item.getField('observations')
+        self.assertTrue(obsField.writeable(item))
+
+        # close meeting, still editable
+        self.closeMeeting(meeting)
+        self.assertEqual(meeting.queryState(), 'closed')
+        self.assertTrue(marginalNotesField.writeable(item))
+        # but not other fields
+        self.assertFalse(obsField.writeable(item))
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

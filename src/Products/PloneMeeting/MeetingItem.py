@@ -87,6 +87,7 @@ from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
+from Products.PloneMeeting.config import WriteMarginalNotes
 from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.model.adaptations import RETURN_TO_PROPOSING_GROUP_MAPPINGS
 from Products.PloneMeeting.Meeting import Meeting
@@ -654,7 +655,6 @@ schema = Schema((
     TextField(
         name='description',
         widget=RichWidget(
-            rows=20,
             label_msgid="PloneMeeting_label_itemDescription",
             label='Description',
             i18n_domain='PloneMeeting',
@@ -671,7 +671,6 @@ schema = Schema((
         allowable_content_types=('text/html',),
         widget=RichWidget(
             condition="python: here.attributeIsUsed('detailedDescription')",
-            rows=20,
             label='Detaileddescription',
             label_msgid='PloneMeeting_label_detailedDescription',
             i18n_domain='PloneMeeting',
@@ -698,7 +697,6 @@ schema = Schema((
         name='budgetInfos',
         widget=RichWidget(
             condition="python: here.attributeIsUsed('budgetInfos')",
-            rows=20,
             description="BudgetInfos",
             description_msgid="item_budgetinfos_descr",
             label='Budgetinfos',
@@ -862,7 +860,6 @@ schema = Schema((
     TextField(
         name='motivation',
         widget=RichWidget(
-            rows=20,
             condition="python: here.attributeIsUsed('motivation')",
             label='Motivation',
             label_msgid='PloneMeeting_label_motivation',
@@ -880,7 +877,6 @@ schema = Schema((
     TextField(
         name='decision',
         widget=RichWidget(
-            rows=20,
             label='Decision',
             label_msgid='PloneMeeting_label_decision',
             i18n_domain='PloneMeeting',
@@ -941,7 +937,6 @@ schema = Schema((
             description="InAndOutMoves",
             description_msgid="in_and_out_moves_descr",
             label_msgid="PloneMeeting_inAndOutMoves",
-            rows=20,
             label='Inandoutmoves',
             i18n_domain='PloneMeeting',
         ),
@@ -958,7 +953,6 @@ schema = Schema((
             description="Notes",
             description_msgid="notes_descr",
             label_msgid="PloneMeeting_notes",
-            rows=20,
             label='Notes',
             i18n_domain='PloneMeeting',
         ),
@@ -975,7 +969,6 @@ schema = Schema((
             description_msgid="internal_notes_descr",
             condition="python: here.showInternalNotes()",
             label_msgid="PloneMeeting_label_internalNotes",
-            rows=20,
             label='InternalNotes',
             i18n_domain='PloneMeeting',
         ),
@@ -984,11 +977,26 @@ schema = Schema((
         optional=True,
     ),
     TextField(
+        name='marginalNotes',
+        allowable_content_types=('text/html',),
+        widget=RichWidget(
+            description="MarginalNotes",
+            description_msgid="marginal_notes_descr",
+            condition="python: here.attributeIsUsed('marginalNotes')",
+            label_msgid="PloneMeeting_label_marginalNotes",
+            label='MarginalNotes',
+            i18n_domain='PloneMeeting',
+        ),
+        default_content_type="text/html",
+        default_output_type="text/x-html-safe",
+        optional=True,
+        write_permission=WriteMarginalNotes,
+    ),
+    TextField(
         name='observations',
         widget=RichWidget(
             label_msgid="PloneMeeting_itemObservations",
             condition="python: here.attributeIsUsed('observations')",
-            rows=20,
             label='Observations',
             i18n_domain='PloneMeeting',
         ),
@@ -1153,7 +1161,6 @@ schema = Schema((
         widget=RichWidget(
             label_msgid="PloneMeeting_label_pollTypeObservations",
             condition="python: here.attributeIsUsed('pollTypeObservations')",
-            rows=20,
             label='Polltypeobservations',
             i18n_domain='PloneMeeting',
         ),
