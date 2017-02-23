@@ -82,6 +82,7 @@ setDefaultRoles(ReadDecision, ('Manager',))
 setDefaultRoles(WriteDecision, ('Manager',))
 setDefaultRoles(AddAnnex, ('Manager',))
 setDefaultRoles(AddAnnexDecision, ('Manager',))
+setDefaultRoles(WriteMarginalNotes, ('Manager',))
 
 # list of add content permissions for content added to Meeting base contents
 ADD_SUBCONTENT_PERMISSIONS = [
