@@ -330,15 +330,6 @@
                 </tal:displayPollTypeObservations>
             </div>
 
-            <div class="discreet"
-                 tal:condition="python: otherMCs or context.isClonableToOtherMeetingConfigs()"
-                 tal:define="otherMCs context/getOtherMeetingConfigsClonableTo">
-                <span class="item_attribute_label"
-                      i18n:translate="PloneMeeting_label_otherMeetingConfigsClonableTo"></span>:&nbsp;&nbsp;
-
-                 <span tal:condition="not: otherMCs">-</span>
-            </div>
-
             <tal:comment replace="nothing">Oral question or item</tal:comment>
             <div class="discreet" tal:condition="python: 'oralQuestion' in usedAttrs">
              <tal:defines define="oq context/getOralQuestion">
