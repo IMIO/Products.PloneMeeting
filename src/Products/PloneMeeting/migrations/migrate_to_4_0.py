@@ -1038,6 +1038,18 @@ class Migrate_To_4_0(Migrator):
                 cfg.setInsertingMethodsOnAddItem(inserts)
         logger.info('Done.')
 
+    def _initFistItemNumnerOnMeetings(self):
+        """Previously it was possible to set a None value in Meeting.firstItemNumber,
+           this causes crash when computing the first item number on meeting closure,
+           now field is required and have to be an integer."""
+        logger.info('Initializing field Meeting.firstItemNumber to be sure it is not None...')
+        brains = self.portal.portal_catalog(meta_type='Meeting')
+        for brain in brains:
+            meeting = brain.getObject()
+            if meeting.getFirstItemNumber() is None:
+                meeting.setFirstItemNumber(-1)
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 4.0...')
         # MIGRATION COMMON PARTS
@@ -1093,6 +1105,7 @@ class Migrate_To_4_0(Migrator):
         self._moveDuplicatedItemLinkFromAutoToManual()
         self._removeAddFilePermissionOnMeetingConfigFolders()
         self._initSelectablePrivacies()
+        self._initFistItemNumnerOnMeetings()
         # update workflow, needed for items moved to item templates and recurring items
         # update reference_catalog as ReferenceFied "MeetingConfig.toDoListTopics"
         # and "Meeting.lateItems" were removed
@@ -1129,7 +1142,8 @@ def migrate(context):
        23) Move 'duplicated and keep link' link from automatic to manual link;
        24) Remove the 'Add File' permission on user folders;
        25) Migrate to MeetingConfig.selectablePrivacies;
-       26) Refresh catalogs.
+       26) Make sure field Meeting.firstItemNumber is not empty on any meeting;
+       27) Refresh catalogs.
     '''
     migrator = Migrate_To_4_0(context)
     migrator.run()

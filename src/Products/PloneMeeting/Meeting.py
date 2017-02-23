@@ -734,6 +734,8 @@ schema = Schema((
             label_msgid='PloneMeeting_label_firstItemNumber',
             i18n_domain='PloneMeeting',
         ),
+        required=True,
+        validators=('isInt', ),
         write_permission="Manage portal",
         read_permission="Manage portal",
     ),
