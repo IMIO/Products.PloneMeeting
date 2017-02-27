@@ -659,10 +659,13 @@ def onPloneGroupDeleted(event):
     tool = api.portal.get_tool('portal_plonemeeting')
     mGroup = tool.getMeetingGroup(group_id)
     if mGroup:
+        msg = translate(
+            "You cannot delete the group \"${group_id}\", linked to MeetingGroup \"${meeting_group}\" !",
+            domain='PloneMeeting',
+            mapping={'group_id': group_id, 'meeting_group': safe_unicode(mGroup.Title())},
+            context=request)
         api.portal.show_message(
-            message=_("You cannot delete the group \"${group_id}\", linked to MeetingGroup \"${meeting_group}\" !",
-                      mapping={'group_id': group_id,
-                               'meeting_group': safe_unicode(mGroup.Title())}),
+            message=msg,
             request=request,
             type='error')
         raise Redirect(request.get('ACTUAL_URL'))
