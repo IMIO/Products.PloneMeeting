@@ -227,14 +227,14 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.at_post_edit_script()
         self.changeUser('pmManager')
         self.failIf(item.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
-        self.assertTrue(not item.isClonableToOtherMeetingConfigs())
+        self.assertFalse(item.showClonableToOtherMeetingConfigs())
 
         # ok, activate it and send it!
         self.changeUser('admin')
         cfg.setMeetingConfigsToCloneTo(({'meeting_config': otherMeetingConfigId,
                                          'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}, ))
         cfg.at_post_edit_script()
-        self.assertTrue(item.isClonableToOtherMeetingConfigs())
+        self.assertTrue(item.showClonableToOtherMeetingConfigs())
         self.changeUser('pmManager')
         self.failUnless(item.mayCloneToOtherMeetingConfig(otherMeetingConfigId))
         item.cloneToOtherMeetingConfig(otherMeetingConfigId)

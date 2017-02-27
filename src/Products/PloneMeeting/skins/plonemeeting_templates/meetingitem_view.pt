@@ -281,7 +281,7 @@
 
             <tal:comment replace="nothing">Other MeetingConfigs Clonable To</tal:comment>
             <div class="discreet"
-                 tal:condition="python: otherMCs or context.isClonableToOtherMeetingConfigs()"
+                 tal:condition="python: otherMCs or context.showClonableToOtherMeetingConfigs()"
                  tal:define="otherMCs context/getOtherMeetingConfigsClonableTo">
                 <span class="item_attribute_label"
                       i18n:translate="PloneMeeting_label_otherMeetingConfigsClonableTo"></span>:&nbsp;&nbsp;

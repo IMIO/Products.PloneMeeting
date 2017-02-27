@@ -22,12 +22,17 @@
 # 02110-1301, USA.
 #
 
+import transaction
 from DateTime import DateTime
 from OFS.ObjectManager import BeforeDeleteException
 from zope.i18n import translate
+from zExceptions import Redirect
+
 from plone import api
+from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from Products.statusmessages.interfaces import IStatusMessage
 
 
 class testMeetingGroup(PloneMeetingTestCase):
@@ -302,10 +307,15 @@ class testMeetingGroup(PloneMeetingTestCase):
         self.assertEquals(len(newGroup.getPloneGroups()), len(MEETING_GROUP_SUFFIXES))
 
         # remove a Plone group
-        aPloneGroupId = newGroup.getPloneGroups()[0].getId()
-        self.assertTrue(self.portal.portal_groups.removeGroup(aPloneGroupId))
+        newGroup_creators = newGroup.getPloneGroups(suffixes='creators')[0].getId()
+        # this will raise a Redirect, catch it so group is removed
+        try:
+            self.portal.portal_groups.removeGroup(newGroup_creators)
+        except Redirect:
+            pass
         # now we have a missing group
         self.assertTrue(None in newGroup.getPloneGroups())
+        self.assertTrue(newGroup_creators not in newGroup.getPloneGroups())
         # a missing Plone group makes various things fail, like MeetingConfig.listSelectableCopyGroups
         self.assertRaises(AttributeError, cfg.listSelectableCopyGroups)
 
@@ -599,6 +609,45 @@ class testMeetingGroup(PloneMeetingTestCase):
         self.assertEquals(vendors.getGroupInChargeAt(DateTime('2013/05/05')), group1)
         self.assertEquals(vendors.getGroupInChargeAt(DateTime('2012/08/08')), group1)
         self.assertEquals(vendors.getGroupInChargeAt(DateTime('2008/08/08')), group1)
+
+    def test_pm_PloneGroupRemoved(self):
+        """A Plone group linked to a MeetingGroup can not be removed."""
+        self.changeUser('siteadmin')
+        # create a group with title containing special characters
+        newGroup = self.create('MeetingGroup', title='New group éé', acronym='N.G.')
+        newGroup_creators = '{0}_creators'.format(newGroup.getId())
+        msg = translate("You cannot delete the group \"${group_id}\", "
+                        "linked to MeetingGroup \"${meeting_group}\" !",
+                        mapping={'group_id': newGroup_creators,
+                                 'meeting_group': safe_unicode(newGroup.Title())},
+                        domain='PloneMeeting',
+                        context=self.request)
+        # no messages for now
+        messages = IStatusMessage(self.request).show()
+        self.assertEqual(messages, [])
+        portal_groups = self.portal.portal_groups
+        self.assertTrue(newGroup_creators in portal_groups.listGroupIds())
+        # manage transaction because we need to revert the removeGroup
+        # or group is really removed...
+        transaction.commit()
+        transaction.begin()
+        self.assertRaises(Redirect, portal_groups.removeGroup, newGroup_creators)
+        transaction.abort()
+        self.assertTrue(newGroup_creators in portal_groups.listGroupIds())
+        # the portal_message was added
+        messages = IStatusMessage(self.request).show()
+        self.assertEqual(messages[0].message, msg)
+
+        # a Plone group that is not linked to a MeetingGroup is deletable
+        self.assertTrue('Reviewers' in portal_groups.listGroupIds())
+        portal_groups.removeGroup('Reviewers')
+        self.assertFalse('Reviewers' in portal_groups.listGroupIds())
+
+        # Plone groups linked to a MeetingGroup are removable
+        # if currently removing the MeetingGroup
+        self.assertTrue(newGroup_creators in portal_groups.listGroupIds())
+        self.deleteAsManager(newGroup.UID())
+        self.assertFalse(newGroup_creators in portal_groups.listGroupIds())
 
 
 def test_suite():

@@ -1215,7 +1215,7 @@ schema = Schema((
     LinesField(
         name='otherMeetingConfigsClonableTo',
         widget=MultiSelectionWidget(
-            condition="here/isClonableToOtherMeetingConfigs",
+            condition="here/showClonableToOtherMeetingConfigs",
             format="checkbox",
             label='Othermeetingconfigsclonableto',
             label_msgid='PloneMeeting_label_otherMeetingConfigsClonableTo',
@@ -2013,9 +2013,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            items.'''
         return ('portal_plonemeeting' in self.absolute_url())
 
-    security.declarePublic('isClonableToOtherMeetingConfigs')
+    security.declarePublic('showClonableToOtherMeetingConfigs')
 
-    def isClonableToOtherMeetingConfigs(self):
+    def showClonableToOtherMeetingConfigs(self):
         '''Returns True is the current item can be cloned to another
            meetingConfig. This method is used as a condition for showing
            or not the 'otherMeetingConfigsClonableTo' field.'''

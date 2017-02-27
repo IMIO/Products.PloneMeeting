@@ -16,12 +16,12 @@ __docformat__ = 'plaintext'
 
 import logging
 logger = logging.getLogger('PloneMeeting')
-
 from AccessControl import Unauthorized
 from DateTime import DateTime
 from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
 from OFS.ObjectManager import BeforeDeleteException
+from zExceptions import Redirect
 from zope.event import notify
 from zope.i18n import translate
 from zope.lifecycleevent import IObjectRemovedEvent
@@ -34,6 +34,7 @@ from collective.iconifiedcategory.utils import update_all_categorized_elements
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.cache import invalidate_cachekey_volatile_for
 from imio.helpers.xhtml import storeExternalImagesLocally
+from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import ADVICE_GIVEN_HISTORIZED_COMMENT
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
@@ -257,14 +258,6 @@ def onGroupWillBeRemoved(group, event):
                 translate("can_not_delete_meetinggroup_meetingitem",
                           domain="plone",
                           context=group.REQUEST))
-    # If everything passed correctly, we delete every linked (and empty)
-    # Plone groups.
-    portal_groups = api.portal.get_tool('portal_groups')
-    for suffix in MEETING_GROUP_SUFFIXES:
-        ploneGroupId = group.getPloneGroupId(suffix)
-        pGroup = portal_groups.getGroupById(ploneGroupId)
-        if pGroup:
-            portal_groups.removeGroup(ploneGroupId)
 
 
 def onGroupRemoved(group, event):
@@ -272,6 +265,14 @@ def onGroupRemoved(group, event):
     # bypass this if we are actually removing the 'Plone Site'
     if event.object.meta_type == 'Plone Site':
         return
+
+    # If everything passed correctly, we delete every linked (and empty) Plone groups.
+    portal_groups = api.portal.get_tool('portal_groups')
+    for suffix in MEETING_GROUP_SUFFIXES:
+        ploneGroupId = group.getPloneGroupId(suffix)
+        pGroup = portal_groups.getGroupById(ploneGroupId)
+        if pGroup:
+            portal_groups.removeGroup(ploneGroupId)
 
     # clean cache for "Products.PloneMeeting.vocabularies.proposinggroupsvocabulary" and
     # "Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary" vocabularies
@@ -648,3 +649,20 @@ def onDashboardCollectionAdded(collection, event):
     cfg = tool.getMeetingConfig(collection)
     if cfg:
         cfg.updateCollectionColumns()
+
+
+def onPloneGroupDeleted(event):
+    '''Do not delete a Plone group that is linked to a MeetingGroup.'''
+    group_id = event.principal
+    portal = api.portal.get()
+    request = portal.REQUEST
+    tool = api.portal.get_tool('portal_plonemeeting')
+    mGroup = tool.getMeetingGroup(group_id)
+    if mGroup:
+        api.portal.show_message(
+            message=_("You cannot delete the group \"${group_id}\", linked to MeetingGroup \"${meeting_group}\" !",
+                      mapping={'group_id': group_id,
+                               'meeting_group': safe_unicode(mGroup.Title())}),
+            request=request,
+            type='error')
+        raise Redirect(request.get('ACTUAL_URL'))

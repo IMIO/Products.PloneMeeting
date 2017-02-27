@@ -371,6 +371,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Do not define the 'rows' attribute on RichWidget anymore so we may use the CKeditor property 'editor height' to define the editor
   height and it can be changed thru the UI in the CKeditor control panel
 - Added field MeetingItem.marginalNotes that is still editable by a MeetingManager even when item is decided and meeting is closed
+- A Plone group that is linked to a MeetingGroup is no more deletable and a clear message is displayed.  The only way to remove a Plone
+  group linked to a MeetingGroup is to delete the MeetingGroup that will also check if it is not used in the application
 
 3.3 (2015-02-27)
 ----------------
