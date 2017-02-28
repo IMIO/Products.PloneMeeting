@@ -159,6 +159,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Added new richText field 'Meeting.notes/MeetingItem.notes' to be able to specifically encode notes to be used
   in document generation (for example) on an item or on a meeting.  These fields are by default only
   editable/viewable by MeetingManagers
+- Added new richText field 'Meeting.committeeObservations' to encode informations regarding committee
 - Added new richText field 'MeetingItem.internalNotes' restricted in edit/view to the members of the proposing
   group to leave internal notes on an item
 - Every caches are invalidated when a MeetingConfig is edited so changing a parameter
@@ -217,7 +218,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - A meeting containing items in state 'returned_to_proposing_group' may not be closed anymore
 - Added boolean field Meeting.extraordinarySession, informational field useable when necessary
 - Enabled leading icons for meetings as it is the case for items, added icon for Meeting.extraordinarySession
-- Simplified testing infrastructure when overrided by a plugin so th plugin does not need to call existing tests
+- Simplified testing infrastructure when overrided by a plugin so the plugin does not need to call existing tests
 - When using WF adaptations 'hide_decisions_when_under_writing', do not only show the decision to MeetingManagers but to
   every users able to edit the item, this way, used together with WF adaptation 'return_to_proposing_group', the decision
   is viewable by users that will correct the item

@@ -37,6 +37,11 @@
     <metal:f use-macro="context/@@pm-macros/viewContentField"/>
   </tal:field>
 
+  <tal:comment replace="nothing">Committee observations</tal:comment>
+  <tal:field define="fieldName python: 'committeeObservations'; ajaxEdit python:True">
+    <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+  </tal:field>
+
   <tal:annexes replace="structure context/@@display-annexes" />
 
   <tal:comment replace="nothing">For the admin only</tal:comment>

@@ -690,6 +690,19 @@ schema = Schema((
         optional=True,
     ),
     TextField(
+        name='committeeObservations',
+        allowable_content_types=('text/html',),
+        widget=RichWidget(
+            condition="python: here.attributeIsUsed('committeeObservations')",
+            label='Committeeobservations',
+            label_msgid='PloneMeeting_label_committeeObservations',
+            i18n_domain='PloneMeeting',
+        ),
+        default_content_type="text/html",
+        default_output_type="text/x-html-safe",
+        optional=True,
+    ),
+    TextField(
         name='authorityNotice',
         allowable_content_types=('text/html',),
         widget=RichWidget(
