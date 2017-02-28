@@ -335,6 +335,8 @@ def _configureCKeditor(site):
     cke_props.height = '500px'
     # do not use 'rows' of the field widget for editor height
     cke_props.properties_overloaded = (u'width', u'height')
+    # use Moono-Lisa skin
+    cke_props.skin = u'moono-lisa'
 
 
 def _congfigureSafeHtml(site):

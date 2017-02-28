@@ -1079,6 +1079,10 @@ class Migrate_To_4_0(Migrator):
         # upgrade dependencies
         self.upgradeDependencies()
         self.updateHolidays()
+        # re-apply the plonemeetingskin as it was shuffled by imioapps upgrade step
+        self.runProfileSteps('plonetheme.imioapps',
+                             steps=['cssregistry'],
+                             profile='plonemeetingskin')
 
         # MIGRATION V4 SPECIFIC PARTS
         self._adaptAppForImioAnnex()
