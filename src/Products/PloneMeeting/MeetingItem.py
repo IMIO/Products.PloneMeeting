@@ -2090,7 +2090,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getMeeting_cachekey(method, self, brain=False):
         '''cachekey method for self.getMeeting.'''
-        return self.REQUEST._debug, brain
+        return (self, self.REQUEST._debug, brain)
 
     security.declarePublic('getMeeting')
 
@@ -2115,7 +2115,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def getMeetingToInsertIntoWhenNoCurrentMeetingObject_cachekey(method, self, preferredMeeting):
         '''cachekey method for self.getMeetingToInsertIntoWhenNoCurrentMeetingObject.'''
         # do only recompute once by REQUEST
-        return str(self.REQUEST._debug), preferredMeeting
+        return (self, str(self.REQUEST._debug), preferredMeeting)
 
     @ram.cache(getMeetingToInsertIntoWhenNoCurrentMeetingObject_cachekey)
     def getMeetingToInsertIntoWhenNoCurrentMeetingObject(self, preferredMeeting):
