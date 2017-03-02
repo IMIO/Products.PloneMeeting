@@ -2,7 +2,7 @@
 #
 # File: testPortlets.py
 #
-# Copyright (c) 2015 by Imio.be
+# Copyright (c) 2017 by Imio.be
 #
 # GNU General Public License (GPL)
 #
@@ -22,11 +22,43 @@
 # 02110-1301, USA.
 #
 
+from zope.component import getMultiAdapter
+from zope.component import getUtility
+from plone.portlets.interfaces import IPortletManager, IPortletRenderer
+from Products.PloneMeeting.browser import portlet_plonemeeting
+from Products.PloneMeeting.browser import portlet_todo
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 
 
 class testPortlets(PloneMeetingTestCase):
     '''Tests the MeetingItem class methods.'''
+
+    def setUp(self):
+        """ """
+        # call parent setUp
+        PloneMeetingTestCase.setUp(self)
+        self.changeUser('pmCreator1')
+        mFolder = self.getMeetingFolder(self.meetingConfig)
+        self.view = self.portal.restrictedTraverse('@@plone')
+        self.manager = getUtility(IPortletManager,
+                                  name='plone.leftcolumn',
+                                  context=self.portal)
+        self.portlet_pm_assignment = portlet_plonemeeting.Assignment()
+        self.portlet_pm_renderer = getMultiAdapter(
+            (mFolder,
+             self.request,
+             self.view,
+             self.manager,
+             self.portlet_pm_assignment),
+            IPortletRenderer)
+        self.portlet_todo_assignment = portlet_todo.Assignment()
+        self.portlet_todo_renderer = getMultiAdapter(
+            (mFolder,
+             self.request,
+             self.view,
+             self.manager,
+             self.portlet_todo_assignment),
+            IPortletRenderer)
 
     def test_pm_PortletPMAvailableTemplates(self):
         '''Test the portlet_plonemeeting itemTemplates icon that is shown if item templates
@@ -52,6 +84,32 @@ class testPortlets(PloneMeetingTestCase):
         self.assertTrue(itemsCategory.templateItems())
         # no matter actually there are no itemTemplates available for him...
         self.assertFalse(self.meetingConfig.getItemTemplates(as_brains=True, onlyActive=True, filtered=True))
+
+    def test_pm_FromPortletTodo(self):
+        """While getting searches in portlet_todo, the TAL condition for searches have
+           a 'fromPortletTodo=True', it is not the case in the portlet_plonemeeting, this way
+           we may know that we are in portlet_todo or portlet_plonemeeting and display
+           searches using a different condition."""
+        # by default, no condition, viewable in both portlets
+        searches = self.meetingConfig.searches
+        searchAllItems = searches.searches_items.searchallitems
+        searchAllItems.tal_condition = ''
+        searchAllItemsUID = searchAllItems.UID()
+        # select 'searchallitems' in the MeetingConfig.toDoListSearches
+        self.meetingConfig.setToDoListSearches([searchAllItems])
+        # viewable in portlet_plonemeeting
+        self.changeUser('pmCreator1')
+        self.assertTrue(searchAllItemsUID in self.portlet_pm_renderer.render())
+        # and viewable in portlet_todo
+        self.assertTrue(searchAllItemsUID in self.portlet_todo_renderer.render())
+
+        # set 'python: fromPortletTodo' as condition for a search, it will be displayed
+        # in the portlet_todo but not in the portlet_plonemeeting
+        searchAllItems.tal_condition = 'python: fromPortletTodo'
+        # not viewable in portlet_plonemeeting
+        self.assertFalse(searchAllItemsUID in self.portlet_pm_renderer.render())
+        # but viewable in portlet_todo
+        self.assertTrue(searchAllItemsUID in self.portlet_todo_renderer.render())
 
 
 def test_suite():

@@ -93,22 +93,23 @@ class Renderer(base.Renderer, FacetedRenderer):
         if not self.cfg:
             return res
         member = api.user.get_current()
+        # add a special key 'fromPortletTodo' in the extra_expr_ctx specifying
+        # that we are querying available searches from the portlet_todo,
+        # this way, we can use a different condition to display search in the
+        # portlet_todo, for example shown for everyone in the
+        # portlet_plonemeeting but only for some users in the portlet_todo
+        # or only shown in the portlet_todo
         data = {'member': member,
                 'tool': self.tool,
-                'cfg': self.cfg}
+                'cfg': self.cfg,
+                'fromPortletTodo': True}
 
-        # add a special key in the REQUEST specifying that we are querying
-        # available searches from the portlet_todo, this way, we can use a different
-        # condition to display search in the portlet_todo, for example shown for everyone in the
-        # plonemeeting_portlet but only for some users in the portlet_todo
-        self.request.set('fromPortletTodo', True)
         for search in self.cfg.getToDoListSearches():
             if ITALConditionable.providedBy(search):
                 data.update({'obj': search})
                 if not evaluateExpressionFor(search, extra_expr_ctx=data):
                     continue
             res.append(search)
-        self.request.set('fromPortletTodo', False)
         return res
 
     def getColoredLink(self, brain):

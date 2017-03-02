@@ -58,7 +58,9 @@ class PMConditionAwareCollectionVocabulary(ConditionAwareCollectionVocabulary):
         """Define some values that will be available in the TALCondition expression."""
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
-        return {'tool': tool, 'cfg': cfg}
+        return {'tool': tool,
+                'cfg': cfg,
+                'fromPortletTodo': False}
 
 PMConditionAwareCollectionVocabularyFactory = PMConditionAwareCollectionVocabulary()
 
