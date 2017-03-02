@@ -1347,10 +1347,12 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
         self.cfg = self.tool.getMeetingConfig(context)
         self.parent = self.context.getParentNode()
 
-    def get_infos(self, category):
+    def get_infos(self, category, limited=False):
         """A the 'visible_for_groups' info."""
-        infos = super(PMCategorizedObjectInfoAdapter, self).get_infos(category)
-        infos['visible_for_groups'] = self._visible_for_groups()
+        infos = super(PMCategorizedObjectInfoAdapter, self).get_infos(
+            category, limited=limited)
+        if not limited:
+            infos['visible_for_groups'] = self._visible_for_groups()
         return infos
 
     def _apply_visible_groups_security(self, group_ids):
