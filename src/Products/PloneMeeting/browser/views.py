@@ -589,7 +589,8 @@ class PMDocumentGenerationHelperView(ATDocumentGenerationHelperView):
 
                 # display the author if advice was given
                 if withAuthor and not adviceType == NOT_GIVEN_ADVICE_VALUE:
-                    adviceObj = getattr(item, advice['advice_id'])
+                    adviceHolder = advice.get('adviceHolder', item)
+                    adviceObj = adviceHolder.getAdviceObj(advice['id'])
                     author = membershipTool.getMemberInfo(adviceObj.Creator())
                     if author:
                         author = author['fullname']
