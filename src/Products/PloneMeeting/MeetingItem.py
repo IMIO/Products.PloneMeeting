@@ -622,6 +622,18 @@ class MeetingItemWorkflowActions:
         '''Send an email when returned to proposing group if relevant...'''
         self.context.sendMailIfRelevant('returnedToProposingGroup', 'MeetingMember', isRole=True)
 
+    security.declarePrivate('doGoTo_returned_to_proposing_group_proposed')
+
+    def doGoTo_returned_to_proposing_group_proposed(self, stateChange):
+        '''Send an email when returned to proposing group for validation if relevant...'''
+        self.context.sendMailIfRelevant('goTo_returned_to_proposing_group_proposed', 'MeetingMember', isRole=True)
+
+    security.declarePrivate('doGoTo_returned_to_proposing_group_prevalidated')
+
+    def doGoTo_returned_to_proposing_group_prevalidated(self, stateChange):
+        '''Send an email when returned to proposing group for validation if relevant...'''
+        self.context.sendMailIfRelevant('goTo_returned_to_proposing_group_prevalidated', 'MeetingMember', isRole=True)
+
     security.declarePrivate('doWait_advices_from_itemcreated')
 
     def doWait_advices_from_itemcreated(self, stateChange):

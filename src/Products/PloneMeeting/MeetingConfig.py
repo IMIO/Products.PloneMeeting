@@ -2174,7 +2174,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                      'pre_validation_keep_reviewer_permissions', 'items_come_validated',
                      'archiving', 'no_publication', 'no_proposal', 'everyone_reads_all',
                      'reviewers_take_back_validated_item', 'creator_edits_unless_closed',
-                     'return_to_proposing_group', 'hide_decisions_when_under_writing',
+                     'return_to_proposing_group', 'return_to_proposing_group_with_last_validation',
+                     'return_to_proposing_group_with_all_validations', 'hide_decisions_when_under_writing',
                      'waiting_advices', 'postpone_next_meeting', 'mark_not_applicable',
                      'removed')
 
@@ -3101,6 +3102,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            ('pre_validation' in values or 'pre_validation_keep_reviewer_permissions' in values):
             return msg
         if 'pre_validation' in values and 'pre_validation_keep_reviewer_permissions' in values:
+            return msg
+
+        vals = [vals for vals in values if vals.startswith('return_to_proposing_group')]
+        if len(vals) > 1:
             return msg
 
         catalog = api.portal.get_tool('portal_catalog')

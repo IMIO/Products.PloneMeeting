@@ -71,6 +71,8 @@ class testWFAdaptations(PloneMeetingTestCase):
                            'pre_validation_keep_reviewer_permissions',
                            'removed',
                            'return_to_proposing_group',
+                           'return_to_proposing_group_with_all_validations',
+                           'return_to_proposing_group_with_last_validation',
                            'reviewers_take_back_validated_item',
                            'waiting_advices'])
 
@@ -195,6 +197,21 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertEquals(
             cfg.validate_workflowAdaptations(('no_proposal', 'pre_validation_keep_reviewer_permissions')),
             wa_conflicts)
+
+        # return_to_proposing_group... alone is ok
+        self.failIf(cfg.validate_workflowAdaptations(('return_to_proposing_group',)))
+        self.failIf(cfg.validate_workflowAdaptations(('return_to_proposing_group_with_last_validation',)))
+        self.failIf(cfg.validate_workflowAdaptations(('return_to_proposing_group_with_all_validations',)))
+        # Only one return_to_proposing_group can be selectable
+        self.assertEquals(
+            cfg.validate_workflowAdaptations(('return_to_proposing_group_with_last_validation',
+                                              'return_to_proposing_group')), wa_conflicts)
+        self.assertEquals(
+            cfg.validate_workflowAdaptations(('return_to_proposing_group_with_last_validation',
+                                              'return_to_proposing_group_with_all_validations')), wa_conflicts)
+        self.assertEquals(
+            cfg.validate_workflowAdaptations(('return_to_proposing_group_with_all_validations',
+                                              'return_to_proposing_group')), wa_conflicts)
 
     def test_pm_Validate_workflowAdaptations_added_no_publication(self):
         """Test MeetingConfig.validate_workflowAdaptations that manage addition
