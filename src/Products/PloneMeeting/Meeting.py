@@ -1394,8 +1394,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             else:
                 # first added item
                 item.setItemNumber(100)
-            # Add the item at the end of the items list
 
+        # Add the item at the end of the items list
         items.append(item)
         self.setItems(items)
         # invalidate RAMCache for MeetingItem.getMeeting
