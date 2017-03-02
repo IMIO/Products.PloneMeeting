@@ -95,14 +95,18 @@ class Migrate_To_4_0(Migrator):
         portal_tabs = api.portal.get_tool('portal_actions').portal_tabs
 
         for cfg in self.tool.objectValues('MeetingConfig'):
+            logger.info('Moving to imio.dashboard : adding DashboardCollections and disabling Topics...')
+            # call _createSubFolder and createSearches so new searches are added to
+            # a Plone Site that was already migrated in PM4 and is upgraded after new searches
+            # have been added to the code
+            cfg._createSubFolders()
+            cfg.createSearches(cfg._searchesInfo())
+
             # already migrated?
             if cfg.get('searches', None) and \
                cfg.searches.get('searches_items', None) and \
                cfg.searches.searches_items.objectIds():
                 continue
-            logger.info('Moving to imio.dashboard : adding DashboardCollections and disabling Topics...')
-            cfg._createSubFolders()
-            cfg.createSearches(cfg._searchesInfo())
             for topic in cfg.topics.objectValues():
                 if wft.getInfoFor(topic, 'review_state') == 'active':
                     wft.doActionFor(topic, 'deactivate')
