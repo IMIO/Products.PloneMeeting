@@ -618,32 +618,6 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertTrue('%s_restrictedpowerobservers' % cfg.getId() in meeting.__ac_local_roles__)
         self.assertTrue(catalog(UID=meeting.UID()))
 
-    def test_pm_UpdateAnnexes(self):
-        """Test updateAnnexes that will reindex every annexes on items.
-           This is usefull especially if a user change an annex type title."""
-        # only available to 'Managers'
-        self.changeUser('pmCreator1')
-        self.assertRaises(Unauthorized, self.tool.updateAnnexes)
-        # create item with annex
-        item = self.create('MeetingItem')
-        annex = self.addAnnex(item)
-        category = get_category_object(annex, annex.content_category)
-        currentIndexedCategoryTitle = category.Title()
-        self.assertEqual(item.categorized_elements[annex.UID()]['category_title'],
-                         currentIndexedCategoryTitle)
-        NEW_CATEGORY_TITLE = 'New category title'
-        category.title = NEW_CATEGORY_TITLE
-        self.assertNotEqual(currentIndexedCategoryTitle, NEW_CATEGORY_TITLE)
-        # categorized_elements was not updated
-        self.assertNotEqual(item.categorized_elements[annex.UID()]['category_title'],
-                            NEW_CATEGORY_TITLE)
-
-        # updateAnnexes then check again
-        self.changeUser('siteadmin')
-        self.tool.updateAnnexes()
-        self.assertEqual(item.categorized_elements[annex.UID()]['category_title'],
-                         NEW_CATEGORY_TITLE)
-
     def test_pm_FormatMeetingDate(self):
         """Test the formatMeetingDate method."""
         self.changeUser('pmManager')

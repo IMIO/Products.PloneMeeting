@@ -350,7 +350,11 @@
                    tal:define="cat_group_url cat_group/absolute_url" width="100%;">
               <tr>
                 <th class="nosort" width="200px">
-                  <h2 tal:content="cat_group/Title">Group category title</h2>
+                  <h2>
+                    <a href=""
+                       tal:attributes="href cat_group/absolute_url"
+                        tal:content="cat_group/Title">Group category title</a>
+                  </h2>
                   <tal:forRealManagers condition="isRealManager">
                     <a href="#"
                        title="add_object"
