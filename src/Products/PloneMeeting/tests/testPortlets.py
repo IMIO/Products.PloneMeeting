@@ -33,10 +33,8 @@ from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCas
 class testPortlets(PloneMeetingTestCase):
     '''Tests the MeetingItem class methods.'''
 
-    def setUp(self):
+    def _setup_portlets(self):
         """ """
-        # call parent setUp
-        PloneMeetingTestCase.setUp(self)
         self.changeUser('pmCreator1')
         mFolder = self.getMeetingFolder(self.meetingConfig)
         self.view = self.portal.restrictedTraverse('@@plone')
@@ -90,6 +88,7 @@ class testPortlets(PloneMeetingTestCase):
            a 'fromPortletTodo=True', it is not the case in the portlet_plonemeeting, this way
            we may know that we are in portlet_todo or portlet_plonemeeting and display
            searches using a different condition."""
+        self._setup_portlets()
         # by default, no condition, viewable in both portlets
         searches = self.meetingConfig.searches
         searchAllItems = searches.searches_items.searchallitems
