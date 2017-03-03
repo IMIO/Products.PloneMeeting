@@ -626,34 +626,43 @@ class Migrate_To_4_0(Migrator):
         """If still using the old default toolbar, move to the new toolbar
            where buttons ,'NbSpace','NbHyphen', 'link', 'Unlink' and 'Image' are added."""
         logger.info('Updating ckeditor custom toolbar, adding buttons '
-                    '\'NbSpace\', \'NbHyphen\', \'Link\', \'Unlink\' and \'Image\'...')
+                    '\'FontSize\', \'NbSpace\', \'NbHyphen\', \'Link\', \'Unlink\' and \'Image\'...')
         toolbar = self.portal.portal_properties.ckeditor_properties.toolbar_Custom
-        if not 'NbSpace' in toolbar and not 'NbHyphen' in toolbar:
+        if not "'NbSpace'" in toolbar and not "'NbHyphen'" in toolbar:
             # try to insert these buttons after 'Format' or 'Styles'
             if 'Format' in toolbar:
                 toolbar = toolbar.replace("'Format'", "'Format','NbSpace','NbHyphen'")
-            elif 'Styles' in toolbar:
+            elif "'Styles'" in toolbar:
                 toolbar = toolbar.replace("'Styles'", "'Styles','NbSpace','NbHyphen'")
             else:
                 self.warn(logger, "Could not add new buttons 'NbSpace' and 'NbHyphen' to the ckeditor toolbar!")
 
-        if not 'Image' in toolbar:
-            # try to insert these buttons after 'SpecialChar' or 'Table'
-            if 'SpecialChar' in toolbar:
+        if not "'Image'" in toolbar:
+            # try to insert this button after 'SpecialChar' or 'Table'
+            if "'SpecialChar'" in toolbar:
                 toolbar = toolbar.replace("'SpecialChar'", "'SpecialChar','Image'")
-            elif 'Table' in toolbar:
+            elif "'Table'" in toolbar:
                 toolbar = toolbar.replace("'Table'", "'Table','Image'")
             else:
                 self.warn(logger, "Could not add new button 'Image' to the ckeditor toolbar!")
 
-        if not 'Link' in toolbar and not 'Unlink' in toolbar:
+        if not "'Link'" in toolbar and not "'Unlink'" in toolbar:
             # try to insert these buttons after 'SpecialChar' or 'Table'
-            if 'SpecialChar' in toolbar:
+            if "'SpecialChar'" in toolbar:
                 toolbar = toolbar.replace("'SpecialChar'", "'SpecialChar','Link','Unlink'")
-            elif 'Table' in toolbar:
+            elif "'Table'" in toolbar:
                 toolbar = toolbar.replace("'Table'", "'Table','Link','Unlink'")
             else:
                 self.warn(logger, "Could not add new buttons 'Link' and 'Unlink' to the ckeditor toolbar!")
+
+        if not "'FontSize'" in toolbar:
+            # try to insert this button after 'Format' or 'Styles'
+            if "'Styles'" in toolbar:
+                toolbar = toolbar.replace("'Styles'", "'Styles','FontSize'")
+            elif "'Format'" in toolbar:
+                toolbar = toolbar.replace("'Format'", "'Format','FontSize'")
+            else:
+                self.warn(logger, "Could not add new button 'FontSize' to the ckeditor toolbar!")
 
         self.portal.portal_properties.ckeditor_properties.manage_changeProperties(
             toolbar_Custom=toolbar)
