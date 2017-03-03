@@ -164,15 +164,17 @@ class PMConfigActionsPanelViewlet(ActionsPanelViewlet):
     def renderViewlet(self):
         """ """
         showAddContent = False
+        showActions = False
         if 'ContentCategory' in self.context.portal_type:
             showAddContent = True
+            showActions = True
         return self.context.restrictedTraverse("@@actions_panel")(useIcons=False,
                                                                   showTransitions=True,
                                                                   appendTypeNameToTransitionLabel=True,
                                                                   showArrows=False,
                                                                   showEdit=False,
                                                                   showDelete=False,
-                                                                  showActions=False,
+                                                                  showActions=showActions,
                                                                   showAddContent=showAddContent)
 
     def getBackUrl(self):
@@ -637,8 +639,14 @@ class ConfigActionsPanelView(ActionsPanelView):
                                    'renderArrows',
                                    'renderOwnDelete',
                                    'renderAddContent')
+
+        if 'ContentCategory' in self.context.portal_type:
+            self.SECTIONS_TO_RENDER += ('renderActions', )
+            self.ACCEPTABLE_ACTIONS = ('update_categorized_elements',
+                                       'update_and_sort_categorized_elements')
+
         if self.context.meta_type == 'MeetingGroup':
-            self.SECTIONS_TO_RENDER = self.SECTIONS_TO_RENDER + ('renderLinkedPloneGroups', )
+            self.SECTIONS_TO_RENDER += ('renderLinkedPloneGroups', )
 
     def renderArrows(self):
         """ """
