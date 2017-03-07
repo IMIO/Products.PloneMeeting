@@ -41,6 +41,7 @@ from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
 from imio.helpers.xhtml import addClassToContent
 from imio.helpers.xhtml import imagesToPath
 from Products.PloneMeeting import logger
+from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import ADVICE_STATES_ALIVE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.browser.itemchangeorder import _is_integer
@@ -152,9 +153,17 @@ class PresentSeveralItemsView(BrowserView):
         """ """
         uid_catalog = api.portal.get_tool('uid_catalog')
         wfTool = api.portal.get_tool('portal_workflow')
+        # defer call to Meeting.updateItemReferences
+        self.request.set('defer_Meeting_updateItemReferences', True)
+        lowest_itemNumber = 0
         for uid in uids:
             obj = uid_catalog.searchResults(UID=uid)[0].getObject()
             wfTool.doActionFor(obj, 'present')
+            if not lowest_itemNumber or obj.getItemNumber() < lowest_itemNumber:
+                lowest_itemNumber = obj.getItemNumber()
+        self.request.set('defer_Meeting_updateItemReferences', False)
+        # now we may call updateItemReferences
+        self.context.updateItemReferences(startNumber=lowest_itemNumber)
         msg = translate('present_several_items_done',
                         domain='PloneMeeting',
                         context=self.request)
@@ -178,8 +187,14 @@ class RemoveSeveralItemsView(BrowserView):
         # by jQuery, we receive only one uid, as a string...
         if isinstance(uids, str):
             uids = [uids]
+        # defer call to Meeting.updateItemReferences
+        self.request.set('defer_Meeting_updateItemReferences', True)
+        lowest_itemNumber = 0
         for uid in uids:
             obj = uid_catalog(UID=uid)[0].getObject()
+            # save lowest_itemNumber for call to Meeting.updateItemReferences here under
+            if not lowest_itemNumber or obj.getItemNumber() < lowest_itemNumber:
+                lowest_itemNumber = obj.getItemNumber()
             # execute every 'back' transitions until item is in state 'validated'
             changedState = True
             while not obj.queryState() == 'validated':
@@ -192,6 +207,10 @@ class RemoveSeveralItemsView(BrowserView):
                         wfTool.doActionFor(obj, tr['id'])
                         changedState = True
                         break
+
+        self.request.set('defer_Meeting_updateItemReferences', False)
+        # now we may call updateItemReferences
+        self.context.updateItemReferences(startNumber=lowest_itemNumber)
         msg = translate('remove_several_items_done',
                         domain='PloneMeeting',
                         context=self.request)
@@ -300,6 +319,17 @@ class MeetingAfterFacetedInfosView(BrowserView):
         return self.tool.isManager(self.context) and \
             self.context.adapted().isDecided() and \
             self.context.queryState() not in self.context.meetingClosedStates
+
+
+class MeetingUpdateItemReferences(BrowserView):
+    """Call Meeting.updateItemReferences from a meeting."""
+
+    def index(self):
+        """ """
+        self.context.updateItemReferences()
+        msg = _('References of contained items have been updated.')
+        api.portal.show_message(msg, request=self.request)
+        return self.request.RESPONSE.redirect(self.context.absolute_url())
 
 
 class PloneMeetingRedirectToAppView(BrowserView):

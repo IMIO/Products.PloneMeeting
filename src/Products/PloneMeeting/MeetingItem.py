@@ -50,6 +50,7 @@ from Products.Archetypes.atapi import RichWidget
 from Products.Archetypes.atapi import Schema
 from Products.Archetypes.atapi import SelectionWidget
 from Products.Archetypes.atapi import StringField
+from Products.Archetypes.atapi import StringWidget
 from Products.Archetypes.atapi import TextAreaWidget
 from Products.Archetypes.atapi import TextField
 from Products.Archetypes.event import ObjectEditedEvent
@@ -651,6 +652,16 @@ schema = Schema((
             label_msgid='PloneMeeting_label_itemNumber',
             i18n_domain='PloneMeeting',
         ),
+    ),
+    StringField(
+        name='itemReference',
+        widget=StringWidget(
+            visible=False,
+            label='Itemreference',
+            label_msgid='PloneMeeting_label_itemReference',
+            i18n_domain='PloneMeeting',
+        ),
+        searchable=True,
     ),
     TextField(
         name='description',
@@ -2648,14 +2659,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res = self.context
         return res
 
-    security.declarePublic('getItemReference')
+    security.declarePublic('updateItemReference')
 
-    def getItemReference(self):
-        '''Gets the reference of this item. Returns an empty string if the
-           meeting is not decided yet.'''
+    def updateItemReference(self):
+        '''Update the item reference, recompute it,
+           stores it and reindex 'getItemReference'.'''
         res = ''
         item = self.getSelf()
-        if item.hasMeeting():
+        meeting = item.getMeeting()
+        if meeting and not meeting.queryState() in meeting.getBeforeFrozenStates():
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(item)
             itemRefFormat = cfg.getItemReferenceFormat()
@@ -2666,6 +2678,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     res = Expression(itemRefFormat)(ctx)
                 except Exception, e:
                     raise PloneMeetingError(ITEM_REF_ERROR % str(e))
+        stored = self.getField('itemReference').get(self)
+        if stored != res:
+            self.setItemReference(res)
+            self.reindexObject(idxs=['SearchableText'])
         return res
 
     security.declarePublic('getItemSignatures')

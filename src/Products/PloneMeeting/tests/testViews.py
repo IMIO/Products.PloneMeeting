@@ -31,6 +31,7 @@ from zope.i18n import translate
 from plone import api
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
+from Products.CMFCore.permissions import View
 from Products.statusmessages.interfaces import IStatusMessage
 
 from Products import PloneMeeting as products_plonemeeting
@@ -559,6 +560,34 @@ class testViews(PloneMeetingTestCase):
                           '<p class="sample">DECIDE :</p>'
                           '<p class="sample">&#160;</p>'
                           '<p class="sample">The d&#233;cision using UTF-8 characters.</p>')
+
+    def test_pm_MeetingUpdateItemReferences(self):
+        """Test call to @@update-item-references from the meeting that will update
+           every references of items of a meeting."""
+        cfg = self.meetingConfig
+        # remove recurring items in self.meetingConfig
+        self._removeConfigObjectsFor(cfg)
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        meeting = self.create('Meeting', date=DateTime('2017/03/03'))
+        self.presentItem(item)
+        self.freezeMeeting(meeting)
+        self.assertEqual(item.getItemReference(), 'Ref. 20170303/1')
+        # change itemReferenceFormat
+        # change itemReferenceFormat to include an item data (Title)
+        cfg.setItemReferenceFormat(
+            "python: here.getMeeting().getDate().strftime('%Y%m%d') + '/' + "
+            "here.getItemNumber(for_display=True)")
+        view = meeting.restrictedTraverse('@@update-item-references')
+        view()
+        self.assertEqual(item.getItemReference(), '20170303/1')
+
+        # the view is not available to other users
+        self.changeUser('pmCreator1')
+        self.assertTrue(self.hasPermission(View, meeting))
+        self.assertRaises(Unauthorized,
+                          meeting.restrictedTraverse,
+                          '@@update-item-references')
 
 
 def test_suite():

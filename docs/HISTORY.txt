@@ -80,7 +80,6 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   in the 'advices to give' search when giveable
 - Adapted the 'move item to position number' on the meeting view to move an item to an exact position and no
   more the 'position before the entered number'
-- Added possibility to display the item reference in the item dashboards
 - Removed Meeting.getAllItems and deprecated Meeting.getItemsInOrder that must be replaced by Meeting.getItems.
   Meeting.getItems does not receive a 'late=True/False' parameter anymore as we may have more than 'normal/late' for
   MeetingItem.listType, but receives now a list of listTypes that is by default empty ([]) meaning that it will
@@ -374,6 +373,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Added field MeetingItem.marginalNotes that is still editable by a MeetingManager even when item is decided and meeting is closed
 - A Plone group that is linked to a MeetingGroup is no more deletable and a clear message is displayed.  The only way to remove a Plone
   group linked to a MeetingGroup is to delete the MeetingGroup that will also check if it is not used in the application
+- Added possibility to display the item reference in the item dashboards, moreover, Meeting.itemReference is now a field where the
+  item reference is stored.  This avoid computing the itemReference each time it is accessed, moreover MeetingItem.itemReference is
+  searchable and will be found in the SearchableText
 
 3.3 (2015-02-27)
 ----------------

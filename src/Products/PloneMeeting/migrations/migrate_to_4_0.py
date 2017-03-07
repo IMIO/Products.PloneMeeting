@@ -1051,7 +1051,7 @@ class Migrate_To_4_0(Migrator):
                 cfg.setInsertingMethodsOnAddItem(inserts)
         logger.info('Done.')
 
-    def _initFistItemNumnerOnMeetings(self):
+    def _initFirstItemNumberOnMeetings(self):
         """Previously it was possible to set a None value in Meeting.firstItemNumber,
            this causes crash when computing the first item number on meeting closure,
            now field is required and have to be an integer."""
@@ -1061,6 +1061,27 @@ class Migrate_To_4_0(Migrator):
             meeting = brain.getObject()
             if meeting.getFirstItemNumber() is None:
                 meeting.setFirstItemNumber(-1)
+        logger.info('Done.')
+
+    def _updateItemReferences(self):
+        """Previously reference was geenrated each time it was accessed, now it is stored."""
+        logger.info('Storing item reference for every items...')
+        brains = self.portal.portal_catalog(meta_type='Meeting')
+        checkMigrated = True
+        for brain in brains:
+            meeting = brain.getObject()
+            # already migrated?
+            if checkMigrated:
+                items = meeting.getItems()
+                if items:
+                    if items[0].getItemReference():
+                        break
+                    else:
+                        checkMigrated = False
+            # not migrated, migrate
+            logger.info('Running updateItemReferences for : %s'
+                        % meeting.absolute_url_path())
+            meeting.updateItemReferences()
         logger.info('Done.')
 
     def run(self):
@@ -1122,7 +1143,8 @@ class Migrate_To_4_0(Migrator):
         self._moveDuplicatedItemLinkFromAutoToManual()
         self._removeAddFilePermissionOnMeetingConfigFolders()
         self._initSelectablePrivacies()
-        self._initFistItemNumnerOnMeetings()
+        self._initFirstItemNumberOnMeetings()
+        self._updateItemReferences()
         # update workflow, needed for items moved to item templates and recurring items
         # update reference_catalog as ReferenceFied "MeetingConfig.toDoListTopics"
         # and "Meeting.lateItems" were removed
