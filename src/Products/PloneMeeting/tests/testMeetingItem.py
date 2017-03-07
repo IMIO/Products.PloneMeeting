@@ -3526,7 +3526,7 @@ class testMeetingItem(PloneMeetingTestCase):
             'answerers', 'completeness', 'emergency', 'id',
             'itemAbsents', 'itemAssembly', 'itemAssemblyAbsents',
             'itemAssemblyExcused', 'itemInitiator', 'itemIsSigned',
-            'itemKeywords', 'itemNumber', 'itemSignatories',
+            'itemKeywords', 'itemNumber', 'itemReference', 'itemSignatories',
             'itemSignatures', 'itemTags', 'listType', 'manuallyLinkedItems',
             'meetingTransitionInsertingMe', 'inAndOutMoves', 'notes',
             'marginalNotes', 'observations', 'pollTypeObservations',
