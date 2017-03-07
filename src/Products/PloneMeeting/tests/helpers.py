@@ -21,6 +21,7 @@
 #
 
 from DateTime import DateTime
+from plone import api
 
 
 class PloneMeetingTestingHelpers:
@@ -242,7 +243,7 @@ class PloneMeetingTestingHelpers:
            Overrided to do it as 'Manager' to be able not
            to change permissions ever lines"""
         from plone.app.testing.helpers import setRoles
-        currentMember = self.portal.portal_membership.getAuthenticatedMember()
+        currentMember = api.user.get_current()
         currentMemberRoles = currentMember.getRoles()
         setRoles(self.portal, currentMember.getId(), currentMemberRoles + ['Manager', ])
         for member in members:
@@ -254,7 +255,7 @@ class PloneMeetingTestingHelpers:
            Overrided to do it as 'Manager' to be able not
            to change permissions ever lines"""
         from plone.app.testing.helpers import setRoles
-        currentMember = self.portal.portal_membership.getAuthenticatedMember()
+        currentMember = api.user.get_current()
         currentMemberRoles = currentMember.getRoles()
         setRoles(self.portal, currentMember.getId(), currentMemberRoles + ['Manager', ])
         for member in members:
