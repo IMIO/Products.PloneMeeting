@@ -3686,10 +3686,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         isPowerObserver = tool.isPowerObserverForCfg(cfg)
         isRestrictedPowerObserver = tool.isPowerObserverForCfg(cfg, isRestricted=True)
         for groupId, adviceInfo in self.adviceIndex.iteritems():
+            # make sure we do not modify original data
+            adviceInfo = deepcopy(adviceInfo)
             # manage inherited advice
             if adviceInfo['inherited']:
-                # make sure we do not modify original data, use .copy()
-                adviceInfo = adviceInfo.copy()
                 adviceInfo = self.getInheritedAdviceInfo(groupId)
                 adviceInfo['inherited'] = True
             # Create the entry for this type of advice if not yet created.
@@ -3726,10 +3726,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if not predecessor:
             return res
 
-        inheritedAdviceInfo = predecessor.adviceIndex.get(adviserId).copy()
+        inheritedAdviceInfo = deepcopy(predecessor.adviceIndex.get(adviserId))
         while (predecessor and predecessor.adviceIndex[adviserId]['inherited']):
             predecessor = predecessor.getPredecessor()
-            inheritedAdviceInfo = predecessor.adviceIndex.get(adviserId).copy()
+            inheritedAdviceInfo = deepcopy(predecessor.adviceIndex.get(adviserId))
 
         res = inheritedAdviceInfo
         res['adviceHolder'] = predecessor
@@ -3986,7 +3986,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # if advice is inherited get real adviceInfo
             if adviceInfo['inherited']:
                 adviceInfo = self.getInheritedAdviceInfo(advId)
-            data[advId] = adviceInfo.copy()
+            data[advId] = deepcopy(adviceInfo)
             # optimize some saved data
             data[advId]['type_translated'] = translate(data[advId]['type'],
                                                        domain='PloneMeeting',
