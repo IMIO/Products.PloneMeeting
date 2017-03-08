@@ -374,6 +374,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Added field MeetingItem.marginalNotes that is still editable by a MeetingManager even when item is decided and meeting is closed
 - A Plone group that is linked to a MeetingGroup is no more deletable and a clear message is displayed.  The only way to remove a Plone
   group linked to a MeetingGroup is to delete the MeetingGroup that will also check if it is not used in the application
+- Add new workflows adaptations to add one validation (last level) or all level of validation for wf adaptation "Return to proposign group"
 
 3.3 (2015-02-27)
 ----------------

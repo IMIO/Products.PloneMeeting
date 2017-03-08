@@ -276,6 +276,8 @@ div.pm_search_no_result_info {
 .state-itemfrozen, .label-state-itemfrozen,
 .state-frozen, .label-state-frozen { color: cornflowerBlue !important; }
 .state-returned_to_proposing_group, .label-state-returned_to_proposing_group, .state-advice_given, .label-state-advice_given { color: grey !important; }
+.state-returned_to_proposing_group_proposed, .label-state-returned_to_proposing_group_proposed { color: DarkOrange !important; }
+.state-returned_to_proposing_group_prevalidated, .label-state-returned_to_proposing_group_prevalidated { color: blue !important; }
 .state-itempublished, .label-state-itempublished,
 .state-published, .label-state-published { color: darkgoldenrod !important; }
 .state-decided, .label-state-decided,

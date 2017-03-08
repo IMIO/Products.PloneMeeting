@@ -704,10 +704,10 @@ class testSearches(PloneMeetingTestCase):
                           {'review_state': {'query': ['unknown_review_state']}})
         self.changeUser('pmManager')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstocorrect')
-        self.assertEquals(adapter.query,
-                          {'getProposingGroup': {'query': ['developers']},
-                           'portal_type': {'query': itemTypeName},
-                           'review_state': {'query': ['returned_to_proposing_group']}})
+
+        self.assertEquals(adapter.query, {
+                          'portal_type': {'query': itemTypeName},
+                          'reviewProcessInfo': {'query': ['developers__reviewprocess__returned_to_proposing_group']}})
 
         # it returns only items the current user is able to correct
         # create an item for developers and one for vendors and 'return' it to proposingGroup
@@ -741,6 +741,186 @@ class testSearches(PloneMeetingTestCase):
         self.failUnless(len(res) == 1)
         self.failUnless(res[0].UID == vendorsItem.UID())
 
+
+    def test_pm_SearchItemsToCorrectToValidateHigest(self):
+        '''Test the 'items-to-correct-to-validate-of-highest-hierarchic-level' CompoundCriterion adapter.  This should return
+           a list of items in state 'returned_to_proposing_group_proposed' the current user is able to edit.'''
+        # specify that copyGroups can see the item when it is proposed
+        cfg = self.meetingConfig
+        itemTypeName = cfg.getItemTypeName()
+
+        self.changeUser('siteadmin')
+        # first test the generated query
+        adapter = getAdapter(cfg,
+                             ICompoundCriterionFilter,
+                             name='items-to-correct-to-validate-of-highest-hierarchic-level')
+        # wfAdaptation 'return_to_proposing_group_with_last_validation' is not enabled
+        self.assertEquals(adapter.query,
+                          {'review_state': {'query': ['unknown_review_state']}})
+        wfAdaptations = list(cfg.getWorkflowAdaptations())
+        if not 'return_to_proposing_group_with_last_validation' in wfAdaptations:
+            wfAdaptations.append('return_to_proposing_group_with_last_validation')
+        # desactivate simple return to proposing group wf
+        if 'return_to_proposing_group' in wfAdaptations:
+            wfAdaptations.remove('return_to_proposing_group')
+        cfg.setWorkflowAdaptations(wfAdaptations)
+        performWorkflowAdaptations(cfg, logger=pm_logger)
+
+        # normally this search is not available to users that are not able to review items
+        # nevertheless, if a user is in not able to edit items to correct in proposed, the special
+        # query 'return nothing' is returned
+        self.assertEquals(adapter.query,
+                          {'review_state': {'query': ['unknown_review_state']}})
+        self.changeUser('pmManager')
+        cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstocorrecttovalidateofhighesthierarchiclevel')
+        self.assertEquals(adapter.query, {
+            'getProposingGroup': {'query': ['developers']},
+            'portal_type': {'query': itemTypeName},
+            'review_state': {'query': 'returned_to_proposing_group_proposed'}})
+
+        # it returns only items the current user is able to correct
+        # create an item for developers and one for vendors and 'return' it to proposingGroup
+        self.create('Meeting', date=DateTime())
+        developersItem = self.create('MeetingItem')
+        self.assertEquals(developersItem.getProposingGroup(), 'developers')
+        self.presentItem(developersItem)
+        self.changeUser('pmCreator2')
+        vendorsItem = self.create('MeetingItem')
+        self.assertEquals(vendorsItem.getProposingGroup(), 'vendors')
+        self.changeUser('pmManager')
+        self.presentItem(vendorsItem)
+        collection = cfg.searches.searches_items.searchitemstocorrecttovalidate
+        cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstocorrecttovalidateofhighesthierarchiclevel')
+        self.failIf(collection.getQuery())
+        self.do(developersItem, 'return_to_proposing_group')
+        self.do(vendorsItem, 'return_to_proposing_group')
+
+        self.changeUser('pmCreator1')
+        self.do(developersItem, 'goTo_returned_to_proposing_group_proposed')
+        self.changeUser('pmCreator2')
+        self.do(vendorsItem, 'goTo_returned_to_proposing_group_proposed')
+        self.changeUser('pmManager')
+
+        # pmManager may only edit developersItem
+        self.assertTrue(self.hasPermission(ModifyPortalContent, developersItem))
+        cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstocorrecttovalidateofhighesthierarchiclevel')
+        res = collection.getQuery()
+        self.failUnless(len(res) == 1)
+        self.failUnless(res[0].UID == developersItem.UID())
+
+        # pmCreator2 can't edit vendorsItem
+        self.changeUser('pmCreator2')
+        self.assertTrue(not self.hasPermission(ModifyPortalContent, vendorsItem))
+        cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstocorrecttovalidateofhighesthierarchiclevel')
+        res = collection.getQuery()
+        self.failUnless(len(res) == 0)
+
+        # pmReviewer2 may only edit vendorsItem
+        self.changeUser('pmReviewer2')
+        self.assertTrue(self.hasPermission(ModifyPortalContent, vendorsItem))
+        cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstocorrecttovalidateofhighesthierarchiclevel')
+        res = collection.getQuery()
+        self.failUnless(len(res) == 1)
+        self.failUnless(res[0].UID == vendorsItem.UID())
+
+
+    def test_pm_SearchItemsToCorrectToValidateAll(self):
+        '''Test the 'items-to-correct-to-validate-of-highest-hierarchic-level' CompoundCriterion adapter.  This should return
+           a list of items in state 'returned_to_proposing_group_proposed' the current user is able to edit.'''
+        # specify that copyGroups can see the item when it is proposed or prevalidated
+        cfg = self.meetingConfig
+        itemTypeName = cfg.getItemTypeName()
+
+        self.changeUser('siteadmin')
+        # first test the generated query
+        adapter = getAdapter(cfg,
+                             ICompoundCriterionFilter,
+                             name='items-to-correct-to-validate-of-every-reviewer-groups')
+        # wfAdaptation 'return_to_proposing_group_with_last_validation' is not enabled
+        self.assertEquals(adapter.query,
+                          {'review_state': {'query': ['unknown_review_state']}})
+        wfAdaptations = list(cfg.getWorkflowAdaptations())
+        if not 'pre_validation' in wfAdaptations:
+            wfAdaptations.append('pre_validation')
+        if not 'return_to_proposing_group_with_all_validations' in wfAdaptations:
+            wfAdaptations.append('return_to_proposing_group_with_all_validations')
+        # desactivate simple return to proposing group wf
+        if 'return_to_proposing_group' in wfAdaptations:
+            wfAdaptations.remove('return_to_proposing_group')
+        cfg.setWorkflowAdaptations(wfAdaptations)
+        performWorkflowAdaptations(cfg, logger=pm_logger)
+
+        # normally this search is not available to users that are not able to review items
+        # nevertheless, if a user is in not able to edit items to correct in proposed, the special
+        # query 'return nothing' is returned
+        self.assertEquals(adapter.query,
+                          {'review_state': {'query': ['unknown_review_state']}})
+        self.changeUser('pmManager')
+        cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstocorrecttovalidateofeveryreviewerlevelsandlowerlevels')
+        self.assertEquals(adapter.query, {
+            'portal_type': {'query': itemTypeName},
+            'reviewProcessInfo': {'query': ['developers__reviewprocess__returned_to_proposing_group_prevalidated',
+                                       'developers__reviewprocess__returned_to_proposing_group_proposed']}})
+
+        # it returns only items the current user is able to correct
+        # create an item for developers and one for vendors and 'return' it to proposingGroup
+        self.create('Meeting', date=DateTime())
+        developersItem = self.create('MeetingItem')
+        self.assertEquals(developersItem.getProposingGroup(), 'developers')
+        self.changeUser('pmCreator2')
+        vendorsItem = self.create('MeetingItem')
+        self.assertEquals(vendorsItem.getProposingGroup(), 'vendors')
+        self.changeUser('admin')
+        # presenting item :
+        for tr in ('propose', 'prevalidate', 'validate', 'present'):
+            self.do(developersItem,tr)
+            self.do(vendorsItem,tr)
+        self.changeUser('pmManager')
+        collection = cfg.searches.searches_items.searchitemstocorrecttovalidateoffeveryreviewergroups
+        cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstocorrecttovalidateofeveryreviewerlevelsandlowerlevels')
+        self.failIf(collection.getQuery())
+
+        self.do(developersItem, 'return_to_proposing_group')
+        self.do(vendorsItem, 'return_to_proposing_group')
+
+        self.changeUser('pmCreator1')
+        self.do(developersItem, 'goTo_returned_to_proposing_group_proposed')
+        self.changeUser('pmCreator2')
+        self.do(vendorsItem, 'goTo_returned_to_proposing_group_proposed')
+
+        self.changeUser('pmCreator1')
+        # pmManager can't edit developersItem
+        self.assertTrue(not self.hasPermission(ModifyPortalContent, developersItem))
+        cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstocorrecttovalidateofeveryreviewerlevelsandlowerlevels')
+        res = collection.getQuery()
+        self.failUnless(len(res) == 0)
+
+        # pmCreator2 can't edit vendorsItem
+        self.changeUser('pmCreator2')
+        self.assertTrue(not self.hasPermission(ModifyPortalContent, vendorsItem))
+        cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstocorrecttovalidateofeveryreviewerlevelsandlowerlevels')
+        res = collection.getQuery()
+        self.failUnless(len(res) == 0)
+
+        self.changeUser('admin')
+        self.do(developersItem, 'goTo_returned_to_proposing_group_prevalidated')
+        self.do(vendorsItem, 'goTo_returned_to_proposing_group_prevalidated')
+
+        # pmReviewer1 may only edit developersItem
+        self.changeUser('pmReviewer1')
+        self.assertTrue(self.hasPermission(ModifyPortalContent, developersItem))
+        cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstocorrecttovalidateofeveryreviewerlevelsandlowerlevels')
+        res = collection.getQuery()
+        self.failUnless(len(res) == 1)
+        self.failUnless(res[0].UID == developersItem.UID())
+
+        # pmReviewer2 may only edit vendorsItem
+        self.changeUser('pmReviewer2')
+        self.assertTrue(self.hasPermission(ModifyPortalContent, vendorsItem))
+        cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstocorrecttovalidateofeveryreviewerlevelsandlowerlevels')
+        res = collection.getQuery()
+        self.failUnless(len(res) == 1)
+        self.failUnless(res[0].UID == vendorsItem.UID())
 
 def test_suite():
     from unittest import TestSuite, makeSuite
