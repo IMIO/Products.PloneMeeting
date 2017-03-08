@@ -83,7 +83,7 @@ div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchlastdecisions
     min-width: 150px;
     padding-right: 9px;
 }
-div.ploneMeetingSelectContainer div span {
+div.ploneMeetingSelectContainer span[id^='idButtonText_'] {
     padding-left: 5px;
 }
 

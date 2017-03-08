@@ -5,9 +5,10 @@
              i18n:domain="PloneMeeting">
 
     <tal:comment replace="nothing">A few number of meetings, show a link by meeting</tal:comment>
-    <ul class="fewMeetings" tal:condition="python: nbOfMeetings <= maxShownMeetings">
-        <li tal:repeat="brain brains">
-            <div>
+    <ul class="fewMeetings">
+        <li tal:condition="python: nbOfMeetings <= maxShownMeetings"
+                  tal:repeat="brain brains">
+            <div tal:attributes="class python: context.REQUEST['URL'].startswith(brain.getURL()) and 'portletSelected' or ''">
                <tal:meetingPrettyLink replace="structure python: brain.getObject().getPrettyLink(prefixed=False, short=True)" />
             </div>
         </li>

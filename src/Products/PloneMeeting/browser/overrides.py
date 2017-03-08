@@ -43,7 +43,6 @@ from imio.dashboard.browser.overrides import IDFacetedTableView
 from imio.dashboard.browser.overrides import IDDashboardDocumentGeneratorLinksViewlet
 from imio.dashboard.browser.views import RenderTermPortletView
 from imio.dashboard.content.pod_template import IDashboardPODTemplate
-from imio.helpers.cache import get_cachekey_volatile
 from imio.history.browser.views import IHDocumentBylineViewlet
 from imio.prettylink.interfaces import IPrettyLink
 
@@ -316,25 +315,13 @@ class PMRenderTermView(RenderTermPortletView):
 
     def __call__(self, term, category, widget):
         super(PMRenderTermView, self).__call__(term, category, widget)
-        # display the searchallmeetings/searchlastdecisions as a selection list
+        # display the searchallmeetings as a selection list
         if self.context.getId() in ['searchallmeetings', 'searchlastdecisions']:
-            return self.render_meetings_term()
+            self.tool = api.portal.get_tool('portal_plonemeeting')
+            self.cfg = self.tool.getMeetingConfig(self.context)
+            self.brains = self.context.getQuery()
+            return ViewPageTemplateFile("templates/term_searchmeetings.pt")(self)
         return self.index()
-
-    def render_meetings_term_cachekey(method, self):
-        '''cachekey method for self.render_meetings_term.'''
-        user = self.request['AUTHENTICATED_USER']
-        date = get_cachekey_volatile(
-            'Products.PloneMeeting.browser.overrides.PMRenderTermView.render_meetings_term')
-        return self.context, user, date
-
-    @ram.cache(render_meetings_term_cachekey)
-    def render_meetings_term(self):
-        """ """
-        self.tool = api.portal.get_tool('portal_plonemeeting')
-        self.cfg = self.tool.getMeetingConfig(self.context)
-        self.brains = self.context.getQuery()
-        return ViewPageTemplateFile("templates/term_searchmeetings.pt")(self)
 
     def getMeetingPrettyLink(self, brain):
         """ """

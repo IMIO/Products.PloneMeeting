@@ -45,6 +45,8 @@ class BaseImgSelectBoxView(BrowserView):
     def selectable_value_class(self, selectable_value):
         """ """
         css_class = "ploneMeetingSelectItem"
+        if selectable_value == self.selected_value():
+            css_class += " selected"
         return css_class
 
     def selectable_value_id(self, selectable_value):
