@@ -888,17 +888,20 @@ $(document).ready(function () {
       var replaced = false;
       $('a', this).each(function() {
         if (this.href + '/' == current_url) {
-            replaced = true;
+          replaced = true;
           this.parentNode.className = this.parentNode.className + " portletSelected";
           // adapt currently selected value, replace it by this and remove link
           current =  $('div.manyMeetings span.ploneMeetingRef div');
+          if (current.length == 0) {
+            current = $('div.manyMeetings span span.select_choice');
+            }
           duplicated = $.clone(this);
           duplicated.className = duplicated.className + " portletSelected"
           current.replaceWith($(duplicated).replaceTag('div', true));
           }
         });
     // set eventual imgselect box back to select_choice
-    if (!replaced) {
+    if (replaced == false) {
         $('div.ploneMeetingSelectContainer span.select_choice', this).click();
     }
   });
