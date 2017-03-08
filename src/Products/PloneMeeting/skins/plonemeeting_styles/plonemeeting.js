@@ -852,6 +852,57 @@ if (budgetRelated.length) {
 
 });
 
+$.extend({
+    replaceTag: function (element, tagName, withDataAndEvents, deepWithDataAndEvents) {
+        var newTag = $("<" + tagName + ">")[0];
+        // From [Stackoverflow: Copy all Attributes](http://stackoverflow.com/a/6753486/2096729)
+        $.each(element.attributes, function() {
+            newTag.setAttribute(this.name, this.value);
+        });
+        $(element).children().clone(withDataAndEvents, deepWithDataAndEvents).appendTo(newTag);
+        return newTag;
+    }
+})
+$.fn.extend({
+    replaceTag: function (tagName, withDataAndEvents, deepWithDataAndEvents) {
+        // Use map to reconstruct the selector with newly created elements
+        return this.map(function() {
+            return jQuery.replaceTag(this, tagName, withDataAndEvents, deepWithDataAndEvents);
+        })
+    }
+})
+
+// highlight currently selected meeting in the meeting imgselectbox
+// (searchallmeetings/searchlastdecisions) in portlet_plonemeeting
+$(document).ready(function () {
+  var current_url = $('base').attr('href');
+  // find if current_url startswith a link in ul.fewMeetings or in div.manyMeetings
+  $('ul.fewMeetings li a').each(function() {
+      if (this.href + '/' == current_url) {
+        this.parentNode.className = "portletSelected";
+        return
+   };
+  });
+
+  $('div.manyMeetings').each(function() {
+      var replaced = false;
+      $('a', this).each(function() {
+        if (this.href + '/' == current_url) {
+            replaced = true;
+          this.parentNode.className = this.parentNode.className + " portletSelected";
+          // adapt currently selected value, replace it by this and remove link
+          current =  $('div.manyMeetings span.ploneMeetingRef div');
+          duplicated = $.clone(this);
+          duplicated.className = duplicated.className + " portletSelected"
+          current.replaceWith($(duplicated).replaceTag('div', true));
+          }
+        });
+    // set eventual imgselect box back to select_choice
+    if (!replaced) {
+        $('div.ploneMeetingSelectContainer span.select_choice', this).click();
+    }
+  });
+});
 
 // called on each faceted table change to update the portlet_todo
 $(document).ready(function () {

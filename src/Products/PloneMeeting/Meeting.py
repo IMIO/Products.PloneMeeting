@@ -1757,6 +1757,9 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                                         xmlpath=os.path.dirname(__file__) +
                                         '/faceted_conf/default_dashboard_widgets.xml')
         self.setLayout('meeting_view')
+        # clean cache related to portlet meetings rendering
+        invalidate_cachekey_volatile_for(
+            'Products.PloneMeeting.browser.overrides.PMRenderTermView.render_meetings_term')
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=True)
         self.reindexObject()
@@ -1781,13 +1784,14 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         if self.REQUEST.get('need_Meeting_updateItemReferences', False):
             self.updateItemReferences()
             self.REQUEST.set('need_Meeting_updateItemReferences', False)
+        # clean cache related to portlet meetings rendering
+        invalidate_cachekey_volatile_for(
+            'Products.PloneMeeting.browser.overrides.PMRenderTermView.render_meetings_term')
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=False)
         # notify modified
         notify(ObjectEditedEvent(self))
         self.reindexObject()
-        # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
-        invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
         userId = api.user.get_current().getId()
         logger.info('Meeting at %s edited by "%s".' % (self.absolute_url_path(), userId))
 

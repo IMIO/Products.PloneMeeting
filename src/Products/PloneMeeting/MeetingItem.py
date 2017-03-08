@@ -4937,7 +4937,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         return DisplayList(tuple(res)).sortedByValue()
 
-    def showDuplicateItemAction_cachekey(method, self, brain=False):
+    def showDuplicateItemAction_cachekey(method, self):
         '''cachekey method for self.showDuplicateItemAction.'''
         return (self, str(self.REQUEST._debug))
 

@@ -126,6 +126,7 @@ def onMeetingTransition(meeting, event):
     transitionId = event.transition.id
     action = 'do%s%s' % (transitionId[0].upper(), transitionId[1:])
     do(action, event)
+
     # update items references if meeting is going from beforeFrozen state
     # to frozen state or the other way round
     beforeFrozenStates = meeting.getBeforeFrozenStates()
@@ -134,6 +135,11 @@ def onMeetingTransition(meeting, event):
        (event.old_state.id not in beforeFrozenStates and
             event.new_state.id in beforeFrozenStates):
         meeting.updateItemReferences()
+
+    # clean cache related to portlet meetings rendering
+    invalidate_cachekey_volatile_for(
+        'Products.PloneMeeting.browser.overrides.PMRenderTermView.render_meetings_term')
+
     # notify a MeetingAfterTransitionEvent for subplugins so we are sure
     # that it is called after PloneMeeting meeting transition
     notify(MeetingAfterTransitionEvent(meeting))
