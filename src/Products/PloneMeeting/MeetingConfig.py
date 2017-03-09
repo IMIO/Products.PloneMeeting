@@ -1122,20 +1122,6 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
-    IntegerField(
-        name='maxShownMeetings',
-        default=defValues.maxShownMeetings,
-        widget=IntegerField._properties['widget'](
-            description="MaxShownMeetings",
-            description_msgid="max_shown_meetings_descr",
-            label='Maxshownmeetings',
-            label_msgid='PloneMeeting_label_maxShownMeetings',
-            i18n_domain='PloneMeeting',
-        ),
-        required=True,
-        schemata="gui",
-        write_permission="PloneMeeting: Write risky config",
-    ),
     LinesField(
         name='itemColumns',
         widget=MultiSelectionWidget(
@@ -1202,6 +1188,20 @@ schema = Schema((
         vocabulary='listItemsListVisibleFields',
         default=defValues.itemsListVisibleFields,
         enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    IntegerField(
+        name='maxShownMeetings',
+        default=defValues.maxShownMeetings,
+        widget=IntegerField._properties['widget'](
+            description="MaxShownMeetings",
+            description_msgid="max_shown_meetings_descr",
+            label='Maxshownmeetings',
+            label_msgid='PloneMeeting_label_maxShownMeetings',
+            i18n_domain='PloneMeeting',
+        ),
+        required=True,
+        schemata="gui",
         write_permission="PloneMeeting: Write risky config",
     ),
     ReferenceField(

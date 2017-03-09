@@ -724,10 +724,10 @@
           <td tal:define="field python:here.getField('itemsListVisibleFields')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td tal:define="field python:here.getField('toDoListSearches')">
+          <td tal:define="field python:here.getField('maxShownMeetings')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td tal:define="field python:here.getField('maxShownMeetings')">
+          <td tal:define="field python:here.getField('toDoListSearches')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
         </tr>
