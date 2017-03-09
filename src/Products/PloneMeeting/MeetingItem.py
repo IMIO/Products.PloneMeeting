@@ -2000,6 +2000,60 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         self.getField('manuallyLinkedItems').set(self, valueToStore, **kwargs)
 
+    security.declarePrivate('setCategory')
+
+    def setCategory(self, value, **kwargs):
+        '''Overrides the field 'category' mutator to be able to
+           updateItemReferences if value changed.'''
+        current_category = self.getField('category').get(self, **kwargs)
+        if not value == current_category:
+            # add a value in the REQUEST to specify that updateItemReferences is needed
+            self.REQUEST.set('need_Meeting_updateItemReferences', True)
+        self.getField('category').set(self, value, **kwargs)
+
+    security.declarePrivate('setClassifier')
+
+    def setClassifier(self, value, **kwargs):
+        '''Overrides the field 'classifier' mutator to be able to
+           updateItemReferences if value changed.'''
+        current_classifier = self.getField('classifier').getRaw(self, **kwargs)
+        if not value == current_classifier:
+            # add a value in the REQUEST to specify that updateItemReferences is needed
+            self.REQUEST.set('need_Meeting_updateItemReferences', True)
+        self.getField('classifier').set(self, value, **kwargs)
+
+    security.declarePrivate('setProposingGroup')
+
+    def setProposingGroup(self, value, **kwargs):
+        '''Overrides the field 'proposingGroup' mutator to be able to
+           updateItemReferences if value changed.'''
+        current_proposingGroup = self.getField('proposingGroup').get(self, **kwargs)
+        if not value == current_proposingGroup:
+            # add a value in the REQUEST to specify that updateItemReferences is needed
+            self.REQUEST.set('need_Meeting_updateItemReferences', True)
+        self.getField('proposingGroup').set(self, value, **kwargs)
+
+    def _adaptLinesValueToBeCompared(self, value):
+        """'value' received from processForm does not correspond to what is stored
+           for LinesField, we need to adapt it so it may be compared.
+           This is completly taken from Products.Archetypes.Field.LinesField.set."""
+
+        if isinstance(value, basestring):
+            value = value.split('\n')
+        value = [v for v in value if v and v.strip()]
+        return tuple(value)
+
+    security.declarePrivate('setOtherMeetingConfigsClonableTo')
+
+    def setOtherMeetingConfigsClonableTo(self, value, **kwargs):
+        '''Overrides the field 'otherMeetingConfigsClonableTo' mutator to be able to
+           updateItemReferences if value changed.'''
+        current_otherMeetingConfigsClonableTo = self.getField('otherMeetingConfigsClonableTo').get(self, **kwargs)
+        if not self._adaptLinesValueToBeCompared(value) == current_otherMeetingConfigsClonableTo:
+            # add a value in the REQUEST to specify that updateItemReferences is needed
+            self.REQUEST.set('need_Meeting_updateItemReferences', True)
+        self.getField('otherMeetingConfigsClonableTo').set(self, value, **kwargs)
+
     security.declareProtected('View', 'getManuallyLinkedItems')
 
     def getManuallyLinkedItems(self, only_viewable=False, **kwargs):

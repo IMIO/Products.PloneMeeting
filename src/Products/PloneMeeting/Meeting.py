@@ -1483,13 +1483,19 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         # meeting is considered modified
         self.notifyModified()
 
-    def updateItemReferences(self, startNumber=0):
+    def updateItemReferences(self, startNumber=0, check_needed=False):
         """Update itemReference of every contained items, if p_startNumber is given,
            we update items starting from p_startNumber itemNumber.
-           By default, if p_startNumber=0, every linked items will be updated."""
+           By default, if p_startNumber=0, every linked items will be updated.
+           If p_check_needed is True, we check if value '' in REQUEST is True."""
         # call to updateItemReferences may be deferred for optimization
         if self.REQUEST.get('defer_Meeting_updateItemReferences', False):
             return
+
+        if check_needed and not self.REQUEST.get('need_Meeting_updateItemReferences', True):
+            return
+        # force disable 'need_Meeting_updateItemReferences' from REQUEST
+        self.REQUEST.set('need_Meeting_updateItemReferences', False)
 
         # as we could be in the 'available items' faceted part, when inserting
         # an item from the meeting_view, we set force_linked_items_query=True
@@ -1757,6 +1763,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                                         xmlpath=os.path.dirname(__file__) +
                                         '/faceted_conf/default_dashboard_widgets.xml')
         self.setLayout('meeting_view')
+        # update every items itemReference if needed
+        self.updateItemReferences(check_needed=True)
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=True)
         self.reindexObject()
@@ -1778,9 +1786,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         # Make sure we have 'text/html' for every Rich fields
         forceHTMLContentTypeForEmptyRichFields(self)
         # update every items itemReference if needed
-        if self.REQUEST.get('need_Meeting_updateItemReferences', False):
-            self.updateItemReferences()
-            self.REQUEST.set('need_Meeting_updateItemReferences', False)
+        self.updateItemReferences(check_needed=True)
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=False)
         # notify modified

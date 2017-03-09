@@ -325,8 +325,8 @@ def onItemModified(item, event):
     meeting = item.getMeeting()
     if meeting:
         meeting.invalidate_meeting_actions_panel_cache = True
-        # update item reference
-        item.updateItemReference()
+        # update item references if necessary
+        meeting.updateItemReferences(startNumber=item.getItemNumber(), check_needed=True)
 
     # reactivate rename_after_creation as long as item is in it's initial_state
     if item._at_rename_after_creation:

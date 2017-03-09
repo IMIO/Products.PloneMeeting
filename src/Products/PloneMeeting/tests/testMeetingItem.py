@@ -4920,22 +4920,55 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(item3.getItemReference(), '')
         self.assertEqual(len(catalog(SearchableText=old_itemReference)), 0)
 
-    def test_pm_ItemReferenceUpdateWhenItemModified(self):
-        """When an item is modified, it's itemReference is updated."""
+    def test_pm_ItemReferenceUpdateWhenSpecificItemFieldsModified(self):
+        """When a item is modified, if 'category', 'classifier', 'proposingGroup'
+           or 'otherMeetingConfigsClonableTo' field is changed, we need to update
+           every itemReference starting from current item."""
+        self.changeUser('siteadmin')
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        cfg2Id = cfg2.getId()
+        cfg.setUseGroupsAsCategories(False)
+        # remove recurring items in self.meetingConfig
+        self._removeConfigObjectsFor(cfg)
         # change itemReferenceFormat to include an item data (Title)
         cfg = self.meetingConfig
         cfg.setItemReferenceFormat(
-            "python: here.getMeeting().getDate().strftime('%Y%m%d') + '/' + here.Title()")
+            "python: here.getMeeting().getDate().strftime('%Y%m%d') + '/' + "
+            "str(here.getProposingGroup(True).getAcronym()) + '/' + "
+            "str(here.getCategory()) + '/' + "
+            "str(here.getClassifier() and here.getClassifier().getId() or '-') + '/' + "
+            "('/'.join(here.getOtherMeetingConfigsClonableTo()) or '-') + '/' + "
+            "here.Title() + '/' + "
+            "str(here.getItemNumber(relativeTo='meetingConfig', for_display=True))")
         self.changeUser('pmManager')
-        item = self.create('MeetingItem')
-        item.setTitle('Title1')
+        item = self.create('MeetingItem', title='Title1')
         meeting = self.create('Meeting', date=DateTime('2017/03/03'))
         self.presentItem(item)
         self.freezeMeeting(meeting)
-        self.assertEqual(item.getItemReference(), '20170303/Title1')
+        self.assertEqual(item.getItemReference(), '20170303/Devel/development/-/-/Title1/1')
+        # change category
+        item.setCategory('research')
+        item.at_post_edit_script()
+        self.assertEqual(item.getItemReference(), '20170303/Devel/research/-/-/Title1/1')
+        # change classifier
+        item.setClassifier(cfg.classifiers.classifier1.UID())
+        item.at_post_edit_script()
+        self.assertEqual(item.getItemReference(), '20170303/Devel/research/classifier1/-/Title1/1')
+        # change proposingGroup
+        item.setProposingGroup('vendors')
+        item.at_post_edit_script()
+        self.assertEqual(item.getItemReference(), '20170303/Devil/research/classifier1/-/Title1/1')
+        # change otherMeetingConfigsClonableTo
+        item.setOtherMeetingConfigsClonableTo((cfg2Id,))
+        item.at_post_edit_script()
+        self.assertEqual(item.getItemReference(),
+                         '20170303/Devil/research/classifier1/{0}/Title1/1'.format(cfg2Id))
+        # changing the Title will not update the reference
         item.setTitle('Title2')
-        notify(ObjectModifiedEvent(item))
-        self.assertEqual(item.getItemReference(), '20170303/Title2')
+        item.at_post_edit_script()
+        self.assertEqual(item.getItemReference(),
+                         '20170303/Devil/research/classifier1/{0}/Title1/1'.format(cfg2Id))
 
     def test_pm_ItemReferenceUpdateWhenItemPositionChangedOnMeeting(self):
         """When an item position changed in the meeting, the itemReference is updated."""
