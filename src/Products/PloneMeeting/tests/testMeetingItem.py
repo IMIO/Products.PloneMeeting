@@ -95,13 +95,10 @@ class testMeetingItem(PloneMeetingTestCase):
         # Use the 'plonegov-assembly' meetingConfig
         self.setMeetingConfig(self.meetingConfig2.getId())
         cfg = self.meetingConfig
-        self.create('MeetingCategory', isClassifier=True, id='class1', title='Classifier 1')
-        self.create('MeetingCategory', isClassifier=True, id='class2', title='Classifier 2')
-        self.create('MeetingCategory', isClassifier=True, id='class3', title='Classifier 3')
         # create an item for test
         self.changeUser('pmCreator1')
         expectedCategories = ['deployment', 'maintenance', 'development', 'events', 'research', 'projects', ]
-        expectedClassifiers = ['class1', 'class2', 'class3', ]
+        expectedClassifiers = ['classifier1', 'classifier2', 'classifier3', ]
         # By default, every categories are selectable
         self.failUnless([cat.id for cat in cfg.getCategories()] == expectedCategories)
         # And the behaviour is the same for classifiers
@@ -109,9 +106,9 @@ class testMeetingItem(PloneMeetingTestCase):
         # Deactivate a category and a classifier
         self.changeUser('admin')
         self.wfTool.doActionFor(cfg.categories.deployment, 'deactivate')
-        self.wfTool.doActionFor(cfg.classifiers.class2, 'deactivate')
+        self.wfTool.doActionFor(cfg.classifiers.classifier2, 'deactivate')
         expectedCategories.remove('deployment')
-        expectedClassifiers.remove('class2')
+        expectedClassifiers.remove('classifier2')
         # getCategories has caching in the REQUEST, we need to wipe this out
         self.cleanMemoize()
         self.changeUser('pmCreator1')
@@ -121,9 +118,9 @@ class testMeetingItem(PloneMeetingTestCase):
         # Specify that a category is restricted to some groups pmCreator1 is not creator for
         self.changeUser('admin')
         cfg.categories.maintenance.setUsingGroups(('vendors',))
-        cfg.classifiers.class1.setUsingGroups(('vendors',))
+        cfg.classifiers.classifier1.setUsingGroups(('vendors',))
         expectedCategories.remove('maintenance')
-        expectedClassifiers.remove('class1')
+        expectedClassifiers.remove('classifier1')
         # getCategories has caching in the REQUEST, we need to wipe this out
         self.cleanMemoize()
         self.changeUser('pmCreator1')
