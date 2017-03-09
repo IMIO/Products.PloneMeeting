@@ -3682,12 +3682,22 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
         res = []
         for profile in confidential_profiles:
-            res.append(
-                (profile, translate('visible_for_{0}'.format(profile),
-                                    domain="PloneMeeting",
-                                    context=self.REQUEST))
-            )
-        return DisplayList(res)
+            if profile.startswith(PROPOSINGGROUPPREFIX):
+                res.append(
+                    (profile,
+                     translate('visible_for_{0}'.format(PROPOSINGGROUPPREFIX),
+                               mapping={'meeting_group_suffix':
+                                        translate(profile.replace(PROPOSINGGROUPPREFIX, ''),
+                                                  domain="PloneMeeting",
+                                                  context=self.REQUEST)},
+                               domain="PloneMeeting",
+                               context=self.REQUEST)))
+            else:
+                res.append(
+                    (profile, translate('visible_for_{0}'.format(profile),
+                                        domain="PloneMeeting",
+                                        context=self.REQUEST)))
+        return DisplayList(res).sortedByValue()
 
     security.declarePrivate('listAdviceAnnexConfidentialVisibleFor')
 
@@ -3715,12 +3725,22 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
         res = []
         for profile in confidential_profiles:
-            res.append(
-                (profile, translate('visible_for_{0}'.format(profile),
-                                    domain="PloneMeeting",
-                                    context=self.REQUEST))
-            )
-        return DisplayList(res)
+            if profile.startswith(PROPOSINGGROUPPREFIX):
+                res.append(
+                    (profile,
+                     translate('visible_for_{0}'.format(PROPOSINGGROUPPREFIX),
+                               mapping={'meeting_group_suffix':
+                                        translate(profile.replace(PROPOSINGGROUPPREFIX, ''),
+                                                  domain="PloneMeeting",
+                                                  context=self.REQUEST)},
+                               domain="PloneMeeting",
+                               context=self.REQUEST)))
+            else:
+                res.append(
+                    (profile, translate('visible_for_{0}'.format(profile),
+                                        domain="PloneMeeting",
+                                        context=self.REQUEST)))
+        return DisplayList(res).sortedByValue()
 
     security.declarePrivate('listMeetingAnnexConfidentialVisibleFor')
 
@@ -3738,12 +3758,23 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
         res = []
         for profile in confidential_profiles:
-            res.append(
-                (profile, translate('visible_for_{0}'.format(profile),
-                                    domain="PloneMeeting",
-                                    context=self.REQUEST))
-            )
-        return DisplayList(res)
+            if profile.startswith(SUFFIXPROFILEPREFIX):
+                res.append(
+                    (profile,
+                     translate('visible_for_{0}'.format(SUFFIXPROFILEPREFIX),
+                               mapping={'meeting_group_suffix':
+                                        translate(profile.replace(SUFFIXPROFILEPREFIX, ''),
+                                                  domain="PloneMeeting",
+                                                  context=self.REQUEST)},
+                               domain="PloneMeeting",
+                               context=self.REQUEST)))
+            else:
+                res.append(
+                    (profile, translate('visible_for_{0}'.format(profile),
+                                        domain="PloneMeeting",
+                                        context=self.REQUEST))
+                )
+        return DisplayList(res).sortedByValue()
 
     security.declarePrivate('listAdviceConfidentialFor')
 
