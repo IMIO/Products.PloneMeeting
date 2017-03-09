@@ -243,12 +243,30 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(View, obj))
         self._checkMayAccessConfidentialAnnexes(obj, annexNotConfidential, annexConfidential,
                                                 annexes_table, categorized_child)
+        # is viewable for Manager and MeetingManager
+        current_user_id = self.member.getId()
+        self.changeUser('siteadmin')
+        self._checkMayAccessConfidentialAnnexes(obj, annexNotConfidential, annexConfidential,
+                                                annexes_table, categorized_child)
+        self.changeUser('pmManager')
+        self._checkMayAccessConfidentialAnnexes(obj, annexNotConfidential, annexConfidential,
+                                                annexes_table, categorized_child)
+        self.changeUser(current_user_id)
+
+        # disable access to condifential elements to every profiles
         cfg.setItemAnnexConfidentialVisibleFor(())
         cfg.setAdviceAnnexConfidentialVisibleFor(())
         cfg.setMeetingAnnexConfidentialVisibleFor(())
         update_all_categorized_elements(obj)
         self._checkMayNotAccessConfidentialAnnexes(obj, annexNotConfidential, annexConfidential,
                                                    annexes_table, categorized_child)
+        # is viewable for Manager and MeetingManager
+        self.changeUser('siteadmin')
+        self._checkMayAccessConfidentialAnnexes(obj, annexNotConfidential, annexConfidential,
+                                                annexes_table, categorized_child)
+        self.changeUser('pmManager')
+        self._checkMayAccessConfidentialAnnexes(obj, annexNotConfidential, annexConfidential,
+                                                annexes_table, categorized_child)
 
     def _checkMayAccessConfidentialAnnexes(self,
                                            obj,

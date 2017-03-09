@@ -1501,6 +1501,11 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
         return False
 
     def can_view(self):
+        # bypass for MeetingManagers
+        tool = api.portal.get_tool('portal_plonemeeting')
+        if tool.isManager(self.context):
+            return True
+
         # is the context a MeetingItem and privacy viewable?
         if self.context.meta_type == 'MeetingItem' and \
            self._use_isPrivacyViewable() and \
@@ -1508,7 +1513,7 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
             return False
 
         elif self.context.meta_type == 'Meeting':
-            # if we have a SUFFIXPROFILEPREFIX profixed group,
+            # if we have a SUFFIXPROFILEPREFIX prefixed group,
             # check using "userIsAmong", this is only done for Meetings
             infos = self.context.categorized_elements[self.brain.UID]
             if set(self._user_groups()).intersection(infos['visible_for_groups']):
