@@ -376,6 +376,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Added possibility to display the item reference in the item dashboards, moreover, Meeting.itemReference is now a field where the
   item reference is stored.  This avoid computing the itemReference each time it is accessed, moreover MeetingItem.itemReference is
   searchable and will be found in the SearchableText
+- Display the background color relative to MeetingItem.privacy on the meeting available items view as it is the case for the meeting
+  presented items view
 
 3.3 (2015-02-27)
 ----------------
