@@ -2081,7 +2081,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('showClonableToOtherMeetingConfigs')
 
     def showClonableToOtherMeetingConfigs(self):
-        '''Returns True is the current item can be cloned to another
+        '''Returns True if the current item can be cloned to another
            meetingConfig. This method is used as a condition for showing
            or not the 'otherMeetingConfigsClonableTo' field.'''
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -2717,7 +2717,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def updateItemReference(self):
         '''Update the item reference, recompute it,
-           stores it and reindex 'getItemReference'.'''
+           stores it and reindex 'getItemReference'.
+           This expect item to be in a meeting that is at least frozen.'''
         res = ''
         item = self.getSelf()
         meeting = item.getMeeting()
@@ -2732,6 +2733,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     res = Expression(itemRefFormat)(ctx)
                 except Exception, e:
                     raise PloneMeetingError(ITEM_REF_ERROR % str(e))
+
         stored = self.getField('itemReference').get(self)
         if stored != res:
             self.setItemReference(res)

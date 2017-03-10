@@ -294,6 +294,7 @@ class MeetingWorkflowActions:
         unrestrictedMethodsView = getMultiAdapter((self.context, self.context.REQUEST),
                                                   name='pm_unrestricted_methods')
         self.context.setFirstItemNumber(unrestrictedMethodsView.findFirstItemNumberForMeeting(self.context))
+        self.context.updateItemReferences()
 
     security.declarePrivate('doPublish_decisions')
 
@@ -1433,11 +1434,12 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                                  'listType',
                                  'linkedMeetingUID',
                                  'linkedMeetingDate'])
+        # meeting is considered modified, do this before updateItemReferences
+        self.notifyModified()
+
         # update itemReference after 'getItemNumber' has been reindexed of item and
         # items with a higher itemNumber
         self.updateItemReferences(startNumber=item.getItemNumber())
-        # meeting is considered modified
-        self.notifyModified()
 
     security.declareProtected("Modify portal content", 'removeItem')
 
@@ -1453,7 +1455,6 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             # if it is another value (custom), we do not change it
             if item.getListType() == 'late':
                 item.setListType('normal')
-            item.reindexObject(idxs=['listType', ])
         except ValueError:
             # in case this is called by onItemRemoved, the item
             # does not exist anymore and is no more in the items list
@@ -1475,13 +1476,18 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                     anItem.reindexObject(idxs=['getItemNumber', ])
         # invalidate RAMCache for MeetingItem.getMeeting
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeeting')
+
+        # reindex relevant indexes now that item is removed
+        item.reindexObject(idxs=['listType', 'linkedMeetingUID', 'linkedMeetingDate'])
+
+        # meeting is considered modified, do this before updateItemReferences
+        self.notifyModified()
+
         # update itemReference of item that is no more linked to self and so that will not
         # be updated by Meeting.updateItemReferences and then update items that used
         # a higher item number
         item.updateItemReference()
-        self.updateItemReferences(startNumber=item.getItemNumber())
-        # meeting is considered modified
-        self.notifyModified()
+        self.updateItemReferences(startNumber=itemNumber)
 
     def updateItemReferences(self, startNumber=0, check_needed=False):
         """Update itemReference of every contained items, if p_startNumber is given,

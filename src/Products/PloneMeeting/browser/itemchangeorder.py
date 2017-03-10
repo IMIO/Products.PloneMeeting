@@ -322,7 +322,9 @@ class ChangeItemOrderView(BrowserView):
                                     item.setItemNumber(itemNumber + _compute_value_to_add(itemNumber))
                                     item.reindexObject(idxs=['getItemNumber'])
 
+        # when items order on meeting changed, it is considered modified,
+        # do this before updateItemReferences
+        meeting.notifyModified()
+
         # update item references starting from minus between oldIndex and new itemNumber
         meeting.updateItemReferences(startNumber=min(oldIndex, self.context.getItemNumber()))
-        # when items order on meeting changed, it is considered modified
-        meeting.notifyModified()

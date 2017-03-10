@@ -4874,7 +4874,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.backToState(meeting, 'created')
         self.assertEqual(item.getItemReference(), '')
 
-    def test_pm_ItemReferenceAdaptedWhenItemInsertedRemovedFromMeeting(self):
+    def test_pm_ItemReferenceAdaptedWhenItemInsertedOrRemovedOrDeletedFromMeeting(self):
         """Item reference is set when item is inserted into a meeting."""
         catalog = api.portal.get_tool('portal_catalog')
         # remove recurring items in self.meetingConfig
@@ -4916,6 +4916,14 @@ class testMeetingItem(PloneMeetingTestCase):
         self.backToState(item3, 'validated')
         self.assertEqual(item3.getItemReference(), '')
         self.assertEqual(len(catalog(SearchableText=old_itemReference)), 0)
+
+        # insert a new item and delete item1
+        item4 = self.create('MeetingItem', title='Item4 title')
+        self.presentItem(item4)
+        self.assertEqual(item.getItemReference(), 'Ref. 20170303/1')
+        self.assertEqual(item4.getItemReference(), 'Ref. 20170303/2')
+        self.deleteAsManager(item.UID())
+        self.assertEqual(item4.getItemReference(), 'Ref. 20170303/1')
 
     def test_pm_ItemReferenceUpdateWhenSpecificItemFieldsModified(self):
         """When a item is modified, if 'category', 'classifier', 'proposingGroup'
