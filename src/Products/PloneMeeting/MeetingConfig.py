@@ -3222,10 +3222,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if 'return_to_proposing_group_with_all_validations' in removed :
             # this will remove the 'returned_to_proposing_group with last' state for MeetingItem
             # check that no more items are in this state
+            # not downgrade from all to last validation if one item is in intermediary state
             if (catalog(portal_type=self.getItemTypeName(), review_state=all_possible_returned_state)) or \
-               ('return_to_proposing_group' not in added) or \
-               ('return_to_proposing_group_with_last_validation' in added) and \
-               (catalog(portal_type=self.getItemTypeName(), review_state='returned_to_proposing_group')):
+               (('return_to_proposing_group' not in added) and \
+               ('return_to_proposing_group_with_last_validation' not in added) and \
+               (catalog(portal_type=self.getItemTypeName(), review_state='returned_to_proposing_group'))):
                 return translate('wa_removed_return_to_proposing_group_with_all_validations_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)

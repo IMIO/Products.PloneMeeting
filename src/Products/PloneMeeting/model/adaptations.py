@@ -259,11 +259,9 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
         # use same permissions as used by the base_state
         base_state = wf.states[base_state_id]
         new_state = wf.states[new_state_id]
-        for permission, roles in base_state.permission_roles.iteritems():
-            new_state.setPermission(permission, 0, roles)
-
-        cloned_permissions = dict(new_state.permission_roles)
+        cloned_permissions = dict(base_state.permission_roles)
         cloned_permissions_with_meetingmanager = {}
+        customPermissions = RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS.get(meetingConfig.getItemWorkflow(), {})
 
         # we need to use an intermediate dict because roles are stored as a tuple and we need a list...
         for permission in cloned_permissions:
@@ -277,13 +275,19 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                 cloned_permissions_with_meetingmanager[permission] = \
                     tuple(cloned_permissions_with_meetingmanager[permission])
 
+        # now apply custom permissions defined in customPermissions
+        cloned_permissions_with_meetingmanager.update(customPermissions)
+
         # if we are cloning an existing state permissions, make sure DeleteObjects
-        # is only be availble to ['Manager']
-        del_obj_perm = new_state.getPermissionInfo(DeleteObjects)
-        if del_obj_perm['acquired']:
-            cloned_permissions_with_meetingmanager[DeleteObjects] = ['Manager', ]
-        else:
-            cloned_permissions_with_meetingmanager[DeleteObjects] = ('Manager',)
+        # is only be availble to ['Manager', 'MeetingManager']
+        # if custom permissions are defined, keep what is defined in it
+
+        if not DeleteObjects in customPermissions:
+            del_obj_perm = base_state.getPermissionInfo(DeleteObjects)
+            if del_obj_perm['acquired']:
+                cloned_permissions_with_meetingmanager[DeleteObjects] = ['Manager', ]
+            else:
+                cloned_permissions_with_meetingmanager[DeleteObjects] = ('Manager',)
 
         # finally, apply computed permissions, aka cloned
         new_state.permission_roles = cloned_permissions_with_meetingmanager

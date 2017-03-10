@@ -598,6 +598,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.failIf(cfg.validate_workflowAdaptations(('return_to_proposing_group_with_all_validations',)))
         if 'return_to_proposing_group' in cfg.listWorkflowAdaptations():
             self.failIf(cfg.validate_workflowAdaptations(('return_to_proposing_group', )))
+
         if 'return_to_proposing_group_with_last_validation' in cfg.listWorkflowAdaptations():
             self.failIf(cfg.validate_workflowAdaptations(('return_to_proposing_group_with_last_validation',)))
         self.do(item, 'goTo_returned_to_proposing_group_proposed')
@@ -611,7 +612,7 @@ class testWFAdaptations(PloneMeetingTestCase):
                 return_to_proposing_group_removed_error)
         if 'return_to_proposing_group_with_last_validation' in cfg.listWorkflowAdaptations():
             self.assertEquals(
-                cfg.validate_workflowAdaptations(('return_to_proposing_group_with_all_validations',)),
+                cfg.validate_workflowAdaptations(('return_to_proposing_group_with_last_validation',)),
                 return_to_proposing_group_removed_error)
         # make wfAdaptation unselectable
         self.do(item, 'backTo_itemfrozen_from_returned_to_proposing_group')
@@ -1366,6 +1367,12 @@ class testWFAdaptations(PloneMeetingTestCase):
         new_state_permissions = itemWF.states['returned_to_proposing_group'].permission_roles
         self.assertEquals(('Manager', 'MeetingManager', ),
                           new_state_permissions[DeleteObjects])
+        adaptations.RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS = {}
+        # reapply wfAdaptation 'return_to_proposing_group'
+        cfg.at_post_edit_script()
+        itemWF = self.wfTool.getWorkflowsFor(self.meetingConfig.getItemTypeName())[0]
+        new_state_permissions = itemWF.states['returned_to_proposing_group'].permission_roles
+        self.assertEquals(('Manager',), new_state_permissions[DeleteObjects])
 
     def _return_to_proposing_group_active_wf_functionality(self):
         '''Tests the workflow functionality of using the 'return_to_proposing_group' wfAdaptation.'''
@@ -1423,11 +1430,11 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.meetingConfig.setWorkflowAdaptations('return_to_proposing_group_with_last_validation')
         performWorkflowAdaptations(self.meetingConfig, logger=pm_logger)
         # test what should happen to the wf (added states and transitions)
-        self._return_to_proposing_group_with_last_validation_active()
+        self._return_to_proposing_group_with_validation_active()
         # test the functionnality of returning an item to the proposing group
-        self._return_to_proposing_group_with_last_validation_active_wf_functionality()
+        self._return_to_proposing_group_with_validation_active_wf_functionality()
 
-    def _return_to_proposing_group_with_last_validation_active(self):
+    def _return_to_proposing_group_with_validation_active(self):
         '''Tests while 'return_to_proposing_group' wfAdaptation is active.'''
         # we subdvise this test in 3, testing every constants, this way,
         # a subplugin can call these test separately
@@ -1435,9 +1442,9 @@ class testWFAdaptations(PloneMeetingTestCase):
         #  ... we use the same test than original return to proposing group
         self._return_to_proposing_group_active_from_item_states()
         # RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE ORIGINAL and WITH VALIDATION
-        self._return_to_proposing_group_with_last_validation_active_state_to_clone()
+        self._return_to_proposing_group_with_validation_active_state_to_clone()
 
-    def _return_to_proposing_group_with_last_validation_active_state_to_clone(self):
+    def _return_to_proposing_group_with_validation_active_state_to_clone(self):
         '''Helper method to test 'return_to_proposing_group' wfAdaptation regarding the
            RETURN_TO_PROPOSING_GROUP_VALIDATING_STATES defined value.'''
         # make sure permissions of the new state correspond to permissions of the state
@@ -1447,9 +1454,9 @@ class testWFAdaptations(PloneMeetingTestCase):
         # this could be the case if a subproduct (MeetingXXX) calls this test...
         itemWF = self.wfTool.getWorkflowsFor(self.meetingConfig.getItemTypeName())[0]
         cfgItemWFId = self.meetingConfig.getItemWorkflow()
-        state_to_clone_ids = (RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE.get(cfgItemWFId).split('.')[1], ) + \
-                             RETURN_TO_PROPOSING_GROUP_VALIDATING_STATES
 
+        state_to_clone_ids = (RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE.get(cfgItemWFId).split('.')[1], ) + \
+                              RETURN_TO_PROPOSING_GROUP_VALIDATING_STATES
         for state_to_clone_id in state_to_clone_ids:
             cloned_state_permissions = itemWF.states[state_to_clone_id].permission_roles
             returned_state = 'returned_to_proposing_group'
@@ -1464,13 +1471,14 @@ class testWFAdaptations(PloneMeetingTestCase):
                     cloned_state_permission_with_meetingmanager.append('MeetingManager')
                 else:
                     cloned_state_permission_with_meetingmanager = list(cloned_state_permissions[permission])
+
                 # 'Delete objects' is only given to ['Manager', ]
                 if permission == DeleteObjects:
                     cloned_state_permission_with_meetingmanager = ['Manager', ]
-
                 if not acquired:
                     cloned_state_permission_with_meetingmanager = tuple(cloned_state_permission_with_meetingmanager)
-
+                if cloned_state_permission_with_meetingmanager != new_state_permissions[permission]:
+                    import ipdb; ipdb.set_trace()
                 self.assertEquals(cloned_state_permission_with_meetingmanager,
                                   new_state_permissions[permission])
                 # Permission acquisition is also cloned
@@ -1478,7 +1486,7 @@ class testWFAdaptations(PloneMeetingTestCase):
                     itemWF.states[state_to_clone_id].getPermissionInfo(permission)['acquired'],
                     itemWF.states[returned_state].getPermissionInfo(permission)['acquired'])
 
-    def _return_to_proposing_group_with_last_validation_active_wf_functionality(self):
+    def _return_to_proposing_group_with_validation_active_wf_functionality(self):
         '''Tests the workflow functionality of using the 'return_to_proposing_group_with_last_validation' wfAdaptation.'''
         # while it is active, the creators of the item can edit the item as well as the MeetingManagers
         # after, he must be send to reviewer the item
@@ -1546,9 +1554,9 @@ class testWFAdaptations(PloneMeetingTestCase):
         performWorkflowAdaptations(self.meetingConfig, logger=pm_logger)
         # test what should happen to the wf (added states and transitions)
         # We can using the same test than last Validation in standard wf (created --> proposed)
-        self._return_to_proposing_group_with_last_validation_active()
-        # test the functionnality of returning an item to the proposing group
-        self._return_to_proposing_group_with_last_validation_active_wf_functionality()
+        self._return_to_proposing_group_with_validation_active()
+        # We can also using the same test than last Validation
+        self._return_to_proposing_group_with_validation_active_wf_functionality()
 
     def test_pm_WFA_hide_decisions_when_under_writing(self):
         '''Test the workflowAdaptation 'hide_decisions_when_under_writing'.
