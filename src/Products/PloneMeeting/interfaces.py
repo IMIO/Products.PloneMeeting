@@ -220,14 +220,6 @@ class IMeetingItemDocumentation:
     '''Normally, the methods described here should be part of IMeetingItem.
        Because it is impossible to do so with an overengineered yet overrigid
        ArchGenXML 2, we document the provided methods in this absurd class.'''
-    def getItemReference():
-        '''Returns the reference associated to this item. If the format of your
-           item references is simple, you should define it by a TAL expression,
-           directly in the MeetingConfig (through the web or via a profile).
-           Indeed, this is the default behaviour of getItemReference: to produce
-           a reference based on a format specified as a TAL expression in the
-           MeetingConfig. If your references are too complex, then override
-           this method in a specific adapter.'''
     def mustShowItemReference():
         '''When must I show the item reference ? In the default implementation,
            item references are shown as soon as a meeting is published.'''

@@ -122,6 +122,32 @@ class testPerformances(PloneMeetingTestCase):
         pm_logger.info('Delay %d items containing %d annexes in each.' % (10, 10))
         self._delaySeveralItems(meeting, uids)
 
+    def test_pm_Update250ItemsItemReference(self):
+        '''Update the itemReference of 250 items.'''
+        # compute metingDate, proposingGroup acronym and item number elativeTo meeting for itemReference
+        self.meetingConfig.setItemReferenceFormat(
+            "python: here.restrictedTraverse('pm_unrestricted_methods').getLinkedMeetingDate().strftime('%Y%m%d') + "
+            "'/' + here.getProposingGroup(True).getAcronym() + '/' + "
+            "str(here.getItemNumber(relativeTo='meeting', for_display=True))")
+        meeting, uids = self._setupMeetingItemsWithAnnexes(250, 0, with_meeting=True, present_items=True)
+        # update every items
+        pm_logger.info(
+            'Updating item references for %d items presented in a meeting starting from item number %s.' % (250, 0))
+        self._updateItemReferences(meeting)
+        # update items starting from 100th item
+        pm_logger.info(
+            'Updating item references for %d items presented in a meeting starting from item number %s.' % (250, 100))
+        self._updateItemReferences(meeting, startNumber=100*100)
+        # update items starting from 200th item
+        pm_logger.info(
+            'Updating item references for %d items presented in a meeting starting from item number %s.' % (250, 200))
+        self._updateItemReferences(meeting, startNumber=200*100)
+
+    @timecall
+    def _updateItemReferences(self, meeting, startNumber=0):
+        '''Helper method that actually compute every items itemReference for p_meeting.'''
+        meeting.updateItemReferences(startNumber=startNumber)
+
     def test_pm_Present50ItemsWithoutAnnexesSeveralTimes(self):
         '''While presenting items, these items are inserted in a given order.
            In this test, as every items use same 'proposingGroup', same 'privacy'

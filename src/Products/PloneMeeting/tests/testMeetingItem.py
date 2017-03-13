@@ -41,6 +41,7 @@ from collective.iconifiedcategory.utils import get_categories
 from collective.iconifiedcategory.utils import get_category_object
 from collective.iconifiedcategory.utils import get_config_root
 from collective.iconifiedcategory.utils import get_group
+from plone import api
 from plone.app.testing import logout
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
@@ -94,13 +95,10 @@ class testMeetingItem(PloneMeetingTestCase):
         # Use the 'plonegov-assembly' meetingConfig
         self.setMeetingConfig(self.meetingConfig2.getId())
         cfg = self.meetingConfig
-        self.create('MeetingCategory', isClassifier=True, id='class1', title='Classifier 1')
-        self.create('MeetingCategory', isClassifier=True, id='class2', title='Classifier 2')
-        self.create('MeetingCategory', isClassifier=True, id='class3', title='Classifier 3')
         # create an item for test
         self.changeUser('pmCreator1')
         expectedCategories = ['deployment', 'maintenance', 'development', 'events', 'research', 'projects', ]
-        expectedClassifiers = ['class1', 'class2', 'class3', ]
+        expectedClassifiers = ['classifier1', 'classifier2', 'classifier3', ]
         # By default, every categories are selectable
         self.failUnless([cat.id for cat in cfg.getCategories()] == expectedCategories)
         # And the behaviour is the same for classifiers
@@ -108,9 +106,9 @@ class testMeetingItem(PloneMeetingTestCase):
         # Deactivate a category and a classifier
         self.changeUser('admin')
         self.wfTool.doActionFor(cfg.categories.deployment, 'deactivate')
-        self.wfTool.doActionFor(cfg.classifiers.class2, 'deactivate')
+        self.wfTool.doActionFor(cfg.classifiers.classifier2, 'deactivate')
         expectedCategories.remove('deployment')
-        expectedClassifiers.remove('class2')
+        expectedClassifiers.remove('classifier2')
         # getCategories has caching in the REQUEST, we need to wipe this out
         self.cleanMemoize()
         self.changeUser('pmCreator1')
@@ -120,9 +118,9 @@ class testMeetingItem(PloneMeetingTestCase):
         # Specify that a category is restricted to some groups pmCreator1 is not creator for
         self.changeUser('admin')
         cfg.categories.maintenance.setUsingGroups(('vendors',))
-        cfg.classifiers.class1.setUsingGroups(('vendors',))
+        cfg.classifiers.classifier1.setUsingGroups(('vendors',))
         expectedCategories.remove('maintenance')
-        expectedClassifiers.remove('class1')
+        expectedClassifiers.remove('classifier1')
         # getCategories has caching in the REQUEST, we need to wipe this out
         self.cleanMemoize()
         self.changeUser('pmCreator1')
@@ -3525,7 +3523,7 @@ class testMeetingItem(PloneMeetingTestCase):
             'answerers', 'completeness', 'emergency', 'id',
             'itemAbsents', 'itemAssembly', 'itemAssemblyAbsents',
             'itemAssemblyExcused', 'itemInitiator', 'itemIsSigned',
-            'itemKeywords', 'itemNumber', 'itemSignatories',
+            'itemKeywords', 'itemNumber', 'itemReference', 'itemSignatories',
             'itemSignatures', 'itemTags', 'listType', 'manuallyLinkedItems',
             'meetingTransitionInsertingMe', 'inAndOutMoves', 'notes',
             'marginalNotes', 'observations', 'pollTypeObservations',
@@ -4852,6 +4850,328 @@ class testMeetingItem(PloneMeetingTestCase):
         self.deleteAsManager(item2.UID())
         self.assertFalse("clone_to_other_mc.png" in IPrettyLink(item).getLink())
         self.assertTrue("will_be_cloned_to_other_mc.png" in IPrettyLink(item).getLink())
+
+    def test_pm_ItemReferenceSetWhenItemHasFrozenMeeting(self):
+        """Item reference is avilable when item is linked to a meeting
+           that is no more in a beforeFrozenState."""
+        # remove recurring items in self.meetingConfig
+        self._removeConfigObjectsFor(self.meetingConfig)
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        item.setDecision(self.decisionText)
+        self.assertEqual(item.getItemReference(), '')
+        self.validateItem(item)
+        self.assertEqual(item.getItemReference(), '')
+        # now insert it into a meeting
+        meeting = self.create('Meeting', date=DateTime('2017/03/03'))
+        self.presentItem(item)
+        self.assertTrue(item.hasMeeting())
+        self.assertEqual(item.getItemReference(), '')
+        self.freezeMeeting(meeting)
+        self.assertEqual(item.getItemReference(), 'Ref. 20170303/1')
+
+        # set meeting back to created, items references are updated to ''
+        self.backToState(meeting, 'created')
+        self.assertEqual(item.getItemReference(), '')
+
+    def test_pm_ItemReferenceAdaptedWhenItemInsertedOrRemovedOrDeletedFromMeeting(self):
+        """Item reference is set when item is inserted into a meeting."""
+        catalog = api.portal.get_tool('portal_catalog')
+        # remove recurring items in self.meetingConfig
+        self._removeConfigObjectsFor(self.meetingConfig)
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem', title='Item1 title')
+        meeting = self.create('Meeting', date=DateTime('2017/03/03'))
+        self.presentItem(item)
+        self.freezeMeeting(meeting)
+        self.assertEqual(item.getItemReference(), 'Ref. 20170303/1')
+        # correct in catalog too
+        self.assertEqual(catalog(SearchableText=item.getItemReference())[0].UID,
+                         item.UID())
+        # insert a second item
+        item2 = self.create('MeetingItem', title='Item2 title')
+        self.presentItem(item2)
+        self.assertEqual(item2.getItemReference(), 'Ref. 20170303/2')
+        self.assertEqual(catalog(SearchableText=item2.getItemReference())[0].UID,
+                         item2.UID())
+        # insert a third item
+        item3 = self.create('MeetingItem', title='Item3 title')
+        self.presentItem(item3)
+        self.assertEqual(item3.getItemReference(), 'Ref. 20170303/3')
+        self.assertEqual(catalog(SearchableText=item3.getItemReference())[0].UID,
+                         item3.UID())
+
+        # if we remove item2, third item reference is adapted
+        self.backToState(item2, 'validated')
+        self.assertEqual(item2.getItemReference(), '')
+        self.assertEqual(item.getItemReference(), 'Ref. 20170303/1')
+        self.assertEqual(catalog(SearchableText=item.getItemReference())[0].UID,
+                         item.UID())
+        self.assertEqual(item3.getItemReference(), 'Ref. 20170303/2')
+        self.assertEqual(catalog(SearchableText=item3.getItemReference())[0].UID,
+                         item3.UID())
+
+        # removing last item works
+        old_itemReference = item3.getItemReference()
+        self.backToState(item3, 'validated')
+        self.assertEqual(item3.getItemReference(), '')
+        self.assertEqual(len(catalog(SearchableText=old_itemReference)), 0)
+
+        # insert a new item and delete item1
+        item4 = self.create('MeetingItem', title='Item4 title')
+        self.presentItem(item4)
+        self.assertEqual(item.getItemReference(), 'Ref. 20170303/1')
+        self.assertEqual(item4.getItemReference(), 'Ref. 20170303/2')
+        self.deleteAsManager(item.UID())
+        self.assertEqual(item4.getItemReference(), 'Ref. 20170303/1')
+
+    def test_pm_ItemReferenceUpdateWhenSpecificItemFieldsModified(self):
+        """When a item is modified, if 'category', 'classifier', 'proposingGroup'
+           or 'otherMeetingConfigsClonableTo' field is changed, we need to update
+           every itemReference starting from current item."""
+        self.changeUser('siteadmin')
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        cfg2Id = cfg2.getId()
+        cfg.setUseGroupsAsCategories(False)
+        # remove recurring items in self.meetingConfig
+        self._removeConfigObjectsFor(cfg)
+        # change itemReferenceFormat to include an item data (Title)
+        cfg = self.meetingConfig
+        cfg.setItemReferenceFormat(
+            "python: here.getMeeting().getDate().strftime('%Y%m%d') + '/' + "
+            "str(here.getProposingGroup(True).getAcronym()) + '/' + "
+            "str(here.getCategory()) + '/' + "
+            "str(here.getClassifier() and here.getClassifier().getId() or '-') + '/' + "
+            "('/'.join(here.getOtherMeetingConfigsClonableTo()) or '-') + '/' + "
+            "here.Title() + '/' + "
+            "str(here.getItemNumber(relativeTo='meetingConfig', for_display=True))")
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem', title='Title1')
+        meeting = self.create('Meeting', date=DateTime('2017/03/03'))
+        self.presentItem(item)
+        self.freezeMeeting(meeting)
+        self.assertEqual(item.getItemReference(), '20170303/Devel/development/-/-/Title1/1')
+        # change category
+        item.setCategory('research')
+        item.at_post_edit_script()
+        self.assertEqual(item.getItemReference(), '20170303/Devel/research/-/-/Title1/1')
+        # change classifier
+        item.setClassifier(cfg.classifiers.classifier1.UID())
+        item.at_post_edit_script()
+        self.assertEqual(item.getItemReference(), '20170303/Devel/research/classifier1/-/Title1/1')
+        # change proposingGroup
+        item.setProposingGroup('vendors')
+        item.at_post_edit_script()
+        self.assertEqual(item.getItemReference(), '20170303/Devil/research/classifier1/-/Title1/1')
+        # change otherMeetingConfigsClonableTo
+        item.setOtherMeetingConfigsClonableTo((cfg2Id,))
+        item.at_post_edit_script()
+        self.assertEqual(item.getItemReference(),
+                         '20170303/Devil/research/classifier1/{0}/Title1/1'.format(cfg2Id))
+        # changing the Title will not update the reference
+        item.setTitle('Title2')
+        item.at_post_edit_script()
+        self.assertEqual(item.getItemReference(),
+                         '20170303/Devil/research/classifier1/{0}/Title1/1'.format(cfg2Id))
+
+    def test_pm_ItemReferenceUpdateWhenItemPositionChangedOnMeeting(self):
+        """When an item position changed in the meeting, the itemReference is updated."""
+        catalog = api.portal.get_tool('portal_catalog')
+        # remove recurring items in self.meetingConfig
+        self._removeConfigObjectsFor(self.meetingConfig)
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2017/03/03'))
+        item1 = self.create('MeetingItem')
+        item2 = self.create('MeetingItem')
+        item3 = self.create('MeetingItem')
+        item4 = self.create('MeetingItem')
+        self.presentItem(item1)
+        self.presentItem(item2)
+        self.presentItem(item3)
+        self.presentItem(item4)
+        self.freezeMeeting(meeting)
+        self.assertEqual(item1.getItemReference(), 'Ref. 20170303/1')
+        self.assertEqual(item2.getItemReference(), 'Ref. 20170303/2')
+        self.assertEqual(item3.getItemReference(), 'Ref. 20170303/3')
+        self.assertEqual(item4.getItemReference(), 'Ref. 20170303/4')
+
+        # move the item2 down
+        view = item2.restrictedTraverse('@@change-item-order')
+        view('down')
+        self.assertEqual(item1.getItemReference(), 'Ref. 20170303/1')
+        self.assertEqual(item3.getItemReference(), 'Ref. 20170303/2')
+        self.assertEqual(item2.getItemReference(), 'Ref. 20170303/3')
+        self.assertEqual(item4.getItemReference(), 'Ref. 20170303/4')
+        self.assertEqual(catalog(SearchableText=item1.getItemReference())[0].UID,
+                         item1.UID())
+        self.assertEqual(catalog(SearchableText=item2.getItemReference())[0].UID,
+                         item2.UID())
+        self.assertEqual(catalog(SearchableText=item3.getItemReference())[0].UID,
+                         item3.UID())
+        self.assertEqual(catalog(SearchableText=item4.getItemReference())[0].UID,
+                         item4.UID())
+        # move item1 to 4th position
+        view = item1.restrictedTraverse('@@change-item-order')
+        view('number', '4')
+        self.assertEqual(item3.getItemReference(), 'Ref. 20170303/1')
+        self.assertEqual(item2.getItemReference(), 'Ref. 20170303/2')
+        self.assertEqual(item4.getItemReference(), 'Ref. 20170303/3')
+        self.assertEqual(item1.getItemReference(), 'Ref. 20170303/4')
+        self.assertEqual(catalog(SearchableText=item1.getItemReference())[0].UID,
+                         item1.UID())
+        self.assertEqual(catalog(SearchableText=item2.getItemReference())[0].UID,
+                         item2.UID())
+        self.assertEqual(catalog(SearchableText=item3.getItemReference())[0].UID,
+                         item3.UID())
+        self.assertEqual(catalog(SearchableText=item4.getItemReference())[0].UID,
+                         item4.UID())
+
+    def test_pm_ItemReferenceUpdateWhenSpecificMeetingFieldsModified(self):
+        """When a meeting is modified, if 'date', 'firstItemNumber' or 'meetingNumber' field
+           is changed, every contained items itemReference is updated.  Other changes will
+           not update item references."""
+        # remove recurring items in self.meetingConfig
+        cfg = self.meetingConfig
+        self._removeConfigObjectsFor(cfg)
+        cfg.setItemReferenceFormat(
+            "python: here.getMeeting().getDate().strftime('%Y%m%d') + '/' + "
+            "str(here.getMeeting().getFirstItemNumber()) + '/' + "
+            "str(here.getMeeting().getMeetingNumber()) + '/' + "
+            "str(here.getItemNumber(relativeTo='meetingConfig', for_display=True))")
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting',
+                              date=DateTime('2017/03/03'))
+        item1 = self.create('MeetingItem')
+        item2 = self.create('MeetingItem')
+        item3 = self.create('MeetingItem')
+        item4 = self.create('MeetingItem')
+        self.presentItem(item1)
+        self.presentItem(item2)
+        self.presentItem(item3)
+        self.presentItem(item4)
+        self.freezeMeeting(meeting)
+        self.assertEqual(item1.getItemReference(), '20170303/-1/1/1')
+        self.assertEqual(item2.getItemReference(), '20170303/-1/1/2')
+        self.assertEqual(item3.getItemReference(), '20170303/-1/1/3')
+        self.assertEqual(item4.getItemReference(), '20170303/-1/1/4')
+
+        # if fields 'date', 'firstItemNumber' and 'meetingNumber' are changed
+        # the item references are updated
+        # field date
+        meeting.setDate(DateTime('2017/03/05'))
+        meeting.at_post_edit_script()
+        self.assertEqual(item1.getItemReference(), '20170305/-1/1/1')
+        self.assertEqual(item2.getItemReference(), '20170305/-1/1/2')
+        self.assertEqual(item3.getItemReference(), '20170305/-1/1/3')
+        self.assertEqual(item4.getItemReference(), '20170305/-1/1/4')
+        # field firstItemNumber
+        meeting.setFirstItemNumber('12')
+        meeting.at_post_edit_script()
+        self.assertEqual(item1.getItemReference(), '20170305/12/1/12')
+        self.assertEqual(item2.getItemReference(), '20170305/12/1/13')
+        self.assertEqual(item3.getItemReference(), '20170305/12/1/14')
+        self.assertEqual(item4.getItemReference(), '20170305/12/1/15')
+        # field meetingNumber
+        meeting.setMeetingNumber('4')
+        meeting.at_post_edit_script()
+        self.assertEqual(item1.getItemReference(), '20170305/12/4/12')
+        self.assertEqual(item2.getItemReference(), '20170305/12/4/13')
+        self.assertEqual(item3.getItemReference(), '20170305/12/4/14')
+        self.assertEqual(item4.getItemReference(), '20170305/12/4/15')
+
+        # if we change another field, references are not updated
+        # to test this, change the MeetingConfig.itemReferenceFormat
+        # change value for field "place" and check
+        cfg.setItemReferenceFormat(
+            "python: str(here.getItemNumber(relativeTo='meetingConfig', for_display=True))")
+        meeting.setPlace('Another place')
+        meeting.at_post_edit_script()
+        self.assertEqual(item1.getItemReference(), '20170305/12/4/12')
+        self.assertEqual(item2.getItemReference(), '20170305/12/4/13')
+        self.assertEqual(item3.getItemReference(), '20170305/12/4/14')
+        self.assertEqual(item4.getItemReference(), '20170305/12/4/15')
+        # confirm test
+        meeting.updateItemReferences()
+        self.assertEqual(item1.getItemReference(), '12')
+        self.assertEqual(item2.getItemReference(), '13')
+        self.assertEqual(item3.getItemReference(), '14')
+        self.assertEqual(item4.getItemReference(), '15')
+
+    def test_pm_ItemReferenceUpdateWhenSeveralItemsPresentedOrRemovedAtOnce(self):
+        """When presenting items using the '@@present-several-items' view,
+           the item reference is correct, moreover, call to Meeting.updateItemReferences
+           is made only once.  This is the same when removing several items
+           using the '@@remove-several-items' view."""
+        # remove recurring items in self.meetingConfig
+        cfg = self.meetingConfig
+        self._removeConfigObjectsFor(cfg)
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2017/03/07'))
+        meetingUID = meeting.UID()
+        item1 = self.create('MeetingItem', preferredMeeting=meetingUID)
+        item2 = self.create('MeetingItem', preferredMeeting=meetingUID)
+        item3 = self.create('MeetingItem', preferredMeeting=meetingUID)
+        item4 = self.create('MeetingItem', preferredMeeting=meetingUID)
+        self.validateItem(item1)
+        self.validateItem(item2)
+        self.validateItem(item3)
+        self.validateItem(item4)
+        self.freezeMeeting(meeting)
+
+        # presente several items
+        present_view = meeting.restrictedTraverse('@@present-several-items')
+        present_view([item1.UID(), item2.UID(), item3.UID(), item4.UID()])
+        self.assertEqual(item1.getItemReference(), 'Ref. 20170307/1')
+        self.assertEqual(item2.getItemReference(), 'Ref. 20170307/2')
+        self.assertEqual(item3.getItemReference(), 'Ref. 20170307/3')
+        self.assertEqual(item4.getItemReference(), 'Ref. 20170307/4')
+
+        # now remove several items
+        remove_view = meeting.restrictedTraverse('@@remove-several-items')
+        remove_view([item1.UID(), item3.UID()])
+        self.assertEqual(item1.getItemReference(), '')
+        self.assertEqual(item2.getItemReference(), 'Ref. 20170307/1')
+        self.assertEqual(item3.getItemReference(), '')
+        self.assertEqual(item4.getItemReference(), 'Ref. 20170307/2')
+
+    def test_pm_ItemReferenceFoundInItemSearchableText(self):
+        """ """
+        catalog = api.portal.get_tool('portal_catalog')
+        # remove recurring items in self.meetingConfig
+        self._removeConfigObjectsFor(self.meetingConfig)
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2017/03/03'))
+        item1 = self.create('MeetingItem')
+        item2 = self.create('MeetingItem')
+        item3 = self.create('MeetingItem')
+        item4 = self.create('MeetingItem')
+        self.presentItem(item1)
+        self.presentItem(item2)
+        self.presentItem(item3)
+        self.presentItem(item4)
+        self.freezeMeeting(meeting)
+        self.assertEqual(item1.getItemReference(), 'Ref. 20170303/1')
+        self.assertEqual(item2.getItemReference(), 'Ref. 20170303/2')
+        self.assertEqual(item3.getItemReference(), 'Ref. 20170303/3')
+        self.assertEqual(item4.getItemReference(), 'Ref. 20170303/4')
+        # query in catalog
+        # item1
+        brains_item1_ref = catalog(SearchableText=item1.getItemReference())
+        self.assertEqual(len(brains_item1_ref), 1)
+        self.assertEqual(brains_item1_ref[0].UID, item1.UID())
+        # item2
+        brains_item2_ref = catalog(SearchableText=item2.getItemReference())
+        self.assertEqual(len(brains_item2_ref), 1)
+        self.assertEqual(brains_item2_ref[0].UID, item2.UID())
+        # item3
+        brains_item3_ref = catalog(SearchableText=item3.getItemReference())
+        self.assertEqual(len(brains_item3_ref), 1)
+        self.assertEqual(brains_item3_ref[0].UID, item3.UID())
+        # item4
+        brains_item4_ref = catalog(SearchableText=item4.getItemReference())
+        self.assertEqual(len(brains_item4_ref), 1)
+        self.assertEqual(brains_item4_ref[0].UID, item4.UID())
 
 
 def test_suite():

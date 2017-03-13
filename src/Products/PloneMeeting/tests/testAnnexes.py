@@ -243,12 +243,30 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(View, obj))
         self._checkMayAccessConfidentialAnnexes(obj, annexNotConfidential, annexConfidential,
                                                 annexes_table, categorized_child)
+        # is viewable for Manager and MeetingManager
+        current_user_id = self.member.getId()
+        self.changeUser('siteadmin')
+        self._checkMayAccessConfidentialAnnexes(obj, annexNotConfidential, annexConfidential,
+                                                annexes_table, categorized_child)
+        self.changeUser('pmManager')
+        self._checkMayAccessConfidentialAnnexes(obj, annexNotConfidential, annexConfidential,
+                                                annexes_table, categorized_child)
+        self.changeUser(current_user_id)
+
+        # disable access to condifential elements to every profiles
         cfg.setItemAnnexConfidentialVisibleFor(())
         cfg.setAdviceAnnexConfidentialVisibleFor(())
         cfg.setMeetingAnnexConfidentialVisibleFor(())
         update_all_categorized_elements(obj)
         self._checkMayNotAccessConfidentialAnnexes(obj, annexNotConfidential, annexConfidential,
                                                    annexes_table, categorized_child)
+        # is viewable for Manager and MeetingManager
+        self.changeUser('siteadmin')
+        self._checkMayAccessConfidentialAnnexes(obj, annexNotConfidential, annexConfidential,
+                                                annexes_table, categorized_child)
+        self.changeUser('pmManager')
+        self._checkMayAccessConfidentialAnnexes(obj, annexNotConfidential, annexConfidential,
+                                                annexes_table, categorized_child)
 
     def _checkMayAccessConfidentialAnnexes(self,
                                            obj,
@@ -862,6 +880,60 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertEqual(
             form_annexDecision_widget_terms,
             ['annexes_types_-_item_decision_annexes_-_decision-annex'])
+
+    def test_pm_UpdateCategorizedElements(self):
+        """The actions "update_categorized_elements" from collective.iconifiedcategory
+           will update annex confidentiality accesses."""
+        cfg = self.meetingConfig
+        cfgId = cfg.getId()
+        cfg.setItemAnnexConfidentialVisibleFor(('configgroup_restrictedpowerobservers', ))
+        cfg.setItemPowerObserversStates(('itemcreated', ))
+
+        # only available to 'Managers'
+        self.changeUser('pmCreator1')
+        self.assertRaises(Unauthorized,
+                          cfg.annexes_types.item_annexes.restrictedTraverse,
+                          '@@update-categorized-elements')
+
+        # create item with annex
+        item = self.create('MeetingItem')
+        annex = self.addAnnex(item)
+        annex_config = get_config_root(annex)
+        annex_group = get_group(annex_config, annex)
+        # enable confidentiality
+        annex_group.confidentiality_activated = True
+        annex.confidential = True
+        notify(ObjectModifiedEvent(annex))
+        category = get_category_object(annex, annex.content_category)
+        currentIndexedCategoryTitle = category.Title()
+        self.assertEqual(item.categorized_elements[annex.UID()]['category_title'],
+                         currentIndexedCategoryTitle)
+        # restrictedpowerobservers have access to annex, not powerobservers
+        rpoId = '{0}_restrictedpowerobservers'.format(cfgId)
+        poId = '{0}_powerobservers'.format(cfgId)
+        self.assertEqual(
+            annex.__ac_local_roles__[rpoId], ['AnnexReader'])
+        self.assertFalse(poId in annex.__ac_local_roles__)
+
+        # change configuration : category title and MeetingConfig.itemAnnexConfidentialVisibleFor
+        cfg.setItemAnnexConfidentialVisibleFor(('configgroup_powerobservers', ))
+        NEW_CATEGORY_TITLE = 'New category title'
+        category.title = NEW_CATEGORY_TITLE
+        self.assertNotEqual(currentIndexedCategoryTitle, NEW_CATEGORY_TITLE)
+        # categorized_elements was not updated
+        self.assertNotEqual(item.categorized_elements[annex.UID()]['category_title'],
+                            NEW_CATEGORY_TITLE)
+
+        # call @@update-categorized-elements then check again
+        self.changeUser('siteadmin')
+        view = cfg.annexes_types.item_annexes.restrictedTraverse('@@update-categorized-elements')
+        view()
+        self.assertEqual(item.categorized_elements[annex.UID()]['category_title'],
+                         NEW_CATEGORY_TITLE)
+        # accesses were also updated : powerobservers have access to annex, not restrictedpowerobservers
+        self.assertEqual(
+            annex.__ac_local_roles__[poId], ['AnnexReader'])
+        self.assertFalse(rpoId in annex.__ac_local_roles__)
 
 
 def test_suite():

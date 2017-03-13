@@ -317,14 +317,37 @@ def _configureCKeditor(site):
         msg_highlight_yellow = translate('ckeditor_style_highlight_in_yellow',
                                          domain='PloneMeeting',
                                          context=site.REQUEST).encode('utf-8')
+        msg_x_small = translate('ckeditor_style_x_small',
+                                domain='PloneMeeting',
+                                context=site.REQUEST).encode('utf-8')
+        msg_small = translate('ckeditor_style_small',
+                              domain='PloneMeeting',
+                              context=site.REQUEST).encode('utf-8')
+        msg_large = translate('ckeditor_style_large',
+                              domain='PloneMeeting',
+                              context=site.REQUEST).encode('utf-8')
+        msg_x_large = translate('ckeditor_style_x_large',
+                                domain='PloneMeeting',
+                                context=site.REQUEST).encode('utf-8')
         msg_indent = translate('ckeditor_style_indent_first_line',
                                domain='PloneMeeting',
                                context=site.REQUEST).encode('utf-8')
         menuStyles = unicode(
             "[\n{0}\n{{ name : '{1}'\t\t, element : 'span', attributes : {{ 'class' : 'highlight-red' }} }},\n"
             "{{ name : '{2}'\t\t, element : 'span', attributes : {{ 'class' : 'highlight' }} }},\n"
-            "{{ name : '{3}'\t\t, element : 'p', attributes : {{ 'class' : 'indent-firstline' }} }},\n]\n".
-            format(CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG, msg_highlight_red, msg_highlight_yellow, msg_indent), enc)
+            "{{ name : '{3}'\t\t, element : 'span', attributes : {{ 'style' : 'font-size: 70%' }} }},\n"
+            "{{ name : '{4}'\t\t, element : 'span', attributes : {{ 'style' : 'font-size: 85%' }} }},\n"
+            "{{ name : '{5}'\t\t, element : 'span', attributes : {{ 'style' : 'font-size: 115%' }} }},\n"
+            "{{ name : '{6}'\t\t, element : 'span', attributes : {{ 'style' : 'font-size: 130%' }} }},\n"
+            "{{ name : '{7}'\t\t, element : 'p', attributes : {{ 'class' : 'indent-firstline' }} }},\n]\n".
+            format(CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG,
+                   msg_highlight_red,
+                   msg_highlight_yellow,
+                   msg_x_small,
+                   msg_small,
+                   msg_large,
+                   msg_x_large,
+                   msg_indent), enc)
         cke_props.menuStyles = menuStyles
     # activate SCAYT auto-start
     cke_props.enableScaytOnStartup = True

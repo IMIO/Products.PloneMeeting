@@ -32,12 +32,12 @@ from collective.iconifiedcategory.browser.tabview import CategorizedTabView
 from collective.iconifiedcategory.browser.views import CategorizedChildInfosView
 from collective.iconifiedcategory.interfaces import ICategorizedPrint
 from collective.iconifiedcategory.interfaces import ICategorizedConfidential
-from collective.iconifiedcategory import utils as iconifiedcategory_utils
-from collective.iconifiedcategory.utils import get_config_root
+from collective.iconifiedcategory import utils as collective_iconifiedcategory_utils
 from eea.facetednavigation.browser.app.view import FacetedContainerView
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.actionspanel.browser.viewlets import ActionsPanelViewlet
 from imio.actionspanel.browser.views import ActionsPanelView
+from imio.annex import utils as imio_annex_utils
 from imio.dashboard.browser.overrides import IDDocumentGenerationView
 from imio.dashboard.browser.overrides import IDFacetedTableView
 from imio.dashboard.browser.overrides import IDDashboardDocumentGeneratorLinksViewlet
@@ -164,15 +164,17 @@ class PMConfigActionsPanelViewlet(ActionsPanelViewlet):
     def renderViewlet(self):
         """ """
         showAddContent = False
+        showActions = False
         if 'ContentCategory' in self.context.portal_type:
             showAddContent = True
+            showActions = True
         return self.context.restrictedTraverse("@@actions_panel")(useIcons=False,
                                                                   showTransitions=True,
                                                                   appendTypeNameToTransitionLabel=True,
                                                                   showArrows=False,
                                                                   showEdit=False,
                                                                   showDelete=False,
-                                                                  showActions=False,
+                                                                  showActions=showActions,
                                                                   showAddContent=showAddContent)
 
     def getBackUrl(self):
@@ -637,8 +639,14 @@ class ConfigActionsPanelView(ActionsPanelView):
                                    'renderArrows',
                                    'renderOwnDelete',
                                    'renderAddContent')
+
+        if 'ContentCategory' in self.context.portal_type:
+            self.SECTIONS_TO_RENDER += ('renderActions', )
+            self.ACCEPTABLE_ACTIONS = ('update_categorized_elements',
+                                       'update_and_sort_categorized_elements')
+
         if self.context.meta_type == 'MeetingGroup':
-            self.SECTIONS_TO_RENDER = self.SECTIONS_TO_RENDER + ('renderLinkedPloneGroups', )
+            self.SECTIONS_TO_RENDER += ('renderLinkedPloneGroups', )
 
     def renderArrows(self):
         """ """
@@ -709,7 +717,9 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
             'user': currentUser,
             'podTemplate': self.get_pod_template(self.request.get('template_uid')),
             # give ability to access annexes related methods
-            'iconifiedcategory_utils': iconifiedcategory_utils,
+            'collective_iconifiedcategory_utils': collective_iconifiedcategory_utils,
+            # imio.annex utils
+            'imio_annex_utils': imio_annex_utils,
             # make methods defined in utils available
             'utils': pm_utils
         }
@@ -817,10 +827,10 @@ class CategorizedAnnexesView(CategorizedTabView):
     def _prepare_table_render(self, table, portal_type):
         if portal_type == 'annexDecision':
             self.request.set('force_use_item_decision_annexes_group', True)
-            config = get_config_root(self.context)
+            config = collective_iconifiedcategory_utils.get_config_root(self.context)
             self.request.set('force_use_item_decision_annexes_group', False)
         else:
-            config = get_config_root(self.context)
+            config = collective_iconifiedcategory_utils.get_config_root(self.context)
 
         if config.to_be_printed_activated:
             alsoProvides(table, ICategorizedPrint)

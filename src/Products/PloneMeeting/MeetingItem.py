@@ -50,6 +50,7 @@ from Products.Archetypes.atapi import RichWidget
 from Products.Archetypes.atapi import Schema
 from Products.Archetypes.atapi import SelectionWidget
 from Products.Archetypes.atapi import StringField
+from Products.Archetypes.atapi import StringWidget
 from Products.Archetypes.atapi import TextAreaWidget
 from Products.Archetypes.atapi import TextField
 from Products.Archetypes.event import ObjectEditedEvent
@@ -663,6 +664,16 @@ schema = Schema((
             label_msgid='PloneMeeting_label_itemNumber',
             i18n_domain='PloneMeeting',
         ),
+    ),
+    StringField(
+        name='itemReference',
+        widget=StringWidget(
+            visible=False,
+            label='Itemreference',
+            label_msgid='PloneMeeting_label_itemReference',
+            i18n_domain='PloneMeeting',
+        ),
+        searchable=True,
     ),
     TextField(
         name='description',
@@ -2001,6 +2012,60 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         self.getField('manuallyLinkedItems').set(self, valueToStore, **kwargs)
 
+    security.declarePrivate('setCategory')
+
+    def setCategory(self, value, **kwargs):
+        '''Overrides the field 'category' mutator to be able to
+           updateItemReferences if value changed.'''
+        current_category = self.getField('category').get(self, **kwargs)
+        if not value == current_category:
+            # add a value in the REQUEST to specify that updateItemReferences is needed
+            self.REQUEST.set('need_Meeting_updateItemReferences', True)
+        self.getField('category').set(self, value, **kwargs)
+
+    security.declarePrivate('setClassifier')
+
+    def setClassifier(self, value, **kwargs):
+        '''Overrides the field 'classifier' mutator to be able to
+           updateItemReferences if value changed.'''
+        current_classifier = self.getField('classifier').getRaw(self, **kwargs)
+        if not value == current_classifier:
+            # add a value in the REQUEST to specify that updateItemReferences is needed
+            self.REQUEST.set('need_Meeting_updateItemReferences', True)
+        self.getField('classifier').set(self, value, **kwargs)
+
+    security.declarePrivate('setProposingGroup')
+
+    def setProposingGroup(self, value, **kwargs):
+        '''Overrides the field 'proposingGroup' mutator to be able to
+           updateItemReferences if value changed.'''
+        current_proposingGroup = self.getField('proposingGroup').get(self, **kwargs)
+        if not value == current_proposingGroup:
+            # add a value in the REQUEST to specify that updateItemReferences is needed
+            self.REQUEST.set('need_Meeting_updateItemReferences', True)
+        self.getField('proposingGroup').set(self, value, **kwargs)
+
+    def _adaptLinesValueToBeCompared(self, value):
+        """'value' received from processForm does not correspond to what is stored
+           for LinesField, we need to adapt it so it may be compared.
+           This is completly taken from Products.Archetypes.Field.LinesField.set."""
+
+        if isinstance(value, basestring):
+            value = value.split('\n')
+        value = [v for v in value if v and v.strip()]
+        return tuple(value)
+
+    security.declarePrivate('setOtherMeetingConfigsClonableTo')
+
+    def setOtherMeetingConfigsClonableTo(self, value, **kwargs):
+        '''Overrides the field 'otherMeetingConfigsClonableTo' mutator to be able to
+           updateItemReferences if value changed.'''
+        current_otherMeetingConfigsClonableTo = self.getField('otherMeetingConfigsClonableTo').get(self, **kwargs)
+        if not self._adaptLinesValueToBeCompared(value) == current_otherMeetingConfigsClonableTo:
+            # add a value in the REQUEST to specify that updateItemReferences is needed
+            self.REQUEST.set('need_Meeting_updateItemReferences', True)
+        self.getField('otherMeetingConfigsClonableTo').set(self, value, **kwargs)
+
     security.declareProtected('View', 'getManuallyLinkedItems')
 
     def getManuallyLinkedItems(self, only_viewable=False, **kwargs):
@@ -2028,7 +2093,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('showClonableToOtherMeetingConfigs')
 
     def showClonableToOtherMeetingConfigs(self):
-        '''Returns True is the current item can be cloned to another
+        '''Returns True if the current item can be cloned to another
            meetingConfig. This method is used as a condition for showing
            or not the 'otherMeetingConfigsClonableTo' field.'''
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -2660,14 +2725,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res = self.context
         return res
 
-    security.declarePublic('getItemReference')
+    security.declarePublic('updateItemReference')
 
-    def getItemReference(self):
-        '''Gets the reference of this item. Returns an empty string if the
-           meeting is not decided yet.'''
+    def updateItemReference(self):
+        '''Update the item reference, recompute it,
+           stores it and reindex 'getItemReference'.
+           This expect item to be in a meeting that is at least frozen.'''
         res = ''
         item = self.getSelf()
-        if item.hasMeeting():
+        meeting = item.getMeeting()
+        if meeting and not meeting.queryState() in meeting.getBeforeFrozenStates():
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(item)
             itemRefFormat = cfg.getItemReferenceFormat()
@@ -2678,6 +2745,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     res = Expression(itemRefFormat)(ctx)
                 except Exception, e:
                     raise PloneMeetingError(ITEM_REF_ERROR % str(e))
+
+        stored = self.getField('itemReference').get(self)
+        if stored != res:
+            self.setItemReference(res)
+            self.reindexObject(idxs=['SearchableText'])
         return res
 
     security.declarePublic('getItemSignatures')
@@ -3682,10 +3754,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         isPowerObserver = tool.isPowerObserverForCfg(cfg)
         isRestrictedPowerObserver = tool.isPowerObserverForCfg(cfg, isRestricted=True)
         for groupId, adviceInfo in self.adviceIndex.iteritems():
+            # make sure we do not modify original data
+            adviceInfo = deepcopy(adviceInfo)
+
             # manage inherited advice
             if adviceInfo['inherited']:
                 # make sure we do not modify original data, use .copy()
-                adviceInfo = adviceInfo.copy()
                 adviceInfo = self.getInheritedAdviceInfo(groupId)
                 adviceInfo['inherited'] = True
             # Create the entry for this type of advice if not yet created.
@@ -3722,10 +3796,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if not predecessor:
             return res
 
-        inheritedAdviceInfo = predecessor.adviceIndex.get(adviserId).copy()
+        inheritedAdviceInfo = deepcopy(predecessor.adviceIndex.get(adviserId))
         while (predecessor and predecessor.adviceIndex[adviserId]['inherited']):
             predecessor = predecessor.getPredecessor()
-            inheritedAdviceInfo = predecessor.adviceIndex.get(adviserId).copy()
+            inheritedAdviceInfo = deepcopy(predecessor.adviceIndex.get(adviserId))
 
         res = inheritedAdviceInfo
         res['adviceHolder'] = predecessor

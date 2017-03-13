@@ -294,6 +294,7 @@ class MeetingWorkflowActions:
         unrestrictedMethodsView = getMultiAdapter((self.context, self.context.REQUEST),
                                                   name='pm_unrestricted_methods')
         self.context.setFirstItemNumber(unrestrictedMethodsView.findFirstItemNumberForMeeting(self.context))
+        self.context.updateItemReferences()
 
     security.declarePrivate('doPublish_decisions')
 
@@ -750,7 +751,6 @@ schema = Schema((
         required=True,
         validators=('isInt', ),
         write_permission="Manage portal",
-        read_permission="Manage portal",
     ),
     StringField(
         name='meetingConfigVersion',
@@ -759,7 +759,6 @@ schema = Schema((
             label_msgid='PloneMeeting_label_meetingConfigVersion',
             i18n_domain='PloneMeeting',
         ),
-        read_permission="Manage portal",
         write_permission="Manage portal",
     ),
     DateTimeField(
@@ -824,13 +823,13 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getRawQuery')
 
-    def getRawQuery(self):
+    def getRawQuery(self, force_linked_items_query=False, **kwargs):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
 
         # available items?
-        if displaying_available_items(self):
+        if displaying_available_items(self) and not force_linked_items_query:
             res = self._availableItemsQuery()
         else:
             res = [{'i': 'portal_type',
@@ -1163,13 +1162,16 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                               meetingForRepls=meetingForRepls)
         return res
 
-    security.declareProtected('Modify portal content', 'setDate')
+    security.declarePrivate('setDate')
 
     def setDate(self, value, **kwargs):
         '''Overrides the field 'date' mutator so we reindex every linked
-           items if date value changed.'''
+           items if date value changed.  Moreover we manage updateItemReferences
+           if value changed.'''
         current_date = self.getField('date').get(self, **kwargs)
         if not value == current_date:
+            # add a value in the REQUEST to specify that updateItemReferences is needed
+            self.REQUEST.set('need_Meeting_updateItemReferences', True)
             # store new date before updating items so items get
             # right date when calling meeting.getDate
             self.getField('date').set(self, value, **kwargs)
@@ -1187,6 +1189,28 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                 item.reindexObject(idxs=['linkedMeetingDate', 'getPreferredMeetingDate'])
             # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
             invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
+
+    security.declarePrivate('setFirstItemNumber')
+
+    def setFirstItemNumber(self, value, **kwargs):
+        '''Overrides the field 'firstItemNumber' mutator to be able to
+           updateItemReferences if value changed.'''
+        current_first_item_number = self.getField('firstItemNumber').get(self, **kwargs)
+        if not value == current_first_item_number:
+            # add a value in the REQUEST to specify that updateItemReferences is needed
+            self.REQUEST.set('need_Meeting_updateItemReferences', True)
+        self.getField('firstItemNumber').set(self, value, **kwargs)
+
+    security.declarePrivate('setMeetingNumber')
+
+    def setMeetingNumber(self, value, **kwargs):
+        '''Overrides the field 'meetingNumber' mutator to be able to
+           updateItemReferences if value changed.'''
+        current_meetingNumber = self.getField('meetingNumber').get(self, **kwargs)
+        if not value == current_meetingNumber:
+            # add a value in the REQUEST to specify that updateItemReferences is needed
+            self.REQUEST.set('need_Meeting_updateItemReferences', True)
+        self.getField('meetingNumber').set(self, value, **kwargs)
 
     security.declarePublic('showMeetingManagerReservedField')
 
@@ -1223,18 +1247,22 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                  useCatalog=False,
                  additional_catalog_query={},
                  unrestricted=False,
+                 force_linked_items_query=False,
                  **kwargs):
         '''Overrides the Meeting.items accessor.
            Items can be filtered depending on :
            - list of given p_uids;
            - given p_listTypes;
            - returned ordered (by getItemNumber) if p_ordered is True;
-           - if p_unrestricted is True it will return every items, not checking permission.
+           - if p_unrestricted is True it will return every items, not checking permission;
+           - if p_force_linked_items_query is True, it will call self.getRawQuery with
+             same parameter and force use of query showing linked items, not displaying
+             available items.
         '''
         if useCatalog:
             # execute the query using the portal_catalog
             catalog = getToolByName(self, 'portal_catalog')
-            catalog_query = self.getRawQuery()
+            catalog_query = self.getRawQuery(force_linked_items_query=force_linked_items_query)
             if listTypes:
                 catalog_query.append({'i': 'listType',
                                       'o': 'plone.app.querystring.operation.selection.is',
@@ -1394,16 +1422,24 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             else:
                 # first added item
                 item.setItemNumber(100)
-            # Add the item at the end of the items list
 
+        # Add the item at the end of the items list
         items.append(item)
         self.setItems(items)
         # invalidate RAMCache for MeetingItem.getMeeting
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeeting')
         # reindex getItemNumber when item is in the meeting or getItemNumber returns None
-        item.reindexObject(idxs=['getItemNumber', 'listType'])
-        # meeting is considered modified
+        # and reindex linkedMeeting indexes that is used by updateItemReferences using getItems
+        item.reindexObject(idxs=['getItemNumber',
+                                 'listType',
+                                 'linkedMeetingUID',
+                                 'linkedMeetingDate'])
+        # meeting is considered modified, do this before updateItemReferences
         self.notifyModified()
+
+        # update itemReference after 'getItemNumber' has been reindexed of item and
+        # items with a higher itemNumber
+        self.updateItemReferences(startNumber=item.getItemNumber())
 
     security.declareProtected("Modify portal content", 'removeItem')
 
@@ -1419,7 +1455,6 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             # if it is another value (custom), we do not change it
             if item.getListType() == 'late':
                 item.setListType('normal')
-            item.reindexObject(idxs=['listType', ])
         except ValueError:
             # in case this is called by onItemRemoved, the item
             # does not exist anymore and is no more in the items list
@@ -1441,8 +1476,47 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                     anItem.reindexObject(idxs=['getItemNumber', ])
         # invalidate RAMCache for MeetingItem.getMeeting
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeeting')
-        # meeting is considered modified
+
+        # reindex relevant indexes now that item is removed
+        item.reindexObject(idxs=['listType', 'linkedMeetingUID', 'linkedMeetingDate'])
+
+        # meeting is considered modified, do this before updateItemReferences
         self.notifyModified()
+
+        # update itemReference of item that is no more linked to self and so that will not
+        # be updated by Meeting.updateItemReferences and then update items that used
+        # a higher item number
+        item.updateItemReference()
+        self.updateItemReferences(startNumber=itemNumber)
+
+    def updateItemReferences(self, startNumber=0, check_needed=False):
+        """Update itemReference of every contained items, if p_startNumber is given,
+           we update items starting from p_startNumber itemNumber.
+           By default, if p_startNumber=0, every linked items will be updated.
+           If p_check_needed is True, we check if value '' in REQUEST is True."""
+        # call to updateItemReferences may be deferred for optimization
+        if self.REQUEST.get('defer_Meeting_updateItemReferences', False):
+            return
+
+        if check_needed and not self.REQUEST.get('need_Meeting_updateItemReferences', True):
+            return
+        # force disable 'need_Meeting_updateItemReferences' from REQUEST
+        self.REQUEST.set('need_Meeting_updateItemReferences', False)
+
+        # as we could be in the 'available items' faceted part, when inserting
+        # an item from the meeting_view, we set force_linked_items_query=True
+        # regarding the getItemNumber range, we want from startNumber to last
+        # item of the meeting, we consider a meeting have maximum 5000 items...
+        brains = self.getItems(
+            ordered=True,
+            useCatalog=True,
+            additional_catalog_query={
+                'getItemNumber': {'query': [startNumber, 5000*100],
+                                  'range': 'minmax'}, },
+            force_linked_items_query=True)
+        for brain in brains:
+            item = brain.getObject()
+            item.updateItemReference()
 
     security.declarePrivate('getDefaultAssembly')
 
@@ -1695,6 +1769,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                                         xmlpath=os.path.dirname(__file__) +
                                         '/faceted_conf/default_dashboard_widgets.xml')
         self.setLayout('meeting_view')
+        # update every items itemReference if needed
+        self.updateItemReferences(check_needed=True)
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=True)
         self.reindexObject()
@@ -1715,6 +1791,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         transformAllRichTextFields(self)
         # Make sure we have 'text/html' for every Rich fields
         forceHTMLContentTypeForEmptyRichFields(self)
+        # update every items itemReference if needed
+        self.updateItemReferences(check_needed=True)
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=False)
         # notify modified

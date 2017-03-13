@@ -47,6 +47,18 @@ class Migrator(BaseMigrator):
             cfg.setEnableAdviceInvalidation(False)
         self.profile_name = u'profile-Products.PloneMeeting:default'
 
+    def reorderSkinsLayers(self):
+        """Reapply skins of Products.PloneMeeting + self.profile_name."""
+        # re-apply the PloneMeeting skins and the self.profile_name skin if different
+        self.runProfileSteps('Products.PloneMeeting',
+                             steps=['skins'],
+                             profile='default')
+        if self.profile_name != u'profile-Products.PloneMeeting:default':
+            product_name = self.profile_name.split(':')[0][8:]
+            self.runProfileSteps(product_name,
+                                 steps=['skins'],
+                                 profile='default')
+
     def upgradeDependencies(self):
         """Upgrade every dependencies."""
         profile_names = self.ps.getDependenciesForProfile(u'profile-Products.PloneMeeting:default')

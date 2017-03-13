@@ -21,6 +21,7 @@
 #
 
 from DateTime import DateTime
+from plone import api
 
 
 class PloneMeetingTestingHelpers:
@@ -47,19 +48,23 @@ class PloneMeetingTestingHelpers:
                     'backToPublished',
                     'backToCreated',),
         # MeetingItem
-        'itemcreated': ('backToItemFrozen',
+        'itemcreated': ('backToItemPublished',
+                        'backToItemFrozen',
                         'backToPresented',
                         'backToValidated',
                         'backToProposed',
                         'backToItemCreated', ),
-        'proposed': ('backToItemFrozen',
+        'proposed': ('backToItemPublished',
+                     'backToItemFrozen',
                      'backToPresented',
                      'backToValidated',
                      'backToProposed', ),
-        'validated': ('backToItemFrozen',
+        'validated': ('backToItemPublished',
+                      'backToItemFrozen',
                       'backToPresented',
                       'backToValidated', ),
-        'presented': ('backToItemFrozen',
+        'presented': ('backToItemPublished',
+                      'backToItemFrozen',
                       'backToItemPublished',
                       'backToPresented', )}
 
@@ -238,7 +243,7 @@ class PloneMeetingTestingHelpers:
            Overrided to do it as 'Manager' to be able not
            to change permissions ever lines"""
         from plone.app.testing.helpers import setRoles
-        currentMember = self.portal.portal_membership.getAuthenticatedMember()
+        currentMember = api.user.get_current()
         currentMemberRoles = currentMember.getRoles()
         setRoles(self.portal, currentMember.getId(), currentMemberRoles + ['Manager', ])
         for member in members:
@@ -250,7 +255,7 @@ class PloneMeetingTestingHelpers:
            Overrided to do it as 'Manager' to be able not
            to change permissions ever lines"""
         from plone.app.testing.helpers import setRoles
-        currentMember = self.portal.portal_membership.getAuthenticatedMember()
+        currentMember = api.user.get_current()
         currentMemberRoles = currentMember.getRoles()
         setRoles(self.portal, currentMember.getId(), currentMemberRoles + ['Manager', ])
         for member in members:

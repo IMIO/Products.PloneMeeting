@@ -122,6 +122,12 @@ div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchlastdecisions
     margin-top: 5px;
     border-style: outset;
 }
+/* selected element */
+.ploneMeetingSelectButton span.ploneMeetingRef,
+p.ploneMeetingSelectItem.selected {
+    font-weight: bold;
+}
+
 .ploneMeetingSelectBox {
     cursor: pointer;
     border-width: 1px;

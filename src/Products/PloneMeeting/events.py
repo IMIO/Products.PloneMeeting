@@ -126,6 +126,14 @@ def onMeetingTransition(meeting, event):
     transitionId = event.transition.id
     action = 'do%s%s' % (transitionId[0].upper(), transitionId[1:])
     do(action, event)
+    # update items references if meeting is going from beforeFrozen state
+    # to frozen state or the other way round
+    beforeFrozenStates = meeting.getBeforeFrozenStates()
+    if (event.old_state.id in beforeFrozenStates and
+        event.new_state.id not in beforeFrozenStates) or \
+       (event.old_state.id not in beforeFrozenStates and
+            event.new_state.id in beforeFrozenStates):
+        meeting.updateItemReferences()
     # notify a MeetingAfterTransitionEvent for subplugins so we are sure
     # that it is called after PloneMeeting meeting transition
     notify(MeetingAfterTransitionEvent(meeting))
@@ -317,6 +325,8 @@ def onItemModified(item, event):
     meeting = item.getMeeting()
     if meeting:
         meeting.invalidate_meeting_actions_panel_cache = True
+        # update item references if necessary
+        meeting.updateItemReferences(startNumber=item.getItemNumber(), check_needed=True)
 
     # reactivate rename_after_creation as long as item is in it's initial_state
     if item._at_rename_after_creation:

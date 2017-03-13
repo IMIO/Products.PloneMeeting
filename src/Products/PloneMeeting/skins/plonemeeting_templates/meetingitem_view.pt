@@ -16,7 +16,7 @@
       <br />
       <span class="discreet" tal:condition="python: itemNumber != None"
                              tal:content="python: str(itemNumber) + '.'"></span>
-      <span class="discreet" tal:content="python: context.adapted().getItemReference()"></span>
+      <span class="discreet" tal:content="context/getItemReference"></span>
     </tal:itemRef>
    </h1>
   </metal:title>

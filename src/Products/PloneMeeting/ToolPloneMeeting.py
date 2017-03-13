@@ -1534,35 +1534,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             res = res[:res.find('-')]
         return res
 
-    security.declarePublic('updateAnnexes')
-
-    def updateAnnexes(self):
-        '''Update the 'categorized_elements' on every annexes container.'''
-        if not self.isManager(self, realManagers=True):
-            raise Unauthorized
-        catalog = api.portal.get_tool('portal_catalog')
-        # update meetings, items and advices
-        brains = catalog(meta_type=('MeetingItem', 'Meeting'))
-        brains = brains + catalog(object_provides='Products.PloneMeeting.content.advice.IMeetingAdvice')
-        numberOfBrains = len(brains)
-        i = 1
-        for brain in brains:
-            try:
-                if isinstance(brain, AbstractCatalogBrain):
-                    obj = brain.getObject()
-            except AttributeError:
-                continue
-            update_all_categorized_elements(obj)
-            logger.info('%d/%d Updating categorized_elements of %s at %s' % (
-                i,
-                numberOfBrains,
-                brain.portal_type,
-                brain.getPath()))
-            i = i + 1
-        plone_utils = api.portal.get_tool('plone_utils')
-        plone_utils.addPortalMessage('Done.')
-        return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
-
     security.declarePublic('convertAnnexes')
 
     def convertAnnexes(self):

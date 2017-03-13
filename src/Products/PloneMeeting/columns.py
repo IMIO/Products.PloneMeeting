@@ -165,6 +165,17 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
         pretty_link = prettyLinker.getLink()
         return pretty_link + staticInfos + moreInfos + annexes
 
+    def getCSSClasses(self, item):
+        """Apply a particular class on the table row depending on the item's privacy
+           if item is displayed in a meeting."""
+        css_classes = super(PMPrettyLinkColumn, self).getCSSClasses(item)
+        if self.context.meta_type == 'Meeting':
+            # for TR
+            trCSSClasses = []
+            trCSSClasses.append('meeting_item_privacy_{0}'.format(item.privacy))
+            css_classes.update({'tr': ' '.join(trCSSClasses), })
+        return css_classes
+
 
 class PMActionsColumn(ActionsColumn):
     """A column displaying available actions of the listed item."""
@@ -230,15 +241,6 @@ class ItemNumberColumn(BrowserViewCallColumn):
       Display the itemNumber column, used on meetings.
     """
     view_name = 'item-number'
-
-    def getCSSClasses(self, item):
-        """Apply a particular class on the table row depending on the item's privacy."""
-        self.table.sorting_criterion_name = None
-        # for TR
-        trCSSClasses = []
-        trCSSClasses.append('meeting_item_privacy_{0}'.format(item.privacy))
-        return {'tr': ' '.join(trCSSClasses),
-                'td': 'itemnumber'}
 
 
 class ItemCheckBoxColumn(CheckBoxColumn):

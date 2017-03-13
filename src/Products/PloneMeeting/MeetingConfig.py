@@ -1123,20 +1123,6 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
-    IntegerField(
-        name='maxShownMeetings',
-        default=defValues.maxShownMeetings,
-        widget=IntegerField._properties['widget'](
-            description="MaxShownMeetings",
-            description_msgid="max_shown_meetings_descr",
-            label='Maxshownmeetings',
-            label_msgid='PloneMeeting_label_maxShownMeetings',
-            i18n_domain='PloneMeeting',
-        ),
-        required=True,
-        schemata="gui",
-        write_permission="PloneMeeting: Write risky config",
-    ),
     LinesField(
         name='itemColumns',
         widget=MultiSelectionWidget(
@@ -1203,6 +1189,20 @@ schema = Schema((
         vocabulary='listItemsListVisibleFields',
         default=defValues.itemsListVisibleFields,
         enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    IntegerField(
+        name='maxShownMeetings',
+        default=defValues.maxShownMeetings,
+        widget=IntegerField._properties['widget'](
+            description="MaxShownMeetings",
+            description_msgid="max_shown_meetings_descr",
+            label='Maxshownmeetings',
+            label_msgid='PloneMeeting_label_maxShownMeetings',
+            i18n_domain='PloneMeeting',
+        ),
+        required=True,
+        schemata="gui",
         write_permission="PloneMeeting: Write risky config",
     ),
     ReferenceField(
@@ -3748,12 +3748,22 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
         res = []
         for profile in confidential_profiles:
-            res.append(
-                (profile, translate('visible_for_{0}'.format(profile),
-                                    domain="PloneMeeting",
-                                    context=self.REQUEST))
-            )
-        return DisplayList(res)
+            if profile.startswith(PROPOSINGGROUPPREFIX):
+                res.append(
+                    (profile,
+                     translate('visible_for_{0}'.format(PROPOSINGGROUPPREFIX),
+                               mapping={'meeting_group_suffix':
+                                        translate(profile.replace(PROPOSINGGROUPPREFIX, ''),
+                                                  domain="PloneMeeting",
+                                                  context=self.REQUEST)},
+                               domain="PloneMeeting",
+                               context=self.REQUEST)))
+            else:
+                res.append(
+                    (profile, translate('visible_for_{0}'.format(profile),
+                                        domain="PloneMeeting",
+                                        context=self.REQUEST)))
+        return DisplayList(res).sortedByValue()
 
     security.declarePrivate('listAdviceAnnexConfidentialVisibleFor')
 
@@ -3781,12 +3791,22 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
         res = []
         for profile in confidential_profiles:
-            res.append(
-                (profile, translate('visible_for_{0}'.format(profile),
-                                    domain="PloneMeeting",
-                                    context=self.REQUEST))
-            )
-        return DisplayList(res)
+            if profile.startswith(PROPOSINGGROUPPREFIX):
+                res.append(
+                    (profile,
+                     translate('visible_for_{0}'.format(PROPOSINGGROUPPREFIX),
+                               mapping={'meeting_group_suffix':
+                                        translate(profile.replace(PROPOSINGGROUPPREFIX, ''),
+                                                  domain="PloneMeeting",
+                                                  context=self.REQUEST)},
+                               domain="PloneMeeting",
+                               context=self.REQUEST)))
+            else:
+                res.append(
+                    (profile, translate('visible_for_{0}'.format(profile),
+                                        domain="PloneMeeting",
+                                        context=self.REQUEST)))
+        return DisplayList(res).sortedByValue()
 
     security.declarePrivate('listMeetingAnnexConfidentialVisibleFor')
 
@@ -3804,12 +3824,23 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
         res = []
         for profile in confidential_profiles:
-            res.append(
-                (profile, translate('visible_for_{0}'.format(profile),
-                                    domain="PloneMeeting",
-                                    context=self.REQUEST))
-            )
-        return DisplayList(res)
+            if profile.startswith(SUFFIXPROFILEPREFIX):
+                res.append(
+                    (profile,
+                     translate('visible_for_{0}'.format(SUFFIXPROFILEPREFIX),
+                               mapping={'meeting_group_suffix':
+                                        translate(profile.replace(SUFFIXPROFILEPREFIX, ''),
+                                                  domain="PloneMeeting",
+                                                  context=self.REQUEST)},
+                               domain="PloneMeeting",
+                               context=self.REQUEST)))
+            else:
+                res.append(
+                    (profile, translate('visible_for_{0}'.format(profile),
+                                        domain="PloneMeeting",
+                                        context=self.REQUEST))
+                )
+        return DisplayList(res).sortedByValue()
 
     security.declarePrivate('listAdviceConfidentialFor')
 
