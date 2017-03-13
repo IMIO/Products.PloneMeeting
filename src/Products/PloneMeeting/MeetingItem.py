@@ -627,13 +627,19 @@ class MeetingItemWorkflowActions:
 
     def doGoTo_returned_to_proposing_group_proposed(self, stateChange):
         '''Send an email when returned to proposing group for validation if relevant...'''
-        self.context.sendMailIfRelevant('goTo_returned_to_proposing_group_proposed', 'MeetingMember', isRole=True)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        # send email to correct role
+        if 'pre_validation' in cfg.getWorkflowAdaptations():
+            self.context.sendMailIfRelevant('returnedToMeetingManagers', 'MeetingPreReviewer', isRole=True)
+        else:
+            self.context.sendMailIfRelevant('returnedToMeetingManagers', 'MeetingReviewer', isRole=True)
 
     security.declarePrivate('doGoTo_returned_to_proposing_group_prevalidated')
 
     def doGoTo_returned_to_proposing_group_prevalidated(self, stateChange):
         '''Send an email when returned to proposing group for validation if relevant...'''
-        self.context.sendMailIfRelevant('goTo_returned_to_proposing_group_prevalidated', 'MeetingMember', isRole=True)
+        self.context.sendMailIfRelevant('returnedToMeetingManagers', 'MeetingReviewer', isRole=True)
 
     security.declarePrivate('doWait_advices_from_itemcreated')
 

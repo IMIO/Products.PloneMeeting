@@ -73,7 +73,7 @@ from imio.helpers.content import validate_fields
 from Products.PloneMeeting import PloneMeetingError
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
-from Products.PloneMeeting.model.adaptations import getAllPossibleReturnedState
+from Products.PloneMeeting.model.adaptations import getValidationReturnedStates
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from Products.PloneMeeting.config import CLONE_TO_OTHER_MC_ACTION_SUFFIX
 from Products.PloneMeeting.config import CLONE_TO_OTHER_MC_EMERGENCY_ACTION_SUFFIX
@@ -2440,41 +2440,46 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'showNumberOfItems': True,
                     'tal_condition': "python: tool.userIsAmong('creators') and "
                                      "('return_to_proposing_group' in cfg.getWorkflowAdaptations() or "
-                                     "'return_to_proposing_group_with_all_validations' in cfg.getWorkflowAdaptations() "
-                                     "or 'return_to_proposing_group_with_last_validation' in cfg.getWorkflowAdaptations())",
+                                     "'return_to_proposing_group_with_all_validations' "
+                                     "in cfg.getWorkflowAdaptations() or "
+                                     "'return_to_proposing_group_with_last_validation' "
+                                     "in cfg.getWorkflowAdaptations())",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items to correct to validate
                 ('searchitemstocorrecttovalidate', {
                     'subFolderId': 'searches_items',
                     'query':
-                        [
-                            {'i': 'CompoundCriterion',
-                             'o': 'plone.app.querystring.operation.compound.is',
-                             'v': 'items-to-correct-to-validate-of-highest-hierarchic-level'},
-                        ],
+                    [
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'items-to-correct-to-validate-of-highest-hierarchic-level'},
+                    ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': True,
                     'tal_condition': "python: cfg.userIsAReviewer() and "
-                                     "('return_to_proposing_group_with_all_validations' in cfg.getWorkflowAdaptations() "
-                                     "or 'return_to_proposing_group_with_last_validation' in cfg.getWorkflowAdaptations())",
+                                     "('return_to_proposing_group_with_all_validations' "
+                                     "in cfg.getWorkflowAdaptations() or "
+                                     "'return_to_proposing_group_with_last_validation' "
+                                     "in cfg.getWorkflowAdaptations())",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Validable "Items to correct"
                 ('searchitemstocorrecttovalidateoffeveryreviewergroups', {
                     'subFolderId': 'searches_items',
                     'query':
-                        [
-                            {'i': 'CompoundCriterion',
-                             'o': 'plone.app.querystring.operation.compound.is',
-                             'v': 'items-to-correct-to-validate-of-every-reviewer-groups'},
-                        ],
+                    [
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'items-to-correct-to-validate-of-every-reviewer-groups'},
+                    ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': True,
                     'tal_condition': "python: tool.userIsAmong('creators') and "
-                                     "('return_to_proposing_group_with_all_validations' in cfg.getWorkflowAdaptations())",
+                                     "('return_to_proposing_group_with_all_validations' "
+                                     "in cfg.getWorkflowAdaptations())",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Corrected items
@@ -2494,8 +2499,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'showNumberOfItems': False,
                     'tal_condition': "python: tool.isManager(here) and "
                                      "('return_to_proposing_group' in cfg.getWorkflowAdaptations() or "
-                                     "'return_to_proposing_group_with_all_validations' in cfg.getWorkflowAdaptations() "
-                                     "or 'return_to_proposing_group_with_last_validation' in cfg.getWorkflowAdaptations())",
+                                     "'return_to_proposing_group_with_all_validations' in "
+                                     "cfg.getWorkflowAdaptations() or 'return_to_proposing_group_with_last_validation' "
+                                     "in cfg.getWorkflowAdaptations())",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Decided items
@@ -3210,23 +3216,23 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 return translate('wa_removed_return_to_proposing_group_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
-        all_possible_returned_state = getAllPossibleReturnedState()
+        validation_returned_states = getValidationReturnedStates(self)
         if ('return_to_proposing_group_with_last_validation' in removed) and \
-            not ('return_to_proposing_group_with_all_validations' in added):
+           not ('return_to_proposing_group_with_all_validations' in added):
             # this will remove the 'returned_to_proposing_group with last' state for MeetingItem
             # check that no more items are in this state
-            if catalog(portal_type=self.getItemTypeName(), review_state=all_possible_returned_state):
+            if catalog(portal_type=self.getItemTypeName(), review_state=validation_returned_states):
                 return translate('wa_removed_return_to_proposing_group_with_last_validation_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
-        if 'return_to_proposing_group_with_all_validations' in removed :
+        if 'return_to_proposing_group_with_all_validations' in removed:
             # this will remove the 'returned_to_proposing_group with last' state for MeetingItem
             # check that no more items are in this state
             # not downgrade from all to last validation if one item is in intermediary state
-            if (catalog(portal_type=self.getItemTypeName(), review_state=all_possible_returned_state)) or \
-               (('return_to_proposing_group' not in added) and \
-               ('return_to_proposing_group_with_last_validation' not in added) and \
-               (catalog(portal_type=self.getItemTypeName(), review_state='returned_to_proposing_group'))):
+            if (catalog(portal_type=self.getItemTypeName(), review_state=validation_returned_states)) or \
+               (('return_to_proposing_group' not in added) and
+                ('return_to_proposing_group_with_last_validation' not in added) and
+                    (catalog(portal_type=self.getItemTypeName(), review_state='returned_to_proposing_group'))):
                 return translate('wa_removed_return_to_proposing_group_with_all_validations_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)

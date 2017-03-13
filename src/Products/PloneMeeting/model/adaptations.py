@@ -201,9 +201,11 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
             toConfirm.append('MeetingItem.backToPrevalidated')
             meetingConfig.setTransitionsToConfirm(toConfirm)
 
-    def _doWichValidationWithRetourningToProposingGroup(new_state_id, base_state_id, last_returned_state_id):
+    def _doWichValidationWithReturnedToProposingGroup(new_state_id,
+                                                      base_state_id,
+                                                      last_returned_state_id):
         """Helper method for adding a new state, base work will be done using the
-           p_base_state (cloning permission, transition start/end points)."""
+           p_base_state_id (cloning permission, transition start/end points)."""
         wf = itemWorkflow
 
         # create new state
@@ -225,8 +227,9 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
 
         # use same transitions as state last_returned_state_id and add transition between
         #  new state and last_returned_state_id except transitions start with backTo_returned_...
-        back_transition_ids = tuple([back_tr for back_tr in wf.states[last_returned_state_id].transitions
-                               if not back_tr.startswith('backTo_returned_')]) + (transition_id, )
+        back_transition_ids = tuple(
+            [back_tr for back_tr in wf.states[last_returned_state_id].transitions
+             if not back_tr.startswith('backTo_returned_')]) + (transition_id, )
 
         # link state and transitions
         wf.states[new_state_id].setProperties(
@@ -293,9 +296,10 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
         new_state.permission_roles = cloned_permissions_with_meetingmanager
 
     def _apply_return_to_proposing_group(wichValidation=None):
-        """Helper method to apply the 'return_to_proposing_group' or 'return_to_proposing_group_with_last_validation' or
-           return_to_proposing_group_with_all_validations wfAdaptation.
-           wichValidation must in ('None', 'Last', 'All')
+        """Helper method to apply the 'return_to_proposing_group' or
+           'return_to_proposing_group_with_last_validation' or
+           'return_to_proposing_group_with_all_validations' wfAdaptation.
+           wichValidation must in ('None', 'last', 'all')
         """
         if 'returned_to_proposing_group' not in itemWorkflow.states:
             # add the 'returned_to_proposing_group' state and clone the
@@ -388,24 +392,20 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                 title='returned_to_proposing_group', description='',
                 transitions=newTransitionNames)
 
-        # add new intermediary states
-        pre_state = ()
-        if 'prevalidated' in itemWorkflow.states:
-            pre_state = ('prevalidated', )
-
-        states = RETURN_TO_PROPOSING_GROUP_VALIDATING_STATES + pre_state
-        if wichValidation == 'Last':
-            states = (states[-1],)
+        # keep validation returned states
+        validation_returned_states = getValidationReturnedStates(meetingConfig)
+        if wichValidation == 'last':
+            validation_returned_states = (validation_returned_states[-1],)
         elif wichValidation is None:
-            states = ()
+            validation_returned_states = ()
         last_returned_state_id = 'returned_to_proposing_group'
-        # else, we use all states
 
-        for state in states:
-            base_state_id = state
-            new_state_id = "returned_to_proposing_group_%s" % state
-            _doWichValidationWithRetourningToProposingGroup(new_state_id, base_state_id, last_returned_state_id)
-            last_returned_state_id = new_state_id
+        for validation_state in validation_returned_states:
+            base_state_id = validation_state.replace('returned_to_proposing_group_', '')
+            _doWichValidationWithReturnedToProposingGroup(new_state_id=validation_state,
+                                                          base_state_id=base_state_id,
+                                                          last_returned_state_id=last_returned_state_id)
+            last_returned_state_id = validation_state
 
     # Hereafter, adaptations are applied in some meaningful sequence:
     # adaptations that perform important structural changes like adding or
@@ -733,17 +733,17 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
         # with this, the item can be 'returned_to_proposing_group' when in a meeting then the creators
         # can modify it if necessary and send it back to the MeetingManagers when done
         elif wfAdaptation == 'return_to_proposing_group':
-            _apply_return_to_proposing_group (wichValidation = None)
+            _apply_return_to_proposing_group(wichValidation=None)
             logger.info(WF_APPLIED % ("return_to_proposing_group", meetingConfig.getId()))
 
         # same as the "return_to_proposing_group" here above but the reviewer must validate item
         elif wfAdaptation == 'return_to_proposing_group_with_last_validation':
-            _apply_return_to_proposing_group(wichValidation='Last')
+            _apply_return_to_proposing_group(wichValidation='last')
             logger.info(WF_APPLIED % ("return_to_proposing_group_with_last_validation", meetingConfig.getId()))
 
         # same as the "return_to_proposing_group" here above but the item must be validate by all hierarchical level
         elif wfAdaptation == 'return_to_proposing_group_with_all_validations':
-            _apply_return_to_proposing_group(wichValidation='All')
+            _apply_return_to_proposing_group(wichValidation='all')
             logger.info(WF_APPLIED % ("return_to_proposing_group_with_all_validations", meetingConfig.getId()))
 
         # "hide_decisions_when_under_writing" add state 'decisions_published' in the meeting workflow
@@ -1023,9 +1023,19 @@ def performModelAdaptations(tool):
                 patchSchema(contentType)
 # ------------------------------------------------------------------------------
 
-def getAllPossibleReturnedState():
+
+def getValidationReturnedStates(cfg):
     '''used for check compatibility in config '''
-    states = RETURN_TO_PROPOSING_GROUP_VALIDATING_STATES + ('prevalidated',)
+    states = RETURN_TO_PROPOSING_GROUP_VALIDATING_STATES
+    # if workflowAdaptation 'pre_validation' is used, append 'prevalidated'
+    # either we are setting workflowAdaptations, or it is stored in MeetingConfig
+    use_prevalidation = False
+    if hasattr(cfg.REQUEST, 'useGroupsAsCategories'):
+        use_prevalidation = 'pre_validation' in cfg.REQUEST.get('workflowAdaptations', [])
+    else:
+        use_prevalidation = 'pre_validation' in cfg.getWorkflowAdaptations()
+    if use_prevalidation:
+        states += ('prevalidated', )
     res = []
     for state in states:
         res.append("returned_to_proposing_group_%s" % state)
