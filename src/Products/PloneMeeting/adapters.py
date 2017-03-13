@@ -571,6 +571,16 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                         translate('icon_help_returned_to_proposing_group',
                                   domain="PloneMeeting",
                                   context=self.request)))
+        elif itemState == 'returned_to_proposing_group_proposed':
+            res.append(('goTo_returned_to_proposing_group_proposed.png',
+                        translate('icon_help_returned_to_proposing_group_proposed',
+                                  domain="PloneMeeting",
+                                  context=self.request)))
+        elif itemState == 'returned_to_proposing_group_prevalidated':
+            res.append(('goTo_returned_to_proposing_group_prevalidated.png',
+                        translate('icon_help_returned_to_proposing_group_prevalidated',
+                                  domain="PloneMeeting",
+                                  context=self.request)))
         elif itemState == 'prevalidated':
             res.append(('prevalidate.png', translate('icon_help_prevalidated',
                                                      domain="PloneMeeting",
@@ -980,15 +990,9 @@ class ItemsInCopyAdapter(CompoundCriterionBaseAdapter):
     query = query_itemsincopy
 
 
-class ItemsToValidateOfHighestHierarchicLevelAdapter(CompoundCriterionBaseAdapter):
+class BaseItemsToValidateOfHighestHierarchicLevelAdapter(CompoundCriterionBaseAdapter):
 
-    def itemstovalidateofhighesthierarchiclevel_query_cachekey(method, self):
-        '''cachekey method for every CompoundCriterion adapters.'''
-        return str(self.request._debug)
-
-    @property
-    @ram.cache(itemstovalidateofhighesthierarchiclevel_query_cachekey)
-    def query_itemstovalidateofhighesthierarchiclevel(self):
+    def _query(self, prefix_review_state=''):
         '''Return a list of items that the user can validate regarding his highest hierarchic level.
            So if a user is 'prereviewer' and 'reviewier', the search will only return items
            in state corresponding to his 'reviewer' role.'''
@@ -1011,24 +1015,46 @@ class ItemsToValidateOfHighestHierarchicLevelAdapter(CompoundCriterionBaseAdapte
             ('pre_validation' in self.cfg.getWorkflowAdaptations() or
              'pre_validation_keep_reviewer_permissions' in self.cfg.getWorkflowAdaptations()):
             review_state = 'prevalidated'
+        review_state = '%s%s' % (prefix_review_state, review_state)
 
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 'getProposingGroup': {'query': res},
                 'review_state': {'query': review_state}, }
 
-    # we may not ram.cache methods in same file with same name...
-    query = query_itemstovalidateofhighesthierarchiclevel
 
+class ItemsToValidateOfHighestHierarchicLevelAdapter(BaseItemsToValidateOfHighestHierarchicLevelAdapter):
 
-class ItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(CompoundCriterionBaseAdapter):
-
-    def itemstovalidateofeveryreviewerlevelsandlowerlevels_cachekey(method, self):
+    def itemstovalidateofhighesthierarchiclevel_query_cachekey(method, self):
         '''cachekey method for every CompoundCriterion adapters.'''
         return str(self.request._debug)
 
     @property
-    @ram.cache(itemstovalidateofeveryreviewerlevelsandlowerlevels_cachekey)
-    def query_itemstovalidateofeveryreviewerlevelsandlowerlevels(self):
+    @ram.cache(itemstovalidateofhighesthierarchiclevel_query_cachekey)
+    def query_itemstovalidateofhighesthierarchiclevel(self):
+        return self._query()
+
+    # we may not ram.cache methods in same file with same name...
+    query = query_itemstovalidateofhighesthierarchiclevel
+
+
+class ItemsToCorrectToValidateOfHighestHierarchicLevelAdapter(BaseItemsToValidateOfHighestHierarchicLevelAdapter):
+
+    def itemstocorrecttovalidateofhighesthierarchiclevel_query_cachekey(method, self):
+        '''cachekey method for every CompoundCriterion adapters.'''
+        return str(self.request._debug)
+
+    @property
+    @ram.cache(itemstocorrecttovalidateofhighesthierarchiclevel_query_cachekey)
+    def query_itemstocorrecttovalidateofhighesthierarchiclevel(self):
+        return self._query(prefix_review_state='returned_to_proposing_group_')
+
+    # we may not ram.cache methods in same file with same name...
+    query = query_itemstocorrecttovalidateofhighesthierarchiclevel
+
+
+class BaseItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(CompoundCriterionBaseAdapter):
+
+    def _query(self, prefix_review_state=''):
         '''This will check for user highest reviewer level of each of his groups and return these items and
            items of lower reviewer levels.
            This search works if the workflow manage reviewer levels where higher reviewer level
@@ -1069,6 +1095,7 @@ class ItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(CompoundCriterio
                     ('pre_validation' in self.cfg.getWorkflowAdaptations() or
                      'pre_validation_keep_reviewer_permissions' in self.cfg.getWorkflowAdaptations()):
                     review_state = 'prevalidated'
+                review_state = '%s%s' % (prefix_review_state, review_state)
                 reviewProcessInfos.append('%s__reviewprocess__%s' % (mGroupId,
                                                                      review_state))
         if not reviewProcessInfos:
@@ -1079,19 +1106,42 @@ class ItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(CompoundCriterio
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 'reviewProcessInfo': {'query': reviewProcessInfos}, }
 
-    # we may not ram.cache methods in same file with same name...
-    query = query_itemstovalidateofeveryreviewerlevelsandlowerlevels
 
+class ItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(
+        BaseItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter):
 
-class ItemsToValidateOfMyReviewerGroupsAdapter(CompoundCriterionBaseAdapter):
-
-    def itemstovalidateofmyreviewergroups_cachekey(method, self):
+    def itemstovalidateofeveryreviewerlevelsandlowerlevels_query_cachekey(method, self):
         '''cachekey method for every CompoundCriterion adapters.'''
         return str(self.request._debug)
 
     @property
-    @ram.cache(itemstovalidateofmyreviewergroups_cachekey)
-    def query_itemstovalidateofmyreviewergroups(self):
+    @ram.cache(itemstovalidateofeveryreviewerlevelsandlowerlevels_query_cachekey)
+    def query_itemstovalidateofeveryreviewerlevelsandlowerlevels(self):
+        return self._query()
+
+    # we may not ram.cache methods in same file with same name...
+    query = query_itemstovalidateofeveryreviewerlevelsandlowerlevels
+
+
+class ItemsToCorrectToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(
+        BaseItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter):
+
+    def itemstocorrecttovalidateofeveryreviewerlevelsandlowerlevels_query_cachekey(method, self):
+        '''cachekey method for every CompoundCriterion adapters.'''
+        return str(self.request._debug)
+
+    @property
+    @ram.cache(itemstocorrecttovalidateofeveryreviewerlevelsandlowerlevels_query_cachekey)
+    def query_itemstocorrecttovalidateofeveryreviewerlevelsandlowerlevels(self):
+        return self._query(prefix_review_state='returned_to_proposing_group_')
+
+    # we may not ram.cache methods in same file with same name...
+    query = query_itemstocorrecttovalidateofeveryreviewerlevelsandlowerlevels
+
+
+class BaseItemsToValidateOfMyReviewerGroupsAdapter(CompoundCriterionBaseAdapter):
+
+    def _query(self, prefix_review_state=''):
         '''Return a list of items that the user could validate.  So it returns every items the current
            user is able to validate at any state of the validation process.  So if a user is 'prereviewer'
            and 'reviewer' for a group, the search will return items in both states.'''
@@ -1109,6 +1159,7 @@ class ItemsToValidateOfMyReviewerGroupsAdapter(CompoundCriterionBaseAdapter):
                         ('pre_validation' in self.cfg.getWorkflowAdaptations() or
                          'pre_validation_keep_reviewer_permissions' in self.cfg.getWorkflowAdaptations()):
                         review_state = 'prevalidated'
+                    review_state = '%s%s' % (prefix_review_state, review_state)
                     reviewProcessInfos.append('%s__reviewprocess__%s' % (groupId[:-len(reviewer_suffix) - 1],
                                                                          review_state))
         if not reviewProcessInfos:
@@ -1119,11 +1170,63 @@ class ItemsToValidateOfMyReviewerGroupsAdapter(CompoundCriterionBaseAdapter):
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 'reviewProcessInfo': {'query': reviewProcessInfos}, }
 
+
+class ItemsToValidateOfMyReviewerGroupsAdapter(BaseItemsToValidateOfMyReviewerGroupsAdapter):
+
+    def itemstovalidateofmyreviewergroups_query_cachekey(method, self):
+        '''cachekey method for every CompoundCriterion adapters.'''
+        return str(self.request._debug)
+
+    @property
+    @ram.cache(itemstovalidateofmyreviewergroups_query_cachekey)
+    def query_itemstovalidateofmyreviewergroups(self):
+        return self._query()
+
     # we may not ram.cache methods in same file with same name...
     query = query_itemstovalidateofmyreviewergroups
 
 
-class ItemsToCorrectAdapter(CompoundCriterionBaseAdapter):
+class ItemsToCorrectToValidateOfMyReviewerGroupsAdapter(BaseItemsToValidateOfMyReviewerGroupsAdapter):
+
+    def itemstocorrecttovalidateoffmyreviewergroups_cachekey(method, self):
+        '''cachekey method for every CompoundCriterion adapters.'''
+        return str(self.request._debug)
+
+    @property
+    @ram.cache(itemstocorrecttovalidateoffmyreviewergroups_cachekey)
+    def query_itemstocorrecttovalidateoffmyreviewergroups(self):
+        '''Queries all items that current user may correct and in returned_proposed state.'''
+        return self._query(prefix_review_state='returned_to_proposing_group_')
+
+    # we may not ram.cache methods in same file with same name...
+    query = query_itemstocorrecttovalidateoffmyreviewergroups
+
+
+class BaseItemsToCorrectAdapter(CompoundCriterionBaseAdapter):
+
+    def _query(self, review_states):
+
+        # get the state 'returned_to_proposing_group' and check what roles are able edit
+        # so we will get groups suffixes linked to these roles and find relevant proposingGroups
+        wfTool = api.portal.get_tool('portal_workflow')
+        itemWF = wfTool.getWorkflowsFor(self.cfg.getItemTypeName())[0]
+        reviewProcessInfos = []
+        for review_state in review_states:
+            if review_state in itemWF.states:
+                roles = itemWF.states[review_state].permission_roles[ModifyPortalContent]
+                suffixes = [suffix for suffix, role in MEETINGROLES.items() if role in roles]
+                userGroupIds = [mGroup.getId() for mGroup in self.tool.getGroupsForUser(suffixes=suffixes)]
+                if userGroupIds:
+                    for userGroupId in userGroupIds:
+                        reviewProcessInfos.append('%s__reviewprocess__%s' % (userGroupId, review_state))
+        if not reviewProcessInfos:
+            return FIND_NOTHING_QUERY
+        # Create query parameters
+        return {'portal_type': {'query': self.cfg.getItemTypeName()},
+                'reviewProcessInfo': {'query': reviewProcessInfos}, }
+
+
+class ItemsToCorrectAdapter(BaseItemsToCorrectAdapter):
 
     def itemstocorrect_cachekey(method, self):
         '''cachekey method for every CompoundCriterion adapters.'''
@@ -1133,22 +1236,7 @@ class ItemsToCorrectAdapter(CompoundCriterionBaseAdapter):
     @ram.cache(itemstocorrect_cachekey)
     def query_itemstocorrect(self):
         '''Queries all items that current user may correct.'''
-        # get the state 'returned_to_proposing_group' and check what roles are able edit
-        # so we will get groups suffixes linked to these roles and find relevant proposingGroups
-        wfTool = api.portal.get_tool('portal_workflow')
-        itemWF = wfTool.getWorkflowsFor(self.cfg.getItemTypeName())[0]
-        if 'returned_to_proposing_group' in itemWF.states:
-            roles = itemWF.states['returned_to_proposing_group'].permission_roles[ModifyPortalContent]
-            suffixes = [suffix for suffix, role in MEETINGROLES.items() if role in roles]
-            userGroupIds = [mGroup.getId() for mGroup in self.tool.getGroupsForUser(suffixes=suffixes)]
-            if not userGroupIds:
-                return FIND_NOTHING_QUERY
-            # Create query parameters
-            return {'portal_type': {'query': self.cfg.getItemTypeName()},
-                    'review_state': {'query': ['returned_to_proposing_group', ]},
-                    'getProposingGroup': {'query': userGroupIds}, }
-
-        return FIND_NOTHING_QUERY
+        return self._query(review_states=['returned_to_proposing_group'])
 
     # we may not ram.cache methods in same file with same name...
     query = query_itemstocorrect

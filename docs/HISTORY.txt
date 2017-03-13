@@ -373,6 +373,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Added field MeetingItem.marginalNotes that is still editable by a MeetingManager even when item is decided and meeting is closed
 - A Plone group that is linked to a MeetingGroup is no more deletable and a clear message is displayed.  The only way to remove a Plone
   group linked to a MeetingGroup is to delete the MeetingGroup that will also check if it is not used in the application
+- Added wfAdaptation that adds one (last level) or every levels of validation to the "Return to proposing group" wfAdaptation
 - Added possibility to display the item reference in the item dashboards, moreover, Meeting.itemReference is now a field where the
   item reference is stored.  This avoid computing the itemReference each time it is accessed, moreover MeetingItem.itemReference is
   searchable and will be found in the SearchableText

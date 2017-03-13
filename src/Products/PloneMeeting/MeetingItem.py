@@ -623,6 +623,16 @@ class MeetingItemWorkflowActions:
         '''Send an email when returned to proposing group if relevant...'''
         self.context.sendMailIfRelevant('returnedToProposingGroup', 'MeetingMember', isRole=True)
 
+    security.declarePrivate('doGoTo_returned_to_proposing_group_proposed')
+
+    def doGoTo_returned_to_proposing_group_proposed(self, stateChange):
+        pass
+
+    security.declarePrivate('doGoTo_returned_to_proposing_group_prevalidated')
+
+    def doGoTo_returned_to_proposing_group_prevalidated(self, stateChange):
+        pass
+
     security.declarePrivate('doWait_advices_from_itemcreated')
 
     def doWait_advices_from_itemcreated(self, stateChange):
