@@ -71,7 +71,7 @@ RETURN_TO_PROPOSING_GROUP_MAPPINGS = {'backTo_presented_from_returned_to_proposi
                                       ['frozen', 'decided', 'decisions_published', ],
                                       'NO_MORE_RETURNABLE_STATES': ['closed', 'archived', ]
                                       }
-RETURN_TO_PROPOSING_GROUP_VALIDATING_STATES = ('proposed', )
+RETURN_TO_PROPOSING_GROUP_VALIDATION_STATES = ('proposed', )
 
 viewPermissions = ('View', 'Access contents information')
 WF_APPLIED = 'Workflow adaptation "%s" applied for meetingConfig "%s".'
@@ -213,7 +213,6 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
 
         # create transitions, between new state and last_returned_state_id
         # when coming back from base_state_id
-
         transition_id = 'backTo_%s_from_%s' % (last_returned_state_id, new_state_id)
         wf.transitions.addTransition(transition_id)
         transition = wf.transitions[transition_id]
@@ -226,7 +225,7 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
             props={'guard_expr': 'python:here.wfConditions().mayCorrect()'})
 
         # use same transitions as state last_returned_state_id and add transition between
-        #  new state and last_returned_state_id except transitions start with backTo_returned_...
+        # new state and last_returned_state_id except transitions start with backTo_returned_...
         back_transition_ids = tuple(
             [back_tr for back_tr in wf.states[last_returned_state_id].transitions
              if not back_tr.startswith('backTo_returned_')]) + (transition_id, )
@@ -264,7 +263,8 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
         new_state = wf.states[new_state_id]
         cloned_permissions = dict(base_state.permission_roles)
         cloned_permissions_with_meetingmanager = {}
-        customPermissions = RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS.get(meetingConfig.getItemWorkflow(), {})
+        customPermissions = RETURN_TO_PROPOSING_GROUP_CUSTOM_PERMISSIONS.get(
+            meetingConfig.getItemWorkflow(), {})
 
         # we need to use an intermediate dict because roles are stored as a tuple and we need a list...
         for permission in cloned_permissions:
@@ -1026,7 +1026,7 @@ def performModelAdaptations(tool):
 
 def getValidationReturnedStates(cfg):
     '''used for check compatibility in config '''
-    states = RETURN_TO_PROPOSING_GROUP_VALIDATING_STATES
+    states = RETURN_TO_PROPOSING_GROUP_VALIDATION_STATES
     # if workflowAdaptation 'pre_validation' is used, append 'prevalidated'
     # either we are setting workflowAdaptations, or it is stored in MeetingConfig
     use_prevalidation = False

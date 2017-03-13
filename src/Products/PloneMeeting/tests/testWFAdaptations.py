@@ -42,7 +42,7 @@ from Products.PloneMeeting.config import WriteItemMeetingManagerFields
 
 from Products.PloneMeeting.model.adaptations import RETURN_TO_PROPOSING_GROUP_FROM_ITEM_STATES
 from Products.PloneMeeting.model.adaptations import RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE
-from Products.PloneMeeting.model.adaptations import RETURN_TO_PROPOSING_GROUP_VALIDATING_STATES
+from Products.PloneMeeting.model.adaptations import RETURN_TO_PROPOSING_GROUP_VALIDATION_STATES
 from Products.PloneMeeting.model.adaptations import WF_NOT_CREATOR_EDITS_UNLESS_CLOSED
 
 
@@ -1458,7 +1458,7 @@ class testWFAdaptations(PloneMeetingTestCase):
 
         state_to_clone_ids = (
             RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE.get(cfgItemWFId).split('.')[1], ) + \
-            RETURN_TO_PROPOSING_GROUP_VALIDATING_STATES
+            RETURN_TO_PROPOSING_GROUP_VALIDATION_STATES
         for state_to_clone_id in state_to_clone_ids:
             cloned_state_permissions = itemWF.states[state_to_clone_id].permission_roles
             returned_state = 'returned_to_proposing_group'

@@ -3148,8 +3148,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if 'pre_validation' in values and 'pre_validation_keep_reviewer_permissions' in values:
             return msg
 
-        vals = [vals for vals in values if vals.startswith('return_to_proposing_group')]
-        if len(vals) > 1:
+        # several 'return_to_proposing_group' values may not be selected together
+        return_to_prop_group_wf_adaptations = [v for v in values if v.startswith('return_to_proposing_group')]
+        if len(return_to_prop_group_wf_adaptations) > 1:
             return msg
 
         catalog = api.portal.get_tool('portal_catalog')
@@ -3191,8 +3192,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if 'pre_validation' in removed or 'pre_validation_keep_reviewer_permissions' in removed:
             # this will remove the 'prevalidated' state for MeetingItem
             # check that no more items are in this state
-            if catalog(portal_type=self.getItemTypeName(), review_state=('prevalidated',
-                                                                         'returned_to_proposing_group_prevalidated')):
+            if catalog(portal_type=self.getItemTypeName(),
+                       review_state=('prevalidated', 'returned_to_proposing_group_prevalidated')):
                 return translate('wa_removed_pre_validation_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
@@ -3219,15 +3220,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         validation_returned_states = getValidationReturnedStates(self)
         if ('return_to_proposing_group_with_last_validation' in removed) and \
            not ('return_to_proposing_group_with_all_validations' in added):
-            # this will remove the 'returned_to_proposing_group with last' state for MeetingItem
-            # check that no more items are in this state
+            # this will remove the 'returned_to_proposing_group with last validation state'
+            # for MeetingItem check that no more items are in this state
             if catalog(portal_type=self.getItemTypeName(), review_state=validation_returned_states):
                 return translate('wa_removed_return_to_proposing_group_with_last_validation_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
         if 'return_to_proposing_group_with_all_validations' in removed:
-            # this will remove the 'returned_to_proposing_group with last' state for MeetingItem
-            # check that no more items are in this state
+            # this will remove the 'returned_to_proposing_group with every validation states'
+            # for MeetingItem check that no more items are in these states
             # not downgrade from all to last validation if one item is in intermediary state
             if (catalog(portal_type=self.getItemTypeName(), review_state=validation_returned_states)) or \
                (('return_to_proposing_group' not in added) and

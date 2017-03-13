@@ -989,6 +989,7 @@ class ItemsInCopyAdapter(CompoundCriterionBaseAdapter):
     # we may not ram.cache methods in same file with same name...
     query = query_itemsincopy
 
+
 class BaseItemsToValidateOfHighestHierarchicLevelAdapter(CompoundCriterionBaseAdapter):
 
     def _query(self, prefix_review_state=''):
@@ -1011,14 +1012,15 @@ class BaseItemsToValidateOfHighestHierarchicLevelAdapter(CompoundCriterionBaseAd
         review_state = MEETINGREVIEWERS[highestReviewerLevel]
         # specific management for workflows using the 'pre_validation' wfAdaptation
         if highestReviewerLevel == 'reviewers' and \
-                ('pre_validation' in self.cfg.getWorkflowAdaptations() or
-                         'pre_validation_keep_reviewer_permissions' in self.cfg.getWorkflowAdaptations()):
+            ('pre_validation' in self.cfg.getWorkflowAdaptations() or
+             'pre_validation_keep_reviewer_permissions' in self.cfg.getWorkflowAdaptations()):
             review_state = 'prevalidated'
         review_state = '%s%s' % (prefix_review_state, review_state)
 
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 'getProposingGroup': {'query': res},
                 'review_state': {'query': review_state}, }
+
 
 class ItemsToValidateOfHighestHierarchicLevelAdapter(BaseItemsToValidateOfHighestHierarchicLevelAdapter):
 
@@ -1034,6 +1036,7 @@ class ItemsToValidateOfHighestHierarchicLevelAdapter(BaseItemsToValidateOfHighes
     # we may not ram.cache methods in same file with same name...
     query = query_itemstovalidateofhighesthierarchiclevel
 
+
 class ItemsToCorrectToValidateOfHighestHierarchicLevelAdapter(BaseItemsToValidateOfHighestHierarchicLevelAdapter):
 
     def itemstocorrecttovalidateofhighesthierarchiclevel_query_cachekey(method, self):
@@ -1047,6 +1050,7 @@ class ItemsToCorrectToValidateOfHighestHierarchicLevelAdapter(BaseItemsToValidat
 
     # we may not ram.cache methods in same file with same name...
     query = query_itemstocorrecttovalidateofhighesthierarchiclevel
+
 
 class BaseItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(CompoundCriterionBaseAdapter):
 
@@ -1088,8 +1092,8 @@ class BaseItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(CompoundCrit
                 # specific management for workflows using the 'pre_validation' or
                 # 'pre_validation_keep_reviewer_permissions' wfAdaptation
                 if reviewer_suffix == 'reviewers' and \
-                        ('pre_validation' in self.cfg.getWorkflowAdaptations() or
-                                 'pre_validation_keep_reviewer_permissions' in self.cfg.getWorkflowAdaptations()):
+                    ('pre_validation' in self.cfg.getWorkflowAdaptations() or
+                     'pre_validation_keep_reviewer_permissions' in self.cfg.getWorkflowAdaptations()):
                     review_state = 'prevalidated'
                 review_state = '%s%s' % (prefix_review_state, review_state)
                 reviewProcessInfos.append('%s__reviewprocess__%s' % (mGroupId,
@@ -1103,7 +1107,8 @@ class BaseItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(CompoundCrit
                 'reviewProcessInfo': {'query': reviewProcessInfos}, }
 
 
-class ItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(BaseItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter):
+class ItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(
+        BaseItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter):
 
     def itemstovalidateofeveryreviewerlevelsandlowerlevels_query_cachekey(method, self):
         '''cachekey method for every CompoundCriterion adapters.'''
@@ -1117,7 +1122,9 @@ class ItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(BaseItemsToValid
     # we may not ram.cache methods in same file with same name...
     query = query_itemstovalidateofeveryreviewerlevelsandlowerlevels
 
-class ItemsToCorrectToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(BaseItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter):
+
+class ItemsToCorrectToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(
+        BaseItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter):
 
     def itemstocorrecttovalidateofeveryreviewerlevelsandlowerlevels_query_cachekey(method, self):
         '''cachekey method for every CompoundCriterion adapters.'''
@@ -1130,6 +1137,7 @@ class ItemsToCorrectToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(BaseIte
 
     # we may not ram.cache methods in same file with same name...
     query = query_itemstocorrecttovalidateofeveryreviewerlevelsandlowerlevels
+
 
 class BaseItemsToValidateOfMyReviewerGroupsAdapter(CompoundCriterionBaseAdapter):
 
@@ -1148,8 +1156,8 @@ class BaseItemsToValidateOfMyReviewerGroupsAdapter(CompoundCriterionBaseAdapter)
                 if groupId.endswith('_%s' % reviewer_suffix):
                     # specific management for workflows using the 'pre_validation' wfAdaptation
                     if reviewer_suffix == 'reviewers' and \
-                            ('pre_validation' in self.cfg.getWorkflowAdaptations() or
-                                     'pre_validation_keep_reviewer_permissions' in self.cfg.getWorkflowAdaptations()):
+                        ('pre_validation' in self.cfg.getWorkflowAdaptations() or
+                         'pre_validation_keep_reviewer_permissions' in self.cfg.getWorkflowAdaptations()):
                         review_state = 'prevalidated'
                     review_state = '%s%s' % (prefix_review_state, review_state)
                     reviewProcessInfos.append('%s__reviewprocess__%s' % (groupId[:-len(reviewer_suffix) - 1],
@@ -1161,6 +1169,7 @@ class BaseItemsToValidateOfMyReviewerGroupsAdapter(CompoundCriterionBaseAdapter)
 
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 'reviewProcessInfo': {'query': reviewProcessInfos}, }
+
 
 class ItemsToValidateOfMyReviewerGroupsAdapter(BaseItemsToValidateOfMyReviewerGroupsAdapter):
 
@@ -1176,6 +1185,7 @@ class ItemsToValidateOfMyReviewerGroupsAdapter(BaseItemsToValidateOfMyReviewerGr
     # we may not ram.cache methods in same file with same name...
     query = query_itemstovalidateofmyreviewergroups
 
+
 class ItemsToCorrectToValidateOfMyReviewerGroupsAdapter(BaseItemsToValidateOfMyReviewerGroupsAdapter):
 
     def itemstocorrecttovalidateoffmyreviewergroups_cachekey(method, self):
@@ -1190,6 +1200,7 @@ class ItemsToCorrectToValidateOfMyReviewerGroupsAdapter(BaseItemsToValidateOfMyR
 
     # we may not ram.cache methods in same file with same name...
     query = query_itemstocorrecttovalidateoffmyreviewergroups
+
 
 class BaseItemsToCorrectAdapter(CompoundCriterionBaseAdapter):
 
@@ -1212,7 +1223,7 @@ class BaseItemsToCorrectAdapter(CompoundCriterionBaseAdapter):
             return FIND_NOTHING_QUERY
         # Create query parameters
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
-                'reviewProcessInfo' : {'query': reviewProcessInfos}, }
+                'reviewProcessInfo': {'query': reviewProcessInfos}, }
 
 
 class ItemsToCorrectAdapter(BaseItemsToCorrectAdapter):
