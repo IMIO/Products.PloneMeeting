@@ -196,10 +196,11 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.failIf(cfg.validate_workflowAdaptations(('pre_validation', )))
         # conflicts with 'pre_validation_keep_reviewer_permissions')
         self.assertEquals(
-            cfg.validate_workflowAdaptations(('no_proposal', 'pre_validation_keep_reviewer_permissions')),
+            cfg.validate_workflowAdaptations(
+                ('no_proposal', 'pre_validation_keep_reviewer_permissions')),
             wa_conflicts)
 
-        # return_to_proposing_group... alone is ok
+        # return_to_proposing_group_... alone is ok
         self.failIf(cfg.validate_workflowAdaptations(('return_to_proposing_group',)))
         self.failIf(cfg.validate_workflowAdaptations(('return_to_proposing_group_with_last_validation',)))
         self.failIf(cfg.validate_workflowAdaptations(('return_to_proposing_group_with_all_validations',)))
@@ -356,6 +357,11 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertEquals(
             cfg.validate_workflowAdaptations(()),
             pre_validation_removed_error)
+
+        # possible to switch from one to the other
+        self.failIf(cfg.validate_workflowAdaptations(('pre_validation_keep_reviewer_permissions', )))
+        cfg.setWorkflowAdaptations(('pre_validation_keep_reviewer_permissions', ))
+        self.failIf(cfg.validate_workflowAdaptations(('pre_validation', )))
 
         # make wfAdaptation selectable
         self.validateItem(item)

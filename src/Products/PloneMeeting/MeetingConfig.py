@@ -3189,7 +3189,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             return translate('wa_removed_archiving_error',
                              domain='PloneMeeting',
                              context=self.REQUEST)
-        if 'pre_validation' in removed or 'pre_validation_keep_reviewer_permissions' in removed:
+        # check if pre_validation is removed only if the other pre_validation is not added
+        # at the same time (switch from one to other)
+        if ('pre_validation' in removed and not 'pre_validation_keep_reviewer_permissions' in added) or \
+           ('pre_validation_keep_reviewer_permissions' in removed and not 'pre_validation' in added):
             # this will remove the 'prevalidated' state for MeetingItem
             # check that no more items are in this state
             if catalog(portal_type=self.getItemTypeName(),
