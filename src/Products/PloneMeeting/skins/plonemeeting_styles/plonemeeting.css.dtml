@@ -1404,7 +1404,7 @@ button.present_several img {
 
 /* space before the budgetRelated field on the item view */
 p.item-before-budget-related {
-    padding-bottom: 0.5em;
+    padding-bottom: 0.2em;
 }
 
 #content table.configActions {
