@@ -1536,7 +1536,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getStrikedAssembly')
 
-    def getStrikedAssembly(self, groupByDuty=True):
+    def getStrikedAssembly(self, groupByDuty=True, use_mltAssembly=False):
         '''
           Generates a HTML version of the assembly :
           - strikes absents (represented using [[Member assembly name]])
@@ -1548,7 +1548,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         meeting = self.getSelf()
         # either we use free textarea to define assembly...
         if meeting.getAssembly():
-            return toHTMLStrikedContent(meeting.getAssembly())
+            return toHTMLStrikedContent(meeting.getAssembly(),
+                                        use_mltAssembly=use_mltAssembly)
         # ... or we use MeetingUsers
         elif meeting.getAttendees():
             res = []
@@ -1590,7 +1591,10 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                         lastAdded = "<strike>" + lastAdded.replace('<strike>', '').replace('</strike>', '') + \
                                     "</strike>"
                         res[-1] = lastAdded
-            return "<p class='mltAssembly'>" + '<br />'.join(res) + "</p>"
+            if use_mltAssembly:
+                return "<p class='mltAssembly'>" + '<br />'.join(res) + "</p>"
+            else:
+                return "<p>" + "<br />".join(res) + "</p>"
 
     security.declarePrivate('getDefaultSignatures')
 

@@ -379,6 +379,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   searchable and will be found in the SearchableText
 - Display the background color relative to MeetingItem.privacy on the meeting available items view as it is the case for the meeting
   presented items view
+- Using 'mltAssembly' in Meeting.getStrikedAssembly and MeetingItem.getStrikedItemAssembly is now deprecated and not done by default
+  anymore, instead use a stylesMapping in call to appy.pod xhtml applied to XHTML content like 'motivation' or 'decision'.
+  Nevertheless it is still possible to use the 'use_mltAssembly=True' parameter to get the old behavior
 
 3.3 (2015-02-27)
 ----------------
