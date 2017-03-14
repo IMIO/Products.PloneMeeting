@@ -536,7 +536,8 @@ class testViews(PloneMeetingTestCase):
         self.assertEquals(helper.printXhtml(item,
                                             [motivation, 'separator', decision, 'separator', text],
                                             image_src_to_paths=True,
-                                            keepWithNext=True),
+                                            keepWithNext=True,
+                                            keepWithNextNumberOfChars=60),
                           '<p>The motivation using UTF-8 characters : &#232;&#224;.</p>'
                           '<p>&#160;</p>'
                           '<p class="ParaKWN">The d&#233;cision using UTF-8 characters.</p>'
