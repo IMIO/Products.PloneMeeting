@@ -2010,9 +2010,13 @@ class testMeeting(PloneMeetingTestCase):
         meeting = self.create('Meeting', date=DateTime())
         meeting.setAssembly('Simple assembly')
         self.assertEquals(meeting.getStrikedAssembly(),
+                          '<p>Simple assembly</p>')
+        self.assertEquals(meeting.getStrikedAssembly(use_mltAssembly=True),
                           '<p class="mltAssembly">Simple assembly</p>')
         meeting.setAssembly('Assembly with [[striked]] part')
         self.assertEquals(meeting.getStrikedAssembly(),
+                          '<p>Assembly with <strike>striked</strike> part</p>')
+        self.assertEquals(meeting.getStrikedAssembly(use_mltAssembly=True),
                           '<p class="mltAssembly">Assembly with <strike>striked</strike> part</p>')
 
     def test_pm_ChangingMeetingDateUpdateLinkedItemsMeetingDateMetadata(self):
