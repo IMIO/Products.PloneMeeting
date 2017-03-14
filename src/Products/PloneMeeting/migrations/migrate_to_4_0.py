@@ -1084,6 +1084,25 @@ class Migrate_To_4_0(Migrator):
             meeting.updateItemReferences()
         logger.info('Done.')
 
+    def _replaceOldYellowHighlight(self):
+        """Old yellow highlight used <span style="background-color:yellow">,
+           move it to <span class="highlight">."""
+        logger.info('Replace old yellow highlight...')
+        brains = self.portal.portal_catalog(meta_type='MeetingItem')
+        for brain in brains:
+            item = brain.getObject()
+            # check every RichText fields
+            for field in item.Schema().filterFields(default_content_type='text/html'):
+                content = field.get(item)
+                if content.find('<span style="background-color:yellow">') != -1 or \
+                   content.find('<span style="background-color:Yellow">') != -1:
+                    content = content.replace('<span style="background-color:yellow">',
+                                              '<span class="highlight-yellow">')
+                    content = content.replace('<span style="background-color:Yellow">',
+                                              '<span class="highlight-yellow">')
+                    field.set(item, content)
+        logger.info('Done.')
+
     def run(self):
         logger.info('Migrating to PloneMeeting 4.0...')
         # MIGRATION COMMON PARTS
@@ -1148,6 +1167,7 @@ class Migrate_To_4_0(Migrator):
         self._initSelectablePrivacies()
         self._initFirstItemNumberOnMeetings()
         self._updateItemReferences()
+        self._replaceOldYellowHighlight()
         # update workflow, needed for items moved to item templates and recurring items
         # update reference_catalog as ReferenceFied "MeetingConfig.toDoListTopics"
         # and "Meeting.lateItems" were removed

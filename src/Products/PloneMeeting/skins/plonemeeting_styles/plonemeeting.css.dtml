@@ -709,7 +709,6 @@ div[id^="pm_menu_advice_change_delay"].pmDropdown {
     border-left: 0 none transparent !important;
     border-bottom: 0 none transparent !important;
 }
-.highlight {background-color: yellow}
 
 /* Hightlight that a value has been modified, for example the itemAssembly is overriden on a MeetingItem */
 span.highlightValue,
@@ -717,14 +716,10 @@ dt.highlightValue span {
     color: red !important;
 }
 
-/* Add a highlight-red style useable in CKeditor to highlight modified elements */
-.highlight-red {
-    color:red;
-}
-/* Add a indent-firstline style useable in CKeditor to indent first line of a paragraph */
-p.indent-firstline {
-    text-indent: 40px;
-}
+/* CKeditor style */
+.highlight-red {color: red;}
+.highlight-yellow {background-color: yellow;}
+p.indent-firstline {text-indent: 40px;}
 
 /* CSS for MeetingItem.privacy */
 /* While displayed as a single item (meetingitem_view) */

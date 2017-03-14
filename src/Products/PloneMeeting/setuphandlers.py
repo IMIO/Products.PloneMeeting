@@ -334,7 +334,7 @@ def _configureCKeditor(site):
                                context=site.REQUEST).encode('utf-8')
         menuStyles = unicode(
             "[\n{0}\n{{ name : '{1}'\t\t, element : 'span', attributes : {{ 'class' : 'highlight-red' }} }},\n"
-            "{{ name : '{2}'\t\t, element : 'span', attributes : {{ 'class' : 'highlight' }} }},\n"
+            "{{ name : '{2}'\t\t, element : 'span', attributes : {{ 'class' : 'highlight-yellow' }} }},\n"
             "{{ name : '{3}'\t\t, element : 'span', attributes : {{ 'style' : 'font-size: 70%' }} }},\n"
             "{{ name : '{4}'\t\t, element : 'span', attributes : {{ 'style' : 'font-size: 85%' }} }},\n"
             "{{ name : '{5}'\t\t, element : 'span', attributes : {{ 'style' : 'font-size: 115%' }} }},\n"
