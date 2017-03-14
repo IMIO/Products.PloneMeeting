@@ -4171,12 +4171,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # Invalidate all advices. Send notification mail(s) if configured.
             userId = api.user.get_current().getId()
             for advice in self.adviceIndex.itervalues():
-                if 'actor' in advice and (advice['actor'] != userId):
+                advice_obj = self.getAdviceObj(advice['id'])
+                if advice_obj and (advice_obj.Creator() != userId):
                     # Send a mail to the guy that gave the advice.
                     if 'adviceInvalidated' in cfg.getUserParam('mailItemEvents',
                                                                request=self.REQUEST,
-                                                               userId=advice['actor']):
-                        recipient = tool.getMailRecipient(advice['actor'])
+                                                               userId=advice_obj.Creator()):
+                        recipient = tool.getMailRecipient(advice_obj.Creator())
                         if recipient:
                             sendMail([recipient], self, 'adviceInvalidated')
             plone_utils.addPortalMessage(translate('advices_invalidated',

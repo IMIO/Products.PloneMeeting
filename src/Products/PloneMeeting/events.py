@@ -395,6 +395,9 @@ def onAdviceAdded(advice, event):
     # depending on the advice value
     item.reindexObject()
 
+    # Send mail if relevant
+    item.sendMailIfRelevant('adviceEdited', 'Owner', isRole=True)
+
     # log
     userId = api.user.get_current().getId()
     logger.info('Advice at %s created by "%s".' %

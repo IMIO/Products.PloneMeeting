@@ -4692,10 +4692,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ("itemClonedToThisMC", translate('event_item_clone_to_this_mc',
                                              domain=d,
                                              context=self.REQUEST)),
-            # relevant if annex conversion is enabled
-            ("annexConversionError", translate('event_item_annex_conversion_error',
-                                               domain=d,
-                                               context=self.REQUEST)),
             # relevant if wfAdaptation 'return to proposing group' is enabled
             ("returnedToProposingGroup", translate('event_item_returned_to_proposing_group',
                                                    domain=d,
@@ -4715,8 +4711,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # create a separated result (res_transitions) so we can easily sort it
         item_transitions = self.listTransitions('Item')
         res_transitions = []
+        view_msg = translate('notify_users_able_to_view_element',
+                             domain="PloneMeeting",
+                             context=self.REQUEST)
         for item_transition_id, item_transition_name in item_transitions:
-            res_transitions.append(("item_state_changed_%s" % item_transition_id, item_transition_name))
+            label = u"{0} ({1})".format(item_transition_name, view_msg)
+            res_transitions.append(("item_state_changed_%s" % item_transition_id, label))
 
         return DisplayList(tuple(res)) + DisplayList(res_transitions).sortedByValue()
 
@@ -4738,8 +4738,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                   domain='PloneMeeting',
                                   context=self.REQUEST)))
 
+        view_msg = translate('notify_users_able_to_view_element',
+                             domain="PloneMeeting",
+                             context=self.REQUEST)
         for meeting_transition_id, meeting_transition_name in meeting_transitions:
-            res.append(("meeting_state_changed_%s" % meeting_transition_id, meeting_transition_name))
+            label = u"{0} ({1})".format(meeting_transition_name, view_msg)
+            res.append(("meeting_state_changed_%s" % meeting_transition_id, label))
         return DisplayList(res).sortedByValue()
 
     def extraItemEvents(self):
