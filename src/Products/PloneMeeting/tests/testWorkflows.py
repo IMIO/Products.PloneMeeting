@@ -54,7 +54,7 @@ class testWorkflows(PloneMeetingTestCase):
         # Create an item as creator
         self.changeUser('pmCreator2')
         # Does the creator has the right to create an item ?
-        self.failUnless(self.tool.userIsAmong('creators'))
+        self.failUnless(self.tool.userIsAmong(['creators']))
         item = self.create('MeetingItem')
         # May the creator see his item ?
         self.failUnless(self.hasPermission('View', item))

@@ -285,7 +285,7 @@ class ItemToDiscussView(BrowserView):
     @memoize_contextless
     def userIsReviewer(self):
         """ """
-        return self.tool.userIsAmong('reviewers')
+        return self.tool.userIsAmong(['reviewers'])
 
     @memoize_contextless
     def useToggleDiscuss(self):

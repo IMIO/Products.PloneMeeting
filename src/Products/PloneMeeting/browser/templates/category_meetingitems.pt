@@ -1,6 +1,6 @@
 <tal:defines define="tool python: view.tool;
                      cfg python: view.cfg;
-                     userIsAmongCreators python: tool.userIsAmong('creators');
+                     userIsAmongCreators python: tool.userIsAmong(['creators']);
                      meetingFolder python: cfg.getPloneMeetingFolder(cfg.getId());
                      portal_url python: tool.getParentNode().absolute_url();
                      templateItems view/templateItems;"

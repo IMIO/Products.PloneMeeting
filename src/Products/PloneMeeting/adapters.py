@@ -1206,8 +1206,8 @@ class BaseItemsToCorrectAdapter(CompoundCriterionBaseAdapter):
 
     def _query(self, review_states):
 
-        # get the state 'returned_to_proposing_group' and check what roles are able edit
-        # so we will get groups suffixes linked to these roles and find relevant proposingGroups
+        # for every review_states check what roles are able to edit
+        # so we will get groups suffixes linked to these roles and find relevant groups
         wfTool = api.portal.get_tool('portal_workflow')
         itemWF = wfTool.getWorkflowsFor(self.cfg.getItemTypeName())[0]
         reviewProcessInfos = []
@@ -1606,12 +1606,14 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
             infos = self.context.categorized_elements[self.brain.UID]
             if set(self._user_groups()).intersection(infos['visible_for_groups']):
                 return True
+            # build suffixes to pass to tool.userIsAmong
             tool = api.portal.get_tool('portal_plonemeeting')
+            suffixes = []
             for group in infos['visible_for_groups']:
                 if group.startswith(SUFFIXPROFILEPREFIX):
-                    suffix = group.replace(SUFFIXPROFILEPREFIX, '')
-                    if tool.userIsAmong(suffix):
-                        return True
+                    suffixes.append(group.replace(SUFFIXPROFILEPREFIX, ''))
+            if suffixes and tool.userIsAmong(suffixes):
+                return True
             return False
 
         return True

@@ -2204,7 +2204,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: tool.userIsAmong('creators')",
+                    'tal_condition': "python: tool.userIsAmong(['creators'])",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items of my groups
@@ -2302,7 +2302,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': True,
-                    'tal_condition': "python: tool.userIsAmong('prereviewers') and "
+                    'tal_condition': "python: tool.userIsAmong(['prereviewers']) and "
                                      "'pre_validation' in cfg.getWorkflowAdaptations()",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
@@ -2348,7 +2348,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': True,
-                    'tal_condition': "python: cfg.getUseAdvices() and tool.userIsAmong('advisers')",
+                    'tal_condition': "python: cfg.getUseAdvices() and tool.userIsAmong(['advisers'])",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items to advice without delay
@@ -2363,7 +2363,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': True,
-                    'tal_condition': "python: cfg.getUseAdvices() and tool.userIsAmong('advisers')",
+                    'tal_condition': "python: cfg.getUseAdvices() and tool.userIsAmong(['advisers'])",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items to advice with delay
@@ -2378,7 +2378,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': True,
-                    'tal_condition': "python: cfg.getUseAdvices() and tool.userIsAmong('advisers')",
+                    'tal_condition': "python: cfg.getUseAdvices() and tool.userIsAmong(['advisers'])",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items to advice with exceeded delay
@@ -2393,7 +2393,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: cfg.getUseAdvices() and tool.userIsAmong('advisers')",
+                    'tal_condition': "python: cfg.getUseAdvices() and tool.userIsAmong(['advisers'])",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Every advised items
@@ -2408,7 +2408,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: cfg.getUseAdvices() and tool.userIsAmong('advisers')",
+                    'tal_condition': "python: cfg.getUseAdvices() and tool.userIsAmong(['advisers'])",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Advised items with delay
@@ -2423,7 +2423,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: cfg.getUseAdvices() and tool.userIsAmong('advisers')",
+                    'tal_condition': "python: cfg.getUseAdvices() and tool.userIsAmong(['advisers'])",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items to correct
@@ -2438,7 +2438,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': True,
-                    'tal_condition': "python: tool.userIsAmong('creators') and "
+                    'tal_condition': "python: tool.userIsAmong(['creators']) and "
                                      "('return_to_proposing_group' in cfg.getWorkflowAdaptations() or "
                                      "'return_to_proposing_group_with_all_validations' "
                                      "in cfg.getWorkflowAdaptations() or "
@@ -2477,7 +2477,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': True,
-                    'tal_condition': "python: tool.userIsAmong('creators') and "
+                    'tal_condition': "python: tool.userIsAmong(['creators']) and "
                                      "('return_to_proposing_group_with_all_validations' "
                                      "in cfg.getWorkflowAdaptations())",
                     'roles_bypassing_talcondition': ['Manager', ]

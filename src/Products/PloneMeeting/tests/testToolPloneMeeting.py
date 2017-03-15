@@ -665,6 +665,34 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.tool.setHolidays([{'date': (DateTime() + 61).strftime('%Y/%m/%d')}])
         self.assertFalse(self.tool.showHolidaysWarning(self.tool))
 
+    def test_pm_UserIsAmong(self):
+        """This method will check if a user has a group that ends with a list of given suffixes.
+           This will return True if at least one suffixed group corresponds."""
+        self.changeUser('pmCreator1')
+        self.assertEqual(self.member.getGroups(),
+                         ['AuthenticatedUsers', 'developers_creators'])
+        # suffixes parameter must be a list of suffixes
+        self.assertFalse(self.tool.userIsAmong('creators'))
+        self.assertTrue(self.tool.userIsAmong(['creators']))
+        self.assertTrue(self.tool.userIsAmong(['creators', 'reviewers']))
+        self.assertTrue(self.tool.userIsAmong(['creators', 'powerobservers']))
+        self.assertTrue(self.tool.userIsAmong(['creators', 'unknown_suffix']))
+        self.changeUser('pmReviewer1')
+        self.assertEqual(self.member.getGroups(),
+                         ['developers_reviewers', 'developers_observers', 'AuthenticatedUsers'])
+        self.assertFalse(self.tool.userIsAmong(['creators']))
+        self.assertTrue(self.tool.userIsAmong(['reviewers']))
+        self.assertTrue(self.tool.userIsAmong(['observers']))
+        self.assertTrue(self.tool.userIsAmong(['reviewers', 'observers']))
+        self.changeUser('powerobserver1')
+        self.assertEqual(self.member.getGroups(),
+                         ['AuthenticatedUsers', '{0}_powerobservers'.format(self.meetingConfig.getId())])
+        self.assertFalse(self.tool.userIsAmong(['creators']))
+        self.assertFalse(self.tool.userIsAmong(['reviewers']))
+        self.assertFalse(self.tool.userIsAmong(['creators', 'reviewers']))
+        self.assertTrue(self.tool.userIsAmong(['powerobservers']))
+        self.assertTrue(self.tool.userIsAmong(['creators', 'powerobservers']))
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

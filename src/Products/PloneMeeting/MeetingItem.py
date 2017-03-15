@@ -5027,7 +5027,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # - the user must be able to see the item if it is private.
         # The user will duplicate the item in his own folder.
         tool = api.portal.get_tool('portal_plonemeeting')
-        if self.isDefinedInTool() or not tool.userIsAmong('creators') or not self.adapted().isPrivacyViewable():
+        if self.isDefinedInTool() or not tool.userIsAmong(['creators']) or not self.adapted().isPrivacyViewable():
             return False
         return True
 
@@ -5602,8 +5602,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                    showContentIcon=True,
                                    contentValue=title)
 
+    def downOrUpWorkflowAgain_cachekey(method, self, brain=False):
+        '''cachekey method for self.downOrUpWorkflowAgain.'''
+        return (self, self.modified())
+
     security.declarePrivate('downOrUpWorkflowAgain')
 
+    @ram.cache(downOrUpWorkflowAgain_cachekey)
     def downOrUpWorkflowAgain(self):
         """Was current item already in same review_state before?
            And if so, is it up or down the workflow?"""

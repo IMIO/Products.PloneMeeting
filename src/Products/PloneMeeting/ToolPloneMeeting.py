@@ -514,23 +514,25 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 res.append((group.id, group.getName()))
         return res
 
-    def userIsAmong_cachekey(method, self, suffix, onlyActive=True):
+    def userIsAmong_cachekey(method, self, suffixes, onlyActive=True):
         '''cachekey method for self.userIsAmong.'''
         # we only recompute if param or REQUEST changed
-        return (str(self.REQUEST._debug), suffix, onlyActive)
+        return (str(self.REQUEST._debug), suffixes, onlyActive)
 
     security.declarePublic('userIsAmong')
 
     @ram.cache(userIsAmong_cachekey)
-    def userIsAmong(self, suffix, onlyActive=True):
-        '''Check if the currently logged user is in a p_suffix-related Plone
-           group.
+    def userIsAmong(self, suffixes, onlyActive=True):
+        '''Check if the currently logged user is in at least one of p_suffixes-related Plone
+           group.  p_suffixes is a list of suffixes.
            If p_onlyActive is True, we will check if the linked MeetingGroup is active.'''
         user = self.getUser()
         if onlyActive:
             activeMeetingGroupIds = [group.getId() for group in self.getMeetingGroups(onlyActive=True)]
         for groupId in user.getGroups():
-            if groupId.endswith('_%s' % suffix):
+            # check if the groupId ends with a least one of the p_suffixes
+            keep_groupId = [suffix for suffix in suffixes if groupId.endswith('_%s' % suffix)]
+            if keep_groupId:
                 if onlyActive:
                     # check that the linked MeetingGroup is active
                     group = self.getMeetingGroup(groupId)

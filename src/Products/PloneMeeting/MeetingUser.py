@@ -424,8 +424,8 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
         # adviser
         tool = config.getParentNode()
         isMeetingManager = tool.isManager(config)
-        isCreator = tool.userIsAmong('creators')
-        isAdviser = tool.userIsAmong('advisers')
+        isCreator = tool.userIsAmong(['creators'])
+        isAdviser = tool.userIsAmong(['advisers'])
         for event in selectedEvents:
             keepIt = False
             if (event in ('lateItem', 'annexAdded', 'askDiscussItem')) and \

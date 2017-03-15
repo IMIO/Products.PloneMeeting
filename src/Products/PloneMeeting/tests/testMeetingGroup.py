@@ -261,7 +261,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         self.assertTrue('developers' in item.listProposingGroups())
         self.assertTrue('developers_reviewers' in item.listCopyGroups())
         self.assertTrue('developers' in item.listOptionalAdvisers())
-        self.assertTrue(self.tool.userIsAmong('creators'))
+        self.assertTrue(self.tool.userIsAmong(['creators']))
         # after deactivation, the group is no more useable...
         self.changeUser('admin')
         developers = self.tool.developers
@@ -273,7 +273,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         self.assertTrue('developers' not in item.listProposingGroups())
         self.assertTrue('developers_reviewers' not in item.listCopyGroups())
         self.assertTrue('developers' not in item.listOptionalAdvisers())
-        self.assertTrue(not self.tool.userIsAmong('creators'))
+        self.assertTrue(not self.tool.userIsAmong(['creators']))
 
     def test_pm_UpdatePloneGroupTitle(self):
         '''When the title of a MeetingGroup changed, the title of linked
