@@ -119,6 +119,7 @@ div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchlastdecisions
     width: auto;
     height: 18px !important;
     padding-right: 24px;
+    padding-top: 2px;
     margin-top: 5px;
     border-style: outset;
 }
@@ -156,9 +157,14 @@ div.ploneMeetingSelectContainer.annex_type_img_select_box div#annex_type_img_sel
     vertical-align: top !important;
     min-height: 18px;
 }
-.ploneMeetingSelectItem:hover,
-.ploneMeetingSelectItem:hover span {
+.ploneMeetingSelectItem a {
+    min-height: 18px;
+    padding-top: 3px;
+}
+.ploneMeetingSelectItem:hover a {
     background-color: &dtml-globalBackgroundColor;;
+}
+.ploneMeetingSelectItem:hover a span {
     color: white;
 }
 #content p.ploneMeetingSelectItem {
