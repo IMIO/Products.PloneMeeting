@@ -300,9 +300,9 @@ def postInstall(context):
                     activate=True)
     # if collective.messagesviewlet "browser-warning-ff-chrome" is found, make sure it is enabled
     if messages_config:
-        browser_warn_msg = messages_config.get('browser-warning-ff-chrome')
+        browser_warn_msg = messages_config.get('browser-warning-ff-chrome', None)
         # only enables it if it was never changed, aka created = modified
-        if browser_warn_msg.created() == browser_warn_msg.modified() and \
+        if browser_warn_msg and browser_warn_msg.created() == browser_warn_msg.modified() and \
            api.content.get_state(browser_warn_msg) != 'activated':
             api.content.transition(browser_warn_msg, 'activate')
 
