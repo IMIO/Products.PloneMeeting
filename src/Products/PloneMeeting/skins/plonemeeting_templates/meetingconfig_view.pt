@@ -1207,11 +1207,19 @@
                           classOddEven python: oddrow and 'even' or 'odd';"
              tal:attributes="class python: not obj.enabled and classOddEven+' state-inactive' or classOddEven"
              valign="top">
-            <td align="center"><img tal:repeat="fmt obj/pod_formats"
-                                    tal:attributes="src string: $portal_url/++resource++collective.documentgenerator/$fmt.png"/></td>
+            <td align="center">
+                <img tal:repeat="fmt obj/pod_formats"
+                     title="Format"
+                     tal:attributes="title fmt;
+                                     src string: $portal_url/++resource++collective.documentgenerator/$fmt.png"/></td>
             <td>
                 <a tal:attributes="href obj/absolute_url;">
-                  <img src="#" tal:condition="python: obj.portal_type == 'DashboardPODTemplate'" tal:attributes="src string:${portal_url}/++resource++imio.dashboard/dashboardpodtemplate.png" />
+                  <img src="#"
+                       i18n:attributes="title"
+                       i18n:domain="imio.dashboard"
+                       title="DashboardPODTemplate"
+                       tal:condition="python: obj.portal_type == 'DashboardPODTemplate'"
+                       tal:attributes="src string:${portal_url}/++resource++imio.dashboard/dashboardpodtemplate.png" />
                   <span tal:content="obj/Title" />
                 </a>
                 <div class="discreet" tal:define="descr obj/Description" tal:condition="descr" tal:content="descr"></div>
