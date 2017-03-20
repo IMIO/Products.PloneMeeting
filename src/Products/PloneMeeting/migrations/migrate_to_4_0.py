@@ -103,13 +103,8 @@ class Migrate_To_4_0(Migrator):
             cfg.createSearches(cfg._searchesInfo())
 
             # already migrated?
-            if cfg.get('searches', None) and \
-               cfg.searches.get('searches_items', None) and \
-               cfg.searches.searches_items.objectIds():
+            if not hasattr(cfg, 'maxDaysDecisions'):
                 continue
-            for topic in cfg.topics.objectValues():
-                if wft.getInfoFor(topic, 'review_state') == 'active':
-                    wft.doActionFor(topic, 'deactivate')
 
             logger.info('Moving to imio.dashboard : updating MeetingConfig parameters...')
             if hasattr(cfg, 'maxDaysDecisions'):
@@ -148,6 +143,11 @@ class Migrate_To_4_0(Migrator):
                 delattr(cfg, 'enableGotoItem')
             if hasattr(cfg, 'enableGotoPage'):
                 delattr(cfg, 'enableGotoPage')
+
+            # disable old Topics
+            for topic in cfg.topics.objectValues():
+                if wft.getInfoFor(topic, 'review_state') == 'active':
+                    wft.doActionFor(topic, 'deactivate')
 
             logger.info('Moving to imio.dashboard : moving toDoListTopics to toDoListSearches...')
             if not cfg.getToDoListSearches():
@@ -1141,6 +1141,8 @@ class Migrate_To_4_0(Migrator):
         self.reorderSkinsLayers()
 
         # MIGRATION V4 SPECIFIC PARTS
+        self._updateItemReferences()
+        self._replaceOldYellowHighlight()
         self._adaptAppForImioAnnex()
         self._updateItemsListVisibleFields()
         self._migrateLateItems()
@@ -1166,8 +1168,6 @@ class Migrate_To_4_0(Migrator):
         self._removeAddFilePermissionOnMeetingConfigFolders()
         self._initSelectablePrivacies()
         self._initFirstItemNumberOnMeetings()
-        self._updateItemReferences()
-        self._replaceOldYellowHighlight()
         # update workflow, needed for items moved to item templates and recurring items
         # update reference_catalog as ReferenceFied "MeetingConfig.toDoListTopics"
         # and "Meeting.lateItems" were removed
