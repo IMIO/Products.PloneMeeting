@@ -1111,7 +1111,7 @@ class Migrate_To_4_0(Migrator):
         # those resources are removed...  This is the case for collective.z3cform.select2
         self.cleanRegistries()
         # upgrade collective.ckeditor because we need the new 'skin' property while installing PloneMeeting
-        self.upgradeProfile('profile-collective.ckeditor:default')
+        self.upgradeProfile('collective.ckeditor:default')
         # reinstall so versions are correctly shown in portal_quickinstaller
         # and new stuffs are added (portal_catalog metadata especially, imio.history is installed)
         # reinstall PloneMeeting with dependencies, but install only new packages
