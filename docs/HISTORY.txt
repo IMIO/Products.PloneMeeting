@@ -382,6 +382,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Using 'mltAssembly' in Meeting.getStrikedAssembly and MeetingItem.getStrikedItemAssembly is now deprecated and not done by default
   anymore, instead use a stylesMapping in call to appy.pod xhtml applied to XHTML content like 'motivation' or 'decision'.
   Nevertheless it is still possible to use the 'use_mltAssembly=True' parameter to get the old behavior
+- Added parameter 'withWeekDayName' to ToolPloneMeeting.formatMeetingDate that will display the weekday name before the date,
+  like 'Tuesday 05 may 2015'
 
 3.3 (2015-02-27)
 ----------------
