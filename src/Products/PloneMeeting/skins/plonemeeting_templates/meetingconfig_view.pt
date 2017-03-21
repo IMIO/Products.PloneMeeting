@@ -393,9 +393,11 @@
                   tal:attributes="class classOddEven"
                   valign="top">
                 <td>
-                  <a tal:attributes="href cat/absolute_url;
-                                     class python: not isActive and 'state-inactive' or ''"
-                     tal:content="cat/Title">Category title</a>
+                  <h5>
+                    <a tal:attributes="href cat/absolute_url;
+                                       class python: not isActive and 'state-inactive' or ''"
+                       tal:content="cat/Title">Category title</a>
+                  </h5>
                   <div class="discreet" tal:define="descr cat/Description" tal:condition="descr" tal:content="descr">Collection description</div>
                   <tal:additionalInformations
                     define="obj python: cat;
@@ -502,7 +504,7 @@
                 tal:attributes="class python: not isActive and classOddEven+' state-inactive' or classOddEven"
                 class="#">
             <td>
-                <a tal:attributes="href obj/absolute_url" tal:content="obj/getName"></a>
+                <h5><a tal:attributes="href obj/absolute_url" tal:content="obj/getName"></a></h5>
                 <div class="discreet" tal:define="descr obj/Description" tal:condition="descr" tal:content="descr"></div>
                 <tal:additionalInformations
                     define="context python: obj;
@@ -555,7 +557,7 @@
                 tal:attributes="class python: not isActive and classOddEven+' state-inactive' or classOddEven"
                 class="#">
             <td tal:define="descr obj/Description">
-                <a tal:attributes="href obj/absolute_url" tal:content="obj/getName"></a>
+                <h5><a tal:attributes="href obj/absolute_url" tal:content="obj/getName"></a></h5>
                 <div class="discreet" tal:condition="descr" tal:content="descr"></div>
                 <tal:additionalInformations
                     define="context python: obj;
@@ -608,7 +610,7 @@
                           classOddEven python: oddrow and 'even' or 'odd';" valign="top"
                 tal:attributes="class python: not isActive and classOddEven+' state-inactive' or classOddEven"
                 class="#">
-            <td><a tal:attributes="href obj/absolute_url" tal:content="obj/getName"></a></td>
+            <td><h5><a tal:attributes="href obj/absolute_url" tal:content="obj/getName"></a></h5></td>
             <td><span tal:content="python: obj.getMeetingTransitionInsertingMe() or '-'" i18n:domain="plone" i18n:translate="">Transition inserting me</span></td>
             <td align="right">
               <tal:actions replace="structure python: obj.restrictedTraverse('@@config_actions_panel')(showActions=False, showTransitions=False, showArrows=True)" />
@@ -625,8 +627,11 @@
          <span i18n:translate="Item templates"></span>
         </legend>
         <p class="discreet" i18n:translate="item_templates_descr"></p>
-        <p><img src="manage.png"
-                tal:attributes="src string:${portal_url}/manage.png;"/>&nbsp;<a href="itemtemplates" i18n:translate="">Manage item templates</a></p>
+        <h4>
+          <img src="manage.png"
+               tal:attributes="src string:${portal_url}/manage.png;"/>
+          <a href="itemtemplates" i18n:translate="">Manage item templates</a>
+        </h4>
       </fieldset>
     </tal:data>
 
@@ -754,13 +759,12 @@
           DO NOT CHANGE PARAMETERS DEFINED IN THIS SECTION UNLESS YOU ARE REALLY SURE WHAT YOU ARE DOING!
         </p>
         <p class="discreet" i18n:translate="searches_descr"></p>
-        <p>&nbsp;</p>
-        <p><img src="manage.png"
-                tal:attributes="src string:${portal_url}/manage.png;"/>&nbsp;
+        <h4><img src="manage.png"
+                tal:attributes="src string:${portal_url}/manage.png;"/>
             <a href="searches/folder_contents" i18n:translate="">
                 Manage dashboard
             </a>
-        </p>
+        </h4>
         <p>&nbsp;</p>
 
         <tal:searchesCategories repeat="cFolder python: context.searches.objectValues()">
@@ -795,7 +799,7 @@
                   tal:attributes="class python: not isActive and classOddEven+' state-inactive' or classOddEven"
                   valign="top">
                 <td>
-                  <a tal:attributes="href obj/absolute_url" tal:content="obj/Title">Collection title</a>
+                  <h5><a tal:attributes="href obj/absolute_url" tal:content="obj/Title">Collection title</a></h5>
                   <div class="discreet" tal:define="descr obj/Description" tal:condition="descr" tal:content="descr">Collection description</div>
                 </td>
                 <td>
@@ -1145,7 +1149,7 @@
                         classOddEven python: oddrow and 'even' or 'odd';"
             tal:attributes="class python: not isActive and classOddEven+' state-inactive' or classOddEven"
             valign="top">
-        <td><a tal:attributes="href obj/absolute_url" tal:content="obj/Title"></a></td>
+        <td><h5><a tal:attributes="href obj/absolute_url" tal:content="obj/Title"></a></h5></td>
         <td tal:content="obj/getId"></td>
         <td tal:content="python: obj.getBilingual('duty')"></td>
         <td tal:define="usageIds obj/getUsages"
@@ -1213,15 +1217,17 @@
                      tal:attributes="title fmt;
                                      src string: $portal_url/++resource++collective.documentgenerator/$fmt.png"/></td>
             <td>
-                <a tal:attributes="href obj/absolute_url;">
-                  <img src="#"
-                       i18n:attributes="title"
-                       i18n:domain="imio.dashboard"
-                       title="DashboardPODTemplate"
-                       tal:condition="python: obj.portal_type == 'DashboardPODTemplate'"
-                       tal:attributes="src string:${portal_url}/++resource++imio.dashboard/dashboardpodtemplate.png" />
-                  <span tal:content="obj/Title" />
-                </a>
+                <h5>
+                  <a tal:attributes="href obj/absolute_url;">
+                    <img src="#"
+                         i18n:attributes="title"
+                         i18n:domain="imio.dashboard"
+                         title="DashboardPODTemplate"
+                         tal:condition="python: obj.portal_type == 'DashboardPODTemplate'"
+                         tal:attributes="src string:${portal_url}/++resource++imio.dashboard/dashboardpodtemplate.png" />
+                    <span tal:content="obj/Title" />
+                  </a>
+                </h5>
                 <div class="discreet" tal:define="descr obj/Description" tal:condition="descr" tal:content="descr"></div>
                 <tal:additionalInformations
                     define="context python: obj;
