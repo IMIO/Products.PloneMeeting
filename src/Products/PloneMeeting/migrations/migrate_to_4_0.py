@@ -14,6 +14,7 @@ from Products.CMFPlone.utils import safe_unicode
 from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.utils import update_all_categorized_elements
 from imio.dashboard.utils import _updateDefaultCollectionFor
+from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.catalog import removeIndexes
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_NEW
 
@@ -211,6 +212,8 @@ class Migrate_To_4_0(Migrator):
             itemColumns = [k for k in itemColumnsVoc if k in itemColumns]
             meetingColumns = [k for k in meetingColumnsVoc if k in meetingColumns]
             itemsListVisibleColumns = [k for k in itemsListVisibleColumnsVoc if k in itemsListVisibleColumns]
+            # before the item_reference column was not selectable
+            itemsListVisibleColumns.append('item_reference')
 
             # finally set new columns values
             cfg.setItemColumns(itemColumns)
@@ -315,17 +318,22 @@ class Migrate_To_4_0(Migrator):
 
             # Sort late items according to item number
             normalItems = meeting.getReferences('MeetingItems')
-            normalItems.sort(key=lambda x: x.getItemNumber())
-            lateItems.sort(key=lambda x: x.getItemNumber())
+            normalItems.sort(key=lambda x: x.itemNumber)
+            lateItems.sort(key=lambda x: x.itemNumber)
             lenNormalItems = len(normalItems)
             for lateItem in lateItems:
                 lateItem.setListType('late')
                 lateItem.setItemNumber(lateItem.itemNumber + lenNormalItems)
-            lateItems.sort(key=lambda x: x.getItemNumber())
+            lateItems.sort(key=lambda x: x.itemNumber)
 
             # now join lateItems to Meeting.items
             meeting.setItems(normalItems + lateItems)
             meeting.deleteReferences('MeetingLateItems')
+            # invalidate RAMCache for MeetingItem.getMeeting
+            cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeeting')
+            # reindex relevant indexes now that item is removed
+            for item in meeting.getItems():
+                item.reindexObject(idxs=['listType', 'linkedMeetingUID', 'linkedMeetingDate'])
         logger.info('Done.')
 
     def _cleanPMModificationDateOnItems(self):
@@ -483,17 +491,17 @@ class Migrate_To_4_0(Migrator):
         '''The MeetingItem.itemNumber is now 100 instead of 1.'''
         logger.info('Updating every meetings linked items itemNumber...')
         brains = self.portal.portal_catalog(meta_type='Meeting')
+        check_already_migrated = False
         for brain in brains:
             meeting = brain.getObject()
-            check_already_migrated = False
             for item in meeting.getItems(ordered=True):
                 # already migrated? check first number
-                if not check_already_migrated and item.getItemNumber() == 100:
+                if not check_already_migrated and item.itemNumber == 100:
                     logger.info('Done.')
                     return
                 else:
                     check_already_migrated = True
-                item.setItemNumber(item.getItemNumber() * 100)
+                item.setItemNumber(item.itemNumber * 100)
                 item.reindexObject(idxs=['getItemNumber', ])
         logger.info('Done.')
 
@@ -509,6 +517,11 @@ class Migrate_To_4_0(Migrator):
                 itemRefFormat = itemRefFormat.replace(
                     ".getItemNumber(relativeTo='meeting')",
                     ".getItemNumber(relativeTo='meeting', for_display=True)")
+                cfg.setItemReferenceFormat(itemRefFormat)
+            if ".getItemNumber(relativeTo='meetingConfig')" in itemRefFormat:
+                itemRefFormat = itemRefFormat.replace(
+                    ".getItemNumber(relativeTo='meetingConfig')",
+                    ".getItemNumber(relativeTo='meetingConfig', for_display=True)")
                 cfg.setItemReferenceFormat(itemRefFormat)
             if ".getItemNumber()" in itemRefFormat:
                 itemRefFormat = itemRefFormat.replace(
@@ -578,7 +591,7 @@ class Migrate_To_4_0(Migrator):
         '''The MeetingItem and Meeting receive to new HTML fields 'notes' and 'inAndOutMoves',
            make sure the content_type is correctly set to 'text/html'.
            It also manage new field Meeting.authorityNotice.'''
-        logger.info('Initializing new HTML fields on meeting and items...')
+        logger.info('Initializing new HTML fields on meetings and items...')
         brains = self.portal.portal_catalog(meta_type=('Meeting', 'MeetingItem', ))
         for brain in brains:
             itemOrMeeting = brain.getObject()
@@ -626,7 +639,7 @@ class Migrate_To_4_0(Migrator):
         """If still using the old default toolbar, move to the new toolbar
            where buttons ,'NbSpace','NbHyphen', 'link', 'Unlink' and 'Image' are added."""
         logger.info('Updating ckeditor custom toolbar, adding buttons '
-                    '\'FontSize\', \'NbSpace\', \'NbHyphen\', \'Link\', \'Unlink\' and \'Image\'...')
+                    '\'NbSpace\', \'NbHyphen\', \'Link\', \'Unlink\' and \'Image\'...')
         toolbar = self.portal.portal_properties.ckeditor_properties.toolbar_Custom
         if not "'NbSpace'" in toolbar and not "'NbHyphen'" in toolbar:
             # try to insert these buttons after 'Format' or 'Styles'
@@ -654,15 +667,6 @@ class Migrate_To_4_0(Migrator):
                 toolbar = toolbar.replace("'Table'", "'Table','Link','Unlink'")
             else:
                 self.warn(logger, "Could not add new buttons 'Link' and 'Unlink' to the ckeditor toolbar!")
-
-        if not "'FontSize'" in toolbar:
-            # try to insert this button after 'Format' or 'Styles'
-            if "'Styles'" in toolbar:
-                toolbar = toolbar.replace("'Styles'", "'Styles','FontSize'")
-            elif "'Format'" in toolbar:
-                toolbar = toolbar.replace("'Format'", "'Format','FontSize'")
-            else:
-                self.warn(logger, "Could not add new button 'FontSize' to the ckeditor toolbar!")
 
         self.portal.portal_properties.ckeditor_properties.manage_changeProperties(
             toolbar_Custom=toolbar)
@@ -1077,6 +1081,7 @@ class Migrate_To_4_0(Migrator):
                     if items[0].getItemReference():
                         break
                     else:
+                        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeeting')
                         checkMigrated = False
             # not migrated, migrate
             logger.info('Running updateItemReferences for : %s'
@@ -1141,8 +1146,6 @@ class Migrate_To_4_0(Migrator):
         self.reorderSkinsLayers()
 
         # MIGRATION V4 SPECIFIC PARTS
-        self._updateItemReferences()
-        self._replaceOldYellowHighlight()
         self._adaptAppForImioAnnex()
         self._updateItemsListVisibleFields()
         self._migrateLateItems()
@@ -1168,6 +1171,8 @@ class Migrate_To_4_0(Migrator):
         self._removeAddFilePermissionOnMeetingConfigFolders()
         self._initSelectablePrivacies()
         self._initFirstItemNumberOnMeetings()
+        self._updateItemReferences()
+        self._replaceOldYellowHighlight()
         # update workflow, needed for items moved to item templates and recurring items
         # update reference_catalog as ReferenceFied "MeetingConfig.toDoListTopics"
         # and "Meeting.lateItems" were removed
