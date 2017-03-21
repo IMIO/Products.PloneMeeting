@@ -1439,7 +1439,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('formatMeetingDate')
 
     def formatMeetingDate(self, meeting, lang=None, short=False,
-                          withHour=False, prefixed=False):
+                          withHour=False, prefixed=False, withWeekDayName=False):
         '''Returns p_meeting.getDate formatted.
            - If p_lang is specified, it translates translatable elements (if
              any), like day of week or month, in p_lang. Else, it translates it
@@ -1460,6 +1460,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             fmt = '%d/%m/%Y'
         else:
             fmt = '%d %mt %Y'
+        if withWeekDayName:
+            fmt = fmt.replace('%d', '%A %d')
+            dow = translate(weekdaysIds[date.dow()], target_language=lang,
+                            domain='plonelocales', context=self.REQUEST)
+            fmt = fmt.replace('%A', dow)
         if withHour and (date._hour or date._minute):
             fmt += ' (%H:%M)'
         # Apply p_fmt to p_aDate. Manage first special symbols corresponding to
@@ -1467,10 +1472,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         # Manage day of week
         if not lang:
             lang = api.portal.get_tool('portal_languages').getDefaultLanguage()
-        dow = translate(weekdaysIds[date.dow()], target_language=lang,
-                        domain='plonelocales', context=self.REQUEST)
-        fmt = fmt.replace('%dt', dow.lower())
-        fmt = fmt.replace('%DT', dow)
+
         # Manage month
         month = translate(monthsIds[date.month()], target_language=lang,
                           domain='plonelocales', context=self.REQUEST)

@@ -644,6 +644,26 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertEquals(self.tool.formatMeetingDate(meeting, short=True, withHour=True, prefixed=True),
                           u'Meeting of 05/05/2015 (14:30)')
 
+        # withWeekDayName
+        self.assertEquals(self.tool.formatMeetingDate(meeting, withWeekDayName=True),
+                          u'Tuesday 05 may 2015')
+        self.assertEquals(self.tool.formatMeetingDate(meeting, short=True, withWeekDayName=True),
+                          u'Tuesday 05/05/2015')
+        self.assertEquals(self.tool.formatMeetingDate(meeting, short=True, withHour=True, withWeekDayName=True),
+                          u'Tuesday 05/05/2015 (14:30)')
+        self.assertEquals(self.tool.formatMeetingDate(meeting,
+                                                      short=True,
+                                                      withHour=True,
+                                                      prefixed=True,
+                                                      withWeekDayName=True),
+                          u'Meeting of Tuesday 05/05/2015 (14:30)')
+        self.assertEquals(self.tool.formatMeetingDate(meeting,
+                                                      short=False,
+                                                      withHour=True,
+                                                      prefixed=True,
+                                                      withWeekDayName=True),
+                          u'Meeting of Tuesday 05 may 2015 (14:30)')
+
     def test_pm_ShowHolidaysWarning(self):
         """Method that shows the 'warning holidays' message."""
         # only available to MeetingManagers if last defined holidays is < 60 days in the future
