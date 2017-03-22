@@ -629,6 +629,7 @@
         <p class="discreet" i18n:translate="item_templates_descr"></p>
         <h4>
           <img src="manage.png"
+               style="vertical-align: baseline;"
                tal:attributes="src string:${portal_url}/manage.png;"/>
           <a href="itemtemplates" i18n:translate="">Manage item templates</a>
         </h4>
@@ -760,6 +761,7 @@
         </p>
         <p class="discreet" i18n:translate="searches_descr"></p>
         <h4><img src="manage.png"
+                 style="vertical-align: baseline;"
                 tal:attributes="src string:${portal_url}/manage.png;"/>
             <a href="searches/folder_contents" i18n:translate="">
                 Manage dashboard

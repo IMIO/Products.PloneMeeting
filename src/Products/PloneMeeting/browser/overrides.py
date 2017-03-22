@@ -145,8 +145,9 @@ class PloneMeetingContentActionsViewlet(ContentActionsViewlet):
     def render(self):
         if self.context.meta_type in ('ATTopic', 'Meeting', 'MeetingItem',  'MeetingCategory',
                                       'MeetingConfig', 'MeetingGroup', 'MeetingFileType', 'MeetingUser',
-                                      'PodTemplate', 'ToolPloneMeeting',) or \
-           self.context.portal_type in ('ContentCategoryConfiguration', 'ContentCategoryGroup',) or \
+                                      'ToolPloneMeeting',) or \
+           self.context.portal_type in ('ContentCategoryConfiguration', 'ContentCategoryGroup',
+                                        'ConfigurablePODTemplate', 'DashboardPODTemplate') or \
            self.context.portal_type.startswith(('meetingadvice',)) or \
            self.context.portal_type.endswith(('ContentCategory', 'ContentSubcategory',)):
             return ''

@@ -1568,6 +1568,12 @@ div.pmMoreInfo table tr th {
     padding: 0.3em;
 }
 
+/* hide collective.documentviewer message on portaltype-configurablepodtemplate
+ * that says that element is still not converted */
+body.portaltype-configurablepodtemplate dl.portalMessage,
+body.portaltype-dashboardpodtemplate dl.portalMessage {
+    display: none;
+}
 
 /* fix width of select2 widget to 400px as when calling initializeSelect2Widgets
  * because when validation fails, the opened widget in fullscreen (out of the overlay)
