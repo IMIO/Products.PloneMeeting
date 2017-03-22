@@ -684,6 +684,29 @@ class FolderDocumentGenerationHelperView(PMDocumentGenerationHelperView):
             res.append(subres)
         return res
 
+    def get_all_items_dghv_with_single_advice(self, brains):
+        """
+        :param brains: the brains collection representing @Product.PloneMeeting.MeetingItem
+        :return: an array of dictionary which contains 2 keys.
+                 itemView : the documentgenerator helper view of a MeetingItem.
+                 advice   : the data from a single advice linked to this MeetingItem as extracted with getAdviceDataFor.
+
+                 If a MeetingItem doesn't have any advices the key advice is given with None value.
+                 If a MeetingItem has more than 1 advice. The same Helper View is returned each time with a different
+                 advice.
+        """
+        res = []
+        for brain in brains:
+            item = brain.getObject()
+            advices = item.getAdviceDataFor(item)
+            if advices:
+                for advice in advices:
+                    res.append({'itemView': self.getDGHV(item), 'advice': advices[advice]})
+            else:
+                res.append({'itemView': self.getDGHV(item), 'advice': None})
+
+        return res
+
 
 class MeetingDocumentGenerationHelperView(FolderDocumentGenerationHelperView):
     """ """
@@ -858,3 +881,4 @@ class DisplayAnnexesView(BrowserView):
     def show(self):
         """ """
         return self.tool.showAnnexesTab(self.context)
+
