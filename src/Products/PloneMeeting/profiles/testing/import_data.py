@@ -287,6 +287,7 @@ meetingPma.annexTypes = [financialAnalysis, budgetAnalysisCfg1, overheadAnalysis
 meetingPma.usedItemAttributes = ('toDiscuss', 'itemTags', 'itemIsSigned',)
 meetingPma.usedMeetingAttributes = ('place',)
 meetingPma.itemDecidedStates = ('accepted', 'refused', 'delayed', 'confirmed', 'itemarchived')
+meetingPma.itemPositiveDecidedStates = ['accepted', 'confirmed']
 meetingPma.transitionsForPresentingAnItem = ('propose', 'validate', 'present', )
 meetingPma.onMeetingTransitionItemTransitionToTrigger = ({'meeting_transition': 'publish',
                                                           'item_transition': 'itempublish'},
@@ -412,6 +413,7 @@ meetingPga.selectableAdvisers = []
 meetingPga.itemPowerObserversStates = ('itemcreated', 'presented', 'accepted', 'delayed', 'refused')
 meetingPga.meetingPowerObserversStates = ('frozen', 'published', 'decided', 'closed')
 meetingPga.itemDecidedStates = ('accepted', 'refused', 'delayed', 'confirmed', 'itemarchived')
+meetingPga.itemPositiveDecidedStates = ['accepted', 'confirmed']
 meetingPga.useCopies = True
 meetingPga.selectableCopyGroups = [developers.getIdSuffixed('reviewers'), vendors.getIdSuffixed('reviewers'), ]
 meetingPga.itemCopyGroupsStates = ['validated', 'itempublished', 'itemfrozen', 'accepted', 'refused', 'delayed', ]
