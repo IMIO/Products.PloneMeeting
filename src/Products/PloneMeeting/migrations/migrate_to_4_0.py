@@ -377,6 +377,12 @@ class Migrate_To_4_0(Migrator):
                 if itemTemplate.portal_type == itemType:
                     itemTemplate.portal_type = itemTemplateType
                     itemTemplate.reindexObject(idxs=['portal_type', 'Type', ])
+                else:
+                    # raise if we have a element that does not contains 'ItemTemplate'
+                    # in it's portal_type, it checks if some itemTemplates were copy/pasted
+                    # from one MeetingConfig to another...
+                    if not 'ItemTemplate' in itemTemplate.portal_type:
+                        raise Exception('An item template was migrated to a wrong portal_type!')
             # update recurring items portal_type
             recItemType = cfg.getItemTypeName(configType='MeetingItemRecurring')
             recItems = cfg.getRecurringItems(onlyActive=False)
@@ -384,6 +390,12 @@ class Migrate_To_4_0(Migrator):
                 if recItem.portal_type == itemType:
                     recItem.portal_type = recItemType
                     recItem.reindexObject(idxs=['portal_type', 'Type', ])
+                else:
+                    # raise if we have a element that does not contains 'ItemRecurring'
+                    # in it's portal_type, it checks if some recItems were copy/pasted
+                    # from one MeetingConfig to another...
+                    if not 'ItemRecurring' in recItem.portal_type:
+                        raise Exception('A recurring item was migrated to a wrong portal_type!')
             # update constraintypes for folders itemtemplates and recurringitems
             cfg.itemtemplates.setLocallyAllowedTypes(['Folder', itemTemplateType])
             cfg.itemtemplates.setImmediatelyAddableTypes(['Folder', itemTemplateType])
