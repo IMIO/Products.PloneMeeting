@@ -704,6 +704,32 @@ schema = Schema((
         optional=True,
     ),
     TextField(
+        name='publicMeetingObservations',
+        allowable_content_types=('text/html',),
+        widget=RichWidget(
+            condition="python: here.attributeIsUsed('publicMeetingObservations')",
+            label='Publicmeetingobservations',
+            label_msgid='PloneMeeting_label_publicMeetingObservations',
+            i18n_domain='PloneMeeting',
+        ),
+        default_content_type="text/html",
+        default_output_type="text/x-html-safe",
+        optional=True,
+    ),
+    TextField(
+        name='secretMeetingObservations',
+        allowable_content_types=('text/html',),
+        widget=RichWidget(
+            condition="python: here.attributeIsUsed('secretMeetingObservations')",
+            label='Secretmeetingobservations',
+            label_msgid='PloneMeeting_label_secretMeetingObservations',
+            i18n_domain='PloneMeeting',
+        ),
+        default_content_type="text/html",
+        default_output_type="text/x-html-safe",
+        optional=True,
+    ),
+    TextField(
         name='authorityNotice',
         allowable_content_types=('text/html',),
         widget=RichWidget(

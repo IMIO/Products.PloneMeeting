@@ -42,6 +42,16 @@
     <metal:f use-macro="context/@@pm-macros/viewContentField"/>
   </tal:field>
 
+  <tal:comment replace="nothing">Public meeting observations</tal:comment>
+  <tal:field define="fieldName python: 'publicMeetingObservations'; ajaxEdit python:True">
+    <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+  </tal:field>
+
+  <tal:comment replace="nothing">Secret meeting observations</tal:comment>
+  <tal:field define="fieldName python: 'secretMeetingObservations'; ajaxEdit python:True">
+    <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+  </tal:field>
+
   <tal:annexes replace="structure context/@@display-annexes" />
 
   <tal:comment replace="nothing">For the admin only</tal:comment>

@@ -300,6 +300,14 @@
                    condition="python: context.showMeetingManagerReservedField('committeeObservations')">
           <metal:f use-macro="context/@@pm-macros/editContentField"/>
         </tal:field>
+        <tal:field define="fieldName python: 'publicMeetingObservations'"
+                   condition="python: context.showMeetingManagerReservedField('publicMeetingObservations')">
+          <metal:f use-macro="context/@@pm-macros/editContentField"/>
+        </tal:field>
+        <tal:field define="fieldName python: 'secretMeetingObservations'"
+                   condition="python: context.showMeetingManagerReservedField('secretMeetingObservations')">
+          <metal:f use-macro="context/@@pm-macros/editContentField"/>
+        </tal:field>
 
         <tal:comment replace="nothing">For the admin only</tal:comment>
         <fieldset tal:condition="python: member.has_role('Manager')">
