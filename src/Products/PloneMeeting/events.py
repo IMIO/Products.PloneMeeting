@@ -194,7 +194,8 @@ def onGroupTransition(mGroup, event):
 def onGroupWillBeRemoved(group, event):
     '''Checks if the current meetingGroup can be deleted:
       - it can not be linked to an existing meetingItem;
-      - it can not be referenced in an existing meetingConfig;
+      - it can not be referenced in an existing MeetingConfig;
+      - it can not be used as groupInCharge of another MeetingGroup;
       - the linked ploneGroups must be empty of members.'''
     # Do lighter checks first...  Check that the meetingGroup is not used
     # in a meetingConfig
@@ -205,6 +206,15 @@ def onGroupWillBeRemoved(group, event):
 
     tool = api.portal.get_tool('portal_plonemeeting')
     groupId = group.getId()
+
+    for mGroup in tool.getMeetingGroups(onlyActive=False):
+        group_in_charge_ids = [v['group_id'] for v in mGroup.getGroupInCharge()]
+        if groupId in group_in_charge_ids:
+            raise BeforeDeleteException(translate("can_not_delete_meetinggroup_groupincharge",
+                                                  mapping={'group_title': safe_unicode(mGroup.Title())},
+                                                  domain="plone",
+                                                  context=group.REQUEST))
+
     for mc in tool.objectValues('MeetingConfig'):
         # The meetingGroup can be referenced in selectableAdvisers/selectableCopyGroups.
         customAdvisersGroupIds = [customAdviser['group'] for customAdviser in mc.getCustomAdvisers()]
@@ -282,8 +292,7 @@ def onGroupRemoved(group, event):
         if pGroup:
             portal_groups.removeGroup(ploneGroupId)
 
-    # clean cache for "Products.PloneMeeting.vocabularies.proposinggroupsvocabulary" and
-    # "Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary" vocabularies
+    # clean cache for MeetingGroup related vocabularies
     invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
     invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary")
     invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.askedadvicesvocabulary")

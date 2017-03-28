@@ -225,6 +225,41 @@ class testFaceted(PloneMeetingTestCase):
         self.assertEquals(len(vocab1(pmFolder)), 3)
         self.assertEquals(len(vocab2(pmFolder)), 3)
 
+    def test_pm_GroupsInChargeVocabulary(self):
+        '''Test the "Products.PloneMeeting.vocabularies.groupsinchargevocabulary"
+           vocabulary, especially because it is cached.'''
+        self.changeUser('siteadmin')
+        vendors = self.tool.vendors
+        developers = self.tool.developers
+        self.create('MeetingGroup', id='group1', title='Group 1', acronym='G1')
+        self.create('MeetingGroup', id='group2', title='Group 2', acronym='G2')
+        self.create('MeetingGroup', id='group3', title='Group 3', acronym='G3')
+        vocab = queryUtility(IVocabularyFactory, "Products.PloneMeeting.vocabularies.groupsinchargevocabulary")
+
+        # for now, no group in charge
+        self.assertEqual(len(vocab(self.portal)), 0)
+        # define some group in charge, vocabulary is invalidated when a group is modified
+        vendors.setGroupInCharge(({'date_to': '', 'group_id': 'group1', 'orderindex_': '1'},))
+        vendors.at_post_edit_script()
+        developers.setGroupInCharge(({'date_to': '', 'group_id': 'group2', 'orderindex_': '1'},))
+        developers.at_post_edit_script()
+        self.assertEqual([term.title for term in vocab(self.portal)], ['Group 1', 'Group 2'])
+
+        # create an new group with a groupInCharge directly
+        self.create('MeetingGroup', id='group4', title='Group 4',
+                    acronym='G4', groupInCharge=({'date_to': '', 'group_id': 'group3', 'orderindex_': '1'},))
+        self.assertEqual([term.title for term in vocab(self.portal)], ['Group 1', 'Group 2', 'Group 3'])
+
+        # change a group in charge
+        vendors.setGroupInCharge(({'date_to': '', 'group_id': 'group4', 'orderindex_': '1'},))
+        vendors.at_post_edit_script()
+        self.assertEqual([term.title for term in vocab(self.portal)], ['Group 2', 'Group 3', 'Group 4'])
+
+        # unselect a group in charge
+        vendors.setGroupInCharge(())
+        vendors.at_post_edit_script()
+        self.assertEqual([term.title for term in vocab(self.portal)], ['Group 2', 'Group 3'])
+
     def test_pm_CreatorsVocabulary(self):
         '''Test the "Products.PloneMeeting.vocabularies.creatorsvocabulary"
            vocabulary, especially because it is cached.'''

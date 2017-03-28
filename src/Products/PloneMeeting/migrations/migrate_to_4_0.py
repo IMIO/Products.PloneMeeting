@@ -1120,76 +1120,80 @@ class Migrate_To_4_0(Migrator):
                     field.set(item, content)
         logger.info('Done.')
 
-    def run(self):
+    def run(self, step=None):
         logger.info('Migrating to PloneMeeting 4.0...')
-        # MIGRATION COMMON PARTS
-        # clean registries before reinstall because if a ressource if BrowserLayer aware
-        # as BrowserLayer is just installed, the REQUEST still not implements it and
-        # those resources are removed...  This is the case for collective.z3cform.select2
-        self.cleanRegistries()
-        # upgrade collective.ckeditor because we need the new 'skin' property while installing PloneMeeting
-        self.upgradeProfile('collective.ckeditor:default')
-        # reinstall so versions are correctly shown in portal_quickinstaller
-        # and new stuffs are added (portal_catalog metadata especially, imio.history is installed)
-        # reinstall PloneMeeting with dependencies, but install only new packages
-        # we want to reapply entire PM but upgrade existing dependencies
-        self.reinstall(profiles=['profile-Products.PloneMeeting:default', ],
-                       ignore_dependencies=False,
-                       dependency_strategy=DEPENDENCY_STRATEGY_NEW)
-        if self.profile_name != 'profile-Products.PloneMeeting:default':
-            self.reinstall(profiles=[self.profile_name, ],
+        if not step or step == 1:
+            # MIGRATION COMMON PARTS
+            # clean registries before reinstall because if a ressource if BrowserLayer aware
+            # as BrowserLayer is just installed, the REQUEST still not implements it and
+            # those resources are removed...  This is the case for collective.z3cform.select2
+            self.cleanRegistries()
+            # upgrade collective.ckeditor because we need the new 'skin' property while installing PloneMeeting
+            self.upgradeProfile('collective.ckeditor:default')
+            # reinstall so versions are correctly shown in portal_quickinstaller
+            # and new stuffs are added (portal_catalog metadata especially, imio.history is installed)
+            # reinstall PloneMeeting with dependencies, but install only new packages
+            # we want to reapply entire PM but upgrade existing dependencies
+            self.reinstall(profiles=['profile-Products.PloneMeeting:default', ],
                            ignore_dependencies=False,
                            dependency_strategy=DEPENDENCY_STRATEGY_NEW)
-        # reapply the registry.xml step of plone.app.querystring
-        # that misses an upgrade step with new type
-        # 'plone.app.querystring.operation.selection.is.operation'
-        self.runProfileSteps('plone.app.querystring', steps=['plone.app.registry'])
-        # reapply the registry.xml step of imio.actionspanel
-        # for which there is a missing dependency to add record
-        # 'imio.actionspanel.browser.registry.IImioActionsPanelConfig'
-        self.runProfileSteps('imio.actionspanel', steps=['plone.app.registry'])
-        # upgrade dependencies
-        self.upgradeDependencies()
-        self.updateHolidays()
-        # re-apply the plonemeetingskin CSS as it was shuffled by imioapps upgrade step
-        self.runProfileSteps('plonetheme.imioapps',
-                             steps=['cssregistry'],
-                             profile='plonemeetingskin')
-        self.reorderSkinsLayers()
+            if self.profile_name != 'profile-Products.PloneMeeting:default':
+                self.reinstall(profiles=[self.profile_name, ],
+                               ignore_dependencies=False,
+                               dependency_strategy=DEPENDENCY_STRATEGY_NEW)
+            # reapply the registry.xml step of plone.app.querystring
+            # that misses an upgrade step with new type
+            # 'plone.app.querystring.operation.selection.is.operation'
+            self.runProfileSteps('plone.app.querystring', steps=['plone.app.registry'])
+            # reapply the registry.xml step of imio.actionspanel
+            # for which there is a missing dependency to add record
+            # 'imio.actionspanel.browser.registry.IImioActionsPanelConfig'
+            self.runProfileSteps('imio.actionspanel', steps=['plone.app.registry'])
+            # upgrade dependencies
+            self.upgradeDependencies()
+            self.updateHolidays()
+            # re-apply the plonemeetingskin CSS as it was shuffled by imioapps upgrade step
+            self.runProfileSteps('plonetheme.imioapps',
+                                 steps=['cssregistry'],
+                                 profile='plonemeetingskin')
+            self.reorderSkinsLayers()
 
         # MIGRATION V4 SPECIFIC PARTS
-        self._adaptAppForImioAnnex()
-        self._updateItemsListVisibleFields()
-        self._migrateLateItems()
-        self._adaptAppForImioDashboard()
-        self._moveToItemTemplateRecurringOwnPortalTypes()
-        self._changeWFUsedForItemAndMeeting()
-        self._cleanPMModificationDateOnItems()
-        self._cleanMeetingFolderLayout()
-        self._adaptAppForCollectiveDocumentGenerator()
-        self._adaptMeetingItemsNumber()
-        self._adaptMeetingConfigsItemRefFormat()
-        self._cleanMeetingConfigs()
-        self._cleanMeetingUsers()
-        self._updateAllLocalRoles()
-        self._updateManagedPermissionsForAdvices()
-        self._initNewHTMLFields()
-        self._updateHistoryComments()
-        self._updateCKeditorCustomToolbar()
-        self._removeUnusedIndexes()
-        self._initSelectableAdvisers()
-        self._moveAppName()
-        self._moveDuplicatedItemLinkFromAutoToManual()
-        self._removeAddFilePermissionOnMeetingConfigFolders()
-        self._initSelectablePrivacies()
-        self._initFirstItemNumberOnMeetings()
-        self._updateItemReferences()
-        self._replaceOldYellowHighlight()
-        # update workflow, needed for items moved to item templates and recurring items
-        # update reference_catalog as ReferenceFied "MeetingConfig.toDoListTopics"
-        # and "Meeting.lateItems" were removed
-        self.refreshDatabase(catalogsToRebuild=['portal_catalog', 'reference_catalog'],
-                             workflows=True)
+        if not step or step == 2:
+            self._adaptAppForImioAnnex()
+
+        if not step or step == 3:
+            self._updateItemsListVisibleFields()
+            self._migrateLateItems()
+            self._adaptAppForImioDashboard()
+            self._moveToItemTemplateRecurringOwnPortalTypes()
+            self._changeWFUsedForItemAndMeeting()
+            self._cleanPMModificationDateOnItems()
+            self._cleanMeetingFolderLayout()
+            self._adaptAppForCollectiveDocumentGenerator()
+            self._adaptMeetingItemsNumber()
+            self._adaptMeetingConfigsItemRefFormat()
+            self._cleanMeetingConfigs()
+            self._cleanMeetingUsers()
+            self._updateAllLocalRoles()
+            self._updateManagedPermissionsForAdvices()
+            self._initNewHTMLFields()
+            self._updateHistoryComments()
+            self._updateCKeditorCustomToolbar()
+            self._removeUnusedIndexes()
+            self._initSelectableAdvisers()
+            self._moveAppName()
+            self._moveDuplicatedItemLinkFromAutoToManual()
+            self._removeAddFilePermissionOnMeetingConfigFolders()
+            self._initSelectablePrivacies()
+            self._initFirstItemNumberOnMeetings()
+            self._updateItemReferences()
+            self._replaceOldYellowHighlight()
+            # update workflow, needed for items moved to item templates and recurring items
+            # update reference_catalog as ReferenceFied "MeetingConfig.toDoListTopics"
+            # and "Meeting.lateItems" were removed
+            self.refreshDatabase(catalogsToRebuild=['portal_catalog', 'reference_catalog'],
+                                 workflows=True)
 
 
 # The migration function -------------------------------------------------------
@@ -1226,5 +1230,62 @@ def migrate(context):
     '''
     migrator = Migrate_To_4_0(context)
     migrator.run()
+    migrator.finish()
+# ------------------------------------------------------------------------------
+
+
+def migrate_step1(context):
+    '''This migration function will:
+
+       1) Reinstall PloneMeeting and upgrade dependencies.
+    '''
+    migrator = Migrate_To_4_0(context)
+    migrator.run(step=1)
+    migrator.finish()
+# ------------------------------------------------------------------------------
+
+
+def migrate_step2(context):
+    '''This migration function will:
+
+       2) Move to imio.annex.
+    '''
+    migrator = Migrate_To_4_0(context)
+    migrator.run(step=2)
+    migrator.finish()
+# ------------------------------------------------------------------------------
+
+
+def migrate_step3(context):
+    '''This migration function will:
+
+       3) Clean registries;
+       4) Update holidays defined on portal_plonemeeting;
+       5) Update MeetingConfig.itemsListVisibleFields stored values;
+       6) Migrate late items;
+       7) Move to imio.dashboard;
+       8) Clean pm_modification_date on items and annexes;
+       9) Move item templates and recurring items to their own portal_type;
+       10) Make sure no layout is defined on users MeetingFolders;
+       11) Move to collective.documentgenerator;
+       12) Adapt every items itemNumber;
+       13) Adapt every configs itemReferenceFormat;
+       14) Clean MeetingConfigs from unused attributes;
+       15) Clean MeetingUsers from unused attributes;
+       16) Update all local_roles of Meeting and MeetingItems;
+       17) Init new HTML fields;
+       18) Update history comments;
+       19) Update CKEditor custom toolbar;
+       20) Remove unused catalog indexes;
+       21) Initialize MeetingConfig.selectableAdvisers field;
+       22) Adapt application name;
+       23) Move 'duplicated and keep link' link from automatic to manual link;
+       24) Remove the 'Add File' permission on user folders;
+       25) Migrate to MeetingConfig.selectablePrivacies;
+       26) Make sure field Meeting.firstItemNumber is not empty on any meeting;
+       27) Refresh catalogs.
+    '''
+    migrator = Migrate_To_4_0(context)
+    migrator.run(step=3)
     migrator.finish()
 # ------------------------------------------------------------------------------

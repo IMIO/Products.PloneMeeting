@@ -230,6 +230,21 @@ class testMeetingGroup(PloneMeetingTestCase):
         # the group is actually removed
         self.failIf(hasattr(self.tool, 'vendors'))
 
+    def test_pm_CanNotRemoveMeetingGroupUsedAsGroupInCharge(self):
+        '''While removing a MeetingGroup, it should raise if
+           it is used as groupInCharge of another MeetingGroup.'''
+        self.changeUser('siteadmin')
+        group1 = self.create('MeetingGroup', id='group1', title='Group 1', acronym='G1')
+        group2 = self.create('MeetingGroup', id='group2', title='Group 2', acronym='G2')
+        group1.setGroupInCharge(({'date_to': '', 'group_id': 'group2', 'orderindex_': '1'},))
+        with self.assertRaises(BeforeDeleteException) as cm:
+            self.tool.manage_delObjects([group2.getId()])
+        self.assertEquals(cm.exception.message,
+                          translate('can_not_delete_meetinggroup_groupincharge',
+                                    domain='plone',
+                                    mapping={'group_title': group1.Title()},
+                                    context=self.portal.REQUEST))
+
     def test_pm_DeactivatedGroupCanNoMoreBeUsed(self):
         """
           Check that when a MeetingGroup has been deactivated, it is no more useable in any

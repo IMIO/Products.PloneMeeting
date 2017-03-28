@@ -120,6 +120,35 @@ class ItemProposingGroupsVocabulary(object):
 ItemProposingGroupsVocabularyFactory = ItemProposingGroupsVocabulary()
 
 
+class GroupsInChargeVocabulary(object):
+    implements(IVocabularyFactory)
+
+    def __call___cachekey(method, self, context):
+        '''cachekey method for self.__call__.'''
+        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.groupsinchargevocabulary')
+        return date
+
+    @ram.cache(__call___cachekey)
+    def __call__(self, context):
+        """ """
+        tool = api.portal.get_tool('portal_plonemeeting')
+        groups = tool.getMeetingGroups(onlyActive=False, caching=False)
+        res = []
+        for group in groups:
+            group_in_charge = group.getGroupInChargeAt()
+            # manage duplicates
+            if group_in_charge and not group_in_charge in res:
+                res.append(group_in_charge)
+        res = [SimpleTerm(gic.getId(),
+                          gic.getId(),
+                          safe_unicode(gic.Title()))
+               for gic in res]
+        res = sorted(res, key=attrgetter('title'))
+        return SimpleVocabulary(res)
+
+GroupsInChargeVocabularyFactory = GroupsInChargeVocabulary()
+
+
 class ItemProposingGroupAcronymsVocabulary(object):
     implements(IVocabularyFactory)
 

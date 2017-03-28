@@ -11,6 +11,8 @@
            name="Products.PloneMeeting.vocabularies.proposinggroupsvocabulary" />
   <utility component=".vocabularies.ItemProposingGroupAcronymsVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary" />
+  <utility component=".vocabularies.GroupsInChargeVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.groupsinchargevocabulary" />
   <utility component=".vocabularies.ItemReviewStatesVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.itemreviewstatesvocabulary" />
   <utility component=".vocabularies.MeetingReviewStatesVocabularyFactory"
