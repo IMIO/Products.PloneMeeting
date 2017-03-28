@@ -1130,6 +1130,9 @@ class Migrate_To_4_0(Migrator):
             self.cleanRegistries()
             # upgrade collective.ckeditor because we need the new 'skin' property while installing PloneMeeting
             self.upgradeProfile('collective.ckeditor:default')
+            # upgrade profiles that are not dependencies of Products.PloneMeeting
+            self.upgradeProfile('Products.CMFEditions:CMFEditions')
+            self.upgradeProfile('plonetheme.sunburst:default')
             # reinstall so versions are correctly shown in portal_quickinstaller
             # and new stuffs are added (portal_catalog metadata especially, imio.history is installed)
             # reinstall PloneMeeting with dependencies, but install only new packages
