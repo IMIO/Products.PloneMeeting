@@ -232,6 +232,8 @@ class Migrate_To_4_0(Migrator):
             cfg.setItemColumns(itemColumns)
             cfg.setMeetingColumns(meetingColumns)
             cfg.setItemsListVisibleColumns(itemsListVisibleColumns)
+            # default value for new field MeetingConfig.availableItemsListVisibleColumns
+            cfg.setAvailableItemsListVisibleColumns(itemsListVisibleColumns)
             cfg.updateCollectionColumns()
 
             logger.info('Moving to imio.dashboard : migrating parameters "maxShown..."...')

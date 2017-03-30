@@ -711,9 +711,16 @@
           <td width="33%" tal:define="field python:here.getField('meetingColumns')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td width="33%" tal:define="field python:here.getField('itemsListVisibleColumns')">
+          <td width="33%"></td>
+        </tr>
+        <tr valign="top">
+          <td tal:define="field python:here.getField('itemsListVisibleColumns')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
+          <td tal:define="field python:here.getField('availableItemsListVisibleColumns')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td></td>
         </tr>
         <tr valign="top">
           <td tal:define="field python:here.getField('dashboardItemsListingsFilters')">

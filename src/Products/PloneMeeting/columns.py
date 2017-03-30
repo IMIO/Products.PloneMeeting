@@ -143,7 +143,10 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
                 # so check where we are
                 if IMeeting.providedBy(self.context):
                     # on the meeting
-                    visibleColumns = cfg.getItemsListVisibleColumns()
+                    if displaying_available_items(self.context):
+                        visibleColumns = cfg.getAvailableItemsListVisibleColumns()
+                    else:
+                        visibleColumns = cfg.getItemsListVisibleColumns()
                 else:
                     visibleColumns = cfg.getItemColumns()
                 staticInfos = obj.restrictedTraverse('@@item-static-infos')(visibleColumns=visibleColumns)

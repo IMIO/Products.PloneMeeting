@@ -546,6 +546,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Removed properties 'meetingRole' and 'meetingGroupId' from Plone groups created when adding
   a MeetingGroup, we use MEETINGROLES and MEETING_GROUP_SUFFIXES now
 - Highlight lines that are empty at the end of a rich text field on the meeting and item view
+- Added field MeetingConfig.availableItemsListVisibleColumns in addition to MeetingConfig.itemsListVisibleColumns
+  to be able to define columns to display in the table of available items.  MeetingConfig.itemsListVisibleColumns
+  is now used to define columns to display in the table of items presented to a meeting
 
 3.2.0.1 (2014-03-06)
 --------------------

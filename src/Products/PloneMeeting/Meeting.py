@@ -917,8 +917,12 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         tool = getToolByName(self, 'portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         # some columns are displayed in the 'Purpose' column
-        itemsListVisibleColumns = [col for col in cfg.getItemsListVisibleColumns() if
-                                   col not in ('budget_infos', 'item_reference')]
+        if displaying_available_items(self):
+            visibleCols = cfg.getAvailableItemsListVisibleColumns()
+        else:
+            visibleCols = cfg.getItemsListVisibleColumns()
+        itemsListVisibleColumns = [col for col in visibleCols
+                                   if col not in ('budget_infos', 'item_reference')]
         itemsListVisibleColumns.insert(0, u'pretty_link')
         if not displaying_available_items(self):
             itemsListVisibleColumns.insert(0, u'getItemNumber')

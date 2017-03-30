@@ -1158,6 +1158,23 @@ schema = Schema((
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
+        name='availableItemsListVisibleColumns',
+        widget=MultiSelectionWidget(
+            description="availableItemsListVisibleColumns",
+            description_msgid="available_items_list_visible_columns_descr",
+            format="checkbox",
+            label='AvailableItemslistvisiblecolumns',
+            label_msgid='PloneMeeting_label_availableItemsListVisibleColumns',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="gui",
+        multiValued=1,
+        vocabulary='listItemsListVisibleColumns',
+        default=defValues.availableItemsListVisibleColumns,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
         name='itemsListVisibleColumns',
         widget=MultiSelectionWidget(
             description="ItemsListVisibleColumns",
@@ -3534,6 +3551,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def listItemsListVisibleColumns(self):
         res = self.listItemRelatedColumns()
+        res.insert(-1, ('getPreferredMeetingDate', translate('header_getPreferredMeetingDate',
+                                                             domain='collective.eeafaceted.z3ctable',
+                                                             context=self.REQUEST)))
         return DisplayList(tuple(res))
 
     def listItemsListVisibleFields(self):
@@ -4420,8 +4440,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getItemTypeName')
 
     def getItemTypeName(self, configType=None):
-        '''Gets the name of the portal_type of the meeting item for this
-           config.'''
+        '''Gets the name of the portal_type of the meeting item for this config.'''
         if not configType:
             return 'MeetingItem%s' % self.getShortName()
         else:

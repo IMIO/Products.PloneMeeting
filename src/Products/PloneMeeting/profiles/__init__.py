@@ -304,7 +304,8 @@ class MeetingConfigDescriptor(Descriptor):
     multiSelectFields = ('certifiedSignatures', 'usedItemAttributes', 'historizedItemAttributes',
                          'recordItemHistoryStates', 'usedMeetingAttributes',
                          'historizedMeetingAttributes', 'recordMeetingHistoryStates',
-                         'itemsListVisibleColumns', 'itemsListVisibleFields', 'itemColumns', 'meetingColumns',
+                         'availableItemsListVisibleColumns', 'itemsListVisibleColumns', 'itemsListVisibleFields',
+                         'itemColumns', 'meetingColumns',
                          'dashboardItemsListingsFilters', 'dashboardMeetingAvailableItemsFilters',
                          'dashboardMeetingLinkedItemsFilters',
                          'workflowAdaptations', 'transitionsToConfirm', 'transitionsForPresentingAnItem',
@@ -509,8 +510,10 @@ class MeetingConfigDescriptor(Descriptor):
         # Which view do you want to select when entering a PloneMeeting folder ?
         self.meetingAppDefaultView = 'searchallitems'
         # Columns shown on the meeting view.  Order is important!
-        self.itemsListVisibleColumns = ['Creator', 'CreationDate', 'review_state',
-                                        'getProposingGroup', 'actions']
+        self.availableItemsListVisibleColumns = [
+            'Creator', 'CreationDate', 'review_state', 'getProposingGroup', 'actions']
+        self.itemsListVisibleColumns = [
+            'Creator', 'CreationDate', 'review_state', 'getProposingGroup', 'actions']
         # what fields of the item will be displayed in the items listings
         # while clicking on the show more infos action (glasses icon)
         self.itemsListVisibleFields = ['MeetingItem.description', 'MeetingItem.decision']
