@@ -28,6 +28,19 @@ from Products.PloneMeeting.utils import updateCollectionCriterion
 # The migration class ----------------------------------------------------------
 class Migrate_To_4_0(Migrator):
 
+    def _fixPortalLanguages(self):
+        """Make sure we do not use sub languages for the default language."""
+        logger.info('Fixing portal_languages...')
+        languages = self.portal.portal_languages
+        if '-' in languages.getDefaultLanguage():
+            old_default_lang = languages.getDefaultLanguage()
+            default_lang = old_default_lang.split('-')[0]
+            languages.setDefaultLanguage(default_lang)
+            supported_langs = languages.supported_langs
+            supported_langs.remove(old_default_lang)
+            supported_langs.append(default_lang)
+        logger.info('Done.')
+
     def _get_wh_key(self, itemOrMeeting):
         """Get workflow_history key to use, in case there are several keys, we take the one
            having the last event."""
@@ -1128,6 +1141,9 @@ class Migrate_To_4_0(Migrator):
         logger.info('Migrating to PloneMeeting 4.0...')
         if not step or step == 1:
             # MIGRATION COMMON PARTS
+            # due to a Plone bug regarding sub language, we need to make sure selected language
+            # is a language without sub part, so 'en-ca' must be 'en'
+            self._fixPortalLanguages()
             # clean registries before reinstall because if a ressource if BrowserLayer aware
             # as BrowserLayer is just installed, the REQUEST still not implements it and
             # those resources are removed...  This is the case for collective.z3cform.select2
