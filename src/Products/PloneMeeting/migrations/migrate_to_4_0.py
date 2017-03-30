@@ -225,15 +225,15 @@ class Migrate_To_4_0(Migrator):
             itemColumns = [k for k in itemColumnsVoc if k in itemColumns]
             meetingColumns = [k for k in meetingColumnsVoc if k in meetingColumns]
             itemsListVisibleColumns = [k for k in itemsListVisibleColumnsVoc if k in itemsListVisibleColumns]
-            # before the item_reference column was not selectable
-            itemsListVisibleColumns.append('item_reference')
 
             # finally set new columns values
             cfg.setItemColumns(itemColumns)
             cfg.setMeetingColumns(meetingColumns)
-            cfg.setItemsListVisibleColumns(itemsListVisibleColumns)
             # default value for new field MeetingConfig.availableItemsListVisibleColumns
             cfg.setAvailableItemsListVisibleColumns(itemsListVisibleColumns)
+            # before the item_reference column was not selectable
+            itemsListVisibleColumns.append('item_reference')
+            cfg.setItemsListVisibleColumns(itemsListVisibleColumns)
             cfg.updateCollectionColumns()
 
             logger.info('Moving to imio.dashboard : migrating parameters "maxShown..."...')

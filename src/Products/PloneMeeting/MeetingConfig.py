@@ -1169,7 +1169,7 @@ schema = Schema((
         ),
         schemata="gui",
         multiValued=1,
-        vocabulary='listItemsListVisibleColumns',
+        vocabulary='listAvailableItemsListVisibleColumns',
         default=defValues.availableItemsListVisibleColumns,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
@@ -3546,6 +3546,17 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 translate("header_actions", domain=d, context=self.REQUEST)),
         ]
         return res
+
+    security.declarePrivate('listAvailableItemsListVisibleColumns')
+
+    def listAvailableItemsListVisibleColumns(self):
+        res = self.listItemRelatedColumns()
+        res.insert(-1, ('getPreferredMeetingDate', translate('header_getPreferredMeetingDate',
+                                                             domain='collective.eeafaceted.z3ctable',
+                                                             context=self.REQUEST)))
+        # remove item_reference
+        res = [v for v in res if not v[0] == 'item_reference']
+        return DisplayList(tuple(res))
 
     security.declarePrivate('listItemsListVisibleColumns')
 
