@@ -22,7 +22,7 @@ class PMConfigurablePODTemplateCondition(ConfigurablePODTemplateCondition):
         Override so we may use a single 'MeetingItemXXX' portal_type
         to work with real MeetingItem, ItemTemplate and RecurringItem item type.
         """
-        allowed_types = self.pod_template.pod_portal_types
+        allowed_types = list(self.pod_template.pod_portal_types)
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         # add the ItemTemplate and RecurringItem to allowed_types if itemTypeName is allowed
