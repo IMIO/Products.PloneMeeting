@@ -469,10 +469,14 @@ class Migrate_To_4_0(Migrator):
                     if "here.portal_plonemeeting" in condition:
                         condition = condition.replace("here.portal_plonemeeting", "tool")
 
+                    file_content = podFile.data
+                    # in some case ??? we have a OFS.Image.Pdata instance and we need binary data
+                    if hasattr(file_content, 'data'):
+                        file_content = file_content.data
                     data = {'title': template.Title(),
                             'description': template.Description(),
                             'odt_file': NamedBlobFile(
-                                data=podFile.data,
+                                data=file_content,
                                 contentType='applications/odt',
                                 filename=safe_unicode(podFile.filename)),
                             'pod_portal_types': pod_portal_types,
