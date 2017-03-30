@@ -16,3 +16,17 @@ class PMConfigurablePODTemplateCondition(ConfigurablePODTemplateCondition):
         extra_context.update({'tool': tool,
                               'cfg': cfg})
         return extra_context
+
+    def evaluate_allowed_context(self, context):
+        """
+        Override so we may use a single 'MeetingItemXXX' portal_type
+        to work with real MeetingItem, ItemTemplate and RecurringItem item type.
+        """
+        allowed_types = self.pod_template.pod_portal_types
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        # add the ItemTemplate and RecurringItem to allowed_types if itemTypeName is allowed
+        if cfg.getItemTypeName() in allowed_types:
+            allowed_types.append(cfg.getItemTypeName(configType='MeetingItemTemplate'))
+            allowed_types.append(cfg.getItemTypeName(configType='MeetingItemRecurring'))
+        return not allowed_types or context.portal_type in allowed_types
