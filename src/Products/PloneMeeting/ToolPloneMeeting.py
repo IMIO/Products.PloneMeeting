@@ -529,6 +529,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         user = self.getUser()
         if onlyActive:
             activeMeetingGroupIds = [group.getId() for group in self.getMeetingGroups(onlyActive=True)]
+        res = False
         for groupId in user.getGroups():
             # check if the groupId ends with a least one of the p_suffixes
             keep_groupId = [suffix for suffix in suffixes if groupId.endswith('_%s' % suffix)]
@@ -538,9 +539,12 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     group = self.getMeetingGroup(groupId)
                     # we could not find the group, for example if suffix is 'powerobservers'
                     if not group or group.getId() in activeMeetingGroupIds:
-                        return True
+                        res = True
+                        break
                 else:
-                    return True
+                    res = True
+                    break
+        return res
 
     security.declarePublic('getPloneMeetingFolder')
 
