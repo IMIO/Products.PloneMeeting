@@ -1183,14 +1183,18 @@ class Migrate_To_4_0(Migrator):
 
         # MIGRATION V4 SPECIFIC PARTS
         if not step or step == 2:
+            # move to ItemTemplate and RecurringItem before adapting used WF
+            # so portal_type of these items are correct
+            self._moveToItemTemplateRecurringOwnPortalTypes()
+            # adapt WF before moving to imio.annex or every items state is 'itemcreated'
+            # and during moving to imio.annex, every items are renamed...
+            self._changeWFUsedForItemAndMeeting()
             self._adaptAppForImioAnnex()
 
         if not step or step == 3:
             self._updateItemsListVisibleFields()
             self._migrateLateItems()
             self._adaptAppForImioDashboard()
-            self._moveToItemTemplateRecurringOwnPortalTypes()
-            self._changeWFUsedForItemAndMeeting()
             self._cleanPMModificationDateOnItems()
             self._cleanMeetingFolderLayout()
             self._adaptAppForCollectiveDocumentGenerator()
