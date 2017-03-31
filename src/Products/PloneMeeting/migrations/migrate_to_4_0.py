@@ -172,7 +172,12 @@ class Migrate_To_4_0(Migrator):
                 collectionIds = cfg.searches.searches_items.objectIds()
                 toDoListSearches = []
                 for topic in topics:
-                    if topic.getId() in collectionIds:
+                    # special management for old topic that had a wrong id : searchitemstoadvicewithdexceededelay
+                    # and new id is searchitemstoadvicewithexceededdelay
+                    topicId = topic.getId()
+                    if topicId == 'searchitemstoadvicewithdexceededelay':
+                        topicId = 'searchitemstoadvicewithexceededdelay'
+                    if topicId in collectionIds:
                         toDoListSearches.append(getattr(cfg.searches.searches_items, topic.getId()))
                     else:
                         warning_msg = 'Moving to imio.dashboard : could not select a collection with ' \
