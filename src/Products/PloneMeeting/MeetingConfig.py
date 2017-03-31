@@ -2210,6 +2210,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # My items
                 ('searchmyitems', {
                     'subFolderId': 'searches_items',
+                    'active': True,
                     'query':
                     [
                         {'i': 'portal_type',
@@ -2227,6 +2228,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # Items of my groups
                 ('searchitemsofmygroups', {
                     'subFolderId': 'searches_items',
+                    'active': True,
                     'query':
                     [
                         {'i': 'CompoundCriterion',
@@ -2242,6 +2244,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # Living items, items in the current flow, by default every states but decidedStates
                 ('searchlivingitems', {
                     'subFolderId': 'searches_items',
+                    'active': True,
                     'query':
                     [
                         {'i': 'portal_type',
@@ -2260,6 +2263,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # Items I take over
                 ('searchmyitemstakenover', {
                     'subFolderId': 'searches_items',
+                    'active': True,
                     'query':
                     [
                         {'i': 'CompoundCriterion',
@@ -2277,6 +2281,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # All (visible) items
                 ('searchallitems', {
                     'subFolderId': 'searches_items',
+                    'active': True,
                     'query':
                     [
                         {'i': 'portal_type',
@@ -2292,6 +2297,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # Items in copy
                 ('searchallitemsincopy', {
                     'subFolderId': 'searches_items',
+                    'active': True,
                     'query':
                     [
                         {'i': 'CompoundCriterion',
@@ -2307,6 +2313,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # Items to prevalidate
                 ('searchitemstoprevalidate', {
                     'subFolderId': 'searches_items',
+                    'active': True,
                     'query':
                     [
                         {'i': 'portal_type',
@@ -2326,6 +2333,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # Items to validate
                 ('searchitemstovalidate', {
                     'subFolderId': 'searches_items',
+                    'active': True,
                     'query':
                     [
                         {'i': 'CompoundCriterion',
@@ -2341,6 +2349,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # Validable items
                 ('searchvalidableitems', {
                     'subFolderId': 'searches_items',
+                    'active': True,
                     'query':
                     [
                         {'i': 'CompoundCriterion',
@@ -2356,6 +2365,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # Items to advice
                 ('searchallitemstoadvice', {
                     'subFolderId': 'searches_items',
+                    'active': True,
                     'query':
                     [
                         {'i': 'CompoundCriterion',
@@ -2371,6 +2381,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # Items to advice without delay
                 ('searchitemstoadvicewithoutdelay', {
                     'subFolderId': 'searches_items',
+                    'active': True,
                     'query':
                     [
                         {'i': 'CompoundCriterion',
@@ -2386,6 +2397,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # Items to advice with delay
                 ('searchitemstoadvicewithdelay', {
                     'subFolderId': 'searches_items',
+                    'active': True,
                     'query':
                     [
                         {'i': 'CompoundCriterion',
@@ -2401,6 +2413,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # Items to advice with exceeded delay
                 ('searchitemstoadvicewithexceededdelay', {
                     'subFolderId': 'searches_items',
+                    'active': True,
                     'query':
                     [
                         {'i': 'CompoundCriterion',
@@ -2416,6 +2429,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # Every advised items
                 ('searchalladviseditems', {
                     'subFolderId': 'searches_items',
+                    'active': True,
                     'query':
                     [
                         {'i': 'CompoundCriterion',
@@ -2431,6 +2445,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # Advised items with delay
                 ('searchalladviseditemswithdelay', {
                     'subFolderId': 'searches_items',
+                    'active': True,
                     'query':
                     [
                         {'i': 'CompoundCriterion',
@@ -2446,6 +2461,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # Items to correct
                 ('searchitemstocorrect', {
                     'subFolderId': 'searches_items',
+                    'active': True,
                     'query':
                     [
                         {'i': 'CompoundCriterion',
@@ -2466,6 +2482,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # Items to correct to validate
                 ('searchitemstocorrecttovalidate', {
                     'subFolderId': 'searches_items',
+                    'active': True,
                     'query':
                     [
                         {'i': 'CompoundCriterion',
@@ -2485,6 +2502,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # Validable "Items to correct"
                 ('searchitemstocorrecttovalidateoffeveryreviewergroups', {
                     'subFolderId': 'searches_items',
+                    'active': True,
                     'query':
                     [
                         {'i': 'CompoundCriterion',
@@ -2502,6 +2520,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # Corrected items
                 ('searchcorrecteditems', {
                     'subFolderId': 'searches_items',
+                    'active': True,
                     'query':
                     [
                         {'i': 'portal_type',
@@ -2524,6 +2543,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # Decided items
                 ('searchdecideditems', {
                     'subFolderId': 'searches_items',
+                    'active': True,
                     'query':
                     [
                         {'i': 'CompoundCriterion',
@@ -2539,6 +2559,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # All not-yet-decided meetings
                 ('searchallmeetings', {
                     'subFolderId': 'searches_meetings',
+                    'active': True,
                     'query':
                     [
                         {'i': 'portal_type',
@@ -2557,6 +2578,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # Last decided meetings
                 ('searchlastdecisions', {
                     'subFolderId': 'searches_decisions',
+                    'active': True,
                     'query':
                     [
                         {'i': 'portal_type',
@@ -2578,6 +2600,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # All decided meetings
                 ('searchalldecisions', {
                     'subFolderId': 'searches_decisions',
+                    'active': True,
                     'query':
                     [
                         {'i': 'portal_type',
@@ -4151,6 +4174,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                           target_language=default_language,
                                           default=collectionId))
             collection.setCustomViewFields(['Title', 'CreationDate', 'Creator', 'review_state', 'actions'])
+            if not collectionData['active']:
+                api.content.transition(collection, 'deactivate')
             collection.reindexObject()
 
     def _getCloneToOtherMCActionId(self, destMeetingConfigId, meetingConfigId, emergency=False):
