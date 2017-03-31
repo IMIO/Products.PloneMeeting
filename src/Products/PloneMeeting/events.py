@@ -342,7 +342,8 @@ def onItemModified(item, event):
         wfTool = api.portal.get_tool('portal_workflow')
         itemWF = wfTool.getWorkflowsFor(item)[0]
         initial_state = itemWF.initial_state
-        if initial_state == item.queryState():
+        # only rename if this will effectively change the id
+        if initial_state == item.queryState() and item.getId() != item.generateNewId():
             # in case a user of same group is editing the item of another user
             # he does not have the 'Add portal content' permission that is necessary
             # when renaming so do this as Manager
