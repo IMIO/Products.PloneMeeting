@@ -14,6 +14,8 @@ from plone import api
 from plone.namedfile.file import NamedBlobFile
 from plone.namedfile.file import NamedBlobImage
 from Products.CMFPlone.utils import safe_unicode
+from collective.documentgenerator.config import set_oo_port
+from collective.documentgenerator.config import set_uno_path
 from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.utils import update_all_categorized_elements
 from imio.dashboard.utils import _updateDefaultCollectionFor
@@ -524,6 +526,10 @@ class Migrate_To_4_0(Migrator):
                 self.tool.openOfficePort)
             delattr(self.tool, 'unoEnabledPython')
             delattr(self.tool, 'openOfficePort')
+            # call set_oo_port() and set_uno_path() from collective.documentgenerator
+            # these methods are aware of environment variables 'OO_PORT' and 'PYTHON_UNO'
+            set_oo_port()
+            set_uno_path()
         logger.info('Done.')
 
     def _adaptMeetingItemsNumber(self):
