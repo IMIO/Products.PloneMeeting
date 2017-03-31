@@ -3550,17 +3550,19 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('listAvailableItemsListVisibleColumns')
 
     def listAvailableItemsListVisibleColumns(self):
+        '''Vocabulary for the 'availableItemsListVisibleColumns' field.'''
         res = self.listItemRelatedColumns()
         res.insert(-1, ('getPreferredMeetingDate', translate('header_getPreferredMeetingDate',
                                                              domain='collective.eeafaceted.z3ctable',
                                                              context=self.REQUEST)))
-        # remove item_reference
-        res = [v for v in res if not v[0] == 'item_reference']
+        # remove item_reference and review_state
+        res = [v for v in res if v[0] not in ('item_reference', 'review_state')]
         return DisplayList(tuple(res))
 
     security.declarePrivate('listItemsListVisibleColumns')
 
     def listItemsListVisibleColumns(self):
+        '''Vocabulary for the 'itemsListVisibleColumns' field.'''
         res = self.listItemRelatedColumns()
         res.insert(-1, ('getPreferredMeetingDate', translate('header_getPreferredMeetingDate',
                                                              domain='collective.eeafaceted.z3ctable',

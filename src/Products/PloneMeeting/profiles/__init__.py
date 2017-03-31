@@ -511,7 +511,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.meetingAppDefaultView = 'searchallitems'
         # Columns shown on the meeting view.  Order is important!
         self.availableItemsListVisibleColumns = [
-            'Creator', 'CreationDate', 'review_state', 'getProposingGroup', 'actions']
+            'Creator', 'CreationDate', 'getProposingGroup', 'actions']
         self.itemsListVisibleColumns = [
             'Creator', 'CreationDate', 'review_state', 'getProposingGroup', 'actions']
         # what fields of the item will be displayed in the items listings
