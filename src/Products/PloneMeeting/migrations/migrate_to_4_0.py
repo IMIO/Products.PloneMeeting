@@ -6,7 +6,10 @@ logger = logging.getLogger('PloneMeeting')
 
 from Acquisition import aq_base
 from DateTime import DateTime
+from persistent.list import PersistentList
+from persistent.mapping import PersistentMapping
 from zope.i18n import translate
+
 from plone import api
 from plone.namedfile.file import NamedBlobFile
 from plone.namedfile.file import NamedBlobImage
@@ -629,6 +632,26 @@ class Migrate_To_4_0(Migrator):
             forceHTMLContentTypeForEmptyRichFields(itemOrMeeting)
         logger.info('Done.')
 
+    def _addPersistentAttributesToItems(self):
+        '''Add the attributes 'emergency_changes_history', 'completeness_changes_history' and 'takenOverByInfos'
+           on every existing items :
+           - 'emergency_changes_history' and 'completeness_changes_history' will be used to store changes about the
+           MeetingItem.emergency and MeetingItem.completeness fields values and comments;
+           - 'takenOverByInfos' will be used to store history of who already took an item over
+           for each review_state the item already get thru.'''
+        brains = self.portal.portal_catalog(meta_type=('MeetingItem', ))
+        logger.info("Initializing new attributes 'emergency_changes_history', 'completeness_changes_history' and "
+                    "'takenOverByInfos' for %d MeetingItem objects..." % len(brains))
+        for brain in brains:
+            item = brain.getObject()
+            if not hasattr(item, 'emergency_changes_history'):
+                item.emergency_changes_history = PersistentList()
+            if not hasattr(item, 'completeness_changes_history'):
+                item.completeness_changes_history = PersistentList()
+            if not hasattr(item, 'takenOverByInfos'):
+                item.takenOverByInfos = PersistentMapping()
+        logger.info('Done.')
+
     def _updateHistoryComments(self):
         '''Some histories used for MeetingItems stored comment in a 'comment' key, we need
            to store it in a 'comments' key so it behaves like the workflow_history.'''
@@ -1207,6 +1230,7 @@ class Migrate_To_4_0(Migrator):
             self._updateAllLocalRoles()
             self._updateManagedPermissionsForAdvices()
             self._initNewHTMLFields()
+            self._addPersistentAttributesToItems()
             self._updateHistoryComments()
             self._updateCKeditorCustomToolbar()
             self._removeUnusedIndexes()
