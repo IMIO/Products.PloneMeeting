@@ -180,7 +180,7 @@ class Migrate_To_4_0(Migrator):
                     if topicId == 'searchitemstoadvicewithdexceededelay':
                         topicId = 'searchitemstoadvicewithexceededdelay'
                     if topicId in collectionIds:
-                        toDoListSearches.append(getattr(cfg.searches.searches_items, topic.getId()))
+                        toDoListSearches.append(getattr(cfg.searches.searches_items, topicId))
                     else:
                         warning_msg = 'Moving to imio.dashboard : could not select a collection with ' \
                             'id "%s" for portlet_todo!' % topic.getId()
