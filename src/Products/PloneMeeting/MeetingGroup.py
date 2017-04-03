@@ -167,29 +167,20 @@ schema = Schema((
         columns=('signatureNumber', 'name', 'function', 'date_from', 'date_to'),
         allow_empty_rows=False,
     ),
-    DataGridField(
-        name='groupInCharge',
-        widget=DataGridField._properties['widget'](
-            columns={'group_id':
-                     SelectColumn("Group in charge id",
-                                  vocabulary="listActiveMeetingGroups",
-                                  col_description="Select the group that is in charge of the current group."),
-                     'date_to':
-                     Column("Group in charge date to (included)",
-                            col_description="Enter valid date to, use following format : YYYY/MM/DD, "
-                                            "leave empty if it is the current group in charge.  "
-                                            "If many lines, enter from older to newer validity."), },
-            label_msgid="PloneMeeting_label_groupInCharge",
-            description="GroupInCharge",
-            description_msgid="group_in_charge_descr",
-            label='Groupincharge',
+    LinesField(
+        name='groupsInCharge',
+        default=defValues.groupsInCharge,
+        widget=MultiSelectionWidget(
+            description="GroupsInCharge",
+            description_msgid="groups_in_charge_descr",
+            format="checkbox",
+            label='Groupsincharge',
+            label_msgid='PloneMeeting_label_groupsInCharge',
             i18n_domain='PloneMeeting',
         ),
-        default=defValues.groupInCharge,
-        allow_oddeven=True,
-        write_permission="PloneMeeting: Write harmless config",
-        columns=('group_id', 'date_to'),
-        allow_empty_rows=False,
+        multiValued=1,
+        vocabulary='listActiveMeetingGroups',
+        write_permission="PloneMeeting: Write risky config",
     ),
 
 ),
@@ -234,54 +225,6 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
     def queryState(self):
         '''In what state am I ?'''
         return self.portal_workflow.getInfoFor(self, 'review_state')
-
-    security.declarePrivate('validate_groupInCharge')
-
-    def validate_groupInCharge(self, value):
-        '''Validation method for field 'groupInCharge'.
-           We validate that given 'date_to' dates are valid and
-           that registered rows are sorted from older to newer.'''
-        row_number = 1
-        last_datetime_to = None
-        # remove 'template_row_marker' from value
-        value = [row for row in value if not row.get('orderindex_', '') == 'template_row_marker']
-        for row in value:
-            date_to = row['date_to']
-
-            # last row must not contain a date_to
-            is_last_row = bool(row == value[-1])
-            if is_last_row and date_to:
-                return translate('error_in_charge_group_date_may_not_be_given',
-                                 domain='PloneMeeting',
-                                 context=self.REQUEST)
-            # if several rows, date_to is required for first rows
-            if len(value) > 1 and not is_last_row and not date_to:
-                return translate('error_in_charge_group_date_to_missing',
-                                 mapping={'row_number': row_number},
-                                 domain='PloneMeeting',
-                                 context=self.REQUEST)
-
-            if date_to:
-                # first validate date_to if given
-                try:
-                    datetime_to = DateTime(date_to)
-                    # respect right string format?
-                    if not datetime_to.strftime('%Y/%m/%d') == date_to:
-                        raise SyntaxError
-                except:
-                    return translate('error_in_charge_group_invalid_dates',
-                                     mapping={'row_number': row_number},
-                                     domain='PloneMeeting',
-                                     context=self.REQUEST)
-
-                # if date_to is given, next must be newer
-                if last_datetime_to and not datetime_to > last_datetime_to:
-                    return translate('error_in_charge_group_dates_sorting',
-                                     mapping={'row_number': row_number},
-                                     domain='PloneMeeting',
-                                     context=self.REQUEST)
-                last_datetime_to = datetime_to
-            row_number += 1
 
     security.declarePrivate('listSignatureNumbers')
 
@@ -331,7 +274,7 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
 
     def listActiveMeetingGroups(self):
         """
-          Vocabulary for the groupInCharge.group_id field.
+          Vocabulary for the groupsInCharge field.
           It returns every active MeetingGroups.
         """
         res = []
@@ -340,12 +283,12 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
             res.append((mGroup.getId(), mGroup.getName()))
         # make sure that if a configuration was defined for a group
         # that is now inactive, it is still displayed
-        storedGroupIds = [row['group_id'] for row in self.getGroupInCharge()]
-        if storedGroupIds:
+        storedGroupsInCharge = self.getGroupsInCharge()
+        if storedGroupsInCharge:
             groupsInVocab = [group[0] for group in res]
-            for storedGroupId in storedGroupIds:
-                if storedGroupId not in groupsInVocab:
-                    mGroup = getattr(tool, storedGroupId)
+            for storedGroupInCharge in storedGroupsInCharge:
+                if storedGroupInCharge not in groupsInVocab:
+                    mGroup = getattr(tool, storedGroupInCharge)
                     res.append((mGroup.getId(), mGroup.getName()))
         return DisplayList(res).sortedByValue()
 
@@ -585,23 +528,6 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
             # of function/name, like ['function1', 'name1', 'function2', 'name2']
             group_signatures = listifySignatures(computedSignatures)
         return group_signatures
-
-    security.declarePublic('getGroupInChargeAt')
-
-    def getGroupInChargeAt(self, date=DateTime()):
-        '''Get groupInCharge at given p_date.
-           If no valid groupInCharge is found, None is returned.'''
-        groupInCharge = None
-        tool = api.portal.get_tool('portal_plonemeeting')
-        for row in self.getGroupInCharge():
-            if not row['date_to']:
-                groupInCharge = tool.get(row['group_id'])
-                break
-            datetime_to = DateTime('{} 23:59'.format(row['date_to']))
-            if datetime_to > date:
-                groupInCharge = tool.get(row['group_id'])
-                break
-        return groupInCharge
 
 
 registerType(MeetingGroup, PROJECTNAME)

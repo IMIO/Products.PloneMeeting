@@ -23,7 +23,6 @@
 #
 
 import transaction
-from DateTime import DateTime
 from OFS.ObjectManager import BeforeDeleteException
 from zope.i18n import translate
 from zExceptions import Redirect
@@ -142,6 +141,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         # checks on the item are made around :
         # item.getProposingGroup
         # item.getAssociatedGroups
+        # item.getGroupInCharge
         # item.adviceIndex
         # item.getCopyGroups
         # so check the 5 possible "states"
@@ -180,11 +180,19 @@ class testMeetingGroup(PloneMeetingTestCase):
             self.tool.manage_delObjects(['developers', ])
         self.assertEquals(cm.exception.message, can_not_delete_meetinggroup_meetingitem)
 
-        # check with item having copyGroups
+        # check with groupInCharge
         item.setProposingGroup('vendors')
         item.setAssociatedGroups(())
         item.setOptionalAdvisers(())
         self.assertTrue('developers_advisers' not in item.adviceIndex)
+        item.setGroupInCharge('developers')
+        item.at_post_edit_script()
+        with self.assertRaises(BeforeDeleteException) as cm:
+            self.tool.manage_delObjects(['developers', ])
+        self.assertEquals(cm.exception.message, can_not_delete_meetinggroup_meetingitem)
+
+        # check with item having copyGroups
+        item.setGroupInCharge('')
         cfg.setUseCopies(True)
         item.setCopyGroups(('developers_reviewers', ))
         item.at_post_edit_script()
@@ -236,7 +244,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         self.changeUser('siteadmin')
         group1 = self.create('MeetingGroup', id='group1', title='Group 1', acronym='G1')
         group2 = self.create('MeetingGroup', id='group2', title='Group 2', acronym='G2')
-        group1.setGroupInCharge(({'date_to': '', 'group_id': 'group2', 'orderindex_': '1'},))
+        group1.setGroupsInCharge(('group2',))
         with self.assertRaises(BeforeDeleteException) as cm:
             self.tool.manage_delObjects([group2.getId()])
         self.assertEquals(cm.exception.message,
@@ -568,62 +576,6 @@ class testMeetingGroup(PloneMeetingTestCase):
              {'date_to': '2014/05/05', 'group_id': 'developers', 'orderindex_': '2'},
              {'date_to': '', 'group_id': 'developers', 'orderindex_': '3'}]),
             error_dates_sorting_msg)
-
-    def test_pm_GetGroupInChargeAt(self):
-        """Test the MeetingGroup.getGroupInChargeAt method.
-           This method receives a date and return who was in charge at the given date."""
-        self.changeUser('siteadmin')
-        vendors = self.tool.vendors
-        developers = self.tool.developers
-        group1 = self.create('MeetingGroup', id='group1', title='Group 1', acronym='G1')
-        group2 = self.create('MeetingGroup', id='group2', title='Group 2', acronym='G2')
-        group3 = self.create('MeetingGroup', id='group3', title='Group 3', acronym='G3')
-
-        # no group in charge
-        vendors.setGroupInCharge(())
-        self.failIf(vendors.validate_groupInCharge(vendors.getGroupInCharge()))
-        self.assertIsNone(vendors.getGroupInChargeAt())
-        self.assertIsNone(vendors.getGroupInChargeAt(DateTime('2015/05/05')))
-
-        # only one without date_to, always in charge
-        vendors.setGroupInCharge(
-            ({'date_to': '', 'group_id': 'developers', 'orderindex_': '1'},))
-        self.failIf(vendors.validate_groupInCharge(vendors.getGroupInCharge()))
-        self.assertEquals(vendors.getGroupInChargeAt(), developers)
-        self.assertEquals(vendors.getGroupInChargeAt(DateTime('2015/05/05')), developers)
-
-        # one past, one current
-        vendors.setGroupInCharge(
-            ({'date_to': '2015/05/05', 'group_id': 'group1', 'orderindex_': '1'},
-             {'date_to': '', 'group_id': 'developers', 'orderindex_': '2'},))
-        self.failIf(vendors.validate_groupInCharge(vendors.getGroupInCharge()))
-        self.assertEquals(vendors.getGroupInChargeAt(), developers)
-        # after '2015/05/05'
-        self.assertEquals(vendors.getGroupInChargeAt(DateTime('2016/05/05')), developers)
-        # the '2015/05/05' and before
-        self.assertEquals(vendors.getGroupInChargeAt(DateTime('2015/05/05')), group1)
-        self.assertEquals(vendors.getGroupInChargeAt(DateTime('2014/03/03')), group1)
-
-        # 'complex' configuration
-        vendors.setGroupInCharge(
-            ({'date_to': '2013/05/05', 'group_id': 'group1', 'orderindex_': '1'},
-             {'date_to': '2014/05/05', 'group_id': 'group2', 'orderindex_': '2'},
-             {'date_to': '2015/05/05', 'group_id': 'group3', 'orderindex_': '3'},
-             {'date_to': '', 'group_id': 'developers', 'orderindex_': '4'},))
-        self.failIf(vendors.validate_groupInCharge(vendors.getGroupInCharge()))
-        self.assertEquals(vendors.getGroupInChargeAt(), developers)
-        # after '2015/05/05'
-        self.assertEquals(vendors.getGroupInChargeAt(DateTime('2016/05/05')), developers)
-        # the '2015/05/05' and before
-        self.assertEquals(vendors.getGroupInChargeAt(DateTime('2015/05/05')), group3)
-        self.assertEquals(vendors.getGroupInChargeAt(DateTime('2014/08/08')), group3)
-        # the '2014/05/05' and before
-        self.assertEquals(vendors.getGroupInChargeAt(DateTime('2014/05/05')), group2)
-        self.assertEquals(vendors.getGroupInChargeAt(DateTime('2013/08/08')), group2)
-        # the '2013/05/05' and before
-        self.assertEquals(vendors.getGroupInChargeAt(DateTime('2013/05/05')), group1)
-        self.assertEquals(vendors.getGroupInChargeAt(DateTime('2012/08/08')), group1)
-        self.assertEquals(vendors.getGroupInChargeAt(DateTime('2008/08/08')), group1)
 
     def test_pm_PloneGroupRemoved(self):
         """A Plone group linked to a MeetingGroup can not be removed."""

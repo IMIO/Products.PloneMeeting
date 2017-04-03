@@ -161,7 +161,6 @@
   <adapter name="linkedMeetingUID" factory=".indexes.linkedMeetingUID" />
   <adapter name="getPreferredMeetingDate" factory=".indexes.getPreferredMeetingDate" />
   <adapter name="getCopyGroups" factory=".indexes.getCopyGroups" />
-  <adapter name="getGroupInCharge" factory=".indexes.getGroupInCharge" />
   <adapter name="sentToInfos" factory=".indexes.sentToInfos" />
   <adapter name="templateUsingGroups" factory=".indexes.templateUsingGroups" />
   <adapter name="previous_review_state" factory=".indexes.previous_review_state" />

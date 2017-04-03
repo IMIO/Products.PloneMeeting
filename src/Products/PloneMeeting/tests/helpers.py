@@ -84,33 +84,44 @@ class PloneMeetingTestingHelpers:
 
     def _createMeetingWithItems(self, withItems=True, meetingDate=DateTime()):
         '''Create a meeting with a bunch of items.'''
+        def _set_proposing_group(item, group_id):
+            """Take into account fact that configuration uses groupsInCharge."""
+            group = self.tool.get(group_id)
+            groupsInCharge = group.getGroupsInCharge()
+            if groupsInCharge:
+                item.setProposingGroupWithGroupInCharge(
+                    '{0}__groupincharge__{1}'.format(
+                        group_id, groupsInCharge[0]))
+            else:
+                item.setProposingGroup(group_id)
+        # if 
         meeting = self.create('Meeting', date=meetingDate)
         # a meeting could be created with items if it has
         # recurring items...  But we can also add some more...
         if withItems:
             item1 = self.create('MeetingItem')  # id=o2
-            item1.setProposingGroup('vendors')
+            _set_proposing_group(item1, 'vendors')
             item1.setAssociatedGroups(('developers',))
             item1.setPrivacy('public')
             item1.setPollType('secret_separated')
             item1.setCategory('research')
             item2 = self.create('MeetingItem')  # id=o3
-            item2.setProposingGroup('developers')
+            _set_proposing_group(item2, 'developers')
             item2.setPrivacy('public')
             item2.setPollType('no_vote')
             item2.setCategory('development')
             item3 = self.create('MeetingItem')  # id=o4
-            item3.setProposingGroup('vendors')
+            _set_proposing_group(item3, 'vendors')
             item3.setPrivacy('secret')
             item3.setPollType('freehand')
             item3.setCategory('development')
             item4 = self.create('MeetingItem')  # id=o5
-            item4.setProposingGroup('developers')
+            _set_proposing_group(item4, 'developers')
             item4.setPrivacy('secret')
             item4.setPollType('freehand')
             item4.setCategory('events')
             item5 = self.create('MeetingItem')  # id=o6
-            item5.setProposingGroup('vendors')
+            _set_proposing_group(item5, 'vendors')
             item5.setPrivacy('public')
             item5.setPollType('secret')
             item5.setCategory('events')

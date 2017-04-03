@@ -191,10 +191,13 @@ class testAnnexes(PloneMeetingTestCase):
         cfg.setItemGroupInChargeStates(item_initial_state)
 
         # does not fail in no group in charge
-        self.assertFalse(proposingGroup.getGroupInChargeAt())
+        self.assertFalse(proposingGroup.getGroupsInCharge())
         cfg.setItemAnnexConfidentialVisibleFor(('reader_groupincharge', ))
         update_all_categorized_elements(item)
-        proposingGroup.setGroupInCharge(({'group_id': 'vendors', 'date_to': ''},))
+        proposingGroup.setGroupsInCharge(('vendors', ))
+        item.setProposingGroupWithGroupInCharge(
+            '{0}__groupincharge__{1}'.format(
+                item.getProposingGroup(), 'vendors'))
         item.updateLocalRoles()
 
         self.changeUser('pmReviewer2')
@@ -406,10 +409,13 @@ class testAnnexes(PloneMeetingTestCase):
         cfg.setItemGroupInChargeStates(item_initial_state)
 
         # does not fail in no group in charge
-        self.assertFalse(proposingGroup.getGroupInChargeAt())
+        self.assertFalse(proposingGroup.getGroupsInCharge())
         cfg.setAdviceAnnexConfidentialVisibleFor(('reader_groupincharge', ))
         update_all_categorized_elements(item)
-        proposingGroup.setGroupInCharge(({'group_id': 'vendors', 'date_to': ''},))
+        proposingGroup.setGroupsInCharge(('vendors', ))
+        item.setProposingGroupWithGroupInCharge(
+            '{0}__groupincharge__{1}'.format(
+                item.getProposingGroup(), 'vendors'))
         item.updateLocalRoles()
 
         self.changeUser('pmReviewer2')

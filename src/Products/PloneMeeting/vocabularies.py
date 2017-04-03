@@ -135,10 +135,11 @@ class GroupsInChargeVocabulary(object):
         groups = tool.getMeetingGroups(onlyActive=False, caching=False)
         res = []
         for group in groups:
-            group_in_charge = group.getGroupInChargeAt()
-            # manage duplicates
-            if group_in_charge and not group_in_charge in res:
-                res.append(group_in_charge)
+            for group_in_charge_id in group.getGroupsInCharge():
+                # manage duplicates
+                group_in_charge = tool.get(group_in_charge_id)
+                if group_in_charge and not group_in_charge in res:
+                    res.append(group_in_charge)
         res = [SimpleTerm(gic.getId(),
                           gic.getId(),
                           safe_unicode(gic.Title()))

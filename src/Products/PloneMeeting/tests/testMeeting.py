@@ -474,15 +474,17 @@ class testMeeting(PloneMeetingTestCase):
                     id='groupincharge2',
                     Title='Group in charge 2',
                     acronym='GIC2')
-        self.tool.vendors.setGroupInCharge(
-            ({'date_to': '', 'group_id': 'groupincharge1', 'orderindex_': '1'},))
-        self.tool.developers.setGroupInCharge(
-            ({'date_to': '', 'group_id': 'groupincharge2', 'orderindex_': '1'},))
+        self.tool.vendors.setGroupsInCharge(('groupincharge1',))
+        self.tool.developers.setGroupsInCharge(('groupincharge2',))
+
+        # make sure recurring items are correctly configured
+        for recurring_item in cfg.recurringitems.objectValues():
+            recurring_item.setProposingGroupWithGroupInCharge('developers__groupincharge__groupincharge2')
 
         # no reverse
         meeting = self._createMeetingWithItems()
-        self.assertEquals([(item.getProposingGroup(theObject=True).getId(),
-                           item.getProposingGroup(theObject=True).getGroupInChargeAt().getId())
+        self.assertEquals([(item.getProposingGroup(),
+                           item.getGroupInCharge())
                            for item in meeting.getItems(ordered=True)],
                           [('vendors', 'groupincharge1'),
                            ('vendors', 'groupincharge1'),
@@ -491,13 +493,14 @@ class testMeeting(PloneMeetingTestCase):
                            ('developers', 'groupincharge2'),
                            ('developers', 'groupincharge2'),
                            ('developers', 'groupincharge2')])
-        self.tool.vendors.setGroupInCharge(
-            ({'date_to': '', 'group_id': 'groupincharge2', 'orderindex_': '1'},))
-        self.tool.developers.setGroupInCharge(
-            ({'date_to': '', 'group_id': 'groupincharge1', 'orderindex_': '1'},))
+        self.tool.vendors.setGroupsInCharge(('groupincharge2',))
+        self.tool.developers.setGroupsInCharge(('groupincharge1',))
+        # make sure recurring items are correctly configured
+        for recurring_item in cfg.recurringitems.objectValues():
+            recurring_item.setProposingGroupWithGroupInCharge('developers__groupincharge__groupincharge1')
         meeting2 = self._createMeetingWithItems()
-        self.assertEquals([(item.getProposingGroup(theObject=True).getId(),
-                           item.getProposingGroup(theObject=True).getGroupInChargeAt().getId())
+        self.assertEquals([(item.getProposingGroup(),
+                           item.getGroupInCharge())
                            for item in meeting2.getItems(ordered=True)],
                           [('developers', 'groupincharge1'),
                            ('developers', 'groupincharge1'),
@@ -511,8 +514,8 @@ class testMeeting(PloneMeetingTestCase):
         cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_groups_in_charge',
                                            'reverse': '1'}, ))
         meeting3 = self._createMeetingWithItems()
-        self.assertEquals([(item.getProposingGroup(theObject=True).getId(),
-                           item.getProposingGroup(theObject=True).getGroupInChargeAt().getId())
+        self.assertEquals([(item.getProposingGroup(),
+                           item.getGroupInCharge())
                            for item in meeting3.getItems(ordered=True)],
                           [('vendors', 'groupincharge2'),
                            ('vendors', 'groupincharge2'),
@@ -531,8 +534,8 @@ class testMeeting(PloneMeetingTestCase):
         cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_groups_in_charge',
                                            'reverse': '0'}, ))
         meeting4 = self._createMeetingWithItems()
-        self.assertEquals([(item.getProposingGroup(theObject=True).getId(),
-                           item.getProposingGroup(theObject=True).getGroupInChargeAt().getId())
+        self.assertEquals([(item.getProposingGroup(),
+                           item.getGroupInCharge())
                            for item in meeting4.getItems(ordered=True)],
                           [('vendors', 'groupincharge2'),
                            ('vendors', 'groupincharge2'),

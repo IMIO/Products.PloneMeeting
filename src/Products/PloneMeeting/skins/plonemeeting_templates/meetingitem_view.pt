@@ -49,34 +49,19 @@
       <tr valign="top">
         <td width="50%" style="padding-right: 0.5em;">
 
-            <tal:comment replace="nothing">Classifier</tal:comment>
-            <div class="discreet"
-                 tal:condition="python: 'classifier' in usedAttrs"
-                 tal:define="classifier context/getClassifier">
-                <span class="item_attribute_label"
-                      i18n:translate="PloneMeeting_label_classifier"></span>:&nbsp;&nbsp;
-                <span tal:condition="classifier" tal:content="classifier/Title">-</span>
-                <span tal:condition="not: classifier">-</span>
-            </div>
-
-            <tal:comment replace="nothing">Category or proposing group (if group is used as category)</tal:comment>
-            <div class="discreet" tal:define="cat python: context.getCategory(True)" tal:condition="python: cat">
-                <span class="item_attribute_label"
-                      tal:condition="not: meetingConfig/getUseGroupsAsCategories"
-                      i18n:translate="MeetingCategory"></span>
-                <span class="item_attribute_label"
-                      tal:condition="meetingConfig/getUseGroupsAsCategories"
-                      i18n:translate="PloneMeeting_label_proposingGroup"></span>:&nbsp;&nbsp;
-                <span tal:content="python: cat.getName()"></span>
-            </div>
-
-            <tal:comment replace="nothing">Proposing group (if group is not used as category),
-                                           could be empty in the case of a template item.</tal:comment>
-            <div class="discreet" tal:condition="python: not meetingConfig.getUseGroupsAsCategories()">
+            <tal:comment replace="nothing">Proposing group (when proposingGroupWithGroupInCharge is not used)</tal:comment>
+            <div class="discreet" tal:condition="python: not 'proposingGroupWithGroupInCharge' in usedAttrs">
                 <span class="item_attribute_label"
                       i18n:translate="PloneMeeting_label_proposingGroup"></span>:&nbsp;&nbsp;
-                <span tal:condition="context/getProposingGroup"
-                      tal:content="python: getattr(tool, context.getProposingGroup()).Title()"></span>
+                <span metal:use-macro="python: here.widget('proposingGroup', mode='view')" />
+                <span tal:condition="not: context/getProposingGroup">-</span>
+            </div>
+
+            <tal:comment replace="nothing">Proposing group (when proposingGroupWithGroupInCharge is used)</tal:comment>
+            <div class="discreet" tal:condition="python: 'proposingGroupWithGroupInCharge' in usedAttrs">
+                <span class="item_attribute_label"
+                      i18n:translate="PloneMeeting_label_proposingGroupWithGroupInCharge"></span>:&nbsp;&nbsp;
+                <span metal:use-macro="python: here.widget('proposingGroupWithGroupInCharge', mode='view')" />
                 <span tal:condition="not: context/getProposingGroup">-</span>
             </div>
 
@@ -90,6 +75,27 @@
                 </tal:displayAssociatedGroups>
                 <span tal:condition="not: associatedGroups">-</span>
             </div>
+
+            <tal:comment replace="nothing">Classifier</tal:comment>
+            <div class="discreet"
+                 tal:condition="python: 'classifier' in usedAttrs"
+                 tal:define="classifier context/getClassifier">
+                <span class="item_attribute_label"
+                      i18n:translate="PloneMeeting_label_classifier"></span>:&nbsp;&nbsp;
+                <span tal:condition="classifier" tal:content="classifier/Title">-</span>
+                <span tal:condition="not: classifier">-</span>
+            </div>
+
+            <tal:comment replace="nothing">Category</tal:comment>
+            <tal:category condition="not:meetingConfig/getUseGroupsAsCategories">
+            <div class="discreet"
+                 tal:define="cat python: context.getCategory(True)">
+                <span class="item_attribute_label"
+                      tal:condition="not: meetingConfig/getUseGroupsAsCategories"
+                      i18n:translate="MeetingCategory"></span>:&nbsp;&nbsp;
+                <span tal:condition="cat" tal:content="python: cat.getName()"></span>
+            </div>
+            </tal:category>
 
             <tal:comment replace="nothing">Copy groups for this item</tal:comment>
             <div class="discreet" tal:condition="context/isCopiesEnabled"

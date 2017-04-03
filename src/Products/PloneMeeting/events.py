@@ -208,8 +208,7 @@ def onGroupWillBeRemoved(group, event):
     groupId = group.getId()
 
     for mGroup in tool.getMeetingGroups(onlyActive=False):
-        group_in_charge_ids = [v['group_id'] for v in mGroup.getGroupInCharge()]
-        if groupId in group_in_charge_ids:
+        if groupId in mGroup.getGroupsInCharge():
             raise BeforeDeleteException(translate("can_not_delete_meetinggroup_groupincharge",
                                                   mapping={'group_title': safe_unicode(mGroup.Title())},
                                                   domain="plone",
@@ -268,6 +267,7 @@ def onGroupWillBeRemoved(group, event):
         obj = brain.getObject()
         if (obj.getProposingGroup() == groupId) or \
            (groupId in obj.getAssociatedGroups()) or \
+           (obj.getGroupInCharge() == groupId) or \
            (groupId in obj.adviceIndex) or \
            set(obj.getCopyGroups()).intersection(suffixedGroups):
             # The meetingGroup is linked to an existing item, we can not

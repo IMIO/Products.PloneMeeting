@@ -48,15 +48,13 @@ class ItemProposingGroupAcronymColumn(AbbrColumn):
 
 
 class ItemGroupInChargeColumn(VocabularyColumn):
-    """A column that display the proposingGroup.groupInCharge
-    taking into account meeting date."""
+    """A column that display the groupInCharge."""
     attrName = 'getGroupInCharge'
     vocabulary = u'Products.PloneMeeting.vocabularies.groupsinchargevocabulary'
 
 
 class ItemGroupInChargeAcronymColumn(AbbrColumn):
-    """A column that display the proposingGroup.groupInCharge
-    acronym taking into account meeting date."""
+    """A column that display the groupInCharge acronym."""
     attrName = 'getGroupInCharge'
     vocabulary = u'Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary'
     full_vocabulary = u'Products.PloneMeeting.vocabularies.proposinggroupsvocabulary'

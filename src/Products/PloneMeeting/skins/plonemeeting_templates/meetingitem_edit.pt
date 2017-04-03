@@ -39,7 +39,10 @@
     <tal:comment replace="nothing">Proposing group, category, classifier, toDiscuss</tal:comment>
     <table cellpadding="0" cellspacing="0">
       <tr valign="top">
-        <td><metal:field use-macro="python:here.widget('proposingGroup', mode='edit')"/></td>
+        <td>
+            <metal:field use-macro="python:here.widget('proposingGroup', mode='edit')"/>
+            <metal:field use-macro="python:here.widget('proposingGroupWithGroupInCharge', mode='edit')"/>
+        </td>
         <td><metal:field use-macro="python:here.widget('classifier', mode='edit')"/></td>
         <td><metal:field use-macro="python:here.widget('category', mode='edit')"/></td>
       </tr>

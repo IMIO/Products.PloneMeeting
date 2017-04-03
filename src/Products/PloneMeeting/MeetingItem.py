@@ -771,12 +771,33 @@ schema = Schema((
     StringField(
         name='proposingGroup',
         widget=SelectionWidget(
+            condition="python: not here.attributeIsUsed('proposingGroupWithGroupInCharge')",
             format="select",
             label='Proposinggroup',
             label_msgid='PloneMeeting_label_proposingGroup',
             i18n_domain='PloneMeeting',
         ),
         vocabulary='listProposingGroups',
+    ),
+    StringField(
+        name='proposingGroupWithGroupInCharge',
+        widget=SelectionWidget(
+            format="select",
+            label='Proposinggroupwithgroupincharge',
+            label_msgid='PloneMeeting_label_proposingGroupWithGroupInCharge',
+            i18n_domain='PloneMeeting',
+        ),
+        optional=True,
+        vocabulary='listProposingGroupsWithGroupsInCharge',
+    ),
+    StringField(
+        name='groupInCharge',
+        widget=StringWidget(
+            visible=False,
+            label='Groupincharge',
+            label_msgid='PloneMeeting_label_groupInCharge',
+            i18n_domain='PloneMeeting',
+        ),
     ),
     LinesField(
         name='associatedGroups',
@@ -2043,6 +2064,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self.REQUEST.set('need_Meeting_updateItemReferences', True)
         self.getField('proposingGroup').set(self, value, **kwargs)
 
+    security.declarePrivate('setProposingGroupWithGroupInCharge')
+
+    def setProposingGroupWithGroupInCharge(self, value, **kwargs):
+        '''Overrides the field 'proposingGroupWithGroupInCharge' mutator to be able to
+           set a correct 'proposingGroup' and 'goupInCharge' from received value.'''
+        if value:
+            proposingGroup, groupInCharge = value.split('__groupincharge__')
+            self.setProposingGroup(proposingGroup)
+            self.setGroupInCharge(groupInCharge)
+        self.getField('proposingGroupWithGroupInCharge').set(self, value, **kwargs)
+
     def _adaptLinesValueToBeCompared(self, value):
         """'value' received from processForm does not correspond to what is stored
            for LinesField, we need to adapt it so it may be compared.
@@ -2460,6 +2492,34 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                   context=self.REQUEST).encode('utf-8'))
         return res.sortedByValue()
 
+    security.declarePublic('listProposingGroupsWithGroupsInCharge')
+
+    def listProposingGroupsWithGroupsInCharge(self):
+        '''Like self.listProposingGroups but appends the various possible groups in charge.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        base_res = self.listProposingGroups()
+        res = []
+        for k, v in base_res.items():
+            if not k:
+                res.append((k, v))
+            mGroup = tool.get(k)
+            for groupInChargeId in mGroup.getGroupsInCharge():
+                groupInCharge = tool.get(groupInChargeId)
+                key = '{0}__groupincharge__{1}'.format(k, groupInChargeId)
+                # only take active groups in charge
+                if api.content.get_state(groupInCharge) == 'active':
+                    res.append((key, '{0} ({1})'.format(v, groupInCharge.Title())))
+        res = DisplayList(tuple(res))
+
+        # make sure current value is still in the vocabulary
+        current_value = self.getProposingGroupWithGroupInCharge()
+        if current_value and not current_value in res.keys():
+            current_proposingGroupId, current_groupInChargeId = current_value.split('__groupincharge__')
+            res.add(current_value,
+                    '{0} ({1})'.format(tool.get(current_proposingGroupId).Title(),
+                                       tool.get(current_groupInChargeId).Title()))
+        return res.sortedByValue()
+
     security.declarePublic('listAssociatedGroups')
 
     def listAssociatedGroups(self):
@@ -2638,9 +2698,20 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def getProposingGroup(self, theObject=False, **kwargs):
         '''This redefined accessor may return the proposing group id or the real
            group if p_theObject is True.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
         res = self.getField('proposingGroup').get(self, **kwargs)  # = group id
         if res and theObject:
+            tool = api.portal.get_tool('portal_plonemeeting')
+            res = getattr(tool, res)
+        return res
+
+    security.declarePublic('getGroupInCharge')
+
+    def getGroupInCharge(self, theObject=False, **kwargs):
+        '''This redefined accessor may return the groupInCharge id or the real
+           group if p_theObject is True.'''
+        res = self.getField('groupInCharge').get(self, **kwargs)  # = group id
+        if res and theObject:
+            tool = api.portal.get_tool('portal_plonemeeting')
             res = getattr(tool, res)
         return res
 
@@ -3232,7 +3303,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 return values.index(toCloneTo[0])
         elif insertMethod == 'on_groups_in_charge':
             proposingGroup = self.getProposingGroup(True)
-            groupInCharge = proposingGroup.getGroupInChargeAt()
+            groupInCharge = self.getGroupInCharge(True)
             if not groupInCharge:
                 raise Exception("No valid groupInCharge defined for {0}".format(proposingGroup.getId()))
             return groupInCharge.getOrder(onlyActive=False)
@@ -4878,8 +4949,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         itemState = self.queryState()
         if itemState not in cfg.getItemGroupInChargeStates():
             return
-        proposingGroup = self.getProposingGroup(True)
-        groupInCharge = proposingGroup.getGroupInChargeAt()
+        groupInCharge = self.getGroupInCharge(True)
         if not groupInCharge:
             return
         observersPloneGroupId = groupInCharge.getPloneGroupId('observers')

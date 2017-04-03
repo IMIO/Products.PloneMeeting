@@ -80,20 +80,6 @@ def getRawClassifier(obj):
     return classifier
 
 
-@indexer(IItem)
-def getGroupInCharge(obj):
-    """
-    """
-    date = None
-    meeting = obj.getMeeting()
-    if meeting:
-        date = meeting.getDate()
-    groupInCharge = obj.getProposingGroup(theObject=True).getGroupInChargeAt(date)
-    if groupInCharge:
-        return groupInCharge.getId()
-    return _marker
-
-
 @indexer(IMeetingItem)
 def getCopyGroups(obj):
     """

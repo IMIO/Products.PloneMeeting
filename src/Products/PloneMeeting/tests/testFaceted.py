@@ -239,24 +239,24 @@ class testFaceted(PloneMeetingTestCase):
         # for now, no group in charge
         self.assertEqual(len(vocab(self.portal)), 0)
         # define some group in charge, vocabulary is invalidated when a group is modified
-        vendors.setGroupInCharge(({'date_to': '', 'group_id': 'group1', 'orderindex_': '1'},))
+        vendors.setGroupsInCharge(('group1',))
         vendors.at_post_edit_script()
-        developers.setGroupInCharge(({'date_to': '', 'group_id': 'group2', 'orderindex_': '1'},))
+        developers.setGroupsInCharge(('group2',))
         developers.at_post_edit_script()
         self.assertEqual([term.title for term in vocab(self.portal)], ['Group 1', 'Group 2'])
 
         # create an new group with a groupInCharge directly
         self.create('MeetingGroup', id='group4', title='Group 4',
-                    acronym='G4', groupInCharge=({'date_to': '', 'group_id': 'group3', 'orderindex_': '1'},))
+                    acronym='G4', groupsInCharge=('group3',))
         self.assertEqual([term.title for term in vocab(self.portal)], ['Group 1', 'Group 2', 'Group 3'])
 
         # change a group in charge
-        vendors.setGroupInCharge(({'date_to': '', 'group_id': 'group4', 'orderindex_': '1'},))
+        vendors.setGroupsInCharge(('group4',))
         vendors.at_post_edit_script()
         self.assertEqual([term.title for term in vocab(self.portal)], ['Group 2', 'Group 3', 'Group 4'])
 
         # unselect a group in charge
-        vendors.setGroupInCharge(())
+        vendors.setGroupsInCharge(())
         vendors.at_post_edit_script()
         self.assertEqual([term.title for term in vocab(self.portal)], ['Group 2', 'Group 3'])
 

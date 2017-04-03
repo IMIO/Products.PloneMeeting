@@ -1553,8 +1553,7 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
             elif visible_for == '{0}copy_groups'.format(READERPREFIX):
                 res = res + list(self.parent.getAllCopyGroups(auto_real_group_ids=True))
             elif visible_for == '{0}groupincharge'.format(READERPREFIX):
-                proposingGroup = self.parent.getProposingGroup(True)
-                groupInCharge = proposingGroup.getGroupInChargeAt()
+                groupInCharge = self.parent.getGroupInCharge(True)
                 if groupInCharge:
                     res.append(groupInCharge.getPloneGroupId(suffix='observers'))
         return res

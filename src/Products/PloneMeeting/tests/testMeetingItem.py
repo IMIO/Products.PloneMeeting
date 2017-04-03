@@ -146,7 +146,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failUnless([gr.getId() for gr in cfg.getCategories()] == ['developers', 'vendors'])
 
     def test_pm_ListProposingGroups(self):
-        '''Check that the user is creator for the proposing groups.'''
+        '''Check MeetingItem.proposingGroup vocabulary.'''
         # test that if a user is cretor for a group but only reviewer for
         # another, it only returns the groups the user is creator for...  This
         # test the bug of ticket #643
@@ -170,6 +170,64 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setProposingGroup('developers')
         self.changeUser('pmReviewer1')
         self.assertTrue(item.listProposingGroups().sortedByKey().keys() == ['developers', 'vendors', ])
+
+    def test_pm_ListProposingGroupsWithGroupsInCharge(self):
+        '''Check MeetingItem.proposingGroupWithGroupInCharge vocabulary.
+           It will evolve regarding groupInCharge, old value are kept and new values
+           take groupsInCharge review_state into account.'''
+        self.changeUser('siteadmin')
+        group1 = self.create('MeetingGroup', id='group1', title='Group 1', acronym='G1')
+        self.create('MeetingGroup', id='group2', title='Group 2', acronym='G2')
+        self.create('MeetingGroup', id='group3', title='Group 3', acronym='G3')
+        self.tool.developers.setGroupsInCharge(('group1', ))
+        self.tool.vendors.setGroupsInCharge(('group2', ))
+        # make pmCreator1 creator for vendors
+        self.portal.portal_groups.addPrincipalToGroup('pmCreator1', 'vendors_creators')
+        self.changeUser('pmCreator1')
+        item1 = self.create('MeetingItem')
+        self.assertEqual(item1.listProposingGroupsWithGroupsInCharge().items(),
+                         (('developers__groupincharge__group1', 'Developers (Group 1)'),
+                          ('vendors__groupincharge__group2', 'Vendors (Group 2)')))
+        item1.setProposingGroupWithGroupInCharge('developers__groupincharge__group1')
+        # now disable group1
+        self.changeUser('siteadmin')
+        self.do(group1, 'deactivate')
+        self.changeUser('pmCreator1')
+        # still available for item as is use it
+        self.assertEqual(item1.listProposingGroupsWithGroupsInCharge().items(),
+                         (('developers__groupincharge__group1', 'Developers (Group 1)'),
+                          ('vendors__groupincharge__group2', 'Vendors (Group 2)'),))
+        # but not for a new item
+        item2 = self.create('MeetingItem')
+        self.assertEqual(item2.listProposingGroupsWithGroupsInCharge().items(),
+                         (('vendors__groupincharge__group2', 'Vendors (Group 2)'),))
+
+        # define another groupInCharge for developers
+        self.tool.developers.setGroupsInCharge(('group1', 'group3'))
+        # 3 choices are available on item1
+        self.assertEqual(item1.listProposingGroupsWithGroupsInCharge().items(),
+                         (('developers__groupincharge__group1', 'Developers (Group 1)'),
+                          ('developers__groupincharge__group3', 'Developers (Group 3)'),
+                          ('vendors__groupincharge__group2', 'Vendors (Group 2)'),))
+        # but only 2 for item2
+        self.assertEqual(item2.listProposingGroupsWithGroupsInCharge().items(),
+                         (('developers__groupincharge__group3', 'Developers (Group 3)'),
+                          ('vendors__groupincharge__group2', 'Vendors (Group 2)'),))
+
+        # now if we remove completely group1 from groupsInCharge of developers
+        # it still works, this way we may change a groupInCharge from group
+        # we set it as groupInCharge of vendors
+        self.tool.developers.setGroupsInCharge(('group3'))
+        self.tool.vendors.setGroupsInCharge(('group1', 'group2', 'group3'))
+        self.assertEqual(item1.listProposingGroupsWithGroupsInCharge().items(),
+                         (('developers__groupincharge__group1', 'Developers (Group 1)'),
+                          ('developers__groupincharge__group3', 'Developers (Group 3)'),
+                          ('vendors__groupincharge__group2', 'Vendors (Group 2)'),
+                          ('vendors__groupincharge__group3', 'Vendors (Group 3)'),))
+        self.assertEqual(item2.listProposingGroupsWithGroupsInCharge().items(),
+                         (('developers__groupincharge__group3', 'Developers (Group 3)'),
+                          ('vendors__groupincharge__group2', 'Vendors (Group 2)'),
+                          ('vendors__groupincharge__group3', 'Vendors (Group 3)'),))
 
     def test_pm_SendItemToOtherMC(self):
         '''Test the send an item to another meetingConfig functionnality'''
@@ -1849,14 +1907,16 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         proposingGroup = item.getProposingGroup(theObject=True)
-        self.assertFalse(proposingGroup.getGroupInChargeAt())
+        self.assertFalse(proposingGroup.getGroupsInCharge())
         # this does not fail...
         item.updateLocalRoles()
         self.assertFalse('vendors_observers' in item.__ac_local_roles__)
 
         # define a group in charge
-        proposingGroup.setGroupInCharge(({'group_id': 'vendors', 'date_to': ''},))
-        self.assertEqual(proposingGroup.getGroupInChargeAt(), self.tool.vendors)
+        proposingGroup.setGroupsInCharge(('vendors',))
+        item.setProposingGroupWithGroupInCharge(
+            '{0}__groupincharge__{1}'.format(
+                item.getProposingGroup(), 'vendors'))
         item.updateLocalRoles()
         self.assertTrue(READER_USECASES['groupincharge'] in item.__ac_local_roles__['vendors_observers'])
 
@@ -1865,18 +1925,9 @@ class testMeetingItem(PloneMeetingTestCase):
         item.updateLocalRoles()
         self.assertFalse('vendors_observers' in item.__ac_local_roles__)
 
-        # right, back to correct configuration but make group in charge no more valid
-        cfg.setItemGroupInChargeStates(self.WF_STATE_NAME_MAPPINGS['itemcreated'],)
-        item.updateLocalRoles()
-        self.assertTrue(READER_USECASES['groupincharge'] in item.__ac_local_roles__['vendors_observers'])
-        proposingGroup.setGroupInCharge(({'group_id': 'vendors', 'date_to': '2016/01/01'},))
-        self.assertFalse(proposingGroup.getGroupInChargeAt())
-        item.updateLocalRoles()
-        self.assertFalse('vendors_observers' in item.__ac_local_roles__)
-
+        # right, back to correct configuration
         # check that changing item's state works, back to correct configuration
-        proposingGroup.setGroupInCharge(({'group_id': 'vendors', 'date_to': ''},))
-        self.assertEqual(proposingGroup.getGroupInChargeAt(), self.tool.vendors)
+        cfg.setItemGroupInChargeStates(self.WF_STATE_NAME_MAPPINGS['itemcreated'],)
         item.updateLocalRoles()
         self.assertTrue(READER_USECASES['groupincharge'] in item.__ac_local_roles__['vendors_observers'])
         self.proposeItem(item)
