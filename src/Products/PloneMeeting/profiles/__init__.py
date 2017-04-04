@@ -66,13 +66,13 @@ class Descriptor(object):
 class RecurringItemDescriptor(Descriptor):
     excludedFields = ['title']
 
-    def __init__(self, id, title, proposingGroup, description='', category='',
-                 associatedGroups=(), decision='', itemKeywords='', itemTags=(),
-                 meetingTransitionInsertingMe='_init_'):
+    def __init__(self, id, title, proposingGroup, proposingGroupWithGroupInCharge='',
+                 description='', category='', associatedGroups=(), decision='',
+                 itemKeywords='', itemTags=(), meetingTransitionInsertingMe='_init_'):
         self.id = id
         self.setBilingual('title', title)
-        # when usage is 'as_template_item', the proposingGroup can be empty ('')
         self.proposingGroup = proposingGroup
+        self.proposingGroupWithGroupInCharge = proposingGroupWithGroupInCharge
         self.setBilingual('description', description)
         self.category = category
         self.associatedGroups = associatedGroups
@@ -85,13 +85,14 @@ class RecurringItemDescriptor(Descriptor):
 class ItemTemplateDescriptor(Descriptor):
     excludedFields = ['title']
 
-    def __init__(self, id, title, proposingGroup, description='', category='',
-                 associatedGroups=(), decision='', itemKeywords='', itemTags=(),
-                 templateUsingGroups=[]):
+    def __init__(self, id, title, proposingGroup, proposingGroupWithGroupInCharge='',
+                 description='', category='', associatedGroups=(), decision='',
+                 itemKeywords='', itemTags=(), templateUsingGroups=[]):
         self.id = id
         self.setBilingual('title', title)
-        # when usage is 'as_template_item', the proposingGroup can be empty ('')
+        # the proposingGroup can be empty ('') for itemtemplate
         self.proposingGroup = proposingGroup
+        self.proposingGroupWithGroupInCharge = proposingGroupWithGroupInCharge
         self.setBilingual('description', description)
         self.category = category
         self.associatedGroups = associatedGroups
