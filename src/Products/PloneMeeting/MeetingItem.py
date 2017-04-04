@@ -1518,7 +1518,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def validate_proposingGroup(self, value):
         '''proposingGroup is mandatory in every cases, except for an itemtemplate.'''
-        if not value and not (self.isDefinedInTool() and 'itemtemplates' in self.absolute_url()):
+        if not value and \
+           not (self.isDefinedInTool() and 'itemtemplates' in self.absolute_url()) and \
+           not self.attributeIsUsed('proposingGroupWithGroupInCharge'):
             return translate('proposing_group_required', domain='PloneMeeting', context=self.REQUEST)
 
     security.declarePrivate('validate_optionalAdvisers')
