@@ -190,11 +190,11 @@ ITEM_NO_PREFERRED_MEETING_VALUE = "whatever"
 
 # default fields kept when an item is cloned
 DEFAULT_COPIED_FIELDS = ['title', 'description', 'detailedDescription', 'motivation',
-                         'decision', 'budgetInfos', 'budgetRelated', 'sendToAuthority']
+                         'decision', 'budgetInfos', 'budgetRelated', 'sendToAuthority',
+                         'groupInCharge', 'proposingGroupWithGroupInCharge']
 # extra fields kept when an item is cloned in the same meeting config,
 # so not the case when sent to another meeting config
-EXTRA_COPIED_FIELDS_SAME_MC = ['associatedGroups', 'groupInCharge', 'proposingGroupWithGroupInCharge',
-                               'copyGroups', 'classifier', 'category',
+EXTRA_COPIED_FIELDS_SAME_MC = ['associatedGroups', 'copyGroups', 'classifier', 'category',
                                'optionalAdvisers', 'otherMeetingConfigsClonableTo',
                                'otherMeetingConfigsClonableToPrivacy', 'oralQuestion',
                                'toDiscuss', 'privacy', 'pollType']
