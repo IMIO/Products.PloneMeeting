@@ -782,6 +782,7 @@ schema = Schema((
     StringField(
         name='proposingGroupWithGroupInCharge',
         widget=SelectionWidget(
+            condition="python: here.attributeIsUsed('proposingGroupWithGroupInCharge')",
             format="select",
             label='Proposinggroupwithgroupincharge',
             label_msgid='PloneMeeting_label_proposingGroupWithGroupInCharge',
@@ -2503,6 +2504,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if not k:
                 res.append((k, v))
             mGroup = tool.get(k)
+            groupsInCharge = mGroup.getGroupsInCharge()
+            if not groupsInCharge:
+                # append a value that will let use a simple proposingGroup without groupInCharge
+                key = '{0}__groupincharge__{1}'.format(k, '')
+                res.append((key, '{0} ()'.format(v)))
             for groupInChargeId in mGroup.getGroupsInCharge():
                 groupInCharge = tool.get(groupInChargeId)
                 key = '{0}__groupincharge__{1}'.format(k, groupInChargeId)
