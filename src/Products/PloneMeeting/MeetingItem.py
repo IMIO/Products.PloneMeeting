@@ -1056,7 +1056,7 @@ schema = Schema((
         widget=MultiSelectionWidget(
             description="TemplateUsingGroups",
             description_msgid="template_using_groups_descr",
-            condition="python: here.isDefinedInTool() and 'itemtemplates' in here.absolute_url()",
+            condition="python: here.isDefinedInTool(item_type='itemtemplate')",
             format="checkbox",
             label='Templateusinggroups',
             label_msgid='PloneMeeting_label_templateUsingGroups',
@@ -1069,7 +1069,7 @@ schema = Schema((
     StringField(
         name='meetingTransitionInsertingMe',
         widget=SelectionWidget(
-            condition="python: here.isDefinedInTool() and here.getParentNode().getId() == 'recurringitems'",
+            condition="python: here.isDefinedInTool(item_type='recurring')",
             description="MeetingTransitionInsertingMe",
             description_msgid="meeting_transition_inserting_me_descr",
             label='Meetingtransitioninsertingme',
@@ -1517,10 +1517,23 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('validate_proposingGroup')
 
     def validate_proposingGroup(self, value):
-        '''proposingGroup is mandatory in every cases, except for an itemtemplate.'''
-        if not value and \
-           not (self.isDefinedInTool() and 'itemtemplates' in self.absolute_url()) and \
-           not self.attributeIsUsed('proposingGroupWithGroupInCharge'):
+        '''proposingGroup is mandatory if used, except for an itemtemplate.'''
+        # bypass for itemtemplates
+        if self.isDefinedInTool(item_type='itemtemplate'):
+            return
+
+        if not value and not self.attributeIsUsed('proposingGroupWithGroupInCharge'):
+            return translate('proposing_group_required', domain='PloneMeeting', context=self.REQUEST)
+
+    security.declarePrivate('validate_proposingGroupWithGroupInCharge')
+
+    def validate_proposingGroupWithGroupInCharge(self, value):
+        '''proposingGroupWithGroupInCharge is mandatory if used, except for an itemtemplate.'''
+        # bypass for itemtemplates
+        if self.isDefinedInTool(item_type='itemtemplate'):
+            return
+
+        if not value and self.attributeIsUsed('proposingGroupWithGroupInCharge'):
             return translate('proposing_group_required', domain='PloneMeeting', context=self.REQUEST)
 
     security.declarePrivate('validate_optionalAdvisers')
@@ -2117,11 +2130,19 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('isDefinedInTool')
 
-    def isDefinedInTool(self):
+    def isDefinedInTool(self, item_type='*'):
         '''Is this item being defined in the tool (portal_plonemeeting) ?
-           Items defined like that are used as base for creating recurring
-           items.'''
-        return ('portal_plonemeeting' in self.absolute_url())
+           p_item_type can be :
+           - '*', we return True for any item defined in the tool;
+           - 'recurring', we return True if it is a recurring item defined in the tool;
+           - 'itemtemplate', we return True if it is an item template defined in the tool.'''
+        if item_type == '*':
+            return self.portal_type.startswith('MeetingItemRecurring') or \
+                self.portal_type.startswith('MeetingItemTemplate')
+        elif item_type == 'recurring':
+            return self.portal_type.startswith('MeetingItemRecurring')
+        elif item_type == 'itemtemplate':
+            return self.portal_type.startswith('MeetingItemTemplate')
 
     security.declarePublic('showClonableToOtherMeetingConfigs')
 
@@ -2488,8 +2509,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if self.getProposingGroup() and not self.getProposingGroup() in res.keys():
             current_group = self.getProposingGroup(theObject=True)
             res.add(current_group.getId(), current_group.getName())
-        # add a 'make_a_choice' value when the item is in the tool
-        if isDefinedInTool:
+        # add a 'make_a_choice' value when the used on an itemtemplate
+        if self.isDefinedInTool(item_type='itemtemplate'):
             res.add('', translate('make_a_choice',
                                   domain='PloneMeeting',
                                   context=self.REQUEST).encode('utf-8'))
@@ -2505,6 +2526,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         for k, v in base_res.items():
             if not k:
                 res.append((k, v))
+                continue
             mGroup = tool.get(k)
             groupsInCharge = mGroup.getGroupsInCharge()
             if not groupsInCharge:
