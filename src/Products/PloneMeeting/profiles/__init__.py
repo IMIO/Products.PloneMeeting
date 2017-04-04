@@ -319,8 +319,8 @@ class MeetingConfigDescriptor(Descriptor):
                          'powerAdvisersGroups', 'itemPowerObserversStates', 'meetingPowerObserversStates',
                          'itemRestrictedPowerObserversStates', 'meetingRestrictedPowerObserversStates',
                          'meetingConfigsToCloneTo', 'itemAdviceInvalidateStates', 'transitionsReinitializingDelays',
-                         'customAdvisers', 'selectableCopyGroups', 'votesEncoder', 'meetingTopicStates',
-                         'decisionTopicStates', 'listTypes', 'selectablePrivacies',
+                         'customAdvisers', 'selectableCopyGroups', 'itemCopyGroupsStates', 'votesEncoder',
+                         'meetingTopicStates', 'decisionTopicStates', 'listTypes', 'selectablePrivacies',
                          'xhtmlTransformFields', 'xhtmlTransformTypes',
                          'usedVoteValues', 'insertingMethodsOnAddItem')
     excludedFields = ['maxDaysDecisions', 'meetingAppDefaultView']
