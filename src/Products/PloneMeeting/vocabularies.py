@@ -224,11 +224,10 @@ class CreatorsVocabulary(object):
     def __call__(self, context):
         """ """
         catalog = api.portal.get_tool('portal_catalog')
-        membershipTool = api.portal.get_tool('portal_membership')
         res = []
         for creator in catalog.uniqueValuesFor('Creator'):
-            memberInfo = membershipTool.getMemberInfo(creator)
-            value = memberInfo and memberInfo['fullname'] or creator
+            member = api.user.get(creator)
+            value = member.getProperty('fullname') or creator
             res.append(SimpleTerm(creator,
                                   creator,
                                   safe_unicode(value))
