@@ -1475,15 +1475,21 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
         """ """
         groups = []
         if self.context.confidential:
-            parent_meta_type = self.parent.meta_type
-            if parent_meta_type == 'MeetingItem':
-                groups = self._item_visible_for_groups()
-            elif parent_meta_type == 'Meeting':
-                groups = self._meeting_visible_for_groups()
-            else:
-                # advice
-                groups = self._advice_visible_for_groups()
+            groups = self._compute_visible_for_groups()
         self._apply_visible_groups_security(groups)
+        return groups
+
+    def _compute_visible_for_groups(self):
+        """ """
+        groups = []
+        parent_meta_type = self.parent.meta_type
+        if parent_meta_type == 'MeetingItem':
+            groups = self._item_visible_for_groups()
+        elif parent_meta_type == 'Meeting':
+            groups = self._meeting_visible_for_groups()
+        else:
+            # advice
+            groups = self._advice_visible_for_groups()
         return groups
 
     def _item_visible_for_groups(self):
