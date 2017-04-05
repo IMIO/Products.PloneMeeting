@@ -861,7 +861,7 @@ class Migrate_To_4_0(Migrator):
                 # make sure we do not have lost MeetingFiles left
                 lost_mfs = obj.objectIds('MeetingFile')
                 if lost_mfs:
-                    obj.manage_delObjects(ids=[lost_mfs])
+                    obj.manage_delObjects(ids=lost_mfs)
                 delattr(obj, 'alreadyUsedAnnexNames')
                 delattr(obj, 'annexIndex')
                 obj.setModificationDate(obj_modified)
