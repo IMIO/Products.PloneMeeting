@@ -227,7 +227,7 @@ class CreatorsVocabulary(object):
         res = []
         for creator in catalog.uniqueValuesFor('Creator'):
             member = api.user.get(creator)
-            value = member.getProperty('fullname') or creator
+            value = member and member.getProperty('fullname') or creator
             res.append(SimpleTerm(creator,
                                   creator,
                                   safe_unicode(value))
