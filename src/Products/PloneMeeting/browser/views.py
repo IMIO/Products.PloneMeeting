@@ -881,4 +881,3 @@ class DisplayAnnexesView(BrowserView):
     def show(self):
         """ """
         return self.tool.showAnnexesTab(self.context)
-
