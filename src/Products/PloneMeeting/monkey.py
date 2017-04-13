@@ -3,6 +3,23 @@ from Acquisition import aq_base
 from Products.PortalTransforms.cache import Cache
 from Products.PloneMeeting import logger
 
+from plone.app.querystring import queryparser
+
+
+def _patched_equal(context, row):
+    """Monkeypatch _equal so we never pass None as values or it breaks as
+       None can not be indexed.
+    """
+    row_values = row.values
+    if row_values is None:
+        row_values = []
+    return {row.index: {'query': row_values, }}
+
+queryparser.__pm_old_equal = queryparser._equal
+queryparser._equal = _patched_equal
+logger.info("Monkey patching plone.app.querystring.queryparser (_equal)")
+_equal = _patched_equal
+
 
 def userAndGroupsAwarePortalTransformsCacheKey():
     """Monkeypatch Products.PortalTransforms.Cache._genCacheKey
