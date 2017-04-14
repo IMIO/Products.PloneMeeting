@@ -169,11 +169,12 @@ class testWorkflows(PloneMeetingTestCase):
         # pmCreator1 creates an item with 1 annex and proposes it
         self.changeUser('pmCreator1')
         item1 = self.create('MeetingItem', title='The first item')
-        self.addAnnex(item1)
-        # The creator cannot add a decision annex on created item
-        self.assertRaises(Unauthorized, self.addAnnex, item1, relatedTo='item_decision')
+        someAnnex = self.addAnnex(item1)
+        # The creator can add a decision annex on created item
+        self.addAnnex(item1, relatedTo='item_decision')
         self.do(item1, 'propose')
         # The creator cannot add a decision annex on proposed item
+        self.assertRaises(Unauthorized, self.addAnnex, item1)
         self.assertRaises(Unauthorized, self.addAnnex, item1, relatedTo='item_decision')
         self.failIf(self.transitions(item1))  # He may trigger no more action
         # pmManager creates a meeting
@@ -189,14 +190,14 @@ class testWorkflows(PloneMeetingTestCase):
         self.do(item3, 'propose')
         # pmReviewer1 validates item1 and adds an annex to it
         self.changeUser('pmReviewer1')
-        # The reviewer cannot add a decision annex on proposed item
-        self.assertRaises(Unauthorized, self.addAnnex, item1, relatedTo='item_decision')
+        # The reviewer can add a decision annex on proposed item
+        self.addAnnex(item1, relatedTo='item_decision')
         self.do(item1, 'validate')
         # The reviewer cannot add a decision annex on validated item
         self.assertFalse(self.hasPermission(AddAnnexDecision, item1))
         self.assertRaises(Unauthorized, self.addAnnex, item1, relatedTo='item_decision')
-        self.assertTrue(self.hasPermission(AddAnnex, item1))
-        self.addAnnex(item1)
+        self.assertFalse(self.hasPermission(AddAnnex, item1))
+        self.assertRaises(Unauthorized, self.addAnnex, item1)
         # pmManager inserts item1 into the meeting and publishes it
         self.changeUser('pmManager')
         # The meetingManager can add annexes, decision-related or not
@@ -205,7 +206,6 @@ class testWorkflows(PloneMeetingTestCase):
         self.portal.restrictedTraverse('@@delete_givenuid')(managerAnnex.UID())
         self.do(item1, 'present')
         self.changeUser('pmCreator1')
-        someAnnex = self.addAnnex(item1)
         # The creator cannot add a decision annex on presented item
         self.assertRaises(Unauthorized, self.addAnnex, item1, relatedTo='item_decision')
         # pmCreator2 cannot view the annex created by pmCreator1

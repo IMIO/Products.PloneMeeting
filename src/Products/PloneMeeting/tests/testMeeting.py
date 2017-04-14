@@ -2192,12 +2192,12 @@ class testMeeting(PloneMeetingTestCase):
                                                context=self.portal.REQUEST)
         self.assertEquals(
             meeting.getPrettyLink(showContentIcon=True, prefixed=True),
-            u"<a class='pretty_link state-created' title='Meeting of 05 may 2015 (12:35)' "
+            u"<a class='pretty_link state-created' title='Meeting of 05/05/2015 (12:35)' "
             "href='http://nohost/plone/Members/pmManager/mymeetings/{0}/o1' "
             "target='_self'><span class='pretty_link_icons'><img title='{1}' "
             "src='http://nohost/plone/Meeting.png' /></span><span class='pretty_link_content'>"
-            "Meeting of 05 may 2015 (12:35)</span></a>".format(self.meetingConfig.getId(),
-                                                               translatedMeetingTypeTitle))
+            "Meeting of 05/05/2015 (12:35)</span></a>".format(self.meetingConfig.getId(),
+                                                              translatedMeetingTypeTitle))
 
     def test_pm_ShowMeetingManagerReservedField(self):
         """This condition is protecting some fields that should only be
