@@ -831,7 +831,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getPrettyLink(self,
                       prefixed=False,
-                      short=False,
+                      short=True,
                       showContentIcon=False,
                       isViewable=True,
                       notViewableHelpMessage=''):
