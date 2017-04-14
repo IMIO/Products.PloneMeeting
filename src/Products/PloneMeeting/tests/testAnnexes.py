@@ -826,7 +826,7 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertEqual(annex2.created(), clonedItem.objectValues()[1].created())
 
     def test_pm_AnnexesDeletableByItemEditor(self):
-        """annex may be deleted if user may edit the item."""
+        """annex/annexDecision may be deleted if user may edit the item."""
         cfg = self.meetingConfig
         # use the 'only_creator_may_delete' WF adaptation if available
         # in this case, it will ensure that when validated, the item may not be
@@ -838,27 +838,54 @@ class testAnnexes(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         item.setDecision('<p>Decision</p>')
         annex1 = self.addAnnex(item)
+        annexDecision1 = self.addAnnex(item, relatedTo='item_decision')
         annex2 = self.addAnnex(item)
+        annexDecision2 = self.addAnnex(item, relatedTo='item_decision')
         annex3 = self.addAnnex(item)
+        annexDecision3 = self.addAnnex(item, relatedTo='item_decision')
         # delete annex as item creator
         self.assertTrue(IContentDeletable(annex1).mayDelete())
+        self.assertTrue(IContentDeletable(annexDecision1).mayDelete())
         self.assertTrue(IContentDeletable(annex2).mayDelete())
+        self.assertTrue(IContentDeletable(annexDecision2).mayDelete())
         self.assertTrue(IContentDeletable(annex3).mayDelete())
+        self.assertTrue(IContentDeletable(annexDecision3).mayDelete())
         item.restrictedTraverse('@@delete_givenuid')(annex1.UID())
+        item.restrictedTraverse('@@delete_givenuid')(annexDecision1.UID())
 
         self.proposeItem(item)
+        # creator no more able to delete annex
+        self.assertFalse(IContentDeletable(annex2).mayDelete())
+        self.assertFalse(IContentDeletable(annexDecision2).mayDelete())
+        self.assertRaises(Unauthorized,
+                          item.restrictedTraverse('@@delete_givenuid'),
+                          annex2.UID())
+        self.assertRaises(Unauthorized,
+                          item.restrictedTraverse('@@delete_givenuid'),
+                          annexDecision2.UID())
         self.changeUser('pmReviewer1')
         if 'only_creator_may_delete' in cfg.listWorkflowAdaptations():
             self.assertFalse(self.hasPermission(DeleteObjects, item))
         self.assertTrue(IContentDeletable(annex2).mayDelete())
         item.restrictedTraverse('@@delete_givenuid')(annex2.UID())
+        item.restrictedTraverse('@@delete_givenuid')(annexDecision2.UID())
 
         self.validateItem(item)
+        # reviewer no more able to delete annex
+        self.assertFalse(IContentDeletable(annex3).mayDelete())
+        self.assertFalse(IContentDeletable(annexDecision3).mayDelete())
+        self.assertRaises(Unauthorized,
+                          item.restrictedTraverse('@@delete_givenuid'),
+                          annex3.UID())
+        self.assertRaises(Unauthorized,
+                          item.restrictedTraverse('@@delete_givenuid'),
+                          annexDecision3.UID())
         self.changeUser('pmManager')
         if 'only_creator_may_delete' in cfg.listWorkflowAdaptations():
             self.assertFalse(self.hasPermission(DeleteObjects, item))
         self.assertTrue(IContentDeletable(annex3).mayDelete())
         item.restrictedTraverse('@@delete_givenuid')(annex3.UID())
+        item.restrictedTraverse('@@delete_givenuid')(annexDecision3.UID())
 
     def test_pm_DecisionAnnexesDeletableByOwner(self):
         """annexDecision may be deleted by the Owner, aka the user that added the annex."""

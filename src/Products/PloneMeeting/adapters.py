@@ -399,8 +399,8 @@ class AnnexableAdapter(object):
 class AnnexContentDeletableAdapter(APContentDeletableAdapter):
     """
       Manage the mayDelete for annex and annexDecision.
-      An annex can be deleted by users able to edit parent (item or advice).
-      A decision annex is deletable by the annexDecision Owner ad vitam.
+      An annex/annexDecision can be deleted by users able to edit parent (item or advice).
+      An annexDecision is deletable by the annexDecision Owner still able to add annexDecision.
     """
     def __init__(self, context):
         self.context = context
@@ -411,9 +411,8 @@ class AnnexContentDeletableAdapter(APContentDeletableAdapter):
         mayDelete = super(AnnexContentDeletableAdapter, self).mayDelete()
         if not mayDelete:
             parent = self.context.getParentNode()
-            # able to delete an annex if able to edit the parent
-            if self.context.portal_type == 'annex':
-                if _checkPermission(ModifyPortalContent, parent):
+            # able to delete an annex/annexDecision if able to edit the parent
+            if _checkPermission(ModifyPortalContent, parent):
                     return True
 
             # a 'Owner' may still remove an 'annexDecision' if enabled
