@@ -352,7 +352,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Moved to imio.annex : in WFs, renamed permission "PloneMeeting: Write decision annex" to "PloneMeeting: Add annexDecision" and
   removed the "PloneMeeting: Add MeetingFile" and "PloneMeeting: Read decision annex" permissions.  Annexes may now be added on Meetings
   and are displayed in dashboards like for items.  On items, there is now one single tab 'annexes' where annexes and decision annexes
-  are managed.  Moreover annexes are reorderable in the 'annexes' tab
+  are managed.  Moreover annexes are reorderable in the 'annexes' tab.  Annexes are addable/editable/deletable by users able to edit the parent,
+  decision annexes are only deletable by the Owner of the decision annex
 - Added validation for field 'item_assembly' in the form for defining assembly for a specific item.  The validation takes care
   that opening "[[" have their corresponding "]]".  This is only done for field 'item_assembly' as brackets are not used
   for other fields (absents, excused)

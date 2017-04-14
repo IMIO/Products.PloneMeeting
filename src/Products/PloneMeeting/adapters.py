@@ -396,9 +396,10 @@ class AnnexableAdapter(object):
         return 'successfully_converted'
 
 
-class AnnexDecisionContentDeletableAdapter(APContentDeletableAdapter):
+class AnnexContentDeletableAdapter(APContentDeletableAdapter):
     """
-      Manage the mayDelete for annexDecision.
+      Manage the mayDelete for annex and annexDecision.
+      An annex can be deleted by users able to edit parent (item or advice).
       A decision annex is deletable by the annexDecision Owner ad vitam.
     """
     def __init__(self, context):
@@ -407,15 +408,21 @@ class AnnexDecisionContentDeletableAdapter(APContentDeletableAdapter):
     def mayDelete(self):
         '''See docstring in interfaces.py.'''
         # check 'Delete objects' permission
-        mayDelete = super(AnnexDecisionContentDeletableAdapter, self).mayDelete()
+        mayDelete = super(AnnexContentDeletableAdapter, self).mayDelete()
         if not mayDelete:
+            parent = self.context.getParentNode()
+            # able to delete an annex if able to edit the parent
+            if self.context.portal_type == 'annex':
+                if _checkPermission(ModifyPortalContent, parent):
+                    return True
+
             # a 'Owner' may still remove an 'annexDecision' if enabled
             # in the cfg and if still able to add 'annexDecision'
-            if self.context.portal_type == 'annexDecision':
+            elif self.context.portal_type == 'annexDecision':
                 tool = api.portal.get_tool('portal_plonemeeting')
                 cfg = tool.getMeetingConfig(self.context)
                 if cfg.getOwnerMayDeleteAnnexDecision() and \
-                   _checkPermission(AddAnnexDecision, self.context):
+                   _checkPermission(AddAnnexDecision, parent):
                     member = api.user.get_current()
                     if 'Owner' in member.getRolesInContext(self.context):
                         return True
@@ -457,22 +464,6 @@ class MeetingContentDeletableAdapter(APContentDeletableAdapter):
         member = api.user.get_current()
         if member.has_role('Manager'):
             return True
-
-
-class MeetingFileContentDeletableAdapter(APContentDeletableAdapter):
-    """
-      Manage the mayDelete for MeetingFile.
-      A MeetingFile can be deleted by users able to edit parent (item or advice).
-    """
-    def __init__(self, context):
-        self.context = context
-
-    def mayDelete(self):
-        '''See docstring in interfaces.py.'''
-        parent = self.context.getParentNode()
-        if _checkPermission(ModifyPortalContent, parent):
-            return True
-        return False
 
 
 class ItemPrettyLinkAdapter(PrettyLinkAdapter):

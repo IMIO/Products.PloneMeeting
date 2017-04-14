@@ -38,15 +38,17 @@ from collective.iconifiedcategory.utils import get_config_root
 from collective.iconifiedcategory.utils import get_category_object
 from collective.iconifiedcategory.utils import get_group
 from collective.iconifiedcategory.utils import update_all_categorized_elements
+from imio.actionspanel.interfaces import IContentDeletable
+from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from Products.PloneMeeting.indexes import SearchableText
+from Products.PloneMeeting.MeetingConfig import PROPOSINGGROUPPREFIX
+from Products.PloneMeeting.MeetingConfig import SUFFIXPROFILEPREFIX
 from Products.PloneMeeting.profiles.testing import import_data
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
-from Products.PloneMeeting.MeetingConfig import PROPOSINGGROUPPREFIX
-from Products.PloneMeeting.MeetingConfig import SUFFIXPROFILEPREFIX
 
 
 class testAnnexes(PloneMeetingTestCase):
@@ -822,6 +824,41 @@ class testAnnexes(PloneMeetingTestCase):
         clonedItem = item.clone()
         self.assertEqual(annex1.created(), clonedItem.objectValues()[0].created())
         self.assertEqual(annex2.created(), clonedItem.objectValues()[1].created())
+
+    def test_pm_AnnexesDeletableByItemEditor(self):
+        """annex may be deleted if user may edit the item."""
+        cfg = self.meetingConfig
+        # use the 'only_creator_may_delete' WF adaptation if available
+        # in this case, it will ensure that when validated, the item may not be
+        # deleted but annexes may be deleted by item editor
+        if 'only_creator_may_delete' in cfg.listWorkflowAdaptations():
+            cfg.setWorkflowAdaptations('only_creator_may_delete')
+            cfg.at_post_edit_script()
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.setDecision('<p>Decision</p>')
+        annex1 = self.addAnnex(item)
+        annex2 = self.addAnnex(item)
+        annex3 = self.addAnnex(item)
+        # delete annex as item creator
+        self.assertTrue(IContentDeletable(annex1).mayDelete())
+        self.assertTrue(IContentDeletable(annex2).mayDelete())
+        self.assertTrue(IContentDeletable(annex3).mayDelete())
+        item.restrictedTraverse('@@delete_givenuid')(annex1.UID())
+
+        self.proposeItem(item)
+        self.changeUser('pmReviewer1')
+        if 'only_creator_may_delete' in cfg.listWorkflowAdaptations():
+            self.assertFalse(self.hasPermission(DeleteObjects, item))
+        self.assertTrue(IContentDeletable(annex2).mayDelete())
+        item.restrictedTraverse('@@delete_givenuid')(annex2.UID())
+
+        self.validateItem(item)
+        self.changeUser('pmManager')
+        if 'only_creator_may_delete' in cfg.listWorkflowAdaptations():
+            self.assertFalse(self.hasPermission(DeleteObjects, item))
+        self.assertTrue(IContentDeletable(annex3).mayDelete())
+        item.restrictedTraverse('@@delete_givenuid')(annex3.UID())
 
     def test_pm_DecisionAnnexesDeletableByOwner(self):
         """annexDecision may be deleted by the Owner, aka the user that added the annex."""

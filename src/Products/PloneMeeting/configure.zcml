@@ -141,16 +141,13 @@
 
   <!-- IContentDeletable adapter override for PloneMeeting -->
   <adapter for="imio.annex.content.annex.IAnnex"
-           factory=".adapters.AnnexDecisionContentDeletableAdapter"
+           factory=".adapters.AnnexContentDeletableAdapter"
            provides="imio.actionspanel.interfaces.IContentDeletable" />
   <adapter for="Products.PloneMeeting.Meeting.Meeting"
            factory=".adapters.MeetingContentDeletableAdapter"
            provides="imio.actionspanel.interfaces.IContentDeletable" />
   <adapter for="Products.PloneMeeting.MeetingItem.MeetingItem"
            factory=".adapters.MeetingItemContentDeletableAdapter"
-           provides="imio.actionspanel.interfaces.IContentDeletable" />
-  <adapter for="Products.PloneMeeting.MeetingFile.MeetingFile"
-           factory=".adapters.MeetingFileContentDeletableAdapter"
            provides="imio.actionspanel.interfaces.IContentDeletable" />
 
   <!-- Indexes -->
