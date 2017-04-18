@@ -72,7 +72,8 @@ class PloneMeetingTestingHelpers:
                               'proposed_first_level': 'proposed',
                               'proposed': 'proposed',
                               'validated': 'validated',
-                              'presented': 'presented'}
+                              'presented': 'presented',
+                              'itemfrozen': 'itemfrozen'}
 
     WF_TRANSITION_NAME_MAPPINGS = {
         'backToItemCreated': 'backToItemCreated',
@@ -94,7 +95,6 @@ class PloneMeetingTestingHelpers:
                         group_id, groupsInCharge[0]))
             else:
                 item.setProposingGroup(group_id)
-        # if 
         meeting = self.create('Meeting', date=meetingDate)
         # a meeting could be created with items if it has
         # recurring items...  But we can also add some more...

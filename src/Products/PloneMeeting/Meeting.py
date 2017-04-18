@@ -51,7 +51,9 @@ from plone.memoize import ram
 from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.cache import invalidate_cachekey_volatile_for
 from Products.Archetypes.event import ObjectEditedEvent
-from Products.CMFCore.permissions import ModifyPortalContent, ReviewPortalContent, View
+from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFCore.permissions import ReviewPortalContent
+from Products.CMFCore.permissions import View
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from Products.CMFCore.utils import _checkPermission
 from Products.CMFCore.utils import getToolByName
@@ -1527,8 +1529,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         # call to updateItemReferences may be deferred for optimization
         if self.REQUEST.get('defer_Meeting_updateItemReferences', False):
             return
-
-        if check_needed and not self.REQUEST.get('need_Meeting_updateItemReferences', True):
+        if check_needed and not self.REQUEST.get('need_Meeting_updateItemReferences', False):
             return
         # force disable 'need_Meeting_updateItemReferences' from REQUEST
         self.REQUEST.set('need_Meeting_updateItemReferences', False)
@@ -1537,15 +1538,17 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         # an item from the meeting_view, we set force_linked_items_query=True
         # regarding the getItemNumber range, we want from startNumber to last
         # item of the meeting, we consider a meeting have maximum 5000 items...
+        # moreover we getItems unrestricted to be sure we have every elements
         brains = self.getItems(
             ordered=True,
             useCatalog=True,
+            unrestricted=True,
             additional_catalog_query={
                 'getItemNumber': {'query': [startNumber, 5000*100],
                                   'range': 'minmax'}, },
             force_linked_items_query=True)
         for brain in brains:
-            item = brain.getObject()
+            item = brain._unrestrictedGetObject()
             item.updateItemReference()
 
     security.declarePrivate('getDefaultAssembly')

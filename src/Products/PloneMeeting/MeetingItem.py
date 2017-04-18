@@ -2836,14 +2836,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if meeting and not meeting.queryState() in meeting.getBeforeFrozenStates():
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(item)
-            itemRefFormat = cfg.getItemReferenceFormat()
-            if itemRefFormat.strip():
-                portal = item.portal_url.getPortalObject()
-                ctx = createExprContext(item.getParentNode(), portal, item)
-                try:
-                    res = Expression(itemRefFormat)(ctx)
-                except Exception, e:
-                    raise PloneMeetingError(ITEM_REF_ERROR % str(e))
+            res = _evaluateExpression(item,
+                                      expression=cfg.getItemReferenceFormat().strip(),
+                                      roles_bypassing_expression=[],
+                                      extra_expr_ctx={'item': item,
+                                                      'meeting': meeting})
+            if not res:
+                res = ''
 
         stored = self.getField('itemReference').get(self)
         if stored != res:

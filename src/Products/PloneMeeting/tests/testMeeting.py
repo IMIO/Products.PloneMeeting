@@ -34,6 +34,7 @@ from zope.i18n import translate
 from Products.CMFCore.permissions import AddPortalContent
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import ReviewPortalContent
+from Products.CMFCore.permissions import View
 from Products.ZCatalog.Catalog import AbstractCatalogBrain
 
 from plone.app.textfield.value import RichTextValue
@@ -1794,9 +1795,10 @@ class testMeeting(PloneMeetingTestCase):
         '''Test the 'remove whole meeting' functionnality, so removing a meeting
            including every items that are presented into it.
            The functionnality is only available to role 'Manager'.'''
-        self.meetingConfig.setItemAdviceStates((self.WF_STATE_NAME_MAPPINGS['presented'], ))
-        self.meetingConfig.setItemAdviceEditStates((self.WF_STATE_NAME_MAPPINGS['presented'], ))
-        self.meetingConfig.setItemAdviceViewStates((self.WF_STATE_NAME_MAPPINGS['presented'], ))
+        cfg = self.meetingConfig
+        cfg.setItemAdviceStates((self.WF_STATE_NAME_MAPPINGS['presented'], ))
+        cfg.setItemAdviceEditStates((self.WF_STATE_NAME_MAPPINGS['presented'], ))
+        cfg.setItemAdviceViewStates((self.WF_STATE_NAME_MAPPINGS['presented'], ))
 
         # create a meeting with several items
         self.changeUser('pmManager')
@@ -2240,6 +2242,74 @@ class testMeeting(PloneMeetingTestCase):
         self.assertEqual(meeting.getAssembly(), '<p>Default assembly</p>')
         self.assertEqual(meeting.getAssemblyStaves(), '<p>Default assembly staves</p>')
         self.assertEqual(meeting.getSignatures(), 'Default signatures')
+
+    def test_pm_ItemReferenceInMeetingUpdatedWhenNecessary(self):
+        '''Items references in a meeting are updated only when relevant,
+           so if an advice is added to a presented or frozen item, references are not updated.
+           Every item references are updated regardless current user have not access to every items.'''
+        cfg = self.meetingConfig
+        cfg.setItemAdviceStates((self.WF_STATE_NAME_MAPPINGS['itemfrozen'], ))
+        cfg.setItemAdviceEditStates((self.WF_STATE_NAME_MAPPINGS['itemfrozen'], ))
+        cfg.setItemAdviceViewStates((self.WF_STATE_NAME_MAPPINGS['itemfrozen'], ))
+        clean_request = self.portal.REQUEST.clone()
+        self.changeUser('pmCreator1')
+        item1 = self.create('MeetingItem')
+        item1.setDecision(self.decisionText)
+        item1.setOptionalAdvisers(('vendors', ))
+        item2 = self.create('MeetingItem')
+        item2.setDecision(self.decisionText)
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2017/04/18'))
+        self.presentItem(item1)
+        self.presentItem(item2)
+        self.assertEqual(
+            [item.getObject().getItemReference() for
+             item in meeting.getItems(ordered=True, useCatalog=True, unrestricted=True)],
+            ['', '', '', ''])
+        self.freezeMeeting(meeting)
+        self.assertEqual(
+            [item.getObject().getItemReference() for
+             item in meeting.getItems(ordered=True, useCatalog=True, unrestricted=True)],
+            ['Ref. 20170418/1', 'Ref. 20170418/2', 'Ref. 20170418/3', 'Ref. 20170418/4'])
+        # change itemReferenceFormat to check if references are updated
+        cfg.setItemReferenceFormat('item/getItemNumber')
+        # give an advice
+        self.portal.REQUEST = clean_request
+        self.assertFalse('need_Meeting_updateItemReferences' in self.portal.REQUEST)
+        self.changeUser('pmReviewer2')
+        createContentInContainer(item1,
+                                 'meetingadvice',
+                                 **{'advice_group': 'vendors',
+                                    'advice_type': u'positive',
+                                    'advice_comment': RichTextValue(u'My comment')})
+        # references where not updated
+        self.assertEqual(
+            [item.getObject().getItemReference() for
+             item in meeting.getItems(ordered=True, useCatalog=True, unrestricted=True)],
+            ['Ref. 20170418/1', 'Ref. 20170418/2', 'Ref. 20170418/3', 'Ref. 20170418/4'])
+
+        # now test that Meeting.updateItemReferences may be done
+        # even if current user may not access every items
+        self.changeUser('pmManager')
+        self.changeUser('pmReviewer2')
+        self.assertTrue(self.hasPermission(View, item1))
+        # make sure item2 is not accessible to 'MeetingObserverGlobal'
+        view_perm_roles = list(item2._View_Permission)
+        if 'MeetingObserverGlobal' in view_perm_roles:
+            view_perm_roles.remove('MeetingObserverGlobal')
+            item2._View_Permission = view_perm_roles
+            item2.reindexObject()
+        self.assertFalse(self.hasPermission(View, item2))
+        self.assertEquals(len(meeting.getItems(ordered=True, useCatalog=True)), 3)
+        self.assertEquals(len(meeting.getItems(ordered=True, useCatalog=True, unrestricted=True)), 4)
+        # enable item references update
+        self.request.set('need_Meeting_updateItemReferences', True)
+        # make sure it will be changed
+        meeting.updateItemReferences()
+        self.assertEqual(
+            [item.getObject().getItemReference() for
+             item in meeting.getItems(ordered=True, useCatalog=True, unrestricted=True)],
+            [100, 200, 300, 400])
 
 
 def test_suite():
