@@ -31,6 +31,7 @@ from AccessControl import Unauthorized
 from Products.Five import zcml
 from zope.i18n import translate
 
+from Products.CMFCore.permissions import AccessContentsInformation
 from Products.CMFCore.permissions import AddPortalContent
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import ReviewPortalContent
@@ -2284,8 +2285,8 @@ class testMeeting(PloneMeetingTestCase):
                                     'advice_comment': RichTextValue(u'My comment')})
         # references where not updated
         self.assertEqual(
-            [item.getObject().getItemReference() for
-             item in meeting.getItems(ordered=True, useCatalog=True, unrestricted=True)],
+            [brain._unrestrictedGetObject().getItemReference() for
+             brain in meeting.getItems(ordered=True, useCatalog=True, unrestricted=True)],
             ['Ref. 20170418/1', 'Ref. 20170418/2', 'Ref. 20170418/3', 'Ref. 20170418/4'])
 
         # now test that Meeting.updateItemReferences may be done
@@ -2293,22 +2294,22 @@ class testMeeting(PloneMeetingTestCase):
         self.changeUser('pmManager')
         self.changeUser('pmReviewer2')
         self.assertTrue(self.hasPermission(View, item1))
-        # make sure item2 is not accessible to 'MeetingObserverGlobal'
-        view_perm_roles = list(item2._View_Permission)
-        if 'MeetingObserverGlobal' in view_perm_roles:
-            view_perm_roles.remove('MeetingObserverGlobal')
-            item2._View_Permission = view_perm_roles
+        # make sure item2 is not accessible to 'pmReviewer2'
+        if self.hasPermission(View, item2):
+            item2.manage_permission(View, ['Manager'])
+            item2.manage_permission(AccessContentsInformation, ['Manager'])
             item2.reindexObject()
         self.assertFalse(self.hasPermission(View, item2))
-        self.assertEquals(len(meeting.getItems(ordered=True, useCatalog=True)), 3)
-        self.assertEquals(len(meeting.getItems(ordered=True, useCatalog=True, unrestricted=True)), 4)
+        # there are unaccessible items
+        self.assertTrue(len(meeting.getItems(ordered=True, useCatalog=True))
+                        < meeting.numberOfItems())
         # enable item references update
         self.request.set('need_Meeting_updateItemReferences', True)
         # make sure it will be changed
         meeting.updateItemReferences()
         self.assertEqual(
-            [item.getObject().getItemReference() for
-             item in meeting.getItems(ordered=True, useCatalog=True, unrestricted=True)],
+            [brain._unrestrictedGetObject().getItemReference() for
+             brain in meeting.getItems(ordered=True, useCatalog=True, unrestricted=True)],
             [100, 200, 300, 400])
 
 
