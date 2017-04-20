@@ -18,7 +18,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Added boolean field Meeting.extraordinarySession, informational field useable when necessary
 - When using WF adaptations 'hide_decisions_when_under_writing', do not only show the decision to MeetingManagers but to
   every users able to edit the item, this way, used together with WF adaptation 'return_to_proposing_group', the decision
-  is viewable by users that will correct the item
+  is viewable by users that will correct the item.  Moreover make sure the decision is viewable to MeetingManagers when item
+  is no more editable, this is the case for example when item is 'accepted'
 
 3.3 (2015-02-27)
 ----------------

@@ -943,7 +943,21 @@ class testWFAdaptations(PloneMeetingTestCase):
         # MeetingManagers see it correctly
         self.assertEquals(item.getMotivation(), '<p>Motivation adapted by pmManager</p>')
         self.assertEquals(item.getDecision(), '<p>Decision adapted by pmManager</p>')
+        # make sure decision is visible or not when item is decided and so no more editable by anyone
+        self.do(item, 'accept')
+        if 'confirm' in self.transitions(item):
+            self.do(item, 'confirm')
+        self.assertFalse(self.hasPermission(ModifyPortalContent, item))
+        self.assertEquals(item.getMotivation(), '<p>Motivation adapted by pmManager</p>')
+        self.assertEquals(item.getDecision(), '<p>Decision adapted by pmManager</p>')
+        self.changeUser('pmCreator1')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertEquals(item.getMotivation(),
+                          HIDE_DECISION_UNDER_WRITING_MSG)
+        self.assertEquals(item.getDecision(),
+                          HIDE_DECISION_UNDER_WRITING_MSG)
         # a 'publish_decisions' transition is added after 'decide'
+        self.changeUser('pmManager')
         self.do(meeting, 'publish_decisions')
         self.assertEquals(meeting.queryState(), 'decisions_published')
         self.assertEquals(item.getMotivation(), '<p>Motivation adapted by pmManager</p>')
