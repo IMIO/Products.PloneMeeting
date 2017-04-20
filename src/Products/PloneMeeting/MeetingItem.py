@@ -1470,9 +1470,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         adaptations = cfg.getWorkflowAdaptations()
-        if 'hide_decisions_when_under_writing' in adaptations and \
-           self.hasMeeting() and self.getMeeting().queryState() == 'decided' and \
-           not _checkPermission(ModifyPortalContent, self):
+        # manage case of accepted item that is no more editable by MeetingManagers
+        # but the meeting in this case is still editable
+        meeting = self.getMeeting()
+        if meeting and 'hide_decisions_when_under_writing' in adaptations and \
+           meeting.queryState() == 'decided' and \
+           not (_checkPermission(ModifyPortalContent, self) or
+                _checkPermission(ModifyPortalContent, meeting)):
             return translate('decision_under_edit',
                              domain='PloneMeeting',
                              context=self.REQUEST,

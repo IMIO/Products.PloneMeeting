@@ -222,7 +222,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Simplified testing infrastructure when overrided by a plugin so the plugin does not need to call existing tests
 - When using WF adaptations 'hide_decisions_when_under_writing', do not only show the decision to MeetingManagers but to
   every users able to edit the item, this way, used together with WF adaptation 'return_to_proposing_group', the decision
-  is viewable by users that will correct the item
+  is viewable by users that will correct the item.  Moreover make sure the decision is viewable to MeetingManagers when item
+  is no more editable, this is the case for example when item is 'accepted'
 - When duplicating an item, make sure values kept for fields MeetingItem.otherMeetingConfigsClonableTo and
   MeetingItem.copyGroups are still valid, indeed the configuration could have changed since the original item was created
 - Added possibility to use the same workflow for item/meeting generated portal_types of several MeetingConfigs.  We duplicate
