@@ -1477,10 +1477,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            meeting.queryState() == 'decided' and \
            not (_checkPermission(ModifyPortalContent, self) or
                 _checkPermission(ModifyPortalContent, meeting)):
+            # do not return unicode as getDecision returns 'utf-8' usually
             return translate('decision_under_edit',
                              domain='PloneMeeting',
                              context=self.REQUEST,
-                             default=HIDE_DECISION_UNDER_WRITING_MSG)
+                             default=HIDE_DECISION_UNDER_WRITING_MSG).encode('utf-8')
 
     security.declarePublic('getMotivation')
 

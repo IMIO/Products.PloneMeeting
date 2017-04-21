@@ -1665,13 +1665,19 @@ class testWFAdaptations(PloneMeetingTestCase):
         # set a decision...
         item.setMotivation('<p>Motivation adapted by pmManager</p>')
         item.setDecision('<p>Decision adapted by pmManager</p>')
+        # getDecision must return 'utf-8' encoded string, make sure it is
         item.reindexObject()
+        self.assertTrue(isinstance(item.getDecision(), basestring))
+        self.assertFalse(isinstance(item.getDecision(), unicode))
         self.changeUser('pmCreator1')
         self.assertEquals(meeting.queryState(), 'decided')
         self.assertEquals(item.getMotivation(),
                           HIDE_DECISION_UNDER_WRITING_MSG)
         self.assertEquals(item.getDecision(),
                           HIDE_DECISION_UNDER_WRITING_MSG)
+        # getDecision must return 'utf-8' encoded string, make sure it is
+        self.assertTrue(isinstance(item.getDecision(), basestring))
+        self.assertFalse(isinstance(item.getDecision(), unicode))
 
         # special test, remove an annex, it is done as 'all_powerful_Oz' user
         # and broke when checking has_permission in MeetingItem._mayNotViewDecisionMsg
