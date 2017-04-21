@@ -718,6 +718,7 @@ div[id^="pm_menu_advice_change_delay"].pmDropdown {
 }
 
 /* Hightlight that a value has been modified, for example the itemAssembly is overriden on a MeetingItem */
+p.highlightValue,
 span.highlightValue,
 dt.highlightValue span {
     color: red !important;
