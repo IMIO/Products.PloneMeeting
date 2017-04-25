@@ -2226,7 +2226,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getMeeting_cachekey(method, self, brain=False):
         '''cachekey method for self.getMeeting.'''
-        return (self, self.REQUEST._debug, brain)
+        return (self, str(self.REQUEST._debug), brain)
 
     security.declarePublic('getMeeting')
 
