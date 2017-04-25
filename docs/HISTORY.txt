@@ -391,6 +391,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Added parameter 'withWeekDayName' to ToolPloneMeeting.formatMeetingDate that will display the weekday name before the date,
   like 'Tuesday 05 may 2015'
 - A MeetingGroup may not be removed if it is used as groupInCharge of another
+- Added view '@@header' on advice, item and meeting that renders the header on various place (view and annexes tab especially)
 
 3.3 (2015-02-27)
 ----------------

@@ -1,0 +1,12 @@
+<tal:comment replace="nothing">Title, with number of items</tal:comment>
+<h1 class="documentFirstHeading" i18n:domain="PloneMeeting" tal:define="isDecided python: context.adapted().isDecided">
+  <span tal:replace="structure python: context.getPrettyLink(prefixed=True, short=False, showContentIcon=True)">Meeting title</span>&nbsp;-
+  <span tal:condition="not:isDecided"
+        i18n:translate="agenda">Agenda</span>
+  <span tal:condition="isDecided"
+        i18n:translate="decisions">Decisions</span>
+  <tal:comment replace="nothing">Display number of items in the meeting when on meeting_view</tal:comment>
+  <span class="discreet">(<span class="meeting_number_of_items" tal:content="context/numberOfItems"></span>
+    <span i18n:translate="">items_count</span>)
+  </span>
+</h1>

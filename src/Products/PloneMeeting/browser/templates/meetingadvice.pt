@@ -8,9 +8,7 @@
 <body>
 
   <metal:title fill-slot="content-title">
-   <h1 class="documentFirstHeading">
-    <span tal:content="structure here/getPrettyLink">Advice pretty title</span>
-   </h1>
+      <tal:header replace="structure context/@@header" />
   </metal:title>
 
   <metal:main fill-slot="content-core">

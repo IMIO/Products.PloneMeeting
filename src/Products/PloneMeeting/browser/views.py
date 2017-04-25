@@ -881,3 +881,15 @@ class DisplayAnnexesView(BrowserView):
     def show(self):
         """ """
         return self.tool.showAnnexesTab(self.context)
+
+
+class AdviceHeaderView(BrowserView):
+    """ """
+
+
+class ItemHeaderView(BrowserView):
+    """ """
+
+
+class MeetingHeaderView(BrowserView):
+    """ """
