@@ -122,14 +122,25 @@ class testPerformances(PloneMeetingTestCase):
         pm_logger.info('Delay %d items containing %d annexes in each.' % (10, 10))
         self._delaySeveralItems(meeting, uids)
 
-    def test_pm_Update250ItemsItemReference(self):
-        '''Update the itemReference of 250 items.'''
-        # compute metingDate, proposingGroup acronym and item number elativeTo meeting for itemReference
+    def _setItemReferenceFormat(self):
+        """Compute metingDate, proposingGroup acronym and item number relativeTo meeting."""
         self.meetingConfig.setItemReferenceFormat(
             "python: here.restrictedTraverse('pm_unrestricted_methods').getLinkedMeetingDate().strftime('%Y%m%d') + "
             "'/' + here.getProposingGroup(True).getAcronym() + '/' + "
             "str(here.getItemNumber(relativeTo='meeting', for_display=True))")
+
+    def test_pm_Update250ItemsItemReference(self):
+        '''Update the itemReference of 250 items.'''
+        self._setItemReferenceFormat()
         meeting, uids = self._setupMeetingItemsWithAnnexes(250, 0, with_meeting=True, present_items=True)
+
+        # item references are only updated once meeting is frozen
+        # freeze meeting but defer references update
+        # update every items
+        pm_logger.info('Freezing meeting without updateItemReferences.')
+        self.request.set('defer_Meeting_updateItemReferences', True)
+        self.freezeMeeting(meeting)
+        self.request.set('defer_Meeting_updateItemReferences', False)
         # update every items
         pm_logger.info(
             'Updating item references for %d items presented in a meeting starting from item number %s.' % (250, 0))
