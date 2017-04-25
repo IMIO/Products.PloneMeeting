@@ -157,6 +157,9 @@ class testPerformances(PloneMeetingTestCase):
     @timecall
     def _updateItemReferences(self, meeting, startNumber=0):
         '''Helper method that actually compute every items itemReference for p_meeting.'''
+        # set back every items reference to '' so the entire process including reindex of SearchableText is done
+        for item in meeting.getItems():
+            item.setItemReference('')
         meeting.updateItemReferences(startNumber=startNumber)
 
     def test_pm_Present50ItemsWithoutAnnexesSeveralTimes(self):
