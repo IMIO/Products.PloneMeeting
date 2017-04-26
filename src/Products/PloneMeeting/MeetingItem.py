@@ -541,7 +541,17 @@ class MeetingItemWorkflowActions:
     security.declarePrivate('doRemove')
 
     def doRemove(self, stateChange):
-        pass
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        # duplicate item if necessary
+        if 'removed_and_duplicated' in cfg.getWorkflowAdaptations():
+            creator = self.context.Creator()
+            # We create a copy in the initial item state, in the folder of creator.
+            self.context.clone(copyAnnexes=True,
+                               newOwnerId=creator,
+                               cloneEventAction='create_from_removed_item',
+                               keepProposingGroup=True,
+                               setCurrentAsPredecessor=True)
 
     security.declarePrivate('doPostpone_next_meeting')
 

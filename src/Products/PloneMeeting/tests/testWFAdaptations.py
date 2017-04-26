@@ -71,6 +71,7 @@ class testWFAdaptations(PloneMeetingTestCase):
                            'pre_validation',
                            'pre_validation_keep_reviewer_permissions',
                            'removed',
+                           'removed_and_duplicated',
                            'return_to_proposing_group',
                            'return_to_proposing_group_with_all_validations',
                            'return_to_proposing_group_with_last_validation',
@@ -215,6 +216,13 @@ class testWFAdaptations(PloneMeetingTestCase):
             cfg.validate_workflowAdaptations(('return_to_proposing_group_with_all_validations',
                                               'return_to_proposing_group')), wa_conflicts)
 
+        # removed and removed_and_duplicated may not be used together
+        self.failIf(cfg.validate_workflowAdaptations(('removed',)))
+        self.failIf(cfg.validate_workflowAdaptations(('removed_and_duplicated',)))
+        self.assertEquals(
+            cfg.validate_workflowAdaptations(('removed',
+                                              'removed_and_duplicated')), wa_conflicts)
+
     def test_pm_Validate_workflowAdaptations_added_no_publication(self):
         """Test MeetingConfig.validate_workflowAdaptations that manage addition
            of wfAdaptations 'no_publication' that is not possible if some meeting
@@ -358,10 +366,11 @@ class testWFAdaptations(PloneMeetingTestCase):
             cfg.validate_workflowAdaptations(()),
             pre_validation_removed_error)
 
-        # possible to switch from one to the other
-        self.failIf(cfg.validate_workflowAdaptations(('pre_validation_keep_reviewer_permissions', )))
-        cfg.setWorkflowAdaptations(('pre_validation_keep_reviewer_permissions', ))
-        self.failIf(cfg.validate_workflowAdaptations(('pre_validation', )))
+        if 'pre_validation_keep_reviewer_permissions' in cfg.listWorkflowAdaptations():
+            # possible to switch from one to the other
+            self.failIf(cfg.validate_workflowAdaptations(('pre_validation_keep_reviewer_permissions', )))
+            cfg.setWorkflowAdaptations(('pre_validation_keep_reviewer_permissions', ))
+            self.failIf(cfg.validate_workflowAdaptations(('pre_validation', )))
 
         # make wfAdaptation selectable
         self.validateItem(item)
@@ -433,7 +442,7 @@ class testWFAdaptations(PloneMeetingTestCase):
 
     def test_pm_Validate_workflowAdaptations_removed_removed(self):
         """Test MeetingConfig.validate_workflowAdaptations that manage removal
-           of wfAdaptations 'removed' that is not possible if
+           of wfAdaptations 'removed' or 'removed_and_duplicated' that is not possible if
            some items are 'removed'."""
         # ease override by subproducts
         cfg = self.meetingConfig
@@ -458,6 +467,12 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertEquals(
             cfg.validate_workflowAdaptations(()),
             removed_removed_error)
+
+        if 'removed_and_duplicated' in cfg.listWorkflowAdaptations():
+            # possible to switch from one to the other
+            self.failIf(cfg.validate_workflowAdaptations(('removed_and_duplicated', )))
+            cfg.setWorkflowAdaptations(('removed_and_duplicated', ))
+            self.failIf(cfg.validate_workflowAdaptations(('removed', )))
 
         # make wfAdaptation selectable
         self.do(item, 'backToItemFrozen')
@@ -2309,7 +2324,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertFalse('removed' in itemWF.states)
 
     def _removed_active(self):
-        '''Tests while 'mark_not_applicable' wfAdaptation is active.'''
+        '''Tests while 'removed' wfAdaptation is active.'''
         itemWF = self.wfTool.getWorkflowsFor(self.meetingConfig.getItemTypeName())[0]
         self.assertTrue('remove' in itemWF.transitions)
         self.assertTrue('removed' in itemWF.states)
@@ -2322,6 +2337,50 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.decideMeeting(meeting)
         self.do(item, 'remove')
         self.assertEqual(item.queryState(), 'removed')
+        # no predecessor was set
+        self.assertFalse(item.getBRefs('ItemPredecessor'))
+        # back transition
+        self.do(item, 'backToItemFrozen')
+
+    def test_pm_WFA_removed_and_duplicated(self):
+        '''Test the workflowAdaptation 'removed_and_duplicated'.'''
+        # ease override by subproducts
+        cfg = self.meetingConfig
+        if not 'removed_and_duplicated' in cfg.listWorkflowAdaptations():
+            return
+        self.changeUser('pmManager')
+        # check while the wfAdaptation is not activated
+        self._removed_and_duplicated_inactive()
+        # activate the wfAdaptation and check
+        cfg.setWorkflowAdaptations(('removed_and_duplicated', ))
+        performWorkflowAdaptations(cfg, logger=pm_logger)
+        self._removed_and_duplicated_active()
+
+    def _removed_and_duplicated_inactive(self):
+        '''Tests while 'removed_and_duplicated' wfAdaptation is inactive.'''
+        itemWF = self.wfTool.getWorkflowsFor(self.meetingConfig.getItemTypeName())[0]
+        self.assertFalse('remove' in itemWF.transitions)
+        self.assertFalse('removed' in itemWF.states)
+
+    def _removed_and_duplicated_active(self):
+        '''Tests while 'removed_and_duplicated' wfAdaptation is active.'''
+        itemWF = self.wfTool.getWorkflowsFor(self.meetingConfig.getItemTypeName())[0]
+        self.assertTrue('remove' in itemWF.transitions)
+        self.assertTrue('removed' in itemWF.states)
+        # test it
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2016/06/06'))
+        item = self.create('MeetingItem')
+        item.setDecision('<p>A decision</p>')
+        self.presentItem(item)
+        self.decideMeeting(meeting)
+        # no linked item for now
+        self.assertFalse(item.getBRefs('ItemPredecessor'))
+        self.do(item, 'remove')
+        self.assertEqual(item.queryState(), 'removed')
+        # item was duplicated and new item is in it's initial state
+        linked_item = item.getBRefs('ItemPredecessor')[0]
+        self.assertEqual(linked_item.queryState(), self._initial_state(linked_item))
         # back transition
         self.do(item, 'backToItemFrozen')
 

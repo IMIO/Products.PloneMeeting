@@ -341,8 +341,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   original item are inherited
 - Added workflowAdaptation 'mark_not_applicable', it adds a decided state 'marked_not_applicable' to the item (based on the already existing
   state 'delayed')
-- Added workflowAdaptation 'removed', it adds a decided state 'removed' to the item (based on the already existing
-  state 'delayed')
+- Added workflowAdaptations 'removed' and 'removed_and_duplicated', it adds a decided state 'removed' to the item
+  (based on the already existing state 'delayed').  'removed_and_duplicated' will also duplicate the 'removed' item
 - Added optional RichText field Meeting.authorityNotice
 - Added optional field MeetingItem.pollType, it relies on MeetingConfig.usedPollTypes and MeetingConfig.defaultPollType.
   Added also relevant dashboard column and faceted filter.  An additional optional field MeetingItem.pollTypeObservations

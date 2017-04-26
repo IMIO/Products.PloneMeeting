@@ -2195,7 +2195,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                      'return_to_proposing_group', 'return_to_proposing_group_with_last_validation',
                      'return_to_proposing_group_with_all_validations', 'hide_decisions_when_under_writing',
                      'waiting_advices', 'postpone_next_meeting', 'mark_not_applicable',
-                     'removed')
+                     'removed', 'removed_and_duplicated')
 
     def _searchesInfo(self):
         """Informations used to create DashboardCollections in the searches."""
@@ -3187,6 +3187,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             return msg
         if 'pre_validation' in values and 'pre_validation_keep_reviewer_permissions' in values:
             return msg
+        if 'removed' in values and 'removed_and_duplicated' in values:
+            return msg
 
         # several 'return_to_proposing_group' values may not be selected together
         return_to_prop_group_wf_adaptations = [v for v in values if v.startswith('return_to_proposing_group')]
@@ -3301,7 +3303,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 return translate('wa_removed_mark_not_applicable_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
-        if 'removed' in removed:
+        # check if 'removed' is removed only if the other 'removed_and_duplicated' is not added
+        # at the same time (switch from one to other)
+        if ('removed' in removed and not 'removed_and_duplicated' in added) or \
+           ('removed_and_duplicated' in removed and not 'removed' in added):
             # this will remove the 'removed' state for Item
             # check that no more items are in this state
             if catalog(portal_type=self.getItemTypeName(), review_state='removed'):
