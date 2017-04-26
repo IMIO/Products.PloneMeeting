@@ -546,6 +546,7 @@ dd li a.erroredConversion, tr span.erroredConversion {
 .fieldErrorBox {
     color: red;
     font-weight: bold;
+    font-size: 140%;
 }
 
 .contentBatchAction {
@@ -725,6 +726,7 @@ dt.highlightValue span {
 }
 
 /* CKeditor style */
+.highlight-orange {color: orange;}
 .highlight-red {color: red;}
 .highlight-yellow {background-color: yellow;}
 p.indent-firstline {text-indent: 40px;}
