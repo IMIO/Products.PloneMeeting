@@ -346,7 +346,7 @@ def _configureCKeditor(site):
             "{{ name : '{4}'\t\t, element : 'span', attributes : {{ 'style' : 'font-size: 85%' }} }},\n"
             "{{ name : '{5}'\t\t, element : 'span', attributes : {{ 'style' : 'font-size: 115%' }} }},\n"
             "{{ name : '{6}'\t\t, element : 'span', attributes : {{ 'style' : 'font-size: 130%' }} }},\n"
-            "{{ name : '{7}'\t\t, element : 'p', attributes : {{ 'class' : 'indent-firstline' }} }},\n]\n".
+            "{{ name : '{7}'\t\t, element : 'p', attributes : {{ 'style' : 'text-indent: 40px;' }} }},\n]\n".
             format(CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG,
                    msg_highlight_red,
                    msg_highlight_yellow,
