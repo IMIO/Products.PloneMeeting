@@ -497,7 +497,12 @@ class Migrate_To_4_0(Migrator):
                     file_content = podFile.data
                     # in some case ??? we have a OFS.Image.Pdata instance and we need binary data
                     if hasattr(file_content, 'data'):
-                        file_content = file_content.data
+                        # this is chunking the data into small parts accessibl by 'next'
+                        pdata = file_content
+                        file_content = ''
+                        while pdata is not None:
+                            file_content = file_content + pdata.data
+                            pdata = pdata.next
                     data = {'title': template.Title(),
                             'description': template.Description(),
                             'odt_file': NamedBlobFile(
