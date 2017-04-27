@@ -3626,9 +3626,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('listOptionalAdvisers')
 
-    def listOptionalAdvisers(self):
+    def listOptionalAdvisers(self, include_selected=True):
         '''Optional advisers for this item are MeetingGroups that are not among
-           automatic advisers and that have at least one adviser.'''
+           automatic advisers and that have at least one adviser.
+           If p_include_selected is True, we ensure thtat the currently selected
+           elements on self are present in the vocabulary.'''
         def _displayDelayAwareValue(delay_label, group_name, delay):
             group_name = safe_unicode(group_name)
             delay_label = safe_unicode(delay_label)
@@ -3675,21 +3677,22 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # make sure optionalAdvisers actually stored have their corresponding
         # term in the vocabulary, if not, add it
-        optionalAdvisers = self.getOptionalAdvisers()
-        if optionalAdvisers:
-            optionalAdvisersInVocab = [group[0] for group in resNonDelayAwareAdvisers] + \
-                                      [group[0] for group in resDelayAwareAdvisers]
-            for groupId in optionalAdvisers:
-                if groupId not in optionalAdvisersInVocab:
-                    if '__rowid__' in groupId:
-                        meetingGroupId, row_id = self._decodeDelayAwareId(groupId)
-                        delay = cfg._dataForCustomAdviserRowId(row_id)['delay']
-                        delay_label = self.adviceIndex[meetingGroupId]['delay_label']
-                        group_name = getattr(tool, meetingGroupId).getName()
-                        value_to_display = _displayDelayAwareValue(delay_label, group_name, delay)
-                        resDelayAwareAdvisers.append((groupId, value_to_display))
-                    else:
-                        resNonDelayAwareAdvisers.append((groupId, getattr(tool, groupId).getName()))
+        if include_selected:
+            optionalAdvisers = self.getOptionalAdvisers()
+            if optionalAdvisers:
+                optionalAdvisersInVocab = [group[0] for group in resNonDelayAwareAdvisers] + \
+                                          [group[0] for group in resDelayAwareAdvisers]
+                for groupId in optionalAdvisers:
+                    if groupId not in optionalAdvisersInVocab:
+                        if '__rowid__' in groupId:
+                            meetingGroupId, row_id = self._decodeDelayAwareId(groupId)
+                            delay = cfg._dataForCustomAdviserRowId(row_id)['delay']
+                            delay_label = self.adviceIndex[meetingGroupId]['delay_label']
+                            group_name = getattr(tool, meetingGroupId).getName()
+                            value_to_display = _displayDelayAwareValue(delay_label, group_name, delay)
+                            resDelayAwareAdvisers.append((groupId, value_to_display))
+                        else:
+                            resNonDelayAwareAdvisers.append((groupId, getattr(tool, groupId).getName()))
 
         # now create the listing
         # sort elements by value before potentially prepending a special value here under
@@ -5223,6 +5226,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # make sure we only have selectable copyGroups
             newItem.setCopyGroups(
                 tuple(set(copyGroups).intersection(set(selectableCopyGroups))))
+        if 'optionalAdvisers' in copyFields:
+            optionalAdvisers = list(newItem.getOptionalAdvisers())
+            selectableAdvisers = newItem.listOptionalAdvisers(include_selected=False).keys()
+            # make sure we only have selectable advisers
+            newItem.setOptionalAdvisers(
+                tuple(set(optionalAdvisers).intersection(set(selectableAdvisers))))
 
         # automatically set current item as predecessor for newItem?
         inheritedAdviserIds = []

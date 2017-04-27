@@ -2671,6 +2671,9 @@ class testMeetingItem(PloneMeetingTestCase):
         item.at_post_edit_script()
         self.assertTrue('developers__rowid__unique_id_123' in item.listOptionalAdvisers())
         self.assertTrue('developers__rowid__unique_id_456' in item.listOptionalAdvisers())
+        # except if include_selected is False
+        self.assertFalse('developers__rowid__unique_id_123' in item.listOptionalAdvisers(include_selected=False))
+        self.assertTrue('developers__rowid__unique_id_456' in item.listOptionalAdvisers(include_selected=False))
 
     def test_pm_ListOptionalAdvisersDelayAwareAdvisers(self):
         '''
@@ -3707,8 +3710,8 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(notSendableItem.getOtherMeetingConfigsClonableTo())
 
     def test_pm_CopiedFieldsCopyGroupsWhenDuplicated(self):
-        '''Make sure field MeetingItem.copyGroups value correspond to what is currently
-           defined in the MeetingConfig.'''
+        '''Make sure field MeetingItem.copyGroups value correspond to what is
+           currently defined in the MeetingConfig.'''
         cfg = self.meetingConfig
         cfg.setUseCopies(True)
         cfg.setSelectableCopyGroups(('developers_reviewers', 'vendors_reviewers'))
@@ -3726,6 +3729,22 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.setUseCopies(False)
         newItem2 = item.clone()
         self.assertFalse(newItem2.getCopyGroups())
+
+    def test_pm_CopiedFieldsOptionalAdvisersWhenDuplicated(self):
+        '''Make sure field MeetingItem.opitonalAdvisers value correspond to what
+           is currently defined in the MeetingConfig.'''
+        cfg = self.meetingConfig
+        cfg.setSelectableAdvisers(('developers', 'vendors'))
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.setOptionalAdvisers(('developers', 'vendors'))
+        item.at_post_edit_script()
+        # change configuration, and do 'developers' no more a selectable adviser
+        cfg.setSelectableAdvisers(('vendors', ))
+        newItem = item.clone()
+        # only relevant copyGroups were kept
+        self.assertEquals(newItem.getOptionalAdvisers(),
+                          ('vendors', ))
 
     def test_pm_ToDiscussFieldBehaviourWhenCloned(self):
         '''When cloning an item to the same MeetingConfig, the field 'toDiscuss' is managed manually :
