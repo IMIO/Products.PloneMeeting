@@ -1295,6 +1295,23 @@ schema = Schema((
         enforceVocabulary=False,
         write_permission="PloneMeeting: Write risky config",
     ),
+    LinesField(
+        name='groupsShownInDashboardFilter',
+        widget=MultiSelectionWidget(
+            description="GroupsShownInDashboardFilter",
+            description_msgid="groups_shown_in_dashboard_filter_descr",
+            format="checkbox",
+            label='Groupsshownindashboardfilter',
+            label_msgid='PloneMeeting_label_groupsShownInDashboardFilter',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="gui",
+        multiValued=1,
+        vocabulary_factory='Products.PloneMeeting.vocabularies.proposinggroupsvocabulary',
+        default=defValues.groupsShownInDashboardFilter,
+        enforceVocabulary=False,
+        write_permission="PloneMeeting: Write risky config",
+    ),
     StringField(
         name='maxShownListings',
         widget=SelectionWidget(

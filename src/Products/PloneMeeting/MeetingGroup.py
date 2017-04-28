@@ -13,8 +13,6 @@ __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
 <g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""
 __docformat__ = 'plaintext'
 
-from DateTime import DateTime
-
 from AccessControl import ClassSecurityInfo
 from Products.Archetypes.atapi import AttributeStorage
 from Products.Archetypes.atapi import BaseContent
@@ -372,6 +370,7 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
         # clean cache for vocabularies using MeetingGroups
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary")
+        invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupsforfacetedfiltervocabulary")
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.groupsinchargevocabulary")
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.askedadvicesvocabulary")
         self.adapted().onEdit(isCreated=True)  # Call product-specific code
@@ -383,6 +382,7 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
         # clean cache for vocabularies using MeetingGroups
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary")
+        invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupsforfacetedfiltervocabulary")
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.groupsinchargevocabulary")
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.askedadvicesvocabulary")
         self.adapted().onEdit(isCreated=False)

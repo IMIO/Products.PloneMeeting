@@ -107,17 +107,82 @@ class ItemProposingGroupsVocabulary(object):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
         groups = tool.getMeetingGroups(onlyActive=False, caching=False)
-        res = []
-        for group in groups:
-            res.append(SimpleTerm(group.getId(),
-                                  group.getId(),
-                                  safe_unicode(group.Title())
-                                  )
-                       )
-        res = sorted(res, key=attrgetter('title'))
+        activeGroups = [group for group in groups if group.queryState() == 'active']
+        notActiveGroups = [group for group in groups if not group.queryState() == 'active']
+        res_active = []
+        for group in activeGroups:
+            res_active.append(
+                SimpleTerm(group.getId(),
+                           group.getId(),
+                           safe_unicode(group.Title())
+                           )
+                )
+        res = sorted(res_active, key=attrgetter('title'))
+
+        res_not_active = []
+        for group in notActiveGroups:
+            res_not_active.append(
+                SimpleTerm(group.getId(),
+                           group.getId(),
+                           translate('${group_title} (Inactive)',
+                                     domain='PloneMeeting',
+                                     mapping={'group_title': safe_unicode(group.Title())},
+                                     context=context.REQUEST)
+                           )
+                )
+        res = res + sorted(res_not_active, key=attrgetter('title'))
         return SimpleVocabulary(res)
 
+
 ItemProposingGroupsVocabularyFactory = ItemProposingGroupsVocabulary()
+
+
+class ItemProposingGroupsForFacetedFilterVocabulary(object):
+    implements(IVocabularyFactory)
+
+    def __call___cachekey(method, self, context):
+        '''cachekey method for self.__call__.'''
+        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.proposinggroupsforfacetedfiltervocabulary')
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        return date, cfg
+
+    @ram.cache(__call___cachekey)
+    def __call__(self, context):
+        """ """
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        groups = tool.getMeetingGroups(onlyActive=False, caching=False)
+        activeGroups = [group for group in groups if group.queryState() == 'active']
+        notActiveGroups = [group for group in groups if not group.queryState() == 'active']
+        groupsToShow = cfg.getGroupsShownInDashboardFilter()
+        res_active = []
+        for group in activeGroups:
+            if not groupsToShow or group.getId() in groupsToShow:
+                res_active.append(
+                    SimpleTerm(group.getId(),
+                               group.getId(),
+                               safe_unicode(group.Title())
+                               )
+                    )
+        res = sorted(res_active, key=attrgetter('title'))
+
+        res_not_active = []
+        for group in notActiveGroups:
+            if not groupsToShow or group.getId() in groupsToShow:
+                res_not_active.append(
+                    SimpleTerm(group.getId(),
+                               group.getId(),
+                               translate('${group_title} (Inactive)',
+                                         domain='PloneMeeting',
+                                         mapping={'group_title': safe_unicode(group.Title())},
+                                         context=context.REQUEST)
+                               )
+                    )
+        res = res + sorted(res_not_active, key=attrgetter('title'))
+        return SimpleVocabulary(res)
+
+ItemProposingGroupsForFacetedFilterVocabularyFactory = ItemProposingGroupsForFacetedFilterVocabulary()
 
 
 class GroupsInChargeVocabulary(object):

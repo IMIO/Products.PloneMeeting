@@ -190,16 +190,25 @@ class testFaceted(PloneMeetingTestCase):
         self.assertNotEqual(terms_cfg1, terms_cfg2)
 
     def test_pm_ProposingGroupsVocabularies(self):
-        '''Test the "Products.PloneMeeting.vocabularies.proposinggroupsvocabulary"
-           and "Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary"
+        '''Test the "Products.PloneMeeting.vocabularies.proposinggroupsvocabulary",
+           "Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary" and
+           "Products.PloneMeeting.vocabularies.proposinggroupsforfacetedfiltervocabulary"
            vocabularies, especially because it is cached.'''
         self.changeUser('siteadmin')
         pmFolder = self.getMeetingFolder()
-        vocab1 = queryUtility(IVocabularyFactory, "Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
-        vocab2 = queryUtility(IVocabularyFactory, "Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary")
+        vocab1 = queryUtility(
+            IVocabularyFactory,
+            "Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
+        vocab2 = queryUtility(
+            IVocabularyFactory,
+            "Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary")
+        vocab3 = queryUtility(
+            IVocabularyFactory,
+            "Products.PloneMeeting.vocabularies.proposinggroupsforfacetedfiltervocabulary")
         # once get, it is cached
         self.assertEquals(len(vocab1(pmFolder)), 3)
         self.assertEquals(len(vocab2(pmFolder)), 3)
+        self.assertEquals(len(vocab3(pmFolder)), 3)
 
         # if we add/remove/edit a group, then the cache is cleaned
         # add a group
@@ -208,22 +217,47 @@ class testFaceted(PloneMeetingTestCase):
         # cache was cleaned
         self.assertEquals(len(vocab1(pmFolder)), 4)
         self.assertEquals(len(vocab2(pmFolder)), 4)
+        self.assertEquals(len(vocab3(pmFolder)), 4)
 
         # edit a group
         self.assertEquals(vocab1(pmFolder).by_token[newGroupId].title, newGroup.Title())
         self.assertEquals(vocab2(pmFolder).by_token[newGroupId].title, newGroup.getAcronym())
+        self.assertEquals(vocab3(pmFolder).by_token[newGroupId].title, newGroup.Title())
         newGroup.setTitle(u'Modified title')
         newGroup.setAcronym(u'Modified acronym')
         newGroup.at_post_edit_script()
         # cache was cleaned
         self.assertEquals(vocab1(pmFolder).by_token[newGroupId].title, newGroup.Title())
         self.assertEquals(vocab2(pmFolder).by_token[newGroupId].title, newGroup.getAcronym())
+        self.assertEquals(vocab3(pmFolder).by_token[newGroupId].title, newGroup.Title())
 
         # remove a group
         self.portal.restrictedTraverse('@@delete_givenuid')(newGroup.UID())
         # cache was cleaned
         self.assertEquals(len(vocab1(pmFolder)), 3)
         self.assertEquals(len(vocab2(pmFolder)), 3)
+        self.assertEquals(len(vocab3(pmFolder)), 3)
+
+    def test_pm_ProposingGroupsForFacetedVocabulary(self):
+        '''Test that vocabulary "Products.PloneMeeting.vocabularies.proposinggroupsforfacetedfiltervocabulary"
+           relies on MeetingConfig.groupsShownInDashboardFilter.'''
+        cfg = self.meetingConfig
+        self.changeUser('siteadmin')
+        pmFolder = self.getMeetingFolder()
+        vocab = queryUtility(
+            IVocabularyFactory,
+            "Products.PloneMeeting.vocabularies.proposinggroupsforfacetedfiltervocabulary")
+        # by default when MeetingConfig.groupsShownInDashboardFilter is empty, every groups are returned
+        self.assertEqual(cfg.getGroupsShownInDashboardFilter(), ())
+        self.assertEquals(
+            [term.title for term in vocab(pmFolder)],
+            [u'Developers', u'Vendors', u'End users (Inactive)'])
+        # now define values in MeetingConfig.groupsShownInDashboardFilter
+        cfg.setGroupsShownInDashboardFilter(('developers', 'endUsers'))
+        cfg.at_post_edit_script()
+        self.assertEquals(
+            [term.title for term in vocab(pmFolder)],
+            [u'Developers', u'End users (Inactive)'])
 
     def test_pm_GroupsInChargeVocabulary(self):
         '''Test the "Products.PloneMeeting.vocabularies.groupsinchargevocabulary"
