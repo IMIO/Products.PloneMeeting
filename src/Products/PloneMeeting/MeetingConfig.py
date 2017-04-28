@@ -1895,6 +1895,19 @@ schema = Schema((
         write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
+        name='itemWithGivenAdviceIsNotDeletable',
+        default=defValues.itemWithGivenAdviceIsNotDeletable,
+        widget=BooleanField._properties['widget'](
+            description="ItemWithGivenAdviceIsNotDeletable",
+            description_msgid="item_with_given_advice_is_not_deletable_descr",
+            label='Itemwithgivenadviceisnotdeletable',
+            label_msgid='PloneMeeting_label_itemWithGivenAdviceIsNotDeletable',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    BooleanField(
         name='ownerMayDeleteAnnexDecision',
         default=defValues.ownerMayDeleteAnnexDecision,
         widget=BooleanField._properties['widget'](

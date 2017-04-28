@@ -146,7 +146,7 @@
   <adapter for="Products.PloneMeeting.Meeting.Meeting"
            factory=".adapters.MeetingContentDeletableAdapter"
            provides="imio.actionspanel.interfaces.IContentDeletable" />
-  <adapter for="Products.PloneMeeting.MeetingItem.MeetingItem"
+  <adapter for="Products.PloneMeeting.interfaces.IMeetingItem"
            factory=".adapters.MeetingItemContentDeletableAdapter"
            provides="imio.actionspanel.interfaces.IContentDeletable" />
 

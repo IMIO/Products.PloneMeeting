@@ -1803,8 +1803,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         if wf_state in item.takenOverByInfos:
             previousUserId = item.takenOverByInfos[wf_state]
-            membershipTool = api.portal.get_tool('portal_membership')
-            previousUser = membershipTool.getMemberById(previousUserId)
+            previousUser = api.user.get(previousUserId)
             mayTakeOver = False
             if previousUser:
                 # do this as previousUser

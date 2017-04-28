@@ -397,6 +397,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   is now used to define columns to display in the table of items presented to a meeting
 - Added field MeetingConfig.groupsShownInDashboardFilter to be able to select values that will be displayed in the 'Group' filter
   of the faceted dashboards
+- Added field MeetingConfig.itemWithGivenAdviceIsNotDeletable, when set to True, an item containing at least one given advice
+  will not be deletable, except by MeetingManagers and Managers
 
 3.3 (2015-02-27)
 ----------------

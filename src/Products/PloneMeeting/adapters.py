@@ -40,6 +40,7 @@ from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import AddAnnexDecision
 from Products.PloneMeeting.config import MEETINGREVIEWERS
 from Products.PloneMeeting.config import MEETINGROLES
+from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.interfaces import IMeeting
 from Products.PloneMeeting.utils import displaying_available_items
@@ -439,6 +440,18 @@ class MeetingItemContentDeletableAdapter(APContentDeletableAdapter):
     def mayDelete(self):
         '''See docstring in interfaces.py.'''
         # check 'Delete objects' permission
+        mayDelete = super(MeetingItemContentDeletableAdapter, self).mayDelete()
+        if mayDelete:
+            # check itemWithGivenAdviceIsNotDeletable
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(self.context)
+            if cfg.getItemWithGivenAdviceIsNotDeletable() and not tool.isManager(self.context):
+                # do we have any given advice?
+                # do not consider advices that are inherited
+                given_advices = [advice for advice in self.context.adviceIndex.values() if
+                                 not advice['inherited'] and not advice['type'] == NOT_GIVEN_ADVICE_VALUE]
+                if given_advices:
+                    return False
         return super(MeetingItemContentDeletableAdapter, self).mayDelete()
 
 

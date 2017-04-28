@@ -41,6 +41,7 @@ from collective.iconifiedcategory.utils import get_categories
 from collective.iconifiedcategory.utils import get_category_object
 from collective.iconifiedcategory.utils import get_config_root
 from collective.iconifiedcategory.utils import get_group
+from imio.actionspanel.interfaces import IContentDeletable
 from plone import api
 from plone.app.testing import logout
 from plone.app.textfield.value import RichTextValue
@@ -5247,6 +5248,47 @@ class testMeetingItem(PloneMeetingTestCase):
         brains_item4_ref = catalog(SearchableText=item4.getItemReference())
         self.assertEqual(len(brains_item4_ref), 1)
         self.assertEqual(brains_item4_ref[0].UID, item4.UID())
+
+    def test_pm_ItemNotDeletableWhenContainingGivenAdvices(self):
+        """If MeetingConfig.itemWithGivenAdviceIsNotDeletable is True,
+           an item containing given advices will not be deletable."""
+        cfg = self.meetingConfig
+        cfg.setItemWithGivenAdviceIsNotDeletable(True)
+        cfg.setUseAdvices(True)
+        cfg.setItemAdviceStates(['itemcreated'])
+        cfg.setItemAdviceEditStates(['itemcreated'])
+        cfg.setItemAdviceViewStates(['itemcreated'])
+        self.changeUser('pmCreator1')
+        itemWithoutAdvice = self.create('MeetingItem')
+        itemWithNotGivenAdvice = self.create('MeetingItem')
+        itemWithNotGivenAdvice.setOptionalAdvisers(('vendors', ))
+        itemWithGivenAdvice = self.create('MeetingItem')
+        itemWithGivenAdvice.setOptionalAdvisers(('vendors', ))
+        itemWithGivenAdvice.at_post_edit_script()
+        self.changeUser('pmReviewer2')
+        createContentInContainer(itemWithGivenAdvice,
+                                 'meetingadvice',
+                                 **{'advice_group': 'vendors',
+                                    'advice_type': u'positive',
+                                    'advice_hide_during_redaction': False,
+                                    'advice_comment': RichTextValue(u'My comment')})
+        # an item containing inherited advices may be deleted
+        self.changeUser('pmCreator1')
+        itemWithInheritedGivenAdvices = itemWithGivenAdvice.clone(
+            setCurrentAsPredecessor=True, inheritAdvices=True)
+
+        # checks
+        cfg.setItemWithGivenAdviceIsNotDeletable(False)
+        self.assertTrue(IContentDeletable(itemWithoutAdvice).mayDelete())
+        self.assertTrue(IContentDeletable(itemWithNotGivenAdvice).mayDelete())
+        self.assertTrue(IContentDeletable(itemWithGivenAdvice).mayDelete())
+        self.assertTrue(IContentDeletable(itemWithInheritedGivenAdvices).mayDelete())
+        cfg.setItemWithGivenAdviceIsNotDeletable(True)
+        self.assertTrue(IContentDeletable(itemWithoutAdvice).mayDelete())
+        self.assertTrue(IContentDeletable(itemWithNotGivenAdvice).mayDelete())
+        self.assertFalse(IContentDeletable(itemWithGivenAdvice).mayDelete())
+        self.assertTrue(IContentDeletable(itemWithInheritedGivenAdvices).mayDelete())
+        import ipdb; ipdb.set_trace()
 
 
 def test_suite():

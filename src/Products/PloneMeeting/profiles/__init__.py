@@ -487,6 +487,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.itemCopyGroupsStates = ['accepted', 'refused', 'delayed', ]
         self.hideItemHistoryCommentsToUsersOutsideProposingGroup = False
         self.restrictAccessToSecretItems = False
+        self.itemWithGivenAdviceIsNotDeletable = False
         self.ownerMayDeleteAnnexDecision = False
 
         # GUI-related parameters -----------------------------------------------
