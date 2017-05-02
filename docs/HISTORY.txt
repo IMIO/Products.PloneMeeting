@@ -401,6 +401,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   of the faceted dashboards
 - Added field MeetingConfig.itemWithGivenAdviceIsNotDeletable, when set to True, an item containing at least one given advice
   will not be deletable, except by MeetingManagers and Managers
+- Invalidate actions_panel cache for Meeting and MeetingItem if MeetingConfig is modified.  Indeed it can add/remove WF transitions
+  or enable/disable delete icon when item contains advices for example.  This is done at the ram.cache invalidation key level because
+  call to cleanRamCache in MeetingConfig.at_post_edit_script is not enough when using several ZEO instances
 
 3.3 (2015-02-27)
 ----------------

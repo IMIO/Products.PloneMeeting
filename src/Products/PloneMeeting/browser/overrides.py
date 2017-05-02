@@ -432,6 +432,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
            - linked meeting is modified (modified is also triggered when review_state changed);
            - item is modified (modified is also triggered when review_state changed);
            - something changed around advices;
+           - cfg changed;
            - different item or user;
            - user groups changed;
            - if item query_state is 'validated', check also if it is presentable;
@@ -442,6 +443,9 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         if meeting:
             meetingModified = self.context.getMeeting().modified()
         annotations = IAnnotations(self.context)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        cfg_modified = cfg.modified()
         user = self.request['AUTHENTICATED_USER']
         userGroups = user.getGroups()
         userRoles = user.getRoles()
@@ -451,7 +455,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         if self.context.queryState() == 'validated':
             isPresentable = self.context.wfConditions().mayPresent()
 
-        return (self.context, self.context.modified(), self.context.adviceIndex,
+        return (self.context, self.context.modified(), self.context.adviceIndex, cfg_modified,
                 user.getId(), userGroups, userRoles, annotations,
                 meetingModified, useIcons, showTransitions, appendTypeNameToTransitionLabel, showEdit,
                 showOwnDelete, showActions, showAddContent, showHistory, showHistoryLastEventHasComments,
@@ -546,8 +550,12 @@ class MeetingActionsPanelView(BaseActionsPanelView):
            The cache is invalidated if :
            - meeting is modified (modified is also triggered when review_state changed);
            - getRawItems changed;
+           - cfg modified;
            - different item or user;
            - user groups changed.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        cfg_modified = cfg.modified()
         user = self.request['AUTHENTICATED_USER']
         userGroups = user.getGroups()
         userRoles = user.getRoles()
@@ -555,7 +563,7 @@ class MeetingActionsPanelView(BaseActionsPanelView):
         if hasattr(self.context, 'invalidate_meeting_actions_panel_cache'):
             invalidate_meeting_actions_panel_cache = True
             delattr(self.context, 'invalidate_meeting_actions_panel_cache')
-        return (self.context, self.context.modified(), self.context.getRawItems(),
+        return (self.context, self.context.modified(), self.context.getRawItems(), cfg_modified,
                 user.getId(), userGroups, userRoles, invalidate_meeting_actions_panel_cache,
                 useIcons, showTransitions, appendTypeNameToTransitionLabel, showEdit,
                 showOwnDelete, showActions, showAddContent, showHistory, showHistoryLastEventHasComments,
