@@ -307,8 +307,10 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   Added constant EXTRA_ADVICE_SUFFIXES to config.py to define extra suffixes to use for groups giving advice using a custom workflow
 - Meeting and MeetingItem WorkflowCondition 'mayCorrect' now receive an extra parameter 'destinationState' that is useful
   when a state has several 'back' transitions to know which transition we are working on
-- Moved emergency change comment popup and advice delay change comment popup to z3c.form
-  to be able to define that comment is now required
+- Moved emergency change comment popup and advice delay change comment popup to z3c.form to be able to define that comment is now required.
+  Moreover access to delay changes history is now given to every members of the proposing group in addition to advisers of the group the advice
+  is asked to and MeetingManagers.  Before members of the proposingGroup were only able to see the delay changes history when they were
+  able to change the delay, but no more after
 - Added helper method MeetingItem.getAdviceObj(advId) that will return the 'meetingadvice' object for the given p_advId adviser
   id.  If advice object exists, it is returned, otherwise 'None' is returned
 - Display a "group users" icon next to the displayed copy groups and asked advices on the item view to be able to get informations

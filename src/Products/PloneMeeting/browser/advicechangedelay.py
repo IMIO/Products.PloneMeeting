@@ -105,14 +105,17 @@ class AdviceDelaysView(BrowserView):
         return res
 
     def _mayAccessDelayChangesHistory(self, adviceId=None):
-        '''May current user access delay changes history?'''
+        '''May current user access delay changes history?
+           By default it is shown to MeetingManagers, advisers of p_adviceId and members of the proposingGroup.'''
         if not adviceId:
             adviceId = self.advice['id']
-        tool = getToolByName(self.context, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         # MeetingManagers and advisers of the group
         # can access the delay changes history
         userAdviserGroupIds = [group.getId() for group in tool.getGroupsForUser(suffixes=['advisers'])]
-        if tool.isManager(self.context) or adviceId in userAdviserGroupIds:
+        if tool.isManager(self.context) or \
+           adviceId in userAdviserGroupIds or \
+           self.context.getProposingGroup(theObject=True) in tool.getGroupsForUser():
             return True
         else:
             return False

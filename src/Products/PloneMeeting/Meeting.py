@@ -887,7 +887,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                ]
         # First, get meetings accepting items for which the date is lower or
         # equal to the date of this meeting (self)
-        meetings = meeting.portal_catalog(
+        catalog = api.portal.get_tool('portal_catalog')
+        meetings = catalog(
             portal_type=cfg.getMeetingTypeName(),
             getDate={'query': meeting.getDate(), 'range': 'max'}, )
         meetingUids = [b.getObject().UID() for b in meetings]
