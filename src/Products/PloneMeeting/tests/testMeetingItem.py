@@ -5288,7 +5288,6 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(IContentDeletable(itemWithNotGivenAdvice).mayDelete())
         self.assertFalse(IContentDeletable(itemWithGivenAdvice).mayDelete())
         self.assertTrue(IContentDeletable(itemWithInheritedGivenAdvices).mayDelete())
-        import ipdb; ipdb.set_trace()
 
 
 def test_suite():
