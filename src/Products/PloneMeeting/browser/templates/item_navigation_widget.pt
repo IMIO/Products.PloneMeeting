@@ -59,7 +59,7 @@
                            size="3"
                            tal:attributes="onKeyPress string:if (event.keyCode==13) gotoItem($(this), $lastItemNumberDisplay);" />
         <img tal:attributes="src string: ${view/portal_url}/gotoItem.png;
-                             onClick string:javascript:gotoItem($$('input#goto_meeting'), ${lastItemNumberDisplay});"
+                             onClick string:javascript:gotoItem($$(this).prev(), ${lastItemNumberDisplay});"
              style="cursor:pointer"/>
     </span>
 </div>
