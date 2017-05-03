@@ -21,6 +21,10 @@
               handler=".events.onItemMoved" />
 
   <subscriber for=".interfaces.IMeetingItem
+                   OFS.interfaces.IObjectClonedEvent"
+              handler=".events.onItemCloned" />
+
+  <subscriber for=".interfaces.IMeetingItem
                    Products.DCWorkflow.interfaces.IAfterTransitionEvent"
               handler=".events.onItemTransition" />
 

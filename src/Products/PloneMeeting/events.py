@@ -299,8 +299,24 @@ def onGroupRemoved(group, event):
     invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.askedadvicesvocabulary")
 
 
+def _check_item_pasted_in_cfg(item):
+    """ """
+    if item.isDefinedInTool():
+        # weirdly it is posible to copy/paste from MeetingConfig to another violating
+        # the constrain types?  So make sure we do not paste from another MC or
+        # we get an element with a wrong portal_type, moreover it would be work
+        # to ensure that copied data are valid : category, opitonal fields, ...
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(item, caching=False)
+        # not same cfg manage portal_type
+        recurringItemPortalType = cfg.getItemTypeName(configType='MeetingItemRecurring')
+        itemTemplatePortalType = cfg.getItemTypeName(configType='MeetingItemTemplate')
+        if item.portal_type not in (recurringItemPortalType, itemTemplatePortalType):
+            raise Unauthorized()
+
+
 def onItemMoved(item, event):
-    '''Called when an item is pasted cut/pasted.'''
+    '''Called when an item is cut/pasted.'''
     # this is also called when removing an item, in this case, we do nothing
     if IObjectRemovedEvent.providedBy(event):
         return
@@ -308,6 +324,15 @@ def onItemMoved(item, event):
     # update categorized_elements when renaming because path changed
     if item._at_creation_flag:
         update_all_categorized_elements(item)
+
+    # check if we are not pasting items from a MC to another
+    _check_item_pasted_in_cfg(item)
+
+
+def onItemCloned(item, event):
+    '''Called when an item is copy/pasted.'''
+    # check if we are not pasting items from a MC to another
+    _check_item_pasted_in_cfg(item)
 
 
 def onItemAdded(item, event):

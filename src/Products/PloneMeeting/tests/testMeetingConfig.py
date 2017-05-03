@@ -1226,6 +1226,34 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.meetingConfig.updateAnnexConfidentiality()
         self.assertTrue(annex.confidential)
 
+    def test_pm_ItemInConfigIsNotPastableToAnotherMC(self):
+        """ """
+        self.changeUser('siteadmin')
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+
+        # item template
+        item_template = cfg.itemtemplates.objectValues()[0]
+        copied_data = cfg.itemtemplates.manage_copyObjects(ids=[item_template.getId()])
+        # pastable locally
+        self.assertEqual(len(cfg.itemtemplates.objectIds()), 2)
+        cfg.itemtemplates.manage_pasteObjects(copied_data)
+        self.assertEqual(len(cfg.itemtemplates.objectIds()), 3)
+        # but not to another MC
+        self.assertRaises(Unauthorized,
+                          cfg2.itemtemplates.manage_pasteObjects, copied_data)
+
+        # recurring item
+        rec_item = cfg.recurringitems.objectValues()[0]
+        copied_data = cfg.recurringitems.manage_copyObjects(ids=[rec_item.getId()])
+        # pastable locally
+        self.assertEqual(len(cfg.recurringitems.objectIds()), 2)
+        cfg.recurringitems.manage_pasteObjects(copied_data)
+        self.assertEqual(len(cfg.recurringitems.objectIds()), 3)
+        # but not to another MC
+        self.assertRaises(Unauthorized,
+                          cfg2.recurringitems.manage_pasteObjects, copied_data)
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
