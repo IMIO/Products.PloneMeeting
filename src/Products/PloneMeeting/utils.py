@@ -1047,11 +1047,11 @@ def getHistory(obj, startNumber=0, batchSize=500, checkMayView=True):
                     val = oldValue.replace('\r', '').replace('\n', '<br/>')
                     event['changes'][name] = val
                 elif widgetName == 'SelectionWidget':
-                    allValues = getattr(obj, obj.getField(name).vocabulary)()
+                    allValues = obj.getField(name).Vocabulary(obj)
                     val = allValues.getValue(oldValue or '')
                     event['changes'][name] = val or '-'
                 elif widgetName == 'MultiSelectionWidget':
-                    allValues = getattr(obj, obj.getField(name).vocabulary)()
+                    allValues = obj.getField(name).Vocabulary(obj)
                     val = [allValues.getValue(v) for v in oldValue]
                     if not val:
                         val = '-'
