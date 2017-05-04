@@ -3544,6 +3544,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            or an empty list.  The method update existing copyGroups and add groups
            prefixed with AUTO_COPY_GROUP_PREFIX.'''
         tool = api.portal.get_tool('portal_plonemeeting')
+        # empty stored autoCopyGroups
         self.autoCopyGroups = PersistentList()
 
         for mGroup in tool.getMeetingGroups():

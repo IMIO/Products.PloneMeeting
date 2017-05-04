@@ -649,17 +649,21 @@ class Migrate_To_4_0(Migrator):
         logger.info('Done.')
 
     def _addPersistentAttributesToItems(self):
-        '''Add the attributes 'emergency_changes_history', 'completeness_changes_history' and 'takenOverByInfos'
-           on every existing items :
+        '''Add the attributes 'autoCopyGroups', 'emergency_changes_history',
+           'completeness_changes_history' and 'takenOverByInfos' on every existing items :
+           - 'autoCopyGroups' is used to stored automatically added copyGroups;
            - 'emergency_changes_history' and 'completeness_changes_history' will be used to store changes about the
            MeetingItem.emergency and MeetingItem.completeness fields values and comments;
            - 'takenOverByInfos' will be used to store history of who already took an item over
            for each review_state the item already get thru.'''
         brains = self.portal.portal_catalog(meta_type=('MeetingItem', ))
-        logger.info("Initializing new attributes 'emergency_changes_history', 'completeness_changes_history' and "
-                    "'takenOverByInfos' for %d MeetingItem objects..." % len(brains))
+        logger.info("Initializing new attributes 'autoCopyGroups', 'emergency_changes_history', "
+                    "ompleteness_changes_history' and 'takenOverByInfos' for %d MeetingItem objects..."
+                    % len(brains))
         for brain in brains:
             item = brain.getObject()
+            if not hasattr(item, 'autoCopyGroups'):
+                item.autoCopyGroups = PersistentList()
             if not hasattr(item, 'emergency_changes_history'):
                 item.emergency_changes_history = PersistentList()
             if not hasattr(item, 'completeness_changes_history'):
