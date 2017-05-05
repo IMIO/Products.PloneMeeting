@@ -4776,6 +4776,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ("adviceInvalidated", translate('event_invalidate_advice',
                                             domain=d,
                                             context=self.REQUEST)),
+            ("adviceDelayWarning", translate('event_advice_delay_warning',
+                                             domain=d,
+                                             context=self.REQUEST)),
+            ("adviceDelayExpired", translate('event_advice_delay_expired',
+                                             domain=d,
+                                             context=self.REQUEST)),
             # relevant if askToDiscuss is enabled
             ("askDiscussItem", translate('event_ask_discuss_item',
                                          domain=d,

@@ -3419,6 +3419,71 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         """See docstring in interfaces.py"""
         return True
 
+    def _sendMailToGroupMembers(self, group_id, event_id, mapping={}):
+        """ """
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        ploneGroup = api.group.get(group_id)
+        for memberId in ploneGroup.getMemberIds():
+            if event_id not in cfg.getUserParam('mailItemEvents',
+                                                request=self.REQUEST,
+                                                userId=memberId):
+                continue
+            # Send a mail to this user
+            recipient = tool.getMailRecipient(memberId)
+            if recipient:
+                sendMail([recipient],
+                         self,
+                         event_id,
+                         mapping=mapping)
+
+    security.declarePublic('sendAdviceDelayWarningMailIfRelevant')
+
+    def sendAdviceDelayWarningMailIfRelevant(self, group_id, old_adviceIndex):
+        ''' '''
+        def _delay_in_alert(adviceInfo, old_adviceInfo):
+            """ """
+            left_delay = adviceInfo['delay_infos']['left_delay']
+            old_left_delay = old_adviceInfo['delay_infos']['left_delay']
+            delay_left_alert = adviceInfo['delay_left_alert']
+            return (left_delay != old_left_delay) and \
+                (delay_left_alert.isdigit() and
+                 left_delay >= -1
+                 and left_delay <= int(delay_left_alert))
+
+        def _just_timed_out(adviceInfo, old_adviceInfo):
+            """ """
+            return adviceInfo['delay_infos']['delay_status'] == 'timed_out' and \
+                not old_adviceInfo['delay_infos']['delay_status'] == 'timed_out'
+
+        # now that new delay is computed, check if we need to send an email notification
+        # only notify one time, when 'left_delay' changed and if it is <= 'delay_left_alert'
+        # when _updateAdvices is called several times, delay_infos could not exist in old_adviceIndex
+        adviceInfo = self.adviceIndex[group_id]
+        old_adviceInfo = old_adviceIndex[group_id]
+        if adviceInfo.get('delay_infos', {}) and \
+           old_adviceInfo.get('delay_infos', {}):
+            # take also into account freshly expired delays
+            just_timed_out = _just_timed_out(adviceInfo, old_adviceInfo)
+            if _delay_in_alert(adviceInfo, old_adviceInfo) or just_timed_out:
+                tool = api.portal.get_tool('portal_plonemeeting')
+                cfg = tool.getMeetingConfig(self)
+                left_delay = adviceInfo['delay_infos']['left_delay']
+                limit_date = adviceInfo['delay_infos']['limit_date_localized']
+                event_id = 'adviceDelayWarning'
+                if left_delay == -1 or just_timed_out:
+                    event_id = 'adviceDelayExpired'
+                if event_id not in cfg.getMailItemEvents():
+                    return
+                plone_group_id = '{0}_advisers'.format(group_id)
+                self._sendMailToGroupMembers(
+                    plone_group_id,
+                    event_id,
+                    mapping={'left_delay': left_delay,
+                             'limit_date': limit_date,
+                             'group_name': self.adviceIndex[group_id]['name'],
+                             'delay_label': self.adviceIndex[group_id]['delay_label']})
+
     def getUnhandledInheritedAdvisersData(self, adviserIds, optional):
         """ """
         predecessor = self.getPredecessor()
@@ -4606,6 +4671,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             else:
                 adviceHolder = self
             self.adviceIndex[groupId]['delay_infos'] = adviceHolder.getDelayInfosForAdvice(groupId)
+            # send delay expiration warning notification if relevant
+            self.sendAdviceDelayWarningMailIfRelevant(
+                groupId, old_adviceIndex)
 
         # update adviceIndex of every items for which I am the predecessor
         # this way inherited advices are correct if any

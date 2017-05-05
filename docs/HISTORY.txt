@@ -406,6 +406,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   call to cleanRamCache in MeetingConfig.at_post_edit_script is not enough when using several ZEO instances
 - Make sure it is not possible to paste config items (ItemTemplate, RecurringItem) from a MeetingConfig to another as the copy/paste
   buttons are enabled in the item templates management configuration
+- Added an email notification when advice delay is about to expire and an email notification when advice delay is expired
 
 3.3 (2015-02-27)
 ----------------
