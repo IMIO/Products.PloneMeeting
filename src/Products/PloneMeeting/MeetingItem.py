@@ -3451,7 +3451,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # only notify one time, when 'left_delay' changed and if it is <= 'delay_left_alert'
         # when _updateAdvices is called several times, delay_infos could not exist in old_adviceIndex
         adviceInfo = self.adviceIndex[group_id]
-        old_adviceInfo = old_adviceIndex[group_id]
+        # first time group_id is added to adviceIndex, it does not exist in old_adviceIndex
+        old_adviceInfo = old_adviceIndex.get(group_id, {})
         if adviceInfo.get('delay_infos', {}) and \
            old_adviceInfo.get('delay_infos', {}):
             # take also into account freshly expired delays
