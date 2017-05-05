@@ -3383,12 +3383,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(self)
         if 'adviceToGive' not in cfg.getMailItemEvents():
             return
-        for groupId, adviceInfo in self.adviceIndex.iteritems():
+        for group_id, adviceInfo in self.adviceIndex.iteritems():
             # call hook '_sendAdviceToGiveToGroup' to be able to bypass
             # send of this notification to some defined groups
-            if not self.adapted()._sendAdviceToGiveToGroup(groupId):
+            if not self.adapted()._sendAdviceToGiveToGroup(group_id):
                 continue
-            adviceStates = getattr(tool, groupId).getItemAdviceStates(cfg)
+            adviceStates = getattr(tool, group_id).getItemAdviceStates(cfg)
             # Ignore advices that must not be given in the current item state
             if new_review_state not in adviceStates:
                 continue
@@ -3399,32 +3399,23 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if not adviceInfo['type'] == 'not_given':
                 continue
             # Send a mail to every person from group _advisers.
-            ploneGroup = self.acl_users.getGroup('%s_advisers' % groupId)
-            for memberId in ploneGroup.getMemberIds():
-                if 'adviceToGive' not in cfg.getUserParam('mailItemEvents',
-                                                          request=self.REQUEST,
-                                                          userId=memberId):
-                    continue
-                # Send a mail to this guy
-                recipient = tool.getMailRecipient(memberId)
-                if recipient:
-                    labelType = adviceInfo['optional'] and 'advice_optional' or 'advice_mandatory'
-                    translated_type = translate(labelType, domain='PloneMeeting', context=self.REQUEST).lower()
-                    sendMail([recipient],
-                             self,
-                             'adviceToGive',
-                             mapping={'type': translated_type})
+            labelType = adviceInfo['optional'] and 'advice_optional' or 'advice_mandatory'
+            translated_type = translate(labelType, domain='PloneMeeting', context=self.REQUEST).lower()
+            plone_group_id = '{0}_advisers'.format(group_id)
+            self._sendMailToGroupMembers(plone_group_id=plone_group_id,
+                                         event_id='adviceToGive',
+                                         mapping={'type': translated_type})
 
     def _sendAdviceToGiveToGroup(self, groupId):
         """See docstring in interfaces.py"""
         return True
 
-    def _sendMailToGroupMembers(self, group_id, event_id, mapping={}):
+    def _sendMailToGroupMembers(self, plone_group_id, event_id, mapping={}):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        ploneGroup = api.group.get(group_id)
-        for memberId in ploneGroup.getMemberIds():
+        plone_group = api.group.get(plone_group_id)
+        for memberId in plone_group.getMemberIds():
             if event_id not in cfg.getUserParam('mailItemEvents',
                                                 request=self.REQUEST,
                                                 userId=memberId):
