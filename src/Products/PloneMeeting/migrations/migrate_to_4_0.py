@@ -855,6 +855,9 @@ class Migrate_To_4_0(Migrator):
                             annex_creators = mf.Creators()
                             # remove mf before creating new annex because we will use same id
                             obj.manage_delObjects(ids=[annex_id])
+                            # make sure annex_id is not reserved
+                            if self.portal.check_id(annex_id):
+                                annex_id = annex_id + '-1'
                             new_annex = api.content.create(
                                 id=annex_id,
                                 type=annex_type,
