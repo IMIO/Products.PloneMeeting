@@ -416,6 +416,13 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
     # performed in meetingConfig.validate_workflowAdaptations.
     # If p_specificAdaptation is passed, just the relevant wfAdaptation is applied.
     wfAdaptations = meetingConfig.getWorkflowAdaptations()
+    # make sure given wfAdaptations are in the right order
+    # import MeetingConfig only here so we are sure that the 'wfAdaptations' attr
+    # has been updated by subplugins if any
+    from Products.PloneMeeting.MeetingConfig import MeetingConfig
+    ordered_wfAdaptations = MeetingConfig.wfAdaptations
+    wfAdaptations = list(wfAdaptations)
+    wfAdaptations.sort(key=lambda x: ordered_wfAdaptations.index(x))
     wfTool = api.portal.get_tool('portal_workflow')
 
     def _getItemWorkflow():

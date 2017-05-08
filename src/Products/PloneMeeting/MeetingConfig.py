@@ -2216,7 +2216,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     metaNames = ('Item', 'ItemTemplate', 'ItemRecurring', 'Meeting')
     defaultWorkflows = ('meetingitem_workflow', 'meeting_workflow')
 
-    # Names of workflow adaptations.
+    # Names of workflow adaptations, ORDER IS IMPORTANT!
     wfAdaptations = ('no_global_observation', 'creator_initiated_decisions',
                      'only_creator_may_delete', 'pre_validation',
                      'pre_validation_keep_reviewer_permissions', 'items_come_validated',
