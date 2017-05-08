@@ -240,7 +240,11 @@ class Migrate_To_4_0(Migrator):
             cfg.setItemColumns(itemColumns)
             cfg.setMeetingColumns(meetingColumns)
             # default value for new field MeetingConfig.availableItemsListVisibleColumns
-            cfg.setAvailableItemsListVisibleColumns(itemsListVisibleColumns)
+            # except 'review_state'
+            availableItemsListVisibleColumns = list(itemsListVisibleColumns)
+            if 'review_state' in availableItemsListVisibleColumns:
+                availableItemsListVisibleColumns.remove('review_state')
+            cfg.setAvailableItemsListVisibleColumns(availableItemsListVisibleColumns)
             # before the item_reference column was not selectable
             itemsListVisibleColumns.append('item_reference')
             cfg.setItemsListVisibleColumns(itemsListVisibleColumns)
