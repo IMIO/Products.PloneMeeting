@@ -286,6 +286,7 @@ meetingPma.annexTypes = [financialAnalysis, budgetAnalysisCfg1, overheadAnalysis
                          adviceAnnex, adviceLegalAnalysis, meetingAnnex]
 meetingPma.usedItemAttributes = ('toDiscuss', 'itemTags', 'itemIsSigned',)
 meetingPma.usedMeetingAttributes = ('place',)
+meetingPma.maxShownListings = '100'
 meetingPma.itemDecidedStates = ('accepted', 'refused', 'delayed', 'confirmed', 'itemarchived')
 meetingPma.itemPositiveDecidedStates = ['accepted', 'confirmed']
 meetingPma.transitionsForPresentingAnItem = ('propose', 'validate', 'present', )

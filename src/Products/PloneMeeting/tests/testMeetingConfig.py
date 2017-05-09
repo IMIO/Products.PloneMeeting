@@ -35,6 +35,8 @@ from collective.iconifiedcategory.utils import get_category_object
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFPlone import PloneMessageFactory
 from Products.CMFPlone.CatalogTool import getIcon
+from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
+from imio.dashboard.utils import _get_criterion
 
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
@@ -1253,6 +1255,29 @@ class testMeetingConfig(PloneMeetingTestCase):
         # but not to another MC
         self.assertRaises(Unauthorized,
                           cfg2.recurringitems.manage_pasteObjects, copied_data)
+
+    def test_pm_MaxShownListings(self):
+        """Field MeetingConfig.maxShownListings is synchronized with faceted filter 'resultsperpage'."""
+        # default value works while used in import_data, default is '100' here
+        cfg = self.meetingConfig
+        self.assertEqual(cfg.getMaxShownListings(), u'100')
+        # no resultsperpage widget on 'cfg.searches'
+        self.assertIsNone(
+            _get_criterion(
+                cfg.searches,
+                ResultsPerPageWidget.widget_type)
+            )
+        # filter on searches_items is synchronized
+        criterion = _get_criterion(cfg.searches.searches_items, ResultsPerPageWidget.widget_type)
+        # sync from cfg to faceted widget
+        self.assertEqual(criterion.default, u'100')
+        cfg.setMaxShownListings('80')
+        self.assertEqual(criterion.default, u'80')
+        self.assertEqual(cfg.getMaxShownListings(), u'80')
+        # sync from faceted widget to cfg
+        criterion.default = u'60'
+        self.assertEqual(criterion.default, u'60')
+        self.assertEqual(cfg.getMaxShownListings(), u'60')
 
 
 def test_suite():

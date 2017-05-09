@@ -2695,22 +2695,27 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Overrides the field 'maxShownListings' mutator to synch
            defined value with relevant faceted criterion.'''
         # get the criterion and update it
-        criterion = _get_criterion(
-            self.searches.searches_items,
-            ResultsPerPageWidget.widget_type)
-        criterion.default = value
+        # do not fail at widget initialization
+        if self.get('searches'):
+            criterion = _get_criterion(
+                self.searches.searches_items,
+                ResultsPerPageWidget.widget_type)
+            criterion.default = safe_unicode(value)
         self.getField('maxShownListings').set(self, value, **kwargs)
 
     security.declarePublic('getMaxShownListings')
 
-    def getMaxShownListings(self):
+    def getMaxShownListings(self, **kwargs):
         '''Overrides the field 'maxShownListings' acessor to synch
            defined value with relevant faceted criterion.'''
         # get the criterion
         criterion = _get_criterion(
             self.searches.searches_items,
             ResultsPerPageWidget.widget_type)
-        return criterion.default
+        if criterion:
+            return criterion.default
+        else:
+            return self.getField('maxShownListings').get(self, **kwargs)
 
     security.declarePrivate('listAttributes')
 
@@ -4517,6 +4522,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     tool._enableFacetedDashboardFor(subFolder,
                                                     xmlpath=os.path.dirname(__file__) +
                                                     '/faceted_conf/default_dashboard_items_widgets.xml')
+                    # synch value between self.maxShownListings and the 'resultsperpage' widget
+                    self.setMaxShownListings(self.getField('maxShownListings').get(self))
                 elif subFolderId == 'searches_meetings':
                     tool._enableFacetedDashboardFor(subFolder,
                                                     xmlpath=os.path.dirname(__file__) +
