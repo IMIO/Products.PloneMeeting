@@ -33,6 +33,7 @@ from collective.iconifiedcategory.utils import get_categories
 from eea.facetednavigation.criteria.handler import Criteria as eeaCriteria
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
+from eea.facetednavigation.widgets.storage import Criterion
 from imio.actionspanel.adapters import ContentDeletableAdapter as APContentDeletableAdapter
 from imio.history.adapters import ImioWfHistoryAdapter
 from imio.prettylink.adapters import PrettyLinkAdapter
@@ -913,10 +914,13 @@ class Criteria(eeaCriteria):
                 continue
             if criterion.section != u'advanced' or \
                criterion.__name__ in kept_filters:
-                res.append(criterion)
-            # manage default value for the 'resultsperpage' criterion
-            if criterion.widget == ResultsPerPageWidget.widget_type:
-                criterion.default = resultsperpagedefault
+                # create new object to avoid modifying stored one
+                new_criterion = Criterion()
+                new_criterion.update(**criterion.__dict__)
+                # manage default value for the 'resultsperpage' criterion
+                if criterion.widget == ResultsPerPageWidget.widget_type:
+                    new_criterion.default = resultsperpagedefault
+                res.append(new_criterion)
         self.criteria = res
         return self.context, self.criteria
 

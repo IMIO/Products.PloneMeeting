@@ -68,6 +68,8 @@ from Products.CMFPlone.utils import safe_unicode
 from plone import api
 from collective.iconifiedcategory.utils import get_category_object
 from eea.facetednavigation.interfaces import ICriteria
+from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
+from imio.dashboard.utils import _get_criterion
 from imio.helpers.cache import cleanRamCache
 from imio.helpers.content import validate_fields
 from Products.PloneMeeting import PloneMeetingError
@@ -2686,6 +2688,29 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if not v.get('row_id', None):
                 v.row_id = self.generateUniqueId()
         self.getField('customAdvisers').set(self, value, **kwargs)
+
+    security.declareProtected(WriteRiskyConfig, 'setMaxShownListings')
+
+    def setMaxShownListings(self, value, **kwargs):
+        '''Overrides the field 'maxShownListings' mutator to synch
+           defined value with relevant faceted criterion.'''
+        # get the criterion and update it
+        criterion = _get_criterion(
+            self.searches.searches_items,
+            ResultsPerPageWidget.widget_type)
+        criterion.default = value
+        self.getField('maxShownListings').set(self, value, **kwargs)
+
+    security.declarePublic('getMaxShownListings')
+
+    def getMaxShownListings(self):
+        '''Overrides the field 'maxShownListings' acessor to synch
+           defined value with relevant faceted criterion.'''
+        # get the criterion
+        criterion = _get_criterion(
+            self.searches.searches_items,
+            ResultsPerPageWidget.widget_type)
+        return criterion.default
 
     security.declarePrivate('listAttributes')
 
