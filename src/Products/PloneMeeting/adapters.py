@@ -407,7 +407,7 @@ class AnnexContentDeletableAdapter(APContentDeletableAdapter):
     def __init__(self, context):
         self.context = context
 
-    def mayDelete(self):
+    def mayDelete(self, **kwargs):
         '''See docstring in interfaces.py.'''
         # check 'Delete objects' permission
         mayDelete = super(AnnexContentDeletableAdapter, self).mayDelete()
@@ -430,6 +430,29 @@ class AnnexContentDeletableAdapter(APContentDeletableAdapter):
         return mayDelete
 
 
+class AdviceContentDeletableAdapter(APContentDeletableAdapter):
+    """
+      Manage the mayDelete for meetingadvice.
+      Must have 'Delete objects' on the item.
+      If some versions are saved (advice was asked_again at least once), advice
+      is not deletable.
+    """
+    def __init__(self, context):
+        self.context = context
+
+    def mayDelete(self, **kwargs):
+        '''See docstring in interfaces.py.'''
+        # check 'Delete objects' permission
+        mayDelete = super(AdviceContentDeletableAdapter, self).mayDelete()
+        if mayDelete:
+            tool = api.portal.get_tool('portal_plonemeeting')
+            pr = api.portal.get_tool('portal_repository')
+            if not tool.isManager(self.context, realManagers=True) and \
+               pr.getHistoryMetadata(self.context):
+                return False
+        return mayDelete
+
+
 class MeetingItemContentDeletableAdapter(APContentDeletableAdapter):
     """
       Manage the mayDelete for MeetingItem.
@@ -438,7 +461,7 @@ class MeetingItemContentDeletableAdapter(APContentDeletableAdapter):
     def __init__(self, context):
         self.context = context
 
-    def mayDelete(self):
+    def mayDelete(self, **kwargs):
         '''See docstring in interfaces.py.'''
         # check 'Delete objects' permission
         mayDelete = super(MeetingItemContentDeletableAdapter, self).mayDelete()
@@ -453,7 +476,7 @@ class MeetingItemContentDeletableAdapter(APContentDeletableAdapter):
                                  not advice['inherited'] and not advice['type'] == NOT_GIVEN_ADVICE_VALUE]
                 if given_advices:
                     return False
-        return super(MeetingItemContentDeletableAdapter, self).mayDelete()
+        return mayDelete
 
 
 class MeetingContentDeletableAdapter(APContentDeletableAdapter):
@@ -466,7 +489,7 @@ class MeetingContentDeletableAdapter(APContentDeletableAdapter):
     def __init__(self, context):
         self.context = context
 
-    def mayDelete(self):
+    def mayDelete(self, **kwargs):
         '''See docstring in interfaces.py.'''
         if not super(MeetingContentDeletableAdapter, self).mayDelete():
             return False

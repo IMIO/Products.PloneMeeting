@@ -1904,8 +1904,8 @@ class testAdvices(PloneMeetingTestCase):
         # right, ask advice again
         changeView()
         # advice was not historized again because it was not modified
-        self.assertEquals(pr.getHistoryMetadata(advice)._available, [0])
-        self.assertTrue(advice.advice_type == 'asked_again')
+        self.assertEqual(pr.getHistoryMetadata(advice)._available, [0])
+        self.assertEqual(advice.advice_type, 'asked_again')
         # now it is available in vocabulary
         vocab = factory(advice)
         self.assertTrue('asked_again' in vocab)
@@ -1952,6 +1952,68 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmReviewer1')
         self.backToState(item, 'itemcreated')
         self.assertEquals(pr.getHistoryMetadata(advice)._available, [0, 1, 2, 3])
+
+    def test_pm_HistorizedAdviceIsNotDeletable(self):
+        """When an advice has been historized (officially given or asked_again,
+           so when versions exist), it can not be deleted by the advisers."""
+        cfg = self.meetingConfig
+        cfg.setItemAdviceStates([self.WF_STATE_NAME_MAPPINGS['itemcreated'], ])
+        cfg.setItemAdviceEditStates([self.WF_STATE_NAME_MAPPINGS['itemcreated'], ])
+        cfg.setItemAdviceViewStates([self.WF_STATE_NAME_MAPPINGS['itemcreated'], ])
+        cfg.setUsedAdviceTypes(cfg.getUsedAdviceTypes() + ('asked_again', ))
+        self.changeUser('pmCreator1')
+        # create an item and ask the advice of group 'vendors'
+        data = {
+            'title': 'Item to advice',
+            'category': 'maintenance',
+            'optionalAdvisers': ('vendors', 'developers', )
+        }
+        item = self.create('MeetingItem', **data)
+        # give advice
+        self.changeUser('pmAdviser1')
+        developers_advice = createContentInContainer(
+            item,
+            'meetingadvice',
+            **{'advice_group': 'developers',
+               'advice_type': u'positive',
+               'advice_hide_during_redaction': False,
+               'advice_comment': RichTextValue(u'My comment')})
+        # for now advice is deletable
+        advices_icons = item.restrictedTraverse('@@advices-icons')
+        self.assertTrue(advices_icons.mayDelete(developers_advice))
+        # give advice
+        self.changeUser('pmReviewer2')
+        vendors_advice = createContentInContainer(
+            item,
+            'meetingadvice',
+            **{'advice_group': 'vendors',
+               'advice_type': u'negative',
+               'advice_hide_during_redaction': False,
+               'advice_comment': RichTextValue(u'My comment')})
+        # for now advice is deletable
+        advices_icons = item.restrictedTraverse('@@advices-icons')
+        self.assertTrue(advices_icons.mayDelete(vendors_advice))
+
+        # ask developers_advice again
+        changeView = developers_advice.restrictedTraverse('@@change-advice-asked-again')
+        self.changeUser('pmCreator1')
+        changeView()
+        self.assertEqual(developers_advice.advice_type, 'asked_again')
+        # advice asker may obviously not delete it
+        self.assertFalse(advices_icons.mayDelete(developers_advice))
+        # and advisers neither
+        self.changeUser('pmAdviser1')
+        self.assertFalse(advices_icons.mayDelete(developers_advice))
+        # even when advice_type is changed
+        developers_advice.advice_type = 'positive'
+        notify(ObjectModifiedEvent(developers_advice))
+        self.assertFalse(advices_icons.mayDelete(developers_advice))
+
+        # when an advice is officially given, it is historized so advice is no more deletable
+        self.proposeItem(item)
+        self.assertFalse(advices_icons.mayDelete(developers_advice))
+        self.changeUser('pmReviewer2')
+        self.assertFalse(advices_icons.mayDelete(vendors_advice))
 
     def test_pm_AdviceHistorizedWithItemDataWhenAdviceGiven(self):
         """When an advice is given, it is versioned and relevant item infos are saved.

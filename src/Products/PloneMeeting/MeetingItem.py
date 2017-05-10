@@ -56,6 +56,7 @@ from Products.Archetypes.atapi import TextField
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.Expression import Expression, createExprContext
 from Products.CMFCore.WorkflowCore import WorkflowException
+from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import ReviewPortalContent
 from Products.CMFCore.permissions import View
@@ -4280,7 +4281,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         """Remove every contained advices."""
         ids = []
         for advice in self.getAdvices():
-            self._grantPermissionToRole('Delete objects', 'Authenticated', advice)
+            self._grantPermissionToRole(DeleteObjects, 'Authenticated', advice)
             ids.append(advice.getId())
         self.manage_delObjects(ids=ids)
 

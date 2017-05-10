@@ -29,6 +29,7 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
 from Products.Five import BrowserView
 from plone import api
+from imio.actionspanel.interfaces import IContentDeletable
 from imio.history.browser.views import IHVersionPreviewView
 
 
@@ -43,13 +44,15 @@ class AdvicesIcons(BrowserView):
         self.cfg = self.tool.getMeetingConfig(self.context)
         self.portal = api.portal.get()
         self.portal_url = self.portal.absolute_url()
+        self.advisableGroups = self.context.getAdvicesGroupsInfosForUser()
+        self.advicesByType = self.context.getAdvicesByType()
 
     def __call__(self):
         if not self.context.adapted().isPrivacyViewable():
             return '<div style="display: inline">&nbsp;-&nbsp;&nbsp;&nbsp;</div>'
         return super(AdvicesIcons, self).__call__()
 
-    def advicesDelayToWarn(self, advicesByType, userAdviserGroupIds):
+    def advicesDelayToWarn(self, userAdviserGroupIds):
         """We will warn if :
            - 'not_given' are in the addable advices;
            - 'hidden_during_redaction' or 'asked_again' are in the editable advices."""
@@ -115,6 +118,10 @@ class AdvicesIcons(BrowserView):
     def showLinkToInherited(self, adviceIsInherited, adviceHolder):
         """ """
         return bool(adviceIsInherited and self.context._appendLinkedItem(adviceHolder, only_viewable=True))
+
+    def mayDelete(self, advice):
+        """ """
+        return IContentDeletable(advice).mayDelete(advisableGroups=self.advisableGroups)
 
 
 class ChangeAdviceHiddenDuringRedactionView(BrowserView):

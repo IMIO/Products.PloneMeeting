@@ -410,6 +410,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   code that sends email to members of a particular Plone group into MeetingItem._sendMailToGroupMembers and use it in both
   MeetingItem.sendAdviceDelayWarningMailIfRelevant (advice delay expiration/expired notification)
   and MeetingItem.sendAdviceToGiveMailIfRelevant (advice to give notification)
+- An advice that was historized once (asked again or really given) may not be deleted anymore except by real managers
 
 3.3 (2015-02-27)
 ----------------

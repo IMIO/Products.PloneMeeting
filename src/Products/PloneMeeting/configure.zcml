@@ -143,6 +143,9 @@
   <adapter for="imio.annex.content.annex.IAnnex"
            factory=".adapters.AnnexContentDeletableAdapter"
            provides="imio.actionspanel.interfaces.IContentDeletable" />
+  <adapter for="Products.PloneMeeting.content.advice.IMeetingAdvice"
+           factory=".adapters.AdviceContentDeletableAdapter"
+           provides="imio.actionspanel.interfaces.IContentDeletable" />
   <adapter for="Products.PloneMeeting.Meeting.Meeting"
            factory=".adapters.MeetingContentDeletableAdapter"
            provides="imio.actionspanel.interfaces.IContentDeletable" />
