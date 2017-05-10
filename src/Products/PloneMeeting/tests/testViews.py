@@ -590,6 +590,21 @@ class testViews(PloneMeetingTestCase):
                           meeting.restrictedTraverse,
                           '@@update-item-references')
 
+    def test_pm_DisplayGroupUsersView(self):
+        """This view returns member of a group but not 'Not found' ones,
+           aka users that were in groups and that were deleted, a special user
+           'Not found' is left in the group."""
+        self.changeUser('pmCreator1')
+        view = self.portal.restrictedTraverse('@@display-group-users')
+        view(group_id='developers_creators')
+        self.assertEqual(
+            view.group_users(),
+            'M. PMCreator One<br />M. PMCreator One bee<br />M. PMManager')
+        # add a 'not foudn' user, will not be displayed
+        self._make_not_found_user(group_id='developers_creators')
+        self.assertEqual(
+            view.group_users(),
+            'M. PMCreator One<br />M. PMCreator One bee<br />M. PMManager')
 
 def test_suite():
     from unittest import TestSuite, makeSuite

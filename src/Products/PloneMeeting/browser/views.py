@@ -831,22 +831,18 @@ class DisplayGroupUsersView(BrowserView):
         """ """
         # manage auto groups
         self.group_id = group_id
+        self.group = api.group.get(group_id)
         return self.index()
 
     def group_title(self):
         """ """
-        groupsTool = api.portal.get_tool('portal_groups')
-        group = groupsTool.getGroupById(self.group_id)
-        return group.getProperty('title')
+        return self.group.getProperty('title')
 
     def group_users(self):
         """ """
-        groupsTool = api.portal.get_tool('portal_groups')
-        membershipTool = api.portal.get_tool('portal_membership')
         res = []
-        for member_id in groupsTool.getGroupMembers(self.group_id):
-            memberInfos = membershipTool.getMemberInfo(member_id)
-            res.append(memberInfos and memberInfos['fullname'] or member_id)
+        for member in self.group.getAllGroupMembers():
+            res.append(member.getProperty('fullname') or member.getId())
         res.sort()
         return "<br />".join(res)
 

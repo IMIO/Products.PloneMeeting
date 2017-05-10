@@ -277,3 +277,19 @@ class PloneMeetingTestingHelpers:
         """Return the workflow initial_state of given p_obj."""
         wf_name = self.wfTool.getWorkflowsFor(obj)[0].getId()
         return self.wfTool[wf_name].initial_state
+
+    def _make_not_found_user(self, user_id='new_test_user', group_id='developers_creators'):
+        """Add a p_user_id member to the p_group_id group then delete it."""
+        currentUser = self.member.getId()
+        self.changeUser('admin')
+        membershipTool = api.portal.get_tool('portal_membership')
+        membershipTool.addMember(id=user_id,
+                                 password='12345',
+                                 roles=('Member', ),
+                                 domains=())
+        self.portal.portal_groups.addPrincipalToGroup(user_id, group_id)
+        membershipTool.deleteMembers((user_id, ))
+        # now we have a 'not found' user in developers_creators
+        self.assertTrue((user_id, '<{0}: not found>'.format(user_id)) in
+                        self.portal.acl_users.source_groups.listAssignedPrincipals(group_id))
+        self.changeUser(currentUser)

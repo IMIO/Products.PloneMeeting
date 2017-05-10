@@ -116,16 +116,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         # before from groups he is in, a special "not found" user will still be assigned to the groups...
         # to test, add a new user, assign it to the developers_creators group, remove the user
         # it should not complain about 'can_not_delete_meetinggroup_plonegroup'
-        membershipTool = api.portal.get_tool('portal_membership')
-        membershipTool.addMember(id='new_test_user',
-                                 password='12345',
-                                 roles=('Member', ),
-                                 domains=())
-        self.portal.portal_groups.addPrincipalToGroup('new_test_user', 'developers_creators')
-        membershipTool.deleteMembers(('new_test_user', ))
-        # now we have a 'not found' user in developers_creators
-        self.assertTrue(('new_test_user', '<new_test_user: not found>') in
-                        self.portal.acl_users.source_groups.listAssignedPrincipals('developers_creators'))
+        self._make_not_found_user()
         # but it does not raise an exception with message 'can_not_delete_meetinggroup_plonegroup'
         with self.assertRaises(BeforeDeleteException) as cm:
             self.tool.manage_delObjects(['developers', ])
