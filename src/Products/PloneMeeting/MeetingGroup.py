@@ -367,25 +367,23 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
                                         "because a Plone groupe having id "
                                         "'%s' already exists." % groupId)
         self._createPloneGroupForAllSuffixes()
-        # clean cache for vocabularies using MeetingGroups
-        invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
-        invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary")
-        invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupsforfacetedfiltervocabulary")
-        invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.groupsinchargevocabulary")
-        invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.askedadvicesvocabulary")
+        self._invalidateCachedVocabularies()
         self.adapted().onEdit(isCreated=True)  # Call product-specific code
 
     security.declarePrivate('at_post_edit_script')
 
     def at_post_edit_script(self):
         self._createPloneGroupForAllSuffixes()
-        # clean cache for vocabularies using MeetingGroups
+        self._invalidateCachedVocabularies()
+        self.adapted().onEdit(isCreated=False)
+
+    def _invalidateCachedVocabularies(self):
+        """Clean cache for vocabularies using MeetingGroups."""
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary")
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupsforfacetedfiltervocabulary")
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.groupsinchargevocabulary")
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.askedadvicesvocabulary")
-        self.adapted().onEdit(isCreated=False)
 
     def _createPloneGroupForAllSuffixes(self):
         """ """

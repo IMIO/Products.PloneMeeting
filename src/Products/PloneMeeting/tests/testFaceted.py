@@ -238,6 +238,27 @@ class testFaceted(PloneMeetingTestCase):
         self.assertEquals(len(vocab2(pmFolder)), 3)
         self.assertEquals(len(vocab3(pmFolder)), 3)
 
+        # activate "End users"
+        self.assertEquals(
+            [term.title for term in vocab1(pmFolder)],
+            [u'Developers', u'Vendors', u'End users (Inactive)'])
+        self.assertEquals(
+            [term.title for term in vocab2(pmFolder)],
+            [u'Devel', u'Devil', u'EndUsers'])
+        self.assertEquals(
+            [term.title for term in vocab3(pmFolder)],
+            [u'Developers', u'Vendors', u'End users (Inactive)'])
+        self.do(self.tool.endUsers, 'activate')
+        self.assertEquals(
+            [term.title for term in vocab1(pmFolder)],
+            [u'Developers', u'End users', u'Vendors'])
+        self.assertEquals(
+            [term.title for term in vocab2(pmFolder)],
+            [u'Devel', u'Devil', u'EndUsers'])
+        self.assertEquals(
+            [term.title for term in vocab3(pmFolder)],
+            [u'Developers', u'End users', u'Vendors'])
+
     def test_pm_ProposingGroupsForFacetedVocabulary(self):
         '''Test that vocabulary "Products.PloneMeeting.vocabularies.proposinggroupsforfacetedfiltervocabulary"
            relies on MeetingConfig.groupsShownInDashboardFilter.'''
@@ -258,6 +279,12 @@ class testFaceted(PloneMeetingTestCase):
         self.assertEquals(
             [term.title for term in vocab(pmFolder)],
             [u'Developers', u'End users (Inactive)'])
+
+        # activate "End users"
+        self.do(self.tool.endUsers, 'activate')
+        self.assertEquals(
+            [term.title for term in vocab(pmFolder)],
+            [u'Developers', u'End users'])
 
     def test_pm_GroupsInChargeVocabulary(self):
         '''Test the "Products.PloneMeeting.vocabularies.groupsinchargevocabulary"

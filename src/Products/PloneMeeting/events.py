@@ -190,6 +190,9 @@ def onGroupTransition(mGroup, event):
             _('meetinggroup_removed_from_meetingconfigs_selectablecopygroups_selectableadvisers'),
             'info')
 
+    # invalidate cache of relevant vocabularies
+    mGroup._invalidateCachedVocabularies()
+
 
 def onGroupWillBeRemoved(group, event):
     '''Checks if the current meetingGroup can be deleted:
