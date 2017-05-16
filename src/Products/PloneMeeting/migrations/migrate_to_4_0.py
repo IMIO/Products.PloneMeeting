@@ -1,4 +1,5 @@
-# ------------------------------------------------------------------------------
+# -*- coding: utf-8 -*-
+
 import os
 import time
 import logging
@@ -628,6 +629,16 @@ class Migrate_To_4_0(Migrator):
            Moreover it will call _addManagedPermissions for Meetings and MeetingItems.'''
         logger.info('Updating allLocalRoles...')
         self.tool.updateAllLocalRoles()
+        logger.info('Done.')
+
+    def _updateAllAnnexes(self):
+        '''Update annexes AFTER local_roles and permissions are correct (tool.updateAllLocalRoles
+           and update WF permissions) because not confidential annexes acquire permissions and
+           it relies on parent's local_roles that need to be correct.'''
+        logger.info('Updating annexes...')
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            for category_group in cfg.annexes_types.objectValues():
+                category_group.restrictedTraverse('@@update-categorized-elements')()
         logger.info('Done.')
 
     def _updateManagedPermissionsForAdvices(self):
@@ -1278,6 +1289,7 @@ class Migrate_To_4_0(Migrator):
             # and "Meeting.lateItems" were removed
             self.refreshDatabase(catalogsToRebuild=['portal_catalog', 'reference_catalog'],
                                  workflows=True)
+            self._updateAllAnnexes()
 
 
 # The migration function -------------------------------------------------------
