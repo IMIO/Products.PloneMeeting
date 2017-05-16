@@ -637,9 +637,10 @@ class testAdvices(PloneMeetingTestCase):
                            'real_group_id__developers',
                            'real_group_id__developers__not_given'])
 
-        # delete the advice
-        self.changeUser('pmAdviser1')
+        # delete the advice as Manager as it was historized
+        self.changeUser('siteadmin')
         item.restrictedTraverse('@@delete_givenuid')(advice.UID())
+        self.changeUser('pmAdviser1')
         self.assertEquals(set(indexAdvisers.callable(item)), set(['delay_real_group_id__unique_id_123',
                                                                   'delay_real_group_id__unique_id_123__not_given',
                                                                   'delay__vendors_advice_not_given',
