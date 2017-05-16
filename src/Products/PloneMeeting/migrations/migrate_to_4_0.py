@@ -1379,7 +1379,8 @@ def migrate_step3(context):
        24) Remove the 'Add File' permission on user folders;
        25) Migrate to MeetingConfig.selectablePrivacies;
        26) Make sure field Meeting.firstItemNumber is not empty on any meeting;
-       27) Refresh catalogs.
+       27) Refresh catalogs and update WF permissions;
+       28) Update annexes accesses.
     '''
     migrator = Migrate_To_4_0(context)
     migrator.run(step=3)
