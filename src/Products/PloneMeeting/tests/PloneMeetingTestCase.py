@@ -234,7 +234,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         elif objectType in ('MeetingGroup', 'MeetingConfig'):
             contentType = objectType
             folder = self.tool
-        elif objectType in ('MeetingCategory', ):
+        elif objectType == 'MeetingCategory':
             contentType = objectType
             if isClassifier:
                 folder = cfg.classifiers

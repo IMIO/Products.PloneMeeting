@@ -99,20 +99,27 @@ class testFaceted(PloneMeetingTestCase):
 
         # if we add/remove a category, then the cache is cleaned too
         # add a category
-        newCatId = cfg.categories.invokeFactory('MeetingCategory',
-                                                id='new-category',
-                                                title='New category')
-        newCat = getattr(cfg.categories, newCatId)
-        newCat.at_post_create_script()
+        newCat = self.create('MeetingCategory',
+                             id='new-category',
+                             title='New category')
         # cache was cleaned, the new value is available
         terms = vocab(pmFolder)
-        self.assertEquals(len(terms), nbOfCategories + 1)
+        self.assertEquals(
+            [term.title for term in vocab(pmFolder)],
+            [u'New category', u'New title', u'Research topics'])
+
+        # disable a category
+        self.do(newCat, 'deactivate')
+        self.assertEquals(
+            [term.title for term in vocab(pmFolder)],
+            [u'New title', u'Research topics', u'New category (Inactive)'])
 
         # remove a category
         self.portal.restrictedTraverse('@@delete_givenuid')(newCat.UID())
         # cache was cleaned
-        terms = vocab(pmFolder)
-        self.assertEquals(len(terms), nbOfCategories)
+        self.assertEquals(
+            [term.title for term in vocab(pmFolder)],
+            [u'New title', u'Research topics'])
 
     def test_pm_ItemCategoriesVocabularyMCAware(self):
         '''Test that "Products.PloneMeeting.vocabularies.categoriesvocabulary"

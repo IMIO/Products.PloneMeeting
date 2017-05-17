@@ -81,14 +81,30 @@ class ItemCategoriesVocabulary(object):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         categories = cfg.getCategories(onlySelectable=False, caching=False)
-        res = []
-        for category in categories:
-            res.append(SimpleTerm(category.getId(),
-                                  category.getId(),
-                                  safe_unicode(category.Title())
-                                  )
-                       )
-        res = sorted(res, key=attrgetter('title'))
+        activeCategories = [cat for cat in categories if api.content.get_state(cat) == 'active']
+        notActiveCategories = [cat for cat in categories if not api.content.get_state(cat) == 'active']
+        res_active = []
+        for category in activeCategories:
+            res_active.append(
+                SimpleTerm(category.getId(),
+                           category.getId(),
+                           safe_unicode(category.Title())
+                           )
+                )
+        res = sorted(res_active, key=attrgetter('title'))
+
+        res_not_active = []
+        for category in notActiveCategories:
+            res_not_active.append(
+                SimpleTerm(category.getId(),
+                           category.getId(),
+                           translate('${element_title} (Inactive)',
+                                     domain='PloneMeeting',
+                                     mapping={'element_title': safe_unicode(category.Title())},
+                                     context=context.REQUEST)
+                           )
+                )
+        res = res + sorted(res_not_active, key=attrgetter('title'))
         return SimpleVocabulary(res)
 
 ItemCategoriesVocabularyFactory = ItemCategoriesVocabulary()
@@ -124,9 +140,9 @@ class ItemProposingGroupsVocabulary(object):
             res_not_active.append(
                 SimpleTerm(group.getId(),
                            group.getId(),
-                           translate('${group_title} (Inactive)',
+                           translate('${element_title} (Inactive)',
                                      domain='PloneMeeting',
-                                     mapping={'group_title': safe_unicode(group.Title())},
+                                     mapping={'element_title': safe_unicode(group.Title())},
                                      context=context.REQUEST)
                            )
                 )
@@ -173,9 +189,9 @@ class ItemProposingGroupsForFacetedFilterVocabulary(object):
                 res_not_active.append(
                     SimpleTerm(group.getId(),
                                group.getId(),
-                               translate('${group_title} (Inactive)',
+                               translate('${element_title} (Inactive)',
                                          domain='PloneMeeting',
-                                         mapping={'group_title': safe_unicode(group.Title())},
+                                         mapping={'element_title': safe_unicode(group.Title())},
                                          context=context.REQUEST)
                                )
                     )

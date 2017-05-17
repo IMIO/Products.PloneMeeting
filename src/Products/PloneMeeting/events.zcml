@@ -69,6 +69,10 @@
               handler=".events.onGroupRemoved" />
 
   <subscriber for=".interfaces.IMeetingCategory
+                   Products.DCWorkflow.interfaces.IAfterTransitionEvent"
+              handler=".events.onCategoryTransition" />
+
+  <subscriber for=".interfaces.IMeetingCategory
                    zope.container.interfaces.IObjectRemovedEvent"
               handler=".events.onCategoryRemoved" />
 

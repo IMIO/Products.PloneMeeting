@@ -443,8 +443,9 @@ class testPerformances(PloneMeetingTestCase):
         self._removeConfigObjectsFor(self.meetingConfig, folders=['recurringitems', 'itemtemplates', 'categories'])
         # create categories
         for i in range(number_of_categories):
-            catId = self.meetingConfig.categories.invokeFactory('MeetingCategory', id=i, title='Category %d' % i)
-            catObj = getattr(self.meetingConfig.categories, catId)
+            catObj = self.create('MeetingCategory',
+                                 id=i,
+                                 title='Category %d' % i)
             if withUsingGroups:
                 catObj.setUsingGroups(('developers', ))
             catObj._at_creation_flag = False

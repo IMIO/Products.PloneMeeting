@@ -684,6 +684,15 @@ def onMeetingRemoved(meeting, event):
     invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
 
 
+def onCategoryTransition(category, event):
+    '''Called whenever a transition has been fired on a MeetingCategory.'''
+    if not event.transition or (category != event.object):
+        return
+
+    # invalidate cache of relevant vocabularies
+    category._invalidateCachedVocabularies()
+
+
 def onCategoryRemoved(category, event):
     '''Called when a MeetingCategory is removed.'''
     # bypass this if we are actually removing the 'Plone Site'

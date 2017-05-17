@@ -137,18 +137,20 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
             i = None
         return i
 
+    def _invalidateCachedVocabularies(self):
+        """Clean cache for vocabularies using MeetingCategories."""
+        invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.categoriesvocabulary")
+
     security.declarePrivate('at_post_create_script')
 
     def at_post_create_script(self):
-        # clean cache for "Products.PloneMeeting.vocabularies.categoriesvocabulary"
-        invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.categoriesvocabulary")
+        self._invalidateCachedVocabularies()
         self.adapted().onEdit(isCreated=True)
 
     security.declarePrivate('at_post_edit_script')
 
     def at_post_edit_script(self):
-        # clean cache for "Products.PloneMeeting.vocabularies.categoriesvocabulary"
-        invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.categoriesvocabulary")
+        self._invalidateCachedVocabularies()
         self.adapted().onEdit(isCreated=False)
 
     security.declarePrivate('manage_beforeDelete')
