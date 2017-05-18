@@ -699,7 +699,19 @@ class OtherMCCorrespondenceVocabulary(object):
                         cat.UID(),
                         cat.UID(),
                         u'%s -> %s -> %s' % (safe_unicode(cfg.Title()),
-                                             'Item annex',
+                                             translate('Item annexes',
+                                                       domain='PloneMeeting',
+                                                       context=context.REQUEST),
+                                             safe_unicode(cat.Title()))))
+                item_decision_annexes = cfg.annexes_types.item_decision_annexes
+                for cat in item_decision_annexes.objectValues():
+                    res.append(SimpleTerm(
+                        cat.UID(),
+                        cat.UID(),
+                        u'%s -> %s -> %s' % (safe_unicode(cfg.Title()),
+                                             translate('Item decision annexes',
+                                                       domain='PloneMeeting',
+                                                       context=context.REQUEST),
                                              safe_unicode(cat.Title()))))
         return SimpleVocabulary(res)
 

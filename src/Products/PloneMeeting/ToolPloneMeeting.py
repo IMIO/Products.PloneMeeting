@@ -1251,6 +1251,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
           - either we have a correspondence defined on the original ContentCategory specifying what is the
             ContentCategory to use in the new MeetingConfig;
           - or if we can not get a correspondence, we use the default ContentCategory of the new MeetingConfig.
+          Moreover it takes care of setting a correct portal_type in case we are changing from annex to annexDecision.
           Returns True if the content_category was actually updated, False if no correspondence could be found.
         '''
         catalog = api.portal.get_tool('portal_catalog')
@@ -1284,6 +1285,18 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 setattr(adapted_annex,
                         'content_category',
                         calculate_category_id(categories[0].getObject()))
+        # try to get the category, if it raises KeyError it means we need to change the annex portal_type
+        try:
+            get_category_object(annex, annex.content_category)
+        except KeyError:
+            if annex.portal_type == 'annex':
+                annex.portal_type = 'annexDecision'
+            else:
+                annex.portal_type = 'annex'
+            annex.reindexObject()
+            # now it should not fail anymore
+            get_category_object(annex, annex.content_category)
+
         return True
 
     security.declarePublic('getSelf')

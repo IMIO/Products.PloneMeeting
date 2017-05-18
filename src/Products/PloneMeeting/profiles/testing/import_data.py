@@ -100,11 +100,8 @@ budgetAnalysisCfg1 = ItemAnnexTypeDescriptor(
 
 itemAnnex = ItemAnnexTypeDescriptor(
     'item-annex', 'Other annex(es)', u'itemAnnex.png')
-# Could be used once we
-# will digitally sign decisions ? Indeed, once signed, we will need to
-# store them (together with the signature) as separate files.
-decision = ItemAnnexTypeDescriptor(
-    'decision', 'Decision', u'decision.png', relatedTo='item_decision')
+
+# Item decision annex
 decisionAnnex = ItemAnnexTypeDescriptor(
     'decision-annex', 'Decision annex(es)', u'decisionAnnex.png', relatedTo='item_decision')
 # A vintage annex type
