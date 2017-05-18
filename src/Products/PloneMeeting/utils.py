@@ -1006,7 +1006,7 @@ def getHistoryTexts(obj, event):
     return res
 
 
-def getHistory(obj, startNumber=0, batchSize=500, checkMayView=True):
+def getHistory(obj, startNumber=0, batchSize=500, checkMayView=True, history_types=['datachange', 'workflow']):
     '''Returns the history for this object, sorted in reverse order
        (most recent change first)'''
     res = []
@@ -1026,6 +1026,8 @@ def getHistory(obj, startNumber=0, batchSize=500, checkMayView=True):
         # We take a copy, because we will modify it.
         event = history[i].copy()
         if event['action'] == '_datachange_':
+            if not 'datachange' in history_types:
+                continue
             event['changes'] = {}
             event['type'] = 'changes'
             for name, oldValue in history[i]['changes'].iteritems():
@@ -1061,6 +1063,8 @@ def getHistory(obj, startNumber=0, batchSize=500, checkMayView=True):
                 else:
                     event['changes'][name] = oldValue
         else:
+            if not 'workflow' in history_types:
+                continue
             event['type'] = 'workflow'
             if checkMayView:
                 # workflow history event

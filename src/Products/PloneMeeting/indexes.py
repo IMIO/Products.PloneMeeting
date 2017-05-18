@@ -19,6 +19,7 @@ from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import getHistory
 
 REAL_GROUP_ID_PATTERN = 'real_group_id__{0}'
 DELAYAWARE_REAL_GROUP_ID_PATTERN = 'delay_real_group_id__{0}'
@@ -45,17 +46,15 @@ def previous_review_state(obj):
     """
       Indexes the previous review_state, aka the review_state before current review_state
     """
-    wfName = obj.portal_workflow.getWorkflowsFor(obj)[0].id
-    wh = obj.workflow_history
+    wf_history = getHistory(obj, history_types=['workflow'])
 
-    # check that we have a history for current workflow and that
-    # there is more than one action triggered, or we are in the initial state and
-    # previous action is None...
-    if wfName not in wh or not len(wh[wfName]) > 1:
+    # check that there is more than one action triggered,
+    # or we are in the initial state and previous action is None...
+    if not wf_history or len(wf_history) == 1:
         return _marker
 
     # action [-1] is last triggered action, but we want the previous one...
-    previous_action = wh[wfName][-2]['review_state']
+    previous_action = wf_history[-2]['review_state']
     return previous_action
 
 

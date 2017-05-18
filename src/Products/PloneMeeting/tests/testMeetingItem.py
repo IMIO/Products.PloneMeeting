@@ -71,6 +71,7 @@ from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import WriteBudgetInfos
+from Products.PloneMeeting.indexes import previous_review_state
 from Products.PloneMeeting.indexes import sentToInfos
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
@@ -1460,6 +1461,26 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(clonedItem.adviceIsInherited('group1'))
         self.assertTrue(clonedItem.adviceIsInherited('group2'))
         self.assertTrue(clonedItem.adviceIsInherited('poweradvisers'))
+
+    def test_pm_PreviousReviewStateIndex(self):
+        """Test the previous_review_state index, especially when datachange is enabled."""
+        cfg = self.meetingConfig
+        cfg.setHistorizedItemAttributes(('decision', ))
+        cfg.setRecordItemHistoryStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.assertEquals(previous_review_state(item)(), [])
+        self.proposeItem(item)
+        self.assertEquals(previous_review_state(item)(), 'itemcreated')
+
+        # now check that it does not interact when datachange is enabled
+        setFieldFromAjax(item, 'decision', self.decisionText)
+        self.assertEquals(previous_review_state(item)(), 'itemcreated')
+
+        # does not fail if no workflow_history
+        item.workflow_history.clear()
+        self.assertEquals(previous_review_state(item)(), [])
 
     def test_pm_AddAutoCopyGroups(self):
         '''Test the functionnality of automatically adding some copyGroups depending on
