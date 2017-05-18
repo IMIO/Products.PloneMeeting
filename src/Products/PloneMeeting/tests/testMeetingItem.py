@@ -1479,7 +1479,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEquals(previous_review_state(item)(), 'itemcreated')
 
         # does not fail if no workflow_history
-        item.workflow_history.clear()
+        item.workflow_history[item.workflow_history.keys()[0]] = {}
         self.assertEquals(previous_review_state(item)(), [])
 
     def test_pm_AddAutoCopyGroups(self):
