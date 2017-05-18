@@ -2700,7 +2700,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             criterion = _get_criterion(
                 self.searches.searches_items,
                 ResultsPerPageWidget.widget_type)
-            criterion.default = safe_unicode(value)
+            criteria = ICriteria(self.searches.searches_items)
+            # need to use ICriteria.edit to make change persistent
+            criteria.edit(criterion.__name__, **{'default': safe_unicode(value)})
         self.getField('maxShownListings').set(self, value, **kwargs)
 
     security.declarePublic('getMaxShownListings')
