@@ -412,7 +412,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   and MeetingItem.sendAdviceToGiveMailIfRelevant (advice to give notification)
 - An advice that was historized once (asked again or really given) may not be deleted anymore except by real managers
 - Fixed bug in index previous_review_state that failed when datachange functionnality was enabled
-  as it saves datachanges in the workflw_history
+  as it saves datachanges in the workflow_history
 
 3.3 (2015-02-27)
 ----------------
