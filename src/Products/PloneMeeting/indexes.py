@@ -46,7 +46,10 @@ def previous_review_state(obj):
     """
       Indexes the previous review_state, aka the review_state before current review_state
     """
-    wf_history = getHistory(obj, history_types=['workflow'])
+    try:
+        wf_history = getHistory(obj, history_types=['workflow'])
+    except KeyError:
+        return _marker
 
     # check that there is more than one action triggered,
     # or we are in the initial state and previous action is None...

@@ -34,6 +34,7 @@ from zope.i18n import translate
 from zope.interface import Invalid
 from zope.lifecycleevent import ObjectModifiedEvent
 
+from Products.PluginIndexes.common.UnIndex import _marker
 from collective.iconifiedcategory.event import IconifiedPrintChangedEvent
 from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.utils import get_categorized_elements
@@ -1470,7 +1471,7 @@ class testMeetingItem(PloneMeetingTestCase):
 
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        self.assertEquals(previous_review_state(item)(), [])
+        self.assertEquals(previous_review_state(item)(), _marker)
         self.proposeItem(item)
         self.assertEquals(previous_review_state(item)(), 'itemcreated')
 
@@ -1480,7 +1481,9 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # does not fail if no workflow_history
         item.workflow_history[item.workflow_history.keys()[0]] = {}
-        self.assertEquals(previous_review_state(item)(), [])
+        self.assertEquals(previous_review_state(item)(), _marker)
+        item.workflow_history = {}
+        self.assertEquals(previous_review_state(item)(), _marker)
 
     def test_pm_AddAutoCopyGroups(self):
         '''Test the functionnality of automatically adding some copyGroups depending on
