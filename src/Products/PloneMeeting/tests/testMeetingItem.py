@@ -1473,11 +1473,12 @@ class testMeetingItem(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         self.assertEquals(previous_review_state(item)(), _marker)
         self.proposeItem(item)
-        self.assertEquals(previous_review_state(item)(), 'itemcreated')
+        previous_state = item.getHistory(history_types=['workflow'])[-2]['review_state']
+        self.assertEquals(previous_review_state(item)(), previous_state)
 
         # now check that it does not interact when datachange is enabled
         setFieldFromAjax(item, 'decision', self.decisionText)
-        self.assertEquals(previous_review_state(item)(), 'itemcreated')
+        self.assertEquals(previous_review_state(item)(), previous_state)
 
         # does not fail if no workflow_history
         item.workflow_history[item.workflow_history.keys()[0]] = {}
