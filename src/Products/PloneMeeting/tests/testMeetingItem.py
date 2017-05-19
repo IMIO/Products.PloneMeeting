@@ -2642,6 +2642,57 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setAssociatedGroups(())
         self.assertEquals(item.listAssociatedGroups().keys(), ['vendors', ])
 
+    def test_pm_ListCategoriesContainsDisabledStoredValue(self):
+        '''
+          This is the vocabulary for the field "category".
+          Check that we still have the stored value in the vocabulary.
+        '''
+        cfg = self.meetingConfig
+        cfg.setUseGroupsAsCategories(False)
+        self.changeUser('pmManager')
+        # create 2 items of different categories
+        item = self.create('MeetingItem')
+        self.assertEqual(item.getCategory(), 'development')
+        item2 = self.create('MeetingItem')
+        item2.setCategory('research')
+        item2.at_post_edit_script()
+        # a disabled category will still be displayed in the vocab if it is the currently used value
+        self.changeUser('siteadmin')
+        self.do(cfg.categories.development, 'deactivate')
+        self.assertEqual(item.listCategories().values(),
+                         [u'Development topics', u'Research topics'])
+        self.assertEqual(item2.listCategories().values(),
+                         [u'Research topics'])
+
+    def test_pm_ListCategoriesNaturalSorting(self):
+        '''
+          This is the vocabulary for the field "category".
+          Values are sorted using Natural sorting.
+        '''
+        cfg = self.meetingConfig
+        cfg.setUseGroupsAsCategories(False)
+        # create categories
+        self._removeConfigObjectsFor(cfg, folders=['categories'])
+        data = {'cat2': '2. Category',
+                'cat21': '2.1 Category',
+                'cat22': '2.2 Category',
+                'cat1': '1. Category',
+                'cat11': '1.1 Category',
+                'cat12': '1.2 Category',
+                'cat10': '10. Category',
+                'cat101': '10.1 Category'}
+        for cat_id, cat_title in data.items():
+            self.create('MeetingCategory', id=cat_id, title=cat_title)
+
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        # items are naturally sorted
+        self.assertEqual(item.listCategories().values(),
+                         [u'--- Make a choice ---',
+                          u'1. Category', u'1.1 Category', u'1.2 Category',
+                          u'2. Category', u'2.1 Category', u'2.2 Category',
+                          u'10. Category', u'10.1 Category'])
+
     def test_pm_ListOptionalAdvisersVocabulary(self):
         '''
           This is the vocabulary for the field "optionalAdvisers".

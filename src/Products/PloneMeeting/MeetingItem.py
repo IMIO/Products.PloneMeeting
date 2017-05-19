@@ -19,6 +19,7 @@ from collections import OrderedDict
 from copy import deepcopy
 from datetime import datetime
 from DateTime import DateTime
+from natsort import realsorted
 from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
 from AccessControl import ClassSecurityInfo
@@ -2702,16 +2703,24 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(self)
         for cat in cfg.getCategories():
             res.append((cat.id, safe_unicode(cat.getName())))
+
+        # make sure current category is listed here
+        storedKeys = [elt[0] for elt in res]
+        current_cat = self.getCategory(theObject=True)
+        if current_cat and not current_cat.getId() in storedKeys:
+            res.append((current_cat.getId(), safe_unicode(current_cat.getName())))
+
+        # natural sort, reverse tuple so we have value/key instead key/value
+        # and realsorted may achieve his work
+        res = [(elt[1], elt[0]) for elt in res]
+        res = realsorted(res)
+        res = [(elt[1], elt[0]) for elt in res]
+
         if len(res) > 4:
             res.insert(0, ('_none_', translate('make_a_choice',
                                                domain='PloneMeeting',
                                                context=self.REQUEST)))
-        res = DisplayList(tuple(res))
-        # make sure current category is listed here
-        if self.getCategory() and not self.getCategory() in res.keys():
-            current_cat = self.getCategory(theObject=True)
-            res.add(current_cat.getId(), safe_unicode(current_cat.getName()))
-        return res.sortedByValue()
+        return DisplayList(res)
 
     security.declarePublic('getCategory')
 

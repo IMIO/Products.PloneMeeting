@@ -46,6 +46,7 @@ setup(name='Products.PloneMeeting',
                           templates=['Genshi', ]),
       install_requires=[
           'setuptools',
+          'natsort',
           'appy',
           'beautifulsoup4',
           'Plone',
