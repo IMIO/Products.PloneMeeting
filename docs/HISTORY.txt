@@ -242,7 +242,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   first meetingAcceptingItems in the future (still in the MeetingConfig.meetingPresentItemWhenNoCurrentMeetingStates)
 - Links to meetings are colorized depending on their review_state wherever it is displayed
 - Added possibility to only redefine partially certifiedSignatures on a MeetingGroup, this way we may still use for example
-  signature 1 from the MeetingConfig and only redefine signature 2 on the MeetingGroup
+  signature 1 from the MeetingConfig and only redefine signature 2 on the MeetingGroup.  Moreover, a new parameter
+  'from_group_in_charge=False' is available on MeetingItem.getCertifiedSignatures and MeetingGroup.getCertifiedSignatures,
+  when set to True, the certifiedSignatures of the first defined MeetingGroup.groupInCharge will be considered
 - When creating an item from a template, if the first edition is cancelled, it is deleted
 - When removing a MeetingConfig, make sure every created groups (meetingmanagers, powerobservers, ...) are removed as well
 - When editing an item, in the 'preferredMeeting' list box, display the meeting review_state next to the meeting date so

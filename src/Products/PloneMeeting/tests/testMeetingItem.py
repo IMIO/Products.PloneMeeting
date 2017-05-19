@@ -3531,6 +3531,104 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEquals(item.adapted().getCertifiedSignatures(),
                           [u'Function1valid', u'Name1valid'])
 
+    def test_pm_GetCertifiedSignaturesFromGroupInCharge(self):
+        '''Test the MeetingItem.getCertifiedSignatures method when parameter from_group_in_charge is True,
+           it will get signatures defined on the first of the defined groupsInCharge.'''
+        # define signatures for the MeetingConfig
+        certified = [
+            {'signatureNumber': '1',
+             'name': 'Name1',
+             'function': 'Function1',
+             'date_from': '',
+             'date_to': '',
+             },
+            {'signatureNumber': '2',
+             'name': 'Name2',
+             'function': 'Function2',
+             'date_from': '',
+             'date_to': '',
+             },
+        ]
+        cfg = self.meetingConfig
+        cfg.setCertifiedSignatures(certified)
+        # set vendors in charge of developers
+        self.tool.developers.setGroupsInCharge(('vendors', ))
+        # create an item for developers
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        # item proposing group is "developers"
+        self.assertTrue(item.getProposingGroup() == 'developers')
+
+        # nothing defined on groupInCharge, it takes values from MeetingConfig
+        self.assertEqual(self.tool.vendors.getCertifiedSignatures(), ())
+        self.assertEqual(
+            item.getCertifiedSignatures(from_group_in_charge=True),
+            ['Function1', 'Name1', 'Function2', 'Name2'])
+        self.assertEqual(
+            item.getCertifiedSignatures(from_group_in_charge=False),
+            ['Function1', 'Name1', 'Function2', 'Name2'])
+
+        # define values on groupInCharge
+        certified = [
+            {'signatureNumber': '1',
+             'name': 'GroupInChargeName1',
+             'function': 'GroupInChargeFunction1',
+             'date_from': '',
+             'date_to': '',
+             },
+            {'signatureNumber': '2',
+             'name': 'GroupInChargeName2',
+             'function': 'GroupInChargeFunction2',
+             'date_from': '',
+             'date_to': '',
+             },
+        ]
+        self.tool.vendors.setCertifiedSignatures(certified)
+        self.assertEqual(
+            item.getCertifiedSignatures(from_group_in_charge=True),
+            ['GroupInChargeFunction1', 'GroupInChargeName1',
+             'GroupInChargeFunction2', 'GroupInChargeName2'])
+        self.assertEqual(
+            item.getCertifiedSignatures(from_group_in_charge=False),
+            ['Function1', 'Name1', 'Function2', 'Name2'])
+
+        # define partial values on groupInCharge
+        certified = [
+            {'signatureNumber': '1',
+             'name': 'GroupInChargeName1',
+             'function': 'GroupInChargeFunction1',
+             'date_from': '',
+             'date_to': '',
+             },
+        ]
+        self.tool.vendors.setCertifiedSignatures(certified)
+        self.assertEqual(
+            item.getCertifiedSignatures(from_group_in_charge=True),
+            ['GroupInChargeFunction1', 'GroupInChargeName1',
+             'Function2', 'Name2'])
+        self.assertEqual(
+            item.getCertifiedSignatures(from_group_in_charge=False),
+            ['Function1', 'Name1', 'Function2', 'Name2'])
+
+        # locally defined values overrides values from groupInCharge
+        # define signature 2 for developers
+        certified = [
+            {'signatureNumber': '2',
+             'name': 'DevName2',
+             'function': 'DevFunction2',
+             'date_from': '',
+             'date_to': '',
+             },
+        ]
+        self.tool.developers.setCertifiedSignatures(certified)
+        self.assertEqual(
+            item.getCertifiedSignatures(from_group_in_charge=True),
+            ['GroupInChargeFunction1', 'GroupInChargeName1',
+             'DevFunction2', 'DevName2'])
+        self.assertEqual(
+            item.getCertifiedSignatures(from_group_in_charge=False),
+            ['Function1', 'Name1', 'DevFunction2', 'DevName2'])
+
     def test_pm_ItemCreatedOnlyUsingTemplate(self):
         '''If MeetingConfig.itemCreatedOnlyUsingTemplate is True, a user can only
            create a new item using an item template, if he tries to create an item

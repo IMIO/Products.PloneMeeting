@@ -2885,7 +2885,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getCertifiedSignatures')
 
-    def getCertifiedSignatures(self, forceUseCertifiedSignaturesOnMeetingConfig=False):
+    def getCertifiedSignatures(self,
+                               forceUseCertifiedSignaturesOnMeetingConfig=False,
+                               from_group_in_charge=False):
         '''See docstring in interfaces.py.'''
         item = self.getSelf()
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -2899,7 +2901,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # get certified signatures computed, this will return a list with pair
             # of function/signatures, so ['function1', 'name1', 'function2', 'name2', 'function3', 'name3', ]
             # this list is ordered by signature number defined on the MeetingGroup/MeetingConfig
-            return item.getProposingGroup(theObject=True).getCertifiedSignatures(computed=True, context=item)
+            return item.getProposingGroup(theObject=True).getCertifiedSignatures(
+                computed=True, context=item, from_group_in_charge=from_group_in_charge)
         else:
             # we use MeetingUsers
             signatories = cfg.getMeetingUsers(usages=('signer',))

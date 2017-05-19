@@ -507,16 +507,25 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
 
     security.declarePublic('getCertifiedSignatures')
 
-    def getCertifiedSignatures(self, computed=False, context=None, **kwargs):
+    def getCertifiedSignatures(self, computed=False, context=None, from_group_in_charge=False, **kwargs):
         '''Overrides field 'certifiedSignatures' accessor to be able to pass
            the p_computed parameter that will return computed certified signatures,
            so signatures really available right now.  If nothing is defined on the MeetingGroup,
-           use certified signatures defined on the corresponding MeetingConfig found using p_context.'''
+           use certified signatures defined on the corresponding MeetingConfig found using p_context.
+           If p_from_group_in_charge is True, we get certifiedSignatures from the first defined
+           self.groupsInCharge.'''
         group_signatures = self.getField('certifiedSignatures').get(self, **kwargs)
         if computed:
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(context)
             computedSignatures = cfg.getCertifiedSignatures(computed=True)
+
+            # get certified signatures from first of the defined groupsInCharge
+            groups_in_charge = self.getGroupsInCharge()
+            if from_group_in_charge and groups_in_charge:
+                tool = api.portal.get_tool('portal_plonemeeting')
+                group_in_charge = getattr(tool, groups_in_charge[0])
+                computedSignatures.update(computeCertifiedSignatures(group_in_charge.getCertifiedSignatures()))
 
             # if we have certified signatures defined on this MeetingGroup
             # update MeetingConfig signatures regarding what is defined here
