@@ -1665,7 +1665,8 @@ class IconifiedCategoryConfigAdapter(object):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
         # manage the css.py file generation necessary CSS, in this case, context is the portal
-        referer = self.context.REQUEST['HTTP_REFERER']
+        # in case we use plone.app.async, there could be no REQUEST
+        referer = hasattr(self.context, 'REQUEST') and self.context.REQUEST['HTTP_REFERER'] or ''
         if self.context.portal_type == 'Plone Site' and 'mymeetings' in referer:
             referer_path = referer.lstrip(self.context.absolute_url())
             try:
@@ -1691,6 +1692,7 @@ class IconifiedCategoryGroupAdapter(object):
         """ """
         self.config = config
         self.context = context
+        self.request = self.context.get('REQUEST', {})
 
     @memoize
     def get_group(self):
@@ -1707,16 +1709,16 @@ class IconifiedCategoryGroupAdapter(object):
             if self.context.meta_type == 'MeetingItem':
 
                 # it is possible to force to use the item_decision_annexes group
-                if self.context.REQUEST.get('force_use_item_decision_annexes_group', False):
+                if self.request.get('force_use_item_decision_annexes_group', False):
                     return cfg.annexes_types.item_decision_annexes
 
                 # we are adding a new annex, get annex portal_type from form_instance
                 # manage also the InlineValidation view
-                if hasattr(self.context.REQUEST.get('PUBLISHED'), 'form_instance'):
-                    form_instance = self.context.REQUEST.get('PUBLISHED').form_instance
-                elif (hasattr(self.context.REQUEST.get('PUBLISHED'), 'context',) and
-                      hasattr(self.context.REQUEST.get('PUBLISHED').context, 'form_instance')):
-                    form_instance = self.context.REQUEST.get('PUBLISHED').context.form_instance
+                if hasattr(self.request.get('PUBLISHED'), 'form_instance'):
+                    form_instance = self.request.get('PUBLISHED').form_instance
+                elif (hasattr(self.request.get('PUBLISHED'), 'context',) and
+                      hasattr(self.request.get('PUBLISHED').context, 'form_instance')):
+                    form_instance = self.request.get('PUBLISHED').context.form_instance
                 else:
                     # calling with MeetingItem as context, this is the case when checking
                     # if categories exist and if annexes tab should be displayed
@@ -1745,7 +1747,7 @@ class IconifiedCategoryGroupAdapter(object):
 
     def get_every_categories(self):
         categories = get_categories(self.context)
-        self.context.REQUEST.set('force_use_item_decision_annexes_group', True)
+        self.request['force_use_item_decision_annexes_group'] = True
         categories = categories + get_categories(self.context)
-        self.context.REQUEST.set('force_use_item_decision_annexes_group', False)
+        self.request['force_use_item_decision_annexes_group'] = False
         return categories
