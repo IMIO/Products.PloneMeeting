@@ -1692,7 +1692,7 @@ class IconifiedCategoryGroupAdapter(object):
         """ """
         self.config = config
         self.context = context
-        self.request = self.context.get('REQUEST', {})
+        self.request = getattr(self.context, 'REQUEST', {})
 
     @memoize
     def get_group(self):
