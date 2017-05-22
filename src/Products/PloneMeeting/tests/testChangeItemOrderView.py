@@ -47,9 +47,7 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         return meeting, item1, item2, item3, item4, item5, item6, item7
 
     def test_pm_ChanteItemOrderSetup(self):
-        """As self._setupOrderedItems is used in several test methods,
-           we added a test for it.
-        """
+        """As self._setupOrderedItems is used in several test methods, we added a test for it."""
         self.changeUser('pmManager')
         meeting, item1, item2, item3, item4, item5, item6, item7 = self._setupOrderedItems()
         self.assertEquals(item1.getItemNumber(), 100)
@@ -466,6 +464,11 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         # nothing changed
         self.assertEquals(item2.getItemNumber(), 200)
         view('number', None)
+        # nothing changed
+        self.assertEquals(item2.getItemNumber(), 200)
+        # move one position to far
+        self.assertEqual(len(meeting.getItems()), 7)
+        view('number', '8')
         # nothing changed
         self.assertEquals(item2.getItemNumber(), 200)
         # move one of the last items upper

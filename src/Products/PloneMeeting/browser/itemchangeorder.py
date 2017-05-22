@@ -97,7 +97,7 @@ class ChangeItemOrderView(BrowserView):
             # check finally that if we are moving an item to a subnumber,
             # the master exists (moving to 12.1, 12 has to exist)
             if (moveNumber < 100) or \
-               (moveNumber > _to_integer(items[-1].getItemNumber()) + 100) or \
+               (moveNumber > _to_integer(items[-1].getItemNumber()) + 99) or \
                (not moveNumberIsInteger and len(wishedNumber.split('.')[1]) > 2) or \
                (not moveNumberIsInteger and
                 (not meeting.getItemByNumber(moveNumber - 1)
