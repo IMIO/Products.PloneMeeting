@@ -72,7 +72,8 @@ columnInfos = ('getTitle2', 'getDate', 'getProposingGroup', 'getGroupInCharge',
                'getPreferredMeeting', 'getPreferredMeetingDate',
                'linkedMeetingDate', 'linkedMeetingUID',
                'getItemIsSigned', 'title_or_id', 'toDiscuss',
-               'privacy', 'pollType', 'listType', 'getItemNumber', 'getCategory')
+               'privacy', 'pollType', 'listType', 'getItemNumber',
+               'getCategory', 'getRawClassifier')
 transformsToDisable = ['word_to_html', 'pdf_to_html', 'pdf_to_text']
 # Index "indexUsages" does not use Archetype-generated getter "getUsages"
 # because in this case, both fields MeetingUser.usages and MeetingItem.usages

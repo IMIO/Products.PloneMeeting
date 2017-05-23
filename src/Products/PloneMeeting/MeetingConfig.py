@@ -3614,6 +3614,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 translate('header_review_state', domain=d, context=self.REQUEST)),
             ("getCategory",
                 translate("header_getCategory", domain=d, context=self.REQUEST)),
+            ("getRawClassifier",
+                translate("header_getRawClassifier", domain=d, context=self.REQUEST)),
             ("getProposingGroup",
                 translate("header_getProposingGroup", domain=d, context=self.REQUEST)),
             ("proposing_group_acronym",

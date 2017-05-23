@@ -68,26 +68,27 @@ PMConditionAwareCollectionVocabularyFactory = PMConditionAwareCollectionVocabula
 class ItemCategoriesVocabulary(object):
     implements(IVocabularyFactory)
 
-    def __call___cachekey(method, self, context):
+    def __call___cachekey(method, self, context, classifiers=False):
         '''cachekey method for self.__call__.'''
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.categoriesvocabulary')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        return date, cfg
+        return date, cfg, classifiers
 
     @ram.cache(__call___cachekey)
-    def __call__(self, context):
+    def __call__(self, context, classifiers=False):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        categories = cfg.getCategories(onlySelectable=False, caching=False)
+        categories = cfg.getCategories(classifiers=classifiers, onlySelectable=False, caching=False)
         activeCategories = [cat for cat in categories if api.content.get_state(cat) == 'active']
         notActiveCategories = [cat for cat in categories if not api.content.get_state(cat) == 'active']
         res_active = []
         for category in activeCategories:
+            term_id = classifiers and category.UID() or category.getId()
             res_active.append(
-                SimpleTerm(category.getId(),
-                           category.getId(),
+                SimpleTerm(term_id,
+                           term_id,
                            safe_unicode(category.Title())
                            )
                 )
@@ -95,9 +96,10 @@ class ItemCategoriesVocabulary(object):
 
         res_not_active = []
         for category in notActiveCategories:
+            term_id = classifiers and category.UID() or category.getId()
             res_not_active.append(
-                SimpleTerm(category.getId(),
-                           category.getId(),
+                SimpleTerm(term_id,
+                           term_id,
                            translate('${element_title} (Inactive)',
                                      domain='PloneMeeting',
                                      mapping={'element_title': safe_unicode(category.Title())},
@@ -108,6 +110,16 @@ class ItemCategoriesVocabulary(object):
         return SimpleVocabulary(res)
 
 ItemCategoriesVocabularyFactory = ItemCategoriesVocabulary()
+
+
+class ItemClassifiersVocabulary(ItemCategoriesVocabulary):
+    implements(IVocabularyFactory)
+
+    def __call__(self, context, classifiers=True):
+        """ """
+        return super(ItemClassifiersVocabulary, self).__call__(context, classifiers=True)
+
+ItemClassifiersVocabularyFactory = ItemClassifiersVocabulary()
 
 
 class ItemProposingGroupsVocabulary(object):
