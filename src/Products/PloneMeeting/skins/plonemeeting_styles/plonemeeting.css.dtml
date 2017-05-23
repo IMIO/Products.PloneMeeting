@@ -725,11 +725,15 @@ dt.highlightValue span {
     color: red !important;
 }
 
-/* CKeditor style */
+/* CKeditor styles */
 .highlight-orange {background-color: orange;}
 .highlight-red {color: red;}
 .highlight-yellow {background-color: yellow;}
 p.indent-firstline {text-indent: 40px;}
+.xSmallText {font-size: 70%;}
+.smallText {font-size: 85%;}
+.largeText {font-size: 115%;}
+.xLargeText {font-size: 130%;}
 
 /* CSS for MeetingItem.privacy */
 /* While displayed as a single item (meetingitem_view) */
@@ -1563,13 +1567,22 @@ div.dashboard_annexes {
 }
 
 /* add cell padding to tables written in rich text fields (CKeditor) */
-body.cke_editable table tr td,
-body.cke_editable table tr th,
-div[id^='hook_'] table tr td,
-div[id^='hook_'] table tr th,
-div.pmMoreInfo table tr td,
-div.pmMoreInfo table tr th {
+body.cke_editable table:not([cellpadding='0']) tr td,
+body.cke_editable table:not([cellpadding='0']) tr th,
+div[id^='hook_'] table:not([cellpadding='0']) tr td,
+div[id^='hook_'] table:not([cellpadding='0']) tr th,
+div.pmMoreInfo table:not([cellpadding='0']) tr td,
+div.pmMoreInfo table:not([cellpadding='0']) tr th {
     padding: 0.3em;
+}
+/* force no padding when cellpadding="0" */
+body.cke_editable table[cellpadding='0'] tr td,
+body.cke_editable table[cellpadding='0'] tr th,
+div[id^='hook_'] table[cellpadding='0'] tr td,
+div[id^='hook_'] table[cellpadding='0'] tr th,
+div.pmMoreInfo table[cellpadding='0'] tr td,
+div.pmMoreInfo table[cellpadding='0'] tr th {
+    padding: 0em !important;
 }
 
 /* hide collective.documentviewer message on portaltype-configurablepodtemplate
