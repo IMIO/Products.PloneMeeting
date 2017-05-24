@@ -64,8 +64,9 @@ class testMeetingGroup(PloneMeetingTestCase):
             translate('can_not_delete_meetinggroup_meetingconfig',
                       domain="plone",
                       context=self.request)
+        developers = self.tool.developers
         with self.assertRaises(BeforeDeleteException) as cm:
-            self.tool.manage_delObjects(['developers', ])
+            self.portal.restrictedTraverse('@@delete_givenuid')(developers.UID(), catch_before_delete_exception=False)
         self.assertEquals(cm.exception.message, can_not_delete_meetinggroup_meetingconfig)
         # so remove selectableCopyGroups from the meetingConfigs
         cfg.setSelectableCopyGroups(())
@@ -74,7 +75,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         # define selectableAdvisers, the exception is also raised
         cfg.setSelectableAdvisers(('developers', ))
         with self.assertRaises(BeforeDeleteException) as cm:
-            self.tool.manage_delObjects(['developers', ])
+            self.portal.restrictedTraverse('@@delete_givenuid')(developers.UID(), catch_before_delete_exception=False)
         self.assertEquals(cm.exception.message, can_not_delete_meetinggroup_meetingconfig)
         # so remove selectableAdvisers
         cfg.setSelectableAdvisers(())
@@ -85,7 +86,7 @@ class testMeetingGroup(PloneMeetingTestCase):
               'group': 'developers',
               'delay': '5', }, ])
         with self.assertRaises(BeforeDeleteException) as cm:
-            self.tool.manage_delObjects(['developers', ])
+            self.portal.restrictedTraverse('@@delete_givenuid')(developers.UID(), catch_before_delete_exception=False)
         self.assertEquals(cm.exception.message, can_not_delete_meetinggroup_meetingconfig)
         # so remove customAdvisers
         cfg.setCustomAdvisers([])
@@ -93,21 +94,20 @@ class testMeetingGroup(PloneMeetingTestCase):
         # define powerAdvisersGroups, the exception is also raised
         cfg.setPowerAdvisersGroups(['developers', ])
         with self.assertRaises(BeforeDeleteException) as cm:
-            self.tool.manage_delObjects(['developers', ])
+            self.portal.restrictedTraverse('@@delete_givenuid')(developers.UID(), catch_before_delete_exception=False)
         self.assertEquals(cm.exception.message, can_not_delete_meetinggroup_meetingconfig)
         # so remove powerAdvisersGroups
         cfg.setPowerAdvisersGroups([])
 
         # 2) fails because the corresponding Plone groups are not empty
         with self.assertRaises(BeforeDeleteException) as cm:
-            self.tool.manage_delObjects(['developers', ])
+            self.portal.restrictedTraverse('@@delete_givenuid')(developers.UID(), catch_before_delete_exception=False)
         can_not_delete_meetinggroup_plonegroup = \
             translate('can_not_delete_meetinggroup_plonegroup',
                       domain="plone",
                       context=self.request)
         self.assertEquals(cm.exception.message, can_not_delete_meetinggroup_plonegroup)
         # so remove every users of these groups
-        developers = self.tool.developers
         for ploneGroup in developers.getPloneGroups():
             for memberId in ploneGroup.getGroupMemberIds():
                 ploneGroup.removeMember(memberId)
@@ -119,7 +119,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         self._make_not_found_user()
         # but it does not raise an exception with message 'can_not_delete_meetinggroup_plonegroup'
         with self.assertRaises(BeforeDeleteException) as cm:
-            self.tool.manage_delObjects(['developers', ])
+            self.portal.restrictedTraverse('@@delete_givenuid')(developers.UID(), catch_before_delete_exception=False)
 
         self.assertNotEquals(cm.exception.message, can_not_delete_meetinggroup_plonegroup)
         can_not_delete_meetinggroup_meetingitem = \
@@ -145,7 +145,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         item.setCopyGroups(())
         item.at_post_edit_script()
         with self.assertRaises(BeforeDeleteException) as cm:
-            self.tool.manage_delObjects(['developers', ])
+            self.portal.restrictedTraverse('@@delete_givenuid')(developers.UID(), catch_before_delete_exception=False)
 
         self.assertEquals(cm.exception.message, can_not_delete_meetinggroup_meetingitem)
 
@@ -157,7 +157,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         item.setCopyGroups(())
         item.at_post_edit_script()
         with self.assertRaises(BeforeDeleteException) as cm:
-            self.tool.manage_delObjects(['developers', ])
+            self.portal.restrictedTraverse('@@delete_givenuid')(developers.UID(), catch_before_delete_exception=False)
         self.assertEquals(cm.exception.message, can_not_delete_meetinggroup_meetingitem)
 
         # now check with item having optionalAdvisers
@@ -168,7 +168,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         item.setCopyGroups(())
         item.at_post_edit_script()
         with self.assertRaises(BeforeDeleteException) as cm:
-            self.tool.manage_delObjects(['developers', ])
+            self.portal.restrictedTraverse('@@delete_givenuid')(developers.UID(), catch_before_delete_exception=False)
         self.assertEquals(cm.exception.message, can_not_delete_meetinggroup_meetingitem)
 
         # check with groupInCharge
@@ -179,7 +179,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         item.setGroupInCharge('developers')
         item.at_post_edit_script()
         with self.assertRaises(BeforeDeleteException) as cm:
-            self.tool.manage_delObjects(['developers', ])
+            self.portal.restrictedTraverse('@@delete_givenuid')(developers.UID(), catch_before_delete_exception=False)
         self.assertEquals(cm.exception.message, can_not_delete_meetinggroup_meetingitem)
 
         # check with item having copyGroups
@@ -188,13 +188,13 @@ class testMeetingGroup(PloneMeetingTestCase):
         item.setCopyGroups(('developers_reviewers', ))
         item.at_post_edit_script()
         with self.assertRaises(BeforeDeleteException) as cm:
-            self.tool.manage_delObjects(['developers', ])
+            self.portal.restrictedTraverse('@@delete_givenuid')(developers.UID(), catch_before_delete_exception=False)
         self.assertEquals(cm.exception.message, can_not_delete_meetinggroup_meetingitem)
 
         # remove copyGroups for item so it works...
         item.setCopyGroups(())
         item.at_post_edit_script()
-        self.tool.manage_delObjects(['developers', ])
+        self.portal.restrictedTraverse('@@delete_givenuid')(developers.UID(), catch_before_delete_exception=False)
         # the group is actually removed
         self.failIf(hasattr(self.tool, 'developers'))
 
@@ -203,8 +203,9 @@ class testMeetingGroup(PloneMeetingTestCase):
         item.aq_inner.aq_parent.manage_delObjects([item.getId(), ])
         self.assertEquals(cfg.itemtemplates.template2.getProposingGroup(), 'vendors')
         # then fails because corresponding Plone groups are not empty...
+        vendors = self.tool.vendors
         with self.assertRaises(BeforeDeleteException) as cm:
-            self.tool.manage_delObjects(['vendors', ])
+            self.portal.restrictedTraverse('@@delete_givenuid')(vendors.UID(), catch_before_delete_exception=False)
 
         self.assertEquals(cm.exception.message, can_not_delete_meetinggroup_plonegroup)
         # so remove them...
@@ -215,7 +216,7 @@ class testMeetingGroup(PloneMeetingTestCase):
 
         # 5) then fails because used by an item present in the configuration
         with self.assertRaises(BeforeDeleteException) as cm:
-            self.tool.manage_delObjects(['vendors', ])
+            self.portal.restrictedTraverse('@@delete_givenuid')(vendors.UID(), catch_before_delete_exception=False)
         self.maxDiff = None
         self.assertEquals(cm.exception.message,
                           translate('can_not_delete_meetinggroup_config_meetingitem',
@@ -225,7 +226,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         # so remove the item in the config (it could work by changing the proposingGroup too...)
         cfg.itemtemplates.manage_delObjects(['template2', ])
         # now it works...
-        self.tool.manage_delObjects(['vendors', ])
+        self.portal.restrictedTraverse('@@delete_givenuid')(vendors.UID(), catch_before_delete_exception=False)
         # the group is actually removed
         self.failIf(hasattr(self.tool, 'vendors'))
 

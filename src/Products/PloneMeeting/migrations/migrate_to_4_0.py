@@ -89,6 +89,14 @@ class Migrate_To_4_0(Migrator):
                     break
         logger.info('Done.')
 
+    def _updateCatalogsByTypes(self):
+        '''Before some types where blacklisted from portal_catalog, make sure it is no more.'''
+        logger.info('Updating catalogsByType...')
+        at_tool = api.portal.get_tool('archetype_tool')
+        at_tool.setCatalogsByType('MeetingGroup', ['portal_catalog'])
+        at_tool.setCatalogsByType('MeetingConfig', ['portal_catalog'])
+        logger.info('Done.')
+
     def _updateItemsListVisibleFields(self):
         '''MeetingConfig.itemsListVisibleFields stored values changed from
            'description, decision' to 'MeetingItem.description, MeetingItem.decision'.'''
@@ -1259,6 +1267,7 @@ class Migrate_To_4_0(Migrator):
             self._adaptAppForImioAnnex()
 
         if not step or step == 3:
+            self._updateCatalogsByTypes()
             self._updateItemsListVisibleFields()
             self._migrateLateItems()
             self._adaptAppForImioDashboard()
