@@ -1353,8 +1353,8 @@ def isModifiedSinceLastVersion(obj):
         timestamp = history_metadata._full[history_metadata.nextVersionId-1]['metadata']['sys_metadata']['timestamp']
         # we do not use _retrieve because it does a transaction savepoint and it
         # breaks collective.zamqp...  So we use timestamp
-        # advice.modified is initialized to timestamp just after a version, see content.advice.versionate_if_relevant
-        # keep >= for backward compatibility as before, timestamp was > than modified, now it is equal...
+        # advice.modified will be older than timestamp as it is managed in see content.advice.versionate_if_relevant
+        # keep >= for backward compatibility as before, modified was set to timestamp, now it is older...
         if DateTime(timestamp) >= obj.modified():
             modified = False
     return modified

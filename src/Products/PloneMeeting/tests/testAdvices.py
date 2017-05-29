@@ -54,6 +54,7 @@ from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.indexes import indexAdvisers
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from Products.PloneMeeting.utils import isModifiedSinceLastVersion
 
 
 class testAdvices(PloneMeetingTestCase):
@@ -2088,6 +2089,49 @@ class testAdvices(PloneMeetingTestCase):
                            {'field_name': 'detailedDescription', 'field_content': '<p>Item detailed description</p>'},
                            {'field_name': 'motivation', 'field_content': '<p>Item motivation</p>'},
                            {'field_name': 'decision', 'field_content': '<p>Another decision</p>'}])
+
+    def test_pm_AdviceModificationDateKeptWhenAdviceHistorized(self):
+        """Make sure historizing the advice will not change the advice modification date."""
+        cfg = self.meetingConfig
+        # item data are saved if cfg.historizeItemDataWhenAdviceIsGiven
+        self.assertTrue(cfg.getHistorizeItemDataWhenAdviceIsGiven())
+        cfg.setItemAdviceStates([self.WF_STATE_NAME_MAPPINGS['proposed'], ])
+        cfg.setItemAdviceEditStates([self.WF_STATE_NAME_MAPPINGS['proposed'], ])
+        cfg.setItemAdviceViewStates([self.WF_STATE_NAME_MAPPINGS['proposed'], ])
+
+        # create an item and ask the advice of group 'vendors'
+        self.changeUser('pmCreator1')
+        data = {
+            'title': 'Item to advice',
+            'category': 'maintenance',
+            'optionalAdvisers': ('vendors', 'developers', ),
+            'description': '<p>Item description</p>',
+        }
+        item = self.create('MeetingItem', **data)
+        item.setDetailedDescription('<p>Item detailed description</p>')
+        item.setMotivation('<p>Item motivation</p>')
+        item.setDecision('<p>Item decision</p>')
+        self.proposeItem(item)
+
+        # give advice
+        self.changeUser('pmReviewer2')
+        advice = createContentInContainer(item,
+                                          'meetingadvice',
+                                          **{'advice_group': 'vendors',
+                                             'advice_type': u'negative',
+                                             'advice_hide_during_redaction': False,
+                                             'advice_comment': RichTextValue(u'My comment')})
+
+        # advice is versioned when it is given, aka transition giveAdvice has been triggered
+        self.changeUser('pmReviewer1')
+        pr = api.portal.get_tool('portal_repository')
+        self.assertFalse(pr.getHistoryMetadata(advice))
+        advice_modified = advice.modified()
+        self.assertTrue(isModifiedSinceLastVersion(advice))
+        self.validateItem(item)
+        self.assertTrue(pr.getHistoryMetadata(advice))
+        self.assertFalse(isModifiedSinceLastVersion(advice))
+        self.assertEqual(advice_modified, advice.modified())
 
     def test_pm_AdviceHistorizedIfGivenAndItemChanged(self):
         """When an advice is given, if it was not historized and an item richText field

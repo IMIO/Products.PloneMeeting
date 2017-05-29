@@ -74,7 +74,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - A given advice is automatically versionned when necessary (the 'give_advice' transition is triggered, 
   the item is edited after the advice has been given or annex have been added/removed), we rely now on
   plone.app.versioningbehavior to display a historized version, moreover versioned advice is directly previewable
-  in the @@historyview popup
+  in the @@historyview popup.  We make sure that the advice modification date is not changed so we can rely on it
+  for real advice given date
 - Added possibility to ask an advice several times (asked again), if it was never historized or if advice was modified
   since last historization, it is historized again.  Asked again advices appear in the 'given advices' search and anew
   in the 'advices to give' search when giveable
