@@ -398,7 +398,9 @@ class testToolPloneMeeting(PloneMeetingTestCase):
            that is sent to another MeetingConfig.
         '''
         cfg = self.meetingConfig
+        cfgId = cfg.getId()
         cfg2 = self.meetingConfig2
+        cfg2Id = cfg2.getId()
         self.changeUser('pmManager')
         itemCfg1 = self.create('MeetingItem')
         annexCfg1 = self.addAnnex(itemCfg1)
@@ -431,7 +433,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
 
         # 3) normal annex type with correspondence
         # 'budget-analysis' in cfg1 corresponds to 'budget-analysis' in cfg2
-        annexCfg2.content_category = 'annexes_types_-_item_annexes_-_budget-analysis'
+        annexCfg2.content_category = '{0}-annexes_types_-_item_annexes_-_budget-analysis'.format(cfgId)
         budgetAnalysisAnnexTypeCfg1 = get_category_object(annexCfg1, annexCfg2.content_category)
         budgetAnalysisAnnexTypeCfg2 = get_category_object(annexCfg2, annexCfg2.content_category)
         self.assertEqual(budgetAnalysisAnnexTypeCfg1.other_mc_correspondences,
@@ -439,40 +441,42 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # corresponding annexType has been used
         self.assertTrue(self.tool._updateContentCategoryAfterSentToOtherMeetingConfig(annexCfg2, cfg))
         self.assertEqual(annexCfg2.content_category,
-                         'annexes_types_-_item_annexes_-_budget-analysis')
+                         '{0}-annexes_types_-_item_annexes_-_budget-analysis'.format(cfg2Id))
 
         # 4) normal annexType with correspondence to a subType
         # 'overhead-analysis' in cfg1 corresponds to subType 'budget-analysis-sub-annex' in cfg2
-        annexCfg2.content_category = 'annexes_types_-_item_annexes_-_overhead-analysis'
+        annexCfg2.content_category = '{0}-annexes_types_-_item_annexes_-_overhead-analysis'.format(cfgId)
         overheadAnalysisAnnexTypeCfg1 = get_category_object(annexCfg1, annexCfg2.content_category)
         self.assertEqual(overheadAnalysisAnnexTypeCfg1.other_mc_correspondences,
                          set([budgetAnalysisAnnexTypeCfg2['budget-analysis-sub-annex'].UID()]))
         # corresponding annexType has been used, aka the subType
         self.assertTrue(self.tool._updateContentCategoryAfterSentToOtherMeetingConfig(annexCfg2, cfg))
         self.assertEqual(annexCfg2.content_category,
-                         'annexes_types_-_item_annexes_-_budget-analysis_-_budget-analysis-sub-annex')
+                         '{0}-annexes_types_-_item_annexes_-_budget-analysis_-_budget-analysis-sub-annex'.format(cfg2Id))
 
         # 5) subType with correspondence to a normal annexType
         # subType 'overhead-analysis-sub-annex' in cfg1 corresponds to annex type 'budget-analysis' in cfg2
-        annexCfg2.content_category = 'annexes_types_-_item_annexes_-_overhead-analysis_-_overhead-analysis-sub-annex'
+        annexCfg2.content_category = \
+            '{0}-annexes_types_-_item_annexes_-_overhead-analysis_-_overhead-analysis-sub-annex'.format(cfgId)
         overheadAnalysisSubAnnexTypeCfg1 = get_category_object(annexCfg1, annexCfg2.content_category)
         self.assertEqual(overheadAnalysisSubAnnexTypeCfg1.other_mc_correspondences,
                          set([budgetAnalysisAnnexTypeCfg2.UID()]))
         # corresponding annexType has been used, aka the subType
         self.assertTrue(self.tool._updateContentCategoryAfterSentToOtherMeetingConfig(annexCfg2, cfg))
         self.assertEqual(annexCfg2.content_category,
-                         'annexes_types_-_item_annexes_-_budget-analysis')
+                         '{0}-annexes_types_-_item_annexes_-_budget-analysis'.format(cfg2Id))
 
         # 6) subType with correspondence to a subType
         # subType 'budget-analysis-sub-annex' in cfg1 corresponds to subType 'budget-analysis-sub-annex' in cfg2
-        annexCfg2.content_category = 'annexes_types_-_item_annexes_-_budget-analysis_-_budget-analysis-sub-annex'
+        annexCfg2.content_category = \
+            '{0}-annexes_types_-_item_annexes_-_budget-analysis_-_budget-analysis-sub-annex'.format(cfgId)
         budgetAnalysisSubAnnexTypeCfg1 = get_category_object(annexCfg1, annexCfg2.content_category)
         self.assertEqual(budgetAnalysisSubAnnexTypeCfg1.other_mc_correspondences,
                          set([budgetAnalysisAnnexTypeCfg2['budget-analysis-sub-annex'].UID()]))
         # corresponding annexType has been used, aka the subType
         self.assertTrue(self.tool._updateContentCategoryAfterSentToOtherMeetingConfig(annexCfg2, cfg))
         self.assertEqual(annexCfg2.content_category,
-                         'annexes_types_-_item_annexes_-_budget-analysis_-_budget-analysis-sub-annex')
+                         '{0}-annexes_types_-_item_annexes_-_budget-analysis_-_budget-analysis-sub-annex'.format(cfg2Id))
 
     def test_pm_UpdateContentCategoryAfterSentToOtherMeetingConfigCrossingAnnexType(self):
         '''Test the ToolPloneMeeting._updateContentCategoryAfterSentToOtherMeetingConfig method.
@@ -481,6 +485,9 @@ class testToolPloneMeeting(PloneMeetingTestCase):
            other MC.
         '''
         cfg = self.meetingConfig
+        cfgId = cfg.getId()
+        cfg2 = self.meetingConfig2
+        cfg2Id = cfg2.getId()
         # adapt other_mc_correspondences
         annexCat1 = cfg.annexes_types.item_annexes.get(self.annexFileType)
         annexDecisionCat1 = cfg.annexes_types.item_decision_annexes.get(self.annexFileTypeDecision)
@@ -503,19 +510,23 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # manipulate annexCfg2 content_category to use one coming from cfg1
         annexCfg2.content_category = annexCfg1.content_category
         self.assertEqual(annexCfg2.portal_type, 'annex')
-        self.assertEqual(annexCfg2.content_category, 'annexes_types_-_item_annexes_-_financial-analysis')
+        self.assertEqual(annexCfg2.content_category,
+                         '{0}-annexes_types_-_item_annexes_-_financial-analysis'.format(cfgId))
         self.assertTrue(self.tool._updateContentCategoryAfterSentToOtherMeetingConfig(annexCfg2, cfg))
         self.assertEqual(annexCfg2.portal_type, 'annexDecision')
-        self.assertEqual(annexCfg2.content_category, 'annexes_types_-_item_decision_annexes_-_decision-annex')
+        self.assertEqual(annexCfg2.content_category,
+                         '{0}-annexes_types_-_item_decision_annexes_-_decision-annex'.format(cfg2Id))
 
         # 2) annexDecision to annex
         # manipulate annexCfg2 content_category to use one coming from cfg1
         annexDecisionCfg2.content_category = annexDecisionCfg1.content_category
         self.assertEqual(annexDecisionCfg2.portal_type, 'annexDecision')
-        self.assertEqual(annexDecisionCfg2.content_category, 'annexes_types_-_item_decision_annexes_-_decision-annex')
+        self.assertEqual(annexDecisionCfg2.content_category,
+                         '{0}-annexes_types_-_item_decision_annexes_-_decision-annex'.format(cfgId))
         self.assertTrue(self.tool._updateContentCategoryAfterSentToOtherMeetingConfig(annexDecisionCfg2, cfg))
         self.assertEqual(annexDecisionCfg2.portal_type, 'annex')
-        self.assertEqual(annexDecisionCfg2.content_category, 'annexes_types_-_item_annexes_-_financial-analysis')
+        self.assertEqual(annexDecisionCfg2.content_category,
+                         '{0}-annexes_types_-_item_annexes_-_financial-analysis'.format(cfg2Id))
 
     def test_pm_UpdateContentCategoryAfterSentToOtherMeetingConfigRemovesElementsWithoutTypeCorrespondence(self):
         '''Test the ToolPloneMeeting._updateContentCategoryAfterSentToOtherMeetingConfig method.

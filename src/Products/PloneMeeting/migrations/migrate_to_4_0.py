@@ -28,6 +28,7 @@ from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.migrations import Migrator
 from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
+from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import updateCollectionCriterion
 
 
@@ -1212,6 +1213,48 @@ class Migrate_To_4_0(Migrator):
                     field.set(item, content)
         logger.info('Done.')
 
+    def _adaptAnnexContentCategory(self):
+        """Migrate content_category of existing annexes to append the MeetingConfig id."""
+        def _updateAnnexes(obj):
+            """ """
+            annexes = get_annexes(obj)
+            if annexes:
+                for annex in annexes:
+                    if annex.content_category.startswith(cfgId):
+                        # already migrated
+                        return True
+                    content_category = "{0}-{1}".format(cfgId, annex.content_category)
+                    annex.content_category = content_category
+                update_all_categorized_elements(obj, limited=False, sort=False)
+            return False
+
+        logger.info('Adapting content_category of annexes...')
+        # MeetingItems
+        brains = self.portal.portal_catalog(meta_type=('Meeting', 'MeetingItem'))
+        i = 1
+        total = len(brains)
+        for brain in brains:
+            logger.info('Migrating element {0}/{1} ({2})...'.format(
+                i,
+                total,
+                brain.getPath()))
+            itemOrMeeting = brain.getObject()
+            cfg = self.tool.getMeetingConfig(itemOrMeeting)
+            cfgId = cfg.getId()
+            if _updateAnnexes(itemOrMeeting):
+                logger.info('Migration not necessary...')
+                logger.info('Done.')
+                return
+            if itemOrMeeting.meta_type == 'MeetingItem':
+                advices = itemOrMeeting.getAdvices()
+                for advice in advices:
+                    if _updateAnnexes(advice):
+                        logger.info('Migration not necessary...')
+                        logger.info('Done.')
+                        return
+            i = i + 1
+        logger.info('Done.')
+
     def run(self, step=None):
         logger.info('Migrating to PloneMeeting 4.0...')
         if not step or step == 1:
@@ -1299,6 +1342,10 @@ class Migrate_To_4_0(Migrator):
             self.refreshDatabase(catalogsToRebuild=['portal_catalog', 'reference_catalog'],
                                  workflows=True)
             self._updateAllAnnexes()
+
+        # ADDITIONAL STEPS FOR APP ALREADY MIGRATED TO v4.0...
+        if not step or step == 4:
+            self._adaptAnnexContentCategory()
 
 
 # The migration function -------------------------------------------------------
@@ -1393,5 +1440,17 @@ def migrate_step3(context):
     '''
     migrator = Migrate_To_4_0(context)
     migrator.run(step=3)
+    migrator.finish()
+# ------------------------------------------------------------------------------
+
+
+def migrate_step4(context):
+    '''This migration function will:
+
+       29) Update annexes content_category.  This is an additional step for
+           profiles that were already moved to v4.0...
+    '''
+    migrator = Migrate_To_4_0(context)
+    migrator.run(step=4)
     migrator.finish()
 # ------------------------------------------------------------------------------

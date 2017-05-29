@@ -736,12 +736,14 @@ class testAnnexes(PloneMeetingTestCase):
         """When conversion is enabled, either by 'auto_convert' or
            when MeetingConfig.annexToPrintMode is 'enabled_for_printing',
            if an annex is updated, it will be converted again onModified."""
+        cfg = self.meetingConfig
+        cfgId = cfg.getId()
         gsettings = GlobalSettings(self.portal)
         gsettings.auto_convert = True
         gsettings.auto_layout_file_types = CONVERTABLE_TYPES.keys()
         default_category = get_category_object(
             self.meetingConfig,
-            'annexes_types_-_item_annexes_-_financial-analysis')
+            '{0}-annexes_types_-_item_annexes_-_financial-analysis'.format(cfgId))
         default_category_group = default_category.get_category_group()
         default_category_group.to_be_printed_activated = True
 
@@ -917,6 +919,8 @@ class testAnnexes(PloneMeetingTestCase):
 
     def test_pm_ItemAnnexFormVocabularies(self):
         """The vocabularies used for MeetingItem is different if used for annex or annexDecision."""
+        cfg = self.meetingConfig
+        cfgId = cfg.getId()
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         # set item in a state where both annex and annexDecision are addable
@@ -928,16 +932,16 @@ class testAnnexes(PloneMeetingTestCase):
         form_annex_instance = form_annex.form_instance
         form_annex_instance.update()
         form_annex_widget = form_annex_instance.widgets['IIconifiedCategorization.content_category']
-        form_annex_widget_terms = form_annex_widget.terms.terms.by_token.keys()
+        form_annex_widget_terms = [term.token for term in form_annex_widget.terms]
         self.assertEqual(
             form_annex_widget_terms,
-            ['annexes_types_-_item_annexes_-_budget-analysis_-_budget-analysis-sub-annex',
-             'annexes_types_-_item_annexes_-_overhead-analysis',
-             'annexes_types_-_item_annexes_-_financial-analysis_-_financial-analysis-sub-annex',
-             'annexes_types_-_item_annexes_-_financial-analysis',
-             'annexes_types_-_item_annexes_-_item-annex',
-             'annexes_types_-_item_annexes_-_budget-analysis',
-             'annexes_types_-_item_annexes_-_overhead-analysis_-_overhead-analysis-sub-annex'])
+            ['{0}-annexes_types_-_item_annexes_-_financial-analysis'.format(cfgId),
+             '{0}-annexes_types_-_item_annexes_-_financial-analysis_-_financial-analysis-sub-annex'.format(cfgId),
+             '{0}-annexes_types_-_item_annexes_-_budget-analysis'.format(cfgId),
+             '{0}-annexes_types_-_item_annexes_-_budget-analysis_-_budget-analysis-sub-annex'.format(cfgId),
+             '{0}-annexes_types_-_item_annexes_-_overhead-analysis'.format(cfgId),
+             '{0}-annexes_types_-_item_annexes_-_overhead-analysis_-_overhead-analysis-sub-annex'.format(cfgId),
+             '{0}-annexes_types_-_item_annexes_-_item-annex'.format(cfgId)])
 
         # now for decisionAnnex
         # check with form, context is the MeetingItem
@@ -946,10 +950,10 @@ class testAnnexes(PloneMeetingTestCase):
         form_annexDecision_instance = form_annexDecision.form_instance
         form_annexDecision_instance.update()
         form_annexDecision_widget = form_annexDecision_instance.widgets['IIconifiedCategorization.content_category']
-        form_annexDecision_widget_terms = form_annexDecision_widget.terms.terms.by_token.keys()
+        form_annexDecision_widget_terms = [term.token for term in form_annexDecision_widget.terms]
         self.assertEqual(
             form_annexDecision_widget_terms,
-            ['annexes_types_-_item_decision_annexes_-_decision-annex'])
+            ['{0}-annexes_types_-_item_decision_annexes_-_decision-annex'.format(cfgId)])
 
     def test_pm_UpdateCategorizedElements(self):
         """The actions "update_categorized_elements" from collective.iconifiedcategory

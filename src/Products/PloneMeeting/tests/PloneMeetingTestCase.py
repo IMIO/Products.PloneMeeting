@@ -316,7 +316,8 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             elif context.meta_type == 'Meeting':
                 annexType = self.annexFileTypeMeeting
 
-        # get complete annexType id that is like 'annexes_types_-_item_annexes_-_financial-analysis'
+        # get complete annexType id that is like
+        # 'meeting-config-id-annexes_types_-_item_annexes_-_financial-analysis'
         if relatedTo == 'item_decision':
             context.REQUEST.set('force_use_item_decision_annexes_group', True)
         annexes_config_root = get_config_root(context)

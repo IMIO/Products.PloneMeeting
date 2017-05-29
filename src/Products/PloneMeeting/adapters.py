@@ -1665,25 +1665,15 @@ class IconifiedCategoryConfigAdapter(object):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
         # manage the css.py file generation necessary CSS, in this case, context is the portal
-        # in case we use plone.app.async, there could be no REQUEST
-        referer = hasattr(self.context, 'REQUEST') and self.context.REQUEST['HTTP_REFERER'] or ''
-        if self.context.portal_type == 'Plone Site' and 'mymeetings' in referer:
-            referer_path = referer.lstrip(self.context.absolute_url())
-            try:
-                referer_obj = self.context.unrestrictedTraverse(referer_path)
-            except:
-                referer_obj = None
-            # in case we are adding/editing annex, referer_obj is the form
-            if referer_obj and referer_obj.__module__ in ('Products.Five.metaclass',
-                                                          'plone.dexterity.browser.add'):
-                referer_obj = referer_obj.context
-            self.context = referer_obj
-        # if self.context is finally not what we want, getMeetingConfig will raise an AttributeError
+        # we return portal as the config root so css file is generated with every existing categories
+        # found in every MeetingConfigs
+        if self.context.portal_type == 'Plone Site':
+            return self.context
         try:
             cfg = tool.getMeetingConfig(self.context)
         except AttributeError:
             cfg = None
-        return cfg and cfg.annexes_types or None
+        return cfg and cfg.annexes_types or cfg
 
 
 class IconifiedCategoryGroupAdapter(object):

@@ -53,6 +53,13 @@
       destination="4.0"
       handler="Products.PloneMeeting.migrations.migrate_to_4_0.migrate_step3"
       profile="Products.PloneMeeting:default" />
+  <genericsetup:upgradeStep
+      title="Go to PloneMeeting 4.0 (Step 4)"
+      description="For application that was already migrated to v4.0 Step 1 to Step 3"
+      source="4.0"
+      destination="4.0"
+      handler="Products.PloneMeeting.migrations.migrate_to_4_0.migrate_step4"
+      profile="Products.PloneMeeting:default" />
 
 
   <!-- ##/code-section profiles.zcml-bottom -->
