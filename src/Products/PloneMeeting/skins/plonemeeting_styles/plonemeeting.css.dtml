@@ -6,10 +6,10 @@ fieldset {line-height: 1em; margin: 0.5em 0; }
 
 /* background of secret items when displayed on the meeting */
 table.listing tbody tr.odd.meeting_item_privacy_secret td {
-    background-color: #ffff99;
+    background-color: #fffacd;
 }
 table.listing tbody tr.even.meeting_item_privacy_secret td{
-    background-color: #ffcc33;
+    background-color: #ffe37f;
 }
 table.listing tbody tr.odd.meeting_item_privacy_secret_heading td {
     background-color: #d0ece7;
