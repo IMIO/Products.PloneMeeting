@@ -54,6 +54,7 @@ from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.indexes import indexAdvisers
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from Products.PloneMeeting.utils import getLastEvent
 from Products.PloneMeeting.utils import isModifiedSinceLastVersion
 
 
@@ -2101,16 +2102,7 @@ class testAdvices(PloneMeetingTestCase):
 
         # create an item and ask the advice of group 'vendors'
         self.changeUser('pmCreator1')
-        data = {
-            'title': 'Item to advice',
-            'category': 'maintenance',
-            'optionalAdvisers': ('vendors', 'developers', ),
-            'description': '<p>Item description</p>',
-        }
-        item = self.create('MeetingItem', **data)
-        item.setDetailedDescription('<p>Item detailed description</p>')
-        item.setMotivation('<p>Item motivation</p>')
-        item.setDecision('<p>Item decision</p>')
+        item = self.create('MeetingItem', optionalAdvisers=('vendors',))
         self.proposeItem(item)
 
         # give advice
@@ -2132,6 +2124,42 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(pr.getHistoryMetadata(advice))
         self.assertFalse(isModifiedSinceLastVersion(advice))
         self.assertEqual(advice_modified, advice.modified())
+
+    def test_pm_Get_advice_given_on(self):
+        """This method will return the smallest of last event 'giveAdvice' and 'modified'.
+           This will care that an advice that is edited out of the period the adviser may
+           edit the advice is still using the correct given_on date."""
+        cfg = self.meetingConfig
+        cfg.setItemAdviceStates([self.WF_STATE_NAME_MAPPINGS['itemcreated'], ])
+        cfg.setItemAdviceEditStates([self.WF_STATE_NAME_MAPPINGS['itemcreated'], ])
+        cfg.setItemAdviceViewStates([self.WF_STATE_NAME_MAPPINGS['itemcreated'], ])
+
+        # create an item and ask the advice of group 'vendors'
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem', optionalAdvisers=('vendors',))
+
+        # give advice
+        self.changeUser('pmReviewer2')
+        advice = createContentInContainer(item,
+                                          'meetingadvice',
+                                          **{'advice_group': 'vendors',
+                                             'advice_type': u'negative',
+                                             'advice_hide_during_redaction': False,
+                                             'advice_comment': RichTextValue(u'My comment')})
+
+        advice_modified = advice.modified()
+        self.assertEqual(advice.get_advice_given_on(), advice_modified)
+        # propose item so transition 'giveAdvice' is triggered
+        self.assertFalse(getLastEvent(advice, 'giveAdvice'))
+        self.proposeItem(item)
+        self.assertTrue(getLastEvent(advice, 'giveAdvice'))
+        # still using the modified date
+        self.assertEqual(advice.get_advice_given_on(), advice_modified)
+        # if advice is modified when it is given, then the date it was given
+        # (giveAdvice was triggered) will be used
+        advice.notifyModified()
+        self.assertNotEqual(advice.modified(), advice_modified)
+        self.assertEqual(advice.get_advice_given_on(), getLastEvent(advice, 'giveAdvice')['time'])
 
     def test_pm_AdviceHistorizedIfGivenAndItemChanged(self):
         """When an advice is given, if it was not historized and an item richText field

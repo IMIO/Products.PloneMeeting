@@ -173,16 +173,16 @@ class MeetingAdvice(Container):
 
     def get_advice_given_on(self):
         '''Return the date the advice was given on.
-           Returns older date between modified() and last event 'giveAdvice'.'''
+           Returns the smallest date between modified() and last event 'giveAdvice'.
+           This manages case when advice is edited after it is given, for example
+           when a MeetingManager corrects a typo, the advice_given_on date will be
+           the 'giveAdvice' date.'''
         lastEvent = getLastEvent(self, 'giveAdvice')
+        modified = self.modified()
         if not lastEvent:
-            return self.modified()
+            return modified
         else:
-            modified = self.modified()
-            if lastEvent['time'] < modified:
-                return lastEvent['time']
-            else:
-                return modified
+            return min(lastEvent['time'], modified)
 
     def versionate_if_relevant(self, comment):
         """Versionate if self was never versioned or
