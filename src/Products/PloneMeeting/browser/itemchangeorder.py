@@ -96,8 +96,10 @@ class ChangeItemOrderView(BrowserView):
             # check also that if we use a subnumber, the previous exists (22.2 exists if we specified 22.3)
             # check finally that if we are moving an item to a subnumber,
             # the master exists (moving to 12.1, 12 has to exist)
+            last_item = items[-1]
+            moving_last_item = self.context == last_item
             if (moveNumber < 100) or \
-               (moveNumber > _to_integer(items[-1].getItemNumber()) + 99) or \
+               (not moving_last_item and moveNumber > _to_integer(last_item.getItemNumber()) + 99) or \
                (not moveNumberIsInteger and len(wishedNumber.split('.')[1]) > 2) or \
                (not moveNumberIsInteger and
                 (not meeting.getItemByNumber(moveNumber - 1)
