@@ -9,7 +9,7 @@
         <br />
       </tal:back_to_item>
 
-      <fieldset>
+      <fieldset tal:condition="view/showAnnexesSection">
         <legend>
           <a name="annexes"><span i18n:translate="">Annexes</span></a>
             <a href="++add++annex"

@@ -19,6 +19,7 @@ from plone.app.controlpanel.overview import OverviewControlPanel
 from plone.app.layout.viewlets.common import ContentActionsViewlet
 from plone.app.layout.viewlets.common import GlobalSectionsViewlet
 from plone.memoize import ram
+from plone.memoize.instance import memoize
 from plone.memoize.view import memoize_contextless
 
 from archetypes.referencebrowserwidget.browser.view import ReferenceBrowserPopup
@@ -51,6 +52,7 @@ from Products.CMFPlone.utils import safe_unicode
 from Products.CPUtils.Extensions.utils import check_zope_admin
 from Products.PloneMeeting import utils as pm_utils
 from Products.PloneMeeting.interfaces import IMeeting
+from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import sendMail
 
@@ -836,23 +838,17 @@ class CategorizedAnnexesView(CategorizedTabView):
     def _prepare_table_render(self, table, portal_type):
         if portal_type == 'annexDecision':
             self.request.set('force_use_item_decision_annexes_group', True)
-            config = collective_iconifiedcategory_utils.get_config_root(self.context)
+            self.config = collective_iconifiedcategory_utils.get_config_root(self.context)
             self.request.set('force_use_item_decision_annexes_group', False)
         else:
-            config = collective_iconifiedcategory_utils.get_config_root(self.context)
+            self.config = collective_iconifiedcategory_utils.get_config_root(self.context)
 
-        if config.to_be_printed_activated:
+        if self.config.to_be_printed_activated:
             alsoProvides(table, ICategorizedPrint)
-        if config.confidentiality_activated:
+        if self.config.confidentiality_activated:
             tool = api.portal.get_tool('portal_plonemeeting')
             if tool.isManager(self.context):
                 alsoProvides(table, ICategorizedConfidential)
-
-    def showDecisionAnnexesSection(self):
-        """ """
-        if not self.context.meta_type == 'MeetingItem':
-            return False
-        return True
 
     def showAddAnnex(self):
         """ """
@@ -864,13 +860,30 @@ class CategorizedAnnexesView(CategorizedTabView):
         """ """
         portal_types = api.portal.get_tool('portal_types')
         annexTypeInfo = portal_types['annexDecision']
-        return annexTypeInfo in self.context.allowedContentTypes()
+        return annexTypeInfo in self.context.allowedContentTypes() and \
+            self._annexDecisionCategories()
 
-    def numberOfAnnexes(self, portal_type='annex'):
-        '''Return the number of viewable annexes.'''
-        catalog = api.portal.get_tool('portal_catalog')
-        return len(catalog(portal_type=portal_type,
-                           path='/'.join(self.context.getPhysicalPath())))
+    @memoize
+    def _annexDecisionCategories(self):
+        """ """
+        self.request.set('force_use_item_decision_annexes_group', True)
+        categories = collective_iconifiedcategory_utils.get_categories(self.context)
+        self.request.set('force_use_item_decision_annexes_group', False)
+        return categories
+
+    def showAnnexesSection(self):
+        """ """
+        return True
+
+    def showDecisionAnnexesSection(self):
+        """ """
+        # check if context contains decisionAnnexes or if there
+        # are some decisionAnnex annex types available in the configuration
+        if self.context.meta_type == 'MeetingItem' and \
+            (get_annexes(self.context, portal_types=['annexDecision']) or
+             self._annexDecisionCategories()):
+            return True
+        return False
 
 
 class PMCKFinder(CKFinder):

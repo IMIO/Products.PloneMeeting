@@ -309,7 +309,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             if context.meta_type == 'MeetingItem':
                 if not relatedTo:
                     annexType = self.annexFileType
-                if relatedTo == 'item_decision':
+                elif relatedTo == 'item_decision':
                     annexType = self.annexFileTypeDecision
             elif context.portal_type.startswith('meetingadvice'):
                 annexType = self.annexFileTypeAdvice
