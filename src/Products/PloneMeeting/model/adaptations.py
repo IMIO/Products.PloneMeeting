@@ -86,10 +86,15 @@ WF_NOT_CREATOR_EDITS_UNLESS_CLOSED = ('delayed', 'refused', 'confirmed', 'itemar
 # 'back_states' are states to come back from the new state and 'perm_cloned_states' are states
 # to use to define permissions of the new state minus every 'edit' permissions.  We may define
 # several 'perm_cloned_states' because it will try to find first, if not found, try to use following, ...
-WAITING_ADVICES_FROM_STATES = ({'from_states': ('proposed', 'prevalidated'),
-                                'back_states': ('proposed', 'prevalidated'),
-                                'perm_cloned_states': ('prevalidated', 'proposed'),
-                                'remove_modify_access': True},)
+WAITING_ADVICES_FROM_STATES = (
+    {'from_states': ('itemcreated', ),
+     'back_states': ('itemcreated', ),
+     'perm_cloned_states': ('itemcreated',),
+     'remove_modify_access': True},
+    {'from_states': ('proposed', 'prevalidated'),
+     'back_states': ('proposed', 'prevalidated'),
+     'perm_cloned_states': ('prevalidated', 'proposed'),
+     'remove_modify_access': True},)
 
 
 def grantPermission(state, perm, role):
