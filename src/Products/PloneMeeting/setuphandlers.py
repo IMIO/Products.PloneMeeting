@@ -307,6 +307,9 @@ def postInstall(context):
            api.content.get_state(browser_warn_msg) != 'activated':
             api.content.transition(browser_warn_msg, 'activate')
 
+    # reorder css
+    _reorderCSS(site)
+
 
 ##code-section FOOT
 def _configureCKeditor(site):
@@ -427,6 +430,23 @@ def _adaptFrontPage(site):
         frontPage.setModificationDate(frontPage.created() + 0.000002)
         frontPage.reindexObject()
     logger.info('Done.')
+
+
+def _reorderCSS(site):
+    """
+       Make sure CSS are correctly reordered in portal_css so things
+       work as expected...
+    """
+    portal_css = site.portal_css
+    css = ['imio.dashboard.css',
+           'plonemeeting.css',
+           'meetingcommunes.css',
+           'imioapps.css',
+           'plonemeetingskin.css',
+           'imioapps_IEFixes.css',
+           'ploneCustom.css']
+    for resource in css:
+        portal_css.moveResourceToBottom(resource)
 
 
 def reInstall(context):
