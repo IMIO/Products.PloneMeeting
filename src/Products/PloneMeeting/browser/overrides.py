@@ -357,16 +357,6 @@ class PMRenderCategoryView(RenderCategoryView):
         return bool(self.cfg.getItemTemplates(as_brains=True, onlyActive=True))
 
 
-class MeetingFacetedTableView(IDFacetedTableView):
-    """Override the faceted-table-items views used on the meeting_view
-       to disable sorting for every columns, elements are sorted by itemNumber."""
-
-    def __init__(self, context, request):
-        ''' '''
-        super(MeetingFacetedTableView, self).__init__(context, request)
-        self.sorting_criterion_name = None
-
-
 class BaseActionsPanelView(ActionsPanelView):
     """
       Base mechanism for managing displayed actions.

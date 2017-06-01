@@ -419,6 +419,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - MeetingItem.caegory vocabulary (listCategories) uses natural sorting to display elements, it means that labels will be sorted
   alphabetically but with advanced management for numbered labels like 1, 1.1, 1.2, 2, 2.1, 2.2, ..., 10, 10.1, 10.2, ...
   that will be sorted correctly.  This rely on the 'natsort' library
+- Added possibility to sort elements displayed in the available items dashbord of the meeting_view
 
 3.3 (2015-02-27)
 ----------------

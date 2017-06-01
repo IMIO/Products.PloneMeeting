@@ -902,8 +902,9 @@ class Criteria(eeaCriteria):
         meeting_view = False
         if IMeeting.providedBy(context):
             meeting_view = True
+            is_displaying_available_items = displaying_available_items(context)
             self.context = cfg.searches.searches_items
-            if displaying_available_items(context):
+            if is_displaying_available_items:
                 kept_filters = cfg.getDashboardMeetingAvailableItemsFilters()
                 resultsperpagedefault = cfg.getMaxShownAvailableItems()
             else:
@@ -932,8 +933,15 @@ class Criteria(eeaCriteria):
 
         res = PersistentList()
         for criterion in self._criteria():
-            # do not keep sorting criterion on the meeting_view
             if meeting_view and criterion.widget == u'sorting':
+                # keep it only of displaying available items, default sorting
+                # is set on 'getProposingGroup', if not displaying available items
+                # the sorting widget is not kept so sorting is disabled for presented items
+                if is_displaying_available_items:
+                    new_criterion = Criterion()
+                    new_criterion.update(**criterion.__dict__)
+                    new_criterion.default = u'getProposingGroup'
+                    res.append(new_criterion)
                 continue
             if criterion.section != u'advanced' or \
                criterion.__name__ in kept_filters:

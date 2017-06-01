@@ -688,13 +688,6 @@
         name="document_generation_helper_view"
      />
 
-    <browser:view
-        for="Products.PloneMeeting.interfaces.IMeeting"
-        name="faceted-table-view"
-        class=".overrides.MeetingFacetedTableView"
-        permission="zope2.View"
-    />
-
     <!-- ckeditor browser, override for Meeting, MeetingItem and meetingadvice -->
     <browser:page
         name="plone_ckfinder"
