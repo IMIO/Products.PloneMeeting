@@ -32,6 +32,18 @@ from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import updateCollectionCriterion
 
 
+def _pdata_to_data(file_content):
+    # in some case ??? we have a OFS.Image.Pdata instance and we need binary data
+    if hasattr(file_content, 'data'):
+        # this is chunking the data into small parts accessibl by 'next'
+        pdata = file_content
+        file_content = ''
+        while pdata is not None:
+            file_content = file_content + pdata.data
+            pdata = pdata.next
+    return file_content
+
+
 # The migration class ----------------------------------------------------------
 class Migrate_To_4_0(Migrator):
 
@@ -510,13 +522,7 @@ class Migrate_To_4_0(Migrator):
 
                     file_content = podFile.data
                     # in some case ??? we have a OFS.Image.Pdata instance and we need binary data
-                    if hasattr(file_content, 'data'):
-                        # this is chunking the data into small parts accessibl by 'next'
-                        pdata = file_content
-                        file_content = ''
-                        while pdata is not None:
-                            file_content = file_content + pdata.data
-                            pdata = pdata.next
+                    file_content = _pdata_to_data(file_content)
                     data = {'title': template.Title(),
                             'description': template.Description(),
                             'odt_file': NamedBlobFile(
@@ -867,8 +873,11 @@ class Migrate_To_4_0(Migrator):
                             logger.info('Migrating MeetingFile {0}...'.format(annex_id))
                             annex_title = mf.Title()
                             mf_file = mf.getFile()
+                            file_content = mf_file.data
+                            # in some case ??? we have a OFS.Image.Pdata instance and we need binary data
+                            file_content = _pdata_to_data(file_content)
                             annex_file = NamedBlobFile(
-                                data=mf_file.data,
+                                data=file_content,
                                 contentType=mf_file.getContentType(),
                                 filename=safe_unicode(mf_file.filename))
                             annex_to_print = mf.getToPrint()
