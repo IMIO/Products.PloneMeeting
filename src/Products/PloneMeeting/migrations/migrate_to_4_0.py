@@ -1310,6 +1310,7 @@ class Migrate_To_4_0(Migrator):
 
         # MIGRATION V4 SPECIFIC PARTS
         if not step or step == 2:
+            self._addPersistentAttributesToItems()
             # move to ItemTemplate and RecurringItem before adapting used WF
             # so portal_type of these items are correct
             self._moveToItemTemplateRecurringOwnPortalTypes()
@@ -1333,7 +1334,6 @@ class Migrate_To_4_0(Migrator):
             self._updateAllLocalRoles()
             self._updateManagedPermissionsForAdvices()
             self._initNewHTMLFields()
-            self._addPersistentAttributesToItems()
             self._updateHistoryComments()
             self._updateCKeditorCustomToolbar()
             self._removeUnusedIndexes()
