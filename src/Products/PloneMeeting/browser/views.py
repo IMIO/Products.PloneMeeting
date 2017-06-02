@@ -484,21 +484,23 @@ class PortletTodoUpdateView(BrowserView):
     def __call__(self):
         """Render portlet_todo and return the entire HTML tree."""
         from zope.component import getUtility
+        from zope.component import queryMultiAdapter
         from plone.portlets.interfaces import IPortletManager
-        from plone.portlets.interfaces import IPortletRenderer
-        from Products.PloneMeeting.browser.portlet_todo import Assignment as todo_assignment
+        from plone.portlets.interfaces import IPortletManagerRenderer
 
-        view = self.context.restrictedTraverse('@@plone')
         manager = getUtility(IPortletManager,
                              name='plone.leftcolumn',
                              context=self.context)
-        renderer = getMultiAdapter((self.context,
-                                    self.request,
-                                    view,
-                                    manager,
-                                    todo_assignment()),
-                                   IPortletRenderer)
-        return renderer.render()
+        # we use IPortletManagerRenderer so parameters
+        # batch_size and title_length are taken into account
+        renderer = queryMultiAdapter(
+            (self.context, self.request, self, manager), IPortletManagerRenderer)
+
+        for portlet in renderer.portletsToShow():
+            if portlet['name'] == 'portlet_todo':
+                return portlet['renderer'].render()
+
+        return ''
 
 
 class PMDocumentGenerationHelperView(ATDocumentGenerationHelperView):
