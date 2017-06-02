@@ -12,7 +12,9 @@ from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 
 from collective.behavior.talcondition.interfaces import ITALConditionable
 from collective.behavior.talcondition.utils import evaluateExpressionFor
+from eea.facetednavigation.widgets.sorting.widget import Widget as SortingWidget
 from imio.dashboard.browser.facetedcollectionportlet import Renderer as FacetedRenderer
+from imio.dashboard.utils import _get_criterion
 from imio.dashboard.utils import getCollectionLinkCriterion
 
 from zope.i18nmessageid import MessageFactory
@@ -39,7 +41,7 @@ class ITodoPortlet(IPortletDataProvider):
 class Assignment(base.Assignment):
     implements(ITodoPortlet)
 
-    #this needs to be done for old portlets that did not have the new batch_size attribute
+    # this needs to be done for old portlets that did not have the new batch_size attribute
     batch_size = 3
     title_length = 45
 
@@ -111,6 +113,21 @@ class Renderer(base.Renderer, FacetedRenderer):
                     continue
             res.append(search)
         return res
+
+    def doSearch(self, collection):
+        """ """
+        # get the sorting, either faceted sorting criterion is used
+        # or we will use sort_on and sort_reversed defined on collection
+        sorting_criterion = _get_criterion(self.cfg.searches.searches_items, SortingWidget.widget_type)
+        if sorting_criterion and sorting_criterion.default:
+            sort_on = sorting_criterion.default.split('(reverse)')[0]
+            sort_order = '(reverse)' in sorting_criterion.default and 'descending' or ''
+        else:
+            sort_on = collection.getSort_on()
+            sort_order = collection.getSort_reversed() and 'descending' or ''
+        return collection.getQuery(**{'limit': self.data.batch_size,
+                                      'sort_on': sort_on,
+                                      'sort_order': sort_order})
 
     def getColoredLink(self, brain):
         """

@@ -4,7 +4,7 @@
     <dt class="portletHeader" i18n:translate="To do">To do</dt>
 
    <tal:block repeat="search view/getSearches">
-      <tal:block define="brains python: search.getQuery(**{'limit': view.data.batch_size});">
+      <tal:block define="brains python: view.doSearch(collection=search);">
          <dd class="portletSection">
             <tal:comment replace="nothing">On click, we simulate click in the collection widget portlet</tal:comment>
             <a href="javascript:;"
