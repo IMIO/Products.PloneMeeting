@@ -527,17 +527,20 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
         predecessor = self._predecessorFromOtherMC()
         if predecessor:
             predecessor_modified = predecessor.modified()
-        # manage otherMC to send to
+        # manage otherMC to send to, and cloned to
+        # indeed we need to know where to send/have been sent if selected/unselected, ...
         ann = IAnnotations(self.context)
-        other_mc_to_clone_to_ann_keys = [
-            self.context._getSentToOtherMCAnnotationKey(destMeetingConfigId)
-            for destMeetingConfigId in self.context.getOtherMeetingConfigsClonableTo()
+        other_mc_to_clone_to = [
+            destMeetingConfigId for destMeetingConfigId in self.context.getOtherMeetingConfigsClonableTo()]
+        other_mc_cloned_to_ann_keys = [
+            destMeetingConfigId for destMeetingConfigId in self.context.listOtherMeetingConfigsClonableTo().keys()
             if self.context._getSentToOtherMCAnnotationKey(destMeetingConfigId) in ann]
         return res + (meeting_modified,
                       takenOverBy,
                       current_member,
                       predecessor_modified,
-                      other_mc_to_clone_to_ann_keys)
+                      other_mc_to_clone_to,
+                      other_mc_cloned_to_ann_keys)
 
     @ram.cache(getLink_cachekey)
     def getLink(self):

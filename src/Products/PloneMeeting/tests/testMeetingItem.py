@@ -5096,10 +5096,16 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse("will_be_cloned_to_other_mc.png" in IPrettyLink(item).getLink())
         self.assertTrue("clone_to_other_mc.png" in IPrettyLink(item).getLink())
 
+        # now set item as no more to send to cfg2
+        item.setOtherMeetingConfigsClonableTo(())
+        # still with icon "sent to" as it has been sent
+        self.assertFalse("will_be_cloned_to_other_mc.png" in IPrettyLink(item).getLink())
+        self.assertTrue("clone_to_other_mc.png" in IPrettyLink(item).getLink())
+
         # remove sent item
         self.deleteAsManager(item2.UID())
         self.assertFalse("clone_to_other_mc.png" in IPrettyLink(item).getLink())
-        self.assertTrue("will_be_cloned_to_other_mc.png" in IPrettyLink(item).getLink())
+        self.assertFalse("will_be_cloned_to_other_mc.png" in IPrettyLink(item).getLink())
 
     def test_pm_ItemReferenceSetWhenItemHasFrozenMeeting(self):
         """Item reference is avilable when item is linked to a meeting
