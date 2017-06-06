@@ -606,6 +606,7 @@ class testViews(PloneMeetingTestCase):
             view.group_users(),
             'M. PMCreator One<br />M. PMCreator One bee<br />M. PMManager')
 
+
 def test_suite():
     from unittest import TestSuite, makeSuite
     suite = TestSuite()

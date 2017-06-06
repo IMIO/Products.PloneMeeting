@@ -49,7 +49,8 @@ class testPortlets(PloneMeetingTestCase):
              self.manager,
              self.portlet_pm_assignment),
             IPortletRenderer)
-        self.portlet_todo_assignment = portlet_todo.Assignment()
+        self.portlet_todo_assignment = portlet_todo.Assignment(batch_size=5,
+                                                               title_length=100)
         self.portlet_todo_renderer = getMultiAdapter(
             (mFolder,
              self.request,
