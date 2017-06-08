@@ -1838,21 +1838,32 @@ class testMeeting(PloneMeetingTestCase):
         # first make sure recurring items are not added
         self.changeUser('admin')
         self._removeConfigObjectsFor(self.meetingConfig)
+        # make sure 'pmManager' may not see items of 'vendors'
+        self.portal.portal_groups.removePrincipalFromGroup('pmManager', 'vendors_advisers')
+
         # create a meeting and an item, set the meeting as preferredMeeting for the item
         # then when the meeting is removed, the item preferredMeeting is back to 'whatever'
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=DateTime('2014/01/01'))
         meetingUID = meeting.UID()
+        # create item as 'pmCreator2' so it is not viewable by 'pmManager'
+        self.changeUser('pmCreator2')
         item = self.create('MeetingItem')
         item.setPreferredMeeting(meetingUID)
         item.reindexObject(idxs=['getPreferredMeeting'])
         items = self.portal.portal_catalog(getPreferredMeeting=meetingUID)
         self.assertTrue(len(items) == 1)
         self.assertTrue(items[0].UID == item.UID())
+
         # now remove the meeting and check
+        self.changeUser('pmManager')
+        # item is not viewable by MeetingManager
+        self.assertFalse(self.hasPermission(View, item))
         self.portal.restrictedTraverse('@@delete_givenuid')(meetingUID)
-        items = self.portal.portal_catalog(getPreferredMeeting=meetingUID)
+
         # no items found
+        self.changeUser('pmCreator2')
+        items = self.portal.portal_catalog(getPreferredMeeting=meetingUID)
         self.assertFalse(items)
         # the preferred meeting of the item is now 'whatever'
         self.assertTrue(item.getPreferredMeeting() == ITEM_NO_PREFERRED_MEETING_VALUE)

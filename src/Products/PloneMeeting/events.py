@@ -674,12 +674,18 @@ def onMeetingRemoved(meeting, event):
         meeting.REQUEST.set('items_to_remove', ())
 
     # update items for which current meeting is selected as preferred meeting
+    # do this unrestricted so we are sure that every items are updated
     catalog = api.portal.get_tool('portal_catalog')
-    brains = catalog(getPreferredMeeting=meeting.UID())
+    brains = catalog.unrestrictedSearchResults(getPreferredMeeting=meeting.UID())
+    # we do not reindex in the loop on brains or it mess things because
+    # we are reindexing the index we searched on and brains is a LazyMap
+    items_to_reindex = []
     for brain in brains:
         item = brain.getObject()
         item.setPreferredMeeting(ITEM_NO_PREFERRED_MEETING_VALUE)
-        item.reindexObject('getPreferredMeeting')
+        items_to_reindex.append(item)
+    for item_to_reindex in items_to_reindex:
+        item_to_reindex.reindexObject(idxs=['getPreferredMeeting', 'getPreferredMeetingDate'])
     # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
     invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
 
