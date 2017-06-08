@@ -688,7 +688,7 @@ class Migrate_To_4_0(Migrator):
            for each review_state the item already get thru.'''
         brains = self.portal.portal_catalog(meta_type=('MeetingItem', ))
         logger.info("Initializing new attributes 'autoCopyGroups', 'emergency_changes_history', "
-                    "ompleteness_changes_history' and 'takenOverByInfos' for %d MeetingItem objects..."
+                    "completeness_changes_history' and 'takenOverByInfos' for %d MeetingItem objects..."
                     % len(brains))
         for brain in brains:
             item = brain.getObject()
@@ -846,7 +846,7 @@ class Migrate_To_4_0(Migrator):
             brains = catalog(portal_type=portal_type)
             for brain in brains:
                 obj = brain.getObject()
-                if obj._v_old_mft == old_mft:
+                if obj._old_mft == old_mft:
                     return obj
 
         def _migrateFiles(brains):
@@ -963,7 +963,7 @@ class Migrate_To_4_0(Migrator):
                     confidential=mft.getIsConfidentialDefault(),
                     enabled=bool(wfTool.getInfoFor(mft, 'review_state') == 'active'))
                 old_mft_new_cat_id_mappings[mft.UID()] = calculate_category_id(category)
-                category._v_old_mft = mft.UID()
+                category._old_mft = mft.UID()
                 for subType in mft.getSubTypes():
                     subcat = api.content.create(
                         type=subcategory_type,
@@ -977,7 +977,7 @@ class Migrate_To_4_0(Migrator):
                     )
                     old_mft_new_cat_id_mappings[mft.UID() + '__subtype__' + subType['row_id']] = \
                         calculate_category_id(category)
-                    subcat._v_old_mft = subType['row_id']
+                    subcat._old_mft = subType['row_id']
 
         # now that categories and subcategories are created, we are
         # able to update the otherMCCorrespondences attribute
