@@ -438,7 +438,7 @@ def _reorderCSS(site):
        work as expected...
     """
     portal_css = site.portal_css
-    css = ['imio.dashboard.css',
+    css = ['++resource++imio.dashboard/imio.dashboard.css',
            'plonemeeting.css',
            'meetingcommunes.css',
            'imioapps.css',
