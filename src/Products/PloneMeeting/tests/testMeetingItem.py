@@ -4245,6 +4245,33 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(i4.getRawManuallyLinkedItems() == [i1UID, i2UID, i3UID, i5UID])
         self.assertTrue(i5.getRawManuallyLinkedItems() == [i1UID, i2UID, i3UID, i4UID])
 
+    def test_pm_ManuallyLinkedItemsDuplicatedAndKeepLinkWhenSomeLinkedItemsWereDeleted(self):
+        '''In case a user duplicateAndKeepLink an item linked to another having manually
+           linked items that where deleted, it does not fail...'''
+        # create item for 'developers'
+        self.changeUser('pmCreator1')
+        item1 = self.create('MeetingItem')
+        item2 = self.create('MeetingItem')
+        item1.setManuallyLinkedItems([item2.UID()])
+        item3 = item1.clone(newOwnerId=self.member.id,
+                            cloneEventAction='Duplicate and keep link',
+                            setCurrentAsPredecessor=True,
+                            manualLinkToPredecessor=True)
+        self.assertTrue(item1.UID() in item3.getRawManuallyLinkedItems())
+        # remove item1 and duplicateAndKeepLink item3
+        item1_UID = item1.UID()
+        self.deleteAsManager(item1_UID)
+        self.assertTrue(item1_UID in item3.getRawManuallyLinkedItems())
+        # duplicateAndKeepLink to item3 that still has a reference to item1 UID
+        item4 = item3.clone(newOwnerId=self.member.id,
+                            cloneEventAction='Duplicate and keep link',
+                            setCurrentAsPredecessor=True,
+                            manualLinkToPredecessor=True)
+        # it worked and now manuallyLinkdItems holds correct existing UIDs only
+        self.assertFalse(item1_UID in item2.getRawManuallyLinkedItems())
+        self.assertFalse(item1_UID in item3.getRawManuallyLinkedItems())
+        self.assertFalse(item1_UID in item4.getRawManuallyLinkedItems())
+
     def test_pm_Completeness(self):
         '''Test the item-completeness view and relevant methods in MeetingItem.'''
         # completeness widget is disabled for items of the config

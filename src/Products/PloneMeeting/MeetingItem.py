@@ -2020,7 +2020,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             for newUid in newUids:
                 # add every manually linked items of this newUid...
                 newItem = unrestrictedSearch(UID=newUid)[0]._unrestrictedGetObject()
-                for mLinkedItemUid in newItem.getRawManuallyLinkedItems():
+                # getRawManuallyLinkedItems still holds old UID of deleted items
+                # so we use getManuallyLinkedItems to be sure that item object still exists
+                mLinkedItemUids = [tmp_item.UID() for tmp_item in newItem.getManuallyLinkedItems()]
+                for mLinkedItemUid in mLinkedItemUids:
                     if mLinkedItemUid and not mLinkedItemUid in newLinkedUids:
                         newLinkedUids.append(mLinkedItemUid)
             # do not forget newUids
