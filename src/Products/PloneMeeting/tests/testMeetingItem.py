@@ -29,6 +29,7 @@ from DateTime import DateTime
 from Products.Five import zcml
 
 from zope.annotation.interfaces import IAnnotations
+from zope.component import getAdapter
 from zope.event import notify
 from zope.i18n import translate
 from zope.interface import Invalid
@@ -43,6 +44,7 @@ from collective.iconifiedcategory.utils import get_category_object
 from collective.iconifiedcategory.utils import get_config_root
 from collective.iconifiedcategory.utils import get_group
 from imio.actionspanel.interfaces import IContentDeletable
+from imio.history.interfaces import IImioHistory
 from plone import api
 from plone.app.testing import logout
 from plone.app.textfield.value import RichTextValue
@@ -1485,6 +1487,23 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEquals(previous_review_state(item)(), _marker)
         item.workflow_history = {}
         self.assertEquals(previous_review_state(item)(), _marker)
+
+    def test_pm_GetHistoryToHighlightHistoryIconDoesBypassDatachanges(self):
+        """getHistory done when getting the last event comment to know if history icon/link
+           must be highlighted does will bypass datachanges (performance reason because it
+           computes diffs)."""
+        cfg = self.meetingConfig
+        cfg.setHistorizedItemAttributes(('decision', ))
+        cfg.setRecordItemHistoryStates((self.WF_STATE_NAME_MAPPINGS['itemcreated'], ))
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.assertFalse('_datachange_' in [event['action'] for event in item.getHistory()])
+        setFieldFromAjax(item, 'decision', self.decisionText)
+        self.assertTrue('_datachange_' in [event['action'] for event in item.getHistory()])
+        # datachange are not taken into account when for_last_event=True
+        adapter = getAdapter(item, IImioHistory, 'workflow')
+        self.assertTrue('_datachange_' in [event['action'] for event in adapter.getHistory()])
+        self.assertFalse('_datachange_' in [event['action'] for event in adapter.getHistory(for_last_event=True)])
 
     def test_pm_AddAutoCopyGroups(self):
         '''Test the functionnality of automatically adding some copyGroups depending on

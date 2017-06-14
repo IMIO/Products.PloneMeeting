@@ -858,9 +858,21 @@ class PMWfHistoryAdapter(ImioWfHistoryAdapter):
                     userMayAccessComment = False
         return userMayAccessComment
 
-    def getHistory(self, checkMayView=True):
+    def getHistory(self, **kw):
         """Override getHistory because it manages data changes."""
-        return self.context.getHistory(checkMayView=checkMayView)
+        if 'checkMayView' in kw:
+            checkMayView = kw['checkMayView']
+        else:
+            checkMayView = True
+
+        if 'for_last_event' in kw:
+            for_last_event = kw['for_last_event']
+        else:
+            for_last_event = False
+        if for_last_event:
+            return self.context.getHistory(checkMayView=checkMayView, history_types=['workflow'])
+        else:
+            return self.context.getHistory(checkMayView=checkMayView)
 
 
 class Criteria(eeaCriteria):
