@@ -839,7 +839,8 @@ class PMWfHistoryAdapter(ImioWfHistoryAdapter):
         ignorable_history_comment += ('create_meeting_item_from_template_comments',
                                       'create_from_predecessor_comments',
                                       'Duplicate and keep link_comments',
-                                      'Duplicate_comments')
+                                      'Duplicate_comments',
+                                      u'wf_transition_triggered_by_application')
         return ignorable_history_comment
 
     def mayViewComment(self, event):
