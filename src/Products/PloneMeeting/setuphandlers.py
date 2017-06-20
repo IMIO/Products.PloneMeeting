@@ -352,6 +352,10 @@ def _configureCKeditor(site):
         msg_indent = translate('ckeditor_style_indent_first_line',
                                domain='PloneMeeting',
                                context=site.REQUEST).encode('utf-8')
+        msg_table_no_optimization = translate('ckeditor_style_table_no_optimization',
+                                              domain='PloneMeeting',
+                                              context=site.REQUEST).encode('utf-8')
+
         menuStyles = unicode(
             "[\n{0}\n{{ name : '{1}'\t\t, element : 'span', attributes : {{ 'class' : 'highlight-red' }} }},\n"
             "{{ name : '{2}'\t\t, element : 'p', attributes : {{ 'class' : 'highlight-yellow' }} }},\n"
@@ -359,7 +363,8 @@ def _configureCKeditor(site):
             "{{ name : '{4}'\t\t, element : 'p', attributes : {{ 'class' : 'smallText' }} }},\n"
             "{{ name : '{5}'\t\t, element : 'p', attributes : {{ 'class' : 'largeText' }} }},\n"
             "{{ name : '{6}'\t\t, element : 'p', attributes : {{ 'class' : 'xLargeText' }} }},\n"
-            "{{ name : '{7}'\t\t, element : 'p', attributes : {{ 'style' : 'text-indent: 40px;' }} }},\n]\n".
+            "{{ name : '{7}'\t\t, element : 'table', styles : {{ 'table-layout' : 'fixed' }} }},\n"
+            "{{ name : '{8}'\t\t, element : 'p', attributes : {{ 'style' : 'text-indent: 40px;' }} }},\n]\n".
             format(CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG,
                    msg_highlight_red,
                    msg_highlight_yellow,
@@ -367,6 +372,7 @@ def _configureCKeditor(site):
                    msg_small,
                    msg_large,
                    msg_x_large,
+                   msg_table_no_optimization,
                    msg_indent), enc)
         cke_props.menuStyles = menuStyles
     # activate SCAYT auto-start
