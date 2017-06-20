@@ -307,6 +307,15 @@ def postInstall(context):
            api.content.get_state(browser_warn_msg) != 'activated':
             api.content.transition(browser_warn_msg, 'activate')
 
+    # enable raiseOnError_for_non_managers and optimize_tables in collective.documentgenerator
+    api.portal.set_registry_record(
+        'collective.documentgenerator.browser.controlpanel.'
+        'IDocumentGeneratorControlPanelSchema.optimize_tables',
+        True)
+    api.portal.set_registry_record(
+        'collective.documentgenerator.browser.controlpanel.'
+        'IDocumentGeneratorControlPanelSchema.raiseOnError_for_non_managers',
+        True)
     # reorder css
     _reorderCSS(site)
 
