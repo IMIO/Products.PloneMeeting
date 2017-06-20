@@ -785,8 +785,6 @@ class CheckPodTemplatesView(BrowserView):
                 messages['no_obj_found'].append((pod_template, None))
                 continue
 
-            kwargs = {}
-            kwargs['raiseOnError'] = True
             for obj in objs:
                 view = obj.restrictedTraverse('@@document-generation')
                 self.request.set('template_uid', pod_template.UID())
@@ -795,7 +793,7 @@ class CheckPodTemplatesView(BrowserView):
                     view._render_document(pod_template,
                                           output_format='odt',
                                           sub_documents=[],
-                                          **kwargs)
+                                          raiseOnError=True)
                     messages['clean'].append((pod_template, obj))
                 except Exception, exc:
                     messages['error'].append((pod_template, obj, ('Error', exc.message)))
