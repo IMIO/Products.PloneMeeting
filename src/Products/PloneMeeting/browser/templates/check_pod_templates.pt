@@ -10,7 +10,7 @@
   <body>
   <metal:fill fill-slot="main">
 
-    <h1 class="documentFirstHeading">Check Pod templates</h1>
+    <h1 class="documentFirstHeading" i18n:translate="pm_check_pod_templates">Check Pod templates</h1>
 
     <metal:backToMeetingConfig use-macro='here/@@pm-macros/backToMeetingConfig' />
 
