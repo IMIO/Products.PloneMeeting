@@ -654,6 +654,7 @@ class Migrate_To_4_0(Migrator):
         for cfg in self.tool.objectValues('MeetingConfig'):
             for category_group in cfg.annexes_types.objectValues():
                 category_group.restrictedTraverse('@@update-categorized-elements')()
+        self.portal.portal_css.cookResources()
         logger.info('Done.')
 
     def _updateManagedPermissionsForAdvices(self):
