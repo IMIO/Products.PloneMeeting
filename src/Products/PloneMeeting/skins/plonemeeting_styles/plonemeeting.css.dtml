@@ -199,10 +199,10 @@ div.ploneMeetingSelectContainer.annex_type_img_select_box div#annex_type_img_sel
     border: 1px dotted darkgrey;
 }
 /* table for which attribute "border" is not given will be rendered with borders by appy.pod */
-#content div[id^='hook_'] table:not(border):not([style*="border"]) tr th,
-#content div[id^='hook_'] table:not(border):not([style*="border"]) tr td,
-#content div.pmMoreInfo table:not(border):not([style*="border"])  tr th,
-#content div.pmMoreInfo table:not(border):not([style*="border"])  tr td,
+#content div[id^='hook_'] table:not([border]):not([style*="border"]) tr th,
+#content div[id^='hook_'] table:not([border]):not([style*="border"]) tr td,
+#content div.pmMoreInfo table:not([border]):not([style*="border"])  tr th,
+#content div.pmMoreInfo table:not([border]):not([style*="border"])  tr td,
 body.cke_editable table:not([border='0']):not([style*="border"])  tr td,
 body.cke_editable table.cke_show_border:not([border='0']):not([style*="border"])  tr td {
     border: 1px solid black;
