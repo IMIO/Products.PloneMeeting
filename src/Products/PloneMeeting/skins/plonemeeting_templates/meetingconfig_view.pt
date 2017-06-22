@@ -366,8 +366,7 @@
                     <a href="#"
                        title="Edit attributes of this group of categories"
                        i18n:attributes="title"
-                       tal:attributes="href string:${cat_group_url}/edit"
-                       tal:condition="isRealManager">
+                       tal:attributes="href string:${cat_group_url}/edit">
                       <img src="#" tal:attributes="src string: $portal_url/edit.png" />
                     </a>
                   </tal:forRealManagers>
