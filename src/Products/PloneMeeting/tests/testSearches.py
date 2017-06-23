@@ -78,12 +78,16 @@ class testSearches(PloneMeetingTestCase):
         # as adviser, query is correct
         self.changeUser('pmAdviser1')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstoadvice')
-        self.assertEquals(adapter.query,
-                          {'indexAdvisers': {'query': ['developers_advice_not_given',
-                                                       'delay__developers_advice_not_given',
-                                                       'developers_advice_asked_again',
-                                                       'delay__developers_advice_asked_again']},
-                           'portal_type': {'query': itemTypeName}})
+        self.assertEquals(
+            adapter.query,
+            {'indexAdvisers': {
+                'query': ['developers_advice_not_given',
+                          'delay__developers_advice_not_given',
+                          'developers_advice_asked_again',
+                          'delay__developers_advice_asked_again',
+                          'developers_advice_hidden_during_redaction',
+                          'delay__developers_advice_hidden_during_redaction']},
+                'portal_type': {'query': itemTypeName}})
 
         # now do the query
         # this adapter is used by the "searchallitemstoadvice"
@@ -143,6 +147,14 @@ class testSearches(PloneMeetingTestCase):
         advice.restrictedTraverse('@@change-advice-asked-again')()
         self.proposeItem(item)
         self.changeUser('pmReviewer2')
+        cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstoadvice')
+        self.assertEquals(len(collection.getQuery()), 1)
+        self.assertEquals(collection.getQuery()[0].UID, item.UID())
+
+        # a given advice that is 'hidden_during_redaction' is also found by this search
+        advice.advice_type = u'positive'
+        changeView = advice.restrictedTraverse('@@change-advice-hidden-during-redaction')
+        changeView()
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstoadvice')
         self.assertEquals(len(collection.getQuery()), 1)
         self.assertEquals(collection.getQuery()[0].UID, item.UID())

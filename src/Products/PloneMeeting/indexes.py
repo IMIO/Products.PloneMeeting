@@ -16,8 +16,9 @@ from plone.indexer import indexer
 from Products.PluginIndexes.common.UnIndex import _marker
 from Products.PloneMeeting.interfaces import IMeeting
 from Products.PloneMeeting.interfaces import IMeetingItem
-from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
+from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
+from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import getHistory
 
@@ -235,13 +236,15 @@ def templateUsingGroups(obj):
 
 def _to_coded_adviser_index(obj, groupId, advice):
     """Build an 'index' version of the adviser state so it is searchable and so on."""
-    def _computeSuffixFor(groupId, advice):
+    def _computeSuffixFor(groupId, advice, advice_type):
         '''
           Compute the suffix that will be appended depending on advice state.
         '''
         suffixes = []
         # still not given but still giveable?  Not giveable?  Delay exceeded? Asked again?
-        if advice['type'] in (NOT_GIVEN_ADVICE_VALUE, 'asked_again'):
+        if advice_type in (NOT_GIVEN_ADVICE_VALUE,
+                           'asked_again',
+                           HIDDEN_DURING_REDACTION_ADVICE_VALUE):
             if obj._adviceDelayIsTimedOut(groupId):
                 # delay is exceeded, advice was not given
                 suffixes.append('_advice_delay_exceeded')
@@ -250,8 +253,10 @@ def _to_coded_adviser_index(obj, groupId, advice):
                 if advice['advice_addable']:
                     suffixes.append('_advice_not_given')
                 elif advice['advice_editable']:
-                    # case when 'asked_again'
-                    suffixes.append('_advice_asked_again')
+                    if advice_type == 'asked_again':
+                        suffixes.append('_advice_asked_again')
+                    elif advice_type == HIDDEN_DURING_REDACTION_ADVICE_VALUE:
+                        suffixes.append('_advice_{0}'.format(HIDDEN_DURING_REDACTION_ADVICE_VALUE))
                 else:
                     suffixes.append('_advice_not_giveable')
 
@@ -267,11 +272,11 @@ def _to_coded_adviser_index(obj, groupId, advice):
     res = []
     isDelayAware = obj.adviceIndex[groupId]['delay'] and True or False
     # compute suffixes
-    suffixes = _computeSuffixFor(groupId, advice)
-    # we also index the 'real_group_id_' so we can query who we asked
-    # advice to, without passing the advice state
     # we compute the 'advice_type' to take into account 'hidden_during_redaction'
     advice_type = obj._shownAdviceTypeFor(advice)
+    suffixes = _computeSuffixFor(groupId, advice, advice_type)
+    # we also index the 'real_group_id_' so we can query who we asked
+    # advice to, without passing the advice state
     for suffix in suffixes:
         if isDelayAware:
             res.append('delay__' + groupId + suffix)

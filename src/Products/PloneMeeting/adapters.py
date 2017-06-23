@@ -39,6 +39,7 @@ from imio.history.adapters import ImioWfHistoryAdapter
 from imio.prettylink.adapters import PrettyLinkAdapter
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import AddAnnexDecision
+from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import MEETINGREVIEWERS
 from Products.PloneMeeting.config import MEETINGROLES
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
@@ -1312,7 +1313,9 @@ class ItemsToAdviceAdapter(CompoundCriterionBaseAdapter):
         groupIds = [g.getId() + '_advice_not_given' for g in groups] + \
                    ['delay__' + g.getId() + '_advice_not_given' for g in groups] + \
                    [g.getId() + '_advice_asked_again' for g in groups] + \
-                   ['delay__' + g.getId() + '_advice_asked_again' for g in groups]
+                   ['delay__' + g.getId() + '_advice_asked_again' for g in groups] + \
+                   ['{0}_advice_{1}'.format(g.getId(), HIDDEN_DURING_REDACTION_ADVICE_VALUE) for g in groups] + \
+                   ['delay__{0}_advice_{1}'.format(g.getId(), HIDDEN_DURING_REDACTION_ADVICE_VALUE) for g in groups]
         # Create query parameters
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 # KeywordIndex 'indexAdvisers' use 'OR' by default
@@ -1336,7 +1339,8 @@ class ItemsToAdviceWithoutDelayAdapter(CompoundCriterionBaseAdapter):
         # Add a '_advice_not_given' at the end of every group id: we want "not given" advices.
         # this search will only return 'not delay-aware' advices
         groupIds = [g.getId() + '_advice_not_given' for g in groups] + \
-                   [g.getId() + '_advice_asked_again' for g in groups]
+                   [g.getId() + '_advice_asked_again' for g in groups] + \
+                   ['{0}_advice_{1}'.format(g.getId(), HIDDEN_DURING_REDACTION_ADVICE_VALUE) for g in groups]
         # Create query parameters
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 # KeywordIndex 'indexAdvisers' use 'OR' by default
@@ -1361,7 +1365,8 @@ class ItemsToAdviceWithDelayAdapter(CompoundCriterionBaseAdapter):
         # Add a '_advice_not_given' at the end of every group id: we want "not given" advices.
         # this search will only return 'delay-aware' advices
         groupIds = ['delay__' + g.getId() + '_advice_not_given' for g in groups] + \
-                   ['delay__' + g.getId() + '_advice_asked_again' for g in groups]
+                   ['delay__' + g.getId() + '_advice_asked_again' for g in groups] + \
+                   ['delay__{0}_advice_{1}'.format(g.getId(), HIDDEN_DURING_REDACTION_ADVICE_VALUE) for g in groups]
         # Create query parameters
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 # KeywordIndex 'indexAdvisers' use 'OR' by default

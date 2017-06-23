@@ -555,28 +555,33 @@ class testAdvices(PloneMeetingTestCase):
         changeHiddenDuringRedactionView = advice.restrictedTraverse('@@change-advice-hidden-during-redaction')
         changeHiddenDuringRedactionView()
         self.assertTrue(advice.advice_hide_during_redaction)
-        self.assertEquals(set(indexAdvisers.callable(item)),
-                          set(['delay_real_group_id__unique_id_123',
-                               'delay_real_group_id__unique_id_123__not_given',
-                               'delay__vendors_advice_not_given',
-                               'real_group_id__developers',
-                               'real_group_id__developers__hidden_during_redaction',
-                               'developers_advice_under_edit',
-                               'not_given', HIDDEN_DURING_REDACTION_ADVICE_VALUE]))
+        self.assertEquals(
+            sorted(indexAdvisers.callable(item)),
+            ['delay__vendors_advice_not_given',
+             'delay_real_group_id__unique_id_123',
+             'delay_real_group_id__unique_id_123__not_given',
+             'developers_advice_hidden_during_redaction',
+             'developers_advice_under_edit',
+             HIDDEN_DURING_REDACTION_ADVICE_VALUE,
+             'not_given',
+             'real_group_id__developers',
+             'real_group_id__developers__hidden_during_redaction'])
         brains = self.portal.portal_catalog(indexAdvisers='real_group_id__developers__hidden_during_redaction')
         self.assertEquals(len(brains), 1)
         self.assertEquals(brains[0].UID, itemUID)
         # makes this advice 'considered_not_given_hidden_during_redaction'
         self.changeUser('pmReviewer1')
         self.validateItem(item)
-        self.assertEquals(set(indexAdvisers.callable(item)),
-                          set(['delay_real_group_id__unique_id_123',
-                               'delay_real_group_id__unique_id_123__not_given',
-                               'delay__vendors_advice_not_giveable',
-                               'real_group_id__developers',
-                               'real_group_id__developers__considered_not_given_hidden_during_redaction',
-                               'developers_advice_given',
-                               'not_given', CONSIDERED_NOT_GIVEN_ADVICE_VALUE]))
+        self.assertEquals(
+            sorted(indexAdvisers.callable(item)),
+            [CONSIDERED_NOT_GIVEN_ADVICE_VALUE,
+             'delay__vendors_advice_not_giveable',
+             'delay_real_group_id__unique_id_123',
+             'delay_real_group_id__unique_id_123__not_given',
+             'developers_advice_given',
+             'not_given',
+             'real_group_id__developers',
+             'real_group_id__developers__considered_not_given_hidden_during_redaction'])
         brains = self.portal.portal_catalog(
             indexAdvisers='real_group_id__developers__considered_not_given_hidden_during_redaction')
         self.assertEquals(len(brains), 1)
