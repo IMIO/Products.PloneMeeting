@@ -2711,7 +2711,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Overrides the field 'maxShownListings' acessor to synch
            defined value with relevant faceted criterion.'''
         if self.checkCreationFlag():
-            return '20'
+            return defValues.maxShownListings
         # get the criterion
         criterion = _get_criterion(
             self.searches.searches_items,
