@@ -31,8 +31,9 @@ from collective.eeafaceted.collectionwidget.browser.views import RenderCategoryV
 from collective.iconifiedcategory.browser.actionview import ConfidentialChangeView
 from collective.iconifiedcategory.browser.tabview import CategorizedTabView
 from collective.iconifiedcategory.browser.views import CategorizedChildInfosView
-from collective.iconifiedcategory.interfaces import ICategorizedPrint
 from collective.iconifiedcategory.interfaces import ICategorizedConfidential
+from collective.iconifiedcategory.interfaces import ICategorizedPrint
+from collective.iconifiedcategory.interfaces import ICategorizedSigned
 from collective.iconifiedcategory import utils as collective_iconifiedcategory_utils
 from eea.facetednavigation.browser.app.view import FacetedContainerView
 from eea.facetednavigation.interfaces import IFacetedNavigable
@@ -40,7 +41,6 @@ from imio.actionspanel.browser.viewlets import ActionsPanelViewlet
 from imio.actionspanel.browser.views import ActionsPanelView
 from imio.annex import utils as imio_annex_utils
 from imio.dashboard.browser.overrides import IDDocumentGenerationView
-from imio.dashboard.browser.overrides import IDFacetedTableView
 from imio.dashboard.browser.overrides import IDDashboardDocumentGeneratorLinksViewlet
 from imio.dashboard.browser.views import RenderTermPortletView
 from imio.dashboard.content.pod_template import IDashboardPODTemplate
@@ -839,6 +839,8 @@ class CategorizedAnnexesView(CategorizedTabView):
             tool = api.portal.get_tool('portal_plonemeeting')
             if tool.isManager(self.context):
                 alsoProvides(table, ICategorizedConfidential)
+        if self.config.signed_activated:
+            alsoProvides(table, ICategorizedSigned)
 
     def showAddAnnex(self):
         """ """
