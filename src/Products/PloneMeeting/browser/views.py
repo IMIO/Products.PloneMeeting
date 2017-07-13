@@ -584,13 +584,15 @@ class PMDocumentGenerationHelperView(ATDocumentGenerationHelperView):
         '''Helper method to have a printable version of advices.'''
         membershipTool = api.portal.get_tool('portal_membership')
         itemAdvicesByType = item.getAdvicesByType()
-        res = "<p class='pmAdvices'>"
+        res = ""
         if withAdvicesTitle:
-            res += "<u><b>%s :</b></u><br />" % translate('PloneMeeting_label_advices',
+            res += "<p class='pmAdvices'><u><b>%s :</b></u></p>" % translate('PloneMeeting_label_advices',
                                                           domain='PloneMeeting',
                                                           context=self.request)
         for adviceType in itemAdvicesByType:
             for advice in itemAdvicesByType[adviceType]:
+
+                res+="<p class='pmAdvices'>"
                 # if we have a delay and delay_label, we display it
                 delayAwareMsg = u''
                 if withDelay and advice['delay']:
@@ -638,9 +640,9 @@ class PMDocumentGenerationHelperView(ATDocumentGenerationHelperView):
                                                                              domain='PloneMeeting',
                                                                              context=self.request),
                                                                    unicode(adviceComment, 'utf-8')))
+                res += u"</p>"
         if not itemAdvicesByType:
-            res += '-'
-        res += u"</p>"
+            res += "<p class='pmAdvices'>-</p>"
 
         return res.encode('utf-8')
 
