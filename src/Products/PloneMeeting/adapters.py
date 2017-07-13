@@ -1308,7 +1308,7 @@ class ItemsToAdviceAdapter(CompoundCriterionBaseAdapter):
     def query_itemstoadvice(self):
         '''Queries all items for which the current user must give an advice.'''
         groups = self.tool.getGroupsForUser(suffixes=['advisers'])
-        # Add a '_advice_not_given' at the end of every group id: we want "not given" advices.
+        # Consider not_given, asked_again and hidden_during_redaction advices,
         # this search will return 'not delay-aware' and 'delay-aware' advices
         groupIds = [g.getId() + '_advice_not_given' for g in groups] + \
                    ['delay__' + g.getId() + '_advice_not_given' for g in groups] + \
