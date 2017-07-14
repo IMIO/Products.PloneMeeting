@@ -1664,10 +1664,15 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
            not self.context.adapted().isPrivacyViewable():
             return False
 
-        elif self.context.meta_type == 'Meeting':
+        # bypass if not confidential
+        infos = self.context.categorized_elements[self.brain.UID]
+        if not infos['confidential']:
+            return True
+
+        # Meeting
+        if self.context.meta_type == 'Meeting':
             # if we have a SUFFIXPROFILEPREFIX prefixed group,
             # check using "userIsAmong", this is only done for Meetings
-            infos = self.context.categorized_elements[self.brain.UID]
             if set(self._user_groups()).intersection(infos['visible_for_groups']):
                 return True
             # build suffixes to pass to tool.userIsAmong
