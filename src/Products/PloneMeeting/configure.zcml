@@ -9,6 +9,7 @@
   <include package="communesplone.layout"/>
   <include package="Products.PasswordStrength" />
   <include package="collective.ckeditor"/>
+  <include package="collective.dms.scanbehavior"/>
   <include package="collective.documentviewer"/>
   <include package="collective.datagridcolumns"/>
   <include package="collective.iconifieddocumentactions"/>

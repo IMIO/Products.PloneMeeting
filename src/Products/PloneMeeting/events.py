@@ -599,7 +599,7 @@ def onAnnexToPrintChanged(annex, event):
     annex = event.object
 
     # if not set to True, we return
-    if event.new_value is True:
+    if event.new_values['to_print'] is True:
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(annex)
         # in case we are updating an annex that was already converted,
