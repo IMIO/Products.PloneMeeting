@@ -10,6 +10,7 @@
     <input type="hidden" name="uids" value=""/>
     <input type="hidden" name="facetedQuery" value=""/>
     <input type="hidden" name="mailinglist_name" value=""/>
+    <input tal:condition="view/displayStoreAsAnnexSection" type="hidden" name="store_as_annex_uid" value=""/>
 
     <ul class="pod-template">
         <li tal:repeat="infos view/get_links_info">
@@ -25,27 +26,41 @@
         <tal:comment replace="nothing">XXX Added by PloneMeting : send the document by email.</tal:comment>
         <tal:mail define="mailingLists python: view.getAvailableMailingLists(infos['template_uid'])"
                   condition="mailingLists">
-        <img src="sendMail.gif"
-             tal:attributes="onClick string:toggleMenu('${infos/template_uid}_${infos/output_format}');
-                             src string:${view/portal_url}/sendMail.gif;"
-             style="cursor:pointer; position: relative;"/>
-        <div tal:define="menuId string:pm_menu_${infos/template_uid}_${infos/output_format}"
-             tal:attributes="id menuId; name menuId" class="pmDropdown podTemplateSendmail">
-          <div tal:repeat="name mailingLists">
-            <a style="cursor: pointer"
-               tal:content="name"
-               tal:attributes="onclick string:event.preventDefault();;javascript:$(this).parents('form')[0].mailinglist_name.value='${name}';;javascript:$(this).parents('form')[0].target='_self';;generatePodDocument('${infos/template_uid}','${infos/output_format}', this);;">
-                Mailing list name
-            </a>
-          </div>
-                <div style="text-align: right;"
-                     tal:attributes="onClick string:toggleMenu('${infos/template_uid}_${infos/output_format}');">
-                    <img style="bottom: -13px; position: absolute; right: -13px; cursor: pointer;"
-                         src="pb_close_small.png"
-                         tal:attributes="src string:${view/portal_url}/pb_close_small.png"/>
-                </div>
-        </div>
+            <img src="sendMail.gif"
+                 tal:attributes="onClick string:toggleMenu('${infos/template_uid}_${infos/output_format}');
+                                 src string:${view/portal_url}/sendMail.gif;"
+                 style="cursor:pointer; position: relative;"/>
+            <div tal:define="menuId string:pm_menu_${infos/template_uid}_${infos/output_format}"
+                 tal:attributes="id menuId; name menuId" class="pmDropdown podTemplateSendmail">
+              <div tal:repeat="name mailingLists">
+                <a style="cursor: pointer"
+                   tal:content="name"
+                   tal:attributes="onclick string:event.preventDefault();;javascript:$(this).parents('form')[0].mailinglist_name.value='${name}';;javascript:$(this).parents('form')[0].target='_self';;generatePodDocument('${infos/template_uid}','${infos/output_format}', this);;">
+                    Mailing list name
+                </a>
+              </div>
+                    <div style="text-align: right;"
+                         tal:attributes="onClick string:toggleMenu('${infos/template_uid}_${infos/output_format}');">
+                        <img style="bottom: -13px; position: absolute; right: -13px; cursor: pointer;"
+                             src="pb_close_small.png"
+                             tal:attributes="src string:${view/portal_url}/pb_close_small.png"/>
+                    </div>
+            </div>
         </tal:mail>
+
+        <tal:comment replace="nothing">XXX Added by PloneMeting : store generated document as annex.</tal:comment>
+        <tal:store_as_annex condition="python: view.displayStoreAsAnnexSection()">
+            <tal:defines define="store_as_annex_uid python: infos['store_as_annex_uid']"
+                         condition="python: store_as_annex_uid and view.may_store_as_annex()">
+                <a style="cursor: pointer"
+                   tal:attributes="onclick string:event.preventDefault();;javascript:$(this).parents('form')[0].store_as_annex_uid.value='${store_as_annex_uid}';;javascript:$(this).parents('form')[0].target='_self';;generatePodDocument('${infos/template_uid}','${infos/output_format}', this);;">
+                    <img src="store_as_annex.png"
+                         tal:attributes="src string:${view/portal_url}/store_as_annex.png;
+                                         title python: view.get_store_as_annex_title_msg(infos['store_as_annex_title'])"
+                         style="cursor:pointer; position: relative;"/>
+                </a>
+            </tal:defines>
+        </tal:store_as_annex>
 
         </li>
     </ul>

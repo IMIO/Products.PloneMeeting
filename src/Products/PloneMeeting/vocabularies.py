@@ -8,6 +8,7 @@ from zope.interface import implements
 from zope.schema.vocabulary import SimpleVocabulary
 from zope.schema.interfaces import IVocabularyFactory
 from zope.schema.vocabulary import SimpleTerm
+from z3c.form.i18n import MessageFactory as _
 from Products.CMFPlone.utils import safe_unicode
 
 from plone import api
@@ -730,6 +731,43 @@ class OtherMCCorrespondenceVocabulary(object):
         return SimpleVocabulary(res)
 
 OtherMCCorrespondenceVocabularyFactory = OtherMCCorrespondenceVocabulary()
+
+
+class StorePodTemplateAsAnnexVocabulary(object):
+    """
+    Vocabulary factory for 'ConfigurablePodTemplate.store_as_annex' field.
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        res = [SimpleTerm('--NOVALUE--', '--NOVALUE--', _('No value'))]
+        item_annexes = cfg.annexes_types.item_annexes
+        for cat in item_annexes.objectValues():
+            res.append(SimpleTerm(
+                cat.UID(),
+                cat.UID(),
+                u'%s → %s → %s' % (
+                    safe_unicode(cfg.Title()),
+                    translate('Item annexes',
+                              domain='PloneMeeting',
+                              context=context.REQUEST),
+                    safe_unicode(cat.Title()))))
+        item_decision_annexes = cfg.annexes_types.item_decision_annexes
+        for cat in item_decision_annexes.objectValues():
+            res.append(SimpleTerm(
+                cat.UID(),
+                cat.UID(),
+                u'%s → %s → %s' % (
+                    safe_unicode(cfg.Title()),
+                    translate('Item decision annexes',
+                              domain='PloneMeeting',
+                              context=context.REQUEST),
+                    safe_unicode(cat.Title()))))
+        return SimpleVocabulary(res)
+
+StorePodTemplateAsAnnexVocabularyFactory = StorePodTemplateAsAnnexVocabulary()
 
 
 class PMPortalTypesVocabulary(PortalTypesVocabularyFactory):

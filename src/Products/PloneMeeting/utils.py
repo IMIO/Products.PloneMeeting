@@ -44,6 +44,7 @@ from plone.autoform.interfaces import WRITE_PERMISSIONS_KEY
 from plone.dexterity.interfaces import IDexterityContent
 from plone import api
 from collective.iconifiedcategory.interfaces import IIconifiedInfos
+from collective.iconifiedcategory import utils as collective_iconifiedcategory_utils
 from imio.helpers.xhtml import addClassToLastChildren
 from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
 from imio.helpers.xhtml import markEmptyTags
