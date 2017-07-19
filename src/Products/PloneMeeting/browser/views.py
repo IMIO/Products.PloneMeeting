@@ -43,10 +43,12 @@ from imio.helpers.xhtml import imagesToPath
 from Products.PloneMeeting import logger
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import ADVICE_STATES_ALIVE
+from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.browser.itemchangeorder import _is_integer
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
 from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
+from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import signatureNotAlone
 from Products.PloneMeeting.indexes import _to_coded_adviser_index
 
@@ -728,6 +730,31 @@ class ItemDocumentGenerationHelperView(PMDocumentGenerationHelperView):
             return meeting.Title()
         else:
             return noMeetingMarker
+
+    def get_scan_id(self):
+        """We get scan_id to use on the template.
+           - either we have a stored annex having a used_pod_template_id that corresponds
+           to self.pod_template.id;
+           - or we get the next_scan_id."""
+        for annex in get_annexes(self.context):
+            if getattr(annex, 'used_pod_template_id', None) == self.pod_template.getId():
+                # annex must have a scan_id in this case or something went wrong
+                if not annex.scan_id:
+                    raise Exception(
+                        "Found annex at {0} with correct 'used_pod_template_id' "
+                        "but without a 'scan_id'!".format(
+                            '/'.join(annex.getPhysicalPath())))
+                # make the 'item_scan_id' value available in the REQUEST
+                self.request.set(ITEM_SCAN_ID_NAME, annex.scan_id)
+                return annex.scan_id
+        # no annex found we get the next_scan_id
+        # we import here because imio.zamqp.core could not be there
+        # as amqp is activated when necessary
+        from imio.zamqp.core.utils import next_scan_id
+        scan_id = next_scan_id(file_portal_types=['annex', 'annexDecision'])
+        # make the 'item_scan_id' value available in the REQUEST
+        self.request.set(ITEM_SCAN_ID_NAME, scan_id)
+        return scan_id
 
 
 class AdviceDocumentGenerationHelperView(PMDocumentGenerationHelperView):

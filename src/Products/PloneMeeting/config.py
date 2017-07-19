@@ -225,6 +225,9 @@ MEETING_NOT_CLOSED_STATES = ('published', 'frozen', 'decided', 'decisions_publis
 # In those states, the meeting accept items, normal or late
 MEETING_STATES_ACCEPTING_ITEMS = ('created', 'frozen', 'published', 'decided')
 
+# name of the variable added to the REQUEST when getting the scan_id
+ITEM_SCAN_ID_NAME = 'item_scan_id'
+
 # Keys used in annotations
 SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY = 'PloneMeeting-sent_to_other_meetingconfig_'
 CLONE_TO_OTHER_MC_ACTION_SUFFIX = 'clone_to_other_mc_'

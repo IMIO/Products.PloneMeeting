@@ -53,6 +53,7 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFPlone.utils import safe_unicode
 from Products.CPUtils.Extensions.utils import check_zope_admin
 from Products.PloneMeeting import utils as pm_utils
+from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.interfaces import IMeeting
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import getCurrentMeetingObject
@@ -810,7 +811,7 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
         # indeed we may not store the same generated pod_template several times
         plone_utils = api.portal.get_tool('plone_utils')
         for annex in get_annexes(self.context):
-            if getattr(annex, '_used_pod_template_id', None) == pod_template.getId():
+            if getattr(annex, 'used_pod_template_id', None) == pod_template.getId():
                 msg = translate(
                     'store_podtemplate_as_annex_can_not_store_several_times',
                     domain='PloneMeeting',
@@ -847,6 +848,8 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
         annex_type_category_id = collective_iconifiedcategory_utils.calculate_category_id(annex_type)
         to_print_default = annex_type_group.to_be_printed_activated and annex_type.to_print or False
         confidential_default = annex_type_group.confidentiality_activated and annex_type.confidential or False
+        # if we find an annex_scan_id in the REQUEST, we use it on the created annex
+        scan_id = self.request.get(ITEM_SCAN_ID_NAME, None)
         annex = createContentInContainer(
             container=self.context,
             portal_type=annex_portal_type,
@@ -854,10 +857,12 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
             file=annex_file,
             content_category=annex_type_category_id,
             to_print=to_print_default,
-            confidential=confidential_default)
-        # we mark the stored annex with pod_template id
-        annex._used_pod_template_id = pod_template.getId()
-        return self.request.RESPONSE.redirect(self.context.absolute_url() + '/@@categorized-annexes')
+            confidential=confidential_default,
+            used_pod_template_id=pod_template.getId(),
+            scan_id=scan_id)
+
+        return self.request.RESPONSE.redirect(
+            self.context.absolute_url() + '/@@categorized-annexes')
 
     def _get_stored_annex_title(self, pod_template):
         """Generates the stored annex title using the ConfigurablePODTemplate.store_as_annex_title_expr.

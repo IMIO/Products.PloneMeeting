@@ -743,6 +743,9 @@ class StorePodTemplateAsAnnexVocabulary(object):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         res = [SimpleTerm('--NOVALUE--', '--NOVALUE--', _('No value'))]
+        # do not fail when displaying the schema in the dexterity types control panel
+        if not cfg:
+            return SimpleVocabulary(res)
         item_annexes = cfg.annexes_types.item_annexes
         for cat in item_annexes.objectValues():
             res.append(SimpleTerm(
