@@ -479,8 +479,8 @@ class testViews(PloneMeetingTestCase):
         # call the document-generation view
         self.request.set('template_uid', template.UID())
         self.request.set('output_format', 'odt')
-        self.request.set('mailinglist_name', 'unknown_mailing_list')
         view = item.restrictedTraverse('@@document-generation')
+        view()
         helper = view.get_generation_context_helper()
         return item, motivation, decision, helper
 
