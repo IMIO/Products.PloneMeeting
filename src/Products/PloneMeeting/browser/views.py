@@ -791,6 +791,7 @@ class CheckPodTemplatesView(BrowserView):
                 view = obj.restrictedTraverse('@@document-generation')
                 self.request.set('template_uid', pod_template.UID())
                 self.request.set('output_format', 'odt')
+                view()
                 try:
                     view._render_document(pod_template,
                                           output_format='odt',
