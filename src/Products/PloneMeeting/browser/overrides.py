@@ -18,7 +18,6 @@ from plone.app.content.browser.foldercontents import FolderContentsView
 from plone.app.controlpanel.overview import OverviewControlPanel
 from plone.app.layout.viewlets.common import ContentActionsViewlet
 from plone.app.layout.viewlets.common import GlobalSectionsViewlet
-from plone.dexterity.utils import createContentInContainer
 from plone.memoize import ram
 from plone.memoize.instance import memoize
 from plone.memoize.view import memoize_contextless
@@ -53,6 +52,7 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFPlone.utils import safe_unicode
 from Products.CPUtils.Extensions.utils import check_zope_admin
 from Products.PloneMeeting import utils as pm_utils
+from Products.PloneMeeting.config import BARCODE_ATTR_ID
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.interfaces import IMeeting
 from Products.PloneMeeting.utils import get_annexes
@@ -850,9 +850,9 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
         confidential_default = annex_type_group.confidentiality_activated and annex_type.confidential or False
         # if we find an annex_scan_id in the REQUEST, we use it on the created annex
         scan_id = self.request.get(ITEM_SCAN_ID_NAME, None)
-        annex = createContentInContainer(
+        annex = api.content.create(
             container=self.context,
-            portal_type=annex_portal_type,
+            type=annex_portal_type,
             title=self._get_stored_annex_title(pod_template),
             file=annex_file,
             content_category=annex_type_category_id,
@@ -860,6 +860,10 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
             confidential=confidential_default,
             used_pod_template_id=pod_template.getId(),
             scan_id=scan_id)
+        # if we have a scan_id it means that a barcode has been inserted in the generated document
+        # we mark stored annex as barcoded
+        if scan_id:
+            setattr(annex, BARCODE_ATTR_ID, True)
 
         return self.request.RESPONSE.redirect(
             self.context.absolute_url() + '/@@categorized-annexes')
