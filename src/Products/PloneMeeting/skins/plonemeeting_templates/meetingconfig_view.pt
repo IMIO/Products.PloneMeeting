@@ -350,7 +350,7 @@
                    tal:define="cat_group_url cat_group/absolute_url" width="100%;">
               <tr>
                 <th class="nosort" width="200px">
-                  <h2>
+                  <h2 style="display: inline;">
                     <a href=""
                        tal:attributes="href cat_group/absolute_url"
                         tal:content="cat_group/Title">Group category title</a>
