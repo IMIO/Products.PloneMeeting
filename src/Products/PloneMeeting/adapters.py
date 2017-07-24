@@ -1664,6 +1664,11 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
            not self.context.adapted().isPrivacyViewable():
             return False
 
+        # bypass if not confidential
+        infos = self.context.categorized_elements[self.brain.UID]
+        if not infos['confidential']:
+            return True
+
         elif self.context.meta_type == 'Meeting':
             # if we have a SUFFIXPROFILEPREFIX prefixed group,
             # check using "userIsAmong", this is only done for Meetings
