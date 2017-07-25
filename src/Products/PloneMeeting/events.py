@@ -37,7 +37,9 @@ from imio.helpers.xhtml import storeExternalImagesLocally
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import ADVICE_GIVEN_HISTORIZED_COMMENT
+from Products.PloneMeeting.config import BARCODE_INSERTED_ATTR_ID
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
+from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import addRecurringItemsIfRelevant
@@ -566,6 +568,14 @@ def onAnnexEditFinished(annex, event):
     if event.object.REQUEST['PUBLISHED'].__name__ == 'edit':
         parent = annex.getParentNode()
         return annex.REQUEST.RESPONSE.redirect(parent.absolute_url() + '/@@categorized-annexes')
+
+
+def onAnnexFileChanged(annex, event):
+    '''Remove BARCODE_ATTR_ID of annex if any except if ITEM_SCAN_ID_NAME found
+       in the REQUEST, in this case, it means that we are creating an annex containing
+       a generated document inclucing the barcode.'''
+    if getattr(annex, BARCODE_INSERTED_ATTR_ID, False) and not annex.REQUEST.get(ITEM_SCAN_ID_NAME, False):
+        setattr(annex, BARCODE_INSERTED_ATTR_ID, False)
 
 
 def onAnnexRemoved(annex, event):

@@ -131,6 +131,12 @@
                    zope.container.interfaces.IObjectRemovedEvent"
               handler=".events.onAnnexRemoved" />
 
+  <subscriber
+    for="imio.annex.content.annex.IAnnex
+         imio.annex.interfaces.IAnnexFileChangedEvent"
+    handler=".events.onAnnexFileChanged"
+    />
+
   <!-- DashboardCollection events -->
   <subscriber for="imio.dashboard.interfaces.IDashboardCollection
                    Products.Archetypes.interfaces.IObjectInitializedEvent"

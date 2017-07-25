@@ -52,7 +52,7 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFPlone.utils import safe_unicode
 from Products.CPUtils.Extensions.utils import check_zope_admin
 from Products.PloneMeeting import utils as pm_utils
-from Products.PloneMeeting.config import BARCODE_ATTR_ID
+from Products.PloneMeeting.config import BARCODE_INSERTED_ATTR_ID
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.interfaces import IMeeting
 from Products.PloneMeeting.utils import get_annexes
@@ -780,7 +780,10 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
             return self._sendPodTemplate(generated_template)
         # check if we need to store the generated document
         elif self.request.get('store_as_annex_uid'):
-            return self._storePodTemplateAsAnnex(generated_template, pod_template, output_format)
+            return self.storePodTemplateAsAnnex(generated_template,
+                                                pod_template,
+                                                output_format,
+                                                store_as_annex_uid=self.request.get('store_as_annex_uid'))
         else:
             return generated_template
 
@@ -793,9 +796,9 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
         plone_utils = api.portal.get_tool('plone_utils')
         return plone_utils.normalizeString(res)
 
-    def _storePodTemplateAsAnnex(self, generated_template, pod_template, output_format):
-        '''Store given generated_template as annex using annex_type found in REQUEST 'store_as_annex_uid'.'''
-        annex_type = api.content.find(UID=self.request.get('store_as_annex_uid'))[0].getObject()
+    def storePodTemplateAsAnnex(self, generated_teamplate_data, pod_template, output_format, store_as_annex_uid):
+        '''Store given p_generated_template_dat as annex using annex_type found using p_store_as_annex_uid.'''
+        annex_type = api.content.find(UID=store_as_annex_uid)[0].getObject()
         # first check if current member is able to store_as_annex
         may_store_as_annex = PMDocumentGeneratorLinksViewlet(
             self.context,
@@ -840,12 +843,32 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
             return self.request.RESPONSE.redirect(self.request['HTTP_REFERER'])
 
         # proceed, add annex and redirect user to the annexes table view
+        self._store_pod_template_as_annex(
+            pod_template,
+            output_format,
+            generated_teamplate_data,
+            annex_type,
+            annex_portal_type)
+
+        return self.request.RESPONSE.redirect(
+            self.context.absolute_url() + '/@@categorized-annexes')
+
+    def _store_pod_template_as_annex(self,
+                                     pod_template,
+                                     output_format,
+                                     generated_teamplate_data,
+                                     annex_type,
+                                     annex_portal_type):
+        """Private method that stores a p_generated_template as an annex of
+           p_annex_portal_type using p_annex_type."""
+        plone_utils = api.portal.get_tool('plone_utils')
         filename = plone_utils.normalizeString(safe_unicode(pod_template.Title()))
         filename = u'{0}.{1}'.format(filename, output_format)
         annex_file = namedfile.NamedBlobFile(
-            generated_template,
+            generated_teamplate_data,
             filename=filename)
         annex_type_category_id = collective_iconifiedcategory_utils.calculate_category_id(annex_type)
+        annex_type_group = annex_type.get_category_group()
         to_print_default = annex_type_group.to_be_printed_activated and annex_type.to_print or False
         confidential_default = annex_type_group.confidentiality_activated and annex_type.confidential or False
         # if we find an annex_scan_id in the REQUEST, we use it on the created annex
@@ -863,10 +886,7 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
         # if we have a scan_id it means that a barcode has been inserted in the generated document
         # we mark stored annex as barcoded
         if scan_id:
-            setattr(annex, BARCODE_ATTR_ID, True)
-
-        return self.request.RESPONSE.redirect(
-            self.context.absolute_url() + '/@@categorized-annexes')
+            setattr(annex, BARCODE_INSERTED_ATTR_ID, True)
 
     def _get_stored_annex_title(self, pod_template):
         """Generates the stored annex title using the ConfigurablePODTemplate.store_as_annex_title_expr.
