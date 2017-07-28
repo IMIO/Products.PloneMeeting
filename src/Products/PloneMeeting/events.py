@@ -571,10 +571,13 @@ def onAnnexEditFinished(annex, event):
 
 
 def onAnnexFileChanged(annex, event):
-    '''Remove BARCODE_ATTR_ID of annex if any except if ITEM_SCAN_ID_NAME found
-       in the REQUEST, in this case, it means that we are creating an annex containing
-       a generated document inclucing the barcode.'''
-    if getattr(annex, BARCODE_INSERTED_ATTR_ID, False) and not annex.REQUEST.get(ITEM_SCAN_ID_NAME, False):
+    '''Remove BARCODE_ATTR_ID of annex if any except:
+       - if ITEM_SCAN_ID_NAME found in the REQUEST in this case, it means that we are creating an annex containing
+       a generated document inclucing the barcode;
+       - or annex is signed (it means that we are updating the annex thru the AMQP WS).
+       '''
+    if getattr(annex, BARCODE_INSERTED_ATTR_ID, False) and \
+       not (annex.REQUEST.get(ITEM_SCAN_ID_NAME, False) or annex.signed):
         setattr(annex, BARCODE_INSERTED_ATTR_ID, False)
 
 

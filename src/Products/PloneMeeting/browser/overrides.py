@@ -278,8 +278,12 @@ class PMDocumentGeneratorLinksViewlet(DocumentGeneratorLinksViewlet, BaseGenerat
         """ """
         return True
 
-    def may_store_as_annex(self):
-        """By default only (Meeting)Managers are able to store a generted document as annex."""
+    def may_store_as_annex(self, pod_template_uid, store_as_annex_uid):
+        """By default only (Meeting)Managers are able to store a generated document as annex.
+           Check also that the p_store_as_annex_uid is defined in the POD template with p_pod_template_uid UID."""
+        pod_template = api.content.find(UID=pod_template_uid)[0].getObject()
+        if not store_as_annex_uid in pod_template.store_as_annex:
+            return False
         tool = api.portal.get_tool('portal_plonemeeting')
         return tool.isManager(self.context)
 
@@ -796,7 +800,7 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
         plone_utils = api.portal.get_tool('plone_utils')
         return plone_utils.normalizeString(res)
 
-    def storePodTemplateAsAnnex(self, generated_teamplate_data, pod_template, output_format, store_as_annex_uid):
+    def storePodTemplateAsAnnex(self, generated_template_data, pod_template, output_format, store_as_annex_uid):
         '''Store given p_generated_template_dat as annex using annex_type found using p_store_as_annex_uid.'''
         annex_type = api.content.find(UID=store_as_annex_uid)[0].getObject()
         # first check if current member is able to store_as_annex
@@ -804,7 +808,7 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
             self.context,
             self.request,
             None,
-            None).may_store_as_annex()
+            None).may_store_as_annex(pod_template.UID(), store_as_annex_uid)
 
         # user should not have arrived here, we raise Unauthorized
         if not may_store_as_annex:
@@ -846,7 +850,7 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
         self._store_pod_template_as_annex(
             pod_template,
             output_format,
-            generated_teamplate_data,
+            generated_template_data,
             annex_type,
             annex_portal_type)
 
@@ -897,8 +901,8 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
             expression=value.strip(),
             extra_expr_ctx={'obj': self.context,
                             'member': api.user.get_current(),
-                            'pod_template': pod_template})
-
+                            'pod_template': pod_template},
+            empty_expr_is_true=False)
         return evaluatedExpr or pod_template.Title()
 
     def _sendPodTemplate(self, rendered_template):
@@ -984,12 +988,14 @@ class CategorizedAnnexesView(CategorizedTabView):
 
         if self.config.to_be_printed_activated:
             alsoProvides(table, ICategorizedPrint)
-        if self.config.confidentiality_activated:
-            tool = api.portal.get_tool('portal_plonemeeting')
-            if tool.isManager(self.context):
-                alsoProvides(table, ICategorizedConfidential)
+        if self.config.confidentiality_activated and self._showConfidentialColumn():
+            alsoProvides(table, ICategorizedConfidential)
         if self.config.signed_activated:
             alsoProvides(table, ICategorizedSigned)
+
+    def _showConfidentialColumn(self):
+        """ """
+        return self.tool.isManager(self.context)
 
     def showAddAnnex(self):
         """ """
@@ -1042,12 +1048,20 @@ class PMCKFinder(CKFinder):
 
 class PMCategorizedChildInfosView(CategorizedChildInfosView):
     """ """
+
+    def __init__(self, context, request):
+        """ """
+        super(PMCategorizedChildInfosView, self).__init__(context, request)
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+
     def show_preview_link(self):
         """Show link if preview is enabled, aka the auto_convert in collective.documentviewer."""
-        tool = api.portal.get_tool('portal_plonemeeting')
-        if tool.auto_convert_annexes():
-            return True
-        return False
+        return self.tool.auto_convert_annexes()
+
+    def show_confidential(self, element):
+        """ """
+        show = super(PMCategorizedChildInfosView, self).show_confidential(element)
+        return show and self.tool.isManager(self.context)
 
     def show_nothing(self):
         """Do not display the 'Nothing' label."""
