@@ -429,11 +429,11 @@
                             <td tal:condition="python: not hasAnnexes and not hasAnnexesDecision">
                                 <span>-</span>
                             </td>
-                            <td width="110px">
+                            <td width="130px">
                              <a href="@@categorized-annexes">
                               <img class="categorized_elements_more_infos_icon"
                                    src="more_infos.png"
-                                   tal:attributes="src string:${portal_url}/++resource++collective.iconifiedcategory.more_infos.png" />
+                                   tal:attributes="src string:${portal_url}/++resource++collective.iconifiedcategory/more_infos.png" />
                               <span i18n:domain="collective.iconifiedcategory" i18n:translate="">More infos</span>
                              </a>
                             </td>

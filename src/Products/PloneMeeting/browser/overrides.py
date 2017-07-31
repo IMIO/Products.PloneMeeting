@@ -758,7 +758,7 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
             'meetingConfig': cfg,
             'itemUids': {},
             'user': currentUser,
-            'podTemplate': self.get_pod_template(self.request.get('template_uid')),
+            'podTemplate': self.pod_template,
             # give ability to access annexes related methods
             'collective_iconifiedcategory_utils': collective_iconifiedcategory_utils,
             # imio.annex utils
@@ -800,9 +800,15 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
         plone_utils = api.portal.get_tool('plone_utils')
         return plone_utils.normalizeString(res)
 
-    def storePodTemplateAsAnnex(self, generated_template_data, pod_template, output_format, store_as_annex_uid):
+    def storePodTemplateAsAnnex(self,
+                                generated_template_data,
+                                pod_template,
+                                output_format,
+                                store_as_annex_uid,
+                                return_portal_msg_code=False):
         '''Store given p_generated_template_dat as annex using annex_type found using p_store_as_annex_uid.'''
         annex_type = api.content.find(UID=store_as_annex_uid)[0].getObject()
+        import ipdb; ipdb.set_trace()
         # first check if current member is able to store_as_annex
         may_store_as_annex = PMDocumentGeneratorLinksViewlet(
             self.context,
@@ -819,12 +825,16 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
         plone_utils = api.portal.get_tool('plone_utils')
         for annex in get_annexes(self.context):
             if getattr(annex, 'used_pod_template_id', None) == pod_template.getId():
-                msg = translate(
-                    'store_podtemplate_as_annex_can_not_store_several_times',
-                    domain='PloneMeeting',
-                    context=self.request)
-                plone_utils.addPortalMessage(msg, type='warning')
-                return self.request.RESPONSE.redirect(self.request['HTTP_REFERER'])
+                msg_code = 'store_podtemplate_as_annex_can_not_store_several_times'
+                if return_portal_msg_code:
+                    return msg_code
+                else:
+                    msg = translate(
+                        msg_code,
+                        domain='PloneMeeting',
+                        context=self.request)
+                    plone_utils.addPortalMessage(msg, type='warning')
+                    return self.request.RESPONSE.redirect(self.request['HTTP_REFERER'])
 
         # now add the annex using specified type
         # check if we need to add an 'annex' or an 'annexDecision'
@@ -839,12 +849,16 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
                                  in self.context.allowedContentTypes()]
 
         if not annex_portal_type in allowedContentTypeIds:
-            msg = translate(
-                'store_podtemplate_as_annex_can_not_add_annex',
-                domain='PloneMeeting',
-                context=self.request)
-            plone_utils.addPortalMessage(msg)
-            return self.request.RESPONSE.redirect(self.request['HTTP_REFERER'])
+            msg_code = 'store_podtemplate_as_annex_can_not_add_annex'
+            if return_portal_msg_code:
+                return msg_code
+            else:
+                msg = translate(
+                    msg_code,
+                    domain='PloneMeeting',
+                    context=self.request)
+                plone_utils.addPortalMessage(msg)
+                return self.request.RESPONSE.redirect(self.request['HTTP_REFERER'])
 
         # proceed, add annex and redirect user to the annexes table view
         self._store_pod_template_as_annex(
@@ -854,8 +868,9 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
             annex_type,
             annex_portal_type)
 
-        return self.request.RESPONSE.redirect(
-            self.context.absolute_url() + '/@@categorized-annexes')
+        if not return_portal_msg_code:
+            return self.request.RESPONSE.redirect(
+                self.context.absolute_url() + '/@@categorized-annexes')
 
     def _store_pod_template_as_annex(self,
                                      pod_template,
