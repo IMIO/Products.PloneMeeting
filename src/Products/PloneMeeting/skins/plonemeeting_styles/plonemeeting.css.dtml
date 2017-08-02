@@ -192,8 +192,12 @@ div.ploneMeetingSelectContainer.annex_type_img_select_box div#annex_type_img_sel
 #content div[id^='hook_'] table[border='0'] tr td,
 #content div[id^='hook_'] table[style*='border: none;'] tr th,
 #content div[id^='hook_'] table[style*='border: none;'] tr td,
+#content div[id^='hook_'] table[style*='border:none;'] tr th,
+#content div[id^='hook_'] table[style*='border:none;'] tr td,
 #content div[id^='hook_'] table[style*='border: medium none;'] tr th,
 #content div[id^='hook_'] table[style*='border: medium none;'] tr td,
+#content div[id^='hook_'] table[style*='border:medium none;'] tr th,
+#content div[id^='hook_'] table[style*='border:medium none;'] tr td,
 #content div.pmMoreInfo table[border='0'] tr th,
 #content div.pmMoreInfo table[border='0'] tr td {
     border: 1px dotted darkgrey;
