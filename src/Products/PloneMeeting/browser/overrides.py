@@ -808,7 +808,6 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
                                 return_portal_msg_code=False):
         '''Store given p_generated_template_dat as annex using annex_type found using p_store_as_annex_uid.'''
         annex_type = api.content.find(UID=store_as_annex_uid)[0].getObject()
-        import ipdb; ipdb.set_trace()
         # first check if current member is able to store_as_annex
         may_store_as_annex = PMDocumentGeneratorLinksViewlet(
             self.context,
