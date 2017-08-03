@@ -419,8 +419,6 @@ function askAjaxChunk(hook, mode, url, page, macro, params, beforeSend, onGet) {
       // Set the correct HTTP headers
       rq.xhr.setRequestHeader(
         "Content-Type", "application/x-www-form-urlencoded");
-      rq.xhr.setRequestHeader("Content-length", paramsFull.length);
-      rq.xhr.setRequestHeader("Connection", "close");
       rq.xhr.onreadystatechange = function(){ getAjaxChunk(pos); }
       rq.xhr.send(paramsFull);
     }
@@ -589,10 +587,11 @@ function initRichTextField(rq, hook) {
     if (ploneEditor == 'CKeditor') { jQuery(launchCKInstances([fieldName,])); }
     // Enable unload protection, avoid loosing unsaved changes if user click somewhere else
     var tool = window.onbeforeunload && window.onbeforeunload.tool;
-    tool.addForms.apply(tool, $('form.enableUnloadProtection').get());
+    if (tool!==null) {
+      tool.addForms.apply(tool, $('form.enableUnloadProtection').get());
+    }
     // enable UnlockHandler so element is correctly unlocked after edit
     plone.UnlockHandler.init()
-    
   }
 }
 function getRichTextContent(rq, params) {
