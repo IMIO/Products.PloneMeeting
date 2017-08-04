@@ -1106,6 +1106,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
         # make sure 'update_all_categorized_elements' is not called while processing annexes
         self.REQUEST.set('defer_update_categorized_elements', True)
+        self.REQUEST.set('defer_categorized_content_created_event', True)
         # Perform the paste
         pasteResult = destFolder.manage_pasteObjects(copiedData)
         # Restore the previous local roles for this user
@@ -1214,6 +1215,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         update_all_categorized_elements(newItem)
         # remove defered call to 'update_all_categorized_elements'
         self.REQUEST.set('defer_update_categorized_elements', False)
+        self.REQUEST.set('defer_categorized_content_created_event', False)
 
         # The copy/paste has transferred history. We must clean the history
         # of the cloned object.
