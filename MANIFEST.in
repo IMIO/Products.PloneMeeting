@@ -8,8 +8,10 @@ include dev.cfg
 include prod.cfg
 include versions-base.cfg
 include versions-dev.cfg
+recursive-exclude src svnignore
 recursive-include bin *.sh
 recursive-include docs *.txt
+recursive-include docs *.GPL
 recursive-include src *.GPL
 recursive-include src *.TXT
 recursive-include src *.ZPL
