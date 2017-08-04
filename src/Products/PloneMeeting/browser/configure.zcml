@@ -160,6 +160,12 @@
       />
     <browser:view
       for="Products.PloneMeeting.interfaces.IMeeting"
+      name="store-every-items-template-as-annex"
+      class=".views.MeetingStoreEveryItemsPodTemplateAsAnnex"
+      permission="cmf.ModifyPortalContent"
+      />
+    <browser:view
+      for="Products.PloneMeeting.interfaces.IMeeting"
       name="present-several-items"
       class=".views.PresentSeveralItemsView"
       permission="zope2.View"

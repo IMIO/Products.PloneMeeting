@@ -878,6 +878,11 @@ p.indent-firstline {text-indent: 40px;}
     width: 3em;
 }
 
+/* make field ConfigurablePODTemplate.store_as_annex_title_expr large enough */
+#form-widgets-store_as_annex_title_expr.text-widget.textline-field {
+    width: 665px;
+}
+
 /* center controls displayed on z3c.forms */
 #form .formControls {
     text-align: center;

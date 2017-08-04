@@ -26,7 +26,6 @@ import lxml
 
 from collections import OrderedDict
 
-from zope.component import getMultiAdapter
 from zope.i18n import translate
 
 from plone.memoize.view import memoize
@@ -43,10 +42,12 @@ from imio.helpers.xhtml import imagesToPath
 from Products.PloneMeeting import logger
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import ADVICE_STATES_ALIVE
+from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.browser.itemchangeorder import _is_integer
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
 from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
+from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import signatureNotAlone
 from Products.PloneMeeting.indexes import _to_coded_adviser_index
 
@@ -332,6 +333,46 @@ class MeetingUpdateItemReferences(BrowserView):
         return self.request.RESPONSE.redirect(self.context.absolute_url())
 
 
+class MeetingStoreEveryItemsPodTemplateAsAnnex(BrowserView):
+    """ """
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+
+    def __call__(self, template_id, output_format, num_of_items=20):
+        """Generate template_uid for p_num_of_items of current meeting.
+           This will generate for p_num_of_items items found that still did
+           not have the pod_template stored as an annex.  This will it is
+           possible to successively store as annex without breaking the server."""
+        num_of_generated_templates = 0
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        pod_template = getattr(cfg.podtemplates, template_id)
+        for item in self.context.getItems(ordered=True):
+            generation_view = item.restrictedTraverse('@@document-generation')
+            generated_template = generation_view(template_uid=pod_template.UID(),
+                                                 output_format=output_format)
+            res = generation_view.storePodTemplateAsAnnex(
+                generated_template,
+                pod_template,
+                output_format,
+                store_as_annex_uid=pod_template.store_as_annex[0],
+                return_portal_msg_code=True)
+            if not res:
+                num_of_generated_templates += 1
+                logger.info(
+                    'Generated POD template {0} using output format {1} for item a {2}'.format(
+                        template_id, output_format, '/'.join(item.getPhysicalPath())))
+            else:
+                # print error code
+                logger.info('Could not generate POD template {0} using output format {1} for item a {2}'.format(
+                    template_id, output_format, '/'.join(item.getPhysicalPath())))
+
+            if num_of_generated_templates == num_of_items:
+                break
+        return self.request.RESPONSE.redirect(self.context.absolute_url())
+
+
 class PloneMeetingRedirectToAppView(BrowserView):
     """
       This manage the view set on the Plone Site that redirects the connected user
@@ -340,16 +381,15 @@ class PloneMeetingRedirectToAppView(BrowserView):
     def __init__(self, context, request):
         self.context = context
         self.request = request
-        self.portal_state = getMultiAdapter((self.context, self.request), name=u'plone_portal_state')
-        self.portal = self.portal_state.portal()
+        self.tool = api.portal.get_tool('portal_plonemeeting')
 
     def __call__(self):
         '''
           Add a specific portal_message if we have no active meetingConfig to redirect the connected member to.
         '''
-        defaultMeetingConfig = self.defaultMeetingConfig()
+        defaultMeetingConfig = self.tool.getDefaultMeetingConfig()
         member = api.user.get_current()
-        if not self.defaultMeetingConfig() and member.has_role('Manager'):
+        if not defaultMeetingConfig and member.has_role('Manager'):
             plone_utils = api.portal.get_tool('plone_utils')
             plone_utils.addPortalMessage(
                 translate('Please specify a default meeting config upon active existing '
@@ -358,21 +398,10 @@ class PloneMeetingRedirectToAppView(BrowserView):
                           context=self.request), type='warning')
         # redirect the user to the default meeting config if possible
         if defaultMeetingConfig:
-            pmFolder = self.getPloneMeetingTool().getPloneMeetingFolder(defaultMeetingConfig.getId())
+            pmFolder = self.tool.getPloneMeetingFolder(defaultMeetingConfig.getId())
             return self.request.RESPONSE.redirect(pmFolder.absolute_url() + "/searches_items")
 
         return self.index()
-
-    @memoize
-    def defaultMeetingConfig(self):
-        '''Returns the default MeetingConfig.
-           getDefaultMeetingConfig takes care of current member being able to access the MeetingConfig.'''
-        return self.getPloneMeetingTool().getDefaultMeetingConfig()
-
-    @memoize
-    def getPloneMeetingTool(self):
-        '''Returns the tool.'''
-        return api.portal.get_tool('portal_plonemeeting')
 
 
 class ObjectGoToView(BrowserView):
@@ -731,6 +760,31 @@ class ItemDocumentGenerationHelperView(PMDocumentGenerationHelperView):
         else:
             return noMeetingMarker
 
+    def get_scan_id(self):
+        """We get scan_id to use on the template.
+           - either we have a stored annex having a used_pod_template_id that corresponds
+           to self.pod_template.id;
+           - or we get the next_scan_id."""
+        for annex in get_annexes(self.context):
+            if getattr(annex, 'used_pod_template_id', None) == self.pod_template.getId():
+                # annex must have a scan_id in this case or something went wrong
+                if not annex.scan_id:
+                    raise Exception(
+                        "Found annex at {0} with correct 'used_pod_template_id' "
+                        "but without a 'scan_id'!".format(
+                            '/'.join(annex.getPhysicalPath())))
+                # make the 'item_scan_id' value available in the REQUEST
+                self.request.set(ITEM_SCAN_ID_NAME, annex.scan_id)
+                return annex.scan_id
+        # no annex found we get the next_scan_id
+        # we import here because imio.zamqp.core could not be there
+        # as amqp is activated when necessary
+        from imio.zamqp.core.utils import next_scan_id
+        scan_id = next_scan_id(file_portal_types=['annex', 'annexDecision'])
+        # make the 'item_scan_id' value available in the REQUEST
+        self.request.set(ITEM_SCAN_ID_NAME, scan_id)
+        return scan_id
+
 
 class AdviceDocumentGenerationHelperView(PMDocumentGenerationHelperView):
     """ """
@@ -790,9 +844,10 @@ class CheckPodTemplatesView(BrowserView):
             for obj in objs:
                 view = obj.restrictedTraverse('@@document-generation')
                 self.request.set('template_uid', pod_template.UID())
-                self.request.set('output_format', 'odt')
+                self.request.set('output_format', pod_template.pod_formats[0])
                 view()
                 try:
+                    view()
                     view._render_document(pod_template,
                                           output_format='odt',
                                           sub_documents=[],

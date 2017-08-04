@@ -198,7 +198,8 @@ class PodTemplateDescriptor(Descriptor):
                          'dashboard_collections_ids',
                          'context_variables',
                          'style_template',
-                         'roles_bypassing_talcondition')
+                         'roles_bypassing_talcondition',
+                         'store_as_annex')
 
     def __init__(self, id, title, description='', enabled=True, dashboard=False):
         self.id = id
@@ -218,6 +219,8 @@ class PodTemplateDescriptor(Descriptor):
         self.context_variables = []
         self.style_template = []
         self.roles_bypassing_talcondition = []
+        self.store_as_annex = []
+        self.store_as_annex_title_expr = u''
 
 
 class PloneGroupDescriptor(Descriptor):

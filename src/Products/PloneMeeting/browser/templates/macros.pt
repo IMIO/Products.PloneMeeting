@@ -811,7 +811,7 @@ This works for an AT and for a DX.</tal:comment>
                 dummy python: view.update();"
         repeat="widget view/widgets/values">
         <div class="discreet"
-              tal:condition="python: not widget.name.replace('form.widgets.', '') in excludedFields and widget.value">
+              tal:condition="python: not widget.name.replace('form.widgets.', '') in excludedFields and widget.value not in (None, '', '--NOVALUE--', u'', (), [], ['--NOVALUE--'])">
           <label class="horizontal" tal:content="widget/label" />
           <div tal:content="structure widget/render" />
         </div>

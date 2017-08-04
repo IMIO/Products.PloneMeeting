@@ -21,6 +21,7 @@ from plone.app.layout.viewlets.common import GlobalSectionsViewlet
 from plone.memoize import ram
 from plone.memoize.instance import memoize
 from plone.memoize.view import memoize_contextless
+from plone import namedfile
 
 from archetypes.referencebrowserwidget.browser.view import ReferenceBrowserPopup
 from collective.behavior.talcondition.utils import _evaluateExpression
@@ -31,8 +32,9 @@ from collective.eeafaceted.collectionwidget.browser.views import RenderCategoryV
 from collective.iconifiedcategory.browser.actionview import ConfidentialChangeView
 from collective.iconifiedcategory.browser.tabview import CategorizedTabView
 from collective.iconifiedcategory.browser.views import CategorizedChildInfosView
-from collective.iconifiedcategory.interfaces import ICategorizedPrint
 from collective.iconifiedcategory.interfaces import ICategorizedConfidential
+from collective.iconifiedcategory.interfaces import ICategorizedPrint
+from collective.iconifiedcategory.interfaces import ICategorizedSigned
 from collective.iconifiedcategory import utils as collective_iconifiedcategory_utils
 from eea.facetednavigation.browser.app.view import FacetedContainerView
 from eea.facetednavigation.interfaces import IFacetedNavigable
@@ -40,7 +42,6 @@ from imio.actionspanel.browser.viewlets import ActionsPanelViewlet
 from imio.actionspanel.browser.views import ActionsPanelView
 from imio.annex import utils as imio_annex_utils
 from imio.dashboard.browser.overrides import IDDocumentGenerationView
-from imio.dashboard.browser.overrides import IDFacetedTableView
 from imio.dashboard.browser.overrides import IDDashboardDocumentGeneratorLinksViewlet
 from imio.dashboard.browser.views import RenderTermPortletView
 from imio.dashboard.content.pod_template import IDashboardPODTemplate
@@ -51,6 +52,8 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFPlone.utils import safe_unicode
 from Products.CPUtils.Extensions.utils import check_zope_admin
 from Products.PloneMeeting import utils as pm_utils
+from Products.PloneMeeting.config import BARCODE_INSERTED_ATTR_ID
+from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.interfaces import IMeeting
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import getCurrentMeetingObject
@@ -219,6 +222,10 @@ class BaseGeneratorLinksViewlet():
         tool = api.portal.get_tool('portal_plonemeeting')
         return tool.getAvailableMailingLists(self.context, template_uid)
 
+    def displayStoreAsAnnexSection(self):
+        """ """
+        return False
+
 
 class PMDocumentGeneratorLinksViewlet(DocumentGeneratorLinksViewlet, BaseGeneratorLinksViewlet):
     """Override the 'generatelinks' viewlet to restrict templates by MeetingConfig."""
@@ -252,6 +259,41 @@ class PMDocumentGeneratorLinksViewlet(DocumentGeneratorLinksViewlet, BaseGenerat
         pod_templates = [self.context.unrestrictedTraverse(brain.getPath()) for brain in brains]
 
         return pod_templates
+
+    def add_extra_links_info(self, template, infos):
+        """Complete infos with the store_as_annex data."""
+        res = {'store_as_annex_uid': None,
+               'store_as_annex_title': None}
+        if template.store_as_annex and template.store_as_annex != ['--NOVALUE--']:
+            annex_type_uid = template.store_as_annex[0]
+            res['store_as_annex_uid'] = annex_type_uid
+            annex_type = api.content.find(UID=annex_type_uid)[0].getObject()
+            annex_type_title = '{0} → {1}'.format(
+                annex_type.aq_parent.Title(),
+                annex_type.Title())
+            res['store_as_annex_title'] = annex_type_title
+        return res
+
+    def displayStoreAsAnnexSection(self):
+        """ """
+        return True
+
+    def may_store_as_annex(self, pod_template_uid, store_as_annex_uid):
+        """By default only (Meeting)Managers are able to store a generated document as annex.
+           Check also that the p_store_as_annex_uid is defined in the POD template with p_pod_template_uid UID."""
+        pod_template = api.content.find(UID=pod_template_uid)[0].getObject()
+        if not store_as_annex_uid in pod_template.store_as_annex:
+            return False
+        tool = api.portal.get_tool('portal_plonemeeting')
+        return tool.isManager(self.context)
+
+    def get_store_as_annex_title_msg(self, annex_type_title):
+        """ """
+        return translate('stored_as_annex_type_title',
+                         domain='PloneMeeting',
+                         mapping={'annex_type_title': safe_unicode(annex_type_title)},
+                         context=self.request,
+                         default="Store as annex of type \"${annex_type_title}\"")
 
 
 class PMDashboardDocumentGeneratorLinksViewlet(IDDashboardDocumentGeneratorLinksViewlet, BaseGeneratorLinksViewlet):
@@ -716,7 +758,7 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
             'meetingConfig': cfg,
             'itemUids': {},
             'user': currentUser,
-            'podTemplate': self.get_pod_template(self.request.get('template_uid')),
+            'podTemplate': self.pod_template,
             # give ability to access annexes related methods
             'collective_iconifiedcategory_utils': collective_iconifiedcategory_utils,
             # imio.annex utils
@@ -740,6 +782,12 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
         # check if we have to send this generated POD template or to render it
         if self.request.get('mailinglist_name'):
             return self._sendPodTemplate(generated_template)
+        # check if we need to store the generated document
+        elif self.request.get('store_as_annex_uid'):
+            return self.storePodTemplateAsAnnex(generated_template,
+                                                pod_template,
+                                                output_format,
+                                                store_as_annex_uid=self.request.get('store_as_annex_uid'))
         else:
             return generated_template
 
@@ -751,6 +799,125 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
                          pod_template.Title()[0:20])
         plone_utils = api.portal.get_tool('plone_utils')
         return plone_utils.normalizeString(res)
+
+    def storePodTemplateAsAnnex(self,
+                                generated_template_data,
+                                pod_template,
+                                output_format,
+                                store_as_annex_uid,
+                                return_portal_msg_code=False):
+        '''Store given p_generated_template_dat as annex using annex_type found using p_store_as_annex_uid.'''
+        annex_type = api.content.find(UID=store_as_annex_uid)[0].getObject()
+        # first check if current member is able to store_as_annex
+        may_store_as_annex = PMDocumentGeneratorLinksViewlet(
+            self.context,
+            self.request,
+            None,
+            None).may_store_as_annex(pod_template.UID(), store_as_annex_uid)
+
+        # user should not have arrived here, we raise Unauthorized
+        if not may_store_as_annex:
+            raise Unauthorized
+
+        # now check that an annex was not already stored using same pod_template
+        # indeed we may not store the same generated pod_template several times
+        plone_utils = api.portal.get_tool('plone_utils')
+        for annex in get_annexes(self.context):
+            if getattr(annex, 'used_pod_template_id', None) == pod_template.getId():
+                msg_code = 'store_podtemplate_as_annex_can_not_store_several_times'
+                if return_portal_msg_code:
+                    return msg_code
+                else:
+                    msg = translate(
+                        msg_code,
+                        domain='PloneMeeting',
+                        context=self.request)
+                    plone_utils.addPortalMessage(msg, type='warning')
+                    return self.request.RESPONSE.redirect(self.request['HTTP_REFERER'])
+
+        # now add the annex using specified type
+        # check if we need to add an 'annex' or an 'annexDecision'
+        annex_type_group = annex_type.get_category_group()
+        if annex_type_group.getId() == 'item_annexes':
+            annex_portal_type = 'annex'
+        else:
+            annex_portal_type = 'annexDecision'
+
+        # check if user is able to add this portal_type locally
+        allowedContentTypeIds = [allowedContentType.getId() for allowedContentType
+                                 in self.context.allowedContentTypes()]
+
+        if not annex_portal_type in allowedContentTypeIds:
+            msg_code = 'store_podtemplate_as_annex_can_not_add_annex'
+            if return_portal_msg_code:
+                return msg_code
+            else:
+                msg = translate(
+                    msg_code,
+                    domain='PloneMeeting',
+                    context=self.request)
+                plone_utils.addPortalMessage(msg)
+                return self.request.RESPONSE.redirect(self.request['HTTP_REFERER'])
+
+        # proceed, add annex and redirect user to the annexes table view
+        self._store_pod_template_as_annex(
+            pod_template,
+            output_format,
+            generated_template_data,
+            annex_type,
+            annex_portal_type)
+
+        if not return_portal_msg_code:
+            return self.request.RESPONSE.redirect(
+                self.context.absolute_url() + '/@@categorized-annexes')
+
+    def _store_pod_template_as_annex(self,
+                                     pod_template,
+                                     output_format,
+                                     generated_teamplate_data,
+                                     annex_type,
+                                     annex_portal_type):
+        """Private method that stores a p_generated_template as an annex of
+           p_annex_portal_type using p_annex_type."""
+        plone_utils = api.portal.get_tool('plone_utils')
+        filename = plone_utils.normalizeString(safe_unicode(pod_template.Title()))
+        filename = u'{0}.{1}'.format(filename, output_format)
+        annex_file = namedfile.NamedBlobFile(
+            generated_teamplate_data,
+            filename=filename)
+        annex_type_category_id = collective_iconifiedcategory_utils.calculate_category_id(annex_type)
+        annex_type_group = annex_type.get_category_group()
+        to_print_default = annex_type_group.to_be_printed_activated and annex_type.to_print or False
+        confidential_default = annex_type_group.confidentiality_activated and annex_type.confidential or False
+        # if we find an annex_scan_id in the REQUEST, we use it on the created annex
+        scan_id = self.request.get(ITEM_SCAN_ID_NAME, None)
+        annex = api.content.create(
+            container=self.context,
+            type=annex_portal_type,
+            title=self._get_stored_annex_title(pod_template),
+            file=annex_file,
+            content_category=annex_type_category_id,
+            to_print=to_print_default,
+            confidential=confidential_default,
+            used_pod_template_id=pod_template.getId(),
+            scan_id=scan_id)
+        # if we have a scan_id it means that a barcode has been inserted in the generated document
+        # we mark stored annex as barcoded
+        if scan_id:
+            setattr(annex, BARCODE_INSERTED_ATTR_ID, True)
+
+    def _get_stored_annex_title(self, pod_template):
+        """Generates the stored annex title using the ConfigurablePODTemplate.store_as_annex_title_expr.
+           If empty, we just return the ConfigurablePODTemplate title."""
+        value = pod_template.store_as_annex_title_expr
+        evaluatedExpr = _evaluateExpression(
+            self.context,
+            expression=value.strip(),
+            extra_expr_ctx={'obj': self.context,
+                            'member': api.user.get_current(),
+                            'pod_template': pod_template},
+            empty_expr_is_true=False)
+        return evaluatedExpr or pod_template.Title()
 
     def _sendPodTemplate(self, rendered_template):
         '''Sends, by email, a p_rendered_template.'''
@@ -835,10 +1002,14 @@ class CategorizedAnnexesView(CategorizedTabView):
 
         if self.config.to_be_printed_activated:
             alsoProvides(table, ICategorizedPrint)
-        if self.config.confidentiality_activated:
-            tool = api.portal.get_tool('portal_plonemeeting')
-            if tool.isManager(self.context):
-                alsoProvides(table, ICategorizedConfidential)
+        if self.config.confidentiality_activated and self._showConfidentialColumn():
+            alsoProvides(table, ICategorizedConfidential)
+        if self.config.signed_activated:
+            alsoProvides(table, ICategorizedSigned)
+
+    def _showConfidentialColumn(self):
+        """ """
+        return self.tool.isManager(self.context)
 
     def showAddAnnex(self):
         """ """
@@ -891,12 +1062,20 @@ class PMCKFinder(CKFinder):
 
 class PMCategorizedChildInfosView(CategorizedChildInfosView):
     """ """
+
+    def __init__(self, context, request):
+        """ """
+        super(PMCategorizedChildInfosView, self).__init__(context, request)
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+
     def show_preview_link(self):
         """Show link if preview is enabled, aka the auto_convert in collective.documentviewer."""
-        tool = api.portal.get_tool('portal_plonemeeting')
-        if tool.auto_convert_annexes():
-            return True
-        return False
+        return self.tool.auto_convert_annexes()
+
+    def show_confidential(self, element):
+        """ """
+        show = super(PMCategorizedChildInfosView, self).show_confidential(element)
+        return show and self.tool.isManager(self.context)
 
     def show_nothing(self):
         """Do not display the 'Nothing' label."""

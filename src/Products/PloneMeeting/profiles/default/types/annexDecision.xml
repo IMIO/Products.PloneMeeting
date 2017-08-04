@@ -22,8 +22,20 @@
   <element value="plone.app.content.interfaces.INameFromTitle"/>
   <element value="plone.app.lockingbehavior.behaviors.ILocking" />
   <element value="collective.iconifiedcategory.behaviors.iconifiedcategorization.IIconifiedCategorization"/>
+  <element value="collective.dms.scanbehavior.behaviors.behaviors.IScanFields"/>
  </property>
- <property name="schema" />
+ <property name="schema"></property>
+ <property name="model_source">
+     &lt;model xmlns:security="http://namespaces.plone.org/supermodel/security" xmlns:marshal="http://namespaces.plone.org/supermodel/marshal" xmlns:form="http://namespaces.plone.org/supermodel/form" xmlns="http://namespaces.plone.org/supermodel/schema" xmlns:i18n="http://xml.zope.org/namespaces/i18n" i18n:domain="PloneMeeting"&gt;
+       &lt;schema based-on="imio.annex.content.annex.IAnnex"&gt;
+         &lt;field name="used_pod_template_id" type="zope.schema.TextLine" form:mode="z3c.form.interfaces.IForm:hidden"&gt;
+           &lt;title i18n:translate=""&gt;used_pod_template_id&lt;/title&gt;
+           &lt;description i18n:translate=""&gt;used_pod_template_id_descr&lt;/description&gt;
+           &lt;required&gt;False&lt;/required&gt;
+         &lt;/field&gt;
+       &lt;/schema&gt;
+     &lt;/model&gt;
+ </property>
  <property name="schema_policy">schema_policy_annex</property>
  <alias from="(Default)" to="@@display-file"/>
  <alias from="edit" to="@@edit"/>

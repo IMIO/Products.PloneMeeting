@@ -32,6 +32,7 @@ from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 from collective.documentviewer.config import CONVERTABLE_TYPES
 from collective.documentviewer.settings import GlobalSettings
+from collective.iconifiedcategory.event import IconifiedPrintChangedEvent
 from collective.iconifiedcategory.interfaces import IIconifiedPreview
 from collective.iconifiedcategory.utils import get_categorized_elements
 from collective.iconifiedcategory.utils import get_config_root
@@ -721,14 +722,18 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertFalse(converted_annex.to_print)
         self.assertFalse(IIconifiedPreview(converted_annex).converted)
         converted_annex.to_print = True
-        notify(ObjectModifiedEvent(converted_annex))
+        notify(IconifiedPrintChangedEvent(converted_annex,
+                                          old_values={'to_print': False},
+                                          new_values={'to_print': True}))
         self.assertTrue(converted_annex.to_print)
         self.assertTrue(IIconifiedPreview(converted_annex).converted)
 
         # if an annex is not 'to_print', it is not converted
         converted_annex2 = self.addAnnex(item)
         converted_annex2.to_print = False
-        notify(ObjectModifiedEvent(converted_annex2))
+        notify(IconifiedPrintChangedEvent(converted_annex2,
+                                          old_values={'to_print': True},
+                                          new_values={'to_print': False}))
         self.assertFalse(converted_annex2.to_print)
         self.assertFalse(IIconifiedPreview(converted_annex2).converted)
 

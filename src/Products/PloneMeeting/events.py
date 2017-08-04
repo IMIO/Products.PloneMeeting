@@ -37,7 +37,9 @@ from imio.helpers.xhtml import storeExternalImagesLocally
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import ADVICE_GIVEN_HISTORIZED_COMMENT
+from Products.PloneMeeting.config import BARCODE_INSERTED_ATTR_ID
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
+from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import addRecurringItemsIfRelevant
@@ -568,6 +570,17 @@ def onAnnexEditFinished(annex, event):
         return annex.REQUEST.RESPONSE.redirect(parent.absolute_url() + '/@@categorized-annexes')
 
 
+def onAnnexFileChanged(annex, event):
+    '''Remove BARCODE_ATTR_ID of annex if any except:
+       - if ITEM_SCAN_ID_NAME found in the REQUEST in this case, it means that we are creating an annex containing
+       a generated document inclucing the barcode;
+       - or annex is signed (it means that we are updating the annex thru the AMQP WS).
+       '''
+    if getattr(annex, BARCODE_INSERTED_ATTR_ID, False) and \
+       not (annex.REQUEST.get(ITEM_SCAN_ID_NAME, False) or annex.signed):
+        setattr(annex, BARCODE_INSERTED_ATTR_ID, False)
+
+
 def onAnnexRemoved(annex, event):
     '''When an annex is removed, we need to update item (parent).'''
     # bypass this if we are actually removing the 'Plone Site'
@@ -599,7 +612,7 @@ def onAnnexToPrintChanged(annex, event):
     annex = event.object
 
     # if not set to True, we return
-    if event.new_value is True:
+    if event.new_values['to_print'] is True:
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(annex)
         # in case we are updating an annex that was already converted,

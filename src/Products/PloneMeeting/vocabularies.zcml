@@ -47,6 +47,8 @@
            name="Products.PloneMeeting.vocabularies.polltypesvocabulary" />
   <utility component=".vocabularies.OtherMCCorrespondenceVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.othermccorrespondencevocabulary" />
+  <utility component=".vocabularies.StorePodTemplateAsAnnexVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.storepodtemplateasannexvocabulary" />
 
   <!-- Vocabulary used in collectionwidget and inheritating from the imio.dashboard vocabulary -->
   <utility component=".vocabularies.PMConditionAwareCollectionVocabularyFactory"
