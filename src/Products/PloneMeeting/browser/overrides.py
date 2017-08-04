@@ -716,7 +716,7 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
             'meetingConfig': cfg,
             'itemUids': {},
             'user': currentUser,
-            'podTemplate': self.get_pod_template(self.request.get('template_uid')),
+            'podTemplate': self.pod_template,
             # give ability to access annexes related methods
             'collective_iconifiedcategory_utils': collective_iconifiedcategory_utils,
             # imio.annex utils
