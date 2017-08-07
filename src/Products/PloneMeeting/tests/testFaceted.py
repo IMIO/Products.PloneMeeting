@@ -26,6 +26,7 @@ from DateTime import DateTime
 from AccessControl import Unauthorized
 from zope.component import queryUtility
 from zope.schema.interfaces import IVocabularyFactory
+from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 
 
@@ -215,14 +216,18 @@ class testFaceted(PloneMeetingTestCase):
         vocab = queryUtility(IVocabularyFactory, "Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
         # once get, it is cached
         vocab(pmFolder)
-        self.assertEquals(len(vocab(pmFolder)), 1)
+        self.assertEquals(
+            [term.token for term in vocab(pmFolder)._terms],
+            [ITEM_NO_PREFERRED_MEETING_VALUE, meetingUID])
 
         # if we add/remove/edit a meeting, then the cache is cleaned
         # add a meeting
-        self.create('Meeting', date=DateTime('2015/06/06'))
+        meeting2 = self.create('Meeting', date=DateTime('2015/06/06'))
+        meeting2UID = meeting2.UID()
         # cache was cleaned
-        self.assertEquals(len(vocab(pmFolder)), 2)
-
+        self.assertEquals(
+            [term.token for term in vocab(pmFolder)._terms],
+            [ITEM_NO_PREFERRED_MEETING_VALUE, meeting2UID, meetingUID])
         # edit a meeting
         self.assertEquals(vocab(pmFolder).by_token[meetingUID].title, meeting.Title())
         meeting.setDate(DateTime('2015/06/06'))
@@ -233,7 +238,9 @@ class testFaceted(PloneMeetingTestCase):
         # remove a meeting
         self.portal.restrictedTraverse('@@delete_givenuid')(meeting.UID())
         # cache was cleaned
-        self.assertEquals(len(vocab(pmFolder)), 1)
+        self.assertEquals(
+            [term.token for term in vocab(pmFolder)._terms],
+            [ITEM_NO_PREFERRED_MEETING_VALUE, meeting2UID])
 
     def test_pm_MeetingDatesVocabularyMCAware(self):
         '''Test that "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"

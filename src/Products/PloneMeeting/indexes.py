@@ -105,11 +105,13 @@ def linkedMeetingUID(obj):
     """
       Store the linked meeting UID.
     """
-    res = []
+    res = ITEM_NO_PREFERRED_MEETING_VALUE
     meeting = obj.getMeeting()
     if meeting:
         res = meeting.UID()
-    return res or _marker
+    # we use same 'None' value as for getPreferredMeeting so we may use the same
+    # vocabulary in the meeting date/preferred meeting date faceted filters
+    return res
 
 
 @indexer(IMeetingItem)

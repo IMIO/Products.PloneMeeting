@@ -21,6 +21,7 @@ from imio.dashboard.vocabulary import DashboardCollectionsVocabulary
 from imio.helpers.cache import get_cachekey_volatile
 from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
+from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.indexes import REAL_GROUP_ID_PATTERN
 from Products.PloneMeeting.indexes import DELAYAWARE_REAL_GROUP_ID_PATTERN
@@ -351,7 +352,12 @@ class MeetingDatesVocabulary(object):
         brains = catalog(portal_type=cfg.getMeetingTypeName(),
                          sort_on='getDate',
                          sort_order='reverse')
-        res = []
+        res = [
+            SimpleTerm(ITEM_NO_PREFERRED_MEETING_VALUE,
+                       ITEM_NO_PREFERRED_MEETING_VALUE,
+                       translate('no_meeting_available',
+                                 domain='PloneMeeting',
+                                 context=context.REQUEST))]
         for brain in brains:
             res.append(SimpleTerm(brain.UID,
                                   brain.UID,

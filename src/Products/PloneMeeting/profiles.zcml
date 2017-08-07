@@ -61,6 +61,13 @@
       handler="Products.PloneMeeting.migrations.migrate_to_4_0.migrate_step4"
       profile="Products.PloneMeeting:default" />
 
+  <genericsetup:upgradeStep
+      title="Go to PloneMeeting 4.1"
+      description=""
+      source="4.0"
+      destination="4.1"
+      handler="Products.PloneMeeting.migrations.migrate_to_4_1.migrate"
+      profile="Products.PloneMeeting:default" />
 
   <!-- ##/code-section profiles.zcml-bottom -->
 
