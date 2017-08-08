@@ -615,13 +615,13 @@ class PMDocumentGenerationHelperView(ATDocumentGenerationHelperView):
         itemAdvicesByType = item.getAdvicesByType()
         res = ""
         if withAdvicesTitle:
-            res += "<p class='pmAdvices'><u><b>%s :</b></u></p>" % translate('PloneMeeting_label_advices',
-                                                          domain='PloneMeeting',
-                                                          context=self.request)
+            res += "<p class='pmAdvices'><u><b>%s :</b></u></p>" % \
+                translate('PloneMeeting_label_advices',
+                          domain='PloneMeeting',
+                          context=self.request)
         for adviceType in itemAdvicesByType:
             for advice in itemAdvicesByType[adviceType]:
-
-                res+="<p class='pmAdvices'>"
+                res += "<p class='pmAdvices'>"
                 # if we have a delay and delay_label, we display it
                 delayAwareMsg = u''
                 if withDelay and advice['delay']:
