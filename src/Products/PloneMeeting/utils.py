@@ -235,10 +235,9 @@ def getCurrentMeetingObject(context):
 
 
 def cleanMemoize(portal, prefixes=[]):
-    ''' '''
-    # borg localroles are memoized...
-    # so while checking local roles twice, there could be problems...
-    # remove memoized localroles
+    '''This will remove some memoized values from request.
+       This is necessary for example as borg localroles are memoized and if we check
+       roles, then change and check again in the same request, we get wrong results...'''
     annotations = IAnnotations(portal.REQUEST)
     annotations_to_delete = []
     for annotation in annotations.keys():
