@@ -4925,13 +4925,18 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(self.portal.portal_catalog(hasAnnexesToPrint='0', UID=item.UID()))
         # set to True
         annex.to_print = True
-        notify(IconifiedPrintChangedEvent(annex, False, True))
+        notify(IconifiedPrintChangedEvent(annex,
+                                          old_values={'to_print': False},
+                                          new_values={'to_print': True}))
         self.assertTrue(self.portal.portal_catalog(hasAnnexesToPrint='1', UID=item.UID()))
         # remove the element
         self.portal.restrictedTraverse('@@delete_givenuid')(annex.UID())
         self.assertFalse(self.portal.portal_catalog(hasAnnexesToPrint='1', UID=item.UID()))
 
         # add an annex that is directly 'to_print'
+        # this is only done if to_be_printed_activated on CategoryGroup
+        import ipdb; ipdb.set_trace()
+        category_group = self.meetingConfig.annexes_types
         annex = self.addAnnex(item, to_print=True)
         self.assertTrue(self.portal.portal_catalog(hasAnnexesToPrint='1', UID=item.UID()))
 

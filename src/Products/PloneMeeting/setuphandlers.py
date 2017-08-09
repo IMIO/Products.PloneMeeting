@@ -358,7 +358,7 @@ def _configureCKeditor(site):
 
         menuStyles = unicode(
             "[\n{0}\n{{ name : '{1}'\t\t, element : 'span', attributes : {{ 'class' : 'highlight-red' }} }},\n"
-            "{{ name : '{2}'\t\t, element : 'p', attributes : {{ 'class' : 'highlight-yellow' }} }},\n"
+            "{{ name : '{2}'\t\t, element : 'span', attributes : {{ 'class' : 'highlight-yellow' }} }},\n"
             "{{ name : '{3}'\t\t, element : 'p', attributes : {{ 'class' : 'xSmallText' }} }},\n"
             "{{ name : '{4}'\t\t, element : 'p', attributes : {{ 'class' : 'smallText' }} }},\n"
             "{{ name : '{5}'\t\t, element : 'p', attributes : {{ 'class' : 'largeText' }} }},\n"

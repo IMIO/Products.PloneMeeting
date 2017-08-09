@@ -340,10 +340,11 @@ class MeetingStoreEveryItemsPodTemplateAsAnnex(BrowserView):
         self.request = request
 
     def __call__(self, template_id, output_format, num_of_items=20):
-        """Generate template_uid for p_num_of_items of current meeting.
+        """Generate template_id for p_num_of_items of current meeting.
            This will generate for p_num_of_items items found that still did
-           not have the pod_template stored as an annex.  This will it is
-           possible to successively store as annex without breaking the server."""
+           not have the pod_template stored as an annex.
+           p_num_of_items is there to avoid breaking the server for meeting
+           containing several items."""
         num_of_generated_templates = 0
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
