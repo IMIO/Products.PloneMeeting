@@ -4916,6 +4916,7 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm_HasAnnexesToPrintIndex(self):
         """ """
+        cfg = self.meetingConfig
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         annex = self.addAnnex(item)
@@ -4935,9 +4936,16 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # add an annex that is directly 'to_print'
         # this is only done if to_be_printed_activated on CategoryGroup
-        import ipdb; ipdb.set_trace()
-        category_group = self.meetingConfig.annexes_types
+        category = cfg.annexes_types.item_annexes.get(self.annexFileType)
+        category_group = category.get_category_group()
+        self.assertFalse(category_group.to_be_printed_activated)
         annex = self.addAnnex(item, to_print=True)
+        self.assertFalse(annex.to_print)
+        self.assertFalse(self.portal.portal_catalog(hasAnnexesToPrint='1', UID=item.UID()))
+        # enable to_print
+        category_group.to_be_printed_activated = True
+        annex = self.addAnnex(item, to_print=True)
+        self.assertTrue(annex.to_print)
         self.assertTrue(self.portal.portal_catalog(hasAnnexesToPrint='1', UID=item.UID()))
 
     def test_pm_HideCssClasses(self):
