@@ -26,6 +26,7 @@ import lxml
 
 from collections import OrderedDict
 
+from AccessControl import Unauthorized
 from zope.i18n import translate
 
 from plone.memoize.view import memoize
@@ -39,6 +40,7 @@ from collective.documentgenerator.helper.archetypes import ATDocumentGenerationH
 from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
 from imio.helpers.xhtml import addClassToContent
 from imio.helpers.xhtml import imagesToPath
+from Products.CMFCore.permissions import ModifyPortalContent
 from Products.PloneMeeting import logger
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import ADVICE_STATES_ALIVE
@@ -338,17 +340,30 @@ class MeetingStoreEveryItemsPodTemplateAsAnnex(BrowserView):
     def __init__(self, context, request):
         self.context = context
         self.request = request
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(context)
 
-    def __call__(self, template_id, output_format, num_of_items=20):
+    def may_store(self):
+        """ """
+        if self.cfg.getMeetingItemTemplateToStoreAsAnnex() and \
+           api.user.get_current().has_permission(ModifyPortalContent, self.context):
+            return True
+
+    def __call__(self, template_id=None, output_format=None, num_of_items=20):
         """Generate template_id for p_num_of_items of current meeting.
            This will generate for p_num_of_items items found that still did
            not have the pod_template stored as an annex.
            p_num_of_items is there to avoid breaking the server for meeting
            containing several items."""
+        if not self.may_store():
+            raise Unauthorized
+
+        if not template_id:
+            template_id, output_format = \
+                self.cfg.getMeetingItemTemplateToStoreAsAnnex().split('__output_format__')
+        pod_template = getattr(self.cfg.podtemplates, template_id)
+
         num_of_generated_templates = 0
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
-        pod_template = getattr(cfg.podtemplates, template_id)
         for item in self.context.getItems(ordered=True):
             generation_view = item.restrictedTraverse('@@document-generation')
             generated_template = generation_view(template_uid=pod_template.UID(),
@@ -357,7 +372,7 @@ class MeetingStoreEveryItemsPodTemplateAsAnnex(BrowserView):
                 generated_template,
                 pod_template,
                 output_format,
-                store_as_annex_uid=pod_template.store_as_annex[0],
+                store_as_annex_uid=pod_template.store_as_annex,
                 return_portal_msg_code=True)
             if not res:
                 num_of_generated_templates += 1

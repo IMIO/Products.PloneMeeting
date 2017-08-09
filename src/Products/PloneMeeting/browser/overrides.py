@@ -265,7 +265,7 @@ class PMDocumentGeneratorLinksViewlet(DocumentGeneratorLinksViewlet, BaseGenerat
         res = {'store_as_annex_uid': None,
                'store_as_annex_title': None}
         if template.store_as_annex and template.store_as_annex != ['--NOVALUE--']:
-            annex_type_uid = template.store_as_annex[0]
+            annex_type_uid = template.store_as_annex
             res['store_as_annex_uid'] = annex_type_uid
             annex_type = api.content.find(UID=annex_type_uid)[0].getObject()
             annex_type_title = '{0} → {1}'.format(
@@ -791,15 +791,6 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
         else:
             return generated_template
 
-    def _get_filename(self, pod_template):
-        '''Returns a valid, clean fileName for the document generated from
-           p_self for p_pod_template.'''
-        # to avoid long filename problems, only take 120 first characters
-        res = '%s-%s' % (self.context.Title()[0:100],
-                         pod_template.Title()[0:20])
-        plone_utils = api.portal.get_tool('plone_utils')
-        return plone_utils.normalizeString(res)
-
     def storePodTemplateAsAnnex(self,
                                 generated_template_data,
                                 pod_template,
@@ -874,16 +865,14 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
     def _store_pod_template_as_annex(self,
                                      pod_template,
                                      output_format,
-                                     generated_teamplate_data,
+                                     generated_template_data,
                                      annex_type,
                                      annex_portal_type):
         """Private method that stores a p_generated_template as an annex of
            p_annex_portal_type using p_annex_type."""
-        plone_utils = api.portal.get_tool('plone_utils')
-        filename = plone_utils.normalizeString(safe_unicode(pod_template.Title()))
-        filename = u'{0}.{1}'.format(filename, output_format)
+        filename = safe_unicode(self._get_filename())
         annex_file = namedfile.NamedBlobFile(
-            generated_teamplate_data,
+            generated_template_data,
             filename=filename)
         annex_type_category_id = collective_iconifiedcategory_utils.calculate_category_id(annex_type)
         annex_type_group = annex_type.get_category_group()
@@ -966,7 +955,7 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
         '''Send given p_rendered_template of p_pod_template to p_recipients.
            This is extracted so it can be called from other places than self._sendPodTemplate.'''
         # Send the mail with the document as attachment
-        docName = '%s.%s' % (self._get_filename(pod_template), self.get_generation_format())
+        docName = self._get_filename()
         # generate event name depending on obj type
         eventName = self.context.meta_type == 'Meeting' and 'podMeetingByMail' or 'podItemByMail'
         sendMail(recipients,

@@ -24,11 +24,13 @@
                                   pageName request/pageName|string:default;
                                   member context/portal_plonemeeting/getUser;
                                   schematas here/Schemata;
-                                  fieldsets python:[key for key in schematas.keys() if (key != 'metadata')];">
+                                  fieldsets python:[key for key in schematas.keys() if (key != 'metadata')];
+                                  displayable_fieldsets python: list(fieldsets);
+                                  dummy python: displayable_fieldsets.insert(-1, 'users')">
 
     <tal:hideToNonManagers condition="python: isRealManager or context.portal_plonemeeting.isManager(context)">
 
-    <span tal:repeat="fieldset python: fieldsets + ['users', 'doc']">
+    <span tal:repeat="fieldset displayable_fieldsets">
       [
       <tal:otherFieldset condition="python: pageName!=fieldset"><a
         tal:attributes="href python:here.absolute_url()+'?pageName=%s'%fieldset" tal:condition="python: pageName!=fieldset">
@@ -1206,6 +1208,14 @@
 
     <tal:doc condition="python: pageName=='doc'">
     <p i18n:translate="meetingconfig_doc_descr" class='pageNameDescr'></p><br />
+
+      <table width="100%" class="discreet">
+        <tr valign="top">
+          <td tal:define="field python:here.getField('meetingItemTemplateToStoreAsAnnex')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+        </tr>
+      </table>
 
       <a name="podtemplates"></a>
       <fieldset>

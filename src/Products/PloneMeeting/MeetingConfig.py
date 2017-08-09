@@ -2141,6 +2141,22 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
+    StringField(
+        name='meetingItemTemplateToStoreAsAnnex',
+        widget=SelectionWidget(
+            description="MeetingItemTemplateToStoreAsAnnex",
+            description_msgid="meeting_item_template_to_store_as_annex_descr",
+            format="select",
+            label='Meetingitemtemplatetostoreasannex',
+            label_msgid='PloneMeeting_label_meetingItemTemplateToStoreAsAnnex',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="doc",
+        vocabulary_factory='Products.PloneMeeting.vocabularies.itemtemplatesstorableasannexvocabulary',
+        default=defValues.meetingItemTemplateToStoreAsAnnex,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
 
 ),
 )

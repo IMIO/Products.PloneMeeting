@@ -8,7 +8,6 @@ from zope.interface import implements
 from zope.schema.vocabulary import SimpleVocabulary
 from zope.schema.interfaces import IVocabularyFactory
 from zope.schema.vocabulary import SimpleTerm
-from z3c.form.i18n import MessageFactory as _
 from Products.CMFPlone.utils import safe_unicode
 
 from plone import api
@@ -748,7 +747,7 @@ class StorePodTemplateAsAnnexVocabulary(object):
     def __call__(self, context):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        res = [SimpleTerm('--NOVALUE--', '--NOVALUE--', _('No value'))]
+        res = []
         # do not fail when displaying the schema in the dexterity types control panel
         if not cfg:
             return SimpleVocabulary(res)
@@ -757,26 +756,56 @@ class StorePodTemplateAsAnnexVocabulary(object):
             res.append(SimpleTerm(
                 cat.UID(),
                 cat.UID(),
-                u'%s → %s → %s' % (
-                    safe_unicode(cfg.Title()),
-                    translate('Item annexes',
-                              domain='PloneMeeting',
-                              context=context.REQUEST),
+                u'{0} → {1}'.format(
+                    safe_unicode(item_annexes.Title()),
                     safe_unicode(cat.Title()))))
         item_decision_annexes = cfg.annexes_types.item_decision_annexes
         for cat in item_decision_annexes.objectValues():
             res.append(SimpleTerm(
                 cat.UID(),
                 cat.UID(),
-                u'%s → %s → %s' % (
-                    safe_unicode(cfg.Title()),
-                    translate('Item decision annexes',
-                              domain='PloneMeeting',
-                              context=context.REQUEST),
+                u'{0} → {1}'.format(
+                    safe_unicode(item_decision_annexes.Title()),
                     safe_unicode(cat.Title()))))
         return SimpleVocabulary(res)
 
 StorePodTemplateAsAnnexVocabularyFactory = StorePodTemplateAsAnnexVocabulary()
+
+
+class ItemTemplatesStorableAsAnnexVocabulary(object):
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """ """
+        res = [SimpleTerm(u'',
+                          u'',
+                          translate('make_a_choice',
+                                    domain='PloneMeeting',
+                                    context=context.REQUEST))]
+        # get every POD templates that have a defined 'store_as_annex'
+        catalog = api.portal.get_tool('portal_catalog')
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        for pod_template in cfg.podtemplates.objectValues():
+            store_as_annex = getattr(pod_template, 'store_as_annex', None)
+            if store_as_annex:
+                annex_type = catalog(UID=store_as_annex)[0].getObject()
+                annex_group_title = annex_type.get_category_group().Title()
+                for output_format in pod_template.pod_formats:
+                    term_id = '{0}__output_format__{1}'.format(
+                        pod_template.getId(), output_format)
+                    res.append(SimpleTerm(
+                        term_id,
+                        term_id,
+                        u'{0} ({1} / {2})'.format(
+                            safe_unicode(pod_template.Title()),
+                            output_format,
+                            u'{0} → {1}'.format(
+                                safe_unicode(annex_group_title),
+                                safe_unicode(annex_type.Title())))))
+        return SimpleVocabulary(res)
+
+ItemTemplatesStorableAsAnnexVocabularyFactory = ItemTemplatesStorableAsAnnexVocabulary()
 
 
 class PMPortalTypesVocabulary(PortalTypesVocabularyFactory):

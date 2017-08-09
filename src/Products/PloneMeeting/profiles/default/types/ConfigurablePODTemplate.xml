@@ -10,14 +10,11 @@
               &lt;description i18n:translate=""&gt;mailing_lists_descr&lt;/description&gt;
               &lt;required&gt;False&lt;/required&gt;
             &lt;/field&gt;
-            &lt;field name="store_as_annex" type="zope.schema.List"&gt;
+            &lt;field name="store_as_annex" type="zope.schema.Choice"&gt;
               &lt;title i18n:translate=""&gt;store_as_annex&lt;/title&gt;
               &lt;description i18n:translate=""&gt;store_as_annex_descr&lt;/description&gt;
               &lt;required&gt;False&lt;/required&gt;
-              &lt;form:widget type="z3c.form.browser.select.SelectWidget"&gt;&lt;/form:widget&gt;
-              &lt;value_type type="zope.schema.Choice"&gt;
-                &lt;vocabulary&gt;Products.PloneMeeting.vocabularies.storepodtemplateasannexvocabulary&lt;/vocabulary&gt;
-              &lt;/value_type&gt;
+              &lt;vocabulary&gt;Products.PloneMeeting.vocabularies.storepodtemplateasannexvocabulary&lt;/vocabulary&gt;
             &lt;/field&gt;
             &lt;field name="store_as_annex_title_expr" type="zope.schema.TextLine"&gt;
               &lt;title i18n:translate=""&gt;store_as_annex_title_expr&lt;/title&gt;

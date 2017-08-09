@@ -163,6 +163,7 @@
       name="store-every-items-template-as-annex"
       class=".views.MeetingStoreEveryItemsPodTemplateAsAnnex"
       permission="cmf.ModifyPortalContent"
+      allowed_attributes="may_store"
       />
     <browser:view
       for="Products.PloneMeeting.interfaces.IMeeting"

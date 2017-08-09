@@ -12,6 +12,10 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 
 - Added possibility to filter dashboard items that have specifically "no" preferred meeting
   and "no" linked meeting
+- Added functionnaliy to store a generated template directly as an annex of the current context.
+  Added also possibility to store a particular POD template defined in
+  MeetingConfig.meetingItemTemplateToStoreAsAnnex for every items of a meeting.  This is useful
+  to store for example every final decision of items
 
 4.0 (2017-08-04)
 ----------------
