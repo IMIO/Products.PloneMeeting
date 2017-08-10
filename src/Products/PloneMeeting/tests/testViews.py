@@ -31,6 +31,7 @@ from zope.i18n import translate
 from plone import api
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
+from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.statusmessages.interfaces import IStatusMessage
 
@@ -702,6 +703,89 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(
             view.group_users(),
             'M. PMCreator One<br />M. PMCreator One bee<br />M. PMManager')
+
+    def test_pm_MeetingStoreEveryItemsPodTemplateAsAnnex_may_store(self):
+        """By default only may_store if something defined in
+           MeetingConfig.meetingItemTemplateToStoreAsAnnex and user able to edit Meeting."""
+        cfg = self.meetingConfig
+        self.assertFalse(cfg.getMeetingItemTemplateToStoreAsAnnex())
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2017/08/08'))
+        view = meeting.restrictedTraverse('@@store-every-items-template-as-annex')
+        self.assertTrue(self.hasPermission(ModifyPortalContent, meeting))
+        self.assertFalse(view.may_store())
+        self.assertRaises(Unauthorized, view.__call__)
+
+        # configure MeetingConfig.meetingItemTemplateToStoreAsAnnex
+        # values are taking POD templates having a store_as_annex
+        self.assertEqual(
+            cfg.getField('meetingItemTemplateToStoreAsAnnex').Vocabulary(cfg).keys(),
+            [u''])
+        annex_type_uid = cfg.annexes_types.item_decision_annexes.get('decision-annex').UID()
+        cfg.podtemplates.itemTemplate.store_as_annex = annex_type_uid
+        self.assertEqual(
+            cfg.getField('meetingItemTemplateToStoreAsAnnex').Vocabulary(cfg).keys(),
+            [u'', 'itemTemplate__output_format__odt'])
+        cfg.setMeetingItemTemplateToStoreAsAnnex('itemTemplate__output_format__odt')
+        self.assertTrue(view.may_store())
+
+        # may_store is False if user not able to edit meeting
+        self.changeUser('pmCreator1')
+        self.assertFalse(self.hasPermission(ModifyPortalContent, meeting))
+        self.assertFalse(view.may_store())
+
+    def test_pm_MeetingStoreEveryItemsPodTemplateAsAnnex__call__(self):
+        """This will store a POD template selected in
+           MeetingConfig.meetingItemTemplateToStoreAsAnnex as an annex
+           for every items of the meeting."""
+        cfg = self.meetingConfig
+        # define correct config
+        annex_type_uid = cfg.annexes_types.item_decision_annexes.get('decision-annex').UID()
+        cfg.podtemplates.itemTemplate.store_as_annex = annex_type_uid
+        cfg.setMeetingItemTemplateToStoreAsAnnex('itemTemplate__output_format__odt')
+
+        # create meeting with items
+        self.changeUser('pmManager')
+        meeting = self._createMeetingWithItems()
+        view = meeting.restrictedTraverse('@@store-every-items-template-as-annex')
+
+        # store annex for 3 first items
+        view(num_of_items=3)
+        itemTemplateId = cfg.podtemplates.itemTemplate.getId()
+        items = meeting.getItems(ordered=True)
+        # 3 first item have the stored annex
+        for i in range(0, 2):
+            annexes = get_annexes(items[i])
+            self.assertEqual(len(annexes), 1)
+            self.assertTrue(annexes[0].used_pod_template_id, itemTemplateId)
+        # but not the others
+        for i in range(3, 6):
+            annexes = get_annexes(items[i])
+            self.assertFalse(annexes)
+
+        # call again, next 3 are stored
+        view(num_of_items=3)
+        for i in range(0, 5):
+            annexes = get_annexes(items[i])
+            self.assertEqual(len(annexes), 1)
+            self.assertTrue(annexes[0].used_pod_template_id, itemTemplateId)
+        # last element does not have annex
+        annexes = get_annexes(items[6])
+        self.assertFalse(annexes)
+
+        # call a last time, last is stored and it does not fail when no items left
+        view(num_of_items=3)
+        for i in range(0, 6):
+            annexes = get_annexes(items[i])
+            self.assertEqual(len(annexes), 1)
+            self.assertTrue(annexes[0].used_pod_template_id, itemTemplateId)
+
+        # call when nothing to do, nothing is done
+        view()
+        for i in range(0, 6):
+            annexes = get_annexes(items[i])
+            self.assertEqual(len(annexes), 1)
+            self.assertTrue(annexes[0].used_pod_template_id, itemTemplateId)
 
 
 def test_suite():
