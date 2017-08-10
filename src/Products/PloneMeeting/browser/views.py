@@ -377,15 +377,22 @@ class MeetingStoreEveryItemsPodTemplateAsAnnex(BrowserView):
             if not res:
                 num_of_generated_templates += 1
                 logger.info(
-                    'Generated POD template {0} using output format {1} for item a {2}'.format(
+                    'Generated POD template {0} using output format {1} for item at {2}'.format(
                         template_id, output_format, '/'.join(item.getPhysicalPath())))
             else:
                 # print error code
-                logger.info('Could not generate POD template {0} using output format {1} for item a {2}'.format(
-                    template_id, output_format, '/'.join(item.getPhysicalPath())))
+                msg = translate(msgid=res, domain='PloneMeeting', context=self.request)
+                logger.info(u'Could not generate POD template {0} using output format {1} for item at {2} : {3}'.format(
+                    template_id, output_format, '/'.join(item.getPhysicalPath()), msg))
 
             if num_of_generated_templates == num_of_items:
                 break
+        msg = translate('stored_item_template_as_annex',
+                        domain="PloneMeeting",
+                        mapping={'number_of_annexes': num_of_generated_templates},
+                        context=self.request,
+                        default="Stored ${number_of_annexes} annexes")
+        api.portal.show_message(msg, request=self.request)
         return self.request.RESPONSE.redirect(self.context.absolute_url())
 
 
