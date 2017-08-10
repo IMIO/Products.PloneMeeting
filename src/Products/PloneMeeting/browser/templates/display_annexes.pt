@@ -9,7 +9,7 @@
               <td tal:condition="python: not hasAnnexes">
                   <span>-</span>
               </td>
-              <td width="110px">
+              <td width="130px">
                <a href="#" tal:attributes="href string:${context/absolute_url}/@@categorized-annexes">
                 <img class="categorized_elements_more_infos_icon"
                      src="more_infos.png"
