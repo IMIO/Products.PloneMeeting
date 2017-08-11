@@ -2188,6 +2188,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            - 100 is displayed '1';
            - 102 is displayed '1.2';
            - 111 is displayed '1.11'.'''
+        # when 'field' and 'encoding' in kwargs, it means that getRaw is called
+        if 'field' in kwargs and 'encoding' in kwargs:
+            return self.getField('itemNumber').get(self, **kwargs)
+
         # this method is only relevant if the item is in a meeting
         if not self.hasMeeting():
             return 0
