@@ -210,7 +210,9 @@ class Migrate_To_4_0(Migrator):
                 cfg.setToDoListSearches(toDoListSearches)
                 cfg.deleteReferences('ToDoTopics')
 
-            logger.info('Moving to imio.dashboard : updating "itemsListVisibleColumns" and "itemColumns"...')
+            logger.info(
+                'Moving to imio.dashboard ({0}) : updating "itemsListVisibleColumns" and "itemColumns"...'.format(
+                    cfgId))
             # remove some columns
             itemColumns = list(cfg.getItemColumns())
             meetingColumns = list(cfg.getMeetingColumns())
@@ -1355,6 +1357,18 @@ class Migrate_To_4_0(Migrator):
 
         # ADDITIONAL STEPS FOR APP ALREADY MIGRATED TO v4.0...
         if not step or step == 4:
+            # upgrade some profiles updated before v4 final
+            self.upgradeProfile('collective.documentgenerator:default')
+            self.upgradeProfile('plone.app.discussion:default')
+            # make sure form-widgets-raiseOnError_for_non_managers is enabled
+            api.portal.set_registry_record(
+                'collective.documentgenerator.browser.controlpanel.'
+                'IDocumentGeneratorControlPanelSchema.raiseOnError_for_non_managers',
+                True)
+            # last upgrade for collective.documentgenerator reapply portal_types
+            # especially ConfigurablePodTemplate that remves mailing_lists attribute
+            # reapply PloneMeeting types tool step
+            self.runProfileSteps(product='Products.PloneMeeting', steps=['typeinfo'])
             self._adaptAnnexContentCategory()
 
 
