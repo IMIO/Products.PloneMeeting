@@ -8,7 +8,6 @@
 #
 
 import logging
-logger = logging.getLogger('PloneMeeting')
 from AccessControl import Unauthorized
 
 from persistent.list import PersistentList
@@ -51,6 +50,8 @@ from Products.PloneMeeting.MeetingConfig import CONFIGGROUPPREFIX
 from Products.PloneMeeting.MeetingConfig import PROPOSINGGROUPPREFIX
 from Products.PloneMeeting.MeetingConfig import READERPREFIX
 from Products.PloneMeeting.MeetingConfig import SUFFIXPROFILEPREFIX
+
+logger = logging.getLogger('PloneMeeting')
 
 CONTENT_TYPE_NOT_FOUND = 'The content_type for MeetingFile at %s was not found in mimetypes_registry!'
 FILE_EXTENSION_NOT_FOUND = 'The extension used by MeetingFile at %s does not correspond to ' \
@@ -178,9 +179,9 @@ class AnnexableAdapter(object):
             # if the annex needs to be printed, check if everything is ok to print it
             annex_annotations = IAnnotations(annex)
             # must have been converted successfully
-            if not 'collective.documentviewer' in annex_annotations.keys() or not \
-               'successfully_converted' in annex_annotations['collective.documentviewer'] or not \
-               annex_annotations['collective.documentviewer']['successfully_converted'] is True:
+            if 'collective.documentviewer' not in annex_annotations.keys() or \
+               'successfully_converted' not in annex_annotations['collective.documentviewer'] or \
+               annex_annotations['collective.documentviewer']['successfully_converted'] is not True:
                 continue
 
             # everything seems right, manage this annex
