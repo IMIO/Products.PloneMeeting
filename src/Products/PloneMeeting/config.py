@@ -9,11 +9,6 @@
 # GNU General Public License (GPL)
 #
 
-__author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
-<g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""
-__docformat__ = 'plaintext'
-
-
 # Product configuration.
 #
 # The contents of this module will be imported into __init__.py, the
@@ -23,7 +18,9 @@ __docformat__ = 'plaintext'
 # AppConfig.py in your product's root directory. The items in there
 # will be included (by importing) in this file if found.
 
+from collections import OrderedDict
 from Products.CMFCore.permissions import setDefaultRoles
+
 appyRequired = '0.8.0'
 try:
     import appy
@@ -32,8 +29,10 @@ try:
         raise Exception('Appy framework >= %s is required. Download it at http://launchpad.net/appy' % appyRequired)
 except ImportError:
     raise Exception('Appy framework not found. You can download it at http://launchpad.net/appy.')
-from collections import OrderedDict
 
+__author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
+<g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""
+__docformat__ = 'plaintext'
 
 PROJECTNAME = "PloneMeeting"
 
