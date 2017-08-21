@@ -158,11 +158,11 @@ class testMeetingItem(PloneMeetingTestCase):
         # adapt the pmReviewer1 user : add him to a creator group and create is
         # personal folder.
         self.changeUser('admin')
-        #pmReviser1 is member of developer_reviewers and developers_observers
-        #add him to a creator group different from his reviwer group
+        # pmReviser1 is member of developer_reviewers and developers_observers
+        # add him to a creator group different from his reviwer group
         vcGroup = self.portal.portal_groups.getGroupById('vendors_creators')
         vcGroup.addMember('pmReviewer1')
-        #create his personnal zone because he is a creator now
+        # create his personnal zone because he is a creator now
         _createHomeFolder(self.portal, 'pmReviewer1')
         self.changeUser('pmReviewer1')
         item = self.create('MeetingItem')
@@ -398,7 +398,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.meetingConfig.setMeetingConfigsToCloneTo([])
         self.meetingConfig.at_post_edit_script()
         self.failIf(actionId in [act.id for act in self.portal.portal_types[typeName].listActions()])
-        #... nor in portal_actionicons
+        # ... nor in portal_actionicons
         self.failIf(actionId in [ai.getActionId() for ai in self.portal.portal_actionicons.listActionIcons()])
         # let's activate the functionnality again and test
         self.meetingConfig.setMeetingConfigsToCloneTo(
@@ -1148,7 +1148,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
                                          'trigger_workflow_transitions_until':
                                          NO_TRIGGER_WF_TRANSITION_UNTIL},))
-        if not 'privacy' in cfg2.getUsedItemAttributes():
+        if 'privacy' not in cfg2.getUsedItemAttributes():
             cfg2.setUsedItemAttributes(cfg2.getUsedItemAttributes() +
                                        ('privacy', ))
 
@@ -1318,7 +1318,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
         cfg2.setUseGroupsAsCategories(True)
-        if not 'privacy' in cfg2.getUsedItemAttributes():
+        if 'privacy' not in cfg2.getUsedItemAttributes():
             cfg2.setUsedItemAttributes(cfg2.getUsedItemAttributes() + ('privacy', ))
         cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
                                          'trigger_workflow_transitions_until': '%s.%s' %
@@ -3190,12 +3190,12 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmReviewer1')
         self.backToState(item, self.WF_STATE_NAME_MAPPINGS['itemcreated'])
         self.assertTrue(not item.getTakenOverBy())
-        self.assertTrue(not item_created_key in item.takenOverByInfos)
+        self.assertTrue(item_created_key not in item.takenOverByInfos)
 
         # we can set an arbitrary key in the takenOverByInfos
         # instead of current item state if directly passed
         arbitraryKey = "%s__wfstate__%s" % (cfg.getItemWorkflow(), 'validated')
-        self.assertTrue(not arbitraryKey in item.takenOverByInfos)
+        self.assertTrue(arbitraryKey not in item.takenOverByInfos)
         item.setTakenOverBy('pmReviewer1', **{'wf_state': arbitraryKey})
         self.assertTrue(arbitraryKey in item.takenOverByInfos)
 
@@ -3328,7 +3328,7 @@ class testMeetingItem(PloneMeetingTestCase):
         pa = self.portal.portal_actions
         object_buttons = [k['id'] for k in pa.listFilteredActionsFor(item)['object_buttons']]
         # for now action is not available on the item
-        self.assertTrue(not 'dummy' in object_buttons)
+        self.assertTrue('dummy' not in object_buttons)
         beforeMeetingEdit_rendered_actions_panel = actions_panel()
         meeting.setDate(DateTime('2010/10/10'))
         meeting.at_post_edit_script()
@@ -4420,7 +4420,7 @@ class testMeetingItem(PloneMeetingTestCase):
         changeEmergencyForm.handleSaveItemEmergency(changeEmergencyForm, '')
         self.assertEqual(item.getEmergency(), 'emergency_accepted')
         # 'emergency_accepted' no more selectable
-        self.assertTrue(not 'emergency_accepted' in itemEmergencyView.listSelectableEmergencies())
+        self.assertTrue('emergency_accepted' not in itemEmergencyView.listSelectableEmergencies())
         # history was updated
         self.assertEquals(item.emergency_changes_history[1]['action'], 'emergency_accepted')
 
