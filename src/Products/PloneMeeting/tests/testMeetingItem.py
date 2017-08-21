@@ -67,6 +67,7 @@ from Products.PloneMeeting.browser.itemsignatures import item_signatures_default
 from Products.PloneMeeting.config import ADD_SUBCONTENT_PERMISSIONS
 from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import DEFAULT_COPIED_FIELDS
+from Products.PloneMeeting.config import DUPLICATE_AND_KEEP_LINK_EVENT_ACTION
 from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_SAME_MC
 from Products.PloneMeeting.config import HISTORY_COMMENT_NOT_VIEWABLE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
@@ -2156,6 +2157,38 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failUnless(publicItem.adapted().isPrivacyViewable())
         self.failIf(secretHeadingItem.adapted().isPrivacyViewable())
         self.failUnless(publicHeadingItem.adapted().isPrivacyViewable())
+
+    def test_pm_OnDuplicateAndOnDuplicateAndKeepLink(self):
+        """ """
+        cfg = self.meetingConfig
+        cfg.setEnableItemDuplication(False)
+
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        # unable to duplicate as functionnality disabled
+        self.assertFalse(item.showDuplicateItemAction())
+        self.assertRaises(Unauthorized, item.onDuplicate)
+        self.assertRaises(Unauthorized, item.onDuplicateAndKeepLink)
+
+        # enables it and check again
+        cfg.setEnableItemDuplication(True)
+        # clean cache as showDuplicateItemAction is ram cached
+        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.showDuplicateItemAction')
+        self.assertTrue(item.showDuplicateItemAction())
+        item.onDuplicate()
+        self.assertFalse(item.getBRefs())
+        new_item_url = item.onDuplicateAndKeepLink()
+        new_item = self.portal.unrestrictedTraverse(new_item_url.replace(self.app.absolute_url(), ''))
+        self.assertEqual(item.getBRefs(), [new_item])
+
+        # only creators may clone an item
+        self.proposeItem(item)
+        self.changeUser('pmReviewer1')
+        self.assertTrue(self.hasPermission(View, item))
+        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.showDuplicateItemAction')
+        self.assertFalse(item.showDuplicateItemAction())
+        self.assertRaises(Unauthorized, item.onDuplicate)
+        self.assertRaises(Unauthorized, item.onDuplicateAndKeepLink)
 
     def test_pm_IsLateFor(self):
         '''
@@ -4273,7 +4306,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item2 = self.create('MeetingItem')
         item1.setManuallyLinkedItems([item2.UID()])
         item3 = item1.clone(newOwnerId=self.member.id,
-                            cloneEventAction='Duplicate and keep link',
+                            cloneEventAction=DUPLICATE_AND_KEEP_LINK_EVENT_ACTION,
                             setCurrentAsPredecessor=True,
                             manualLinkToPredecessor=True)
         self.assertTrue(item1.UID() in item3.getRawManuallyLinkedItems())
@@ -4283,7 +4316,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(item1_UID in item3.getRawManuallyLinkedItems())
         # duplicateAndKeepLink to item3 that still has a reference to item1 UID
         item4 = item3.clone(newOwnerId=self.member.id,
-                            cloneEventAction='Duplicate and keep link',
+                            cloneEventAction=DUPLICATE_AND_KEEP_LINK_EVENT_ACTION,
                             setCurrentAsPredecessor=True,
                             manualLinkToPredecessor=True)
         # it worked and now manuallyLinkdItems holds correct existing UIDs only

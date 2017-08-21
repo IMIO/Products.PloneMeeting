@@ -881,6 +881,19 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
+    BooleanField(
+        name='enableItemDuplication',
+        default=defValues.enableItemDuplication,
+        widget=BooleanField._properties['widget'](
+            description="EnableItemDuplication",
+            description_msgid="enable_item_duplication_descr",
+            label='enableitemduplication',
+            label_msgid='PloneMeeting_label_enableItemDuplication',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="data",
+        write_permission="PloneMeeting: Write risky config",
+    ),
     StringField(
         name='itemWorkflow',
         widget=SelectionWidget(

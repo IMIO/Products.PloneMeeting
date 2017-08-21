@@ -39,6 +39,9 @@ from imio.history.adapters import ImioWfHistoryAdapter
 from imio.prettylink.adapters import PrettyLinkAdapter
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import AddAnnexDecision
+from Products.PloneMeeting.config import DUPLICATE_EVENT_ACTION
+from Products.PloneMeeting.config import DUPLICATE_AND_KEEP_LINK_EVENT_ACTION
+
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import MEETINGREVIEWERS
 from Products.PloneMeeting.config import MEETINGROLES
@@ -839,8 +842,8 @@ class PMWfHistoryAdapter(ImioWfHistoryAdapter):
         ignorable_history_comment = super(PMWfHistoryAdapter, self).ignorableHistoryComments()
         ignorable_history_comment += ('create_meeting_item_from_template_comments',
                                       'create_from_predecessor_comments',
-                                      'Duplicate and keep link_comments',
-                                      'Duplicate_comments',
+                                      '{0}_comments'.format(DUPLICATE_AND_KEEP_LINK_EVENT_ACTION),
+                                      '{0}_comments'.format(DUPLICATE_EVENT_ACTION),
                                       u'wf_transition_triggered_by_application')
         return ignorable_history_comment
 
