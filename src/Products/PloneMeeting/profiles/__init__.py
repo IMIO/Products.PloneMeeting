@@ -374,6 +374,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.keepOriginalToPrintOfClonedItems = True
         self.cssClassesToHide = 'highlight\nhighlight-red'
         self.hideCssClassesTo = ()
+        self.enableItemDuplication = True
 
         # Data-related parameters ----------------------------------------------
         # Some attributes on an item are optional. In the field

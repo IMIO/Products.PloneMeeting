@@ -16,6 +16,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   Added also possibility to store a particular POD template defined in
   MeetingConfig.meetingItemTemplateToStoreAsAnnex for every items of a meeting.  This is useful
   to store for example every final decision of items
+- Added parameter MeetingConfig.enableItemDuplication, True by default, to be able to easily enable or
+  disable item duplication functionnality
 
 4.0 (2017-08-04)
 ----------------

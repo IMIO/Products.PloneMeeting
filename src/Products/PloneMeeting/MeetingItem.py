@@ -71,6 +71,8 @@ from Products.PloneMeeting.config import AUTO_COPY_GROUP_PREFIX
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import DEFAULT_COPIED_FIELDS
+from Products.PloneMeeting.config import DUPLICATE_AND_KEEP_LINK_EVENT_ACTION
+from Products.PloneMeeting.config import DUPLICATE_EVENT_ACTION
 from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_SAME_MC
 from Products.PloneMeeting.config import HIDE_DECISION_UNDER_WRITING_MSG
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
@@ -5208,16 +5210,36 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Condition for displaying the 'duplicate' action in the interface.
            Returns True if the user can duplicate the item.'''
         # Conditions for being able to see the "duplicate an item" action:
-        # - the user is not Plone-disk-aware;
+        # - the functionnality is enabled in MeetingConfig;
+        # - the item is not added in the configuration;
         # - the user is creator in some group;
-        # - the user must be able to see the item if it is private.
+        # - the user must be able to see the item if it is secret.
         # The user will duplicate the item in his own folder.
         tool = api.portal.get_tool('portal_plonemeeting')
-        if self.isDefinedInTool() or not tool.userIsAmong(['creators']) or not self.adapted().isPrivacyViewable():
+        cfg = tool.getMeetingConfig(self)
+        if not cfg.getEnableItemDuplication() or \
+           self.isDefinedInTool() or \
+           not tool.userIsAmong(['creators']) or \
+           not self.adapted().isPrivacyViewable():
             return False
         return True
 
-    security.declarePublic('clone')
+    def _mayClone(self, cloneEventAction=None):
+        """ """
+        # first check that we are not trying to clone an item
+        # we can not access because of privacy status
+        # do this check if we are not creating an item from an itemTemplate
+        # for wich there is no proposingGroup selected or it will not be
+        # privacyViewable and using such an item template will always fail...
+        if self.getProposingGroup() and not self.adapted().isPrivacyViewable():
+            raise Unauthorized
+
+        # 'duplicate' and 'duplicate and keep link'
+        if cloneEventAction in (DUPLICATE_EVENT_ACTION, DUPLICATE_AND_KEEP_LINK_EVENT_ACTION) and \
+           not self.showDuplicateItemAction():
+            raise Unauthorized
+
+    security.declarePrivate('clone')
 
     def clone(self, copyAnnexes=True, newOwnerId=None, cloneEventAction=None,
               destFolder=None, copyFields=DEFAULT_COPIED_FIELDS, newPortalType=None,
@@ -5240,13 +5262,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            and the link is unbreakable (at least thru the UI).
            If p_inheritAdvices is True, advices will be inherited from predecessor,
            this also needs p_setCurrentAsPredecessor=True and p_manualLinkToPredecessor=False.'''
-        # first check that we are not trying to clone an item
-        # we can not access because of privacy status
-        # do thsi check if we are not creating an item from an itemTemplate
-        # for wich there is no proposingGroup selected or it will not be
-        # privacyViewable and using such an item template will always fail...
-        if self.getProposingGroup() and not self.adapted().isPrivacyViewable():
-            raise Unauthorized
+
+        # check if may clone
+        self._mayClone(cloneEventAction)
+
         wfTool = api.portal.get_tool('portal_workflow')
         # Get the PloneMeetingFolder of the current user as destFolder
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -5621,7 +5640,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''This method is triggered when the users clicks on
            "duplicate item".'''
         user = api.user.get_current()
-        newItem = self.clone(newOwnerId=user.id, cloneEventAction='Duplicate')
+        newItem = self.clone(newOwnerId=user.id, cloneEventAction=DUPLICATE_EVENT_ACTION)
         self.plone_utils.addPortalMessage(
             translate('item_duplicated', domain='PloneMeeting', context=self.REQUEST))
         return self.REQUEST.RESPONSE.redirect(newItem.absolute_url())
@@ -5633,7 +5652,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            "duplicate item and keep link".'''
         user = api.user.get_current()
         newItem = self.clone(newOwnerId=user.id,
-                             cloneEventAction='Duplicate and keep link',
+                             cloneEventAction=DUPLICATE_AND_KEEP_LINK_EVENT_ACTION,
                              setCurrentAsPredecessor=True,
                              manualLinkToPredecessor=True)
         plone_utils = api.portal.get_tool('plone_utils')
