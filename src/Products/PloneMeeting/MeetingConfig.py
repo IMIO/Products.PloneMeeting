@@ -9,10 +9,6 @@
 # GNU General Public License (GPL)
 #
 
-__author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
-<g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""
-__docformat__ = 'plaintext'
-
 from AccessControl import ClassSecurityInfo
 from Products.Archetypes.atapi import BaseFolder
 from Products.Archetypes.atapi import BooleanField
@@ -41,6 +37,7 @@ from Products.DataGridField.Column import Column
 from Products.DataGridField.CheckboxColumn import CheckboxColumn
 from Products.DataGridField.SelectColumn import SelectColumn
 
+import logging
 import os
 from collections import OrderedDict
 from AccessControl import Unauthorized
@@ -125,11 +122,15 @@ from Products.PloneMeeting.validators import WorkflowInterfacesValidator
 from Products.PloneMeeting.Meeting import Meeting
 from Products.PloneMeeting.MeetingItem import MeetingItem
 
+
+__author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
+<g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""
+__docformat__ = 'plaintext'
+
 defValues = MeetingConfigDescriptor.get()
 # This way, I get the default values for some MeetingConfig fields,
 # that are defined in a unique place: the MeetingConfigDescriptor class, used
 # for importing profiles.
-import logging
 logger = logging.getLogger('PloneMeeting')
 DUPLICATE_SHORT_NAME = 'Short name "%s" is already used by another meeting configuration. Please choose another one.'
 
@@ -3313,8 +3314,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                              context=self.REQUEST)
         # check if pre_validation is removed only if the other pre_validation is not added
         # at the same time (switch from one to other)
-        if ('pre_validation' in removed and not 'pre_validation_keep_reviewer_permissions' in added) or \
-           ('pre_validation_keep_reviewer_permissions' in removed and not 'pre_validation' in added):
+        if ('pre_validation' in removed and 'pre_validation_keep_reviewer_permissions' not in added) or \
+           ('pre_validation_keep_reviewer_permissions' in removed and 'pre_validation' not in added):
             # this will remove the 'prevalidated' state for MeetingItem
             # check that no more items are in this state
             if catalog(portal_type=self.getItemTypeName(),
@@ -3385,8 +3386,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                  context=self.REQUEST)
         # check if 'removed' is removed only if the other 'removed_and_duplicated' is not added
         # at the same time (switch from one to other)
-        if ('removed' in removed and not 'removed_and_duplicated' in added) or \
-           ('removed_and_duplicated' in removed and not 'removed' in added):
+        if ('removed' in removed and 'removed_and_duplicated' not in added) or \
+           ('removed_and_duplicated' in removed and 'removed' not in added):
             # this will remove the 'removed' state for Item
             # check that no more items are in this state
             if catalog(portal_type=self.getItemTypeName(), review_state='removed'):
@@ -5579,7 +5580,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             for brain in brains:
                 # filter out advices to only update advices of current MeetingConfig
                 if brain.portal_type in advice_portal_types and \
-                   not cfgId in brain.getPath():
+                   cfgId not in brain.getPath():
                     continue
 
                 obj = brain.getObject()

@@ -1,9 +1,10 @@
 # -*- coding: utf-8 -*-
 
 import logging
-logger = logging.getLogger('PloneMeeting')
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_NEW
 from Products.PloneMeeting.migrations import Migrator
+
+logger = logging.getLogger('PloneMeeting')
 
 
 # The migration class ----------------------------------------------------------

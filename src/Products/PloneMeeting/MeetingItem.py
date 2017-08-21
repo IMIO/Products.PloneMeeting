@@ -9,10 +9,7 @@
 # GNU General Public License (GPL)
 #
 
-__author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
-<g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""
-__docformat__ = 'plaintext'
-
+import logging
 from zope.interface import implements
 from appy.gen import No
 from collections import OrderedDict
@@ -65,6 +62,7 @@ from Products.CMFCore.utils import _checkPermission
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from Products.CMFPlone.utils import safe_unicode
 from collective.behavior.talcondition.utils import _evaluateExpression
+from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.prettylink.interfaces import IPrettyLink
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting import PloneMeetingError
@@ -124,9 +122,12 @@ from Products.PloneMeeting.utils import transformAllRichTextFields
 from Products.PloneMeeting.utils import updateAnnexesAccess
 from Products.PloneMeeting.utils import workday
 
-import logging
+
+__author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
+<g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""
+__docformat__ = 'plaintext'
+
 logger = logging.getLogger('PloneMeeting')
-from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 
 # PloneMeetingError-related constants -----------------------------------------
 ITEM_REF_ERROR = 'There was an error in the TAL expression for defining the ' \
@@ -499,7 +500,7 @@ class MeetingItemWorkflowActions:
         # If the meeting is already frozen and this item is a "late" item,
         # I must set automatically the item to "itemfrozen".
         meetingState = meeting.queryState()
-        if not meetingState in meeting.getBeforeFrozenStates():
+        if meetingState not in meeting.getBeforeFrozenStates():
             self._freezePresentedItem()
         # We may have to send a mail.
         self.context.sendMailIfRelevant('itemPresented', 'Owner', isRole=True)
@@ -662,7 +663,6 @@ class MeetingItemWorkflowActions:
 
 
 InitializeClass(MeetingItemWorkflowActions)
-##/code-section module-header
 
 schema = Schema((
 
@@ -1402,19 +1402,14 @@ schema = Schema((
 ),
 )
 
-##code-section after-local-schema #fill in your manual code here
-##/code-section after-local-schema
-
 MeetingItem_schema = OrderedBaseFolderSchema.copy() + \
     schema.copy()
 
-##code-section after-schema #fill in your manual code here
 # Make title longer
 MeetingItem_schema['title'].widget.maxlength = '750'
 # Define a specific msgid for title
 MeetingItem_schema['title'].widget.i18n_domain = 'PloneMeeting'
 MeetingItem_schema['title'].widget.label_msgid = 'PloneMeeting_label_itemTitle'
-##/code-section after-schema
 
 
 class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
@@ -1428,13 +1423,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     schema = MeetingItem_schema
 
-    ##code-section class-header #fill in your manual code here
     meetingTransitionsAcceptingRecurringItems = ('_init_', 'publish', 'freeze', 'decide')
-    ##/code-section class-header
-
-    # Methods
-
-    # Manually created methods
 
     security.declarePublic('title_or_id')
 
@@ -1963,8 +1952,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def setItemIsSigned(self, value, **kwargs):
         '''Overrides the field 'itemIsSigned' mutator to check if the field is
            actually editable.'''
-        #if we are not in the creation process (setting the default value)
-        #and if the user can not sign the item, we raise an Unauthorized
+        # if we are not in the creation process (setting the default value)
+        # and if the user can not sign the item, we raise an Unauthorized
         if not self._at_creation_flag and not self.adapted().maySignItem():
             raise Unauthorized
         self.getField('itemIsSigned').set(self, value, **kwargs)
@@ -2024,7 +2013,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # so we use getManuallyLinkedItems to be sure that item object still exists
                 mLinkedItemUids = [tmp_item.UID() for tmp_item in newItem.getManuallyLinkedItems()]
                 for mLinkedItemUid in mLinkedItemUids:
-                    if mLinkedItemUid and not mLinkedItemUid in newLinkedUids:
+                    if mLinkedItemUid and mLinkedItemUid not in newLinkedUids:
                         newLinkedUids.append(mLinkedItemUid)
             # do not forget newUids
             newLinkedUids = newLinkedUids + newUids
@@ -2566,7 +2555,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # make sure current value is still in the vocabulary
         current_value = self.getProposingGroupWithGroupInCharge()
-        if current_value and not current_value in res.keys():
+        if current_value and current_value not in res.keys():
             current_proposingGroupId, current_groupInChargeId = current_value.split('__groupincharge__')
             res.add(current_value,
                     '{0} ({1})'.format(tool.get(current_proposingGroupId).Title(),
@@ -3459,8 +3448,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             delay_left_alert = adviceInfo['delay_left_alert']
             return (left_delay != old_left_delay) and \
                 (delay_left_alert.isdigit() and
-                 left_delay >= -1
-                 and left_delay <= int(delay_left_alert))
+                 left_delay >= -1 and
+                 left_delay <= int(delay_left_alert))
 
         def _just_timed_out(adviceInfo, old_adviceInfo):
             """ """
@@ -3637,7 +3626,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # The expression is supposed to return a list a Plone group suffixes
                 # check that the real linked Plone groups are selectable
                 for suffix in suffixes:
-                    if not suffix in MEETING_GROUP_SUFFIXES:
+                    if suffix not in MEETING_GROUP_SUFFIXES:
                         # If the suffix returned by the expression does not exist
                         # log it, it is a configuration problem
                         logger.warning(AS_COPYGROUP_RES_ERROR % (suffix,
@@ -4313,7 +4302,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # in some case, when creating advice, if adviserIndex is reindexed before
         # _updateAdvices is finished, we do not have the 'delay_infos' in the adviceIndex
         # in this case, no matter p_computeNewDelayInfos we use getDelayInfosForAdvice
-        if computeNewDelayInfos or not 'delay_infos' in self.adviceIndex[groupId]:
+        if computeNewDelayInfos or 'delay_infos' not in self.adviceIndex[groupId]:
             delay_infos = self.getDelayInfosForAdvice(groupId)
         else:
             delay_infos = self.adviceIndex[groupId]['delay_infos']
@@ -5184,7 +5173,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if copyGroups:
             copyGroupsInVocab = [copyGroup[0] for copyGroup in res]
             for groupId in copyGroups:
-                if not groupId in copyGroupsInVocab:
+                if groupId not in copyGroupsInVocab:
                     realGroupId = self._realCopyGroupId(groupId)
                     group = portal_groups.getGroupById(realGroupId)
                     if group:
@@ -5502,7 +5491,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                                                context=self.REQUEST),
                                                      type='warning')
                         break
-                                    # if we are on the triggerUntil transition, we will stop at next loop
+                    # if we are on the triggerUntil transition, we will stop at next loop
                     if tr == triggerUntil:
                         break
             # set back originally PUBLISHED object
@@ -6220,7 +6209,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 </dl>""" % (translate('assembly_excused_defined_on_meeting',
                       domain='PloneMeeting',
                       context=self.REQUEST).encode(enc),
-            self.getMeeting().getAssemblyExcused() or '-')
+                self.getMeeting().getAssemblyExcused() or '-')
         return value + collapsibleMeetingAssemblyExcused
 
     security.declareProtected('Modify portal content', 'ItemAssemblyAbsentsDescrMethod')
@@ -6243,7 +6232,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 </dl>""" % (translate('assembly_absents_defined_on_meeting',
                       domain='PloneMeeting',
                       context=self.REQUEST).encode(enc),
-            self.getMeeting().getAssemblyAbsents() or '-')
+                self.getMeeting().getAssemblyAbsents() or '-')
         return value + collapsibleMeetingAssemblyAbsents
 
     security.declareProtected('Modify portal content', 'ItemSignaturesDescrMethod')
@@ -6287,7 +6276,3 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
 
 registerType(MeetingItem, PROJECTNAME)
-# end of class MeetingItem
-
-##code-section module-footer #fill in your manual code here
-##/code-section module-footer
