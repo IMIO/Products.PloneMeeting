@@ -265,6 +265,9 @@ AUTO_COPY_GROUP_PREFIX = 'auto__'
 HIDE_DECISION_UNDER_WRITING_MSG = \
     "<p class='highlightValue'>The decision is currently under edit by managers, you can not access it.</p>"
 
+DUPLICATE_EVENT_ACTION = 'Duplicate'
+DUPLICATE_AND_KEEP_LINK_EVENT_ACTION = 'Duplicate and keep link'
+
 
 def registerClasses():
     '''ArchGenXML generated code does not register Archetype classes at the
