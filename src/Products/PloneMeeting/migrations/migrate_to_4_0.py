@@ -1217,7 +1217,13 @@ class Migrate_To_4_0(Migrator):
            move it to <span class="highlight">."""
         logger.info('Replace old yellow highlight...')
         brains = self.portal.portal_catalog(meta_type='MeetingItem')
+        i = 1
+        total = len(brains)
         for brain in brains:
+            logger.info('Migrating yellow highlight of element {0}/{1} ({2})...'.format(
+                i,
+                total,
+                brain.getPath()))
             item = brain.getObject()
             # check every RichText fields
             for field in item.Schema().filterFields(default_content_type='text/html'):
@@ -1255,7 +1261,7 @@ class Migrate_To_4_0(Migrator):
         i = 1
         total = len(brains)
         for brain in brains:
-            logger.info('Migrating element {0}/{1} ({2})...'.format(
+            logger.info('Migrating content_category of annexes of element {0}/{1} ({2})...'.format(
                 i,
                 total,
                 brain.getPath()))
