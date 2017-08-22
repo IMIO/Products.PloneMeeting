@@ -1217,10 +1217,13 @@ class Migrate_To_4_0(Migrator):
             for field in item.Schema().filterFields(default_content_type='text/html'):
                 content = field.get(item)
                 if content.find('<span style="background-color:yellow">') != -1 or \
-                   content.find('<span style="background-color:Yellow">') != -1:
+                   content.find('<span style="background-color:Yellow">') != -1 or \
+                   content.find('<span style="background-color:rgb(255, 255, 0)">') != -1:
                     content = content.replace('<span style="background-color:yellow">',
                                               '<span class="highlight-yellow">')
                     content = content.replace('<span style="background-color:Yellow">',
+                                              '<span class="highlight-yellow">')
+                    content = content.replace('<span style="background-color:rgb(255, 255, 0)">',
                                               '<span class="highlight-yellow">')
                     field.set(item, content)
         logger.info('Done.')
