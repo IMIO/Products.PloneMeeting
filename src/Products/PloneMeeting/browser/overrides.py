@@ -71,7 +71,7 @@ class PMFolderContentsView(FolderContentsView):
 
     def __init__(self, context, request):
         super(FolderContentsView, self).__init__(context, request)
-        #alsoProvides(request, IContentsPage)
+        # alsoProvides(request, IContentsPage)
 
 
 class PloneMeetingGlobalSectionsViewlet(GlobalSectionsViewlet):
@@ -91,10 +91,10 @@ class PloneMeetingGlobalSectionsViewlet(GlobalSectionsViewlet):
         url = request['URL']
         path = url[plone_url_len:]
 
-        #XXX change by PM
+        # XXX change by PM
         tool = api.portal.get_tool('portal_plonemeeting')
         mc = tool.getMeetingConfig(self.context)
-        #XXX end of change by PM
+        # XXX end of change by PM
 
         for action in portal_tabs:
             if not action['url'].startswith(plone_url):
@@ -110,11 +110,11 @@ class PloneMeetingGlobalSectionsViewlet(GlobalSectionsViewlet):
                 # for choosing the longest (most relevant) path.
                 valid_actions.append((len(action_path), action['id']))
 
-            #XXX change by PM
+            # XXX change by PM
             if mc:
                 if "/mymeetings/%s" % mc.getId() in action_path:
                     return {'portal': action['id'], }
-            #XXX end of change by PM
+            # XXX end of change by PM
 
         # Sort by path length, the longest matching path wins
         valid_actions.sort()
@@ -264,7 +264,7 @@ class PMDocumentGeneratorLinksViewlet(DocumentGeneratorLinksViewlet, BaseGenerat
         """Complete infos with the store_as_annex data."""
         res = {'store_as_annex_uid': None,
                'store_as_annex_title': None}
-        if template.store_as_annex and template.store_as_annex != ['--NOVALUE--']:
+        if template.store_as_annex:
             annex_type_uid = template.store_as_annex
             res['store_as_annex_uid'] = annex_type_uid
             annex_type = api.content.find(UID=annex_type_uid)[0].getObject()
@@ -282,7 +282,7 @@ class PMDocumentGeneratorLinksViewlet(DocumentGeneratorLinksViewlet, BaseGenerat
         """By default only (Meeting)Managers are able to store a generated document as annex.
            Check also that the p_store_as_annex_uid is defined in the POD template with p_pod_template_uid UID."""
         pod_template = api.content.find(UID=pod_template_uid)[0].getObject()
-        if not store_as_annex_uid in pod_template.store_as_annex:
+        if store_as_annex_uid not in pod_template.store_as_annex:
             return False
         tool = api.portal.get_tool('portal_plonemeeting')
         return tool.isManager(self.context)
@@ -340,7 +340,7 @@ class PMFacetedContainerView(FacetedContainerView):
     def __init__(self, context, request):
         """Hide the green bar on the faceted if not in the configuration."""
         super(PMFacetedContainerView, self).__init__(context, request)
-        if not 'portal_plonemeeting' in self.context.absolute_url() and \
+        if 'portal_plonemeeting' not in self.context.absolute_url() and \
            not IMeeting.providedBy(self.context):
             self.request.set('disable_border', 1)
 
@@ -838,7 +838,7 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
         allowedContentTypeIds = [allowedContentType.getId() for allowedContentType
                                  in self.context.allowedContentTypes()]
 
-        if not annex_portal_type in allowedContentTypeIds:
+        if annex_portal_type not in allowedContentTypeIds:
             msg_code = 'store_podtemplate_as_annex_can_not_add_annex'
             if return_portal_msg_code:
                 return msg_code
