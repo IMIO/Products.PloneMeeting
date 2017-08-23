@@ -23,14 +23,21 @@ img.logical_meeting {
 }
 
 /* display lines of the table on the meeting_view 100% height so the 'listType' column is displayed correctly */
-table.faceted-table-results > tbody > tr.odd {
-    height: 100%;
+table.faceted-table-results > tbody > tr {
+    height: 1px;
 }
 
 table.listing tr[class][class] td[class^='meeting_item_listType_'] {
     padding: 0em;
     border-right: 0px;
     height: 100%;
+}
+
+@media screen and (-webkit-min-device-pixel-ratio:0)
+{ 
+    table.listing tr[class][class] td[class^='meeting_item_listType_'] {
+        height: inherit;
+    }
 }
 
 /* grey the items with a subnumber itemnumber input */
