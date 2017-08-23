@@ -847,7 +847,7 @@
                   </div>
                   
                 </td>
-                <td style="word-break: break-all;" >
+                <td>
                   <span tal:content="obj/tal_condition">TAL Condition</span>
                 </td>
                 <td i18n:domain="plone">
