@@ -9,10 +9,6 @@
 # GNU General Public License (GPL)
 #
 
-__author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
-<g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""
-__docformat__ = 'plaintext'
-
 from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
 from zope.interface import implements
@@ -36,6 +32,7 @@ from Products.Archetypes.atapi import TextField
 
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 
+import logging
 import os
 from appy.gen import No
 from collections import OrderedDict
@@ -95,7 +92,11 @@ from Products.PloneMeeting.utils import transformAllRichTextFields
 from Products.PloneMeeting.utils import updateAnnexesAccess
 
 from Products.PloneMeeting import PMMessageFactory as _
-import logging
+
+__author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
+<g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""
+__docformat__ = 'plaintext'
+
 logger = logging.getLogger('PloneMeeting')
 
 # PloneMeetingError-related constants -----------------------------------------
@@ -906,9 +907,9 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getSort_on')
 
-    def getSort_on(self):
+    def getSort_on(self, force_linked_items_query=False):
         """ """
-        if displaying_available_items(self):
+        if displaying_available_items(self) and not force_linked_items_query:
             return 'getProposingGroup'
         else:
             return 'getItemNumber'
@@ -1305,7 +1306,10 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                                       'o': 'plone.app.querystring.operation.selection.is',
                                       'v': uids},)
             if ordered:
-                query = queryparser.parseFormquery(self, catalog_query, sort_on=self.getSort_on())
+                query = queryparser.parseFormquery(
+                    self,
+                    catalog_query,
+                    sort_on=self.getSort_on(force_linked_items_query=force_linked_items_query))
             else:
                 query = queryparser.parseFormquery(self, catalog_query)
 
