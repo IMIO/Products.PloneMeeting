@@ -18,6 +18,10 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   to store for example every final decision of items
 - Added parameter MeetingConfig.enableItemDuplication, True by default, to be able to easily enable or
   disable item duplication functionnality
+- Fixed bug in MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject where returned meeting could
+  nevertheless not be a meeting into which item could be presented because it was frozen and item was not
+  isLateFor(meeting).  The isLateFor check is now done in the MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject
+  and not more in the mayPresent method
 
 4.0 (2017-08-04)
 ----------------
