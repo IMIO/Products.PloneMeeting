@@ -3320,10 +3320,11 @@ class testMeetingItem(PloneMeetingTestCase):
         validatedItemCreatedMeeting_rendered_actions_panel = actions_panel()
         self.freezeMeeting(meeting)
         # here item is no more presentable
+        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject')
         self.assertFalse(item.wfConditions().mayPresent())
         validatedItemFrozenMeeting_rendered_actions_panel = actions_panel()
-        self.assertTrue(not validatedItemCreatedMeeting_rendered_actions_panel ==
-                        validatedItemFrozenMeeting_rendered_actions_panel)
+        self.assertTrue('present' in validatedItemCreatedMeeting_rendered_actions_panel)
+        self.assertFalse('present' in validatedItemFrozenMeeting_rendered_actions_panel)
 
     def test_pm_ItemActionsPanelCachingInvalidatedWhenLinkedMeetingIsEdited(self):
         """Actions panel cache is invalidated when the linked meeting is edited."""
