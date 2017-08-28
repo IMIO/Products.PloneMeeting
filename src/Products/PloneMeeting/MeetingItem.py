@@ -220,12 +220,7 @@ class MeetingItemWorkflowConditions:
         if not self._publishedObjectIsMeeting():
             meeting = self.context.getMeetingToInsertIntoWhenNoCurrentMeetingObject(
                 self.context.getPreferredMeeting())
-            # if we found a meeting, check that, if it is a meeting accepting late items
-            # the current item is a late item...
-            if not meeting or \
-               (not meeting.queryState() in meeting.getBeforeFrozenStates() and
-                    not self.context.wfConditions().isLateFor(meeting)):
-                return False
+            return bool(meeting)
 
         # here we are sure that we have a meeting that will accept the item
         # Verify if all automatic advices have been given on this item.
@@ -2296,8 +2291,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             brains = cfg.adapted().getMeetingsAcceptingItems(review_states=meetingStates,
                                                              inTheFuture=True)
 
-        if brains:
-            return brains[0].getObject()
+        for brain in brains:
+            meeting = brain.getObject()
+            # find a meeting that is really accepting current item
+            # in case meeting is frozen, make sure current item isLateFor(meeting)
+            if meeting.queryState() in meeting.getBeforeFrozenStates() or \
+               self.wfConditions().isLateFor(meeting):
+                return meeting
         return None
 
     def _getOtherMeetingConfigsImAmClonedIn(self):
