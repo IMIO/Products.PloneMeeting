@@ -1598,6 +1598,40 @@ class testMeeting(PloneMeetingTestCase):
         self.presentItem(item2)
         self.assertEquals(item2.getMeeting(), meeting2)
 
+    def test_pm_PresentItemWhenNoPublishedMeetingAndNextMeetingInFutureIsFrozen(self):
+        '''If next meeting in future is frozen and it is not the preferredMeeting of an item,
+           the next receivable meeting is used, aka None if not or next created meeting.
+        '''
+        cfg = self.meetingConfig
+        self.assertEqual(cfg.getMeetingPresentItemWhenNoCurrentMeetingStates(), tuple())
+
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        meeting1 = self.create('Meeting', date=DateTime() + 1)
+        meeting2 = self.create('Meeting', date=DateTime() + 2)
+        self.validateItem(item)
+        # unset current meeting
+        item.REQUEST['PUBLISHED'] = item
+
+        # for now, the next meeting is used
+        self.assertTrue(meeting1.queryState() in meeting1.getBeforeFrozenStates())
+        self.assertTrue(meeting2.queryState() in meeting1.getBeforeFrozenStates())
+        self.assertTrue(meeting1.getDate() < meeting2.getDate())
+        self.assertEqual(
+            item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(ITEM_NO_PREFERRED_MEETING_VALUE),
+            meeting1)
+        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject')
+        # freeze meeting1, meeting2 is used
+        self.freezeMeeting(meeting1)
+        self.assertFalse(meeting1.queryState() in meeting1.getBeforeFrozenStates())
+        self.assertEqual(
+            item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(ITEM_NO_PREFERRED_MEETING_VALUE),
+            meeting2)
+        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject')
+        # delete meeting2, None is returned
+        self.deleteAsManager(meeting2.UID())
+        self.assertIsNone(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(ITEM_NO_PREFERRED_MEETING_VALUE))
+
     def test_pm_Validate_date(self):
         """
           Test the Meeting.date validator "validate_date" : validates that 2 meetings can
