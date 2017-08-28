@@ -1604,6 +1604,7 @@ div.pmMoreInfo table[cellpadding='0'] tr th {
  * that says that element is still not converted */
 body.portaltype-configurablepodtemplate dl.portalMessage,
 body.portaltype-dashboardpodtemplate dl.portalMessage,
+body.portaltype-file dl.portalMessage,
 body.portaltype-itemannexcontentcategory dl.portalMessage,
 body.portaltype-contentcategory dl.portalMessage {
     display: none;
