@@ -31,20 +31,24 @@
                                  src string:${view/portal_url}/sendMail.gif;"
                  style="cursor:pointer; position: relative;"/>
             <div tal:define="menuId string:pm_menu_${infos/template_uid}_${infos/output_format}"
-                 tal:attributes="id menuId; name menuId" class="pmDropdown podTemplateSendmail">
-              <div tal:repeat="name mailingLists">
-                <a style="cursor: pointer"
+                 tal:attributes="id menuId; name menuId" class="pmDropdown podTemplateSendmail discreet">
+              <div style="clear: left;" tal:repeat="name mailingLists">
+                <img style="float: left; padding-right: 0.3em;"
+                     src="blue_arrow.gif"
+                     tal:attributes="src string:${view/portal_url}/blue_arrow.gif"/>
+                <a href="#"
+                   class="template_send_mailing_list"
                    tal:content="name"
                    tal:attributes="onclick string:event.preventDefault();;javascript:$(this).parents('form')[0].mailinglist_name.value='${name}';;javascript:$(this).parents('form')[0].target='_self';;generatePodDocument('${infos/template_uid}','${infos/output_format}', this);;">
                     Mailing list name
                 </a>
-              </div>
-                    <div style="text-align: right;"
-                         tal:attributes="onClick string:toggleMenu('${infos/template_uid}_${infos/output_format}');">
-                        <img style="bottom: -13px; position: absolute; right: -13px; cursor: pointer;"
-                             src="pb_close_small.png"
-                             tal:attributes="src string:${view/portal_url}/pb_close_small.png"/>
-                    </div>
+                </div>
+                <div style="text-align: right;"
+                     tal:attributes="onClick string:toggleMenu('${infos/template_uid}_${infos/output_format}');">
+                    <img style="bottom: -13px; position: absolute; right: -13px; cursor: pointer;"
+                         src="pb_close_small.png"
+                         tal:attributes="src string:${view/portal_url}/pb_close_small.png"/>
+                </div>
             </div>
         </tal:mail>
 
