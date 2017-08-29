@@ -1245,13 +1245,18 @@ table.listing tr[class][class] td.meeting_item_listType_late {
 .transition-completeness_evaluation_asked_again {
     color: &dtml-discreetColor;;
 }
-a[class^="item_completeness_"],
+a[class^="link-overlay-pm item_completeness_"],
 a.item_no_emergency,
-a[class^="item_emergency_"],
-a[class^="item_listType_"] {
+a[class^="link-overlay-pm item_emergency_"],
+a[class^="item_listType_"],
+a.template_send_mailing_list {
     padding-right: 50px;
     float: left;
     font-weight: normal;
+    font-style: normal;
+}
+a.template_send_mailing_list {
+    line-height: 1em;
 }
 /* need to set !important because used in the advice popup where actionMenuAX defines padding */
 div a.advice_delay_change_value {
@@ -1599,6 +1604,7 @@ div.pmMoreInfo table[cellpadding='0'] tr th {
  * that says that element is still not converted */
 body.portaltype-configurablepodtemplate dl.portalMessage,
 body.portaltype-dashboardpodtemplate dl.portalMessage,
+body.portaltype-file dl.portalMessage,
 body.portaltype-itemannexcontentcategory dl.portalMessage,
 body.portaltype-contentcategory dl.portalMessage {
     display: none;
