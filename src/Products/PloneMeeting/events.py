@@ -9,13 +9,7 @@
 # GNU General Public License (GPL)
 #
 
-__author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
-<g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""
-__docformat__ = 'plaintext'
-
-
 import logging
-logger = logging.getLogger('PloneMeeting')
 from AccessControl import Unauthorized
 from DateTime import DateTime
 from persistent.list import PersistentList
@@ -50,6 +44,12 @@ from Products.PloneMeeting.utils import ItemAfterTransitionEvent
 from Products.PloneMeeting.utils import MeetingAfterTransitionEvent
 from Products.PloneMeeting.utils import meetingTriggerTransitionOnLinkedItems
 from Products.PloneMeeting.utils import sendMailIfRelevant
+
+__author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
+<g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""
+__docformat__ = 'plaintext'
+
+logger = logging.getLogger('PloneMeeting')
 
 podTransitionPrefixes = {'MeetingItem': 'pod_item', 'Meeting': 'pod_meeting'}
 
@@ -681,7 +681,7 @@ def onMeetingRemoved(meeting, event):
                     (len(meeting.REQUEST.get('items_to_remove')),
                      meeting.absolute_url()))
         # use an intermediate list to avoid changing value in REQUEST
-        items_to_remove = [item for item in meeting.REQUEST.get('items_to_remove')]
+        items_to_remove = list(meeting.REQUEST.get('items_to_remove'))
         for item in items_to_remove:
             unrestrictedRemoveGivenObject(item)
         meeting.REQUEST.set('items_to_remove', ())
