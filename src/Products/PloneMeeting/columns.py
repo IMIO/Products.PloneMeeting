@@ -191,7 +191,6 @@ class PMActionsColumn(ActionsColumn):
         if self.context.meta_type == 'Meeting' and not displaying_available_items(self.context):
             self.params['showArrows'] = True
             self.params['lastItemUID'] = self.context.getItems(ordered=True, useCatalog=True)[-1].UID
-            self.params['totalNbOfItems'] = self.context.numberOfItems()
         else:
             self.params['showArrows'] = False
             self.params['lastItemUID'] = 0
