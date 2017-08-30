@@ -169,19 +169,20 @@ class PMConfigActionsPanelViewlet(ActionsPanelViewlet):
 
     def renderViewlet(self):
         """ """
-        showAddContent = False
-        showActions = False
-        if 'ContentCategory' in self.context.portal_type:
-            showAddContent = True
-            showActions = True
-        return self.context.restrictedTraverse("@@actions_panel")(useIcons=False,
-                                                                  showTransitions=True,
-                                                                  appendTypeNameToTransitionLabel=True,
-                                                                  showArrows=False,
-                                                                  showEdit=False,
-                                                                  showDelete=False,
-                                                                  showActions=showActions,
-                                                                  showAddContent=showAddContent)
+        if self.show():
+            showAddContent = False
+            showActions = False
+            if 'ContentCategory' in self.context.portal_type:
+                showAddContent = True
+                showActions = True
+            return self.context.restrictedTraverse("@@actions_panel")(useIcons=False,
+                                                                      showTransitions=True,
+                                                                      appendTypeNameToTransitionLabel=True,
+                                                                      showArrows=False,
+                                                                      showEdit=False,
+                                                                      showDelete=False,
+                                                                      showActions=showActions,
+                                                                      showAddContent=showAddContent)
 
     def getBackUrl(self):
         '''Computes the URL for "back" links in the tool or in a config.'''
