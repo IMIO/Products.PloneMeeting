@@ -3,7 +3,6 @@
 import os
 import time
 import logging
-logger = logging.getLogger('PloneMeeting')
 
 from Acquisition import aq_base
 from DateTime import DateTime
@@ -30,6 +29,8 @@ from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import updateCollectionCriterion
+
+logger = logging.getLogger('PloneMeeting')
 
 
 def _pdata_to_data(file_content):
@@ -90,7 +91,7 @@ class Migrate_To_4_0(Migrator):
             for brain in catalog(portal_type=(cfg.getItemTypeName(), cfg.getMeetingTypeName())):
                 itemOrMeeting = brain.getObject()
                 itemOrMeetingWFId = wfTool.getWorkflowsFor(itemOrMeeting)[0].getId()
-                if not itemOrMeetingWFId in itemOrMeeting.workflow_history:
+                if itemOrMeetingWFId not in itemOrMeeting.workflow_history:
                     wf_history_key = self._get_wh_key(itemOrMeeting)
                     itemOrMeeting.workflow_history[itemOrMeetingWFId] = \
                         tuple(itemOrMeeting.workflow_history[wf_history_key])
@@ -171,7 +172,7 @@ class Migrate_To_4_0(Migrator):
             if hasattr(cfg, 'meetingAppDefaultView'):
                 # if cfg.meetingAppDefaultView is like 'topic_searchmyitems', try to recover it...
                 default_view = cfg.meetingAppDefaultView.split('topic_')[-1]
-                if not default_view in cfg.searches.searches_items.objectIds():
+                if default_view not in cfg.searches.searches_items.objectIds():
                     default_view = 'searchallitems'
                 # update the criterion default value
                 default_uid = getattr(cfg.searches.searches_items, default_view).UID()
@@ -440,7 +441,7 @@ class Migrate_To_4_0(Migrator):
                     # raise if we have a element that does not contains 'ItemTemplate'
                     # in it's portal_type, it checks if some itemTemplates were copy/pasted
                     # from one MeetingConfig to another...
-                    if not 'ItemTemplate' in itemTemplate.portal_type:
+                    if 'ItemTemplate' not in itemTemplate.portal_type:
                         raise Exception('An item template was migrated to a wrong portal_type!')
             # update recurring items portal_type
             recItemType = cfg.getItemTypeName(configType='MeetingItemRecurring')
@@ -453,7 +454,7 @@ class Migrate_To_4_0(Migrator):
                     # raise if we have a element that does not contains 'ItemRecurring'
                     # in it's portal_type, it checks if some recItems were copy/pasted
                     # from one MeetingConfig to another...
-                    if not 'ItemRecurring' in recItem.portal_type:
+                    if 'ItemRecurring' not in recItem.portal_type:
                         raise Exception('A recurring item was migrated to a wrong portal_type!')
             # update constraintypes for folders itemtemplates and recurringitems
             cfg.itemtemplates.setLocallyAllowedTypes(['Folder', itemTemplateType])
@@ -727,7 +728,7 @@ class Migrate_To_4_0(Migrator):
                     break
                 history = getattr(item, history_id)
                 for action in history:
-                    if not 'comment' in action:
+                    if 'comment' not in action:
                         # already migrated
                         check_already_migrated = True
                         break
@@ -739,7 +740,7 @@ class Migrate_To_4_0(Migrator):
                 if check_already_migrated:
                     break
                 for action in adviceInfo['delay_changes_history']:
-                    if not 'comment' in action:
+                    if 'comment' not in action:
                         # already migrated
                         check_already_migrated = True
                         break
@@ -754,7 +755,7 @@ class Migrate_To_4_0(Migrator):
         logger.info('Updating ckeditor custom toolbar, adding buttons '
                     '\'NbSpace\', \'NbHyphen\', \'Link\', \'Unlink\' and \'Image\'...')
         toolbar = self.portal.portal_properties.ckeditor_properties.toolbar_Custom
-        if not "'NbSpace'" in toolbar and not "'NbHyphen'" in toolbar:
+        if "'NbSpace'" not in toolbar and "'NbHyphen'" not in toolbar:
             # try to insert these buttons after 'Format' or 'Styles'
             if 'Format' in toolbar:
                 toolbar = toolbar.replace("'Format'", "'Format','NbSpace','NbHyphen'")
@@ -763,7 +764,7 @@ class Migrate_To_4_0(Migrator):
             else:
                 self.warn(logger, "Could not add new buttons 'NbSpace' and 'NbHyphen' to the ckeditor toolbar!")
 
-        if not "'Image'" in toolbar:
+        if "'Image'" not in toolbar:
             # try to insert this button after 'SpecialChar' or 'Table'
             if "'SpecialChar'" in toolbar:
                 toolbar = toolbar.replace("'SpecialChar'", "'SpecialChar','Image'")
@@ -772,7 +773,7 @@ class Migrate_To_4_0(Migrator):
             else:
                 self.warn(logger, "Could not add new button 'Image' to the ckeditor toolbar!")
 
-        if not "'Link'" in toolbar and not "'Unlink'" in toolbar:
+        if "'Link'" not in toolbar and "'Unlink'" not in toolbar:
             # try to insert these buttons after 'SpecialChar' or 'Table'
             if "'SpecialChar'" in toolbar:
                 toolbar = toolbar.replace("'SpecialChar'", "'SpecialChar','Link','Unlink'")
@@ -1053,13 +1054,13 @@ class Migrate_To_4_0(Migrator):
 
             cfg.setItemAnnexConfidentialVisibleFor(
                 [k for k in cfg.listItemAnnexConfidentialVisibleFor().keys()
-                 if not k in mapped_annexConfidentialFor])
+                 if k not in mapped_annexConfidentialFor])
             cfg.setAdviceAnnexConfidentialVisibleFor(
                 [k for k in cfg.listAdviceAnnexConfidentialVisibleFor().keys()
-                 if not k in mapped_annexConfidentialFor])
+                 if k not in mapped_annexConfidentialFor])
             cfg.setMeetingAnnexConfidentialVisibleFor(
                 [k for k in cfg.listMeetingAnnexConfidentialVisibleFor().keys()
-                 if not k in mapped_annexConfidentialFor])
+                 if k not in mapped_annexConfidentialFor])
 
             if not hasattr(cfg, 'enableAnnexToPrint'):
                 # already migrated
