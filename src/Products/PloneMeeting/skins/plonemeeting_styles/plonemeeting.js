@@ -1,8 +1,8 @@
 // Dropdown for selecting an annex type
 var ploneMeetingSelectBoxes = new Object();
 function displayPloneMeetingSelectBox(selectName) {
-  var box = document.getElementById(ploneMeetingSelectBoxes[selectName]["box"]);
-  var button = document.getElementById(ploneMeetingSelectBoxes[selectName]["button"]);
+  var box = document.getElementById(ploneMeetingSelectBoxes[selectName].box);
+  var button = document.getElementById(ploneMeetingSelectBoxes[selectName].button);
   box_is_visible = $(box).is(':visible');
   $(box).fadeToggle('fast');
   if (!box_is_visible) {
@@ -17,11 +17,11 @@ function displayPloneMeetingSelectBox(selectName) {
 function hidePloneMeetingSelectBox(selectName, idImage, inner_tag, value, predefined_title) {
   var newImage = document.getElementById(idImage);
 
-  var btnImage = document.getElementById(ploneMeetingSelectBoxes[selectName]["image"])
-  var btnText = document.getElementById(ploneMeetingSelectBoxes[selectName]["buttonText"])
+  var btnImage = document.getElementById(ploneMeetingSelectBoxes[selectName].image);
+  var btnText = document.getElementById(ploneMeetingSelectBoxes[selectName].buttonText);
 
-  document.getElementById(ploneMeetingSelectBoxes[selectName]["button"]).style.borderStyle = "outset";
-  document.getElementById(ploneMeetingSelectBoxes[selectName]["box"]).style.display="none";
+  document.getElementById(ploneMeetingSelectBoxes[selectName].button).style.borderStyle = "outset";
+  document.getElementById(ploneMeetingSelectBoxes[selectName].box).style.display="none";
   btnText.innerHTML = inner_tag.innerHTML;
 }
 
@@ -47,12 +47,12 @@ function bringForward(elem) {
     var currentAnnexGroup = findParent(elem, "contentActionsAX");
     for (var i=0; i < annexGroups.length; i++) {
         if (annexGroups[i] == currentAnnexGroup){
-            removeClassName(annexGroups[i], 'onBottom')
-            addClassName(annexGroups[i], 'onTop')
+            removeClassName(annexGroups[i], 'onBottom');
+            addClassName(annexGroups[i], 'onTop');
         }
         else {
-            removeClassName(annexGroups[i], 'onTop')
-            addClassName(annexGroups[i], 'onBottom')
+            removeClassName(annexGroups[i], 'onTop');
+            addClassName(annexGroups[i], 'onBottom');
         }
     }
 }
@@ -77,10 +77,10 @@ function toggleMenuHandlerAX(event) {
     } else {
         // it's invisible - make it visible (and hide all others except if a container)
         if (!findParent(container, "actionMenuAX")) {
-            hideAllMenusAX()
+            hideAllMenusAX();
         }
         else {
-            hideAllMenusAX(findParent(container, "actionMenuAX"))
+            hideAllMenusAX(findParent(container, "actionMenuAX"));
         }
         bringForward(this);
         replaceClassName(container, 'deactivated', 'activated', true);
@@ -122,7 +122,7 @@ function actionMenuMouseOverAX(event) {
     // hide all menus
     var menus = $('dl.actionMenuAX');
     for (var i=0; i < menus.length; i++) {
-        var menu = menus[i]
+        var menu = menus[i];
         // check if the menu is visible
         if (hasClassName(menu, 'activated')) {
             switch_menu = true;
@@ -165,7 +165,7 @@ function initializeMenusAXStartingAt(node) {
 
 function initializeMenusAX() {
   initializeMenusAXStartingAt(document);
-};
+}
 
 registerPloneFunction(initializeMenusAX);
 
@@ -180,7 +180,7 @@ function toggleMenu(menuId){
    * because it thinks we are using a CSS class selector so use getElementById */
   menu = $(document.getElementById('pm_menu_' + menuId));
   menu.fadeToggle(100);
-  return
+  return;
 }
 
 var wrongTextInput = '#ff934a none';
@@ -216,7 +216,7 @@ function toggleMeetingDescriptions() {
   else {
       setDescriptionsVisiblity(true);
   }
-};
+}
 
 // Function that, depending on p_mustShow, shows or hides the descriptions.
 function setDescriptionsVisiblity(mustShow) {
@@ -240,7 +240,7 @@ function setDescriptionsVisiblity(mustShow) {
        });
     createCookie('pmShowDescriptions', 'false');
   }
-};
+}
 
 // Function that toggles the persons visibility
 function togglePersons() {
@@ -257,7 +257,7 @@ function togglePersons() {
     createCookie('showPersons', 'true');
     persons.style.display = 'table';
   }
-};
+}
 
 function toggleBooleanCookie(cookieId) {
   // What is the state of this boolean (expanded/collapsed) cookie?
@@ -284,7 +284,7 @@ function toggleBooleanCookie(cookieId) {
   img.src = imgSrc;
   // Inverse the cookie value
   createCookie(cookieId, newState);
-};
+}
 
 var dialogData = null; // Used to store data while popup is shown.
 // Functions for opening and closing a dialog window
@@ -340,7 +340,7 @@ function getAjaxChunk(pos) {
   // askAjaxChunk below) when an Ajax response is available.
   // First, find back the correct XMLHttpRequest object
   if ( (typeof(xhrObjects[pos]) != 'undefined') &&
-       (xhrObjects[pos].freed == 0)) {
+       (xhrObjects[pos].freed === 0)) {
     var hook = xhrObjects[pos].hook;
     if (xhrObjects[pos].xhr.readyState == 1) {
       // The request has been initialized: display the waiting radar
@@ -419,11 +419,11 @@ function askAjaxChunk(hook, mode, url, page, macro, params, beforeSend, onGet) {
       // Set the correct HTTP headers
       rq.xhr.setRequestHeader(
         "Content-Type", "application/x-www-form-urlencoded");
-      rq.xhr.onreadystatechange = function(){ getAjaxChunk(pos); }
+      rq.xhr.onreadystatechange = function(){ getAjaxChunk(pos); };
       rq.xhr.send(paramsFull);
     }
     else if (mode == 'GET') {
-      rq.xhr.onreadystatechange = function() { getAjaxChunk(pos); }
+      rq.xhr.onreadystatechange = function() { getAjaxChunk(pos); };
       if (window.XMLHttpRequest) { rq.xhr.send(null); }
       else if (window.ActiveXObject) { rq.xhr.send(); }
     }
@@ -433,7 +433,7 @@ function askAjaxChunk(hook, mode, url, page, macro, params, beforeSend, onGet) {
 // Triggers recording of item-people-related info like votes, questioners, answerers.
 function saveItemPeopleInfos(itemUrl, allVotesYes) {
   // If "allVotesYes" is true, all vote values must be set to "yes".
-  theForm = document.forms["itemPeopleForm"];
+  theForm = document.forms.itemPeopleForm;
   params = {'action': 'SaveItemPeopleInfos', 'allYes': allVotesYes};
   // Collect params to send via the AJAX request.
   for (var i=0; i<theForm.elements.length; i++) {
@@ -468,7 +468,7 @@ function confirmByebyeUser(itemUrl, userId, actionType, byeType){
                 'userId': userId, 'actionType': actionType, 'byeType':byeType};
   if (actionType == "delete") {
     if (confirm(are_you_sure)) {
-      delete dialogData['itemUrl'];
+      delete dialogData.itemUrl;
       askAjaxChunk('meeting_users_', 'POST', itemUrl, '@@pm-macros', 'itemPeople', dialogData);
     }
   }
@@ -477,13 +477,13 @@ function confirmByebyeUser(itemUrl, userId, actionType, byeType){
 
 // Note that a user lefts a meeting after some point.
 function byebyeUser(widget) {
-  itemUrl = dialogData['itemUrl'];
-  delete dialogData['itemUrl'];
+  itemUrl = dialogData.itemUrl;
+  delete dialogData.itemUrl;
   // Does the user leave after this item, or does he leave only while this item is discussed?
   leavesAfter = document.getElementById('leaves_after');
   if (leavesAfter.checked) byeType = 'leaves_after';
   else byeType = 'leaves_now';
-  dialogData['byeType'] = byeType
+  dialogData.byeType = byeType;
   askAjaxChunk('meeting_users_', 'POST', itemUrl, '@@pm-macros', 'itemPeople', dialogData);
   closeDialog('confirmByebyeUser');
 }
@@ -510,11 +510,11 @@ function toggleIcon(UID, img_tag, baseUrl, viewName, baseSelector) {
     var $img = $(img_tag).appendTo($span);
     // only redefine a onclick if not already defined in the HTML
     // this way, if a specific onclick is defined by the called view, we keep it
-    if ($img.attr('onclick') == null) {
+    if ($img.attr('onclick') === null) {
         $img.click(function() {
             asyncToggleIcon(UID, baseUrl, viewName, baseSelector);
         });
-    };
+    }
     // special management for the toggle budgetRelated where we need to display
     // or hide the budgetInfos field.  If budgetRelated, we show it, either we hide it...
     $hook_budgetInfos = $('#hook_budgetInfos');
@@ -529,9 +529,9 @@ function toggleIcon(UID, img_tag, baseUrl, viewName, baseSelector) {
             $hook_budgetInfos.fadeOut("fast", function() {
                    $(this).hide();
                });
-        };
-    };
-  };
+        }
+    }
+  }
 }
 
 // function that toggle an icon by calling the p_viewName view
@@ -591,7 +591,7 @@ function initRichTextField(rq, hook) {
       tool.addForms.apply(tool, $('form.enableUnloadProtection').get());
     }
     // enable UnlockHandler so element is correctly unlocked after edit
-    plone.UnlockHandler.init()
+    plone.UnlockHandler.init();
   }
 }
 function getRichTextContent(rq, params) {
@@ -614,7 +614,7 @@ function getRichTextContent(rq, params) {
   // Construct parameters and return them.
   var params = "&fieldName=" + encodeURIComponent(fieldName) +
                '&fieldContent=' + encodeURIComponent(theWidget.value);
-  return params
+  return params;
 }
 
 // Function that allows to present several items in a meeting
@@ -628,7 +628,7 @@ function presentSelectedItems(baseUrl) {
         var msg = window.eval('sure_to_present_selected_items');
         if (confirm(msg)) {
           // avoid Arrays to be passed as uids[]
-          params = $.param({'uids:list': uids}, traditional=true)
+          params = $.param({'uids:list': uids}, traditional=true);
           $.ajax({
             url: baseUrl + "/@@present-several-items",
             dataType: 'html',
@@ -665,7 +665,7 @@ function removeSelectedItems(baseUrl) {
         var msg = window.eval('sure_to_remove_selected_items');
         if (confirm(msg)) {
           // avoid Arrays to be passed as uids[]
-          params = $.param({uids: uids}, traditional=true)
+          params = $.param({uids: uids}, traditional=true);
           $.ajax({
             url: baseUrl + "/@@remove-several-items",
             dataType: 'html',
@@ -699,7 +699,7 @@ function decideSelectedItems(baseUrl,tag){
     }
     else {
           // avoid Arrays to be passed as uids[]
-          params = $.param({uids: uids, transition: tag.name}, traditional=true)
+          params = $.param({uids: uids, transition: tag.name}, traditional=true);
           $.ajax({
             url: baseUrl + "/@@decide-several-items",
             dataType: 'html',
@@ -802,6 +802,9 @@ function synchronizeMeetingFaceteds(infos) {
     }
 }
 
+// event subscriber when a element is delete in a dashboard, refresh numberOfItems if we are on a meeting
+$(document).on('ap_delete_givenuid', updateNumberOfItems);
+
 // update the number of items displayed on the meeting_view when items have been presented/removed of the meeting
 function updateNumberOfItems(infos) {
   // get numberOfItems using an ajax call
@@ -810,9 +813,11 @@ function updateNumberOfItems(infos) {
     dataType: 'html',
     cache: false,
     async: false});
-  parent.$('.meeting_number_of_items').each(function() {
-      this.innerHTML = response.responseText;
-    });
+  if (response.status == 200) {
+    parent.$('.meeting_number_of_items').each(function() {
+        this.innerHTML = response.responseText;
+      });
+  }
 }
 
 // when clicking on the input#forceInsertNormal, update the 'pmForceInsertNormal' cookie
@@ -829,7 +834,7 @@ function changeForceInsertNormalCookie(input) {
 // functionnality when displayed on the meetingitem_edit form
 $(document).ready(function () {
 
-budgetRelated = $('input#budgetRelated')
+budgetRelated = $('input#budgetRelated');
 if (budgetRelated.length) {
   budgetInfos = $('#archetypes-fieldname-budgetInfos');
   if (!budgetRelated[0].checked) {
@@ -844,7 +849,7 @@ if (budgetRelated.length) {
       budgetInfos.fadeOut("fast", function() {
       $(this).hide();
     });
-  };
+  }
   });
 
 }
@@ -862,7 +867,7 @@ $(document).ready(function () {
             tag[0].parentNode.innerHTML = data;
           }
           
-      })
+      });
   });
 });
 

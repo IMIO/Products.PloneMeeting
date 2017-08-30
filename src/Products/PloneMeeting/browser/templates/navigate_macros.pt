@@ -61,5 +61,5 @@
   <tal:comment replace="nothing">Go to meetingitem_view for a given item number</tal:comment>
   <span class="discreet" tal:condition="python: lastItemUid!=False">&nbsp;&nbsp;<span i18n:translate="">goto_item</span>&nbsp;&nbsp;<input type="text" size="2"/><img
       tal:attributes="src string: $portal_url/gotoItem.png;
-                      onClick python: 'gotoItem(this.previousSibling, %d, \'%s\')' % (meeting.numberOfItems(), meeting.UID())" style="cursor:pointer"/></span>
+                      onClick python: 'gotoItem(this.previousSibling, %d, \'%s\')' % (totalNbOfItems, meeting.UID())" style="cursor:pointer"/></span>
 </div>

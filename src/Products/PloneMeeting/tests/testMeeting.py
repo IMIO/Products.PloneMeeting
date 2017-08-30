@@ -1155,14 +1155,14 @@ class testMeeting(PloneMeetingTestCase):
         self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
         # by default, 7 normal items and none late
-        self.assertTrue(meeting.numberOfItems() == 7)
+        self.assertTrue(meeting.numberOfItems() == '7')
         # add a late item
         self.freezeMeeting(meeting)
         item = self.create('MeetingItem')
         item.setPreferredMeeting(meeting.UID())
         self.presentItem(item)
         # now 8 items
-        self.assertTrue(meeting.numberOfItems() == 8)
+        self.assertTrue(meeting.numberOfItems() == '8')
         self.assertTrue(len(meeting.getRawItems()) == 8)
 
     def test_pm_AvailableItems(self):
