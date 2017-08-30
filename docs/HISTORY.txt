@@ -22,6 +22,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   nevertheless not be a meeting into which item could be presented because it was frozen and item was not
   isLateFor(meeting).  The isLateFor check is now done in the MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject
   and not more in the mayPresent method
+- Install imio.helpers to get the helpers.js
+- Show actions panel viewlet in configuration only on the view, no more on others like folder_contents
 
 4.0 (2017-08-04)
 ----------------
