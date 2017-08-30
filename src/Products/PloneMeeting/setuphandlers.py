@@ -9,13 +9,7 @@
 # GNU General Public License (GPL)
 #
 
-__author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
-<g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""
-__docformat__ = 'plaintext'
-
-
 import logging
-logger = logging.getLogger('PloneMeeting: setuphandlers')
 from zope.component import queryUtility
 from zope.i18n import translate
 from Products.CMFPlacefulWorkflow.PlacefulWorkflowTool import WorkflowPolicyConfig_id
@@ -27,6 +21,12 @@ from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG
 from imio.helpers.catalog import addOrUpdateIndexes
 from imio.helpers.catalog import addOrUpdateColumns
+
+__author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
+<g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""
+__docformat__ = 'plaintext'
+
+logger = logging.getLogger('PloneMeeting: setuphandlers')
 
 folderViews = ('folder_contents', )
 # Indexes used by PloneMeeting
@@ -78,7 +78,6 @@ transformsToDisable = ['word_to_html', 'pdf_to_html', 'pdf_to_text']
 # Index "indexUsages" does not use Archetype-generated getter "getUsages"
 # because in this case, both fields MeetingUser.usages and MeetingItem.usages
 # would be indexed. We only want to index MeetingUser.usages.
-##/code-section HEAD
 
 
 def isNotPloneMeetingProfile(context):
@@ -288,7 +287,7 @@ def postInstall(context):
     # add a collective.messagesviewlet message that will be used to warn MeetingManagers
     # that there are no more holidays in the configuration in less that 2 months
     messages_config = site.get('messages-config', None)
-    if messages_config and not 'holidays_warning' in messages_config.objectIds():
+    if messages_config and 'holidays_warning' not in messages_config.objectIds():
         add_message(id='holidays_warning',
                     title=translate('Holidays warning (do not delete!)',
                                     domain='PloneMeeting',
@@ -320,7 +319,6 @@ def postInstall(context):
     _reorderCSS(site)
 
 
-##code-section FOOT
 def _configureCKeditor(site):
     '''Make sure CKeditor is the new default editor used by everyone...
        CKeditor custom styles are kept during migrations using the _before_reinstall/_after_reinstall hooks.'''
@@ -468,5 +466,3 @@ def reInstall(context):
     '''Reinstalls the product.'''
     profileId = u'profile-Products.PloneMeeting:default'
     context.runAllImportStepsFromProfile(profileId)
-
-##/code-section FOOT

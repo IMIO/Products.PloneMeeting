@@ -2026,7 +2026,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     def numberOfItems(self):
         '''How much items in this meeting ?'''
-        return len(self.getRawItems())
+        return str(len(self.getRawItems()))
 
     security.declarePrivate('manage_beforeDelete')
 

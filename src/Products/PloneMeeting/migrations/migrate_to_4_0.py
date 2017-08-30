@@ -1379,6 +1379,8 @@ class Migrate_To_4_0(Migrator):
             # reapply PloneMeeting types tool step
             self.runProfileSteps(product='Products.PloneMeeting', steps=['typeinfo'])
             self._adaptAnnexContentCategory()
+            # recook CSS and JS
+            self.cleanRegistries()
 
 
 # The migration function -------------------------------------------------------
