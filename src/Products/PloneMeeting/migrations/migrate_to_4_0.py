@@ -137,7 +137,7 @@ class Migrate_To_4_0(Migrator):
         portal_tabs = api.portal.get_tool('portal_actions').portal_tabs
 
         for cfg in self.tool.objectValues('MeetingConfig'):
-            cfgId = cfg.getID()
+            cfgId = cfg.getId()
             logger.info(
                 'Moving to imio.dashboard : adding DashboardCollections and disabling Topics...'.format(cfgId))
             # call _createSubFolder and createSearches so new searches are added to
