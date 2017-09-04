@@ -477,6 +477,7 @@ class Migrate_To_4_0(Migrator):
                     continue
                 if meetingFolder.getProperty('layout'):
                     meetingFolder.manage_delProperties(['layout'])
+        logger.info('Done.')
 
     def _adaptAppForCollectiveDocumentGenerator(self):
         """Move own PodTemplates to ConfigurablePODTemplates of collective.documentgenerator."""

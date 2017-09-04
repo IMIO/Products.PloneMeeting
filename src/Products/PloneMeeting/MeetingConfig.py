@@ -80,6 +80,7 @@ from Products.PloneMeeting.config import DEFAULT_ITEM_COLUMNS
 from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
 from Products.PloneMeeting.config import DEFAULT_MEETING_COLUMNS
 from Products.PloneMeeting.config import ITEM_ICON_COLORS
+from Products.PloneMeeting.config import ITEMTEMPLATESMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETING_CONFIG
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
@@ -4429,6 +4430,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             self.manage_addLocalRoles(groupId, ('MeetingManager',))
         self.manage_addLocalRoles(groupId, ('MeetingManager',))
 
+    security.declarePrivate('createItemTemplateManagersGroup')
+
+    def createItemTemplateManagersGroup(self):
+        '''Creates a Plone group that will be used to store users able to manage item templates.'''
+        groupId, wasCreated = self._createSuffixedGroup(suffix=ITEMTEMPLATESMANAGERS_GROUP_SUFFIX)
+        if wasCreated:
+            # give 'Manager' local role to group in the itemtemplates folder
+            self.itemtemplates.manage_addLocalRoles(groupId, ('Manager', ))
+
     security.declarePrivate('at_post_create_script')
 
     def at_post_create_script(self):
@@ -4458,6 +4468,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         self.createBudgetImpactEditorsGroup()
         # Create the corresponding group that will contain MeetingManagers
         self.createMeetingManagersGroup()
+        # Create the corresponding group that will contain item templates Managers
+        self.createItemTemplateManagersGroup()
         self.adapted().onEdit(isCreated=True)  # Call sub-product code if any
 
     security.declarePrivate('at_post_edit_script')

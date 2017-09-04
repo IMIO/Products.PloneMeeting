@@ -36,34 +36,6 @@ __docformat__ = 'plaintext'
 
 PROJECTNAME = "PloneMeeting"
 
-# Permissions
-DEFAULT_ADD_CONTENT_PERMISSION = "Add portal content"
-setDefaultRoles(DEFAULT_ADD_CONTENT_PERMISSION, ('Manager', 'Owner', 'Contributor'))
-ADD_CONTENT_PERMISSIONS = {
-    'MeetingItem': 'PloneMeeting: Add MeetingItem',
-    'Meeting': 'PloneMeeting: Add Meeting',
-    'MeetingCategory': 'PloneMeeting: Manage configuration',
-    'MeetingConfig': 'PloneMeeting: Manage configuration',
-    'MeetingGroup': 'PloneMeeting: Manage configuration',
-    'PodTemplate': 'PloneMeeting: Manage configuration',
-    'MeetingUser': 'PloneMeeting: Add MeetingUser',
-}
-
-setDefaultRoles('PloneMeeting: Add MeetingItem', ('Manager', ))
-setDefaultRoles('PloneMeeting: Add Meeting', ('Manager', ))
-setDefaultRoles('PloneMeeting: Manage configuration', ('Manager', ))
-setDefaultRoles('PloneMeeting: Add MeetingUser', ('Manager', ))
-
-product_globals = globals()
-
-# Dependencies of Products to be installed by quick-installer
-# override in custom configuration
-DEPENDENCIES = []
-
-# Dependend products - not quick-installed - used in testcase
-# override in custom configuration
-PRODUCT_DEPENDENCIES = []
-
 # Define PloneMeeting-specific permissions
 ReadDecision = 'PloneMeeting: Read decision'
 WriteDecision = 'PloneMeeting: Write decision'
@@ -77,11 +49,42 @@ WriteRiskyConfig = 'PloneMeeting: Write risky config'
 AddAdvice = 'PloneMeeting: Add advice'
 AddAnnex = 'PloneMeeting: Add annex'
 AddAnnexDecision = 'PloneMeeting: Add annexDecision'
+AddItem = 'PloneMeeting: Add MeetingItem'
+AddMeeting = 'PloneMeeting: Add Meeting'
 setDefaultRoles(ReadDecision, ('Manager',))
 setDefaultRoles(WriteDecision, ('Manager',))
 setDefaultRoles(AddAnnex, ('Manager',))
 setDefaultRoles(AddAnnexDecision, ('Manager',))
 setDefaultRoles(WriteMarginalNotes, ('Manager',))
+
+# Permissions
+DEFAULT_ADD_CONTENT_PERMISSION = "Add portal content"
+setDefaultRoles(DEFAULT_ADD_CONTENT_PERMISSION, ('Manager', 'Owner', 'Contributor'))
+
+ADD_CONTENT_PERMISSIONS = {
+    'MeetingItem': AddItem,
+    'Meeting': AddMeeting,
+    'MeetingCategory': 'PloneMeeting: Manage configuration',
+    'MeetingConfig': 'PloneMeeting: Manage configuration',
+    'MeetingGroup': 'PloneMeeting: Manage configuration',
+    'PodTemplate': 'PloneMeeting: Manage configuration',
+    'MeetingUser': 'PloneMeeting: Add MeetingUser',
+}
+
+setDefaultRoles(AddItem, ('Manager', 'Editor', ))
+setDefaultRoles(AddMeeting, ('Manager', ))
+setDefaultRoles('PloneMeeting: Manage configuration', ('Manager', ))
+setDefaultRoles('PloneMeeting: Add MeetingUser', ('Manager', ))
+
+product_globals = globals()
+
+# Dependencies of Products to be installed by quick-installer
+# override in custom configuration
+DEPENDENCIES = []
+
+# Dependend products - not quick-installed - used in testcase
+# override in custom configuration
+PRODUCT_DEPENDENCIES = []
 
 # list of add content permissions for content added to Meeting base contents
 ADD_SUBCONTENT_PERMISSIONS = [
@@ -133,6 +136,8 @@ BUDGETIMPACTEDITORS_GROUP_SUFFIX = 'budgetimpacteditors'
 # in localroles of every meetingConfig user folders (mymeetings/meetingconfigfolder)
 # and on the corresponding MeetingConfig so these users are MeetingManager on the MeetingConfig too
 MEETINGMANAGERS_GROUP_SUFFIX = 'meetingmanagers'
+# This is the group created for each MeetingConfig where we store users able to manage item templates.
+ITEMTEMPLATESMANAGERS_GROUP_SUFFIX = 'itemtemplatesmanagers'
 
 # This is a mapping between usecases around the role Reader, so users that can see
 # By default, the same role is used for different usecases, so it will give the same view permission by the wf

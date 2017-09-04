@@ -24,6 +24,8 @@ import os
 import os.path
 import urlparse
 import socket
+from AccessControl import ClassSecurityInfo
+from App.class_init import InitializeClass
 from appy.shared.diff import HtmlDiff
 from datetime import timedelta
 from email.MIMEMultipart import MIMEMultipart
@@ -44,7 +46,6 @@ from plone.autoform.interfaces import WRITE_PERMISSIONS_KEY
 from plone.dexterity.interfaces import IDexterityContent
 from plone import api
 from collective.iconifiedcategory.interfaces import IIconifiedInfos
-from collective.iconifiedcategory import utils as collective_iconifiedcategory_utils
 from imio.helpers.xhtml import addClassToLastChildren
 from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
 from imio.helpers.xhtml import markEmptyTags
@@ -678,8 +679,6 @@ def getDateFromDelta(aDate, delta):
     return DateTime('%s %s' % ((aDate + int(days)).strftime('%Y/%m/%d'), hour))
 
 # ------------------------------------------------------------------------------
-from AccessControl import ClassSecurityInfo
-from App.class_init import InitializeClass
 
 
 class FakeMeetingUser:
@@ -1026,7 +1025,7 @@ def getHistory(obj, startNumber=0, batchSize=500, checkMayView=True, history_typ
         # We take a copy, because we will modify it.
         event = history[i].copy()
         if event['action'] == '_datachange_':
-            if not 'datachange' in history_types:
+            if 'datachange' not in history_types:
                 continue
             event['changes'] = {}
             event['type'] = 'changes'
@@ -1063,7 +1062,7 @@ def getHistory(obj, startNumber=0, batchSize=500, checkMayView=True, history_typ
                 else:
                     event['changes'][name] = oldValue
         else:
-            if not 'workflow' in history_types:
+            if 'workflow' not in history_types:
                 continue
             event['type'] = 'workflow'
             if checkMayView:
@@ -1518,7 +1517,7 @@ def getTransitionToReachState(obj, state):
     res = ''
     availableTransitions = [t['id'] for t in wfTool.getTransitionsFor(obj)]
     for transition in wf.transitions.values():
-        if not transition.id in availableTransitions:
+        if transition.id not in availableTransitions:
             continue
         if transition.new_state_id == state:
             res = transition.id

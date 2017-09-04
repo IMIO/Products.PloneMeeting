@@ -24,6 +24,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   and not more in the mayPresent method
 - Install imio.helpers to get the helpers.js
 - Show actions panel viewlet in configuration only on the view, no more on others like folder_contents
+- Added a group 'itemtemplatesmanagers' by MeetingConfig.  Users in that group will get 'Manager' role on the
+  folder containing item templates of the MeetingConfig (itemtemplates) and will be able to manage it
 
 4.0 (2017-08-04)
 ----------------

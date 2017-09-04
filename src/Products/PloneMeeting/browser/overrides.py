@@ -716,9 +716,9 @@ class ConfigActionsPanelView(ActionsPanelView):
         if folderId == 'meetingusers':
             return "../?pageName=users#meetingusers"
         if self.context.meta_type == "MeetingConfig":
-            return "#meetingconfigs"
+            return "#MeetingConfig"
         if self.context.meta_type == "MeetingGroup":
-            return "#meetinggroups"
+            return "#MeetingGroup"
         # most are used on the 'data' fieldset, use this as default
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
