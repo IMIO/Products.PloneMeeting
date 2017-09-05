@@ -1111,15 +1111,16 @@ class testMeetingConfig(PloneMeetingTestCase):
         """When the MeetingConfig is deleted, created groups are removed too :
            - meetingmanagers group;
            - powerobservers groups;
-           - budgetimpacteditors group.
+           - budgetimpacteditors group;
+           - itemtemplatesmanagers group.
            """
         self.changeUser('siteadmin')
         newCfg = self.create('MeetingConfig')
         newCfgId = newCfg.getId()
-        # this created 4 groups
+        # this created 5 groups
         created_groups = [groupId for groupId in self.portal.portal_groups.listGroupIds()
                           if groupId.startswith(newCfgId)]
-        self.assertEquals(len(created_groups), 4)
+        self.assertEquals(len(created_groups), 5)
         # remove the MeetingConfig, groups are removed as well
         self.tool.restrictedTraverse('@@delete_givenuid')(newCfg.UID())
         self.assertFalse(newCfgId in self.tool.objectIds())

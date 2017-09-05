@@ -5168,7 +5168,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             for suffix in (MEETINGMANAGERS_GROUP_SUFFIX,
                            POWEROBSERVERS_GROUP_SUFFIX,
                            RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX,
-                           BUDGETIMPACTEDITORS_GROUP_SUFFIX):
+                           BUDGETIMPACTEDITORS_GROUP_SUFFIX,
+                           ITEMTEMPLATESMANAGERS_GROUP_SUFFIX):
                 portal_groups.removeGroup("%s_%s" % (self.getId(), suffix))
         BaseFolder.manage_beforeDelete(self, item, container)
 
