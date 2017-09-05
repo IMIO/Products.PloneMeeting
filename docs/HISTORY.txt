@@ -9,7 +9,6 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 
 4.1 (unreleased)
 ----------------
-
 - Added possibility to filter dashboard items that have specifically "no" preferred meeting
   and "no" linked meeting
 - Added functionnaliy to store a generated template directly as an annex of the current context.
@@ -26,6 +25,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Show actions panel viewlet in configuration only on the view, no more on others like folder_contents
 - Added a group 'itemtemplatesmanagers' by MeetingConfig.  Users in that group will get 'Manager' role on the
   folder containing item templates of the MeetingConfig (itemtemplates) and will be able to manage it
+- Removed the event logging (element added, edited, deleted, ...), we now rely on collective.fingerpointing that
+  is included in imio.actionspanel >= 1.30
 
 4.0 (2017-08-04)
 ----------------

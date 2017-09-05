@@ -47,7 +47,6 @@ from plone.app.querystring.querybuilder import queryparser
 from plone.memoize import ram
 from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.cache import invalidate_cachekey_volatile_for
-from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import ReviewPortalContent
 from Products.CMFCore.permissions import View
@@ -1816,8 +1815,6 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=True)
         self.reindexObject()
-        userId = api.user.get_current().getId()
-        logger.info('Meeting at %s created by "%s".' % (self.absolute_url_path(), userId))
 
     security.declarePrivate('at_post_edit_script')
 
@@ -1837,13 +1834,9 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         self.updateItemReferences(check_needed=True)
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=False)
-        # notify modified
-        notify(ObjectEditedEvent(self))
         self.reindexObject()
         # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
-        userId = api.user.get_current().getId()
-        logger.info('Meeting at %s edited by "%s".' % (self.absolute_url_path(), userId))
 
     def updateLocalRoles(self, **kwargs):
         """Update various local roles."""

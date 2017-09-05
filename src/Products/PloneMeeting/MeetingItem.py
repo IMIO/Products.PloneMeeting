@@ -51,14 +51,14 @@ from Products.Archetypes.atapi import StringField
 from Products.Archetypes.atapi import StringWidget
 from Products.Archetypes.atapi import TextAreaWidget
 from Products.Archetypes.atapi import TextField
-from Products.Archetypes.event import ObjectEditedEvent
-from Products.CMFCore.Expression import Expression, createExprContext
-from Products.CMFCore.WorkflowCore import WorkflowException
+from Products.CMFCore.Expression import createExprContext
+from Products.CMFCore.Expression import Expression
 from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import ReviewPortalContent
 from Products.CMFCore.permissions import View
 from Products.CMFCore.utils import _checkPermission
+from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from Products.CMFPlone.utils import safe_unicode
 from collective.behavior.talcondition.utils import _evaluateExpression
@@ -4895,7 +4895,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=True)
         self.reindexObject()
-        logger.info('Item at %s created by "%s".' % (self.absolute_url_path(), userId))
 
     security.declarePrivate('at_post_edit_script')
 
@@ -4910,12 +4909,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         forceHTMLContentTypeForEmptyRichFields(self)
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=False)
-        # notify modified
-        notify(ObjectEditedEvent(self))
         self.reindexObject()
-        userId = api.user.get_current().getId()
-        logger.info('Item at %s edited by "%s".' %
-                    (self.absolute_url_path(), userId))
 
     security.declarePublic('updateHistory')
 

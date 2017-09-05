@@ -234,8 +234,7 @@ def onGroupWillBeRemoved(group, event):
                 raise BeforeDeleteException(translate("can_not_delete_meetinggroup_meetingconfig",
                                                       domain="plone",
                                                       context=group.REQUEST))
-    # Then check that every linked Plone group is empty because we are
-    # going to delete them.
+    # Then check that every linked Plone group is empty because we are going to delete them.
     portal = api.portal.get()
     for suffix in MEETING_GROUP_SUFFIXES:
         ploneGroupId = group.getPloneGroupId(suffix)
@@ -275,8 +274,7 @@ def onGroupWillBeRemoved(group, event):
            (obj.getGroupInCharge() == groupId) or \
            (groupId in obj.adviceIndex) or \
            set(obj.getCopyGroups()).intersection(suffixedGroups):
-            # The meetingGroup is linked to an existing item, we can not
-            # delete it.
+            # The meetingGroup is linked to an existing item, we can not delete it.
             raise BeforeDeleteException(
                 translate("can_not_delete_meetinggroup_meetingitem",
                           domain="plone",
@@ -439,11 +437,6 @@ def onAdviceAdded(advice, event):
     # Send mail if relevant
     item.sendMailIfRelevant('adviceEdited', 'Owner', isRole=True)
 
-    # log
-    userId = api.user.get_current().getId()
-    logger.info('Advice at %s created by "%s".' %
-                (advice.absolute_url_path(), userId))
-
 
 def onAdviceModified(advice, event):
     '''Called when a meetingadvice is modified so we can warn parent item.'''
@@ -466,11 +459,6 @@ def onAdviceModified(advice, event):
     # reindexObject in case for example we have custom indexes
     # depending on the advice value
     item.reindexObject()
-
-    # log
-    userId = api.user.get_current().getId()
-    logger.info('Advice at %s edited by "%s".' %
-                (advice.absolute_url_path(), userId))
 
 
 def onAdviceEditFinished(advice, event):
@@ -555,11 +543,6 @@ def onAnnexAdded(annex, event):
         parent.setModificationDate(DateTime())
         # just reindex the entire object
         parent.reindexObject()
-
-    # log
-    userId = api.user.get_current().getId()
-    logger.info('Annex at %s created by "%s".' %
-                (annex.absolute_url_path(), userId))
 
 
 def onAnnexEditFinished(annex, event):
