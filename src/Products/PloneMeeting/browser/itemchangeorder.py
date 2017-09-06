@@ -102,8 +102,8 @@ class ChangeItemOrderView(BrowserView):
                (not moving_last_item and moveNumber > _to_integer(last_item.getItemNumber()) + 99) or \
                (not moveNumberIsInteger and len(wishedNumber.split('.')[1]) > 2) or \
                (not moveNumberIsInteger and
-                (not meeting.getItemByNumber(moveNumber - 1)
-                 or moveNumber - 1 == oldIndex)):
+                (not meeting.getItemByNumber(moveNumber - 1) or
+                 moveNumber - 1 == oldIndex)):
                 self.context.plone_utils.addPortalMessage(
                     translate(msgid='item_illegal_move',
                               domain='PloneMeeting',
