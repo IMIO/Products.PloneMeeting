@@ -11,7 +11,6 @@
 
 import logging
 from zope.interface import implements
-from zope.lifecycleevent import ObjectModifiedEvent
 from appy.gen import No
 from collections import OrderedDict
 from copy import deepcopy
@@ -52,6 +51,7 @@ from Products.Archetypes.atapi import StringField
 from Products.Archetypes.atapi import StringWidget
 from Products.Archetypes.atapi import TextAreaWidget
 from Products.Archetypes.atapi import TextField
+from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.Expression import createExprContext
 from Products.CMFCore.Expression import Expression
 from Products.CMFCore.permissions import DeleteObjects
@@ -4905,9 +4905,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            as it is already done in processForm.
            This is called when we change something on an item and we do not
            use processForm."""
-        notify(ObjectModifiedEvent(self))
-        self.at_post_edit_script()
+        # WARNING, we do things the same order processForm do it
+        # reindexObject is done in _processForm, then notify and
+        # call to at_post_edit_script are done
         self.reindexObject()
+        notify(ObjectEditedEvent(self))
+        self.at_post_edit_script()
 
     security.declarePrivate('at_post_edit_script')
 

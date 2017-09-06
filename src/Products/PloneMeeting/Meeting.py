@@ -12,7 +12,6 @@
 from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
 from zope.interface import implements
-from zope.lifecycleevent import ObjectModifiedEvent
 import interfaces
 
 from Products.Archetypes.atapi import BooleanField
@@ -30,6 +29,7 @@ from Products.Archetypes.atapi import Schema
 from Products.Archetypes.atapi import StringField
 from Products.Archetypes.atapi import TextAreaWidget
 from Products.Archetypes.atapi import TextField
+from Products.Archetypes.event import ObjectEditedEvent
 
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 
@@ -1530,7 +1530,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         """Update itemReference of every contained items, if p_startNumber is given,
            we update items starting from p_startNumber itemNumber.
            By default, if p_startNumber=0, every linked items will be updated.
-           If p_check_needed is True, we check if value '' in REQUEST is True."""
+           If p_check_needed is True, we check if value 'need_Meeting_updateItemReferences' in REQUEST is True."""
         # call to updateItemReferences may be deferred for optimization
         if self.REQUEST.get('defer_Meeting_updateItemReferences', False):
             return
@@ -1825,9 +1825,12 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
            as it is already done in processForm.
            This is called when we change something on a meeting and we do not
            use processForm."""
-        notify(ObjectModifiedEvent(self))
-        self.at_post_edit_script()
+        # WARNING, we do things the same order processForm do it
+        # reindexObject is done in _processForm, then notify and
+        # call to at_post_edit_script are done
         self.reindexObject()
+        notify(ObjectEditedEvent(self))
+        self.at_post_edit_script()
 
     security.declarePrivate('at_post_edit_script')
 
