@@ -82,7 +82,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         """WFAdpatations are applied when the MeetingConfig is edited."""
         cfg = self.meetingConfig
         # ease override by subproducts
-        if not 'return_to_proposing_group' in cfg.listWorkflowAdaptations():
+        if 'return_to_proposing_group' not in cfg.listWorkflowAdaptations():
             return
         self.changeUser('siteadmin')
         self.assertFalse('return_to_proposing_group' in cfg.getWorkflowAdaptations())
@@ -99,7 +99,7 @@ class testWFAdaptations(PloneMeetingTestCase):
            will not integrate it anymore.  Try with 'return_to_proposing_group'."""
         cfg = self.meetingConfig
         # ease override by subproducts
-        if not 'return_to_proposing_group' in cfg.listWorkflowAdaptations():
+        if 'return_to_proposing_group' not in cfg.listWorkflowAdaptations():
             return
         self.changeUser('siteadmin')
         self.assertFalse('return_to_proposing_group' in cfg.getWorkflowAdaptations())
@@ -121,7 +121,7 @@ class testWFAdaptations(PloneMeetingTestCase):
            MeetingConfig is saved."""
         cfg = self.meetingConfig
         # ease override by subproducts
-        if not 'return_to_proposing_group' in cfg.listWorkflowAdaptations():
+        if 'return_to_proposing_group' not in cfg.listWorkflowAdaptations():
             return
         self.changeUser('pmManager')
         # activate
@@ -228,7 +228,7 @@ class testWFAdaptations(PloneMeetingTestCase):
            of wfAdaptations 'no_publication' that is not possible if some meeting
            or items are 'published'."""
         # ease override by subproducts
-        if not 'no_publication' in self.meetingConfig.listWorkflowAdaptations():
+        if 'no_publication' not in self.meetingConfig.listWorkflowAdaptations():
             return
 
         no_publication_added_error = translate('wa_added_no_publication_error',
@@ -275,7 +275,7 @@ class testWFAdaptations(PloneMeetingTestCase):
            of wfAdaptations 'no_proposal' that is not possible if some items are 'proposed'."""
         # ease override by subproducts
         cfg = self.meetingConfig
-        if not 'no_proposal' in cfg.listWorkflowAdaptations():
+        if 'no_proposal' not in cfg.listWorkflowAdaptations():
             return
 
         no_proposal_added_error = translate('wa_added_no_proposal_error',
@@ -302,7 +302,7 @@ class testWFAdaptations(PloneMeetingTestCase):
            will raise a conflict, we do not test it here."""
         # ease override by subproducts
         cfg = self.meetingConfig
-        if not 'items_come_validated' in cfg.listWorkflowAdaptations():
+        if 'items_come_validated' not in cfg.listWorkflowAdaptations():
             return
 
         items_come_validated_added_error = translate('wa_added_items_come_validated_error',
@@ -330,7 +330,7 @@ class testWFAdaptations(PloneMeetingTestCase):
            of wfAdaptations 'archiving' that is not possible."""
         # ease override by subproducts
         cfg = self.meetingConfig
-        if not 'archiving' in cfg.listWorkflowAdaptations():
+        if 'archiving' not in cfg.listWorkflowAdaptations():
             return
 
         archiving_removed_error = translate('wa_removed_archiving_error',
@@ -348,7 +348,7 @@ class testWFAdaptations(PloneMeetingTestCase):
            of wfAdaptations 'pre_validation' that is not possible if some items are 'pre_validated'."""
         # ease override by subproducts
         cfg = self.meetingConfig
-        if not 'pre_validation' in cfg.listWorkflowAdaptations():
+        if 'pre_validation' not in cfg.listWorkflowAdaptations():
             return
 
         pre_validation_removed_error = translate('wa_removed_pre_validation_error',
@@ -382,7 +382,7 @@ class testWFAdaptations(PloneMeetingTestCase):
            some items are 'postponed_next_meeting'."""
         # ease override by subproducts
         cfg = self.meetingConfig
-        if not 'postpone_next_meeting' in cfg.listWorkflowAdaptations():
+        if 'postpone_next_meeting' not in cfg.listWorkflowAdaptations():
             return
 
         postpone_removed_error = translate('wa_removed_postpone_next_meeting_error',
@@ -414,7 +414,7 @@ class testWFAdaptations(PloneMeetingTestCase):
            some items are 'marked_not_applicable'."""
         # ease override by subproducts
         cfg = self.meetingConfig
-        if not 'mark_not_applicable' in cfg.listWorkflowAdaptations():
+        if 'mark_not_applicable' not in cfg.listWorkflowAdaptations():
             return
 
         mark_not_applicable_removed_error = translate('wa_removed_mark_not_applicable_error',
@@ -446,7 +446,7 @@ class testWFAdaptations(PloneMeetingTestCase):
            some items are 'removed'."""
         # ease override by subproducts
         cfg = self.meetingConfig
-        if not 'removed' in cfg.listWorkflowAdaptations():
+        if 'removed' not in cfg.listWorkflowAdaptations():
             return
 
         removed_removed_error = translate('wa_removed_removed_error',
@@ -484,7 +484,7 @@ class testWFAdaptations(PloneMeetingTestCase):
            'waiting_advices'."""
         # ease override by subproducts
         cfg = self.meetingConfig
-        if not 'waiting_advices' in cfg.listWorkflowAdaptations():
+        if 'waiting_advices' not in cfg.listWorkflowAdaptations():
             return
 
         waiting_advices_proposed_state = '{0}_waiting_advices'.format(self.WF_STATE_NAME_MAPPINGS['proposed'])
@@ -522,7 +522,7 @@ class testWFAdaptations(PloneMeetingTestCase):
            some items are 'returned_to_proposing_group'."""
         # ease override by subproducts
         cfg = self.meetingConfig
-        if not 'return_to_proposing_group' in cfg.listWorkflowAdaptations():
+        if 'return_to_proposing_group' not in cfg.listWorkflowAdaptations():
             return
 
         return_to_proposing_group_removed_error = translate('wa_removed_return_to_proposing_group_error',
@@ -557,7 +557,7 @@ class testWFAdaptations(PloneMeetingTestCase):
            some items are 'returned_to_proposing_group xxx'."""
         # ease override by subproducts
         cfg = self.meetingConfig
-        if not 'return_to_proposing_group_with_last_validation' in cfg.listWorkflowAdaptations():
+        if 'return_to_proposing_group_with_last_validation' not in cfg.listWorkflowAdaptations():
             return
 
         return_to_proposing_group_removed_error = translate(
@@ -600,7 +600,7 @@ class testWFAdaptations(PloneMeetingTestCase):
            some items are 'returned_to_proposing_group xxx'."""
         # ease override by subproducts
         cfg = self.meetingConfig
-        if not 'return_to_proposing_group_with_all_validations' in cfg.listWorkflowAdaptations():
+        if 'return_to_proposing_group_with_all_validations' not in cfg.listWorkflowAdaptations():
             return
 
         return_to_proposing_group_removed_error = translate(
@@ -646,7 +646,7 @@ class testWFAdaptations(PloneMeetingTestCase):
            some meetings are 'decisions_published'."""
         # ease override by subproducts
         cfg = self.meetingConfig
-        if not 'hide_decisions_when_under_writing' in cfg.listWorkflowAdaptations():
+        if 'hide_decisions_when_under_writing' not in cfg.listWorkflowAdaptations():
             return
 
         hide_decisions_when_under_writing_removed_error = \
@@ -674,7 +674,7 @@ class testWFAdaptations(PloneMeetingTestCase):
            This test check the removal of the 'published' state in the meeting/item WF.'''
         # ease override by subproducts
         cfg = self.meetingConfig
-        if not 'no_publication' in cfg.listWorkflowAdaptations():
+        if 'no_publication' not in cfg.listWorkflowAdaptations():
             return
         self.changeUser('pmManager')
         # check while the wfAdaptation is not activated
@@ -710,7 +710,7 @@ class testWFAdaptations(PloneMeetingTestCase):
            Check the removal of state 'proposed' in the item WF.'''
         # ease override by subproducts
         cfg = self.meetingConfig
-        if not 'no_proposal' in self.meetingConfig.listWorkflowAdaptations():
+        if 'no_proposal' not in self.meetingConfig.listWorkflowAdaptations():
             return
         self.changeUser('pmManager')
         # check while the wfAdaptation is not activated
@@ -740,7 +740,7 @@ class testWFAdaptations(PloneMeetingTestCase):
            Check the addition of a 'prevalidated' state in the item WF.'''
         # ease override by subproducts
         cfg = self.meetingConfig
-        if not 'pre_validation' in cfg.listWorkflowAdaptations():
+        if 'pre_validation' not in cfg.listWorkflowAdaptations():
             return
         self.changeUser('pmManager')
         # check while the wfAdaptation is not activated
@@ -780,7 +780,7 @@ class testWFAdaptations(PloneMeetingTestCase):
            to the prereviewer.'''
         # ease override by subproducts
         cfg = self.meetingConfig
-        if not 'pre_validation_keep_reviewer_permissions' in cfg.listWorkflowAdaptations():
+        if 'pre_validation_keep_reviewer_permissions' not in cfg.listWorkflowAdaptations():
             return
         self.changeUser('pmManager')
         # check while the wfAdaptation is not activated
@@ -812,7 +812,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertTrue('developers_prereviewers' in self.member.getGroups())
         self.changeUser('pmReviewerLevel2')
         self.failUnless('prevalidate' in self.transitions(i1))
-        self.assertTrue(not 'developers_prereviewers' in self.member.getGroups())
+        self.assertTrue('developers_prereviewers' not in self.member.getGroups())
         self.do(i1, 'prevalidate')
         self.do(i1, 'validate')
 
@@ -821,7 +821,7 @@ class testWFAdaptations(PloneMeetingTestCase):
            Check that the creator can edit the decision field while activated.'''
         # ease override by subproducts
         cfg = self.meetingConfig
-        if not 'creator_initiated_decisions' in cfg.listWorkflowAdaptations():
+        if 'creator_initiated_decisions' not in cfg.listWorkflowAdaptations():
             return
         self.changeUser('pmManager')
         # check while the wfAdaptation is not activated
@@ -847,7 +847,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         '''Test the workflowAdaptation 'items_come_validated'.'''
         # ease override by subproducts
         cfg = self.meetingConfig
-        if not 'items_come_validated' in cfg.listWorkflowAdaptations():
+        if 'items_come_validated' not in cfg.listWorkflowAdaptations():
             return
         self.changeUser('pmManager')
         # check while the wfAdaptation is not activated
@@ -875,7 +875,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         '''Test the workflowAdaptation 'archiving'.'''
         # ease override by subproducts
         cfg = self.meetingConfig
-        if not 'archiving' in cfg.listWorkflowAdaptations():
+        if 'archiving' not in cfg.listWorkflowAdaptations():
             return
         # check while the wfAdaptation is not activated
         self._archiving_inactive()
@@ -906,7 +906,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         '''Test the workflowAdaptation 'archiving'.'''
         # ease override by subproducts
         cfg = self.meetingConfig
-        if not 'only_creator_may_delete' in cfg.listWorkflowAdaptations():
+        if 'only_creator_may_delete' not in cfg.listWorkflowAdaptations():
             return
         # check while the wfAdaptation is not activated
         self._only_creator_may_delete_inactive()
@@ -954,14 +954,15 @@ class testWFAdaptations(PloneMeetingTestCase):
 
     def test_pm_WFA_no_global_observation(self):
         '''Test the workflowAdaptation 'no_global_observation'.'''
+        cfg = self.meetingConfig
         # ease override by subproducts
-        if not 'no_global_observation' in self.meetingConfig.listWorkflowAdaptations():
+        if 'no_global_observation' not in cfg.listWorkflowAdaptations():
             return
         # check while the wfAdaptation is not activated
         self._no_global_observation_inactive()
         # activate the wfAdaptation and check
-        self.meetingConfig.setWorkflowAdaptations('no_global_observation')
-        performWorkflowAdaptations(self.meetingConfig, logger=pm_logger)
+        cfg.setWorkflowAdaptations('no_global_observation')
+        performWorkflowAdaptations(cfg, logger=pm_logger)
         self._no_global_observation_active()
 
     def _no_global_observation_inactive(self):
@@ -1038,7 +1039,7 @@ class testWFAdaptations(PloneMeetingTestCase):
             # no matter the element is published or not
             self.changeUser('pmCreator2')
             self.failIf(self.hasPermission(View, i1))
-        #check that the meeting have been published
+        # check that the meeting have been published
         self.failUnless(isPublished)
         # check every decided states of the item
         # set the meeting back to decided
@@ -1062,15 +1063,16 @@ class testWFAdaptations(PloneMeetingTestCase):
 
     def test_pm_WFA_everyone_reads_all(self):
         '''Test the workflowAdaptation 'everyone_reads_all'.'''
+        cfg = self.meetingConfig
         # ease override by subproducts
-        if not 'everyone_reads_all' in self.meetingConfig.listWorkflowAdaptations():
+        if 'everyone_reads_all' not in cfg.listWorkflowAdaptations():
             return
         self.changeUser('pmManager')
         # check while the wfAdaptation is not activated
         self._everyone_reads_all_inactive()
         # activate the wfAdaptation and check
-        self.meetingConfig.setWorkflowAdaptations('everyone_reads_all')
-        performWorkflowAdaptations(self.meetingConfig, logger=pm_logger)
+        cfg.setWorkflowAdaptations('everyone_reads_all')
+        performWorkflowAdaptations(cfg, logger=pm_logger)
         self._everyone_reads_all_active()
 
     def _everyone_reads_all_inactive(self):
@@ -1111,7 +1113,7 @@ class testWFAdaptations(PloneMeetingTestCase):
             else:
                 self.changeUser('pmCreator2')
                 self.failIf(self.hasPermission(View, i1))
-        #check that the meeting have been published
+        # check that the meeting have been published
         self.failUnless(isPublished)
 
     def _everyone_reads_all_active(self):
@@ -1152,20 +1154,21 @@ class testWFAdaptations(PloneMeetingTestCase):
                 isPublished = True
             self.changeUser('pmCreator2')
             self.failUnless(self.hasPermission(View, i1))
-        #check that the meeting have been published
+        # check that the meeting have been published
         self.failUnless(isPublished)
 
     def test_pm_WFA_creator_edits_unless_closed(self):
         '''Test the workflowAdaptation 'creator_edits_unless_closed'.'''
+        cfg = self.meetingConfig
         # ease override by subproducts
-        if not 'creator_edits_unless_closed' in self.meetingConfig.listWorkflowAdaptations():
+        if 'creator_edits_unless_closed' not in cfg.listWorkflowAdaptations():
             return
         self.changeUser('pmManager')
         # check while the wfAdaptation is not activated
         self._creator_edits_unless_closed_inactive()
         # activate the wfAdaptation and check
-        self.meetingConfig.setWorkflowAdaptations('creator_edits_unless_closed')
-        performWorkflowAdaptations(self.meetingConfig, logger=pm_logger)
+        cfg.setWorkflowAdaptations('creator_edits_unless_closed')
+        performWorkflowAdaptations(cfg, logger=pm_logger)
         self._creator_edits_unless_closed_active()
 
     def _creator_edits_unless_closed_inactive(self):
@@ -1232,14 +1235,15 @@ class testWFAdaptations(PloneMeetingTestCase):
 
     def test_pm_WFA_return_to_proposing_group(self):
         '''Test the workflowAdaptation 'return_to_proposing_group'.'''
+        cfg = self.meetingConfig
         # ease override by subproducts
-        if not 'return_to_proposing_group' in self.meetingConfig.listWorkflowAdaptations():
+        if 'return_to_proposing_group' not in cfg.listWorkflowAdaptations():
             return
         # check while the wfAdaptation is not activated
         self._return_to_proposing_group_inactive()
         # activate the wfAdaptation and check
-        self.meetingConfig.setWorkflowAdaptations('return_to_proposing_group')
-        performWorkflowAdaptations(self.meetingConfig, logger=pm_logger)
+        cfg.setWorkflowAdaptations('return_to_proposing_group')
+        performWorkflowAdaptations(cfg, logger=pm_logger)
         # test what should happen to the wf (added states and transitions)
         self._return_to_proposing_group_active()
         # test the functionnality of returning an item to the proposing group
@@ -1293,7 +1297,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         for permission in cloned_state_permissions:
             cloned_state_permission_with_meetingmanager = []
             acquired = isinstance(cloned_state_permissions[permission], list) and True or False
-            if not 'MeetingManager' in cloned_state_permissions[permission]:
+            if 'MeetingManager' not in cloned_state_permissions[permission]:
                 cloned_state_permission_with_meetingmanager = list(cloned_state_permissions[permission])
                 cloned_state_permission_with_meetingmanager.append('MeetingManager')
             else:
@@ -1329,7 +1333,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         CUSTOM_PERMISSION = WriteItemMeetingManagerFields
         cfgItemWFId = cfg.getItemWorkflow()
         state_to_clone_id = RETURN_TO_PROPOSING_GROUP_STATE_TO_CLONE.get(cfgItemWFId).split('.')[1]
-        if not 'MeetingManager' in \
+        if 'MeetingManager' not in \
            itemWF.states[state_to_clone_id].permission_roles[CUSTOM_PERMISSION]:
             if isinstance(itemWF.states['returned_to_proposing_group'].permission_roles[CUSTOM_PERMISSION], tuple):
                 tmp_list = list(itemWF.states['returned_to_proposing_group'].permission_roles[CUSTOM_PERMISSION])
@@ -1362,7 +1366,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         for permission in cloned_state_permissions:
             cloned_state_permission_with_meetingmanager = []
             acquired = isinstance(cloned_state_permissions[permission], list) and True or False
-            if not 'MeetingManager' in cloned_state_permissions[permission]:
+            if 'MeetingManager' not in cloned_state_permissions[permission]:
                 cloned_state_permission_with_meetingmanager = list(cloned_state_permissions[permission])
                 cloned_state_permission_with_meetingmanager.append('MeetingManager')
             else:
@@ -1445,12 +1449,13 @@ class testWFAdaptations(PloneMeetingTestCase):
 
     def test_pm_WFA_return_to_proposing_group_with_last_validation(self):
         '''Test the workflowAdaptation 'return_to_proposing_group_with_last_validation'.'''
+        cfg = self.meetingConfig
         # ease override by subproducts
-        if not 'return_to_proposing_group_with_last_validation' in self.meetingConfig.listWorkflowAdaptations():
+        if 'return_to_proposing_group_with_last_validation' not in cfg.listWorkflowAdaptations():
             return
         # activate the wfAdaptation and check
-        self.meetingConfig.setWorkflowAdaptations('return_to_proposing_group_with_last_validation')
-        performWorkflowAdaptations(self.meetingConfig, logger=pm_logger)
+        cfg.setWorkflowAdaptations('return_to_proposing_group_with_last_validation')
+        performWorkflowAdaptations(cfg, logger=pm_logger)
         # test what should happen to the wf (added states and transitions)
         self._return_to_proposing_group_with_validation_active()
         # test the functionnality of returning an item to the proposing group
@@ -1489,7 +1494,7 @@ class testWFAdaptations(PloneMeetingTestCase):
             for permission in cloned_state_permissions:
                 cloned_state_permission_with_meetingmanager = []
                 acquired = isinstance(cloned_state_permissions[permission], list) and True or False
-                if not 'MeetingManager' in cloned_state_permissions[permission]:
+                if 'MeetingManager' not in cloned_state_permissions[permission]:
                     cloned_state_permission_with_meetingmanager = list(cloned_state_permissions[permission])
                     cloned_state_permission_with_meetingmanager.append('MeetingManager')
                 else:
@@ -1568,12 +1573,13 @@ class testWFAdaptations(PloneMeetingTestCase):
 
     def test_pm_WFA_return_to_proposing_group_with_all_validations(self):
         '''Test the workflowAdaptation 'return_to_proposing_group_with_all_validations'.'''
+        cfg = self.meetingConfig
         # ease override by subproducts
-        if not 'return_to_proposing_group_with_all_validations' in self.meetingConfig.listWorkflowAdaptations():
+        if 'return_to_proposing_group_with_all_validations' not in cfg.listWorkflowAdaptations():
             return
         # activate the wfAdaptation and check
-        self.meetingConfig.setWorkflowAdaptations('return_to_proposing_group_with_all_validations')
-        performWorkflowAdaptations(self.meetingConfig, logger=pm_logger)
+        cfg.setWorkflowAdaptations('return_to_proposing_group_with_all_validations')
+        performWorkflowAdaptations(cfg, logger=pm_logger)
         # test what should happen to the wf (added states and transitions)
         # We can using the same test than last Validation in standard wf (created --> proposed)
         self._return_to_proposing_group_with_validation_active()
@@ -1585,20 +1591,21 @@ class testWFAdaptations(PloneMeetingTestCase):
            If meeting is in 'decided' state, only the MeetingManagers can
            view the real decision. The other people view a standard
            message taken from the MeetingConfig.'''
+        cfg = self.meetingConfig
         # ease override by subproducts
-        if not 'hide_decisions_when_under_writing' in self.meetingConfig.listWorkflowAdaptations():
+        if 'hide_decisions_when_under_writing' not in cfg.listWorkflowAdaptations():
             return
         self.changeUser('admin')
-        self._removeConfigObjectsFor(self.meetingConfig)
+        self._removeConfigObjectsFor(cfg)
         self.changeUser('pmManager')
         # check while the wfAdaptation is not activated
         self._hide_decisions_when_under_writing_inactive()
         # activate the wfAdaptation and check
-        self.meetingConfig.setWorkflowAdaptations('hide_decisions_when_under_writing')
-        performWorkflowAdaptations(self.meetingConfig, logger=pm_logger)
+        cfg.setWorkflowAdaptations('hide_decisions_when_under_writing')
+        performWorkflowAdaptations(cfg, logger=pm_logger)
         self._hide_decisions_when_under_writing_active()
         # test also for the meetingConfig2 if it uses a different workflow
-        if self.meetingConfig.getMeetingWorkflow() == self.meetingConfig2.getMeetingWorkflow():
+        if cfg.getMeetingWorkflow() == self.meetingConfig2.getMeetingWorkflow():
             return
         self.meetingConfig = self.meetingConfig2
         self._hide_decisions_when_under_writing_inactive()
@@ -1751,14 +1758,14 @@ class testWFAdaptations(PloneMeetingTestCase):
         """Test when both 'return_to_proposing_group' and 'hide_decisions_when_under_writing' WFAdaptations
            are enabled, in this case, when the meeting is decided and decisions are hidden, nevertheless, when
            returned to the proposing group, the decision is visible to the users able to edit the item."""
+        cfg = self.meetingConfig
         # ease override by subproducts
-        if not 'return_to_proposing_group' in self.meetingConfig.listWorkflowAdaptations() or \
-           not 'hide_decisions_when_under_writing' in self.meetingConfig.listWorkflowAdaptations():
+        if 'return_to_proposing_group' not in cfg.listWorkflowAdaptations() or \
+           'hide_decisions_when_under_writing' not in cfg.listWorkflowAdaptations():
             return
         self.changeUser('admin')
-        self._removeConfigObjectsFor(self.meetingConfig)
+        self._removeConfigObjectsFor(cfg)
         self.changeUser('pmManager')
-        cfg = self.meetingConfig
         cfg.setWorkflowAdaptations(
             ('hide_decisions_when_under_writing', 'return_to_proposing_group'))
         performWorkflowAdaptations(cfg, logger=pm_logger)
@@ -1813,7 +1820,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         '''Test the workflowAdaptation 'waiting_advices'.'''
         cfg = self.meetingConfig
         # ease override by subproducts
-        if not 'waiting_advices' in cfg.listWorkflowAdaptations():
+        if 'waiting_advices' not in cfg.listWorkflowAdaptations():
             return
 
         self.changeUser('pmManager')
@@ -1872,7 +1879,7 @@ class testWFAdaptations(PloneMeetingTestCase):
                          advice_required_to_ask_advices)
         # ask an advice so transition is available
         item.setOptionalAdvisers(('vendors', ))
-        item.at_post_edit_script()
+        item._update_after_edit()
         # still not available because no advice may be asked in state waiting_state_name
         self.assertFalse(waiting_state_name in self.tool.vendors.getItemAdviceStates())
         self.assertFalse(waiting_transition_name in self.transitions(item))
@@ -1902,14 +1909,14 @@ class testWFAdaptations(PloneMeetingTestCase):
            it is possible to go from 'proposed' and 'prevalidated' to 'waiting_advices'
            and to go back to both states.'''
         cfg = self.meetingConfig
-        if not 'pre_validation' in cfg.listWorkflowAdaptations() or \
-           not 'waiting_advices' in cfg.listWorkflowAdaptations():
+        if 'pre_validation' not in cfg.listWorkflowAdaptations() or \
+           'waiting_advices' not in cfg.listWorkflowAdaptations():
             return
 
         wfAdaptations = list(cfg.getWorkflowAdaptations())
-        if not 'pre_validation' in wfAdaptations:
+        if 'pre_validation' not in wfAdaptations:
             wfAdaptations.append('pre_validation')
-        if not 'waiting_advices' in wfAdaptations:
+        if 'waiting_advices' not in wfAdaptations:
             wfAdaptations.append('waiting_advices')
         cfg.setWorkflowAdaptations(tuple(wfAdaptations))
         from Products.PloneMeeting.model import adaptations
@@ -1949,7 +1956,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setOptionalAdvisers(('vendors', ))
-        item.at_post_edit_script()
+        item._update_after_edit()
         self._afterItemCreatedWaitingAdviceWithPrevalidation(item)
         self.proposeItem(item, first_level=True)
         # 'pmCreator1' is not able to set item to 'waiting_advices'
@@ -1991,7 +1998,7 @@ class testWFAdaptations(PloneMeetingTestCase):
            states from 'itemcreated' and 'proposed.'''
         cfg = self.meetingConfig
         # ease override by subproducts
-        if not 'waiting_advices' in cfg.listWorkflowAdaptations():
+        if 'waiting_advices' not in cfg.listWorkflowAdaptations():
             return
 
         from Products.PloneMeeting.model import adaptations
@@ -2015,7 +2022,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setOptionalAdvisers(('vendors', ))
-        item.at_post_edit_script()
+        item._update_after_edit()
         # from 'itemcreated'
         self.do(item, 'wait_advices_from_itemcreated')
         self.assertEquals(item.queryState(), 'itemcreated_waiting_advices')
@@ -2051,7 +2058,7 @@ class testWFAdaptations(PloneMeetingTestCase):
            is kept on the item set to 'waiting_advices'.'''
         cfg = self.meetingConfig
         # ease override by subproducts
-        if not 'waiting_advices' in cfg.listWorkflowAdaptations():
+        if 'waiting_advices' not in cfg.listWorkflowAdaptations():
             return
 
         from Products.PloneMeeting.model import adaptations
@@ -2069,7 +2076,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setOptionalAdvisers(('vendors', ))
-        item.at_post_edit_script()
+        item._update_after_edit()
         # from 'itemcreated'
         self._setItemToWaitingAdvices(item, 'wait_advices_from_itemcreated')
         self.assertEquals(item.queryState(), 'itemcreated_waiting_advices')
@@ -2102,7 +2109,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         '''Test the workflowAdaptation 'postpone_next_meeting'.'''
         # ease override by subproducts
         cfg = self.meetingConfig
-        if not 'postpone_next_meeting' in cfg.listWorkflowAdaptations():
+        if 'postpone_next_meeting' not in cfg.listWorkflowAdaptations():
             return
         self.changeUser('pmManager')
         # check while the wfAdaptation is not activated
@@ -2139,7 +2146,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         '''The back transition may vary if using additional WFAdaptations,
            item may back to 'itempublished', 'itemfrozen', ...'''
         cfg = self.meetingConfig
-        if not 'postpone_next_meeting' in cfg.listWorkflowAdaptations():
+        if 'postpone_next_meeting' not in cfg.listWorkflowAdaptations():
             return
         self.changeUser('pmManager')
 
@@ -2165,7 +2172,7 @@ class testWFAdaptations(PloneMeetingTestCase):
            and the duplicated item is automatically validated.
            Moreover, advices on the duplicated item are inherited from original item.'''
         cfg = self.meetingConfig
-        if not 'postpone_next_meeting' in cfg.listWorkflowAdaptations():
+        if 'postpone_next_meeting' not in cfg.listWorkflowAdaptations():
             return
 
         self.changeUser('admin')
@@ -2193,7 +2200,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         cfg.setItemAdviceEditStates(('itemcreated', ))
         cfg.setItemAdviceViewStates(('itemcreated', ))
         originalWFAdaptations = cfg.getWorkflowAdaptations()
-        if not 'postpone_next_meeting' in originalWFAdaptations:
+        if 'postpone_next_meeting' not in originalWFAdaptations:
             cfg.setWorkflowAdaptations(originalWFAdaptations + ('postpone_next_meeting', ))
         cfg.at_post_edit_script()
 
@@ -2202,7 +2209,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         item.setDecision('<p>Decision</p>')
         item.setOptionalAdvisers(('vendors', 'developers__rowid__unique_id_123',
                                   'group2__rowid__unique_id_456', 'group1'))
-        item.at_post_edit_script()
+        item._update_after_edit()
         # give advices
         self.changeUser('pmAdviser1')
         createContentInContainer(item,
@@ -2247,11 +2254,11 @@ class testWFAdaptations(PloneMeetingTestCase):
     def test_pm_WFA_postpone_next_meeting_advices_inherited(self):
         '''When an item is set to 'postponed_next_meeting', cloned item inherits from every advices.'''
         cfg = self.meetingConfig
-        if not 'postpone_next_meeting' in cfg.listWorkflowAdaptations():
+        if 'postpone_next_meeting' not in cfg.listWorkflowAdaptations():
             return
         self.changeUser('pmManager')
         originalWFAdaptations = cfg.getWorkflowAdaptations()
-        if not 'postpone_next_meeting' in originalWFAdaptations:
+        if 'postpone_next_meeting' not in originalWFAdaptations:
             cfg.setWorkflowAdaptations(originalWFAdaptations + ('postpone_next_meeting', ))
         cfg.at_post_edit_script()
 
@@ -2270,7 +2277,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         '''Test the workflowAdaptation 'mark_not_applicable'.'''
         # ease override by subproducts
         cfg = self.meetingConfig
-        if not 'mark_not_applicable' in cfg.listWorkflowAdaptations():
+        if 'mark_not_applicable' not in cfg.listWorkflowAdaptations():
             return
         self.changeUser('pmManager')
         # check while the wfAdaptation is not activated
@@ -2307,7 +2314,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         '''Test the workflowAdaptation 'removed'.'''
         # ease override by subproducts
         cfg = self.meetingConfig
-        if not 'removed' in cfg.listWorkflowAdaptations():
+        if 'removed' not in cfg.listWorkflowAdaptations():
             return
         self.changeUser('pmManager')
         # check while the wfAdaptation is not activated
@@ -2346,7 +2353,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         '''Test the workflowAdaptation 'removed_and_duplicated'.'''
         # ease override by subproducts
         cfg = self.meetingConfig
-        if not 'removed_and_duplicated' in cfg.listWorkflowAdaptations():
+        if 'removed_and_duplicated' not in cfg.listWorkflowAdaptations():
             return
         self.changeUser('pmManager')
         # check while the wfAdaptation is not activated
@@ -2388,7 +2395,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         '''Test the workflowAdaptation 'reviewers_take_back_validated_item'.'''
         # ease override by subproducts
         cfg = self.meetingConfig
-        if not 'reviewers_take_back_validated_item' in cfg.listWorkflowAdaptations():
+        if 'reviewers_take_back_validated_item' not in cfg.listWorkflowAdaptations():
             return
         self.changeUser('pmManager')
         # check while the wfAdaptation is not activated

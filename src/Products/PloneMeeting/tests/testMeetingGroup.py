@@ -143,7 +143,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         item.setOptionalAdvisers(())
         self.assertTrue('developers_advisers' not in item.adviceIndex)
         item.setCopyGroups(())
-        item.at_post_edit_script()
+        item._update_after_edit()
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(developers.UID(), catch_before_delete_exception=False)
 
@@ -155,7 +155,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         item.setOptionalAdvisers(())
         self.assertTrue('developers_advisers' not in item.adviceIndex)
         item.setCopyGroups(())
-        item.at_post_edit_script()
+        item._update_after_edit()
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(developers.UID(), catch_before_delete_exception=False)
         self.assertEquals(cm.exception.message, can_not_delete_meetinggroup_meetingitem)
@@ -166,7 +166,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         item.setOptionalAdvisers(('developers', ))
         self.assertTrue('developers_advisers' not in item.adviceIndex)
         item.setCopyGroups(())
-        item.at_post_edit_script()
+        item._update_after_edit()
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(developers.UID(), catch_before_delete_exception=False)
         self.assertEquals(cm.exception.message, can_not_delete_meetinggroup_meetingitem)
@@ -177,7 +177,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         item.setOptionalAdvisers(())
         self.assertTrue('developers_advisers' not in item.adviceIndex)
         item.setGroupInCharge('developers')
-        item.at_post_edit_script()
+        item._update_after_edit()
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(developers.UID(), catch_before_delete_exception=False)
         self.assertEquals(cm.exception.message, can_not_delete_meetinggroup_meetingitem)
@@ -186,14 +186,14 @@ class testMeetingGroup(PloneMeetingTestCase):
         item.setGroupInCharge('')
         cfg.setUseCopies(True)
         item.setCopyGroups(('developers_reviewers', ))
-        item.at_post_edit_script()
+        item._update_after_edit()
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(developers.UID(), catch_before_delete_exception=False)
         self.assertEquals(cm.exception.message, can_not_delete_meetinggroup_meetingitem)
 
         # remove copyGroups for item so it works...
         item.setCopyGroups(())
-        item.at_post_edit_script()
+        item._update_after_edit()
         self.portal.restrictedTraverse('@@delete_givenuid')(developers.UID(), catch_before_delete_exception=False)
         # the group is actually removed
         self.failIf(hasattr(self.tool, 'developers'))

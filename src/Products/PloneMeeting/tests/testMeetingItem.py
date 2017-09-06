@@ -389,23 +389,23 @@ class testMeetingItem(PloneMeetingTestCase):
         # while activating a meetingConfig to send items to, an action is created.
         # While deactivated, theses actions disappear
         typeName = self.meetingConfig.getItemTypeName()
-        meetingConfigId = self.meetingConfig.getId()
-        otherMeetingConfigId = self.meetingConfig2.getId()
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
         # by default, the testing profile is configured so we have self.meetingConfig2Id
         # in self.meetingConfig.meetingConfigsToCloneTo, so the actions exist...
-        actionId = self.meetingConfig._getCloneToOtherMCActionId(otherMeetingConfigId, meetingConfigId)
+        actionId = self.meetingConfig._getCloneToOtherMCActionId(cfg2.getId(), cfg.getId())
         self.failUnless(actionId in [act.id for act in self.portal.portal_types[typeName].listActions()])
         # but if we remove the self.meetingConfig.meetingConfigsToCloneTos, then the action is remove too
-        self.meetingConfig.setMeetingConfigsToCloneTo([])
-        self.meetingConfig.at_post_edit_script()
+        cfg.setMeetingConfigsToCloneTo([])
+        cfg.at_post_edit_script()
         self.failIf(actionId in [act.id for act in self.portal.portal_types[typeName].listActions()])
         # ... nor in portal_actionicons
         self.failIf(actionId in [ai.getActionId() for ai in self.portal.portal_actionicons.listActionIcons()])
         # let's activate the functionnality again and test
-        self.meetingConfig.setMeetingConfigsToCloneTo(
-            ({'meeting_config': otherMeetingConfigId,
+        cfg.setMeetingConfigsToCloneTo(
+            ({'meeting_config': cfg2.getId(),
               'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}, ))
-        self.meetingConfig.at_post_edit_script()
+        cfg.at_post_edit_script()
         # an action is created
         self.failUnless(actionId in [act.id for act in self.portal.portal_types[typeName].listActions()])
         # but we do not use portal_actionicons
@@ -434,7 +434,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setBudgetRelated(True)
         item.setBudgetInfos('<p>My budget infos</p>', mimetype='text/html')
         item.setOtherMeetingConfigsClonableTo((cfg2Id,))
-        item.at_post_edit_script()
+        item._update_after_edit()
         clonedItem = item.cloneToOtherMeetingConfig(cfg2Id)
 
         # make sure relevant fields are there or no more there
@@ -492,7 +492,7 @@ class testMeetingItem(PloneMeetingTestCase):
                   'delay': '5'}, ])
             self.changeUser('pmManager')
             item.setOptionalAdvisers(('vendors', 'developers__rowid__unique_id_123'))
-            item.at_post_edit_script()
+            item._update_after_edit()
 
             developers_advice = createContentInContainer(
                 item,
@@ -804,8 +804,8 @@ class testMeetingItem(PloneMeetingTestCase):
             # duplicate WF and update self.meetingConfig2
             copyInfos = self.wfTool.manage_copyObjects(self.meetingConfig.getItemWorkflow())
             newWFId = self.wfTool.manage_pasteObjects(copyInfos)[0]['new_id']
-            self.meetingConfig2.setItemWorkflow(newWFId)
-            self.meetingConfig2.at_post_edit_script()
+            cfg2.setItemWorkflow(newWFId)
+            cfg2.at_post_edit_script()
         # now define a different WF intial_state for self.meetingConfig2
         # item workflow and test that everything is ok
         # set new intial_state to 'validated'
@@ -1431,7 +1431,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setDecision('<p>Decision</p>')
         item.setOptionalAdvisers(('vendors', 'developers__rowid__unique_id_123',
                                   'group2__rowid__unique_id_456', 'group1'))
-        item.at_post_edit_script()
+        item._update_after_edit()
         # give advices
         self.changeUser('pmAdviser1')
         createContentInContainer(item,
@@ -1553,7 +1553,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.tool.vendors.setAsCopyGroupOn(
             "python: item.getProposingGroup() == 'vendors' and ['reviewers', ] or []")
         # edit the item, 'vendors_reviewers' should be in the copyGroups of the item
-        i5.at_post_edit_script()
+        i5._update_after_edit()
         self.failIf(i5.getCopyGroups())
         self.assertEquals(i5.autoCopyGroups,
                           ['auto__developers_reviewers', 'auto__developers_advisers', 'auto__vendors_reviewers'])
@@ -1569,7 +1569,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failUnless(READER_USECASES['copy_groups'] in i5.__ac_local_roles__['developers_advisers'])
         # if a wrong TAL expression is used, it does not break anything upon item at_post_edit_script
         self.tool.vendors.setAsCopyGroupOn("python: item.someUnexistingMethod()")
-        i5.at_post_edit_script()
+        i5._update_after_edit()
         self.assertEquals(i5.autoCopyGroups,
                           ['auto__developers_reviewers', 'auto__developers_advisers'])
 
@@ -1588,7 +1588,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # now unselect it and call at_post_edit_script again
         item.setCopyGroups(())
         self.failIf(item.getCopyGroups())
-        item.at_post_edit_script()
+        item._update_after_edit()
         self.assertEquals(item.autoCopyGroups, ['auto__vendors_reviewers'])
 
         # now use the isCreated in the TAL expression so an expression
@@ -1601,7 +1601,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item2.setCopyGroups(())
         self.failIf(item2.getCopyGroups())
         self.assertEquals(item2.autoCopyGroups, ['auto__vendors_reviewers'])
-        item2.at_post_edit_script()
+        item2._update_after_edit()
         # this time it is now added again as the expression is only True at item creation time
         self.failIf(item2.getCopyGroups())
         self.failIf(item2.autoCopyGroups)
@@ -1620,29 +1620,29 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failIf(item.getCopyGroups())
         # set a correct expression so vendors is set as copy group
         self.tool.vendors.setAsCopyGroupOn("python: item.getProposingGroup() == 'developers' and ['reviewers', ] or []")
-        item.at_post_edit_script()
+        item._update_after_edit()
         self.assertEquals(item.autoCopyGroups, ['auto__vendors_reviewers'])
         # with a wrong TAL expression (syntax or content) it does not break
         self.tool.vendors.setAsCopyGroupOn("python: item.someUnexistingMethod()")
-        item.at_post_edit_script()
+        item._update_after_edit()
         # no matter the expression is wrong now, when a group is added in copy, it is left
         self.assertFalse(item.getCopyGroups(), item.autoCopyGroups)
         self.tool.vendors.setAsCopyGroupOn("python: some syntax error")
-        item.at_post_edit_script()
+        item._update_after_edit()
         # no more there
         self.assertFalse(item.getCopyGroups(), item.autoCopyGroups)
         # if it is a right TAL expression but that does not returns usable sufixes, it does not break neither
         self.tool.vendors.setAsCopyGroupOn("python: item.getId() and True or True")
-        item.at_post_edit_script()
+        item._update_after_edit()
         self.assertFalse(item.getCopyGroups(), item.autoCopyGroups)
         self.tool.vendors.setAsCopyGroupOn("python: item.getId() and 'some_wrong_string' or 'some_wrong_string'")
-        item.at_post_edit_script()
+        item._update_after_edit()
         self.assertFalse(item.getCopyGroups(), item.autoCopyGroups)
         self.tool.vendors.setAsCopyGroupOn("python: item.getId()")
-        item.at_post_edit_script()
+        item._update_after_edit()
         self.assertFalse(item.getCopyGroups(), item.autoCopyGroups)
         self.tool.vendors.setAsCopyGroupOn("python: 123")
-        item.at_post_edit_script()
+        item._update_after_edit()
         self.assertFalse(item.getCopyGroups(), item.autoCopyGroups)
 
     def test_pm_GetAllCopyGroups(self):
@@ -1654,13 +1654,13 @@ class testMeetingItem(PloneMeetingTestCase):
         # add a manual copyGroup
         item = self.create('MeetingItem')
         item.setCopyGroups(('developers_reviewers', ))
-        item.at_post_edit_script()
+        item._update_after_edit()
         self.assertEquals(item.getAllCopyGroups(),
                           ('developers_reviewers', ))
         self.assertEquals(item.getAllCopyGroups(auto_real_group_ids=True),
                           ('developers_reviewers', ))
         self.tool.vendors.setAsCopyGroupOn("python: item.getProposingGroup() == 'developers' and ['reviewers', ] or []")
-        item.at_post_edit_script()
+        item._update_after_edit()
         self.assertEquals(item.getAllCopyGroups(),
                           ('developers_reviewers', 'auto__vendors_reviewers'))
         self.assertEquals(item.getAllCopyGroups(auto_real_group_ids=True),
@@ -2118,9 +2118,9 @@ class testMeetingItem(PloneMeetingTestCase):
         # set 'copyGroups' for publicItem, 'pmReviewer2' will be able to access it
         # and so it will be privacyViewable
         publicItem.setCopyGroups('vendors_reviewers')
-        publicItem.at_post_edit_script()
+        publicItem._update_after_edit()
         publicHeadingItem.setCopyGroups('vendors_reviewers')
-        publicHeadingItem.at_post_edit_script()
+        publicHeadingItem._update_after_edit()
         self.assertTrue(self.hasPermission('View', publicItem))
         self.failUnless(publicItem.adapted().isPrivacyViewable())
         self.assertTrue(publicAnnex.restrictedTraverse('@@download'))
@@ -2662,7 +2662,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # test with autoCopyGroups and the include_auto=False parameter
         self.tool.vendors.setAsCopyGroupOn(
             "python: item.getProposingGroup() == 'developers' and ['observers', 'advisers', ] or []")
-        item.at_post_edit_script()
+        item._update_after_edit()
         self.assertEqual(item.autoCopyGroups, ['auto__vendors_observers', 'auto__vendors_advisers'])
         self.assertEqual(item.listCopyGroups().keys(), ['vendors_reviewers'])
         self.assertEqual(item.listCopyGroups().values(), ['Vendors (Reviewers)'])
@@ -2708,7 +2708,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(item.getCategory(), 'development')
         item2 = self.create('MeetingItem')
         item2.setCategory('research')
-        item2.at_post_edit_script()
+        item2._update_after_edit()
         # a disabled category will still be displayed in the vocab if it is the currently used value
         self.changeUser('siteadmin')
         self.do(cfg.categories.development, 'deactivate')
@@ -2797,7 +2797,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue('developers__rowid__unique_id_456' in item.listOptionalAdvisers())
         # but if selected, then it appears in the vocabulary, no matter the 'available_on' expression
         item.setOptionalAdvisers(('developers__rowid__unique_id_123', ))
-        item.at_post_edit_script()
+        item._update_after_edit()
         self.assertTrue('developers__rowid__unique_id_123' in item.listOptionalAdvisers())
         self.assertTrue('developers__rowid__unique_id_456' in item.listOptionalAdvisers())
         # except if include_selected is False
@@ -2919,7 +2919,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         # check with the 'non-delay-aware' and the 'delay-aware' advisers selected
         item.setOptionalAdvisers(('developers', ))
-        item.at_post_edit_script()
+        item._update_after_edit()
         can_not_unselect_msg = translate('can_not_unselect_already_given_advice',
                                          domain='PloneMeeting',
                                          context=self.portal.REQUEST)
@@ -3251,13 +3251,13 @@ class testMeetingItem(PloneMeetingTestCase):
         # remove selected category and notify edited
         originalCategory = item.getCategory()
         item.setCategory('')
-        item.at_post_edit_script()
+        item._update_after_edit()
         self.assertTrue(not self.transitions(item))
         no_category_rendered_actions_panel = actions_panel()
         self.assertTrue(not no_category_rendered_actions_panel ==
                         rendered_actions_panel)
         item.setCategory(originalCategory)
-        item.at_post_edit_script()
+        item._update_after_edit()
         # changed again
         rendered_actions_panel = actions_panel()
         self.assertTrue(not no_category_rendered_actions_panel ==
@@ -3365,7 +3365,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue('dummy' not in object_buttons)
         beforeMeetingEdit_rendered_actions_panel = actions_panel()
         meeting.setDate(DateTime('2010/10/10'))
-        meeting.at_post_edit_script()
+        meeting._update_after_edit()
         # now action is available
         object_buttons = [k['id'] for k in pa.listFilteredActionsFor(item)['object_buttons']]
         self.assertTrue('dummy' in object_buttons)
@@ -3925,7 +3925,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         item.setOtherMeetingConfigsClonableTo((self.meetingConfig2.getId(), ))
-        item.at_post_edit_script()
+        item._update_after_edit()
         newItem = item.clone()
         # field was kept as still possible in the configuration
         self.assertEquals(newItem.getOtherMeetingConfigsClonableTo(),
@@ -3946,7 +3946,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setCopyGroups(('developers_reviewers', 'vendors_reviewers'))
-        item.at_post_edit_script()
+        item._update_after_edit()
         # change configuration, and do 'developers_reviewers' no more a selectable copyGroup
         cfg.setSelectableCopyGroups(('vendors_reviewers', ))
         newItem = item.clone()
@@ -3966,7 +3966,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setOptionalAdvisers(('developers', 'vendors'))
-        item.at_post_edit_script()
+        item._update_after_edit()
         # change configuration, and do 'developers' no more a selectable adviser
         cfg.setSelectableAdvisers(('vendors', ))
         newItem = item.clone()
@@ -4637,7 +4637,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item = self.create('MeetingItem', title='My new title')
         item.setCopyGroups(('vendors_reviewers', ))
         item.setOptionalAdvisers(('vendors', ))
-        item.at_post_edit_script()
+        item._update_after_edit()
         # users able to edit the item or at least one field are able to add images
         self.assertTrue(self.hasPermission('ATContentTypes: Add Image', item))
         self.assertTrue(self.hasPermission(AddPortalContent, item))
@@ -4764,7 +4764,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # test using at_post_edit_script, aka full edit form
         text = '<p>Working external image <img src="http://www.imio.be/spw.png"/>.</p>'
         item.setDescription(text)
-        item.at_post_edit_script()
+        item._update_after_edit()
         self.assertTrue('spw.png' in item.objectIds())
 
     def test_pm_ItemLocalRolesUpdatedEvent(self):
@@ -5303,24 +5303,24 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(item.getItemReference(), '20170303/Devel/development/-/-/Title1/1')
         # change category
         item.setCategory('research')
-        item.at_post_edit_script()
+        item._update_after_edit()
         self.assertEqual(item.getItemReference(), '20170303/Devel/research/-/-/Title1/1')
         # change classifier
         item.setClassifier(cfg.classifiers.classifier1.UID())
-        item.at_post_edit_script()
+        item._update_after_edit()
         self.assertEqual(item.getItemReference(), '20170303/Devel/research/classifier1/-/Title1/1')
         # change proposingGroup
         item.setProposingGroup('vendors')
-        item.at_post_edit_script()
+        item._update_after_edit()
         self.assertEqual(item.getItemReference(), '20170303/Devil/research/classifier1/-/Title1/1')
         # change otherMeetingConfigsClonableTo
         item.setOtherMeetingConfigsClonableTo((cfg2Id,))
-        item.at_post_edit_script()
+        item._update_after_edit()
         self.assertEqual(item.getItemReference(),
                          '20170303/Devil/research/classifier1/{0}/Title1/1'.format(cfg2Id))
         # changing the Title will not update the reference
         item.setTitle('Title2')
-        item.at_post_edit_script()
+        item._update_after_edit()
         self.assertEqual(item.getItemReference(),
                          '20170303/Devil/research/classifier1/{0}/Title1/1'.format(cfg2Id))
 
@@ -5409,21 +5409,21 @@ class testMeetingItem(PloneMeetingTestCase):
         # the item references are updated
         # field date
         meeting.setDate(DateTime('2017/03/05'))
-        meeting.at_post_edit_script()
+        meeting._update_after_edit()
         self.assertEqual(item1.getItemReference(), '20170305/-1/1/1')
         self.assertEqual(item2.getItemReference(), '20170305/-1/1/2')
         self.assertEqual(item3.getItemReference(), '20170305/-1/1/3')
         self.assertEqual(item4.getItemReference(), '20170305/-1/1/4')
         # field firstItemNumber
         meeting.setFirstItemNumber('12')
-        meeting.at_post_edit_script()
+        meeting._update_after_edit()
         self.assertEqual(item1.getItemReference(), '20170305/12/1/12')
         self.assertEqual(item2.getItemReference(), '20170305/12/1/13')
         self.assertEqual(item3.getItemReference(), '20170305/12/1/14')
         self.assertEqual(item4.getItemReference(), '20170305/12/1/15')
         # field meetingNumber
         meeting.setMeetingNumber('4')
-        meeting.at_post_edit_script()
+        meeting._update_after_edit()
         self.assertEqual(item1.getItemReference(), '20170305/12/4/12')
         self.assertEqual(item2.getItemReference(), '20170305/12/4/13')
         self.assertEqual(item3.getItemReference(), '20170305/12/4/14')
@@ -5435,7 +5435,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.setItemReferenceFormat(
             "python: str(here.getItemNumber(relativeTo='meetingConfig', for_display=True))")
         meeting.setPlace('Another place')
-        meeting.at_post_edit_script()
+        meeting._update_after_edit()
         self.assertEqual(item1.getItemReference(), '20170305/12/4/12')
         self.assertEqual(item2.getItemReference(), '20170305/12/4/13')
         self.assertEqual(item3.getItemReference(), '20170305/12/4/14')
@@ -5537,7 +5537,7 @@ class testMeetingItem(PloneMeetingTestCase):
         itemWithNotGivenAdvice.setOptionalAdvisers(('vendors', ))
         itemWithGivenAdvice = self.create('MeetingItem')
         itemWithGivenAdvice.setOptionalAdvisers(('vendors', ))
-        itemWithGivenAdvice.at_post_edit_script()
+        itemWithGivenAdvice._update_after_edit()
         self.changeUser('pmReviewer2')
         createContentInContainer(itemWithGivenAdvice,
                                  'meetingadvice',

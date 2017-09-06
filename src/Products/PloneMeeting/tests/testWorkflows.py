@@ -323,7 +323,7 @@ class testWorkflows(PloneMeetingTestCase):
         annex2 = self.addAnnex(item1)
         # Change proposing group for item1 (vendors)
         item1.setProposingGroup('vendors')
-        item1.at_post_edit_script()
+        item1._update_after_edit()
         for userId in ('pmCreator1', 'pmReviewer2'):
             self.changeUser(userId)
             self.failUnless(self.hasPermission('View', (item1, annex1, annex2)))

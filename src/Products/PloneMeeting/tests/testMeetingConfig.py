@@ -296,7 +296,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         cfg.setItemAdviceEditStates(('itemcreated', ))
         cfg.setCustomAdvisers([originalCustomAdvisers, ])
         item.setBudgetRelated(True)
-        item.at_post_edit_script()
+        item._update_after_edit()
         # the automatic advice has been asked
         self.assertEquals(item.adviceIndex['developers']['row_id'], 'unique_id_123')
         # current config is still valid
@@ -401,7 +401,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setOptionalAdvisers(('vendors__rowid__unique_id_123', ))
-        item.at_post_edit_script()
+        item._update_after_edit()
         customAdvisers[0]['available_on'] = ''
         self.failIf(cfg.validate_customAdvisers(customAdvisers))
 
@@ -611,7 +611,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         item.setOptionalAdvisers(())
         customAdvisers[2]['gives_auto_advice_on'] = 'python:True'
         cfg.setCustomAdvisers(customAdvisers)
-        item.at_post_edit_script()
+        item._update_after_edit()
         # advice linked to second row is asked
         self.assertTrue(item.adviceIndex['vendors']['row_id'] == customAdvisers[2]['row_id'])
         # current config still does validate correctly
@@ -774,7 +774,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                       context=self.request)
         values = ({'insertingMethod': 'on_poll_type',
                    'reverse': '0'}, )
-        if not 'pollType' in cfg.getUsedItemAttributes():
+        if 'pollType' not in cfg.getUsedItemAttributes():
             cfg.setUsedItemAttributes(cfg.getUsedItemAttributes() + ('pollType', ))
         self.assertTrue('pollType' in cfg.getUsedItemAttributes())
         # it validates

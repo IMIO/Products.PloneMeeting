@@ -107,17 +107,19 @@ class testToolPloneMeeting(PloneMeetingTestCase):
     def test_pm_GetDefaultMeetingConfig(self):
         '''Test the ToolPloneMeeting.getDefaultMeetingConfig method
            that returns the default meetingConfig.'''
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
         # must be connected to access MeetingConfigs
         self.changeUser('pmCreator1')
-        self.assertTrue(self.meetingConfig.getIsDefault())
-        self.assertTrue(not self.meetingConfig2.getIsDefault())
-        self.assertTrue(self.tool.getDefaultMeetingConfig().getId() == self.meetingConfig.getId())
+        self.assertTrue(cfg.getIsDefault())
+        self.assertTrue(not cfg2.getIsDefault())
+        self.assertTrue(self.tool.getDefaultMeetingConfig().getId() == cfg.getId())
         # if we change default config, it works
-        self.meetingConfig2.setIsDefault(True)
-        self.meetingConfig2.at_post_edit_script()
-        self.assertTrue(not self.meetingConfig.getIsDefault())
-        self.assertTrue(self.meetingConfig2.getIsDefault())
-        self.assertTrue(self.tool.getDefaultMeetingConfig().getId() == self.meetingConfig2.getId())
+        cfg2.setIsDefault(True)
+        cfg2.at_post_edit_script()
+        self.assertTrue(not cfg.getIsDefault())
+        self.assertTrue(cfg2.getIsDefault())
+        self.assertTrue(self.tool.getDefaultMeetingConfig().getId() == cfg2.getId())
 
     def test_pm_GetMeetingGroup(self):
         '''Return the meeting group containing the plone group
@@ -236,7 +238,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # 'pmCreator1' as newOwnerId
         self.changeUser('admin')
         self.portal.acl_users.source_users.removeUser('pmCreator1')
-        self.assertTrue(not 'pmCreator1' in self.portal.acl_users.source_users.listUserIds())
+        self.assertTrue('pmCreator1' not in self.portal.acl_users.source_users.listUserIds())
         # now clone the item using 'pmCreator1' as newOwnerId
         self.changeUser('pmManager')
         clonedItem = item.clone(newOwnerId='pmCreator1')
@@ -266,7 +268,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.validateItem(item)
         # 'pmManager' is not creator for 'vendors'
         self.changeUser('pmManager')
-        self.assertTrue(not 'vendors_creators' in self.member.getGroups())
+        self.assertTrue('vendors_creators' not in self.member.getGroups())
         # clone it without keeping the proposingGroup
         clonedItem = item.clone()
         self.assertTrue(clonedItem.getProposingGroup() == 'developers')
@@ -321,7 +323,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         res1AnnexesUids = [annex['UID'] for annex in get_categorized_elements(res1)]
         item1AnnexesUids = [annex['UID'] for annex in get_categorized_elements(item1)]
         self.failIf(len(set(item1AnnexesUids).intersection(set(res1AnnexesUids))) != 0)
-        #Now check item2 : no annexes nor given advices
+        # Now check item2 : no annexes nor given advices
         self.assertEquals(len(get_categorized_elements(res2)), 0)
         self.assertEquals(len(res2.getGivenAdvices()), 0)
         self.assertEquals(len(res2.adviceIndex), 0)
@@ -451,8 +453,9 @@ class testToolPloneMeeting(PloneMeetingTestCase):
                          set([budgetAnalysisAnnexTypeCfg2['budget-analysis-sub-annex'].UID()]))
         # corresponding annexType has been used, aka the subType
         self.assertTrue(self.tool._updateContentCategoryAfterSentToOtherMeetingConfig(annexCfg2, cfg))
-        self.assertEqual(annexCfg2.content_category,
-                         '{0}-annexes_types_-_item_annexes_-_budget-analysis_-_budget-analysis-sub-annex'.format(cfg2Id))
+        self.assertEqual(
+            annexCfg2.content_category,
+            '{0}-annexes_types_-_item_annexes_-_budget-analysis_-_budget-analysis-sub-annex'.format(cfg2Id))
 
         # 5) subType with correspondence to a normal annexType
         # subType 'overhead-analysis-sub-annex' in cfg1 corresponds to annex type 'budget-analysis' in cfg2
@@ -475,8 +478,9 @@ class testToolPloneMeeting(PloneMeetingTestCase):
                          set([budgetAnalysisAnnexTypeCfg2['budget-analysis-sub-annex'].UID()]))
         # corresponding annexType has been used, aka the subType
         self.assertTrue(self.tool._updateContentCategoryAfterSentToOtherMeetingConfig(annexCfg2, cfg))
-        self.assertEqual(annexCfg2.content_category,
-                         '{0}-annexes_types_-_item_annexes_-_budget-analysis_-_budget-analysis-sub-annex'.format(cfg2Id))
+        self.assertEqual(
+            annexCfg2.content_category,
+            '{0}-annexes_types_-_item_annexes_-_budget-analysis_-_budget-analysis-sub-annex'.format(cfg2Id))
 
     def test_pm_UpdateContentCategoryAfterSentToOtherMeetingConfigCrossingAnnexType(self):
         '''Test the ToolPloneMeeting._updateContentCategoryAfterSentToOtherMeetingConfig method.
@@ -548,7 +552,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         item.setOtherMeetingConfigsClonableTo((cfg2Id,))
-        item.at_post_edit_script()
+        item._update_after_edit()
         self.addAnnex(item)
         self.addAnnex(item, relatedTo='item_decision')
         self.assertEqual([annex.portal_type for annex in get_annexes(item)], ['annex', 'annexDecision'])
@@ -621,7 +625,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertRaises(Unauthorized, self.tool.updateAllLocalRoles)
         item1 = self.create('MeetingItem')
         item1.setCopyGroups(('vendors_reviewers',))
-        item1.at_post_edit_script()
+        item1._update_after_edit()
         item2 = self.create('MeetingItem')
         item2.setCopyGroups(('vendors_reviewers',))
         self.proposeItem(item2)
@@ -645,7 +649,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         self.assertRaises(Unauthorized, self.tool.updateAllLocalRoles)
         item1 = self.create('MeetingItem')
-        item1.at_post_edit_script()
+        item1._update_after_edit()
         item2 = self.create('MeetingItem')
         self.proposeItem(item2)
         # budgetImpactEditors roles are set for item1, not for item2
@@ -671,7 +675,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.changeUser('pmManager')
         self.assertRaises(Unauthorized, self.tool.updateAllLocalRoles)
         item1 = self.create('MeetingItem')
-        item1.at_post_edit_script()
+        item1._update_after_edit()
         item2 = self.create('MeetingItem')
         self.proposeItem(item2)
         meeting = self.create('Meeting', date=DateTime('2015/05/05'))

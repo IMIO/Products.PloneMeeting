@@ -231,7 +231,7 @@ class testFaceted(PloneMeetingTestCase):
         # edit a meeting
         self.assertEquals(vocab(pmFolder).by_token[meetingUID].title, meeting.Title())
         meeting.setDate(DateTime('2015/06/06'))
-        meeting.at_post_edit_script()
+        meeting._update_after_edit()
         # cache was cleaned
         self.assertEquals(vocab(pmFolder).by_token[meetingUID].title, meeting.Title())
 

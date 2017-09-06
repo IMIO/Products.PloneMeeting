@@ -332,18 +332,18 @@ class testViews(PloneMeetingTestCase):
         # no delay-aware advice
         itemWithNonDelayAwareAdvices = self.create('MeetingItem')
         itemWithNonDelayAwareAdvices.setBudgetRelated(True)
-        itemWithNonDelayAwareAdvices.at_post_edit_script()
+        itemWithNonDelayAwareAdvices._update_after_edit()
 
         # the automatic advice has been added
         self.assertTrue(itemWithNonDelayAwareAdvices.adviceIndex['vendors']['optional'] is False)
         itemWithNonDelayAwareAdvices.setOptionalAdvisers(('developers', ))
-        itemWithNonDelayAwareAdvices.at_post_edit_script()
+        itemWithNonDelayAwareAdvices._update_after_edit()
         self.assertTrue(itemWithNonDelayAwareAdvices.adviceIndex['developers']['optional'] is True)
 
         # one delay-aware advice addable
         itemWithDelayAwareAdvice = self.create('MeetingItem')
         itemWithDelayAwareAdvice.setOptionalAdvisers(('vendors__rowid__unique_id_123', ))
-        itemWithDelayAwareAdvice.at_post_edit_script()
+        itemWithDelayAwareAdvice._update_after_edit()
         self.proposeItem(itemWithDelayAwareAdvice)
         self.assertTrue(itemWithDelayAwareAdvice.adviceIndex['vendors']['advice_addable'])
         # this time the element is returned
@@ -410,7 +410,7 @@ class testViews(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         item1 = self.create('MeetingItem')
         item1.setOptionalAdvisers(('developers', ))
-        item1.at_post_edit_script()
+        item1._update_after_edit()
         item2 = self.create('MeetingItem')
         item2.setOptionalAdvisers(('developers', ))
         self.proposeItem(item2)

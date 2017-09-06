@@ -375,7 +375,7 @@ class testSearches(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         # give a view access to members of vendors, like pmReviewer2
         item.setCopyGroups(('vendors_reviewers',))
-        item.at_post_edit_script()
+        item._update_after_edit()
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemsincopy')
         self.failIf(collection.getQuery())
         # connect as a member of 'developers_reviewers'
@@ -475,7 +475,7 @@ class testSearches(PloneMeetingTestCase):
 
         # activate 'prevalidation' if necessary
         if 'prereviewers' in MEETINGREVIEWERS and \
-           not 'pre_validation' in cfg.getWorkflowAdaptations():
+           'pre_validation' not in cfg.getWorkflowAdaptations():
             cfg.setWorkflowAdaptations('pre_validation')
             performWorkflowAdaptations(cfg, logger=pm_logger)
         # now do the query
@@ -515,7 +515,7 @@ class testSearches(PloneMeetingTestCase):
             review_states = ('prevalidated',)
         cfg.setItemCopyGroupsStates(review_states)
         item.setCopyGroups(('vendors_reviewers',))
-        item.at_post_edit_script()
+        item._update_after_edit()
         self.changeUser('pmReviewer2')
         # the user can see the item
         self.failUnless(self.hasPermission('View', item))
@@ -630,7 +630,7 @@ class testSearches(PloneMeetingTestCase):
         # this, but if a subplugin has the right workflow behaviour, this can works also
         # so if we have 'pre_validation_keep_reviewer_permissions' apply it, either,
         # check if self.runSearchItemsToValidateOfEveryReviewerLevelsAndLowerLevelsTest() is True
-        if not 'pre_validation_keep_reviewer_permissions' in cfg.listWorkflowAdaptations() and \
+        if 'pre_validation_keep_reviewer_permissions' not in cfg.listWorkflowAdaptations() and \
            not self.runSearchItemsToValidateOfEveryReviewerLevelsAndLowerLevelsTest():
             pm_logger.info("Could not launch test 'test_pm_SearchItemsToValidateOfEveryReviewerLevelsAndLowerLevels' "
                            "because we need a correctly configured workflow.")
@@ -688,7 +688,7 @@ class testSearches(PloneMeetingTestCase):
            a list of items in state 'returned_to_proposing_group' the current user is able to edit.'''
         # specify that copyGroups can see the item when it is proposed
         cfg = self.meetingConfig
-        if not 'return_to_proposing_group' in cfg.listWorkflowAdaptations():
+        if 'return_to_proposing_group' not in cfg.listWorkflowAdaptations():
             pm_logger.info("Bypassing test test_pm_SearchItemsToCorrect because it "
                            "needs the 'return_to_proposing_group' wfAdaptation.")
             return
@@ -703,7 +703,7 @@ class testSearches(PloneMeetingTestCase):
         self.assertEquals(adapter.query,
                           {'review_state': {'query': ['unknown_review_state']}})
         wfAdaptations = list(cfg.getWorkflowAdaptations())
-        if not 'return_to_proposing_group' in wfAdaptations:
+        if 'return_to_proposing_group' not in wfAdaptations:
             wfAdaptations.append('return_to_proposing_group')
         cfg.setWorkflowAdaptations(wfAdaptations)
         performWorkflowAdaptations(cfg, logger=pm_logger)
@@ -758,7 +758,7 @@ class testSearches(PloneMeetingTestCase):
            'returned_to_proposing_group_proposed' the current user is able to edit.'''
         # specify that copyGroups can see the item when it is proposed
         cfg = self.meetingConfig
-        if not 'return_to_proposing_group_with_last_validation' in cfg.listWorkflowAdaptations():
+        if 'return_to_proposing_group_with_last_validation' not in cfg.listWorkflowAdaptations():
             pm_logger.info(
                 "Bypassing test test_pm_SearchItemsToCorrectToValidateHighestHierarchicLevel because it "
                 "needs the 'return_to_proposing_group_with_last_validation' wfAdaptation.")
@@ -774,7 +774,7 @@ class testSearches(PloneMeetingTestCase):
         self.assertEquals(adapter.query,
                           {'review_state': {'query': ['unknown_review_state']}})
         wfAdaptations = list(cfg.getWorkflowAdaptations())
-        if not 'return_to_proposing_group_with_last_validation' in wfAdaptations:
+        if 'return_to_proposing_group_with_last_validation' not in wfAdaptations:
             wfAdaptations.append('return_to_proposing_group_with_last_validation')
         # desactivate simple return to proposing group wf
         if 'return_to_proposing_group' in wfAdaptations:
@@ -848,7 +848,7 @@ class testSearches(PloneMeetingTestCase):
            'returned_to_proposing_group_proposed' the current user is able to edit.'''
         # specify that copyGroups can see the item when it is proposed or prevalidated
         cfg = self.meetingConfig
-        if not 'return_to_proposing_group_with_all_validations' in cfg.listWorkflowAdaptations():
+        if 'return_to_proposing_group_with_all_validations' not in cfg.listWorkflowAdaptations():
             pm_logger.info(
                 "Bypassing test test_pm_SearchItemsToCorrectToValidateOfEveryReviewerGroups because it "
                 "needs the 'return_to_proposing_group_with_all_validations' wfAdaptation.")
@@ -865,9 +865,9 @@ class testSearches(PloneMeetingTestCase):
         self.assertEquals(adapter.query,
                           {'review_state': {'query': ['unknown_review_state']}})
         wfAdaptations = list(cfg.getWorkflowAdaptations())
-        if not 'pre_validation' in wfAdaptations:
+        if 'pre_validation' not in wfAdaptations:
             wfAdaptations.append('pre_validation')
-        if not 'return_to_proposing_group_with_all_validations' in wfAdaptations:
+        if 'return_to_proposing_group_with_all_validations' not in wfAdaptations:
             wfAdaptations.append('return_to_proposing_group_with_all_validations')
         # desactivate simple return to proposing group wf
         if 'return_to_proposing_group' in wfAdaptations:

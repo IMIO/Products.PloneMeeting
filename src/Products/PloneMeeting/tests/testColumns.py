@@ -53,14 +53,14 @@ class testColumns(PloneMeetingTestCase):
                                  description='Public item description')
         self.addAnnex(publicItem)
         publicItem.setPrivacy('public')
-        publicItem.at_post_edit_script()
+        publicItem._update_after_edit()
         publicBrain = self.portal.portal_catalog(UID=publicItem.UID())[0]
         secretItem = self.create('MeetingItem',
                                  title='Secret item title',
                                  description='Secret item description')
         self.addAnnex(secretItem)
         secretItem.setPrivacy('secret')
-        secretItem.at_post_edit_script()
+        secretItem._update_after_edit()
         secretBrain = self.portal.portal_catalog(UID=secretItem.UID())[0]
 
         meetingFolder = self.getMeetingFolder()
