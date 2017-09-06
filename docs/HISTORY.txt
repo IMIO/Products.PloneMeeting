@@ -30,6 +30,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Refactored use of Meeting.at_post_edit_script and MeetingItem.at_post_edit_script : it is no more used directly
   but we use _update_after_edit that handles call to at_post_edit_script and the ObjectModifiedEvent. This way
   we avoid multiple call to event or reindexation when calling at_post_edit_script directly or thru processForm
+- Use declarePrivate for MeetingItem.getItemClonedToOtherMC as we now query the item cloned to another MC with
+  an unrestrictedSearch as this item could not be viewable by current user
 
 4.0 (2017-08-04)
 ----------------
