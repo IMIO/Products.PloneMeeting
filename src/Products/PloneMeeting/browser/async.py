@@ -56,7 +56,7 @@ class Discuss(BrowserView):
         src = "%s/%s" % (portal_url, filename)
 
         html = self.IMG_TEMPLATE % (src, title, name)
-        self.context.at_post_edit_script()
+        self.context._update_after_edit()
         return html
 
     def synchToggle(self, itemUid, discussAction):
@@ -85,7 +85,7 @@ class Discuss(BrowserView):
             toDiscuss = not item.getToDiscuss()
             item.setToDiscuss(toDiscuss)
             item.adapted().onDiscussChanged(toDiscuss)
-        self.context.at_post_edit_script()
+        self.context._update_after_edit()
         return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 
 
@@ -205,7 +205,7 @@ class AdviceIsConfidential(BrowserView):
         portal_url = self.portal_state.portal_url()
         src = "%s/%s" % (portal_url, filename)
         html = self.IMG_TEMPLATE % (src, title, name)
-        self.context.at_post_edit_script()
+        self.context._update_after_edit()
         return html
 
 
@@ -256,7 +256,7 @@ class BudgetRelated(BrowserView):
         # reload the page if current toggle did change adviceIndex
         # indeed, budgetRelated informations often impact automtic advices
         storedAdviceIndex = self.context.adviceIndex
-        self.context.at_post_edit_script()
+        self.context._update_after_edit()
         if not self.context.adviceIndex == storedAdviceIndex:
             # we set a status reponse of 500 so the jQuery calling this
             # will refresh the page

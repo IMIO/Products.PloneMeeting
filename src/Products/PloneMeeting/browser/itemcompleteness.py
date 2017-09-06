@@ -63,17 +63,17 @@ class ChangeItemCompletenessView(BrowserView):
             self._changeCompleteness(self.request.get('new_completeness_value'),
                                      comment=self.request.get('comment', ''))
             # update item
-            self.context.at_post_edit_script()
+            self.context._update_after_edit()
             return self.request.RESPONSE.redirect(self.context.absolute_url())
         return self.index()
 
     def _changeCompleteness(self, new_completeness_value, bypassSecurityCheck=False, comment=''):
         '''Helper method that change completeness and manage completeness history.'''
         # make sure new_completeness_value exists in MeetingItem.listCompleteness vocabulary
-        if not new_completeness_value in self.context.listCompleteness():
+        if new_completeness_value not in self.context.listCompleteness():
             raise KeyError("New value %s does not correspond to a value of MeetingItem.listCompleteness")
 
-        if not bypassSecurityCheck and not new_completeness_value in \
+        if not bypassSecurityCheck and new_completeness_value not in \
            self.context.restrictedTraverse('@@item-completeness').listSelectableCompleteness():
             raise Unauthorized
         self.context.setCompleteness(new_completeness_value)

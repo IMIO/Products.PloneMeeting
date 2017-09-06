@@ -12,6 +12,7 @@
 from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
 from zope.interface import implements
+from zope.lifecycleevent import ObjectModifiedEvent
 import interfaces
 
 from Products.Archetypes.atapi import BooleanField
@@ -1816,6 +1817,18 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         self.adapted().onEdit(isCreated=True)
         self.reindexObject()
 
+    def _update_after_edit(self):
+        """Convenience method that make sure ObjectModifiedEvent and
+           at_post_edit_script are called, like it is the case in
+           Archetypes.BaseObject.processForm.
+           We also call reindexObject here so we avoid multiple reindexation
+           as it is already done in processForm.
+           This is called when we change something on a meeting and we do not
+           use processForm."""
+        notify(ObjectModifiedEvent(self))
+        self.at_post_edit_script()
+        self.reindexObject()
+
     security.declarePrivate('at_post_edit_script')
 
     def at_post_edit_script(self):
@@ -1834,7 +1847,6 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         self.updateItemReferences(check_needed=True)
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=False)
-        self.reindexObject()
         # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
 

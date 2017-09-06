@@ -51,7 +51,7 @@ class ChangeItemListTypeView(BrowserView):
         '''Change listType value.'''
         self._changeListType(new_value)
         # update item
-        self.context.at_post_edit_script()
+        self.context._update_after_edit()
 
     def _changeListType(self, new_value):
         '''Helper method that changes listType value and check that :
@@ -60,7 +60,7 @@ class ChangeItemListTypeView(BrowserView):
         # make sure new_value exists
         factory = queryUtility(IVocabularyFactory,
                                'Products.PloneMeeting.vocabularies.listtypesvocabulary')
-        if not new_value in factory(self.context):
+        if new_value not in factory(self.context):
             raise KeyError("New value '{0}' does not correspond to a value of MeetingItem.listType".
                            format(new_value))
 

@@ -11,6 +11,7 @@
 
 import logging
 from zope.interface import implements
+from zope.lifecycleevent import ObjectModifiedEvent
 from appy.gen import No
 from collections import OrderedDict
 from copy import deepcopy
@@ -4896,6 +4897,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self.adapted().onEdit(isCreated=True)
         self.reindexObject()
 
+    def _update_after_edit(self):
+        """Convenience method that make sure ObjectModifiedEvent and
+           at_post_edit_script are called, like it is the case in
+           Archetypes.BaseObject.processForm.
+           We also call reindexObject here so we avoid multiple reindexation
+           as it is already done in processForm.
+           This is called when we change something on an item and we do not
+           use processForm."""
+        notify(ObjectModifiedEvent(self))
+        self.at_post_edit_script()
+        self.reindexObject()
+
     security.declarePrivate('at_post_edit_script')
 
     def at_post_edit_script(self):
@@ -4909,7 +4922,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         forceHTMLContentTypeForEmptyRichFields(self)
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=False)
-        self.reindexObject()
 
     security.declarePublic('updateHistory')
 

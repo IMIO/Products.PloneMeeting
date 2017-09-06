@@ -8,6 +8,7 @@ from z3c.form import button
 from z3c.form import field
 from z3c.form import form
 from plone import api
+from plone.z3cform.layout import wrap_form
 from Products.Archetypes import DisplayList
 from Products.CMFCore.utils import getToolByName
 from Products.Five.browser import BrowserView
@@ -109,7 +110,7 @@ class ItemEmergencyChangeForm(form.Form):
         # if not available, just raise Unauthorized
         new_emergency_value = data.get('new_emergency_value')
         itemEmergencyView = self.context.restrictedTraverse('@@item-emergency')
-        if not new_emergency_value in itemEmergencyView.listSelectableEmergencies():
+        if new_emergency_value not in itemEmergencyView.listSelectableEmergencies():
             raise Unauthorized
         self.context.setEmergency(new_emergency_value)
         # add a line to the item's emergency_change_history
@@ -120,7 +121,7 @@ class ItemEmergencyChangeForm(form.Form):
                         'comments': data['comment']}
         self.context.emergency_changes_history.append(history_data)
         # update item
-        self.context.at_post_edit_script()
+        self.context._update_after_edit()
         plone_utils = api.portal.get_tool('plone_utils')
         plone_utils.addPortalMessage(_("Item emergency changed."))
         self.request.RESPONSE.redirect(self.context.absolute_url())
@@ -153,5 +154,4 @@ class ItemEmergencyChangeForm(form.Form):
             u"${new_emergency_value}</span>, please enter a comment.")
         super(ItemEmergencyChangeForm, self).updateWidgets()
 
-from plone.z3cform.layout import wrap_form
 ItemEmergencyChangeFormWrapper = wrap_form(ItemEmergencyChangeForm)

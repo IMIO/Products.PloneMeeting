@@ -27,6 +27,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   folder containing item templates of the MeetingConfig (itemtemplates) and will be able to manage it
 - Removed the event logging (element added, edited, deleted, ...), we now rely on collective.fingerpointing that
   is included in imio.actionspanel >= 1.30
+- Refactored use of Meeting.at_post_edit_script and MeetingItem.at_post_edit_script : it is no more used directly
+  but we use _update_after_edit that handles call to at_post_edit_script and the ObjectModifiedEvent. This way
+  we avoid multiple call to event or reindexation when calling at_post_edit_script directly or thru processForm
 
 4.0 (2017-08-04)
 ----------------

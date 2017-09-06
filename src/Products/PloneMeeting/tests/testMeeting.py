@@ -1728,7 +1728,7 @@ class testMeeting(PloneMeetingTestCase):
         self.assertTrue(not meeting.Title() == self.tool.formatMeetingDate(meeting))
         self.assertTrue(not meeting.getPlace() == 'Yet another place')
         # at_post_edit_script takes care of updating title and place
-        meeting.at_post_edit_script()
+        meeting._update_after_edit()
         self.assertTrue(meeting.Title() == self.tool.formatMeetingDate(meeting))
         self.assertTrue(meeting.getPlace() == 'Yet another place')
 
@@ -1848,7 +1848,7 @@ class testMeeting(PloneMeetingTestCase):
         self.addAnnex(anItem)
         # add an advice as removing item/advice calls onAdviceRemoved
         anItem.setOptionalAdvisers(('vendors',))
-        anItem.at_post_edit_script()
+        anItem._update_after_edit()
         self.changeUser('pmReviewer2')
         createContentInContainer(anItem,
                                  'meetingadvice',
@@ -1944,7 +1944,7 @@ class testMeeting(PloneMeetingTestCase):
         beforeEdit_rendered_actions_panel = actions_panel()
         # now edit the meeting
         meeting.setDate(DateTime('2010/10/10'))
-        meeting.at_post_edit_script()
+        meeting._update_after_edit()
         # action is available
         object_buttons = [k['id'] for k in pa.listFilteredActionsFor(meeting)['object_buttons']]
         self.assertTrue('dummy' in object_buttons)
@@ -1991,7 +1991,7 @@ class testMeeting(PloneMeetingTestCase):
         # for now, the actions panel is still the same
         dummyItemAction_rendered_actions_panel = actions_panel()
         self.assertTrue(frozenMeeting_rendered_actions_panel == dummyItemAction_rendered_actions_panel)
-        item.at_post_edit_script()
+        item._update_after_edit()
         # the actions panel has been invalidated
         dummyItemAction_rendered_actions_panel = actions_panel()
         self.assertTrue(not frozenMeeting_rendered_actions_panel == dummyItemAction_rendered_actions_panel)
@@ -2009,7 +2009,7 @@ class testMeeting(PloneMeetingTestCase):
                                                                                          MEETINGMANAGERS_GROUP_SUFFIX))
         # we need to reconnect for groups changes to take effect
         self.changeUser('pmManager')
-        self.assertTrue(not 'MeetingManager' in self.member.getRolesInContext(meeting))
+        self.assertTrue('MeetingManager' not in self.member.getRolesInContext(meeting))
         self.assertFalse(self.hasPermission(ReviewPortalContent, meeting))
         self.assertTrue(not meetingManager_rendered_actions_panel == actions_panel())
 
@@ -2190,10 +2190,10 @@ class testMeeting(PloneMeetingTestCase):
         setFieldFromAjax(meeting, 'observations', text)
         self.assertTrue('mascotte-presentation.jpg' in meeting.objectIds())
 
-        # test using at_post_edit_script, aka full edit form
+        # test using processForm, aka full edit form
         text = '<p>Working external image <img src="http://www.imio.be/spw.png"/>.</p>'
         meeting.setObservations(text)
-        meeting.at_post_edit_script()
+        meeting.processForm()
         self.assertTrue('spw.png' in meeting.objectIds())
 
     def test_pm_MeetingLocalRolesUpdatedEvent(self):
@@ -2346,8 +2346,8 @@ class testMeeting(PloneMeetingTestCase):
             item2.reindexObject()
         self.assertFalse(self.hasPermission(View, item2))
         # there are unaccessible items
-        self.assertTrue(len(meeting.getItems(ordered=True, useCatalog=True))
-                        < meeting.numberOfItems())
+        self.assertTrue(
+            len(meeting.getItems(ordered=True, useCatalog=True)) < meeting.numberOfItems())
         # enable item references update
         self.request.set('need_Meeting_updateItemReferences', True)
         # make sure it will be changed
