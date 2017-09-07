@@ -1527,7 +1527,7 @@ class testMeeting(PloneMeetingTestCase):
         self.assertTrue(not item.wfConditions().mayPresent())
         # MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject returns nothing
         # as no meeting in the future
-        self.assertTrue(not item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(item.getPreferredMeeting()))
+        self.assertIsNone(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject())
 
         # clean RAM cache for MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject
         # and set meeting date in the future, it will be found because no meetingPresentItemWhenNoCurrentMeetingStates
@@ -1538,13 +1538,13 @@ class testMeeting(PloneMeetingTestCase):
         # item may be presented in the meeting
         self.assertTrue(item.wfConditions().mayPresent())
         # there is a meeting to insert into
-        self.assertTrue(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(item.getPreferredMeeting()))
+        self.assertEqual(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting)
 
         # define meetingPresentItemWhenNoCurrentMeetingStates to ('created', )
         cfg.setMeetingPresentItemWhenNoCurrentMeetingStates(('created', ))
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject')
         # meeting is found because it is 'created'
-        self.assertTrue(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(item.getPreferredMeeting()))
+        self.assertEqual(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting)
         # present the item as normal item
         self.presentItem(item)
         self.assertTrue(item.queryState() == 'presented')
@@ -1563,34 +1563,26 @@ class testMeeting(PloneMeetingTestCase):
         # freeze the meeting2, it will not be in the available meetings so item2 will take meeting to present
         self.freezeMeeting(meeting2)
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject')
-        self.assertEquals(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(item.getPreferredMeeting()),
-                          meeting)
-        self.assertEquals(item2.getMeetingToInsertIntoWhenNoCurrentMeetingObject(item2.getPreferredMeeting()),
-                          meeting)
+        self.assertEquals(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting)
+        self.assertEquals(item2.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting)
 
         # make frozen meetings accept items
         cfg.setMeetingPresentItemWhenNoCurrentMeetingStates(('created', 'frozen', ))
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject')
-        self.assertEquals(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(item.getPreferredMeeting()),
-                          meeting)
+        self.assertEquals(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting)
         # preferred meeting is preferred if available
-        self.assertEquals(item2.getMeetingToInsertIntoWhenNoCurrentMeetingObject(item2.getPreferredMeeting()),
-                          meeting2)
+        self.assertEquals(item2.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting2)
         # if meeting2 is no more frozen, item2 will take meeting
         self.decideMeeting(meeting2)
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject')
-        self.assertEquals(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(item.getPreferredMeeting()),
-                          meeting)
-        self.assertEquals(item2.getMeetingToInsertIntoWhenNoCurrentMeetingObject(item2.getPreferredMeeting()),
-                          meeting)
+        self.assertEquals(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting)
+        self.assertEquals(item2.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting)
 
         # except if no meetingPresentItemWhenNoCurrentMeetingStates
         cfg.setMeetingPresentItemWhenNoCurrentMeetingStates(())
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject')
-        self.assertEquals(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(item.getPreferredMeeting()),
-                          meeting)
-        self.assertEquals(item2.getMeetingToInsertIntoWhenNoCurrentMeetingObject(item2.getPreferredMeeting()),
-                          meeting2)
+        self.assertEquals(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting)
+        self.assertEquals(item2.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting2)
 
         # present items, it is presented in the right meeting
         self.presentItem(item)
@@ -1617,20 +1609,41 @@ class testMeeting(PloneMeetingTestCase):
         self.assertTrue(meeting1.queryState() in meeting1.getBeforeFrozenStates())
         self.assertTrue(meeting2.queryState() in meeting1.getBeforeFrozenStates())
         self.assertTrue(meeting1.getDate() < meeting2.getDate())
-        self.assertEqual(
-            item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(ITEM_NO_PREFERRED_MEETING_VALUE),
-            meeting1)
+        self.assertEqual(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting1)
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject')
         # freeze meeting1, meeting2 is used
         self.freezeMeeting(meeting1)
         self.assertFalse(meeting1.queryState() in meeting1.getBeforeFrozenStates())
-        self.assertEqual(
-            item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(ITEM_NO_PREFERRED_MEETING_VALUE),
-            meeting2)
+        self.assertEqual(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting2)
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject')
         # delete meeting2, None is returned
         self.deleteAsManager(meeting2.UID())
-        self.assertIsNone(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(ITEM_NO_PREFERRED_MEETING_VALUE))
+        self.assertIsNone(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject())
+
+    def test_pm_PresentItemWhenNoPublishedMeetingAndNextMeetingInFutureDoesNotAcceptItems(self):
+        '''If next meeting in future does not accept items, even if it is the preferred meeting for the item,
+           it is not used, but the next meeting in the future, aka None if not or next created meeting.
+        '''
+        cfg = self.meetingConfig
+        self.assertEqual(cfg.getMeetingPresentItemWhenNoCurrentMeetingStates(), tuple())
+
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        meeting1 = self.create('Meeting', date=DateTime() - 1)
+        meeting2 = self.create('Meeting', date=DateTime() + 1)
+        self.validateItem(item)
+        # unset current meeting
+        item.REQUEST['PUBLISHED'] = item
+
+        # close meeting1, meeting2 is used
+        self.closeMeeting(meeting1)
+        self.assertFalse(meeting1.wfConditions().mayAcceptItems())
+        self.assertEqual(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting2)
+        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject')
+        # even if meeting1 is set as preferred meeting
+        item.setPreferredMeeting(meeting1.UID())
+        item.reindexObject()
+        self.assertEqual(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting2)
 
     def test_pm_Validate_date(self):
         """
