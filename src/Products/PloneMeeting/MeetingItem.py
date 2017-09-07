@@ -218,8 +218,7 @@ class MeetingItemWorkflowConditions:
         # Indeed, an item may only be presented within a meeting.
         # if we are not on a meeting, try to get the next meeting accepting items
         if not self._publishedObjectIsMeeting():
-            meeting = self.context.getMeetingToInsertIntoWhenNoCurrentMeetingObject(
-                self.context.getPreferredMeeting())
+            meeting = self.context.getMeetingToInsertIntoWhenNoCurrentMeetingObject()
             return bool(meeting)
 
         # here we are sure that we have a meeting that will accept the item
@@ -489,8 +488,7 @@ class MeetingItemWorkflowActions:
         # the item in the next available meeting
         if not meeting:
             # find meetings accepting items in the future
-            meeting = self.context.getMeetingToInsertIntoWhenNoCurrentMeetingObject(
-                self.context.getPreferredMeeting())
+            meeting = self.context.getMeetingToInsertIntoWhenNoCurrentMeetingObject()
         self.context.REQUEST.set('currentlyInsertedItem', self.context)
         meeting.insertItem(self.context, forceNormal=self._forceInsertNormal())
         # If the meeting is already frozen and this item is a "late" item,
@@ -2263,13 +2261,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res = brains[0]
         return res
 
-    def getMeetingToInsertIntoWhenNoCurrentMeetingObject_cachekey(method, self, preferredMeeting):
+    def getMeetingToInsertIntoWhenNoCurrentMeetingObject_cachekey(method, self):
         '''cachekey method for self.getMeetingToInsertIntoWhenNoCurrentMeetingObject.'''
         # do only recompute once by REQUEST
-        return (self, str(self.REQUEST._debug), preferredMeeting)
+        return (self, str(self.REQUEST._debug))
 
     @ram.cache(getMeetingToInsertIntoWhenNoCurrentMeetingObject_cachekey)
-    def getMeetingToInsertIntoWhenNoCurrentMeetingObject(self, preferredMeeting):
+    def getMeetingToInsertIntoWhenNoCurrentMeetingObject(self):
         '''Return the meeting the item will be inserted into in case the 'present'
            transition from another view than the meeting view.  This will take into
            acount meeting states defined in MeetingConfig.meetingPresentItemWhenNoCurrentMeetingStates.'''
@@ -2280,23 +2278,29 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # indeed, in some case the tuple ('created', 'frozen') behaves specifically
         meetingStates = list(cfg.getMeetingPresentItemWhenNoCurrentMeetingStates())
         brains = []
+        preferredMeeting = self.getPreferredMeeting()
         if preferredMeeting != ITEM_NO_PREFERRED_MEETING_VALUE:
             # preferredMeeting, try to get it from meetingsAcceptingItems or
             # use meetingsAcceptingItems in the future
             brains = cfg.adapted().getMeetingsAcceptingItems(review_states=meetingStates)
             brains = [brain for brain in brains if brain.UID == preferredMeeting]
-        if not brains:
-            # no preferredMeeting or it was not found in meetingsAcceptingItems
-            # take into account meetings in the future
-            brains = cfg.adapted().getMeetingsAcceptingItems(review_states=meetingStates,
-                                                             inTheFuture=True)
+
+        # extend brains with other meetings accepting items, this way if preferred meeting
+        # does not accept items, we will have other possibilities
+        # no preferredMeeting or it was not found in meetingsAcceptingItems
+        # take into account meetings in the future
+        brains += list(cfg.adapted().getMeetingsAcceptingItems(
+            review_states=meetingStates, inTheFuture=True))
 
         for brain in brains:
             meeting = brain.getObject()
             # find a meeting that is really accepting current item
             # in case meeting is frozen, make sure current item isLateFor(meeting)
-            if meeting.queryState() in meeting.getBeforeFrozenStates() or \
-               self.wfConditions().isLateFor(meeting):
+            # also in case no meetingStates, a closed meeting could be returned, check
+            # that current user may edit returned meeting
+            if meeting.wfConditions().mayAcceptItems() and (
+                    meeting.queryState() in meeting.getBeforeFrozenStates() or
+                    self.wfConditions().isLateFor(meeting)):
                 return meeting
         return None
 
