@@ -1002,7 +1002,7 @@ class ItemsOfMyGroupsAdapter(CompoundCriterionBaseAdapter):
     def query_itemsofmygroups(self):
         '''Queries all items of groups of the current user, no matter wich suffix
            of the group the user is in.'''
-        userGroupIds = [mGroup.getId() for mGroup in self.tool.getGroupsForUser()]
+        userGroupIds = [mGroup.getId() for mGroup in self.tool.getGroupsForUser(active=False)]
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 'getProposingGroup': {'query': userGroupIds}, }
 
