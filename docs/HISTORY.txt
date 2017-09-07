@@ -32,6 +32,10 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   we avoid multiple call to event or reindexation when calling at_post_edit_script directly or thru processForm
 - Use declarePrivate for MeetingItem.getItemClonedToOtherMC as we now query the item cloned to another MC with
   an unrestrictedSearch as this item could not be viewable by current user
+- Make sure an item is never presented in a meeting that is no more accepting items (like a closed meeting).  This could
+  be the case when a closed meeting was the preferred meeting of an item when using 'present' button on the item view.
+  Method MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject does not receive the preferredMeeting parameter
+  anymore as we are on the item
 
 4.0 (2017-08-04)
 ----------------
