@@ -5626,6 +5626,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return True
         return False
 
+    security.declarePrivate('getItemClonedToOtherMC')
+
     def getItemClonedToOtherMC(self, destMeetingConfigId, theObject=True):
         '''Returns the item cloned to the destMeetingConfigId if any.
            If p_theObject is True, the real object is returned, if not, we return the brain.'''
@@ -5634,15 +5636,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         itemUID = ann.get(annotation_key, None)
         if itemUID:
             catalog = api.portal.get_tool('portal_catalog')
-            # we search unrestricted because current user could not have access
-            # to the other item, but we need to get some metadata about it...
-            if not theObject:
-                brains = catalog.unrestrictedSearchResults(UID=itemUID)
-            else:
-                brains = catalog(UID=itemUID)
+            # we search unrestricted because current user could not have access to the other item
+            brains = catalog.unrestrictedSearchResults(UID=itemUID)
             if brains:
                 if theObject:
-                    return brains[0].getObject()
+                    return brains[0]._unrestrictedGetObject()
                 else:
                     return brains[0]
         return None

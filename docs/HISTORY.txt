@@ -15,6 +15,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   nevertheless not be a meeting into which item could be presented because it was frozen and item was not
   isLateFor(meeting).  The isLateFor check is now done in the MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject
   and not more in the mayPresent method
+- Use declarePrivate for MeetingItem.getItemClonedToOtherMC as we now query the item cloned to another MC with
+  an unrestrictedSearch as this item could not be viewable by current user
 
 
 4.0 (2017-08-04)
