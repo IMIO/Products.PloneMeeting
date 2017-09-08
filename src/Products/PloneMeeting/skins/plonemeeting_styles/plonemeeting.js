@@ -510,7 +510,7 @@ function toggleIcon(UID, img_tag, baseUrl, viewName, baseSelector) {
     var $img = $(img_tag).appendTo($span);
     // only redefine a onclick if not already defined in the HTML
     // this way, if a specific onclick is defined by the called view, we keep it
-    if ($img.attr('onclick') === null) {
+    if (!($img.attr('onclick'))) {
         $img.click(function() {
             asyncToggleIcon(UID, baseUrl, viewName, baseSelector);
         });
