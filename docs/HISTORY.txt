@@ -7,10 +7,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Versions 3.0.x are for Plone < 4.3
 - Versions 3.1.+ are for Plone 4.3+
 
-4.1 (unreleased)
-----------------
-
-- Nothing changed yet.
+4.1 (backports)
+---------------
 - Fixed bug in MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject where returned meeting could
   nevertheless not be a meeting into which item could be presented because it was frozen and item was not
   isLateFor(meeting).  The isLateFor check is now done in the MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject
@@ -21,12 +19,14 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   be the case when a closed meeting was the preferred meeting of an item when using 'present' button on the item view.
   Method MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject does not receive the preferredMeeting parameter
   anymore as we are on the item
+- In the 'items-of-my-groups' adapter used for the searchitemsofmygroups Collection,
+  query also items of groups that are deactivated
 
 
 4.0 (2017-08-04)
 ----------------
 - Moved to Plone 4.3.8
-- Moved to collective.ckeditor 4.5.0 (CKEditor 4.6.2)
+- Moved to collective.ckeditor 4.6.0 (CKEditor 4.7.2)
 - Moved to collective.documentviewer 3.0.3
 - Rely on beautifulsoup4, Products.CPUtils, collective.messagesviewlet
 - Get rid of ArchGenXML, just use it for workflows generation
