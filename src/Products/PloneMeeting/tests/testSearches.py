@@ -55,6 +55,42 @@ class testSearches(PloneMeetingTestCase):
                 break
         self.assertEquals(collectionCriterion.default, searchallitems.UID())
 
+    def test_pm_SearchItemsOfMyGroups(self):
+        '''Test the 'items-of-my-groups' adapter that returns items using proposingGroup
+           the current user is in.'''
+        cfg = self.meetingConfig
+        itemTypeName = cfg.getItemTypeName()
+
+        # siteadmin is not member of any PloneMeeting groups
+        adapter = getAdapter(cfg, ICompoundCriterionFilter, name='items-of-my-groups')
+        self.changeUser('siteadmin')
+        self.assertEqual(adapter.query,
+                         {'getProposingGroup': {'query': []},
+                          'portal_type':  {'query': itemTypeName}})
+
+        # pmManager is member of 'developers' and 'vendors'
+        self.changeUser('pmManager')
+        cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemsofmygroups')
+        self.assertEqual(adapter.query,
+                         {'getProposingGroup': {'query': ['developers', 'vendors']},
+                          'portal_type':  {'query': itemTypeName}})
+
+        # pmCreator1 is member of 'developers'
+        self.changeUser('pmCreator1')
+        cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemsofmygroups')
+        self.assertEqual(adapter.query,
+                         {'getProposingGroup': {'query': ['developers']},
+                          'portal_type':  {'query': itemTypeName}})
+
+        # a deactivated group is still listed
+        self.changeUser('siteadmin')
+        self.do(self.tool.developers, 'deactivate')
+        self.changeUser('pmManager')
+        cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemsofmygroups')
+        self.assertEqual(adapter.query,
+                         {'getProposingGroup': {'query': ['developers', 'vendors']},
+                          'portal_type':  {'query': itemTypeName}})
+
     def test_pm_SearchItemsToAdviceAdapter(self):
         '''Test the 'search-items-to-advice' adapter that should return a list of items
            a user has to give an advice for.'''

@@ -21,6 +21,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   be the case when a closed meeting was the preferred meeting of an item when using 'present' button on the item view.
   Method MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject does not receive the preferredMeeting parameter
   anymore as we are on the item
+- In the 'items-of-my-groups' adapter used for the searchitemsofmygroups Collection,
+  query also items of groups that are deactivated
 
 
 4.0 (2017-08-04)
