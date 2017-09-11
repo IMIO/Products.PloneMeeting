@@ -21,6 +21,10 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   anymore as we are on the item
 - In the 'items-of-my-groups' adapter used for the searchitemsofmygroups Collection,
   query also items of groups that are deactivated
+- MeetingConfig.getMeetingsAcceptingItems is no more adaptable, just the underlying method
+  MeetingConfig.getMeetingsAcceptingItemsAdditionalManagerStates is adaptable
+- Added caching for MeetingConfig.getMeetingsAcceptingItems, cache is available during entire request
+- Moved condition for MeetingItem.updateItemReference to MeetingItem._mayUpdateItemReference that is adaptable
 
 
 4.0 (2017-08-04)

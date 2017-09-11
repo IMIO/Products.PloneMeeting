@@ -77,7 +77,7 @@ class Renderer(base.Renderer, FacetedRenderer):
         pmFolder = self.getPloneMeetingFolder()
         # if we are on a Meeting, it provides IFacetedNavigable but we want to display user pmFolder facetednav
         contextURL = self.context.absolute_url()
-        if (not 'portal_plonemeeting' in contextURL and
+        if ('portal_plonemeeting' not in contextURL and
             not contextURL.startswith(pmFolder.absolute_url())) or \
            IMeeting.providedBy(self.context):
             return self.cfg.searches

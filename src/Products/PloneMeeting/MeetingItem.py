@@ -2282,14 +2282,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if preferredMeeting != ITEM_NO_PREFERRED_MEETING_VALUE:
             # preferredMeeting, try to get it from meetingsAcceptingItems or
             # use meetingsAcceptingItems in the future
-            brains = cfg.adapted().getMeetingsAcceptingItems(review_states=meetingStates)
+            brains = cfg.getMeetingsAcceptingItems(review_states=meetingStates)
             brains = [brain for brain in brains if brain.UID == preferredMeeting]
 
         # extend brains with other meetings accepting items, this way if preferred meeting
         # does not accept items, we will have other possibilities
         # no preferredMeeting or it was not found in meetingsAcceptingItems
         # take into account meetings in the future
-        brains += list(cfg.adapted().getMeetingsAcceptingItems(
+        brains += list(cfg.getMeetingsAcceptingItems(
             review_states=meetingStates, inTheFuture=True))
 
         for brain in brains:
@@ -2408,7 +2408,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         # save meetingUIDs, it will be necessary here under
-        for meetingBrain in cfg.adapted().getMeetingsAcceptingItems():
+        for meetingBrain in cfg.getMeetingsAcceptingItems():
             meetingDate = tool.formatMeetingDate(meetingBrain, withHour=True)
             meetingState = translate(meetingBrain.review_state,
                                      domain="plone",
@@ -2861,6 +2861,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res = self.context
         return res
 
+    def _mayUpdateItemReference(self):
+        '''See docstring in interfaces.py.'''
+        item = self.getSelf()
+        meeting = item.getMeeting()
+        return bool(
+            meeting and meeting.queryState() not in meeting.getBeforeFrozenStates())
+
     security.declarePublic('updateItemReference')
 
     def updateItemReference(self):
@@ -2870,7 +2877,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = ''
         item = self.getSelf()
         meeting = item.getMeeting()
-        if meeting and not meeting.queryState() in meeting.getBeforeFrozenStates():
+        if self.adapted()._mayUpdateItemReference():
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(item)
             res = _evaluateExpression(item,
@@ -2878,8 +2885,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                       roles_bypassing_expression=[],
                                       extra_expr_ctx={'item': item,
                                                       'meeting': meeting})
-            if not res:
-                res = ''
+            # make sure we do not have None
+            res = res or ''
 
         stored = self.getField('itemReference').get(self)
         if stored != res:
@@ -4647,7 +4654,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                             wfTool.doActionFor(adviceObj, 'backToAdviceInitialState', comment=wf_comment)
                         except WorkflowException:
                             # if we have another workflow than default meetingadvice_workflow
-                            # maybe we can not 'backToAdviceUnderEdit'
+                            # maybe we can not 'backToAdviceInitialState'
                             pass
                         self.REQUEST.set('mayBackToAdviceInitialState', False)
                     self.adviceIndex[groupId]['advice_editable'] = True
@@ -5387,12 +5394,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         """Returns the logical meeting the item should be presented in
            when it will be sent to given p_destMeetingConfig."""
         if destMeetingConfig.getId() in self.getOtherMeetingConfigsClonableToEmergency():
-            meetingsAcceptingItems = destMeetingConfig.adapted().getMeetingsAcceptingItems(
+            meetingsAcceptingItems = destMeetingConfig.getMeetingsAcceptingItems(
                 inTheFuture=True)
         else:
             wfTool = api.portal.get_tool('portal_workflow')
             meetingWF = wfTool.getWorkflowsFor(destMeetingConfig.getMeetingTypeName())[0]
-            meetingsAcceptingItems = destMeetingConfig.adapted().getMeetingsAcceptingItems(
+            meetingsAcceptingItems = destMeetingConfig.getMeetingsAcceptingItems(
                 review_states=(wfTool[meetingWF.getId()].initial_state, ),
                 inTheFuture=True)
         res = None

@@ -5698,18 +5698,22 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         return ('decided', 'published', )
 
+    def getMeetingsAcceptingItems_cachekey(method, self, review_states=('created', 'frozen'), inTheFuture=False):
+        '''cachekey method for self.getMeetingsAcceptingItems.'''
+        return (self, str(self.REQUEST._debug), review_states, inTheFuture)
+
+    @ram.cache(getMeetingsAcceptingItems_cachekey)
     def getMeetingsAcceptingItems(self, review_states=('created', 'frozen'), inTheFuture=False):
         '''See doc in interfaces.py.'''
-        cfg = self.getSelf()
         tool = api.portal.get_tool('portal_plonemeeting')
         catalog = api.portal.get_tool('portal_catalog')
         # If the current user is a meetingManager (or a Manager),
         # he is able to add a meetingitem to a 'decided' meeting.
         # except if we specifically restricted given p_review_states.
-        if review_states == ('created', 'frozen') and tool.isManager(cfg):
-            review_states += cfg.adapted().getMeetingsAcceptingItemsAdditionalManagerStates()
+        if review_states == ('created', 'frozen') and tool.isManager(self):
+            review_states += self.adapted().getMeetingsAcceptingItemsAdditionalManagerStates()
 
-        query = {'portal_type': cfg.getMeetingTypeName(),
+        query = {'portal_type': self.getMeetingTypeName(),
                  'review_state': review_states,
                  'sort_on': 'getDate'}
         # querying empty review_state will return nothing

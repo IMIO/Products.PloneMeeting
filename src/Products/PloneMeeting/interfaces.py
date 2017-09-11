@@ -413,6 +413,10 @@ class IMeetingItemDocumentation:
            ids that will be used for id and translated for title."""
     def showAdvices(self):
         """This controls if advices need to be shown on the item view."""
+    def _mayUpdateItemReference(self):
+        """Condition to update item reference.  By default the item reference
+           will be updated if item is in a meeting and meeting review_state is
+           not 'before frozen'."""
 
 
 class IMeetingItemWorkflowConditions(Interface):
@@ -654,8 +658,6 @@ class IMeetingConfigDocumentation:
            a plugin that added his own workflowAdaptations validates it.'''
     def onEdit(isCreated):
         '''Called when an object p_isCreated or edited.'''
-    def getMeetingsAcceptingItems():
-        '''Gets the meetings that can accept items.'''
     def getMeetingsAcceptingItemsAdditionalManagerStates():
         '''Additional states for MeetingManagers in which meetings are still accepting items.'''
 
