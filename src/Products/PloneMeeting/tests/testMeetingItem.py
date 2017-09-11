@@ -895,7 +895,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # could not be added because no meeting in initial_state is available
         cfg2MeetingWF = self.wfTool.getWorkflowsFor(cfg2.getMeetingTypeName())[0]
         meeting_initial_state = self.wfTool[cfg2MeetingWF.getId()].initial_state
-        self.assertTrue(len(cfg2.adapted().getMeetingsAcceptingItems(
+        self.assertTrue(len(cfg2.getMeetingsAcceptingItems(
             review_states=(meeting_initial_state, ))) == 0)
         self.assertTrue(newItem.queryState() == 'validated')
         # a status message was added
@@ -3066,13 +3066,13 @@ class testMeetingItem(PloneMeetingTestCase):
         self.create('MeetingItem')
         # getMeetingsAcceptingItems should only return meetings
         # that are 'created', 'frozen' or 'decided' for the meetingManager
-        self.assertEquals([m.id for m in cfg.adapted().getMeetingsAcceptingItems()], [m1.id, m2.id, m3.id])
+        self.assertEquals([m.id for m in cfg.getMeetingsAcceptingItems()], [m1.id, m2.id, m3.id])
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         # getMeetingsAcceptingItems should only return meetings
         # that are 'created' or 'frozen' for the meetingMember
         self.changeUser('pmCreator1')
         self.create('MeetingItem')
-        self.assertEquals([m.id for m in cfg.adapted().getMeetingsAcceptingItems()], [m1.id, m2.id])
+        self.assertEquals([m.id for m in cfg.getMeetingsAcceptingItems()], [m1.id, m2.id])
 
     def test_pm_OnTransitionFieldTransforms(self):
         '''On transition triggered, some transforms can be applied to item or meeting
