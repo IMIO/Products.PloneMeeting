@@ -17,6 +17,12 @@ table.listing tbody tr.odd.meeting_item_privacy_secret_heading td {
 table.listing tbody tr.even.meeting_item_privacy_secret_heading td {
     background-color: #a2d9ce;
 }
+table.listing tbody tr.odd.meeting_item_privacy_public_heading td {
+    background-color: #FFEDDE;
+}
+table.listing tbody tr.even.meeting_item_privacy_public_heading td {
+    background-color: #FFDABC;
+}
 
 img.logical_meeting {
     cursor: help;
