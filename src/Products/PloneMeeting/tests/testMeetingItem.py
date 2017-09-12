@@ -521,6 +521,7 @@ class testMeetingItem(PloneMeetingTestCase):
                                            annexType='marketing-annex',
                                            relatedTo='item_decision')
         self.do(item, 'accept')
+        cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
 
         # Get the new item
         newItem = item.getItemClonedToOtherMC(destMeetingConfigId=otherMeetingConfigId)
@@ -894,7 +895,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # could not be added because no meeting in initial_state is available
         cfg2MeetingWF = self.wfTool.getWorkflowsFor(cfg2.getMeetingTypeName())[0]
         meeting_initial_state = self.wfTool[cfg2MeetingWF.getId()].initial_state
-        self.assertTrue(len(cfg2.adapted().getMeetingsAcceptingItems(
+        self.assertTrue(len(cfg2.getMeetingsAcceptingItems(
             review_states=(meeting_initial_state, ))) == 0)
         self.assertTrue(newItem.queryState() == 'validated')
         # a status message was added
@@ -1026,6 +1027,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.deleteAsManager(sentItem.UID())
         item.setOtherMeetingConfigsClonableToEmergency((cfg2Id,))
         self.backToState(item, 'itemfrozen')
+        cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         self.do(item, 'accept')
         sentItem = item.getItemClonedToOtherMC(cfg2Id)
         self.assertEquals(sentItem.getMeeting(), frozenMeeting)
@@ -1038,8 +1040,8 @@ class testMeetingItem(PloneMeetingTestCase):
         createdMeeting.setDate(now+1)
         createdMeeting.reindexObject(idxs=['getDate'])
         self.backToState(item, 'itemfrozen')
+        cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         self.do(item, 'accept')
-        item.getItemClonedToOtherMC(cfg2Id)
         sentItem = item.getItemClonedToOtherMC(cfg2Id)
         self.assertEquals(sentItem.getMeeting(), createdMeeting)
 
@@ -1048,8 +1050,8 @@ class testMeetingItem(PloneMeetingTestCase):
         createdMeeting.setDate(now-1)
         createdMeeting.reindexObject(idxs=['getDate'])
         self.backToState(item, 'itemfrozen')
+        cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         self.do(item, 'accept')
-        item.getItemClonedToOtherMC(cfg2Id)
         sentItem = item.getItemClonedToOtherMC(cfg2Id)
         self.assertEquals(sentItem.getMeeting(), frozenMeeting)
 
@@ -1060,8 +1062,8 @@ class testMeetingItem(PloneMeetingTestCase):
         frozenMeeting.setDate(now-1)
         frozenMeeting.reindexObject(idxs=['getDate'])
         self.backToState(item, 'itemfrozen')
+        cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         self.do(item, 'accept')
-        item.getItemClonedToOtherMC(cfg2Id)
         sentItem = item.getItemClonedToOtherMC(cfg2Id)
         self.assertIsNone(sentItem.getMeeting())
         self.assertEqual(sentItem.queryState(), 'validated')
@@ -1095,6 +1097,7 @@ class testMeetingItem(PloneMeetingTestCase):
         noAvailableMeetingItem.setOtherMeetingConfigsClonableTo((cfg2Id,))
         noAvailableMeetingItem.setOtherMeetingConfigsClonableToEmergency((cfg2Id,))
         noAvailableMeetingItem.cloneToOtherMeetingConfig(cfg2Id)
+        cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         self.assertEqual(noAvailableMeetingItem.getPreferredMeeting(),
                          ITEM_NO_PREFERRED_MEETING_VALUE)
 
@@ -1118,7 +1121,9 @@ class testMeetingItem(PloneMeetingTestCase):
         # send items
         self.changeUser('pmCreator1')
         normalItem.cloneToOtherMeetingConfig(cfg2Id)
+        cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         emergencyItem.cloneToOtherMeetingConfig(cfg2Id)
+        cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         # createdMeeting may be set as preferredMeeting even if not viewable by user
         clonedNormalItem = normalItem.getItemClonedToOtherMC(cfg2Id)
         self.assertFalse(self.hasPermission(View, createdMeeting))
@@ -1362,6 +1367,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item2.setDecision('<p>My decision</p>', mimetype='text/html')
         item2.setOtherMeetingConfigsClonableTo((cfg2Id,))
         item2.setOtherMeetingConfigsClonableToPrivacy((cfg2Id,))
+        cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         clonedItem2 = item2.cloneToOtherMeetingConfig(cfg2Id)
         self.assertEqual(clonedItem2.queryState(), 'presented')
         cleanRamCacheFor('Products.PloneMeeting.Meeting.getItems')
@@ -2607,21 +2613,28 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEquals(len(item.listMeetingsAcceptingItems()), 4)
         self.assertTrue(ITEM_NO_PREFERRED_MEETING_VALUE in
                         item.listMeetingsAcceptingItems().keys())
+        cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         # now do m1 a meeting that do not accept any items anymore
         self.closeMeeting(m1)
         self.assertEquals(len(item.listMeetingsAcceptingItems()), 3)
+        cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         # so m1 is no more in the vocabulary
         self.assertTrue(m1UID not in item.listMeetingsAcceptingItems().keys())
         # but if it was the preferredMeeting selected for the item
         # it is present in the vocabulary
         item.setPreferredMeeting(m1UID)
         self.assertEquals(len(item.listMeetingsAcceptingItems()), 4)
+        cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         self.assertTrue(m1UID in item.listMeetingsAcceptingItems().keys())
+        cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         # if item.preferredMeeting is in the vocabulary by default, it works too
         item.setPreferredMeeting(m2UID)
         self.assertEquals(len(item.listMeetingsAcceptingItems()), 3)
+        cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         self.assertTrue(m1UID not in item.listMeetingsAcceptingItems().keys())
+        cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         self.assertTrue(m2UID in item.listMeetingsAcceptingItems().keys())
+        cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         # delete meeting stored as preferredMeeting for the item
         # it should not appear anymore in the vocabulary
         # delete m2, avoid permission problems, do that as 'Manager'
@@ -2629,6 +2642,7 @@ class testMeetingItem(PloneMeetingTestCase):
         m2.aq_inner.aq_parent.manage_delObjects(ids=[m2.getId(), ])
         self.changeUser('pmManager')
         self.assertEquals(len(item.listMeetingsAcceptingItems()), 2)
+        cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         self.assertTrue(m2UID not in item.listMeetingsAcceptingItems().keys())
 
     def test_pm_ListCopyGroups(self):
@@ -3052,12 +3066,13 @@ class testMeetingItem(PloneMeetingTestCase):
         self.create('MeetingItem')
         # getMeetingsAcceptingItems should only return meetings
         # that are 'created', 'frozen' or 'decided' for the meetingManager
-        self.assertEquals([m.id for m in cfg.adapted().getMeetingsAcceptingItems()], [m1.id, m2.id, m3.id])
+        self.assertEquals([m.id for m in cfg.getMeetingsAcceptingItems()], [m1.id, m2.id, m3.id])
+        cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         # getMeetingsAcceptingItems should only return meetings
         # that are 'created' or 'frozen' for the meetingMember
         self.changeUser('pmCreator1')
         self.create('MeetingItem')
-        self.assertEquals([m.id for m in cfg.adapted().getMeetingsAcceptingItems()], [m1.id, m2.id])
+        self.assertEquals([m.id for m in cfg.getMeetingsAcceptingItems()], [m1.id, m2.id])
 
     def test_pm_OnTransitionFieldTransforms(self):
         '''On transition triggered, some transforms can be applied to item or meeting
@@ -4833,6 +4848,7 @@ class testMeetingItem(PloneMeetingTestCase):
                     cfg2Title, noneTheoricalMeeting,
                     cfg3Title, noneTheoricalMeeting),
                     'utf-8'))
+        cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         # ask emergency for sending to cfg3
         item.setOtherMeetingConfigsClonableToEmergency((cfg3Id, ))
         self.assertEquals(
@@ -4840,6 +4856,7 @@ class testMeetingItem(PloneMeetingTestCase):
             unicode("{0} ({1}), {2} (<span class='item_clone_to_emergency'>Emergency</span> - {3})".format(
                     cfg2Title, noneTheoricalMeeting,
                     cfg3Title, noneTheoricalMeeting), 'utf-8'))
+        cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
 
         # enable 'otherMeetingConfigsClonableToPrivacy' that is also displayed
         cfg.setUsedItemAttributes(cfg.getUsedItemAttributes() +
@@ -4853,6 +4870,7 @@ class testMeetingItem(PloneMeetingTestCase):
                     "<span class='item_privacy_public'>Public meeting</span> - {3})".format(
                         cfg2Title, noneTheoricalMeeting,
                         cfg3Title, noneTheoricalMeeting), 'utf-8'))
+        cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         item.setOtherMeetingConfigsClonableToPrivacy((cfg2Id, ))
         self.assertEquals(
             item.displayOtherMeetingConfigsClonableTo(),
@@ -4861,6 +4879,7 @@ class testMeetingItem(PloneMeetingTestCase):
                     "<span class='item_privacy_public'>Public meeting</span> - {3})".format(
                         cfg2Title, noneTheoricalMeeting,
                         cfg3Title, noneTheoricalMeeting), 'utf-8'))
+        cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         item.setOtherMeetingConfigsClonableToPrivacy((cfg2Id, cfg3Id))
         self.assertEquals(
             item.displayOtherMeetingConfigsClonableTo(),
@@ -4869,6 +4888,7 @@ class testMeetingItem(PloneMeetingTestCase):
                     "<span class='item_privacy_secret'>Closed door</span> - {3})".format(
                         cfg2Title, noneTheoricalMeeting,
                         cfg3Title, noneTheoricalMeeting), 'utf-8'))
+        cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
 
         # now test when meetings exist in cfg2
         self.changeUser('pmManager')
@@ -4889,6 +4909,7 @@ class testMeetingItem(PloneMeetingTestCase):
                         createdMeeting.getPrettyLink(prefixed=False,
                                                      showContentIcon=False).encode('utf-8')),
                     'utf-8'))
+        cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         item.setOtherMeetingConfigsClonableToEmergency((cfg2Id, ))
         self.assertEquals(
             item.displayOtherMeetingConfigsClonableTo(),
