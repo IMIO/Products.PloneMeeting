@@ -23,7 +23,6 @@
 #
 
 from collections import OrderedDict
-
 from DateTime import DateTime
 
 from AccessControl import Unauthorized
@@ -1071,7 +1070,11 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertTrue(cfg.getRecurringItems())
         with self.assertRaises(BeforeDeleteException) as cm:
             self.tool.manage_delObjects([cfgId, ])
-        self.assertEquals(cm.exception.message, 'can_not_delete_meetingitem_container')
+        can_not_delete_meetingitem_container = \
+            translate('can_not_delete_meetingitem_container',
+                      domain="plone",
+                      context=self.request)
+        self.assertEquals(cm.exception.message, can_not_delete_meetingitem_container)
         self._removeConfigObjectsFor(cfg)
 
         # fails if a meeting exists
@@ -1080,7 +1083,11 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.changeUser('admin')
         with self.assertRaises(BeforeDeleteException) as cm:
             self.tool.manage_delObjects([cfgId, ])
-        self.assertEquals(cm.exception.message, 'can_not_delete_meetingconfig_meeting')
+        can_not_delete_meetingconfig_meeting = \
+            translate('can_not_delete_meetingconfig_meeting',
+                      domain="plone",
+                      context=self.request)
+        self.assertEquals(cm.exception.message, can_not_delete_meetingconfig_meeting)
         self.portal.restrictedTraverse('@@delete_givenuid')(meeting.UID())
 
         # fails if an item exists
@@ -1089,7 +1096,11 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.changeUser('admin')
         with self.assertRaises(BeforeDeleteException) as cm:
             self.tool.manage_delObjects([cfgId, ])
-        self.assertEquals(cm.exception.message, 'can_not_delete_meetingconfig_meetingitem')
+        can_not_delete_meetingconfig_meetingitem = \
+            translate('can_not_delete_meetingconfig_meetingitem',
+                      domain="plone",
+                      context=self.request)
+        self.assertEquals(cm.exception.message, can_not_delete_meetingconfig_meetingitem)
         self.portal.restrictedTraverse('@@delete_givenuid')(item.UID())
 
         # fails if another element then searches_xxx folder exists in the pmFolders
@@ -1100,7 +1111,11 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.changeUser('admin')
         with self.assertRaises(BeforeDeleteException) as cm:
             self.tool.manage_delObjects([cfgId, ])
-        self.assertEquals(cm.exception.message, 'can_not_delete_meetingconfig_meetingfolder')
+        can_not_delete_meetingconfig_meetingfolder = \
+            translate('can_not_delete_meetingconfig_meetingfolder',
+                      domain="plone",
+                      context=self.request)
+        self.assertEquals(cm.exception.message, can_not_delete_meetingconfig_meetingfolder)
         self.portal.restrictedTraverse('@@delete_givenuid')(afile.UID())
 
         self.assertTrue(cfgId in self.tool.objectIds())

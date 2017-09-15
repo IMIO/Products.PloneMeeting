@@ -5117,16 +5117,29 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # If we are trying to remove the Plone Site, bypass this hook.
         # bypass also if we are in the creation process
         if not item.meta_type == "Plone Site" and not item._at_creation_flag:
+            can_not_delete_meetingconfig_meeting = \
+                translate('can_not_delete_meetingconfig_meeting',
+                          domain="plone",
+                          context=self.REQUEST)
+            can_not_delete_meetingconfig_meetingitem = \
+                translate('can_not_delete_meetingconfig_meetingitem',
+                          domain="plone",
+                          context=self.REQUEST)
+            can_not_delete_meetingconfig_meetingfolder = \
+                translate('can_not_delete_meetingconfig_meetingfolder',
+                          domain="plone",
+                          context=self.REQUEST)
+
             # Checks that no Meeting and no MeetingItem remains.
             catalog = api.portal.get_tool('portal_catalog')
             brains = catalog(portal_type=self.getMeetingTypeName())
             if brains:
                 # We found at least one Meeting.
-                raise BeforeDeleteException("can_not_delete_meetingconfig_meeting")
+                raise BeforeDeleteException(can_not_delete_meetingconfig_meeting)
             brains = catalog(portal_type=self.getItemTypeName())
             if brains:
                 # We found at least one MeetingItem.
-                raise BeforeDeleteException("can_not_delete_meetingconfig_meetingitem")
+                raise BeforeDeleteException(can_not_delete_meetingconfig_meetingitem)
             # Check that every meetingConfig folder of Members is empty.
             membershipTool = api.portal.get_tool('portal_membership')
             members = membershipTool.getMembersFolder()
@@ -5141,7 +5154,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         configFolder = getattr(root_folder, meetingFolderId)
                         objectIds = configFolder.objectIds()
                         if set(objectIds).difference(searches_folder_ids):
-                            raise BeforeDeleteException("can_not_delete_meetingconfig_meetingfolder")
+                            raise BeforeDeleteException(can_not_delete_meetingconfig_meetingfolder)
             # If everything is OK, we can remove every meetingFolder
             for member in members.objectValues():
                 # Get the right meetingConfigFolder
