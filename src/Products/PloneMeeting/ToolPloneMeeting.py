@@ -9,10 +9,6 @@
 # GNU General Public License (GPL)
 #
 
-__author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
-<g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""
-__docformat__ = 'plaintext'
-
 import interfaces
 import time
 import OFS.Moniker
@@ -96,6 +92,10 @@ from Products.PloneMeeting.utils import monthsIds
 from Products.PloneMeeting.utils import weekdaysIds
 from Products.PloneMeeting.utils import workday
 from Products.PloneMeeting.model.adaptations import performModelAdaptations
+
+__author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
+<g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""
+__docformat__ = 'plaintext'
 
 # Some constants ---------------------------------------------------------------
 MEETING_CONFIG_ERROR = 'A validation error occurred while instantiating ' \
@@ -282,14 +282,8 @@ schema = Schema((
 ),
 )
 
-##code-section after-local-schema #fill in your manual code here
-##/code-section after-local-schema
-
 ToolPloneMeeting_schema = OrderedBaseFolderSchema.copy() + \
     schema.copy()
-
-##code-section after-schema #fill in your manual code here
-##/code-section after-schema
 
 
 class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
@@ -303,7 +297,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     schema = ToolPloneMeeting_schema
 
-    ##code-section class-header #fill in your manual code here
     schema = schema.copy()
     schema["id"].widget.visible = False
     schema["title"].widget.visible = False
@@ -1178,6 +1171,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if 'classifier' in copyFields:
             newItem.getField('classifier').set(
                 newItem, copiedItem.getClassifier())
+
+        # remove every contained images as it will be added again by storeImagesLocally
+        for image in [img for img in newItem.objectValues() if img.portal_type == 'Image']:
+            unrestrictedRemoveGivenObject(image)
 
         # Manage annexes.
         # we will remove annexes if copyAnnexes is False or if we could not find

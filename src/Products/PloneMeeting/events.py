@@ -27,7 +27,7 @@ from collective.documentviewer.async import queueJob
 from collective.iconifiedcategory.utils import update_all_categorized_elements
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.cache import invalidate_cachekey_volatile_for
-from imio.helpers.xhtml import storeExternalImagesLocally
+from imio.helpers.xhtml import storeImagesLocally
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import ADVICE_GIVEN_HISTORIZED_COMMENT
@@ -384,7 +384,7 @@ def onItemModified(item, event):
                 item._at_creation_flag = False
 
 
-def storeExternalImagesLocallyDexterity(advice):
+def storeImagesLocallyDexterity(advice):
     '''Store external images of every RichText field of a dexterity object locally.'''
     portal_types = api.portal.get_tool('portal_types')
     fti = portal_types[advice.portal_type]
@@ -394,7 +394,8 @@ def storeExternalImagesLocallyDexterity(advice):
             # avoid infinite loop because this is called in a ObjectModifiedEvent
             # and we are modifying the advice...
             advice.REQUEST.set('currentlyStoringExternalImages', True)
-            newValue = storeExternalImagesLocally(advice, getattr(advice, field_id).output)
+            newValue = storeImagesLocally(advice,
+                                          getattr(advice, field_id).output)
             setattr(advice, field_id, RichTextValue(newValue))
             advice.REQUEST.set('currentlyStoringExternalImages', False)
 
@@ -419,7 +420,7 @@ def onAdviceAdded(advice, event):
     _addManagedPermissions(advice)
 
     # make sure external images used in RichText fields are stored locally
-    storeExternalImagesLocallyDexterity(advice)
+    storeImagesLocallyDexterity(advice)
 
     # notify our own PM event so we are sure that this event is called
     # after the onAviceAdded event
@@ -450,7 +451,7 @@ def onAdviceModified(advice, event):
     item.updateLocalRoles()
 
     # make sure external images used in RichText fields are stored locally
-    storeExternalImagesLocallyDexterity(advice)
+    storeImagesLocallyDexterity(advice)
 
     # notify our own PM event so we are sure that this event is called
     # after the onAviceModified event
