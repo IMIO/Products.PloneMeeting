@@ -5696,7 +5696,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if item.meta_type not in ['Plone Site', 'MeetingItem', ]:
             user = api.user.get_current()
             logger.warn(BEFOREDELETE_ERROR % (user.getId(), self.id))
-            raise BeforeDeleteException("can_not_delete_meetingitem_container")
+            raise BeforeDeleteException(
+                translate("can_not_delete_meetingitem_container",
+                          domain="plone",
+                          context=item.REQUEST))
         # if we are not removing the site and we are not in the creation process of
         # an item, manage predecessor
         if not item.meta_type == 'Plone Site' and not item._at_creation_flag:

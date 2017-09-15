@@ -4665,7 +4665,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(AddPortalContent, item))
         self.assertFalse(self.hasPermission(ModifyPortalContent, item))
         self.assertTrue(self.hasPermission(WriteBudgetInfos, item))
-        item.invokeFactory('Image', id='img2', title='Image2', file=data.read())
+        item.invokeFactory('Image', id='img2', title='Image2', file=data)
         # users just able to see the item are not able to add images
         # copyGroup
         self.changeUser('pmCreator2')

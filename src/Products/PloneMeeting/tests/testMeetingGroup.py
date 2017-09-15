@@ -65,6 +65,7 @@ class testMeetingGroup(PloneMeetingTestCase):
                       domain="plone",
                       context=self.request)
         developers = self.tool.developers
+        transaction.commit()
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(developers.UID(), catch_before_delete_exception=False)
         self.assertEquals(cm.exception.message, can_not_delete_meetinggroup_meetingconfig)
@@ -74,6 +75,7 @@ class testMeetingGroup(PloneMeetingTestCase):
 
         # define selectableAdvisers, the exception is also raised
         cfg.setSelectableAdvisers(('developers', ))
+        transaction.commit()
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(developers.UID(), catch_before_delete_exception=False)
         self.assertEquals(cm.exception.message, can_not_delete_meetinggroup_meetingconfig)
@@ -85,6 +87,7 @@ class testMeetingGroup(PloneMeetingTestCase):
             [{'row_id': 'unique_id_123',
               'group': 'developers',
               'delay': '5', }, ])
+        transaction.commit()
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(developers.UID(), catch_before_delete_exception=False)
         self.assertEquals(cm.exception.message, can_not_delete_meetinggroup_meetingconfig)
@@ -93,6 +96,7 @@ class testMeetingGroup(PloneMeetingTestCase):
 
         # define powerAdvisersGroups, the exception is also raised
         cfg.setPowerAdvisersGroups(['developers', ])
+        transaction.commit()
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(developers.UID(), catch_before_delete_exception=False)
         self.assertEquals(cm.exception.message, can_not_delete_meetinggroup_meetingconfig)
@@ -100,6 +104,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         cfg.setPowerAdvisersGroups([])
 
         # 2) fails because the corresponding Plone groups are not empty
+        transaction.commit()
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(developers.UID(), catch_before_delete_exception=False)
         can_not_delete_meetinggroup_plonegroup = \
@@ -118,6 +123,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         # it should not complain about 'can_not_delete_meetinggroup_plonegroup'
         self._make_not_found_user()
         # but it does not raise an exception with message 'can_not_delete_meetinggroup_plonegroup'
+        transaction.commit()
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(developers.UID(), catch_before_delete_exception=False)
 
@@ -144,6 +150,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         self.assertTrue('developers_advisers' not in item.adviceIndex)
         item.setCopyGroups(())
         item._update_after_edit()
+        transaction.commit()
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(developers.UID(), catch_before_delete_exception=False)
 
@@ -156,6 +163,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         self.assertTrue('developers_advisers' not in item.adviceIndex)
         item.setCopyGroups(())
         item._update_after_edit()
+        transaction.commit()
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(developers.UID(), catch_before_delete_exception=False)
         self.assertEquals(cm.exception.message, can_not_delete_meetinggroup_meetingitem)
@@ -167,6 +175,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         self.assertTrue('developers_advisers' not in item.adviceIndex)
         item.setCopyGroups(())
         item._update_after_edit()
+        transaction.commit()
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(developers.UID(), catch_before_delete_exception=False)
         self.assertEquals(cm.exception.message, can_not_delete_meetinggroup_meetingitem)
@@ -178,6 +187,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         self.assertTrue('developers_advisers' not in item.adviceIndex)
         item.setGroupInCharge('developers')
         item._update_after_edit()
+        transaction.commit()
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(developers.UID(), catch_before_delete_exception=False)
         self.assertEquals(cm.exception.message, can_not_delete_meetinggroup_meetingitem)
@@ -187,6 +197,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         cfg.setUseCopies(True)
         item.setCopyGroups(('developers_reviewers', ))
         item._update_after_edit()
+        transaction.commit()
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(developers.UID(), catch_before_delete_exception=False)
         self.assertEquals(cm.exception.message, can_not_delete_meetinggroup_meetingitem)
@@ -204,6 +215,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         self.assertEquals(cfg.itemtemplates.template2.getProposingGroup(), 'vendors')
         # then fails because corresponding Plone groups are not empty...
         vendors = self.tool.vendors
+        transaction.commit()
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(vendors.UID(), catch_before_delete_exception=False)
 
@@ -215,6 +227,7 @@ class testMeetingGroup(PloneMeetingTestCase):
                 ploneGroup.removeMember(memberId)
 
         # 5) then fails because used by an item present in the configuration
+        transaction.commit()
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(vendors.UID(), catch_before_delete_exception=False)
         self.maxDiff = None
