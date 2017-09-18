@@ -4804,7 +4804,7 @@ class testMeetingItem(PloneMeetingTestCase):
         text = text_pattern.format('http://www.imio.be/contact.png', img.absolute_url())
         item.setDescription(text)
         self.assertEqual(item.objectIds(), ['dot.gif'])
-        item._update_after_edit()
+        item.at_post_edit_script()
         # we have images saved locally
         self.assertEqual(sorted(item.objectIds()), ['contact.png', 'dot.gif'])
 
