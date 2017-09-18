@@ -48,7 +48,7 @@ from imio.helpers.xhtml import addClassToLastChildren
 from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
 from imio.helpers.xhtml import markEmptyTags
 from imio.helpers.xhtml import removeBlanks
-from imio.helpers.xhtml import storeExternalImagesLocally
+from imio.helpers.xhtml import storeImagesLocally
 from imio.helpers.xhtml import xhtmlContentIsEmpty
 from imio.history.interfaces import IImioHistory
 from Products.Archetypes.event import ObjectEditedEvent
@@ -1104,10 +1104,11 @@ def transformAllRichTextFields(obj, onlyField=None):
        transformRichTextField that may be overridden by an adapter. This
        method calls it for every rich text field defined on this obj (item or meeting), if
        the user has the permission to update the field.'''
-    member = obj.portal_membership.getAuthenticatedMember()
-    meetingConfig = obj.portal_plonemeeting.getMeetingConfig(obj)
-    fieldsToTransform = meetingConfig.getXhtmlTransformFields()
-    transformTypes = meetingConfig.getXhtmlTransformTypes()
+    member = api.user.get_current()
+    tool = api.portal.get_tool('portal_plonemeeting')
+    cfg = tool.getMeetingConfig(obj)
+    fieldsToTransform = cfg.getXhtmlTransformFields()
+    transformTypes = cfg.getXhtmlTransformTypes()
     for field in obj.schema.fields():
         if field.widget.getName() != 'RichWidget':
             continue
@@ -1121,7 +1122,7 @@ def transformAllRichTextFields(obj, onlyField=None):
             continue
         # Apply mandatory transforms
         fieldContent = formatXhtmlFieldForAppy(field.get(obj))
-        fieldContent = storeExternalImagesLocally(obj, field.get(obj))
+        fieldContent = storeImagesLocally(obj, field.get(obj))
         # Apply standard transformations as defined in the config
         # fieldsToTransform is like ('MeetingItem.description', 'MeetingItem.budgetInfos', )
         if ("%s.%s" % (obj.meta_type, field.getName()) in fieldsToTransform) and \

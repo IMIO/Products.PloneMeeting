@@ -40,8 +40,6 @@ from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.utils import get_config_root
 from imio.helpers.cache import cleanRamCacheFor
 import Products.PloneMeeting
-# If I do not remove this method, some tests crash.
-#from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.config import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.config import MEETINGREVIEWERS
 from Products.PloneMeeting.config import TOOL_FOLDER_ANNEX_TYPES
@@ -248,7 +246,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         if not idInAttrs:
             attrs.update({'id': self._generateId(folder)})
         if objectType == 'MeetingItem':
-            if not 'proposingGroup' in attrs.keys():
+            if 'proposingGroup' not in attrs.keys():
                 cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.getGroupsForUser')
                 proposingGroup = self.tool.getGroupsForUser(suffixes=['creators'])
                 if len(proposingGroup):

@@ -25,6 +25,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   MeetingConfig.getMeetingsAcceptingItemsAdditionalManagerStates is adaptable
 - Added caching for MeetingConfig.getMeetingsAcceptingItems, cache is available during entire request
 - Moved condition for MeetingItem.updateItemReference to MeetingItem._mayUpdateItemReference that is adaptable
+- When duplicating an item, make sure links to images used in XHTML fields are updated so it points to the new item.
+  Moreover delete every contained images on duplication, no more used images will be deleted and used images will
+  be retrieved by storeImagesLocally
 
 
 4.0 (2017-08-04)

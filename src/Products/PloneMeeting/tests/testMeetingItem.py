@@ -4647,7 +4647,9 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.setItemBudgetInfosStates(('itemcreated', 'validated', ))
         # test image
         file_path = path.join(path.dirname(__file__), 'dot.gif')
-        data = open(file_path, 'r')
+        file_handler = open(file_path, 'r')
+        data = file_handler.read()
+        file_handler.close()
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem', title='My new title')
         item.setCopyGroups(('vendors_reviewers', ))
@@ -4657,19 +4659,19 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission('ATContentTypes: Add Image', item))
         self.assertTrue(self.hasPermission(AddPortalContent, item))
         self.assertTrue(self.hasPermission(ModifyPortalContent, item))
-        item.invokeFactory('Image', id='img1', title='Image1', file=data.read())
+        item.invokeFactory('Image', id='img1', title='Image1', file=data)
         self.changeUser('budgetimpacteditor')
         self.assertTrue(self.hasPermission('ATContentTypes: Add Image', item))
         self.assertTrue(self.hasPermission(AddPortalContent, item))
         self.assertFalse(self.hasPermission(ModifyPortalContent, item))
         self.assertTrue(self.hasPermission(WriteBudgetInfos, item))
-        item.invokeFactory('Image', id='img2', title='Image2', file=data.read())
+        item.invokeFactory('Image', id='img2', title='Image2', file=data)
         # users just able to see the item are not able to add images
         # copyGroup
         self.changeUser('pmCreator2')
         self.assertFalse(self.hasPermission('ATContentTypes: Add Image', item))
         self.assertFalse(self.hasPermission(AddPortalContent, item))
-        self.assertRaises(Unauthorized, item.invokeFactory, 'Image', id='img', title='Image1', file=data.read())
+        self.assertRaises(Unauthorized, item.invokeFactory, 'Image', id='img', title='Image1', file=data)
         # adviser
         self.changeUser('pmReviewer2')
         self.assertFalse(self.hasPermission('ATContentTypes: Add Image', item))
@@ -4693,7 +4695,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(self.hasPermission('ATContentTypes: Add Image', item))
         # pmCreator1 still have AddPortalContent because he is Owner but he may not add anything
         self.assertTrue(self.hasPermission(AddPortalContent, item))
-        self.assertRaises(Unauthorized, item.invokeFactory, 'Image', id='img', title='Image1', file=data.read())
+        self.assertRaises(Unauthorized, item.invokeFactory, 'Image', id='img', title='Image1', file=data)
         # copyGroup not able to view
         self.changeUser('pmCreator2')
         self.assertFalse(self.hasPermission('ATContentTypes: Add Image', item))
@@ -4714,7 +4716,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmReviewer1')
         self.assertTrue(self.hasPermission('ATContentTypes: Add Image', item))
         self.assertTrue(self.hasPermission(AddPortalContent, item))
-        item.invokeFactory('Image', id='img3', title='Image3', file=data.read())
+        item.invokeFactory('Image', id='img3', title='Image3', file=data)
 
         # validate the item
         self.changeUser('pmCreator1')
@@ -4723,7 +4725,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(self.hasPermission('ATContentTypes: Add Image', item))
         # pmCreator1 still have AddPortalContent because he is Owner but he may not add anything
         self.assertTrue(self.hasPermission(AddPortalContent, item))
-        self.assertRaises(Unauthorized, item.invokeFactory, 'Image', id='img', title='Image1', file=data.read())
+        self.assertRaises(Unauthorized, item.invokeFactory, 'Image', id='img', title='Image1', file=data)
         # copyGroups
         self.changeUser('pmCreator2')
         self.assertFalse(self.hasPermission('ATContentTypes: Add Image', item))
@@ -4748,11 +4750,11 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('budgetimpacteditor')
         self.assertTrue(self.hasPermission('ATContentTypes: Add Image', item))
         self.assertTrue(self.hasPermission(AddPortalContent, item))
-        item.invokeFactory('Image', id='img4', title='Image4', file=data.read())
+        item.invokeFactory('Image', id='img4', title='Image4', file=data)
         self.changeUser('pmManager')
         self.assertTrue(self.hasPermission('ATContentTypes: Add Image', item))
         self.assertTrue(self.hasPermission(AddPortalContent, item))
-        item.invokeFactory('Image', id='img5', title='Image5', file=data.read())
+        item.invokeFactory('Image', id='img5', title='Image5', file=data)
 
     def test_pm_ItemExternalImagesStoredLocally(self):
         """External images are stored locally."""
@@ -4781,6 +4783,39 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setDescription(text)
         item.at_post_edit_script()
         self.assertTrue('spw.png' in item.objectIds())
+
+    def test_pm_ItemInternalImagesStoredLocallyWhenItemDuplicated(self):
+        """When an item is duplicated, images that were stored in original item
+           are kept in new item and uri to images are adapted accordingly in the
+           new item XHTML fields."""
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        # add image
+        file_path = path.join(path.dirname(__file__), 'dot.gif')
+        file_handler = open(file_path, 'r')
+        data = file_handler.read()
+        file_handler.close()
+        img_id = item.invokeFactory('Image', id='dot.gif', title='Image', file=data)
+        img = getattr(item, img_id)
+
+        # let's say we even have external images
+        text_pattern = '<p>External image <img src="{0}" />.</p>'\
+            '<p>Internal image <img src="{1}" />.</p>'
+        text = text_pattern.format('http://www.imio.be/contact.png', img.absolute_url())
+        item.setDescription(text)
+        self.assertEqual(item.objectIds(), ['dot.gif'])
+        item.at_post_edit_script()
+        # we have images saved locally
+        self.assertEqual(sorted(item.objectIds()), ['contact.png', 'dot.gif'])
+
+        # duplicate and check that uri are correct
+        newItem = item.clone()
+        self.assertEqual(sorted(newItem.objectIds()), ['contact.png', 'dot.gif'])
+        self.assertEqual(
+            newItem.Description(),
+            text_pattern.format(
+                newItem.absolute_url() + '/contact.png',
+                newItem.absolute_url() + '/dot.gif'))
 
     def test_pm_ItemLocalRolesUpdatedEvent(self):
         """Test this event that is triggered after the local_roles on the item have been updated."""
