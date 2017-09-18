@@ -102,6 +102,7 @@ from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
 from Products.PloneMeeting.utils import addDataChange
 from Products.PloneMeeting.utils import AdvicesUpdatedEvent
+from Products.PloneMeeting.utils import cleanMemoize
 from Products.PloneMeeting.utils import fieldIsEmpty
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import getCustomAdapter
@@ -4910,6 +4911,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self.manage_addLocalRoles(userId, ('Owner',))
         self.updateLocalRoles(isCreated=True,
                               inheritedAdviserIds=kwargs.get('inheritedAdviserIds', []))
+        # clean borg.localroles caching
+        cleanMemoize(self,
+                     prefixes=['borg.localrole.workspace.checkLocalRolesAllowed'])
         # Apply potential transformations to richtext fields
         transformAllRichTextFields(self)
         # Make sure we have 'text/html' for every Rich fields
@@ -5694,7 +5698,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if item.meta_type not in ['Plone Site', 'MeetingItem', ]:
             user = api.user.get_current()
             logger.warn(BEFOREDELETE_ERROR % (user.getId(), self.id))
-            raise BeforeDeleteException("can_not_delete_meetingitem_container")
+            raise BeforeDeleteException(
+                translate("can_not_delete_meetingitem_container",
+                          domain="plone",
+                          context=item.REQUEST))
         # if we are not removing the site and we are not in the creation process of
         # an item, manage predecessor
         if not item.meta_type == 'Plone Site' and not item._at_creation_flag:

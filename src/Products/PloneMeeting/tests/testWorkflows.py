@@ -22,9 +22,11 @@
 # 02110-1301, USA.
 #
 
+import transaction
 from DateTime import DateTime
 from AccessControl import Unauthorized
 from OFS.ObjectManager import BeforeDeleteException
+from zope.i18n import translate
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.statusmessages.interfaces import IStatusMessage
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
@@ -129,10 +131,17 @@ class testWorkflows(PloneMeetingTestCase):
         self.assertTrue(messages[0].message == u'Faceted navigation enabled')
         self.assertTrue(messages[1].message == u'Configuration imported')
         # @@delete_givenuid added one statusMessage about BeforeDeleteException
+        transaction.commit()
         self.portal.restrictedTraverse('@@delete_givenuid')(pmManagerFolder.UID())
         messages = statusMessages.show()
         self.assertEquals(len(messages), 1)
-        self.assertEquals(messages[0].message, u'can_not_delete_meetingitem_container')
+        can_not_delete_meetingitem_container = \
+            translate('can_not_delete_meetingitem_container',
+                      domain="plone",
+                      context=self.request)
+        # commit transaction because a failed delete will abort transaction
+        self.assertEquals(
+            messages[0].message, can_not_delete_meetingitem_container + u' (BeforeDeleteException)')
         # The folder should not have been deleted...
         self.failUnless(hasattr(pmManagerFolder, item.getId()))
         # Try with a meeting in it now

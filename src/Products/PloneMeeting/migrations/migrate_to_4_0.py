@@ -1373,6 +1373,7 @@ class Migrate_To_4_0(Migrator):
             # upgrade some profiles updated before v4 final
             self.upgradeProfile('collective.documentgenerator:default')
             self.upgradeProfile('plone.app.discussion:default')
+            self.runProfileSteps(product='imio.annex', steps=['typeinfo'])
             # make sure form-widgets-raiseOnError_for_non_managers is enabled
             api.portal.set_registry_record(
                 'collective.documentgenerator.browser.controlpanel.'
