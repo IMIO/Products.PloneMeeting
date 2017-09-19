@@ -4934,6 +4934,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setOtherMeetingConfigsClonableTo((cfg2Id, ))
         createdMeeting = self.create('Meeting', date=now+10, meetingConfig=cfg2)
         frozenMeeting = self.create('Meeting', date=now+5, meetingConfig=cfg2)
+        self.meetingConfig = self.meetingConfig2
         self.freezeMeeting(frozenMeeting)
         self.assertEquals(
             item.displayOtherMeetingConfigsClonableTo(),
