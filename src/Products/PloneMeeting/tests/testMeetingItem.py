@@ -4932,8 +4932,9 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setOtherMeetingConfigsClonableToPrivacy(())
         item.setOtherMeetingConfigsClonableToEmergency(())
         item.setOtherMeetingConfigsClonableTo((cfg2Id, ))
-        createdMeeting = self.create('Meeting', date=now+10, meetingConfig=cfg2)
-        frozenMeeting = self.create('Meeting', date=now+5, meetingConfig=cfg2)
+        self.meetingConfig = cfg2
+        createdMeeting = self.create('Meeting', date=now+10)
+        frozenMeeting = self.create('Meeting', date=now+5)
         self.freezeMeeting(frozenMeeting)
         self.assertEquals(
             item.displayOtherMeetingConfigsClonableTo(),
