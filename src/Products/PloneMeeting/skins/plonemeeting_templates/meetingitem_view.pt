@@ -308,11 +308,11 @@
                       i18n:translate="PloneMeeting_label_pollType"></span>:&nbsp;&nbsp;
                 <span metal:use-macro="python: here.widget('pollType', mode='view')" />
                 <tal:displayPollTypeObservations tal:condition="python: 'pollTypeObservations' in usedAttrs">
-                    <img src="++resource++collective.iconifiedcategory.more_infos.png"
+                    <img src="++resource++collective.iconifiedcategory/more_infos.png"
                          id="showPollTypeObservations"
                          style="cursor: pointer;"
-                         tal:attributes="src string:${portal_url}/++resource++collective.iconifiedcategory.more_infos.png"
-                         i18n:attributes="title" title="See/hide data used for council item" />
+                         tal:attributes="src string:${portal_url}/++resource++collective.iconifiedcategory/more_infos.png"
+                         i18n:attributes="title" title="See/hide poll type observations" />
                     <script type="text/javascript">
                         $( "#showPollTypeObservations" ).bind( "click", function(event) {
                             event.preventDefault();
