@@ -312,7 +312,7 @@
                          id="showPollTypeObservations"
                          style="cursor: pointer;"
                          tal:attributes="src string:${portal_url}/++resource++collective.iconifiedcategory/more_infos.png"
-                         i18n:attributes="title" title="See/hide poll type observations" />
+                         i18n:attributes="title" title="show_or_hide_pollTypeObservations" />
                     <script type="text/javascript">
                         $( "#showPollTypeObservations" ).bind( "click", function(event) {
                             event.preventDefault();
