@@ -393,7 +393,7 @@ class testMeeting(PloneMeetingTestCase):
                           ['o3', 'o4', 'o5', 'o6', newItem.getId(), 'o2'])
         # now test while inserting items using a disabled category
         # remove newItem, change his category for a disabled one and present it again
-        self.backToState(newItem, self.WF_STATE_NAME_MAPPINGS['validated'])
+        self.backToState(newItem, self._stateMappingFor('validated'))
         self.assertTrue(not newItem.hasMeeting())
         newItem.setCategory('development')
         self.assertTrue(newItem.getCategory(), u'developement')
@@ -1255,7 +1255,7 @@ class testMeeting(PloneMeetingTestCase):
         m1_query = queryparser.parseFormquery(m1, m1.adapted()._availableItemsQuery())
         self.assertTrue(not catalog(m1_query))
         # turn i2 into a late item
-        proposedState = self.WF_STATE_NAME_MAPPINGS['proposed']
+        proposedState = self._stateMappingFor('proposed')
         # if current workflow does not use late items, we pass this test...
         i2Wf = self.wfTool.getWorkflowsFor(i2)[0]
         if proposedState in i2Wf.states.keys():
@@ -1853,9 +1853,9 @@ class testMeeting(PloneMeetingTestCase):
            including every items that are presented into it.
            The functionnality is only available to role 'Manager'.'''
         cfg = self.meetingConfig
-        cfg.setItemAdviceStates((self.WF_STATE_NAME_MAPPINGS['presented'], ))
-        cfg.setItemAdviceEditStates((self.WF_STATE_NAME_MAPPINGS['presented'], ))
-        cfg.setItemAdviceViewStates((self.WF_STATE_NAME_MAPPINGS['presented'], ))
+        cfg.setItemAdviceStates((self._stateMappingFor('presented'), ))
+        cfg.setItemAdviceEditStates((self._stateMappingFor('presented'), ))
+        cfg.setItemAdviceViewStates((self._stateMappingFor('presented'), ))
 
         # create a meeting with several items
         self.changeUser('pmManager')
@@ -2316,9 +2316,9 @@ class testMeeting(PloneMeetingTestCase):
            so if an advice is added to a presented or frozen item, references are not updated.
            Every item references are updated regardless current user have not access to every items.'''
         cfg = self.meetingConfig
-        cfg.setItemAdviceStates((self.WF_STATE_NAME_MAPPINGS['itemfrozen'], ))
-        cfg.setItemAdviceEditStates((self.WF_STATE_NAME_MAPPINGS['itemfrozen'], ))
-        cfg.setItemAdviceViewStates((self.WF_STATE_NAME_MAPPINGS['itemfrozen'], ))
+        cfg.setItemAdviceStates((self._stateMappingFor('itemfrozen'), ))
+        cfg.setItemAdviceEditStates((self._stateMappingFor('itemfrozen'), ))
+        cfg.setItemAdviceViewStates((self._stateMappingFor('itemfrozen'), ))
         clean_request = self.portal.REQUEST.clone()
         self.changeUser('pmCreator1')
         item1 = self.create('MeetingItem')

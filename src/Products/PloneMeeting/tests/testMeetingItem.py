@@ -420,7 +420,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # enable motivation and budgetInfos in cfg1, not in cfg2
         cfg.setUsedItemAttributes(('motivation', 'budgetInfos'))
         cfg2.setUsedItemAttributes(('itemIsSigned', 'privacy'))
-        cfg.setItemManualSentToOtherMCStates((self.WF_STATE_NAME_MAPPINGS['itemcreated'],))
+        cfg.setItemManualSentToOtherMCStates((self._stateMappingFor('itemcreated')))
 
         # create and send
         self.changeUser('pmManager')
@@ -481,8 +481,8 @@ class testMeetingItem(PloneMeetingTestCase):
             # add a normal and a delay-aware advice
             self.changeUser('admin')
             cfg.setUseAdvices(True)
-            cfg.setItemAdviceStates([self.WF_STATE_NAME_MAPPINGS['proposed'], ])
-            cfg.setItemAdviceEditStates([self.WF_STATE_NAME_MAPPINGS['proposed'], 'validated', ])
+            cfg.setItemAdviceStates([self._stateMappingFor('proposed')])
+            cfg.setItemAdviceEditStates([self._stateMappingFor('proposed'), 'validated', ])
             cfg.setItemAdviceViewStates(['presented', ])
             cfg.setCustomAdvisers(
                 [{'row_id': 'unique_id_123',
@@ -1220,7 +1220,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.setMeetingConfigsToCloneTo(({'meeting_config': '%s' % cfg2Id,
                                          'trigger_workflow_transitions_until': '%s.%s' %
                                          (cfg2Id, 'validate')},))
-        cfg.setItemManualSentToOtherMCStates((self.WF_STATE_NAME_MAPPINGS['proposed'],
+        cfg.setItemManualSentToOtherMCStates((self._stateMappingFor('proposed'),
                                               'validated'))
 
         # an 'itemcreated' item may not be send
@@ -1476,7 +1476,7 @@ class testMeetingItem(PloneMeetingTestCase):
         """Test the previous_review_state index, especially when datachange is enabled."""
         cfg = self.meetingConfig
         cfg.setHistorizedItemAttributes(('decision', ))
-        cfg.setRecordItemHistoryStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+        cfg.setRecordItemHistoryStates((self._stateMappingFor('proposed'), ))
 
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -1501,7 +1501,7 @@ class testMeetingItem(PloneMeetingTestCase):
            computes diffs)."""
         cfg = self.meetingConfig
         cfg.setHistorizedItemAttributes(('decision', ))
-        cfg.setRecordItemHistoryStates((self.WF_STATE_NAME_MAPPINGS['itemcreated'], ))
+        cfg.setRecordItemHistoryStates((self._stateMappingFor('itemcreated'), ))
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         self.assertFalse('_datachange_' in [event['action'] for event in item.getHistory()])
@@ -1678,7 +1678,7 @@ class testMeetingItem(PloneMeetingTestCase):
            Test also that using copyGroups given to _advisers groups still work as expected
            with advisers used for advices functionnality.'''
         # to ease test override, consider that we can give advices when the item is created for this test
-        self.meetingConfig.setItemAdviceStates(['itemcreated', self.WF_STATE_NAME_MAPPINGS['proposed'], 'validated', ])
+        self.meetingConfig.setItemAdviceStates(['itemcreated', self._stateMappingFor('proposed'), 'validated', ])
         # activate copyGroups when the item is 'itemcreated' so we can check
         # behaviour between copyGroups and advisers
         self.meetingConfig.setItemCopyGroupsStates(['itemcreated', ])
@@ -1923,7 +1923,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg = self.meetingConfig
         # we will let copyGroups view items when in state 'validated'
         cfg.setUseCopies(True)
-        cfg.setItemCopyGroupsStates((self.WF_STATE_NAME_MAPPINGS['proposed'], 'validated', ))
+        cfg.setItemCopyGroupsStates((self._stateMappingFor('proposed'), 'validated', ))
         cfg.setItemBudgetInfosStates(('validated', ))
         # budget impact editors gets view on an item thru another role
         # here 'budgetimpacteditor' is a powerobserver
@@ -1953,7 +1953,7 @@ class testMeetingItem(PloneMeetingTestCase):
         '''Group in charge will have access of groups they have in charge in states
            defined in MeetingConfig.itemGroupInChargeStates.'''
         cfg = self.meetingConfig
-        cfg.setItemGroupInChargeStates(self.WF_STATE_NAME_MAPPINGS['itemcreated'],)
+        cfg.setItemGroupInChargeStates(self._stateMappingFor('itemcreated'),)
 
         # first test : no group in charge
         self.changeUser('pmCreator1')
@@ -1973,13 +1973,13 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(READER_USECASES['groupincharge'] in item.__ac_local_roles__['vendors_observers'])
 
         # not right state in the configuration
-        cfg.setItemGroupInChargeStates(self.WF_STATE_NAME_MAPPINGS['proposed'],)
+        cfg.setItemGroupInChargeStates(self._stateMappingFor('proposed'),)
         item.updateLocalRoles()
         self.assertFalse('vendors_observers' in item.__ac_local_roles__)
 
         # right, back to correct configuration
         # check that changing item's state works, back to correct configuration
-        cfg.setItemGroupInChargeStates(self.WF_STATE_NAME_MAPPINGS['itemcreated'],)
+        cfg.setItemGroupInChargeStates(self._stateMappingFor('itemcreated'),)
         item.updateLocalRoles()
         self.assertTrue(READER_USECASES['groupincharge'] in item.__ac_local_roles__['vendors_observers'])
         self.proposeItem(item)
@@ -3223,7 +3223,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setTakenOverBy('pmReviewer1')
         # send item back to itemcreated, 'pmCreator1' will be automatically
         # selected as user that took item over
-        self.backToState(item, self.WF_STATE_NAME_MAPPINGS['itemcreated'])
+        self.backToState(item, self._stateMappingFor('itemcreated'))
         self.assertTrue(item.getTakenOverBy() == 'pmCreator1')
         # propose it again, it will be set to 'pmReviewer1'
         self.changeUser('pmCreator1')
@@ -3236,7 +3236,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item.takenOverByInfos[item_created_key] = 'pmCreator2'
         # now set item back to itemcreated
         self.changeUser('pmReviewer1')
-        self.backToState(item, self.WF_STATE_NAME_MAPPINGS['itemcreated'])
+        self.backToState(item, self._stateMappingFor('itemcreated'))
         self.assertTrue(not item.getTakenOverBy())
         self.assertTrue(item_created_key not in item.takenOverByInfos)
 
@@ -4503,7 +4503,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
         cfg.setItemManualSentToOtherMCStates(('itemcreated',
-                                              self.WF_STATE_NAME_MAPPINGS['proposed']))
+                                              self._stateMappingFor('proposed')))
 
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
@@ -5189,14 +5189,13 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
-        cfg.setItemManualSentToOtherMCStates((self.WF_STATE_NAME_MAPPINGS['itemcreated']))
+        cfg.setItemManualSentToOtherMCStates((self._stateMappingFor('itemcreated')))
         # create an item in cfg, send it to cfg2 and check
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         item.setOtherMeetingConfigsClonableTo((cfg2Id,))
         item2 = item.cloneToOtherMeetingConfig(cfg2Id)
-        self.assertEqual(item.queryState(),
-                         self.WF_STATE_NAME_MAPPINGS['itemcreated'])
+        self.assertEqual(item.queryState(), self._stateMappingFor('itemcreated'))
         self.assertTrue(
             u'<img title=\'Sent from {0}, original item is "{1}".\' '
             u'src=\'http://nohost/plone/cloned_not_decided.png\' />'.format(
@@ -5205,8 +5204,7 @@ class testMeetingItem(PloneMeetingTestCase):
             )
             in IPrettyLink(item2).getLink())
         self.proposeItem(item)
-        self.assertEqual(item.queryState(),
-                         self.WF_STATE_NAME_MAPPINGS['proposed'])
+        self.assertEqual(item.queryState(), self._stateMappingFor('proposed'))
         self.assertTrue(
             u'<img title=\'Sent from {0}, original item is "{1}".\' '
             u'src=\'http://nohost/plone/cloned_not_decided.png\' />'.format(
@@ -5234,7 +5232,7 @@ class testMeetingItem(PloneMeetingTestCase):
         if 'privacy' in usedItemAttributes:
             usedItemAttributes.remove('privacy')
             cfg2.setUsedItemAttributes(usedItemAttributes)
-        cfg.setItemManualSentToOtherMCStates((self.WF_STATE_NAME_MAPPINGS['itemcreated']))
+        cfg.setItemManualSentToOtherMCStates((self._stateMappingFor('itemcreated')))
         # create an item in cfg, send it to cfg2 and check
         self.changeUser('pmManager')
         item = self.create('MeetingItem')

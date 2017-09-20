@@ -540,7 +540,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
            configuration, the annex is not kept (it is deleted).
         '''
         cfg = self.meetingConfig
-        cfg.setItemManualSentToOtherMCStates((self.WF_STATE_NAME_MAPPINGS['itemcreated'],))
+        cfg.setItemManualSentToOtherMCStates((self._stateMappingFor('itemcreated'),))
         # adapt other_mc_correspondences to set to nothing
         annexCat1 = cfg.annexes_types.item_annexes.get(self.annexFileType)
         annexDecisionCat1 = cfg.annexes_types.item_decision_annexes.get(self.annexFileTypeDecision)
@@ -635,7 +635,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
 
         # change configuration, updateAllLocalRoles then check again
         self.changeUser('siteadmin')
-        self.meetingConfig.setItemCopyGroupsStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+        self.meetingConfig.setItemCopyGroupsStates((self._stateMappingFor('proposed'), ))
         self.tool.updateAllLocalRoles()
         self.assertFalse('vendors_reviewers' in item1.__ac_local_roles__)
         self.assertTrue('vendors_reviewers' in item2.__ac_local_roles__)
@@ -658,7 +658,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
 
         # change configuration, updateAllLocalRoles then check again
         self.changeUser('siteadmin')
-        cfg.setItemBudgetInfosStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+        cfg.setItemBudgetInfosStates((self._stateMappingFor('proposed'), ))
         self.tool.updateAllLocalRoles()
         self.assertFalse('%s_budgetimpacteditors' % cfg.getId() in item1.__ac_local_roles__)
         self.assertTrue('%s_budgetimpacteditors' % cfg.getId() in item2.__ac_local_roles__)
@@ -669,7 +669,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfg.setItemPowerObserversStates(('itemcreated', ))
         cfg.setMeetingPowerObserversStates(('created', ))
-        cfg.setItemRestrictedPowerObserversStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+        cfg.setItemRestrictedPowerObserversStates((self._stateMappingFor('proposed'), ))
         cfg.setMeetingRestrictedPowerObserversStates(('closed', ))
         # only available to 'Managers'
         self.changeUser('pmManager')
@@ -689,7 +689,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
 
         # change configuration, updateAllLocalRoles then check again
         self.changeUser('siteadmin')
-        cfg.setItemPowerObserversStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+        cfg.setItemPowerObserversStates((self._stateMappingFor('proposed'), ))
         cfg.setMeetingPowerObserversStates(('closed', ))
         cfg.setItemRestrictedPowerObserversStates(('itemcreated', ))
         cfg.setMeetingRestrictedPowerObserversStates(('created', ))

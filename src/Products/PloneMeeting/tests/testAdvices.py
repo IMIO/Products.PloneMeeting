@@ -109,9 +109,9 @@ class testAdvices(PloneMeetingTestCase):
         self.create('Meeting', date=meetingDate)
         for item in (item1, item2, item3):
             self.presentItem(item)
-        self.assertEquals(item1.queryState(), self.WF_STATE_NAME_MAPPINGS['presented'])
-        self.assertEquals(item2.queryState(), self.WF_STATE_NAME_MAPPINGS['presented'])
-        self.assertEquals(item3.queryState(), self.WF_STATE_NAME_MAPPINGS['presented'])
+        self.assertEquals(item1.queryState(), self._stateMappingFor('presented'))
+        self.assertEquals(item2.queryState(), self._stateMappingFor('presented'))
+        self.assertEquals(item3.queryState(), self._stateMappingFor('presented'))
         # item1 still viewable because the item an advice is asked for is still viewable in the 'presented' state...
         self.changeUser('pmReviewer2')
         self.failUnless(self.hasPermission(View, item1))
@@ -236,7 +236,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertRaises(Unauthorized, item1.restrictedTraverse('@@delete_givenuid'), item1.meetingadvice.UID())
         # put the item back in a state where 'pmReviewer2' can remove the advice
         self.changeUser('pmManager')
-        self.backToState(item1, self.WF_STATE_NAME_MAPPINGS['proposed'])
+        self.backToState(item1, self._stateMappingFor('proposed'))
         self.changeUser('pmReviewer2')
         # remove the advice
         item1.restrictedTraverse('@@delete_givenuid')(item1.meetingadvice.UID())
@@ -265,10 +265,10 @@ class testAdvices(PloneMeetingTestCase):
         '''
         # advice are addable/editable when item is 'proposed'
         cfg = self.meetingConfig
-        cfg.setItemAdviceStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
-        cfg.setItemAdviceEditStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
-        cfg.setItemAdviceViewStates((self.WF_STATE_NAME_MAPPINGS['proposed'],
-                                     self.WF_STATE_NAME_MAPPINGS['validated'], ))
+        cfg.setItemAdviceStates((self._stateMappingFor('proposed'), ))
+        cfg.setItemAdviceEditStates((self._stateMappingFor('proposed'), ))
+        cfg.setItemAdviceViewStates((self._stateMappingFor('proposed'),
+                                     self._stateMappingFor('validated'), ))
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         item.setOptionalAdvisers(('vendors', ))
@@ -390,7 +390,7 @@ class testAdvices(PloneMeetingTestCase):
         # activate advice invalidation in state 'validated'
         cfg = self.meetingConfig
         cfg.setEnableAdviceInvalidation(True)
-        cfg.setItemAdviceInvalidateStates((self.WF_STATE_NAME_MAPPINGS['validated'],))
+        cfg.setItemAdviceInvalidateStates((self._stateMappingFor('validated'),))
         self.changeUser('pmCreator1')
         # create an item and ask the advice of group 'vendors'
         data = {
@@ -434,7 +434,7 @@ class testAdvices(PloneMeetingTestCase):
         self.failIf(item.hasAdvices())
         self.failIf(item.getGivenAdvices())
         # given the advice again so we can check other case where advices are invalidated
-        self.backToState(item, self.WF_STATE_NAME_MAPPINGS['proposed'])
+        self.backToState(item, self._stateMappingFor('proposed'))
         self.changeUser('pmReviewer2')
         createContentInContainer(item,
                                  'meetingadvice',
@@ -451,7 +451,7 @@ class testAdvices(PloneMeetingTestCase):
         self.failIf(item.hasAdvices())
         self.failIf(item.getGivenAdvices())
         # given the advice again so we can check other case where advices are invalidated
-        self.backToState(item, self.WF_STATE_NAME_MAPPINGS['proposed'])
+        self.backToState(item, self._stateMappingFor('proposed'))
         self.changeUser('pmReviewer2')
         createContentInContainer(item,
                                  'meetingadvice',
@@ -469,7 +469,7 @@ class testAdvices(PloneMeetingTestCase):
         self.failIf(item.hasAdvices())
         self.failIf(item.getGivenAdvices())
         # given the advice again so we can check other case where advices are invalidated
-        self.backToState(item, self.WF_STATE_NAME_MAPPINGS['proposed'])
+        self.backToState(item, self._stateMappingFor('proposed'))
         self.changeUser('pmReviewer2')
         createContentInContainer(item,
                                  'meetingadvice',
@@ -500,8 +500,8 @@ class testAdvices(PloneMeetingTestCase):
               'delay_label': ''}, ])
         cfg.setUsedAdviceTypes(cfg.getUsedAdviceTypes() + ('asked_again', ))
         # an advice can be given or edited when an item is 'proposed'
-        cfg.setItemAdviceStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
-        cfg.setItemAdviceEditStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+        cfg.setItemAdviceStates((self._stateMappingFor('proposed'), ))
+        cfg.setItemAdviceEditStates((self._stateMappingFor('proposed'), ))
         # create an item to advice
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -587,7 +587,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEquals(len(brains), 1)
         self.assertEquals(brains[0].UID, itemUID)
         # back to 'proposed' and not more hidden_during_redaction
-        self.backToState(item, self.WF_STATE_NAME_MAPPINGS['proposed'])
+        self.backToState(item, self._stateMappingFor('proposed'))
         self.changeUser('pmAdviser1')
         changeHiddenDuringRedactionView()
 
@@ -609,7 +609,7 @@ class testAdvices(PloneMeetingTestCase):
 
         # put the item in a state where given advices are not editable anymore
         self.changeUser('pmReviewer1')
-        self.backToState(item, self.WF_STATE_NAME_MAPPINGS['itemcreated'])
+        self.backToState(item, self._stateMappingFor('itemcreated'))
         self.assertEquals(set(indexAdvisers.callable(item)), set(['delay_real_group_id__unique_id_123',
                                                                   'delay_real_group_id__unique_id_123__positive',
                                                                   'delay__vendors_advice_given',
@@ -678,7 +678,7 @@ class testAdvices(PloneMeetingTestCase):
            to query items having advice of a given group using a given advice_type.'''
         # an advice can be given when an item is 'proposed' or 'validated'
         self.assertEquals(self.meetingConfig.getItemAdviceStates(),
-                          (self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+                          (self._stateMappingFor('proposed'), ))
         # create 3 items with various advices
         self.changeUser('pmCreator1')
         item1 = self.create('MeetingItem')
@@ -1057,7 +1057,7 @@ class testAdvices(PloneMeetingTestCase):
         # advices are giveable when item is validated, so validate the item
         # this will initialize the 'delay_started_on' date
         self.validateItem(item)
-        self.assertEquals(item.queryState(), self.WF_STATE_NAME_MAPPINGS['validated'])
+        self.assertEquals(item.queryState(), self._stateMappingFor('validated'))
         # we have datetime now in 'delay_started_on' and still nothing in 'delay_stopped_on'
         self.assertTrue(isinstance(item.adviceIndex['developers']['delay_started_on'], datetime))
         self.assertTrue(item.adviceIndex['developers']['delay_stopped_on'] is None)
@@ -1066,7 +1066,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(item.adviceIndex['vendors']['delay_stopped_on'] is None)
 
         # set item back to proposed, 'delay_stopped_on' should be set
-        self.backToState(item, self.WF_STATE_NAME_MAPPINGS['proposed'])
+        self.backToState(item, self._stateMappingFor('proposed'))
         self.assertTrue(isinstance(item.adviceIndex['developers']['delay_started_on'], datetime))
         self.assertTrue(isinstance(item.adviceIndex['developers']['delay_stopped_on'], datetime))
         # vendors optional advice is not delay-aware
@@ -1080,7 +1080,7 @@ class testAdvices(PloneMeetingTestCase):
         saved_developers_start_date = item.adviceIndex['developers']['delay_started_on']
         saved_vendors_start_date = item.adviceIndex['vendors']['delay_started_on']
         self.presentItem(item)
-        self.assertEquals(item.queryState(), self.WF_STATE_NAME_MAPPINGS['presented'])
+        self.assertEquals(item.queryState(), self._stateMappingFor('presented'))
         self.assertEquals(item.adviceIndex['developers']['delay_started_on'], saved_developers_start_date)
         self.assertEquals(item.adviceIndex['vendors']['delay_started_on'], saved_vendors_start_date)
         # the 'delay_stopped_on' is now set on the delay-aware advice
@@ -1088,9 +1088,9 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(item.adviceIndex['vendors']['delay_stopped_on'] is None)
         # if we excute the transition that will reinitialize dates, it is 'backToItemCreated'
         self.assertEquals(cfg.getTransitionsReinitializingDelays(),
-                          (self.WF_TRANSITION_NAME_MAPPINGS['backToItemCreated'], ))
-        self.backToState(item, self.WF_STATE_NAME_MAPPINGS['itemcreated'])
-        self.assertEquals(item.queryState(), self.WF_STATE_NAME_MAPPINGS['itemcreated'])
+                          (self._transitionMappingFor('backToItemCreated'), ))
+        self.backToState(item, self._stateMappingFor('itemcreated'))
+        self.assertEquals(item.queryState(), self._stateMappingFor('itemcreated'))
         # the delays have been reinitialized to None
         self.assertEquals([advice['delay_started_on'] for advice in item.adviceIndex.values()],
                           [None, None])
@@ -1168,9 +1168,9 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(not vendors.getItemAdviceStates())
         # make advice giveable when item is proposed
         cfg = self.meetingConfig
-        cfg.setItemAdviceStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
-        cfg.setItemAdviceEditStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
-        cfg.setItemAdviceViewStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+        cfg.setItemAdviceStates((self._stateMappingFor('proposed'), ))
+        cfg.setItemAdviceEditStates((self._stateMappingFor('proposed'), ))
+        cfg.setItemAdviceViewStates((self._stateMappingFor('proposed'), ))
         self.assertTrue(vendors.getItemAdviceStates(cfg) == cfg.getItemAdviceStates())
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
@@ -1178,7 +1178,7 @@ class testAdvices(PloneMeetingTestCase):
         item.setOptionalAdvisers(('vendors', ))
         item.at_post_create_script()
         self.proposeItem(item)
-        self.assertTrue(item.queryState() == self.WF_STATE_NAME_MAPPINGS['proposed'])
+        self.assertTrue(item.queryState() == self._stateMappingFor('proposed'))
         # the advice is giveable by the vendors
         self.changeUser('pmReviewer2')
         self.assertTrue('vendors' in [key for key, value in item.getAdvicesGroupsInfosForUser()[0]])
@@ -1187,10 +1187,10 @@ class testAdvices(PloneMeetingTestCase):
         # in 'proposed' state, but well in 'validated' state
         self.changeUser('admin')
         vendors.setItemAdviceStates(("%s__state__%s" % (cfg.getId(),
-                                                        self.WF_STATE_NAME_MAPPINGS['validated'])))
+                                                        self._stateMappingFor('validated'))))
         # no more using values defined on the meetingConfig
         self.assertTrue(not vendors.getItemAdviceStates(cfg) == cfg.getItemAdviceStates())
-        self.assertTrue(vendors.getItemAdviceStates(cfg) == (self.WF_STATE_NAME_MAPPINGS['validated'], ))
+        self.assertTrue(vendors.getItemAdviceStates(cfg) == (self._stateMappingFor('validated'), ))
         item.at_post_create_script()
         self.changeUser('pmReviewer2')
         self.assertTrue('vendors' not in [key for key, value in item.getAdvicesGroupsInfosForUser()[0]])
@@ -1198,20 +1198,20 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmManager')
         self.validateItem(item)
         self.changeUser('pmReviewer2')
-        self.assertTrue(item.queryState() == self.WF_STATE_NAME_MAPPINGS['validated'])
+        self.assertTrue(item.queryState() == self._stateMappingFor('validated'))
         self.assertTrue('vendors' in [key for key, value in item.getAdvicesGroupsInfosForUser()[0]])
 
         # it is the same for itemAdviceEditStates and itemAdviceViewStates
         self.assertTrue(vendors.getItemAdviceEditStates(cfg) == cfg.getItemAdviceEditStates())
         self.assertTrue(vendors.getItemAdviceViewStates(cfg) == cfg.getItemAdviceViewStates())
         vendors.setItemAdviceEditStates(("%s__state__%s" % (cfg.getId(),
-                                                            self.WF_STATE_NAME_MAPPINGS['validated'])))
+                                                            self._stateMappingFor('validated'))))
         vendors.setItemAdviceViewStates(("%s__state__%s" % (cfg.getId(),
-                                                            self.WF_STATE_NAME_MAPPINGS['validated'])))
+                                                            self._stateMappingFor('validated'))))
         self.assertTrue(not vendors.getItemAdviceEditStates(cfg) == cfg.getItemAdviceEditStates())
-        self.assertTrue(vendors.getItemAdviceEditStates(cfg) == (self.WF_STATE_NAME_MAPPINGS['validated'], ))
+        self.assertTrue(vendors.getItemAdviceEditStates(cfg) == (self._stateMappingFor('validated'), ))
         self.assertTrue(not vendors.getItemAdviceViewStates(cfg) == cfg.getItemAdviceViewStates())
-        self.assertTrue(vendors.getItemAdviceViewStates(cfg) == (self.WF_STATE_NAME_MAPPINGS['validated'], ))
+        self.assertTrue(vendors.getItemAdviceViewStates(cfg) == (self._stateMappingFor('validated'), ))
 
     def test_pm_MeetingGroupDefinedItemAdviceStatesWorksTogetherWithMeetingConfigValues(self):
         '''Advices giveable/editable/viewable states defined for a MeetingConfig on a MeetingGroup will
@@ -1221,15 +1221,15 @@ class testAdvices(PloneMeetingTestCase):
         cfg = self.meetingConfig
         vendors = self.tool.vendors
         vendors.setItemAdviceStates(("%s__state__%s" % (cfg.getId(),
-                                                        self.WF_STATE_NAME_MAPPINGS['proposed'])))
+                                                        self._stateMappingFor('proposed'))))
         vendors.setItemAdviceEditStates(("%s__state__%s" % (cfg.getId(),
-                                                            self.WF_STATE_NAME_MAPPINGS['proposed'])))
+                                                            self._stateMappingFor('proposed'))))
         vendors.setItemAdviceViewStates(("%s__state__%s" % (cfg.getId(),
-                                                            self.WF_STATE_NAME_MAPPINGS['proposed'])))
+                                                            self._stateMappingFor('proposed'))))
         cfg2 = self.meetingConfig2
-        cfg2.setItemAdviceStates((self.WF_STATE_NAME_MAPPINGS['itemcreated'], ))
-        cfg2.setItemAdviceEditStates((self.WF_STATE_NAME_MAPPINGS['itemcreated'], ))
-        cfg2.setItemAdviceViewStates((self.WF_STATE_NAME_MAPPINGS['itemcreated'], ))
+        cfg2.setItemAdviceStates((self._stateMappingFor('itemcreated'), ))
+        cfg2.setItemAdviceEditStates((self._stateMappingFor('itemcreated'), ))
+        cfg2.setItemAdviceViewStates((self._stateMappingFor('itemcreated'), ))
 
         # getting states for cfg2 will get states on the cfg2
         self.assertTrue(vendors.getItemAdviceStates(cfg2) == cfg2.getItemAdviceStates())
@@ -1242,9 +1242,9 @@ class testAdvices(PloneMeetingTestCase):
            item is given by another functionnality (MeetingManager, power observer, ...).'''
         # set developers as power advisers
         cfg = self.meetingConfig
-        cfg.setItemAdviceStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+        cfg.setItemAdviceStates((self._stateMappingFor('proposed'), ))
         cfg.setPowerAdvisersGroups(('developers', ))
-        cfg.setItemPowerObserversStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+        cfg.setItemPowerObserversStates((self._stateMappingFor('proposed'), ))
 
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
@@ -1327,9 +1327,9 @@ class testAdvices(PloneMeetingTestCase):
         # no unavailable ending days for now...
         self.tool.setDelayUnavailableEndDays([])
         # make advice giveable when item is proposed
-        self.meetingConfig.setItemAdviceStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
-        self.meetingConfig.setItemAdviceEditStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
-        self.meetingConfig.setItemAdviceViewStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+        self.meetingConfig.setItemAdviceStates((self._stateMappingFor('proposed'), ))
+        self.meetingConfig.setItemAdviceEditStates((self._stateMappingFor('proposed'), ))
+        self.meetingConfig.setItemAdviceViewStates((self._stateMappingFor('proposed'), ))
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         item.setOptionalAdvisers(('vendors__rowid__unique_id_123', ))
@@ -1440,11 +1440,11 @@ class testAdvices(PloneMeetingTestCase):
            available delays for a selected delay-aware advice.'''
         cfg = self.meetingConfig
         # make advice addable and editable when item is 'proposed'
-        cfg.setItemAdviceStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
-        cfg.setItemAdviceEditStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
-        cfg.setItemAdviceViewStates((self.WF_STATE_NAME_MAPPINGS['proposed'],
-                                     self.WF_STATE_NAME_MAPPINGS['validated']))
-        cfg.setItemPowerObserversStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+        cfg.setItemAdviceStates((self._stateMappingFor('proposed'), ))
+        cfg.setItemAdviceEditStates((self._stateMappingFor('proposed'), ))
+        cfg.setItemAdviceViewStates((self._stateMappingFor('proposed'),
+                                     self._stateMappingFor('validated')))
+        cfg.setItemPowerObserversStates((self._stateMappingFor('proposed'), ))
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         # no other linked delay
@@ -1511,7 +1511,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(availableDelaysView._mayAccessDelayChangesHistory())
 
         # makes it an automatic advice
-        self.backToState(item, self.WF_STATE_NAME_MAPPINGS['itemcreated'])
+        self.backToState(item, self._stateMappingFor('itemcreated'))
         self.changeUser('pmCreator1')
         item._update_after_edit()
         customAdvisers[0]['gives_auto_advice_on'] = 'python:True'
@@ -1542,7 +1542,7 @@ class testAdvices(PloneMeetingTestCase):
         # access to delay changes history
         self.assertTrue(availableDelaysView._mayAccessDelayChangesHistory())
         # test the 'available_on' behaviour
-        self.backToState(item, self.WF_STATE_NAME_MAPPINGS['proposed'])
+        self.backToState(item, self._stateMappingFor('proposed'))
         self.assertTrue(item.adviceIndex['vendors']['delay_stopped_on'] is None)
         self.assertEqual(availableDelaysView.listSelectableDelays(item.adviceIndex['vendors']['row_id']),
                          [('unique_id_456', '10', u''), ('unique_id_789', '20', u'')])
@@ -1615,10 +1615,10 @@ class testAdvices(PloneMeetingTestCase):
         '''Test the view '@@change-advice-delay' that apply the change delay action.'''
         cfg = self.meetingConfig
         # make advice addable and editable when item is 'proposed'
-        cfg.setItemAdviceStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
-        cfg.setItemAdviceEditStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
-        cfg.setItemAdviceViewStates((self.WF_STATE_NAME_MAPPINGS['proposed'],
-                                     self.WF_STATE_NAME_MAPPINGS['validated']))
+        cfg.setItemAdviceStates((self._stateMappingFor('proposed'), ))
+        cfg.setItemAdviceEditStates((self._stateMappingFor('proposed'), ))
+        cfg.setItemAdviceViewStates((self._stateMappingFor('proposed'),
+                                     self._stateMappingFor('validated')))
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         customAdvisers = [{'row_id': 'unique_id_123',
@@ -1723,7 +1723,7 @@ class testAdvices(PloneMeetingTestCase):
         cfg.setAdviceConfidentialityDefault(True)
         cfg.setAdviceConfidentialFor(('power_observers', ))
         # make power observers able to see proposed items
-        cfg.setItemPowerObserversStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+        cfg.setItemPowerObserversStates((self._stateMappingFor('proposed'), ))
         # first check default confidentiality value
         # create an item and ask advice of 'developers'
         self.changeUser('pmCreator1')
@@ -1786,9 +1786,9 @@ class testAdvices(PloneMeetingTestCase):
            transitions triggered on advice that will 'giveAdvice'.'''
         cfg = self.meetingConfig
         # advice can be given when item is validated
-        cfg.setItemAdviceStates((self.WF_STATE_NAME_MAPPINGS['validated'], ))
-        cfg.setItemAdviceEditStates((self.WF_STATE_NAME_MAPPINGS['validated'], ))
-        cfg.setItemAdviceViewStates((self.WF_STATE_NAME_MAPPINGS['validated'], ))
+        cfg.setItemAdviceStates((self._stateMappingFor('validated'), ))
+        cfg.setItemAdviceEditStates((self._stateMappingFor('validated'), ))
+        cfg.setItemAdviceViewStates((self._stateMappingFor('validated'), ))
         # create an item as vendors and give an advice as vendors on it
         # it is viewable by MeetingManager when validated
         self.changeUser('pmCreator2')
@@ -1810,7 +1810,7 @@ class testAdvices(PloneMeetingTestCase):
         for tr in self.transitions(item):
             # get the transition that ends to 'proposed'
             transition = itemWF.transitions[tr]
-            if transition.new_state_id == self.WF_STATE_NAME_MAPPINGS['proposed']:
+            if transition.new_state_id == self._stateMappingFor('proposed'):
                 backToProposedTr = tr
                 break
         # this will work...
@@ -1857,9 +1857,9 @@ class testAdvices(PloneMeetingTestCase):
     def test_pm_ChangeAdviceAskedAgainView(self):
         """Test the view that will change from advice asked_again/back to previous advice."""
         cfg = self.meetingConfig
-        cfg.setItemAdviceStates([self.WF_STATE_NAME_MAPPINGS['proposed'], ])
-        cfg.setItemAdviceEditStates([self.WF_STATE_NAME_MAPPINGS['proposed'], ])
-        cfg.setItemAdviceViewStates([self.WF_STATE_NAME_MAPPINGS['proposed'], ])
+        cfg.setItemAdviceStates([self._stateMappingFor('proposed'), ])
+        cfg.setItemAdviceEditStates([self._stateMappingFor('proposed'), ])
+        cfg.setItemAdviceViewStates([self._stateMappingFor('proposed'), ])
         # set that default value of field 'advice_hide_during_redaction' will be True
         cfg.setDefaultAdviceHiddenDuringRedaction(True)
         self.changeUser('pmCreator1')
@@ -1965,9 +1965,9 @@ class testAdvices(PloneMeetingTestCase):
         """When an advice has been historized (officially given or asked_again,
            so when versions exist), it can not be deleted by the advisers."""
         cfg = self.meetingConfig
-        cfg.setItemAdviceStates([self.WF_STATE_NAME_MAPPINGS['itemcreated'], ])
-        cfg.setItemAdviceEditStates([self.WF_STATE_NAME_MAPPINGS['itemcreated'], ])
-        cfg.setItemAdviceViewStates([self.WF_STATE_NAME_MAPPINGS['itemcreated'], ])
+        cfg.setItemAdviceStates([self._stateMappingFor('itemcreated'), ])
+        cfg.setItemAdviceEditStates([self._stateMappingFor('itemcreated'), ])
+        cfg.setItemAdviceViewStates([self._stateMappingFor('itemcreated'), ])
         cfg.setUsedAdviceTypes(cfg.getUsedAdviceTypes() + ('asked_again', ))
         self.changeUser('pmCreator1')
         # create an item and ask the advice of group 'vendors'
@@ -2031,9 +2031,9 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(cfg.getHistorizeItemDataWhenAdviceIsGiven())
         # make sure we know what item rich text fields are enabled
         cfg.setUsedItemAttributes(('detailedDescription', 'motivation', ))
-        cfg.setItemAdviceStates([self.WF_STATE_NAME_MAPPINGS['proposed'], ])
-        cfg.setItemAdviceEditStates([self.WF_STATE_NAME_MAPPINGS['proposed'], ])
-        cfg.setItemAdviceViewStates([self.WF_STATE_NAME_MAPPINGS['proposed'], ])
+        cfg.setItemAdviceStates([self._stateMappingFor('proposed'), ])
+        cfg.setItemAdviceEditStates([self._stateMappingFor('proposed'), ])
+        cfg.setItemAdviceViewStates([self._stateMappingFor('proposed'), ])
         # set that default value of field 'advice_hide_during_redaction' will be True
         cfg.setDefaultAdviceHiddenDuringRedaction(True)
         self.changeUser('pmCreator1')
@@ -2074,7 +2074,7 @@ class testAdvices(PloneMeetingTestCase):
                            {'field_name': 'motivation', 'field_content': '<p>Item motivation</p>'},
                            {'field_name': 'decision', 'field_content': '<p>Item decision</p>'}])
         # when giving advice for a second time, if advice is not edited, it is not versioned uselessly
-        self.backToState(item, self.WF_STATE_NAME_MAPPINGS['proposed'])
+        self.backToState(item, self._stateMappingFor('proposed'))
         self.assertEquals(advice.queryState(), 'advice_under_edit')
         self.validateItem(item)
         self.assertEquals(advice.queryState(), 'advice_given')
@@ -2083,7 +2083,7 @@ class testAdvices(PloneMeetingTestCase):
 
         # come back to 'proposed' and edit advice
         item.setDecision('<p>Another decision</p>')
-        self.backToState(item, self.WF_STATE_NAME_MAPPINGS['proposed'])
+        self.backToState(item, self._stateMappingFor('proposed'))
         notify(ObjectModifiedEvent(advice))
         self.validateItem(item)
         h_metadata = pr.getHistoryMetadata(advice)
@@ -2101,9 +2101,9 @@ class testAdvices(PloneMeetingTestCase):
         cfg = self.meetingConfig
         # item data are saved if cfg.historizeItemDataWhenAdviceIsGiven
         self.assertTrue(cfg.getHistorizeItemDataWhenAdviceIsGiven())
-        cfg.setItemAdviceStates([self.WF_STATE_NAME_MAPPINGS['proposed'], ])
-        cfg.setItemAdviceEditStates([self.WF_STATE_NAME_MAPPINGS['proposed'], ])
-        cfg.setItemAdviceViewStates([self.WF_STATE_NAME_MAPPINGS['proposed'], ])
+        cfg.setItemAdviceStates([self._stateMappingFor('proposed'), ])
+        cfg.setItemAdviceEditStates([self._stateMappingFor('proposed'), ])
+        cfg.setItemAdviceViewStates([self._stateMappingFor('proposed'), ])
 
         # create an item and ask the advice of group 'vendors'
         self.changeUser('pmCreator1')
@@ -2135,9 +2135,9 @@ class testAdvices(PloneMeetingTestCase):
            This will care that an advice that is edited out of the period the adviser may
            edit the advice is still using the correct given_on date."""
         cfg = self.meetingConfig
-        cfg.setItemAdviceStates([self.WF_STATE_NAME_MAPPINGS['itemcreated'], ])
-        cfg.setItemAdviceEditStates([self.WF_STATE_NAME_MAPPINGS['itemcreated'], ])
-        cfg.setItemAdviceViewStates([self.WF_STATE_NAME_MAPPINGS['itemcreated'], ])
+        cfg.setItemAdviceStates([self._stateMappingFor('itemcreated'), ])
+        cfg.setItemAdviceEditStates([self._stateMappingFor('itemcreated'), ])
+        cfg.setItemAdviceViewStates([self._stateMappingFor('itemcreated'), ])
 
         # create an item and ask the advice of group 'vendors'
         self.changeUser('pmCreator1')
@@ -2176,9 +2176,9 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(cfg.getHistorizeItemDataWhenAdviceIsGiven())
         # make sure we know what item rich text fields are enabled
         cfg.setUsedItemAttributes(('detailedDescription', 'motivation', ))
-        cfg.setItemAdviceStates([self.WF_STATE_NAME_MAPPINGS['proposed'], ])
-        cfg.setItemAdviceEditStates([self.WF_STATE_NAME_MAPPINGS['proposed'], ])
-        cfg.setItemAdviceViewStates([self.WF_STATE_NAME_MAPPINGS['proposed'], ])
+        cfg.setItemAdviceStates([self._stateMappingFor('proposed'), ])
+        cfg.setItemAdviceEditStates([self._stateMappingFor('proposed'), ])
+        cfg.setItemAdviceViewStates([self._stateMappingFor('proposed'), ])
         # default value of field 'advice_hide_during_redaction' is False
         self.assertFalse(cfg.getDefaultAdviceHiddenDuringRedaction())
 
@@ -2251,7 +2251,7 @@ class testAdvices(PloneMeetingTestCase):
 
         # but it is again if advice is edited
         self.changeUser('pmManager')
-        self.backToState(item, self.WF_STATE_NAME_MAPPINGS['proposed'])
+        self.backToState(item, self._stateMappingFor('proposed'))
         self.changeUser('pmReviewer2')
         notify(ObjectModifiedEvent(advice))
         self.changeUser('pmReviewer1')
@@ -2263,7 +2263,7 @@ class testAdvices(PloneMeetingTestCase):
         # and once again back to proposed and edit item
         # not versioned because advice was not edited
         self.changeUser('pmManager')
-        self.backToState(item, self.WF_STATE_NAME_MAPPINGS['proposed'])
+        self.backToState(item, self._stateMappingFor('proposed'))
         self.changeUser('pmReviewer1')
         self.request.form['detailedDescription'] = '<p>Item detailed description edited 3</p>'
         item.processForm({'detailedDescription': '<p>Item detailed description edited 3</p>'})
@@ -2273,7 +2273,7 @@ class testAdvices(PloneMeetingTestCase):
 
         # right, back to proposed and use ajax edit
         self.changeUser('pmManager')
-        self.backToState(item, self.WF_STATE_NAME_MAPPINGS['proposed'])
+        self.backToState(item, self._stateMappingFor('proposed'))
         self.changeUser('pmReviewer2')
         notify(ObjectModifiedEvent(advice))
         self.changeUser('pmReviewer1')
@@ -2322,9 +2322,9 @@ class testAdvices(PloneMeetingTestCase):
         # classic scenario is an item visible by advisers when it is 'proposed'
         # and no more when it goes back to 'itemcreated'
         cfg = self.meetingConfig
-        cfg.setItemAdviceStates([self.WF_STATE_NAME_MAPPINGS['proposed'], ])
-        cfg.setItemAdviceEditStates([self.WF_STATE_NAME_MAPPINGS['proposed'], ])
-        cfg.setItemAdviceViewStates([self.WF_STATE_NAME_MAPPINGS['proposed'], ])
+        cfg.setItemAdviceStates([self._stateMappingFor('proposed'), ])
+        cfg.setItemAdviceEditStates([self._stateMappingFor('proposed'), ])
+        cfg.setItemAdviceViewStates([self._stateMappingFor('proposed'), ])
         cfg.setKeepAccessToItemWhenAdviceIsGiven(False)
 
         # create an item, set it to 'proposed', give advice and set it back to 'itemcreated'
@@ -2364,7 +2364,7 @@ class testAdvices(PloneMeetingTestCase):
         # set item back to 'itemcreated', it will not be visible anymore by advisers
         self.changeUser('pmReviewer2')
         self.assertFalse(cfg.getKeepAccessToItemWhenAdviceIsGiven())
-        self.backToState(item, self.WF_STATE_NAME_MAPPINGS['itemcreated'])
+        self.backToState(item, self._stateMappingFor('itemcreated'))
         self.assertFalse(self.hasPermission(View, item))
 
         # activate keepAccessToItemWhenAdviceIsGiven, then item is visible again
@@ -2387,7 +2387,7 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('pmReviewer2')
         self.assertEquals(vendors.getKeepAccessToItemWhenAdviceIsGiven(), '')
         self.assertFalse(cfg.getKeepAccessToItemWhenAdviceIsGiven())
-        self.backToState(item, self.WF_STATE_NAME_MAPPINGS['itemcreated'])
+        self.backToState(item, self._stateMappingFor('itemcreated'))
         self.assertFalse(self.hasPermission(View, item))
 
         # override MeetingConfig value

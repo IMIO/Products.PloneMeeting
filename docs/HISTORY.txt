@@ -45,6 +45,10 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - When duplicating an item, make sure links to images used in XHTML fields are updated so it points to the new item.
   Moreover delete every contained images on duplication, no more used images will be deleted and used images will
   be retrieved by storeImagesLocally
+- Moved tests/helpers.WF_STATE_NAME_MAPPINGS to WF_ITEM_STATE_NAME_MAPPINGS_1/WF_ITEM_STATE_NAME_MAPPINGS_2 and
+  WF_MEETING_STATE_NAME_MAPPINGS_1/WF_MEETING_STATE_NAME_MAPPINGS_2 and moved WF_TRANSITION_NAME_MAPPINGS to
+  WF_ITEM_TRANSITION_NAME_MAPPINGS_1/WF_ITEM_TRANSITION_NAME_MAPPINGS_2 and WF_MEETING_TRANSITION_NAME_MAPPINGS_1/
+  WF_MEETING_TRANSITION_NAME_MAPPINGS_2 so we may handle differents workflows
 
 4.0 (2017-08-04)
 ----------------

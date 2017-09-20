@@ -285,7 +285,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         # create an item and propose it
         item = self.create('MeetingItem')
         self.proposeItem(item)
-        self.assertEquals(item.queryState(), self.WF_STATE_NAME_MAPPINGS['proposed'])
+        self.assertEquals(item.queryState(), self._stateMappingFor('proposed'))
         self.assertEquals(
             cfg.validate_workflowAdaptations(('no_proposal', )),
             no_proposal_added_error)
@@ -316,7 +316,7 @@ class testWFAdaptations(PloneMeetingTestCase):
             cfg.validate_workflowAdaptations(('items_come_validated', )),
             items_come_validated_added_error)
         self.proposeItem(item)
-        self.assertEquals(item.queryState(), self.WF_STATE_NAME_MAPPINGS['proposed'])
+        self.assertEquals(item.queryState(), self._stateMappingFor('proposed'))
         self.assertEquals(
             cfg.validate_workflowAdaptations(('items_come_validated', )),
             items_come_validated_added_error)
@@ -487,7 +487,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         if 'waiting_advices' not in cfg.listWorkflowAdaptations():
             return
 
-        waiting_advices_proposed_state = '{0}_waiting_advices'.format(self.WF_STATE_NAME_MAPPINGS['proposed'])
+        waiting_advices_proposed_state = '{0}_waiting_advices'.format(self._stateMappingFor('proposed'))
         self.tool.vendors.setItemAdviceStates(
             ("{0}__state__{1}".format(cfg.getId(), waiting_advices_proposed_state),))
 
@@ -1834,9 +1834,9 @@ class testWFAdaptations(PloneMeetingTestCase):
         from Products.PloneMeeting.model import adaptations
         original_WAITING_ADVICES_FROM_STATES = adaptations.WAITING_ADVICES_FROM_STATES
         adaptations.WAITING_ADVICES_FROM_STATES = (
-            {'from_states': (self.WF_STATE_NAME_MAPPINGS['proposed_first_level'], ),
-             'back_states': (self.WF_STATE_NAME_MAPPINGS['proposed_first_level'], ),
-             'perm_cloned_states': (self.WF_STATE_NAME_MAPPINGS['proposed_first_level'], ),
+            {'from_states': (self._stateMappingFor('proposed_first_level'), ),
+             'back_states': (self._stateMappingFor('proposed_first_level'), ),
+             'perm_cloned_states': (self._stateMappingFor('proposed_first_level'), ),
              'remove_modify_access': True},)
         cfg.setWorkflowAdaptations(originalWFA + ('waiting_advices',))
         cfg.at_post_edit_script()
@@ -1856,8 +1856,8 @@ class testWFAdaptations(PloneMeetingTestCase):
         cfg = self.meetingConfig
         # by default it is linked to the 'proposed' state
         itemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
-        waiting_state_name = '{0}_waiting_advices'.format(self.WF_STATE_NAME_MAPPINGS['proposed_first_level'])
-        waiting_transition_name = 'wait_advices_from_{0}'.format(self.WF_STATE_NAME_MAPPINGS['proposed_first_level'])
+        waiting_state_name = '{0}_waiting_advices'.format(self._stateMappingFor('proposed_first_level'))
+        waiting_transition_name = 'wait_advices_from_{0}'.format(self._stateMappingFor('proposed_first_level'))
         self.assertTrue(waiting_state_name in itemWF.states)
 
         # right, create an item and set it to 'waiting_advices'
@@ -1873,7 +1873,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         advice_required_to_ask_advices = translate('advice_required_to_ask_advices',
                                                    domain='PloneMeeting',
                                                    context=self.request)
-        methodName = 'mayWait_advices_from_{0}'.format(self.WF_STATE_NAME_MAPPINGS['proposed_first_level'])
+        methodName = 'mayWait_advices_from_{0}'.format(self._stateMappingFor('proposed_first_level'))
         self.assertEqual(translate(getattr(item.wfConditions(), methodName)().msg,
                                    context=self.request),
                          advice_required_to_ask_advices)
@@ -1901,8 +1901,8 @@ class testWFAdaptations(PloneMeetingTestCase):
 
         # right come back to 'proposed'
         self.changeUser('pmReviewer1')
-        self.do(item, 'backTo_%s_from_waiting_advices' % self.WF_STATE_NAME_MAPPINGS['proposed_first_level'])
-        self.assertEquals(item.queryState(), self.WF_STATE_NAME_MAPPINGS['proposed_first_level'])
+        self.do(item, 'backTo_%s_from_waiting_advices' % self._stateMappingFor('proposed_first_level'))
+        self.assertEquals(item.queryState(), self._stateMappingFor('proposed_first_level'))
 
     def test_pm_WFA_waiting_advices_with_prevalidation(self):
         '''It can also work from several states, if pre_validation is enabled
@@ -1922,16 +1922,16 @@ class testWFAdaptations(PloneMeetingTestCase):
         from Products.PloneMeeting.model import adaptations
         original_WAITING_ADVICES_FROM_STATES = adaptations.WAITING_ADVICES_FROM_STATES
         adaptations.WAITING_ADVICES_FROM_STATES = (
-            {'from_states': (self.WF_STATE_NAME_MAPPINGS['proposed_first_level'],
+            {'from_states': (self._stateMappingFor('proposed_first_level'),
                              'prevalidated', ),
-             'back_states': (self.WF_STATE_NAME_MAPPINGS['proposed_first_level'],
+             'back_states': (self._stateMappingFor('proposed_first_level'),
                              'prevalidated', ),
-             'perm_cloned_states': (self.WF_STATE_NAME_MAPPINGS['proposed_first_level'],
+             'perm_cloned_states': (self._stateMappingFor('proposed_first_level'),
                                     'prevalidated', ),
              'remove_modify_access': True},)
         cfg.at_post_edit_script()
         waiting_advices_state = '{0}__or__prevalidated_waiting_advices'.format(
-            self.WF_STATE_NAME_MAPPINGS['proposed_first_level'])
+            self._stateMappingFor('proposed_first_level'))
         self.tool.vendors.setItemAdviceStates(("{0}__state__{1}".format(cfg.getId(), waiting_advices_state), ))
 
         # by default it is linked to the 'proposed' state
@@ -1939,16 +1939,16 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertTrue(waiting_advices_state in itemWF.states)
 
         # suffixed transitions are not added
-        self.assertFalse('%s_waiting_advices' % self.WF_STATE_NAME_MAPPINGS['proposed_first_level']
+        self.assertFalse('%s_waiting_advices' % self._stateMappingFor('proposed_first_level')
                          in itemWF.states)
         self.assertFalse('prevalidated_waiting_advices' in itemWF.states)
         # transitions are created
         wait_advices_from_proposed_transition = 'wait_advices_from_%s' % \
-            self.WF_STATE_NAME_MAPPINGS['proposed_first_level']
+            self._stateMappingFor('proposed_first_level')
         self.assertTrue(wait_advices_from_proposed_transition in itemWF.transitions)
         self.assertTrue('wait_advices_from_prevalidated' in itemWF.transitions)
         # back transitions are created
-        self.assertTrue('backTo_%s_from_waiting_advices' % self.WF_STATE_NAME_MAPPINGS['proposed_first_level']
+        self.assertTrue('backTo_%s_from_waiting_advices' % self._stateMappingFor('proposed_first_level')
                         in itemWF.transitions)
         self.assertTrue('backTo_prevalidated_from_waiting_advices' in itemWF.transitions)
 
@@ -2008,14 +2008,14 @@ class testWFAdaptations(PloneMeetingTestCase):
              'back_states': ('itemcreated', ),
              'perm_cloned_states': ('itemcreated', ),
              'remove_modify_access': True},
-            {'from_states': (self.WF_STATE_NAME_MAPPINGS['proposed'], ),
-             'back_states': (self.WF_STATE_NAME_MAPPINGS['proposed'], ),
-             'perm_cloned_states': (self.WF_STATE_NAME_MAPPINGS['proposed'], ),
+            {'from_states': (self._stateMappingFor('proposed'), ),
+             'back_states': (self._stateMappingFor('proposed'), ),
+             'perm_cloned_states': (self._stateMappingFor('proposed'), ),
              'remove_modify_access': True},)
         cfg.setWorkflowAdaptations(cfg.getWorkflowAdaptations() + ('waiting_advices', ))
         cfg.at_post_edit_script()
         waiting_advices_itemcreated_state = 'itemcreated_waiting_advices'
-        waiting_advices_proposed_state = '{0}_waiting_advices'.format(self.WF_STATE_NAME_MAPPINGS['proposed'])
+        waiting_advices_proposed_state = '{0}_waiting_advices'.format(self._stateMappingFor('proposed'))
         self.tool.vendors.setItemAdviceStates(
             ("{0}__state__{1}".format(cfg.getId(), waiting_advices_itemcreated_state),
              "{0}__state__{1}".format(cfg.getId(), waiting_advices_proposed_state),))
@@ -2035,8 +2035,8 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.proposeItem(item)
         self.changeUser('pmReviewer1')
         self._setItemToWaitingAdvices(item,
-                                      'wait_advices_from_%s' % self.WF_STATE_NAME_MAPPINGS['proposed'])
-        self.assertEquals(item.queryState(), '%s_waiting_advices' % self.WF_STATE_NAME_MAPPINGS['proposed'])
+                                      'wait_advices_from_%s' % self._stateMappingFor('proposed'))
+        self.assertEquals(item.queryState(), '%s_waiting_advices' % self._stateMappingFor('proposed'))
         self.assertFalse(self.hasPermission(ModifyPortalContent, item))
         self.assertFalse(self.hasPermission(DeleteObjects, item))
         # 'pmCreator1' may view, not edit
@@ -2046,8 +2046,8 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertFalse(self.hasPermission(DeleteObjects, item))
         self.assertFalse(self.transitions(item))
         self.changeUser(self._userAbleToBackFromWaitingAdvices(item.queryState()))
-        self.do(item, 'backTo_%s_from_waiting_advices' % self.WF_STATE_NAME_MAPPINGS['proposed'])
-        self.assertEquals(item.queryState(), self.WF_STATE_NAME_MAPPINGS['proposed'])
+        self.do(item, 'backTo_%s_from_waiting_advices' % self._stateMappingFor('proposed'))
+        self.assertEquals(item.queryState(), self._stateMappingFor('proposed'))
 
         # back to original configuration
         adaptations.WAITING_ADVICES_FROM_STATES = original_WAITING_ADVICES_FROM_STATES
