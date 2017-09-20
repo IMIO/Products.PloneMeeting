@@ -1210,16 +1210,14 @@ schema = Schema((
     ),
     LinesField(
         name='itemsListVisibleFields',
-        widget=MultiSelectionWidget(
+        widget=InAndOutWidget(
             description="ItemsListVisibleFields",
             description_msgid="items_list_visible_fields_descr",
-            format="checkbox",
             label='Itemslistvisiblefields',
             label_msgid='PloneMeeting_label_itemsListVisibleFields',
             i18n_domain='PloneMeeting',
         ),
         schemata="gui",
-        multiValued=1,
         vocabulary='listItemsListVisibleFields',
         default=defValues.itemsListVisibleFields,
         enforceVocabulary=True,
@@ -3694,10 +3692,17 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                                              context=self.REQUEST)))
         return DisplayList(tuple(res))
 
+    def _ignoredVisibleFieldIds(self):
+        """ """
+        return ['id', 'title', 'templateUsingGroups',
+                'meetingTransitionInsertingMe']
+
     def listItemsListVisibleFields(self):
         '''Vocabulary for the 'itemsListVisibleFields' field.
            Every RichText field available on the MeetingItem can be selectable.'''
-        res = self._listRichTextFieldFor(MeetingItem)
+        res = self._listFieldsFor(MeetingItem,
+                                  ignored_field_ids=self.adapted()._ignoredVisibleFieldIds(),
+                                  hide_not_visible=True)
         return DisplayList(tuple(res))
 
     security.declarePrivate('listItemColumns')
@@ -4792,13 +4797,20 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def _listRichTextFieldFor(self, baseClass):
         '''
         '''
+        return self._listFieldsFor(baseClass, widget_type='RichWidget')
+
+    def _listFieldsFor(self, baseClass, widget_type=None, ignored_field_ids=[], hide_not_visible=False):
+        """ """
         d = 'PloneMeeting'
         res = []
-        for field in baseClass.schema.fields():
+        for field in baseClass.schema.filterFields(isMetadata=False):
             fieldName = field.getName()
-            if field.widget.getName() == 'RichWidget':
+            if fieldName not in ignored_field_ids and \
+               (not widget_type or field.widget.getName() == widget_type) and \
+               (not hide_not_visible or field.widget.visible):
+                label_msgid = getattr(field.widget, 'label_msgid', field.widget.label)
                 msg = '%s.%s -> %s' % (baseClass.__name__, fieldName,
-                                       translate(field.widget.label_msgid, domain=d, context=self.REQUEST))
+                                       translate(label_msgid, domain=d, context=self.REQUEST))
                 res.append(('%s.%s' % (baseClass.__name__, fieldName), msg))
         return res
 
