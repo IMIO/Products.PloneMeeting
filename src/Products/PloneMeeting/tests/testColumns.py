@@ -43,7 +43,7 @@ class testColumns(PloneMeetingTestCase):
            - more infos are not displayed."""
         cfg = self.meetingConfig
         cfg.setRestrictAccessToSecretItems(True)
-        cfg.setItemRestrictedPowerObserversStates((self.WF_STATE_NAME_MAPPINGS['itemcreated'], ))
+        cfg.setItemRestrictedPowerObserversStates((self._stateMappingFor('itemcreated'), ))
         self.request.cookies['pmShowDescriptions'] = 'true'
 
         self.changeUser('pmCreator1')

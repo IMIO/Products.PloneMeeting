@@ -77,9 +77,6 @@
            <td tal:condition="python:'privacy' in usedAttrs">
             <metal:field use-macro="python:here.widget('privacy', mode='edit')"/>
            </td>
-           <td tal:condition="python:'listType' in usedAttrs">
-            <metal:field use-macro="python:here.widget('listType', mode='edit')"/>
-           </td>
            <td tal:condition="python:'itemKeywords' in usedAttrs">
             <metal:field use-macro="python:here.widget('itemKeywords', mode='edit')"/>
            </td>

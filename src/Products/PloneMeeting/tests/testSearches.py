@@ -132,8 +132,7 @@ class testSearches(PloneMeetingTestCase):
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstoadvice')
         self.failIf(collection.getQuery())
         # an advice can be given when an item is 'proposed'
-        self.assertEquals(cfg.getItemAdviceStates(),
-                          (self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+        self.assertEquals(cfg.getItemAdviceStates(), (self._stateMappingFor('proposed'), ))
         # create an item to advice
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -237,8 +236,7 @@ class testSearches(PloneMeetingTestCase):
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_adviseditems')
         self.failIf(collection.getQuery())
         # an advice can be given when an item is 'proposed'
-        self.assertEquals(cfg.getItemAdviceStates(),
-                          (self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+        self.assertEquals(cfg.getItemAdviceStates(), (self._stateMappingFor('proposed'), ))
         # create an item to advice
         self.changeUser('pmCreator1')
         item1 = self.create('MeetingItem')
@@ -332,8 +330,7 @@ class testSearches(PloneMeetingTestCase):
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_adviseditemswithdelay')
         self.failIf(collection.getQuery())
         # an advice can be given when an item is 'proposed'
-        self.assertEquals(cfg.getItemAdviceStates(),
-                          (self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+        self.assertEquals(cfg.getItemAdviceStates(), (self._stateMappingFor('proposed'), ))
         # create an item to advice
         self.changeUser('pmCreator1')
         item1 = self.create('MeetingItem')
@@ -385,7 +382,7 @@ class testSearches(PloneMeetingTestCase):
         # specify that copyGroups can see the item when it is proposed
         cfg = self.meetingConfig
         cfg.setUseCopies(True)
-        cfg.setItemCopyGroupsStates((self.WF_STATE_NAME_MAPPINGS['proposed'], 'validated', ))
+        cfg.setItemCopyGroupsStates((self._stateMappingFor('proposed'), 'validated', ))
 
         itemTypeName = cfg.getItemTypeName()
 
@@ -430,7 +427,7 @@ class testSearches(PloneMeetingTestCase):
         # specify that copyGroups can see the item when it is proposed
         cfg = self.meetingConfig
         cfg.setUseCopies(True)
-        cfg.setItemCopyGroupsStates((self.WF_STATE_NAME_MAPPINGS['proposed'], 'validated', ))
+        cfg.setItemCopyGroupsStates((self._stateMappingFor('proposed'), 'validated', ))
         # configure an auto copyGroup, vendors_reviewers will be set
         # as auto copyGroup for every items
         self.tool.vendors.setAsCopyGroupOn("python: ['reviewers']")
@@ -452,7 +449,7 @@ class testSearches(PloneMeetingTestCase):
         # specify that copyGroups can see the item when it is proposed
         cfg = self.meetingConfig
         cfg.setUseCopies(True)
-        cfg.setItemCopyGroupsStates((self.WF_STATE_NAME_MAPPINGS['proposed'], 'validated', ))
+        cfg.setItemCopyGroupsStates((self._stateMappingFor('proposed'), 'validated', ))
 
         itemTypeName = cfg.getItemTypeName()
 
@@ -507,7 +504,7 @@ class testSearches(PloneMeetingTestCase):
         self.assertEquals(adapter.query,
                           {'getProposingGroup': {'query': ['developers']},
                            'portal_type': {'query': itemTypeName},
-                           'review_state': {'query': self.WF_STATE_NAME_MAPPINGS['proposed']}})
+                           'review_state': {'query': self._stateMappingFor('proposed')}})
 
         # activate 'prevalidation' if necessary
         if 'prereviewers' in MEETINGREVIEWERS and \

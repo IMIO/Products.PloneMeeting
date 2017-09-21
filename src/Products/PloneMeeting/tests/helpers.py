@@ -68,20 +68,53 @@ class PloneMeetingTestingHelpers:
                       'backToItemPublished',
                       'backToPresented', )}
 
-    WF_STATE_NAME_MAPPINGS = {'itemcreated': 'itemcreated',
-                              'proposed_first_level': 'proposed',
-                              'proposed': 'proposed',
-                              'validated': 'validated',
-                              'presented': 'presented',
-                              'itemfrozen': 'itemfrozen'}
+    WF_ITEM_STATE_NAME_MAPPINGS_1 = {'itemcreated': 'itemcreated',
+                                     'proposed_first_level': 'proposed',
+                                     'proposed': 'proposed',
+                                     'validated': 'validated',
+                                     'presented': 'presented',
+                                     'itemfrozen': 'itemfrozen'}
+    WF_ITEM_STATE_NAME_MAPPINGS_2 = {'itemcreated': 'itemcreated',
+                                     'proposed_first_level': 'proposed',
+                                     'proposed': 'proposed',
+                                     'validated': 'validated',
+                                     'presented': 'presented',
+                                     'itemfrozen': 'itemfrozen'}
+    WF_MEETING_STATE_NAME_MAPPINGS_1 = {'frozen': 'frozen'}
+    WF_MEETING_STATE_NAME_MAPPINGS_2 = {'frozen': 'frozen'}
 
-    WF_TRANSITION_NAME_MAPPINGS = {
+    WF_ITEM_TRANSITION_NAME_MAPPINGS_1 = {
         'backToItemCreated': 'backToItemCreated',
         'backToProposed': 'backToProposed', }
+    WF_ITEM_TRANSITION_NAME_MAPPINGS_2 = {
+        'backToItemCreated': 'backToItemCreated',
+        'backToProposed': 'backToProposed', }
+    WF_MEETING_TRANSITION_NAME_MAPPINGS_1 = {}
+    WF_MEETING_TRANSITION_NAME_MAPPINGS_2 = {}
 
     # in which state an item must be after a particular meeting transition?
     ITEM_WF_STATE_AFTER_MEETING_TRANSITION = {'publish_decisions': 'confirmed',
                                               'close': 'confirmed', }
+
+    def _stateMappingFor(self, state_name, meta_type='MeetingItem'):
+        """ """
+        meetingConfigNumber = self._determinateUsedMeetingConfigNumber()
+        pattern = ''
+        if meta_type == 'MeetingItem':
+            pattern = 'WF_ITEM_STATE_NAME_MAPPINGS_%d'
+        else:
+            pattern = 'WF_MEETING_STATE_NAME_MAPPINGS_%d'
+        return getattr(self, (pattern % meetingConfigNumber)).get(state_name, state_name)
+
+    def _transitionMappingFor(self, transition_name, meta_type='MeetingItem'):
+        """ """
+        meetingConfigNumber = self._determinateUsedMeetingConfigNumber()
+        pattern = ''
+        if meta_type == 'MeetingItem':
+            pattern = 'WF_ITEM_TRANSITION_NAME_MAPPINGS_%d'
+        else:
+            pattern = 'WF_MEETING_TRANSITION_NAME_MAPPINGS_%d'
+        return getattr(self, (pattern % meetingConfigNumber)).get(transition_name, transition_name)
 
     def _createMeetingWithItems(self, withItems=True, meetingDate=DateTime()):
         '''Create a meeting with a bunch of items.'''
@@ -217,9 +250,8 @@ class PloneMeetingTestingHelpers:
         if state in BACK_TO_WF_PATH:
             transitions = BACK_TO_WF_PATH[state]
             useDefinedWfPath = True
-        # check if a mapping exist for state name
-        if state in self.WF_STATE_NAME_MAPPINGS:
-            state = self.WF_STATE_NAME_MAPPINGS[state]
+        # check if a mapping exist for state name, returns original state if no mapping exists
+        state = self._stateMappingFor(state)
         # do things as admin to avoid permission issues
         currentUser = self.member.getId()
         self.changeUser('admin')
