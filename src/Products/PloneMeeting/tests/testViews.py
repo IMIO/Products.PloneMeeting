@@ -351,7 +351,7 @@ class testViews(PloneMeetingTestCase):
         self.assertTrue(not itemWithDelayAwareAdvice.adviceIndex['vendors']['advice_addable'])
         self.assertTrue(not catalog(**query))
         # back to proposed, add it
-        self.backToState(itemWithDelayAwareAdvice, self.WF_STATE_NAME_MAPPINGS['proposed'])
+        self.backToState(itemWithDelayAwareAdvice, self._stateMappingFor('proposed'))
         createContentInContainer(itemWithDelayAwareAdvice,
                                  'meetingadvice',
                                  **{'advice_group': 'vendors',
@@ -367,7 +367,7 @@ class testViews(PloneMeetingTestCase):
         self.assertTrue(catalog(**query)[0].UID == itemWithDelayAwareAdvice.UID())
 
         # makes it no more editable
-        self.backToState(itemWithDelayAwareAdvice, self.WF_STATE_NAME_MAPPINGS['itemcreated'])
+        self.backToState(itemWithDelayAwareAdvice, self._stateMappingFor('itemcreated'))
         self.assertTrue(not itemWithDelayAwareAdvice.adviceIndex['vendors']['advice_editable'])
         self.assertTrue(not catalog(**query))
 
@@ -416,8 +416,8 @@ class testViews(PloneMeetingTestCase):
 
         # change configuration, _updateAllAdvices then check again
         self.changeUser('siteadmin')
-        cfg.setItemAdviceStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
-        cfg.setItemAdviceEditStates((self.WF_STATE_NAME_MAPPINGS['proposed'], ))
+        cfg.setItemAdviceStates((self._stateMappingFor('proposed'), ))
+        cfg.setItemAdviceEditStates((self._stateMappingFor('proposed'), ))
         self.portal.restrictedTraverse('@@update-delay-aware-advices')._updateAllAdvices()
         self.assertFalse('developers_advisers' in item1.__ac_local_roles__)
         self.assertTrue('developers_advisers' in item2.__ac_local_roles__)

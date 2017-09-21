@@ -480,7 +480,7 @@ class testWorkflows(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         # 'pmManager' may propose the item but he will not be able to validate it
         self.proposeItem(item)
-        self.assertTrue(item.queryState() == self.WF_STATE_NAME_MAPPINGS['proposed'])
+        self.assertTrue(item.queryState() == self._stateMappingFor('proposed'))
         # we have no avaialble transition, or just one, and in this case, it is a 'back' transition
         availableTransitions = self.wfTool.getTransitionsFor(item)
         if availableTransitions:
