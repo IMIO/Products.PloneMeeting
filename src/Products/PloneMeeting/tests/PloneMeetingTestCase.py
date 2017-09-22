@@ -39,6 +39,7 @@ from Products.PloneTestCase.setup import _createHomeFolder
 from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.utils import get_config_root
 from imio.helpers.cache import cleanRamCacheFor
+from imio.helpers.testing import testing_logger
 import Products.PloneMeeting
 from Products.PloneMeeting.config import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.config import MEETINGREVIEWERS
@@ -50,14 +51,7 @@ from Products.PloneMeeting.tests.helpers import PloneMeetingTestingHelpers
 from Products.PloneMeeting.utils import cleanMemoize
 
 # Force application logging level to DEBUG so we can use logger in tests
-import sys
-import logging
-pm_logger = logging.getLogger('PloneMeeting: testing')
-pm_logger.setLevel(logging.DEBUG)
-handler = logging.StreamHandler(sys.stdout)
-formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
-handler.setFormatter(formatter)
-pm_logger.addHandler(handler)
+pm_logger = testing_logger('PloneMeeting: testing')
 
 
 class TestFile:
