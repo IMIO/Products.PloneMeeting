@@ -1216,6 +1216,7 @@ schema = Schema((
             label='Itemslistvisiblefields',
             label_msgid='PloneMeeting_label_itemsListVisibleFields',
             i18n_domain='PloneMeeting',
+            size='10',
         ),
         schemata="gui",
         vocabulary='listItemsListVisibleFields',
@@ -3693,9 +3694,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return DisplayList(tuple(res))
 
     def _ignoredVisibleFieldIds(self):
-        """ """
-        return ['id', 'title', 'templateUsingGroups',
-                'meetingTransitionInsertingMe']
+        """Ignore :
+           - basic fields : id, title;
+           - itemTemplate/recurringItem specific fields : templateUsingGroups, meetingTransitionInsertingMe;
+           - fields not rendered correctly : itemAssembly/itemAssemblyExcused/itemAssemblyAbsents/itemSignatures,
+             manuallyLinkedItems, otherMeetingConfigsClonableToEmergency/otherMeetingConfigsClonableToPrivacy."""
+        return ['id', 'title',
+                'templateUsingGroups', 'meetingTransitionInsertingMe',
+                'itemAssembly', 'itemAssemblyExcused', 'itemAssemblyAbsents', 'itemSignatures',
+                'manuallyLinkedItems',
+                'otherMeetingConfigsClonableToEmergency', 'otherMeetingConfigsClonableToPrivacy']
 
     def listItemsListVisibleFields(self):
         '''Vocabulary for the 'itemsListVisibleFields' field.
