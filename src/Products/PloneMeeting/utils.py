@@ -25,6 +25,7 @@ import os.path
 import urlparse
 import socket
 from AccessControl import ClassSecurityInfo
+from AccessControl.Permission import Permission
 from App.class_init import InitializeClass
 from appy.shared.diff import HtmlDiff
 from datetime import timedelta
@@ -1470,19 +1471,17 @@ def _addManagedPermissions(obj):
         roles = []
         for write_perm in write_perms:
             try:
-                rolesOfPerm = obj.rolesOfPermission(write_perm)
+                write_perm_roles = Permission(write_perm, {}, obj).getRoles()
             except ValueError:
                 # we have the id of a Zope3 style permission, get the title
                 write_perm = queryUtility(IPermission, write_perm)
-                rolesOfPerm = obj.rolesOfPermission(write_perm)
-            roles_of_perm = [p['name'] for p in rolesOfPerm
-                             if p['selected'] == 'SELECTED']
-            roles += roles_of_perm
+                write_perm_roles = Permission(write_perm, {}, obj).getRoles()
+            roles += write_perm_roles
 
         # check the 'Modify portal content' permission
-        roles_of_perm = [p['name'] for p in obj.rolesOfPermission(ModifyPortalContent)
-                         if p['selected'] == 'SELECTED']
-        roles += roles_of_perm
+        modify_perm = Permission(ModifyPortalContent, {}, obj)
+        modify_perm_roles = modify_perm.getRoles()
+        roles += modify_perm_roles
         # remove duplicates
         roles = tuple(set(roles))
         obj.manage_permission("ATContentTypes: Add Image", roles, acquire=False)
@@ -1493,17 +1492,19 @@ def _addManagedPermissions(obj):
         # if a role is able to add something, it also needs the AddPortalContent permission
         roles = []
         for add_subcontent_permission in ADD_SUBCONTENT_PERMISSIONS:
-            roles += [role['name'] for role in obj.rolesOfPermission(add_subcontent_permission)
-                      if role['selected']]
+            permission = Permission(add_subcontent_permission, {}, obj)
+            roles += permission.getRoles()
+        # remove duplicates
+        roles = list(set(roles))
         obj.manage_permission(AddPortalContent, roles, acquire=True)
 
     def _addManagePropertiesPermission():
         # give it to roles having 'PloneMeeting: add annex' or 'PloneMeeting: add annexDecision' permission
         roles = []
-        roles += [role['name'] for role in obj.rolesOfPermission(AddAnnex)
-                  if role['selected']]
-        roles += [role['name'] for role in obj.rolesOfPermission(AddAnnexDecision)
-                  if role['selected']]
+        add_annex_permission = Permission(AddAnnex, {}, obj)
+        roles += add_annex_permission.getRoles()
+        add_annex_decision_permission = Permission(AddAnnexDecision, {}, obj)
+        roles += add_annex_decision_permission.getRoles()
         obj.manage_permission(ManageProperties, roles, acquire=True)
 
     _addImagePermission()
