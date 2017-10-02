@@ -53,7 +53,6 @@ from Products.CMFCore.permissions import ReviewPortalContent
 from Products.CMFCore.permissions import View
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from Products.CMFCore.utils import _checkPermission
-from Products.CMFCore.utils import getToolByName
 from plone import api
 from imio.prettylink.interfaces import IPrettyLink
 from Products.PloneMeeting.browser.itemchangeorder import _compute_value_to_add
@@ -918,7 +917,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getCustomViewFields(self):
         """ """
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         # some columns are displayed in the 'Purpose' column
         if displaying_available_items(self):
@@ -938,7 +937,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     def validate_date(self, value):
         '''There can't be several meetings with the same date and hour.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
+        catalog = api.portal.get_tool('portal_catalog')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         # add GMT+x value
         localizedValue0 = value + ' ' + _findLocalTimeZoneName(0)
@@ -946,8 +946,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         # make sure we look for existing meetings in both possible
         # time zones because if we just changed timezone, we could create
         # another meeting with same date of an existing that was created with previous timezone...
-        otherMeetings = self.portal_catalog(portal_type=cfg.getMeetingTypeName(),
-                                            getDate=(DateTime(localizedValue0), DateTime(localizedValue1), ))
+        otherMeetings = catalog(portal_type=cfg.getMeetingTypeName(),
+                                getDate=(DateTime(localizedValue0), DateTime(localizedValue1), ))
         if otherMeetings:
             for m in otherMeetings:
                 if m.getObject() != self:
@@ -993,7 +993,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         # used MeetingUsers are users really saved in attendess, absents, excused, replacements
         mUserIds = set(self.getAttendees()).union(set(self.getAbsents())).union(set(self.getExcused()))
         # keep order as defined in the configuration
-        cfg = self.portal_plonemeeting.getMeetingConfig(self)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
         # get every potential assembly members, inactive included
         allMeetingUsers = cfg.getMeetingUsers(usages=usages, onlyActive=False)
         allActiveMeetingUsers = cfg.getMeetingUsers(usages=usages, theObjects=False)
@@ -1011,7 +1012,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
     def getDefaultAttendees(self):
         '''The default attendees are the active MeetingUsers in the
            corresponding meeting configuration.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         return [u.id for u in cfg.getMeetingUsers()]
 
@@ -1020,7 +1021,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
     def getDefaultSignatories(self):
         '''The default signatories are the active MeetingUsers having usage
            "signer" and whose "signatureIsDefault" is True.'''
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         res = []
         for user in cfg.getMeetingUsers(usages=('signer',)):
@@ -1116,7 +1117,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         if not hasattr(self.aq_base, 'entrances'):
             return res
         if theObjects:
-            tool = getToolByName(self, 'portal_plonemeeting')
+            tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self)
         itemNumber = item.getItemNumber(relativeTo='meeting')
         for userId, number in self.entrances.iteritems():
@@ -1163,7 +1164,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         if not hasattr(self.aq_base, 'departures'):
             return res
         if theObjects:
-            tool = getToolByName(self, 'portal_plonemeeting')
+            tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self)
         itemNumber = item.getItemNumber(relativeTo='meeting')
         if when == 'after':
@@ -1209,8 +1210,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             # store new date before updating items so items get
             # right date when calling meeting.getDate
             self.getField('date').set(self, value, **kwargs)
-            catalog = getToolByName(self, 'portal_catalog')
-            tool = getToolByName(self, 'portal_plonemeeting')
+            catalog = api.portal.get_tool('portal_catalog')
+            tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self)
             # items linked to the meeting
             brains = catalog(portal_type=cfg.getItemTypeName(),
@@ -1295,7 +1296,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         '''
         if useCatalog:
             # execute the query using the portal_catalog
-            catalog = getToolByName(self, 'portal_catalog')
+            catalog = api.portal.get_tool('portal_catalog')
             catalog_query = self.getRawQuery(force_linked_items_query=force_linked_items_query)
             if listTypes:
                 catalog_query.append({'i': 'listType',
@@ -1353,7 +1354,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getItemByNumber(self, number):
         '''Gets the item thas has number p_number.'''
-        catalog = getToolByName(self, 'portal_catalog')
+        catalog = api.portal.get_tool('portal_catalog')
         brains = catalog(linkedMeetingUID=self.UID(), getItemNumber=number)
         if not brains:
             return None
@@ -1370,7 +1371,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
           Returns states before the meeting is frozen, so states where
           an item is still not considered as a late item.
         """
-        wfTool = getToolByName(self, 'portal_workflow')
+        wfTool = api.portal.get_tool('portal_workflow')
         meetingWF = wfTool.getWorkflowsFor(self)[0]
         # get the 'frozen' state
         if 'frozen' not in meetingWF.states:
@@ -1399,7 +1400,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         # list of items or to the list of "late" items. Note that I get
         # the list of items *in order* in the case I need to insert the item
         # at another place than at the end.
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         isLate = not forceNormal and item.wfConditions().isLateFor(self)
         if isLate:
@@ -1638,7 +1639,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getDefaultSignatures(self):
         if self.attributeIsUsed('signatures'):
-            cfg = self.portal_plonemeeting.getMeetingConfig(self)
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(self)
             return cfg.getSignatures()
         return ''
 
@@ -1652,10 +1654,10 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         # interface languages (and because Plone requires a title). At every
         # place in HS/PM, we always deduce the meeting "title" based on its date
         # and the required formatting.
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         if "secondLanguageCfg" in tool.getModelAdaptations():
             # We will create a bilingual title
-            languages = getToolByName(self, 'portal_languages')
+            languages = api.portal.get_tool('portal_languages')
             firstLanguage = languages.getDefaultLanguage()[0:2]
             secondLanguage = tool.findSecondLanguage()[0:2]
             if not secondLanguage:
@@ -1680,7 +1682,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
     def computeDates(self):
         '''Computes, for this meeting, the dates which are derived from the
            meeting date when relevant.'''
-        cfg = self.portal_plonemeeting.getMeetingConfig(self)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
         usedAttrs = cfg.getUsedMeetingAttributes()
         meetingDate = self.getDate()
         # Initialize the effective start date with the meeting date
@@ -1722,7 +1725,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         '''After a meeting has been created or edited, we update here the info
            related to meeting users implied in the meeting: attendees,
            signatories, replacements...'''
-        cfg = self.portal_plonemeeting.getMeetingConfig(self)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
         usedAttrs = cfg.getUsedMeetingAttributes()
         useReplacements = cfg.getUseUserReplacements()
         # Do it only if MeetingUser-based user management is enabled.
@@ -1797,7 +1801,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         self.computeDates()
         # Update user-related info (attendees, signatories, replacements...)
         self.updateMeetingUsers()
-        meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        meetingConfig = tool.getMeetingConfig(self)
         self.setMeetingConfigVersion(meetingConfig.getConfigVersion())
         addRecurringItemsIfRelevant(self, '_init_')
         # Apply potential transformations to richtext fields
@@ -1934,7 +1939,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     def attributeIsUsed(self, name):
         '''Is the attribute named p_name used in this meeting config ?'''
-        meetingConfig = self.portal_plonemeeting.getMeetingConfig(self)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        meetingConfig = tool.getMeetingConfig(self)
         return (name in meetingConfig.getUsedMeetingAttributes())
 
     def queryState_cachekey(method, self):
@@ -1946,7 +1952,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
     @ram.cache(queryState_cachekey)
     def queryState(self):
         '''In what state am I ?'''
-        wfTool = getToolByName(self, 'portal_workflow')
+        wfTool = api.portal.get_tool('portal_workflow')
         return wfTool.getInfoFor(self, 'review_state')
 
     security.declarePublic('getLastEvent')
@@ -2009,7 +2015,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
            config) to the folder containing this meeting.'''
         destFolder = self.getParentNode()
         newItems = []
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         for recurringItem in recurringItems:
             newItems.append(recurringItem.clone(cloneEventAction='Add recurring item',
@@ -2045,13 +2051,12 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         # Just check that the meeting is myself or a Plone Site.
         # We can remove an meeting directly but not "through" his container.
         if item.meta_type not in ('Plone Site', 'Meeting'):
-            user = self.portal_membership.getAuthenticatedMember()
+            user = api.user.get_current()
             logger.warn(BEFOREDELETE_ERROR % (user.getId(), self.id))
             raise BeforeDeleteException("can_not_delete_meeting_container")
         # we are removing the meeting
         if item.meta_type == 'Meeting':
-            membershipTool = getToolByName(item, 'portal_membership')
-            member = membershipTool.getAuthenticatedMember()
+            member = api.user.get_current()
             if member.has_role('Manager'):
                 item.REQUEST.set('items_to_remove', item.getItems())
         OrderedBaseFolder.manage_beforeDelete(self, item, container)
@@ -2080,10 +2085,10 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
            meetings in the previous p_searchMeetingsInterval, which is a number
            of days. If no meeting is found, the method returns None.'''
         meetingDate = self.getDate()
-        tool = getToolByName(self, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         meetingTypeName = cfg.getMeetingTypeName()
-        catalog = getToolByName(self, 'portal_catalog')
+        catalog = api.portal.get_tool('portal_catalog')
         # find every meetings before searchMeetingsInterval days before self
         brains = catalog(portal_type=meetingTypeName,
                          getDate={'query': meetingDate - searchMeetingsInterval,
