@@ -1389,6 +1389,9 @@ class Migrate_To_4_0(Migrator):
             # reapply PloneMeeting types tool step
             self.runProfileSteps(product='Products.PloneMeeting', steps=['typeinfo'])
             self._adaptAnnexContentCategory()
+            # make sure we use resolveuid for images so URL is always correct even if item id changed
+            cke_props = self.portal.portal_properties.ckeditor_properties
+            cke_props.allow_link_byuid = True
             # recook CSS and JS
             self.cleanRegistries()
 
