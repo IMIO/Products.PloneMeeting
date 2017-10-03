@@ -35,6 +35,7 @@ from plone.memoize.view import memoize_contextless
 from Products.Five import BrowserView
 from Products.CMFCore.WorkflowCore import WorkflowException
 from plone import api
+from eea.facetednavigation.browser.app.view import FacetedContainerView
 from eea.facetednavigation.interfaces import ICriteria
 from collective.documentgenerator.helper.archetypes import ATDocumentGenerationHelperView
 from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
@@ -296,6 +297,31 @@ class ItemToDiscussView(BrowserView):
         return self.context.restrictedTraverse('@@toggle_to_discuss').isAsynchToggleEnabled()
 
 
+class MeetingView(FacetedContainerView):
+    """The meeting_view."""
+
+    def __init__(self, context, request):
+        """ """
+        super(MeetingView, self).__init__(context, request)
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
+
+    def __call__(self):
+        """ """
+        # initialize member in call because it is Anonymous in __init__ of view...
+        self.member = api.user.get_current()
+        return super(MeetingView, self).__call__()
+
+    def showPage(self):
+        """Display page to current user?"""
+        return self.tool.showMeetingView()
+
+    def showAvailableItems(self):
+        """Show the available items part?"""
+        return self.member.has_permission(ModifyPortalContent, self.context) and \
+            self.context.wfConditions().mayAcceptItems()
+
+
 class MeetingBeforeFacetedInfosView(BrowserView):
     """Informations displayed before the faceted on the meeting_view."""
 
@@ -322,6 +348,17 @@ class MeetingAfterFacetedInfosView(BrowserView):
         return self.tool.isManager(self.context) and \
             self.context.adapted().isDecided() and \
             self.context.queryState() not in self.context.meetingClosedStates
+
+
+class MeetingInsertingMethodsHelpMsgView(BrowserView):
+    """ """
+
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+        self.portal_url = api.portal.get().absolute_url()
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
 
 
 class MeetingUpdateItemReferences(BrowserView):

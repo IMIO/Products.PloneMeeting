@@ -123,41 +123,48 @@
         template="templates/ajax.pt"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View" />
+
     <browser:page
       for="Products.PloneMeeting.interfaces.IMeeting"
       name="meeting_view"
       template="templates/meeting_view.pt"
-      class=".overrides.PMFacetedContainerView"
-      permission="zope2.View"
-      />
+      class=".views.MeetingView"
+      permission="zope2.View" />
+
     <browser:page
       for="Products.PloneMeeting.interfaces.IMeeting"
       name="meeting_available_items_view"
       template="templates/meeting_available_items_view.pt"
-      class=".overrides.PMFacetedContainerView"
-      permission="zope2.View"
-      />
+      class=".views.MeetingView"
+      permission="zope2.View" />
 
     <browser:page
       for="Products.PloneMeeting.interfaces.IMeeting"
       name="meeting-before-faceted-infos"
       template="templates/meeting_before_faceted_infos.pt"
       class=".views.MeetingBeforeFacetedInfosView"
-      permission="zope2.View"
-      />
+      permission="zope2.View" />
+
     <browser:page
       for="Products.PloneMeeting.interfaces.IMeeting"
       name="meeting-after-faceted-infos"
       template="templates/meeting_after_faceted_infos.pt"
       class=".views.MeetingAfterFacetedInfosView"
-      permission="zope2.View"
-      />
+      permission="zope2.View" />
+
+    <browser:page
+      for="Products.PloneMeeting.interfaces.IMeeting"
+      name="display-inserting-methods-helper-msg"
+      template="templates/meeting_inserting_methods_help_msg.pt"
+      class=".views.MeetingInsertingMethodsHelpMsgView"
+      permission="zope2.View" />
+
     <browser:view
       for="Products.PloneMeeting.interfaces.IMeeting"
       name="update-item-references"
       class=".views.MeetingUpdateItemReferences"
-      permission="cmf.ModifyPortalContent"
-      />
+      permission="cmf.ModifyPortalContent" />
+
     <browser:view
       for="Products.PloneMeeting.interfaces.IMeeting"
       name="store-every-items-template-as-annex"
@@ -165,24 +172,28 @@
       permission="cmf.ModifyPortalContent"
       allowed_attributes="may_store"
       />
+
     <browser:view
       for="Products.PloneMeeting.interfaces.IMeeting"
       name="present-several-items"
       class=".views.PresentSeveralItemsView"
       permission="zope2.View"
       />
+
     <browser:view
       for="Products.PloneMeeting.interfaces.IMeeting"
       name="remove-several-items"
       class=".views.RemoveSeveralItemsView"
       permission="zope2.View"
       />
+
     <browser:view
       for="Products.PloneMeeting.interfaces.IMeeting"
       name="decide-several-items"
       class=".views.DecideSeveralItemsView"
       permission="zope2.View"
       />
+
     <browser:page
       for="Products.PloneMeeting.interfaces.IMeetingConfig"
       name="check-pod-templates"
@@ -190,6 +201,7 @@
       class=".views.CheckPodTemplatesView"
       permission="cmf.ManagePortal"
       />
+
     <browser:page
       for="Products.CMFPlone.interfaces.siteroot.IPloneSiteRoot"
       name="display-group-users"
@@ -197,6 +209,7 @@
       class=".views.DisplayGroupUsersView"
       permission="zope2.View"
       />
+
     <browser:page
       for="Products.PloneMeeting.interfaces.IMeetingItem"
       name="display-inherited-item-infos"
@@ -204,6 +217,7 @@
       class=".views.DisplayInheritedAdviceItemInfos"
       permission="zope2.View"
       />
+
     <browser:page
       for="Products.PloneMeeting.interfaces.IMeetingContent"
       name="display-annexes"
@@ -211,6 +225,7 @@
       class=".views.DisplayAnnexesView"
       permission="zope2.View"
       />
+
     <browser:page
       for="Products.PloneMeeting.interfaces.IMeetingItem"
       name="header"
@@ -218,6 +233,7 @@
       class=".views.ItemHeaderView"
       permission="zope2.View"
       />
+
     <browser:page
       for="Products.PloneMeeting.interfaces.IMeeting"
       name="header"
@@ -225,6 +241,7 @@
       class=".views.MeetingHeaderView"
       permission="zope2.View"
       />
+
     <browser:page
       for="Products.PloneMeeting.content.advice.IMeetingAdvice"
       name="header"

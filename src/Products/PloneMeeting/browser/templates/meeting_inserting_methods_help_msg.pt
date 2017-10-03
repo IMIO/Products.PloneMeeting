@@ -1,0 +1,9 @@
+<tal:defines define="cfg python: view.cfg;" i18n:domain="PloneMeeting">
+
+  <tal:field define="context python: cfg;
+                     field python:cfg.getField('insertingMethodsOnAddItem');
+                     mode string:view;">
+    <span metal:use-macro="context/widgets/field/macros/view" />
+  </tal:field>
+
+</tal:defines>
