@@ -78,6 +78,7 @@ from Products.PloneMeeting.config import WriteBudgetInfos
 from Products.PloneMeeting.indexes import previous_review_state
 from Products.PloneMeeting.indexes import sentToInfos
 from Products.PloneMeeting.MeetingItem import MeetingItem
+from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.utils import get_annexes
@@ -3048,7 +3049,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failIf(itemTemplate.validate_proposingGroup('developers'))
 
     def test_pm_GetMeetingsAcceptingItems(self):
-        """Test the MeetingItem.getMeetingsAcceptingItems method."""
+        """Test the MeetingConfig.getMeetingsAcceptingItems method."""
         cfg = self.meetingConfig
         self.changeUser('pmManager')
         # create 4 meetings with items so we can play the workflow
@@ -3063,7 +3064,6 @@ class testMeetingItem(PloneMeetingTestCase):
         # go to state 'closed'
         m4 = self.create('Meeting', date=DateTime('2013/02/22 08:00:00'))
         self.closeMeeting(m4)
-        self.create('MeetingItem')
         # getMeetingsAcceptingItems should only return meetings
         # that are 'created', 'frozen' or 'decided' for the meetingManager
         self.assertEquals([m.id for m in cfg.getMeetingsAcceptingItems()], [m1.id, m2.id, m3.id])
@@ -3071,8 +3071,31 @@ class testMeetingItem(PloneMeetingTestCase):
         # getMeetingsAcceptingItems should only return meetings
         # that are 'created' or 'frozen' for the meetingMember
         self.changeUser('pmCreator1')
-        self.create('MeetingItem')
         self.assertEquals([m.id for m in cfg.getMeetingsAcceptingItems()], [m1.id, m2.id])
+
+    def test_pm_GetMeetingsAcceptingItemsWithPublishDecisionsWFAdaptation(self):
+        """Test that MeetingConfig.getMeetingsAcceptingItems also return meetings in state
+           'decisions_published' to MeetingManagers."""
+        cfg = self.meetingConfig
+        # enable 'publish_decisions' WFAdaptation
+        if 'hide_decisions_when_under_writing' not in cfg.listWorkflowAdaptations():
+            return
+        cfg.setWorkflowAdaptations(('hide_decisions_when_under_writing', ))
+        performWorkflowAdaptations(cfg, logger=pm_logger)
+
+        self.changeUser('pmManager')
+        # create 1 meeting with items so we can play the workflow
+        meeting = self.create('Meeting', date=DateTime('2017/10/01 08:00:00'))
+        self.decideMeeting(meeting)
+        # go to state 'decisions_published'
+        self.do(meeting, 'publish_decisions')
+        self.assertEquals(
+            [m.id for m in cfg.getMeetingsAcceptingItems()],
+            [meeting.getId()])
+        cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
+        # not for creators
+        self.changeUser('pmCreator1')
+        self.assertEquals([m.id for m in cfg.getMeetingsAcceptingItems()], [])
 
     def test_pm_OnTransitionFieldTransforms(self):
         '''On transition triggered, some transforms can be applied to item or meeting

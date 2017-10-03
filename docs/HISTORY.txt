@@ -51,6 +51,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   WF_MEETING_TRANSITION_NAME_MAPPINGS_2 so we may handle differents workflows
 - Added possibility to display every fields of MeetingItem on the dashboard more infos view, not just the RichText
   fields like it was the case before
+- A meeting in state 'decisions_published' added by WFAdaptation 'hide_decisions_when_under_writing', will now be
+  returned by MeetingConfig.getMeetingsAcceptingItems for MeetingManagers
 
 4.0 (2017-08-04)
 ----------------
