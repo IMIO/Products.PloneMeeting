@@ -27,6 +27,7 @@ from DateTime import DateTime
 from AccessControl import Unauthorized
 from OFS.ObjectManager import BeforeDeleteException
 from zope.i18n import translate
+from Products.CMFCore.permissions import AddPortalContent
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.statusmessages.interfaces import IStatusMessage
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
@@ -430,6 +431,17 @@ class testWorkflows(PloneMeetingTestCase):
         # a recurring item is added during the 'decide' transition
         self.failIf(len(meeting.getItems()) != 8)
         self.assertTrue(meeting.getItems(ordered=True)[-1].isLate())
+
+    def test_pm_RecurringItemAddAnnexPermission(self):
+        """Check the add annex permission for recurring items added to a meeting.
+           This checks that a MeetingManager may correctly add annexes to a
+           recurring item that was presented to a meeting."""
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2017/09/22'))
+        item = meeting.getItems()[0]
+        self.assertTrue(self.hasPermission(AddPortalContent, item))
+        self.assertTrue(self.hasPermission(AddAnnex, item))
+        self.assertTrue(self.hasPermission(AddAnnexDecision, item))
 
     def test_pm_NoDefinedRecurringItems(self):
         '''When no recurring items exist in the meetingConfig, we can add a meeting,
