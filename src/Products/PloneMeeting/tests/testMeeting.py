@@ -2206,17 +2206,46 @@ class testMeeting(PloneMeetingTestCase):
         meeting = getattr(pmFolder, meetingId)
         meeting.processForm()
         self.assertTrue('contact.png' in meeting.objectIds())
+        img = meeting.get('contact.png')
+        # link to image uses resolveuid
+        self.assertEqual(
+            meeting.getObservations(),
+            '<p>Working external image <img src="{0}" alt="contact.png" '
+            'title="contact.png" />.</p>'.format(img.absolute_url()))
+        self.assertEqual(
+            meeting.getRawObservations(),
+            '<p>Working external image <img src="resolveuid/{0}"/>.</p>'.format(img.UID()))
 
         # test using the quickedit
         text = '<p>Working external image <img src="http://www.imio.be/mascotte-presentation.jpg"/>.</p>'
         setFieldFromAjax(meeting, 'observations', text)
         self.assertTrue('mascotte-presentation.jpg' in meeting.objectIds())
+        img2 = meeting.get('mascotte-presentation.jpg')
+
+        # link to image uses resolveuid
+        self.assertEqual(
+            meeting.getObservations(),
+            '<p>Working external image <img src="{0}" alt="mascotte-presentation.jpg" '
+            'title="mascotte-presentation.jpg" />.</p>'.format(img2.absolute_url()))
+        self.assertEqual(
+            meeting.getRawObservations(),
+            '<p>Working external image <img src="resolveuid/{0}"/>.</p>'.format(img2.UID()))
 
         # test using processForm, aka full edit form
         text = '<p>Working external image <img src="http://www.imio.be/spw.png"/>.</p>'
         meeting.setObservations(text)
         meeting.processForm()
         self.assertTrue('spw.png' in meeting.objectIds())
+        img3 = meeting.get('spw.png')
+
+        # link to image uses resolveuid
+        self.assertEqual(
+            meeting.getObservations(),
+            '<p>Working external image <img src="{0}" alt="spw.png" '
+            'title="spw.png" />.</p>'.format(img3.absolute_url()))
+        self.assertEqual(
+            meeting.getRawObservations(),
+            '<p>Working external image <img src="resolveuid/{0}"/>.</p>'.format(img3.UID()))
 
     def test_pm_MeetingLocalRolesUpdatedEvent(self):
         """Test this event that is triggered after the local_roles on the meeting have been updated."""
