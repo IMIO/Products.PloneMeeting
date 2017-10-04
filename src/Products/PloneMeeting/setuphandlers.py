@@ -373,6 +373,8 @@ def _configureCKeditor(site):
                    msg_table_no_optimization,
                    msg_indent), enc)
         cke_props.menuStyles = menuStyles
+    # make sure we use resolveuid for images so URL is always correct even if item id changed
+    cke_props.allow_link_byuid = True
     # activate SCAYT auto-start
     cke_props.enableScaytOnStartup = True
     # disable folder creation thru CKeditor to avoid

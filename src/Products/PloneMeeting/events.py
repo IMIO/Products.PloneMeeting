@@ -367,7 +367,9 @@ def onItemModified(item, event):
         meeting.updateItemReferences(startNumber=item.getItemNumber(), check_needed=True)
 
     # reactivate rename_after_creation as long as item is in it's initial_state
-    if item._at_rename_after_creation:
+    # if not currently creating an element.  Indeed adding an image to an item
+    # that is in the creation process will trigger modified event
+    if item._at_rename_after_creation and not item.checkCreationFlag():
         wfTool = api.portal.get_tool('portal_workflow')
         itemWF = wfTool.getWorkflowsFor(item)[0]
         initial_state = itemWF.initial_state

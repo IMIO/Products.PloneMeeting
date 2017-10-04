@@ -1123,9 +1123,10 @@ def transformAllRichTextFields(obj, onlyField=None):
             writePermission = field.write_permission
         if not member.has_permission(writePermission, obj):
             continue
+        # make sure we do not loose resolveuid to images, use getRaw
+        raw_value = field.getRaw(obj)
         # Apply mandatory transforms
-        fieldContent = formatXhtmlFieldForAppy(field.get(obj))
-        fieldContent = storeImagesLocally(obj, field.get(obj))
+        fieldContent = storeImagesLocally(obj, raw_value)
         # Apply standard transformations as defined in the config
         # fieldsToTransform is like ('MeetingItem.description', 'MeetingItem.budgetInfos', )
         if ("%s.%s" % (obj.meta_type, field.getName()) in fieldsToTransform) and \
@@ -1273,39 +1274,6 @@ def toHTMLStrikedContent(content, use_mltAssembly=False):
     if use_mltAssembly:
         content = content.replace('<p>', '<p class="mltAssembly">')
     return content
-
-
-# ------------------------------------------------------------------------------
-tokens = (('<li', -1), ('</li>', 5))
-crlf = ('\r', '\n')
-
-
-def formatXhtmlFieldForAppy(value):
-    '''p_value is a string containing XHTML code. This code must follow some
-       rules to be Appy-compliant (ie, for appy.shared.XhtmlDiff to work
-       properly).'''
-    global tokens
-    global crlf
-    for token, delta in tokens:
-        res = []
-        i = 0  # Where I am in p_value
-        while i < len(value):
-            j = value.find(token, i)
-            if j == -1:
-                # No more occurrences. Dump the end of p_value in the result.
-                res.append(value[i:])
-                break
-            res.append(value[i:j])
-            deltaj = j+delta
-            if (delta < 0) and (j > 0) and (value[deltaj] not in crlf):
-                res.append('\n')
-            i = j + len(token)
-            res.append(value[j:i])
-            if (delta > 0) and (j > 0) and (value[deltaj] not in crlf):
-                res.append('\n')
-        value = ''.join(res)
-    return value
-# ------------------------------------------------------------------------------
 
 
 def _itemNumber_to_storedItemNumber(number):
