@@ -53,6 +53,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   fields like it was the case before
 - A meeting in state 'decisions_published' added by WFAdaptation 'hide_decisions_when_under_writing', will now be
   returned by MeetingConfig.getMeetingsAcceptingItems for MeetingManagers
+- Make sure all links to images are always using resolveuid despite various data transforms
 
 4.0 (2017-08-04)
 ----------------

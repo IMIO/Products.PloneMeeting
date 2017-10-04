@@ -1240,6 +1240,7 @@ class Migrate_To_4_0(Migrator):
                     content = content.replace('<span style="background-color:rgb(255, 255, 0)">',
                                               '<span class="highlight-yellow">')
                     field.set(item, content)
+            i = i + 1
         logger.info('Done.')
 
     def _adaptAnnexContentCategory(self):
@@ -1282,6 +1283,37 @@ class Migrate_To_4_0(Migrator):
                         logger.info('Done.')
                         return
             i = i + 1
+        logger.info('Done.')
+
+    def _adaptInternalImagesLinkToUseResolveUID(self):
+        """We make sure we use resolveuid in src to internal images."""
+        logger.info('Adapt link to internal images to use resolveuid...')
+        # base our work on found images
+        brains = self.portal.portal_catalog(portal_type='Image')
+        i = 1
+        total = len(brains)
+        number_of_migrated_links = 0
+        for brain in brains:
+            logger.info('Migrating links to image {0}/{1} ({2})...'.format(
+                i,
+                total,
+                brain.getPath()))
+            i = i + 1
+            image = brain.getObject()
+            parent = image.aq_inner.aq_parent
+            # make sure image is added to meeting/item
+            if parent.meta_type not in ('Meeting', 'MeetingItem'):
+                continue
+            image_url = image.absolute_url()
+            image_UID = image.UID()
+            for field in parent.Schema().filterFields(default_content_type='text/html'):
+                content = field.getRaw(parent)
+                if content.find(image_url) != -1:
+                    content = content.replace(image_url, 'resolveuid/{0}'.format(image_UID))
+                    logger.info('Replaced image link in field {0}'.format(field.getName()))
+                    number_of_migrated_links = number_of_migrated_links + 1
+                    field.set(parent, content)
+        logger.info('Adapted {0} links.'.format(number_of_migrated_links))
         logger.info('Done.')
 
     def run(self, step=None):
@@ -1392,6 +1424,8 @@ class Migrate_To_4_0(Migrator):
             # make sure we use resolveuid for images so URL is always correct even if item id changed
             cke_props = self.portal.portal_properties.ckeditor_properties
             cke_props.allow_link_byuid = True
+            # make sure links internal images use resolveuid
+            self._adaptInternalImagesLinkToUseResolveUID()
             # recook CSS and JS
             self.cleanRegistries()
 
