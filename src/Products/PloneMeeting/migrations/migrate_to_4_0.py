@@ -1229,7 +1229,7 @@ class Migrate_To_4_0(Migrator):
             item = brain.getObject()
             # check every RichText fields
             for field in item.Schema().filterFields(default_content_type='text/html'):
-                content = field.get(item)
+                content = field.getRaw(item)
                 if content.find('<span style="background-color:yellow">') != -1 or \
                    content.find('<span style="background-color:Yellow">') != -1 or \
                    content.find('<span style="background-color:rgb(255, 255, 0)">') != -1:
