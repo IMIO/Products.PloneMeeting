@@ -4826,7 +4826,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # that has a link to an unexisting image or so
         text = '<p>Not working external image <img src="http://www.imio.be/unknown_image.png"/>.</p>'
         item.setDescription(text)
-        item._update_after_edit()
+        item.at_post_edit_script()
         self.assertTrue('spw.png' in item.objectIds())
         # nothing was done
         self.assertEqual(
@@ -4896,8 +4896,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setDescription(text)
         self.assertEqual(item.objectIds(), ['dot.gif'])
         # transformAllRichTextFields is called by MeetingItem.at_post_edit_script
-        # that is called by MeetingItem._update_after_edit...
-        item._update_after_edit()
+        item.at_post_edit_script()
         self.assertEqual(item.getRawDescription(), text)
 
     def test_pm_ItemLocalRolesUpdatedEvent(self):
