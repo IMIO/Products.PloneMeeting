@@ -360,6 +360,16 @@ class MeetingInsertingMethodsHelpMsgView(BrowserView):
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
 
+    def showSelectablePrivaciesField(self):
+        """In case we use the 'on_privacy' inserting method, it relies on the
+           order of selectablePrivacies and we will show the information."""
+        inserting_methods = [
+            method['insertingMethod']
+            for method in self.cfg.getInsertingMethodsOnAddItem()]
+        if 'on_privacy' in inserting_methods:
+            return True
+        return False
+
 
 class MeetingUpdateItemReferences(BrowserView):
     """Call Meeting.updateItemReferences from a meeting."""
