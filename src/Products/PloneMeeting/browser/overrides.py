@@ -7,6 +7,7 @@
 # GNU General Public License (GPL)
 #
 
+import appy
 from AccessControl import Unauthorized
 from Acquisition import aq_base
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
@@ -328,6 +329,7 @@ class PloneMeetingOverviewControlPanel(OverviewControlPanel):
         versions = super(PloneMeetingOverviewControlPanel, self).version_overview()
         portal_setup = api.portal.get_tool('portal_setup')
         pm_version = portal_setup.getProfileInfo('profile-Products.PloneMeeting:default')['version']
+        versions.insert(0, 'appy %s' % appy.version.verbose)
         versions.insert(0, 'PloneMeeting %s' % pm_version)
         return versions
 
