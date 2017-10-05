@@ -78,6 +78,7 @@ from Products.PloneMeeting.config import WriteBudgetInfos
 from Products.PloneMeeting.indexes import previous_review_state
 from Products.PloneMeeting.indexes import sentToInfos
 from Products.PloneMeeting.MeetingItem import MeetingItem
+from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.utils import get_annexes
@@ -3048,7 +3049,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failIf(itemTemplate.validate_proposingGroup('developers'))
 
     def test_pm_GetMeetingsAcceptingItems(self):
-        """Test the MeetingItem.getMeetingsAcceptingItems method."""
+        """Test the MeetingConfig.getMeetingsAcceptingItems method."""
         cfg = self.meetingConfig
         self.changeUser('pmManager')
         # create 4 meetings with items so we can play the workflow
@@ -3063,7 +3064,6 @@ class testMeetingItem(PloneMeetingTestCase):
         # go to state 'closed'
         m4 = self.create('Meeting', date=DateTime('2013/02/22 08:00:00'))
         self.closeMeeting(m4)
-        self.create('MeetingItem')
         # getMeetingsAcceptingItems should only return meetings
         # that are 'created', 'frozen' or 'decided' for the meetingManager
         self.assertEquals([m.id for m in cfg.getMeetingsAcceptingItems()], [m1.id, m2.id, m3.id])
@@ -3071,8 +3071,31 @@ class testMeetingItem(PloneMeetingTestCase):
         # getMeetingsAcceptingItems should only return meetings
         # that are 'created' or 'frozen' for the meetingMember
         self.changeUser('pmCreator1')
-        self.create('MeetingItem')
         self.assertEquals([m.id for m in cfg.getMeetingsAcceptingItems()], [m1.id, m2.id])
+
+    def test_pm_GetMeetingsAcceptingItemsWithPublishDecisionsWFAdaptation(self):
+        """Test that MeetingConfig.getMeetingsAcceptingItems also return meetings in state
+           'decisions_published' to MeetingManagers."""
+        cfg = self.meetingConfig
+        # enable 'publish_decisions' WFAdaptation
+        if 'hide_decisions_when_under_writing' not in cfg.listWorkflowAdaptations():
+            return
+        cfg.setWorkflowAdaptations(('hide_decisions_when_under_writing', ))
+        performWorkflowAdaptations(cfg, logger=pm_logger)
+
+        self.changeUser('pmManager')
+        # create 1 meeting with items so we can play the workflow
+        meeting = self.create('Meeting', date=DateTime('2017/10/01 08:00:00'))
+        self.decideMeeting(meeting)
+        # go to state 'decisions_published'
+        self.do(meeting, 'publish_decisions')
+        self.assertEquals(
+            [m.id for m in cfg.getMeetingsAcceptingItems()],
+            [meeting.getId()])
+        cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
+        # not for creators
+        self.changeUser('pmCreator1')
+        self.assertEquals([m.id for m in cfg.getMeetingsAcceptingItems()], [])
 
     def test_pm_OnTransitionFieldTransforms(self):
         '''On transition triggered, some transforms can be applied to item or meeting
@@ -4772,22 +4795,92 @@ class testMeetingItem(PloneMeetingTestCase):
         item.processForm()
         # contact.png was saved in the item
         self.assertTrue('contact.png' in item.objectIds())
+        img = item.get('contact.png')
+        # external image link was updated
+        self.assertEqual(
+            item.getRawDescription(),
+            '<p>Working external image <img src="resolveuid/{0}"/>.</p>'.format(img.UID()))
 
         # test using the quickedit
         text = '<p>Working external image <img src="http://www.imio.be/mascotte-presentation.jpg"/>.</p>'
         setFieldFromAjax(item, 'description', text)
         self.assertTrue('mascotte-presentation.jpg' in item.objectIds())
+        img2 = item.get('mascotte-presentation.jpg')
+        # external image link was updated
+        self.assertEqual(
+            item.getRawDescription(),
+            '<p>Working external image <img src="resolveuid/{0}"/>.</p>'.format(img2.UID()))
 
         # test using at_post_edit_script, aka full edit form
         text = '<p>Working external image <img src="http://www.imio.be/spw.png"/>.</p>'
         item.setDescription(text)
         item.at_post_edit_script()
         self.assertTrue('spw.png' in item.objectIds())
+        img3 = item.get('spw.png')
+        # external image link was updated
+        self.assertEqual(
+            item.getRawDescription(),
+            '<p>Working external image <img src="resolveuid/{0}"/>.</p>'.format(img3.UID()))
+
+        # link to unknown external image, like during copy/paste of content
+        # that has a link to an unexisting image or so
+        text = '<p>Not working external image <img src="http://www.imio.be/unknown_image.png"/>.</p>'
+        item.setDescription(text)
+        item.at_post_edit_script()
+        self.assertTrue('spw.png' in item.objectIds())
+        # nothing was done
+        self.assertEqual(
+            sorted(item.objectIds()),
+            ['contact.png', 'mascotte-presentation.jpg', 'spw.png'])
+        self.assertEqual(item.getRawDescription(), text)
 
     def test_pm_ItemInternalImagesStoredLocallyWhenItemDuplicated(self):
         """When an item is duplicated, images that were stored in original item
            are kept in new item and uri to images are adapted accordingly in the
            new item XHTML fields."""
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        # add images
+        file_path = path.join(path.dirname(__file__), 'dot.gif')
+        file_handler = open(file_path, 'r')
+        data = file_handler.read()
+        file_handler.close()
+        img_id = item.invokeFactory('Image', id='dot.gif', title='Image', file=data)
+        img = getattr(item, img_id)
+        img2_id = item.invokeFactory('Image', id='dot2.gif', title='Image', file=data)
+        img2 = getattr(item, img2_id)
+
+        # let's say we even have external images
+        text_pattern = '<p>External image <img src="{0}"/>.</p>' \
+            '<p>Internal image <img src="{1}"/>.</p>' \
+            '<p>Internal image 2 <img src="{2}"/>.</p>'
+        text = text_pattern.format(
+            'http://www.imio.be/contact.png',
+            img.absolute_url(),
+            'resolveuid/{0}'.format(img2.UID()))
+        item.setDescription(text)
+        self.assertEqual(item.objectIds(), ['dot.gif', 'dot2.gif'])
+        item.at_post_edit_script()
+        # we have images saved locally
+        self.assertEqual(sorted(item.objectIds()), ['contact.png', 'dot.gif', 'dot2.gif'])
+
+        # duplicate and check that uri are correct
+        newItem = item.clone()
+        self.assertEqual(sorted(newItem.objectIds()), ['contact.png', 'dot.gif', 'dot2.gif'])
+        new_img = newItem.get('contact.png')
+        new_img1 = newItem.get('dot.gif')
+        new_img2 = newItem.get('dot2.gif')
+        # every links are turned to resolveuid
+        self.assertEqual(
+            newItem.getRawDescription(),
+            text_pattern.format(
+                'resolveuid/{0}'.format(new_img.UID()),
+                'resolveuid/{0}'.format(new_img1.UID()),
+                'resolveuid/{0}'.format(new_img2.UID())))
+
+    def test_pm_TransformAllRichTextFields(self):
+        """Test that it does not alterate field content, especially
+           links to internal content or image that uses resolveuid."""
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         # add image
@@ -4798,24 +4891,13 @@ class testMeetingItem(PloneMeetingTestCase):
         img_id = item.invokeFactory('Image', id='dot.gif', title='Image', file=data)
         img = getattr(item, img_id)
 
-        # let's say we even have external images
-        text_pattern = '<p>External image <img src="{0}" />.</p>'\
-            '<p>Internal image <img src="{1}" />.</p>'
-        text = text_pattern.format('http://www.imio.be/contact.png', img.absolute_url())
+        # link to image using resolveuid
+        text = '<p>Internal image <img src="resolveuid/{0}" />.</p>'.format(img.UID())
         item.setDescription(text)
         self.assertEqual(item.objectIds(), ['dot.gif'])
+        # transformAllRichTextFields is called by MeetingItem.at_post_edit_script
         item.at_post_edit_script()
-        # we have images saved locally
-        self.assertEqual(sorted(item.objectIds()), ['contact.png', 'dot.gif'])
-
-        # duplicate and check that uri are correct
-        newItem = item.clone()
-        self.assertEqual(sorted(newItem.objectIds()), ['contact.png', 'dot.gif'])
-        self.assertEqual(
-            newItem.Description(),
-            text_pattern.format(
-                newItem.absolute_url() + '/contact.png',
-                newItem.absolute_url() + '/dot.gif'))
+        self.assertEqual(item.getRawDescription(), text)
 
     def test_pm_ItemLocalRolesUpdatedEvent(self):
         """Test this event that is triggered after the local_roles on the item have been updated."""

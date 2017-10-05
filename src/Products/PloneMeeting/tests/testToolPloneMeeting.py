@@ -150,7 +150,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         item1.setItemKeywords('My keywords')
         item1.setTitle('My title')
         item1.setBudgetRelated(True)
-        item1.setBudgetInfos('My budget')
+        item1.setBudgetInfos('<p>My budget</p>')
         workingFolder = item1.getParentNode()
         clonedItem = item1.clone()
         self.assertEquals(
