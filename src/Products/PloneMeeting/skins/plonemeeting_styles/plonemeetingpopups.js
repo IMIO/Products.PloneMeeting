@@ -94,14 +94,15 @@ function saveAdvice() {
     }
 }
 
-// prepare overlays for normal (non-ajax) pages
-// like meetingitem_view or overlays that you can raise from the portlet_plonemeeting
 jQuery(document).ready(function($) {
     // advice popups
     adviceAddEdit();
     advicePreview();
     inheritedItemInfos();
     usersGroupInfos();
+    tooltipster_helper(selector='.tooltipster-inserting-methods-helper-msg',
+                       view_name='@@display-inserting-methods-helper-msg',
+                       data_parameters={});
 
     jQuery(function($){
         // Every common overelays, must stay at the bottom of every defined overlays!!!
@@ -276,3 +277,45 @@ function usersGroupInfos() {
     });
 });
 }
+
+function tooltipster_helper(selector, view_name, data_parameters) {
+
+    jQuery(function($){
+
+    $(selector).tooltipster({
+
+        contentAsHTML: true,
+        interactive: true,
+        theme: 'tooltipster-shadow',
+        position: 'bottom',
+        speed: 100,
+        delay: 50,
+        animation: 'fade',
+        trigger: 'hover',    
+
+        functionBefore: function (origin, helper) {
+            helper();
+            if (origin.data('loaded') !== true) {
+                var group_id = $(origin).attr('data-group_id');
+                var base_url = $(origin).attr('data-base_url');
+                if (!data_parameters) {
+                    data_parameters = {};
+                }
+                data_parameters.ajax_load = new Date().getTime();
+                $.ajax({
+                    type: 'GET',
+                    url: base_url + '/' + view_name,
+                    data: data_parameters,
+                    success: function (data) {
+                        origin.tooltipster('update', data).data('ajax ', 'cached');
+                        origin.data('loaded', true);
+                        helper();
+                    }
+                });
+            }
+        }
+    });
+});
+  
+}
+

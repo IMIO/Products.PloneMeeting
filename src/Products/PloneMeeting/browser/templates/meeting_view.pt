@@ -26,22 +26,18 @@
   </metal:description>
 
 <div metal:fill-slot="content-core"
-     tal:define="tool python: context.portal_plonemeeting;
-                 member context/@@plone_portal_state/member;
-                 showPage tool/showMeetingView;
-                 showAvailableItems python:member.has_permission('Modify portal content', context) and context.wfConditions().mayAcceptItems();">
+     tal:define="showPage view/showPage;">
 
 <tal:showPage condition="showPage">
   <script language="javascript"
-    tal:content="python: 'ploneEditor = \'%s\';' % (member.getProperty('wysiwyg_editor') or here.portal_properties.site_properties.default_editor)">
+    tal:content="python: 'ploneEditor = \'%s\';' % (view.member.getProperty('wysiwyg_editor') or here.portal_properties.site_properties.default_editor)">
   </script>
-
 
   <tal:comment replace="nothing">XXX changed for PM, infos displayed before the faceted table.</tal:comment>
   <tal:meetingBeforeFacetedInfos replace="structure context/@@meeting-before-faceted-infos" />
   <br />
 
-  <tal:availableItems condition="showAvailableItems">
+  <tal:availableItems condition="view/showAvailableItems">
     <h2 class="available-items" >
       <span i18n:translate='available_items'>Available items</span>
     </h2>
@@ -54,8 +50,14 @@
         $('iframe.auto-height').iFrameResize({log:false, scrolling:true})
     </script>
   </tal:availableItems>
+
   <h2 class="presented-items">
     <span i18n:translate="presented_items">Presented items</span> (<span class="meeting_number_of_items" tal:content="context/numberOfItems"/>)
+    <acronym class="tooltipster-inserting-methods-helper-msg"
+             tal:condition="python: view.tool.isManager(context)"
+             tal:attributes="data-base_url string:${context/absolute_url}">
+      <img src="help.png" tal:attributes="src string:${portal_url}/help.png" />
+    </acronym>
   </h2>
 
   <!-- Folder contents -->

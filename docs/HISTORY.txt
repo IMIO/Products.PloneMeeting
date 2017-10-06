@@ -55,6 +55,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   returned by MeetingConfig.getMeetingsAcceptingItems for MeetingManagers
 - Make sure all links to images are always using resolveuid despite various data transforms
 - Display the appy version in Plone control panel
+- Added helper message about inserting methods used in this MeetingConfig next to the 'Presented items' label
+  on the meeting_view, this lets MeetingManagers now about how are inserted and sorted items in the meeting
 
 4.0 (2017-08-04)
 ----------------
