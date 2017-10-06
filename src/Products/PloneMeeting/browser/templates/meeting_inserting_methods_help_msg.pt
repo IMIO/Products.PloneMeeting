@@ -1,10 +1,10 @@
-<tal:defines
-    define="cfg python: view.cfg;
-            context python: cfg;
-            mode string:view;"
+<div id="content"
+    tal:define="cfg python: view.cfg;
+                context python: cfg;
+                mode string:view;"
     i18n:domain="PloneMeeting">
 
-  <fieldset>
+  <fieldset class="inserting-methods-help-msg">
     <legend i18n:translate="meeting_inserting_methods_help_msg_descr">Parameters of configuration influencing orders of insertion of item in the meeting</legend>
     <br />
 
@@ -20,4 +20,4 @@
     <br />
   </fieldset>
 
-</tal:defines>
+</div>

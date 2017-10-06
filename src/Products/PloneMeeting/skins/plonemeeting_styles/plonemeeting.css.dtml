@@ -4,6 +4,10 @@
 
 fieldset {line-height: 1em; margin: 0.5em 0; }
 
+fieldset.inserting-methods-help-msg {
+   width: 800px;
+}
+
 /* background of secret items when displayed on the meeting */
 table.listing tbody tr.odd.meeting_item_privacy_secret td {
     background-color: #fffacd;
