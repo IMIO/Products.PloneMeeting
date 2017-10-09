@@ -36,8 +36,8 @@ from plone import api
 from Products.CMFCore.permissions import View, ModifyPortalContent
 from Products.CMFPlone.CatalogTool import getObjSize
 from collective.documentviewer.async import asyncInstalled
-from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import MAX_FILE_SIZE_WARNING
+from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.interfaces import IMeetingFile

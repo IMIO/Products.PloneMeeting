@@ -16,7 +16,7 @@ from plone.dexterity.schema import DexteritySchemaPolicy
 from plone.directives import form
 
 from plone import api
-from Products.PloneMeeting import PMMessageFactory as _
+from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IMeetingContent
 from Products.PloneMeeting.utils import findMeetingAdvicePortalType
 from Products.PloneMeeting.utils import getHistory
@@ -243,7 +243,7 @@ class AdviceGroupVocabulary(object):
         elif context.portal_type in advicePortalTypeIds:
             alterable_advices_groups = [groupId for groupId, groupTitle in context.getAdvicesGroupsInfosForUser()[1]]
             # make sure advice_group selected on advice is in the vocabulary
-            if not context.advice_group in alterable_advices_groups:
+            if context.advice_group not in alterable_advices_groups:
                 alterable_advices_groups.append(context.advice_group)
 
         # manage case where we have several meetingadvice portal_types
@@ -289,7 +289,7 @@ class AdviceTypeVocabulary(object):
                 usedAdviceTypes.remove('asked_again', )
             # make sure if an adviceType was used for context and it is no more available, it
             # appears in the vocabulary and is so useable...
-            if context.portal_type in advicePortalTypeIds and not context.advice_type in usedAdviceTypes:
+            if context.portal_type in advicePortalTypeIds and context.advice_type not in usedAdviceTypes:
                 usedAdviceTypes.append(context.advice_type)
             for advice_id, advice_title in cfg.listAdviceTypes().items():
                 if advice_id in usedAdviceTypes:

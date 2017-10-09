@@ -20,6 +20,9 @@
 
 from collections import OrderedDict
 from Products.CMFCore.permissions import setDefaultRoles
+from zope.i18nmessageid import MessageFactory
+
+PMMessageFactory = MessageFactory("PloneMeeting")
 
 appyRequired = '0.8.0'
 try:
@@ -296,3 +299,7 @@ def registerClasses():
             # Unregister the class
             del Products.Archetypes.ATToolModule._types[key]
         registerType(klass, PROJECTNAME)
+
+
+class PloneMeetingError(Exception):
+    pass

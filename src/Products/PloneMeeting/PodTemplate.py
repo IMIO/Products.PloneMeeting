@@ -30,7 +30,7 @@ import appy.pod
 from appy.pod.renderer import Renderer
 from appy.shared.utils import normalizeString
 from StringIO import StringIO
-from Products.PloneMeeting import PloneMeetingError
+from Products.PloneMeeting.config import PloneMeetingError
 from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.utils import clonePermissions, getCustomAdapter, sendMail, getFieldContent
 from Products.CMFCore.Expression import Expression, createExprContext

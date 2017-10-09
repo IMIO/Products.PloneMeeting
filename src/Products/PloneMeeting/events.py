@@ -29,12 +29,12 @@ from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.cache import invalidate_cachekey_volatile_for
 from imio.helpers.xhtml import storeImagesLocally
 from Products.CMFPlone.utils import safe_unicode
-from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import ADVICE_GIVEN_HISTORIZED_COMMENT
 from Products.PloneMeeting.config import BARCODE_INSERTED_ATTR_ID
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
+from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import addRecurringItemsIfRelevant
 from Products.PloneMeeting.utils import AdviceAfterAddEvent

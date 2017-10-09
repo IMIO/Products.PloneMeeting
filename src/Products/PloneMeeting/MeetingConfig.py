@@ -69,8 +69,6 @@ from eea.facetednavigation.widgets.resultsperpage.widget import Widget as Result
 from imio.dashboard.utils import _get_criterion
 from imio.helpers.cache import cleanRamCache
 from imio.helpers.content import validate_fields
-from Products.PloneMeeting import PloneMeetingError
-from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
 from Products.PloneMeeting.model.adaptations import getValidationReturnedStates
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
@@ -87,6 +85,8 @@ from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETINGREVIEWERS
 from Products.PloneMeeting.config import MEETINGROLES
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
+from Products.PloneMeeting.config import PloneMeetingError
+from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import READER_USECASES

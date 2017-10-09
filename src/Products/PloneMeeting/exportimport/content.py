@@ -19,25 +19,18 @@
 # 02110-1301, USA.
 #
 
-__author__ = '''Gauthier BASTIEN <gbastien@commune.sambreville.be>'''
-__docformat__ = 'plaintext'
-
-'''PloneMeeting exportimport setup.
-   This is the exportimport file for GenericSetup. See configure.zcml and
-   profiles/default for more information.'''
-
-# ------------------------------------------------------------------------------
 from zope.i18n import translate
 from plone import api
 from collective.iconifiedcategory import CAT_SEPARATOR
 from Products.CMFPlone.interfaces.constrains import IConstrainTypes
 from imio.dashboard.utils import _updateDefaultCollectionFor
-from Products.PloneMeeting.config import registerClasses, PROJECTNAME
+from Products.PloneMeeting.config import PloneMeetingError
+from Products.PloneMeeting.config import PROJECTNAME
+from Products.PloneMeeting.config import registerClasses
 from Products.PloneMeeting.model.adaptations import performModelAdaptations
-from Products.PloneMeeting.ToolPloneMeeting import PloneMeetingError, MEETING_CONFIG_ERROR
+from Products.PloneMeeting.ToolPloneMeeting import MEETING_CONFIG_ERROR
 from Products.PloneMeeting.utils import updateCollectionCriterion
-import logging
-logger = logging.getLogger('PloneMeeting')
+
 
 # PloneMeeting-Error related constants -----------------------------------------
 MEETINGCONFIG_BADREQUEST_ERROR = 'There was an error during creation of MeetingConfig with id "%s". ' \

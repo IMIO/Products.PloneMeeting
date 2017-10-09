@@ -9,6 +9,7 @@ from zope.i18n import translate
 from z3c.form import button
 from z3c.form import field
 from z3c.form import form
+from plone.z3cform.layout import wrap_form
 
 from plone import api
 from Products.CMFCore.Expression import createExprContext
@@ -17,12 +18,10 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
 from Products.CMFCore.utils import getToolByName
 from Products.Five.browser import BrowserView
-from Products.PloneMeeting import PMMessageFactory as _
+from Products.PloneMeeting import logger
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
+from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.MeetingItem import ADVICE_AVAILABLE_ON_CONDITION_ERROR
-
-import logging
-logger = logging.getLogger('PloneMeeting')
 
 
 class AdviceDelaysView(BrowserView):
@@ -269,7 +268,6 @@ class AdviceChangeDelayForm(form.Form):
             default=u"You are about to change advice delay for this item to <span style='font-weight: bold;'>"
             u"${new_delay_value}</span> days, please enter a comment.")
 
-from plone.z3cform.layout import wrap_form
 AdviceChangeDelayFormWrapper = wrap_form(AdviceChangeDelayForm)
 
 

@@ -36,15 +36,14 @@ from eea.facetednavigation.widgets.storage import Criterion
 from imio.actionspanel.adapters import ContentDeletableAdapter as APContentDeletableAdapter
 from imio.history.adapters import ImioWfHistoryAdapter
 from imio.prettylink.adapters import PrettyLinkAdapter
-from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import AddAnnexDecision
 from Products.PloneMeeting.config import DUPLICATE_EVENT_ACTION
 from Products.PloneMeeting.config import DUPLICATE_AND_KEEP_LINK_EVENT_ACTION
-
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import MEETINGREVIEWERS
 from Products.PloneMeeting.config import MEETINGROLES
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
+from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.interfaces import IMeeting
 from Products.PloneMeeting.utils import displaying_available_items

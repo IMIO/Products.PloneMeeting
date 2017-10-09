@@ -25,20 +25,19 @@
 #
 
 import logging
-from zope.i18nmessageid import MessageFactory
 from Products.Archetypes import listTypes
 from Products.Archetypes.atapi import process_types
 from Products.CMFCore import DirectoryView
 from Products.CMFCore import utils as cmfutils
 from Products.CMFPlone.utils import ToolInit
-from Products.validation.validators.BaseValidators import baseValidators, protocols
+from Products.validation.validators.BaseValidators import baseValidators
+from Products.validation.validators.BaseValidators import protocols
 from Products.validation import validation
 from validators import CertifiedSignaturesValidator
 from config import ADD_CONTENT_PERMISSIONS
 from config import DEFAULT_ADD_CONTENT_PERMISSION
 from config import product_globals
 from config import PROJECTNAME
-
 DirectoryView.registerDirectory('skins', product_globals)
 
 logger = logging.getLogger('PloneMeeting')
@@ -48,11 +47,6 @@ __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
 <g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""
 __docformat__ = 'plaintext'
 
-PMMessageFactory = MessageFactory("PloneMeeting")
-
-
-class PloneMeetingError(Exception):
-    pass
 
 # Another monkey patch in the "isURL" validator: why is the "file" protocol
 # excluded?

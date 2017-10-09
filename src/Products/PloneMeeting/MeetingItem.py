@@ -65,8 +65,6 @@ from Products.CMFPlone.utils import safe_unicode
 from collective.behavior.talcondition.utils import _evaluateExpression
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.prettylink.interfaces import IPrettyLink
-from Products.PloneMeeting import PMMessageFactory as _
-from Products.PloneMeeting import PloneMeetingError
 from Products.PloneMeeting.config import AddAdvice
 from Products.PloneMeeting.config import AUTO_COPY_GROUP_PREFIX
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
@@ -86,6 +84,8 @@ from Products.PloneMeeting.config import MEETINGROLES
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
+from Products.PloneMeeting.config import PloneMeetingError
+from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import READER_USECASES

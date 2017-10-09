@@ -31,7 +31,7 @@ from Products.DataGridField.SelectColumn import SelectColumn
 
 from zope.i18n import translate
 from imio.helpers.cache import invalidate_cachekey_volatile_for
-from Products.PloneMeeting import PloneMeetingError
+from Products.PloneMeeting.config import PloneMeetingError
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import WriteRiskyConfig
 from Products.PloneMeeting.profiles import GroupDescriptor

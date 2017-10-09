@@ -35,9 +35,9 @@ from zope.browserpage.viewpagetemplatefile import ViewPageTemplateFile
 from Products.CMFCore.utils import getToolByName
 from Products.CMFPlone.utils import safe_unicode
 from plone import api
-from Products.PloneMeeting import PMMessageFactory as _
-from Products.PloneMeeting.interfaces import IRedirect
 from Products.PloneMeeting.browser.itemassembly import validate_apply_until_item_number
+from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.interfaces import IRedirect
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
 
 

@@ -37,7 +37,6 @@ from Products.CMFPlone.CatalogTool import getIcon
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
 from imio.dashboard.utils import _get_criterion
 
-from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
@@ -47,6 +46,7 @@ from Products.PloneMeeting.config import DEFAULT_MEETING_COLUMNS
 from Products.PloneMeeting.config import ITEM_ICON_COLORS
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
+from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX

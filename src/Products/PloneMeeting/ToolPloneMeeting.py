@@ -68,14 +68,14 @@ from imio.helpers.security import is_develop_environment
 from imio.helpers.security import generate_password
 from imio.prettylink.interfaces import IPrettyLink
 from Products.PloneMeeting import logger
-from Products.PloneMeeting import PloneMeetingError
-from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import ADD_CONTENT_PERMISSIONS
 from Products.PloneMeeting.config import DEFAULT_COPIED_FIELDS
 from Products.PloneMeeting.config import MEETING_CONFIG
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
+from Products.PloneMeeting.config import PloneMeetingError
 from Products.PloneMeeting.config import ploneMeetingRoles
+from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import PY_DATETIME_WEEKDAYS

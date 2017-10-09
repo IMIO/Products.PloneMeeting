@@ -43,10 +43,10 @@ from imio.helpers.xhtml import addClassToContent
 from imio.helpers.xhtml import imagesToPath
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.PloneMeeting import logger
-from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import ADVICE_STATES_ALIVE
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
+from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.browser.itemchangeorder import _is_integer
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
 from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber

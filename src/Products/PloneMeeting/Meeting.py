@@ -62,6 +62,7 @@ from Products.PloneMeeting.browser.itemchangeorder import _use_same_integer
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import MEETING_NOT_CLOSED_STATES
 from Products.PloneMeeting.config import MEETING_STATES_ACCEPTING_ITEMS
+from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import READER_USECASES
@@ -91,7 +92,6 @@ from Products.PloneMeeting.utils import transformAllRichTextFields
 from Products.PloneMeeting.utils import updateAnnexesAccess
 from Products.PloneMeeting.utils import validate_item_assembly_value
 
-from Products.PloneMeeting import PMMessageFactory as _
 
 __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
 <g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""

@@ -66,12 +66,12 @@ from Products.CMFCore.permissions import ManageProperties
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.CMFPlone.utils import safe_unicode
-from Products.PloneMeeting import PloneMeetingError
-from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import AddAnnexDecision
 from Products.PloneMeeting.config import ADD_SUBCONTENT_PERMISSIONS
 from Products.PloneMeeting.config import HISTORY_COMMENT_NOT_VIEWABLE
+from Products.PloneMeeting.config import PloneMeetingError
+from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import TOOL_ID
 from Products.PloneMeeting.interfaces import IAdviceAfterAddEvent
 from Products.PloneMeeting.interfaces import IAdviceAfterModifyEvent

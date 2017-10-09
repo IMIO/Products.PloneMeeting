@@ -6,8 +6,8 @@ from Products.Five.browser import BrowserView
 
 from plone import api
 
+from Products.PloneMeeting.config import PloneMeetingError
 from Products.PloneMeeting.utils import ItemListTypeChangedEvent
-from Products.PloneMeeting import PloneMeetingError
 
 
 class ItemListTypeView(BrowserView):

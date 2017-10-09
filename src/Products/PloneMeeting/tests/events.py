@@ -9,7 +9,7 @@
 # GNU General Public License (GPL)
 #
 
-from Products.PloneMeeting import PloneMeetingError
+from Products.PloneMeeting.config import PloneMeetingError
 from Products.PloneMeeting.tests.testViews import SAMPLE_ERROR_MESSAGE
 
 

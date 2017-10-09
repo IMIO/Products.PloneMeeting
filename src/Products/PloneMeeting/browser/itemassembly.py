@@ -38,7 +38,7 @@ from plone.z3cform.layout import wrap_form
 from Products.CMFCore.utils import getToolByName
 from Products.CMFPlone.utils import safe_unicode
 from plone import api
-from Products.PloneMeeting import PMMessageFactory as _
+from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IRedirect
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
 from Products.PloneMeeting.utils import validate_item_assembly_value

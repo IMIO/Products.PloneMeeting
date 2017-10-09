@@ -17,8 +17,8 @@ from plone import api
 from collective.messagesviewlet.utils import add_message
 from Products.cron4plone.browser.configlets.cron_configuration import ICronConfiguration
 from Products.CPUtils.Extensions.utils import configure_ckeditor
-from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.config import CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG
+from Products.PloneMeeting.config import PMMessageFactory as _
 from imio.helpers.catalog import addOrUpdateIndexes
 from imio.helpers.catalog import addOrUpdateColumns
 
