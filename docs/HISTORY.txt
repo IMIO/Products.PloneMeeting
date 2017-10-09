@@ -57,6 +57,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Display the appy version in Plone control panel
 - Added helper message about inserting methods used in this MeetingConfig next to the 'Presented items' label
   on the meeting_view, this lets MeetingManagers now about how are inserted and sorted items in the meeting
+- Validate Meeting.assembly and MeetingItem.itemAssembly the same way it is done for item assembly helper form,
+  namely make sure opened "[[" are correctly matching closing "]]"
 
 4.0 (2017-08-04)
 ----------------

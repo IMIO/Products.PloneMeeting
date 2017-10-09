@@ -81,6 +81,8 @@ from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
+from Products.PloneMeeting.tests.testUtils import ASSEMBLY_CORRECT_VALUE
+from Products.PloneMeeting.tests.testUtils import ASSEMBLY_WRONG_VALUE
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import getFieldVersion
 from Products.PloneMeeting.utils import getLastEvent
@@ -2458,35 +2460,50 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertRaises(Unauthorized, formAssembly.update)
         self.assertRaises(Unauthorized, formSignatures.update)
 
-    def test_pm_ValidateItemAssembly(self):
-        """Test the method that validated item_assembly on the item_assembly_form."""
-        # empty value
-        self.assertTrue(validate_item_assembly(u''))
-        # correct values
-        self.assertTrue(validate_item_assembly(u'[[Text]][[Text]]'))
-        self.assertTrue(validate_item_assembly(u'[[Text]] Text Text [[Text]]'))
-        self.assertTrue(validate_item_assembly(u'[[Text]] Text Text [[Text]]'))
-        self.assertTrue(validate_item_assembly(u'Text Text Text [[Text]]'))
-        self.assertTrue(validate_item_assembly(u'[[Text]] Text Text Text'))
-        self.assertTrue(validate_item_assembly(u'Text Text [[Text]] Text'))
-        # wrong values
-        wrong_msg = translate(
+    def test_pm_Validate_item_assembly(self):
+        """Test the method that validates item_assembly on the item_assembly_form.
+           The validator logic is tested in testUtils.test_pm_Validate_item_assembly_value,
+           here we just test raised messages and so on."""
+        # correct value
+        self.assertTrue(validate_item_assembly(ASSEMBLY_CORRECT_VALUE))
+
+        # wrong value
+        validation_error_msg = translate(
             'Please check that opening "[[" have corresponding closing "]]".',
             domain='PloneMeeting',
             context=self.request)
-        WRONG_VALUE = u'[[Text Text'
         with self.assertRaises(Invalid) as cm:
-            validate_item_assembly(WRONG_VALUE)
-        self.assertEquals(cm.exception.message, wrong_msg)
-        self.assertRaises(Invalid, validate_item_assembly, u'[[Text [[Text')
-        self.assertRaises(Invalid, validate_item_assembly, u']]Text [[Text')
-        self.assertRaises(Invalid, validate_item_assembly, u'Text [[Text')
-        self.assertRaises(Invalid, validate_item_assembly, u'Text Text]]')
+            validate_item_assembly(ASSEMBLY_WRONG_VALUE)
+        self.assertEquals(cm.exception.message, validation_error_msg)
 
         # we have a special case, if REQUEST contains 'initial_edit', then validation
         # is bypassed, this let's edit an old wrong value
         self.request.set('initial_edit', u'1')
-        self.assertTrue(validate_item_assembly(WRONG_VALUE))
+        self.assertTrue(validate_item_assembly(ASSEMBLY_WRONG_VALUE))
+
+    def test_pm_Validate_itemAssembly(self):
+        """Test the method that validates MeetingItem.itemAssembly.
+           The validator logic is tested in testUtils.test_pm_Validate_item_assembly_value,
+           here we just test raised messages and so on."""
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        validation_error_msg = translate(
+            'Please check that opening "[[" have corresponding closing "]]".',
+            domain='PloneMeeting',
+            context=self.request)
+
+        # correct value
+        self.assertIsNone(item.validate_itemAssembly(ASSEMBLY_CORRECT_VALUE))
+
+        # wrong value
+        self.assertEqual(
+            item.validate_itemAssembly(ASSEMBLY_WRONG_VALUE),
+            validation_error_msg)
+
+        # we have a special case, if REQUEST contains 'initial_edit', then validation
+        # is bypassed, this let's edit an old wrong value
+        self.request.set('initial_edit', u'1')
+        self.assertIsNone(item.validate_itemAssembly(ASSEMBLY_WRONG_VALUE))
 
     def test_pm_GetItemNumber(self):
         '''

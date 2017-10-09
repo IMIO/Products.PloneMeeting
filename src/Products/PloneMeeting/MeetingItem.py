@@ -124,6 +124,7 @@ from Products.PloneMeeting.utils import setFieldFromAjax
 from Products.PloneMeeting.utils import toHTMLStrikedContent
 from Products.PloneMeeting.utils import transformAllRichTextFields
 from Products.PloneMeeting.utils import updateAnnexesAccess
+from Products.PloneMeeting.utils import validate_item_assembly_value
 from Products.PloneMeeting.utils import workday
 
 
@@ -1515,6 +1516,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            (not meetingConfig.getUseGroupsAsCategories()) and \
            (value == '_none_' or not value):
             return translate('category_required', domain='PloneMeeting', context=self.REQUEST)
+
+    security.declarePrivate('validate_itemAssembly')
+
+    def validate_itemAssembly(self, value):
+        '''Validate the itemAssembly field.'''
+        if not validate_item_assembly_value(value):
+            return translate('Please check that opening "[[" have corresponding closing "]]".',
+                             domain='PloneMeeting',
+                             context=self.REQUEST)
 
     security.declarePrivate('validate_proposingGroup')
 

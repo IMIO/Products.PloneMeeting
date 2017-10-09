@@ -52,6 +52,8 @@ from Products.PloneMeeting.config import MEETING_STATES_ACCEPTING_ITEMS
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from Products.PloneMeeting.tests.testUtils import ASSEMBLY_CORRECT_VALUE
+from Products.PloneMeeting.tests.testUtils import ASSEMBLY_WRONG_VALUE
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import setFieldFromAjax
 
@@ -1716,7 +1718,7 @@ class testMeeting(PloneMeetingTestCase):
 
     def test_pm_Validate_place(self):
         """
-          Test the Meeting.placve validator "validate_place" : if place is 'other',
+          Test the Meeting.place validator "validate_place" : if place is 'other',
           a 'place_other' value must be found in the REQUEST.
         """
         self.changeUser('pmManager')
@@ -1729,6 +1731,30 @@ class testMeeting(PloneMeetingTestCase):
         self.request.set('place_other', 'Some other place')
         # if the validation is ok, it returns nothing...
         self.assertTrue(not meeting.validate_place('other'))
+
+    def test_pm_Validate_assembly(self):
+        """Test the Meeting.assembly validator.
+           The validator logic is tested in testUtils.test_pm_Validate_item_assembly_value,
+           here we just test raised messages and so on."""
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2017/10/10'))
+        validation_error_msg = translate(
+            'Please check that opening "[[" have corresponding closing "]]".',
+            domain='PloneMeeting',
+            context=self.request)
+
+        # correct value
+        self.assertIsNone(meeting.validate_assembly(ASSEMBLY_CORRECT_VALUE))
+
+        # wrong value
+        self.assertEqual(
+            meeting.validate_assembly(ASSEMBLY_WRONG_VALUE),
+            validation_error_msg)
+
+        # we have a special case, if REQUEST contains 'initial_edit', then validation
+        # is bypassed, this let's edit an old wrong value
+        self.request.set('initial_edit', u'1')
+        self.assertIsNone(meeting.validate_assembly(ASSEMBLY_WRONG_VALUE))
 
     def test_pm_TitleAndPlaceCorrectlyUpdatedOnEdit(self):
         '''
