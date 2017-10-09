@@ -889,7 +889,7 @@ class CheckPodTemplatesView(BrowserView):
         for pod_template in self.cfg.podtemplates.objectValues():
 
             # we do not manage 'DashboardPODTemplate' automatically for now...
-            if pod_template.meta_type == 'DashboardPODTemplate':
+            if pod_template.portal_type == 'DashboardPODTemplate':
                 messages['dashboard_templates_not_managed'].append((pod_template, None))
                 continue
 
