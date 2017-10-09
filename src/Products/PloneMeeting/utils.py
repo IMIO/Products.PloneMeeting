@@ -57,7 +57,6 @@ from imio.helpers.xhtml import storeImagesLocally
 from imio.helpers.xhtml import xhtmlContentIsEmpty
 from imio.history.interfaces import IImioHistory
 from Products.Archetypes.event import ObjectEditedEvent
-from Products.CMFCore.utils import getToolByName
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.MailHost.MailHost import MailHostError
 from Products.CMFCore.permissions import AccessContentsInformation
@@ -158,7 +157,7 @@ def getWorkflowAdapter(obj, conditions):
     '''Gets the adapter, for a PloneMeeting object that proposes methods that
        may be used as workflow conditions (if p_conditions is True) or actions
        (if p_condition is False).'''
-    tool = getToolByName(obj, TOOL_ID)
+    tool = api.portal.get_tool(TOOL_ID)
     meetingConfig = tool.getMeetingConfig(obj)
     interfaceMethod = adaptables[obj.meta_type]['method']
     if conditions:
@@ -347,7 +346,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
     if mailMode == 'deactivated':
         return
     # Compute user name
-    pms = obj.portal_membership
+    pms = api.portal.get_tool('portal_membership')
     userName = pms.getAuthenticatedMember().getId()
     userInfo = pms.getMemberById(userName)
     if userInfo and userInfo.getProperty('fullname'):
@@ -356,7 +355,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
     userGroups = ', '.join([g.Title() for g in tool.getGroupsForUser()])
     # Create the message parts
     d = 'PloneMeeting'
-    portal = obj.portal_url.getPortalObject()
+    portal = api.portal.get()
     portalUrl = portal.absolute_url()
     if mapping:
         # we need every mappings to be unicode
@@ -487,8 +486,8 @@ def sendMailIfRelevant(obj, event, permissionOrRole, isRole=False,
        A plug-in may use this method for sending custom events that are not
        defined in the MeetingConfig. In this case, you must specify
        p_customEvent = True.'''
-    tool = getToolByName(obj, 'portal_plonemeeting')
-    membershipTool = getToolByName(obj, 'portal_membership')
+    tool = api.portal.get_tool(TOOL_ID)
+    membershipTool = api.portal.get_tool('portal_membership')
     currentUser = membershipTool.getAuthenticatedMember()
     cfg = tool.getMeetingConfig(obj)
     # Do not send the mail if mail mode is "deactivated".
@@ -992,7 +991,7 @@ def findNewValue(obj, name, history, stopIndex):
 def getHistoryTexts(obj, event):
     '''Returns a tuple (insertText, deleteText) containing texts to show on,
        respectively, inserted and deleted chunks of text.'''
-    tool = getToolByName(obj, 'portal_plonemeeting')
+    tool = api.portal.get_tool(TOOL_ID)
     toLocalizedTime = obj.restrictedTraverse('@@plone').toLocalizedTime
     userName = tool.getUserName(event['actor'])
     mapping = {'userName': userName.decode('utf-8')}
@@ -1166,7 +1165,7 @@ def applyOnTransitionFieldTransform(obj, transitionId):
     '''
       Apply onTransitionFieldTransforms defined in the corresponding obj MeetingConfig.
     '''
-    tool = getToolByName(obj, 'portal_plonemeeting')
+    tool = api.portal.get_tool(TOOL_ID)
     cfg = tool.getMeetingConfig(obj)
     idxs = []
     for transform in cfg.getOnTransitionFieldTransforms():
@@ -1175,8 +1174,7 @@ def applyOnTransitionFieldTransform(obj, transitionId):
            transform['field_name'].split('.')[0] == obj.meta_type and \
            tal_expr:
             from Products.CMFCore.Expression import Expression, createExprContext
-            portal_url = getToolByName(obj, 'portal_url')
-            portal = portal_url.getPortalObject()
+            portal = api.portal.get()
             ctx = createExprContext(obj.getParentNode(), portal, obj)
             try:
                 res = Expression(tal_expr)(ctx)
@@ -1199,7 +1197,7 @@ def meetingTriggerTransitionOnLinkedItems(meeting, transitionId):
       check if we need to trigger workflow transition on linked items
       defined in MeetingConfig.onMeetingTransitionItemTransitionToTrigger.
     '''
-    tool = getToolByName(meeting, 'portal_plonemeeting')
+    tool = api.portal.get_tool(TOOL_ID)
     cfg = tool.getMeetingConfig(meeting)
     wfTool = api.portal.get_tool('portal_workflow')
     wf_comment = _('wf_transition_triggered_by_application')
