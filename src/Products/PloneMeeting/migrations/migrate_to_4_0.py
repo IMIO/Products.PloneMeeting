@@ -21,6 +21,7 @@ from collective.iconifiedcategory.utils import update_all_categorized_elements
 from imio.dashboard.utils import _updateDefaultCollectionFor
 from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.catalog import removeIndexes
+from Products.CMFPlone.utils import base_hasattr
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_NEW
 
 from Products.PloneMeeting.interfaces import IAnnexable
@@ -338,19 +339,19 @@ class Migrate_To_4_0(Migrator):
         logger.info('Moving to imio.dashboard : removing parameters "usedColorSystem", "dateFormat", '
                     '"colorSystemDisabledFor", "publicUrl" and "deferredNotificationsHandling" '
                     'from portal_plonemeeting...')
-        if hasattr(self.tool, 'usedColorSystem'):
+        if base_hasattr(self.tool, 'usedColorSystem'):
             delattr(self.tool, 'usedColorSystem')
-        if hasattr(self.tool, 'colorSystemDisabledFor'):
+        if base_hasattr(self.tool, 'colorSystemDisabledFor'):
             delattr(self.tool, 'colorSystemDisabledFor')
-        if hasattr(self.tool, 'publicUrl'):
+        if base_hasattr(self.tool, 'publicUrl'):
             delattr(self.tool, 'publicUrl')
-        if hasattr(self.tool, 'deferredNotificationsHandling'):
+        if base_hasattr(self.tool, 'deferredNotificationsHandling'):
             delattr(self.tool, 'deferredNotificationsHandling')
-        if hasattr(self.tool, 'maxShownFound'):
+        if base_hasattr(self.tool, 'maxShownFound'):
             delattr(self.tool, 'maxShownFound')
-        if hasattr(self.tool, 'showItemKeywordsTargets'):
+        if base_hasattr(self.tool, 'showItemKeywordsTargets'):
             delattr(self.tool, 'showItemKeywordsTargets')
-        if hasattr(self.tool, 'dateFormat'):
+        if base_hasattr(self.tool, 'dateFormat'):
             delattr(self.tool, 'dateFormat')
 
         logger.info('Moving to imio.dashboard : enabling faceted view for existing Meetings...')
@@ -1103,12 +1104,20 @@ class Migrate_To_4_0(Migrator):
                 for cat_group in cfg.annexes_types.objectValues():
                     cat_group.confidentiality_activated = True
 
-            delattr(cfg, 'annexConfidentialFor')
-            delattr(cfg, 'enableAnnexToPrint')
-            delattr(cfg, 'annexToPrintDefault')
-            delattr(cfg, 'annexDecisionToPrintDefault')
-            delattr(cfg, 'annexAdviceToPrintDefault')
-            delattr(cfg, 'enableAnnexConfidentiality')
+            # in some case with long living MeetingConfig not edtited for long,
+            # some attribtues could not exist, avoid failing on it
+            if base_hasattr(cfg, 'annexConfidentialFor'):
+                delattr(cfg, 'annexConfidentialFor')
+            if base_hasattr(cfg, 'enableAnnexToPrint'):
+                delattr(cfg, 'enableAnnexToPrint')
+            if base_hasattr(cfg, 'annexToPrintDefault'):
+                delattr(cfg, 'annexToPrintDefault')
+            if base_hasattr(cfg, 'annexDecisionToPrintDefault'):
+                delattr(cfg, 'annexDecisionToPrintDefault')
+            if base_hasattr(cfg, 'annexAdviceToPrintDefault'):
+                delattr(cfg, 'annexAdviceToPrintDefault')
+            if base_hasattr(cfg, 'enableAnnexConfidentiality'):
+                delattr(cfg, 'enableAnnexConfidentiality')
 
         # migrate MeetingFiles
         logger.info('Moving MeetingFiles to annexes...')
