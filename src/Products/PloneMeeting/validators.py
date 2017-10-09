@@ -2,16 +2,12 @@
 #
 # File: validators.py
 #
-# Copyright (c) 2016 by Imio.be
+# Copyright (c) 2017 by Imio.be
 # Generator: ArchGenXML Version 2.7
 #            http://plone.org/products/archgenxml
 #
 # GNU General Public License (GPL)
 #
-
-__author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
-<g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""
-__docformat__ = 'plaintext'
 
 from DateTime import DateTime
 from zope.component import getGlobalSiteManager
@@ -20,6 +16,10 @@ from zope.i18n import translate
 from zope.interface import implements
 from Products.validation.interfaces.IValidator import IValidator
 from Products.PloneMeeting.utils import getInterface
+
+__author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
+<g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""
+__docformat__ = 'plaintext'
 
 
 class CertifiedSignaturesValidator:

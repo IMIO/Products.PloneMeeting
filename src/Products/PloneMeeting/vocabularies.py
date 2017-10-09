@@ -232,7 +232,7 @@ class GroupsInChargeVocabulary(object):
             for group_in_charge_id in group.getGroupsInCharge():
                 # manage duplicates
                 group_in_charge = tool.get(group_in_charge_id)
-                if group_in_charge and not group_in_charge in res:
+                if group_in_charge and group_in_charge not in res:
                     res.append(group_in_charge)
         res = [SimpleTerm(gic.getId(),
                           gic.getId(),

@@ -295,7 +295,7 @@ def _to_coded_adviser_index(obj, groupId, advice):
             # 'real_group_id_' with suffixed advice_type
             res.append(real_group_id + '__' + advice_type)
     # advice_type
-    if not advice_type in res:
+    if advice_type not in res:
         res.append(advice_type)
     return res
 
