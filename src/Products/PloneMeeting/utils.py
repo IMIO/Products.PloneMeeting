@@ -22,6 +22,7 @@
 
 import os
 import os.path
+import re
 import urlparse
 import socket
 from AccessControl import ClassSecurityInfo
@@ -40,6 +41,7 @@ from zope.component import getAdapter
 from zope.component import queryUtility
 from zope.component.interfaces import ObjectEvent
 from zope.event import notify
+from zope.globalrequest import getRequest
 from zope.interface import implements
 from zope.security.interfaces import IPermission
 from plone.app.textfield import RichText
@@ -1564,6 +1566,44 @@ def updateAnnexesAccess(container):
             continue
         adapter = getAdapter(annex, IIconifiedInfos)
         v['visible_for_groups'] = adapter._visible_for_groups()
+
+
+def validate_item_assembly_value(value):
+    '''This method does validate the 'item_assembly' field.
+       It will check that [[]] are correct.'''
+    # do not validate if we are calling the form, this way
+    # if some old value is wrong, the form can be shown and the validation
+    # is done when saving the form
+    req = getRequest()
+    if req.get('initial_edit', None) == u'1':
+        return True
+    # check that every opening [[ has a closing ]] and that it matches
+    # correctly regarding position, we do not want "Text [[Text [[Text]] Text]] Text"
+    opening_pos = []
+    closing_pos = []
+    for m in re.finditer('\[\[', value):
+        opening_pos.append(m.start())
+    for m in re.finditer('\]\]', value):
+        closing_pos.append(m.start())
+
+    if not opening_pos and not closing_pos:
+        return True
+
+    # create one single list and check number of elements and that elements
+    # are succedding each other in right order
+    if len(opening_pos) != len(closing_pos):
+        return False
+    # check succession
+    res = zip(opening_pos, closing_pos)
+    # zip() will return a list of tuple and sum() will turn this into a list
+    res = sum(res, ())
+    if not sorted(res) == list(res):
+        return False
+    # check number of elements, dividable by 2
+    if not len(res) % 2 == 0:
+        return False
+
+    return True
 
 
 class AdvicesUpdatedEvent(ObjectEvent):

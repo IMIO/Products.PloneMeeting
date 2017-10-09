@@ -89,6 +89,7 @@ from Products.PloneMeeting.utils import setFieldFromAjax
 from Products.PloneMeeting.utils import toHTMLStrikedContent
 from Products.PloneMeeting.utils import transformAllRichTextFields
 from Products.PloneMeeting.utils import updateAnnexesAccess
+from Products.PloneMeeting.utils import validate_item_assembly_value
 
 from Products.PloneMeeting import PMMessageFactory as _
 
@@ -965,6 +966,15 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             return translate('place_other_required',
                              domain='PloneMeeting',
                              context=rq)
+
+    security.declarePrivate('validate_assembly')
+
+    def validate_assembly(self, value):
+        '''Validate the assembly field.'''
+        if not validate_item_assembly_value(value):
+            return translate('Please check that opening "[[" have corresponding closing "]]".',
+                             domain='PloneMeeting',
+                             context=self.REQUEST)
 
     security.declarePublic('listAssemblyMembers')
 

@@ -1,0 +1,18 @@
+<div id="content"
+    tal:define="cfg python: view.cfg;
+                context python: cfg;
+                mode string:view;"
+    i18n:domain="PloneMeeting">
+
+  <h4 class="inserting-methods-help-msg" i18n:translate="meeting_inserting_methods_help_msg_descr">Parameters of configuration influencing orders of insertion of item in the meeting</h4>
+
+  <br />
+  <tal:field define="field python:cfg.getField('insertingMethodsOnAddItem')">
+    <span metal:use-macro="context/widgets/field/macros/view" />
+  </tal:field>
+
+  <tal:field condition="view/showSelectablePrivaciesField" define="field python:cfg.getField('selectablePrivacies')">
+    <span metal:use-macro="context/widgets/field/macros/view" />
+  </tal:field>
+
+</div>

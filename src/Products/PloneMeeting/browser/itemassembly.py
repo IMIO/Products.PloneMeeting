@@ -20,14 +20,12 @@
 # 02110-1301, USA.
 #
 
-import re
 from AccessControl import Unauthorized
 from zope import interface
 from zope import schema
 from zope.browserpage.viewpagetemplatefile import ViewPageTemplateFile
 from zope.component.hooks import getSite
 from zope.contentprovider.provider import ContentProviderBase
-from zope.globalrequest import getRequest
 from zope.i18n import translate
 from zope.interface import implements
 from z3c.form import button
@@ -35,7 +33,7 @@ from z3c.form import field
 from z3c.form import form
 from z3c.form.interfaces import IFieldsAndContentProvidersForm
 from z3c.form.contentprovider import ContentProviders
-
+from plone.z3cform.layout import wrap_form
 
 from Products.CMFCore.utils import getToolByName
 from Products.CMFPlone.utils import safe_unicode
@@ -43,6 +41,7 @@ from plone import api
 from Products.PloneMeeting import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IRedirect
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
+from Products.PloneMeeting.utils import validate_item_assembly_value
 
 USING_ABSENTS_OR_EXCUSED_MSGID = u"Enter the item attendees to be applied. By default, the value of the field is " \
     "what is defined on the meeting. If you do not change this value, nothing will be applied on the item. If you " \
@@ -103,39 +102,7 @@ def validate_apply_until_item_number(value):
 def validate_item_assembly(value):
     '''This method does validate the 'item_assembly' field.
        It will check that [[]] are correct.'''
-    # do not validate if we are calling the form, this way
-    # if some old value is wrong, the form can be shown and the validation
-    # is done when saving the form
-    req = getRequest()
-    if req.get('initial_edit', None) == u'1':
-        return True
-    # check that every opening [[ has a closing ]] and that it matches
-    # correctly regarding position, we do not want "Text [[Text [[Text]] Text]] Text"
-    opening_pos = []
-    closing_pos = []
-    for m in re.finditer('\[\[', value):
-        opening_pos.append(m.start())
-    for m in re.finditer('\]\]', value):
-        closing_pos.append(m.start())
-
-    if not opening_pos and not closing_pos:
-        return True
-
-    # create one single list an check number of elements and that elements
-    # are succedding each other in right order
-    try:
-        if len(opening_pos) != len(closing_pos):
-            raise
-        # check succession
-        res = zip(opening_pos, closing_pos)
-        # zip() will return a list of tuple and sum() will turn this into a list
-        res = sum(res, ())
-        if not sorted(res) == list(res):
-            raise ValueError
-        # check number of elements, dividable by 2
-        if not len(res) % 2 == 0:
-            raise ValueError
-    except:
+    if not validate_item_assembly_value(value):
         raise interface.Invalid(_(u'Please check that opening "[[" have corresponding closing "]]".'))
     return True
 
@@ -428,5 +395,4 @@ class ManageItemAssemblyForm(form.Form):
         self._finishedSent = True
 
 
-from plone.z3cform.layout import wrap_form
 ManageItemAssemblyFormWrapper = wrap_form(ManageItemAssemblyForm)
