@@ -517,11 +517,12 @@ def sendMailIfRelevant(obj, event, permissionOrRole, isRole=False,
             continue
         # Does the user have the corresponding permission on p_obj ?
         if isRole:
-            checkMethod = user.has_role
+            if not user.has_role(permissionOrRole, obj):
+                continue
         else:
-            checkMethod = user.has_permission
-        if not checkMethod(permissionOrRole, obj):
-            continue
+            if not api.user.has_permission(permission=permissionOrRole, obj=obj, user=user):
+                continue
+
         recipient = tool.getMailRecipient(user)
         # Must we avoid sending mail to this recipient for some custom reason?
         if not adap.includeMailRecipient(event, userId):
