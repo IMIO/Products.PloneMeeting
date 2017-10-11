@@ -888,9 +888,14 @@ class Migrate_To_4_0(Migrator):
                             file_content = mf_file.data
                             # in some case ??? we have a OFS.Image.Pdata instance and we need binary data
                             file_content = _pdata_to_data(file_content)
+                            content_type = mf_file.getContentType()
+                            if not content_type or content_type == 'None':
+                                mimetypes = self.portal.mimetypes_registry
+                                content_type = mimetypes.lookupExtension(
+                                    mf_file.filename).normalized()
                             annex_file = NamedBlobFile(
                                 data=file_content,
-                                contentType=mf_file.getContentType(),
+                                contentType=content_type,
                                 filename=safe_unicode(mf_file.filename))
                             annex_to_print = mf.getToPrint()
                             annex_confidential = mf.getIsConfidential()
