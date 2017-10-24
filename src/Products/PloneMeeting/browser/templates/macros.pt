@@ -830,3 +830,55 @@ This works for an AT and for a DX.</tal:comment>
   </tal:at>
 </tal:defines>
 </metal:additionalInformations>
+
+<metal:categoriesInMeetingConfig define-macro="categoriesInConfig" i18n:domain="PloneMeeting">
+<tal:comment replace="nothing">Macro used to display categories and classifiers in a MeetingConfig.
+The parameter "cFolder" is the folder containing categories.</tal:comment>
+<table tal:define="cFolderUrl cFolder/absolute_url;
+                   objs python: cFolder.objectValues('MeetingCategory');
+                   threshold python: 40"
+       class="listing nosort" align="right" width="100%">
+  <tr>
+    <th class="nosort" i18n:translate="listingheader_title">Title</th>
+    <th class="nosort" width="20%" i18n:translate="PloneMeeting_label_categoryId">Category id</th>
+    <th class="nosort" width="50px" i18n:translate="heading_is_active">Active?</th>
+    <th class="nosort" width="130px" i18n:translate="heading_actions">Actions</th>
+  </tr>
+  <tr tal:condition="not: objs">
+    <td colspan="4" align="center" i18n:translate="">no_category</td>
+  </tr>
+  <tr tal:condition="python: len(objs) > threshold">
+    <td colspan="4" align="center" i18n:translate="too_many_categories_use_folder_contents">
+      There are too much categories to display.
+    </td>
+  </tr>
+  <tal:loop repeat="obj objs" condition="python: len(objs) <= threshold">
+  <tr tal:define="isActive python: here.portal_workflow.getInfoFor(obj, 'review_state') == 'active';
+                    oddrow repeat/obj/odd;
+                    classOddEven python: oddrow and 'even' or 'odd';" valign="top"
+        tal:attributes="class python: not isActive and classOddEven+' state-inactive' or classOddEven"
+        class="#">
+    <td>
+        <h5><a tal:attributes="href obj/absolute_url" tal:content="obj/getName"></a></h5>
+        <div class="discreet" tal:define="descr obj/Description" tal:condition="descr" tal:content="descr"></div>
+        <tal:additionalInformations
+            define="context python: obj;
+                    excludedFields python: ('id', 'description', 'title')">
+            <metal:addtionalInformations use-macro="here/@@pm-macros/additionalInformations" />
+        </tal:additionalInformations>
+    </td>
+    <td tal:content="obj/getCategoryId"></td>
+    <td i18n:domain="plone">
+      <span tal:condition="isActive" i18n:translate="">Yes</span>
+      <span tal:condition="not: isActive" i18n:translate="">No</span>
+    </td>
+    <td align="right">
+      <tal:actions replace="structure python: obj.restrictedTraverse('@@actions_panel')(showActions=False, showTransitions=False, showArrows=True)" />
+    </td>
+  </tr>
+  </tal:loop>
+</table>
+<p i18n:translate="categories_use_folder_contents" tal:condition="isRealManager">
+  You may use the <a i18n:name="folder_contents_link" i18n:translate="categories_folder_contents_view" href="#" tal:attributes="href string:${cFolder/absolute_url}/folder_contents">"Folder contents" view</a> to manage categories.
+</p>
+</metal:categoriesInMeetingConfig>

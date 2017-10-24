@@ -62,6 +62,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Speed up MeetingCategory deletion prevention by using getCategory catalog search index.  We also avoid deletion
   of a MeetingCategory used by an item template.  Moreover we display the item using category in the "can not delete"
   portal message
+- Do not display categories in the MeetingConfig if more than 40 categories because it takes too much time.
+  We display a link to the categories/classifiers container folder_contents view to manage large amount of categories
 
 4.0 (2017-08-04)
 ----------------
