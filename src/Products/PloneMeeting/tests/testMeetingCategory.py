@@ -36,41 +36,63 @@ class testMeetingCategory(PloneMeetingTestCase):
         self.changeUser('admin')
         cfg = self.meetingConfig
         cfg2 = self.meetingConfig2
+        self._removeConfigObjectsFor(cfg)
+        self._removeConfigObjectsFor(cfg2)
         cfg.setUseGroupsAsCategories(False)
         cfg2.setUseGroupsAsCategories(False)
-        # by default 'development', used by cfg and cfg2
-        development = cfg.categories.development.getId()
-        # create a recurring item in cfg2 using also category with id 'development'
-        recItemCfg2 = self.create('MeetingItemRecurring', meetingConfig=self.meetingConfig2)
-        recItemCfg2.setCategory(development)
-        # by default 'research'
-        research = cfg.categories.research.getId()
+        # add 3 categories in cfg1 and one in cfg2 having same id as cat1 in cfg1
+        cat1 = self.create('MeetingCategory', id="cat1", title="Category 1")
+        cat1Id = cat1.getId()
+        cat2 = self.create('MeetingCategory', id="cat2", title="Category 2")
+        cat2Id = cat2.getId()
+        cat3 = self.create('MeetingCategory', id="cat3", title="Category 3")
+        cat3Id = cat3.getId()
+
+        # create a recurring item in cfg2 using also category with id 'cat1'
+        # this will check for MeetingConfig isolation
+        self.setMeetingConfig(cfg2.getId())
+        cat1cfg2 = self.create('MeetingCategory', id=cat1Id, title="Category 1")
+        cat1Cfg2Id = cat1cfg2.getId()
+        recItemCfg2 = self.create('MeetingItemRecurring', category=cat1Cfg2Id)
+
+        # back to cfg1
+        self.setMeetingConfig(cfg.getId())
         self.changeUser('pmManager')
         # create an item
-        item = self.create('MeetingItem')
-        # set a category
-        item.setCategory(development)
-        item.reindexObject()
-        # now remove a used and an unused one
+        item = self.create('MeetingItem', category=cat2Id)
+        # now try to remove it
         self.changeUser('admin')
         self.assertRaises(BeforeDeleteException,
                           cfg.categories.manage_delObjects,
-                          [development])
-        # if a recurring item is using a category, it is taken into account too...
-        aRecurringItem = cfg.recurringitems.objectValues('MeetingItem')[0]
-        # make sure it is unindexed
-        aRecurringItem.unindexObject()
-        aRecurringItem.setCategory(research)
-        self.failUnless(aRecurringItem.getCategory() == research)
+                          [cat2Id])
+
+        # Recurring item
+        # if a recurring item is using a category, category is not deletable
+        recItemCfg1 = self.create('MeetingItemRecurring', category=cat1Id)
+        self.assertEqual(recItemCfg1.getCategory(), cat1Id)
         self.assertRaises(BeforeDeleteException,
                           cfg.categories.manage_delObjects,
-                          [research])
+                          [cat1Id])
+        # recurring item of cfg1 use same category id as recurring item of cfg2
+        self.assertEqual(recItemCfg1.getCategory(), recItemCfg2.getCategory())
+
+        # Item template
+        # if an item template is using a category, category is not deletable
+        itemTemplate = self.create('MeetingItemTemplate', category=cat3Id)
+        self.assertEqual(itemTemplate.getCategory(), cat3Id)
+        self.assertRaises(BeforeDeleteException,
+                          cfg.categories.manage_delObjects,
+                          [cat3Id])
+
         # now delete the recurring item and the category should be removable
-        aRecurringItem.aq_inner.aq_parent.manage_delObjects([aRecurringItem.getId(), ])
-        cfg.categories.manage_delObjects([research])
-        # remove the created item so the category is removable too
+        recItemCfg1.aq_inner.aq_parent.manage_delObjects([recItemCfg1.getId(), ])
+        cfg.categories.manage_delObjects([cat1Id])
+        # remove the created item so the cat2 is removable
         item.aq_inner.aq_parent.manage_delObjects([item.getId(), ])
-        cfg.categories.manage_delObjects([development])
+        cfg.categories.manage_delObjects([cat2Id])
+        # remove the item template so cat3 is removable
+        itemTemplate.aq_inner.aq_parent.manage_delObjects([itemTemplate.getId(), ])
+        cfg.categories.manage_delObjects([cat3Id])
 
     def test_pm_ListCategoriesOfOtherMCs(self):
         '''Test the vocabulary of the 'categoryMappingsWhenCloningToOtherMC' field.'''

@@ -59,6 +59,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   on the meeting_view, this lets MeetingManagers now about how are inserted and sorted items in the meeting
 - Validate Meeting.assembly and MeetingItem.itemAssembly the same way it is done for item assembly helper form,
   namely make sure opened "[[" are correctly matching closing "]]"
+- Speed up MeetingCategory deletion prevention by using getCategory catalog search index.  We also avoid deletion
+  of a MeetingCategory used by an item template.  Moreover we display the item using category in the "can not delete"
+  portal message
 
 4.0 (2017-08-04)
 ----------------
