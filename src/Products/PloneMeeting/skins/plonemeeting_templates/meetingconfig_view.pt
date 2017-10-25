@@ -487,42 +487,9 @@
           </a>
         </legend>
         <p class="discreet" i18n:translate="categories_descr"></p><br />
-        <table tal:define="cFolder python:context.categories;
-                           cFolderUrl cFolder/absolute_url"
-               class="listing nosort" align="right" width="100%">
-          <tr>
-            <th i18n:translate="listingheader_title">Title</th>
-            <th width="50px" i18n:translate="heading_is_active">Active?</th>
-            <th width="130px" i18n:translate="heading_actions">Actions</th>
-          </tr>
-          <tr tal:condition="python: not cFolder.objectValues('MeetingCategory')">
-            <td colspan="3" align="center" i18n:translate="">no_category</td>
-          </tr>
-          <tal:loop repeat="obj python: cFolder.objectValues('MeetingCategory')">
-          <tr tal:define="isActive python: here.portal_workflow.getInfoFor(obj, 'review_state') == 'active';
-                            oddrow repeat/obj/odd;
-                            classOddEven python: oddrow and 'even' or 'odd';" valign="top"
-                tal:attributes="class python: not isActive and classOddEven+' state-inactive' or classOddEven"
-                class="#">
-            <td>
-                <h5><a tal:attributes="href obj/absolute_url" tal:content="obj/getName"></a></h5>
-                <div class="discreet" tal:define="descr obj/Description" tal:condition="descr" tal:content="descr"></div>
-                <tal:additionalInformations
-                    define="context python: obj;
-                            excludedFields python: ('id', 'description', 'title')">
-                    <metal:addtionalInformations use-macro="here/@@pm-macros/additionalInformations" />
-                </tal:additionalInformations>
-            </td>
-            <td i18n:domain="plone">
-              <span tal:condition="isActive" i18n:translate="">Yes</span>
-              <span tal:condition="not: isActive" i18n:translate="">No</span>
-            </td>
-            <td align="right">
-              <tal:actions replace="structure python: obj.restrictedTraverse('@@actions_panel')(showActions=False, showTransitions=False, showArrows=True)" />
-            </td>
-          </tr>
-          </tal:loop>
-        </table>
+        <tal:defines define="cFolder python:context.categories;">
+          <metal:addtionalInformations use-macro="here/@@pm-macros/categoriesInConfig" />
+        </tal:defines>
       </fieldset>
 
       <tal:comment replace="nothing">Classifiers</tal:comment>
@@ -539,44 +506,9 @@
           </a>
         </legend>
         <p class="discreet" i18n:translate="classifiers_descr"></p><br />
-        <table tal:define="cFolder python:context.classifiers;
-                           cFolderUrl cFolder/absolute_url"
-               class="listing nosort" align="right" width="100%">
-          <tr>
-            <th class="nosort" i18n:translate="listingheader_title">Title</th>
-            <th class="nosort" width="20%" i18n:translate="PloneMeeting_label_categoryId">Category id</th>
-            <th class="nosort" width="50px" i18n:translate="heading_is_active">Active?</th>
-            <th class="nosort" width="130px" i18n:translate="heading_actions">Actions</th>
-          </tr>
-          <tr tal:condition="python: not cFolder.objectValues('MeetingCategory')">
-            <td colspan="4" align="center" i18n:translate="">no_classifier</td>
-          </tr>
-          <tal:loop repeat="obj python:cFolder.objectValues('MeetingCategory')">
-          <tr tal:define="isActive python: here.portal_workflow.getInfoFor(obj, 'review_state') == 'active';
-                            oddrow repeat/obj/odd;
-                            classOddEven python: oddrow and 'even' or 'odd';" valign="top"
-                tal:attributes="class python: not isActive and classOddEven+' state-inactive' or classOddEven"
-                class="#">
-            <td tal:define="descr obj/Description">
-                <h5><a tal:attributes="href obj/absolute_url" tal:content="obj/getName"></a></h5>
-                <div class="discreet" tal:condition="descr" tal:content="descr"></div>
-                <tal:additionalInformations
-                    define="context python: obj;
-                            excludedFields python: ('id', 'description', 'title')">
-                    <metal:addtionalInformations use-macro="here/@@pm-macros/additionalInformations" />
-                </tal:additionalInformations>
-            </td>
-            <td tal:content="obj/getCategoryId"></td>
-            <td i18n:domain="plone">
-              <span tal:condition="isActive" i18n:translate="">Yes</span>
-              <span tal:condition="not: isActive" i18n:translate="">No</span>
-            </td>
-            <td align="right">
-              <tal:actions replace="structure python: obj.restrictedTraverse('@@actions_panel')(showActions=False, showTransitions=False, showArrows=True)" />
-            </td>
-          </tr>
-          </tal:loop>
-        </table>
+        <tal:defines define="cFolder python:context.classifiers;">
+          <metal:addtionalInformations use-macro="here/@@pm-macros/categoriesInConfig" />
+        </tal:defines>
       </fieldset>
 
       <!-- Recurring items -->

@@ -2,16 +2,12 @@
 #
 # File: MeetingCategory.py
 #
-# Copyright (c) 2015 by Imio.be
+# Copyright (c) 2017 by Imio.be
 # Generator: ArchGenXML Version 2.7
 #            http://plone.org/products/archgenxml
 #
 # GNU General Public License (GPL)
 #
-
-__author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
-<g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""
-__docformat__ = 'plaintext'
 
 from AccessControl import ClassSecurityInfo
 from zope.i18n import translate
@@ -33,6 +29,11 @@ from imio.helpers.cache import invalidate_cachekey_volatile_for
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import WriteRiskyConfig
 from Products.PloneMeeting.utils import getCustomAdapter, getFieldContent
+
+__author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
+<g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""
+__docformat__ = 'plaintext'
+
 
 schema = Schema((
 
@@ -156,29 +157,29 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
     security.declarePrivate('manage_beforeDelete')
 
     def manage_beforeDelete(self, item, container):
-        '''Checks if the current meetingCategory can be deleted:
-          - it can not be linked to an existing meetingItem.'''
+        '''Checks if the current MeetingCategory can be deleted:
+          - it can not be linked to an existing meetingItem (normal item,
+            recurring item or item template).'''
         # If we are trying to remove the whole Plone Site, bypass this hook.
         # bypass also if we are in the creation process
         if not item.meta_type == "Plone Site" and not item._at_creation_flag:
-            isLinked = False
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self)
-            for brain in self.portal_catalog(portal_type=cfg.getItemTypeName()):
-                obj = brain.getObject()
-                if obj.getCategory() == self.getId():
-                    isLinked = True
-                    break
-            # check also items added in the MeetingConfig but that are not indexed...
-            if not isLinked:
-                for obj in cfg.recurringitems.objectValues('MeetingItem'):
-                    if obj.getCategory() == self.getId():
-                        isLinked = True
-                        break
-            if isLinked:
-                # The meetingCategory is linked to an existing item, we can not
-                # delete it.
-                raise BeforeDeleteException("can_not_delete_meetingcategory_meetingitem")
+            catalog = api.portal.get_tool('portal_catalog')
+            brains = catalog(
+                portal_type=(
+                    cfg.getItemTypeName(),
+                    cfg.getItemTypeName(configType='MeetingItemRecurring'),
+                    cfg.getItemTypeName(configType='MeetingItemTemplate')),
+                getCategory=self.getId())
+            if brains:
+                # linked to an existing item, we can not delete it
+                msg = translate(
+                    "can_not_delete_meetingcategory_meetingitem",
+                    domain="plone",
+                    mapping={'url': brains[0].getURL()},
+                    context=self.REQUEST)
+                raise BeforeDeleteException(msg)
         BaseContent.manage_beforeDelete(self, item, container)
 
     security.declarePublic('getSelf')
