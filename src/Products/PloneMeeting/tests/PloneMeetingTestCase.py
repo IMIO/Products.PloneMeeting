@@ -213,7 +213,9 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
            meeting item (if p_objectType is 'MeetingItem') and
            returns the created object. p_attrs is a dict of attributes
            that will be given to invokeFactory.'''
-        cfg = meetingConfig or self.meetingConfig
+        originalConfig = self.meetingConfig
+        self.setMeetingConfig(meetingConfig and meetingConfig.getId() or originalConfig.getId())
+        cfg = self.meetingConfig
         shortName = cfg.getShortName()
         # Some special behaviour occurs if the item to create is
         # a recurring item or an item template
@@ -269,6 +271,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                 obj._at_rename_after_creation = True
         # make sure we do not have permission check cache problems...
         self.cleanMemoize()
+        self.setMeetingConfig(originalConfig.getId())
         return obj
 
     def _cleanExistingTmpAnnexFile(self):
