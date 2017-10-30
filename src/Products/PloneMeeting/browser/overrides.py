@@ -746,15 +746,6 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
         else:
             return generated_template
 
-    def _get_filename(self, pod_template):
-        '''Returns a valid, clean fileName for the document generated from
-           p_self for p_pod_template.'''
-        # to avoid long filename problems, only take 120 first characters
-        res = '%s-%s' % (self.context.Title()[0:100],
-                         pod_template.Title()[0:20])
-        plone_utils = api.portal.get_tool('plone_utils')
-        return plone_utils.normalizeString(res)
-
     def _sendPodTemplate(self, rendered_template):
         '''Sends, by email, a p_rendered_template.'''
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -802,7 +793,7 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
         '''Send given p_rendered_template of p_pod_template to p_recipients.
            This is extracted so it can be called from other places than self._sendPodTemplate.'''
         # Send the mail with the document as attachment
-        docName = '%s.%s' % (self._get_filename(pod_template), self.get_generation_format())
+        docName = self._get_filename()
         # generate event name depending on obj type
         eventName = self.context.meta_type == 'Meeting' and 'podMeetingByMail' or 'podItemByMail'
         sendMail(recipients,
