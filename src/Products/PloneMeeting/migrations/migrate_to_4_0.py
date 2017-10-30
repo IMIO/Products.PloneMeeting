@@ -1428,7 +1428,9 @@ class Migrate_To_4_0(Migrator):
             # last upgrade for collective.documentgenerator reapply portal_types
             # especially ConfigurablePodTemplate that remves mailing_lists attribute
             # reapply PloneMeeting types tool step
-            self.runProfileSteps(product='Products.PloneMeeting', steps=['typeinfo'])
+            # reapply propertiestool.xml so new type MailingLoopTemplate
+            # from collective.documentgenerator is registered in types_not_searched
+            self.runProfileSteps(product='Products.PloneMeeting', steps=['typeinfo', 'propertiestool'])
             self._adaptAnnexContentCategory()
             # make sure we use resolveuid for images so URL is always correct even if item id changed
             cke_props = self.portal.portal_properties.ckeditor_properties
