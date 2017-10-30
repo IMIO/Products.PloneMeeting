@@ -834,10 +834,11 @@ This works for an AT and for a DX.</tal:comment>
 <metal:categoriesInMeetingConfig define-macro="categoriesInConfig" i18n:domain="PloneMeeting">
 <tal:comment replace="nothing">Macro used to display categories and classifiers in a MeetingConfig.
 The parameter "cFolder" is the folder containing categories.</tal:comment>
-<table tal:define="cFolderUrl cFolder/absolute_url;
-                   objs python: cFolder.objectValues('MeetingCategory');
-                   threshold python: not 'show_every_categories' in context.REQUEST and 50 or 0"
-       class="listing nosort" align="right" width="100%">
+<tal:defines define="cFolderUrl cFolder/absolute_url;
+                     objs python: cFolder.objectValues('MeetingCategory');
+                     threshold python: not 'show_every_categories' in context.REQUEST and 50 or 0;
+                     too_much_cats python: threshold and len(objs) > threshold;">
+<table class="listing nosort" align="right" width="100%">
   <tr>
     <th class="nosort" i18n:translate="listingheader_title">Title</th>
     <th class="nosort" width="20%" i18n:translate="PloneMeeting_label_categoryId">Category id</th>
@@ -847,7 +848,7 @@ The parameter "cFolder" is the folder containing categories.</tal:comment>
   <tr tal:condition="not: objs">
     <td colspan="4" align="center" i18n:translate="">no_category</td>
   </tr>
-  <tr tal:condition="python: threshold and len(objs) > threshold">
+  <tr tal:condition="too_much_cats">
     <td colspan="4" align="center">
      <span i18n:translate="too_many_categories_use_folder_contents" style="color: red; font-style: italic;">
       There are too much categories to display.
@@ -880,10 +881,11 @@ The parameter "cFolder" is the folder containing categories.</tal:comment>
   </tr>
   </tal:loop>
 </table>
-<p i18n:translate="categories_force_display_descr">
+<p tal:condition="too_much_cats" i18n:translate="categories_force_display_descr">
   You can <a i18n:name="force_display" i18n:translate="categories_force_display" href=".?pageName=data&show_every_categories=1#categories">force display</a> of every categories.
 </p>
 <p i18n:translate="categories_use_folder_contents" tal:condition="isRealManager">
   You can <a i18n:name="force_display" i18n:translate="categories_force_display" href="./?pageName=data&show_every_categories=1">force display</a> of every categories or you may use the <a i18n:name="folder_contents_link" i18n:translate="categories_folder_contents_view" href="#" tal:attributes="href string:${cFolder/absolute_url}/folder_contents">"Folder contents" view</a> to manage categories.
 </p>
+</tal:defines>
 </metal:categoriesInMeetingConfig>
