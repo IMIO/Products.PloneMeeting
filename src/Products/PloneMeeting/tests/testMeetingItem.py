@@ -5298,7 +5298,9 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(item.queryState(), self._stateMappingFor('itemcreated'))
         # check that date is not displayed as item is not into a meeting,
         # date is displayed at end of image title in case it is linked to a meeting
-        self.assertTrue("<img title='Item sent to PloneGov assembly' src=" in IPrettyLink(item).getLink())
+        self.assertTrue(
+            "<img title='Item sent to {0}' src=".format(cfg2.Title())
+            in IPrettyLink(item).getLink())
         self.assertTrue(
             u'<img title=\'Sent from {0}, original item is "{1}".\' '
             u'src=\'http://nohost/plone/cloned_not_decided.png\' />'.format(
