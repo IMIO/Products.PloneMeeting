@@ -26,8 +26,10 @@ from time import sleep
 from AccessControl import Unauthorized
 from DateTime import DateTime
 from zope.annotation import IAnnotations
+from zope.component import queryUtility
 from zope.event import notify
 from zope.lifecycleevent import ObjectModifiedEvent
+from zope.schema.interfaces import IVocabularyFactory
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 from collective.documentviewer.config import CONVERTABLE_TYPES
@@ -1046,6 +1048,28 @@ class testAnnexes(PloneMeetingTestCase):
         # view._annexDecisionCategories is memoized
         view = item.restrictedTraverse('@@categorized-annexes')
         self.assertFalse(view.showDecisionAnnexesSection())
+
+    def test_pm_Other_mc_correspondences_vocabulary(self):
+        """ """
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        cfg2Title = cfg2.Title()
+        annex_type = cfg.annexes_types.item_annexes.get(self.annexFileType)
+        # get vocabulary name
+        type_info = self.portal.portal_types.get(annex_type.portal_type)
+        vocab_name = type_info.lookupSchema()['other_mc_correspondences'].value_type.vocabularyName
+        vocab = queryUtility(IVocabularyFactory, vocab_name)
+        self.assertEqual(
+            [term.title for term in vocab(annex_type)._terms],
+            [u'{0} \u2192 Item annexes \u2192 Financial analysis'.format(cfg2Title),
+             u'{0} \u2192 Item annexes \u2192 Financial analysis '
+             u'\u2192 Financial analysis sub annex'.format(cfg2Title),
+             u'{0} \u2192 Item annexes \u2192 Legal analysis'.format(cfg2Title),
+             u'{0} \u2192 Item annexes \u2192 Budget analysis'.format(cfg2Title),
+             u'{0} \u2192 Item annexes \u2192 Budget analysis '
+             u'\u2192 Budget analysis sub annex'.format(cfg2Title),
+             u'{0} \u2192 Item annexes \u2192 Other annex(es)'.format(cfg2Title),
+             u'{0} \u2192 Item decision annexes \u2192 Decision annex(es)'.format(cfg2Title)])
 
 
 def test_suite():

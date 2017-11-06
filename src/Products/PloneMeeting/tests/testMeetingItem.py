@@ -5273,8 +5273,14 @@ class testMeetingItem(PloneMeetingTestCase):
         """The imio.prettylink getLink caching is overrided and is invalidated when the
            predecessor from another MC is modified.  Indeed an icon displays informations
            about the item predecessor state, meeting, ..."""
+        # make sure 'privacy' is used in cfg2, it adds the "(Public meeting)" part
+        # the the link displayed on the item that was sent
         cfg = self.meetingConfig
         cfg2 = self.meetingConfig2
+        usedItemAttrs = list(cfg2.getUsedItemAttributes())
+        if 'privacy' not in usedItemAttrs:
+            usedItemAttrs.append('privacy')
+            cfg2.setUsedItemAttributes(usedItemAttrs)
         cfg2Id = cfg2.getId()
         cfg.setItemManualSentToOtherMCStates((self._stateMappingFor('itemcreated')))
         # create an item in cfg, send it to cfg2 and check
@@ -5283,6 +5289,11 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setOtherMeetingConfigsClonableTo((cfg2Id,))
         item2 = item.cloneToOtherMeetingConfig(cfg2Id)
         self.assertEqual(item.queryState(), self._stateMappingFor('itemcreated'))
+        # check that date is not displayed as item is not into a meeting,
+        # date is displayed at end of image title in case it is linked to a meeting
+        self.assertTrue(
+            "<img title='Item sent to {0} (Public meeting)' src=".format(cfg2.Title())
+            in IPrettyLink(item).getLink())
         self.assertTrue(
             u'<img title=\'Sent from {0}, original item is "{1}".\' '
             u'src=\'http://nohost/plone/cloned_not_decided.png\' />'.format(
