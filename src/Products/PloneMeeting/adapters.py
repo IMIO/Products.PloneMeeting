@@ -43,6 +43,7 @@ from Products.PloneMeeting.config import DUPLICATE_EVENT_ACTION
 from Products.PloneMeeting.config import DUPLICATE_AND_KEEP_LINK_EVENT_ACTION
 
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
+from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import MEETINGREVIEWERS
 from Products.PloneMeeting.config import MEETINGROLES
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
@@ -682,7 +683,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
             clonedBrain = self.context.getItemClonedToOtherMC(clonedToOtherMCId, theObject=False)
             # do not check on linkedMeetingDate because it may contains '1950/01/01',
             # see linkedMeetingDate indexer in indexes.py
-            if clonedBrain.linkedMeetingUID:
+            if clonedBrain.linkedMeetingUID != ITEM_NO_PREFERRED_MEETING_VALUE:
                 # avoid instantiating toLocalizedTime more than once
                 toLocalizedTime = toLocalizedTime or self.context.restrictedTraverse('@@plone').toLocalizedTime
                 long_format = clonedBrain.linkedMeetingDate.hour() and True or False

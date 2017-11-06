@@ -716,6 +716,17 @@ class OtherMCCorrespondenceVocabulary(object):
                                       domain='PloneMeeting',
                                       context=context.REQUEST),
                             safe_unicode(cat.Title()))))
+                    for subcat in cat.objectValues():
+                        res.append(SimpleTerm(
+                            subcat.UID(),
+                            subcat.UID(),
+                            u'%s → %s → %s → %s' % (
+                                safe_unicode(cfg.Title()),
+                                translate('Item annexes',
+                                          domain='PloneMeeting',
+                                          context=context.REQUEST),
+                                safe_unicode(cat.Title()),
+                                safe_unicode(subcat.Title()))))
                 item_decision_annexes = cfg.annexes_types.item_decision_annexes
                 for cat in item_decision_annexes.objectValues():
                     res.append(SimpleTerm(
@@ -727,6 +738,17 @@ class OtherMCCorrespondenceVocabulary(object):
                                       domain='PloneMeeting',
                                       context=context.REQUEST),
                             safe_unicode(cat.Title()))))
+                    for subcat in cat.objectValues():
+                        res.append(SimpleTerm(
+                            subcat.UID(),
+                            subcat.UID(),
+                            u'%s → %s → %s → %s' % (
+                                safe_unicode(cfg.Title()),
+                                translate('Item annexes',
+                                          domain='PloneMeeting',
+                                          context=context.REQUEST),
+                                safe_unicode(cat.Title()),
+                                safe_unicode(subcat.Title()))))
         return SimpleVocabulary(res)
 
 OtherMCCorrespondenceVocabularyFactory = OtherMCCorrespondenceVocabulary()
