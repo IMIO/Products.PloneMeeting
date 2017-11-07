@@ -18,6 +18,8 @@
 # AppConfig.py in your product's root directory. The items in there
 # will be included (by importing) in this file if found.
 
+import pkg_resources
+
 from collections import OrderedDict
 from Products.CMFCore.permissions import setDefaultRoles
 from zope.i18nmessageid import MessageFactory
@@ -32,6 +34,12 @@ try:
         raise Exception('Appy framework >= %s is required. Download it at http://launchpad.net/appy' % appyRequired)
 except ImportError:
     raise Exception('Appy framework not found. You can download it at http://launchpad.net/appy.')
+
+HAS_ZAMQP = True
+try:
+    pkg_resources.get_distribution('imio.zamqp.pm')
+except pkg_resources.DistributionNotFound:
+    HAS_ZAMQP = False
 
 __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
 <g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""

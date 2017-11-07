@@ -18,6 +18,7 @@ from collective.messagesviewlet.utils import add_message
 from Products.cron4plone.browser.configlets.cron_configuration import ICronConfiguration
 from Products.CPUtils.Extensions.utils import configure_ckeditor
 from Products.PloneMeeting.config import CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG
+from Products.PloneMeeting.config import HAS_ZAMQP
 from Products.PloneMeeting.config import PMMessageFactory as _
 from imio.helpers.catalog import addOrUpdateIndexes
 from imio.helpers.catalog import addOrUpdateColumns
@@ -250,6 +251,9 @@ def postInstall(context):
     # adapt front-page
     _adaptFrontPage(site)
 
+    # configure imio.pm.zamqp if present
+    _configure_zamqp(site)
+
     # configure collective.documentviewer
     from collective.documentviewer.settings import GlobalSettings
     viewer_settings = GlobalSettings(site)._metadata
@@ -445,6 +449,12 @@ def _adaptFrontPage(site):
         frontPage.setModificationDate(frontPage.created() + 0.000002)
         frontPage.reindexObject()
     logger.info('Done.')
+
+
+def _configure_zamqp(site):
+    """Apply imio.zamqp.pm profile if present."""
+    if HAS_ZAMQP:
+        site.portal_setup.runAllImportStepsFromProfile('imio.zamqp.pm:default')
 
 
 def _reorderCSS(site):
