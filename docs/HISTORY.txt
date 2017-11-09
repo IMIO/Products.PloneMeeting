@@ -64,6 +64,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   portal message
 - Do not display categories in the MeetingConfig if more than 40 categories because it takes too much time.
   We display a link to the categories/classifiers container folder_contents view to manage large amount of categories
+- Added boolean field ItemAnnexContentCategory.only_for_meeting_managers (item annex/annexDecision types), if set
+  to True, the annex type will only be selectable by MeetingManagers
 
 4.0 (2017-08-04)
 ----------------

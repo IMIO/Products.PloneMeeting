@@ -13,6 +13,8 @@ from Products.CMFPlone.utils import safe_unicode
 from plone import api
 from plone.memoize import ram
 from collective.documentgenerator.content.vocabulary import PortalTypesVocabularyFactory
+from collective.iconifiedcategory.vocabularies import CategoryTitleVocabulary
+from collective.iconifiedcategory.vocabularies import CategoryVocabulary
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.dashboard.content.dashboardcollection import IDashboardCollection
 from imio.dashboard.vocabulary import ConditionAwareCollectionVocabulary
@@ -887,3 +889,19 @@ class PMDashboardCollectionsVocabulary(DashboardCollectionsVocabulary):
         return vocabulary
 
 PMDashboardCollectionsVocabularyFactory = PMDashboardCollectionsVocabulary()
+
+
+class PMCategoryVocabulary(CategoryVocabulary):
+    """Override to take into account field 'only_for_meeting_managers' on the category."""
+
+    def _get_categories(self, context):
+        """ """
+        categories = super(PMCategoryVocabulary, self)._get_categories(context)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        isManager = tool.isManager(context)
+        categories = [cat for cat in categories if not cat.only_for_meeting_managers or isManager]
+        return categories
+
+
+class PMCategoryTitleVocabulary(CategoryTitleVocabulary, PMCategoryVocabulary):
+    """Override to use same _get_categories as PMCategoryVocabulary."""
