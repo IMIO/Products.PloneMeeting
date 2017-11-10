@@ -36,6 +36,7 @@ from collective.documentviewer.config import CONVERTABLE_TYPES
 from collective.documentviewer.settings import GlobalSettings
 from collective.iconifiedcategory.event import IconifiedPrintChangedEvent
 from collective.iconifiedcategory.interfaces import IIconifiedPreview
+from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.utils import get_categorized_elements
 from collective.iconifiedcategory.utils import get_config_root
 from collective.iconifiedcategory.utils import get_category_object
@@ -1075,6 +1076,41 @@ class testAnnexes(PloneMeetingTestCase):
              u'\u2192 Budget analysis sub annex'.format(cfg2Title),
              u'{0} \u2192 Item annexes \u2192 Other annex(es)'.format(cfg2Title),
              u'{0} \u2192 Item decision annexes \u2192 Decision annex(es)'.format(cfg2Title)])
+
+    def test_pm_annex_type_only_for_meeting_managers(self):
+        """An ItemAnnexContentCategory may be defined only selectable by MeetingManagers."""
+        cfg = self.meetingConfig
+        vocab = queryUtility(IVocabularyFactory, 'collective.iconifiedcategory.categories')
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        annex = self.addAnnex(item)
+
+        # we will make 'only_for_meeting_managers' the 'overhead-analysis' category
+        # and the 'budget-analysis_-_budget-analysis-sub-annex' subcategory
+        overhead_analysis = cfg.annexes_types.item_annexes.get('overhead-analysis')
+        overhead_analysis_category_id = calculate_category_id(overhead_analysis)
+        budget_analysis_subannex = cfg.annexes_types.item_annexes.get(
+            'budget-analysis').get('budget-analysis-sub-annex')
+        budget_analysis_subannex_category_id = calculate_category_id(budget_analysis_subannex)
+
+        term_tokens = [term.token for term in vocab(annex)._terms]
+        self.assertTrue(overhead_analysis_category_id in term_tokens)
+        self.assertTrue(budget_analysis_subannex_category_id in term_tokens)
+
+        # hide the 2 categories
+        overhead_analysis.only_for_meeting_managers = True
+        budget_analysis_subannex.only_for_meeting_managers = True
+
+        # no more in vocabulary for 'pmCreator1'
+        term_tokens = [term.token for term in vocab(annex)._terms]
+        self.assertFalse(overhead_analysis_category_id in term_tokens)
+        self.assertFalse(budget_analysis_subannex_category_id in term_tokens)
+
+        # in vocabulary for a MeetingManager
+        self.changeUser('pmManager')
+        term_tokens = [term.token for term in vocab(annex)._terms]
+        self.assertTrue(overhead_analysis_category_id in term_tokens)
+        self.assertTrue(budget_analysis_subannex_category_id in term_tokens)
 
 
 def test_suite():

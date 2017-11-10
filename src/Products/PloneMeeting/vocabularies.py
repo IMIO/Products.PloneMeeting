@@ -902,6 +902,17 @@ class PMCategoryVocabulary(CategoryVocabulary):
         categories = [cat for cat in categories if not cat.only_for_meeting_managers or isManager]
         return categories
 
+    def _get_subcategories(self, context, category):
+        """Return subcategories for given category.
+           This needs to return a list of subcategory brains."""
+        subcategories = super(PMCategoryVocabulary, self)._get_subcategories(context, category)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        isManager = tool.isManager(context)
+        subcategories = [
+            subcat for subcat in subcategories
+            if not subcat.getObject().only_for_meeting_managers or isManager]
+        return subcategories
+
 
 class PMCategoryTitleVocabulary(CategoryTitleVocabulary, PMCategoryVocabulary):
     """Override to use same _get_categories as PMCategoryVocabulary."""
