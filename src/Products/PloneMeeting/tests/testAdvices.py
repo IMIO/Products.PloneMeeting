@@ -1656,23 +1656,22 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(item.adviceIndex['vendors']['row_id'] == 'unique_id_123')
         self.assertTrue(item.adviceIndex['vendors']['delay'] == '5')
         self.assertTrue(item.adviceIndex['vendors']['optional'] is True)
-        changeDelayForm = item.restrictedTraverse('@@advice_delay_change_form').form_instance
-        self.request['form.widgets.current_delay_row_id'] = u'unique_id_123'
+        form = item.restrictedTraverse('@@advice_delay_change_form').form_instance
+        form.request['form.widgets.current_delay_row_id'] = u'unique_id_123'
 
         # first check that if we try to play the fennec, it raises Unauthorized
-        self.request['form.widgets.new_delay_row_id'] = u'some_dummy_value'
-        self.assertRaises(Unauthorized, changeDelayForm)
+        form.request['form.widgets.new_delay_row_id'] = u'some_dummy_value'
+        self.assertRaises(Unauthorized, form)
         # now change the delay, really
-        self.request['form.widgets.new_delay_row_id'] = u'unique_id_789'
+        form.request['form.widgets.new_delay_row_id'] = u'unique_id_789'
         # delay is changed to third custom adviser, aka 20 days
-        changeDelayForm()
-        changeDelayForm.handleSaveAdviceDelay(changeDelayForm, '')
+        form.handleSaveAdviceDelay(form, '')
         # not changed as comment is required
         self.assertEqual(item.adviceIndex['vendors']['row_id'], 'unique_id_123')
         self.assertEqual(item.adviceIndex['vendors']['delay'], '5')
         # now apply with comment
-        self.request['form.widgets.comment'] = u'My comment'
-        changeDelayForm.handleSaveAdviceDelay(changeDelayForm, '')
+        form.request['form.widgets.comment'] = u'My comment'
+        form.handleSaveAdviceDelay(form, '')
         self.assertTrue(item.adviceIndex['vendors']['row_id'] == 'unique_id_789')
         self.assertTrue(item.adviceIndex['vendors']['delay'] == '20')
         # a special key save the fact that we saved delay of an automatic adviser
@@ -1691,10 +1690,10 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(item.adviceIndex['vendors']['delay'] == '5')
         self.assertTrue(item.adviceIndex['vendors']['optional'] is False)
         # if a normal user tries to change an automatic advice delay, it will raises Unauthorized
-        self.assertRaises(Unauthorized, changeDelayForm.handleSaveAdviceDelay, changeDelayForm, '')
+        self.assertRaises(Unauthorized, form.handleSaveAdviceDelay, form, '')
         # now as MeetingManager it works
         self.changeUser('pmManager')
-        changeDelayForm.handleSaveAdviceDelay(changeDelayForm, '')
+        form.handleSaveAdviceDelay(form, '')
         self.assertTrue(item.adviceIndex['vendors']['row_id'] == 'unique_id_789')
         self.assertTrue(item.adviceIndex['vendors']['delay'] == '20')
         self.assertTrue(item.adviceIndex['vendors']['delay_for_automatic_adviser_changed_manually'] is True)

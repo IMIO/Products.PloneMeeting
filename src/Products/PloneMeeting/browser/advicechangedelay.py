@@ -126,7 +126,7 @@ def current_delay_row_id_default():
       form : form?current_delay_row_id=new_value.
     """
     request = getSite().REQUEST
-    return request.get('current_delay_row_id', '')
+    return request.get('current_delay_row_id', u'')
 
 
 def new_delay_row_id_default():
@@ -135,7 +135,7 @@ def new_delay_row_id_default():
       form : form?new_delay_row_id=new_value.
     """
     request = getSite().REQUEST
-    return request.get('new_delay_row_id', '')
+    return request.get('new_delay_row_id', u'')
 
 
 class IAdviceChangeDelayComment(interface.Interface):
@@ -157,7 +157,7 @@ class IAdviceChangeDelayComment(interface.Interface):
         required=False)
 
 
-class AdviceChangeDelayForm(form.Form):
+class AdviceChangeDelayForm(form.EditForm):
     """
       This form will give the possibility to add a
       required comment while changing advice delay.

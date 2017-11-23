@@ -25,6 +25,7 @@ import transaction
 import unittest
 from AccessControl.SecurityManagement import getSecurityManager
 
+from z3c.form.testing import TestRequest as z3c_form_TestRequest
 from zope.event import notify
 from zope.traversing.interfaces import BeforeTraverseEvent
 
@@ -52,6 +53,23 @@ from Products.PloneMeeting.utils import cleanMemoize
 
 # Force application logging level to DEBUG so we can use logger in tests
 pm_logger = testing_logger('PloneMeeting: testing')
+
+
+class Response:
+    def reset(self):
+        pass
+
+    def handleException(self, *args):
+        pass
+
+    def redirect(self, *args):
+        pass
+
+
+class TestRequest(z3c_form_TestRequest):
+
+    response = Response()
+    RESPONSE = Response()
 
 
 class TestFile:

@@ -81,6 +81,7 @@ from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
+from Products.PloneMeeting.tests.PloneMeetingTestCase import TestRequest
 from Products.PloneMeeting.tests.testUtils import ASSEMBLY_CORRECT_VALUE
 from Products.PloneMeeting.tests.testUtils import ASSEMBLY_WRONG_VALUE
 from Products.PloneMeeting.utils import get_annexes
@@ -4453,6 +4454,7 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm_Emergency(self):
         '''Test the item-emergency view and relevant methods in MeetingItem.'''
+        self.request = TestRequest()
         # emergency widget is disabled for items of the config
         cfg = self.meetingConfig
         self.changeUser('siteadmin')
@@ -4470,24 +4472,30 @@ class testMeetingItem(PloneMeetingTestCase):
         # item emergency history is empty
         self.assertTrue(not item.emergency_changes_history)
         itemEmergencyView = item.restrictedTraverse('item-emergency')
-        changeEmergencyForm = item.restrictedTraverse('@@item_emergency_change_form').form_instance
+        form = item.restrictedTraverse('@@item_emergency_change_form').form_instance
 
         # ask emergency
         self.assertTrue(itemEmergencyView.listSelectableEmergencies().keys() == ['emergency_asked'])
         # current user may not quickEdit 'emergency' as it is not in cfg.usedItemAttributes
         self.assertFalse('emergency' in cfg.getUsedItemAttributes())
-        self.assertRaises(Unauthorized, changeEmergencyForm)
+        self.assertRaises(Unauthorized, form)
         cfg.setUsedItemAttributes(cfg.getUsedItemAttributes() + ('emergency', ))
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attributeIsUsed')
-        # not changed until required values are not given
-        self.request['form.widgets.new_emergency_value'] = u'emergency_asked'
-        self.request['form.widgets.comment'] = u''
-        changeEmergencyForm()
-        changeEmergencyForm.handleSaveItemEmergency(changeEmergencyForm, '')
+        # not changed until required values are given
+        request = TestRequest(form={
+            'form.widgets.new_emergency_value': u'emergency_asked',
+            'form.widgets.comment': u''})
+        form.request = request
+        form.update()
+        form.handleSaveItemEmergency(form, '')
         self.assertEqual(item.getEmergency(), u'no_emergency')
         # define required comment, now it will work
-        self.request['form.widgets.comment'] = u'My comment'
-        changeEmergencyForm.handleSaveItemEmergency(changeEmergencyForm, '')
+        request = TestRequest(form={
+            'form.widgets.new_emergency_value': u'emergency_asked',
+            'form.widgets.comment': u'My comment'})
+        form.request = request
+        form.update()
+        form.handleSaveItemEmergency(form, '')
         self.assertEqual(item.getEmergency(), u'emergency_asked')
         # history was updated
         self.assertEquals(item.emergency_changes_history[0]['action'], 'emergency_asked')
@@ -4505,8 +4513,12 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(item.adapted().mayAskEmergency())
         self.assertTrue(item.adapted().mayAcceptOrRefuseEmergency())
         # accept emergency
-        self.request['form.widgets.new_emergency_value'] = u'emergency_accepted'
-        changeEmergencyForm.handleSaveItemEmergency(changeEmergencyForm, '')
+        request = TestRequest(form={
+            'form.widgets.new_emergency_value': u'emergency_accepted',
+            'form.widgets.comment': u'My comment'})
+        form.request = request
+        form.update()
+        form.handleSaveItemEmergency(form, '')
         self.assertEqual(item.getEmergency(), 'emergency_accepted')
         # 'emergency_accepted' no more selectable
         self.assertTrue('emergency_accepted' not in itemEmergencyView.listSelectableEmergencies())
@@ -4517,8 +4529,11 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         self.assertFalse(item.adapted().mayAskEmergency())
         self.assertFalse(item.adapted().mayAcceptOrRefuseEmergency())
-        self.request['new_emergency_value'] = 'no_emergency'
-        self.assertRaises(Unauthorized, changeEmergencyForm)
+        request = TestRequest(form={
+            'form.widgets.new_emergency_value': u'no_emergency',
+            'form.widgets.comment': u'My comment'})
+        form.request = request
+        self.assertRaises(Unauthorized, form)
 
     def test_pm_ItemStrikedAssembly(self):
         """Test use of utils.toHTMLStrikedContent for itemAssembly."""
