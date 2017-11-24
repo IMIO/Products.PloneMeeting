@@ -175,14 +175,6 @@
 
     <browser:view
       for="Products.PloneMeeting.interfaces.IMeeting"
-      name="store-every-items-template-as-annex"
-      class=".views.MeetingStoreEveryItemsPodTemplateAsAnnex"
-      permission="cmf.ModifyPortalContent"
-      allowed_attributes="may_store"
-      />
-
-    <browser:view
-      for="Products.PloneMeeting.interfaces.IMeeting"
       name="present-several-items"
       class=".views.PresentSeveralItemsView"
       permission="zope2.View"
@@ -201,6 +193,13 @@
       class=".views.DecideSeveralItemsView"
       permission="zope2.View"
       />
+
+    <!-- IMEETING BATCH ACTIONS -->
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingBatchActionsMarker"
+        name="store-items-template-as-annex-batch-action"
+        class=".views.MeetingStoreItemsPodTemplateAsAnnexBatchActionForm"
+        permission="zope2.View" />
 
     <browser:page
       for="Products.PloneMeeting.interfaces.IMeetingConfig"

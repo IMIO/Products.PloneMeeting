@@ -64,14 +64,4 @@
          visible="True">
   <permission value="Modify portal content"/>
  </action>
- <action title="Store items decision as annex"
-         i18n:attributes="title"
-         action_id="store_every_items_decision_as_annex"
-         category="object_buttons"
-         condition_expr="object/@@store-every-items-template-as-annex/may_store"
-         icon_expr=""
-         url_expr="string:${object_url}/@@store-every-items-template-as-annex"
-         visible="True">
-  <permission value="Modify portal content"/>
- </action>
 </object>

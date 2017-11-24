@@ -27,6 +27,7 @@ import lxml
 from collections import OrderedDict
 
 from AccessControl import Unauthorized
+from z3c.form import button
 from zope.i18n import translate
 
 from plone.memoize.view import memoize
@@ -35,9 +36,10 @@ from plone.memoize.view import memoize_contextless
 from Products.Five import BrowserView
 from Products.CMFCore.WorkflowCore import WorkflowException
 from plone import api
+from collective.documentgenerator.helper.archetypes import ATDocumentGenerationHelperView
+from collective.eeafaceted.batchactions.browser.views import BatchActionForm
 from eea.facetednavigation.browser.app.view import FacetedContainerView
 from eea.facetednavigation.interfaces import ICriteria
-from collective.documentgenerator.helper.archetypes import ATDocumentGenerationHelperView
 from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
 from imio.helpers.xhtml import addClassToContent
 from imio.helpers.xhtml import imagesToPath
@@ -378,67 +380,6 @@ class MeetingUpdateItemReferences(BrowserView):
         """ """
         self.context.updateItemReferences()
         msg = _('References of contained items have been updated.')
-        api.portal.show_message(msg, request=self.request)
-        return self.request.RESPONSE.redirect(self.context.absolute_url())
-
-
-class MeetingStoreEveryItemsPodTemplateAsAnnex(BrowserView):
-    """ """
-    def __init__(self, context, request):
-        self.context = context
-        self.request = request
-        self.tool = api.portal.get_tool('portal_plonemeeting')
-        self.cfg = self.tool.getMeetingConfig(context)
-
-    def may_store(self):
-        """ """
-        if self.cfg.getMeetingItemTemplateToStoreAsAnnex() and \
-           api.user.get_current().has_permission(ModifyPortalContent, self.context):
-            return True
-
-    def __call__(self, template_id=None, output_format=None, num_of_items=20):
-        """Generate template_id for p_num_of_items of current meeting.
-           This will generate for p_num_of_items items found that still did
-           not have the pod_template stored as an annex.
-           p_num_of_items is there to avoid breaking the server for meeting
-           containing several items."""
-        if not self.may_store():
-            raise Unauthorized
-
-        if not template_id:
-            template_id, output_format = \
-                self.cfg.getMeetingItemTemplateToStoreAsAnnex().split('__output_format__')
-        pod_template = getattr(self.cfg.podtemplates, template_id)
-
-        num_of_generated_templates = 0
-        for item in self.context.getItems(ordered=True):
-            generation_view = item.restrictedTraverse('@@document-generation')
-            generated_template = generation_view(template_uid=pod_template.UID(),
-                                                 output_format=output_format)
-            res = generation_view.storePodTemplateAsAnnex(
-                generated_template,
-                pod_template,
-                output_format,
-                store_as_annex_uid=pod_template.store_as_annex,
-                return_portal_msg_code=True)
-            if not res:
-                num_of_generated_templates += 1
-                logger.info(
-                    'Generated POD template {0} using output format {1} for item at {2}'.format(
-                        template_id, output_format, '/'.join(item.getPhysicalPath())))
-            else:
-                # print error code
-                msg = translate(msgid=res, domain='PloneMeeting', context=self.request)
-                logger.info(u'Could not generate POD template {0} using output format {1} for item at {2} : {3}'.format(
-                    template_id, output_format, '/'.join(item.getPhysicalPath()), msg))
-
-            if num_of_generated_templates == num_of_items:
-                break
-        msg = translate('stored_item_template_as_annex',
-                        domain="PloneMeeting",
-                        mapping={'number_of_annexes': num_of_generated_templates},
-                        context=self.request,
-                        default="Stored ${number_of_annexes} annexes")
         api.portal.show_message(msg, request=self.request)
         return self.request.RESPONSE.redirect(self.context.absolute_url())
 
@@ -1017,3 +958,75 @@ class ItemHeaderView(BrowserView):
 
 class MeetingHeaderView(BrowserView):
     """ """
+
+
+class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BatchActionForm):
+
+    buttons = BatchActionForm.buttons.copy()
+    label = _(u"Batch store items POD template as annex")
+    button_with_icon = True
+
+    def __init__(self, context, request):
+        super(MeetingStoreItemsPodTemplateAsAnnexBatchActionForm, self).__init__(context, request)
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(context)
+
+    def update(self):
+        # initialize self.brains and referr
+        super(MeetingStoreItemsPodTemplateAsAnnexBatchActionForm, self).update()
+        super(BatchActionForm, self).update()
+
+    def available(self):
+        """ """
+        if self.cfg.getMeetingItemTemplateToStoreAsAnnex() and \
+           api.user.get_current().has_permission(ModifyPortalContent, self.context):
+            return True
+
+    @button.buttonAndHandler(_(u'Apply'), name='apply')
+    def handleApply(self, action):
+        """Handle apply button."""
+        data, errors = self.extractData()
+        if errors:
+            self.status = self.formErrorsMessage
+
+        self._apply()
+        self.request.response.redirect(self.request.form['form.widgets.referer'])
+
+    def _apply(self):
+        """ """
+        if not self.available():
+            raise Unauthorized
+
+        template_id, output_format = \
+            self.cfg.getMeetingItemTemplateToStoreAsAnnex().split('__output_format__')
+        pod_template = getattr(self.cfg.podtemplates, template_id)
+
+        num_of_generated_templates = 0
+        for brain in self.brains:
+            item = brain.getObject()
+            generation_view = item.restrictedTraverse('@@document-generation')
+            generated_template = generation_view(template_uid=pod_template.UID(),
+                                                 output_format=output_format)
+            res = generation_view.storePodTemplateAsAnnex(
+                generated_template,
+                pod_template,
+                output_format,
+                store_as_annex_uid=pod_template.store_as_annex,
+                return_portal_msg_code=True)
+            if not res:
+                num_of_generated_templates += 1
+                logger.info(
+                    'Generated POD template {0} using output format {1} for item at {2}'.format(
+                        template_id, output_format, '/'.join(item.getPhysicalPath())))
+            else:
+                # print error code
+                msg = translate(msgid=res, domain='PloneMeeting', context=self.request)
+                logger.info(u'Could not generate POD template {0} using output format {1} for item at {2} : {3}'.format(
+                    template_id, output_format, '/'.join(item.getPhysicalPath()), msg))
+
+        msg = translate('stored_item_template_as_annex',
+                        domain="PloneMeeting",
+                        mapping={'number_of_annexes': num_of_generated_templates},
+                        context=self.request,
+                        default="Stored ${number_of_annexes} annexes")
+        api.portal.show_message(msg, request=self.request)
