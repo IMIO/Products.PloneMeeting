@@ -37,6 +37,7 @@ from Products.Five import BrowserView
 from Products.CMFCore.WorkflowCore import WorkflowException
 from plone import api
 from collective.documentgenerator.helper.archetypes import ATDocumentGenerationHelperView
+from collective.eeafaceted.batchactions import _ as _CEBA
 from collective.eeafaceted.batchactions.browser.views import BatchActionForm
 from eea.facetednavigation.browser.app.view import FacetedContainerView
 from eea.facetednavigation.interfaces import ICriteria
@@ -963,7 +964,7 @@ class MeetingHeaderView(BrowserView):
 class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BatchActionForm):
 
     buttons = BatchActionForm.buttons.copy()
-    label = _(u"Batch store items POD template as annex")
+    label = _CEBA("store-items-template-as-annex-batch-action-but")
     button_with_icon = True
 
     def __init__(self, context, request):
