@@ -247,6 +247,7 @@
     <implements interface="plone.app.collection.interfaces.ICollection" />
     <implements interface="collective.plonefinder.browser.interfaces.IFinderUploadCapable" />
     <implements interface="collective.quickupload.interfaces.IQuickUploadCapable" />
+    <implements interface="Products.PloneMeeting.interfaces.IMeetingBatchActionsMarker" />
   </class>
   <!-- makes the MeetingFile implements IFileContent so every views of collective.documentviewer are also available... -->
   <class class="Products.PloneMeeting.MeetingFile.MeetingFile">

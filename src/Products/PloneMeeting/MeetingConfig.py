@@ -49,6 +49,7 @@ from zope.component import getUtility
 from zope.component import getMultiAdapter
 from zope.container.interfaces import INameChooser
 from zope.i18n import translate
+from zope.interface import alsoProvides
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from plone.memoize import ram
 from plone.app.portlets.portlets import navigation
@@ -63,6 +64,7 @@ from Products.CMFPlone.interfaces.constrains import IConstrainTypes
 from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
 from plone import api
+from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
 from collective.iconifiedcategory.utils import get_category_object
 from eea.facetednavigation.interfaces import ICriteria
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
@@ -5756,6 +5758,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 tool._enableFacetedDashboardFor(subFolderObj,
                                                 xmlpath=os.path.dirname(__file__) +
                                                 '/faceted_conf/default_dashboard_widgets.xml')
+                alsoProvides(subFolderObj, IBatchActionsMarker)
+                subFolderObj.reindexObject()
 
     def getMeetingsAcceptingItemsAdditionalManagerStates(self):
         '''See doc in interfaces.py.'''

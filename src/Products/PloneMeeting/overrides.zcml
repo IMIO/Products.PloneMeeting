@@ -191,8 +191,14 @@
                 collective.eeafaceted.z3ctable.interfaces.IFacetedTable"
            factory="Products.PloneMeeting.columns.PMPrettyLinkColumn"
            provides="collective.eeafaceted.z3ctable.interfaces.IFacetedColumn"
-           name="pretty_link"
-        />
+           name="pretty_link" />
+        <adapter
+           for="zope.interface.Interface
+                zope.publisher.interfaces.browser.IBrowserRequest
+                collective.eeafaceted.z3ctable.interfaces.IFacetedTable"
+           factory="Products.PloneMeeting.columns.ItemCheckBoxColumn"
+           provides="collective.eeafaceted.z3ctable.interfaces.IFacetedColumn"
+           name="select_row" />
     </configure>
 
     <configure package="eea.facetednavigation">

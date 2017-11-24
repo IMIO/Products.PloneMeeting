@@ -20,11 +20,12 @@
 # 02110-1301, USA.
 #
 
+from collective.eeafaceted.batchactions.browser.viewlets import BatchActionsViewlet
 from plone.app.layout.viewlets import ViewletBase
-from zope.component import getMultiAdapter
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.utils import displaying_available_items
+from zope.component import getMultiAdapter
 
 
 class WorkflowState(ViewletBase):
@@ -60,3 +61,12 @@ class ForceInsertNormal(ViewletBase):
                                              name=u'plone_context_state')
 
     index = ViewPageTemplateFile("templates/viewlet_force_insert_normal.pt")
+
+
+class PMMeetingBatchActionsViewlet(BatchActionsViewlet):
+    """ """
+    def available(self):
+        """Not available on the 'available items' when displayed on a meeting."""
+        if displaying_available_items(self.context):
+            return False
+        return True

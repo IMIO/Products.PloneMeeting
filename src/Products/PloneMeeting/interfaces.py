@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
 from zope.interface import Interface
 from zope.component.interfaces import IObjectEvent
 from zope.publisher.interfaces.browser import IBrowserRequest
@@ -173,6 +174,10 @@ class IMeetingItem(IMeetingContent):
 class IMeeting(IMeetingContent):
     """Marker interface for .Meeting.Meeting
     """
+
+
+class IMeetingBatchActionsMarker(IBatchActionsMarker):
+    """Marker interfaces to register batch actions for Meetings."""
 
 
 class IToolPloneMeeting(IConfigElement):

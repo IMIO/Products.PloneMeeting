@@ -105,6 +105,14 @@
         template="templates/actions_panel_config_viewlet.pt"
         permission="zope2.View"/>
 
+    <!-- batchactions viewlet for IMeeting -->
+    <browser:viewlet
+        name="collective.eeafaceted.batchactions"
+        for="Products.PloneMeeting.interfaces.IMeetingBatchActionsMarker"
+        manager="collective.eeafaceted.z3ctable.interfaces.IBottomAboveNavManager"
+        class=".viewlets.PMMeetingBatchActionsViewlet"
+        permission="zope2.View" />
+
     <!-- Define a imio.history version preview for IMeetingAdvice -->
     <browser:page
         for="Products.PloneMeeting.content.advice.IMeetingAdvice"

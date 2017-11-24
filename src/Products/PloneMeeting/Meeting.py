@@ -931,7 +931,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         if not displaying_available_items(self):
             itemsListVisibleColumns.insert(0, u'getItemNumber')
             itemsListVisibleColumns.insert(0, u'listType')
-        itemsListVisibleColumns.append(u'check_box_item')
+        itemsListVisibleColumns.append(u'select_row')
         return itemsListVisibleColumns
 
     security.declarePrivate('validate_date')
