@@ -964,7 +964,7 @@ class MeetingHeaderView(BrowserView):
 class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BatchActionForm):
 
     buttons = BatchActionForm.buttons.copy()
-    label = _CEBA("store-items-template-as-annex-batch-action-but")
+    label = _CEBA("Store POD template as annex for selected elements")
     button_with_icon = True
 
     def __init__(self, context, request):
