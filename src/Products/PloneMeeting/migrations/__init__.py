@@ -17,10 +17,11 @@
 
 # ------------------------------------------------------------------------------
 import logging
-logger = logging.getLogger('PloneMeeting')
-
+from DateTime import DateTime
 from plone import api
 from imio.migrator.migrator import Migrator as BaseMigrator
+
+logger = logging.getLogger('PloneMeeting')
 
 
 class Migrator(BaseMigrator):
@@ -97,8 +98,11 @@ class Migrator(BaseMigrator):
         defaultHolidays = [holiday['date'] for holiday in defaultPMConfig.holidays]
         currentHolidays = [holiday['date'] for holiday in self.tool.getHolidays()]
         storedHolidays = list(self.tool.getHolidays())
+        highestStoredHoliday = DateTime(storedHolidays[-1]['date'])
         for defaultHoliday in defaultHolidays:
-            if not defaultHoliday in currentHolidays:
+            # update if not there and if higher that highest stored holiday
+            if defaultHoliday not in currentHolidays and \
+               DateTime(defaultHoliday) > highestStoredHoliday:
                 storedHolidays.append({'date': defaultHoliday})
         self.tool.setHolidays(storedHolidays)
         logger.info('Done.')
