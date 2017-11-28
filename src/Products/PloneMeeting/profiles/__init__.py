@@ -124,6 +124,8 @@ class AnnexTypeDescriptor(Descriptor):
                  icon,
                  predefined_title=u'',
                  relatedTo='advice',
+                 to_sign=False,
+                 signed=False,
                  enabled=True,
                  subTypes=(),
                  confidential=False,
@@ -137,6 +139,8 @@ class AnnexTypeDescriptor(Descriptor):
         self.subTypes = subTypes
         self.confidential = confidential
         self.to_print = to_print
+        self.to_sign = to_sign
+        self.signed = signed
         self.enabled = enabled
 
 
@@ -151,45 +155,75 @@ class ItemAnnexTypeDescriptor(AnnexTypeDescriptor):
                  predefined_title=u'',
                  relatedTo='item',
                  other_mc_correspondences=set(),
+                 to_sign=False,
+                 signed=False,
                  enabled=True,
                  subTypes=(),
                  confidential=False,
-                 to_print=False):
+                 to_print=False,
+                 only_for_meeting_managers=False):
         super(ItemAnnexTypeDescriptor, self).__init__(
             id=id,
             title=title,
             icon=icon,
             predefined_title=predefined_title,
             relatedTo=relatedTo,
+            to_sign=to_sign,
+            signed=signed,
             enabled=enabled,
             subTypes=subTypes,
             confidential=confidential,
             to_print=to_print)
         self.other_mc_correspondences = other_mc_correspondences
+        self.only_for_meeting_managers = only_for_meeting_managers
 
 
 class AnnexSubTypeDescriptor(Descriptor):
 
-    def __init__(self, id, title, predefined_title=u'',
-                 enabled=True, confidential=False, to_print=False):
+    def __init__(self,
+                 id,
+                 title,
+                 predefined_title=u'',
+                 to_sign=False,
+                 signed=False,
+                 enabled=True,
+                 confidential=False,
+                 to_print=False):
         self.id = id
         self.title = title
         self.predefined_title = predefined_title
         self.confidential = confidential
         self.to_print = to_print
+        self.to_sign = to_sign
+        self.signed = signed
         self.enabled = enabled
 
 
 class ItemAnnexSubTypeDescriptor(AnnexSubTypeDescriptor):
     multiSelectFields = ('other_mc_correspondences', )
 
-    def __init__(self, id, title, predefined_title=u'',
-                 other_mc_correspondences=set(), enabled=True,
-                 confidential=False, to_print=False):
+    def __init__(self,
+                 id,
+                 title,
+                 predefined_title=u'',
+                 other_mc_correspondences=set(),
+                 to_sign=False,
+                 signed=False,
+                 enabled=True,
+                 confidential=False,
+                 to_print=False,
+                 only_for_meeting_managers=False):
         super(ItemAnnexSubTypeDescriptor, self).__init__(
-            id=id, title=title, predefined_title=predefined_title,
-            enabled=enabled, confidential=confidential, to_print=to_print)
+            id=id,
+            title=title,
+            predefined_title=predefined_title,
+            to_sign=to_sign,
+            signed=signed,
+            enabled=enabled,
+            confidential=confidential,
+            to_print=to_print)
         self.other_mc_correspondences = other_mc_correspondences
+        self.only_for_meeting_managers = only_for_meeting_managers
 
 
 class PodTemplateDescriptor(Descriptor):
@@ -603,6 +637,9 @@ class MeetingConfigDescriptor(Descriptor):
 
         # Doc parameters -------------------------------------------------------
         self.meetingItemTemplateToStoreAsAnnex = ''
+
+        # content_category_groups parameters -----------------------------------
+        self.category_group_activated_attrs = {}
 
 
 class PloneMeetingConfiguration(Descriptor):

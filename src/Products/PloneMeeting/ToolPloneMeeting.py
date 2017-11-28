@@ -575,7 +575,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if cData['id'] in self.objectIds():
             return
         self.invokeFactory('MeetingConfig', **cData)
-        cfg = getattr(self, configData.id)
+        cfgId = configData.id
+        cfg = getattr(self, cfgId)
         cfg._at_creation_flag = True
         # TextArea fields are not set properly.
         for field in cfg.Schema().fields():
@@ -608,6 +609,16 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             cfg.addItemToConfig(descr)
         for descr in configData.itemTemplates:
             cfg.addItemToConfig(descr, isRecurring=False)
+        # configure ContentCategoryGroups before adding annex_types
+        # this will enable confidentiality, to_sign/signed, ... if necessary
+        for category_group_id, attrs in configData.category_group_activated_attrs.items():
+            category_group = cfg.annexes_types.get(category_group_id)
+            for attr in attrs:
+                if not hasattr(category_group, attr):
+                    raise PloneMeetingError(
+                        'Attribute {0} does not exist on {1} of {2}'.format(
+                            attr, category_group_id, cfgId))
+                setattr(category_group, attr, True)
         for descr in configData.annexTypes:
             cfg.addAnnexType(descr, source)
         for descr in configData.podTemplates:

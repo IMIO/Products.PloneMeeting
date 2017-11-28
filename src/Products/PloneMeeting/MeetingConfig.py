@@ -5319,6 +5319,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             container=getattr(folder, categoryGroupId),
             to_print=at.to_print,
             confidential=at.confidential,
+            to_sign=at.to_sign,
+            signed=at.signed,
             enabled=at.enabled
         )
         # store an empty set in other_mc_correspondences for validation
@@ -5329,6 +5331,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         self._validate_dx_content(annexType)
         if portal_type == 'ItemAnnexContentCategory':
             annexType.other_mc_correspondences = at.other_mc_correspondences
+            annexType.only_for_meeting_managers = at.only_for_meeting_managers
 
         for subType in at.subTypes:
             annexSubType = api.content.create(
@@ -5339,6 +5342,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 container=annexType,
                 to_print=subType.to_print,
                 confidential=subType.confidential,
+                to_sign=at.to_sign,
+                signed=at.signed,
                 enabled=subType.enabled
             )
             if sub_portal_type == 'ItemAnnexContentSubcategory':
@@ -5346,6 +5351,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             self._validate_dx_content(annexSubType)
             if sub_portal_type == 'ItemAnnexContentSubcategory':
                 annexSubType.other_mc_correspondences = subType.other_mc_correspondences
+                annexType.only_for_meeting_managers = at.only_for_meeting_managers
 
         return annexType
 

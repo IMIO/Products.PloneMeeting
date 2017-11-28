@@ -325,3 +325,20 @@ class PloneMeetingTestingHelpers:
         self.assertTrue((user_id, '<{0}: not found>'.format(user_id)) in
                         self.portal.acl_users.source_groups.listAssignedPrincipals(group_id))
         self.changeUser(currentUser)
+
+    def _setupStorePodAsAnnex(self):
+        """ """
+        cfg = self.meetingConfig
+        pod_template = cfg.podtemplates.itemTemplate
+        annex_type = cfg.annexes_types.item_annexes.get('item-annex')
+        pod_template.store_as_annex = [annex_type.UID()]
+        self.request.set('template_uid', pod_template.UID())
+        self.request.set('output_format', 'odt')
+        self.request.set('store_as_annex_uid', annex_type.UID())
+        # create an item
+        original_member_id = self.member.getId()
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        if original_member_id:
+            self.changeUser(original_member_id)
+        return pod_template, annex_type, item
