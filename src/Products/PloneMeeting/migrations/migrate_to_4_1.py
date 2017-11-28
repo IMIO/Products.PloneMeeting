@@ -59,6 +59,7 @@ class Migrate_To_4_1(Migrator):
 
     def run(self, step=None):
         logger.info('Migrating to PloneMeeting 4.1...')
+        # reinstall so versions are correctly shown in portal_quickinstaller
         self.reinstall(profiles=['profile-Products.PloneMeeting:default', ],
                        ignore_dependencies=False,
                        dependency_strategy=DEPENDENCY_STRATEGY_NEW)
@@ -66,6 +67,9 @@ class Migrate_To_4_1(Migrator):
             self.reinstall(profiles=[self.profile_name, ],
                            ignore_dependencies=False,
                            dependency_strategy=DEPENDENCY_STRATEGY_NEW)
+        # upgrade dependencies
+        self.upgradeDependencies()
+        self.updateHolidays()
 
         # migration steps
         self._addItemTemplatesManagersGroup()
