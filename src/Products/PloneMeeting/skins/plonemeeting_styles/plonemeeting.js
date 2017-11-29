@@ -691,33 +691,6 @@ function removeSelectedItems(baseUrl) {
     }
 }
 
-// Function that allows to decide several items at once in a meeting
-function decideSelectedItems(baseUrl,tag){
-    var uids = selectedCheckBoxes('select_item');
-    if (!uids.length) {
-      alert(no_selected_items);
-    }
-    else {
-          // avoid Arrays to be passed as uids[]
-          params = $.param({uids: uids, transition: tag.name}, traditional=true);
-          $.ajax({
-            url: baseUrl + "/@@decide-several-items",
-            dataType: 'html',
-            data: params,
-            cache: false,
-            async: true,
-            success: function(data) {
-                // reload the faceted page
-                Faceted.URLHandler.hash_changed();
-            },
-            error: function(jqXHR, textStatus, errorThrown) {
-              /*console.log(textStatus);*/
-              window.location.href = window.location.href;
-              }
-            });
-        }
-}
-
 // show/hide "move item to position" action icon button
 function onImageButtonFocus(itemNumber) {
   var imageButtons = document.getElementsByName('moveImageButton');

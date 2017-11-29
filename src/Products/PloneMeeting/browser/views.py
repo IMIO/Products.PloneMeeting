@@ -225,35 +225,6 @@ class RemoveSeveralItemsView(BrowserView):
         plone_utils.addPortalMessage(msg)
 
 
-class DecideSeveralItemsView(BrowserView):
-    """
-      This manage the view that devide several items at once in a meeting
-    """
-    def __init__(self, context, request):
-        self.context = context
-        self.request = request
-        self.portal_url = api.portal.get().absolute_url()
-
-    def __call__(self, uids, transition):
-        """ """
-        uid_catalog = api.portal.get_tool('uid_catalog')
-        wfTool = api.portal.get_tool('portal_workflow')
-        # make sure we have a list of uids, in some case, as it is called
-        # by jQuery, we receive only one uid, as a string...
-        if isinstance(uids, str):
-            uids = [uids]
-
-        for uid in uids:
-            obj = uid_catalog(UID=uid)[0].getObject()
-            try:
-                wfTool.doActionFor(obj, transition)
-            except WorkflowException:
-                continue
-        msg = translate('decide_several_items_done', domain='PloneMeeting', context=self.request)
-        plone_utils = api.portal.get_tool('plone_utils')
-        plone_utils.addPortalMessage(msg)
-
-
 class ItemNumberView(BrowserView):
     """
       This manage the view displaying the itemNumber on the meeting view
@@ -345,12 +316,6 @@ class MeetingAfterFacetedInfosView(BrowserView):
         self.portal_url = api.portal.get().absolute_url()
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
-
-    def showDecideSeveralItems(self):
-        """Show the 'decide several items' widget?"""
-        return self.tool.isManager(self.context) and \
-            self.context.adapted().isDecided() and \
-            self.context.queryState() not in self.context.meetingClosedStates
 
 
 class MeetingInsertingMethodsHelpMsgView(BrowserView):

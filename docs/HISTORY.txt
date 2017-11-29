@@ -69,6 +69,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   We display a link to the categories/classifiers container folder_contents view to manage large amount of categories
 - Added boolean field ItemAnnexContentCategory.only_for_meeting_managers (item annex/annexDecision types), if set
   to True, the annex type will only be selectable by MeetingManagers
+- Removed the @@decide-several-items view, we use the collective.eeafaceted.batchaction transition action
 
 4.0 (2017-08-04)
 ----------------

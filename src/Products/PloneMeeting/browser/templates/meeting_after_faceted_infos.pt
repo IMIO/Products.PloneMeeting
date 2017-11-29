@@ -5,13 +5,6 @@
                      bilingual python: 'secondLanguage' in view.tool.getModelAdaptations();"
              i18n:domain="PloneMeeting">
 
-  <tal:comment replace="nothing">Action on selected items</tal:comment>
-  <div tal:condition="view/showDecideSeveralItems" id="meetingDecideSeveralItems" >
-    <div metal:use-macro="here/@@pm-macros/showItemsDecidedTransitions"></div>
-  </div>
-  <div style="padding-bottom: 2em;" class="visualClear"></div>
-  <br />
-
   <tal:comment replace="nothing">In and out moves</tal:comment>
   <tal:field define="fieldName python: 'inAndOutMoves'; ajaxEdit python:True">
     <metal:f use-macro="context/@@pm-macros/viewContentField"/>

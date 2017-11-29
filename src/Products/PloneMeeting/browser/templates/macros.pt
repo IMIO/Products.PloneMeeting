@@ -755,22 +755,6 @@ Needs moveUrl, firstId, lastId, obj</tal:comment>
     </a>
 </metal:moveUpDown>
 
-<tal:comment replace="nothing">
-  This macro displays buttons listing transitions to decide an item.
-</tal:comment>
-<metal:decideSeveralItems define-macro="showItemsDecidedTransitions" i18n:domain="PloneMeeting">
-    <p class="discreet"><span i18n:translate="decide_several_items_help">For every selected items, appy following action</span> :</p>
-      <span tal:repeat="transition python: cfg.listTransitionsDecidingItem().items()"
-          class="noPadding">
-        <input type="submit"
-               tal:define="transition_id python:transition[0]"
-               tal:attributes="name transition_id;
-                               value python:transition[1];
-                               class string:apButton apButtonWF apButtonWF_$transition_id;
-                               onClick string:decideSelectedItems('${context/absolute_url}', this)"/>
-      </span>
-</metal:decideSeveralItems>
-
 <tal:comment replace="nothing">In case we are using a popup, add a button 'Close' at the
 bottom so the user can use it to close current popup as well as the cross up right.
 The name is form.button.cancel because it correspond to the overlay close selector.</tal:comment>

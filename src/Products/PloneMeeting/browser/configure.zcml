@@ -187,13 +187,6 @@
       permission="zope2.View"
       />
 
-    <browser:view
-      for="Products.PloneMeeting.interfaces.IMeeting"
-      name="decide-several-items"
-      class=".views.DecideSeveralItemsView"
-      permission="zope2.View"
-      />
-
     <!-- IMEETING BATCH ACTIONS -->
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingBatchActionsMarker"

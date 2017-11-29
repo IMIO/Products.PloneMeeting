@@ -24,6 +24,7 @@
 
 from DateTime import DateTime
 from profilehooks import timecall
+from plone import api
 
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
@@ -239,8 +240,10 @@ class testPerformances(PloneMeetingTestCase):
     @timecall
     def _delaySeveralItems(self, meeting, uids):
         '''Helper method that actually delays the items.'''
-        decideView = meeting.restrictedTraverse('@@decide-several-items')
-        decideView(uids=uids, transition='delay')
+        brains = api.content.find(UID=uids)
+        for brain in brains:
+            obj = brain.getObject()
+            api.content.transition(obj=obj, transition='delay')
 
     @timecall
     def _presentSeveralItems(self, items):

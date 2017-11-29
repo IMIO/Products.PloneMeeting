@@ -1410,51 +1410,6 @@ class testMeeting(PloneMeetingTestCase):
         for item in meeting2.getItems():
             self.assertTrue(item.queryState() == self.ITEM_WF_STATE_AFTER_MEETING_TRANSITION['close'])
 
-    def test_pm_DecideSeveralItems(self):
-        """
-          Test the functionnality to decide several items at once
-        """
-        # create a meeting
-        self.changeUser('pmManager')
-        meeting = self._createMeetingWithItems()
-        self.freezeMeeting(meeting)
-        itemUids = []
-        allItems = meeting.getItems()
-        # set decision and place all items, except the last in uids
-        for item in allItems:
-            item.setDecision(self.decisionText)
-            if item != allItems[-1]:
-                itemUids.append(item.UID())
-        self.decideMeeting(meeting)
-        # back item to itemFrozen state
-        for item in allItems:
-            if item.queryState() == 'accepted':
-                self.do(item, 'backToItemFrozen')
-        # get available decision transitions
-        # this will return every transitions that lead to a decided item
-        decidingTransitions = self.meetingConfig.listTransitionsDecidingItem()
-        itemWF = self.wfTool.getWorkflowsFor(self.meetingConfig.getItemTypeName())[0]
-        for tr in decidingTransitions:
-            # make sure the transition lead to an item decided state
-            self.assertTrue(itemWF.transitions[tr].new_state_id in self.meetingConfig.getItemDecidedStates())
-
-        # use the first decidingTransition and check that elements are decided
-        decidingTransition = itemWF.transitions[decidingTransitions[0]]
-        decideView = meeting.restrictedTraverse('@@decide-several-items')
-        # uids can be a string or a list of uids...
-        item1 = allItems[0]
-        item1_old_state = item1.queryState()
-        decideView(item1.UID(), transition=decidingTransition.id)
-        # item state changed
-        self.assertTrue(item1_old_state != item1.queryState())
-
-        # decide other items including UID of already decided item
-        decideView(itemUids, transition=decidingTransition.id)
-        # after execute method, all items, except the last, are decided
-        for item in allItems[:-1]:
-            self.assertEquals(item.queryState(), decidingTransition.new_state_id)
-        self.assertEquals(allItems[-1].queryState(), 'itemfrozen')
-
     def test_pm_PresentItemToPublishedMeeting(self):
         '''Test the functionnality to present an item.
            It will be presented to the ['PUBLISHED'] meeting if any.

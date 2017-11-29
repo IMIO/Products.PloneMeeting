@@ -5595,22 +5595,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 obj = getattr(self.meetingusers, user.id)
         return getattr(obj, methodName)()
 
-    security.declarePublic('listTransitionsDecidingItem')
-
-    def listTransitionsDecidingItem(self):
-        '''Vocabulary used to get every transitions from the item workflow that will make an item 'decided'.
-           This is used by the panel of transitions available at the bottom of a decided meeting to
-           decide several items at once.'''
-        wfTool = api.portal.get_tool('portal_workflow')
-        itemWorkflow = wfTool.getWorkflowsFor(self.getItemTypeName())[0]
-        res = []
-        for transition in itemWorkflow.transitions.values():
-            if transition.id.startswith('backTo'):
-                continue
-            if transition.new_state_id in self.getItemDecidedStates():
-                res.append((transition.id, translate(transition.title, domain='plone', context=self.REQUEST)))
-        return DisplayList(res).sortedByValue()
-
     security.declarePublic('updateAnnexConfidentiality')
 
     def updateAnnexConfidentiality(self, annex_portal_types=['annex', 'annexDecision']):
