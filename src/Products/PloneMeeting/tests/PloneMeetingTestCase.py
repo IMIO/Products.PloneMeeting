@@ -224,15 +224,12 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                objectType,
                folder=None,
                autoAddCategory=True,
-               meetingConfig=None,
                isClassifier=False,
                **attrs):
         '''Creates an instance of a meeting (if p_objectType is 'Meeting') or
            meeting item (if p_objectType is 'MeetingItem') and
            returns the created object. p_attrs is a dict of attributes
            that will be given to invokeFactory.'''
-        originalConfig = self.meetingConfig
-        self.setMeetingConfig(meetingConfig and meetingConfig.getId() or originalConfig.getId())
         cfg = self.meetingConfig
         shortName = cfg.getShortName()
         # Some special behaviour occurs if the item to create is
@@ -254,7 +251,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                 folder = cfg.categories
         else:
             contentType = '%s%s' % (objectType, shortName)
-            folder = self.getMeetingFolder(meetingConfig)
+            folder = self.getMeetingFolder(cfg)
         # Add some computed attributes
         idInAttrs = 'id' in attrs
         if not idInAttrs:
@@ -289,7 +286,6 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                 obj._at_rename_after_creation = True
         # make sure we do not have permission check cache problems...
         self.cleanMemoize()
-        self.setMeetingConfig(originalConfig.getId())
         return obj
 
     def _cleanExistingTmpAnnexFile(self):
