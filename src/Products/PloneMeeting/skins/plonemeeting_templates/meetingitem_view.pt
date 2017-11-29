@@ -308,10 +308,10 @@
                       i18n:translate="PloneMeeting_label_pollType"></span>:&nbsp;&nbsp;
                 <span metal:use-macro="python: here.widget('pollType', mode='view')" />
                 <tal:displayPollTypeObservations tal:condition="python: 'pollTypeObservations' in usedAttrs">
-                    <img src="++resource++collective.iconifiedcategory/more_infos.png"
+                    <img src="++resource++collective.iconifiedcategory.images/more_infos.png"
                          id="showPollTypeObservations"
                          style="cursor: pointer;"
-                         tal:attributes="src string:${portal_url}/++resource++collective.iconifiedcategory/more_infos.png"
+                         tal:attributes="src string:${portal_url}/++resource++collective.iconifiedcategory.images/more_infos.png"
                          i18n:attributes="title" title="show_or_hide_pollTypeObservations" />
                     <script type="text/javascript">
                         $( "#showPollTypeObservations" ).bind( "click", function(event) {
@@ -433,7 +433,7 @@
                              <a href="@@categorized-annexes">
                               <img class="categorized_elements_more_infos_icon"
                                    src="more_infos.png"
-                                   tal:attributes="src string:${portal_url}/++resource++collective.iconifiedcategory/more_infos.png" />
+                                   tal:attributes="src string:${portal_url}/++resource++collective.iconifiedcategory.images/more_infos.png" />
                               <span i18n:domain="collective.iconifiedcategory" i18n:translate="">More infos</span>
                              </a>
                             </td>
