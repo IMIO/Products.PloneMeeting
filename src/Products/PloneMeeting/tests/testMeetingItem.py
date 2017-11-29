@@ -833,6 +833,7 @@ class testMeetingItem(PloneMeetingTestCase):
            - we can present an item to next available in the future 'created' meeting;
            - errors are managed.'''
         cfg = self.meetingConfig
+        cfgId = cfg.getId()
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
         data = self._setupSendItemToOtherMC(with_advices=True)
@@ -915,24 +916,24 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # the item will only be presented if a meeting in it's initial state
         # in the future is available.  Add a meeting with a date in the past
-        self.create('Meeting',
-                    date=DateTime('2008/06/12 08:00:00'),
-                    meetingConfig=cfg2)
+        self.setMeetingConfig(cfg2Id)
+        self.create('Meeting', date=DateTime('2008/06/12 08:00:00'))
         self.deleteAsManager(newItem.UID())
         originalItem = data['originalItem']
         self.deleteAsManager(originalItem.UID())
+        self.setMeetingConfig(cfgId)
         data = self._setupSendItemToOtherMC(with_advices=True)
         newItem = data['newItem']
         # the item could not be presented
         self.assertTrue(newItem.queryState() == 'validated')
         # now create a meeting 15 days in the future
+        self.setMeetingConfig(cfg2Id)
         futureDate = DateTime() + 15
-        self.create('Meeting',
-                    date=futureDate,
-                    meetingConfig=cfg2)
+        self.create('Meeting', date=futureDate)
         self.deleteAsManager(newItem.UID())
         originalItem = data['originalItem']
         self.deleteAsManager(originalItem.UID())
+        self.setMeetingConfig(cfgId)
         data = self._setupSendItemToOtherMC(with_advices=True)
         newItem = data['newItem']
         # the item could not be presented
