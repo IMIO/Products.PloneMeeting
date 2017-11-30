@@ -219,6 +219,28 @@ def hasAnnexesToPrint(obj):
     return '0'
 
 
+@indexer(IMeetingItem)
+def hasAnnexesToSign(obj):
+    """
+      Index the fact that an item has annexes to_sign/signed.
+      - '-1' is not to_sign;
+      - '0' is to_sign but not signed;
+      - '1' is signed.
+    """
+    # use objectValues because with events order, an annex
+    # could be added but still not registered in the categorized_elements dict
+    res = []
+    for annex in get_annexes(obj):
+        if annex.to_sign:
+            if annex.signed:
+                res.append('1')
+            else:
+                res.append('0')
+        else:
+            res.append('-1')
+    return res
+
+
 @indexer(IItem)
 def templateUsingGroups(obj):
     """

@@ -11,7 +11,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 ----------------
 - Moved to Plone 4.3.15
 - Rely on collective.eeafaceted.batchactions
-- Use the "to_sign/signed" functionnality of collective.iconifiedcategory, useable on annexes
+- Use the "to_sign/signed" functionnality of collective.iconifiedcategory, useable on annexes, added relevant
+  advanced filter for dashboards
 - Added possibility to filter dashboard items that have specifically "no" preferred meeting
   and "no" linked meeting
 - Added functionnaliy to store a generated template directly as an annex of the current context.
