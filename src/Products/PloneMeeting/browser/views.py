@@ -26,19 +26,16 @@ import lxml
 
 from collections import OrderedDict
 
-from AccessControl import Unauthorized
-from z3c.form import button
 from zope.i18n import translate
 
 from plone.memoize.view import memoize
 from plone.memoize.view import memoize_contextless
 
 from Products.Five import BrowserView
-from Products.CMFCore.WorkflowCore import WorkflowException
 from plone import api
 from collective.documentgenerator.helper.archetypes import ATDocumentGenerationHelperView
 from collective.eeafaceted.batchactions import _ as _CEBA
-from collective.eeafaceted.batchactions.browser.views import BatchActionForm
+from collective.eeafaceted.batchactions.browser.views import BaseBatchActionForm
 from eea.facetednavigation.browser.app.view import FacetedContainerView
 from eea.facetednavigation.interfaces import ICriteria
 from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
@@ -926,9 +923,8 @@ class MeetingHeaderView(BrowserView):
     """ """
 
 
-class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BatchActionForm):
+class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
 
-    buttons = BatchActionForm.buttons.copy()
     label = _CEBA("Store POD template as annex for selected elements")
     button_with_icon = True
 
@@ -937,32 +933,14 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BatchActionForm):
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(context)
 
-    def update(self):
-        # initialize self.brains and referr
-        super(MeetingStoreItemsPodTemplateAsAnnexBatchActionForm, self).update()
-        super(BatchActionForm, self).update()
-
     def available(self):
         """ """
         if self.cfg.getMeetingItemTemplateToStoreAsAnnex() and \
            api.user.get_current().has_permission(ModifyPortalContent, self.context):
             return True
 
-    @button.buttonAndHandler(_(u'Apply'), name='apply')
-    def handleApply(self, action):
-        """Handle apply button."""
-        data, errors = self.extractData()
-        if errors:
-            self.status = self.formErrorsMessage
-
-        self._apply()
-        self.request.response.redirect(self.request.form['form.widgets.referer'])
-
-    def _apply(self):
+    def _apply(self, **data):
         """ """
-        if not self.available():
-            raise Unauthorized
-
         template_id, output_format = \
             self.cfg.getMeetingItemTemplateToStoreAsAnnex().split('__output_format__')
         pod_template = getattr(self.cfg.podtemplates, template_id)
