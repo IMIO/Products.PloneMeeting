@@ -156,7 +156,7 @@
   <!-- Indexes -->
   <adapter name="getRawClassifier" factory=".indexes.getRawClassifier" />
   <adapter name="Description" factory=".indexes.Description" />
-  <adapter name="hasAnnexesToPrint" factory=".indexes.hasAnnexesToPrint" />
+  <adapter name="hasAnnexesToSign" factory=".indexes.hasAnnexesToSign" />
   <adapter name="linkedMeetingDate" factory=".indexes.linkedMeetingDate" />
   <adapter name="linkedMeetingUID" factory=".indexes.linkedMeetingUID" />
   <adapter name="getPreferredMeetingDate" factory=".indexes.getPreferredMeetingDate" />
@@ -219,6 +219,15 @@
            factory=".adapters.IconifiedCategoryGroupAdapter"
            provides="collective.iconifiedcategory.interfaces.IIconifiedCategoryGroup" />
 
+  <adapter for="OFS.interfaces.IItem"
+           factory=".adapters.PMCompletenessChangesHistoryAdapter"
+           name="completeness_changes"
+           provides="imio.history.interfaces.IImioHistory" />
+
+  <adapter for="OFS.interfaces.IItem"
+           factory=".adapters.PMEmergencyChangesHistoryAdapter"
+           name="emergency_changes"
+           provides="imio.history.interfaces.IImioHistory" />
 
   <five:deprecatedManageAddDelete class=".MeetingItem.MeetingItem" />
   <five:deprecatedManageAddDelete class=".Meeting.Meeting" />

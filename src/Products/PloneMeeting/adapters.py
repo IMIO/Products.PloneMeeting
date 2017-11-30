@@ -35,6 +35,8 @@ from eea.facetednavigation.widgets.resultsperpage.widget import Widget as Result
 from eea.facetednavigation.widgets.storage import Criterion
 from imio.actionspanel.adapters import ContentDeletableAdapter as APContentDeletableAdapter
 from imio.history.adapters import ImioWfHistoryAdapter
+from imio.history.adapters import BaseImioHistoryAdapter
+from imio.history.config import HISTORY_COMMENT_NOT_VIEWABLE
 from imio.prettylink.adapters import PrettyLinkAdapter
 from Products.PloneMeeting.config import AddAnnexDecision
 from Products.PloneMeeting.config import DUPLICATE_EVENT_ACTION
@@ -879,6 +881,38 @@ class PMWfHistoryAdapter(ImioWfHistoryAdapter):
             return self.context.getHistory(checkMayView=checkMayView, history_types=['workflow'])
         else:
             return self.context.getHistory(checkMayView=checkMayView)
+
+
+class PMEmergencyChangesHistoryAdapter(BaseImioHistoryAdapter):
+    """ """
+
+    def getHistory(self, checkMayView=True, **kw):
+        """See docstring in interfaces.py."""
+        res = []
+        history = list(self.context.emergency_changes_history)
+        for event in history:
+            # Make sure original value is not modified
+            event = event.copy()
+            if checkMayView and not self.mayViewComment(event):
+                event['comments'] = HISTORY_COMMENT_NOT_VIEWABLE
+            res.append(event)
+        return res
+
+
+class PMCompletenessChangesHistoryAdapter(BaseImioHistoryAdapter):
+    """ """
+
+    def getHistory(self, checkMayView=True, **kw):
+        """See docstring in interfaces.py."""
+        res = []
+        history = list(self.context.completeness_changes_history)
+        for event in history:
+            # Make sure original value is not modified
+            event = event.copy()
+            if checkMayView and not self.mayViewComment(event):
+                event['comments'] = HISTORY_COMMENT_NOT_VIEWABLE
+            res.append(event)
+        return res
 
 
 class Criteria(eeaCriteria):
