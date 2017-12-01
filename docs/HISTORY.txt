@@ -7,8 +7,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Versions 3.0.x are for Plone < 4.3
 - Versions 3.1.+ are for Plone 4.3+
 
-4.1 (unreleased)
-----------------
+4.1b1 (unreleased)
+------------------
 - Moved to Plone 4.3.15
 - Rely on collective.eeafaceted.batchactions
 - Use the "to_sign/signed" functionnality of collective.iconifiedcategory, useable on annexes
