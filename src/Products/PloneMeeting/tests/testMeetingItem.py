@@ -832,6 +832,7 @@ class testMeetingItem(PloneMeetingTestCase):
            - we can present an item to next available in the future 'created' meeting;
            - errors are managed.'''
         cfg = self.meetingConfig
+        cfgId = cfg.getId()
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
         data = self._setupSendItemToOtherMC(with_advices=True)
@@ -914,24 +915,24 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # the item will only be presented if a meeting in it's initial state
         # in the future is available.  Add a meeting with a date in the past
-        self.create('Meeting',
-                    date=DateTime('2008/06/12 08:00:00'),
-                    meetingConfig=cfg2)
+        self.setMeetingConfig(cfg2Id)
+        self.create('Meeting', date=DateTime('2008/06/12 08:00:00'))
         self.deleteAsManager(newItem.UID())
         originalItem = data['originalItem']
         self.deleteAsManager(originalItem.UID())
+        self.setMeetingConfig(cfgId)
         data = self._setupSendItemToOtherMC(with_advices=True)
         newItem = data['newItem']
         # the item could not be presented
         self.assertTrue(newItem.queryState() == 'validated')
         # now create a meeting 15 days in the future
+        self.setMeetingConfig(cfg2Id)
         futureDate = DateTime() + 15
-        self.create('Meeting',
-                    date=futureDate,
-                    meetingConfig=cfg2)
+        self.create('Meeting', date=futureDate)
         self.deleteAsManager(newItem.UID())
         originalItem = data['originalItem']
         self.deleteAsManager(originalItem.UID())
+        self.setMeetingConfig(cfgId)
         data = self._setupSendItemToOtherMC(with_advices=True)
         newItem = data['newItem']
         # the item could not be presented
@@ -982,6 +983,7 @@ class testMeetingItem(PloneMeetingTestCase):
            when item will be sent and presented to the other MC, it will be presented
            as a 'late' item if emergency was asked.'''
         cfg = self.meetingConfig
+        cfgId = cfg.getId()
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
         cfg.setUsedItemAttributes(cfg.getUsedItemAttributes() +
@@ -1007,14 +1009,16 @@ class testMeetingItem(PloneMeetingTestCase):
         # in the next 'created' meeting, no matter a 'frozen' is happening in the future but before
         now = DateTime()
         # create 2 meetings in cfg2
-        frozenMeeting = self.create('Meeting', date=now+5, meetingConfig=cfg2)
+        self.setMeetingConfig(cfg2Id)
+        frozenMeeting = self.create('Meeting', date=now+5)
         # must contains at least an item to be frozen
-        dummyItem = self.create('MeetingItem', meetingConfig=cfg2)
+        dummyItem = self.create('MeetingItem')
         self.presentItem(dummyItem)
         self.freezeMeeting(frozenMeeting)
         self.assertEquals(frozenMeeting.queryState(), 'frozen')
-        createdMeeting = self.create('Meeting', date=now+10, meetingConfig=cfg2)
+        createdMeeting = self.create('Meeting', date=now+10)
         # create the meeting in cfg
+        self.setMeetingConfig(cfgId)
         meeting = self.create('Meeting', date=now)
         self.presentItem(item)
         # presented in 'meeting'
@@ -1077,6 +1081,7 @@ class testMeetingItem(PloneMeetingTestCase):
            available meeting, including frozen meetings, this way the item may be presented
            in a frozen meeting."""
         cfg = self.meetingConfig
+        cfgId = cfg.getId()
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
         cfg.setUsedItemAttributes(cfg.getUsedItemAttributes() +
@@ -1115,11 +1120,13 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmManager')
         now = DateTime()
         # create 2 meetings in cfg2
-        createdMeeting = self.create('Meeting', date=now+10, meetingConfig=cfg2)
+        self.setMeetingConfig(cfg2Id)
+        createdMeeting = self.create('Meeting', date=now+10)
         # createdMeeting will only be viewable by Managers
         createdMeeting.manage_permission(View, ['Manager', ])
-        frozenMeeting = self.create('Meeting', date=now+5, meetingConfig=cfg2)
+        frozenMeeting = self.create('Meeting', date=now+5)
         self.freezeMeeting(frozenMeeting)
+        self.setMeetingConfig(cfgId)
 
         # send items
         self.changeUser('pmCreator1')
