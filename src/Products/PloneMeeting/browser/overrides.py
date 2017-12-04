@@ -291,7 +291,7 @@ class PMDocumentGeneratorLinksViewlet(DocumentGeneratorLinksViewlet, BaseGenerat
 
     def get_store_as_annex_title_msg(self, annex_type_title):
         """ """
-        return translate('stored_as_annex_type_title',
+        return translate('store_as_annex_type_title',
                          domain='PloneMeeting',
                          mapping={'annex_type_title': safe_unicode(annex_type_title)},
                          context=self.request,
