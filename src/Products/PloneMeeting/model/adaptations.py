@@ -23,7 +23,8 @@ from Products.PloneMeeting.utils import updateCollectionCriterion
 
 # Stuff for performing workflow adaptations ------------------------------------
 noGlobalObsStates = ('itempublished', 'itemfrozen', 'accepted', 'refused',
-                     'delayed', 'confirmed', 'itemarchived')
+                     'delayed', 'confirmed', 'itemarchived',
+                     'removed', 'removed_and_duplicated', 'marked_not_applicable')
 groupDecisionReadStates = ('proposed', 'prevalidated', 'validated', 'presented',
                            'itempublished', 'itemfrozen')
 
@@ -277,7 +278,7 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
             # if it is a list, it is acquired...  WTF???  So make sure we store the correct type...
             acquired = isinstance(cloned_permissions[permission], list) and True or False
             cloned_permissions_with_meetingmanager[permission] = list(cloned_permissions[permission])
-            if not 'MeetingManager' in cloned_permissions[permission]:
+            if 'MeetingManager' not in cloned_permissions[permission]:
                 cloned_permissions_with_meetingmanager[permission].append('MeetingManager')
             if not acquired:
                 cloned_permissions_with_meetingmanager[permission] = \
@@ -290,7 +291,7 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
         # is only be availble to ['Manager', 'MeetingManager']
         # if custom permissions are defined, keep what is defined in it
 
-        if not DeleteObjects in customPermissions:
+        if DeleteObjects not in customPermissions:
             del_obj_perm = base_state.getPermissionInfo(DeleteObjects)
             if del_obj_perm['acquired']:
                 cloned_permissions_with_meetingmanager[DeleteObjects] = ['Manager', ]
@@ -337,7 +338,7 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                     # if it is a list, it is acquired...  WTF???  So make sure we store the correct type...
                     acquired = isinstance(cloned_permissions[permission], list) and True or False
                     cloned_permissions_with_meetingmanager[permission] = list(cloned_permissions[permission])
-                    if not 'MeetingManager' in cloned_permissions[permission]:
+                    if 'MeetingManager' not in cloned_permissions[permission]:
                         cloned_permissions_with_meetingmanager[permission].append('MeetingManager')
                     if not acquired:
                         cloned_permissions_with_meetingmanager[permission] = \
@@ -349,7 +350,7 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
             # if we are cloning an existing state permissions, make sure DeleteObjects
             # is only be availble to ['Manager', 'MeetingManager']
             # if custom permissions are defined, keep what is defined in it
-            if not DeleteObjects in customPermissions and stateToClone:
+            if DeleteObjects not in customPermissions and stateToClone:
                 del_obj_perm = stateToClone.getPermissionInfo(DeleteObjects)
                 if del_obj_perm['acquired']:
                     cloned_permissions_with_meetingmanager[DeleteObjects] = ['Manager', ]
@@ -818,7 +819,7 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                     for collection in meetingConfig.searches.searches_decisions.objectValues('DashboardCollection'):
                         for criterion in collection.query:
                             if criterion['i'] == 'review_state' and \
-                               not 'decisions_published' in criterion['v']:
+                               'decisions_published' not in criterion['v']:
                                 updateCollectionCriterion(collection, criterion['i'],
                                                           tuple(criterion['v']) + ('decisions_published', ))
             logger.info(WF_APPLIED % ("hide_decisions_when_under_writing", meetingConfig.getId()))
@@ -833,7 +834,7 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
             from Products.PloneMeeting.MeetingItem import MeetingItem
             edit_permissions = [ModifyPortalContent, DeleteObjects]
             for field in MeetingItem.schema.fields():
-                if field.write_permission and not field.write_permission in edit_permissions:
+                if field.write_permission and field.write_permission not in edit_permissions:
                     edit_permissions.append(field.write_permission)
             NEW_STATE_ID_PATTERN = '{0}_waiting_advices'
             # for transition to 'xxx_waiting_advices', we need to know where we are coming from
@@ -927,6 +928,12 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
             _addDecidedState(new_state_id='removed',
                              transition_id='remove')
             logger.info(WF_APPLIED % (wfAdaptation, meetingConfig.getId()))
+
+        # "refused" add state 'refused' in the item workflow
+        elif wfAdaptation == 'refused':
+            _addDecidedState(new_state_id='refused',
+                             transition_id='refuse')
+            logger.info(WF_APPLIED % ("refused", meetingConfig.getId()))
 
 
 # Stuff for performing model adaptations ---------------------------------------

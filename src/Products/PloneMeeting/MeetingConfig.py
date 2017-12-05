@@ -2259,7 +2259,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                      'return_to_proposing_group', 'return_to_proposing_group_with_last_validation',
                      'return_to_proposing_group_with_all_validations', 'hide_decisions_when_under_writing',
                      'waiting_advices', 'postpone_next_meeting', 'mark_not_applicable',
-                     'removed', 'removed_and_duplicated')
+                     'removed', 'removed_and_duplicated', 'refused')
 
     def _searchesInfo(self):
         """Informations used to create DashboardCollections in the searches."""
@@ -3399,6 +3399,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 return translate('wa_removed_mark_not_applicable_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
+        if 'refused' in removed:
+            # this will remove the 'refused' state for Item
+            # check that no more items are in this state
+            if catalog(portal_type=self.getItemTypeName(), review_state='refused'):
+                return translate('wa_removed_refused_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+
         # check if 'removed' is removed only if the other 'removed_and_duplicated' is not added
         # at the same time (switch from one to other)
         if ('removed' in removed and 'removed_and_duplicated' not in added) or \

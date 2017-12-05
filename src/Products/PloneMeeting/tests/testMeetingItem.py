@@ -1870,6 +1870,9 @@ class testMeetingItem(PloneMeetingTestCase):
         # - frozen items/meetings are accessible by both;
         # - only restricted power observers may access 'refused' items.
         cfg = self.meetingConfig
+        # add state 'refused' to item WF
+        cfg.setWorkflowAdaptations(('refused', ))
+        performWorkflowAdaptations(cfg, logger=pm_logger)
         cfg.setItemPowerObserversStates(('itemcreated', 'validated', 'presented',
                                          'itemfrozen', 'accepted', 'delayed'))
         cfg.setMeetingPowerObserversStates(('created', 'frozen', 'decided', 'closed'))
