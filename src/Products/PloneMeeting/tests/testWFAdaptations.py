@@ -477,8 +477,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self._validate_item_decision_state_removed(
             wf_adaptation_name='refused',
             item_state='refused',
-            item_transition='refuse',
-            performWFA=False)
+            item_transition='refuse')
 
     def test_pm_Validate_workflowAdaptations_removed_waiting_advices(self):
         """Test MeetingConfig.validate_workflowAdaptations that manage removal
