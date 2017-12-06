@@ -27,6 +27,7 @@ from datetime import datetime
 from DateTime import DateTime
 from AccessControl import Unauthorized
 from Products.Five import zcml
+from zope.component import getMultiAdapter
 from zope.i18n import translate
 from plone import api
 from plone.app.textfield.value import RichTextValue
@@ -784,6 +785,21 @@ class testViews(PloneMeetingTestCase):
             annexes = get_annexes(items[i])
             self.assertEqual(len(annexes), 1)
             self.assertTrue(annexes[0].used_pod_template_id, itemTemplateId)
+
+    def test_pm_PMTransitionBatchActionFormOnlyForOperationalRoles(self):
+        """The PMTransitionBatchActionForm is only available to operational roles,
+           so users like (restricted) power observers will not be able to use it."""
+        # with operational roles
+        self.changeUser('pmCreator1')
+        pmFolder = self.getMeetingFolder()
+        form = getMultiAdapter((pmFolder.searches_items, self.request), name=u'transition-batch-action')
+        self.assertTrue(form.available())
+
+        # without operational roles
+        self.changeUser('powerobserver1')
+        pmFolder = self.getMeetingFolder()
+        form = getMultiAdapter((pmFolder.searches_items, self.request), name=u'transition-batch-action')
+        self.assertFalse(form.available())
 
 
 def test_suite():

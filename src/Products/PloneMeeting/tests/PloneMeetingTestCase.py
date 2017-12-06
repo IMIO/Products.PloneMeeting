@@ -117,7 +117,8 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                        'pmCreator1',
                        'pmCreator1b',
                        'pmCreator2',
-                       'siteadmin'):
+                       'siteadmin',
+                       'powerobserver1'):
             _createHomeFolder(self.portal, userId)
         # Disable notifications mechanism. This way, the test suite may be
         # executed even on production sites that contain many real users.
