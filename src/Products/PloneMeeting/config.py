@@ -26,15 +26,6 @@ from zope.i18nmessageid import MessageFactory
 
 PMMessageFactory = MessageFactory("PloneMeeting")
 
-appyRequired = '0.8.0'
-try:
-    import appy
-    if not hasattr(appy, 'versionIsGreaterThanOrEquals') or \
-       not appy.versionIsGreaterThanOrEquals(appyRequired):
-        raise Exception('Appy framework >= %s is required. Download it at http://launchpad.net/appy' % appyRequired)
-except ImportError:
-    raise Exception('Appy framework not found. You can download it at http://launchpad.net/appy.')
-
 HAS_ZAMQP = True
 try:
     pkg_resources.get_distribution('imio.zamqp.pm')

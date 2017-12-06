@@ -29,6 +29,7 @@ from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.ckeditor.browser.ckeditorfinder import CKFinder
 from collective.documentgenerator.content.pod_template import IPODTemplate
 from collective.documentgenerator.viewlets.generationlinks import DocumentGeneratorLinksViewlet
+from collective.eeafaceted.batchactions.browser.views import TransitionBatchActionForm
 from collective.eeafaceted.collectionwidget.browser.views import RenderCategoryView
 from collective.iconifiedcategory.browser.actionview import ConfidentialChangeView
 from collective.iconifiedcategory.browser.tabview import CategorizedTabView
@@ -56,6 +57,7 @@ from Products.PloneMeeting import utils as pm_utils
 from Products.PloneMeeting.config import BARCODE_INSERTED_ATTR_ID
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.interfaces import IMeeting
+from Products.PloneMeeting.utils import get_all_suffixes
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import sendMail
@@ -1099,3 +1101,14 @@ class PMReferenceBrowserPopup(ReferenceBrowserPopup):
         return getattr(item, 'title_or_id', '') or \
             getattr(item, 'Title', '') or \
             getattr(item, 'getId', '')
+
+
+class PMTransitionBatchActionForm(TransitionBatchActionForm):
+    """ """
+
+    def available(self):
+        """Only available to users having operational roles in the application.
+           This is essentially dont to hide this to (restricted)powerobservers."""
+        tool = api.portal.get_tool('portal_plonemeeting')
+        return bool(tool.userIsAmong(suffixes=get_all_suffixes(None)) or
+                    tool.isManager(self.context))

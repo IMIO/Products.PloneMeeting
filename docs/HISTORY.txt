@@ -11,7 +11,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 ------------------
 
 - State 'refused' is no more by default in the item workflow, it is now a WFAdaptation 'refused'
-  that is enabled by default but that can be disabled in case state 'refused' is not used.
+  that is enabled by default but that can be disabled in case state 'refused' is not used
+- Batch action to change state (TransitionBatchActionForm) is now only available to users having
+  operational roles in the application.  So it is not available to (restricted)powerobservers for example
 
 4.1b1 (2017-12-01)
 ------------------
