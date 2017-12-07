@@ -963,6 +963,42 @@ class testAnnexes(PloneMeetingTestCase):
             form_annexDecision_widget_terms,
             ['{0}-annexes_types_-_item_decision_annexes_-_decision-annex'.format(cfgId)])
 
+    def test_pm_MeetingAnnexFormVocabularies(self):
+        """This is essentially done to make sure ++add++annex works
+           correctly when adding an annex on a meeting."""
+        cfg = self.meetingConfig
+        cfgId = cfg.getId()
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime())
+
+        # check with form, context is the MeetingItem
+        form_annex = meeting.restrictedTraverse('++add++annex')
+        form_annex_instance = form_annex.form_instance
+        form_annex_instance.update()
+        form_annex_widget = form_annex_instance.widgets['IIconifiedCategorization.content_category']
+        form_annex_widget_terms = [term.token for term in form_annex_widget.terms]
+        self.assertEqual(
+            form_annex_widget_terms,
+            ['{0}-annexes_types_-_meeting_annexes_-_meeting-annex'.format(cfgId)])
+
+    def test_pm_AdviceAnnexFormVocabularies(self):
+        """This is essentially done to make sure ++add++annex works
+           correctly when adding an annex on an advice."""
+        cfg = self.meetingConfig
+        cfgId = cfg.getId()
+        item, advice = self._setupItemWithAdvice()
+
+        # check with form, context is the advice
+        form_annex = advice.restrictedTraverse('++add++annex')
+        form_annex_instance = form_annex.form_instance
+        form_annex_instance.update()
+        form_annex_widget = form_annex_instance.widgets['IIconifiedCategorization.content_category']
+        form_annex_widget_terms = [term.token for term in form_annex_widget.terms]
+        self.assertEqual(
+            form_annex_widget_terms,
+            ['{0}-annexes_types_-_advice_annexes_-_advice-annex'.format(cfgId),
+             '{0}-annexes_types_-_advice_annexes_-_advice-legal-analysis'.format(cfgId)])
+
     def test_pm_UpdateCategorizedElements(self):
         """The actions "update_categorized_elements" from collective.iconifiedcategory
            will update annex confidentiality accesses."""

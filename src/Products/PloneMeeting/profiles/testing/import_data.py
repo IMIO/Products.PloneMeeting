@@ -284,7 +284,8 @@ meetingPma.annexTypes = [financialAnalysis, budgetAnalysisCfg1, overheadAnalysis
 meetingPma.usedItemAttributes = ('toDiscuss', 'itemTags', 'itemIsSigned',)
 meetingPma.usedMeetingAttributes = ('place',)
 meetingPma.maxShownListings = '100'
-meetingPma.itemDecidedStates = ('accepted', 'refused', 'delayed', 'confirmed', 'itemarchived')
+meetingPma.itemDecidedStates = ('accepted', 'delayed', 'confirmed', 'itemarchived')
+meetingPma.workflowAdaptations = []
 meetingPma.itemPositiveDecidedStates = ['accepted', 'confirmed']
 meetingPma.transitionsForPresentingAnItem = ('propose', 'validate', 'present', )
 meetingPma.onMeetingTransitionItemTransitionToTrigger = ({'meeting_transition': 'publish',
@@ -339,7 +340,7 @@ meetingPma.sortAllItemTags = True
 meetingPma.recurringItems = (recItem1, recItem2, )
 meetingPma.itemTemplates = (template1, template2, )
 # use same values as meetingPga for powerObserversStates
-meetingPma.itemPowerObserversStates = ('itemcreated', 'presented', 'accepted', 'delayed', 'refused')
+meetingPma.itemPowerObserversStates = ('itemcreated', 'presented', 'accepted', 'delayed')
 meetingPma.meetingPowerObserversStates = ('frozen', 'published', 'decided', 'closed')
 meetingPma.useVotes = True
 meetingPma.meetingUsers = [pmReviewer1_voter, pmManager_observer,
@@ -408,13 +409,14 @@ meetingPga.useGroupsAsCategories = False
 meetingPga.itemTemplates = (template1, template2, )
 meetingPga.useAdvices = False
 meetingPga.selectableAdvisers = []
-meetingPga.itemPowerObserversStates = ('itemcreated', 'presented', 'accepted', 'delayed', 'refused')
+meetingPga.itemPowerObserversStates = ('itemcreated', 'presented', 'accepted', 'delayed')
 meetingPga.meetingPowerObserversStates = ('frozen', 'published', 'decided', 'closed')
-meetingPga.itemDecidedStates = ('accepted', 'refused', 'delayed', 'confirmed', 'itemarchived')
+meetingPga.itemDecidedStates = ('accepted', 'delayed', 'confirmed', 'itemarchived')
+meetingPga.workflowAdaptations = []
 meetingPga.itemPositiveDecidedStates = ['accepted', 'confirmed']
 meetingPga.useCopies = True
 meetingPga.selectableCopyGroups = [developers.getIdSuffixed('reviewers'), vendors.getIdSuffixed('reviewers'), ]
-meetingPga.itemCopyGroupsStates = ['validated', 'itempublished', 'itemfrozen', 'accepted', 'refused', 'delayed', ]
+meetingPga.itemCopyGroupsStates = ['validated', 'itempublished', 'itemfrozen', 'accepted', 'delayed', ]
 
 # The whole configuration object -----------------------------------------------
 data = PloneMeetingConfiguration('My meetings', (meetingPma, meetingPga),

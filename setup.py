@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import os
 
-version = '4.1.dev0'
+version = '4.1b2.dev0'
 
 setup(name='Products.PloneMeeting',
       version=version,
@@ -46,12 +46,13 @@ setup(name='Products.PloneMeeting',
                           templates=['Genshi', ],
                           amqp=['imio.zamqp.pm']),
       install_requires=[
-          'setuptools',
-          'natsort',
-          'appy',
+          'appy > 0.8.0',
           'beautifulsoup4',
+          'natsort',
+          'setuptools',
           'Plone',
           'Pillow',
+          # require unittest2 to avoid warning message in plone.app.testing 4.2.x
           'unittest2',
           'collective.ckeditor',
           'collective.datagridcolumns',

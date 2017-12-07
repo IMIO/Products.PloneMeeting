@@ -16,6 +16,7 @@ from collective.documentgenerator.content.vocabulary import PortalTypesVocabular
 from collective.iconifiedcategory.vocabularies import CategoryTitleVocabulary
 from collective.iconifiedcategory.vocabularies import CategoryVocabulary
 from eea.facetednavigation.interfaces import IFacetedNavigable
+from imio.annex.content.annex import IAnnex
 from imio.dashboard.content.dashboardcollection import IDashboardCollection
 from imio.dashboard.vocabulary import ConditionAwareCollectionVocabulary
 from imio.dashboard.vocabulary import DashboardCollectionsVocabulary
@@ -892,25 +893,36 @@ PMDashboardCollectionsVocabularyFactory = PMDashboardCollectionsVocabulary()
 
 
 class PMCategoryVocabulary(CategoryVocabulary):
-    """Override to take into account field 'only_for_meeting_managers' on the category."""
+    """Override to take into account field 'only_for_meeting_managers' on the category
+       for annexes added on items."""
 
     def _get_categories(self, context):
         """ """
         categories = super(PMCategoryVocabulary, self)._get_categories(context)
-        tool = api.portal.get_tool('portal_plonemeeting')
-        isManager = tool.isManager(context)
-        categories = [cat for cat in categories if not cat.only_for_meeting_managers or isManager]
+        # when adding an annex, context is the parent
+        container = context
+        if IAnnex.providedBy(context):
+            container = context.aq_parent
+        if container.meta_type == 'MeetingItem':
+            tool = api.portal.get_tool('portal_plonemeeting')
+            isManager = tool.isManager(context)
+            categories = [cat for cat in categories if not cat.only_for_meeting_managers or isManager]
         return categories
 
     def _get_subcategories(self, context, category):
         """Return subcategories for given category.
            This needs to return a list of subcategory brains."""
         subcategories = super(PMCategoryVocabulary, self)._get_subcategories(context, category)
-        tool = api.portal.get_tool('portal_plonemeeting')
-        isManager = tool.isManager(context)
-        subcategories = [
-            subcat for subcat in subcategories
-            if not subcat.getObject().only_for_meeting_managers or isManager]
+        # when adding an annex, context is the parent
+        container = context
+        if IAnnex.providedBy(context):
+            container = context.aq_parent
+        if container.meta_type == 'MeetingItem':
+            tool = api.portal.get_tool('portal_plonemeeting')
+            isManager = tool.isManager(context)
+            subcategories = [
+                subcat for subcat in subcategories
+                if not subcat.getObject().only_for_meeting_managers or isManager]
         return subcategories
 
 

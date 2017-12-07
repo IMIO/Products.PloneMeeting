@@ -22,6 +22,8 @@
 
 from DateTime import DateTime
 from plone import api
+from plone.app.textfield.value import RichTextValue
+from plone.dexterity.utils import createContentInContainer
 
 
 class PloneMeetingTestingHelpers:
@@ -342,3 +344,24 @@ class PloneMeetingTestingHelpers:
         if original_member_id:
             self.changeUser(original_member_id)
         return pod_template, annex_type, item
+
+    def _setupItemWithAdvice(self):
+        """Create an item and adds an advice to it."""
+        cfg = self.meetingConfig
+        cfgItemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
+        item_initial_state = self.wfTool[cfgItemWF.getId()].initial_state
+
+        cfg.setItemAdviceStates((item_initial_state, ))
+        cfg.setItemAdviceEditStates((item_initial_state, ))
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.setOptionalAdvisers(('vendors', ))
+        item.updateLocalRoles()
+        self.changeUser('pmReviewer2')
+        advice = createContentInContainer(
+            item,
+            'meetingadvice',
+            **{'advice_group': self.tool.vendors.getId(),
+               'advice_type': u'positive',
+               'advice_comment': RichTextValue(u'My comment')})
+        return item, advice

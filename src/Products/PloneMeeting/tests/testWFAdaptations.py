@@ -70,6 +70,7 @@ class testWFAdaptations(PloneMeetingTestCase):
                            'postpone_next_meeting',
                            'pre_validation',
                            'pre_validation_keep_reviewer_permissions',
+                           'refused',
                            'removed',
                            'removed_and_duplicated',
                            'return_to_proposing_group',
@@ -408,20 +409,20 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.do(item, 'backToItemFrozen')
         self.failIf(cfg.validate_workflowAdaptations(()))
 
-    def test_pm_Validate_workflowAdaptations_removed_mark_not_applicable(self):
-        """Test MeetingConfig.validate_workflowAdaptations that manage removal
-           of wfAdaptations 'mark_not_applicable' that is not possible if
-           some items are 'marked_not_applicable'."""
+    def _validate_item_decision_state_removed(self, wf_adaptation_name, item_state, item_transition):
+        """Helper method checking that removing an item decision state is not
+           possible if some items still in this state."""
         # ease override by subproducts
         cfg = self.meetingConfig
-        if 'mark_not_applicable' not in cfg.listWorkflowAdaptations():
+        if wf_adaptation_name not in cfg.listWorkflowAdaptations():
             return
 
-        mark_not_applicable_removed_error = translate('wa_removed_mark_not_applicable_error',
-                                                      domain='PloneMeeting',
-                                                      context=self.request)
+        msg_removed_error = translate(
+            'wa_removed_{0}_error'.format(wf_adaptation_name),
+            domain='PloneMeeting',
+            context=self.request)
         self.changeUser('pmManager')
-        cfg.setWorkflowAdaptations(('mark_not_applicable', ))
+        cfg.setWorkflowAdaptations((wf_adaptation_name, ))
         performWorkflowAdaptations(cfg, logger=pm_logger)
 
         meeting = self.create('Meeting', date=DateTime('2016/06/06'))
@@ -429,54 +430,54 @@ class testWFAdaptations(PloneMeetingTestCase):
         item.setDecision('<p>Decision</p>')
         self.presentItem(item)
         self.decideMeeting(meeting)
-        self.do(item, 'mark_not_applicable')
-        self.assertEqual(item.queryState(), 'marked_not_applicable')
-        self.failIf(cfg.validate_workflowAdaptations(('mark_not_applicable', )))
+        self.do(item, item_transition)
+        self.assertEqual(item.queryState(), item_state)
+        self.failIf(cfg.validate_workflowAdaptations((wf_adaptation_name, )))
         self.assertEquals(
             cfg.validate_workflowAdaptations(()),
-            mark_not_applicable_removed_error)
+            msg_removed_error)
 
         # make wfAdaptation selectable
         self.do(item, 'backToItemFrozen')
         self.failIf(cfg.validate_workflowAdaptations(()))
 
+    def test_pm_Validate_workflowAdaptations_removed_mark_not_applicable(self):
+        """Test MeetingConfig.validate_workflowAdaptations that manage removal
+           of wfAdaptations 'mark_not_applicable' that is not possible if
+           some items are 'marked_not_applicable'."""
+
+        self._validate_item_decision_state_removed(
+            wf_adaptation_name='mark_not_applicable',
+            item_state='marked_not_applicable',
+            item_transition='mark_not_applicable')
+
     def test_pm_Validate_workflowAdaptations_removed_removed(self):
         """Test MeetingConfig.validate_workflowAdaptations that manage removal
            of wfAdaptations 'removed' or 'removed_and_duplicated' that is not possible if
            some items are 'removed'."""
-        # ease override by subproducts
+
+        # refused is a default WFAdaptation, do not performWorkflowAdaptations again
+        self._validate_item_decision_state_removed(
+            wf_adaptation_name='removed',
+            item_state='removed',
+            item_transition='remove')
+
         cfg = self.meetingConfig
-        if 'removed' not in cfg.listWorkflowAdaptations():
-            return
-
-        removed_removed_error = translate('wa_removed_removed_error',
-                                          domain='PloneMeeting',
-                                          context=self.request)
-        self.changeUser('pmManager')
-        cfg.setWorkflowAdaptations(('removed', ))
-        performWorkflowAdaptations(cfg, logger=pm_logger)
-
-        meeting = self.create('Meeting', date=DateTime('2016/06/06'))
-        item = self.create('MeetingItem')
-        item.setDecision('<p>Decision</p>')
-        self.presentItem(item)
-        self.decideMeeting(meeting)
-        self.do(item, 'remove')
-        self.assertEqual(item.queryState(), 'removed')
-        self.failIf(cfg.validate_workflowAdaptations(('removed', )))
-        self.assertEquals(
-            cfg.validate_workflowAdaptations(()),
-            removed_removed_error)
-
         if 'removed_and_duplicated' in cfg.listWorkflowAdaptations():
             # possible to switch from one to the other
             self.failIf(cfg.validate_workflowAdaptations(('removed_and_duplicated', )))
             cfg.setWorkflowAdaptations(('removed_and_duplicated', ))
             self.failIf(cfg.validate_workflowAdaptations(('removed', )))
 
-        # make wfAdaptation selectable
-        self.do(item, 'backToItemFrozen')
-        self.failIf(cfg.validate_workflowAdaptations(()))
+    def test_pm_Validate_workflowAdaptations_removed_refused(self):
+        """Test MeetingConfig.validate_workflowAdaptations that manage removal
+           of wfAdaptations 'refuse' that is not possible if
+           some items are 'refused'."""
+
+        self._validate_item_decision_state_removed(
+            wf_adaptation_name='refused',
+            item_state='refused',
+            item_transition='refuse')
 
     def test_pm_Validate_workflowAdaptations_removed_waiting_advices(self):
         """Test MeetingConfig.validate_workflowAdaptations that manage removal
@@ -2273,31 +2274,35 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertEqual(clonedItem.getPredecessor(), item)
         self.assertEqual(clonedItem.queryState(), 'validated')
 
-    def test_pm_WFA_mark_not_applicable(self):
-        '''Test the workflowAdaptation 'mark_not_applicable'.'''
+    def _check_item_decision_state(self,
+                                   wf_adaptation_name,
+                                   item_state,
+                                   item_transition,
+                                   will_be_cloned=False):
+        """Helper method to check WFA adding an item decision state."""
         # ease override by subproducts
         cfg = self.meetingConfig
-        if 'mark_not_applicable' not in cfg.listWorkflowAdaptations():
+        if wf_adaptation_name not in cfg.listWorkflowAdaptations():
             return
         self.changeUser('pmManager')
         # check while the wfAdaptation is not activated
-        self._mark_not_applicable_inactive()
-        # activate the wfAdaptation and check
-        cfg.setWorkflowAdaptations(('mark_not_applicable', ))
+        self._item_decision_state_inactive(item_state, item_transition)
+        cfg.setWorkflowAdaptations((wf_adaptation_name, ))
         performWorkflowAdaptations(cfg, logger=pm_logger)
-        self._mark_not_applicable_active()
+        # activate the wfAdaptation and check
+        self._item_decision_state_active(item_state, item_transition, will_be_cloned)
 
-    def _mark_not_applicable_inactive(self):
-        '''Tests while 'mark_not_applicable' wfAdaptation is inactive.'''
+    def _item_decision_state_inactive(self, item_state, item_transition):
+        """Helper method to check WFA adding an item decision state when it is inactive."""
         itemWF = self.wfTool.getWorkflowsFor(self.meetingConfig.getItemTypeName())[0]
-        self.assertFalse('mark_not_applicable' in itemWF.transitions)
-        self.assertFalse('marked_not_applicable' in itemWF.states)
+        self.assertFalse(item_transition in itemWF.transitions)
+        self.assertFalse(item_state in itemWF.states)
 
-    def _mark_not_applicable_active(self):
-        '''Tests while 'mark_not_applicable' wfAdaptation is active.'''
+    def _item_decision_state_active(self, item_state, item_transition, will_be_cloned):
+        """Helper method to check WFA adding an item decision state when it is active."""
         itemWF = self.wfTool.getWorkflowsFor(self.meetingConfig.getItemTypeName())[0]
-        self.assertTrue('mark_not_applicable' in itemWF.transitions)
-        self.assertTrue('marked_not_applicable' in itemWF.states)
+        self.assertTrue(item_transition in itemWF.transitions)
+        self.assertTrue(item_state in itemWF.states)
         # test it
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=DateTime('2016/06/06'))
@@ -2305,91 +2310,48 @@ class testWFAdaptations(PloneMeetingTestCase):
         item.setDecision('<p>A decision</p>')
         self.presentItem(item)
         self.decideMeeting(meeting)
-        self.do(item, 'mark_not_applicable')
-        self.assertEqual(item.queryState(), 'marked_not_applicable')
+        self.do(item, item_transition)
+        self.assertEqual(item.queryState(), item_state)
+
+        if not will_be_cloned:
+            # no predecessor was set
+            self.assertFalse(item.getBRefs('ItemPredecessor'))
+        else:
+            # item was duplicated and new item is in it's initial state
+            linked_item = item.getBRefs('ItemPredecessor')[0]
+            self.assertEqual(linked_item.queryState(), self._initial_state(linked_item))
+
         # back transition
         self.do(item, 'backToItemFrozen')
+
+    def test_pm_WFA_mark_not_applicable(self):
+        '''Test the workflowAdaptation 'mark_not_applicable'.'''
+        self._check_item_decision_state(
+            wf_adaptation_name='mark_not_applicable',
+            item_state='marked_not_applicable',
+            item_transition='mark_not_applicable')
 
     def test_pm_WFA_removed(self):
         '''Test the workflowAdaptation 'removed'.'''
-        # ease override by subproducts
-        cfg = self.meetingConfig
-        if 'removed' not in cfg.listWorkflowAdaptations():
-            return
-        self.changeUser('pmManager')
-        # check while the wfAdaptation is not activated
-        self._removed_inactive()
-        # activate the wfAdaptation and check
-        cfg.setWorkflowAdaptations(('removed', ))
-        performWorkflowAdaptations(cfg, logger=pm_logger)
-        self._removed_active()
-
-    def _removed_inactive(self):
-        '''Tests while 'removed' wfAdaptation is inactive.'''
-        itemWF = self.wfTool.getWorkflowsFor(self.meetingConfig.getItemTypeName())[0]
-        self.assertFalse('remove' in itemWF.transitions)
-        self.assertFalse('removed' in itemWF.states)
-
-    def _removed_active(self):
-        '''Tests while 'removed' wfAdaptation is active.'''
-        itemWF = self.wfTool.getWorkflowsFor(self.meetingConfig.getItemTypeName())[0]
-        self.assertTrue('remove' in itemWF.transitions)
-        self.assertTrue('removed' in itemWF.states)
-        # test it
-        self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime('2016/06/06'))
-        item = self.create('MeetingItem')
-        item.setDecision('<p>A decision</p>')
-        self.presentItem(item)
-        self.decideMeeting(meeting)
-        self.do(item, 'remove')
-        self.assertEqual(item.queryState(), 'removed')
-        # no predecessor was set
-        self.assertFalse(item.getBRefs('ItemPredecessor'))
-        # back transition
-        self.do(item, 'backToItemFrozen')
+        self._check_item_decision_state(
+            wf_adaptation_name='removed',
+            item_state='removed',
+            item_transition='remove')
 
     def test_pm_WFA_removed_and_duplicated(self):
         '''Test the workflowAdaptation 'removed_and_duplicated'.'''
-        # ease override by subproducts
-        cfg = self.meetingConfig
-        if 'removed_and_duplicated' not in cfg.listWorkflowAdaptations():
-            return
-        self.changeUser('pmManager')
-        # check while the wfAdaptation is not activated
-        self._removed_and_duplicated_inactive()
-        # activate the wfAdaptation and check
-        cfg.setWorkflowAdaptations(('removed_and_duplicated', ))
-        performWorkflowAdaptations(cfg, logger=pm_logger)
-        self._removed_and_duplicated_active()
+        self._check_item_decision_state(
+            wf_adaptation_name='removed_and_duplicated',
+            item_state='removed',
+            item_transition='remove',
+            will_be_cloned=True)
 
-    def _removed_and_duplicated_inactive(self):
-        '''Tests while 'removed_and_duplicated' wfAdaptation is inactive.'''
-        itemWF = self.wfTool.getWorkflowsFor(self.meetingConfig.getItemTypeName())[0]
-        self.assertFalse('remove' in itemWF.transitions)
-        self.assertFalse('removed' in itemWF.states)
-
-    def _removed_and_duplicated_active(self):
-        '''Tests while 'removed_and_duplicated' wfAdaptation is active.'''
-        itemWF = self.wfTool.getWorkflowsFor(self.meetingConfig.getItemTypeName())[0]
-        self.assertTrue('remove' in itemWF.transitions)
-        self.assertTrue('removed' in itemWF.states)
-        # test it
-        self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime('2016/06/06'))
-        item = self.create('MeetingItem')
-        item.setDecision('<p>A decision</p>')
-        self.presentItem(item)
-        self.decideMeeting(meeting)
-        # no linked item for now
-        self.assertFalse(item.getBRefs('ItemPredecessor'))
-        self.do(item, 'remove')
-        self.assertEqual(item.queryState(), 'removed')
-        # item was duplicated and new item is in it's initial state
-        linked_item = item.getBRefs('ItemPredecessor')[0]
-        self.assertEqual(linked_item.queryState(), self._initial_state(linked_item))
-        # back transition
-        self.do(item, 'backToItemFrozen')
+    def test_pm_WFA_refused(self):
+        '''Test the workflowAdaptation 'refused'.'''
+        self._check_item_decision_state(
+            wf_adaptation_name='refused',
+            item_state='refused',
+            item_transition='refuse')
 
     def test_pm_WFA_reviewers_take_back_validated_item(self):
         '''Test the workflowAdaptation 'reviewers_take_back_validated_item'.'''

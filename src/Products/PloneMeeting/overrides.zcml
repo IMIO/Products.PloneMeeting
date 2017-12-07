@@ -226,4 +226,10 @@
              name="collective.iconifiedcategory.category_titles"
              factory=".vocabularies.PMCategoryTitleVocabulary" />
   
+    <browser:page
+      for="collective.eeafaceted.batchactions.interfaces.IBatchActionsMarker"
+      name="transition-batch-action"
+      class=".browser.overrides.PMTransitionBatchActionForm"
+      permission="zope2.View" />
+  
 </configure>

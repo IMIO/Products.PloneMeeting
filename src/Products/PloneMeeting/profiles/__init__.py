@@ -521,7 +521,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.advicesKeptOnSentToOtherMC = []
         self.useCopies = False
         self.selectableCopyGroups = []
-        self.itemCopyGroupsStates = ['accepted', 'refused', 'delayed', ]
+        self.itemCopyGroupsStates = ['accepted', 'delayed', ]
         self.hideItemHistoryCommentsToUsersOutsideProposingGroup = False
         self.restrictAccessToSecretItems = False
         self.itemWithGivenAdviceIsNotDeletable = False
@@ -601,7 +601,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.powerAdvisersGroups = []
         # List of item and meeting states the users in the MeetingConfig
         # corresponding powerObservers group will see the item/meeting
-        self.itemPowerObserversStates = ['itemfrozen', 'accepted', 'refused', 'delayed']
+        self.itemPowerObserversStates = ['itemfrozen', 'accepted', 'delayed']
         self.meetingPowerObserversStates = ['frozen', 'decided', 'closed']
         self.itemRestrictedPowerObserversStates = []
         self.meetingRestrictedPowerObserversStates = []

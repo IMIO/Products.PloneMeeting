@@ -316,7 +316,6 @@
  <state state_id="itemarchived"
         title="itemarchived"
         i18n:attributes="title">
-  <exit-transition transition_id="backToRefused"/>
   <exit-transition transition_id="backToConfirmed"/>
   <exit-transition transition_id="backToDelayed"/>
   <permission-map name="Access contents information"
@@ -484,7 +483,6 @@
  <state state_id="itemfrozen"
         title="itemfrozen"
         i18n:attributes="title">
-  <exit-transition transition_id="refuse"/>
   <exit-transition transition_id="accept"/>
   <exit-transition transition_id="delay"/>
   <exit-transition transition_id="backToItemPublished"/>
@@ -838,104 +836,6 @@
    <permission-role>Reader</permission-role>
   </permission-map>
  </state>
- <state state_id="refused"
-        title="refused"
-        i18n:attributes="title">
-  <exit-transition transition_id="backToItemFrozen"/>
-  <exit-transition transition_id="itemarchive"/>
-  <permission-map name="Access contents information"
-                  acquired="False">
-   <permission-role>Manager</permission-role>
-   <permission-role>MeetingReviewer</permission-role>
-   <permission-role>MeetingManager</permission-role>
-   <permission-role>MeetingObserverLocal</permission-role>
-   <permission-role>MeetingObserverGlobal</permission-role>
-   <permission-role>MeetingMember</permission-role>
-   <permission-role>Reader</permission-role>
-  </permission-map>
-  <permission-map name="Delete objects"
-                  acquired="False">
-   <permission-role>Manager</permission-role>
-   <permission-role>MeetingManager</permission-role>
-  </permission-map>
-  <permission-map name="Modify portal content"
-                  acquired="False">
-   <permission-role>Manager</permission-role>
-   <permission-role>MeetingManager</permission-role>
-  </permission-map>
-  <permission-map name="PloneMeeting: Add annex"
-                  acquired="False">
-   <permission-role>Manager</permission-role>
-   <permission-role>MeetingManager</permission-role>
-  </permission-map>
-  <permission-map name="PloneMeeting: Add annexDecision"
-                  acquired="False">
-   <permission-role>Manager</permission-role>
-   <permission-role>MeetingManager</permission-role>
-  </permission-map>
-  <permission-map name="PloneMeeting: Read budget infos"
-                  acquired="False">
-   <permission-role>Manager</permission-role>
-   <permission-role>MeetingMember</permission-role>
-   <permission-role>MeetingReviewer</permission-role>
-   <permission-role>MeetingObserverLocal</permission-role>
-   <permission-role>MeetingObserverGlobal</permission-role>
-   <permission-role>Reader</permission-role>
-  </permission-map>
-  <permission-map name="PloneMeeting: Read decision"
-                  acquired="False">
-   <permission-role>Manager</permission-role>
-   <permission-role>MeetingReviewer</permission-role>
-   <permission-role>MeetingManager</permission-role>
-   <permission-role>MeetingObserverLocal</permission-role>
-   <permission-role>MeetingObserverGlobal</permission-role>
-   <permission-role>MeetingMember</permission-role>
-   <permission-role>Reader</permission-role>
-  </permission-map>
-  <permission-map name="PloneMeeting: Read item observations"
-                  acquired="False">
-   <permission-role>Manager</permission-role>
-   <permission-role>MeetingManager</permission-role>
-   <permission-role>MeetingObserverGlobal</permission-role>
-   <permission-role>Reader</permission-role>
-  </permission-map>
-  <permission-map name="PloneMeeting: Write budget infos"
-                  acquired="False">
-   <permission-role>Manager</permission-role>
-   <permission-role>MeetingManager</permission-role>
-   <permission-role>MeetingBudgetImpactEditor</permission-role>
-  </permission-map>
-  <permission-map name="PloneMeeting: Write decision"
-                  acquired="False">
-   <permission-role>Manager</permission-role>
-   <permission-role>MeetingManager</permission-role>
-  </permission-map>
-  <permission-map name="PloneMeeting: Write item MeetingManager reserved fields"
-                  acquired="False">
-   <permission-role>Manager</permission-role>
-   <permission-role>MeetingManager</permission-role>
-  </permission-map>
-  <permission-map name="PloneMeeting: Write marginal notes"
-                  acquired="False">
-   <permission-role>Manager</permission-role>
-   <permission-role>MeetingManager</permission-role>
-  </permission-map>
-  <permission-map name="Review portal content"
-                  acquired="False">
-   <permission-role>Manager</permission-role>
-   <permission-role>MeetingManager</permission-role>
-  </permission-map>
-  <permission-map name="View"
-                  acquired="False">
-   <permission-role>Manager</permission-role>
-   <permission-role>MeetingReviewer</permission-role>
-   <permission-role>MeetingManager</permission-role>
-   <permission-role>MeetingObserverLocal</permission-role>
-   <permission-role>MeetingObserverGlobal</permission-role>
-   <permission-role>MeetingMember</permission-role>
-   <permission-role>Reader</permission-role>
-  </permission-map>
- </state>
  <state state_id="validated"
         title="validated"
         i18n:attributes="title">
@@ -1133,18 +1033,6 @@
     <guard-expression>python:here.wfConditions().mayCorrect('proposed')</guard-expression>
   </guard>
  </transition>
- <transition transition_id="backToRefused"
-             title="backToRefused"
-             new_state="refused"
-             trigger="USER"
-             before_script=""
-             after_script=""
-             i18n:attributes="title">
-  <action url="" icon="%(portal_url)s/backToRefused.png" category="workflow" i18n:translate="">backToRefused</action>
-  <guard>
-    <guard-expression>python:here.wfConditions().mayCorrect('refused')</guard-expression>
-  </guard>
- </transition>
  <transition transition_id="backToValidated"
              title="backToValidated"
              new_state="validated"
@@ -1239,18 +1127,6 @@
   <action url="" icon="%(portal_url)s/propose.png" category="workflow" i18n:translate="">propose</action>
   <guard>
     <guard-expression>python:here.wfConditions().mayPropose()</guard-expression>
-  </guard>
- </transition>
- <transition transition_id="refuse"
-             title="refuse"
-             new_state="refused"
-             trigger="USER"
-             before_script=""
-             after_script=""
-             i18n:attributes="title">
-  <action url="" icon="%(portal_url)s/refuse.png" category="workflow" i18n:translate="">refuse</action>
-  <guard>
-    <guard-expression>python:here.wfConditions().mayDecide()</guard-expression>
   </guard>
  </transition>
  <transition transition_id="validate"
