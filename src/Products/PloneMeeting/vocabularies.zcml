@@ -35,6 +35,8 @@
            name="Products.PloneMeeting.vocabularies.sendtoauthorityvocabulary" />
   <utility component=".vocabularies.HasAnnexesToPrintVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.hasannexestoprintvocabulary" />
+  <utility component=".vocabularies.HasAnnexesToSignVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.hasannexestosignvocabulary" />
   <utility component=".vocabularies.DownOrUpWorkflowAgainVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.downorupworkflowagainvocabulary" />
   <utility component=".vocabularies.ListTypesVocabularyFactory"

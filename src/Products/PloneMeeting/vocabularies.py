@@ -593,6 +593,35 @@ class HasAnnexesToPrintVocabulary(object):
 HasAnnexesToPrintVocabularyFactory = HasAnnexesToPrintVocabulary()
 
 
+class HasAnnexesToSignVocabulary(object):
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """ """
+        res = []
+        res.append(SimpleTerm('0',
+                              '0',
+                              safe_unicode(translate('annexes_to_sign_term',
+                                                     domain='PloneMeeting',
+                                                     context=context.REQUEST)))
+                   )
+        res.append(SimpleTerm('1',
+                              '1',
+                              safe_unicode(translate('annexes_signed_term',
+                                                     domain='PloneMeeting',
+                                                     context=context.REQUEST)))
+                   )
+        res.append(SimpleTerm('-1',
+                              '-1',
+                              safe_unicode(translate('no_annexes_to_sign_term',
+                                                     domain='PloneMeeting',
+                                                     context=context.REQUEST)))
+                   )
+        return SimpleVocabulary(res)
+
+HasAnnexesToSignVocabularyFactory = HasAnnexesToSignVocabulary()
+
+
 class DownOrUpWorkflowAgainVocabulary(object):
     implements(IVocabularyFactory)
 

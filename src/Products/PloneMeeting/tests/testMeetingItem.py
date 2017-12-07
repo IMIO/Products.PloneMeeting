@@ -37,6 +37,7 @@ from zope.lifecycleevent import ObjectModifiedEvent
 
 from Products.PluginIndexes.common.UnIndex import _marker
 from collective.iconifiedcategory.event import IconifiedPrintChangedEvent
+from collective.iconifiedcategory.event import IconifiedSignedChangedEvent
 from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.utils import get_categorized_elements
 from collective.iconifiedcategory.utils import get_categories
@@ -5164,6 +5165,57 @@ class testMeetingItem(PloneMeetingTestCase):
         annex = self.addAnnex(item, to_print=True)
         self.assertTrue(annex.to_print)
         self.assertTrue(self.portal.portal_catalog(hasAnnexesToPrint='1', UID=item.UID()))
+
+    def test_pm_HasAnnexesToSignIndex(self):
+        """ """
+        catalog = self.portal.portal_catalog
+        cfg = self.meetingConfig
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        annex = self.addAnnex(item)
+        # False by default
+        self.assertFalse(annex.to_sign)
+        self.assertFalse(annex.signed)
+        self.assertFalse(catalog(hasAnnexesToSign='1', UID=item.UID()))
+        self.assertFalse(catalog(hasAnnexesToSign='0', UID=item.UID()))
+        self.assertTrue(catalog(hasAnnexesToSign='-1', UID=item.UID()))
+        # to_sign
+        annex.to_sign = True
+        notify(IconifiedSignedChangedEvent(
+            annex,
+            old_values={'to_sign': False},
+            new_values={'to_sign': True}))
+        self.assertFalse(catalog(hasAnnexesToSign='1', UID=item.UID()))
+        self.assertTrue(catalog(hasAnnexesToSign='0', UID=item.UID()))
+        self.assertFalse(catalog(hasAnnexesToSign='-1', UID=item.UID()))
+        # signed
+        annex.signed = True
+        notify(IconifiedSignedChangedEvent(
+            annex,
+            old_values={'signed': False},
+            new_values={'signed': True}))
+        self.assertTrue(catalog(hasAnnexesToSign='1', UID=item.UID()))
+        self.assertFalse(catalog(hasAnnexesToSign='0', UID=item.UID()))
+        self.assertFalse(catalog(hasAnnexesToSign='-1', UID=item.UID()))
+        # remove the element
+        self.portal.restrictedTraverse('@@delete_givenuid')(annex.UID())
+        self.assertFalse(catalog(hasAnnexesToSign='1', UID=item.UID()))
+        self.assertFalse(catalog(hasAnnexesToSign='0', UID=item.UID()))
+        self.assertFalse(catalog(hasAnnexesToSign='-1', UID=item.UID()))
+
+        # add an annex that is directly 'to_sign'
+        # this is only done if to_be_signed_activated on CategoryGroup
+        category = cfg.annexes_types.item_annexes.get(self.annexFileType)
+        category_group = category.get_category_group()
+        self.assertFalse(category_group.signed_activated)
+        annex = self.addAnnex(item, to_sign=True)
+        self.assertFalse(annex.to_sign)
+        self.assertFalse(catalog(hasAnnexesToSign='0', UID=item.UID()))
+        # enable to_sign
+        category_group.signed_activated = True
+        annex = self.addAnnex(item, to_sign=True)
+        self.assertTrue(annex.to_sign)
+        self.assertTrue(catalog(hasAnnexesToSign='0', UID=item.UID()))
 
     def test_pm_HideCssClasses(self):
         """ """

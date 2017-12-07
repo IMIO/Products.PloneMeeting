@@ -310,7 +310,9 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                  annexTitle=None,
                  relatedTo=None,
                  to_print=False,
-                 confidential=False):
+                 confidential=False,
+                 to_sign=False,
+                 signed=False):
         '''Adds an annex to p_item.
            If no p_annexType is provided, self.annexFileType is used.
            If no p_annexTitle is specified, the predefined title of the annex type is used.'''
@@ -346,7 +348,9 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             file=self._annex_file_content(),
             content_category=annexTypeId,
             to_print=to_print,
-            confidential=confidential)
+            confidential=confidential,
+            to_sign=to_sign,
+            signed=signed)
         # need to commit the transaction so the stored blob is correct
         # if not done, accessing the blob will raise 'BlobError: Uncommitted changes'
         transaction.commit()

@@ -62,6 +62,7 @@ indexInfos = {
     'pollType': ('FieldIndex', {}),
     'listType': ('FieldIndex', {}),
     'hasAnnexesToPrint': ('FieldIndex', {}),
+    'hasAnnexesToSign': ('KeywordIndex', {}),
     # Meeting-related indexes
     'getDate': ('DateIndex', {}),
     # MeetingUser-related indexes

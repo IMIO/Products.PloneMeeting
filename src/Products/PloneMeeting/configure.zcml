@@ -159,6 +159,7 @@
   <adapter name="getRawClassifier" factory=".indexes.getRawClassifier" />
   <adapter name="Description" factory=".indexes.Description" />
   <adapter name="hasAnnexesToPrint" factory=".indexes.hasAnnexesToPrint" />
+  <adapter name="hasAnnexesToSign" factory=".indexes.hasAnnexesToSign" />
   <adapter name="linkedMeetingDate" factory=".indexes.linkedMeetingDate" />
   <adapter name="linkedMeetingUID" factory=".indexes.linkedMeetingUID" />
   <adapter name="getPreferredMeetingDate" factory=".indexes.getPreferredMeetingDate" />
