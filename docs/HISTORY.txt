@@ -7,7 +7,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Versions 3.0.x are for Plone < 4.3
 - Versions 3.1.+ are for Plone 4.3+
 
-4.1b2 (unreleased)
+4.1b2 (2017-12-07)
 ------------------
 
 - State 'refused' is no more by default in the item workflow, it is now a WFAdaptation 'refused'
