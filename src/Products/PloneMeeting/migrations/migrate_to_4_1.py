@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import logging
+import os
 from zope.interface import alsoProvides
 from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
 from plone import api
@@ -12,6 +13,19 @@ logger = logging.getLogger('PloneMeeting')
 
 # The migration class ----------------------------------------------------------
 class Migrate_To_4_1(Migrator):
+
+    def _addHasAnnexesToSignFacetedFilter(self):
+        """Add new faceted filter 'has annexes to sign?'."""
+        logger.info("Adding new faceted filter 'Has annexes to sign?' for every MeetingConfigs...")
+        xmlpath = os.path.join(
+            os.path.dirname(__file__),
+            '../faceted_conf/upgrade_step_add_hasannexestosign_widget.xml')
+
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            obj = cfg.searches.searches_items
+            obj.unrestrictedTraverse('@@faceted_exportimport').import_xml(
+                import_file=open(xmlpath))
+        logger.info('Done.')
 
     def _addItemTemplatesManagersGroup(self):
         """Add the '_itemtemplatesmanagers' group for every MeetingConfig."""
@@ -93,6 +107,7 @@ class Migrate_To_4_1(Migrator):
         self.updateHolidays()
 
         # migration steps
+        self._addHasAnnexesToSignFacetedFilter()
         self._addItemTemplatesManagersGroup()
         self._updateCollectionColumns()
         self._markSearchesFoldersWithIBatchActionsMarker()

@@ -614,6 +614,16 @@ def onAnnexToPrintChanged(annex, event):
         parent.reindexObject(idxs=['hasAnnexesToPrint'])
 
 
+def onAnnexSignedChanged(annex, event):
+    """ """
+    annex = event.object
+
+    # if parent is a MeetingItem, update the 'hasAnnexesToSign' index
+    parent = annex.getParentNode()
+    if parent.meta_type == 'MeetingItem':
+        parent.reindexObject(idxs=['hasAnnexesToSign'])
+
+
 def onItemEditBegun(item, event):
     '''When an item edit begun, if it is an item in creation, we check that
        if MeetingConfig.itemCreatedOnlyUsingTemplate is True, the user is not trying to create

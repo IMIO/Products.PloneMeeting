@@ -112,6 +112,10 @@
                   collective.iconifiedcategory.interfaces.IIconifiedPrintChangedEvent"
              handler=".events.onAnnexToPrintChanged" />
 
+ <subscriber for="imio.annex.content.annex.IAnnex
+                  collective.iconifiedcategory.interfaces.IIconifiedSignedChangedEvent"
+             handler=".events.onAnnexSignedChanged" />
+
   <!-- if 'auto-conversion' is enabled in collective.documentviewer, convert MeetingFiles upon creation -->
   <subscriber for=".interfaces.IMeetingFile
                    Products.Archetypes.interfaces.IObjectInitializedEvent"
