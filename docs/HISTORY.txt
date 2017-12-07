@@ -14,6 +14,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   that is enabled by default but that can be disabled in case state 'refused' is not used
 - Batch action to change state (TransitionBatchActionForm) is now only available to users having
   operational roles in the application.  So it is not available to (restricted)powerobservers for example
+- Added faceted filter 'Has annexes to sign?'
 
 4.1b1 (2017-12-01)
 ------------------
