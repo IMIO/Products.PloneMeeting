@@ -10,8 +10,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 4.1b3 (unreleased)
 ------------------
 
-- Nothing changed yet.
-
+- Versions of appy and Products.PloneMeeting displayed in control panel are taken from distribution (setup.py),
+  no more from portal_setup.
 
 4.1b2 (2017-12-07)
 ------------------

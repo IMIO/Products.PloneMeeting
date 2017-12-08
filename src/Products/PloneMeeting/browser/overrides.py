@@ -329,9 +329,9 @@ class PloneMeetingOverviewControlPanel(OverviewControlPanel):
     '''
     def version_overview(self):
         versions = super(PloneMeetingOverviewControlPanel, self).version_overview()
-        portal_setup = api.portal.get_tool('portal_setup')
-        pm_version = portal_setup.getProfileInfo('profile-Products.PloneMeeting:default')['version']
-        versions.insert(0, 'appy %s' % appy.version.verbose)
+        pm_version = api.env.get_distribution('Products.PloneMeeting')._version
+        appy_version = api.env.get_distribution('appy')._version
+        versions.insert(0, 'appy %s' % appy_version)
         versions.insert(0, 'PloneMeeting %s' % pm_version)
         return versions
 
