@@ -1552,16 +1552,15 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
         # as we could be in the 'available items' faceted part, when inserting
         # an item from the meeting_view, we set force_linked_items_query=True
-        # regarding the getItemNumber range, we want from startNumber to last
-        # item of the meeting, we consider a meeting have maximum 5000 items...
+        # we query items from startNumber to last item of the meeting
         # moreover we getItems unrestricted to be sure we have every elements
         brains = self.getItems(
             ordered=True,
             useCatalog=True,
             unrestricted=True,
             additional_catalog_query={
-                'getItemNumber': {'query': [startNumber, 5000*100],
-                                  'range': 'minmax'}, },
+                'getItemNumber': {'query': startNumber,
+                                  'range': 'min'}, },
             force_linked_items_query=True)
         for brain in brains:
             item = brain._unrestrictedGetObject()
