@@ -955,7 +955,6 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
                 generated_template,
                 pod_template,
                 output_format,
-                store_as_annex_uid=pod_template.store_as_annex,
                 return_portal_msg_code=True)
             if not res:
                 num_of_generated_templates += 1
