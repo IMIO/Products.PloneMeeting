@@ -111,7 +111,7 @@ class AdvicesIcons(BrowserView):
         res = []
         for adviceToAdd in advicesToAdd:
             advice_portal_type = self.context.adapted()._advicePortalTypeForAdviser(adviceToAdd)
-            if not advice_portal_type in res:
+            if advice_portal_type not in res:
                 res.append(advice_portal_type)
         return res
 
