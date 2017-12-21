@@ -11,7 +11,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 ------------------
 
 - Versions of appy and Products.PloneMeeting displayed in control panel are taken from distribution (setup.py),
-  no more from portal_setup.
+  no more from portal_setup
+- Fixed ConfigurablePODTemplate.store_as_annex to handle storing annex on any element accepting annex
+  (advice and meeting in addition to item and item decision annexes)
 
 4.1b2 (2017-12-07)
 ------------------

@@ -805,22 +805,23 @@ class StorePodTemplateAsAnnexVocabulary(object):
         # do not fail when displaying the schema in the dexterity types control panel
         if not cfg:
             return SimpleVocabulary(res)
-        item_annexes = cfg.annexes_types.item_annexes
-        for cat in item_annexes.objectValues():
-            res.append(SimpleTerm(
-                cat.UID(),
-                cat.UID(),
-                u'{0} → {1}'.format(
-                    safe_unicode(item_annexes.Title()),
-                    safe_unicode(cat.Title()))))
-        item_decision_annexes = cfg.annexes_types.item_decision_annexes
-        for cat in item_decision_annexes.objectValues():
-            res.append(SimpleTerm(
-                cat.UID(),
-                cat.UID(),
-                u'{0} → {1}'.format(
-                    safe_unicode(item_decision_annexes.Title()),
-                    safe_unicode(cat.Title()))))
+
+        for annexes_group in cfg.annexes_types.objectValues():
+            for cat in annexes_group.objectValues():
+                res.append(SimpleTerm(
+                    cat.UID(),
+                    cat.UID(),
+                    u'{0} → {1}'.format(
+                        safe_unicode(annexes_group.Title()),
+                        safe_unicode(cat.Title()))))
+                for subcat in cat.objectValues():
+                    res.append(SimpleTerm(
+                        subcat.UID(),
+                        subcat.UID(),
+                        u'{0} → {1} → {2}'.format(
+                            safe_unicode(annexes_group.Title()),
+                            safe_unicode(cat.Title()),
+                            safe_unicode(subcat.Title()))))
         return SimpleVocabulary(res)
 
 StorePodTemplateAsAnnexVocabularyFactory = StorePodTemplateAsAnnexVocabulary()

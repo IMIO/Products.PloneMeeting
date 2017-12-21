@@ -7,7 +7,6 @@
 # GNU General Public License (GPL)
 #
 
-import appy
 from AccessControl import Unauthorized
 from Acquisition import aq_base
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
@@ -282,11 +281,10 @@ class PMDocumentGeneratorLinksViewlet(DocumentGeneratorLinksViewlet, BaseGenerat
         """ """
         return True
 
-    def may_store_as_annex(self, pod_template_uid, store_as_annex_uid):
-        """By default only (Meeting)Managers are able to store a generated document as annex.
-           Check also that the p_store_as_annex_uid is defined in the POD template with p_pod_template_uid UID."""
+    def may_store_as_annex(self, pod_template_uid):
+        """By default only (Meeting)Managers are able to store a generated document as annex."""
         pod_template = api.content.find(UID=pod_template_uid)[0].getObject()
-        if store_as_annex_uid not in pod_template.store_as_annex:
+        if not pod_template.store_as_annex:
             return False
         tool = api.portal.get_tool('portal_plonemeeting')
         return tool.isManager(self.context)
@@ -788,36 +786,67 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
         if self.request.get('mailinglist_name'):
             return self._sendPodTemplate(generated_template)
         # check if we need to store the generated document
-        elif self.request.get('store_as_annex_uid'):
+        elif self.request.get('store_as_annex', '0') == '1':
             return self.storePodTemplateAsAnnex(generated_template,
                                                 pod_template,
-                                                output_format,
-                                                store_as_annex_uid=self.request.get('store_as_annex_uid'))
+                                                output_format)
         else:
             return generated_template
+
+    def _annexes_types_mapping(self):
+        """Return mapping between annexes_types categories and portal_type
+           of parent of annex that can use it.
+           {'item_annexes': ['MeetingItemCfg1'],
+            'item_decision_annexes': ['MeetingItemCfg1'],
+            ...}."""
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        mapping = {
+            'item_annexes': [cfg.getItemTypeName()],
+            'item_decision_annexes': [cfg.getItemTypeName()],
+            'advice_annexes': tool.getAdvicePortalTypes(as_ids=True),
+            'meeting_annexes': [cfg.getMeetingTypeName()],
+            }
+        return mapping
 
     def storePodTemplateAsAnnex(self,
                                 generated_template_data,
                                 pod_template,
                                 output_format,
-                                store_as_annex_uid,
                                 return_portal_msg_code=False):
-        '''Store given p_generated_template_dat as annex using annex_type found using p_store_as_annex_uid.'''
-        annex_type = api.content.find(UID=store_as_annex_uid)[0].getObject()
+        '''Store given p_generated_template_data as annex using p_pod_template.store_as_annex annex_type uid.'''
         # first check if current member is able to store_as_annex
         may_store_as_annex = PMDocumentGeneratorLinksViewlet(
             self.context,
             self.request,
             None,
-            None).may_store_as_annex(pod_template.UID(), store_as_annex_uid)
-
-        # user should not have arrived here, we raise Unauthorized
+            None).may_store_as_annex(pod_template.UID())
         if not may_store_as_annex:
             raise Unauthorized
 
+        # now check that the store_as_annex corresponds to an annex_type of
+        # the current context.  Indeed because it is possible to define the availability
+        # of a Pod template using a TAL expression, we can not validate field
+        # ConfigurablePodTemplate.store_as_annex and it could contain an annex_type
+        # that does not correspond to the context the document is generated on
+        plone_utils = api.portal.get_tool('plone_utils')
+        annex_type = api.content.find(UID=pod_template.store_as_annex)[0].getObject()
+        annex_type_group = annex_type.get_category_group()
+        if self.context.portal_type not in \
+           self._annexes_types_mapping()[annex_type_group.getId()]:
+            msg_code = 'store_podtemplate_as_annex_wrong_annex_type_on_pod_template'
+            if return_portal_msg_code:
+                return msg_code
+            else:
+                msg = translate(
+                    msg_code,
+                    domain='PloneMeeting',
+                    context=self.request)
+                plone_utils.addPortalMessage(msg, type='error')
+                return self.request.RESPONSE.redirect(self.request['HTTP_REFERER'])
+
         # now check that an annex was not already stored using same pod_template
         # indeed we may not store the same generated pod_template several times
-        plone_utils = api.portal.get_tool('plone_utils')
         for annex in get_annexes(self.context):
             if getattr(annex, 'used_pod_template_id', None) == pod_template.getId():
                 msg_code = 'store_podtemplate_as_annex_can_not_store_several_times'
@@ -833,11 +862,10 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
 
         # now add the annex using specified type
         # check if we need to add an 'annex' or an 'annexDecision'
-        annex_type_group = annex_type.get_category_group()
-        if annex_type_group.getId() == 'item_annexes':
-            annex_portal_type = 'annex'
-        else:
+        if annex_type_group.getId() == 'item_decision_annexes':
             annex_portal_type = 'annexDecision'
+        else:
+            annex_portal_type = 'annex'
 
         # check if user is able to add this portal_type locally
         allowedContentTypeIds = [allowedContentType.getId() for allowedContentType
@@ -852,7 +880,7 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
                     msg_code,
                     domain='PloneMeeting',
                     context=self.request)
-                plone_utils.addPortalMessage(msg)
+                plone_utils.addPortalMessage(msg, type='error')
                 return self.request.RESPONSE.redirect(self.request['HTTP_REFERER'])
 
         # proceed, add annex and redirect user to the annexes table view
@@ -906,7 +934,7 @@ class PMDocumentGenerationView(IDDocumentGenerationView):
         value = pod_template.store_as_annex_title_expr
         evaluatedExpr = _evaluateExpression(
             self.context,
-            expression=value.strip(),
+            expression=value and value.strip() or '',
             extra_expr_ctx={'obj': self.context,
                             'member': api.user.get_current(),
                             'pod_template': pod_template},
