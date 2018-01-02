@@ -354,7 +354,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             # the rule is in use, check every items if the rule is used
             catalog = api.portal.get_tool('portal_catalog')
             cfgs = self.objectValues('MeetingConfig')
-            brains = catalog(Type=[cfg.getItemTypeName() for cfg in cfgs])
+            brains = catalog(portal_type=[cfg.getItemTypeName() for cfg in cfgs])
             year, month, day = date.split('/')
             date_as_datetime = datetime(int(year), int(month), int(day))
             for brain in brains:
