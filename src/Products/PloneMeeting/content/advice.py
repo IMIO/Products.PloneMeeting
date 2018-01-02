@@ -22,6 +22,7 @@ from Products.PloneMeeting.utils import findMeetingAdvicePortalType
 from Products.PloneMeeting.utils import getHistory
 from Products.PloneMeeting.utils import getLastEvent
 from Products.PloneMeeting.utils import isModifiedSinceLastVersion
+from Products.PloneMeeting.utils import version_object
 from imio.prettylink.interfaces import IPrettyLink
 
 
@@ -208,13 +209,8 @@ class MeetingAdvice(Container):
                        (fieldName in usedItemAttrs or not field.optional):
                         self.historized_item_data.append({'field_name': fieldName,
                                                           'field_content': field.get(item)})
-            pr = api.portal.get_tool('portal_repository')
-            # make sure advice modification date is not changed
-            advice_modified = self.modified()
-            pr.save(obj=self, comment=comment)
+            version_object(self, comment=comment)
             delattr(self, 'historized_item_data')
-            # set back modified on advice so version timestamp is > advice modified
-            self.setModificationDate(advice_modified)
             self.reindexObject(idxs=['modified', 'ModificationDate'])
 
 

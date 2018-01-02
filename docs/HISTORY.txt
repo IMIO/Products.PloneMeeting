@@ -19,6 +19,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Install plone.app.versioningbehavior so portal_modifier extra modifiers are correctly installed, especially
   the CloneNamedFileBlobs modifier that takes care of correctly managing versioned Dexterity file
 - Display the 'history' action in the annexes dashboard to Managers
+- Factorized code that saves a version to portal_repository and keep modification date in utils.version_object
 
 4.1b2 (2017-12-07)
 ------------------

@@ -1330,10 +1330,18 @@ def isModifiedSinceLastVersion(obj):
     return modified
 
 
+def version_object(obj, keep_modified=True, comment=''):
+    """ """
+    pr = api.portal.get_tool('portal_repository')
+    # make sure obj modification date is not changed
+    obj_modified = obj.modified()
+    pr.save(obj=obj, comment=comment)
+    # set back modified on obj so version timestamp is > obj modified
+    obj.setModificationDate(obj_modified)
+
+
 # taken from http://mscerts.programming4.us/fr/639402.aspx
 # adapted to fit our needs
-
-
 def networkdays(start_date, end_date, holidays=[], weekends=(5, 6, )):
     delta_days = (end_date - start_date).days + 1
     full_weeks, extra_days = divmod(delta_days, 7)

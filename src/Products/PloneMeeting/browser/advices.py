@@ -147,7 +147,6 @@ class ChangeAdviceAskedAgainView(BrowserView):
 
     def __call__(self):
         """ """
-        pr = api.portal.get_tool('portal_repository')
         parent = self.context.getParentNode()
         if not self.context.advice_type == 'asked_again':
             # we are about to set advice to 'asked_again'
@@ -163,6 +162,7 @@ class ChangeAdviceAskedAgainView(BrowserView):
             cfg = tool.getMeetingConfig(self.context)
             self.context.advice_hide_during_redaction = cfg.getDefaultAdviceHiddenDuringRedaction()
         else:
+            pr = api.portal.get_tool('portal_repository')
             # we are about to set the advice back to original value
             if not parent.adapted().mayBackToPreviousAdvice(self.context):
                 raise Unauthorized
