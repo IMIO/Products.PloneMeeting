@@ -14,6 +14,11 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   no more from portal_setup
 - Fixed ConfigurablePODTemplate.store_as_annex to handle storing annex on any element accepting annex
   (advice and meeting in addition to item and item decision annexes)
+- Enable manual versioning for annex and annexDecision so it can be versioned by imio.zamqp.pm when barcode
+  is inserted into the annex or scanned file is reinjected in the annex
+- Install plone.app.versioningbehavior so portal_modifier extra modifiers are correctly installed, especially
+  the CloneNamedFileBlobs modifier that takes care of correctly managing versioned Dexterity file
+- Display the 'history' action in the annexes dashboard to Managers
 
 4.1b2 (2017-12-07)
 ------------------

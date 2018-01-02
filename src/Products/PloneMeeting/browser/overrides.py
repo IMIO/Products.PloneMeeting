@@ -414,6 +414,7 @@ class BaseActionsPanelView(ActionsPanelView):
         self.IGNORABLE_ACTIONS = ('copy', 'cut', 'paste', 'rename',
                                   'faceted.disable', 'faceted.enable',
                                   'faceted.search.disable', 'faceted.search.enable')
+        self.tool = api.portal.get_tool('portal_plonemeeting')
 
     def mayEdit(self):
         """
@@ -431,8 +432,7 @@ class BaseActionsPanelView(ActionsPanelView):
           This is relevant for Meeting and MeetingItem.
         """
         toConfirm = []
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
+        cfg = self.tool.getMeetingConfig(self.context)
         if cfg:
             toConfirm = cfg.getTransitionsToConfirm()
         return toConfirm
@@ -480,8 +480,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         if meeting:
             meetingModified = self.context.getMeeting().modified()
         annotations = IAnnotations(self.context)
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
+        cfg = self.tool.getMeetingConfig(self.context)
         cfg_modified = cfg.modified()
         user = self.request['AUTHENTICATED_USER']
         userGroups = user.getGroups()
@@ -547,7 +546,8 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         """
           History on items is shown if item isPrivacyViewable without condition.
         """
-        return bool(self.context.adapted().isPrivacyViewable())
+        res = super(MeetingItemActionsPanelView, self).showHistoryForContext()
+        return res and bool(self.context.adapted().isPrivacyViewable())
 
     @memoize_contextless
     def mayChangeOrder(self):
@@ -590,8 +590,7 @@ class MeetingActionsPanelView(BaseActionsPanelView):
            - cfg modified;
            - different item or user;
            - user groups changed.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
+        cfg = self.tool.getMeetingConfig(self.context)
         cfg_modified = cfg.modified()
         user = self.request['AUTHENTICATED_USER']
         userGroups = user.getGroups()
@@ -674,6 +673,24 @@ class AdviceActionsPanelView(BaseActionsPanelView):
         return toConfirm
 
 
+class AnnexActionsPanelView(BaseActionsPanelView):
+    """
+      Specific actions displayed on an annex.
+    """
+
+    def showHistoryForContext(self):
+        """
+          History on annexes is only shown to Managers.
+        """
+        # check isManager on parent (item) so caching is used as context is a key
+        # used in the caching invalidation
+        parent = self.context.aq_inner.aq_parent
+        while parent.meta_type != 'MeetingItem':
+            parent = self.context.aq_inner.aq_parent
+        res = super(MeetingItemActionsPanelView, parent).showHistoryForContext()
+        return res and self.tool.isManager(parent, realManagers=True)
+
+
 class ConfigActionsPanelView(ActionsPanelView):
     """
       Actions panel used for elements of the configuration.
@@ -722,8 +739,7 @@ class ConfigActionsPanelView(ActionsPanelView):
         if self.context.meta_type == "MeetingGroup":
             return "#MeetingGroup"
         # most are used on the 'data' fieldset, use this as default
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
+        cfg = self.tool.getMeetingConfig(self.context)
         return "{0}/?pageName=data#{1}".format(cfg.absolute_url(), folderId)
 
     def mayEdit(self):
@@ -739,8 +755,7 @@ class ConfigActionsPanelView(ActionsPanelView):
         """
           Add a link to linked Plone groups for a MeetingGroup.
         """
-        tool = api.portal.get_tool('portal_plonemeeting')
-        if tool.isManager(self.context, True):
+        if self.tool.isManager(self.context, True):
             return ViewPageTemplateFile("templates/actions_panel_config_linkedplonegroups.pt")(self)
         return ''
 

@@ -92,6 +92,7 @@ class Migrate_To_4_1(Migrator):
     def run(self, step=None):
         logger.info('Migrating to PloneMeeting 4.1...')
         # reinstall so versions are correctly shown in portal_quickinstaller
+        # plone.app.versioningbehavior is installed
         self.reinstall(profiles=['profile-Products.PloneMeeting:default', ],
                        ignore_dependencies=False,
                        dependency_strategy=DEPENDENCY_STRATEGY_NEW)
