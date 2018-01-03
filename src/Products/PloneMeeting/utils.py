@@ -1330,9 +1330,15 @@ def isModifiedSinceLastVersion(obj):
     return modified
 
 
-def version_object(obj, keep_modified=True, comment=''):
-    """ """
+def version_object(obj, keep_modified=True, only_once=False, comment=''):
+    """Versionate p_obj, make sure modification_date is not changed if p_keep_modified is True.
+       p_only_once will take care that p_obj is only versioned one time.
+       An optionnal p_comment may be defined and will appear in the versions history."""
     pr = api.portal.get_tool('portal_repository')
+    # if only_once, return if we already have versions
+    if only_once and pr.getHistoryMetadata(obj):
+        return
+
     # make sure obj modification date is not changed
     obj_modified = obj.modified()
     pr.save(obj=obj, comment=comment)
