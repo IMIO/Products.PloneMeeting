@@ -712,6 +712,7 @@ class ConfigActionsPanelView(ActionsPanelView):
 
         if self.context.meta_type == 'MeetingGroup':
             self.SECTIONS_TO_RENDER += ('renderLinkedPloneGroups', )
+        self.tool = api.portal.get_tool('portal_plonemeeting')
 
     def renderArrows(self):
         """ """
