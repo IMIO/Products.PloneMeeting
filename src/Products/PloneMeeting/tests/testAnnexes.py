@@ -43,6 +43,7 @@ from collective.iconifiedcategory.utils import get_category_object
 from collective.iconifiedcategory.utils import get_group
 from collective.iconifiedcategory.utils import update_all_categorized_elements
 from imio.actionspanel.interfaces import IContentDeletable
+from imio.annex.columns import ActionsColumn
 from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
@@ -1147,6 +1148,19 @@ class testAnnexes(PloneMeetingTestCase):
         term_tokens = [term.token for term in vocab(annex)._terms]
         self.assertTrue(overhead_analysis_category_id in term_tokens)
         self.assertTrue(budget_analysis_subannex_category_id in term_tokens)
+
+    def test_pm_actions_panel_history_only_for_managers(self):
+        """The 'history' icon in the actions panel is only shown to real Managers."""
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        annex = self.addAnnex(item)
+        annex_brain = self.portal.portal_catalog(UID=annex.UID())[0]
+        column = ActionsColumn(self.portal, self.request, self)
+        self.assertFalse('@@historyview' in column.renderCell(annex_brain))
+        self.changeUser('pmManager')
+        self.assertFalse('@@historyview' in column.renderCell(annex_brain))
+        self.changeUser('admin')
+        self.assertTrue('@@historyview' in column.renderCell(annex_brain))
 
 
 def test_suite():

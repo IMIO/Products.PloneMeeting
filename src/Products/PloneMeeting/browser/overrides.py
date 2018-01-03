@@ -682,13 +682,15 @@ class AnnexActionsPanelView(BaseActionsPanelView):
         """
           History on annexes is only shown to Managers.
         """
+        if not super(AnnexActionsPanelView, self).showHistoryForContext():
+            return False
+
         # check isManager on parent (item) so caching is used as context is a key
         # used in the caching invalidation
         parent = self.context.aq_inner.aq_parent
         while parent.meta_type != 'MeetingItem':
             parent = self.context.aq_inner.aq_parent
-        res = super(MeetingItemActionsPanelView, parent).showHistoryForContext()
-        return res and self.tool.isManager(parent, realManagers=True)
+        return self.tool.isManager(parent, realManagers=True)
 
 
 class ConfigActionsPanelView(ActionsPanelView):
