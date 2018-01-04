@@ -688,7 +688,7 @@ class AnnexActionsPanelView(BaseActionsPanelView):
         # check isManager on parent (item) so caching is used as context is a key
         # used in the caching invalidation
         parent = self.context.aq_inner.aq_parent
-        while parent.meta_type != 'MeetingItem':
+        while parent.meta_type not in ('MeetingItem', 'Meeting'):
             parent = parent.aq_inner.aq_parent
         return self.tool.isManager(parent, realManagers=True)
 
