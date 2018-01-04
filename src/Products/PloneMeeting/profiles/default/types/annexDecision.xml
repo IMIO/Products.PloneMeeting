@@ -22,7 +22,6 @@
   <element value="plone.app.content.interfaces.INameFromTitle"/>
   <element value="plone.app.lockingbehavior.behaviors.ILocking" />
   <element value="collective.iconifiedcategory.behaviors.iconifiedcategorization.IIconifiedCategorization"/>
-  <element value="collective.dms.scanbehavior.behaviors.behaviors.IScanFields"/>
  </property>
  <property name="schema"></property>
  <property name="model_source">
