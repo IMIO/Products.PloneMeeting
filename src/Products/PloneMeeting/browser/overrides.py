@@ -689,7 +689,7 @@ class AnnexActionsPanelView(BaseActionsPanelView):
         # used in the caching invalidation
         parent = self.context.aq_inner.aq_parent
         while parent.meta_type != 'MeetingItem':
-            parent = self.context.aq_inner.aq_parent
+            parent = parent.aq_inner.aq_parent
         return self.tool.isManager(parent, realManagers=True)
 
 
