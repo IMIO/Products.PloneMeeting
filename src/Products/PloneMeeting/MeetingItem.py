@@ -4970,6 +4970,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # Add the event to item's history
             self.itemHistory.append(event)
 
+    def _getGroupManagingItem(self):
+        '''See doc in interfaces.py.'''
+        return self.getProposingGroup(True)
+
     security.declareProtected('Modify portal content', 'updateLocalRoles')
 
     def updateLocalRoles(self, **kwargs):
@@ -4987,8 +4991,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # add 'Owner' local role
         self.manage_addLocalRoles(self.owner_info()['id'], ('Owner',))
 
-        # Add the local roles corresponding to the proposing group
-        meetingGroup = self.getProposingGroup(True)
+        # Add the local roles corresponding to the group managing the item
+        meetingGroup = self.adapted()._getGroupManagingItem()
         if meetingGroup:
             portal_groups = api.portal.get_tool('portal_groups')
             for groupSuffix in MEETING_GROUP_SUFFIXES:

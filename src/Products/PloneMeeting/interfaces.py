@@ -324,20 +324,6 @@ class IMeetingItemDocumentation:
              inserted among "normal" (p_late=False) or "late" (p_late=True)
              items on the meeting.
         '''
-    def getIcons(inMeeting, meeting):
-        '''Gets info about the icons to show for this item while displaying it in
-           a list of items. If p_inMeeting is False, the concerned list of items
-           is the list of available items for p_meeting. Else, it is one of the
-           list of items within the meeting (normal or late items). This method
-           must return a list of 2-tuples
-           [(s_iconName1, s_label1),(s_iconName2, s_label2),]:
-           - "iconName" must be the name of the icon file which must lie in a
-             skin, ie "late.png";
-           - "label" must be a i18n label in the "PloneMeeting" domain that will
-             be used for the "title" attribute for the image.  If a mapping is
-             needed, the label can be a list where first element is the msgid
-             and second element the mapping dict.
-        '''
     def mayCloneToOtherMeetingConfig(destMeetingConfigId):
         '''Check that we can clone the item to p_destMeetingConfigId.
            Checks are ordered from light to heavy as this could be called
@@ -410,9 +396,6 @@ class IMeetingItemDocumentation:
     def extraMeetingEvents(self):
         """Method for defining extra meeting events, needs to return a list of
            ids that will be used for id and translated for title."""
-    def extraAdviceTypes(self):
-        """Method for defining extra advice types, needs to return a list of
-           ids that will be used for id and translated for title."""
     def extraInsertingMethods(self):
         """Method for defining extra inserting methods, needs to return a list of
            ids that will be used for id and translated for title."""
@@ -422,6 +405,10 @@ class IMeetingItemDocumentation:
         """Condition to update item reference.  By default the item reference
            will be updated if item is in a meeting and meeting review_state is
            not 'before frozen'."""
+    def _getGroupManagingItem(self):
+        """Returns the current group actually managing the item.
+           By default this will be the proposingGroup.
+           This method must return a MeetingGroup."""
 
 
 class IMeetingItemWorkflowConditions(Interface):
@@ -665,6 +652,9 @@ class IMeetingConfigDocumentation:
         '''Called when an object p_isCreated or edited.'''
     def getMeetingsAcceptingItemsAdditionalManagerStates():
         '''Additional states for MeetingManagers in which meetings are still accepting items.'''
+    def extraAdviceTypes(self):
+        """Method for defining extra advice types, needs to return a list of
+           ids that will be used for id and translated for title."""
 
 
 class IMeetingConfigCustom(IMeetingConfig):
