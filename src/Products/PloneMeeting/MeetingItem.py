@@ -4972,7 +4972,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _getGroupManagingItem(self):
         '''See doc in interfaces.py.'''
-        return self.getProposingGroup(True)
+        item = self.getSelf()
+        return item.getProposingGroup(True)
 
     security.declareProtected('Modify portal content', 'updateLocalRoles')
 
