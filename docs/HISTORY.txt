@@ -20,6 +20,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   the CloneNamedFileBlobs modifier that takes care of correctly managing versioned Dexterity file
 - Display the 'history' action in the annexes dashboard to Managers
 - Factorized code that saves a version to portal_repository and keep modification date in utils.version_object
+- Monkeypatched Products.Archetypes.BaseObject.BaseObject.validate to display validation errors into the log
 
 4.1b2 (2017-12-07)
 ------------------

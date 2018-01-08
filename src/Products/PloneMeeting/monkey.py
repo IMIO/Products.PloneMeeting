@@ -1,5 +1,6 @@
 
 from Acquisition import aq_base
+from Products.Archetypes.BaseObject import BaseObject
 from Products.PortalTransforms.cache import Cache
 from Products.PloneMeeting import logger
 
@@ -55,3 +56,19 @@ def userAndGroupsAwarePortalTransformsCacheKey():
     logger.info("Monkey patching Products.PortalTransforms.cache (_genCacheKey)")
 
 userAndGroupsAwarePortalTransformsCacheKey()
+
+
+BaseObject.__old_pm_validate = BaseObject.validate
+
+
+def validate(self, REQUEST=None, errors=None, data=None, metadata=None):
+    """Monkeypatch to log errors because sometimes, when errors occur in multiple
+       or on disabled fields, it is not visible into the UI."""
+    errors = self.__old_pm_validate(REQUEST, errors, data, metadata)
+    if errors:
+        logger.info(errors)
+    return errors
+
+
+BaseObject.validate = validate
+logger.info("Monkey patching Products.Archetypes.BaseObject.BaseObject (validate)")
