@@ -102,12 +102,12 @@ MEETINGROLES = {'creators': 'MeetingMember',
                 'advisers': None}
 MEETING_GROUP_SUFFIXES = MEETINGROLES.keys()
 
-# advice specific suffixes in case a workflow involving several suffixes is used by some group ids
+# specific suffixes in case a workflow involving several suffixes is used by some group ids
 # this will be like :
 # {'my_group_id': ['additional_suffix1', 'additional_suffix2'],
 # {'my_group_id2': ['additional_suffix1', 'additional_suffix2'],
 # {'my_group_id3': ['other_additional_suffix1', 'other_additional_suffix2'], }
-EXTRA_ADVICE_SUFFIXES = {}
+EXTRA_GROUP_SUFFIXES = {}
 
 # additonal advice types that will be available for MeetingConfig.usedAdviceTypes
 # format is just a tuple containing keys, it will be translated using same key

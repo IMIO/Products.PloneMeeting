@@ -108,7 +108,7 @@ NO_SECOND_LANGUAGE_ERROR = 'Unable to find the second supported language in ' \
 
 
 # Adapters ---------------------------------------------------------------------
-class MeetingWorkflowConditions:
+class MeetingWorkflowConditions(object):
     '''Adapts a meeting to interface IMeetingWorkflowConditions.'''
     implements(IMeetingWorkflowConditions)
     security = ClassSecurityInfo()
@@ -241,7 +241,7 @@ class MeetingWorkflowConditions:
 InitializeClass(MeetingWorkflowConditions)
 
 
-class MeetingWorkflowActions:
+class MeetingWorkflowActions(object):
     '''Adapts a meeting to interface IMeetingWorkflowActions.'''
     implements(IMeetingWorkflowActions)
     security = ClassSecurityInfo()

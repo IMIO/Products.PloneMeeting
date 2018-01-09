@@ -21,6 +21,10 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Display the 'history' action in the annexes dashboard to Managers
 - Factorized code that saves a version to portal_repository and keep modification date in utils.version_object
 - Monkeypatched Products.Archetypes.BaseObject.BaseObject.validate to display validation errors into the log
+- Renamed EXTRA_ADVICE_SUFFIXES to EXTRA_GROUP_SUFFIXES to devine extra suffixes for Plone groups created
+  from a MeetingGroup
+- Turned MeetingWorkflowActions, MeetingWorkflowConditions, MeetingItemWorkflowConditions and
+  MeetingItemWorkflowActions to new style python classes
 
 4.1b2 (2017-12-07)
 ------------------

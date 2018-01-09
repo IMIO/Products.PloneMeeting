@@ -160,7 +160,7 @@ INSERT_ITEM_ERROR = 'There was an error when inserting the item, ' \
                     'please contact system administrator!'
 
 
-class MeetingItemWorkflowConditions:
+class MeetingItemWorkflowConditions(object):
     '''Adapts a MeetingItem to interface IMeetingItemWorkflowConditions.'''
     implements(IMeetingItemWorkflowConditions)
     security = ClassSecurityInfo()
@@ -432,7 +432,7 @@ class MeetingItemWorkflowConditions:
 InitializeClass(MeetingItemWorkflowConditions)
 
 
-class MeetingItemWorkflowActions:
+class MeetingItemWorkflowActions(object):
     '''Adapts a meeting item to interface IMeetingItemWorkflowActions.'''
     implements(IMeetingItemWorkflowActions)
     security = ClassSecurityInfo()
@@ -497,8 +497,8 @@ class MeetingItemWorkflowActions:
         meeting.insertItem(self.context, forceNormal=self._forceInsertNormal())
         # If the meeting is already frozen and this item is a "late" item,
         # I must set automatically the item to "itemfrozen".
-        meetingState = meeting.queryState()
-        if meetingState not in meeting.getBeforeFrozenStates():
+        before_frozen_states = meeting.getBeforeFrozenStates()
+        if before_frozen_states and meeting.queryState() in before_frozen_states:
             self._freezePresentedItem()
         # We may have to send a mail.
         self.context.sendMailIfRelevant('itemPresented', 'Owner', isRole=True)
@@ -4975,6 +4975,29 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         item = self.getSelf()
         return item.getProposingGroup(True)
 
+    def _assign_roles_to_group_suffixes(self,
+                                        meetingGroup,
+                                        suffixes=MEETING_GROUP_SUFFIXES,
+                                        roles=MEETINGROLES):
+        """Method that do the work of assigning roles to every suffixed group
+           of a MeetingGroup.
+           This will assign roles defined in p_roles to every group p_suffixes
+           of p_meetingGroup MeetingGroup."""
+        if meetingGroup:
+            portal_groups = api.portal.get_tool('portal_groups')
+            for groupSuffix in suffixes:
+                # like it is the case for groupSuffix 'advisers'
+                if not roles[groupSuffix]:
+                    continue
+                # if we have a Plone group related to this suffix, apply a local role for it
+                groupId = meetingGroup.getPloneGroupId(groupSuffix)
+                ploneGroup = portal_groups.getGroupById(groupId)
+                if not ploneGroup:
+                    # in some case, MEETING_GROUP_SUFFIXES are used to manage
+                    # only some groups so some other may not have a linked Plone group
+                    continue
+                self.manage_addLocalRoles(groupId, (roles[groupSuffix],))
+
     security.declareProtected('Modify portal content', 'updateLocalRoles')
 
     def updateLocalRoles(self, **kwargs):
@@ -4994,20 +5017,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # Add the local roles corresponding to the group managing the item
         meetingGroup = self.adapted()._getGroupManagingItem()
-        if meetingGroup:
-            portal_groups = api.portal.get_tool('portal_groups')
-            for groupSuffix in MEETING_GROUP_SUFFIXES:
-                # like it is the case for groupSuffix 'advisers'
-                if not MEETINGROLES[groupSuffix]:
-                    continue
-                # if we have a Plone group related to this suffix, apply a local role for it
-                groupId = meetingGroup.getPloneGroupId(groupSuffix)
-                ploneGroup = portal_groups.getGroupById(groupId)
-                if not ploneGroup:
-                    # in some case, MEETING_GROUP_SUFFIXES are used to manage
-                    # only some groups so some other may not have a linked Plone group
-                    continue
-                self.manage_addLocalRoles(groupId, (MEETINGROLES[groupSuffix],))
+        self._assign_roles_to_group_suffixes(meetingGroup)
+
         # update local roles regarding copyGroups
         isCreated = kwargs.get('isCreated', None)
         self._updateCopyGroupsLocalRoles(isCreated)

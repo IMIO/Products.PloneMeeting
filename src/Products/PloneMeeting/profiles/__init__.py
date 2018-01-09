@@ -20,7 +20,7 @@
 
 from Products.PloneMeeting.config import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
-from Products.PloneMeeting.config import EXTRA_ADVICE_SUFFIXES
+from Products.PloneMeeting.config import EXTRA_GROUP_SUFFIXES
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 
 
@@ -321,7 +321,7 @@ class GroupDescriptor(Descriptor):
         self.certifiedSignatures = []
         self.groupsInCharge = groupsInCharge
         # Add lists of users (observers, reviewers, etc) ~[UserDescriptor]~
-        for role in MEETING_GROUP_SUFFIXES + EXTRA_ADVICE_SUFFIXES.get(id, []):
+        for role in MEETING_GROUP_SUFFIXES + EXTRA_GROUP_SUFFIXES.get(id, []):
             setattr(self, role, [])
         self.active = active
 

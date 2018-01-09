@@ -1513,9 +1513,9 @@ def getTransitionToReachState(obj, state):
 def get_all_suffixes(grp_id):
     # import EXTRA_ADVICE_SUFFIXES and MEETING_GROUP_SUFFIXES here
     # as it is monkeypatched by custom profiles
-    from Products.PloneMeeting.config import EXTRA_ADVICE_SUFFIXES
+    from Products.PloneMeeting.config import EXTRA_GROUP_SUFFIXES
     from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
-    return MEETING_GROUP_SUFFIXES + EXTRA_ADVICE_SUFFIXES.get(grp_id, [])
+    return MEETING_GROUP_SUFFIXES + EXTRA_GROUP_SUFFIXES.get(grp_id, [])
 
 
 def findMeetingAdvicePortalType(context):
