@@ -91,12 +91,12 @@ class testSetup(PloneMeetingTestCase):
             # warning, here we get the real WF added by workflows.xml
             itemBaseWF = wfTool.getWorkflowById(cfg.getItemWorkflow())
             # this is necessary in case we use same WF for several MeetingConfigs
-            if not DUMMY_STATE in itemBaseWF.states:
+            if DUMMY_STATE not in itemBaseWF.states:
                 itemBaseWF.states.addState(DUMMY_STATE)
             self.assertTrue(DUMMY_STATE in itemBaseWF.states)
             # same for Meeting workflow
             meetingBaseWF = wfTool.getWorkflowById(cfg.getMeetingWorkflow())
-            if not DUMMY_STATE in meetingBaseWF.states:
+            if DUMMY_STATE not in meetingBaseWF.states:
                 meetingBaseWF.states.addState(DUMMY_STATE)
             self.assertTrue(DUMMY_STATE in meetingBaseWF.states)
         # re-apply the workflows step, reinstall the :default profile
