@@ -498,7 +498,7 @@ class MeetingItemWorkflowActions(object):
         # If the meeting is already frozen and this item is a "late" item,
         # I must set automatically the item to "itemfrozen".
         before_frozen_states = meeting.getBeforeFrozenStates()
-        if before_frozen_states and meeting.queryState() in before_frozen_states:
+        if before_frozen_states and meeting.queryState() not in before_frozen_states:
             self._freezePresentedItem()
         # We may have to send a mail.
         self.context.sendMailIfRelevant('itemPresented', 'Owner', isRole=True)
