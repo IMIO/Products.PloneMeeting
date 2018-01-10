@@ -442,6 +442,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
     def do(self, obj, transition, comment=''):
         '''Executes a workflow p_transition on a given p_obj.'''
         self.wfTool.doActionFor(obj, transition, comment=comment)
+        self.cleanMemoize()
 
     def transitions(self, obj):
         '''Returns the list of transitions that the current user may trigger
