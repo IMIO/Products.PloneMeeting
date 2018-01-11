@@ -1095,24 +1095,29 @@ class testAnnexes(PloneMeetingTestCase):
     def test_pm_Other_mc_correspondences_vocabulary(self):
         """ """
         cfg = self.meetingConfig
-        cfg2 = self.meetingConfig2
-        cfg2Title = cfg2.Title()
         annex_type = cfg.annexes_types.item_annexes.get(self.annexFileType)
         # get vocabulary name
         type_info = self.portal.portal_types.get(annex_type.portal_type)
         vocab_name = type_info.lookupSchema()['other_mc_correspondences'].value_type.vocabularyName
         vocab = queryUtility(IVocabularyFactory, vocab_name)
-        self.assertEqual(
-            [term.title for term in vocab(annex_type)._terms],
-            [u'{0} \u2192 Item annexes \u2192 Financial analysis'.format(cfg2Title),
-             u'{0} \u2192 Item annexes \u2192 Financial analysis '
-             u'\u2192 Financial analysis sub annex'.format(cfg2Title),
-             u'{0} \u2192 Item annexes \u2192 Legal analysis'.format(cfg2Title),
-             u'{0} \u2192 Item annexes \u2192 Budget analysis'.format(cfg2Title),
-             u'{0} \u2192 Item annexes \u2192 Budget analysis '
-             u'\u2192 Budget analysis sub annex'.format(cfg2Title),
-             u'{0} \u2192 Item annexes \u2192 Other annex(es)'.format(cfg2Title),
-             u'{0} \u2192 Item decision annexes \u2192 Decision annex(es)'.format(cfg2Title)])
+        # build expected result depending on existing MC
+        expected = []
+        for mc in self.tool.objectValues('MeetingConfig'):
+            if cfg == mc:
+                continue
+            mc_title = mc.Title()
+            values = [
+                u'{0} \u2192 Item annexes \u2192 Financial analysis'.format(mc_title),
+                u'{0} \u2192 Item annexes \u2192 Financial analysis '
+                u'\u2192 Financial analysis sub annex'.format(mc_title),
+                u'{0} \u2192 Item annexes \u2192 Legal analysis'.format(mc_title),
+                u'{0} \u2192 Item annexes \u2192 Budget analysis'.format(mc_title),
+                u'{0} \u2192 Item annexes \u2192 Budget analysis '
+                u'\u2192 Budget analysis sub annex'.format(mc_title),
+                u'{0} \u2192 Item annexes \u2192 Other annex(es)'.format(mc_title),
+                u'{0} \u2192 Item decision annexes \u2192 Decision annex(es)'.format(mc_title)]
+            expected.extend(values)
+        self.assertEqual([term.title for term in vocab(annex_type)._terms], expected)
 
     def test_pm_annex_type_only_for_meeting_managers(self):
         """An ItemAnnexContentCategory may be defined only selectable by MeetingManagers."""
