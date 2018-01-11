@@ -575,9 +575,9 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # pmManager is in every 'developers' Plone groups except 'prereviewers'
         # and in the 'vendors_advisers' Plone group and in the _meetingmanagers groups
         dev = self.meetingConfig.developers
-        globalGroups = ['AuthenticatedUsers',
-                        '%s_meetingmanagers' % self.meetingConfig.getId(),
-                        '%s_meetingmanagers' % self.meetingConfig2.getId()]
+        globalGroups = ['AuthenticatedUsers']
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            globalGroups.append('%s_meetingmanagers' % cfg.getId())
         pmManagerGroups = dev.getPloneGroups(idsOnly=True) + ['vendors_advisers', ] + globalGroups
         pmManagerGroups.remove('developers_prereviewers')
         self.assertTrue(set(self.member.getGroups()) == set(pmManagerGroups))
