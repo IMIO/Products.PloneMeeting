@@ -883,13 +883,16 @@ class PMWfHistoryAdapter(ImioWfHistoryAdapter):
             return self.context.getHistory(checkMayView=checkMayView)
 
 
-class PMEmergencyChangesHistoryAdapter(BaseImioHistoryAdapter):
+class BasePMHistoryAdapter(BaseImioHistoryAdapter):
     """ """
+    def get_history_data(self):
+        """ """
+        return []
 
     def getHistory(self, checkMayView=True, **kw):
         """See docstring in interfaces.py."""
         res = []
-        history = list(self.context.emergency_changes_history)
+        history = self.get_history_data()
         for event in history:
             # Make sure original value is not modified
             event = event.copy()
@@ -899,20 +902,20 @@ class PMEmergencyChangesHistoryAdapter(BaseImioHistoryAdapter):
         return res
 
 
-class PMCompletenessChangesHistoryAdapter(BaseImioHistoryAdapter):
+class PMEmergencyChangesHistoryAdapter(BasePMHistoryAdapter):
     """ """
 
-    def getHistory(self, checkMayView=True, **kw):
-        """See docstring in interfaces.py."""
-        res = []
-        history = list(self.context.completeness_changes_history)
-        for event in history:
-            # Make sure original value is not modified
-            event = event.copy()
-            if checkMayView and not self.mayViewComment(event):
-                event['comments'] = HISTORY_COMMENT_NOT_VIEWABLE
-            res.append(event)
-        return res
+    def get_history_data(self):
+        """ """
+        return list(self.context.emergency_changes_history)
+
+
+class PMCompletenessChangesHistoryAdapter(BasePMHistoryAdapter):
+    """ """
+
+    def get_history_data(self):
+        """ """
+        return list(self.context.completeness_changes_history)
 
 
 class Criteria(eeaCriteria):
