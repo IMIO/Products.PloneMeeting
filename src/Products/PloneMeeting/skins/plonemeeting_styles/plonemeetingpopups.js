@@ -148,6 +148,18 @@ jQuery(function($) {
 });
 
 jQuery(function($) {
+  // used by overlays displayed over another overlay
+  $('a.link-overlay-pm-over').prepOverlay({
+        subtype: 'ajax',
+        closeselector: '[name="form.buttons.cancel"]',
+        config: {onLoad: function(e) {
+          $(this.getOverlay()).css("z-index", "50000");
+            return true;}
+            }
+    });
+});
+
+jQuery(function($) {
   // Add transition confirmation popup
   $('a.link-overlay-actionspanel.transition-overlay').prepOverlay({
         subtype: 'ajax',
