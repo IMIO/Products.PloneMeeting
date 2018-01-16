@@ -116,7 +116,9 @@ def onItemTransition(item, event):
     item.adapted().setHistorizedTakenOverBy(wf_state)
     # notify an ItemAfterTransitionEvent for subplugins so we are sure
     # that it is called after PloneMeeting item transition
-    notify(ItemAfterTransitionEvent(item))
+    notify(ItemAfterTransitionEvent(
+        event.object, event.workflow, event.old_state, event.new_state,
+        event.transition, event.status, event.kwargs))
     # just reindex the entire object
     item.reindexObject()
 
@@ -138,7 +140,9 @@ def onMeetingTransition(meeting, event):
         meeting.updateItemReferences()
     # notify a MeetingAfterTransitionEvent for subplugins so we are sure
     # that it is called after PloneMeeting meeting transition
-    notify(MeetingAfterTransitionEvent(meeting))
+    notify(MeetingAfterTransitionEvent(
+        event.object, event.workflow, event.old_state, event.new_state,
+        event.transition, event.status, event.kwargs))
     # just reindex the entire object
     event.object.reindexObject()
 
