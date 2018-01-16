@@ -149,6 +149,7 @@ READER_USECASES = {
     'advices': 'Reader',
     'powerobservers': 'Reader',
     'restrictedpowerobservers': 'Reader',
+    'itemtemplatesmanagers': 'Reader',
     'groupincharge': 'Reader',
     'confidentialannex': 'AnnexReader',
 }

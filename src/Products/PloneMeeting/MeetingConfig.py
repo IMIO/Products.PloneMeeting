@@ -4459,6 +4459,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Creates a Plone group that will be used to store users able to manage item templates.'''
         groupId, wasCreated = self._createSuffixedGroup(suffix=ITEMTEMPLATESMANAGERS_GROUP_SUFFIX)
         if wasCreated:
+            # now define local_roles on the tool so it is accessible by this group
+            tool = api.portal.get_tool('portal_plonemeeting')
+            tool.manage_addLocalRoles(groupId, (READER_USECASES[ITEMTEMPLATESMANAGERS_GROUP_SUFFIX],))
+            self.manage_addLocalRoles(groupId, (READER_USECASES[ITEMTEMPLATESMANAGERS_GROUP_SUFFIX],))
             # give 'Manager' local role to group in the itemtemplates folder
             self.itemtemplates.manage_addLocalRoles(groupId, ('Manager', ))
 

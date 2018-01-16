@@ -44,6 +44,7 @@ from Products.PloneMeeting.config import DEFAULT_ITEM_COLUMNS
 from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
 from Products.PloneMeeting.config import DEFAULT_MEETING_COLUMNS
 from Products.PloneMeeting.config import ITEM_ICON_COLORS
+from Products.PloneMeeting.config import ITEMTEMPLATESMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.config import PMMessageFactory as _
@@ -1001,15 +1002,18 @@ class testMeetingConfig(PloneMeetingTestCase):
         # restrictedpowerobservers
         # budgetimpacteditors
         # meetingmanagers
+        # itemtemplatesmanagers
         for suffix in (BUDGETIMPACTEDITORS_GROUP_SUFFIX,
                        POWEROBSERVERS_GROUP_SUFFIX,
                        RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX,
-                       MEETINGMANAGERS_GROUP_SUFFIX):
+                       MEETINGMANAGERS_GROUP_SUFFIX,
+                       ITEMTEMPLATESMANAGERS_GROUP_SUFFIX):
             groupId = '{0}_{1}'.format(cfgId, suffix)
             self.assertTrue(groupId in existingGroupIds)
             # for (restricted)powerobservers, it gets a Reader localrole on tool and MeetingConfig
             if suffix in (POWEROBSERVERS_GROUP_SUFFIX,
-                          RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX):
+                          RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX,
+                          ITEMTEMPLATESMANAGERS_GROUP_SUFFIX):
                 self.assertTrue(self.tool.__ac_local_roles__[groupId] == [READER_USECASES[suffix], ])
                 self.assertTrue(cfg.__ac_local_roles__[groupId] == [READER_USECASES[suffix], ])
             # for meetingmanagers, it gets MeetingManager localrole on MeetingConfig
@@ -1021,6 +1025,9 @@ class testMeetingConfig(PloneMeetingTestCase):
                 self.assertTrue(pmManagerConfigFolder.__ac_local_roles__[groupId] == ['MeetingManager', ])
                 # 'pmManager' is in each _meetingmanagers group
                 self.assertTrue(groupId in self.member.getGroups())
+            # for itemtemplatesmanagers, it gets a Manager localrole on itemtemplates MC subfolder
+            if suffix == ITEMTEMPLATESMANAGERS_GROUP_SUFFIX:
+                self.assertTrue(cfg.itemtemplates.__ac_local_roles__[groupId] == ['Manager'])
 
     def test_pm_ItemIconColor(self):
         '''When changing itemIconColor on the MeetingConfig, make sure the linked
