@@ -22,6 +22,7 @@ from Products.PloneMeeting.utils import findMeetingAdvicePortalType
 from Products.PloneMeeting.utils import getHistory
 from Products.PloneMeeting.utils import getLastEvent
 from Products.PloneMeeting.utils import isModifiedSinceLastVersion
+from Products.PloneMeeting.utils import main_item_data
 from Products.PloneMeeting.utils import version_object
 from imio.prettylink.interfaces import IPrettyLink
 
@@ -192,23 +193,11 @@ class MeetingAdvice(Container):
         # and if it is not 'asked_again', indeed we do not versionate an advice
         # that is 'asked_again' of it's predecessor would be an advice 'asked_again' too...
         if self.advice_type != 'asked_again' and isModifiedSinceLastVersion(self):
-            tool = api.portal.get_tool('portal_plonemeeting')
-            cfg = tool.getMeetingConfig(self)
             # create the historized_item_data before versioning, then removes it after
             # it will still exist on the versioned object
-            self.historized_item_data = PersistentList()
             item = self.getParentNode()
-            if cfg.getHistorizeItemDataWhenAdviceIsGiven():
-                # compute 'historized_item_data', save every active RichText fields
-                usedItemAttrs = cfg.getUsedItemAttributes()
-                self.historized_item_data.append({'field_name': 'title',
-                                                  'field_content': item.Title()})
-                for field in item.Schema().fields():
-                    fieldName = field.getName()
-                    if field.widget.getName() == 'RichWidget' and \
-                       (fieldName in usedItemAttrs or not field.optional):
-                        self.historized_item_data.append({'field_name': fieldName,
-                                                          'field_content': field.get(item)})
+            data = main_item_data(item)
+            self.historized_item_data = PersistentList(data)
             version_object(self, comment=comment)
             delattr(self, 'historized_item_data')
             self.reindexObject(idxs=['modified', 'ModificationDate'])

@@ -66,6 +66,7 @@ from Products.CMFCore.permissions import ManageProperties
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.CMFPlone.utils import safe_unicode
+from Products.DCWorkflow.events import TransitionEvent
 from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import AddAnnexDecision
 from Products.PloneMeeting.config import ADD_SUBCONTENT_PERMISSIONS
@@ -1616,6 +1617,24 @@ def validate_item_assembly_value(value):
     return True
 
 
+def main_item_data(item):
+    """Build a dict with main infos data."""
+    tool = api.portal.get_tool('portal_plonemeeting')
+    cfg = tool.getMeetingConfig(item)
+    # compute data, save 'title' and every active RichText fields
+    usedItemAttrs = cfg.getUsedItemAttributes()
+    data = []
+    data.append({'field_name': 'title',
+                 'field_content': item.Title()})
+    for field in item.Schema().fields():
+        fieldName = field.getName()
+        if field.widget.getName() == 'RichWidget' and \
+           (fieldName in usedItemAttrs or not field.optional):
+            data.append({'field_name': fieldName,
+                         'field_content': field.get(item)})
+    return data
+
+
 class AdvicesUpdatedEvent(ObjectEvent):
     implements(IAdvicesUpdatedEvent)
 
@@ -1633,7 +1652,7 @@ class MeetingLocalRolesUpdatedEvent(ObjectEvent):
         self.old_local_roles = old_local_roles
 
 
-class MeetingAfterTransitionEvent(ObjectEvent):
+class MeetingAfterTransitionEvent(TransitionEvent):
     '''
       Event triggered at the end of the onMeetingTransition,
       so we are sure that subplugins registering to this event
@@ -1641,20 +1660,14 @@ class MeetingAfterTransitionEvent(ObjectEvent):
     '''
     implements(IMeetingAfterTransitionEvent)
 
-    def __init__(self, object):
-        self.object = object
 
-
-class ItemAfterTransitionEvent(ObjectEvent):
+class ItemAfterTransitionEvent(TransitionEvent):
     '''
       Event triggered at the end of the onItemTransition,
       so we are sure that subplugins registering to this event
       will be called after.
     '''
     implements(IItemAfterTransitionEvent)
-
-    def __init__(self, object):
-        self.object = object
 
 
 class ItemDuplicatedEvent(ObjectEvent):
