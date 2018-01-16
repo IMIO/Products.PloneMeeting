@@ -885,6 +885,9 @@ class PMWfHistoryAdapter(ImioWfHistoryAdapter):
 
 class BasePMHistoryAdapter(BaseImioHistoryAdapter):
     """ """
+
+    history_name = None
+
     def get_history_data(self):
         """ """
         return []
@@ -898,6 +901,7 @@ class BasePMHistoryAdapter(BaseImioHistoryAdapter):
             event = event.copy()
             if checkMayView and not self.mayViewComment(event):
                 event['comments'] = HISTORY_COMMENT_NOT_VIEWABLE
+            event['type'] = self.history_name
             res.append(event)
         return res
 
@@ -905,17 +909,21 @@ class BasePMHistoryAdapter(BaseImioHistoryAdapter):
 class PMEmergencyChangesHistoryAdapter(BasePMHistoryAdapter):
     """ """
 
+    history_name = 'emergency_changes'
+
     def get_history_data(self):
         """ """
-        return list(self.context.emergency_changes_history)
+        return getattr(self.context, 'emergency_changes_history', [])
 
 
 class PMCompletenessChangesHistoryAdapter(BasePMHistoryAdapter):
     """ """
 
+    history_name = 'completeness_changes'
+
     def get_history_data(self):
         """ """
-        return list(self.context.completeness_changes_history)
+        return getattr(self.context, 'completeness_changes_history', [])
 
 
 class Criteria(eeaCriteria):
