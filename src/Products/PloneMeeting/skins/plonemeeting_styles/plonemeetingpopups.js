@@ -137,17 +137,26 @@ function initializePMOverlays(){
            urlmatch: '@@historyview',
            urlreplace: '@@contenthistorypopup'
         });
-});
-
-jQuery(function($) {
-  // every common overelays
-  $('a.link-overlay-pm').prepOverlay({
-        subtype: 'ajax',
-        closeselector: '[name="form.buttons.cancel"]',
   });
-});
 
-jQuery(function($) {
+  jQuery(function($) {
+    // every common overlays
+    $('a.link-overlay-pm').prepOverlay({
+          subtype: 'ajax',
+          closeselector: '[name="form.buttons.cancel"]',
+    });
+  });
+  
+  jQuery(function($) {
+    // Add transition confirmation popup
+    $('a.link-overlay-actionspanel.transition-overlay').prepOverlay({
+          subtype: 'ajax',
+          closeselector: '[name="form.buttons.cancel"]',
+    });
+  });
+}
+
+function overOverlays(){
   // used by overlays displayed over another overlay
   $('a.link-overlay-pm-over').prepOverlay({
         subtype: 'ajax',
@@ -157,15 +166,6 @@ jQuery(function($) {
             return true;}
             }
     });
-});
-
-jQuery(function($) {
-  // Add transition confirmation popup
-  $('a.link-overlay-actionspanel.transition-overlay').prepOverlay({
-        subtype: 'ajax',
-        closeselector: '[name="form.buttons.cancel"]',
-  });
-});
 }
 
 // Open every links having the classicpopup class in a... classic popup...
