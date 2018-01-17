@@ -161,10 +161,14 @@ function overOverlays(){
   $('a.link-overlay-pm-over').prepOverlay({
         subtype: 'ajax',
         closeselector: '[name="form.buttons.cancel"]',
-        config: {onLoad: function(e) {
-          $(this.getOverlay()).css("z-index", "50000");
-            return true;}
-            }
+        config: {
+          onLoad: function(e) {
+            $(this.getOverlay()).css("z-index", "50000");
+            $(this.getOverlay()).css("top", "15%");
+            $(this.getOverlay()).css("left", "15%");
+              return true;
+              },
+            },
     });
 }
 
