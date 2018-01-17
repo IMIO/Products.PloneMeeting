@@ -151,7 +151,7 @@ class Migrate_To_4_0(Migrator):
             if not hasattr(cfg, 'maxDaysDecisions'):
                 continue
 
-            logger.info('Moving to imio.dashboard : updating MeetingConfig parameters...')
+            logger.info('Moving to imio.dashboard ({0}) : updating MeetingConfig parameters...'.format(cfgId))
             if hasattr(cfg, 'maxDaysDecisions'):
                 updateCollectionCriterion(cfg.searches.searches_decisions.searchlastdecisions,
                                           'getDate',
@@ -194,7 +194,7 @@ class Migrate_To_4_0(Migrator):
                 if wft.getInfoFor(topic, 'review_state') == 'active':
                     wft.doActionFor(topic, 'deactivate')
 
-            logger.info('Moving to imio.dashboard : moving toDoListTopics to toDoListSearches...')
+            logger.info('Moving to imio.dashboard ({0}) : moving toDoListTopics to toDoListSearches...'.format(cfgId))
             if not cfg.getToDoListSearches():
                 topics = cfg.getReferences('ToDoTopics')
                 collectionIds = cfg.searches.searches_items.objectIds()
@@ -208,8 +208,8 @@ class Migrate_To_4_0(Migrator):
                     if topicId in collectionIds:
                         toDoListSearches.append(getattr(cfg.searches.searches_items, topicId))
                     else:
-                        warning_msg = 'Moving to imio.dashboard : could not select a collection with ' \
-                            'id "%s" for portlet_todo!' % topic.getId()
+                        warning_msg = 'Moving to imio.dashboard ({0}) : could not select a collection with ' \
+                            'id "{1}" for portlet_todo!'.format(cfgId, topic.getId())
                         self.warn(logger, warning_msg)
                 cfg.setToDoListSearches(toDoListSearches)
                 cfg.deleteReferences('ToDoTopics')
@@ -278,7 +278,8 @@ class Migrate_To_4_0(Migrator):
             cfg.setItemsListVisibleColumns(itemsListVisibleColumns)
             cfg.updateCollectionColumns()
 
-            logger.info('Moving to imio.dashboard : migrating parameters "maxShown..."...')
+            logger.info(
+                'Moving to imio.dashboard ({0}) : migrating parameters "maxShown..."...'.format(cfgId))
             if hasattr(self.tool, 'maxShownFound'):
                 # parameter was moved to the MeetingConfig.maxShownListings
                 new_value = self.tool.maxShownFound / 20 * 20
@@ -298,17 +299,20 @@ class Migrate_To_4_0(Migrator):
                     new_value = 20
                 cfg.setMaxShownMeetingItems(str(new_value))
 
-            logger.info('Moving to imio.dashboard : enabling faceted view for ever user folders...')
+            logger.info(
+                'Moving to imio.dashboard ({0}) : enabling faceted view for ever user folders...'.format(cfgId))
             cfg._synchSearches()
 
-            logger.info('Moving to imio.dashboard : updating url_expr of action in portal_tabs...')
+            logger.info(
+                'Moving to imio.dashboard ({0}) : updating url_expr of action in portal_tabs...'.format(cfgId))
             tabId = '%s_action' % cfg.getId()
             action = getattr(portal_tabs, tabId, None)
             if action and not action.url_expr.endswith(' + "/searches_items"'):
                 action.url_expr = action.url_expr + ' + "/searches_items"'
 
-            logger.info('Moving to imio.dashboard : adding '
-                        '"on list type" as first value of "insertingMethodsOnAddItem"...')
+            logger.info(
+                'Moving to imio.dashboard ({0}) : adding '
+                '"on list type" as first value of "insertingMethodsOnAddItem"...'.format(cfgId))
             insertingMethodsOnAddItem = list(cfg.getInsertingMethodsOnAddItem())
             if not insertingMethodsOnAddItem[0]['insertingMethod'] == 'on_list_type':
                 insertingMethodsOnAddItem.insert(0, {'insertingMethod': 'on_list_type', 'reverse': '0'})
@@ -1418,6 +1422,8 @@ class Migrate_To_4_0(Migrator):
             # upgrade some profiles updated before v4 final
             self.upgradeProfile('collective.documentgenerator:default')
             self.upgradeProfile('plone.app.discussion:default')
+            # upgrade collective.ckeditor to get uploadimage plugin
+            self.upgradeProfile('collective.ckeditor:default')
             self.runProfileSteps(product='imio.annex', steps=['typeinfo'])
             self.ps.runAllImportStepsFromProfile('imio.helpers:default')
             # make sure form-widgets-raiseOnError_for_non_managers is enabled
