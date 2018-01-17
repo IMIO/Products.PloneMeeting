@@ -4,6 +4,7 @@ from Products.Archetypes.BaseObject import BaseObject
 from Products.PortalTransforms.cache import Cache
 from Products.PloneMeeting import logger
 
+from plone import api
 from plone.app.querystring import queryparser
 
 
@@ -65,7 +66,7 @@ def validate(self, REQUEST=None, errors=None, data=None, metadata=None):
     """Monkeypatch to log errors because sometimes, when errors occur in multiple
        or on disabled fields, it is not visible into the UI."""
     errors = self.__old_pm_validate(REQUEST, errors, data, metadata)
-    if errors:
+    if errors and api.user.get_current().has_role('Manager'):
         logger.info(errors)
     return errors
 

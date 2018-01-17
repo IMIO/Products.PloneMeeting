@@ -66,7 +66,7 @@ def do(action, event):
         # Update every local roles : advices, copyGroups, powerObservers, budgetImpactEditors, ...
         event.object.updateLocalRoles(triggered_by_transition=event.transition.id)
         # Send mail regarding advices to give if relevant
-        event.object.sendAdviceToGiveMailIfRelevant(event.old_state.id, event.new_state.id)
+        event.object.sendStateDependingMailIfRelevant(event.old_state.id, event.new_state.id)
         # Send mail if relevant
         sendMailIfRelevant(event.object, "item_state_changed_%s" % event.transition.id, 'View')
         # apply on transition field transform if any

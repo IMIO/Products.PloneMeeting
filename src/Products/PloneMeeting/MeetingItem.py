@@ -3407,9 +3407,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return sendMailIfRelevant(self, event, permissionOrRole, isRole,
                                   customEvent, mapping)
 
-    security.declarePublic('sendAdviceToGiveMailIfRelevant')
+    def sendStateDependingMailIfRelevant(self, old_review_state, new_review_state):
+        """Send notifications that depends on old/new review_state."""
+        self._sendAdviceToGiveMailIfRelevant(old_review_state, new_review_state)
+        self._sendCopyGroupsMailIfRelevant(old_review_state, new_review_state)
 
-    def sendAdviceToGiveMailIfRelevant(self, old_review_state, new_review_state):
+    def _sendAdviceToGiveMailIfRelevant(self, old_review_state, new_review_state):
         '''A transition was fired on self, check if, in the new item state,
            advices need to be given, that had not to be given in the previous item state.'''
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -3440,6 +3443,34 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                          mapping={'type': translated_type})
 
     def _sendAdviceToGiveToGroup(self, groupId):
+        """See docstring in interfaces.py"""
+        return True
+
+    def _sendCopyGroupsMailIfRelevant(self, old_review_state, new_review_state):
+        '''A transition was fired on self, check if, in the new item state,
+           copy groups have now access to the item.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        if 'copyGroups' not in cfg.getMailItemEvents():
+            return
+
+        copyGroupsStates = cfg.getItemCopyGroupsStates()
+        # Ignore if current state not in copyGroupsStates
+        if new_review_state not in copyGroupsStates:
+            return
+        # Ignore if copyGroups had already access in previous state
+        if old_review_state in copyGroupsStates:
+            return
+        # Send a mail to every person from getAllCopyGroups
+        for groupId in self.getAllCopyGroups(auto_real_group_ids=True):
+            # call hook '_sendCopyGroupsToGroup' to be able to bypass
+            # send of this notification to some defined groups
+            if not self.adapted()._sendCopyGroupsToGroup(groupId):
+                continue
+            self._sendMailToGroupMembers(plone_group_id=groupId,
+                                         event_id='copyGroups')
+
+    def _sendCopyGroupsToGroup(self, groupId):
         """See docstring in interfaces.py"""
         return True
 

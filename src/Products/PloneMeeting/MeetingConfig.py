@@ -4910,7 +4910,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                                    context=self.REQUEST)),
             ("returnedToMeetingManagers", translate('event_item_returned_to_meeting_managers',
                                                     domain=d,
-                                                    context=self.REQUEST)), ]
+                                                    context=self.REQUEST)),
+            # relevant if using copyGroups
+            ("copyGroups", translate('event_item_copy_groups',
+                                     domain=d,
+                                     context=self.REQUEST)), ]
 
         # add custom mail notifications added by subproducs
         for extra_item_event in self.adapted().extraItemEvents():
