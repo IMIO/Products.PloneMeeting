@@ -246,10 +246,6 @@ div.pmMoreInfo table td {
    vertical-align: inherit;
 }
 
-table.no-style-table td {
-    border: 0 !important;
-}
-
 #content table.no-style-table.advices {
     margin-bottom: 0;
 }

@@ -241,12 +241,17 @@
                      condition="python: context.portal_type in context.portal_plonemeeting.getAdvicePortalTypes(as_ids=True)"
                      i18n:domain="PloneMeeting">
           <h1 class="documentFirstHeading" i18n:translate="">Data of the item when advice was given</h1>
-          <tal:loop repeat="data infos">
-            <fieldset class="field">
-                <legend i18n:translate="" tal:content="python: itemSchema[data['field_name']].widget.label_msgid">Field name</legend>
-                <div tal:content="structure data/field_content"></div>
-            </fieldset>
-          </tal:loop>
+          <table class="no-style-table" width="100%" i18n:domain="PloneMeeting">
+              <tr tal:repeat="data infos">
+                  <td class="table_widget_label">
+                      <label tal:define="field python: context.getField(data['field_name'])"
+                             i18n:translate=""
+                             tal:content="field/widget/label_msgid">Label</label>
+                  </td>
+                  <td class="table_widget_value"
+                      tal:content="structure python: data['field_content'] or '-'">Value</td>
+              </tr>
+          </table>
           <tal:nodata condition="not: infos" i18n:translate="">No historized data for this advice.</tal:nodata>
         </tal:defines>
       </tal:block>
