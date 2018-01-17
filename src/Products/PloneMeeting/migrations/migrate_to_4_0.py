@@ -1423,6 +1423,8 @@ class Migrate_To_4_0(Migrator):
             # upgrade some profiles updated before v4 final
             self.upgradeProfile('collective.documentgenerator:default')
             self.upgradeProfile('plone.app.discussion:default')
+            # upgrade collective.ckeditor to get uploadimage plugin
+            self.upgradeProfile('collective.ckeditor:default')
             self.runProfileSteps(product='imio.annex', steps=['typeinfo'])
             self.ps.runAllImportStepsFromProfile('imio.helpers:default')
             # make sure form-widgets-raiseOnError_for_non_managers is enabled
