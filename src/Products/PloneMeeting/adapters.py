@@ -36,7 +36,6 @@ from eea.facetednavigation.widgets.storage import Criterion
 from imio.actionspanel.adapters import ContentDeletableAdapter as APContentDeletableAdapter
 from imio.history.adapters import ImioWfHistoryAdapter
 from imio.history.adapters import BaseImioHistoryAdapter
-from imio.history.config import HISTORY_COMMENT_NOT_VIEWABLE
 from imio.prettylink.adapters import PrettyLinkAdapter
 from Products.PloneMeeting.config import AddAnnexDecision
 from Products.PloneMeeting.config import DUPLICATE_EVENT_ACTION
@@ -883,47 +882,18 @@ class PMWfHistoryAdapter(ImioWfHistoryAdapter):
             return self.context.getHistory(checkMayView=checkMayView)
 
 
-class BasePMHistoryAdapter(BaseImioHistoryAdapter):
+class PMEmergencyChangesHistoryAdapter(BaseImioHistoryAdapter):
     """ """
 
-    history_name = None
-
-    def get_history_data(self):
-        """ """
-        return []
-
-    def getHistory(self, checkMayView=True, **kw):
-        """See docstring in interfaces.py."""
-        res = []
-        history = self.get_history_data()
-        for event in history:
-            # Make sure original value is not modified
-            event = event.copy()
-            if checkMayView and not self.mayViewComment(event):
-                event['comments'] = HISTORY_COMMENT_NOT_VIEWABLE
-            event['type'] = self.history_name
-            res.append(event)
-        return res
+    history_type = 'emergency_changes'
+    history_attr_name = 'emergency_changes_history'
 
 
-class PMEmergencyChangesHistoryAdapter(BasePMHistoryAdapter):
+class PMCompletenessChangesHistoryAdapter(BaseImioHistoryAdapter):
     """ """
 
-    history_name = 'emergency_changes'
-
-    def get_history_data(self):
-        """ """
-        return getattr(self.context, 'emergency_changes_history', [])
-
-
-class PMCompletenessChangesHistoryAdapter(BasePMHistoryAdapter):
-    """ """
-
-    history_name = 'completeness_changes'
-
-    def get_history_data(self):
-        """ """
-        return getattr(self.context, 'completeness_changes_history', [])
+    history_type = 'completeness_changes'
+    history_attr_name = 'completeness_changes_history'
 
 
 class Criteria(eeaCriteria):
