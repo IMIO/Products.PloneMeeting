@@ -1009,7 +1009,8 @@ def getHistoryTexts(obj, event):
     return res
 
 
-def getHistory(obj, startNumber=0, batchSize=500, checkMayView=True, history_types=['datachange', 'workflow']):
+def getHistory(obj, startNumber=0, batchSize=500, checkMayViewEvent=True,
+               checkMayViewComment=True, history_types=['datachange', 'workflow']):
     '''Returns the history for this object, sorted in reverse order
        (most recent change first)'''
     res = []
@@ -1068,11 +1069,16 @@ def getHistory(obj, startNumber=0, batchSize=500, checkMayView=True, history_typ
         else:
             if 'workflow' not in history_types:
                 continue
+            adapter = None
+            if checkMayViewEvent:
+                adapter = getAdapter(obj, IImioHistory, 'workflow')
+                if not adapter.mayViewEvent(event):
+                    continue
             event['type'] = 'workflow'
-            if checkMayView:
+            if checkMayViewComment:
                 # workflow history event
                 # hide comment if user may not access it
-                adapter = getAdapter(obj, IImioHistory, 'workflow')
+                adapter = adapter or getAdapter(obj, IImioHistory, 'workflow')
                 if not adapter.mayViewComment(event):
                     event['comments'] = HISTORY_COMMENT_NOT_VIEWABLE
         res.append(event)

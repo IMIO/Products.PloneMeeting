@@ -867,19 +867,17 @@ class PMWfHistoryAdapter(ImioWfHistoryAdapter):
 
     def getHistory(self, **kw):
         """Override getHistory because it manages data changes."""
-        if 'checkMayView' in kw:
-            checkMayView = kw['checkMayView']
+        if 'checkMayViewEvent' in kw:
+            checkMayViewEvent = kw['checkMayViewEvent']
         else:
-            checkMayView = True
+            checkMayViewEvent = True
+        if 'checkMayViewComment' in kw:
+            checkMayViewComment = kw['checkMayViewComment']
+        else:
+            checkMayViewComment = True
 
-        if 'for_last_event' in kw:
-            for_last_event = kw['for_last_event']
-        else:
-            for_last_event = False
-        if for_last_event:
-            return self.context.getHistory(checkMayView=checkMayView, history_types=['workflow'])
-        else:
-            return self.context.getHistory(checkMayView=checkMayView)
+        return self.context.getHistory(
+            checkMayViewEvent=checkMayViewEvent, checkMayViewComment=checkMayViewComment)
 
 
 class PMEmergencyChangesHistoryAdapter(BaseImioHistoryAdapter):
