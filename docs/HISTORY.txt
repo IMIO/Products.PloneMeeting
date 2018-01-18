@@ -25,6 +25,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   from a MeetingGroup
 - Turned MeetingWorkflowActions, MeetingWorkflowConditions, MeetingItemWorkflowConditions and
   MeetingItemWorkflowActions to new style python classes
+- Added an email notification when an item is visible by copyGroups, members of the copyGroups are notified
 
 4.1b2 (2017-12-07)
 ------------------

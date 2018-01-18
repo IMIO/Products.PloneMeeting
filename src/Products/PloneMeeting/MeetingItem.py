@@ -3426,10 +3426,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 continue
             adviceStates = getattr(tool, group_id).getItemAdviceStates(cfg)
             # Ignore advices that must not be given in the current item state
-            if new_review_state not in adviceStates:
-                continue
             # Ignore advices that already needed to be given in the previous item state
-            if old_review_state in adviceStates:
+            if new_review_state not in adviceStates or old_review_state in adviceStates:
                 continue
             # do not consider groups that already gave their advice
             if not adviceInfo['type'] == 'not_given':
@@ -3456,10 +3454,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         copyGroupsStates = cfg.getItemCopyGroupsStates()
         # Ignore if current state not in copyGroupsStates
-        if new_review_state not in copyGroupsStates:
-            return
         # Ignore if copyGroups had already access in previous state
-        if old_review_state in copyGroupsStates:
+        if new_review_state not in copyGroupsStates or old_review_state in copyGroupsStates:
             return
         # Send a mail to every person from getAllCopyGroups
         for groupId in self.getAllCopyGroups(auto_real_group_ids=True):
