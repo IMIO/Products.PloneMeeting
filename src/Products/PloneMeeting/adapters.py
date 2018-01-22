@@ -874,9 +874,9 @@ class PMWfHistoryAdapter(ImioWfHistoryAdapter):
         history = super(PMWfHistoryAdapter, self).get_history_data()
         res = []
         for event in history:
-            event = event.copy()
-            if event['action'] != '_datachange_':
-                res.append(event)
+            new_event = event.copy()
+            if new_event['action'] != '_datachange_':
+                res.append(new_event)
         return res
 
 
@@ -891,9 +891,9 @@ class PMDataChangesHistoryAdapter(ImioWfHistoryAdapter):
         full_datachanges_history = []
         # first pass, keep datachanges
         for event in history:
-            event = event.copy()
-            if event['action'] == '_datachange_':
-                full_datachanges_history.append(event)
+            new_event = event.copy()
+            if new_event['action'] == '_datachange_':
+                full_datachanges_history.append(new_event)
 
         # second pass, compute datachanges
         res = []
