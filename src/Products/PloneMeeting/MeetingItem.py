@@ -108,7 +108,6 @@ from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import getFieldContent
 from Products.PloneMeeting.utils import getFieldVersion
-from Products.PloneMeeting.utils import getHistory
 from Products.PloneMeeting.utils import getLastEvent
 from Products.PloneMeeting.utils import getMeetingUsers
 from Products.PloneMeeting.utils import getWorkflowAdapter
@@ -2816,12 +2815,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def hasHistory(self, fieldName=None):
         '''See doc in utils.py.'''
         return hasHistory(self, fieldName)
-
-    security.declarePrivate('getHistory')
-
-    def getHistory(self, *args, **kwargs):
-        '''See doc in utils.py.'''
-        return getHistory(self, *args, **kwargs)
 
     def attributeIsUsed_cachekey(method, self, name):
         '''cachekey method for self.attributeIsUsed.'''

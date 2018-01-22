@@ -11,6 +11,8 @@ from DateTime import DateTime
 
 from OFS.interfaces import IItem
 
+from zope.component import getAdapter
+from imio.history.interfaces import IImioHistory
 from plone import api
 from plone.indexer import indexer
 from Products.PluginIndexes.common.UnIndex import _marker
@@ -20,7 +22,6 @@ from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.utils import get_annexes
-from Products.PloneMeeting.utils import getHistory
 
 REAL_GROUP_ID_PATTERN = 'real_group_id__{0}'
 DELAYAWARE_REAL_GROUP_ID_PATTERN = 'delay_real_group_id__{0}'
@@ -48,7 +49,8 @@ def previous_review_state(obj):
       Indexes the previous review_state, aka the review_state before current review_state
     """
     try:
-        wf_history = getHistory(obj, history_types=['workflow'])
+        adapter = getAdapter(obj, IImioHistory, 'workflow')
+        wf_history = adapter.getHistory()
     except KeyError:
         return _marker
 

@@ -19,7 +19,6 @@ from plone import api
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IMeetingContent
 from Products.PloneMeeting.utils import findMeetingAdvicePortalType
-from Products.PloneMeeting.utils import getHistory
 from Products.PloneMeeting.utils import getLastEvent
 from Products.PloneMeeting.utils import isModifiedSinceLastVersion
 from Products.PloneMeeting.utils import main_item_data
@@ -168,10 +167,6 @@ class MeetingAdvice(Container):
             else:
                 raise KeyError('Not able to find a value to set for advice row_id!')
         self.advice_row_id = row_id
-
-    def getHistory(self, *args, **kwargs):
-        '''See doc in utils.py.'''
-        return getHistory(self, *args, **kwargs)
 
     def get_advice_given_on(self):
         '''Return the date the advice was given on.

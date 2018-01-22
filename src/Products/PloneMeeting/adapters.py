@@ -9,6 +9,7 @@
 
 import logging
 from AccessControl import Unauthorized
+from appy.shared.diff import HtmlDiff
 
 from persistent.list import PersistentList
 from zope.annotation import IAnnotations
@@ -34,6 +35,7 @@ from eea.facetednavigation.interfaces import IFacetedNavigable
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
 from eea.facetednavigation.widgets.storage import Criterion
 from imio.actionspanel.adapters import ContentDeletableAdapter as APContentDeletableAdapter
+from imio.helpers.xhtml import xhtmlContentIsEmpty
 from imio.history.adapters import ImioWfHistoryAdapter
 from imio.history.adapters import BaseImioHistoryAdapter
 from imio.prettylink.adapters import PrettyLinkAdapter
@@ -48,12 +50,14 @@ from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.interfaces import IMeeting
-from Products.PloneMeeting.utils import displaying_available_items
-from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.MeetingConfig import CONFIGGROUPPREFIX
 from Products.PloneMeeting.MeetingConfig import PROPOSINGGROUPPREFIX
 from Products.PloneMeeting.MeetingConfig import READERPREFIX
 from Products.PloneMeeting.MeetingConfig import SUFFIXPROFILEPREFIX
+from Products.PloneMeeting.utils import displaying_available_items
+from Products.PloneMeeting.utils import findNewValue
+from Products.PloneMeeting.utils import getCurrentMeetingObject
+from Products.PloneMeeting.utils import getHistoryTexts
 
 logger = logging.getLogger('PloneMeeting')
 
@@ -865,19 +869,75 @@ class PMWfHistoryAdapter(ImioWfHistoryAdapter):
                     userMayAccessComment = False
         return userMayAccessComment
 
-    def getHistory(self, **kw):
-        """Override getHistory because it manages data changes."""
-        if 'checkMayViewEvent' in kw:
-            checkMayViewEvent = kw['checkMayViewEvent']
-        else:
-            checkMayViewEvent = True
-        if 'checkMayViewComment' in kw:
-            checkMayViewComment = kw['checkMayViewComment']
-        else:
-            checkMayViewComment = True
+    def get_history_data(self):
+        """WF hsitory is mixed with datachanges history."""
+        history = super(PMWfHistoryAdapter, self).get_history_data()
+        res = []
+        for event in history:
+            event = event.copy()
+            if event['action'] != '_datachange_':
+                res.append(event)
+        return res
 
-        return self.context.getHistory(
-            checkMayViewEvent=checkMayViewEvent, checkMayViewComment=checkMayViewComment)
+
+class PMDataChangesHistoryAdapter(ImioWfHistoryAdapter):
+    """ """
+
+    history_type = 'data_changes'
+
+    def get_history_data(self):
+        """WF history is mixed with datachanges history."""
+        history = super(PMDataChangesHistoryAdapter, self).get_history_data()
+        full_datachanges_history = []
+        # first pass, keep datachanges
+        for event in history:
+            event = event.copy()
+            if event['action'] == '_datachange_':
+                full_datachanges_history.append(event)
+
+        # second pass, compute datachanges
+        res = []
+        i = -1
+        full_datachanges_history.reverse()
+        while (i+1) < len(full_datachanges_history):
+            i += 1
+            new_event = full_datachanges_history[i].copy()
+            new_event['changes'] = {}
+            new_event['type'] = self.history_type
+            for name, oldValue in full_datachanges_history[i]['changes'].iteritems():
+                widgetName = self.context.getField(name).widget.getName()
+                if widgetName == 'RichWidget':
+                    if xhtmlContentIsEmpty(oldValue):
+                        val = '-'
+                    else:
+                        newValue = findNewValue(self.context, name, full_datachanges_history, i-1)
+                        # Compute the diff between oldValue and newValue
+                        iMsg, dMsg = getHistoryTexts(self.context, event)
+                        comparator = HtmlDiff(oldValue, newValue, iMsg, dMsg)
+                        val = comparator.get()
+                    new_event['changes'][name] = val
+                elif widgetName == 'BooleanWidget':
+                    label = oldValue and 'Yes' or 'No'
+                    new_event['changes'][name] = translate(label, domain="plone", context=self.request)
+                elif widgetName == 'TextAreaWidget':
+                    val = oldValue.replace('\r', '').replace('\n', '<br/>')
+                    new_event['changes'][name] = val
+                elif widgetName == 'SelectionWidget':
+                    allValues = self.context.getField(name).Vocabulary(self.context)
+                    val = allValues.getValue(oldValue or '')
+                    new_event['changes'][name] = val or '-'
+                elif widgetName == 'MultiSelectionWidget':
+                    allValues = self.context.getField(name).Vocabulary(self.context)
+                    val = [allValues.getValue(v) for v in oldValue]
+                    if not val:
+                        val = '-'
+                    else:
+                        val = '<br/>'.join(val)
+                    new_event['changes'][name] = val
+                else:
+                    new_event['changes'][name] = oldValue
+            res.append(new_event)
+        return res
 
 
 class PMEmergencyChangesHistoryAdapter(BaseImioHistoryAdapter):

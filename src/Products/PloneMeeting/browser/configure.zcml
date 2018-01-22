@@ -757,4 +757,18 @@
         class=".overrides.PMReferenceBrowserPopup"
         />
 
+    <!-- Override @@historyview for IMeetingItem and IMeeting -->
+    <browser:view
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        name="contenthistory"
+        class=".overrides.PMContentHistoryView"
+        layer="imio.history.interfaces.IImioHistoryLayer"
+        permission="zope.Public" />
+    <browser:view
+        for="Products.PloneMeeting.interfaces.IMeeting"
+        name="contenthistory"
+        class=".overrides.PMContentHistoryView"
+        layer="imio.history.interfaces.IImioHistoryLayer"
+        permission="zope.Public" />
+
 </configure>

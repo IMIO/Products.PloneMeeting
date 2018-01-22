@@ -26,6 +26,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Turned MeetingWorkflowActions, MeetingWorkflowConditions, MeetingItemWorkflowConditions and
   MeetingItemWorkflowActions to new style python classes
 - Added an email notification when an item is visible by copyGroups, members of the copyGroups are notified
+- Removed utils.getHistory and Meeting/MeetingItem/meetingadvice.getHistory, the WF and datachanges histories
+  are now 2 separated imio.history adapters
 
 4.1b2 (2017-12-07)
 ------------------

@@ -1494,7 +1494,8 @@ class testMeetingItem(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         self.assertEquals(previous_review_state(item)(), _marker)
         self.proposeItem(item)
-        previous_state = item.getHistory(history_types=['workflow'])[-2]['review_state']
+        wf_adapter = getAdapter(item, IImioHistory, 'workflow')
+        previous_state = wf_adapter.getHistory()[-2]['review_state']
         self.assertEquals(previous_review_state(item)(), previous_state)
 
         # now check that it does not interact when datachange is enabled
@@ -1507,22 +1508,19 @@ class testMeetingItem(PloneMeetingTestCase):
         item.workflow_history = {}
         self.assertEquals(previous_review_state(item)(), _marker)
 
-    def test_pm_GetHistoryToHighlightHistoryIconDoesBypassDatachanges(self):
-        """getHistory done when getting the last event comment to know if history icon/link
-           must be highlighted does will bypass datachanges (performance reason because it
-           computes diffs)."""
+    def test_pm_WFHistoryAndDAtaChangesHistoryAreSeparated(self):
+        """The WF history and datachanges history are separated in 2 adapters."""
         cfg = self.meetingConfig
         cfg.setHistorizedItemAttributes(('decision', ))
         cfg.setRecordItemHistoryStates((self._stateMappingFor('itemcreated'), ))
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        self.assertFalse('_datachange_' in [event['action'] for event in item.getHistory()])
+        wf_adapter = getAdapter(item, IImioHistory, 'workflow')
+        datachanges_adapter = getAdapter(item, IImioHistory, 'data_changes')
+        self.assertFalse('_datachange_' in [event['action'] for event in wf_adapter.getHistory()])
         setFieldFromAjax(item, 'decision', self.decisionText)
-        self.assertTrue('_datachange_' in [event['action'] for event in item.getHistory()])
-        # datachange are not taken into account when for_last_event=True
-        adapter = getAdapter(item, IImioHistory, 'workflow')
-        self.assertTrue('_datachange_' in [event['action'] for event in adapter.getHistory()])
-        self.assertFalse('_datachange_' in [event['action'] for event in adapter.getHistory(for_last_event=True)])
+        self.assertFalse('_datachange_' in [event['action'] for event in wf_adapter.getHistory()])
+        self.assertTrue('_datachange_' in [event['action'] for event in datachanges_adapter.getHistory()])
 
     def test_pm_AddAutoCopyGroups(self):
         '''Test the functionnality of automatically adding some copyGroups depending on
@@ -3460,8 +3458,9 @@ class testMeetingItem(PloneMeetingTestCase):
     def test_pm_HistoryCommentViewability(self):
         '''Test the MeetingConfig.hideItemHistoryCommentsToUsersOutsideProposingGroup parameter
            that will make history comments no viewable to any other user than proposing group members.'''
+        cfg = self.meetingConfig
         # by default, comments are viewable by everyone
-        self.assertTrue(not self.meetingConfig.getHideItemHistoryCommentsToUsersOutsideProposingGroup())
+        self.assertTrue(not cfg.getHideItemHistoryCommentsToUsersOutsideProposingGroup())
         # create an item and do some WF transitions so we have history events
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -3471,19 +3470,20 @@ class testMeetingItem(PloneMeetingTestCase):
         self.validateItem(item)
         # by default, comments are viewable
         self.changeUser('pmReviewer2')
-        history = item.getHistory()
+        wf_adapter = getAdapter(item, IImioHistory, 'workflow')
+        wf_history = wf_adapter.getHistory()
         # we have history
         # we just check >= 3 because the proposeItem method could add several events to the history
         # depending on the validation flow (propose to chief, reviewer, director, ...)
-        self.assertTrue(len(history) >= 3)
-        for event in history:
+        self.assertTrue(len(wf_history) >= 3)
+        for event in wf_history:
             self.assertTrue(event['comments'] == '')
         # make comments not viewable
-        self.meetingConfig.setHideItemHistoryCommentsToUsersOutsideProposingGroup(True)
-        history = item.getHistory()
+        cfg.setHideItemHistoryCommentsToUsersOutsideProposingGroup(True)
+        wf_history = wf_adapter.getHistory()
         # we have history
-        self.assertTrue(len(history) >= 3)
-        for event in history:
+        self.assertTrue(len(wf_history) >= 3)
+        for event in wf_history:
             self.assertTrue(event['comments'] == HISTORY_COMMENT_NOT_VIEWABLE)
 
     def test_pm_GetCertifiedSignatures(self):

@@ -55,7 +55,6 @@ from imio.helpers.xhtml import markEmptyTags
 from imio.helpers.xhtml import removeBlanks
 from imio.helpers.xhtml import storeImagesLocally
 from imio.helpers.xhtml import xhtmlContentIsEmpty
-from imio.history.interfaces import IImioHistory
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.MailHost.MailHost import MailHostError
@@ -70,7 +69,6 @@ from Products.DCWorkflow.events import TransitionEvent
 from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import AddAnnexDecision
 from Products.PloneMeeting.config import ADD_SUBCONTENT_PERMISSIONS
-from Products.PloneMeeting.config import HISTORY_COMMENT_NOT_VIEWABLE
 from Products.PloneMeeting.config import PloneMeetingError
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import TOOL_ID
@@ -1006,82 +1004,6 @@ def getHistoryTexts(obj, event):
         date = toLocalizedTime(event['time'], long_format=True)
         msg = '%s: %s' % (date, msg)
         res.append(msg.encode('utf-8'))
-    return res
-
-
-def getHistory(obj, startNumber=0, batchSize=500, checkMayViewEvent=True,
-               checkMayViewComment=True, history_types=['datachange', 'workflow']):
-    '''Returns the history for this object, sorted in reverse order
-       (most recent change first)'''
-    res = []
-    wfTool = api.portal.get_tool('portal_workflow')
-    wfName = wfTool.getWorkflowsFor(obj)[0].getId()
-    history = list(obj.workflow_history[wfName])
-    stopIndex = startNumber + batchSize - 1
-    i = -1
-    while (i+1) < len(history):
-        i += 1
-        # Keep only events in range startNumber:startNumber+batchSize
-        if i < startNumber:
-            continue
-        if i > stopIndex:
-            break
-        event = history[i]
-        # We take a copy, because we will modify it.
-        event = history[i].copy()
-        if event['action'] == '_datachange_':
-            if 'datachange' not in history_types:
-                continue
-            event['changes'] = {}
-            event['type'] = 'changes'
-            for name, oldValue in history[i]['changes'].iteritems():
-                widgetName = obj.getField(name).widget.getName()
-                if widgetName == 'RichWidget':
-                    if xhtmlContentIsEmpty(oldValue):
-                        val = '-'
-                    else:
-                        newValue = findNewValue(obj, name, history, i-1)
-                        # Compute the diff between oldValue and newValue
-                        iMsg, dMsg = getHistoryTexts(obj, event)
-                        comparator = HtmlDiff(oldValue, newValue, iMsg, dMsg)
-                        val = comparator.get()
-                    event['changes'][name] = val
-                elif widgetName == 'BooleanWidget':
-                    label = oldValue and 'Yes' or 'No'
-                    event['changes'][name] = translate(label, domain="plone", context=obj.REQUEST)
-                elif widgetName == 'TextAreaWidget':
-                    val = oldValue.replace('\r', '').replace('\n', '<br/>')
-                    event['changes'][name] = val
-                elif widgetName == 'SelectionWidget':
-                    allValues = obj.getField(name).Vocabulary(obj)
-                    val = allValues.getValue(oldValue or '')
-                    event['changes'][name] = val or '-'
-                elif widgetName == 'MultiSelectionWidget':
-                    allValues = obj.getField(name).Vocabulary(obj)
-                    val = [allValues.getValue(v) for v in oldValue]
-                    if not val:
-                        val = '-'
-                    else:
-                        val = '<br/>'.join(val)
-                    event['changes'][name] = val
-                else:
-                    event['changes'][name] = oldValue
-        else:
-            if 'workflow' not in history_types:
-                continue
-            adapter = None
-            if checkMayViewEvent:
-                adapter = getAdapter(obj, IImioHistory, 'workflow')
-                if not adapter.mayViewEvent(event):
-                    continue
-            event['type'] = 'workflow'
-            if checkMayViewComment:
-                # workflow history event
-                # hide comment if user may not access it
-                adapter = adapter or getAdapter(obj, IImioHistory, 'workflow')
-                if not adapter.mayViewComment(event):
-                    event['comments'] = HISTORY_COMMENT_NOT_VIEWABLE
-        res.append(event)
     return res
 
 

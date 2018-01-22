@@ -232,6 +232,11 @@
            name="emergency_changes"
            provides="imio.history.interfaces.IImioHistory" />
 
+  <adapter for="OFS.interfaces.IItem"
+           factory=".adapters.PMDataChangesHistoryAdapter"
+           name="data_changes"
+           provides="imio.history.interfaces.IImioHistory" />
+
   <five:deprecatedManageAddDelete class=".MeetingItem.MeetingItem" />
   <five:deprecatedManageAddDelete class=".Meeting.Meeting" />
   <five:deprecatedManageAddDelete class=".MeetingFile.MeetingFile" />

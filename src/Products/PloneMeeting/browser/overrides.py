@@ -46,6 +46,7 @@ from imio.dashboard.browser.overrides import IDDocumentGenerationView
 from imio.dashboard.browser.overrides import IDDashboardDocumentGeneratorLinksViewlet
 from imio.dashboard.browser.views import RenderTermPortletView
 from imio.dashboard.content.pod_template import IDashboardPODTemplate
+from imio.history.browser.views import IHContentHistoryView
 from imio.history.browser.views import IHDocumentBylineViewlet
 from imio.prettylink.interfaces import IPrettyLink
 
@@ -1158,3 +1159,11 @@ class PMTransitionBatchActionForm(TransitionBatchActionForm):
         tool = api.portal.get_tool('portal_plonemeeting')
         return bool(tool.userIsAmong(suffixes=get_all_suffixes(None)) or
                     tool.isManager(self.context))
+
+
+class PMContentHistoryView(IHContentHistoryView):
+    '''
+      Overrides the ContentHistoryView template to use our own.
+      We want to display the content_history as a table.
+    '''
+    histories_to_handle = (u'revision', u'workflow', u'data_changes')

@@ -81,7 +81,6 @@ from Products.PloneMeeting.utils import getLastEvent
 from Products.PloneMeeting.utils import getMeetingUsers
 from Products.PloneMeeting.utils import getFieldVersion
 from Products.PloneMeeting.utils import getDateFromDelta
-from Products.PloneMeeting.utils import getHistory
 from Products.PloneMeeting.utils import hasHistory
 from Products.PloneMeeting.utils import ItemDuplicatedFromConfigEvent
 from Products.PloneMeeting.utils import MeetingLocalRolesUpdatedEvent
@@ -1938,12 +1937,6 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
     def hasHistory(self, fieldName=None):
         '''See doc in utils.py.'''
         return hasHistory(self, fieldName)
-
-    security.declarePublic('getHistory')
-
-    def getHistory(self, *args, **kwargs):
-        '''See doc in utils.py.'''
-        return getHistory(self, *args, **kwargs)
 
     security.declarePublic('attributeIsUsed')
 
