@@ -1,0 +1,16 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:browser="http://namespaces.zope.org/browser"
+    xmlns:plone="http://namespaces.plone.org/plone">
+
+    <configure package="ftw.labels.portlets">
+        <plone:portlet
+            name="ftw.labels.labeljar"
+            interface=".interfaces.ILabelJarPortlet"
+            assignment=".assignments.LabelJarAssignment"
+            renderer="Products.PloneMeeting.ftw_labels.overrides.PMFTWLabelsRenderer"
+            addview=".labeljar.AddForm"
+            />
+    </configure>
+
+</configure>

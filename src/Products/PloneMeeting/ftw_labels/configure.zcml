@@ -1,0 +1,19 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:browser="http://namespaces.zope.org/browser"
+    xmlns:plone="http://namespaces.plone.org/plone">
+
+    <adapter for="Products.PloneMeeting.interfaces.IMeetingItem"
+             factory=".adapters.ftw_labels_jar_discovery"
+             provides="ftw.labels.interfaces.ILabelJar" />
+
+    <configure package="ftw.labels.viewlets">
+      <browser:viewlet
+          name="ftw.labels.labeling"
+          manager="plone.app.layout.viewlets.interfaces.IBelowContentTitle"
+          class="Products.PloneMeeting.ftw_labels.overrides.PMFTWLabelsLabelingViewlet"
+          permission="zope2.View"
+          for="Products.PloneMeeting.interfaces.IMeetingItem" />
+    </configure>
+
+</configure>

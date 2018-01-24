@@ -543,6 +543,19 @@ schema = Schema((
         default_content_type='text/plain',
         write_permission="PloneMeeting: Write risky config",
     ),
+    BooleanField(
+        name='enableLabels',
+        default=defValues.enableLabels,
+        widget=BooleanField._properties['widget'](
+            description="EnableLabels",
+            description_msgid="enable_labels_descr",
+            label='Enablelabels',
+            label_msgid='PloneMeeting_label_enableLabels',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="data",
+        write_permission="PloneMeeting: Write risky config",
+    ),
     DataGridField(
         name='insertingMethodsOnAddItem',
         widget=DataGridField._properties['widget'](

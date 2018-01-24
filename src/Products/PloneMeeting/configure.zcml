@@ -32,12 +32,14 @@
   <include package=".content" />
   <include package=".documentgenerator" />
   <include package=".filters" />
+  <include package=".ftw_labels" />
 
   <include file="columns.zcml" />
   <include file="events.zcml" />
   <include file="profiling.zcml" />
   <include file="vocabularies.zcml" />
   <includeOverrides file="overrides.zcml" />
+  <includeOverrides file="ftw_labels/overrides.zcml" />
 
   <permission id="PloneMeeting.AddAdvice"
               title="PloneMeeting: Add advice"/>

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
+from ftw.labels.interfaces import ILabelSupport
 from zope.interface import Interface
 from zope.component.interfaces import IObjectEvent
 from zope.publisher.interfaces.browser import IBrowserRequest
@@ -166,7 +167,7 @@ class IMeetingContent(Interface):
     """
 
 
-class IMeetingItem(IMeetingContent):
+class IMeetingItem(IMeetingContent, ILabelSupport):
     """Marker interface for .MeetingItem.MeetingItem
     """
 

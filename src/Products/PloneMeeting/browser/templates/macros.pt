@@ -153,7 +153,7 @@ document.location.reload(true);
          tal:condition="changes"
          tal:attributes="src string:$portal_url/view.gif; onClick jsView"/>
     </tal:history>
-  </legend>
+  </legend>123
   <div tal:replace="structure python: context.getFieldVersion(fieldName, changes)"></div>
  </fieldset>
 </div>
