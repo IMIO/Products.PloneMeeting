@@ -10,8 +10,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 4.1b4 (unreleased)
 ------------------
 
-- Nothing changed yet.
-
+- Simplified SearchableText indexer by use of utils.get_annexes as annexes title is indexed
 
 4.1b3 (2018-01-23)
 ------------------

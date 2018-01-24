@@ -181,17 +181,11 @@ def sentToInfos(obj):
 @indexer(IMeetingItem)
 def SearchableText(obj):
     """
-      Contained annex title is indexed in the item's SearachableText.
+      Contained annex title is indexed in the item's SearchableText.
     """
     res = []
     res.append(obj.SearchableText())
-    # do not use get_categorized_elements because it query catalog
-    annexes = []
-    contents = obj.objectValues()
-    for content in contents:
-        if content.portal_type in ('annex', 'annexDecision'):
-            annexes.append(content)
-    for annex in annexes:
+    for annex in get_annexes(obj):
         res.append(annex.SearchableText())
     res = ' '.join(res)
     return res or _marker
