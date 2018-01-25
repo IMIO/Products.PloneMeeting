@@ -24,5 +24,25 @@
    <property name="default"/>
   </criterion>
 
+  <criterion name="c26" i18n:attributes="title">
+   <property name="widget">checkbox</property>
+   <property name="title">Labels</property>
+   <property name="position">top</property>
+   <property name="section">advanced</property>
+   <property name="hidden">0</property>
+   <property name="count">0</property>
+   <property name="sortcountable">0</property>
+   <property name="hidezerocount">0</property>
+   <property name="index">labels</property>
+   <property name="operator">or</property>
+   <property name="operator_visible">0</property>
+   <property
+      name="vocabulary">Products.PloneMeeting.vocabularies.ftwlabelsvocabulary</property>
+   <property name="catalog"></property>
+   <property name="maxitems"></property>
+   <property name="sortreversed">0</property>
+   <property name="default"/>
+  </criterion>
+ 
  </criteria>
 </object>

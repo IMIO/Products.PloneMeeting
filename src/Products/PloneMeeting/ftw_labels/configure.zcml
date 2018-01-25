@@ -16,4 +16,8 @@
           for="Products.PloneMeeting.interfaces.IMeetingItem" />
     </configure>
 
+    <!-- Vocabulary used for the faceted filter -->
+    <utility component=".vocabularies.FTWLabelsVocabularyFactory"
+             name="Products.PloneMeeting.vocabularies.ftwlabelsvocabulary" />
+
 </configure>

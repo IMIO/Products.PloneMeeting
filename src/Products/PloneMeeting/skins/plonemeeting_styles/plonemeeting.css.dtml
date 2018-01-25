@@ -1628,6 +1628,14 @@ body.portaltype-contentcategory dl.portalMessage {
     width: 400px;
 }
 
+#content div#labeling-viewlet {
+   float: left;
+   padding-top: 0.5em;
+}
+#content div#labeling-viewlet li {
+   display: inline;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */

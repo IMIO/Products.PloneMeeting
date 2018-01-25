@@ -11,6 +11,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 ------------------
 
 - Simplified SearchableText indexer by use of utils.get_annexes as annexes title is indexed
+- Added 'Labels' on items, this rely on the integration of ftw.labels
 
 4.1b3 (2018-01-23)
 ------------------

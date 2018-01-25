@@ -256,10 +256,14 @@
   <class class="Products.PloneMeeting.ToolPloneMeeting.ToolPloneMeeting">
     <implements interface="plone.portlets.interfaces.ILocalPortletAssignable" />
   </class>
+  <!-- Make MeetingConfig ILabelRoot to be able to display the ftw.labels labels definition portlet,
+       as well as IMultiPageSchema to display the form on several pages -->
   <class class="Products.PloneMeeting.MeetingConfig.MeetingConfig">
     <implements interface="plone.portlets.interfaces.ILocalPortletAssignable" />
     <implements interface="Products.Archetypes.interfaces.IMultiPageSchema" />
+    <implements interface="ftw.labels.interfaces.ILabelRoot" />
   </class>
+  
   <!-- Make Meeting behave like a Collection to be faceted navigable -->
   <class class="Products.PloneMeeting.Meeting.Meeting">
     <implements interface="eea.facetednavigation.interfaces.IPossibleFacetedNavigable" />
