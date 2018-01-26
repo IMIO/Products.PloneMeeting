@@ -27,6 +27,7 @@ from datetime import datetime
 from DateTime import DateTime
 from AccessControl import Unauthorized
 from Products.Five import zcml
+from zope.component import getAdapter
 from zope.component import getMultiAdapter
 from zope.i18n import translate
 from plone import api
@@ -35,6 +36,9 @@ from plone.dexterity.utils import createContentInContainer
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.statusmessages.interfaces import IStatusMessage
+
+from ftw.labels.interfaces import ILabeling
+from ftw.labels.interfaces import ILabelJar
 
 from Products import PloneMeeting as products_plonemeeting
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
@@ -827,6 +831,75 @@ class testViews(PloneMeetingTestCase):
         pmFolder = self.getMeetingFolder()
         form = getMultiAdapter((pmFolder.searches_items, self.request), name=u'transition-batch-action')
         self.assertFalse(form.available())
+
+    def test_pm_ftw_labels_viewlet_available(self):
+        """Only available on items if enabled in MeetingConfig."""
+        cfg = self.meetingConfig
+        self.assertFalse(cfg.getEnableLabels())
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        viewlet = self._get_viewlet(
+            context=item, manager_name='plone.belowcontenttitle', viewlet_name='ftw.labels.labeling')
+        self.assertFalse(viewlet.available)
+
+        # enableLabels
+        cfg.setEnableLabels(True)
+        # still not available as no labels defined
+        self.assertFalse(viewlet.available)
+        # get the labeljar, that is actually the MeetingConfig
+        labeljar = getAdapter(item, ILabelJar)
+        self.assertEqual(labeljar.context, cfg)
+        self.assertEqual(labeljar.list(), [])
+        labeljar.add('Label', 'green')
+        self.assertTrue(viewlet.available)
+
+    def _enable_ftw_labels(self):
+        cfg = self.meetingConfig
+        cfg.setEnableLabels(True)
+        self.changeUser('pmCreator1')
+        labeljar = getAdapter(cfg, ILabelJar)
+        labeljar.add('Label1', 'green')
+        labeljar.add('Label2', 'red')
+        return labeljar
+
+    def test_pm_ftw_labels_viewlet_can_edit(self):
+        """can_edit when user has Modify portal content permission."""
+        # enable viewlet
+        self._enable_ftw_labels()
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        viewlet = self._get_viewlet(
+            context=item, manager_name='plone.belowcontenttitle', viewlet_name='ftw.labels.labeling')
+        self.assertTrue(viewlet.available)
+
+        # can_edit
+        self.assertTrue(self.hasPermission(ModifyPortalContent, item))
+        self.assertTrue(viewlet.can_edit)
+        # propose so no more editable
+        self.proposeItem(item)
+        self.assertFalse(self.hasPermission(ModifyPortalContent, item))
+        self.assertFalse(viewlet.can_edit)
+
+    def test_pm_ftw_labels_labeling_update_protected(self):
+        """Make sure the @@labeling/update method is correctly protected.
+           Indeed, a scenario where an item is labelled then ModifyPortalContent is lost
+           because state changed, make sure if a browser screen was not update, labeling
+           update raises Unauthorized."""
+        self._enable_ftw_labels()
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        view = item.restrictedTraverse('@@labeling')
+        labeling = ILabeling(item)
+        self.assertEqual(labeling.active_labels(), [])
+        self.request.form['activate_labels'] = ['label1']
+        view.update()
+        self.assertEqual(
+            labeling.active_labels(),
+            [{'color': 'green', 'label_id': 'label1', 'title': 'Label1'}])
+
+        # propose item, view is not more available
+        self.proposeItem(item)
+        self.assertRaises(Unauthorized, item.restrictedTraverse, '@@labeling')
 
 
 def test_suite():

@@ -8,12 +8,21 @@
              provides="ftw.labels.interfaces.ILabelJar" />
 
     <configure package="ftw.labels.viewlets">
-      <browser:viewlet
-          name="ftw.labels.labeling"
-          manager="plone.app.layout.viewlets.interfaces.IBelowContentTitle"
-          class="Products.PloneMeeting.ftw_labels.overrides.PMFTWLabelsLabelingViewlet"
-          permission="zope2.View"
-          for="Products.PloneMeeting.interfaces.IMeetingItem" />
+        <browser:viewlet
+            for="Products.PloneMeeting.interfaces.IMeetingItem"
+            name="ftw.labels.labeling"
+            manager="plone.app.layout.viewlets.interfaces.IBelowContentTitle"
+            class="Products.PloneMeeting.ftw_labels.overrides.PMFTWLabelsLabelingViewlet"
+            permission="zope2.View" />
+    </configure>
+    <configure package="ftw.labels.browser">
+        <browser:page
+            for="Products.PloneMeeting.interfaces.IMeetingItem"
+            name="labeling"
+            class=".labeling.Labeling"
+            permission="cmf.ModifyPortalContent"
+            allowed_attributes="update"
+            />
     </configure>
 
     <!-- Vocabulary used for the faceted filter -->

@@ -10,6 +10,8 @@
 from plone import api
 from ftw.labels.portlets.labeljar import Renderer as ftw_labels_renderer
 from ftw.labels.viewlets.labeling import LabelingViewlet
+from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFCore.utils import _checkPermission
 
 
 class PMFTWLabelsRenderer(ftw_labels_renderer):
@@ -34,3 +36,7 @@ class PMFTWLabelsLabelingViewlet(LabelingViewlet):
             cfg = tool.getMeetingConfig(self.context)
             available = cfg.getEnableLabels()
         return available
+
+    @property
+    def can_edit(self):
+        return _checkPermission(ModifyPortalContent, self.context)
