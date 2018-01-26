@@ -17,6 +17,7 @@
   <include package="collective.js.fancytree"/>
   <include package="collective.js.jqueryui"/>
   <include package="collective.messagesviewlet"/>
+  <include package="ftw.labels"/>
   <include package="imio.annex"/>
   <include package="imio.pm.ws"/>
   <include package="imio.dashboard"/>
