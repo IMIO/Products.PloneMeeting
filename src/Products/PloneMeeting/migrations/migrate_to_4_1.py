@@ -14,12 +14,14 @@ logger = logging.getLogger('PloneMeeting')
 # The migration class ----------------------------------------------------------
 class Migrate_To_4_1(Migrator):
 
-    def _addHasAnnexesToSignFacetedFilter(self):
-        """Add new faceted filter 'has annexes to sign?'."""
-        logger.info("Adding new faceted filter 'Has annexes to sign?' for every MeetingConfigs...")
+    def _addNewFacetedFilters(self):
+        """Add new faceted filters :
+           - 'Has annexes to sign?';
+           - 'Labels'."""
+        logger.info("Adding new faceted filters 'Has annexes to sign?' and 'Labels' for every MeetingConfigs...")
         xmlpath = os.path.join(
             os.path.dirname(__file__),
-            '../faceted_conf/upgrade_step_add_hasannexestosign_widget.xml')
+            '../faceted_conf/upgrade_step_add_item_widgets.xml')
 
         for cfg in self.tool.objectValues('MeetingConfig'):
             obj = cfg.searches.searches_items
@@ -108,7 +110,7 @@ class Migrate_To_4_1(Migrator):
         self.updateHolidays()
 
         # migration steps
-        self._addHasAnnexesToSignFacetedFilter()
+        self._addNewFacetedFilters()
         self._addItemTemplatesManagersGroup()
         self._updateCollectionColumns()
         self._markSearchesFoldersWithIBatchActionsMarker()

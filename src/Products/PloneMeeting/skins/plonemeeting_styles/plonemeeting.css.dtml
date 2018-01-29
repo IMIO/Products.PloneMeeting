@@ -1628,6 +1628,21 @@ body.portaltype-contentcategory dl.portalMessage {
     width: 400px;
 }
 
+/* labels displayed on the item view */
+#content div#viewlet-below-content-title div#labeling-viewlet {
+   float: left;
+}
+#content div#labeling-viewlet li {
+   display: inline;
+}
+#content div#labeling-viewlet {
+   padding-top: 0.3em;
+}
+/* labels displayed in the dashboards */
+#content div#faceted-results div#labeling-viewlet ul {
+   display: inline-block;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */

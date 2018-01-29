@@ -38,6 +38,7 @@ from collective.eeafaceted.batchactions import _ as _CEBA
 from collective.eeafaceted.batchactions.browser.views import BaseBatchActionForm
 from eea.facetednavigation.browser.app.view import FacetedContainerView
 from eea.facetednavigation.interfaces import ICriteria
+from ftw.labels.interfaces import ILabeling
 from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
 from imio.helpers.xhtml import addClassToContent
 from imio.helpers.xhtml import imagesToPath
@@ -133,6 +134,10 @@ class ItemStaticInfosView(BrowserView):
         """ """
         self.visibleColumns = visibleColumns
         return super(ItemStaticInfosView, self).__call__()
+
+    @property
+    def active_labels(self):
+        return ILabeling(self.context).active_labels()
 
 
 class ItemIsSignedView(BrowserView):

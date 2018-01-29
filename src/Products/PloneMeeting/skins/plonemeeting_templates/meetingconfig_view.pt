@@ -235,7 +235,9 @@
           <td tal:define="field python:here.getField('itemReferenceFormat')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td></td>
+          <td tal:define="field python:here.getField('enableLabels')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
         </tr>
         <tr valign="top">
           <td tal:define="field python:here.getField('toDiscussSetOnItemInsert')">

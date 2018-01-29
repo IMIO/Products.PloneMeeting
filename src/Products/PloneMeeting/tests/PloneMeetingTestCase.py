@@ -26,8 +26,10 @@ import unittest
 from AccessControl.SecurityManagement import getSecurityManager
 
 from z3c.form.testing import TestRequest as z3c_form_TestRequest
+from zope.component import getMultiAdapter
 from zope.event import notify
 from zope.traversing.interfaces import BeforeTraverseEvent
+from zope.viewlet.interfaces import IViewletManager
 
 from plone import api
 from plone import namedfile
@@ -35,6 +37,7 @@ from plone.app.testing.helpers import setRoles
 from plone.app.testing import login, logout
 from plone.dexterity.utils import createContentInContainer
 
+from Products.Five.browser import BrowserView
 from Products.PloneTestCase.setup import _createHomeFolder
 
 from collective.iconifiedcategory.utils import calculate_category_id
@@ -450,3 +453,19 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         res = [t['id'] for t in self.wfTool.getTransitionsFor(obj)]
         res.sort()
         return res
+
+    def _get_viewlet_manager(self, context, manager_name):
+        """ """
+        view = BrowserView(context, self.request)
+        viewlet_manager = getMultiAdapter(
+            (context, self.request, view),
+            IViewletManager,
+            manager_name)
+        viewlet_manager.update()
+        return viewlet_manager
+
+    def _get_viewlet(self, context, manager_name, viewlet_name):
+        """ """
+        viewlet_manager = self._get_viewlet_manager(context, manager_name)
+        viewlet = viewlet_manager.get(viewlet_name)
+        return viewlet

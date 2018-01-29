@@ -12,9 +12,20 @@
               manager="plone.leftcolumn"
               type="plonemeeting.portlets.plonemeeting" >
   </assignment>
-  <!-- Hide portlets "navigation" and 'calendar" -->
+  <!-- Hide portlets "navigation" and 'calendar" and "ftw.labels" -->
   <assignment manager="plone.leftcolumn" category="context"
      key="/" type="portlets.Navigation" name="navigation" remove="True"/>
   <assignment manager="plone.rightcolumn" category="context" key="/"
      type="portlets.Calendar" name="calendar" remove="True"/>
+  <assignment manager="plone.leftcolumn" category="context" key="/"
+     type="ftw.labels.labeljar" name="ftw-labels-labeljar" remove="True"/>
+
+  <!-- assign ftw.labels.labeljar-->
+  <assignment
+      name="ftw-labels-labeljar"
+      category="context"
+      key="/"
+      manager="plone.rightcolumn"
+      type="ftw.labels.labeljar">
+  </assignment>
 </portlets>

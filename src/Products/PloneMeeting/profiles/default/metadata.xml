@@ -12,6 +12,7 @@
     <dependency>profile-collective.js.iframeresizer:default</dependency>
     <dependency>profile-collective.messagesviewlet:messages</dependency>
     <dependency>profile-communesplone.layout:default</dependency>
+    <dependency>profile-ftw.labels:default</dependency>
     <dependency>profile-imio.annex:default</dependency>
     <dependency>profile-imio.helpers:default</dependency>
     <dependency>profile-imio.pm.ws:default</dependency>

@@ -1,9 +1,21 @@
+<tal:labels condition="python: 'labels' in view.visibleColumns">
+  <div id="labeling-viewlet">
+    <ul class="activeLabels">
+      <li tal:repeat="label view/active_labels">
+        <span tal:attributes="class string:labelItem labelColor labelcolor-${label/color}"
+              tal:content="label/title" />
+      </li>
+    </ul>
+  </div>
+</tal:labels>
+
 <tal:reference condition="python: 'item_reference' in view.visibleColumns">
     <p class="discreet"
        tal:define="itemReference context/getItemReference"
        tal:condition="itemReference"
        tal:content="itemReference" />
 </tal:reference>
+
 <tal:budget condition="python: 'budget_infos' in view.visibleColumns and context.getBudgetRelated() and not context.fieldIsEmpty('budgetInfos')">
   <span tal:define="field python: context.getField('budgetInfos');
                     mode string:view;">
