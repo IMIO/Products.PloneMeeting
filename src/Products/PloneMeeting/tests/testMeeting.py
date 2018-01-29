@@ -2197,7 +2197,7 @@ class testMeeting(PloneMeetingTestCase):
             'title="contact.png" />.</p>'.format(img.absolute_url()))
         self.assertEqual(
             meeting.getRawObservations(),
-            '<p>Working external image <img src="resolveuid/{0}"/>.</p>'.format(img.UID()))
+            '<p>Working external image <img src="resolveuid/{0}">.</p>'.format(img.UID()))
 
         # test using the quickedit
         text = '<p>Working external image <img src="http://www.imio.be/mascotte-presentation.jpg"/>.</p>'
@@ -2212,7 +2212,7 @@ class testMeeting(PloneMeetingTestCase):
             'title="mascotte-presentation.jpg" />.</p>'.format(img2.absolute_url()))
         self.assertEqual(
             meeting.getRawObservations(),
-            '<p>Working external image <img src="resolveuid/{0}"/>.</p>'.format(img2.UID()))
+            '<p>Working external image <img src="resolveuid/{0}">.</p>'.format(img2.UID()))
 
         # test using processForm, aka full edit form
         text = '<p>Working external image <img src="http://www.imio.be/spw.png"/>.</p>'
@@ -2228,7 +2228,7 @@ class testMeeting(PloneMeetingTestCase):
             'title="spw.png" />.</p>'.format(img3.absolute_url()))
         self.assertEqual(
             meeting.getRawObservations(),
-            '<p>Working external image <img src="resolveuid/{0}"/>.</p>'.format(img3.UID()))
+            '<p>Working external image <img src="resolveuid/{0}">.</p>'.format(img3.UID()))
 
     def test_pm_MeetingLocalRolesUpdatedEvent(self):
         """Test this event that is triggered after the local_roles on the meeting have been updated."""

@@ -4843,7 +4843,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # external image link was updated
         self.assertEqual(
             item.getRawDescription(),
-            '<p>Working external image <img src="resolveuid/{0}"/>.</p>'.format(img.UID()))
+            '<p>Working external image <img src="resolveuid/{0}">.</p>'.format(img.UID()))
 
         # test using the quickedit
         text = '<p>Working external image <img src="http://www.imio.be/mascotte-presentation.jpg"/>.</p>'
@@ -4853,7 +4853,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # external image link was updated
         self.assertEqual(
             item.getRawDescription(),
-            '<p>Working external image <img src="resolveuid/{0}"/>.</p>'.format(img2.UID()))
+            '<p>Working external image <img src="resolveuid/{0}">.</p>'.format(img2.UID()))
 
         # test using at_post_edit_script, aka full edit form
         text = '<p>Working external image <img src="http://www.imio.be/spw.png"/>.</p>'
@@ -4864,11 +4864,11 @@ class testMeetingItem(PloneMeetingTestCase):
         # external image link was updated
         self.assertEqual(
             item.getRawDescription(),
-            '<p>Working external image <img src="resolveuid/{0}"/>.</p>'.format(img3.UID()))
+            '<p>Working external image <img src="resolveuid/{0}">.</p>'.format(img3.UID()))
 
         # link to unknown external image, like during copy/paste of content
         # that has a link to an unexisting image or so
-        text = '<p>Not working external image <img src="http://www.imio.be/unknown_image.png"/>.</p>'
+        text = '<p>Not working external image <img src="http://www.imio.be/unknown_image.png">.</p>'
         item.setDescription(text)
         item._update_after_edit()
         self.assertTrue('spw.png' in item.objectIds())
@@ -4895,9 +4895,9 @@ class testMeetingItem(PloneMeetingTestCase):
         img2 = getattr(item, img2_id)
 
         # let's say we even have external images
-        text_pattern = '<p>External image <img src="{0}"/>.</p>' \
-            '<p>Internal image <img src="{1}"/>.</p>' \
-            '<p>Internal image 2 <img src="{2}"/>.</p>'
+        text_pattern = '<p>External image <img src="{0}">.</p>' \
+            '<p>Internal image <img src="{1}">.</p>' \
+            '<p>Internal image 2 <img src="{2}">.</p>'
         text = text_pattern.format(
             'http://www.imio.be/contact.png',
             img.absolute_url(),

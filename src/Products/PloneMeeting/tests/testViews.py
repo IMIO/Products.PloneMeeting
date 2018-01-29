@@ -655,7 +655,7 @@ class testViews(PloneMeetingTestCase):
                           '<p>&#160;</p>'
                           '<p class="ParaKWN">The d&#233;cision using UTF-8 characters.</p>'
                           '<p class="ParaKWN">&#160;</p>'
-                          '<p class="ParaKWN">Text with image <img src="{0}"/> and more text.</p>'
+                          '<p class="ParaKWN">Text with image <img src="{0}"> and more text.</p>'
                           .format(img_blob_path))
 
     def test_pm_PrintXhtmlAddCSSClass(self):
