@@ -1131,27 +1131,28 @@ class BaseItemsToValidateOfHighestHierarchicLevelAdapter(CompoundCriterionBaseAd
         member = api.user.get_current()
         groupsTool = api.portal.get_tool('portal_groups')
         groupIds = groupsTool.getGroupsForPrincipal(member)
-        res = []
         highestReviewerLevel = self.cfg._highestReviewerLevel(groupIds)
         if not highestReviewerLevel:
             # in this case, we do not want to display a result
             # we return an unknown review_state
             return FIND_NOTHING_QUERY
-        for groupId in groupIds:
-            if groupId.endswith('_%s' % highestReviewerLevel):
-                # append group name without suffix
-                res.append(groupId[:-len('_%s' % highestReviewerLevel)])
         review_state = MEETINGREVIEWERS[highestReviewerLevel]
         # specific management for workflows using the 'pre_validation' wfAdaptation
         if highestReviewerLevel == 'reviewers' and \
             ('pre_validation' in self.cfg.getWorkflowAdaptations() or
              'pre_validation_keep_reviewer_permissions' in self.cfg.getWorkflowAdaptations()):
             review_state = 'prevalidated'
-        review_state = '%s%s' % (prefix_review_state, review_state)
 
+        reviewProcessInfos = []
+        for groupId in groupIds:
+            if groupId.endswith('_%s' % highestReviewerLevel):
+                # append group name without suffix
+                mGroupId = groupId[:-len('_%s' % highestReviewerLevel)]
+                review_state = '%s%s' % (prefix_review_state, review_state)
+                reviewProcessInfos.append(
+                    '%s__reviewprocess__%s' % (mGroupId, review_state))
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
-                'getProposingGroup': {'query': res},
-                'review_state': {'query': review_state}, }
+                'reviewProcessInfo':  {'query': reviewProcessInfos}, }
 
 
 class ItemsToValidateOfHighestHierarchicLevelAdapter(BaseItemsToValidateOfHighestHierarchicLevelAdapter):

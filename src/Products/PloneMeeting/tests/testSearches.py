@@ -501,10 +501,11 @@ class testSearches(PloneMeetingTestCase):
         # for a reviewer, query is correct
         self.changeUser('pmManager')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstovalidateofhighesthierarchiclevel')
-        self.assertEquals(adapter.query,
-                          {'getProposingGroup': {'query': ['developers']},
-                           'portal_type': {'query': itemTypeName},
-                           'review_state': {'query': self._stateMappingFor('proposed')}})
+        self.assertEquals(
+            adapter.query,
+            {'reviewProcessInfo':
+                {'query': ['developers__reviewprocess__{0}'.format(self._stateMappingFor('proposed'))]},
+             'portal_type': {'query': itemTypeName}})
 
         # activate 'prevalidation' if necessary
         if 'prereviewers' in MEETINGREVIEWERS and \
@@ -823,9 +824,9 @@ class testSearches(PloneMeetingTestCase):
         self.changeUser('pmManager')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstocorrecttovalidateofhighesthierarchiclevel')
         self.assertEquals(adapter.query, {
-            'getProposingGroup': {'query': ['developers']},
-            'portal_type': {'query': itemTypeName},
-            'review_state': {'query': 'returned_to_proposing_group_proposed'}})
+            'reviewProcessInfo':
+            {'query': ['developers__reviewprocess__returned_to_proposing_group_proposed']},
+            'portal_type': {'query': itemTypeName}})
 
         # it returns only items the current user is able to correct
         # create an item for developers and one for vendors and 'return' it to proposingGroup
