@@ -1,5 +1,5 @@
 <tal:labels condition="python: 'labels' in view.visibleColumns">
-  <div id="labeling-viewlet">
+  <div id="labeling-viewlet" tal:define="active_labels view/active_labels" tal:condition="active_labels">
     <ul class="activeLabels">
       <li tal:repeat="label view/active_labels">
         <span tal:attributes="class string:labelItem labelColor labelcolor-${label/color}"
