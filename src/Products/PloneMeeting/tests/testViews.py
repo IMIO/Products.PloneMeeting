@@ -655,7 +655,7 @@ class testViews(PloneMeetingTestCase):
                           '<p>&#160;</p>'
                           '<p class="ParaKWN">The d&#233;cision using UTF-8 characters.</p>'
                           '<p class="ParaKWN">&#160;</p>'
-                          '<p class="ParaKWN">Text with image <img src="{0}"> and more text.</p>'
+                          '<p class="ParaKWN">Text with image <img src="{0}" /> and more text.</p>'
                           .format(img_blob_path))
 
     def test_pm_PrintXhtmlAddCSSClass(self):
@@ -674,6 +674,17 @@ class testViews(PloneMeetingTestCase):
                           '<p class="sample">DECIDE :</p>'
                           '<p class="sample">&#160;</p>'
                           '<p class="sample">The d&#233;cision using UTF-8 characters.</p>')
+
+    def test_pm_PrintXhtmlUseSafeHTML(self):
+        '''safe_html will do result XHTML compliant.'''
+        item, motivation, decision, helper = self._setupPrintXhtml()
+        # use_safe_html is True by default
+        self.assertEquals(
+            helper.printXhtml(item, [motivation, '<br>']),
+            motivation + '<br />')
+        self.assertEquals(
+            helper.printXhtml(item, [motivation, '<br>'], use_safe_html=False),
+            motivation + '<br>')
 
     def test_pm_MeetingUpdateItemReferences(self):
         """Test call to @@update-item-references from the meeting that will update

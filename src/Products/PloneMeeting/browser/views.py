@@ -528,7 +528,8 @@ class PMDocumentGenerationHelperView(ATDocumentGenerationHelperView):
                    keepWithNext=False,
                    keepWithNextNumberOfChars=CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT,
                    checkNeedSeparator=True,
-                   addCSSClass=None):
+                   addCSSClass=None,
+                   use_safe_html=True):
         """Helper method to format a p_xhtmlContents.  The xhtmlContents is a list or a string containing
            either XHTML content or some specific recognized words like :
            - 'separator', in this case, it is replaced with the p_separatorValue;
@@ -574,6 +575,12 @@ class PMDocumentGenerationHelperView(ATDocumentGenerationHelperView):
         # manage addCSSClass
         if addCSSClass:
             xhtmlFinal = addClassToContent(xhtmlFinal, addCSSClass)
+
+        # finally use_safe_html to clean the HTML, it does not only clean
+        # but turns the result into a XHTML compliant HTML, by replacing <br> with <br /> for example
+        if use_safe_html:
+            pt = api.portal.get_tool('portal_transforms')
+            xhtmlFinal = pt.convert('safe_html', xhtmlFinal).getData()
 
         return xhtmlFinal
 
