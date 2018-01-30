@@ -30,6 +30,7 @@ from zope.component import queryUtility
 from zope.event import notify
 from zope.lifecycleevent import ObjectModifiedEvent
 from zope.schema.interfaces import IVocabularyFactory
+from plone import api
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 from collective.documentviewer.config import CONVERTABLE_TYPES
@@ -48,10 +49,10 @@ from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
+from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.indexes import SearchableText
 from Products.PloneMeeting.MeetingConfig import PROPOSINGGROUPPREFIX
 from Products.PloneMeeting.MeetingConfig import SUFFIXPROFILEPREFIX
-from Products.PloneMeeting.profiles.testing import import_data
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 
@@ -211,6 +212,12 @@ class testAnnexes(PloneMeetingTestCase):
         self._checkElementConfidentialAnnexAccess(cfg, item, annexNotConfidential, annexConfidential,
                                                   annexes_table, categorized_child)
 
+    def _get_meeting_managers_for(self, cfg):
+        meeting_managers_group_id = '{0}_{1}'.format(cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX)
+        meeting_managers_group = api.group.get(meeting_managers_group_id)
+        meeting_manager_ids = meeting_managers_group.getMemberIds()
+        return meeting_manager_ids
+
     def test_pm_ItemGetCategorizedElementsWithConfidentialityForProposingGroupSuffixes(self):
         ''' '''
         cfg = self.meetingConfig
@@ -226,15 +233,16 @@ class testAnnexes(PloneMeetingTestCase):
         for proposingGroupSuffix in proposingGroupSuffixes:
             cfg.setItemAnnexConfidentialVisibleFor((proposingGroupSuffix, ))
             update_all_categorized_elements(item)
-            # get a user from the right 'developers' subgroup
+            # get a user from the right 'developers' subgroup but make sure it is not a MeetingManager
             group_suffix = proposingGroupSuffix.replace(PROPOSINGGROUPPREFIX, '')
-            users = getattr(import_data.developers, group_suffix)
-            if not users:
+            developers_suffixed_group = self.tool.developers.getPloneGroups(suffixes=[group_suffix])[0]
+            userIds = [userId for userId in developers_suffixed_group.getMemberIds()
+                       if userId not in self._get_meeting_managers_for(cfg)]
+            if not userIds:
                 pm_logger.info("Could not test if developers.'%s' can access confidential "
                                "annexes because there are no user in the group !" % group_suffix)
                 continue
-            username = users[0].id
-            self.changeUser(username)
+            self.changeUser(userIds[0])
             if not self.hasPermission(View, item):
                 pm_logger.info("Could not test if '%s' can access confidential "
                                "annexes because he may not see the item !" % self.member.getId())
@@ -472,15 +480,16 @@ class testAnnexes(PloneMeetingTestCase):
         for proposingGroupSuffix in proposingGroupSuffixes:
             cfg.setAdviceAnnexConfidentialVisibleFor((proposingGroupSuffix, ))
             update_all_categorized_elements(advice)
-            # get a user from the right 'developers' subgroup
+            # get a user from the right 'developers' subgroup but make sure it is not a MeetingManager
             group_suffix = proposingGroupSuffix.replace(PROPOSINGGROUPPREFIX, '')
-            users = getattr(import_data.developers, group_suffix)
-            if not users:
+            developers_suffixed_group = self.tool.developers.getPloneGroups(suffixes=[group_suffix])[0]
+            userIds = [userId for userId in developers_suffixed_group.getMemberIds()
+                       if userId not in self._get_meeting_managers_for(cfg)]
+            if not userIds:
                 pm_logger.info("Could not test if developers.'%s' can access confidential "
                                "annexes because there are no user in the group !" % group_suffix)
                 continue
-            username = users[0].id
-            self.changeUser(username)
+            self.changeUser(userIds[0])
             if not self.hasPermission(View, advice):
                 pm_logger.info("Could not test if '%s' can access confidential "
                                "annexes because he may not see the item !" % self.member.getId())
@@ -554,19 +563,20 @@ class testAnnexes(PloneMeetingTestCase):
                            if k.startswith(SUFFIXPROFILEPREFIX)]
         for profileSuffix in profileSuffixes:
             # every users of a Plone subgroup profileSuffix will have access
-            for groupConfig in (import_data.developers, import_data.vendors):
+            for mGroup in (self.tool.developers, self.tool.vendors):
                 cfg.setMeetingAnnexConfidentialVisibleFor((profileSuffix, ))
                 update_all_categorized_elements(meeting)
-                # get a user from the right 'developers' subgroup
-                users = getattr(groupConfig,
-                                profileSuffix.replace(SUFFIXPROFILEPREFIX, ''))
-                if not users:
+                group_suffix = profileSuffix.replace(SUFFIXPROFILEPREFIX, '')
+                # get a user from the right 'developers/vendors' subgroup
+                suffixed_group = mGroup.getPloneGroups(suffixes=[group_suffix])[0]
+                userIds = [userId for userId in suffixed_group.getMemberIds()
+                           if userId not in self._get_meeting_managers_for(cfg)]
+                if not userIds:
                     pm_logger.info("Could not test if profile '%s' can access confidential "
                                    "annexes for group '%s' because no users is defined in this profile !"
-                                   % (profileSuffix.replace(SUFFIXPROFILEPREFIX, ''), groupConfig.id))
+                                   % (group_suffix, mGroup.getId()))
                     continue
-                username = users[0].id
-                self.changeUser(username)
+                self.changeUser(userIds[0])
                 if not self.hasPermission(View, meeting):
                     pm_logger.info("Could not test if '%s' can access confidential "
                                    "annexes because he may not see the item !" % self.member.getId())
