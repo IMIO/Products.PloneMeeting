@@ -46,13 +46,13 @@ from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.testing import testing_logger
 import Products.PloneMeeting
 from Products.PloneMeeting.config import DEFAULT_USER_PASSWORD
-from Products.PloneMeeting.config import MEETINGREVIEWERS
 from Products.PloneMeeting.config import TOOL_FOLDER_ANNEX_TYPES
 from Products.PloneMeeting.MeetingItem import MeetingItem_schema
 from Products.PloneMeeting.Meeting import Meeting_schema
 from Products.PloneMeeting.testing import PM_TESTING_PROFILE_FUNCTIONAL
 from Products.PloneMeeting.tests.helpers import PloneMeetingTestingHelpers
 from Products.PloneMeeting.utils import cleanMemoize
+from Products.PloneMeeting.utils import reviewersFor
 
 # Force application logging level to DEBUG so we can use logger in tests
 pm_logger = testing_logger('PloneMeeting: testing')
@@ -436,8 +436,9 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
           Helper method for adding a given p_member to every '_prereviewers' group
           corresponding to every '_reviewers' group he is in.
         """
-        groups = [group for group in member.getGroups() if group.endswith('_%s' % MEETINGREVIEWERS.keys()[0])]
-        groups = [group.replace(MEETINGREVIEWERS.keys()[0], MEETINGREVIEWERS.keys()[-1]) for group in groups]
+        reviewers = reviewersFor(self.meetingConfig.getItemWorkflow())
+        groups = [group for group in member.getGroups() if group.endswith('_%s' % reviewers.keys()[0])]
+        groups = [group.replace(reviewers.keys()[0], reviewers.keys()[-1]) for group in groups]
         for group in groups:
             self.portal.portal_groups.addPrincipalToGroup(member.getId(), group)
 

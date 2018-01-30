@@ -1563,6 +1563,14 @@ def main_item_data(item):
     return data
 
 
+def reviewersFor(workflow_id=None):
+    # import MEETINGREVIEWERS as it is often monkeypatched...
+    from Products.PloneMeeting.config import MEETINGREVIEWERS
+    if workflow_id and workflow_id in MEETINGREVIEWERS:
+        return MEETINGREVIEWERS.get(workflow_id)
+    return MEETINGREVIEWERS.get('*')
+
+
 class AdvicesUpdatedEvent(ObjectEvent):
     implements(IAdvicesUpdatedEvent)
 

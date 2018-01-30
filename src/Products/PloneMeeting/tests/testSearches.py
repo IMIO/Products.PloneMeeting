@@ -32,12 +32,11 @@ from eea.facetednavigation.interfaces import ICriteria
 from collective.compoundcriterion.interfaces import ICompoundCriterionFilter
 from collective.eeafaceted.collectionwidget.widgets.widget import CollectionWidget
 from imio.helpers.cache import cleanRamCacheFor
+from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
+from Products.PloneMeeting.utils import reviewersFor
 
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
-
-from Products.PloneMeeting.config import MEETINGREVIEWERS
-from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
 
 
 class testSearches(PloneMeetingTestCase):
@@ -479,6 +478,10 @@ class testSearches(PloneMeetingTestCase):
         self.assertTrue(not item.getTakenOverBy())
         self.failIf(collection.getQuery())
 
+    def _searchItemsToValidateOfHighestHierarchicLevelReviewerInfo(self, cfg):
+        """ """
+        return ['developers__reviewprocess__{0}'.format(self._stateMappingFor('proposed'))]
+
     def test_pm_SearchItemsToValidateOfHighestHierarchicLevel(self):
         '''Test the searchItemsToValidateOfHighestHierarchicLevel method.
            This should return a list of items a user ***really*** has to validate.
@@ -501,14 +504,16 @@ class testSearches(PloneMeetingTestCase):
         # for a reviewer, query is correct
         self.changeUser('pmManager')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstovalidateofhighesthierarchiclevel')
+        reviewProcessInfo = self._searchItemsToValidateOfHighestHierarchicLevelReviewerInfo(cfg)
         self.assertEquals(
             adapter.query,
             {'reviewProcessInfo':
-                {'query': ['developers__reviewprocess__{0}'.format(self._stateMappingFor('proposed'))]},
+                {'query': reviewProcessInfo},
              'portal_type': {'query': itemTypeName}})
 
+        reviewers = reviewersFor(cfg.getItemWorkflow())
         # activate 'prevalidation' if necessary
-        if 'prereviewers' in MEETINGREVIEWERS and \
+        if 'prereviewers' in reviewers and \
            'pre_validation' not in cfg.getWorkflowAdaptations():
             cfg.setWorkflowAdaptations('pre_validation')
             performWorkflowAdaptations(cfg, logger=pm_logger)
@@ -544,8 +549,8 @@ class testSearches(PloneMeetingTestCase):
         # the search does returns him the item, it should not as he is just a reviewer
         # but not able to really validate the new item
         cfg.setUseCopies(True)
-        review_states = MEETINGREVIEWERS[MEETINGREVIEWERS.keys()[0]]
-        if 'prereviewers' in MEETINGREVIEWERS:
+        review_states = reviewers[reviewers.keys()[0]]
+        if 'prereviewers' in reviewers:
             review_states = ('prevalidated',)
         cfg.setItemCopyGroupsStates(review_states)
         item.setCopyGroups(('vendors_reviewers',))
@@ -571,8 +576,9 @@ class testSearches(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self.changeUser('admin')
         # activate the 'pre_validation' wfAdaptation if it exists in current profile...
-        # if not, then MEETINGREVIEWERS must be at least 2 elements long
-        if not len(MEETINGREVIEWERS) > 1:
+        # if not, then reviewers must be at least 2 elements long
+        reviewers = reviewersFor(cfg.getItemWorkflow())
+        if not len(reviewers) > 1:
             pm_logger.info("Could not launch test 'test_pm_SearchItemsToValidateOfMyReviewerGroups' because "
                            "we need at least 2 levels of item validation.")
         if 'pre_validation' in cfg.listWorkflowAdaptations():
@@ -594,12 +600,12 @@ class testSearches(PloneMeetingTestCase):
         # keep relevant reviewer states
         res = []
         for grp in self.member.getGroups():
-            for reviewer_suffix, reviewer_state in MEETINGREVIEWERS.items():
+            for reviewer_suffix, reviewer_states in reviewers.items():
                 if grp.endswith('_' + reviewer_suffix):
                     if reviewer_suffix == 'reviewers' and 'pre_validation' in cfg.listWorkflowAdaptations():
-                        res.append('prevalidated')
+                        res.extend(['prevalidated'])
                     else:
-                        res.append(reviewer_state)
+                        res.extend(reviewer_states)
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstovalidateofmyreviewergroups')
         self.assertEquals(adapter.query,
                           {'portal_type': {'query': itemTypeName},
@@ -655,6 +661,12 @@ class testSearches(PloneMeetingTestCase):
         '''
         return False
 
+    def _searchItemsToValidateOfEveryReviewerLevelsAndLowerLevelsReviewerInfo(self, cfg):
+        """ """
+        reviewers = reviewersFor(cfg.getItemWorkflow())
+        reviewer_states = reviewers[cfg._highestReviewerLevel(self.member.getGroups())]
+        return ['developers__reviewprocess__%s' % reviewer_state for reviewer_state in reviewer_states]
+
     def test_pm_SearchItemsToValidateOfEveryReviewerLevelsAndLowerLevels(self):
         '''Test the searchItemsToValidateOfEveryReviewerLevelsAndLowerLevels method.
            This will return items to validate of his highest hierarchic level and every levels
@@ -682,6 +694,7 @@ class testSearches(PloneMeetingTestCase):
         adapter = getAdapter(cfg,
                              ICompoundCriterionFilter,
                              name='items-to-validate-of-every-reviewer-levels-and-lower-levels')
+        self.changeUser('pmObserver1')
         self.assertEquals(adapter.query,
                           {'review_state': {'query': ['unknown_review_state']}})
         # now do the query
@@ -695,12 +708,11 @@ class testSearches(PloneMeetingTestCase):
         # as first level user, he will see items
         self.changeUser('pmReviewerLevel1')
         # find state to use for current reviewer
-        reviewer_state = MEETINGREVIEWERS[cfg._highestReviewerLevel(self.member.getGroups())]
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstovalidateofeveryreviewerlevelsandlowerlevels')
+        reviewProcessInfo = self._searchItemsToValidateOfEveryReviewerLevelsAndLowerLevelsReviewerInfo(cfg)
         self.assertEquals(adapter.query,
                           {'portal_type': {'query': itemTypeName},
-                           'reviewProcessInfo': {'query': ['developers__reviewprocess__%s' % reviewer_state]}})
-
+                           'reviewProcessInfo': {'query': reviewProcessInfo}})
         self.failUnless(len(collection.getQuery()) == 2)
         # as second level user, he will also see items because items are from lower reviewer levels
         self.changeUser('pmReviewerLevel2')

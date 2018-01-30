@@ -19,7 +19,6 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
 
-from Products.PloneMeeting.config import MEETINGREVIEWERS
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.profiles import AnnexTypeDescriptor
 from Products.PloneMeeting.profiles import CategoryDescriptor
@@ -198,17 +197,15 @@ developers = GroupDescriptor('developers', 'Developers', 'Devel')
 developers.creators.append(pmCreator1)
 developers.creators.append(pmCreator1b)
 developers.creators.append(pmManager)
+developers.prereviewers.append(pmReviewerLevel1)
 developers.reviewers.append(pmReviewer1)
+developers.reviewers.append(pmReviewerLevel2)
 developers.reviewers.append(pmManager)
 developers.observers.append(pmObserver1)
 developers.observers.append(pmReviewer1)
 developers.observers.append(pmManager)
 developers.advisers.append(pmAdviser1)
 developers.advisers.append(pmManager)
-# put pmReviewerLevel1 in first level of reviewers from what is in MEETINGREVIEWERS
-getattr(developers, MEETINGREVIEWERS.keys()[-1]).append(pmReviewerLevel1)
-# put pmReviewerLevel2 in second level of reviewers from what is in MEETINGREVIEWERS
-getattr(developers, MEETINGREVIEWERS.keys()[0]).append(pmReviewerLevel2)
 
 vendors = GroupDescriptor('vendors', 'Vendors', 'Devil')
 vendors.creators.append(pmCreator2)

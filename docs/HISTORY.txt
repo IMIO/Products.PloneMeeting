@@ -17,6 +17,11 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   This can returns proposingGroup for some steps of the WF and another group for specific steps for example
 - Use 'reviewProcessInfo' index instead getProposingGroup/review_state to search for items to validate in
   BaseItemsToValidateOfHighestHierarchicLevelAdapter
+- config.MEETINGREVIEWERS format changed to fit complex situations : now values are defined by item workflow and
+  in a workflow, values are lists of review_states instead single review_state so it is possible
+  to associate the same reviewer level to several review_states for complex WFs where a same reviewer level
+  take part during differents review_states in the validation process.  The MEETINGREVIEWERS is no more accessed
+  directly but thru the utils.reviewerFor(workflow_id) method
 
 4.1b3 (2018-01-23)
 ------------------

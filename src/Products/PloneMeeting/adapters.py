@@ -44,7 +44,6 @@ from Products.PloneMeeting.config import DUPLICATE_EVENT_ACTION
 from Products.PloneMeeting.config import DUPLICATE_AND_KEEP_LINK_EVENT_ACTION
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
-from Products.PloneMeeting.config import MEETINGREVIEWERS
 from Products.PloneMeeting.config import MEETINGROLES
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import PMMessageFactory as _
@@ -58,6 +57,7 @@ from Products.PloneMeeting.utils import displaying_available_items
 from Products.PloneMeeting.utils import findNewValue
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import getHistoryTexts
+from Products.PloneMeeting.utils import reviewersFor
 
 logger = logging.getLogger('PloneMeeting')
 
@@ -1136,21 +1136,25 @@ class BaseItemsToValidateOfHighestHierarchicLevelAdapter(CompoundCriterionBaseAd
             # in this case, we do not want to display a result
             # we return an unknown review_state
             return FIND_NOTHING_QUERY
-        review_state = MEETINGREVIEWERS[highestReviewerLevel]
+        reviewers = reviewersFor(self.cfg.getItemWorkflow())
+        review_states = reviewers[highestReviewerLevel]
         # specific management for workflows using the 'pre_validation' wfAdaptation
         if highestReviewerLevel == 'reviewers' and \
             ('pre_validation' in self.cfg.getWorkflowAdaptations() or
-             'pre_validation_keep_reviewer_permissions' in self.cfg.getWorkflowAdaptations()):
-            review_state = 'prevalidated'
+             'pre_validation_keep_reviewer_permissions' in self.cfg.getWorkflowAdaptations()) and \
+           review_states == ['proposed']:
+            review_states = ['prevalidated']
 
         reviewProcessInfos = []
         for groupId in groupIds:
             if groupId.endswith('_%s' % highestReviewerLevel):
                 # append group name without suffix
                 mGroupId = groupId[:-len('_%s' % highestReviewerLevel)]
-                review_state = '%s%s' % (prefix_review_state, review_state)
-                reviewProcessInfos.append(
-                    '%s__reviewprocess__%s' % (mGroupId, review_state))
+                review_states = [
+                    '%s%s' % (prefix_review_state, review_state) for review_state in review_states]
+                reviewProcessInfo = [
+                    '%s__reviewprocess__%s' % (mGroupId, review_state) for review_state in review_states]
+                reviewProcessInfos.extend(reviewProcessInfo)
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 'reviewProcessInfo':  {'query': reviewProcessInfos}, }
 
@@ -1218,7 +1222,8 @@ class BaseItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(CompoundCrit
             if not highestReviewerLevel:
                 continue
             foundLevel = False
-            for reviewer_suffix, review_state in MEETINGREVIEWERS.items():
+            reviewers = reviewersFor(self.cfg.getItemWorkflow())
+            for reviewer_suffix, review_states in reviewers.items():
                 if not foundLevel and not reviewer_suffix == highestReviewerLevel:
                     continue
                 foundLevel = True
@@ -1226,16 +1231,18 @@ class BaseItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(CompoundCrit
                 # 'pre_validation_keep_reviewer_permissions' wfAdaptation
                 if reviewer_suffix == 'reviewers' and \
                     ('pre_validation' in self.cfg.getWorkflowAdaptations() or
-                     'pre_validation_keep_reviewer_permissions' in self.cfg.getWorkflowAdaptations()):
-                    review_state = 'prevalidated'
-                review_state = '%s%s' % (prefix_review_state, review_state)
-                reviewProcessInfos.append('%s__reviewprocess__%s' % (mGroupId,
-                                                                     review_state))
+                     'pre_validation_keep_reviewer_permissions' in self.cfg.getWorkflowAdaptations()) and \
+                   review_states == ['proposed']:
+                    review_states = ['prevalidated']
+                review_states = [
+                    '%s%s' % (prefix_review_state, review_state) for review_state in review_states]
+                reviewProcessInfo = [
+                    '%s__reviewprocess__%s' % (mGroupId, review_state) for review_state in review_states]
+                reviewProcessInfos.extend(reviewProcessInfo)
         if not reviewProcessInfos:
             # in this case, we do not want to display a result
             # we return an unknown review_state
             return FIND_NOTHING_QUERY
-
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 'reviewProcessInfo': {'query': reviewProcessInfos}, }
 
@@ -1282,24 +1289,29 @@ class BaseItemsToValidateOfMyReviewerGroupsAdapter(CompoundCriterionBaseAdapter)
         groupsTool = api.portal.get_tool('portal_groups')
         groupIds = groupsTool.getGroupsForPrincipal(member)
         reviewProcessInfos = []
+        reviewers = reviewersFor(self.cfg.getItemWorkflow())
         for groupId in groupIds:
-            for reviewer_suffix, review_state in MEETINGREVIEWERS.items():
+            for reviewer_suffix, review_states in reviewers.items():
                 # current user may be able to validate at at least
                 # one level of the entire validation process, we take it into account
                 if groupId.endswith('_%s' % reviewer_suffix):
                     # specific management for workflows using the 'pre_validation' wfAdaptation
                     if reviewer_suffix == 'reviewers' and \
                         ('pre_validation' in self.cfg.getWorkflowAdaptations() or
-                         'pre_validation_keep_reviewer_permissions' in self.cfg.getWorkflowAdaptations()):
-                        review_state = 'prevalidated'
-                    review_state = '%s%s' % (prefix_review_state, review_state)
-                    reviewProcessInfos.append('%s__reviewprocess__%s' % (groupId[:-len(reviewer_suffix) - 1],
-                                                                         review_state))
+                         'pre_validation_keep_reviewer_permissions' in self.cfg.getWorkflowAdaptations()) and \
+                       review_states == ['proposed']:
+                        review_states = ['prevalidated']
+                    mGroupId = groupId[:-len(reviewer_suffix) - 1]
+                    review_states = [
+                        '%s%s' % (prefix_review_state, review_state) for review_state in review_states]
+                    reviewProcessInfo = [
+                        '%s__reviewprocess__%s' % (mGroupId, review_state) for review_state in review_states]
+                    reviewProcessInfos.extend(reviewProcessInfo)
+
         if not reviewProcessInfos:
             # in this case, we do not want to display a result
             # we return an unknown review_state
             return FIND_NOTHING_QUERY
-
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 'reviewProcessInfo': {'query': reviewProcessInfos}, }
 

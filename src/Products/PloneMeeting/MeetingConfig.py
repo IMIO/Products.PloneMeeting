@@ -84,7 +84,6 @@ from Products.PloneMeeting.config import ITEMTEMPLATESMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETING_CONFIG
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
-from Products.PloneMeeting.config import MEETINGREVIEWERS
 from Products.PloneMeeting.config import MEETINGROLES
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.config import PloneMeetingError
@@ -120,6 +119,7 @@ from Products.PloneMeeting.utils import getCustomSchemaFields
 from Products.PloneMeeting.utils import getFieldContent
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import listifySignatures
+from Products.PloneMeeting.utils import reviewersFor
 from Products.PloneMeeting.utils import updateAnnexesAccess
 from Products.PloneMeeting.validators import WorkflowInterfacesValidator
 from Products.PloneMeeting.Meeting import Meeting
@@ -4661,11 +4661,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('userIsAReviewer')
 
     def userIsAReviewer(self):
-        '''Is current user a reviewer?  So is current user among groups of MEETINGREVIEWERS?'''
-        member = self.portal_membership.getAuthenticatedMember()
+        '''Is current user a reviewer?  So is current user among groups of reviewers?'''
+        member = api.user.get_current()
         groupIds = self.portal_groups.getGroupsForPrincipal(member)
         strGroupIds = str(groupIds)
-        for reviewSuffix in MEETINGREVIEWERS.keys():
+        for reviewSuffix in reviewersFor(self.getItemWorkflow()).keys():
             if "_%s'" % reviewSuffix in strGroupIds:
                 return True
         return False
@@ -4673,7 +4673,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def _highestReviewerLevel(self, groupIds):
         '''Return highest reviewer level found in given p_groupIds.'''
         strGroupIds = str(groupIds)
-        for reviewSuffix in MEETINGREVIEWERS.keys():
+        for reviewSuffix in reviewersFor(self.getItemWorkflow()).keys():
             if "_%s'" % reviewSuffix in strGroupIds:
                 return reviewSuffix
 
