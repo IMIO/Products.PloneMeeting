@@ -295,3 +295,14 @@ class PMAnnexActionsColumn(AnnexActionsColumn):
         else:
             self.params['showArrows'] = True
         return super(AnnexActionsColumn, self).renderCell(item)
+
+
+class ReviewStateTitle(I18nColumn):
+    """Translate the review_state title and not the id."""
+
+    def getValue(self, item):
+        """ """
+        obj = self._getObject(item)
+        wfTool = api.portal.get_tool('portal_workflow')
+        wf = wfTool.getWorkflowsFor(obj)[0]
+        return wf.states.get(item.review_state).title

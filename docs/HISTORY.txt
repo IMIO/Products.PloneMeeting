@@ -12,6 +12,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 
 - In the workflow_state viewlet, translate the review_state title and not the review_state id so we may
   have different translations for same state id in different workflows
+- Added dashboard column 'review_state_title' that displays the translated review_state 'Title' instead
+  default 'review_state' column that displayed the translated review_state 'Id'
 
 4.1b4 (2018-01-31)
 ------------------
