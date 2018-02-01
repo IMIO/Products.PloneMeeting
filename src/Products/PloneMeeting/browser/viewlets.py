@@ -20,12 +20,12 @@
 # 02110-1301, USA.
 #
 
+from zope.component import getMultiAdapter
 from collective.eeafaceted.batchactions.browser.viewlets import BatchActionsViewlet
 from plone.app.layout.viewlets import ViewletBase
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
-from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.utils import displaying_available_items
-from zope.component import getMultiAdapter
+from plone import api
 
 
 class WorkflowState(ViewletBase):
@@ -35,9 +35,12 @@ class WorkflowState(ViewletBase):
         self.context_state = getMultiAdapter((self.context, self.request),
                                              name=u'plone_context_state')
 
-    def getObjectState(self):
-        wfTool = getToolByName(self.context, 'portal_workflow')
-        return wfTool.getInfoFor(self.context, 'review_state')
+    def state_infos(self):
+        wfTool = api.portal.get_tool('portal_workflow')
+        review_state = wfTool.getInfoFor(self.context, 'review_state')
+        wf = wfTool.getWorkflowsFor(self.context)[0]
+        return {'state_name': review_state,
+                'state_title': wf.states.get(review_state).title}
 
     index = ViewPageTemplateFile("templates/viewlet_workflowstate.pt")
 

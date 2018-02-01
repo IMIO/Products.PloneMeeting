@@ -10,8 +10,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 4.1b5 (unreleased)
 ------------------
 
-- Nothing changed yet.
-
+- In the workflow_state viewlet, translate the review_state title and not the review_state id so we may
+  have different translations for same state id in different workflows
 
 4.1b4 (2018-01-31)
 ------------------
