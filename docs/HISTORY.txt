@@ -14,6 +14,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   have different translations for same state id in different workflows
 - Added dashboard column 'review_state_title' that displays the translated review_state 'Title' instead
   default 'review_state' column that displayed the translated review_state 'Id'
+- Specify in MeetingConfig.mailItemEvents and MeetingConfig.mailMeetingEvents "WF transition" events title
+  clearly that it is "WF transitions" related events as it can be similar to specific mail events
 
 4.1b4 (2018-01-31)
 ------------------
