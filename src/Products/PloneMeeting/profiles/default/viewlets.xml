@@ -30,4 +30,9 @@
   <hidden manager="plone.portaltop" skinname="*">
     <viewlet name="plone.app.i18n.locales.languageselector" />
   </hidden>
+  <order manager="plone.belowcontenttitle" skinname="*">
+    <viewlet name="imio.history.documentbyline" />
+    <viewlet name="ftw.labels.labeling" />
+    <viewlet name="plone.belowcontenttitle.workflowstate" />
+  </order>
 </object>

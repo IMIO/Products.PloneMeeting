@@ -1,7 +1,7 @@
 <metal:workflowState define-macro="workflowState" i18n:domain="plone">
 <div class="pm_workflowstate">
   <span i18n:translate="label_state"></span>&nbsp;
-  <span tal:define="state view/getObjectState"
-        tal:content="state" i18n:translate="" i18n:domain="plone"
-        tal:attributes="class string:state-${state}"></span>
+  <span tal:define="state_infos view/state_infos"
+        tal:content="state_infos/state_title" i18n:translate="" i18n:domain="plone"
+        tal:attributes="class string:state-${state_infos/state_name}"></span>
 </metal:workflowState>

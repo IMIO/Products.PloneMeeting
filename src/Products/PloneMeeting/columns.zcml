@@ -149,4 +149,13 @@
     factory=".columns.PMAnnexActionsColumn"
     />
 
+  <adapter
+     for="zope.interface.Interface
+          zope.publisher.interfaces.browser.IBrowserRequest
+          collective.eeafaceted.z3ctable.interfaces.IFacetedTable"
+     factory=".columns.ReviewStateTitle"
+     provides="collective.eeafaceted.z3ctable.interfaces.IFacetedColumn"
+     name="review_state_title"
+  />
+
 </configure>

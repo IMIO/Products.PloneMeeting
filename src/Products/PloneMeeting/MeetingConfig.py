@@ -3669,6 +3669,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 translate('header_ModificationDate', domain=d, context=self.REQUEST)),
             ("review_state",
                 translate('header_review_state', domain=d, context=self.REQUEST)),
+            ("review_state_title",
+                translate('header_review_state_title_descr', domain=d, context=self.REQUEST)),
             ("getCategory",
                 translate("header_getCategory", domain=d, context=self.REQUEST)),
             ("getRawClassifier",
@@ -3705,7 +3707,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                                              domain='collective.eeafaceted.z3ctable',
                                                              context=self.REQUEST)))
         # remove item_reference and review_state
-        res = [v for v in res if v[0] not in ('item_reference', 'review_state')]
+        res = [v for v in res if v[0] not in ('item_reference', 'review_state', 'review_state_title')]
         return DisplayList(tuple(res))
 
     security.declarePrivate('listItemsListVisibleColumns')
