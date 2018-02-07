@@ -659,6 +659,27 @@ class testWorkflows(PloneMeetingTestCase):
         # but not other fields
         self.assertFalse(obsField.writeable(item))
 
+    def test_pm_MeetingReviewersValuesAreCorrect(self):
+        """Make sure values defined in config.MEETINGREVIEWERS are valid :
+           - workflows exist;
+           - keys are existing in MEETINGROLES;
+           - values are valid WF states."""
+        from Products.PloneMeeting.config import MEETINGREVIEWERS
+        from Products.PloneMeeting.config import MEETINGROLES
+        for wf_id, values in MEETINGREVIEWERS.items():
+            if wf_id == '*':
+                wf = getattr(self.wfTool, self.meetingConfig.getItemWorkflow())
+            else:
+                self.assertTrue(wf_id in self.wfTool.objectIds())
+                wf = getattr(self.wfTool, wf_id)
+            for meeting_role, states in values.items():
+                self.assertTrue(meeting_role in MEETINGROLES)
+                # only test with '*' if self.meetingConfig itemWF is not defined in MEETINGREVIEWERS
+                if wf_id == '*' and wf.getId() in MEETINGREVIEWERS:
+                    continue
+                for state in states:
+                    self.assertTrue(state in wf.states)
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

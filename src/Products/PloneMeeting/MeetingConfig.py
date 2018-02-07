@@ -4944,12 +4944,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # create a separated result (res_transitions) so we can easily sort it
         item_transitions = self.listTransitions('Item')
         res_transitions = []
-        view_msg = translate('notify_users_able_to_view_element',
-                             domain="PloneMeeting",
-                             context=self.REQUEST)
         for item_transition_id, item_transition_name in item_transitions:
-            label = u"{0} ({1})".format(item_transition_name, view_msg)
-            res_transitions.append(("item_state_changed_%s" % item_transition_id, label))
+            translated_msg = translate('transition_event',
+                                       domain="PloneMeeting",
+                                       mapping={'state_info': item_transition_name},
+                                       context=self.REQUEST)
+            res_transitions.append(("item_state_changed_%s" % item_transition_id, translated_msg))
 
         return DisplayList(tuple(res)) + DisplayList(res_transitions).sortedByValue()
 
@@ -4971,12 +4971,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                   domain='PloneMeeting',
                                   context=self.REQUEST)))
 
-        view_msg = translate('notify_users_able_to_view_element',
-                             domain="PloneMeeting",
-                             context=self.REQUEST)
         for meeting_transition_id, meeting_transition_name in meeting_transitions:
-            label = u"{0} ({1})".format(meeting_transition_name, view_msg)
-            res.append(("meeting_state_changed_%s" % meeting_transition_id, label))
+            translated_msg = translate('transition_event',
+                                       domain="PloneMeeting",
+                                       mapping={'state_info': meeting_transition_name},
+                                       context=self.REQUEST)
+            res.append(("item_state_changed_%s" % meeting_transition_id, translated_msg))
+
         return DisplayList(res).sortedByValue()
 
     def extraItemEvents(self):
