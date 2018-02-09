@@ -406,9 +406,10 @@ class IMeetingItemDocumentation:
         """Condition to update item reference.  By default the item reference
            will be updated if item is in a meeting and meeting review_state is
            not 'before frozen'."""
-    def _getGroupManagingItem(self):
-        """Returns the current group actually managing the item.
+    def _getGroupManagingItem(self, review_state=None):
+        """Returns the group managing the item.
            By default this will be the proposingGroup.
+           Given p_review_state may be used to know what group manage item in which review_state.
            This method must return a MeetingGroup."""
 
 

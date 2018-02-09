@@ -99,8 +99,9 @@ def reviewProcessInfo(obj):
       Compute a reviewProcessInfo, this concatenate the group managing item
       and the item review_state so it can be queryable in the catalog.
     """
+    item_state = obj.queryState()
     return '%s__reviewprocess__%s' % (
-        obj.adapted()._getGroupManagingItem().getId(), obj.queryState())
+        obj.adapted()._getGroupManagingItem(item_state).getId(), item_state)
 
 
 @indexer(IMeetingItem)
