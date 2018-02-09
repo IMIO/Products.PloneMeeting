@@ -22,7 +22,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 
 - Simplified SearchableText indexer by use of utils.get_annexes as annexes title is indexed
 - Added 'Labels' on items, this rely on the integration of ftw.labels
-- Added method MeetingItem._getGroupManagingItem that returns the group currently managing the item.
+- Added method MeetingItem._getGroupManagingItem that returns the group that is managing the item at a given review_state.
   This makes it possible to specify that another group than proposingGroup is managing the item.
   This can returns proposingGroup for some steps of the WF and another group for specific steps for example
 - Use 'reviewProcessInfo' index instead getProposingGroup/review_state to search for items to validate in

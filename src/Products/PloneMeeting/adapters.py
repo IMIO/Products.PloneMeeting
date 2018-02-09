@@ -843,6 +843,12 @@ class PMWfHistoryAdapter(ImioWfHistoryAdapter):
     """
       Override the imio.history ImioHistoryAdapter.
     """
+
+    def __init__(self, context):
+        super(PMWfHistoryAdapter, self).__init__(context)
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
+
     def ignorableHistoryComments(self):
         """Add some more ignorable history comments."""
         ignorable_history_comment = super(PMWfHistoryAdapter, self).ignorableHistoryComments()
@@ -857,15 +863,17 @@ class PMWfHistoryAdapter(ImioWfHistoryAdapter):
         """
           By default, every p_event comment is viewable except for MeetingItem, if
           'hideItemHistoryCommentsToUsersOutsideProposingGroup' is enabled in the MeetingConfig,
-          only members of the proposing group will be able to access history comment.
+          only members of the group manging item at event['review_state'] will be able to access
+          history comment.
         """
         userMayAccessComment = True
         if self.context.meta_type == 'MeetingItem':
-            tool = api.portal.get_tool('portal_plonemeeting')
-            cfg = tool.getMeetingConfig(self.context)
-            if cfg.getHideItemHistoryCommentsToUsersOutsideProposingGroup() and not tool.isManager(self.context):
-                userMeetingGroupIds = [mGroup.getId() for mGroup in tool.getGroupsForUser()]
-                if not self.context.getProposingGroup() in userMeetingGroupIds:
+            if self.cfg.getHideItemHistoryCommentsToUsersOutsideProposingGroup() and \
+               not self.tool.isManager(self.context):
+                userMeetingGroupIds = [mGroup.getId() for mGroup in self.tool.getGroupsForUser()]
+                group_managing_item = \
+                    self.context.adapted()._getGroupManagingItem(event['review_state']).getId()
+                if group_managing_item not in userMeetingGroupIds:
                     userMayAccessComment = False
         return userMayAccessComment
 

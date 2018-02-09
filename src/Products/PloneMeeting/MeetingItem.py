@@ -4990,7 +4990,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # Add the event to item's history
             self.itemHistory.append(event)
 
-    def _getGroupManagingItem(self):
+    def _getGroupManagingItem(self, review_state=None):
         '''See doc in interfaces.py.'''
         item = self.getSelf()
         return item.getProposingGroup(True)
@@ -5036,7 +5036,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self.manage_addLocalRoles(self.owner_info()['id'], ('Owner',))
 
         # Add the local roles corresponding to the group managing the item
-        meetingGroup = self.adapted()._getGroupManagingItem()
+        meetingGroup = self.adapted()._getGroupManagingItem(self.queryState())
         self._assign_roles_to_group_suffixes(meetingGroup)
 
         # update local roles regarding copyGroups
