@@ -4990,7 +4990,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # Add the event to item's history
             self.itemHistory.append(event)
 
-    def _getGroupManagingItem(self, review_state=None):
+    def _getGroupManagingItem(self, review_state):
         '''See doc in interfaces.py.'''
         item = self.getSelf()
         return item.getProposingGroup(True)
