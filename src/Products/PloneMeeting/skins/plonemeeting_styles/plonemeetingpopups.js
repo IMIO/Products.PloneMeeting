@@ -100,6 +100,7 @@ jQuery(document).ready(function($) {
     advicePreview();
     inheritedItemInfos();
     usersGroupInfos();
+    // inserting methods infos on meeting_view
     tooltipster_helper(selector='.tooltipster-inserting-methods-helper-msg',
                        view_name='@@display-inserting-methods-helper-msg',
                        data_parameters={});
@@ -128,7 +129,9 @@ function initializePMOverlays(){
     inheritedItemInfos();
     usersGroupInfos();
     categorizedChildsInfos();
+    //groupesConfigs();
 
+    
     jQuery(function($) {
         // Content history popup
         $('a.overlay-history').prepOverlay({
@@ -146,7 +149,7 @@ function initializePMOverlays(){
           closeselector: '[name="form.buttons.cancel"]',
     });
   });
-  
+
   jQuery(function($) {
     // Add transition confirmation popup
     $('a.link-overlay-actionspanel.transition-overlay').prepOverlay({
@@ -257,44 +260,18 @@ function inheritedItemInfos() {
 }
 
 function usersGroupInfos() {
-    jQuery(function($){
-
-    $('.tooltipster-group-users').tooltipster({
-
-        contentAsHTML: true,
-        interactive: true,
-        theme: 'tooltipster-shadow',
-        position: 'bottom',
-        speed: 100,
-        delay: 50,
-        animation: 'fade',
-        trigger: 'hover',    
-
-        functionBefore: function (origin, helper) {
-            helper();
-            if (origin.data('loaded') !== true) {
-                var group_id = $(origin).attr('data-group_id');
-                var base_url = $(origin).attr('data-base_url');
-                $.ajax({
-                    type: 'GET',
-                    url: base_url + '/@@display-group-users',
-                    data: {
-                        group_id: group_id,
-                        ajax_load: new Date().getTime(),
-                    },
-                    success: function (data) {
-                        origin.tooltipster('update', data).data('ajax ', 'cached');
-                        origin.data('loaded', true);
-                        helper();
-                    }
-                });
-            }
-        }
-    });
-});
+    tooltipster_helper(selector='.tooltipster-group-users',
+                       view_name='@@display-group-users',
+                       data_parameters=['group_id']);
 }
 
-function tooltipster_helper(selector, view_name, data_parameters) {
+function groupedConfigs() {
+    tooltipster_helper(selector='li[id*="portaltab-mc_"]',
+                       view_name='@@display-grouped-configs',
+                       data_parameters=[]);
+}
+
+function tooltipster_helper(selector, view_name, data_parameters={}) {
 
     jQuery(function($){
 
@@ -312,18 +289,24 @@ function tooltipster_helper(selector, view_name, data_parameters) {
         functionBefore: function (origin, helper) {
             helper();
             if (origin.data('loaded') !== true) {
-                var group_id = $(origin).attr('data-group_id');
-                var base_url = $(origin).attr('data-base_url');
-                if (!data_parameters) {
-                    data_parameters = {};
+                // data_parameters
+                parameters = {};
+                for (i = 0, len = data_parameters.length; i < len; i++) {
+                    value = $(origin).attr('data-'+ data_parameters[i]);
+                    parameters[data_parameters[i]] = value;
                 }
-                data_parameters.ajax_load = new Date().getTime();
+                // base_url
+                var base_url = $(origin).attr('data-base_url');
+                if (!base_url) {
+                  base_url = document.baseURI;
+                }
+                parameters.ajax_load = new Date().getTime();
                 $.ajax({
                     type: 'GET',
                     url: base_url + '/' + view_name,
-                    data: data_parameters,
+                    data: parameters,
                     success: function (data) {
-                        origin.tooltipster('update', data).data('ajax ', 'cached');
+                        origin.tooltipster('update', data).data('ajax', 'cached');
                         origin.data('loaded', true);
                         helper();
                     }

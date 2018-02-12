@@ -91,6 +91,18 @@ class Migrate_To_4_1(Migrator):
             name='linkedMeetingUID', REQUEST=None)
         logger.info('Done.')
 
+    def _removeMCPortalTabs(self):
+        """portal_tabs are now generated, remove MC related actions registered
+        in portal_actions/portal_tabs."""
+        logger.info('Removing MeetingConfig related portal_tabs...')
+        actions_to_delete = []
+        portal_tabs = self.portal.portal_actions.portal_tabs
+        for action_id in portal_tabs:
+            if action_id.endswith('_action'):
+                actions_to_delete.append(action_id)
+        portal_tabs.manage_delObjects(ids=actions_to_delete)
+        logger.info('Done.')
+
     def run(self, step=None):
         logger.info('Migrating to PloneMeeting 4.1...')
         # reinstall so versions are correctly shown in portal_quickinstaller
@@ -115,6 +127,7 @@ class Migrate_To_4_1(Migrator):
         self._updateCollectionColumns()
         self._markSearchesFoldersWithIBatchActionsMarker()
         self._reindexLinkedMeetingUIDIndex()
+        self._removeMCPortalTabs()
 
 
 # The migration function -------------------------------------------------------

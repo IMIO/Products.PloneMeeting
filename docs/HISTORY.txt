@@ -16,6 +16,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   default 'review_state' column that displayed the translated review_state 'Id'
 - Specify in MeetingConfig.mailItemEvents and MeetingConfig.mailMeetingEvents "WF transition" events title
   clearly that it is "WF transitions" related events as it can be similar to specific mail events
+- portal_tabs to access a MeetingConfig is now generated, we do not add an action in portal_tabs anymore
 
 4.1b4 (2018-01-31)
 ------------------

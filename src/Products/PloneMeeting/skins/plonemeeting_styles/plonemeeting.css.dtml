@@ -1043,6 +1043,11 @@ body[class*="itemtemplates"].template-manage-portlets a.link-parent {
     float: left;
 }
 
+/* hide metadata tab when editing tool */
+.portaltype-toolplonemeeting li a#fieldsetlegend-metadata {
+   display: none;
+}
+
 /* make column displayed for MeetingConfig.customAdvisers equals
    ...-column-1 is a hidden column (row_id) */
 #datagridwidget-table-customAdvisers .datagridwidget-column-2,
@@ -1642,6 +1647,8 @@ body.portaltype-contentcategory dl.portalMessage {
 #content div#faceted-results div#labeling-viewlet ul {
    display: inline-block;
 }
+
+
 
 /* </dtml-with> */
 

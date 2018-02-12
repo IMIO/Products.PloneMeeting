@@ -380,6 +380,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.meetingManagers = []
 
         # General parameters ---------------------------------------------------
+        self.configGroup = '_none_'
         self.assembly = 'Person 1, Person 2'
         self.assemblyStaves = 'Staff 1, Staff 2'
         self.signatures = 'Person 1, Person 2, Person 3'
@@ -695,6 +696,7 @@ class PloneMeetingConfiguration(Descriptor):
                          {'date': '2018/11/15', },
                          {'date': '2018/12/25', }]
         self.delayUnavailableEndDays = ()
+        self.configGroups = ()
         self.meetingConfigs = meetingConfigs  # ~[MeetingConfigDescriptor]~
         self.groups = groups  # ~[GroupDescriptor]~
         self.usersOutsideGroups = []  # ~[UserDescriptor]~

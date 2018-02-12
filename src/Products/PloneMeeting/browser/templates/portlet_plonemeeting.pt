@@ -11,10 +11,9 @@
                 portal_url view/portal_url;">
 
     <dt class="portletHeader">
-        <span i18n:translate="portlet_pm_header_label">Manage</span>
+        <span tal:content="cfg/Title">MeetingConfig title</span>
         <div class="portletPloneMeetingHeaderIcons">
             <a style="display: inline;"
-               tal:condition="python: cfg"
                href="#"
                tal:attributes="href meetingFolder/searches_items/absolute_url">
             <img style="cursor:pointer"

@@ -25,6 +25,7 @@ from zope.i18n import translate
 from zope.interface import implements
 
 from Products.ZCatalog.Catalog import AbstractCatalogBrain
+from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.CMFCore.utils import _checkPermission
 from Products.CMFCore.utils import UniqueObject
@@ -48,8 +49,8 @@ from Products.ATContentTypes import permission as ATCTPermissions
 from Products.DataGridField import DataGridField
 from Products.DataGridField.Column import Column
 
-from plone.memoize import ram
 from plone import api
+from plone.memoize import ram
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.documentviewer.async import queueJob
 from collective.documentviewer.settings import GlobalSettings
@@ -278,6 +279,27 @@ schema = Schema((
         multiValued=1,
         vocabulary='listWeekDays',
     ),
+    DataGridField(
+        name='configGroups',
+        widget=DataGridField._properties['widget'](
+            description="ConfigGroups",
+            description_msgid="config_groups_descr",
+            columns={
+                'row_id':
+                    Column("Custom adviser row id",
+                           visible=False),
+                'label':
+                    Column("Config group label",
+                           col_description="Enter the label that will be displayed in the application."),
+                     },
+            label='Configgroups',
+            label_msgid='PloneMeeting_label_configGroups',
+            i18n_domain='PloneMeeting',
+        ),
+        default=defValues.configGroups,
+        columns=('row_id', 'label'),
+        allow_empty_rows=False,
+    ),
 
 ),
 )
@@ -316,6 +338,22 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         self.adapted().onEdit(isCreated=True)
         # give the "PloneMeeting: Add MeetingUser" permission to MeetingObserverGlobal role
         self.manage_permission(ADD_CONTENT_PERMISSIONS['MeetingUser'], ('Manager', 'MeetingObserverGlobal'))
+
+    security.declareProtected(ModifyPortalContent, 'setConfigGroups')
+
+    def setConfigGroups(self, value, **kwargs):
+        '''Overrides the field 'configGroups' mutator to manage
+           the 'row_id' column manually.  If empty, we need to add a
+           unique id into it.'''
+        # value contains a list of 'ZPublisher.HTTPRequest', to be compatible
+        # if we receive a 'dict' instead, we use v.get()
+        for v in value:
+            # don't process hidden template row as input data
+            if v.get('orderindex_', None) == "template_row_marker":
+                continue
+            if not v.get('row_id', None):
+                v.row_id = self.generateUniqueId()
+        self.getField('configGroups').set(self, value, **kwargs)
 
     security.declarePrivate('validate_holidays')
 
@@ -863,8 +901,13 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 res = False
         return res
 
-    security.declarePublic('showPloneMeetingTab')
+    def showPloneMeetingTab_cachekey(method, self, meetingConfigId):
+        '''cachekey method for self.showPloneMeetingTab.'''
+        # we only recompute if user groups changed
+        user = self.REQUEST['AUTHENTICATED_USER']
+        return (user.getGroups(), meetingConfigId)
 
+    @ram.cache(showPloneMeetingTab_cachekey)
     def showPloneMeetingTab(self, meetingConfigId):
         '''I show the PloneMeeting tabs (corresponding to meeting configs) if
            the user has one of the PloneMeeting roles and if the meeting config
@@ -1321,7 +1364,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def adapted(self):
         return getCustomAdapter(self)
 
-    security.declareProtected('Modify portal content', 'onEdit')
+    security.declareProtected(ModifyPortalContent, 'onEdit')
 
     def onEdit(self, isCreated):
         '''See doc in interfaces.py.'''
