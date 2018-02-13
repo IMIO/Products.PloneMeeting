@@ -994,8 +994,13 @@ class DisplayMeetingConfigsOfConfigGroup(BrowserView):
         self.context = context
         self.request = request
 
-    def __call__(self, grouped_config_id):
+    def __call__(self, config_group):
         """ """
-        # manage auto groups
-        self.grouped_config_id = grouped_config_id
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.config_group = config_group
         return self.index()
+
+    def getViewableMeetingConfigs(self):
+        """Returns the list of MeetingConfigs the current user has access to."""
+        grouped_configs = self.tool.getGroupedConfigs(config_group=self.config_group)
+        return grouped_configs.values()[0]

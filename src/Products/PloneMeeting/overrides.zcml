@@ -27,6 +27,7 @@
         name="plone.global_sections"
         manager="plone.app.layout.viewlets.interfaces.IPortalHeader"
         class=".browser.overrides.PMGlobalSectionsViewlet"
+        template="browser/templates/sections.pt"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View"
         />

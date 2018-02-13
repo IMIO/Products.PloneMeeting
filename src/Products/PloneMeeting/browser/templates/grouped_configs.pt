@@ -1,1 +1,4 @@
-<p>Tralala</p>
+<h3 tal:repeat="config view/getViewableMeetingConfigs">
+   <a tal:attributes="href python: view.tool.getPloneMeetingFolder(config.getId()).absolute_url() + '/searches_items'"
+      tal:content="config/Title">Config title</a>
+</h3>

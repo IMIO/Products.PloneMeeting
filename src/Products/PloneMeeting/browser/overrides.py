@@ -98,6 +98,7 @@ class PMGlobalSectionsViewlet(GlobalSectionsViewlet):
         # XXX change by PM
         tool = api.portal.get_tool('portal_plonemeeting')
         mc = tool.getMeetingConfig(self.context)
+        grouped_configs = tool.getGroupedConfigs()
         # XXX end of change by PM
 
         for action in portal_tabs:
@@ -118,6 +119,12 @@ class PMGlobalSectionsViewlet(GlobalSectionsViewlet):
             if mc:
                 if "/mymeetings/%s" % mc.getId() in action_path:
                     return {'portal': action['id'], }
+                # grouped configs
+                elif 'data-config_group' in action:
+                    cfgs = grouped_configs[(action['data-config_group'], action['name'])]
+                    for cfg in cfgs:
+                        if "/mymeetings/%s" % cfg.getId() in path:
+                            return {'portal': action['id'], }
             # XXX end of change by PM
 
         # Sort by path length, the longest matching path wins
@@ -1176,13 +1183,33 @@ class PMCatalogNavigationTabs(CatalogNavigationTabs):
     def topLevelTabs(self, actions=None, category='portal_tabs'):
         tabs = super(PMCatalogNavigationTabs, self).topLevelTabs(actions, category)
         tool = api.portal.get_tool('portal_plonemeeting')
-        for cfg in tool.objectValues('MeetingConfig'):
-            cfgId = cfg.getId()
-            if tool.showPloneMeetingTab(cfgId):
-                data = {
-                    'name': cfg.Title(),
-                    'id': 'mc_{0}'.format(cfg.getId()),
-                    'url': tool.getPloneMeetingFolder(cfgId).absolute_url() + "/searches_items",
-                    'description': ''}
-                tabs.append(data)
+        grouped_configs = tool.getGroupedConfigs()
+        portal_url = api.portal.get().absolute_url()
+        for config_group, configs in grouped_configs.items():
+            # a tab with direct access to config
+            if not config_group[0]:
+                for cfg in configs:
+                    cfgId = cfg.getId()
+                    if tool.showPloneMeetingTab(cfgId):
+                        data = {
+                            'name': cfg.Title(),
+                            'id': 'mc_{0}'.format(cfg.getId()),
+                            'url': tool.getPloneMeetingFolder(cfgId).absolute_url() + "/searches_items",
+                            'description': ''}
+                        tabs.append(data)
+            # a tab with access to the config_group, only display it if :
+            # - it contains configs;
+            # - at least showPloneMeetingTab one of the configs
+            elif configs:
+                for cfg in configs:
+                    cfgId = cfg.getId()
+                    if tool.showPloneMeetingTab(cfgId):
+                        data = {
+                            'name': config_group[1],
+                            'id': 'mc_config_group_{0}'.format(config_group[0]),
+                            'url': portal_url + '/#',
+                            'description': '',
+                            'data-config_group': config_group[0]}
+                        tabs.append(data)
+                        break
         return tabs

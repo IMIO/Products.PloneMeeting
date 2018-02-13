@@ -13,6 +13,7 @@ import interfaces
 import time
 import OFS.Moniker
 
+from collections import OrderedDict
 from datetime import datetime
 from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
@@ -1749,6 +1750,39 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if as_ids:
             res = [p.id for p in res]
         return res
+
+    def getGroupedConfigs_cachekey(method, self, config_group=None, check_access=True, as_items=False):
+        '''cachekey method for self.getGroupedConfigs.'''
+        if api.user.is_anonymous():
+            return False
+
+        # we only recompute if user groups or params changed
+        user = self.REQUEST['AUTHENTICATED_USER']
+        return (user.getGroups(), config_group, check_access, as_items)
+
+    security.declarePublic('getGroupedConfigs')
+
+    @ram.cache(getGroupedConfigs_cachekey)
+    def getGroupedConfigs(self, config_group=None, check_access=True, as_items=False):
+        """Return an OrderedDict with configGroup row_id/label tuple as key
+           and list of MeetingConfigs as value."""
+        data = OrderedDict()
+        if not api.user.is_anonymous():
+            for configGroup in self.getConfigGroups() + ({'row_id': '', 'label': '_no_config_group_'}, ):
+                if config_group and configGroup['row_id'] != config_group:
+                    continue
+                res = []
+                for cfg in self.objectValues('MeetingConfig'):
+                    if check_access and not self.showPloneMeetingTab(cfg.getId()):
+                        continue
+                    if cfg.getConfigGroup() == configGroup['row_id']:
+                        res.append(cfg)
+                data[(configGroup['row_id'], configGroup['label'])] = res
+
+        if as_items:
+            return data.items()
+        else:
+            return data
 
 
 registerType(ToolPloneMeeting, PROJECTNAME)

@@ -100,6 +100,8 @@ jQuery(document).ready(function($) {
     advicePreview();
     inheritedItemInfos();
     usersGroupInfos();
+    groupedConfigs();
+
     // inserting methods infos on meeting_view
     tooltipster_helper(selector='.tooltipster-inserting-methods-helper-msg',
                        view_name='@@display-inserting-methods-helper-msg',
@@ -129,8 +131,6 @@ function initializePMOverlays(){
     inheritedItemInfos();
     usersGroupInfos();
     categorizedChildsInfos();
-    //groupesConfigs();
-
     
     jQuery(function($) {
         // Content history popup
@@ -266,9 +266,9 @@ function usersGroupInfos() {
 }
 
 function groupedConfigs() {
-    tooltipster_helper(selector='li[id*="portaltab-mc_"]',
+    tooltipster_helper(selector='li[id*="portaltab-mc_config_group_"] a',
                        view_name='@@display-grouped-configs',
-                       data_parameters=[]);
+                       data_parameters=['config_group']);
 }
 
 function tooltipster_helper(selector, view_name, data_parameters={}) {
@@ -279,7 +279,7 @@ function tooltipster_helper(selector, view_name, data_parameters={}) {
 
         contentAsHTML: true,
         interactive: true,
-        theme: 'tooltipster-shadow',
+        theme: 'tooltipster-noir',
         position: 'bottom',
         speed: 100,
         delay: 50,

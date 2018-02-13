@@ -1648,7 +1648,17 @@ body.portaltype-contentcategory dl.portalMessage {
    display: inline-block;
 }
 
+div.tooltipster-noir .tooltipster-box {
+   background: grey;
+   border: 3px solid red;
+   border-radius: 6px;
+   box-shadow: 5px 5px 2px 0 rgba(0,0,0,0.4);
+}
 
+div.tooltipster-noir .tooltipster-content {
+   color: blue;
+   padding: 8px;
+}
 
 /* </dtml-with> */
 

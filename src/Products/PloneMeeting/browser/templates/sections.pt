@@ -13,7 +13,9 @@
                tal:content="tab/name"
                tal:attributes="href tab/url;
                                title tab/description|nothing;
-                               target tab/link_target|nothing;">
+                               target tab/link_target|nothing;
+                               data-config_group tab/data-config_group|nothing;
+                               onClick python: tab.get('data-config_group') and 'javascript:event.preventDefault()';">
             Tab Name
             </a></li></tal:tabs></ul>
 </tal:sections>

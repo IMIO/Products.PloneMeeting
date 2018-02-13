@@ -380,7 +380,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.meetingManagers = []
 
         # General parameters ---------------------------------------------------
-        self.configGroup = '_none_'
+        self.configGroup = ''
         self.assembly = 'Person 1, Person 2'
         self.assemblyStaves = 'Staff 1, Staff 2'
         self.signatures = 'Person 1, Person 2, Person 3'

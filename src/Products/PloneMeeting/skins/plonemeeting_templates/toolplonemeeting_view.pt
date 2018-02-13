@@ -34,37 +34,43 @@
          </a>
         </legend>
         <p class="discreet" i18n:translate="meeting_configurations_descr"></p><br />
-        <table class="vertical listing nosort" width="100%">
-          <thead>
-          <tr>
-            <th class="nosort" i18n:translate="listingheader_title"></th>
-            <th class="nosort" width="50px" i18n:translate="heading_is_active"></th>
-            <th class="nosort" width="140px" i18n:translate="heading_actions"></th>
-          </tr>
-          </thead>
-          <tbody>
-          <tr tal:condition="python: not context.objectValues('MeetingConfig')">
-            <td colspan="3" align="center" i18n:translate="">no_meeting_config</td>
-          </tr>
-          <tal:loop repeat="obj python:context.objectValues('MeetingConfig')">
-          <tr tal:define="isActive python: here.portal_workflow.getInfoFor(obj, 'review_state') == 'active';
-                          oddrow repeat/obj/odd;
-                          classOddEven python: oddrow and 'even' or 'odd';"
-             tal:attributes="class python: not isActive and classOddEven+' state-inactive' or classOddEven"
-             valign="top">
-            <td><h5><a tal:attributes="href obj/absolute_url" tal:content="obj/getName"></a></h5>
-            </td>
-            <td i18n:domain="plone">
-              <span tal:condition="isActive" i18n:translate="">Yes</span>
-              <span tal:condition="not: isActive" i18n:translate="">No</span>
-            </td>
-            <td align="right">
-                <tal:actions replace="structure python: obj.restrictedTraverse('@@actions_panel')(showActions=False, showTransitions=False, showArrows=True)" />
-            </td>
-          </tr>
-          </tal:loop>
-          </tbody>
-        </table>
+
+        <fieldset tal:repeat="grouped_config python: context.getGroupedConfigs(as_items=True)">
+          <legend tal:content="python:grouped_config[0][1]">Config group title</legend>
+  
+            <table class="vertical listing nosort" width="100%">
+              <thead>
+              <tr>
+                <th class="nosort" i18n:translate="listingheader_title"></th>
+                <th class="nosort" width="50px" i18n:translate="heading_is_active"></th>
+                <th class="nosort" width="140px" i18n:translate="heading_actions"></th>
+              </tr>
+              </thead>
+              <tbody>
+              <tr tal:condition="python: not grouped_config[1]">
+                <td colspan="3" align="center" i18n:translate="">no_meeting_config</td>
+              </tr>
+              <tal:loop repeat="obj python:grouped_config[1]">
+              <tr tal:define="isActive python: here.portal_workflow.getInfoFor(obj, 'review_state') == 'active';
+                              oddrow repeat/obj/odd;
+                              classOddEven python: oddrow and 'even' or 'odd';"
+                 tal:attributes="class python: not isActive and classOddEven+' state-inactive' or classOddEven"
+                 valign="top">
+                <td><h5><a tal:attributes="href obj/absolute_url" tal:content="obj/getName"></a></h5>
+                </td>
+                <td i18n:domain="plone">
+                  <span tal:condition="isActive" i18n:translate="">Yes</span>
+                  <span tal:condition="not: isActive" i18n:translate="">No</span>
+                </td>
+                <td align="right">
+                    <tal:actions replace="structure python: obj.restrictedTraverse('@@actions_panel')(showActions=False, showTransitions=False, showArrows=True)" />
+                </td>
+              </tr>
+              </tal:loop>
+              </tbody>
+            </table>
+        </fieldset>
+
       </fieldset>
 
     <tal:comment replace="nothing">MeetingGroups</tal:comment>
