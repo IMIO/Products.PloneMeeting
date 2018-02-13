@@ -269,9 +269,10 @@ function groupedConfigs() {
     tooltipster_helper(selector='li[id*="portaltab-mc_config_group_"] a',
                        view_name='@@display-grouped-configs',
                        data_parameters=['config_group']);
+//                       theme='tooltipster-noir');
 }
 
-function tooltipster_helper(selector, view_name, data_parameters={}) {
+function tooltipster_helper(selector, view_name, data_parameters={}, theme='tooltipster-shadow') {
 
     jQuery(function($){
 
@@ -279,12 +280,13 @@ function tooltipster_helper(selector, view_name, data_parameters={}) {
 
         contentAsHTML: true,
         interactive: true,
-        theme: 'tooltipster-noir',
+        theme: theme,
         position: 'bottom',
         speed: 100,
         delay: 50,
         animation: 'fade',
-        trigger: 'hover',    
+        trigger: 'hover',
+        arrow: true,
 
         functionBefore: function (origin, helper) {
             helper();
