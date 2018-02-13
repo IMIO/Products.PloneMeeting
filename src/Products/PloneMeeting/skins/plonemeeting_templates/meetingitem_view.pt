@@ -391,8 +391,21 @@
 
     <tal:comment replace="nothing">Budgetary informations, manage fields budgetRelated and budgetInfos</tal:comment>
     <tal:block condition="python: 'budgetInfos' in usedAttrs">
+    
         <p class="item-before-budget-related"></p>
         <metal:budgetInfos use-macro="here/@@pm-macros/budgetInfos" />
+
+        <tal:displayBudgetInfos define="fieldName string:budgetInfos;
+                                        ajaxEdit string:True;">
+          <br /><br />
+          <div id="hideBudgetInfosIfNotBudgetRelated"
+                style="display: none;"
+                tal:define="defaultDisplay python: context.getBudgetRelated() and 'block' or 'none';"
+                tal:attributes="style string:display:${defaultDisplay};">
+              <metal:f use-macro="context/@@pm-macros/viewContentField"/>
+          </div>
+        </tal:displayBudgetInfos>
+
     </tal:block>
 
     <tal:comment replace="nothing">Motivation</tal:comment>

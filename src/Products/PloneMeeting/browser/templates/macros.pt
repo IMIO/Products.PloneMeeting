@@ -322,17 +322,6 @@ document.location.reload(true);
             i18n:translate="budget_related_no_view">This item is not budget related.</span>
     </tal:notBudgetRelated>
   </tal:notMayEdit>
-
-  <tal:displayBudgetInfos define="fieldName string:budgetInfos;
-                                  ajaxEdit string:True;">
-    <br /><br />
-    <span id="hideBudgetInfosIfNotBudgetRelated"
-          style="display: none;"
-          tal:define="defaultDisplay python: context.getBudgetRelated() and 'block' or 'none';"
-          tal:attributes="style string:display:${defaultDisplay};">
-        <metal:f use-macro="context/@@pm-macros/viewContentField"/>
-    </span>
-  </tal:displayBudgetInfos>
 </metal:budgetInfos>
 
 
