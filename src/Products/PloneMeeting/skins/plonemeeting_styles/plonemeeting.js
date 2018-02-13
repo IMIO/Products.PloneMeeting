@@ -517,16 +517,16 @@ function toggleIcon(UID, img_tag, baseUrl, viewName, baseSelector) {
     }
     // special management for the toggle budgetRelated where we need to display
     // or hide the budgetInfos field.  If budgetRelated, we show it, either we hide it...
-    $hook_budgetInfos = $('#hook_budgetInfos');
+    $budgetInfos = $('div#hideBudgetInfosIfNotBudgetRelated');
     if (viewName == '@@toggle_budget_related') {
         if (img_tag.indexOf('nameBudgetRelatedNo') > 0) {
         $('#hideBudgetInfosIfNotBudgetRelated')[0].style.display = 'block';
-        $hook_budgetInfos.fadeIn("fast");
-        $hook_budgetInfos.show();
+        $budgetInfos.fadeIn("fast");
+        $budgetInfos.show();
         }
         else {
             // find the 'hook_budgetInfos' and removes it
-            $hook_budgetInfos.fadeOut("fast", function() {
+            $budgetInfos.fadeOut("fast", function() {
                    $(this).hide();
                });
         }
@@ -809,7 +809,7 @@ $(document).ready(function () {
 
 budgetRelated = $('input#budgetRelated');
 if (budgetRelated.length) {
-  budgetInfos = $('#archetypes-fieldname-budgetInfos');
+  budgetInfos = $('div#hideBudgetInfosIfNotBudgetRelated');
   if (!budgetRelated[0].checked) {
     budgetInfos.hide();
   }
