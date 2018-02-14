@@ -221,42 +221,9 @@ jQuery(function($) {
 });
 
 function inheritedItemInfos() {
-    jQuery(function($){
-
-    $('.tooltipster-inherited-advice').tooltipster({
-
-        contentAsHTML: true,
-        interactive: true,
-        theme: 'tooltipster-shadow',
-        position: 'bottom',
-        speed: 100,
-        delay: 50,
-        animation: 'fade',
-        trigger: 'hover',
-
-        functionBefore: function (origin, helper) {
-            helper();
-            if (origin.data('loaded') !== true) {
-                var advice_id = $(origin).attr('data-advice_id');
-                var base_url = $(origin).attr('data-base_url');
-                
-                $.ajax({
-                    type: 'GET',
-                    url: base_url + '/@@display-inherited-item-infos',
-                    data: {
-                        advice_id: advice_id,
-                        ajax_load: new Date().getTime(),
-                    },
-                    success: function (data) {
-                        origin.tooltipster('update', data).data('ajax ', 'cached');
-                        origin.data('loaded', true);
-                        helper();
-                    }
-                });
-            }
-        }
-    });
-});
+    tooltipster_helper(selector='.tooltipster-inherited-advice',
+                       view_name='@@display-inherited-item-infos',
+                       data_parameters=['advice_id']);
 }
 
 function usersGroupInfos() {
@@ -268,55 +235,6 @@ function usersGroupInfos() {
 function groupedConfigs() {
     tooltipster_helper(selector='li[id*="portaltab-mc_config_group_"] a',
                        view_name='@@display-grouped-configs',
-                       data_parameters=['config_group']);
-//                       theme='tooltipster-noir');
+                       data_parameters=['config_group'],
+                       theme='tooltipster-shadow');
 }
-
-function tooltipster_helper(selector, view_name, data_parameters={}, theme='tooltipster-shadow') {
-
-    jQuery(function($){
-
-    $(selector).tooltipster({
-
-        contentAsHTML: true,
-        interactive: true,
-        theme: theme,
-        position: 'bottom',
-        speed: 100,
-        delay: 50,
-        animation: 'fade',
-        trigger: 'hover',
-        arrow: true,
-
-        functionBefore: function (origin, helper) {
-            helper();
-            if (origin.data('loaded') !== true) {
-                // data_parameters
-                parameters = {};
-                for (i = 0, len = data_parameters.length; i < len; i++) {
-                    value = $(origin).attr('data-'+ data_parameters[i]);
-                    parameters[data_parameters[i]] = value;
-                }
-                // base_url
-                var base_url = $(origin).attr('data-base_url');
-                if (!base_url) {
-                  base_url = document.baseURI;
-                }
-                parameters.ajax_load = new Date().getTime();
-                $.ajax({
-                    type: 'GET',
-                    url: base_url + '/' + view_name,
-                    data: parameters,
-                    success: function (data) {
-                        origin.tooltipster('update', data).data('ajax', 'cached');
-                        origin.data('loaded', true);
-                        helper();
-                    }
-                });
-            }
-        }
-    });
-});
-  
-}
-
