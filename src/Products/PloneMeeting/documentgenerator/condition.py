@@ -26,7 +26,7 @@ class PMConfigurablePODTemplateCondition(ConfigurablePODTemplateCondition):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         # add the ItemTemplate and RecurringItem to allowed_types if itemTypeName is allowed
-        if cfg.getItemTypeName() in allowed_types:
+        if cfg and cfg.getItemTypeName() in allowed_types:
             allowed_types.append(cfg.getItemTypeName(configType='MeetingItemTemplate'))
             allowed_types.append(cfg.getItemTypeName(configType='MeetingItemRecurring'))
         return not allowed_types or context.portal_type in allowed_types

@@ -24,13 +24,16 @@
 
 from DateTime import DateTime
 from AccessControl import Unauthorized
+from zope.i18n import translate
 from zope.testing.testrunner.find import find_test_files
 
 from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.utils import get_categories
 from collective.iconifiedcategory.utils import get_categorized_elements
 from collective.iconifiedcategory.utils import get_category_object
+from imio.helpers.cache import cleanRamCacheFor
 from Products.CMFCore.permissions import ManagePortal
+from Products.CMFPlone.utils import safe_unicode
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.interfaces import IDexterityContent
 from plone.dexterity.utils import createContentInContainer
@@ -332,34 +335,46 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.failUnless(get_annexes(res1)[1].content_category)
 
     def test_pm_ShowPloneMeetingTab(self):
-        '''Test when PM tabs are shown'''
+        '''Test when PM tabs are shown.'''
         # By default, 2 meetingConfigs are created active
         # If the user is not logged in, he can not access the meetingConfigs and
         # so the tabs are not shown
         meetingConfig1Id = self.meetingConfig.getId()
         meetingConfig2Id = self.meetingConfig2.getId()
         self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig2Id), False)
+        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.showPloneMeetingTab')
         self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig1Id), False)
+        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.showPloneMeetingTab')
         # every roles of the application can see the tabs
         self.changeUser('pmManager')
         self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig2Id), True)
+        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.showPloneMeetingTab')
         self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig1Id), True)
+        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.showPloneMeetingTab')
         self.changeUser('pmCreator1')
         self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig2Id), True)
+        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.showPloneMeetingTab')
         self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig1Id), True)
+        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.showPloneMeetingTab')
         self.changeUser('pmReviewer1')
         self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig2Id), True)
+        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.showPloneMeetingTab')
         self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig1Id), True)
+        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.showPloneMeetingTab')
         # If a wrong meetingConfigId is passed, it returns False
         self.assertEquals(self.tool.showPloneMeetingTab('wrong-meeting-config-id'), False)
         # The tab of 'meetingConfig1Id' is viewable by 'power observers'
         self.changeUser('powerobserver1')
         self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig1Id), True)
+        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.showPloneMeetingTab')
         self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig2Id), False)
+        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.showPloneMeetingTab')
         # restrictedpowerobserver2 can only see self.meetingConfig2Id tab
         self.changeUser('restrictedpowerobserver2')
         self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig1Id), False)
+        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.showPloneMeetingTab')
         self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig2Id), True)
+        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.showPloneMeetingTab')
         # If we disable one meetingConfig, it is no more shown
         self.changeUser('admin')
         self.do(getattr(self.tool, meetingConfig2Id), 'deactivate')
@@ -806,6 +821,51 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertFalse(self.tool.userIsAmong(['creators', 'reviewers']))
         self.assertTrue(self.tool.userIsAmong(['powerobservers']))
         self.assertTrue(self.tool.userIsAmong(['creators', 'powerobservers']))
+
+    def test_pm_Validate_configGroups(self):
+        """Test ToolPloneMeeting.validate_configGroups, a value used by a MeetingConfig
+           can not be removed."""
+        # create 3 configGroups and make cfg use the second one
+        cfg = self.meetingConfig
+        self.tool.setConfigGroups(
+            (
+                {'label': 'ConfigGroup1', 'row_id': 'unique_id_1'},
+                {'label': 'ConfigGroup2', 'row_id': 'unique_id_2'},
+                {'label': 'ConfigGroup3', 'row_id': 'unique_id_3'},
+            )
+        )
+
+        # an unused value may be removed
+        self.assertIsNone(self.tool.validate_configGroups(()))
+        self.assertIsNone(self.tool.validate_configGroups((
+            {'label': '', 'orderindex_': 'template_row_marker', 'row_id': ''},
+            )))
+        self.assertIsNone(self.tool.validate_configGroups((
+                {'label': 'ConfigGroup1', 'row_id': 'unique_id_1'},
+                {'label': 'ConfigGroup2', 'row_id': 'unique_id_2'},
+                {'label': 'ConfigGroup3', 'row_id': 'unique_id_3'},
+            )))
+        self.assertIsNone(self.tool.validate_configGroups((
+                {'label': 'ConfigGroup2', 'row_id': 'unique_id_2'},
+                {'label': 'ConfigGroup3', 'row_id': 'unique_id_3'},
+            )))
+        self.assertIsNone(self.tool.validate_configGroups((
+                {'label': 'ConfigGroup2', 'row_id': 'unique_id_2'},
+            )))
+
+        # but fails if removing used value
+        cfg.setConfigGroup('unique_id_2')
+        error_msg = translate(
+            u'configGroup_removed_in_use_error',
+            domain='PloneMeeting',
+            mapping={'config_group_title': u'ConfigGroup2',
+                     'cfg_title': safe_unicode(cfg.Title()), },
+            context=self.request)
+        self.assertEqual(self.tool.validate_configGroups((
+                {'label': 'ConfigGroup1', 'row_id': 'unique_id_1'},
+                {'label': 'ConfigGroup3', 'row_id': 'unique_id_3'},
+                )),
+                         error_msg)
 
 
 def test_suite():

@@ -2785,7 +2785,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
         res = [('',
-                translate('make_a_choice',
+                translate('no_config_group',
                           domain='PloneMeeting',
                           context=self.REQUEST))]
         for configGroup in tool.getConfigGroups():

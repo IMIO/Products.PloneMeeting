@@ -287,7 +287,7 @@ schema = Schema((
             description_msgid="config_groups_descr",
             columns={
                 'row_id':
-                    Column("Custom adviser row id",
+                    Column("Config group row id",
                            visible=False),
                 'label':
                     Column("Config group label",
@@ -424,6 +424,24 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                                  domain='PloneMeeting',
                                  mapping={'item_url': an_item_url, },
                                  context=self.REQUEST)
+
+    def validate_configGroups(self, values):
+        '''Checks if a removed configGroup was not in use.'''
+        # check that if we removed a row, it was not in use by a MeetingConfig
+        configGroups_to_save = set([v['row_id'] for v in values if v['row_id']])
+        stored_configGroups = set([v['row_id'] for v in self.getConfigGroups() if v['row_id']])
+        removed_configGroups = stored_configGroups.difference(configGroups_to_save)
+        for configGroup in removed_configGroups:
+            for cfg in self.objectValues('MeetingConfig'):
+                if cfg.getConfigGroup() == configGroup:
+                    config_group_title = [
+                        v['label'] for v in self.getConfigGroups() if v['row_id'] == configGroup][0]
+                    return translate(
+                        'configGroup_removed_in_use_error',
+                        domain='PloneMeeting',
+                        mapping={'config_group_title': safe_unicode(config_group_title),
+                                 'cfg_title': safe_unicode(cfg.Title()), },
+                        context=self.REQUEST)
 
     security.declarePublic('getCustomFields')
 
@@ -783,7 +801,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         res = None
         activeConfigs = self.getActiveConfigs()
         for config in activeConfigs:
-            if config.isDefault:
+            if config.getIsDefault():
                 res = config
                 break
         if not res and activeConfigs:
@@ -1768,7 +1786,14 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            and list of MeetingConfigs as value."""
         data = OrderedDict()
         if not api.user.is_anonymous():
-            for configGroup in self.getConfigGroups() + ({'row_id': '', 'label': '_no_config_group_'}, ):
+            configGroups = self.getConfigGroups()
+            configGroups += (
+                {'row_id': '',
+                 'label': translate('_no_config_group_',
+                                    domain='PloneMeeting',
+                                    context=self.REQUEST,
+                                    default='Not grouped meeting configurations')}, )
+            for configGroup in configGroups:
                 if config_group and configGroup['row_id'] != config_group:
                     continue
                 res = []
