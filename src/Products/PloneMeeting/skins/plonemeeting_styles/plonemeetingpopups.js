@@ -100,6 +100,9 @@ jQuery(document).ready(function($) {
     advicePreview();
     inheritedItemInfos();
     usersGroupInfos();
+    groupedConfigs();
+
+    // inserting methods infos on meeting_view
     tooltipster_helper(selector='.tooltipster-inserting-methods-helper-msg',
                        view_name='@@display-inserting-methods-helper-msg',
                        data_parameters={});
@@ -128,7 +131,7 @@ function initializePMOverlays(){
     inheritedItemInfos();
     usersGroupInfos();
     categorizedChildsInfos();
-
+    
     jQuery(function($) {
         // Content history popup
         $('a.overlay-history').prepOverlay({
@@ -146,7 +149,7 @@ function initializePMOverlays(){
           closeselector: '[name="form.buttons.cancel"]',
     });
   });
-  
+
   jQuery(function($) {
     // Add transition confirmation popup
     $('a.link-overlay-actionspanel.transition-overlay').prepOverlay({
@@ -218,120 +221,20 @@ jQuery(function($) {
 });
 
 function inheritedItemInfos() {
-    jQuery(function($){
-
-    $('.tooltipster-inherited-advice').tooltipster({
-
-        contentAsHTML: true,
-        interactive: true,
-        theme: 'tooltipster-shadow',
-        position: 'bottom',
-        speed: 100,
-        delay: 50,
-        animation: 'fade',
-        trigger: 'hover',
-
-        functionBefore: function (origin, helper) {
-            helper();
-            if (origin.data('loaded') !== true) {
-                var advice_id = $(origin).attr('data-advice_id');
-                var base_url = $(origin).attr('data-base_url');
-                
-                $.ajax({
-                    type: 'GET',
-                    url: base_url + '/@@display-inherited-item-infos',
-                    data: {
-                        advice_id: advice_id,
-                        ajax_load: new Date().getTime(),
-                    },
-                    success: function (data) {
-                        origin.tooltipster('update', data).data('ajax ', 'cached');
-                        origin.data('loaded', true);
-                        helper();
-                    }
-                });
-            }
-        }
-    });
-});
+    tooltipster_helper(selector='.tooltipster-inherited-advice',
+                       view_name='@@display-inherited-item-infos',
+                       data_parameters=['advice_id']);
 }
 
 function usersGroupInfos() {
-    jQuery(function($){
-
-    $('.tooltipster-group-users').tooltipster({
-
-        contentAsHTML: true,
-        interactive: true,
-        theme: 'tooltipster-shadow',
-        position: 'bottom',
-        speed: 100,
-        delay: 50,
-        animation: 'fade',
-        trigger: 'hover',    
-
-        functionBefore: function (origin, helper) {
-            helper();
-            if (origin.data('loaded') !== true) {
-                var group_id = $(origin).attr('data-group_id');
-                var base_url = $(origin).attr('data-base_url');
-                $.ajax({
-                    type: 'GET',
-                    url: base_url + '/@@display-group-users',
-                    data: {
-                        group_id: group_id,
-                        ajax_load: new Date().getTime(),
-                    },
-                    success: function (data) {
-                        origin.tooltipster('update', data).data('ajax ', 'cached');
-                        origin.data('loaded', true);
-                        helper();
-                    }
-                });
-            }
-        }
-    });
-});
+    tooltipster_helper(selector='.tooltipster-group-users',
+                       view_name='@@display-group-users',
+                       data_parameters=['group_id']);
 }
 
-function tooltipster_helper(selector, view_name, data_parameters) {
-
-    jQuery(function($){
-
-    $(selector).tooltipster({
-
-        contentAsHTML: true,
-        interactive: true,
-        theme: 'tooltipster-shadow',
-        position: 'bottom',
-        speed: 100,
-        delay: 50,
-        animation: 'fade',
-        trigger: 'hover',    
-
-        functionBefore: function (origin, helper) {
-            helper();
-            if (origin.data('loaded') !== true) {
-                var group_id = $(origin).attr('data-group_id');
-                var base_url = $(origin).attr('data-base_url');
-                if (!data_parameters) {
-                    data_parameters = {};
-                }
-                data_parameters.ajax_load = new Date().getTime();
-                $.ajax({
-                    type: 'GET',
-                    url: base_url + '/' + view_name,
-                    data: data_parameters,
-                    success: function (data) {
-                        origin.tooltipster('update', data).data('ajax ', 'cached');
-                        origin.data('loaded', true);
-                        helper();
-                    }
-                });
-            }
-        }
-    });
-});
-  
+function groupedConfigs() {
+    tooltipster_helper(selector='li[id*="portaltab-mc_config_group_"] a',
+                       view_name='@@display-grouped-configs',
+                       data_parameters=['config_group'],
+                       theme='tooltipster-shadow');
 }
-

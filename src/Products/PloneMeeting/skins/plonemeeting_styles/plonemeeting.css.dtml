@@ -451,7 +451,7 @@ td.td_cell_advices .actionMenuAX .actionMenuContentAX {
     padding-right: 0.5em;
     cursor: pointer;
     list-style: none;
-    box-shadow: 5px 5px 5px grey;
+    box-shadow: 0px 0px 5px 5px rgba(0,0,0,0.2);
     border-radius: 5px;
     min-width: 250px;
 }
@@ -1043,6 +1043,11 @@ body[class*="itemtemplates"].template-manage-portlets a.link-parent {
     float: left;
 }
 
+/* hide metadata tab when editing tool */
+.portaltype-toolplonemeeting li a#fieldsetlegend-metadata {
+   display: none;
+}
+
 /* make column displayed for MeetingConfig.customAdvisers equals
    ...-column-1 is a hidden column (row_id) */
 #datagridwidget-table-customAdvisers .datagridwidget-column-2,
@@ -1567,7 +1572,7 @@ div.customAdviceMessage {
 .tooltip.pb-ajax {
     padding: 1em;
     width: 500px;
-    box-shadow: 5px 5px 5px grey;
+    box-shadow: 0px 0px 5px 5px rgba(0,0,0,0.2);
     /* when displaying group users, force font-weight to normal or it is displayed bold */
     font-weight: normal;
 }
@@ -1641,6 +1646,12 @@ body.portaltype-contentcategory dl.portalMessage {
 /* labels displayed in the dashboards */
 #content div#faceted-results div#labeling-viewlet ul {
    display: inline-block;
+}
+
+/* grouped configs displayed in tooltipster */
+div.grouped-configs {
+    padding-right: 1em;
+    padding-left: 1em;
 }
 
 /* </dtml-with> */

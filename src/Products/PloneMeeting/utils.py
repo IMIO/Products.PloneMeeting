@@ -798,7 +798,7 @@ def getFieldContent(obj, name, force=None, sep='-', **kwargs):
                                obj.getField(name + '2').get(obj, **kwargs))
     field = obj.getField(name)
     # Is content of this field bilingual?
-    tool = obj.portal_plonemeeting
+    tool = api.portal.get_tool('portal_plonemeeting')
     adaptations = tool.getModelAdaptations()
     if obj.meta_type in mainTypes:
         bilingual = 'secondLanguage' in adaptations

@@ -13,6 +13,7 @@ import interfaces
 import time
 import OFS.Moniker
 
+from collections import OrderedDict
 from datetime import datetime
 from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
@@ -25,6 +26,7 @@ from zope.i18n import translate
 from zope.interface import implements
 
 from Products.ZCatalog.Catalog import AbstractCatalogBrain
+from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.CMFCore.utils import _checkPermission
 from Products.CMFCore.utils import UniqueObject
@@ -48,8 +50,8 @@ from Products.ATContentTypes import permission as ATCTPermissions
 from Products.DataGridField import DataGridField
 from Products.DataGridField.Column import Column
 
-from plone.memoize import ram
 from plone import api
+from plone.memoize import ram
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.documentviewer.async import queueJob
 from collective.documentviewer.settings import GlobalSettings
@@ -278,6 +280,27 @@ schema = Schema((
         multiValued=1,
         vocabulary='listWeekDays',
     ),
+    DataGridField(
+        name='configGroups',
+        widget=DataGridField._properties['widget'](
+            description="ConfigGroups",
+            description_msgid="config_groups_descr",
+            columns={
+                'row_id':
+                    Column("Config group row id",
+                           visible=False),
+                'label':
+                    Column("Config group label",
+                           col_description="Enter the label that will be displayed in the application."),
+                     },
+            label='Configgroups',
+            label_msgid='PloneMeeting_label_configGroups',
+            i18n_domain='PloneMeeting',
+        ),
+        default=defValues.configGroups,
+        columns=('row_id', 'label'),
+        allow_empty_rows=False,
+    ),
 
 ),
 )
@@ -316,6 +339,22 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         self.adapted().onEdit(isCreated=True)
         # give the "PloneMeeting: Add MeetingUser" permission to MeetingObserverGlobal role
         self.manage_permission(ADD_CONTENT_PERMISSIONS['MeetingUser'], ('Manager', 'MeetingObserverGlobal'))
+
+    security.declareProtected(ModifyPortalContent, 'setConfigGroups')
+
+    def setConfigGroups(self, value, **kwargs):
+        '''Overrides the field 'configGroups' mutator to manage
+           the 'row_id' column manually.  If empty, we need to add a
+           unique id into it.'''
+        # value contains a list of 'ZPublisher.HTTPRequest', to be compatible
+        # if we receive a 'dict' instead, we use v.get()
+        for v in value:
+            # don't process hidden template row as input data
+            if v.get('orderindex_', None) == "template_row_marker":
+                continue
+            if not v.get('row_id', None):
+                v.row_id = self.generateUniqueId()
+        self.getField('configGroups').set(self, value, **kwargs)
 
     security.declarePrivate('validate_holidays')
 
@@ -385,6 +424,24 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                                  domain='PloneMeeting',
                                  mapping={'item_url': an_item_url, },
                                  context=self.REQUEST)
+
+    def validate_configGroups(self, values):
+        '''Checks if a removed configGroup was not in use.'''
+        # check that if we removed a row, it was not in use by a MeetingConfig
+        configGroups_to_save = set([v['row_id'] for v in values if v['row_id']])
+        stored_configGroups = set([v['row_id'] for v in self.getConfigGroups() if v['row_id']])
+        removed_configGroups = stored_configGroups.difference(configGroups_to_save)
+        for configGroup in removed_configGroups:
+            for cfg in self.objectValues('MeetingConfig'):
+                if cfg.getConfigGroup() == configGroup:
+                    config_group_title = [
+                        v['label'] for v in self.getConfigGroups() if v['row_id'] == configGroup][0]
+                    return translate(
+                        'configGroup_removed_in_use_error',
+                        domain='PloneMeeting',
+                        mapping={'config_group_title': safe_unicode(config_group_title),
+                                 'cfg_title': safe_unicode(cfg.Title()), },
+                        context=self.REQUEST)
 
     security.declarePublic('getCustomFields')
 
@@ -744,7 +801,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         res = None
         activeConfigs = self.getActiveConfigs()
         for config in activeConfigs:
-            if config.isDefault:
+            if config.getIsDefault():
                 res = config
                 break
         if not res and activeConfigs:
@@ -863,8 +920,13 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 res = False
         return res
 
-    security.declarePublic('showPloneMeetingTab')
+    def showPloneMeetingTab_cachekey(method, self, meetingConfigId):
+        '''cachekey method for self.showPloneMeetingTab.'''
+        # we only recompute if user groups changed
+        user = self.REQUEST['AUTHENTICATED_USER']
+        return (user.getGroups(), meetingConfigId)
 
+    @ram.cache(showPloneMeetingTab_cachekey)
     def showPloneMeetingTab(self, meetingConfigId):
         '''I show the PloneMeeting tabs (corresponding to meeting configs) if
            the user has one of the PloneMeeting roles and if the meeting config
@@ -1321,7 +1383,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def adapted(self):
         return getCustomAdapter(self)
 
-    security.declareProtected('Modify portal content', 'onEdit')
+    security.declareProtected(ModifyPortalContent, 'onEdit')
 
     def onEdit(self, isCreated):
         '''See doc in interfaces.py.'''
@@ -1706,6 +1768,46 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if as_ids:
             res = [p.id for p in res]
         return res
+
+    def getGroupedConfigs_cachekey(method, self, config_group=None, check_access=True, as_items=False):
+        '''cachekey method for self.getGroupedConfigs.'''
+        if api.user.is_anonymous():
+            return False
+
+        # we only recompute if user groups or params changed
+        user = self.REQUEST['AUTHENTICATED_USER']
+        return (user.getGroups(), config_group, check_access, as_items)
+
+    security.declarePublic('getGroupedConfigs')
+
+    @ram.cache(getGroupedConfigs_cachekey)
+    def getGroupedConfigs(self, config_group=None, check_access=True, as_items=False):
+        """Return an OrderedDict with configGroup row_id/label tuple as key
+           and list of MeetingConfigs as value."""
+        data = OrderedDict()
+        if not api.user.is_anonymous():
+            configGroups = self.getConfigGroups()
+            configGroups += (
+                {'row_id': '',
+                 'label': translate('_no_config_group_',
+                                    domain='PloneMeeting',
+                                    context=self.REQUEST,
+                                    default='Not grouped meeting configurations')}, )
+            for configGroup in configGroups:
+                if config_group and configGroup['row_id'] != config_group:
+                    continue
+                res = []
+                for cfg in self.objectValues('MeetingConfig'):
+                    if check_access and not self.showPloneMeetingTab(cfg.getId()):
+                        continue
+                    if cfg.getConfigGroup() == configGroup['row_id']:
+                        res.append(cfg)
+                data[(configGroup['row_id'], configGroup['label'])] = res
+
+        if as_items:
+            return data.items()
+        else:
+            return data
 
 
 registerType(ToolPloneMeeting, PROJECTNAME)

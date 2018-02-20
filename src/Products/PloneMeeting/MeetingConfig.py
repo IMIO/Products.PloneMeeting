@@ -57,7 +57,6 @@ from plone.namedfile.file import NamedBlobFile
 from plone.namedfile.file import NamedBlobImage
 from plone.portlets.interfaces import IPortletManager
 from plone.portlets.interfaces import IPortletAssignmentMapping
-from Products.CMFCore.ActionInformation import Action
 from Products.CMFCore.Expression import Expression
 from Products.CMFPlone import PloneMessageFactory
 from Products.CMFPlone.interfaces.constrains import IConstrainTypes
@@ -146,6 +145,20 @@ SUFFIXPROFILEPREFIX = 'suffix_profile_'
 
 schema = Schema((
 
+    StringField(
+        name='configGroup',
+        default=defValues.configGroup,
+        widget=SelectionWidget(
+            description="ConfigGroup",
+            description_msgid="config_group_descr",
+            label='Configgroup',
+            label_msgid='PloneMeeting_label_configGroup',
+            i18n_domain='PloneMeeting',
+        ),
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+        vocabulary='listConfigGroups',
+    ),
     TextField(
         name='assembly',
         allowable_content_types=('text/plain',),
@@ -2766,6 +2779,21 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         else:
             return self.getField('maxShownListings').get(self, **kwargs)
 
+    security.declarePublic('listConfigGroups')
+
+    def listConfigGroups(self):
+        """ """
+        tool = api.portal.get_tool('portal_plonemeeting')
+        res = [('',
+                translate('no_config_group',
+                          domain='PloneMeeting',
+                          context=self.REQUEST))]
+        for configGroup in tool.getConfigGroups():
+            res.append(
+                (configGroup['row_id'],
+                 safe_unicode(configGroup['label'])))
+        return DisplayList(res)
+
     security.declarePrivate('listAttributes')
 
     def listAttributes(self, schema, optionalOnly=False):
@@ -4390,27 +4418,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                 context=self.REQUEST)
                 self.plone_utils.addPortalMessage(msg)
 
-    security.declarePrivate('createTab')
-
-    def createTab(self):
-        '''Creates the action tab that corresponds to this meeting config.'''
-        actionIds = self.portal_actions.portal_tabs.objectIds()
-        configId = self.getId()
-        tabId = '%s_action' % configId
-        if tabId in actionIds:
-            return
-        # The action corresponding to the tab does not exist. Create it.
-        urlExpr = 'python:portal.portal_plonemeeting.getPloneMeetingFolder(' \
-                  '"%s").absolute_url() + "/searches_items"' % configId
-        availExpr = 'python:portal.portal_plonemeeting.showPloneMeetingTab(' \
-                    '"%s")' % configId
-        configTab = Action(configId, title=self.Title().decode('utf-8'),
-                           description='', i18n_domain='PloneMeeting',
-                           url_expr=urlExpr, icon_expr='',
-                           available_expr=availExpr, permissions=('View',),
-                           visible=True)
-        self.portal_actions.portal_tabs._setObject(tabId, configTab)
-
     def _createSuffixedGroup(self, suffix):
         '''Create a group for this MeetingConfig using given p_suffix
            to manage group id and group title.
@@ -4497,8 +4504,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         self.manage_addProperty(MEETING_CONFIG, self.id, 'string')
         # Create the collections related to this meeting config
         self.createSearches(self._searchesInfo())
-        # Create the action (tab) that corresponds to this meeting config
-        self.createTab()
         # Update customViewFields defined on DashboardCollections
         self.updateCollectionColumns()
         # Sort the item tags if needed

@@ -213,8 +213,6 @@ def postInstall(context):
     # re-add them manually here...
     for meetingConfig in site.portal_plonemeeting.objectValues('MeetingConfig'):
         meetingConfig.registerPortalTypes()
-        # add default portal_tabs
-        meetingConfig.createTab()
 
     # Check if the personal folder creation of users is enabled
     # check if the creation flag is set to 0, change it if necessary

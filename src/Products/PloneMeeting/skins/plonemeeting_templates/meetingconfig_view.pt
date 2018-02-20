@@ -50,6 +50,9 @@
     <tal:mainConfig condition="python: pageName=='default'">
       <table width="100%" class="discreet">
         <tr valign="top">
+          <td tal:define="field python:here.getField('configGroup')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
           <td tal:define="field python:here.getField('budgetDefault')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
@@ -59,7 +62,6 @@
           <td width="25%" tal:define="field python:here.getField('places')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td></td>
         </tr>
         <tr valign="top">
           <td tal:define="field python:here.getField('folderTitle')">

@@ -985,3 +985,22 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
                         context=self.request,
                         default="Stored ${number_of_annexes} annexes")
         api.portal.show_message(msg, request=self.request)
+
+
+class DisplayMeetingConfigsOfConfigGroup(BrowserView):
+    """This view will display the MeetingConfigs of a ConfigGroup."""
+
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+
+    def __call__(self, config_group):
+        """ """
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.config_group = config_group
+        return self.index()
+
+    def getViewableMeetingConfigs(self):
+        """Returns the list of MeetingConfigs the current user has access to."""
+        grouped_configs = self.tool.getGroupedConfigs(config_group=self.config_group)
+        return grouped_configs.values()[0]

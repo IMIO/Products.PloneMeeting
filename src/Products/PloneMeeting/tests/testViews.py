@@ -31,6 +31,7 @@ from zope.component import getAdapter
 from zope.component import getMultiAdapter
 from zope.i18n import translate
 from plone import api
+from plone.app.testing import logout
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 from Products.CMFCore.permissions import ModifyPortalContent
@@ -911,6 +912,90 @@ class testViews(PloneMeetingTestCase):
         # propose item, view is not more available
         self.proposeItem(item)
         self.assertRaises(Unauthorized, item.restrictedTraverse, '@@labeling')
+
+    def test_pm_TopLevelTabs(self):
+        """The CatalogNavigationTabs.topLevelTabs is overrided to manage groupConfigs."""
+        # configure configGroups, 2 configGroups, one will contain meetingConfig
+        # the other is empty, and meetingConfig2 is not in a configGroup
+        self.tool.setConfigGroups(
+            ({'label': 'ConfigGroup1', 'row_id': 'unique_id_1'},)
+        )
+        cfg = self.meetingConfig
+        cfg2Id = self.meetingConfig2.getId()
+        cfg.setConfigGroup('unique_id_1')
+        # does not break as anonymous
+        logout()
+        view = getMultiAdapter((self.portal, self.request), name='portal_tabs_view')
+        self.assertEqual(len(view.topLevelTabs()), 1)
+        self.assertEqual(view.topLevelTabs()[0]['id'], 'index_html')
+
+        # user having access to both configs
+        self.changeUser('pmCreator1')
+        self.assertEqual(len(view.topLevelTabs()), 3)
+        self.assertEqual(view.topLevelTabs()[0]['id'], 'index_html')
+        self.assertEqual(view.topLevelTabs()[1]['id'], 'mc_config_group_unique_id_1')
+        self.assertEqual(view.topLevelTabs()[2]['id'], 'mc_{0}'.format(cfg2Id))
+
+        # user having access only to cfg, it gets the configGroup
+        self.changeUser('powerobserver1')
+        self.assertEqual(len(view.topLevelTabs()), 2)
+        self.assertEqual(view.topLevelTabs()[0]['id'], 'index_html')
+        self.assertEqual(view.topLevelTabs()[1]['id'], 'mc_config_group_unique_id_1')
+
+        # user having access only to cfg2 will not get configGroup
+        self.changeUser('restrictedpowerobserver2')
+        self.assertEqual(len(view.topLevelTabs()), 2)
+        self.assertEqual(view.topLevelTabs()[0]['id'], 'index_html')
+        self.assertEqual(view.topLevelTabs()[1]['id'], 'mc_{0}'.format(cfg2Id))
+
+    def test_pm_SelectedTabs(self):
+        """The GlobalSectionsViewlet.selectedTabs is overrided to manage groupConfigs."""
+        # configure configGroups, 2 configGroups, one will contain meetingConfig
+        # the other is empty, and meetingConfig2 is not in a configGroup
+        self.tool.setConfigGroups(
+            ({'label': 'ConfigGroup1', 'row_id': 'unique_id_1'},)
+        )
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        cfg2Id = self.meetingConfig2.getId()
+        cfg.setConfigGroup('unique_id_1')
+
+        # does not break as anonymous
+        logout()
+        viewlet = self._get_viewlet(
+            context=self.portal,
+            manager_name='plone.portalheader',
+            viewlet_name='plone.global_sections')
+        viewlet.update()
+        self.assertEqual(viewlet.selected_portal_tab, 'index_html')
+
+        # as user able to access every cfg, default is the groupedConfig
+        # use default MC url as current 'URL'
+        self.changeUser('pmCreator1')
+        viewlet_context = self.getMeetingFolder()
+        viewlet = self._get_viewlet(
+            context=viewlet_context,
+            manager_name='plone.portalheader',
+            viewlet_name='plone.global_sections')
+        redirect_to_app = getMultiAdapter(
+            (self.portal, self.request),
+            name='plonemeeting_redirect_to_app_view')
+        self.request['URL'] = redirect_to_app()
+        viewlet.update()
+        self.assertEqual(viewlet.selected_portal_tab, 'mc_config_group_unique_id_1')
+
+        # now with cfg2 out of configGroups
+        self.setMeetingConfig(cfg2Id)
+        viewlet_context = self.getMeetingFolder()
+        viewlet = self._get_viewlet(
+            context=viewlet_context,
+            manager_name='plone.portalheader',
+            viewlet_name='plone.global_sections')
+        cfg2.setIsDefault(True)
+        cfg2.updateIsDefaultFields()
+        self.request['URL'] = redirect_to_app()
+        viewlet.update()
+        self.assertEqual(viewlet.selected_portal_tab, 'mc_{0}'.format(cfg2Id))
 
 
 def test_suite():

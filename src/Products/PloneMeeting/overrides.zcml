@@ -26,7 +26,8 @@
     <browser:viewlet
         name="plone.global_sections"
         manager="plone.app.layout.viewlets.interfaces.IPortalHeader"
-        class=".browser.overrides.PloneMeetingGlobalSectionsViewlet"
+        class=".browser.overrides.PMGlobalSectionsViewlet"
+        template="browser/templates/sections.pt"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View"
         />
@@ -35,7 +36,7 @@
     <browser:viewlet
         name="imio.history.documentbyline"
         manager="plone.app.layout.viewlets.interfaces.IBelowContentTitle"
-        class=".browser.overrides.PloneMeetingDocumentBylineViewlet"
+        class=".browser.overrides.PMDocumentBylineViewlet"
         layer="imio.history.interfaces.IImioHistoryLayer"
         permission="zope2.View"
         />
