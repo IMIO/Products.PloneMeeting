@@ -32,7 +32,7 @@
     </script>
 
     <tal:comment replace="nothing">Show navigation between items of the same meeting</tal:comment>
-    <tal:itemNavigation tal:condition="python: meeting">
+    <tal:itemNavigation tal:condition="nocall:meeting">
       <tal:itemNavigation replace="structure context/@@item-navigation-widget" />
     </tal:itemNavigation>
 
@@ -73,8 +73,8 @@
                  tal:define="classifier context/getClassifier">
                 <span class="item_attribute_label"
                       i18n:translate="PloneMeeting_label_classifier"></span>:&nbsp;&nbsp;
-                <span tal:condition="classifier" tal:content="classifier/Title">-</span>
-                <span tal:condition="not: classifier">-</span>
+                <span tal:condition="nocall:classifier" tal:content="classifier/Title">-</span>
+                <span tal:condition="not:nocall:classifier">-</span>
             </div>
 
             <tal:comment replace="nothing">Category</tal:comment>
@@ -84,7 +84,7 @@
                 <span class="item_attribute_label"
                       tal:condition="not: meetingConfig/getUseGroupsAsCategories"
                       i18n:translate="MeetingCategory"></span>:&nbsp;&nbsp;
-                <span tal:condition="cat" tal:content="python: cat.getName()"></span>
+                <span tal:condition="nocall:cat" tal:content="cat/getName"></span>
             </div>
             </tal:category>
 
@@ -255,7 +255,7 @@
             <div class="discreet">
               <span class="item_attribute_label"
                     i18n:translate="presented_in_meeting">Presented in meeting</span>:&nbsp;&nbsp;
-              <tal:hasMeeting condition="python: meeting">
+              <tal:hasMeeting condition="nocall:meeting">
                   <tal:link tal:replace="structure meeting/getPrettyLink">
                   </tal:link>
               </tal:hasMeeting>
@@ -263,7 +263,7 @@
             </div>
 
             <tal:comment replace="nothing">List type</tal:comment>
-            <div class="discreet" tal:condition="python: meeting">
+            <div class="discreet" tal:condition="nocall:meeting">
                 <span tal:attributes="class string:item_attribute_label item_listType_${context/getListType}">
                     <tal:itemListType replace="structure here/@@item-listtype/index" />
                 </span>
@@ -489,7 +489,7 @@
        <metal:f use-macro="context/@@pm-macros/viewContentField"/>
     </tal:field>
 
-    <tal:itemNavigation tal:condition="python: meeting">
+    <tal:itemNavigation tal:condition="nocall:meeting">
       <tal:itemNavigation replace="structure context/@@item-navigation-widget" />
     </tal:itemNavigation>
 
