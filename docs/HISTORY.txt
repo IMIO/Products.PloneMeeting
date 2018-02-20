@@ -21,7 +21,6 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   in the site header instead displaying MeetingConfigs next to each other.  This is useful when managing several
   MeetingConfigs or to group MeetingConfigs by context
 - portal_tabs to access a MeetingConfig is now generated, we do not add an action in portal_tabs anymore
-- 
 - Display the title of current MeetingConfig in the portlet_plonemeeting header instead laconic term 'Manage'
   so it recalls where we are.  It is necessary when using groups of configs
 
