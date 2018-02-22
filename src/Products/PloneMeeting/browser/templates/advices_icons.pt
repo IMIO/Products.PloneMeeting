@@ -88,7 +88,7 @@
                          </span>
                          <tal:not_asked_advice_icon condition="advice/not_asked">
                              <img src="advice_not_asked.png"
-                                  title="This advice was given as personal initiative."
+                                  title="This advice was given as personal initiative"
                                   style="cursor: help;"
                                   i18n:attributes="title"
                                   tal:attributes="src string:${view/portal_url}/advice_not_asked.png"/>

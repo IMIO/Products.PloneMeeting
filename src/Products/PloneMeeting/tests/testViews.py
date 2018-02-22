@@ -929,9 +929,11 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(len(view.topLevelTabs()), 1)
         self.assertEqual(view.topLevelTabs()[0]['id'], 'index_html')
 
-        # user having access to both configs
+        # user having access to every configs
         self.changeUser('pmCreator1')
-        self.assertEqual(len(view.topLevelTabs()), 3)
+        # index_html + active MeetingConfigs
+        active_configs = self.tool.getActiveConfigs()
+        self.assertEqual(len(view.topLevelTabs()), 1 + len(active_configs))
         self.assertEqual(view.topLevelTabs()[0]['id'], 'index_html')
         self.assertEqual(view.topLevelTabs()[1]['id'], 'mc_config_group_unique_id_1')
         self.assertEqual(view.topLevelTabs()[2]['id'], 'mc_{0}'.format(cfg2Id))

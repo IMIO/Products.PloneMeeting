@@ -157,14 +157,18 @@ def getWorkflowAdapter(obj, conditions):
        may be used as workflow conditions (if p_conditions is True) or actions
        (if p_condition is False).'''
     tool = api.portal.get_tool(TOOL_ID)
-    meetingConfig = tool.getMeetingConfig(obj)
+    cfg = tool.getMeetingConfig(obj)
     interfaceMethod = adaptables[obj.meta_type]['method']
     if conditions:
         interfaceMethod += 'Conditions'
     else:
         interfaceMethod += 'Actions'
-    interfaceLongName = getattr(meetingConfig, '%sInterface' % interfaceMethod)()
-    return getInterface(interfaceLongName)(obj)
+    interfaceLongName = getattr(cfg, '%sInterface' % interfaceMethod)()
+    adapter = getInterface(interfaceLongName)(obj)
+    # set some attributes so it is reusable in the adapter
+    adapter.tool = tool
+    adapter.cfg = cfg
+    return adapter
 
 
 def getCustomAdapter(obj):

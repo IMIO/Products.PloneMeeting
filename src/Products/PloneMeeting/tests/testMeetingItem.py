@@ -50,6 +50,7 @@ from plone import api
 from plone.app.testing import logout
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
+from plone.memoize.instance import Memojito
 
 from Products.PloneTestCase.setup import _createHomeFolder
 from Products.CMFCore.permissions import AddPortalContent
@@ -3480,6 +3481,8 @@ class testMeetingItem(PloneMeetingTestCase):
             self.assertTrue(event['comments'] == '')
         # make comments not viewable
         cfg.setHideItemHistoryCommentsToUsersOutsideProposingGroup(True)
+        # clean memoize
+        getattr(wf_adapter, Memojito.propname).clear()
         wf_history = wf_adapter.getHistory()
         # we have history
         self.assertTrue(len(wf_history) >= 3)
