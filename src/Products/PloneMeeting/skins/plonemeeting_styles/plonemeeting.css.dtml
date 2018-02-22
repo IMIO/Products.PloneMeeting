@@ -1654,6 +1654,16 @@ div.grouped-configs {
     padding-left: 1em;
 }
 
+/* avoid occcasionnally scroll bars */
+div.tooltipster-categorized-elements {
+    min-width: 350px;
+    max-width: 500px;
+}
+/* arrow position when tooltipster displayed to top (annexes at bottom of the screen) */
+.tooltipster-sidetip.tooltipster-top .tooltipster-arrow {
+    height: 6px;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */
