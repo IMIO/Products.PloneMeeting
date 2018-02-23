@@ -26,6 +26,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Added MeetingConfig.itemFieldsToKeepConfigSortingFor field, item fields (proposingGroup or category) selected
   there will make vocabulary displayed on the item to keep position of terms from the configuration instead default
   behavior that sort vocabularies alphabetically
+- Make sure we do not notify several times the same email address.  More over, if a recipient has no fullname, use
+  the user id to build recipient string "user_id <email@test.org>"
 
 4.1b4 (2018-01-31)
 ------------------

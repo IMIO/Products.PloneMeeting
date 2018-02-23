@@ -2,7 +2,7 @@
 #
 # File: ToolPloneMeeting.py
 #
-# Copyright (c) 2015 by Imio.be
+# Copyright (c) 2018 by Imio.be
 # Generator: ArchGenXML Version 2.7
 #            http://plone.org/products/archgenxml
 #
@@ -1435,11 +1435,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if not userInfo or not userInfo.getProperty('email'):
             return None
         # Compute the mail recipient string
-        if userInfo.getProperty('fullname'):
-            name = userInfo.getProperty('fullname').decode(enc)
-            res = name + u' <%s>' % userInfo.getProperty('email').decode(enc)
-        else:
-            res = userInfo.getProperty('email').decode(enc)
+        fullname = userInfo.getProperty('fullname') or userInfo.id
+        name = fullname.decode(enc)
+        res = name + u' <%s>' % userInfo.getProperty('email').decode(enc)
         return safe_unicode(res)
 
     security.declarePublic('addUsersOutsideGroups')

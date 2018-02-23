@@ -3472,6 +3472,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         plone_group = api.group.get(plone_group_id)
+        # save mail addresses the notification was sent to to avoid
+        # sending this mail several times to the same address in case
+        # same address is used for several users (case of "group" address)
+        sent_mail_addresses = []
         for memberId in plone_group.getMemberIds():
             if event_id not in cfg.getUserParam('mailItemEvents',
                                                 request=self.REQUEST,
@@ -3480,6 +3484,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # Send a mail to this user
             recipient = tool.getMailRecipient(memberId)
             if recipient:
+                username, email = recipient.split('<')
+                if email in sent_mail_addresses:
+                    continue
+                sent_mail_addresses.append(email)
+
                 sendMail([recipient],
                          self,
                          event_id,
