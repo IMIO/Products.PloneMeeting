@@ -744,6 +744,8 @@ dt.highlightValue span {
 /* CKeditor styles */
 .highlight-orange {background-color: orange;}
 .highlight-red {color: red;}
+.highlight-blue {color: blue;}
+.highlight-green {color: green;}
 .highlight-yellow {background-color: yellow;}
 p.indent-firstline {text-indent: 40px;}
 .xSmallText {font-size: 70%;}
@@ -1614,6 +1616,11 @@ div[id^='hook_'] table[cellpadding='0'] tr th,
 div.pmMoreInfo table[cellpadding='0'] tr td,
 div.pmMoreInfo table[cellpadding='0'] tr th {
     padding: 0em !important;
+}
+
+/* increase height of CKeditor styles combobox */
+div.cke.cke_combopanel {
+    height: 300px;
 }
 
 /* hide collective.documentviewer message on portaltype-configurablepodtemplate
