@@ -177,11 +177,27 @@ class testMeetingItem(PloneMeetingTestCase):
         # a 'Manager' will be able to select any proposing group
         # no matter he is a creator or not
         self.changeUser('admin')
-        self.assertTrue(item.listProposingGroups().sortedByKey().keys() == ['developers', 'vendors', ])
+        self.assertTrue(item.listProposingGroups().keys() == ['developers', 'vendors', ])
         # if 'developers' was selected on the item, it will be available to 'pmReviewer1'
         item.setProposingGroup('developers')
         self.changeUser('pmReviewer1')
-        self.assertTrue(item.listProposingGroups().sortedByKey().keys() == ['developers', 'vendors', ])
+        self.assertTrue(item.listProposingGroups().keys() == ['developers', 'vendors', ])
+
+    def test_pm_ListProposingGroupsKeepConfigSorting(self):
+        """If 'proposingGroup' selected in MeetingConfig.itemFieldsToKeepConfigSortingFor,
+           the vocabulary keeps config order, not sorted alphabetically."""
+        cfg = self.meetingConfig
+        # activate endUsers group
+        self.changeUser('siteadmin')
+        self.do(self.tool.endUsers, 'activate')
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.changeUser('siteadmin')
+        # not in itemFieldsToKeepConfigSortingFor for now
+        self.assertFalse('proposingGroup' in cfg.getItemFieldsToKeepConfigSortingFor())
+        self.assertEqual(item.listProposingGroups().keys(), ['developers', 'endUsers', 'vendors'])
+        cfg.setItemFieldsToKeepConfigSortingFor(('proposingGroup', ))
+        self.assertEqual(item.listProposingGroups().keys(), ['developers', 'vendors', 'endUsers'])
 
     def test_pm_ListProposingGroupsWithGroupsInCharge(self):
         '''Check MeetingItem.proposingGroupWithGroupInCharge vocabulary.
@@ -2789,6 +2805,24 @@ class testMeetingItem(PloneMeetingTestCase):
                           u'1. Category', u'1.1 Category', u'1.2 Category',
                           u'2. Category', u'2.1 Category', u'2.2 Category',
                           u'10. Category', u'10.1 Category'])
+
+    def test_pm_ListCategoriesKeepConfigSorting(self):
+        """If 'category' selected in MeetingConfig.itemFieldsToKeepConfigSortingFor,
+           the vocabulary keeps config order, not sorted alphabetically."""
+        cfg = self.meetingConfig
+        cfg.setUseGroupsAsCategories(False)
+        self.changeUser('siteadmin')
+        self.create('MeetingCategory', id='cat1', title='Category 1')
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+
+        # not in itemFieldsToKeepConfigSortingFor for now
+        self.assertFalse('category' in cfg.getItemFieldsToKeepConfigSortingFor())
+        self.assertEqual(item.listCategories().keys(),
+                         ['cat1', 'development', 'research'])
+        cfg.setItemFieldsToKeepConfigSortingFor(('category', ))
+        self.assertEqual(item.listCategories().keys(),
+                         ['development', 'research', 'cat1'])
 
     def test_pm_ListOptionalAdvisersVocabulary(self):
         '''
