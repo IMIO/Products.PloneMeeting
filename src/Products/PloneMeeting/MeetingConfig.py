@@ -610,6 +610,23 @@ schema = Schema((
         schemata="data",
         write_permission="PloneMeeting: Write risky config",
     ),
+    LinesField(
+        name='itemFieldsToKeepConfigSortingFor',
+        widget=MultiSelectionWidget(
+            description="ItemFieldsToKeepConfigSortingFor",
+            description_msgid="item_fields_to_keep_config_sorting_for_descr",
+            format="checkbox",
+            label='Itemfieldstokeepconfigsortingfor',
+            label_msgid='PloneMeeting_label_itemFieldsToKeepConfigSortingFor',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="data",
+        multiValued=1,
+        vocabulary='listItemFieldsToKeepConfigSortingFor',
+        default=defValues.itemFieldsToKeepConfigSortingFor,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
     DataGridField(
         name='listTypes',
         widget=DataGridField._properties['widget'](
@@ -3849,6 +3866,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     mGroup = getattr(tool, storedCustomAdviserGroup)
                     res.append((mGroup.getId(), mGroup.getName()))
         return DisplayList(res).sortedByValue()
+
+    def listItemFieldsToKeepConfigSortingFor(self):
+        '''Vocabulary for itemFieldsToKeepConfigSortingFor field.'''
+        d = "PloneMeeting"
+        res = DisplayList((
+            ('proposingGroup', translate('PloneMeeting_label_proposingGroup', domain=d, context=self.REQUEST)),
+            ('category', translate('PloneMeeting_label_category', domain=d, context=self.REQUEST)),
+        ))
+        return res
 
     def listBooleanVocabulary(self):
         '''Vocabulary generating a boolean behaviour : just 2 values, one yes/True, and the other no/False.

@@ -2537,6 +2537,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            If this item is being created or edited in portal_plonemeeting (as a
            recurring item), the list of active groups is returned.'''
         tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
         isDefinedInTool = self.isDefinedInTool()
         # bypass for Managers, pass idDefinedInTool to True so Managers
         # can select any available MeetingGroup
@@ -2553,7 +2554,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res.add('', translate('make_a_choice',
                                   domain='PloneMeeting',
                                   context=self.REQUEST).encode('utf-8'))
-        return res.sortedByValue()
+        if 'proposingGroup' not in cfg.getItemFieldsToKeepConfigSortingFor():
+            res = res.sortedByValue()
+        return res
 
     security.declarePublic('listProposingGroupsWithGroupsInCharge')
 
@@ -2733,11 +2736,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if current_cat and not current_cat.getId() in storedKeys:
             res.append((current_cat.getId(), safe_unicode(current_cat.getName())))
 
-        # natural sort, reverse tuple so we have value/key instead key/value
-        # and realsorted may achieve his work
-        res = [(elt[1], elt[0]) for elt in res]
-        res = realsorted(res)
-        res = [(elt[1], elt[0]) for elt in res]
+        if 'category' not in cfg.getItemFieldsToKeepConfigSortingFor():
+            # natural sort, reverse tuple so we have value/key instead key/value
+            # and realsorted may achieve his work
+            res = [(elt[1], elt[0]) for elt in res]
+            res = realsorted(res)
+            res = [(elt[1], elt[0]) for elt in res]
 
         if len(res) > 4:
             res.insert(0, ('_none_', translate('make_a_choice',

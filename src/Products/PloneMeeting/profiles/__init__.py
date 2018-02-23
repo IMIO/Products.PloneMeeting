@@ -321,8 +321,8 @@ class MeetingConfigDescriptor(Descriptor):
                          'itemRestrictedPowerObserversStates', 'meetingRestrictedPowerObserversStates',
                          'meetingConfigsToCloneTo', 'itemAdviceInvalidateStates', 'transitionsReinitializingDelays',
                          'customAdvisers', 'selectableCopyGroups', 'itemCopyGroupsStates', 'votesEncoder',
-                         'meetingTopicStates', 'decisionTopicStates', 'listTypes', 'selectablePrivacies',
-                         'xhtmlTransformFields', 'xhtmlTransformTypes',
+                         'meetingTopicStates', 'decisionTopicStates', 'itemFieldsToKeepConfigSortingFor',
+                         'listTypes', 'selectablePrivacies', 'xhtmlTransformFields', 'xhtmlTransformTypes',
                          'usedVoteValues', 'insertingMethodsOnAddItem')
     excludedFields = ['maxDaysDecisions', 'meetingAppDefaultView']
 
@@ -414,6 +414,7 @@ class MeetingConfigDescriptor(Descriptor):
         # a string.
         # Must we sort the tags in alphabetic order ?
         self.sortAllItemTags = False
+        self.itemFieldsToKeepConfigSortingFor = ()
         # used for MeetingItem.listType vocabulary
         self.listTypes = DEFAULT_LIST_TYPES
         # used for MeetingItem.privacy vocabulary
