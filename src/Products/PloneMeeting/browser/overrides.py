@@ -1191,7 +1191,7 @@ class PMCatalogNavigationTabs(CatalogNavigationTabs):
             if not config_group[0]:
                 for cfg in configs:
                     cfgId = cfg.getId()
-                    if tool.showPloneMeetingTab(cfgId):
+                    if tool.showPloneMeetingTab(cfg):
                         data = {
                             'name': cfg.Title(),
                             'id': 'mc_{0}'.format(cfg.getId()),
@@ -1204,7 +1204,7 @@ class PMCatalogNavigationTabs(CatalogNavigationTabs):
             elif configs:
                 for cfg in configs:
                     cfgId = cfg.getId()
-                    if tool.showPloneMeetingTab(cfgId):
+                    if tool.showPloneMeetingTab(cfg):
                         data = {
                             'name': config_group[1],
                             'id': 'mc_config_group_{0}'.format(config_group[0]),

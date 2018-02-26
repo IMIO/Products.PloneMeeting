@@ -22,6 +22,7 @@
 # 02110-1301, USA.
 #
 
+import transaction
 from DateTime import DateTime
 from AccessControl import Unauthorized
 from zope.i18n import translate
@@ -339,47 +340,45 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # By default, 2 meetingConfigs are created active
         # If the user is not logged in, he can not access the meetingConfigs and
         # so the tabs are not shown
-        meetingConfig1Id = self.meetingConfig.getId()
-        meetingConfig2Id = self.meetingConfig2.getId()
-        self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig2Id), False)
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        self.assertEquals(self.tool.showPloneMeetingTab(cfg2), False)
         cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.showPloneMeetingTab')
-        self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig1Id), False)
+        self.assertEquals(self.tool.showPloneMeetingTab(cfg), False)
         cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.showPloneMeetingTab')
         # every roles of the application can see the tabs
         self.changeUser('pmManager')
-        self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig2Id), True)
+        self.assertEquals(self.tool.showPloneMeetingTab(cfg2), True)
         cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.showPloneMeetingTab')
-        self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig1Id), True)
+        self.assertEquals(self.tool.showPloneMeetingTab(cfg), True)
         cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.showPloneMeetingTab')
         self.changeUser('pmCreator1')
-        self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig2Id), True)
+        self.assertEquals(self.tool.showPloneMeetingTab(cfg2), True)
         cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.showPloneMeetingTab')
-        self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig1Id), True)
+        self.assertEquals(self.tool.showPloneMeetingTab(cfg), True)
         cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.showPloneMeetingTab')
         self.changeUser('pmReviewer1')
-        self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig2Id), True)
+        self.assertEquals(self.tool.showPloneMeetingTab(cfg2), True)
         cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.showPloneMeetingTab')
-        self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig1Id), True)
+        self.assertEquals(self.tool.showPloneMeetingTab(cfg), True)
         cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.showPloneMeetingTab')
-        # If a wrong meetingConfigId is passed, it returns False
-        self.assertEquals(self.tool.showPloneMeetingTab('wrong-meeting-config-id'), False)
         # The tab of 'meetingConfig1Id' is viewable by 'power observers'
         self.changeUser('powerobserver1')
-        self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig1Id), True)
+        self.assertEquals(self.tool.showPloneMeetingTab(cfg), True)
         cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.showPloneMeetingTab')
-        self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig2Id), False)
+        self.assertEquals(self.tool.showPloneMeetingTab(cfg2), False)
         cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.showPloneMeetingTab')
         # restrictedpowerobserver2 can only see self.meetingConfig2Id tab
         self.changeUser('restrictedpowerobserver2')
-        self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig1Id), False)
+        self.assertEquals(self.tool.showPloneMeetingTab(cfg), False)
         cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.showPloneMeetingTab')
-        self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig2Id), True)
-        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.showPloneMeetingTab')
+        self.assertEquals(self.tool.showPloneMeetingTab(cfg2), True)
         # If we disable one meetingConfig, it is no more shown
         self.changeUser('admin')
-        self.do(getattr(self.tool, meetingConfig2Id), 'deactivate')
-        self.changeUser('pmManager')
-        self.assertEquals(self.tool.showPloneMeetingTab(meetingConfig2Id), False)
+        self.do(cfg2, 'deactivate')
+        transaction.commit()
+        self.changeUser('restrictedpowerobserver2')
+        self.assertEquals(self.tool.showPloneMeetingTab(cfg2), False)
 
     def test_pm_SetupProcessForCreationFlag(self):
         '''Test that every elements created by the setup process
