@@ -10,8 +10,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 4.1b6 (unreleased)
 ------------------
 
-- Nothing changed yet.
-
+- Override vocabulary 'collective.documentgenerator.ExistingPODTemplate' to include MeetingConfig title in term
 
 4.1b5 (2018-02-23)
 ------------------

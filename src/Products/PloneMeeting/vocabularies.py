@@ -12,6 +12,7 @@ from Products.CMFPlone.utils import safe_unicode
 
 from plone import api
 from plone.memoize import ram
+from collective.documentgenerator.content.vocabulary import ExistingPODTemplateFactory
 from collective.documentgenerator.content.vocabulary import PortalTypesVocabularyFactory
 from collective.iconifiedcategory.vocabularies import CategoryTitleVocabulary
 from collective.iconifiedcategory.vocabularies import CategoryVocabulary
@@ -896,6 +897,24 @@ class PMPortalTypesVocabulary(PortalTypesVocabularyFactory):
             return super(PMPortalTypesVocabulary, self).__call__(context)
 
 PMPortalTypesVocabularyFactory = PMPortalTypesVocabulary()
+
+
+class PMExistingPODTemplate(ExistingPODTemplateFactory):
+    """
+    Vocabulary factory for 'pod_template_to_use' field, include MeetingConfig title in term.
+    """
+    implements(IVocabularyFactory)
+
+    def _renderTermTitle(self, brain):
+        template = brain.getObject()
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(template)
+        return u'{} → {} → {}'.format(
+            safe_unicode(cfg.Title()),
+            safe_unicode(brain.Title),
+            safe_unicode(brain.getObject().odt_file.filename))
+
+PMExistingPODTemplateFactory = PMExistingPODTemplate()
 
 
 class PMDashboardCollectionsVocabulary(DashboardCollectionsVocabulary):
