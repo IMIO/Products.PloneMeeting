@@ -920,20 +920,19 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 res = False
         return res
 
-    def showPloneMeetingTab_cachekey(method, self, meetingConfigId):
+    def showPloneMeetingTab_cachekey(method, self, cfg):
         '''cachekey method for self.showPloneMeetingTab.'''
-        # we only recompute if user groups changed
+        # we only recompute if user groups changed or self changed
         user = self.REQUEST['AUTHENTICATED_USER']
-        return (user.getGroups(), meetingConfigId)
+        return (cfg._p_mtime, user.getGroups(), cfg)
 
     @ram.cache(showPloneMeetingTab_cachekey)
-    def showPloneMeetingTab(self, meetingConfigId):
+    def showPloneMeetingTab(self, cfg):
         '''I show the PloneMeeting tabs (corresponding to meeting configs) if
            the user has one of the PloneMeeting roles and if the meeting config
            is active.'''
         # self.getActiveConfigs also check for 'View' access of current member to it
-        activeConfigs = self.getActiveConfigs()
-        if meetingConfigId not in [activeConfig.getId() for activeConfig in activeConfigs]:
+        if cfg not in self.getActiveConfigs():
             return False
         return True
 
@@ -1772,9 +1771,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if api.user.is_anonymous():
             return False
 
-        # we only recompute if user groups or params changed
+        # we only recompute if cfgs, user groups or params changed
+        cfg_infos = [cfg._p_mtime for cfg in self.objectValues('MeetingConfig')]
         user = self.REQUEST['AUTHENTICATED_USER']
-        return (user.getGroups(), config_group, check_access, as_items)
+        return (cfg_infos, user.getGroups(), config_group, check_access, as_items)
 
     security.declarePublic('getGroupedConfigs')
 
@@ -1796,7 +1796,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     continue
                 res = []
                 for cfg in self.objectValues('MeetingConfig'):
-                    if check_access and not self.showPloneMeetingTab(cfg.getId()):
+                    if check_access and not self.showPloneMeetingTab(cfg):
                         continue
                     if cfg.getConfigGroup() == configGroup['row_id']:
                         res.append(cfg)

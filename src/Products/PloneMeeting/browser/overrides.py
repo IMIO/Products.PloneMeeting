@@ -1185,31 +1185,34 @@ class PMCatalogNavigationTabs(CatalogNavigationTabs):
         tool = api.portal.get_tool('portal_plonemeeting')
         grouped_configs = tool.getGroupedConfigs()
         portal_url = api.portal.get().absolute_url()
+        mc_tabs = []
         for config_group, configs in grouped_configs.items():
             # a tab with direct access to config
             if not config_group[0]:
                 for cfg in configs:
                     cfgId = cfg.getId()
-                    if tool.showPloneMeetingTab(cfgId):
+                    if tool.showPloneMeetingTab(cfg):
                         data = {
                             'name': cfg.Title(),
                             'id': 'mc_{0}'.format(cfg.getId()),
                             'url': tool.getPloneMeetingFolder(cfgId).absolute_url() + "/searches_items",
                             'description': ''}
-                        tabs.append(data)
+                        mc_tabs.append(data)
             # a tab with access to the config_group, only display it if :
             # - it contains configs;
             # - at least showPloneMeetingTab one of the configs
             elif configs:
                 for cfg in configs:
                     cfgId = cfg.getId()
-                    if tool.showPloneMeetingTab(cfgId):
+                    if tool.showPloneMeetingTab(cfg):
                         data = {
                             'name': config_group[1],
                             'id': 'mc_config_group_{0}'.format(config_group[0]),
                             'url': portal_url + '/#',
                             'description': '',
                             'data-config_group': config_group[0]}
-                        tabs.append(data)
+                        mc_tabs.append(data)
                         break
+        # insert MC related tabs after first tab (index_html) but before other extra tabs
+        tabs = [tabs[0]] + mc_tabs + tabs[1:]
         return tabs

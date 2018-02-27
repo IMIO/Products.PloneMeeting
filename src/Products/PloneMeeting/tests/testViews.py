@@ -34,6 +34,7 @@ from plone import api
 from plone.app.testing import logout
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
+from Products.CMFCore.ActionInformation import Action
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.statusmessages.interfaces import IStatusMessage
@@ -949,6 +950,17 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(len(view.topLevelTabs()), 2)
         self.assertEqual(view.topLevelTabs()[0]['id'], 'index_html')
         self.assertEqual(view.topLevelTabs()[1]['id'], 'mc_{0}'.format(cfg2Id))
+
+    def test_pm_TopLevelTabsMCInsertedBeforeCustomTabs(self):
+        """MC related tabs are inserted between 'index_html' tab and eventual extra custom tabs."""
+        extra_tab = Action('extra_tab', title='Extra tab', visible=True)
+        self.portal.portal_actions.portal_tabs._setObject('extra_tab', extra_tab)
+        self.changeUser('pmCreator1')
+        view = getMultiAdapter((self.portal, self.request), name='portal_tabs_view')
+        active_config_ids = ['mc_{0}'.format(cfg.getId()) for cfg in self.tool.getActiveConfigs()]
+        self.assertEqual(
+            [tab['id'] for tab in view.topLevelTabs()],
+            ['index_html'] + active_config_ids + ['extra_tab'])
 
     def test_pm_SelectedTabs(self):
         """The GlobalSectionsViewlet.selectedTabs is overrided to manage groupConfigs."""
