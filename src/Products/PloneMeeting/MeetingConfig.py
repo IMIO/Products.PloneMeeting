@@ -3994,9 +3994,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''
         confidential_profiles = ['{0}{1}'.format(CONFIGGROUPPREFIX,
                                                  BUDGETIMPACTEDITORS_GROUP_SUFFIX)]
-        # do not consider READER_USECASES 'confidentialannex'
+        # do not consider READER_USECASES 'confidentialannex' and 'itemtemplatesmanagers'
         reader_usecases = [usecase for usecase in READER_USECASES.keys()
-                           if usecase != 'confidentialannex']
+                           if usecase not in ['confidentialannex', 'itemtemplatesmanagers']]
         for suffix in reader_usecases:
             if suffix in (POWEROBSERVERS_GROUP_SUFFIX, RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX):
                 confidential_profiles.append('{0}{1}'.format(CONFIGGROUPPREFIX, suffix))
@@ -4036,9 +4036,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         confidential_profiles = ['adviser_group',
                                  '{0}{1}'.format(CONFIGGROUPPREFIX,
                                                  BUDGETIMPACTEDITORS_GROUP_SUFFIX)]
-        # do not consider READER_USECASES 'confidentialannex'
+        # do not consider READER_USECASES 'confidentialannex' and 'itemtemplatesmanagers'
         reader_usecases = [usecase for usecase in READER_USECASES.keys()
-                           if usecase != 'confidentialannex']
+                           if usecase not in ['confidentialannex', 'itemtemplatesmanagers']]
         for suffix in reader_usecases:
             if suffix in (POWEROBSERVERS_GROUP_SUFFIX, RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX):
                 confidential_profiles.append('{0}{1}'.format(CONFIGGROUPPREFIX,
