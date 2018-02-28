@@ -12,7 +12,11 @@ from Products.CMFPlone.utils import safe_unicode
 
 from plone import api
 from plone.memoize import ram
-from collective.documentgenerator.content.vocabulary import ExistingPODTemplateFactory
+# temporary fix until collective.documentgenerator is released
+try:
+    from collective.documentgenerator.content.vocabulary import ExistingPODTemplateFactory
+except ImportError:
+    from builtins import object as ExistingPODTemplateFactory
 from collective.documentgenerator.content.vocabulary import PortalTypesVocabularyFactory
 from collective.iconifiedcategory.vocabularies import CategoryTitleVocabulary
 from collective.iconifiedcategory.vocabularies import CategoryVocabulary
