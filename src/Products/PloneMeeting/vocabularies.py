@@ -907,8 +907,7 @@ class PMExistingPODTemplate(ExistingPODTemplateFactory):
 
     def _renderTermTitle(self, brain):
         template = brain.getObject()
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(template)
+        cfg = template.aq_inner.aq_parent.aq_parent
         return u'{} → {} → {}'.format(
             safe_unicode(cfg.Title()),
             safe_unicode(brain.Title),
