@@ -1799,7 +1799,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     if check_access and not self.showPloneMeetingTab(cfg):
                         continue
                     if cfg.getConfigGroup() == configGroup['row_id']:
-                        res.append(cfg)
+                        res.append({'id': cfg.getId(),
+                                    'title': cfg.Title()})
                 data[(configGroup['row_id'], configGroup['label'])] = res
 
         if as_items:

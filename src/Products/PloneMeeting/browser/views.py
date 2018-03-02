@@ -1003,4 +1003,4 @@ class DisplayMeetingConfigsOfConfigGroup(BrowserView):
     def getViewableMeetingConfigs(self):
         """Returns the list of MeetingConfigs the current user has access to."""
         grouped_configs = self.tool.getGroupedConfigs(config_group=self.config_group)
-        return grouped_configs.values()[0]
+        return [getattr(self.tool, config_info['id']) for config_info in grouped_configs.values()[0]]
