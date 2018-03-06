@@ -54,6 +54,15 @@
   <utility component=".vocabularies.ItemTemplatesStorableAsAnnexVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.itemtemplatesstorableasannexvocabulary" />
 
+  <!-- PMPosition vocabularies -->
+  <utility component=".vocabularies.PositionUsagesVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.pmpositionusagesvocabulary" />
+  <utility component=".vocabularies.PositionDefaultsVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.pmpositiondefaultsvocabulary" />
+
+
+HeldPositionUsagesVocabulary
+
   <!-- Vocabulary used in collectionwidget and inheritating from the imio.dashboard vocabulary -->
   <utility component=".vocabularies.PMConditionAwareCollectionVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.conditionawarecollectionvocabulary" />

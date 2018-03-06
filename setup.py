@@ -55,6 +55,8 @@ setup(name='Products.PloneMeeting',
           # require unittest2 to avoid warning message in plone.app.testing 4.2.x
           'unittest2',
           'collective.ckeditor',
+          'collective.contact.contactlist',
+          'collective.contact.plonegroup',
           'collective.datagridcolumns',
           'collective.js.fancytree',
           'collective.js.jqueryui',

@@ -498,7 +498,7 @@ document.location.reload(true);
       <tal:left condition="python: aId in departees">
       <img tal:attributes="src string: $portal_url/departure.gif"
            title="left_after" i18n:attributes="title"/><span style="color:black"
-           tal:content="python: meeting.getDepartureItem(aId)-1"></span>
+           tal:content="python: meeting.getDepartureItem(aId, for_display=True)"></span>
       <tal:comment replace="nothing">Remove info about user departure from the meeting</tal:comment>
       <img tal:condition="python: mayEditItem and isManager" style="cursor:pointer" title="remove_info" i18n:attributes="title"
            tal:attributes="src string: $portal_url/delete_small.png;

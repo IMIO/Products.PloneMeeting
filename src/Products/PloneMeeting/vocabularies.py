@@ -1007,3 +1007,33 @@ class FTWLabelsVocabulary(object):
         return SimpleVocabulary(res)
 
 FTWLabelsVocabularyFactory = FTWLabelsVocabulary()
+
+
+class PositionUsagesVocabulary(object):
+    """ """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        res = []
+        res.append(
+            SimpleTerm('assemblyMember', 'assemblyMember', 'assemblyMember'))
+        res.append(
+            SimpleTerm('signer', 'signer', 'signer'))
+        return SimpleVocabulary(res)
+
+PositionUsagesVocabularyFactory = PositionUsagesVocabulary()
+
+
+class PositionDefaultsVocabulary(object):
+    """ """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        res = []
+        res.append(
+            SimpleTerm('present', 'present', 'present'))
+        res.append(
+            SimpleTerm('signer', 'signer', 'signer'))
+        return SimpleVocabulary(res)
+
+PositionDefaultsVocabularyFactory = PositionDefaultsVocabulary()

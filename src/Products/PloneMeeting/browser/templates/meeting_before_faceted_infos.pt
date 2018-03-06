@@ -109,13 +109,12 @@
   <table id="meeting_users" class="listing discreet" cellspacing="0" cellpadding="0"
          tal:condition="python: ('attendees' in usedAttrs) and not context.getAssembly()"
          tal:attributes="style python: (request.get('showPersons', 'true')=='true') and 'display:table' or 'display:none'"
-         tal:define="allUsers context/getAllUsedMeetingUsers;
+         tal:define="allUsers context/getAllUsedHeldPositions;
                      attendees context/getAttendees;
                      excused context/getExcused;
                      absents context/getAbsents;
                      signers context/getSignatories;
-                     lateAttendees context/getLateAttendees;
-                     useUserReplacements context/getUserReplacements">
+                     lateAttendees context/getLateAttendees">
     <tal:comment replace="nothing">Column captions</tal:comment>
     <thead>
     <tr>
@@ -124,41 +123,39 @@
       <th class="nosort" tal:condition="python: 'excused' in usedAttrs" i18n:translate="is_excused"></th>
       <th class="nosort" tal:condition="python: 'absents' in usedAttrs" i18n:translate="is_absent"></th>
       <th class="nosort" tal:condition="python: 'signatories' in usedAttrs" i18n:translate="is_signer"></th>
-      <th class="nosort" tal:condition="useUserReplacements" i18n:translate="is_replaced"></th>
     </tr>
     </thead>
     <tbody>
     <tr tal:repeat="mUser allUsers">
-      <td><b tal:content="mUser/Title"></b></td>
-      <td align="center" tal:define="aId mUser/getId">
+    <tal:defines define="aUid mUser/UID">
+      <td><b tal:content="mUser/get_short_title"></b></td>
+      <td align="center">
         <img tal:attributes="src string: $portal_url/checked.gif"
-             tal:condition="python: aId in attendees"/>
+             tal:condition="python: aUid in attendees"/>
         <tal:comment replace="nothing">Info about users late-entering the meeting</tal:comment>
-        <tal:late condition="python: aId in lateAttendees">
+        <tal:late condition="python: aUid in lateAttendees">
           <img tal:attributes="src string: $portal_url/entrance.gif"
             title="present_since" i18n:attributes="title"/><span style="color:black"
-            tal:content="python: context.getEntranceItem(aId) or '?'"></span>
+            tal:content="python: context.getEntranceItem(aUid) or '?'"></span>
         </tal:late>
-        <tal:left define="departNumber python: context.getDepartureItem(aId)" condition="departNumber">
+        <tal:left define="departNumber python: context.getDepartureItem(aUid)" condition="departNumber">
           <img tal:attributes="src string: $portal_url/departure.gif"
                title="left_after" i18n:attributes="title"/><span style="color:black" tal:content="python: departNumber-1"></span>
         </tal:left>
       </td>
       <td align="center" tal:condition="python: 'excused' in usedAttrs">
         <img tal:attributes="src string: $portal_url/checked.gif"
-             tal:condition="python: mUser.getId() in excused"/>
+             tal:condition="python: aUid in excused"/>
       </td>
       <td align="center" tal:condition="python: 'absents' in usedAttrs">
         <img tal:attributes="src string: $portal_url/checked.gif"
-             tal:condition="python: mUser.getId() in absents"/>
+             tal:condition="python: aUid in absents"/>
       </td>
       <td align="center" tal:condition="python: 'signatories' in usedAttrs">
         <img tal:attributes="src string: $portal_url/checked.gif"
-             tal:condition="python: mUser.getId() in signers"/>
+             tal:condition="python: aUid in signers"/>
       </td>
-      <td tal:condition="useUserReplacements">
-        <span tal:condition="python: mUser.getId() in userReplacements" tal:content="python: getattr(cfg.meetingusers, userReplacements[mUser.getId()]).Title()"></span>
-      </td>
+    </tal:defines>
     </tr>
     </tbody>
   </table>

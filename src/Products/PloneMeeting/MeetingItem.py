@@ -6251,7 +6251,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             else:
                 if not hasattr(meeting.aq_base, 'departures'):
                     meeting.departures = PersistentMapping()
-                meeting.departures[userId] = self.getItemNumber(relativeTo='meeting') + 1
+                meeting.departures[userId] = self.getItemNumber(relativeTo='meeting') + 100
         else:
             # Case 2)
             absents = list(self.getItemAbsents())

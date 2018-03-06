@@ -20,10 +20,13 @@
       name="Products.PloneMeeting.content.advice.advice_type_vocabulary"
     />
 
-    <!-- Schema policy -->
-    <utility
-        factory=".advice.MeetingAdviceSchemaPolicy"
-        name="schema_policy_meetingadvice"
+    <!-- Schema policies -->
+    <utility factory=".advice.MeetingAdviceSchemaPolicy"
+             name="schema_policy_meetingadvice"
     />
+    <utility factory=".position.PMPositionSchemaPolicy"
+             name="schema_policy_pm_position"
+    />
+
 
 </configure>

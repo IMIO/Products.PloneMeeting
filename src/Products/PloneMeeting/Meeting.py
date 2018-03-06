@@ -70,6 +70,7 @@ from Products.PloneMeeting.config import RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.interfaces import IMeetingWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingWorkflowConditions
 from Products.PloneMeeting.utils import _addManagedPermissions
+from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
 from Products.PloneMeeting.utils import addDataChange
 from Products.PloneMeeting.utils import addRecurringItemsIfRelevant
 from Products.PloneMeeting.utils import displaying_available_items
@@ -980,51 +981,54 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     def listAssemblyMembers(self):
         '''Returns the active MeetingUsers having usage "assemblyMember".'''
-        res = ((u.id, u.Title()) for u in self.getAllUsedMeetingUsers(includeAllActive=True))
+        res = ((held_pos.UID(), held_pos.Title())
+               for held_pos in self.getAllUsedHeldPositions(includeAllActive=True))
         return DisplayList(res)
 
     security.declarePublic('listSignatories')
 
     def listSignatories(self):
         '''Returns the active MeetingUsers having usage "signer".'''
-        res = ((u.id, u.Title()) for u in self.getAllUsedMeetingUsers(usages=['signer', ],
-                                                                      includeAllActive=True))
+        res = ((held_pos.UID(), held_pos.Title())
+               for held_pos in self.getAllUsedHeldPositions(usages=['signer', ],
+                                                            includeAllActive=True))
         return DisplayList(res)
 
-    security.declarePublic('getAllUsedMeetingUsers')
+    security.declarePublic('getAllUsedHeldPositions')
 
-    def getAllUsedMeetingUsers(self, usages=['assemblyMember', ], includeAllActive=False):
-        '''This will return every used MeetingUsers no matter they are
-           active or not.  This make it possible to deactivate a MeetingUser
-           but still see it on old meetings.  If p_includeAllActive is True,
-           every active users (with usage assemblyMember) will be added so adding
-           a MeetingUser in the configuration will make it useable while editing an
-           existing meeting.'''
-        # used MeetingUsers are users really saved in attendess, absents, excused, replacements
-        mUserIds = set(self.getAttendees()).union(set(self.getAbsents())).union(set(self.getExcused()))
+    def getAllUsedHeldPositions(self, usages=[], includeAllActive=False):
+        '''This will return every held_positions for current MeetingConfig
+           no matter they are active or not.  This make it possible to deactivate a Person or
+           held_position but still see it on old meetings.  If p_includeAllActive is True,
+           every active persons (with usage assemblyMember, aka linked to a position)
+           will be added so adding a Person in the configuration will make it useable
+           while editing an existing meeting.'''
+        # used Persons are held_positions really saved in attendees, absents, excused, replacements
+        heldPositionUids = set(self.getAttendees()).union(set(self.getAbsents())).union(set(self.getExcused()))
         # keep order as defined in the configuration
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         # get every potential assembly members, inactive included
-        allMeetingUsers = cfg.getMeetingUsers(usages=usages, onlyActive=False)
-        allActiveMeetingUsers = cfg.getMeetingUsers(usages=usages, theObjects=False)
-        allActiveMeetingUsersIds = [mUser.getId for mUser in allActiveMeetingUsers]
+        allHeldPositions = cfg.getHeldPositions(usages=usages, onlyActive=False)
+        allActiveHeldPositions = cfg.getHeldPositions(usages=usages, onlyActive=True)
+        allActiveHeldPositionsUids = [held_pos.UID() for held_pos in allActiveHeldPositions]
         if includeAllActive:
             # include selected users + all existing active users
-            return [mUser for mUser in allMeetingUsers if
-                    (mUser.getId() in mUserIds or mUser.getId() in allActiveMeetingUsersIds)]
+            return [held_pos for held_pos in allHeldPositions if
+                    (held_pos.UID() in heldPositionUids or held_pos.UID() in allActiveHeldPositionsUids)]
         else:
             # only include selected users
-            return [mUser for mUser in allMeetingUsers if mUser.getId() in mUserIds]
+            return [held_pos for held_pos in allHeldPositions if held_pos.UID() in heldPositionUids]
 
     security.declarePublic('getDefaultAttendees')
 
     def getDefaultAttendees(self):
-        '''The default attendees are the active MeetingUsers in the
-           corresponding meeting configuration.'''
+        '''The default attendees are the active held_positions in the corresponding meeting configuration.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        return [u.id for u in cfg.getMeetingUsers()]
+        import ipdb; ipdb.set_trace()
+        return [held_pos.UID() for held_pos in cfg.getHeldPositions()
+                if 'present' in held_pos.get_position().defaults]
 
     security.declarePublic('getDefaultSignatories')
 
@@ -1033,11 +1037,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
            "signer" and whose "signatureIsDefault" is True.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        res = []
-        for user in cfg.getMeetingUsers(usages=('signer',)):
-            if user.getSignatureIsDefault():
-                res.append(user.id)
-        return res
+        return [held_pos.UID() for held_pos in cfg.getHeldPositions()
+                if 'signer' in held_pos.get_position().defaults]
 
     security.declarePublic('getAttendees')
 
@@ -1142,12 +1143,17 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getDepartureItem')
 
-    def getDepartureItem(self, userId):
+    def getDepartureItem(self, userId, for_display=False):
         '''p_userId represents a special user that left the meeting BEFORE
            having discussed some item. This method returns, if known, the number
            of this item.'''
+        departure = ''
         if hasattr(self.aq_base, 'departures') and (userId in self.departures):
-            return self.departures[userId]
+            departure = self.departures[userId]
+        if departure and for_display:
+            return _storedItemNumber_to_itemNumber(departure, forceShowDecimal=False)
+        else:
+            return departure
 
     security.declarePublic('hasDeparture')
 
@@ -1759,47 +1765,30 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         for key in self.REQUEST.keys():
             if not key.startswith('muser_'):
                 continue
-            userId = key[6:].rsplit('_', 1)[0]
+            position_uid = key[6:].rsplit('_', 1)[0]
             try:
                 if key.endswith('_attendee'):
-                    attendees.append(userId)
+                    attendees.append(position_uid)
                 elif key.endswith('_excused'):
-                    excused.append(userId)
+                    excused.append(position_uid)
                 elif key.endswith('_absent'):
-                    absents.append(userId)
+                    absents.append(position_uid)
                 elif key.endswith('_signer'):
-                    signers.append(userId)
+                    signers.append(position_uid)
                 elif key.endswith('_lateAttendee'):
-                    lateAttendees.append(userId)
-                elif key.endswith('_replacement'):
-                    replacement = self.REQUEST.get(key)
-                    if replacement:
-                        replacements[userId] = replacement
+                    lateAttendees.append(position_uid)
             except NameError:
                 pass
-        # Keep right order among attendees
-        allIds = cfg.meetingusers.objectIds()
-        attendees.sort(key=allIds.index)
         # Update the DB fields.
         self.setAttendees(attendees)
         if 'excused' in usedAttrs:
-            excused.sort(key=allIds.index)
             self.setExcused(excused)
         if 'absents' in usedAttrs:
-            absents.sort(key=allIds.index)
             self.setAbsents(absents)
         if 'signatories' in usedAttrs:
-            signers.sort(key=allIds.index)
             self.setSignatories(signers)
         if 'lateAttendees' in usedAttrs:
-            lateAttendees.sort(key=allIds.index)
             self.setLateAttendees(lateAttendees)
-        if useReplacements:
-            if hasattr(self.aq_base, 'userReplacements'):
-                del self.userReplacements
-            # In the userReplacements dict, keys are ids of users being
-            # replaced; values are ids of replacement users.
-            self.userReplacements = replacements
 
     security.declarePrivate('at_post_create_script')
 
