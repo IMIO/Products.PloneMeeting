@@ -13,6 +13,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Override vocabulary 'collective.documentgenerator.ExistingPODTemplate' to include MeetingConfig title in term
 - Adapted ToolPloneMeeting.getGroupedConfigs so it does not return MeetingConfig objects because the method
   is ram.cached and returning objects leads to problems where objects lose acquisition
+- Make sure access to meetingitem_view does not raise Unauthorized if current user does not have the 
+  "PloneMeeting: Read budget infos" permission
 
 4.1b5 (2018-02-23)
 ------------------
