@@ -390,8 +390,7 @@
     </tal:field>
 
     <tal:comment replace="nothing">Budgetary informations, manage fields budgetRelated and budgetInfos</tal:comment>
-    <tal:block condition="python: 'budgetInfos' in usedAttrs">
-    
+    <tal:block condition="python: 'budgetInfos' in usedAttrs and member.has_permission('PloneMeeting: Read budget infos', context)">
         <p class="item-before-budget-related"></p>
         <metal:budgetInfos use-macro="here/@@pm-macros/budgetInfos" />
 
