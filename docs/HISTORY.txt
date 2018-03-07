@@ -10,8 +10,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 4.1b7 (unreleased)
 ------------------
 
-- Nothing changed yet.
-
+- Refactored meetingitem_view to use @@display-annexes to display annexes and decision annexes.  Only display
+  the 'More infos' link when relevant, so when no annexes are defined because the 'More infos' link already
+  appear in the existing annexes popup
 
 4.1b6 (2018-03-07)
 ------------------
