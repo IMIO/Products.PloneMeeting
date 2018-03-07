@@ -1010,9 +1010,9 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(self)
         # get every potential assembly members, inactive included
         allHeldPositions = cfg.getHeldPositions(usages=usages, onlyActive=False)
-        allActiveHeldPositions = cfg.getHeldPositions(usages=usages, onlyActive=True)
-        allActiveHeldPositionsUids = [held_pos.UID() for held_pos in allActiveHeldPositions]
         if includeAllActive:
+            allActiveHeldPositions = cfg.getHeldPositions(usages=usages, onlyActive=True)
+            allActiveHeldPositionsUids = [held_pos.UID() for held_pos in allActiveHeldPositions]
             # include selected users + all existing active users
             return [held_pos for held_pos in allHeldPositions if
                     (held_pos.UID() in heldPositionUids or held_pos.UID() in allActiveHeldPositionsUids)]
@@ -1026,7 +1026,6 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         '''The default attendees are the active held_positions in the corresponding meeting configuration.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        import ipdb; ipdb.set_trace()
         return [held_pos.UID() for held_pos in cfg.getHeldPositions()
                 if 'present' in held_pos.get_position().defaults]
 
@@ -1744,7 +1743,6 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         usedAttrs = cfg.getUsedMeetingAttributes()
-        useReplacements = cfg.getUseUserReplacements()
         # Do it only if MeetingUser-based user management is enabled.
         if 'attendees' not in usedAttrs:
             return
@@ -1760,8 +1758,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             signers = []
         if 'lateAttendees' in usedAttrs:
             lateAttendees = []
-        if useReplacements:
-            replacements = {}
+
         for key in self.REQUEST.keys():
             if not key.startswith('muser_'):
                 continue
