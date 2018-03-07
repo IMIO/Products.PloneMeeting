@@ -415,10 +415,6 @@ document.location.reload(true);
 <table tal:define="meetingAttendees python: meeting.getAttendees(True);
                    lateAttendees meeting/getLateAttendees;
                    departees python: meeting.getDepartures(context, when='after', alsoEarlier=True);
-                   showQuestioners python: 'questioners' in usedAttrs;
-                   showAnswerers python: 'answerers' in usedAttrs;
-                   questioners context/getQuestioners;
-                   answerers context/getAnswerers;
                    mayEditQAs context/mayEditQAs;
                    showVotes context/showVotes;
                    usedVoteValues meetingConfig/getUsedVoteValues;
@@ -437,10 +433,7 @@ document.location.reload(true);
   <tr valign="top">
     <th class="nosort" i18n:translate="item_specific"></th>
     <th class="nosort" i18n:translate="is_attendee"></th>
-    <th class="nosort" tal:condition="python: 'signatories' in usedMeetingAttributes"
-        i18n:translate="is_signer"></th>
-    <th class="nosort" tal:condition="showQuestioners" i18n:translate="PloneMeeting_label_questioners"></th>
-    <th class="nosort" tal:condition="showAnswerers" i18n:translate="PloneMeeting_label_answerers"></th>
+    <th class="nosort" tal:condition="python: 'signatories' in usedMeetingAttributes" i18n:translate="is_signer"></th>
     <th class="nosort" tal:condition="showVotes" i18n:translate="is_voter"></th>
     <th class="nosort" tal:condition="python: showVotes and not secret" i18n:translate="vote_value"></th>
     <th class="nosort" tal:condition="python: showVotes and secret" align="left">
@@ -532,28 +525,6 @@ document.location.reload(true);
     <td align="center" tal:condition="python: 'signatories' in usedMeetingAttributes">
       <img tal:attributes="src string: $portal_url/checked.gif"
            tal:condition="python: attendee.getId() in itemSigners"/>
-    </td>
-    <td align="center" tal:condition="showQuestioners">
-      <tal:comment replace="nothing">Show check image for people that can't edit</tal:comment>
-      <img tal:condition="python: not mayEditQAs and (aId in questioners)"
-           tal:attributes="src string: $portal_url/checked.gif"/>
-      <tal:comment replace="nothing">Show checkbox for editors</tal:comment>
-      <input type="checkbox" id="questioner"
-             tal:define="cbId python: 'questioner_%s' % aId"
-             tal:condition="python: mayEditQAs and isPresent"
-             tal:attributes="id cbId; name cbId;
-                             checked python: aId in questioners"/>
-    </td>
-    <td align="center" tal:condition="showAnswerers">
-      <tal:comment replace="nothing">Show check image for people that can't edit</tal:comment>
-      <img tal:condition="python: not mayEditQAs and (aId in answerers)"
-           tal:attributes="src string: $portal_url/checked.gif"/>
-      <tal:comment replace="nothing">Show checkbox for editors</tal:comment>
-      <input type="checkbox"
-             tal:define="cbId python: 'answerer_%s' % aId"
-             tal:condition="python: mayEditQAs and isPresent"
-             tal:attributes="id cbId; name cbId;
-                             checked python: aId in answerers"/>
     </td>
     <td align="center" tal:condition="showVotes">
       <img tal:attributes="src string: $portal_url/checked.gif"

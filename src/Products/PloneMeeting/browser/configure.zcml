@@ -286,11 +286,10 @@
       />
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItem"
-        name="byebyeuser"
-        class=".byebyeuser.ByebyeUser"
-        permission="zope2.View"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        template="templates/byebyeuser.pt"
+        name="item_byebye_attendee_form"
+        class=".byebyeattendee.ByeByeAttendeeForm"
+        permission="zope2.View"
       />
 
     <!-- Asynchronous calls (ajax) -->
