@@ -8,6 +8,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Versions 3.1.+ are for Plone 4.3+
 
 4.1 (backports)
+---------------
 - Fixed bug in MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject where returned meeting could
   nevertheless not be a meeting into which item could be presented because it was frozen and item was not
   isLateFor(meeting).  The isLateFor check is now done in the MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject
@@ -50,6 +51,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Added MeetingConfig.itemFieldsToKeepConfigSortingFor field, item fields (proposingGroup or category) selected
   there will make vocabulary displayed on the item to keep position of terms from the configuration instead default
   behavior that sort vocabularies alphabetically
+- Make sure special "non_selectable_value_" values are not selectable in MeetingItem.optionalAdvisers.  Use
+  JS to override the onClick event of these input values
 
 4.0 (2017-08-04)
 ----------------
