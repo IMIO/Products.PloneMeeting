@@ -747,39 +747,19 @@ class FakeMeetingUser:
 InitializeClass(FakeMeetingUser)
 
 
-def getMeetingUsers(obj, fieldName, theObjects=False, includeDeleted=True,
-                    meetingForRepls=None):
+def getHeldPositionObjs(obj, fieldName, theObjects=False):
     '''Gets the meeting users defined on a given p_obj (item or meeting) within
        a given p_fieldName. Here's the meaning of the remaining params:
        * theObjects  If True, the method will return MeetingUser instances
                      instead of MeetingUser IDs (False value is used for
-                     Archetypes getters.
-       * includeDeleted  (works only when p_theObjects is True)
-                     If True, the method will return a FakeMeetingUser
-                     instance for every MeetingUser that has been deleted.
-       * meetingForRepls (works only when p_theObjects is True)
-                     If given, it is a Meeting instance; it means that we
-                     need to take care of user replacements as defined on
-                     this meeting. In this case we will return
-                     a FakeMeetingUser instance for every replaced user, whose
-                     "duty" will be initialized with the replacement duty of
-                     the original user.'''
+                     Archetypes getters.'''
     res = obj.getField(fieldName).get(obj)
     if not theObjects:
         return res
-    cfg = obj.portal_plonemeeting.getMeetingConfig(obj)
-    newRes = []
-    for id in res:
-        mUser = getattr(cfg.meetingusers, id, None)
-        if not mUser:
-            if includeDeleted:
-                newRes.append(FakeMeetingUser(id))
-        else:
-            if not meetingForRepls:  # Simply add the MeetingUser to the result
-                newRes.append(mUser)
-            else:
-                newRes.append(mUser.getForUseIn(meetingForRepls))
-    return newRes
+    # we have UIDs, query catalog to get objects
+    catalog = api.portal.get_tool('portal_catalog')
+    objs = [brain.getObject() for brain in catalog(UID=res)]
+    return objs
 
 # ------------------------------------------------------------------------------
 mainTypes = ('MeetingItem', 'Meeting', 'MeetingFile')

@@ -15,3 +15,7 @@ class PMHeldPosition(HeldPosition):
         held_position_label = self.label and self.label or self.get_position().Title()
         person_label = self.get_person_title()
         return u"{0} : {1}".format(safe_unicode(held_position_label), safe_unicode(person_label))
+
+    def get_position_usages(self):
+        """Shortcut to get usages defined on linked position."""
+        return self.get_position().usages

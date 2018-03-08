@@ -109,7 +109,7 @@ from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import getFieldContent
 from Products.PloneMeeting.utils import getFieldVersion
 from Products.PloneMeeting.utils import getLastEvent
-from Products.PloneMeeting.utils import getMeetingUsers
+from Products.PloneMeeting.utils import getHeldPositionObjs
 from Products.PloneMeeting.utils import getWorkflowAdapter
 from Products.PloneMeeting.utils import hasHistory
 from Products.PloneMeeting.utils import ItemDuplicatedEvent
@@ -1346,32 +1346,6 @@ schema = Schema((
         ),
         optional=True,
         vocabulary='listCompleteness',
-    ),
-    LinesField(
-        name='questioners',
-        widget=MultiSelectionWidget(
-            visible=False,
-            format="checkbox",
-            label='Questioners',
-            label_msgid='PloneMeeting_label_questioners',
-            i18n_domain='PloneMeeting',
-        ),
-        enforceVocabulary=False,
-        optional=True,
-        multiValued=1,
-    ),
-    LinesField(
-        name='answerers',
-        widget=MultiSelectionWidget(
-            visible=False,
-            format="checkbox",
-            label='Answerers',
-            label_msgid='PloneMeeting_label_answerers',
-            i18n_domain='PloneMeeting',
-        ),
-        enforceVocabulary=False,
-        optional=True,
-        multiValued=1,
     ),
     BooleanField(
         name='itemIsSigned',
@@ -2625,9 +2599,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = []
         if self.hasMeeting():
             # Get IDs of attendees
-            for m in self.getMeeting().getAttendees(theObjects=True):
-                if 'signer' in m.getUsages():
-                    res.append((m.id, m.Title()))
+            for held_position in self.getMeeting().getAttendees(theObjects=True):
+                if 'signer' in held_position.get_position_usages():
+                    res.append((held_position.UID(), held_position.get_short_title()))
         return DisplayList(tuple(res))
 
     security.declarePublic('listItemAbsents')
@@ -2931,7 +2905,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 computed=True, context=item, from_group_in_charge=from_group_in_charge)
         else:
             # we use MeetingUsers
-            signatories = cfg.getMeetingUsers(usages=('signer',))
+            signatories = cfg.getHeldPositions(usages=('signer',))
             res = []
             for signatory in signatories:
                 if signatory.getSignatureIsDefault():
@@ -2948,12 +2922,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            meeting signatories are returned, taking into account user
            replacements or not (depending on p_includeReplacements).
         '''
-        res = getMeetingUsers(self, 'itemSignatories', theObjects,
-                              includeDeleted, self.getMeeting())
+        res = getHeldPositionObjs(self, 'itemSignatories', theObjects)
         if not res and self.hasMeeting():
-            res = self.getMeeting().getSignatories(theObjects,
-                                                   includeDeleted,
-                                                   includeReplacements=includeReplacements)
+            res = self.getMeeting().getSignatories(theObjects)
         return res
 
     security.declarePublic('redefinedItemAssemblies')
@@ -3078,31 +3049,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getItemAbsents')
 
-    def getItemAbsents(self, theObjects=False, includeDeleted=True,
-                       includeMeetingDepartures=False):
+    def getItemAbsents(self, theObjects=False):
         '''Gets the absents on this item. Returns the absents as noted in field
-           "itemAbsents" and adds also, if p_includeMeetingDepartures is True,
-           people noted as absents in field Meeting.departures.'''
-        res = getMeetingUsers(self, 'itemAbsents', theObjects, includeDeleted)
-        if includeMeetingDepartures and self.hasMeeting():
-            gone = self.getMeeting().getDepartures(self,
-                                                   when='before',
-                                                   theObjects=theObjects,
-                                                   alsoEarlier=True)
-            res += tuple(gone)
+           "itemAbsents" and adds also.'''
+        res = getHeldPositionObjs(self, 'itemAbsents', theObjects)
         return res
-
-    security.declarePublic('getQuestioners')
-
-    def getQuestioners(self, theObjects=False, includeDeleted=True):
-        '''Gets the questioners for this item.'''
-        return getMeetingUsers(self, 'questioners', theObjects, includeDeleted)
-
-    security.declarePublic('getAnswerers')
-
-    def getAnswerers(self, theObjects=False, includeDeleted=True):
-        '''Gets the answerers for this item.'''
-        return getMeetingUsers(self, 'answerers', theObjects, includeDeleted)
 
     security.declarePublic('mustShowItemReference')
 
@@ -3856,9 +3807,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def listItemInitiators(self):
         '''Returns the active MeetingUsers having usage "asker".'''
         tool = api.portal.get_tool('portal_plonemeeting')
-        meetingConfig = tool.getMeetingConfig(self)
+        cfg = tool.getMeetingConfig(self)
         res = []
-        for u in meetingConfig.getMeetingUsers(usages=['asker', ]):
+        for u in cfg.getHeldPositions(usages=['asker', ]):
             value = ''
             gender = u.getGender()
             if gender:
@@ -5798,8 +5749,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getAttendees')
 
-    def getAttendees(self, usage=None, includeDeleted=False,
-                     includeAbsents=False, includeReplacements=False):
+    def getAttendees(self, usage=None):
         '''Returns the attendees for this item. Takes into account
            self.itemAbsents, excepted if p_includeAbsents is True. If a given
            p_usage is defined, the method returns only users having this
@@ -5809,27 +5759,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             raise 'Please use MeetingItem.getItemSignatories instead.'
         if not self.hasMeeting():
             return res
-        # Prevent wrong parameters use
-        if includeDeleted and usage:
-            includeDeleted = False
         itemAbsents = ()
         meeting = self.getMeeting()
-        if not includeAbsents:
-            # item absents are absents for the item, absents from an item before this one
-            # and lateAttendees that still not arrived
-            itemAbsents = list(self.getItemAbsents()) + meeting.getDepartures(self, when='before', alsoEarlier=True)
-        # remove lateAttendees that arrived before this item
-        lateAttendees = meeting.getLateAttendees()
-        arrivedLateAttendees = meeting.getEntrances(self, when='during') + meeting.getEntrances(self, when='before')
-        stillNotArrivedLateAttendees = set(lateAttendees).difference(set(arrivedLateAttendees))
-        itemAbsents = itemAbsents + list(stillNotArrivedLateAttendees)
-        for attendee in meeting.getAttendees(True,
-                                             includeDeleted=includeDeleted,
-                                             includeReplacements=includeReplacements):
-            if attendee.id in itemAbsents:
-                continue
-            if not usage or (usage in attendee.getUsages()):
-                res.append(attendee)
+        attendees = meeting.getAttendees()
+        return attendees
         return res
 
     security.declarePublic('getAssembly')
@@ -6046,7 +5979,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def onSaveItemPeopleInfos(self):
         '''This method is called when the user saves item-related people info:
-           votes, questioners, answerers.'''
+           - votes.'''
         rq = self.REQUEST
         # If votes are secret, we get vote counts. Else, we get vote values.
         secret = self.getVotesAreSecret()
@@ -6058,9 +5991,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         rq.set('error', True)  # If everything OK, we'll set "False" in the end.
         # If allYes is True, we must set vote value "yes" for every voter.
         allYes = rq.get('allYes') == 'true'
-        # Questioners / answerers
-        questioners = []
-        answerers = []
         for key in rq.keys():
             if key.startswith('vote_value_') and not secret:
                 voterId = key[11:]
@@ -6094,19 +6024,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         return
                 numberOfVotes += v
                 requestVotes[voteValue] = v
-            elif key.startswith('questioner_'):
-                questioners.append(key[11:])
-            elif key.startswith('answerer_'):
-                answerers.append(key[9:])
-        # Update questioners / answerers
-        mayEditQAs = self.mayEditQAs()
-        # if something received and user can not edit QAs, raise...
-        if (answerers or questioners) and not mayEditQAs:
-            raise Exception("This user can't update this info.")
-        # if the user can update QAs, proceed
-        elif mayEditQAs:
-            self.setQuestioners(questioners)
-            self.setAnswerers(answerers)
         # Check the total number of votes
         if secret:
             if numberOfVotes != numberOfVoters:
@@ -6167,15 +6084,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if not mUser.adapted().mayEditVote(user, self):
                 return False
         return True
-
-    security.declarePublic('mayEditQAs')
-
-    def mayEditQAs(self):
-        '''May the logged user edit questioners and answerers for this item?'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        res = tool.isManager(self) and self.hasMeeting() and \
-            self.getMeeting().getDate().isPast()
-        return res
 
     security.declarePublic('setFieldFromAjax')
 

@@ -79,7 +79,7 @@ from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import getWorkflowAdapter
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getLastEvent
-from Products.PloneMeeting.utils import getMeetingUsers
+from Products.PloneMeeting.utils import getHeldPositionObjs
 from Products.PloneMeeting.utils import getFieldVersion
 from Products.PloneMeeting.utils import getDateFromDelta
 from Products.PloneMeeting.utils import hasHistory
@@ -1041,35 +1041,24 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getAttendees')
 
-    def getAttendees(self, theObjects=False, includeDeleted=True,
-                     includeReplacements=False):
+    def getAttendees(self, theObjects=False):
         '''Returns the attendees in this meeting. When used by Archetypes,
            this method returns a list of attendee ids; when used elsewhere
            (with p_theObjects=True), it returns a list of true MeetingUser
-           objects. If p_includeDeleted is True, it includes a FakeMeetingUser
-           instance for every MeetingUser that has been deleted (works only
-           when p_theObjects is True).
-
-           If p_includeReplacements is True, we will take care of potential user
-           replacements defined in this meeting and we will return a user
-           replacement for every attendee that has been replaced.'''
-        meetingForRepls = None
-        if includeReplacements:
-            meetingForRepls = self
-        return getMeetingUsers(self, 'attendees', theObjects, includeDeleted,
-                               meetingForRepls=meetingForRepls)
+           objects.'''
+        return getHeldPositionObjs(self, 'attendees', theObjects)
 
     security.declarePublic('getExcused')
 
     def getExcused(self, theObjects=False):
         '''See docstring in previous method.'''
-        return getMeetingUsers(self, 'excused', theObjects, True)
+        return getHeldPositionObjs(self, 'excused', theObjects)
 
     security.declarePublic('getAbsents')
 
     def getAbsents(self, theObjects=False):
         '''See docstring in previous method.'''
-        return getMeetingUsers(self, 'absents', theObjects, True)
+        return getHeldPositionObjs(self, 'absents', theObjects)
 
     security.declarePublic('getItemAbsents')
 
@@ -1091,7 +1080,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getLateAttendees(self, theObjects=False):
         '''See docstring in previous method.'''
-        return getMeetingUsers(self, 'lateAttendees', theObjects, True)
+        return getHeldPositionObjs(self, 'lateAttendees', theObjects)
 
     security.declarePublic('getEntranceItem')
 
@@ -1198,18 +1187,9 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getSignatories')
 
-    def getSignatories(self, theObjects=False, includeDeleted=True,
-                       includeReplacements=False):
-        '''See docstring in previous method.
-
-           If p_includeReplacements is True, we will take care of potential user
-           replacements defined in this meeting and we will return a user
-           replacement for every signatory that has been replaced.'''
-        meetingForRepls = None
-        if includeReplacements:
-            meetingForRepls = self
-        res = getMeetingUsers(self, 'signatories', theObjects, includeDeleted,
-                              meetingForRepls=meetingForRepls)
+    def getSignatories(self, theObjects=False):
+        '''See docstring in previous method.'''
+        res = getHeldPositionObjs(self, 'signatories', theObjects)
         return res
 
     security.declarePrivate('setDate')
