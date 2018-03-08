@@ -13,6 +13,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Refactored meetingitem_view to use @@display-annexes to display annexes and decision annexes.  Only display
   the 'More infos' link when relevant, so when no annexes are defined because the 'More infos' link already
   appear in the existing annexes popup
+- Make sure special "non_selectable_value_" values are not selectable in MeetingItem.optionalAdvisers.  Use
+  JS to override the onClick event of these input values
 
 4.1b6 (2018-03-07)
 ------------------
