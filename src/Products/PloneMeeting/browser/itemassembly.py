@@ -270,7 +270,7 @@ class ManageItemAssemblyForm(form.Form):
 
     label = _(u"Manage item assembly")
     description = u''
-    _finishedSent = False
+    _finished = False
 
     def __init__(self, context, request):
         self.context = context
@@ -298,7 +298,7 @@ class ManageItemAssemblyForm(form.Form):
 
     @button.buttonAndHandler(_('Cancel'), name='cancel')
     def handleCancel(self, action):
-        self._finishedSent = True
+        self._finished = True
 
     def update(self):
         """ """
@@ -339,7 +339,7 @@ class ManageItemAssemblyForm(form.Form):
         form.Form.updateWidgets(self)
 
     def render(self):
-        if self._finishedSent:
+        if self._finished:
             IRedirect(self.request).redirect(self.context.absolute_url())
             return ""
         return super(ManageItemAssemblyForm, self).render()
@@ -392,7 +392,7 @@ class ManageItemAssemblyForm(form.Form):
 
         plone_utils = getToolByName(self.context, 'plone_utils')
         plone_utils.addPortalMessage(_("Item assemblies have been updated."))
-        self._finishedSent = True
+        self._finished = True
 
 
 ManageItemAssemblyFormWrapper = wrap_form(ManageItemAssemblyForm)

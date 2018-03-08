@@ -378,7 +378,7 @@
     </table>
 
     <tal:comment replace="nothing">People (item attendees, signers and votes)</tal:comment>
-    <!--metal:people use-macro="here/@@pm-macros/itemPeople"/-->
+    <metal:people use-macro="here/@@pm-macros/itemPeople"/>
 
     <tal:comment replace="nothing">Description</tal:comment>
     <tal:field define="fieldName python: 'description'; ajaxEdit python:True">

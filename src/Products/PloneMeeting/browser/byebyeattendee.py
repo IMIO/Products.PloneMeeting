@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 
 from AccessControl import Unauthorized
-from zope import interface, schema
+from zope import schema
 from zope.component.hooks import getSite
 from zope.i18n import translate
+from zope.interface import Interface
 from z3c.form import field, form, button
+from plone import api
 from plone.z3cform.layout import wrap_form
 from Products.PloneMeeting.browser.itemassembly import validate_apply_until_item_number
 from Products.PloneMeeting.config import PMMessageFactory as _
@@ -21,7 +23,7 @@ def person_uid_default():
     return request.get('person_uid', u'')
 
 
-class IByeByeAttendee(interface.Interface):
+class IByeByeAttendee(Interface):
 
     person_uid = schema.TextLine(
         title=_(u"Person uid"),
@@ -43,6 +45,8 @@ class ByeByeAttendeeForm(form.Form):
     description = u''
     _finishedSent = False
 
+    schema = IByeByeAttendee
+
     fields = field.Fields(IByeByeAttendee)
     ignoreContext = True  # don't use context to get widget data
 
@@ -50,6 +54,12 @@ class ByeByeAttendeeForm(form.Form):
         self.context = context
         self.request = request
         self.label = translate(self.label)
+
+    def updateWidgets(self):
+        # XXX manipulate self.fields BEFORE doing form.Form.updateWidgets
+        # hide person_uid field
+        self.fields['person_uid'].mode = 'hidden'
+        form.Form.updateWidgets(self)
 
     @button.buttonAndHandler(_('Apply'), name='apply_byebye_attendee')
     def handleApplyByeByeAttendee(self, action):
@@ -69,15 +79,19 @@ class ByeByeAttendeeForm(form.Form):
     def handleCancel(self, action):
         self._finishedSent = True
 
+    def _may_byebye_attendee(self):
+        """Check that :
+           - user may quickEdit itemAbsents;
+           - person_uid is actually a present attendee."""
+        meeting = self.context.getMeeting()
+        if meeting and \
+           self.context.mayQuickEdit(
+            'itemAbsents', bypassWritePermissionCheck=True) and \
+           self.person_uid in meeting.getAttendees():
+            return True
+
     def update(self):
         """ """
-        # we check mayQuickEdit with bypassWritePermissionCheck=True
-        # so MeetingManagers are able to edit these infos on decided items
-        # until the linked meeting is closed
-        if not self.context.mayQuickEdit('itemAbsents',
-                                         bypassWritePermissionCheck=True):
-            raise Unauthorized
-
         super(ByeByeAttendeeForm, self).update()
         # after calling parent's update, self.actions are available
         self.actions.get('cancel').addClass('standalone')
@@ -90,10 +104,17 @@ class ByeByeAttendeeForm(form.Form):
 
     def _doApplyByeByeAttendee(self):
         """ """
-        if not self.context.mayQuickEdit('itemAbsents',
-                                         bypassWritePermissionCheck=True):
+        if not self._may_byebye_attendee():
             raise Unauthorized
 
+        # apply itemAbsents
+        item_absents = list(self.context.getItemAbsents())
+        if self.person_uid not in item_absents:
+            item_absents.append(self.person_uid)
+            self.context.setItemAbsents(item_absents)
+
+        plone_utils = api.portal.get_tool('plone_utils')
+        plone_utils.addPortalMessage(_("Attendee has been set absent."))
         self._finishedSent = True
 
 

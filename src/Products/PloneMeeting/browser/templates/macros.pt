@@ -412,9 +412,11 @@ document.location.reload(true);
      tal:condition="python: meeting and ('attendees' in usedMeetingAttributes)"
      tal:attributes="style python: (request.get('showPersons', 'true')=='true') and 'display:table' or 'display:none'">
 <form id="itemPeopleForm" name="itemPeopleForm" method="post">
-<table tal:define="meetingAttendees python: meeting.getAttendees(theObjects=True);
+<table tal:define="allUsers meeting/getAllUsedHeldPositions;
                    showVotes context/showVotes;
                    usedVoteValues meetingConfig/getUsedVoteValues;
+                   excused meeting/getExcused;
+                   absents meeting/getAbsents;
                    itemAbsents context/getItemAbsents;
                    itemSigners context/getItemSignatories;
                    voters python: context.getAttendees(usage='voter');
@@ -430,6 +432,8 @@ document.location.reload(true);
   <tr valign="top">
     <th class="nosort" i18n:translate="item_specific"></th>
     <th class="nosort" i18n:translate="is_attendee"></th>
+    <th class="nosort" tal:condition="python: 'excused' in usedMeetingAttributes" i18n:translate="is_excused"></th>
+    <th class="nosort" tal:condition="python: 'absents' in usedMeetingAttributes" i18n:translate="is_absent"></th>
     <th class="nosort" tal:condition="python: 'signatories' in usedMeetingAttributes" i18n:translate="is_signer"></th>
     <th class="nosort" tal:condition="showVotes" i18n:translate="is_voter"></th>
     <th class="nosort" tal:condition="python: showVotes and not secret" i18n:translate="vote_value"></th>
@@ -463,90 +467,101 @@ document.location.reload(true);
   </tr>
   </thead>
   <tbody>
-  <tr tal:repeat="attendee meetingAttendees">
-    <tal:attendee define="aUid attendee/UID;
-                          isPresent python: attendee.UID() not in itemAbsents">
-    <td><b tal:content="attendee/Title"></b></td>
-    <td align="center"
-        tal:attributes="onmouseover python: 'setByeByeButton(\'%s\', \'visible\')' % aUid;
-                        onmouseout python: 'setByeByeButton(\'%s\', \'hidden\')' % aUid">
-      <tal:comment replace="nothing">The user is present</tal:comment>
-      <img tal:condition="isPresent" tal:attributes="src string: $portal_url/checked.gif"/>
-
-      <tal:comment replace="nothing">Show depart number if user has left (or will do after this item)</tal:comment>
-      <tal:left condition="python: aUid in itemAbsents">
-      <img tal:attributes="src string: $portal_url/departure.gif"
-           title="left_after" i18n:attributes="title"/><span style="color:black"
-           tal:content="python: meeting.getDepartureItem(aUid, for_display=True)"></span>
-      <tal:comment replace="nothing">Remove info about user departure from the meeting</tal:comment>
-      <img tal:condition="python: mayEditItem and isManager" style="cursor:pointer" title="remove_info" i18n:attributes="title"
-           tal:attributes="src string: $portal_url/delete_small.png;
-                           onClick python:'confirmByebyeUser(\'%s\', \'%s\', \'delete\', \'leaves_after\')' % (context.absolute_url(), aUid)"/>
-      </tal:left>
-
-      <tal:comment replace="nothing">Show "absent" icon if the user has left only for this item (=item absent)</tal:comment>
-      <tal:left condition="not:isPresent">
-      <img tal:attributes="src string: $portal_url/leaving.gif"
-           title="left_now" i18n:attributes="title"/>
-      <tal:comment replace="nothing">Remove info user being an item absent</tal:comment>
-      <img tal:condition="python: mayEditItem and isManager" style="cursor:pointer" title="remove_info" i18n:attributes="title"
-           tal:attributes="src string: $portal_url/delete_small.png;
-                           onClick python:'confirmByebyeUser(\'%s\', \'%s\', \'delete\', \'leaves_now\')' % (context.absolute_url(), aUid)"/>
-      </tal:left>
-
-      <tal:comment replace="nothing">Button for byebying a user</tal:comment>
-      <a href="#" class="link-overlay-pm byebye-overlay" tal:attributes="href string:byebyeuser?userId=${aUid}"
-         tal:condition="python: isManager and mayEditItem and isPresent and not meeting.getDepartureItem(aUid)">
-       <img title="person_byebye" i18n:attributes="title" style="cursor: pointer; visibility: hidden"
-           tal:attributes="src string: $portal_url/departure.gif;
-                           id python: 'byebye_%s' % aUid;
-                           name  python: 'byebye_%s' % aUid;" />
-      </a>
-    </td>
-    <td align="center" tal:condition="python: 'signatories' in usedMeetingAttributes">
-      <img tal:attributes="src string: $portal_url/checked.gif"
-           tal:condition="python: attendee.UID() in itemSigners"/>
-    </td>
-    <td align="center" tal:condition="showVotes">
-      <img tal:attributes="src string: $portal_url/checked.gif"
-           tal:condition="python: attendee in voters"/>
-    </td>
-    <td align="center" tal:condition="python: showVotes and not secret">
-    <tal:showVote condition="python: (attendee in voters) and isPresent">
-    <tal:votes define="mayConsultVote python: attendee.adapted().mayConsultVote(member, context);
-                       mayEditVote python: attendee.adapted().mayEditVote(member, context);
-                       voterId attendee/getId;
-                       voteValue python: context.getVoteValue(voterId);
-                       global showSave python: mayEditVote and True or showSave;
-                       global showRefresh python: not mayEditVote and (mayConsultVote and True or showRefresh) or False">
-
-      <tal:comment replace="nothing">For users that can't consult neither edit the vote value</tal:comment>
-      <span id="vote-not_consultable" tal:condition="python: not mayConsultVote and not mayEditVote"
-            i18n:translate="vote_value_not_consultable"></span>
-      <tal:comment replace="nothing">For users that can consult the vote value but not edit it.</tal:comment>
-      <span tal:condition="python: mayConsultVote and not mayEditVote" i18n:translate=""
-            tal:content="python: 'vote_value_%s' % voteValue"></span>
-      <tal:comment replace="nothing">For users that can consult and edit the vote.</tal:comment>
-      <tal:editField condition="python: mayConsultVote and mayEditVote"
-                     define="widgetName python: 'vote_value_%s' % voterId">
-        <tal:radio repeat="usedVoteValue usedVoteValues">
-          <tal:input define="widgetId python:'vote_value_%s_%s' % (usedVoteValue, voterId)">
-          <input type="radio" class="noborder" value="not_yet"
-                 tal:attributes="name widgetName; id widgetId; value usedVoteValue;
-                                 checked python: voteValue == usedVoteValue"/>
-          <label tal:define="used_vote_value python: usedVoteValue.replace('-', '_')"
-                 tal:attributes="for widgetId;
-                                 id python: 'vote-%s' % used_vote_value"
-                 tal:content="python: 'vote_value_%s' % used_vote_value"
-                 i18n:translate=""></label>&nbsp;&nbsp;
-          </tal:input>
-        </tal:radio>
-      </tal:editField>
-    </tal:votes>
-    </tal:showVote>
-    </td>
-    <td align="center" tal:condition="python: showVotes and secret">-
-    </td>
+  <tr tal:repeat="mUser allUsers">
+    <tal:attendee define="aUid mUser/UID;
+                          isPresent python: mUser.UID() not in itemAbsents + excused + absents">
+     <td><b tal:content="mUser/get_short_title"></b></td>
+     <td align="center"
+         tal:attributes="onmouseover python: 'setByeByeButton(\'%s\', \'visible\')' % aUid;
+                         onmouseout python: 'setByeByeButton(\'%s\', \'hidden\')' % aUid">
+       <tal:comment replace="nothing">The user is present</tal:comment>
+       <img tal:condition="isPresent" tal:attributes="src string: $portal_url/checked.gif"/>
+ 
+       <tal:comment replace="nothing">Show depart number if user has left (or will do after this item)</tal:comment>
+       <tal:left condition="python: aUid in itemAbsents">
+       <img tal:attributes="src string: $portal_url/departure.gif"
+            title="left_after" i18n:attributes="title"/><span style="color:black"
+            tal:content="python: meeting.getDepartureItem(aUid, for_display=True)"></span>
+       <tal:comment replace="nothing">Remove info about user departure from the meeting</tal:comment>
+       <img tal:condition="python: mayEditItem and isManager" style="cursor:pointer" title="remove_info" i18n:attributes="title"
+            tal:attributes="src string: $portal_url/delete_small.png;
+                            onClick python:'confirmByebyeUser(\'%s\', \'%s\', \'delete\', \'leaves_after\')' % (context.absolute_url(), aUid)"/>
+       </tal:left>
+ 
+       <tal:comment replace="nothing">Show "absent" icon if the user has left only for this item (=item absent)</tal:comment>
+       <tal:left condition="python: not isPresent and aUid not in (excused + absents)">
+       <img tal:attributes="src string: $portal_url/leaving.gif"
+            title="left_now" i18n:attributes="title"/>
+       <tal:comment replace="nothing">Remove info user being an item absent</tal:comment>
+       <img tal:condition="python: mayEditItem and isManager" style="cursor:pointer" title="remove_info" i18n:attributes="title"
+            tal:attributes="src string: $portal_url/delete_small.png;
+                            onClick python:'confirmByebyeUser(\'%s\', \'%s\', \'delete\', \'leaves_now\')' % (context.absolute_url(), aUid)"/>
+       </tal:left>
+ 
+       <tal:comment replace="nothing">Button for byebying a user</tal:comment>
+       <a href="#" class="link-overlay-pm byebye-overlay" tal:attributes="href string:item_byebye_attendee_form?person_uid=${aUid}"
+          tal:condition="python: isManager and mayEditItem and isPresent and not meeting.getDepartureItem(aUid)">
+        <img title="person_byebye" i18n:attributes="title" style="cursor: pointer; visibility: hidden"
+            tal:attributes="src string: $portal_url/departure.gif;
+                            id python: 'byebye_%s' % aUid;
+                            name  python: 'byebye_%s' % aUid;" />
+       </a>
+     </td>
+ 
+     <td align="center" tal:condition="python: 'excused' in usedMeetingAttributes">
+       <img tal:attributes="src string: $portal_url/checked.gif"
+            tal:condition="python: aUid in excused"/>
+     </td>
+ 
+     <td align="center" tal:condition="python: 'absents' in usedMeetingAttributes">
+       <img tal:attributes="src string: $portal_url/checked.gif"
+            tal:condition="python: aUid in absents"/>
+     </td>
+ 
+     <td align="center" tal:condition="python: 'signatories' in usedMeetingAttributes">
+       <img tal:attributes="src string: $portal_url/checked.gif"
+            tal:condition="python: aUid in itemSigners"/>
+     </td>
+     <td align="center" tal:condition="showVotes">
+       <img tal:attributes="src string: $portal_url/checked.gif"
+            tal:condition="python: aUid in voters"/>
+     </td>
+     <td align="center" tal:condition="python: showVotes and not secret">
+     <tal:showVote condition="python: (aUid in voters) and isPresent">
+     <tal:votes define="mayConsultVote python: mUser.adapted().mayConsultVote(member, context);
+                        mayEditVote python: mUser.adapted().mayEditVote(member, context);
+                        voterId mUser/getId;
+                        voteValue python: context.getVoteValue(voterId);
+                        global showSave python: mayEditVote and True or showSave;
+                        global showRefresh python: not mayEditVote and (mayConsultVote and True or showRefresh) or False">
+ 
+       <tal:comment replace="nothing">For users that can't consult neither edit the vote value</tal:comment>
+       <span id="vote-not_consultable" tal:condition="python: not mayConsultVote and not mayEditVote"
+             i18n:translate="vote_value_not_consultable"></span>
+       <tal:comment replace="nothing">For users that can consult the vote value but not edit it.</tal:comment>
+       <span tal:condition="python: mayConsultVote and not mayEditVote" i18n:translate=""
+             tal:content="python: 'vote_value_%s' % voteValue"></span>
+       <tal:comment replace="nothing">For users that can consult and edit the vote.</tal:comment>
+       <tal:editField condition="python: mayConsultVote and mayEditVote"
+                      define="widgetName python: 'vote_value_%s' % voterId">
+         <tal:radio repeat="usedVoteValue usedVoteValues">
+           <tal:input define="widgetId python:'vote_value_%s_%s' % (usedVoteValue, voterId)">
+           <input type="radio" class="noborder" value="not_yet"
+                  tal:attributes="name widgetName; id widgetId; value usedVoteValue;
+                                  checked python: voteValue == usedVoteValue"/>
+           <label tal:define="used_vote_value python: usedVoteValue.replace('-', '_')"
+                  tal:attributes="for widgetId;
+                                  id python: 'vote-%s' % used_vote_value"
+                  tal:content="python: 'vote_value_%s' % used_vote_value"
+                  i18n:translate=""></label>&nbsp;&nbsp;
+           </tal:input>
+         </tal:radio>
+       </tal:editField>
+     </tal:votes>
+     </tal:showVote>
+     </td>
+     <td align="center" tal:condition="python: showVotes and secret">-
+     </td>
     </tal:attendee>
   </tr>
   <tr>

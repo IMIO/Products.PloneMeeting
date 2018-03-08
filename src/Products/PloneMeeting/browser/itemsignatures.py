@@ -35,6 +35,7 @@ from zope.browserpage.viewpagetemplatefile import ViewPageTemplateFile
 from Products.CMFCore.utils import getToolByName
 from Products.CMFPlone.utils import safe_unicode
 from plone import api
+from plone.z3cform.layout import wrap_form
 from Products.PloneMeeting.browser.itemassembly import validate_apply_until_item_number
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IRedirect
@@ -114,7 +115,7 @@ class ManageItemSignaturesForm(form.Form):
     contentProviders['meetingSignatures'].position = 0
     label = _(u"Manage item signatures")
     description = u''
-    _finishedSent = False
+    _finished = False
 
     def __init__(self, context, request):
         self.context = context
@@ -139,7 +140,7 @@ class ManageItemSignaturesForm(form.Form):
 
     @button.buttonAndHandler(_('Cancel'), name='cancel')
     def handleCancel(self, action):
-        self._finishedSent = True
+        self._finished = True
 
     def update(self):
         """ """
@@ -159,7 +160,7 @@ class ManageItemSignaturesForm(form.Form):
         form.Form.updateWidgets(self)
 
     def render(self):
-        if self._finishedSent:
+        if self._finished:
             IRedirect(self.request).redirect(self.context.absolute_url())
             return ""
         return super(ManageItemSignaturesForm, self).render()
@@ -201,8 +202,7 @@ class ManageItemSignaturesForm(form.Form):
 
         plone_utils = getToolByName(self.context, 'plone_utils')
         plone_utils.addPortalMessage(_("Item signatures have been updated."))
-        self._finishedSent = True
+        self._finished = True
 
 
-from plone.z3cform.layout import wrap_form
 ManageItemSignaturesFormWrapper = wrap_form(ManageItemSignaturesForm)
