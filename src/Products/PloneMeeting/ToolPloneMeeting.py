@@ -1449,11 +1449,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('addUsersAndGroups')
 
-    def addUsersAndGroups(self, groups, usersOutsideGroups=[]):
+    def addUsersAndGroups(self, groups):
         '''Creates MeetingGroups (and potentially Plone users in it) in the
-           tool based on p_groups which is a list of GroupDescriptor instances.
-           if p_usersOutsideGroups is not empty, it is a list of UserDescriptor
-           instances that will serve to create the corresponding Plone users.'''
+           tool based on p_groups which is a list of GroupDescriptor instances.'''
         plone_utils = api.portal.get_tool('plone_utils')
         groupsTool = api.portal.get_tool('portal_groups')
         # if we are in dev, we use DEFAULT_USER_PASSWORD, else we will generate a
