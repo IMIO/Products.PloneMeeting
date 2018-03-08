@@ -419,27 +419,26 @@
 
     <tal:comment replace="nothing">Annexes and advices</tal:comment>
     <a name="adviceAndAnnexes"></a>
-    <table width="100%" cellpadding="1" cellspacing="1">
+    <table width="100%" cellpadding="1" cellspacing="1"
+           tal:define="showAnnexes python: tool.showAnnexesTab(context);
+                       showAdvices python: context.adapted().showAdvices()"
+            tal:condition="python: showAnnexes or showAdvices">
         <tr style="vertical-align: top;">
-            <td class="itemAnnexesCell" width="66%" tal:condition="python: tool.showAnnexesTab(context)">
-              <table width="100%" class="no-style-table" cellpadding="0" cellspacing="0" style="margin: 0;">
-                  <tr tal:define="obj python: context">
-                      <td width="50%">
-                        <tal:annexes replace="structure context/@@display-annexes" />
-                      </td>
-                      <td width="50%" class="itemAdvicesCell">
-                        <tal:annexes replace="structure python: context.restrictedTraverse('@@display-annexes')(annex_portal_type='annexDecision', fieldset_legend='AnnexesDecisionShort')" />
-                      </td>
-                  </tr>
-              </table>
+          <tal:annexes condition="showAnnexes">
+            <td class="itemAnnexesCell" width="33%">
+              <tal:annexes replace="structure context/@@display-annexes" />
             </td>
-            <tal:comment replace="nothing">Advices</tal:comment>
-            <td class="itemAdvicesCell" tal:condition="python: context.adapted().showAdvices()" width="33%">
-                <fieldset tal:define="meetingItem python: context" style="height: 26px;">
-                <legend i18n:translate="PloneMeeting_label_advices">Advices</legend>
-                    <tal:advice replace="structure context/@@advices-icons" />
-                </fieldset>
+            <td width="33%" class="itemAnnexesCell">
+              <tal:annexes replace="structure python: context.restrictedTraverse('@@display-annexes')(annex_portal_type='annexDecision', fieldset_legend='AnnexesDecisionShort')" />
             </td>
+          </tal:annexes>
+          <tal:comment replace="nothing">Advices</tal:comment>
+          <td tal:condition="python: context.adapted().showAdvices()">
+              <fieldset tal:define="meetingItem python: context" style="height: 26px;">
+              <legend i18n:translate="PloneMeeting_label_advices">Advices</legend>
+                  <tal:advice replace="structure context/@@advices-icons" />
+              </fieldset>
+          </td>
         </tr>
     </table>
 
