@@ -734,12 +734,12 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         default_content_type="text/html",
-        read_permission="PloneMeeting: Read budget infos",
         allowable_content_types=('text/html',),
         searchable=True,
         default_method="getDefaultBudgetInfo",
         default_output_type="text/x-html-safe",
         optional=True,
+        read_permission="PloneMeeting: Read budget infos",
         write_permission="PloneMeeting: Write budget infos",
     ),
     StringField(

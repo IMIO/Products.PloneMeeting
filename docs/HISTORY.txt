@@ -7,12 +7,23 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Versions 3.0.x are for Plone < 4.3
 - Versions 3.1.+ are for Plone 4.3+
 
-4.1b6 (unreleased)
+4.1b7 (unreleased)
+------------------
+
+- Refactored meetingitem_view to use @@display-annexes to display annexes and decision annexes.  Only display
+  the 'More infos' link when relevant, so when no annexes are defined because the 'More infos' link already
+  appear in the existing annexes popup
+- Make sure special "non_selectable_value_" values are not selectable in MeetingItem.optionalAdvisers.  Use
+  JS to override the onClick event of these input values
+
+4.1b6 (2018-03-07)
 ------------------
 
 - Override vocabulary 'collective.documentgenerator.ExistingPODTemplate' to include MeetingConfig title in term
 - Adapted ToolPloneMeeting.getGroupedConfigs so it does not return MeetingConfig objects because the method
   is ram.cached and returning objects leads to problems where objects lose acquisition
+- Make sure access to meetingitem_view does not raise Unauthorized if current user does not have the 
+  "PloneMeeting: Read budget infos" permission
 
 4.1b5 (2018-02-23)
 ------------------

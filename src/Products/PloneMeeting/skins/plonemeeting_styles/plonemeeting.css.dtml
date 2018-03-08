@@ -963,9 +963,8 @@ table.listing th.th_header_getItemNumber {
     color: &dtml-discreetColor;;
 }
 
-.itemAdvicesCell {
-    padding-left: 0.3em;
-    vertical-align: top;
+.itemAnnexesCell {
+    padding-right: 0.3em;
 }
 
 /* avoid the select box listing meetings in the portlet_plonemeeting breaking it in smaller resolutions */
