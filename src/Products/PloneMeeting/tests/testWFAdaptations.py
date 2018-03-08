@@ -2143,9 +2143,12 @@ class testWFAdaptations(PloneMeetingTestCase):
             return
         self.changeUser('pmManager')
 
-        # test with only 'postpone_next_meeting' then when using 'no_publication'
-        for wfAdaptations in [('postpone_next_meeting', ),
-                              ('no_publication', 'postpone_next_meeting')]:
+        # test with only 'postpone_next_meeting' then when using
+        # 'postpone_next_meeting' and 'no_publication' togheter if available
+        set_of_wfAdaptations = [('postpone_next_meeting', )]
+        if 'no_publication' in cfg.listWorkflowAdaptations():
+            set_of_wfAdaptations.append(('no_publication', 'postpone_next_meeting'))
+        for wfAdaptations in set_of_wfAdaptations:
             # activate the wfAdaptations and check
             cfg.setWorkflowAdaptations(wfAdaptations)
             cfg.at_post_edit_script()
