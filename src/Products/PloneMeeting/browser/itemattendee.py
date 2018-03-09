@@ -79,17 +79,6 @@ class ByeByeAttendeeForm(form.Form):
     def handleCancel(self, action):
         self._finishedSent = True
 
-    def _may_byebye_attendee(self):
-        """Check that :
-           - user may quickEdit itemAbsents;
-           - person_uid is actually a present attendee."""
-        meeting = self.context.getMeeting()
-        if meeting and \
-           self.context.mayQuickEdit(
-            'itemAbsents', bypassWritePermissionCheck=True) and \
-           self.person_uid in meeting.getAttendees():
-            return True
-
     def update(self):
         """ """
         super(ByeByeAttendeeForm, self).update()
@@ -104,7 +93,7 @@ class ByeByeAttendeeForm(form.Form):
 
     def _doApplyByeByeAttendee(self):
         """ """
-        if not self._may_byebye_attendee():
+        if not self.context._mayChangeAttendees(self.person_uid):
             raise Unauthorized
 
         # apply itemAbsents
@@ -115,6 +104,93 @@ class ByeByeAttendeeForm(form.Form):
 
         plone_utils = api.portal.get_tool('plone_utils')
         plone_utils.addPortalMessage(_("Attendee has been set absent."))
+        self._finishedSent = True
+
+
+ByeByeAttendeeFormWrapper = wrap_form(ByeByeAttendeeForm)
+
+
+class IWelcomeAttendee(Interface):
+
+    person_uid = schema.TextLine(
+        title=_(u"Person uid"),
+        description=_(u""),
+        defaultFactory=person_uid_default,
+        required=False)
+
+    apply_until_item_number = schema.TextLine(
+        title=_(u"Mark this person as back into the meeting until item number"),
+        description=_(u""),
+        required=False,
+        constraint=validate_apply_until_item_number,)
+
+
+class WelcomeAttendeeForm(form.Form):
+    """
+    """
+    label = (u"Welcome attendee from this item to...")
+    description = u''
+    _finishedSent = False
+
+    schema = IWelcomeAttendee
+
+    fields = field.Fields(IWelcomeAttendee)
+    ignoreContext = True  # don't use context to get widget data
+
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+        self.label = translate(self.label)
+
+    def updateWidgets(self):
+        # XXX manipulate self.fields BEFORE doing form.Form.updateWidgets
+        # hide person_uid field
+        self.fields['person_uid'].mode = 'hidden'
+        form.Form.updateWidgets(self)
+
+    @button.buttonAndHandler(_('Apply'), name='apply_welcome_attendee')
+    def handleApplyWelcomeAttendee(self, action):
+        data, errors = self.extractData()
+        if errors:
+            self.status = self.formErrorsMessage
+            return
+        # do adapt item signatures
+        self.person_uid = data.get('person_uid')
+        self.apply_until_item_number = \
+            _itemNumber_to_storedItemNumber(
+                data.get('apply_until_item_number') or u'0'
+                )
+        self._doApplyWelcomeAttendee()
+
+    @button.buttonAndHandler(_('Cancel'), name='cancel')
+    def handleCancel(self, action):
+        self._finishedSent = True
+
+    def update(self):
+        """ """
+        super(WelcomeAttendeeForm, self).update()
+        # after calling parent's update, self.actions are available
+        self.actions.get('cancel').addClass('standalone')
+
+    def render(self):
+        if self._finishedSent:
+            IRedirect(self.request).redirect(self.context.absolute_url())
+            return ""
+        return super(WelcomeAttendeeForm, self).render()
+
+    def _doApplyWelcomeAttendee(self):
+        """ """
+        if not self.context._mayChangeAttendees(self.person_uid):
+            raise Unauthorized
+
+        # apply itemAbsents
+        item_absents = list(self.context.getItemAbsents())
+        if self.person_uid in item_absents:
+            item_absents.remove(self.person_uid)
+            self.context.setItemAbsents(item_absents)
+
+        plone_utils = api.portal.get_tool('plone_utils')
+        plone_utils.addPortalMessage(_("Attendee has been set back present."))
         self._finishedSent = True
 
 
