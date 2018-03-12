@@ -1024,20 +1024,26 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getDefaultAttendees(self):
         '''The default attendees are the active held_positions in the corresponding meeting configuration.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-        return [held_pos.UID() for held_pos in cfg.getHeldPositions()
-                if 'present' in held_pos.get_position().defaults]
+        res = []
+        if self.attributeIsUsed('attendees'):
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(self)
+            res = [held_pos.UID() for held_pos in cfg.getHeldPositions()
+                   if 'present' in held_pos.get_position().defaults]
+        return res
 
     security.declarePublic('getDefaultSignatories')
 
     def getDefaultSignatories(self):
         '''The default signatories are the active MeetingUsers having usage
            "signer" and whose "signatureIsDefault" is True.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-        return [held_pos.UID() for held_pos in cfg.getHeldPositions()
-                if 'signer' in held_pos.get_position().defaults]
+        res = []
+        if self.attributeIsUsed('signatories'):
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(self)
+            res = [held_pos.UID() for held_pos in cfg.getHeldPositions()
+                   if 'signer' in held_pos.get_position().defaults]
+        return res
 
     security.declarePublic('getAttendees')
 

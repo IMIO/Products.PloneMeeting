@@ -34,8 +34,8 @@ from zope.browserpage.viewpagetemplatefile import ViewPageTemplateFile
 
 from Products.CMFCore.utils import getToolByName
 from Products.CMFPlone.utils import safe_unicode
-from plone import api
 from plone.z3cform.layout import wrap_form
+from Products.PloneMeeting.browser.itemassembly import _itemsToUpdate
 from Products.PloneMeeting.browser.itemassembly import validate_apply_until_item_number
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IRedirect
@@ -174,30 +174,14 @@ class ManageItemSignaturesForm(form.Form):
                                          bypassWritePermissionCheck=True):
             raise Unauthorized
 
-        def _itemsToUpdate():
-            """
-              Return items we want to update regarding the number
-              defined in apply_until_item_number
-            """
-            currentItemNumber = self.context.getItemNumber(relativeTo='meeting')
-            if not self.apply_until_item_number or \
-               self.apply_until_item_number < currentItemNumber:
-                return [self.context, ]
-            else:
-                meeting = self.context.getMeeting()
-                catalog = api.portal.get_tool('portal_catalog')
-                brains = catalog(
-                    linkedMeetingUID=meeting.UID(),
-                    getItemNumber={'query': (currentItemNumber,
-                                             self.apply_until_item_number),
-                                   'range': 'minmax'},
-                    sort_on='getItemNumber')
-                return [brain.getObject() for brain in brains]
-
         # only apply if different from meeting
         item_signatures_def = item_signatures_default()
         if self.item_signatures != item_signatures_def:
-            for itemToUpdate in _itemsToUpdate():
+            items_to_update = _itemsToUpdate(
+                from_item_number=self.context.getItemNumber(relativeTo='meeting'),
+                until_item_number=self.apply_until_item_number,
+                meeting=self.context.getMeeting())
+            for itemToUpdate in items_to_update:
                 itemToUpdate.setItemSignatures(self.item_signatures)
 
         plone_utils = getToolByName(self.context, 'plone_utils')
