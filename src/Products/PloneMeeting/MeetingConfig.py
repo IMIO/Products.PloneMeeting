@@ -5687,27 +5687,35 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Update the confidentiality of existing annexes regarding default value
            for confidentiality defined in the corresponding annex type.'''
         tool = api.portal.get_tool('portal_plonemeeting')
-        advice_portal_types = tool.getAdvicePortalTypes()
+        advice_portal_types = tool.getAdvicePortalTypes(as_ids=True)
         cfgId = self.getId()
 
         def _update(brains):
             numberOfBrains = len(brains)
             i = 1
             for brain in brains:
+                obj = brain.getObject()
                 # filter out advices to only update advices of current MeetingConfig
                 if brain.portal_type in advice_portal_types and \
-                   cfgId not in brain.getPath():
+                   '/mymeetings/{0}'.format(cfgId) not in brain.getPath():
+                    logger.info(
+                        '%d/%d Passing %s from other MeetingConfig at %s' %
+                        (i,
+                         numberOfBrains,
+                         brain.portal_type,
+                         '/'.join(obj.getPhysicalPath())))
+                    i = i + 1
                     continue
+                else:
+                    logger.info(
+                        '%d/%d Initializing %s confidentiality of %s at %s' %
+                        (i,
+                         numberOfBrains,
+                         ', '.join(annex_portal_types),
+                         brain.portal_type,
+                         '/'.join(obj.getPhysicalPath())))
+                    i = i + 1
 
-                obj = brain.getObject()
-                logger.info(
-                    '%d/%d Initializing %s confidentiality of %s at %s' %
-                    (i,
-                     numberOfBrains,
-                     ', '.join(annex_portal_types),
-                     brain.portal_type,
-                     '/'.join(obj.getPhysicalPath())))
-                i = i + 1
                 annexes = get_annexes(obj, annex_portal_types)
                 if not annexes:
                     continue
@@ -5730,6 +5738,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         for portal_type in portal_types:
             brains = catalog(portal_type=portal_type)
             _update(brains)
+        logger.info('Done.')
 
     security.declarePublic('updateAdviceConfidentiality')
 

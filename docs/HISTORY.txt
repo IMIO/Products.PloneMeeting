@@ -15,6 +15,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   appear in the existing annexes popup
 - Make sure special "non_selectable_value_" values are not selectable in MeetingItem.optionalAdvisers.  Use
   JS to override the onClick event of these input values
+- Bugfix in MeetingConfig.updateAnnexConfidentiality that applied default confidentiality to every advices of
+  the application and not only to the currently updated MeetingConfig related advices
 
 4.1b6 (2018-03-07)
 ------------------
