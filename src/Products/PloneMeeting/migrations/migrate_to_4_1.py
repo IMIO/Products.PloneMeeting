@@ -83,14 +83,6 @@ class Migrate_To_4_1(Migrator):
                 cfg.setWorkflowAdaptations(wf_adaptations)
         logger.info('Done.')
 
-    def _reindexLinkedMeetingUIDIndex(self):
-        """Reindex the linkedMeetingUID index as it contains the
-           ITEM_NO_PREFERRED_MEETING_VALUE by default instead None."""
-        logger.info('Reindexing the "linkedMeetingUID" index...')
-        self.portal.portal_catalog.reindexIndex(
-            name='linkedMeetingUID', REQUEST=None)
-        logger.info('Done.')
-
     def _removeMCPortalTabs(self):
         """portal_tabs are now generated, remove MC related actions registered
         in portal_actions/portal_tabs."""
@@ -125,16 +117,16 @@ class Migrate_To_4_1(Migrator):
                            ignore_dependencies=False,
                            dependency_strategy=DEPENDENCY_STRATEGY_NEW)
 
-        # upgrade dependencies
+        # common upgrades
         self.upgradeDependencies()
         self.updateHolidays()
+        self.reindexIndexes(idxs=['linkedMeetingUID', 'getConfigId'])
 
         # migration steps
         self._addNewFacetedFilters()
         self._addItemTemplatesManagersGroup()
         self._updateCollectionColumns()
         self._markSearchesFoldersWithIBatchActionsMarker()
-        self._reindexLinkedMeetingUIDIndex()
         self._removeMCPortalTabs()
 
 
@@ -143,11 +135,13 @@ def migrate(context):
     '''This migration function will:
 
        1) Reinstall PloneMeeting and upgrade dependencies;
-       2) Reinstall plugin if not PloneMeeting;
-       3) Add '_itemtemplatesmanagers' groups;
-       4) Update collections columns as column 'check_box_item' was renamed to 'select_row';
-       5) Synch searches to mark searches sub folders with the IBatchActionsMarker;
-       6) Refresh portal_catalog.
+       2) Enable 'refused' WF adaptation;
+       3) Reinstall plugin if not PloneMeeting;
+       4) Run common upgrades (dependencies, holidays, reindexes);
+       5) Add '_itemtemplatesmanagers' groups;
+       6) Update collections columns as column 'check_box_item' was renamed to 'select_row';
+       7) Synch searches to mark searches sub folders with the IBatchActionsMarker;
+       8) Remove MeetingConfig tabs from portal_actions portal_tabs.
     '''
     migrator = Migrate_To_4_1(context)
     migrator.run()

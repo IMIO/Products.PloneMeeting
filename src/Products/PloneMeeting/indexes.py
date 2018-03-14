@@ -27,6 +27,16 @@ REAL_GROUP_ID_PATTERN = 'real_group_id__{0}'
 DELAYAWARE_REAL_GROUP_ID_PATTERN = 'delay_real_group_id__{0}'
 
 
+@indexer(IItem)
+def getConfigId(obj):
+    """
+      Indexes the MeetingConfig id.
+    """
+    tool = api.portal.get_tool('portal_plonemeeting')
+    cfg = tool.getMeetingConfig(obj)
+    return cfg and cfg.getId() or _marker
+
+
 @indexer(IMeeting)
 def sortable_title(obj):
     """

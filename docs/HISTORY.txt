@@ -17,6 +17,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   JS to override the onClick event of these input values
 - Bugfix in MeetingConfig.updateAnnexConfidentiality that applied default confidentiality to every advices of
   the application and not only to the currently updated MeetingConfig related advices
+- Added reindexIndexes method to the PM Migrator so it is easy to reindex some portal_catalog indexes
+- Resurrected the getConfigId index so it is possible to query portal_catalog for MeetingConfig id
 
 4.1b6 (2018-03-07)
 ------------------
