@@ -1,7 +1,9 @@
 <tal:comment replace="nothing">
-The only change here above is to manage the edit_template defined using the context portal_type.
+The only changes here above is to manage the edit_template defined using the context portal_type.
 In PloneMeeting, we use the same template (meeting_edit.pt and meetingitem_edit.pt)
-for every sub portal_types so the line defining the "portal_type" here above is adapted (and only this line).
+for every sub portal_types so the line defining the "portal_type" here above is adapted.
+We also force fieldsets to only consider "default" and set "allow_tabbing" to False to be able
+to use <fieldset> in the edit form.
 </tal:comment>
 
 <tal:block metal:define-macro="master"
@@ -12,8 +14,8 @@ for every sub portal_types so the line defining the "portal_type" here above is 
                    dummy lifecycle/begin_edit;
                    errors options/state/getErrors | nothing;
                    schematas context/Schemata;
-                   allow_tabbing python: not view.isMultiPageSchema();
-                   fieldsets python: view.fieldsets();
+                   allow_tabbing python: False;
+                   fieldsets python: ['default'];
                    default_fieldset python:'default' in fieldsets and 'default' or fieldsets and fieldsets[0] or None;
                    fieldset request/fieldset|options/fieldset|default_fieldset;
                    fields python: view.fields(fieldsets);

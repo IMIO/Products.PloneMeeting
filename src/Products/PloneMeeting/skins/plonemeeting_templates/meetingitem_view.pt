@@ -391,20 +391,22 @@
 
     <tal:comment replace="nothing">Budgetary informations, manage fields budgetRelated and budgetInfos</tal:comment>
     <tal:block condition="python: 'budgetInfos' in usedAttrs and member.has_permission('PloneMeeting: Read budget infos', context)">
+    <fieldset>
+      <legend i18n:translate="">Budget</legend>
         <p class="item-before-budget-related"></p>
         <metal:budgetInfos use-macro="here/@@pm-macros/budgetInfos" />
 
         <tal:displayBudgetInfos define="fieldName string:budgetInfos;
                                         ajaxEdit string:True;">
-          <br /><br />
           <div id="hideBudgetInfosIfNotBudgetRelated"
                 style="display: none;"
                 tal:define="defaultDisplay python: context.getBudgetRelated() and 'block' or 'none';"
                 tal:attributes="style string:display:${defaultDisplay};">
+              <br />
               <metal:f use-macro="context/@@pm-macros/viewContentField"/>
           </div>
         </tal:displayBudgetInfos>
-
+    </fieldset>
     </tal:block>
 
     <tal:comment replace="nothing">Motivation</tal:comment>

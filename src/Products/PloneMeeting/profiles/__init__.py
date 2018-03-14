@@ -657,7 +657,8 @@ class PloneMeetingConfiguration(Descriptor):
         return klass.instance
     get = classmethod(get)
 
-    multiSelectFields = ('availableOcrLanguages', 'modelAdaptations', 'workingDays', )
+    multiSelectFields = ('availableOcrLanguages', 'modelAdaptations',
+                         'workingDays', 'configGroups')
 
     def __init__(self, meetingFolderTitle, meetingConfigs, groups):
         self.meetingFolderTitle = meetingFolderTitle

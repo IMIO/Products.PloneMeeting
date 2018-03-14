@@ -898,7 +898,7 @@ schema = Schema((
         widget=MultiSelectionWidget(
             description="OptionalAdvisersItem",
             description_msgid="optional_advisers_item_descr",
-            condition='python:here.isAdvicesEnabled()',
+            condition='python:here.showOptionalAdvisers()',
             format="checkbox",
             size=10,
             label='Optionaladvisers',
@@ -5179,12 +5179,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self._versionateAdvicesOnItemEdit()
         return BaseFolder.processForm(self, data=data, metadata=metadata, REQUEST=REQUEST, values=values)
 
-    security.declarePublic('isAdvicesEnabled')
+    security.declarePublic('showOptionalAdvisers')
 
-    def isAdvicesEnabled(self):
-        '''Is the "advices" functionality enabled for this meeting config?'''
+    def showOptionalAdvisers(self):
+        '''Show 'MeetingItem.optionalAdvisers' if the "advices" functionality is enabled
+           and if there are selectable optional advices.'''
         tool = api.portal.get_tool('portal_plonemeeting')
-        return tool.getMeetingConfig(self).getUseAdvices()
+        cfg = tool.getMeetingConfig(self)
+        if cfg.getUseAdvices() and self.listOptionalAdvisers():
+            return True
 
     security.declarePublic('isCopiesEnabled')
 

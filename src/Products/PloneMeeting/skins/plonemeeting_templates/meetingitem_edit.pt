@@ -58,7 +58,7 @@
     <table cellpadding="0" cellspacing="0">
       <tr valign="top">
         <td tal:condition="python: 'associatedGroups' in usedAttrs"><metal:field use-macro="python:here.widget('associatedGroups', mode='edit')"/></td>
-        <td tal:condition="context/isAdvicesEnabled"><metal:field use-macro="python:here.widget('optionalAdvisers', mode='edit')"/></td>
+        <td tal:condition="context/showOptionalAdvisers"><metal:field use-macro="python:here.widget('optionalAdvisers', mode='edit')"/></td>
         <td tal:condition="context/isCopiesEnabled"><metal:field use-macro="python:here.widget('copyGroups', mode='edit')"/></td>
         <td tal:condition="python: 'itemSignatories' in usedAttrs"><metal:field use-macro="python:here.widget('itemSignatories', mode='edit')"/></td>
       </tr>
@@ -130,10 +130,13 @@
     </table><br />
 
     <tal:comment replace="nothing">Budget-related information</tal:comment>
-    <metal:field use-macro="python:here.widget('budgetRelated', mode='edit')"/>
-    <div id="hideBudgetInfosIfNotBudgetRelated">
-        <metal:field use-macro="python:here.widget('budgetInfos', mode='edit')"/>
-    </div>
+    <fieldset>
+      <legend i18n:translate="">Budget</legend>
+        <metal:field use-macro="python:here.widget('budgetRelated', mode='edit')"/>
+        <div id="hideBudgetInfosIfNotBudgetRelated">
+            <metal:field use-macro="python:here.widget('budgetInfos', mode='edit')"/>
+        </div>
+    </fieldset>
 
     <metal:field use-macro="python:here.widget('oralQuestion', mode='edit')"/>
     <metal:field use-macro="python:here.widget('itemInitiator', mode='edit')"/>
