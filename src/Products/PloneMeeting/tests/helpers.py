@@ -24,6 +24,8 @@ from DateTime import DateTime
 from plone import api
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
+from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFCore.permissions import View
 
 
 class PloneMeetingTestingHelpers:
@@ -327,6 +329,24 @@ class PloneMeetingTestingHelpers:
         self.assertTrue((user_id, '<{0}: not found>'.format(user_id)) in
                         self.portal.acl_users.source_groups.listAssignedPrincipals(group_id))
         self.changeUser(currentUser)
+
+    def _check_access(self, obj, userIds=[], read=True, write=True):
+        """ """
+        original_user_id = self.member.getId()
+        # no userIds means use current user id
+        if not userIds:
+            userIds = [original_user_id]
+        for userId in userIds:
+            self.changeUser(userId)
+            if read:
+                self.assertTrue(self.hasPermission(View, obj))
+            else:
+                self.assertFalse(self.hasPermission(View, obj))
+            if write:
+                self.assertTrue(self.hasPermission(ModifyPortalContent, obj))
+            else:
+                self.assertFalse(self.hasPermission(ModifyPortalContent, obj))
+        self.changeUser(original_user_id)
 
     def _setupStorePodAsAnnex(self):
         """ """
