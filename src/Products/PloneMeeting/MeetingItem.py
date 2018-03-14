@@ -5020,7 +5020,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             portal_groups = api.portal.get_tool('portal_groups')
             for groupSuffix in suffixes:
                 # like it is the case for groupSuffix 'advisers'
-                if not roles[groupSuffix]:
+                if not roles.get(groupSuffix, None):
                     continue
                 # if we have a Plone group related to this suffix, apply a local role for it
                 groupId = meetingGroup.getPloneGroupId(groupSuffix)
