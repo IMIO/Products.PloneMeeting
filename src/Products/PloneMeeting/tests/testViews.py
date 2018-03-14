@@ -845,6 +845,31 @@ class testViews(PloneMeetingTestCase):
         form = getMultiAdapter((pmFolder.searches_items, self.request), name=u'transition-batch-action')
         self.assertFalse(form.available())
 
+    def test_pm_PMTransitionBatchActionFormOnlyForMeetingManagersOnMeeting(self):
+        """The PMTransitionBatchActionForm is only available to MeetingManagers on
+           dashoboards of the meeting_view."""
+        cfg = self.meetingConfig
+
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2018/03/14'))
+        self.freezeMeeting(meeting)
+        # freeze the meeting so it is viewable in most workflows to various groups
+        form = getMultiAdapter((meeting, self.request), name=u'transition-batch-action')
+        self.assertTrue(form.available())
+
+        # not available to others
+        cfg.setMeetingPowerObserversStates((self._stateMappingFor('frozen', meta_type='Meeting'),))
+        meeting.updateLocalRoles()
+        self.changeUser('powerobserver1')
+        self.assertTrue(self.hasPermission(View, meeting))
+        self.assertFalse(form.available())
+        self.changeUser('pmCreator1')
+        self.assertTrue(self.hasPermission(View, meeting))
+        self.assertFalse(form.available())
+        self.changeUser('pmReviewer1')
+        self.assertTrue(self.hasPermission(View, meeting))
+        self.assertFalse(form.available())
+
     def test_pm_ftw_labels_viewlet_available(self):
         """Only available on items if enabled in MeetingConfig."""
         cfg = self.meetingConfig

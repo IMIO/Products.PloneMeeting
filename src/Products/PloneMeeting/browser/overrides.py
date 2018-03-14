@@ -1164,10 +1164,11 @@ class PMTransitionBatchActionForm(TransitionBatchActionForm):
 
     def available(self):
         """Only available to users having operational roles in the application.
-           This is essentially dont to hide this to (restricted)powerobservers."""
+           This is essentially done to hide this to (restricted)powerobservers
+           and to non MeetingManagers on the meeting_view."""
         tool = api.portal.get_tool('portal_plonemeeting')
-        return bool(tool.userIsAmong(suffixes=get_all_suffixes(None)) or
-                    tool.isManager(self.context))
+        return tool.isManager(self.context) or \
+            (not self.context.meta_type == 'Meeting' and bool(tool.userIsAmong(suffixes=get_all_suffixes(None))))
 
 
 class PMContentHistoryView(IHContentHistoryView):

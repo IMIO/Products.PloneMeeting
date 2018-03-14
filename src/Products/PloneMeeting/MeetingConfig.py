@@ -2299,9 +2299,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                      'pre_validation_keep_reviewer_permissions', 'items_come_validated',
                      'archiving', 'no_publication', 'no_proposal', 'everyone_reads_all',
                      'reviewers_take_back_validated_item', 'creator_edits_unless_closed',
-                     'return_to_proposing_group', 'return_to_proposing_group_with_last_validation',
-                     'return_to_proposing_group_with_all_validations', 'hide_decisions_when_under_writing',
-                     'waiting_advices', 'postpone_next_meeting', 'mark_not_applicable',
+                     'presented_item_back_to_proposed', 'return_to_proposing_group',
+                     'return_to_proposing_group_with_last_validation',
+                     'return_to_proposing_group_with_all_validations',
+                     'hide_decisions_when_under_writing', 'waiting_advices',
+                     'postpone_next_meeting', 'mark_not_applicable',
                      'removed', 'removed_and_duplicated', 'refused')
 
     def _searchesInfo(self):
