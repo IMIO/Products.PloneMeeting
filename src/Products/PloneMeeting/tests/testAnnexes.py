@@ -48,6 +48,7 @@ from imio.annex.columns import ActionsColumn
 from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
+from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.indexes import SearchableText
@@ -831,8 +832,7 @@ class testAnnexes(PloneMeetingTestCase):
         # only members able to add annexes are able to change position
         self.validateItem(item)
         self.assertEqual(item.queryState(), 'validated')
-        self.changeUser('pmObserver1')
-        self.assertTrue(self.hasPermission(View, item))
+        self.assertFalse(self.hasPermission(AddAnnex, item))
         self.assertRaises(Unauthorized, item.folder_position_typeaware, position='up', id=annex1.getId())
 
     def test_pm_AnnexesCreationDateKeptWhenItemDuplicated(self):
