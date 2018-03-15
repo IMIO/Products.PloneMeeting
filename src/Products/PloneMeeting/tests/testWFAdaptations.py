@@ -70,6 +70,9 @@ class testWFAdaptations(PloneMeetingTestCase):
                            'postpone_next_meeting',
                            'pre_validation',
                            'pre_validation_keep_reviewer_permissions',
+                           'presented_item_back_to_itemcreated',
+                           'presented_item_back_to_prevalidated',
+                           'presented_item_back_to_proposed',
                            'refused',
                            'removed',
                            'removed_and_duplicated',
@@ -173,7 +176,10 @@ class testWFAdaptations(PloneMeetingTestCase):
         for otherWFA in ('creator_initiated_decisions',
                          'pre_validation',
                          'pre_validation_keep_reviewer_permissions',
-                         'reviewers_take_back_validated_item'):
+                         'reviewers_take_back_validated_item',
+                         'presented_item_back_to_itemcreated',
+                         'presented_item_back_to_prevalidated',
+                         'presented_item_back_to_proposed'):
             self.assertEquals(
                 cfg.validate_workflowAdaptations(('items_come_validated', otherWFA)),
                 wa_conflicts)
@@ -189,17 +195,18 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.failIf(cfg.validate_workflowAdaptations(('no_proposal', )))
         # conflicts with some
         for otherWFA in ('pre_validation',
-                         'pre_validation_keep_reviewer_permissions'):
+                         'pre_validation_keep_reviewer_permissions',
+                         'presented_item_back_to_proposed'):
             self.assertEquals(
                 cfg.validate_workflowAdaptations(('no_proposal', otherWFA)),
                 wa_conflicts)
 
         # 'pre_validation' alone is ok
         self.failIf(cfg.validate_workflowAdaptations(('pre_validation', )))
-        # conflicts with 'pre_validation_keep_reviewer_permissions')
+        # conflicts with 'pre_validation_keep_reviewer_permissions'
         self.assertEquals(
             cfg.validate_workflowAdaptations(
-                ('no_proposal', 'pre_validation_keep_reviewer_permissions')),
+                ('pre_validation', 'pre_validation_keep_reviewer_permissions')),
             wa_conflicts)
 
         # return_to_proposing_group_... alone is ok
@@ -223,6 +230,25 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertEquals(
             cfg.validate_workflowAdaptations(('removed',
                                               'removed_and_duplicated')), wa_conflicts)
+
+    def test_pm_Validate_workflowAdaptations_presented_item_back_to_prevalidated_needs_pre_validation(self):
+        """If WFA 'presented_item_back_to_prevalidated' is selected,
+           then the 'pre_validation' must be selected as well."""
+        wa_error = translate(
+            'wa_presented_item_back_to_prevalidated_needs_pre_validation_error',
+            domain='PloneMeeting', context=self.request)
+        cfg = self.meetingConfig
+
+        # 'presented_item_back_to_prevalidated' alone is failing
+        self.assertEquals(
+            cfg.validate_workflowAdaptations(('presented_item_back_to_prevalidated', )),
+            wa_error)
+        # works together with 'pre_validation'
+        self.failIf(cfg.validate_workflowAdaptations(
+            ('presented_item_back_to_prevalidated', 'pre_validation', )))
+        self.failIf(cfg.validate_workflowAdaptations(
+            ('presented_item_back_to_prevalidated',
+             'pre_validation_keep_reviewer_permissions', )))
 
     def test_pm_Validate_workflowAdaptations_added_no_publication(self):
         """Test MeetingConfig.validate_workflowAdaptations that manage addition
@@ -2395,6 +2421,109 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertTrue([tr for tr in self.transitions(item) if tr.startswith('back')])
         # but he will not be able to present it
         self.assertFalse('present' in self.transitions(item))
+
+    def test_pm_WFA_presented_item_back_to_proposed(self):
+        '''Test the workflowAdaptation 'presented_item_back_to_proposed'.'''
+        # ease override by subproducts
+        cfg = self.meetingConfig
+        if 'presented_item_back_to_proposed' not in cfg.listWorkflowAdaptations():
+            return
+        self.changeUser('pmManager')
+        # check while the wfAdaptation is not activated
+        self._presented_item_back_to_proposed_inactive()
+        # activate the wfAdaptation and check
+        cfg.setWorkflowAdaptations(('presented_item_back_to_proposed', ))
+        performWorkflowAdaptations(cfg, logger=pm_logger)
+        self._presented_item_back_to_proposed_active()
+
+    def _presented_item_back_to_proposed_inactive(self):
+        '''Tests while 'presented_item_back_to_proposed' wfAdaptation is inactive.'''
+        # present an item, presented item can not be set back to proposed
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        self.create('Meeting', date=DateTime('2018/03/15'))
+        self.presentItem(item)
+        self.assertEqual(self.transitions(item), ['backToValidated'])
+
+    def _presented_item_back_to_proposed_active(self):
+        '''Tests while 'presented_item_back_to_proposed' wfAdaptation is active.'''
+        # present an item, presented item can not be set back to proposed
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        self.create('Meeting', date=DateTime('2018/03/15'))
+        self.presentItem(item)
+        self.assertEqual(self.transitions(item), ['backToProposed', 'backToValidated'])
+        self.do(item, 'backToProposed')
+        self.assertEqual(item.queryState(), 'proposed')
+
+    def test_pm_WFA_presented_item_back_to_itemcreated(self):
+        '''Test the workflowAdaptation 'presented_item_back_to_itemcreated'.'''
+        # ease override by subproducts
+        cfg = self.meetingConfig
+        if 'presented_item_back_to_itemcreated' not in cfg.listWorkflowAdaptations():
+            return
+        self.changeUser('pmManager')
+        # check while the wfAdaptation is not activated
+        self._presented_item_back_to_itemcreated_inactive()
+        # activate the wfAdaptation and check
+        cfg.setWorkflowAdaptations(('presented_item_back_to_itemcreated', ))
+        performWorkflowAdaptations(cfg, logger=pm_logger)
+        self._presented_item_back_to_itemcreated_active()
+
+    def _presented_item_back_to_itemcreated_inactive(self):
+        '''Tests while 'presented_item_back_to_itemcreated' wfAdaptation is inactive.'''
+        # present an item, presented item can not be set back to itemcreated
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        self.create('Meeting', date=DateTime('2018/03/15'))
+        self.presentItem(item)
+        self.assertEqual(self.transitions(item), ['backToValidated'])
+
+    def _presented_item_back_to_itemcreated_active(self):
+        '''Tests while 'presented_item_back_to_itemcreated' wfAdaptation is active.'''
+        # present an item, presented item can not be set back to itemcreated
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        self.create('Meeting', date=DateTime('2018/03/15'))
+        self.presentItem(item)
+        self.assertEqual(self.transitions(item), ['backToItemCreated', 'backToValidated'])
+        self.do(item, 'backToItemCreated')
+        self.assertEqual(item.queryState(), 'itemcreated')
+
+    def test_pm_WFA_presented_item_back_to_prevalidated(self):
+        '''Test the workflowAdaptation 'presented_item_back_to_prevalidated'.'''
+        # ease override by subproducts
+        cfg = self.meetingConfig
+        if 'presented_item_back_to_prevalidated' not in cfg.listWorkflowAdaptations() or \
+           'pre_validation' not in cfg.listWorkflowAdaptations():
+            return
+        self.changeUser('pmManager')
+        # check while the wfAdaptation is not activated
+        self._presented_item_back_to_prevalidated_inactive()
+        # activate the wfAdaptation and check, must be activated together with 'pre_validation'
+        cfg.setWorkflowAdaptations(('pre_validation', 'presented_item_back_to_prevalidated', ))
+        performWorkflowAdaptations(cfg, logger=pm_logger)
+        self._presented_item_back_to_prevalidated_active()
+
+    def _presented_item_back_to_prevalidated_inactive(self):
+        '''Tests while 'presented_item_back_to_prevalidated' wfAdaptation is inactive.'''
+        # present an item, presented item can not be set back to itemcreated
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        self.create('Meeting', date=DateTime('2018/03/15'))
+        self.presentItem(item)
+        self.assertEqual(self.transitions(item), ['backToValidated'])
+
+    def _presented_item_back_to_prevalidated_active(self):
+        '''Tests while 'presented_item_back_to_prevalidated' wfAdaptation is active.'''
+        # present an item, presented item can not be set back to itemcreated
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        self.create('Meeting', date=DateTime('2018/03/15'))
+        self.presentItem(item)
+        self.assertEqual(self.transitions(item), ['backToPrevalidated', 'backToValidated'])
+        self.do(item, 'backToPrevalidated')
+        self.assertEqual(item.queryState(), 'prevalidated')
 
 
 def test_suite():

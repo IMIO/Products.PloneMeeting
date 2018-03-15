@@ -78,6 +78,7 @@ from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_COMPLETENESS_ASKERS
 from Products.PloneMeeting.config import ITEM_COMPLETENESS_EVALUATORS
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
+from Products.PloneMeeting.config import ITEM_STATES_NOT_LINKED_TO_MEETING
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 from Products.PloneMeeting.config import MEETING_NOT_CLOSED_STATES
 from Products.PloneMeeting.config import MEETINGROLES
@@ -604,8 +605,8 @@ class MeetingItemWorkflowActions(object):
           Most of times we do nothing, but in some case, we check the old/new state and
           do some specific treatment.
         """
-        # If we go back to "validated" check if we were in a meeting
-        if stateChange.new_state.id == "validated" and self.context.hasMeeting():
+        # Remove item from meeting if necessary when going to a state where item is not linked to a meeting
+        if stateChange.new_state.id in ITEM_STATES_NOT_LINKED_TO_MEETING and self.context.hasMeeting():
             # We may have to send a mail
             self.context.sendMailIfRelevant('itemUnpresented', 'Owner', isRole=True)
             # remove the item from the meeting

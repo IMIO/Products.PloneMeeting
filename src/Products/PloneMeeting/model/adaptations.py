@@ -111,8 +111,6 @@ def grantPermission(state, perm, role):
 def performWorkflowAdaptations(meetingConfig, logger=logger):
     '''This function applies workflow adaptations as specified by the p_meetingConfig.'''
 
-    cfg_id = meetingConfig.getId()
-
     def _apply_pre_validation(keepReviewerPermissions=False):
         """Helper method to apply the 'pre_validation' or 'pre_validation_keep_reviewer_permissions' wfAdaptation,
            but keep MeetingReviewer permissions for state 'proposed'.
@@ -546,7 +544,6 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
             # Delete state 'published'
             if 'itempublished' in wf.states:
                 wf.states.deleteStates(['itempublished'])
-            logger.info(WF_APPLIED % ("no_publication", cfg_id))
 
         # "no_proposal" removes state 'proposed' in the item workflow: this way,
         # people can directly validate items after they have been created.
@@ -565,7 +562,6 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
             # Delete state 'proposed'
             if 'proposed' in wf.states:
                 wf.states.deleteStates(['proposed'])
-            logger.info(WF_APPLIED % ("no_proposal", cfg_id))
 
         # "pre_validation" adds an additional state in the item validation chain:
         # itemcreated -> proposed -> *prevalidated* -> validated.
@@ -573,14 +569,12 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
         # MeetingGroup-related Plone groups suffixed with "_prereviewers".
         elif wfAdaptation == 'pre_validation':
             _apply_pre_validation(keepReviewerPermissions=False)
-            logger.info(WF_APPLIED % ("pre_validation", cfg_id))
 
         # same as the "pre_validation" here above but will make it possible for a
         # user that is reviewer to validate items proposed to the prereviewer
         # even if that reviewer is not in the Plone _prereviewers group
         elif wfAdaptation == 'pre_validation_keep_reviewer_permissions':
             _apply_pre_validation(keepReviewerPermissions=True)
-            logger.info(WF_APPLIED % ("pre_validation_keep_reviewer_permissions", cfg_id))
 
         # "creator_initiated_decisions" means that decisions (field item.decision)
         # are already pre-encoded (as propositions) by the proposing group.
@@ -615,7 +609,6 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                         grantPermission(wf.states[stateName], ReadDecision, role)
                     except KeyError:
                         pass  # State 'prevalidated' may not exist.
-            logger.info(WF_APPLIED % ("creator_initiated_decisions", cfg_id))
 
         # "items_come_validated" removes the early steps of the item workflow: the
         # initial state becomes "validated". This can be used, for example, when
@@ -632,7 +625,6 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
             for st in ('itemcreated', 'proposed'):
                 if st in wf.states:
                     wf.states.deleteStates([st])
-            logger.info(WF_APPLIED % ("items_come_validated", cfg_id))
 
         # "reviewers_take_back_validated_item" give the ability to reviewers to
         # take back an item that is validated.  To do so, this wfAdaptation will
@@ -644,7 +636,6 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
             revPortalContentRoles = state.permission_roles[ReviewPortalContent]
             if 'MeetingReviewer' not in revPortalContentRoles:
                 state.setPermission(ReviewPortalContent, 0, list(revPortalContentRoles) + ['MeetingReviewer'])
-            logger.info(WF_APPLIED % ("reviewers_take_back_validated_item", cfg_id))
 
         # "archiving" transforms item and meeting workflow into simple, one-state
         # workflows for setting up an archive site.
@@ -677,7 +668,6 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                 names.remove('archived')
             if names:
                 wf.states.deleteStates(names)
-            logger.info(WF_APPLIED % ("archiving", cfg_id))
 
         # "only_creator_may_delete" grants the permission to delete items to
         # creators only (=role MeetingMember)(and also to God=Manager).
@@ -692,7 +682,6 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                     state.setPermission(DeleteObjects, 0, ['MeetingMember', 'Manager'])
                 else:
                     state.setPermission(DeleteObjects, 0, ['Manager', ])
-            logger.info(WF_APPLIED % ("only_creator_may_delete", cfg_id))
 
         # "no_global_observation" means that during the whole decision process,
         # every proposing group will only be able to consult items and decisions
@@ -713,7 +702,6 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                     newRoles = list(roles)
                     newRoles.remove('MeetingObserverGlobal')
                     state.setPermission(permission, 0, newRoles)
-            logger.info(WF_APPLIED % ("no_global_observation", cfg_id))
 
         # "everyone_reads_all" grants, in meeting and item workflows, view access
         # to MeetingObserverGlobal in any state.
@@ -726,7 +714,6 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                         if permission not in viewPermissions:
                             continue
                         grantPermission(state, permission, 'MeetingObserverGlobal')
-            logger.info(WF_APPLIED % ("everyone_reads_all", cfg_id))
 
         # "creator_edits_unless_closed" allows the creator of an item to edit it
         # (decision included) unless the meeting is closed. To be more precise,
@@ -742,24 +729,20 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                 state = wf.states[stateName]
                 grantPermission(state, ModifyPortalContent, 'MeetingMember')
                 grantPermission(state, WriteDecision, 'MeetingMember')
-            logger.info(WF_APPLIED % ("creator_edits_unless_closed", cfg_id))
 
         # when an item is linked to a meeting, most of times, creators lose modify rights on it
         # with this, the item can be 'returned_to_proposing_group' when in a meeting then the creators
         # can modify it if necessary and send it back to the MeetingManagers when done
         elif wfAdaptation == 'return_to_proposing_group':
             _apply_return_to_proposing_group(wichValidation=None)
-            logger.info(WF_APPLIED % ("return_to_proposing_group", cfg_id))
 
         # same as the "return_to_proposing_group" here above but the reviewer must validate item
         elif wfAdaptation == 'return_to_proposing_group_with_last_validation':
             _apply_return_to_proposing_group(wichValidation='last')
-            logger.info(WF_APPLIED % ("return_to_proposing_group_with_last_validation", cfg_id))
 
         # same as the "return_to_proposing_group" here above but the item must be validate by all hierarchical level
         elif wfAdaptation == 'return_to_proposing_group_with_all_validations':
             _apply_return_to_proposing_group(wichValidation='all')
-            logger.info(WF_APPLIED % ("return_to_proposing_group_with_all_validations", cfg_id))
 
         # "hide_decisions_when_under_writing" add state 'decisions_published' in the meeting workflow
         # between the 'decided' and the 'closed' states.  The idea is to hide the decisions to non
@@ -824,7 +807,7 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                                'decisions_published' not in criterion['v']:
                                 updateCollectionCriterion(collection, criterion['i'],
                                                           tuple(criterion['v']) + ('decisions_published', ))
-            logger.info(WF_APPLIED % ("hide_decisions_when_under_writing", cfg_id))
+
         # "waiting_advices" add state 'xxx_waiting_advices' in the item workflow
         # it is a go/back state from the WAITING_ADVICES_FROM_STATES item list of states.
         # It is made to isolate an item in a state where it is no more editable but some advices may be given
@@ -909,33 +892,45 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                         else:
                             new_state.setPermission(permission, 0, roles)
 
-            logger.info(WF_APPLIED % ("waiting_advices", cfg_id))
-
         # "postpone_next_meeting" add state 'postponed_next_meeting' in the item workflow
         # additionnaly, when an item is set to this state, it will be duplicated and validated
         # for a next meeting thru the doPostpone_next_meeting method
         elif wfAdaptation == 'postpone_next_meeting':
             _addDecidedState(new_state_id='postponed_next_meeting',
                              transition_id='postpone_next_meeting')
-            logger.info(WF_APPLIED % ("postpone_next_meeting", cfg_id))
 
         # "mark_not_applicable" add state 'marked_not_applicable' in the item workflow
         elif wfAdaptation == 'mark_not_applicable':
             _addDecidedState(new_state_id='marked_not_applicable',
                              transition_id='mark_not_applicable')
-            logger.info(WF_APPLIED % ("mark_not_applicable", cfg_id))
 
         # "removed" and "removed_and_duplicated" add state 'removed' in the item workflow
         elif wfAdaptation in ('removed', 'removed_and_duplicated'):
             _addDecidedState(new_state_id='removed',
                              transition_id='remove')
-            logger.info(WF_APPLIED % (wfAdaptation, cfg_id))
 
         # "refused" add state 'refused' in the item workflow
         elif wfAdaptation == 'refused':
             _addDecidedState(new_state_id='refused',
                              transition_id='refuse')
-            logger.info(WF_APPLIED % ("refused", cfg_id))
+
+        # "presented_item_back_to_itemcreated" allows the MeetingManagers to send a presented
+        # item directly back to "itemcreated" in addition to back to "validated"
+        elif wfAdaptation == 'presented_item_back_to_itemcreated':
+            wf = itemWorkflow
+            if 'itemcreated' in wf.states:
+                presented = wf.states.presented
+                if 'backToItemCreated' not in presented.transitions:
+                    presented.transitions = presented.transitions + ('backToItemCreated', )
+
+        # "presented_item_back_to_prevalidated" allows the MeetingManagers to send a presented
+        # item directly back to "prevalidated" in addition to back to "validated"
+        elif wfAdaptation == 'presented_item_back_to_prevalidated':
+            wf = itemWorkflow
+            if 'prevalidated' in wf.states:
+                presented = wf.states.presented
+                if 'backToPrevalidated' not in presented.transitions:
+                    presented.transitions = presented.transitions + ('backToPrevalidated', )
 
         # "presented_item_back_to_proposed" allows the MeetingManagers to send a presented
         # item directly back to "proposed" in addition to back to "validated"
@@ -945,7 +940,7 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                 presented = wf.states.presented
                 if 'backToProposed' not in presented.transitions:
                     presented.transitions = presented.transitions + ('backToProposed', )
-            logger.info(WF_APPLIED % ("presented_item_back_to_proposed", cfg_id))
+        logger.info(WF_APPLIED % (wfAdaptation, meetingConfig.getId()))
 
 
 # Stuff for performing model adaptations ---------------------------------------

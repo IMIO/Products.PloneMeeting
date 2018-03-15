@@ -20,6 +20,12 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Added reindexIndexes method to the PM Migrator so it is easy to reindex some portal_catalog indexes
 - Resurrected the getConfigId index so it is possible to query portal_catalog for MeetingConfig id
 - Hide batch actions to non MeetingManagers on the meeting_view dashboards
+- Added new constant config.ITEM_STATES_NOT_LINKED_TO_MEETING to define item states when an item is not presented
+  to a meeting.  This is used by MeetingItem.wfActions.doCorrect to know when an item needs to be removed
+  from a meeting
+- Added Workflow adaptations to remove an item that is presented into a meeting and send it back to previous
+  states than validated : 'Send item back to item created', 'Send item back to pre-validated',
+  'Send item back to proposed'
 
 4.1b6 (2018-03-07)
 ------------------
