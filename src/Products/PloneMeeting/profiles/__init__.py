@@ -362,7 +362,7 @@ class MeetingConfigDescriptor(Descriptor):
                          'usedVoteValues', 'insertingMethodsOnAddItem', 'itemAnnexConfidentialVisibleFor',
                          'adviceAnnexConfidentialVisibleFor', 'meetingAnnexConfidentialVisibleFor',
                          'enableAdviceConfidentiality', 'adviceConfidentialityDefault', 'adviceConfidentialFor',
-                         'hideNotViewableLinkedItemsTo')
+                         'hideNotViewableLinkedItemsTo', 'hideHistoryTo')
     excludedFields = ['maxDaysDecisions', 'meetingAppDefaultView']
 
     # The 'instance' static attribute stores an instance used for assigning
@@ -529,6 +529,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.selectableCopyGroups = []
         self.itemCopyGroupsStates = ['accepted', 'delayed', ]
         self.hideItemHistoryCommentsToUsersOutsideProposingGroup = False
+        self.hideHistoryTo = ()
         self.restrictAccessToSecretItems = False
         self.itemWithGivenAdviceIsNotDeletable = False
         self.ownerMayDeleteAnnexDecision = False

@@ -29,6 +29,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Added adaptable method MeetingItem._getAllGroupsManagingItem that returns every groups that are managing an
   item, this is used by PMCategorizedObjectInfoAdapter._item_visible_for_groups when giving access to confidential
   annexes to proposing group
+- Added attribute MeetingConfig.hideHistoryTo that makes it possible to hide history link on every elements to
+  (restricted) power observers
 
 4.1b6 (2018-03-07)
 ------------------

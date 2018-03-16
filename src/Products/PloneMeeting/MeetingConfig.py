@@ -923,7 +923,7 @@ schema = Schema((
         ),
         schemata="data",
         multiValued=1,
-        vocabulary='listHideCssClassesTo',
+        vocabulary='listPowerObserversTypes',
         default=defValues.hideCssClassesTo,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
@@ -1929,6 +1929,23 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
+    LinesField(
+        name='hideHistoryTo',
+        default=defValues.hideHistoryTo,
+        widget=MultiSelectionWidget(
+            description="HideHistoryTo",
+            description_msgid="hide_history_to_descr",
+            format="checkbox",
+            label='Hidehistoryto',
+            label_msgid='PloneMeeting_label_hideHistoryTo',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        multiValued=1,
+        vocabulary='listPowerObserversTypes',
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
     BooleanField(
         name='hideItemHistoryCommentsToUsersOutsideProposingGroup',
         default=defValues.hideItemHistoryCommentsToUsersOutsideProposingGroup,
@@ -2070,7 +2087,7 @@ schema = Schema((
         ),
         schemata="advices",
         multiValued=1,
-        vocabulary='listAdviceConfidentialFor',
+        vocabulary='listPowerObserversTypes',
         default=defValues.adviceConfidentialFor,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
@@ -2087,7 +2104,7 @@ schema = Schema((
         ),
         schemata="advices",
         multiValued=1,
-        vocabulary='listHideNotViewableLinkedItemsTo',
+        vocabulary='listPowerObserversTypes',
         default=defValues.hideNotViewableLinkedItemsTo,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
@@ -4119,11 +4136,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 )
         return DisplayList(res).sortedByValue()
 
-    security.declarePrivate('listAdviceConfidentialFor')
+    security.declarePrivate('listPowerObserversTypes')
 
-    def listAdviceConfidentialFor(self):
+    def listPowerObserversTypes(self):
         '''
-          Vocabulary for the 'adviceConfidentialFor' field.
+          Vocabulary displaying power observers types.
         '''
         res = DisplayList((
             ('power_observers', translate('confidential_for_power_observers',
@@ -4134,22 +4151,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                                      context=self.REQUEST)),
         ))
         return res
-
-    security.declarePrivate('listHideCssClassesTo')
-
-    def listHideCssClassesTo(self):
-        '''
-          Vocabulary for the 'hideCssClassesTo' field.
-        '''
-        return self.listAdviceConfidentialFor()
-
-    security.declarePrivate('listHideNotViewableLinkedItemsTo')
-
-    def listHideNotViewableLinkedItemsTo(self):
-        '''
-          Vocabulary for the 'hideNotViewableLinkedItemsTo' field.
-        '''
-        return self.listAdviceConfidentialFor()
 
     security.declarePrivate('isVotable')
 

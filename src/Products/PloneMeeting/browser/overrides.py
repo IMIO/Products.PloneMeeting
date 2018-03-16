@@ -1178,6 +1178,18 @@ class PMContentHistoryView(IHContentHistoryView):
     '''
     histories_to_handle = (u'revision', u'workflow', u'data_changes')
 
+    def show_history(self):
+        """Override to take MeetingConfig.hideHistoryTo into account."""
+        res = super(PMContentHistoryView, self).show_history()
+        if res:
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(self.context)
+            hideHistoryTo = cfg.getHideHistoryTo()
+            if ('power_observers' in hideHistoryTo and tool.isPowerObserverForCfg(cfg)) or \
+               ('restricted_power_observers' in hideHistoryTo and tool.isPowerObserverForCfg(cfg, isRestricted=True)):
+                res = False
+        return res
+
 
 class PMCatalogNavigationTabs(CatalogNavigationTabs):
     """ """
