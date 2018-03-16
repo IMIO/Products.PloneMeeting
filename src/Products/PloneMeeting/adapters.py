@@ -1690,11 +1690,12 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
     def _suffix_proposinggroup(self, visible_fors):
         """ """
         res = []
-        proposingGroup = self.parent.getProposingGroup(theObject=True)
+        groups_managing_item = self.context.adapted()._getAllGroupsManagingItem()
         for visible_for in visible_fors:
             if visible_for.startswith(PROPOSINGGROUPPREFIX):
                 suffix = visible_for.replace(PROPOSINGGROUPPREFIX, '')
-                res.append(proposingGroup.getPloneGroupId(suffix))
+                for group_managing_item in groups_managing_item:
+                    res.append(group_managing_item.getPloneGroupId(suffix))
         return res
 
     def _suffix_profile_proposinggroup(self, visible_fors):

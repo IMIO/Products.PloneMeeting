@@ -411,6 +411,9 @@ class IMeetingItemDocumentation:
            By default this will be the proposingGroup.
            Given p_review_state may be used to know what group manage item in which review_state.
            This method must return a MeetingGroup."""
+    def _getAllGroupsManagingItem(self):
+        """Returns the list of groups that manages the item during the entire item life.
+           See _getGroupManagingItem docstring for more informations."""
 
 
 class IMeetingItemWorkflowConditions(Interface):

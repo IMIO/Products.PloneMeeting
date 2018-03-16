@@ -359,7 +359,10 @@ class MeetingConfigDescriptor(Descriptor):
                          'customAdvisers', 'selectableCopyGroups', 'itemCopyGroupsStates', 'votesEncoder',
                          'meetingTopicStates', 'decisionTopicStates', 'itemFieldsToKeepConfigSortingFor',
                          'listTypes', 'selectablePrivacies', 'xhtmlTransformFields', 'xhtmlTransformTypes',
-                         'usedVoteValues', 'insertingMethodsOnAddItem')
+                         'usedVoteValues', 'insertingMethodsOnAddItem', 'itemAnnexConfidentialVisibleFor',
+                         'adviceAnnexConfidentialVisibleFor', 'meetingAnnexConfidentialVisibleFor',
+                         'enableAdviceConfidentiality', 'adviceConfidentialityDefault', 'adviceConfidentialFor',
+                         'hideNotViewableLinkedItemsTo')
     excludedFields = ['maxDaysDecisions', 'meetingAppDefaultView']
 
     # The 'instance' static attribute stores an instance used for assigning

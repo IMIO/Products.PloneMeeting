@@ -26,6 +26,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Added Workflow adaptations to remove an item that is presented into a meeting and send it back to previous
   states than validated : 'Send item back to item created', 'Send item back to pre-validated',
   'Send item back to proposed'
+- Added adaptable method MeetingItem._getAllGroupsManagingItem that returns every groups that are managing an
+  item, this is used by PMCategorizedObjectInfoAdapter._item_visible_for_groups when giving access to confidential
+  annexes to proposing group
 
 4.1b6 (2018-03-07)
 ------------------
