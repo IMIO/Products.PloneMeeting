@@ -5749,7 +5749,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getAttendees')
 
-    def getAttendees(self, usage=None):
+    def getAttendees(self, usage=None, includeAbsents=False):
         '''Returns the attendees for this item. Takes into account
            self.itemAbsents, excepted if p_includeAbsents is True. If a given
            p_usage is defined, the method returns only users having this
@@ -5759,11 +5759,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             raise 'Please use MeetingItem.getItemSignatories instead.'
         if not self.hasMeeting():
             return res
-        itemAbsents = ()
+        itemAbsents = set(self.getItemAbsents())
         meeting = self.getMeeting()
         attendees = meeting.getAttendees()
+        if not includeAbsents:
+            attendees = set(attendees).difference(itemAbsents)
         return attendees
-        return res
 
     security.declarePublic('getAssembly')
 
