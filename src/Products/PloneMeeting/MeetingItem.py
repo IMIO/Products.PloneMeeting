@@ -1049,7 +1049,7 @@ schema = Schema((
         name='observations',
         widget=RichWidget(
             label_msgid="PloneMeeting_itemObservations",
-            condition="python: here.attributeIsUsed('observations')",
+            condition="python: here.attributeIsUsed('observations') and here.adapted().showObservations()",
             label='Observations',
             i18n_domain='PloneMeeting',
         ),
@@ -1655,6 +1655,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         return cfg.getDefaultMeetingItemMotivation()
+
+    security.declarePublic('showObservations')
+
+    def showObservations(self):
+        '''See doc in interfaces.py.'''
+        return True
 
     security.declarePublic('showInternalNotes')
 

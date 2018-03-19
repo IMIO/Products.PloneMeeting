@@ -402,6 +402,8 @@ class IMeetingItemDocumentation:
            ids that will be used for id and translated for title."""
     def showAdvices(self):
         """This controls if advices need to be shown on the item view."""
+    def showObservations(self):
+        """This controls if field MeetingItem.observations must be shown."""
     def _mayUpdateItemReference(self):
         """Condition to update item reference.  By default the item reference
            will be updated if item is in a meeting and meeting review_state is
