@@ -395,7 +395,6 @@ div.pm_search_no_result_info {
 
 /* Styles used for the annexes dropdown menus, derived from Plone styles
    "contentAction" and "actionMenu" */
-.contentActionsAX { }
 .onTop { z-index: 20 !important; }
 .onBottom { z-index: 0 }
 .contentActionsAX td a { padding: 0 0.3em; border: 0 none white; }
@@ -1163,7 +1162,7 @@ span.advices_of_type {
 }
 
 /* display advices horizontally on the item view */
-body.template-meetingitem_view td.itemAdvicesCell div.contentActionsAX > dl {
+body.template-meetingitem_view td#itemAdvicesCell div.contentActionsAX > dl {
     display: inline-block;
 }
 
