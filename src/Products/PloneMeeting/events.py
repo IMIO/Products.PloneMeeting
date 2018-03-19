@@ -560,6 +560,15 @@ def onAnnexEditFinished(annex, event):
         return annex.REQUEST.RESPONSE.redirect(parent.absolute_url() + '/@@categorized-annexes')
 
 
+def onAnnexModified(annex, event):
+    '''When an annex is modified, update parent's modification date.'''
+    parent = annex.aq_inner.aq_parent
+    # update modificationDate, it is used for caching and co
+    parent.setModificationDate(DateTime())
+    # just reindex the entire object
+    parent.reindexObject()
+
+
 def onAnnexFileChanged(annex, event):
     '''Remove BARCODE_ATTR_ID of annex if any except:
        - if ITEM_SCAN_ID_NAME found in the REQUEST in this case, it means that

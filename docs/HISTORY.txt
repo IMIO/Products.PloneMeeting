@@ -10,8 +10,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 4.1b8 (unreleased)
 ------------------
 
-- Nothing changed yet.
-
+- When an annex is modified, update parent's (item, meeting or advice) modification date, as it was already
+  the case when a new annex is added or when it is deleted
 
 4.1b7 (2018-03-19)
 ------------------
