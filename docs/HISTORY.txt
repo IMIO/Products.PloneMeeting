@@ -9,6 +9,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 
 4.1 (backports)
 ---------------
+
 - Fixed bug in MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject where returned meeting could
   nevertheless not be a meeting into which item could be presented because it was frozen and item was not
   isLateFor(meeting).  The isLateFor check is now done in the MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject
@@ -53,6 +54,10 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   behavior that sort vocabularies alphabetically
 - Make sure special "non_selectable_value_" values are not selectable in MeetingItem.optionalAdvisers.  Use
   JS to override the onClick event of these input values
+- Factorized PMDocumentGenerationHelperView(ATDocumentGenerationHelperView) to BaseDGHV(object) so we can
+  use it for dexterity contenttypes.  Item, Meeting and Folder helper views now inherits from the BaseDGHV
+  + ATDocumentGenerationHelperView and the meetingadvice helper view inherits from BaseDGHV + 
+  DXDocumentGenerationHelperView
 
 4.0 (2017-08-04)
 ----------------
