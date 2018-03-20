@@ -13,6 +13,10 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - When an annex is modified, update parent's (item, meeting or advice) modification date, as it was already
   the case when a new annex is added or when it is deleted
 - Added adaptable method MeetingItem.showObservations used in the widget condition of field MeetingItem.observations
+- Factorized PMDocumentGenerationHelperView(ATDocumentGenerationHelperView) to BaseDGHV(object) so we can
+  use it for dexterity contenttypes.  Item, Meeting and Folder helper views now inherits from the BaseDGHV
+  + ATDocumentGenerationHelperView and the meetingadvice helper view inherits from BaseDGHV + 
+  DXDocumentGenerationHelperView
 
 4.1b7 (2018-03-19)
 ------------------
