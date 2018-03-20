@@ -15,6 +15,7 @@ from plone import api
 from plone.indexer import indexer
 from Products.PluginIndexes.common.UnIndex import _marker
 from Products.PloneMeeting.interfaces import IMeeting
+from Products.PloneMeeting.interfaces import IMeetingContent
 from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
@@ -42,7 +43,7 @@ def title_or_id(obj):
     return obj.title_or_id(withTypeName=False)
 
 
-@indexer(IMeetingItem)
+@indexer(IMeetingContent)
 def previous_review_state(obj):
     """
       Indexes the previous review_state, aka the review_state before current review_state

@@ -9,7 +9,6 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 
 4.1 (backports)
 ---------------
-
 - Fixed bug in MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject where returned meeting could
   nevertheless not be a meeting into which item could be presented because it was frozen and item was not
   isLateFor(meeting).  The isLateFor check is now done in the MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject
@@ -61,6 +60,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Fixed problem in CKeditor where toolbar was lost when maximizing a CKeditor containing a very long text
 - In content edited with CKeditor, force margin-bottom under tables to 0em because it is rendered this way
   with appy.pod (2 tables above each other are glued together by default in LibreOffice)
+- Added getProposingGroup index to plone.app.querystring fields selectable on a Collection
 
 4.0 (2017-08-04)
 ----------------
