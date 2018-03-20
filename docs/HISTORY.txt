@@ -58,6 +58,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   use it for dexterity contenttypes.  Item, Meeting and Folder helper views now inherits from the BaseDGHV
   + ATDocumentGenerationHelperView and the meetingadvice helper view inherits from BaseDGHV + 
   DXDocumentGenerationHelperView
+- Fixed problem in CKeditor where toolbar was lost when maximizing a CKeditor containing a very long text
+- In content edited with CKeditor, force margin-bottom under tables to 0em because it is rendered this way
+  with appy.pod (2 tables above each other are glued together by default in LibreOffice)
 
 4.0 (2017-08-04)
 ----------------
