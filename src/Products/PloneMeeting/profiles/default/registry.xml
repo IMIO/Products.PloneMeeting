@@ -1,6 +1,6 @@
 <!-- Operation Definitions -->
 <registry xmlns:i18n="http://xml.zope.org/namespaces/i18n"
-          i18n:domain="plone">
+          i18n:domain="PloneMeeting">
 
     <records interface="plone.app.querystring.interfaces.IQueryField"
              prefix="plone.app.querystring.field.getDate">
@@ -43,7 +43,7 @@
     <records interface="plone.app.querystring.interfaces.IQueryField"
              prefix="plone.app.querystring.field.previous_review_state">
         <value key="title" i18n:translate="">Previous review state</value>
-        <value key="description" i18n:translate="">The item previous review state</value>
+        <value key="description" i18n:translate="">The item, advice or meeting previous review state</value>
         <value key="enabled">True</value>
         <value key="sortable">True</value>
         <value key="operations">
@@ -56,12 +56,25 @@
     <records interface="plone.app.querystring.interfaces.IQueryField"
              prefix="plone.app.querystring.field.indexAdvisers">
         <value key="title" i18n:translate="">Advisers index</value>
-        <value key="description" i18n:translate="">Informations about advices on an element</value>
+        <value key="description" i18n:translate="">Informations about advices on an item or an advice</value>
         <value key="enabled">True</value>
         <value key="operations">
             <element>plone.app.querystring.operation.selection.is</element>
         </value>
         <value key="vocabulary">Products.PloneMeeting.vocabularies.askedadvicesvocabulary</value>
+       <value key="group" i18n:translate="">Metadata</value>
+    </records>
+
+    <records interface="plone.app.querystring.interfaces.IQueryField"
+             prefix="plone.app.querystring.field.getProposingGroup">
+        <value key="title" i18n:translate="PloneMeeting_label_proposingGroup">Proposing group</value>
+        <value key="description" i18n:translate=""></value>
+        <value key="enabled">True</value>
+        <value key="sortable">True</value>
+        <value key="operations">
+            <element>plone.app.querystring.operation.selection.is</element>
+        </value>
+        <value key="vocabulary">Products.PloneMeeting.vocabularies.proposinggroupsvocabulary</value>
        <value key="group" i18n:translate="">Metadata</value>
     </records>
 
