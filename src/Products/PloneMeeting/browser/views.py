@@ -36,9 +36,10 @@ from Products.Five import BrowserView
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.WorkflowCore import WorkflowException
 from plone import api
+from collective.documentgenerator.helper.archetypes import ATDocumentGenerationHelperView
+from collective.documentgenerator.helper.dexterity import DXDocumentGenerationHelperView
 from eea.facetednavigation.browser.app.view import FacetedContainerView
 from eea.facetednavigation.interfaces import ICriteria
-from collective.documentgenerator.helper.archetypes import ATDocumentGenerationHelperView
 from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
 from imio.helpers.xhtml import addClassToContent
 from imio.helpers.xhtml import imagesToPath
@@ -551,7 +552,7 @@ class PortletTodoUpdateView(BrowserView):
         return ''
 
 
-class PMDocumentGenerationHelperView(ATDocumentGenerationHelperView):
+class BaseDGHV(object):
     """ """
 
     def imageOrientation(self, image):
@@ -695,7 +696,7 @@ class PMDocumentGenerationHelperView(ATDocumentGenerationHelperView):
         return res.encode('utf-8')
 
 
-class FolderDocumentGenerationHelperView(PMDocumentGenerationHelperView):
+class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV):
     """ """
 
     def selected_indexAdvisers_data(self, brains):
@@ -764,7 +765,7 @@ class MeetingDocumentGenerationHelperView(FolderDocumentGenerationHelperView):
     """ """
 
 
-class ItemDocumentGenerationHelperView(PMDocumentGenerationHelperView):
+class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV):
     """ """
     def printMeetingDate(self, returnDateTime=False, noMeetingMarker='-'):
         """Print meeting date, manage fact that item is not linked to a meeting,
@@ -780,7 +781,7 @@ class ItemDocumentGenerationHelperView(PMDocumentGenerationHelperView):
             return noMeetingMarker
 
 
-class AdviceDocumentGenerationHelperView(PMDocumentGenerationHelperView):
+class AdviceDocumentGenerationHelperView(DXDocumentGenerationHelperView, BaseDGHV):
     """ """
 
 

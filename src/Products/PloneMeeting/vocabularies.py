@@ -3,6 +3,7 @@
 from operator import attrgetter
 
 from zope.component.hooks import getSite
+from zope.globalrequest import getRequest
 from zope.i18n import translate
 from zope.interface import implements
 from zope.schema.vocabulary import SimpleVocabulary
@@ -148,6 +149,7 @@ class ItemProposingGroupsVocabulary(object):
         res = sorted(res_active, key=attrgetter('title'))
 
         res_not_active = []
+        request = getattr(context, 'REQUEST', getRequest())
         for group in notActiveGroups:
             res_not_active.append(
                 SimpleTerm(group.getId(),
@@ -155,7 +157,7 @@ class ItemProposingGroupsVocabulary(object):
                            translate('${element_title} (Inactive)',
                                      domain='PloneMeeting',
                                      mapping={'element_title': safe_unicode(group.Title())},
-                                     context=context.REQUEST)
+                                     context=request)
                            )
                 )
         res = res + sorted(res_not_active, key=attrgetter('title'))

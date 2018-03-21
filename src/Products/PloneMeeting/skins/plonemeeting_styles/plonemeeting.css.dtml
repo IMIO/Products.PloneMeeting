@@ -250,6 +250,13 @@ table.no-style-table td {
     border: 0 !important;
 }
 
+/* no margin under table in content */
+#content div[id^='hook_'] table,
+body.cke_editable table,
+#content div.pmMoreInfo table {
+   margin-bottom: 0em !important;
+}
+
 #content table.no-style-table.advices {
     margin-bottom: 0;
 }
@@ -1608,6 +1615,11 @@ div[id^='hook_'] table[cellpadding='0'] tr th,
 div.pmMoreInfo table[cellpadding='0'] tr td,
 div.pmMoreInfo table[cellpadding='0'] tr th {
     padding: 0em !important;
+}
+
+/* this avoid losing toolbar when maximizing a CKeditor with very long content */
+.cke_inner.cke_reset.cke_maximized {
+    position: fixed !important;
 }
 
 /* hide collective.documentviewer message on portaltype-configurablepodtemplate
