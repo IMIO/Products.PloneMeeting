@@ -314,7 +314,9 @@ class Migrate_To_4_0(Migrator):
                 'Moving to imio.dashboard ({0}) : adding '
                 '"on list type" as first value of "insertingMethodsOnAddItem"...'.format(cfgId))
             insertingMethodsOnAddItem = list(cfg.getInsertingMethodsOnAddItem())
-            if not insertingMethodsOnAddItem[0]['insertingMethod'] == 'on_list_type':
+            # use insertingMethod 'on_list_type' if not using 'at_the_end'
+            if not insertingMethodsOnAddItem[0]['insertingMethod'] == 'on_list_type' and \
+               not insertingMethodsOnAddItem[0]['insertingMethod'] == 'at_the_end':
                 insertingMethodsOnAddItem.insert(0, {'insertingMethod': 'on_list_type', 'reverse': '0'})
                 cfg.setInsertingMethodsOnAddItem(insertingMethodsOnAddItem)
             tabId = '%s_action' % cfg.getId()
