@@ -5843,6 +5843,24 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(IContentDeletable(itemWithGivenAdvice).mayDelete())
         self.assertTrue(IContentDeletable(itemWithInheritedGivenAdvices).mayDelete())
 
+    def test_pm_ShowObservations(self):
+        """By default, MeetingItem.showObservations returns True but
+           observations are shown if attribute used in configuration."""
+        self.changeUser('pmCreator1')
+        cfg = self.meetingConfig
+        usedItemAttrs = cfg.getUsedItemAttributes()
+        self.assertFalse('observations' in usedItemAttrs)
+        item = self.create('MeetingItem')
+        widget = item.getField('observations').widget
+        self.assertFalse(widget.testCondition(item.aq_inner.aq_parent, self.portal, item))
+        self.assertTrue(item.adapted().showObservations())
+        usedItemAttrs = usedItemAttrs + ('observations', )
+        cfg.setUsedItemAttributes(usedItemAttrs)
+        # MeetingItem.attributeIsUsed is RAMCached
+        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attributeIsUsed')
+        self.assertTrue(widget.testCondition(item.aq_inner.aq_parent, self.portal, item))
+        self.assertTrue(item.adapted().showObservations())
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
