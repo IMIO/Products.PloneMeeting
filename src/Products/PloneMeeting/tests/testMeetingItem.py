@@ -5848,14 +5848,12 @@ class testMeetingItem(PloneMeetingTestCase):
            observations are shown if attribute used in configuration."""
         self.changeUser('pmCreator1')
         cfg = self.meetingConfig
-        usedItemAttrs = cfg.getUsedItemAttributes()
-        self.assertFalse('observations' in usedItemAttrs)
+        cfg.setUsedItemAttributes(())
         item = self.create('MeetingItem')
         widget = item.getField('observations').widget
         self.assertFalse(widget.testCondition(item.aq_inner.aq_parent, self.portal, item))
         self.assertTrue(item.adapted().showObservations())
-        usedItemAttrs = usedItemAttrs + ('observations', )
-        cfg.setUsedItemAttributes(usedItemAttrs)
+        cfg.setUsedItemAttributes(('observations', ))
         # MeetingItem.attributeIsUsed is RAMCached
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attributeIsUsed')
         self.assertTrue(widget.testCondition(item.aq_inner.aq_parent, self.portal, item))
