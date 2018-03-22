@@ -1438,6 +1438,9 @@ class Migrate_To_4_0(Migrator):
             # especially ConfigurablePodTemplate that remves mailing_lists attribute
             # reapply PloneMeeting types tool step
             self.runProfileSteps(product='Products.PloneMeeting', steps=['typeinfo'])
+            # reapply registry.xml to add the getProposingGroup plone.app.querystring query field
+            self.runProfileSteps(product='Products.PloneMeeting', steps=['plone.app.registry'])
+            # correct content_category id of annexes if necessary
             self._adaptAnnexContentCategory()
             # make sure we use resolveuid for images so URL is always correct even if item id changed
             cke_props = self.portal.portal_properties.ckeditor_properties
