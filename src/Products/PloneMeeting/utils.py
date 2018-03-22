@@ -260,6 +260,27 @@ def cleanMemoize(portal, prefixes=[]):
         annotations['plone.memoize'].clear()
 
 
+def createOrUpdatePloneGroup(groupId, groupTitle, groupSuffix):
+    '''This will create the PloneGroup that corresponds to me
+       and p_groupSuffix, if group already exists, it will just update it's title.'''
+    properties = api.portal.get_tool('portal_properties')
+    enc = properties.site_properties.getProperty('default_charset')
+    groupTitle = '%s (%s)' % (
+        groupTitle.decode(enc),
+        translate(groupSuffix, domain='PloneMeeting', context=getRequest()))
+    # a default Plone group title is NOT unicode.  If a Plone group title is
+    # edited TTW, his title is no more unicode if it was previously...
+    # make sure we behave like Plone...
+    groupTitle = groupTitle.encode(enc)
+    portal_groups = api.portal.get_tool('portal_groups')
+    wasCreated = portal_groups.addGroup(groupId, title=groupTitle)
+    if not wasCreated:
+        # update the title so Plone groups title are coherent
+        # with MeetingGroup title in case it is updated thereafter
+        portal_groups.editGroup(groupId, title=groupTitle)
+    return wasCreated
+
+
 def fieldIsEmpty(name, obj, useParamValue=False, value=None):
     '''If field named p_name on p_obj empty ? The method checks emptyness of
        given p_value if p_useParamValue is True instead.'''

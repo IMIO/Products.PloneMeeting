@@ -55,6 +55,13 @@ from Products.PloneMeeting.config import TOOL_FOLDER_SEARCHES
 from Products.PloneMeeting.config import WriteHarmlessConfig
 from Products.PloneMeeting.MeetingConfig import DUPLICATE_SHORT_NAME
 
+MC_GROUP_SUFFIXES = (
+    BUDGETIMPACTEDITORS_GROUP_SUFFIX,
+    POWEROBSERVERS_GROUP_SUFFIX,
+    RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX,
+    MEETINGMANAGERS_GROUP_SUFFIX,
+    ITEMTEMPLATESMANAGERS_GROUP_SUFFIX)
+
 
 class testMeetingConfig(PloneMeetingTestCase):
     '''Tests the MeetingConfig class methods.'''
@@ -1003,11 +1010,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # budgetimpacteditors
         # meetingmanagers
         # itemtemplatesmanagers
-        for suffix in (BUDGETIMPACTEDITORS_GROUP_SUFFIX,
-                       POWEROBSERVERS_GROUP_SUFFIX,
-                       RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX,
-                       MEETINGMANAGERS_GROUP_SUFFIX,
-                       ITEMTEMPLATESMANAGERS_GROUP_SUFFIX):
+        for suffix in MC_GROUP_SUFFIXES:
             groupId = '{0}_{1}'.format(cfgId, suffix)
             self.assertTrue(groupId in existingGroupIds)
             # for (restricted)powerobservers, it gets a Reader localrole on tool and MeetingConfig
@@ -1301,6 +1304,55 @@ class testMeetingConfig(PloneMeetingTestCase):
         criterion.default = u'60'
         self.assertEqual(criterion.default, u'60')
         self.assertEqual(cfg.getMaxShownListings(), u'60')
+
+    def test_pm_UpdateLinkedPloneGroupsTitle(self):
+        '''When the title of a MeetingConfig changed, the title of linked Plone groups is changed accordingly.'''
+        cfg = self.meetingConfig
+        cfgId = cfg.getId()
+        cfgTitle = cfg.Title()
+        for suffix in MC_GROUP_SUFFIXES:
+            ploneGroup = self.portal.portal_groups.getGroupById('{0}_{1}'.format(cfgId, suffix))
+            self.assertTrue(cfgTitle in ploneGroup.getProperty('title'))
+
+        # update MeetingConfig title and check again
+        cfgTitle = 'New cfg title'
+        cfg.setTitle(cfgTitle)
+        cfg.at_post_edit_script()
+        # Plone groups title have been updated
+        for suffix in MC_GROUP_SUFFIXES:
+            ploneGroup = self.portal.portal_groups.getGroupById('{0}_{1}'.format(cfgId, suffix))
+            self.assertTrue(cfgTitle in ploneGroup.getProperty('title'))
+
+    def test_pm_LinkedPloneGroupsTitleWhenUsingConfigGroups(self):
+        '''When cfg is in a configGroup, the title of created Plone groups is prepended with configGroup title.'''
+        self.tool.setConfigGroups(
+            (
+                {'label': 'ConfigGroup1', 'row_id': 'unique_id_1'},
+                {'label': 'ConfigGroup2', 'row_id': 'unique_id_2'},
+                {'label': 'ConfigGroup3', 'row_id': 'unique_id_3'},
+            )
+        )
+        cfg = self.meetingConfig
+        cfgId = cfg.getId()
+        self.assertEqual(cfg.getConfigGroup(), '')
+        for suffix in MC_GROUP_SUFFIXES:
+            ploneGroup = self.portal.portal_groups.getGroupById('{0}_{1}'.format(cfgId, suffix))
+            self.assertFalse(ploneGroup.getProperty('title').startswith('ConfigGroup1'))
+
+        # use a configGroup and check
+        cfg.setConfigGroup('unique_id_1')
+        cfg.at_post_edit_script()
+        # now linked Plone groups contain the configGroup title
+        for suffix in MC_GROUP_SUFFIXES:
+            ploneGroup = self.portal.portal_groups.getGroupById('{0}_{1}'.format(cfgId, suffix))
+            self.assertTrue(ploneGroup.getProperty('title').startswith('ConfigGroup1'))
+
+        # remove configGroup, and check
+        cfg.setConfigGroup('')
+        cfg.at_post_edit_script()
+        for suffix in MC_GROUP_SUFFIXES:
+            ploneGroup = self.portal.portal_groups.getGroupById('{0}_{1}'.format(cfgId, suffix))
+            self.assertFalse(ploneGroup.getProperty('title').startswith('ConfigGroup1'))
 
 
 def test_suite():

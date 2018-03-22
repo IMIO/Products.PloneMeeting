@@ -303,9 +303,8 @@ class testMeetingGroup(PloneMeetingTestCase):
         self.assertTrue('developers' not in item.listOptionalAdvisers())
         self.assertTrue(not self.tool.userIsAmong(['creators']))
 
-    def test_pm_UpdatePloneGroupTitle(self):
-        '''When the title of a MeetingGroup changed, the title of linked
-           Plone groups is changed accordingly.'''
+    def test_pm_UpdateLinkedPloneGroupsTitle(self):
+        '''When the title of a MeetingGroup changed, the title of linked Plone groups is changed accordingly.'''
         developers = self.tool.developers
         devId = developers.getId()
         devTitle = developers.Title()
