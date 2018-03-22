@@ -124,7 +124,8 @@ class PMGlobalSectionsViewlet(GlobalSectionsViewlet):
                     cfg_ids = [cfg['id'] for cfg in
                                grouped_configs[(action['data-config_group'], action['name'])]]
                     for cfg_id in cfg_ids:
-                        if "/mymeetings/%s" % cfg_id in path:
+                        # select groupedConfig tab in the application and when on the MC in the configuration
+                        if "/mymeetings/%s" % cfg_id in path or "/portal_plonemeeting/%s" % cfg_id in path:
                             return {'portal': action['id'], }
             # XXX end of change by PM
 

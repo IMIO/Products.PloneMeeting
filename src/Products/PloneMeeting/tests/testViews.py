@@ -1036,6 +1036,25 @@ class testViews(PloneMeetingTestCase):
         viewlet.update()
         self.assertEqual(viewlet.selected_portal_tab, 'mc_{0}'.format(cfg2Id))
 
+        # now in the configuration
+        # of cfg1 in a configGroup
+        self.changeUser('pmManager')
+        self.request['URL'] = cfg.absolute_url()
+        viewlet = self._get_viewlet(
+            context=cfg,
+            manager_name='plone.portalheader',
+            viewlet_name='plone.global_sections')
+        viewlet.update()
+        self.assertEqual(viewlet.selected_portal_tab, 'mc_config_group_unique_id_1')
+        # cfg2 out of configGroups
+        self.request['URL'] = cfg2.absolute_url()
+        viewlet = self._get_viewlet(
+            context=cfg2,
+            manager_name='plone.portalheader',
+            viewlet_name='plone.global_sections')
+        viewlet.update()
+        self.assertEqual(viewlet.selected_portal_tab, 'mc_{0}'.format(cfg2Id))
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
