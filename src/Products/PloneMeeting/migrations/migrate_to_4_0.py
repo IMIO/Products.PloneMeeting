@@ -1429,7 +1429,7 @@ class Migrate_To_4_0(Migrator):
             self.upgradeProfile('collective.ckeditor:default')
             self.runProfileSteps(product='imio.annex', steps=['typeinfo'])
             self.ps.runAllImportStepsFromProfile('imio.helpers:default')
-            # make sure form-widgets-raiseOnError_for_non_managers is enabled
+            # make sure raiseOnError_for_non_managers is enabled
             api.portal.set_registry_record(
                 'collective.documentgenerator.browser.controlpanel.'
                 'IDocumentGeneratorControlPanelSchema.raiseOnError_for_non_managers',

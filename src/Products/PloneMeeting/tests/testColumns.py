@@ -26,6 +26,7 @@ from collective.iconifiedcategory.interfaces import IIconifiedCategorySettings
 from DateTime import DateTime
 from imio.helpers.cache import cleanRamCacheFor
 from plone import api
+from Products.PloneMeeting.columns import ItemLinkedMeetingColumn
 from Products.PloneMeeting.columns import PMAnnexActionsColumn
 from Products.PloneMeeting.columns import PMPrettyLinkColumn
 from Products.PloneMeeting.config import AddAnnex
@@ -177,6 +178,31 @@ class testColumns(PloneMeetingTestCase):
         # and it works
         item.folder_position_typeaware(position='up', id=annexDecision1.getId())
         item.folder_position_typeaware(position='down', id=annexDecision2.getId())
+
+    def test_pm_ItemLinkedMeetingColumnWhenMeetingNotViewable(self):
+        """Test when link to meeting displayed in the items dashboard."""
+        cfg = self.meetingConfig
+        cfg.setItemPowerObserversStates(('presented', ))
+        cfg.setMeetingPowerObserversStates(())
+
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        self.create('Meeting', date=DateTime('2018/03/21'))
+
+        meetingFolder = self.getMeetingFolder()
+        faceted_table = meetingFolder.restrictedTraverse('faceted-table-view')
+        column = ItemLinkedMeetingColumn(meetingFolder, self.portal.REQUEST, faceted_table)
+        # item not linked to a meeting
+        item_brain = self.portal.portal_catalog(UID=item.UID())[0]
+        self.assertEqual(column.renderCell(item_brain), u'-')
+        self.presentItem(item)
+
+        # linked and viewable
+        item_brain = self.portal.portal_catalog(UID=item.UID())[0]
+        self.assertTrue(u"<a class='pretty_link state-created' " in column.renderCell(item_brain))
+        # linked but not viewable
+        self.changeUser('powerobserver1')
+        self.assertTrue(u"<div class='pretty_link state-created' " in column.renderCell(item_brain))
 
 
 def test_suite():

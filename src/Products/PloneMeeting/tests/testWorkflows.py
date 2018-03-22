@@ -471,7 +471,7 @@ class testWorkflows(PloneMeetingTestCase):
         # contains 2 recurring items
         self.assertTrue(len(meeting2.getItems()) == 2)
 
-    def test_pm_RecurringItemsBypassSecutiry(self):
+    def test_pm_RecurringItemsBypassSecurity(self):
         '''Tests that recurring items are addable by a MeetingManager even if by default,
            one of the transition to trigger for the item to be presented should not be triggerable
            by the MeetingManager inserting the recurring item.

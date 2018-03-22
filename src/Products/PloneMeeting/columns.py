@@ -202,9 +202,10 @@ class ItemLinkedMeetingColumn(BaseColumn):
       Display the formatted date and a link to the linked meeting if any.
     """
     meeting_uid_attr = 'linkedMeetingUID'
+    attrName = 'linkedMeetingDate'
 
     def renderCell(self, item):
-        """Display right icon depending on toDiscuss or not."""
+        """ """
         value = self.getValue(item)
         if not value or value == DateTime('1950/01/01'):
             return u'-'
@@ -219,6 +220,7 @@ class ItemPreferredMeetingColumn(ItemLinkedMeetingColumn):
       Display the formatted date and a link to the preferred meeting if any.
     """
     meeting_uid_attr = 'getPreferredMeeting'
+    attrName = 'getPreferredMeetingDate'
 
 
 class ItemListTypeColumn(VocabularyColumn, ColorColumn):

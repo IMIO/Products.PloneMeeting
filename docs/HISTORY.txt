@@ -21,6 +21,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - In content edited with CKeditor, force margin-bottom under tables to 0em because it is rendered this way
   with appy.pod (2 tables above each other are glued together by default in LibreOffice)
 - Added getProposingGroup index to plone.app.querystring fields selectable on a Collection
+- Make sure the link to meeting displayed in items dashboard is not enabled if current user may not see the meeting
 
 4.1b7 (2018-03-19)
 ------------------
