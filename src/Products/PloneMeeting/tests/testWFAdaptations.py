@@ -56,7 +56,8 @@ class testWFAdaptations(PloneMeetingTestCase):
         '''Test what are the available wfAdaptations.
            This way, if we add a wfAdaptations, the test will 'break' until it is adapted...'''
         self.assertEquals(sorted(self.meetingConfig.listWorkflowAdaptations().keys()),
-                          ['archiving',
+                          ['accepted_out_of_meeting',
+                           'archiving',
                            'creator_edits_unless_closed',
                            'creator_initiated_decisions',
                            'everyone_reads_all',
@@ -504,6 +505,36 @@ class testWFAdaptations(PloneMeetingTestCase):
             wf_adaptation_name='refused',
             item_state='refused',
             item_transition='refuse')
+
+    def test_pm_Validate_workflowAdaptations_removed_accepted_out_of_meeting(self):
+        """Test MeetingConfig.validate_workflowAdaptations that manage removal
+           of wfAdaptations 'accepted_out_of_meeting' that is not possible if
+           some items are 'accepted_out_of_meeting'."""
+
+        # ease override by subproducts
+        cfg = self.meetingConfig
+        if 'accepted_out_of_meeting' not in cfg.listWorkflowAdaptations():
+            return
+
+        msg_removed_error = translate(
+            'wa_removed_accepted_out_of_meeting_error',
+            domain='PloneMeeting',
+            context=self.request)
+        self.changeUser('pmManager')
+        cfg.setWorkflowAdaptations(('accepted_out_of_meeting', ))
+        performWorkflowAdaptations(cfg, logger=pm_logger)
+
+        item = self.create('MeetingItem')
+        self.validateItem(item)
+        self.failIf(cfg.validate_workflowAdaptations(('accepted_out_of_meeting', )))
+        self.do(item, 'accept_out_of_meeting')
+        self.assertEquals(
+            cfg.validate_workflowAdaptations(()),
+            msg_removed_error)
+
+        # make wfAdaptation selectable
+        self.do(item, 'backToValidatedFromAcceptedOutOfMeeting')
+        self.failIf(cfg.validate_workflowAdaptations(()))
 
     def test_pm_Validate_workflowAdaptations_removed_waiting_advices(self):
         """Test MeetingConfig.validate_workflowAdaptations that manage removal
@@ -2524,6 +2555,36 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertEqual(self.transitions(item), ['backToPrevalidated', 'backToValidated'])
         self.do(item, 'backToPrevalidated')
         self.assertEqual(item.queryState(), 'prevalidated')
+
+    def test_pm_WFA_accepted_out_of_meeting(self):
+        '''Test the workflowAdaptation 'accepted_out_of_meeting'.'''
+        # ease override by subproducts
+        cfg = self.meetingConfig
+        if 'accepted_out_of_meeting' not in cfg.listWorkflowAdaptations():
+            return
+        self.changeUser('pmManager')
+        # check while the wfAdaptation is not activated
+        self._accepted_out_of_meeting_inactive()
+        # activate the wfAdaptation and check
+        cfg.setWorkflowAdaptations(('accepted_out_of_meeting', ))
+        performWorkflowAdaptations(cfg, logger=pm_logger)
+        self._accepted_out_of_meeting_active()
+
+    def _accepted_out_of_meeting_inactive(self):
+        '''Tests while 'accepted_out_of_meeting' wfAdaptation is inactive.'''
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        self.validateItem(item)
+        self.assertTrue('accept_out_of_meeting' not in self.transitions(item))
+
+    def _accepted_out_of_meeting_active(self):
+        '''Tests while 'accepted_out_of_meeting' wfAdaptation is active.'''
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        self.validateItem(item)
+        self.assertTrue('accept_out_of_meeting' in self.transitions(item))
+        self.do(item, 'accept_out_of_meeting')
+        self.assertEqual(item.queryState(), 'accepted_out_of_meeting')
 
 
 def test_suite():

@@ -2322,6 +2322,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                      'return_to_proposing_group', 'return_to_proposing_group_with_last_validation',
                      'return_to_proposing_group_with_all_validations',
                      'hide_decisions_when_under_writing', 'waiting_advices',
+                     'accepted_out_of_meeting', 'accepted_out_of_meeting_emergency',
+                     'accepted_out_of_meeting_and_validated_for_next_meeting',
+                     'accepted_out_of_meeting_emergency_and_validated_for_next_meeting',
                      'postpone_next_meeting', 'mark_not_applicable',
                      'removed', 'removed_and_duplicated', 'refused')
 
@@ -3474,6 +3477,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # check that no more meetings are in this state
             if catalog(portal_type=self.getMeetingTypeName(), review_state='decisions_published'):
                 return translate('wa_removed_hide_decisions_when_under_writing_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+        if 'accepted_out_of_meeting' in removed:
+            # this will remove the 'accepted_out_of_meeting' state for Item
+            # check that no more items are in this state
+            if catalog(portal_type=self.getItemTypeName(), review_state='accepted_out_of_meeting'):
+                return translate('wa_removed_accepted_out_of_meeting_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
         if 'postpone_next_meeting' in removed:

@@ -428,6 +428,15 @@ class MeetingItemWorkflowConditions(object):
         """ """
         return self._mayWaitAdvices(self._getWaitingAdvicesStateFrom('prevalidated'))
 
+    security.declarePublic('mayAccept_out_of_meeting')
+
+    def mayAccept_out_of_meeting(self):
+        """ """
+        res = False
+        if _checkPermission(ReviewPortalContent, self.context):
+            res = True
+        return res
+
 
 InitializeClass(MeetingItemWorkflowConditions)
 
@@ -522,6 +531,11 @@ class MeetingItemWorkflowActions(object):
     security.declarePrivate('doItemFreeze')
 
     def doItemFreeze(self, stateChange):
+        pass
+
+    security.declarePrivate('doAccept_out_of_meeting')
+
+    def doAccept_out_of_meeting(self, stateChange):
         pass
 
     security.declarePrivate('doAccept')
@@ -1307,6 +1321,18 @@ schema = Schema((
         vocabulary='listOtherMeetingConfigsClonableToPrivacy',
     ),
     BooleanField(
+        name='isAcceptableOutOfMeeting',
+        default=False,
+        widget=BooleanField._properties['widget'](
+            condition="python: here.showIsAcceptableOutOfMeeting()",
+            description="IsAcceptableOutOfMeeting",
+            description_msgid="is_acceptable_out_of_meeting_descr",
+            label='Isacceptableoutofmeeting',
+            label_msgid='PloneMeeting_label_isAcceptableOutOfMeeting',
+            i18n_domain='PloneMeeting',
+        ),
+    ),
+    BooleanField(
         name='sendToAuthority',
         default=False,
         widget=BooleanField._properties['widget'](
@@ -1662,6 +1688,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         return True
 
+    security.declarePublic('showIsAcceptableOutOfMeeting')
+
+    def showIsAcceptableOutOfMeeting(self):
+        '''Show the MeetingItem.isAcceptableOutOfMeeting field if WFAdaptation
+           'accepted_out_of_meeting' or 'accepted_out_of_meeting_and_validated_for_next_meeting'
+           is used..'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        wfAdaptations = cfg.getWorkflowAdaptations()
+        return 'accepted_out_of_meeting' in wfAdaptations or \
+            'accepted_out_of_meeting_and_validated_for_next_meeting' in wfAdaptations
+
     security.declarePublic('showInternalNotes')
 
     def showInternalNotes(self):
@@ -1773,7 +1811,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         wfTool = api.portal.get_tool('portal_workflow')
         return bool(wfTool.getTransitionsFor(item))
 
-    security.declareProtected('Modify portal content', 'setTakenOverBy')
+    security.declareProtected(ModifyPortalContent, 'setTakenOverBy')
 
     def setTakenOverBy(self, value, **kwargs):
         '''Override MeetingItem.takenOverBy mutator so we can manage
@@ -1959,7 +1997,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return True
         return False
 
-    security.declareProtected('Modify portal content', 'setItemIsSigned')
+    security.declareProtected(ModifyPortalContent, 'setItemIsSigned')
 
     def setItemIsSigned(self, value, **kwargs):
         '''Overrides the field 'itemIsSigned' mutator to check if the field is
@@ -1970,7 +2008,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             raise Unauthorized
         self.getField('itemIsSigned').set(self, value, **kwargs)
 
-    security.declareProtected('Modify portal content', 'setManuallyLinkedItems')
+    security.declareProtected(ModifyPortalContent, 'setManuallyLinkedItems')
 
     def setManuallyLinkedItems(self, value, **kwargs):
         '''Overrides the field 'manuallyLinkedItems' mutator so we synchronize
@@ -3221,13 +3259,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return True
         return False
 
-    security.declareProtected('Modify portal content', 'transformRichTextField')
+    security.declareProtected(ModifyPortalContent, 'transformRichTextField')
 
     def transformRichTextField(self, fieldName, richContent):
         '''See doc in interfaces.py.'''
         return richContent
 
-    security.declareProtected('Modify portal content', 'onEdit')
+    security.declareProtected(ModifyPortalContent, 'onEdit')
 
     def onEdit(self, isCreated):
         '''See doc in interfaces.py.'''
@@ -5043,7 +5081,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     continue
                 self.manage_addLocalRoles(groupId, (roles[groupSuffix],))
 
-    security.declareProtected('Modify portal content', 'updateLocalRoles')
+    security.declareProtected(ModifyPortalContent, 'updateLocalRoles')
 
     def updateLocalRoles(self, **kwargs):
         '''Updates the local roles of this item, regarding :
@@ -5684,7 +5722,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Regarding item state, the item has to be :
         # - current state in itemAutoSentToOtherMCStates;
         # - current state in itemManualSentToOtherMCStates/itemAutoSentToOtherMCStates
-        #   and user have 'Modify portal content' or is a MeetingManager.
+        #   and user have ModifyPortalContent or is a MeetingManager.
         item_state = item.queryState()
         if not ((automatically and
                  item_state in cfg.getItemAutoSentToOtherMCStates()) or
@@ -6223,7 +6261,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if lastValidationDate and (lastValidationDate < deadline):
             return True
 
-    security.declareProtected('Modify portal content', 'onWelcomePerson')
+    security.declareProtected(ModifyPortalContent, 'onWelcomePerson')
 
     def onWelcomePerson(self):
         '''Some user (a late attendee) has entered the meeting just before
@@ -6242,7 +6280,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 meeting.entrances = PersistentMapping()
             meeting.entrances[userId] = self.getItemNumber(relativeTo='meeting')
 
-    security.declareProtected('Modify portal content', 'onByebyePerson')
+    security.declareProtected(ModifyPortalContent, 'onByebyePerson')
 
     def onByebyePerson(self):
         '''Some user (in request.userId) has left the meeting:
@@ -6276,7 +6314,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 absents.append(userId)
             self.setItemAbsents(absents)
 
-    security.declareProtected('Modify portal content', 'ItemAssemblyDescrMethod')
+    security.declareProtected(ModifyPortalContent, 'ItemAssemblyDescrMethod')
 
     def ItemAssemblyDescrMethod(self):
         '''Special handling of itemAssembly field description where we display
@@ -6308,7 +6346,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self.getMeeting().getAssembly() or '-')
         return value + collapsibleMeetingAssembly
 
-    security.declareProtected('Modify portal content', 'ItemAssemblyExcusedDescrMethod')
+    security.declareProtected(ModifyPortalContent, 'ItemAssemblyExcusedDescrMethod')
 
     def ItemAssemblyExcusedDescrMethod(self):
         '''Special handling of itemAssemblyExcused field description where we display
@@ -6331,7 +6369,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 self.getMeeting().getAssemblyExcused() or '-')
         return value + collapsibleMeetingAssemblyExcused
 
-    security.declareProtected('Modify portal content', 'ItemAssemblyAbsentsDescrMethod')
+    security.declareProtected(ModifyPortalContent, 'ItemAssemblyAbsentsDescrMethod')
 
     def ItemAssemblyAbsentsDescrMethod(self):
         '''Special handling of itemAssemblyAbsents field description where we display
@@ -6354,7 +6392,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 self.getMeeting().getAssemblyAbsents() or '-')
         return value + collapsibleMeetingAssemblyAbsents
 
-    security.declareProtected('Modify portal content', 'ItemSignaturesDescrMethod')
+    security.declareProtected(ModifyPortalContent, 'ItemSignaturesDescrMethod')
 
     def ItemSignaturesDescrMethod(self):
         '''Special handling of itemSignatures field description where we display

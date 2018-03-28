@@ -998,15 +998,22 @@
           </td>
         </tr>
         <tr valign="top">
+          <td tal:define="field python:here.getField('hideHistoryTo')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
           <td tal:define="field python:here.getField('hideItemHistoryCommentsToUsersOutsideProposingGroup')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
+          <td></td>
+        </tr>
+        <tr valign="top">
           <td tal:define="field python:here.getField('restrictAccessToSecretItems')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <td tal:define="field python:here.getField('itemWithGivenAdviceIsNotDeletable')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
+          <td></td>
         </tr>
         <tr valign="top">
           <td tal:define="field python:here.getField('ownerMayDeleteAnnexDecision')">
