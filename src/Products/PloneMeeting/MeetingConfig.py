@@ -2322,9 +2322,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                      'return_to_proposing_group', 'return_to_proposing_group_with_last_validation',
                      'return_to_proposing_group_with_all_validations',
                      'hide_decisions_when_under_writing', 'waiting_advices',
-                     'accepted_out_of_meeting', 'accepted_out_of_meeting_emergency',
-                     'accepted_out_of_meeting_and_validated_for_next_meeting',
-                     'accepted_out_of_meeting_emergency_and_validated_for_next_meeting',
+                     'accepted_out_of_meeting', 'accepted_out_of_meeting_and_duplicated',
+                     'accepted_out_of_meeting_emergency', 'accepted_out_of_meeting_emergency_and_duplicated',
                      'postpone_next_meeting', 'mark_not_applicable',
                      'removed', 'removed_and_duplicated', 'refused')
 
@@ -2335,7 +2334,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # compute states to use in the searchlivingitems collection
         wfTool = api.portal.get_tool('portal_workflow')
         itemWF = wfTool.getWorkflowsFor(itemType)[0]
-        livingItemStates = [state for state in itemWF.states if state not in self.getItemDecidedStates()]
+        livingItemStates = [state for state in itemWF.states
+                            if state not in self.getItemDecidedStates()]
         infos = OrderedDict(
             [
                 # My items
@@ -3350,6 +3350,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
         if '' in values:
             values.remove('')
+
+        # conflicts
         msg = translate('wa_conflicts', domain='PloneMeeting', context=self.REQUEST)
         if 'items_come_validated' in values and \
             ('creator_initiated_decisions' in values or
@@ -3371,6 +3373,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if 'pre_validation' in values and 'pre_validation_keep_reviewer_permissions' in values:
             return msg
         if 'removed' in values and 'removed_and_duplicated' in values:
+            return msg
+        if 'accepted_out_of_meeting' in values and \
+           'accepted_out_of_meeting_and_duplicated' in values:
+            return msg
+        if 'accepted_out_of_meeting_emergency' in values and \
+           'accepted_out_of_meeting_emergency_and_duplicated' in values:
             return msg
 
         # 'presented_item_back_to_prevalidated' needs 'pre_validation'
@@ -3484,6 +3492,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # check that no more items are in this state
             if catalog(portal_type=self.getItemTypeName(), review_state='accepted_out_of_meeting'):
                 return translate('wa_removed_accepted_out_of_meeting_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+        if 'accepted_out_of_meeting_emergency' in removed:
+            # this will remove the 'accepted_out_of_meeting_emergency' state for Item
+            # check that no more items are in this state
+            if catalog(portal_type=self.getItemTypeName(), review_state='accepted_out_of_meeting_emergency'):
+                return translate('wa_removed_accepted_out_of_meeting_emergency_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
         if 'postpone_next_meeting' in removed:

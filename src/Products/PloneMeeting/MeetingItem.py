@@ -433,8 +433,25 @@ class MeetingItemWorkflowConditions(object):
     def mayAccept_out_of_meeting(self):
         """ """
         res = False
-        if _checkPermission(ReviewPortalContent, self.context):
-            res = True
+        if self.context.getIsAcceptableOutOfMeeting():
+            tool = api.portal.get_tool('portal_plonemeeting')
+            if _checkPermission(ReviewPortalContent, self.context) and tool.isManager(self.context):
+                res = True
+        return res
+
+    security.declarePublic('mayAccept_out_of_meeting_emergency')
+
+    def mayAccept_out_of_meeting_emergency(self):
+        """ """
+        res = False
+        emergency = self.context.getEmergency()
+        if emergency == 'emergency_accepted':
+            tool = api.portal.get_tool('portal_plonemeeting')
+            if _checkPermission(ReviewPortalContent, self.context) and tool.isManager(self.context):
+                res = True
+        # if at least emergency is asked, then return a No message
+        elif emergency != 'no_emergency':
+            res = No(_('emergency_accepted_required_to_accept_out_of_meeting_emergency'))
         return res
 
 
@@ -536,6 +553,11 @@ class MeetingItemWorkflowActions(object):
     security.declarePrivate('doAccept_out_of_meeting')
 
     def doAccept_out_of_meeting(self, stateChange):
+        pass
+
+    security.declarePrivate('doAccept_out_of_meeting_emergency')
+
+    def doAccept_out_of_meeting_emergency(self, stateChange):
         pass
 
     security.declarePrivate('doAccept')
@@ -857,7 +879,7 @@ schema = Schema((
         name='emergency',
         default='no_emergency',
         widget=SelectionWidget(
-            condition="python: here.attributeIsUsed('emergency') and not here.isDefinedInTool()",
+            condition="python: here.showEmergency()",
             description="Emergency",
             description_msgid="item_emergency_descr",
             visible=False,
@@ -1324,7 +1346,7 @@ schema = Schema((
         name='isAcceptableOutOfMeeting',
         default=False,
         widget=BooleanField._properties['widget'](
-            condition="python: here.showIsAcceptableOutOfMeeting()",
+            condition="here/showIsAcceptableOutOfMeeting",
             description="IsAcceptableOutOfMeeting",
             description_msgid="is_acceptable_out_of_meeting_descr",
             label='Isacceptableoutofmeeting',
@@ -1692,13 +1714,29 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def showIsAcceptableOutOfMeeting(self):
         '''Show the MeetingItem.isAcceptableOutOfMeeting field if WFAdaptation
-           'accepted_out_of_meeting' or 'accepted_out_of_meeting_and_validated_for_next_meeting'
+           'accepted_out_of_meeting' or 'accepted_out_of_meeting_and_duplicated'
            is used..'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         wfAdaptations = cfg.getWorkflowAdaptations()
         return 'accepted_out_of_meeting' in wfAdaptations or \
-            'accepted_out_of_meeting_and_validated_for_next_meeting' in wfAdaptations
+            'accepted_out_of_meeting_and_duplicated' in wfAdaptations
+
+    security.declarePublic('showEmergency')
+
+    def showEmergency(self):
+        '''Show the MeetingItem.emergency field if :
+          - in usedItemAttributes;
+          - or if WFAdaptation 'accepted_out_of_meeting_emergency' or
+            'accepted_out_of_meeting_emergency_and_duplicated' is enabled;
+          - and hide it if isDefinedInTool.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        wfAdaptations = cfg.getWorkflowAdaptations()
+        return (self.attributeIsUsed('emergency') or
+                ('accepted_out_of_meeting' in wfAdaptations or
+                'accepted_out_of_meeting_and_duplicated' in wfAdaptations)) and \
+            not self.isDefinedInTool()
 
     security.declarePublic('showInternalNotes')
 

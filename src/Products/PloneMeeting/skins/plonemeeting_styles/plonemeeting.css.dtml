@@ -1512,7 +1512,7 @@ body.section-portal_plonemeeting #archetypes-fieldname-customViewFields {
 
 #archetypes-fieldname-otherMeetingConfigsClonableToEmergency,
 #archetypes-fieldname-otherMeetingConfigsClonableToPrivacy {
-    display: inherit;
+    display: inline-block;
 }
 #archetypes-fieldname-otherMeetingConfigsClonableToEmergency {
     width: 425px;

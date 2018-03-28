@@ -959,7 +959,7 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
         # "accepted_out_of_meeting" add state 'accepted_out_of_meeting'
         # from 'validated' in the item WF
         elif wfAdaptation in ['accepted_out_of_meeting',
-                              'accepted_out_of_meeting_and_validated_for_next_meeting']:
+                              'accepted_out_of_meeting_and_duplicated']:
             _addIsolatedState(
                 new_state_id='accepted_out_of_meeting',
                 origin_state_id='validated',
@@ -970,7 +970,7 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
         # "accepted_out_of_meeting_emergency" add state 'accepted_out_of_meeting_emergency'
         # from 'validated' in the item WF
         elif wfAdaptation in ['accepted_out_of_meeting_emergency',
-                              'accepted_out_of_meeting_emergency_and_validated_for_next_meeting']:
+                              'accepted_out_of_meeting_emergency_and_duplicated']:
             _addIsolatedState(
                 new_state_id='accepted_out_of_meeting_emergency',
                 origin_state_id='validated',
