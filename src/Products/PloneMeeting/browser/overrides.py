@@ -1105,7 +1105,7 @@ class PMCKFinder(CKFinder):
         self.showbreadcrumbs = False
         self.types = ['Image']
         self.browse = False
-        self.allowimagesizeselection = True
+        self.allowimagesizeselection = False
         self.allowaddfolder = False
         self.showsearchbox = False
         self.openuploadwidgetdefault = True

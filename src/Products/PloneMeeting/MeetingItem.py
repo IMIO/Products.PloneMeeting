@@ -553,12 +553,22 @@ class MeetingItemWorkflowActions(object):
     security.declarePrivate('doAccept_out_of_meeting')
 
     def doAccept_out_of_meeting(self, stateChange):
-        pass
+        """Duplicate item to validated if WFAdaptation
+           'accepted_out_of_meeting_and_duplicated' is used."""
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        if 'accepted_out_of_meeting_and_duplicated' in cfg.getWorkflowAdaptations():
+            self._duplicateAndValidate(cloneEventAction='create_from_accepted_out_of_meeting')
 
     security.declarePrivate('doAccept_out_of_meeting_emergency')
 
     def doAccept_out_of_meeting_emergency(self, stateChange):
-        pass
+        """Duplicate item to validated if WFAdaptation
+           'accepted_out_of_meeting_and_duplicated' is used."""
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        if 'accepted_out_of_meeting_emergency_and_duplicated' in cfg.getWorkflowAdaptations():
+            self._duplicateAndValidate(cloneEventAction='create_from_accepted_out_of_meeting_emergency')
 
     security.declarePrivate('doAccept')
 
@@ -590,16 +600,13 @@ class MeetingItemWorkflowActions(object):
                                keepProposingGroup=True,
                                setCurrentAsPredecessor=True)
 
-    security.declarePrivate('doPostpone_next_meeting')
-
-    def doPostpone_next_meeting(self, stateChange):
-        '''When an item is 'postponed_next_meeting', we will duplicate it:
-           the copy is automatically validated and will be linked to this one.'''
+    def _duplicateAndValidate(self, cloneEventAction):
+        """Duplicate and keep link self.context and validate the new item."""
         creator = self.context.Creator()
         # We create a copy in the initial item state, in the folder of creator.
         clonedItem = self.context.clone(copyAnnexes=True,
                                         newOwnerId=creator,
-                                        cloneEventAction='create_from_postponed_next_meeting',
+                                        cloneEventAction=cloneEventAction,
                                         keepProposingGroup=True,
                                         setCurrentAsPredecessor=True,
                                         inheritAdvices=True)
@@ -611,10 +618,18 @@ class MeetingItemWorkflowActions(object):
         with api.env.adopt_roles(roles=['Manager']):
             # trigger transitions until 'validated', aka one step before 'presented'
             # set a special value in the REQUEST so guards may use it if necessary
-            self.context.REQUEST.set('postponing_item', True)
+            self.context.REQUEST.set('duplicating_and_validating_item', True)
             for tr in cfg.getTransitionsForPresentingAnItem()[0:-1]:
                 wfTool.doActionFor(clonedItem, tr, comment=wf_comment)
-            self.context.REQUEST.set('postponing_item', False)
+            self.context.REQUEST.set('duplicating_and_validating_item', False)
+        return clonedItem
+
+    security.declarePrivate('doPostpone_next_meeting')
+
+    def doPostpone_next_meeting(self, stateChange):
+        '''When an item is 'postponed_next_meeting', we will duplicate it:
+           the copy is automatically validated and will be linked to this one.'''
+        clonedItem = self._duplicateAndValidate(cloneEventAction='create_from_postponed_next_meeting')
         # Send, if configured, a mail to the person who created the item
         clonedItem.sendMailIfRelevant('itemPostponedNextMeeting', 'Owner', isRole=True)
 

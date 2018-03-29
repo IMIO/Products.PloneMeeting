@@ -2652,12 +2652,15 @@ class testWFAdaptations(PloneMeetingTestCase):
         if 'accepted_out_of_meeting_and_duplicated' in cfg.listWorkflowAdaptations():
             wfas = list(cfg.getWorkflowAdaptations())
             wfas.remove('accepted_out_of_meeting')
-            wfas = wfas.append('accepted_out_of_meeting_and_duplicated')
+            wfas.append('accepted_out_of_meeting_and_duplicated')
             cfg.setWorkflowAdaptations(wfas)
-            performWorkflowAdaptations(cfg, logger=pm_logger)
-            item.do(item, 'accept_out_of_meeting')
+            cfg.at_post_edit_script()
+            self.do(item, 'accept_out_of_meeting')
             duplicated_item = item.getBRefs()[0]
-
+            self.assertEqual(duplicated_item.getPredecessor(), item)
+            self.assertEqual(duplicated_item.queryState(), 'validated')
+            # duplicated_item is not more isAcceptableOutOfMeeting
+            self.assertFalse(duplicated_item.getIsAcceptableOutOfMeeting())
 
     def test_pm_WFA_accepted_out_of_meeting_emergency(self):
         '''Test the workflowAdaptation 'accepted_out_of_meeting_emergency'.'''
@@ -2705,6 +2708,26 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.changeUser('pmManager')
         self.do(item, 'accept_out_of_meeting_emergency')
         self.assertEqual(item.queryState(), 'accepted_out_of_meeting_emergency')
+        # not duplicated
+        self.assertFalse(item.getBRefs())
+        # back transition
+        self.do(item, 'backToValidatedFromAcceptedOutOfMeetingEmergency')
+        self.assertEqual(item.queryState(), 'validated')
+
+        # test 'accepted_out_of_meeting_emergency_and_duplicated' if available
+        cfg = self.meetingConfig
+        if 'accepted_out_of_meeting_emergency_and_duplicated' in cfg.listWorkflowAdaptations():
+            wfas = list(cfg.getWorkflowAdaptations())
+            wfas.remove('accepted_out_of_meeting_emergency')
+            wfas.append('accepted_out_of_meeting_emergency_and_duplicated')
+            cfg.setWorkflowAdaptations(wfas)
+            cfg.at_post_edit_script()
+            self.do(item, 'accept_out_of_meeting_emergency')
+            duplicated_item = item.getBRefs()[0]
+            self.assertEqual(duplicated_item.getPredecessor(), item)
+            self.assertEqual(duplicated_item.queryState(), 'validated')
+            # duplicated_item emergency is no more asked
+            self.assertEqual(duplicated_item.getEmergency(), 'no_emergency')
 
 
 def test_suite():
