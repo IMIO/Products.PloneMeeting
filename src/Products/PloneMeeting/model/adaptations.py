@@ -492,6 +492,48 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
         for permission, roles in base_state.permission_roles.iteritems():
             new_state.setPermission(permission, 0, roles)
 
+    def _addIsolatedState(new_state_id,
+                          origin_state_id,
+                          origin_transition_id,
+                          origin_transition_guard_expr_name,
+                          back_transition_id,
+                          back_transition_guard_expr_name='mayCorrect',
+                          base_state_id='accepted'):
+        """Add an isolated state with transitions go and back from/to another state."""
+        wf = itemWorkflow
+        # create new state
+        wf.states.addState(new_state_id)
+        new_state = wf.states[new_state_id]
+        # use same permissions as used by the base_state_id state (default 'accepted')
+        base_state = wf.states[base_state_id]
+        for permission, roles in base_state.permission_roles.iteritems():
+            new_state.setPermission(permission, 0, roles)
+
+        # transitions
+        for transition_id, destination_state_id, guard_expr_name in (
+                (origin_transition_id, new_state_id, origin_transition_guard_expr_name),
+                (back_transition_id, origin_state_id, back_transition_guard_expr_name)):
+            wf.transitions.addTransition(transition_id)
+            transition = wf.transitions[transition_id]
+            transition.setProperties(
+                title=transition_id,
+                new_state_id=destination_state_id, trigger_type=1, script_name='',
+                actbox_name=transition_id, actbox_url='',
+                actbox_icon='%(portal_url)s/{0}.png'.format(transition_id),
+                actbox_category='workflow',
+                props={'guard_expr': 'python:here.wfConditions().{0}()'.format(guard_expr_name)})
+
+        # link states and transitions
+        # new_state
+        new_state.setProperties(
+            title=new_state_id, description='',
+            transitions=[back_transition_id])
+        # validate_state
+        origin_state = wf.states[origin_state_id]
+        origin_state.setProperties(
+            title=origin_state.title, description=origin_state.description,
+            transitions=origin_state.transitions + (origin_transition_id, ))
+
     for wfAdaptation in wfAdaptations:
         # first try to call a performCustomWFAdaptations to see if it manages wfAdaptation
         # it could be a separated one or an overrided one
@@ -913,6 +955,28 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
         elif wfAdaptation == 'refused':
             _addDecidedState(new_state_id='refused',
                              transition_id='refuse')
+
+        # "accepted_out_of_meeting" add state 'accepted_out_of_meeting'
+        # from 'validated' in the item WF
+        elif wfAdaptation in ['accepted_out_of_meeting',
+                              'accepted_out_of_meeting_and_duplicated']:
+            _addIsolatedState(
+                new_state_id='accepted_out_of_meeting',
+                origin_state_id='validated',
+                origin_transition_id='accept_out_of_meeting',
+                origin_transition_guard_expr_name='mayAccept_out_of_meeting',
+                back_transition_id='backToValidatedFromAcceptedOutOfMeeting')
+
+        # "accepted_out_of_meeting_emergency" add state 'accepted_out_of_meeting_emergency'
+        # from 'validated' in the item WF
+        elif wfAdaptation in ['accepted_out_of_meeting_emergency',
+                              'accepted_out_of_meeting_emergency_and_duplicated']:
+            _addIsolatedState(
+                new_state_id='accepted_out_of_meeting_emergency',
+                origin_state_id='validated',
+                origin_transition_id='accept_out_of_meeting_emergency',
+                origin_transition_guard_expr_name='mayAccept_out_of_meeting_emergency',
+                back_transition_id='backToValidatedFromAcceptedOutOfMeetingEmergency')
 
         # "presented_item_back_to_itemcreated" allows the MeetingManagers to send a presented
         # item directly back to "itemcreated" in addition to back to "validated"

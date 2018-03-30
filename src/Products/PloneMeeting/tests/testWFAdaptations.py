@@ -56,7 +56,11 @@ class testWFAdaptations(PloneMeetingTestCase):
         '''Test what are the available wfAdaptations.
            This way, if we add a wfAdaptations, the test will 'break' until it is adapted...'''
         self.assertEquals(sorted(self.meetingConfig.listWorkflowAdaptations().keys()),
-                          ['archiving',
+                          ['accepted_out_of_meeting',
+                           'accepted_out_of_meeting_and_duplicated',
+                           'accepted_out_of_meeting_emergency',
+                           'accepted_out_of_meeting_emergency_and_duplicated',
+                           'archiving',
                            'creator_edits_unless_closed',
                            'creator_initiated_decisions',
                            'everyone_reads_all',
@@ -230,6 +234,29 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertEquals(
             cfg.validate_workflowAdaptations(('removed',
                                               'removed_and_duplicated')), wa_conflicts)
+
+        # accepted_out_of_meeting and accepted_out_of_meeting_and_duplicated
+        # may not be used together
+        self.failIf(cfg.validate_workflowAdaptations(
+            ('accepted_out_of_meeting',)))
+        self.failIf(cfg.validate_workflowAdaptations(
+            ('accepted_out_of_meeting_and_duplicated',)))
+        self.assertEquals(
+            cfg.validate_workflowAdaptations(
+                ('accepted_out_of_meeting',
+                 'accepted_out_of_meeting_and_duplicated')), wa_conflicts)
+
+        # accepted_out_of_meeting_emergency and
+        # accepted_out_of_meeting_emergency_and_duplicated may not be used together
+        self.failIf(cfg.validate_workflowAdaptations(
+            ('accepted_out_of_meeting_emergency',)))
+        self.failIf(cfg.validate_workflowAdaptations(
+            ('accepted_out_of_meeting_emergency_and_duplicated',)))
+        self.assertEquals(
+            cfg.validate_workflowAdaptations(
+                ('accepted_out_of_meeting_emergency',
+                 'accepted_out_of_meeting_emergency_and_duplicated')),
+            wa_conflicts)
 
     def test_pm_Validate_workflowAdaptations_presented_item_back_to_prevalidated_needs_pre_validation(self):
         """If WFA 'presented_item_back_to_prevalidated' is selected,
@@ -504,6 +531,52 @@ class testWFAdaptations(PloneMeetingTestCase):
             wf_adaptation_name='refused',
             item_state='refused',
             item_transition='refuse')
+
+    def test_pm_Validate_workflowAdaptations_removed_accepted_out_of_meeting(self):
+        """Test MeetingConfig.validate_workflowAdaptations that manage removal
+           of wfAdaptations 'accepted_out_of_meeting' or 'accepted_out_of_meeting_emergency'
+           that is not possible if some items are 'accepted_out_of_meeting' or
+           'accepted_out_of_meeting_emergency'."""
+
+        def _check(wfa_name, transition, back_transition, error_msg_id):
+            """ """
+            msg_removed_error = translate(
+                error_msg_id,
+                domain='PloneMeeting',
+                context=self.request)
+            self.changeUser('pmManager')
+            cfg.setWorkflowAdaptations((wfa_name, ))
+            performWorkflowAdaptations(cfg, logger=pm_logger)
+
+            item = self.create('MeetingItem')
+            self.validateItem(item)
+            self.failIf(cfg.validate_workflowAdaptations((wfa_name, )))
+            # do transition available
+            if wfa_name == 'accepted_out_of_meeting':
+                item.setIsAcceptableOutOfMeeting(True)
+            elif wfa_name == 'accepted_out_of_meeting_emergency':
+                item.setEmergency('emergency_accepted')
+            self.do(item, transition)
+            self.assertEquals(
+                cfg.validate_workflowAdaptations(()),
+                msg_removed_error)
+
+            # make wfAdaptation selectable
+            self.do(item, back_transition)
+            self.failIf(cfg.validate_workflowAdaptations(()))
+
+        # ease override by subproducts
+        cfg = self.meetingConfig
+        if 'accepted_out_of_meeting' in cfg.listWorkflowAdaptations():
+            _check(wfa_name='accepted_out_of_meeting',
+                   transition='accept_out_of_meeting',
+                   back_transition='backToValidatedFromAcceptedOutOfMeeting',
+                   error_msg_id='wa_removed_accepted_out_of_meeting_error')
+        if 'accepted_out_of_meeting_emergency' in cfg.listWorkflowAdaptations():
+            _check(wfa_name='accepted_out_of_meeting_emergency',
+                   transition='accept_out_of_meeting_emergency',
+                   back_transition='backToValidatedFromAcceptedOutOfMeetingEmergency',
+                   error_msg_id='wa_removed_accepted_out_of_meeting_emergency_error')
 
     def test_pm_Validate_workflowAdaptations_removed_waiting_advices(self):
         """Test MeetingConfig.validate_workflowAdaptations that manage removal
@@ -2524,6 +2597,140 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertEqual(self.transitions(item), ['backToPrevalidated', 'backToValidated'])
         self.do(item, 'backToPrevalidated')
         self.assertEqual(item.queryState(), 'prevalidated')
+
+    def test_pm_WFA_accepted_out_of_meeting(self):
+        '''Test the workflowAdaptation 'accepted_out_of_meeting'.'''
+        # ease override by subproducts
+        cfg = self.meetingConfig
+        if 'accepted_out_of_meeting' not in cfg.listWorkflowAdaptations():
+            return
+        self.changeUser('pmManager')
+        # check while the wfAdaptation is not activated
+        self._accepted_out_of_meeting_inactive()
+        # activate the wfAdaptation and check
+        # if 'reviewers_take_back_validated_item' WFA is available
+        # enables it as well as in this WFA, the Review portal content permission
+        # is given to reviewers on state 'validated'
+        wfas = ('accepted_out_of_meeting', )
+        if 'reviewers_take_back_validated_item' in cfg.listWorkflowAdaptations():
+            wfas = wfas + ('reviewers_take_back_validated_item', )
+        cfg.setWorkflowAdaptations(wfas)
+        performWorkflowAdaptations(cfg, logger=pm_logger)
+        self._accepted_out_of_meeting_active()
+
+    def _accepted_out_of_meeting_inactive(self):
+        '''Tests while 'accepted_out_of_meeting' wfAdaptation is inactive.'''
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        self.validateItem(item)
+        self.assertFalse('accept_out_of_meeting' in self.transitions(item))
+        # in case 'reviewers_take_back_validated_item' is available
+        self.changeUser('pmReviewer1')
+        self.assertFalse('accept_out_of_meeting' in self.transitions(item))
+
+    def _accepted_out_of_meeting_active(self):
+        '''Tests while 'accepted_out_of_meeting' wfAdaptation is active.'''
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        self.validateItem(item)
+        # not available until MeetingItem.isAcceptableOutOfMeeting is True
+        self.assertFalse('accept_out_of_meeting' in self.transitions(item))
+        item.setIsAcceptableOutOfMeeting(True)
+        self.assertTrue('accept_out_of_meeting' in self.transitions(item))
+        # in case 'reviewers_take_back_validated_item' is available
+        self.changeUser('pmReviewer1')
+        self.assertFalse('accept_out_of_meeting' in self.transitions(item))
+
+        self.changeUser('pmManager')
+        self.do(item, 'accept_out_of_meeting')
+        self.assertEqual(item.queryState(), 'accepted_out_of_meeting')
+        # not duplicated
+        self.assertFalse(item.getBRefs())
+        # back transition
+        self.do(item, 'backToValidatedFromAcceptedOutOfMeeting')
+        self.assertEqual(item.queryState(), 'validated')
+
+        # test 'accepted_out_of_meeting_and_duplicated' if available
+        cfg = self.meetingConfig
+        if 'accepted_out_of_meeting_and_duplicated' in cfg.listWorkflowAdaptations():
+            wfas = list(cfg.getWorkflowAdaptations())
+            wfas.remove('accepted_out_of_meeting')
+            wfas.append('accepted_out_of_meeting_and_duplicated')
+            cfg.setWorkflowAdaptations(wfas)
+            cfg.at_post_edit_script()
+            self.do(item, 'accept_out_of_meeting')
+            duplicated_item = item.getBRefs()[0]
+            self.assertEqual(duplicated_item.getPredecessor(), item)
+            self.assertEqual(duplicated_item.queryState(), 'validated')
+            # duplicated_item is not more isAcceptableOutOfMeeting
+            self.assertFalse(duplicated_item.getIsAcceptableOutOfMeeting())
+
+    def test_pm_WFA_accepted_out_of_meeting_emergency(self):
+        '''Test the workflowAdaptation 'accepted_out_of_meeting_emergency'.'''
+        # ease override by subproducts
+        cfg = self.meetingConfig
+        if 'accepted_out_of_meeting_emergency' not in cfg.listWorkflowAdaptations():
+            return
+        self.changeUser('pmManager')
+        # check while the wfAdaptation is not activated
+        self._accepted_out_of_meeting_emergency_inactive()
+        # activate the wfAdaptation and check
+        # if 'reviewers_take_back_validated_item' WFA is available
+        # enables it as well as in this WFA, the Review portal content permission
+        # is given to reviewers on state 'validated'
+        wfas = ('accepted_out_of_meeting_emergency', )
+        if 'reviewers_take_back_validated_item' in cfg.listWorkflowAdaptations():
+            wfas = wfas + ('reviewers_take_back_validated_item', )
+        cfg.setWorkflowAdaptations(wfas)
+        performWorkflowAdaptations(cfg, logger=pm_logger)
+        self._accepted_out_of_meeting_emergency_active()
+
+    def _accepted_out_of_meeting_emergency_inactive(self):
+        '''Tests while 'accepted_out_of_meeting' wfAdaptation is inactive.'''
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        self.validateItem(item)
+        self.assertFalse('accept_out_of_meeting' in self.transitions(item))
+        # in case 'reviewers_take_back_validated_item' is available
+        self.changeUser('pmReviewer1')
+        self.assertFalse('accept_out_of_meeting' in self.transitions(item))
+
+    def _accepted_out_of_meeting_emergency_active(self):
+        '''Tests while 'accepted_out_of_meeting' wfAdaptation is active.'''
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        self.validateItem(item)
+        # not available until MeetingItem.isAcceptableOutOfMeeting is True
+        self.assertFalse('accept_out_of_meeting_emergency' in self.transitions(item))
+        item.setEmergency('emergency_accepted')
+        self.assertTrue('accept_out_of_meeting_emergency' in self.transitions(item))
+        # in case 'reviewers_take_back_validated_item' is available
+        self.changeUser('pmReviewer1')
+        self.assertFalse('accept_out_of_meeting_emergency' in self.transitions(item))
+
+        self.changeUser('pmManager')
+        self.do(item, 'accept_out_of_meeting_emergency')
+        self.assertEqual(item.queryState(), 'accepted_out_of_meeting_emergency')
+        # not duplicated
+        self.assertFalse(item.getBRefs())
+        # back transition
+        self.do(item, 'backToValidatedFromAcceptedOutOfMeetingEmergency')
+        self.assertEqual(item.queryState(), 'validated')
+
+        # test 'accepted_out_of_meeting_emergency_and_duplicated' if available
+        cfg = self.meetingConfig
+        if 'accepted_out_of_meeting_emergency_and_duplicated' in cfg.listWorkflowAdaptations():
+            wfas = list(cfg.getWorkflowAdaptations())
+            wfas.remove('accepted_out_of_meeting_emergency')
+            wfas.append('accepted_out_of_meeting_emergency_and_duplicated')
+            cfg.setWorkflowAdaptations(wfas)
+            cfg.at_post_edit_script()
+            self.do(item, 'accept_out_of_meeting_emergency')
+            duplicated_item = item.getBRefs()[0]
+            self.assertEqual(duplicated_item.getPredecessor(), item)
+            self.assertEqual(duplicated_item.queryState(), 'validated')
+            # duplicated_item emergency is no more asked
+            self.assertEqual(duplicated_item.getEmergency(), 'no_emergency')
 
 
 def test_suite():

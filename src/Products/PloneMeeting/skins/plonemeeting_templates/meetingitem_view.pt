@@ -276,6 +276,13 @@
                 <span metal:use-macro="python: here.widget('sendToAuthority', mode='view')" />
             </div>
 
+            <tal:comment replace="nothing">Is acceptable out of meeting?</tal:comment>
+            <div class="discreet" tal:condition="context/showIsAcceptableOutOfMeeting">
+                <span class="item_attribute_label"
+                      i18n:translate="PloneMeeting_label_isAcceptableOutOfMeeting"></span>:&nbsp;&nbsp;
+                <span metal:use-macro="python: here.widget('isAcceptableOutOfMeeting', mode='view')" />
+            </div>
+
             <tal:comment replace="nothing">Other MeetingConfigs Clonable To</tal:comment>
             <div class="discreet"
                  tal:condition="python: otherMCs or context.showClonableToOtherMeetingConfigs()"

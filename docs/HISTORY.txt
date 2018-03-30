@@ -24,6 +24,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Make sure the link to meeting displayed in items dashboard is not enabled if current user may not see the meeting
 - If a MeetingConfig is in a configGroup, prepend linked Plone groups (powerobservers, meetingmanagers, ...) title
   with the title of the configGroup, this is useful when using several MC having same title if different configGroups
+- Added workflow adaptationis 'accepted_out_of_meeting' that makes it possible to accept an item that is 'validated'
+  and still not linked to a meeting.  Differents variants are provided : with emergency or not and with duplication
+  of the item and validation of resulting item or not
 
 4.1b7 (2018-03-19)
 ------------------

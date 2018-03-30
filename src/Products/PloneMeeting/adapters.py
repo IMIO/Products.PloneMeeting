@@ -629,6 +629,22 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
             res.append(('accepted_but_modified.png', translate('icon_help_accepted_but_modified',
                                                                domain="PloneMeeting",
                                                                context=self.request)))
+        elif itemState == 'accepted_out_of_meeting':
+            res.append(('accept_out_of_meeting.png',
+                        translate('icon_help_accepted_out_of_meeting',
+                                  domain="PloneMeeting",
+                                  context=self.request,
+                                  default=translate('accepted_out_of_meeting',
+                                                    domain="plone",
+                                                    context=self.request))))
+        elif itemState == 'accepted_out_of_meeting_emergency':
+            res.append(('accept_out_of_meeting_emergency.png',
+                        translate('icon_help_accepted_out_of_meeting_emergency',
+                                  domain="PloneMeeting",
+                                  context=self.request,
+                                  default=translate('accepted_out_of_meeting_emergency',
+                                                    domain="plone",
+                                                    context=self.request))))
         elif itemState == 'pre_accepted':
             res.append(('pre_accepted.png', translate('icon_help_pre_accepted',
                                                       domain="PloneMeeting",
