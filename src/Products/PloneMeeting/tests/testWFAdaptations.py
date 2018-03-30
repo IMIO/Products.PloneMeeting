@@ -57,6 +57,9 @@ class testWFAdaptations(PloneMeetingTestCase):
            This way, if we add a wfAdaptations, the test will 'break' until it is adapted...'''
         self.assertEquals(sorted(self.meetingConfig.listWorkflowAdaptations().keys()),
                           ['accepted_out_of_meeting',
+                           'accepted_out_of_meeting_and_duplicated',
+                           'accepted_out_of_meeting_emergency',
+                           'accepted_out_of_meeting_emergency_and_duplicated',
                            'archiving',
                            'creator_edits_unless_closed',
                            'creator_initiated_decisions',
