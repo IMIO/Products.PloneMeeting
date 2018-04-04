@@ -1117,15 +1117,15 @@ class testAnnexes(PloneMeetingTestCase):
                 continue
             mc_title = mc.Title()
             values = [
-                u'{0} \u2192 Item annexes \u2192 Financial analysis'.format(mc_title),
-                u'{0} \u2192 Item annexes \u2192 Financial analysis '
-                u'\u2192 Financial analysis sub annex'.format(mc_title),
-                u'{0} \u2192 Item annexes \u2192 Legal analysis'.format(mc_title),
-                u'{0} \u2192 Item annexes \u2192 Budget analysis'.format(mc_title),
-                u'{0} \u2192 Item annexes \u2192 Budget analysis '
-                u'\u2192 Budget analysis sub annex'.format(mc_title),
-                u'{0} \u2192 Item annexes \u2192 Other annex(es)'.format(mc_title),
-                u'{0} \u2192 Item decision annexes \u2192 Decision annex(es)'.format(mc_title)]
+                u'{0} 🡒 Item annexes 🡒 Financial analysis'.format(mc_title),
+                u'{0} 🡒 Item annexes 🡒 Financial analysis '
+                u'🡒 Financial analysis sub annex'.format(mc_title),
+                u'{0} 🡒 Item annexes 🡒 Legal analysis'.format(mc_title),
+                u'{0} 🡒 Item annexes 🡒 Budget analysis'.format(mc_title),
+                u'{0} 🡒 Item annexes 🡒 Budget analysis '
+                u'🡒 Budget analysis sub annex'.format(mc_title),
+                u'{0} 🡒 Item annexes 🡒 Other annex(es)'.format(mc_title),
+                u'{0} 🡒 Item decision annexes 🡒 Decision annex(es)'.format(mc_title)]
             expected.extend(values)
         self.assertEqual([term.title for term in vocab(annex_type)._terms], expected)
 

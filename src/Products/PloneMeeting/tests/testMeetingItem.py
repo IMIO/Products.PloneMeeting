@@ -3907,7 +3907,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # on the parameter MeetingConfig.toDiscussSetOnItemInsert
         # check test test_pm_ToDiscussFieldBehaviourWhenCloned
         NEUTRAL_FIELDS = [
-            'answerers', 'completeness', 'emergency', 'id',
+            'answerers', 'completeness', 'emergency', 'id', 'isAcceptableOutOfMeeting',
             'itemAbsents', 'itemAssembly', 'itemAssemblyAbsents',
             'itemAssemblyExcused', 'itemInitiator', 'itemIsSigned',
             'itemKeywords', 'itemNumber', 'itemReference', 'itemSignatories',
