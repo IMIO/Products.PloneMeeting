@@ -18,7 +18,7 @@
            <element>plone.app.querystring.operation.date.beforeToday</element>
            <element>plone.app.querystring.operation.date.afterToday</element>
        </value>
-       <value key="group" i18n:translate="">Dates</value>
+       <value key="group" i18n:domain="plone" i18n:translate="">Dates</value>
     </records>
 
     <records interface="plone.app.querystring.interfaces.IQueryField"
@@ -37,7 +37,7 @@
            <element>plone.app.querystring.operation.date.beforeToday</element>
            <element>plone.app.querystring.operation.date.afterToday</element>
        </value>
-       <value key="group" i18n:translate="">Dates</value>
+       <value key="group" i18n:domain="plone" i18n:translate="">Dates</value>
     </records>
 
     <records interface="plone.app.querystring.interfaces.IQueryField"
@@ -50,7 +50,7 @@
             <element>plone.app.querystring.operation.selection.is</element>
         </value>
         <value key="vocabulary">plone.app.vocabularies.WorkflowStates</value>
-       <value key="group" i18n:translate="">Metadata</value>
+       <value key="group" i18n:domain="plone" i18n:translate="">Metadata</value>
     </records>
 
     <records interface="plone.app.querystring.interfaces.IQueryField"
@@ -62,7 +62,7 @@
             <element>plone.app.querystring.operation.selection.is</element>
         </value>
         <value key="vocabulary">Products.PloneMeeting.vocabularies.askedadvicesvocabulary</value>
-       <value key="group" i18n:translate="">Metadata</value>
+       <value key="group" i18n:domain="plone" i18n:translate="">Metadata</value>
     </records>
 
     <records interface="plone.app.querystring.interfaces.IQueryField"
@@ -75,7 +75,7 @@
             <element>plone.app.querystring.operation.selection.is</element>
         </value>
         <value key="vocabulary">Products.PloneMeeting.vocabularies.proposinggroupsvocabulary</value>
-       <value key="group" i18n:translate="">Metadata</value>
+       <value key="group" i18n:domain="plone" i18n:translate="">Metadata</value>
     </records>
 
 </registry>
