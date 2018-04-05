@@ -1770,7 +1770,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             return False
 
         # we only recompute if cfgs, user groups or params changed
-        cfg_infos = [cfg._p_mtime for cfg in self.objectValues('MeetingConfig')]
+        cfg_infos = [(cfg._p_mtime, cfg.id) for cfg in self.objectValues('MeetingConfig')]
         user = self.REQUEST['AUTHENTICATED_USER']
         return (cfg_infos, user.getGroups(), config_group, check_access, as_items)
 
@@ -1793,7 +1793,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 if config_group and configGroup['row_id'] != config_group:
                     continue
                 res = []
-                for cfg in self.getFolderContents(contentFilter={'portal_type': 'MeetingConfig'}, full_objects=True):
+                for cfg in self.objectValues('MeetingConfig'):
                     if check_access and not self.showPloneMeetingTab(cfg):
                         continue
                     if cfg.getConfigGroup() == configGroup['row_id']:
