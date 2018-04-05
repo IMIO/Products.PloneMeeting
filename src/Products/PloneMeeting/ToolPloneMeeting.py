@@ -1793,7 +1793,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 if config_group and configGroup['row_id'] != config_group:
                     continue
                 res = []
-                for cfg in self.objectValues('MeetingConfig'):
+                for cfg in self.getFolderContents(contentFilter={'portal_type': 'MeetingConfig'}, full_objects=True):
                     if check_access and not self.showPloneMeetingTab(cfg):
                         continue
                     if cfg.getConfigGroup() == configGroup['row_id']:
