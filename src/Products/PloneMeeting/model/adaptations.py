@@ -480,9 +480,11 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
 
         # add state to possible transitions of same origin state as for base_state
         # get the transition leading to base_state then get the state it is going from
-        tr_leading_to_base_state = [tr for tr in wf.transitions.values() if tr.new_state_id == base_state_id][0].id
+        tr_leading_to_base_state = [tr for tr in wf.transitions.values()
+                                    if tr.new_state_id == base_state_id][0].id
         # get the state, the transition 'delay' is going from
-        origin_state_id = [state for state in wf.states.values() if tr_leading_to_base_state in state.transitions][0].id
+        origin_state_id = [state for state in wf.states.values()
+                           if tr_leading_to_base_state in state.transitions][0].id
         wf.states[origin_state_id].transitions = \
             wf.states[origin_state_id].transitions + (transition_id, )
 
@@ -1075,11 +1077,11 @@ additions = {
                    condition="python: here.showMeetingManagerReservedField('preObservations')",)),
 
     # Additional fields for other types
-    "MeetingCategory":     (cf('title'), cf('description', type='text')),
-    "MeetingFileType":     (cf('title'), cf('predefinedTitle')),
-    "PodTemplate":         (cf('title'), cf('description', type='text')),
-    "MeetingGroup":        (cf('title'), cf('description', type='text')),
-    "MeetingConfig":       (cf('title'),),
+    "MeetingCategory": (cf('title'), cf('description', type='text')),
+    "MeetingFileType": (cf('title'), cf('predefinedTitle')),
+    "PodTemplate": (cf('title'), cf('description', type='text')),
+    "MeetingGroup": (cf('title'), cf('description', type='text')),
+    "MeetingConfig": (cf('title'),),
     "MeetingUser":
     (cf('duty', condition="python: here.isManager(here)"),
      cf('replacementDuty', condition="python: here.isManager(here)")),

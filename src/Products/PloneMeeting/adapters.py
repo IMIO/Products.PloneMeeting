@@ -201,7 +201,8 @@ class AnnexableAdapter(object):
             data['number'] = i
             data['images'] = []
             data['number_of_images'] = annex_annotations['collective.documentviewer']['num_pages']
-            # we need to traverse to something like : @@dvpdffiles/c/7/c7e2e8b5597c4dc28cf2dee9447dcf9a/large/dump_1.png
+            # we need to traverse to something like :
+            # @@dvpdffiles/c/7/c7e2e8b5597c4dc28cf2dee9447dcf9a/large/dump_1.png
             dvpdffiles = portal.unrestrictedTraverse('@@dvpdffiles')
             filetraverser = dvpdffiles.publishTraverse(self.request, annexUID[0])
             filetraverser = dvpdffiles.publishTraverse(self.request, annexUID[1])
@@ -923,7 +924,7 @@ class PMDataChangesHistoryAdapter(ImioWfHistoryAdapter):
         res = []
         i = -1
         full_datachanges_history.reverse()
-        while (i+1) < len(full_datachanges_history):
+        while (i + 1) < len(full_datachanges_history):
             i += 1
             new_event = full_datachanges_history[i].copy()
             new_event['changes'] = {}
@@ -934,7 +935,7 @@ class PMDataChangesHistoryAdapter(ImioWfHistoryAdapter):
                     if xhtmlContentIsEmpty(oldValue):
                         val = '-'
                     else:
-                        newValue = findNewValue(self.context, name, full_datachanges_history, i-1)
+                        newValue = findNewValue(self.context, name, full_datachanges_history, i - 1)
                         # Compute the diff between oldValue and newValue
                         iMsg, dMsg = getHistoryTexts(self.context, event)
                         comparator = HtmlDiff(oldValue, newValue, iMsg, dMsg)
@@ -1180,7 +1181,7 @@ class BaseItemsToValidateOfHighestHierarchicLevelAdapter(CompoundCriterionBaseAd
                     '%s__reviewprocess__%s' % (mGroupId, review_state) for review_state in review_states]
                 reviewProcessInfos.extend(reviewProcessInfo)
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
-                'reviewProcessInfo':  {'query': reviewProcessInfos}, }
+                'reviewProcessInfo': {'query': reviewProcessInfos}, }
 
 
 class ItemsToValidateOfHighestHierarchicLevelAdapter(BaseItemsToValidateOfHighestHierarchicLevelAdapter):

@@ -122,7 +122,8 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
                                     default="Show/hide details")
             header = \
                 u'<span class="showHideDetails" onclick="javascript:toggleMeetingDescriptions()">' + \
-                u'<img src="{0}/more_less_details.png" title="{1}" /></span>'.format(self.table.portal_url, showHideMsg)
+                u'<img src="{0}/more_less_details.png" title="{1}" /></span>'.format(
+                    self.table.portal_url, showHideMsg)
             return super(PMPrettyLinkColumn, self).renderHeadCell() + header
         return super(PMPrettyLinkColumn, self).renderHeadCell()
 
