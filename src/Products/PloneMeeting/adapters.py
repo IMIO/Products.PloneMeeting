@@ -835,6 +835,12 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                                                 domain="PloneMeeting",
                                                 mapping={'fullname': safe_unicode(tool.getUserName(takenOverBy))},
                                                 context=self.request)))
+
+        if self.context.getIsAcceptableOutOfMeeting():
+            res.append(('acceptable_out_of_meeting.png',
+                        translate('PloneMeeting_label_isAcceptableOutOfMeeting',
+                                  domain="PloneMeeting",
+                                  context=self.request)))
         return res
 
 
