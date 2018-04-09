@@ -22,6 +22,7 @@
 # 02110-1301, USA.
 #
 
+import transaction
 from copy import deepcopy
 from os import path
 
@@ -2263,6 +2264,47 @@ class testMeeting(PloneMeetingTestCase):
 
         # cleanUp zmcl.load_config because it impact other tests
         zcml.cleanUp()
+
+    def test_pm_GetBeforeFrozenStates(self):
+        """This should return states before the 'frozen' state.
+           Test this especially because it is cached.
+           This test is very WF specific and only works with the base meeting_workflow."""
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        cfg.setMeetingWorkflow('meeting_workflow')
+        cfg.at_post_edit_script()
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime())
+        self.assertEqual(sorted(meeting.getBeforeFrozenStates()),
+                         ['created', 'published'])
+        # use the no_publication WF adaptation to remove state 'published'
+        cfg.setWorkflowAdaptations(('no_publication', ))
+        # do not use at_post_edit_script that does a cleanRamCache()
+        cfg.registerPortalTypes()
+        transaction.commit()
+        self.assertEqual(sorted(meeting.getBeforeFrozenStates()),
+                         ['created'])
+        cfg.setWorkflowAdaptations(())
+        # do not use at_post_edit_script that does a cleanRamCache()
+        cfg.registerPortalTypes()
+        transaction.commit()
+        self.assertEqual(sorted(meeting.getBeforeFrozenStates()),
+                         ['created', 'published'])
+
+        # different for 2 meetingConfigs
+        self.setMeetingConfig(cfg2.getId())
+        meeting2 = self.create('Meeting', date=DateTime())
+        self.assertEqual(sorted(meeting2.getBeforeFrozenStates()),
+                         ['created', 'published'])
+        cfg2.setWorkflowAdaptations(('no_publication', ))
+        cfg2.registerPortalTypes()
+        transaction.commit()
+
+        # different values for different meetings
+        self.assertEqual(sorted(meeting.getBeforeFrozenStates()),
+                         ['created', 'published'])
+        self.assertEqual(sorted(meeting2.getBeforeFrozenStates()),
+                         ['created'])
 
     def test_pm_GetPrettyLink(self):
         """Test the Meeting.getPrettyLink method."""

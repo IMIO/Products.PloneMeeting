@@ -27,6 +27,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Added workflow adaptationis 'accepted_out_of_meeting' that makes it possible to accept an item that is 'validated'
   and still not linked to a meeting.  Differents variants are provided : with emergency or not and with duplication
   of the item and validation of resulting item or not
+- Fixed bug in Meeting.getBeforeFrozenStates that always returned the same values for different Meetings of
+  different MeetingConfigs that could lead the inconsistency
 
 4.1b7 (2018-03-19)
 ------------------
