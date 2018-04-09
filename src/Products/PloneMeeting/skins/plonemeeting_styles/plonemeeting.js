@@ -243,19 +243,14 @@ function setDescriptionsVisiblity(mustShow) {
 }
 
 // Function that toggles the persons visibility
-function togglePersons() {
-  persons = document.getElementById('meeting_users_');
-  if (!persons) persons = document.getElementById('meeting_users');
-  if (!persons) return;
+function togglePersonsCookie() {
   show = readCookie('showPersons');
   if (!show) show = 'true';
   if (show == 'true') {
     createCookie('showPersons', 'false');
-    persons.style.display = 'none';
   }
   else {
     createCookie('showPersons', 'true');
-    persons.style.display = 'table';
   }
 }
 

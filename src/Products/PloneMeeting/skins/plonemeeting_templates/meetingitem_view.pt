@@ -101,14 +101,13 @@
 
             <tal:comment replace="nothing">Item assembly</tal:comment>
             <div class="discreet"
-                 tal:condition="python: ('itemAssembly' in usedAttrs) and ('assembly' in usedMeetingAttributes) and meeting">
+                 tal:condition="python: meeting and ('itemAssembly' in usedAttrs or context.getItemAssembly()) and ('assembly' in usedMeetingAttributes or meeting.getAssembly())">
                 <tal:defines define="redefinedItemAssemblies python: context.redefinedItemAssemblies(usedMeetingAttributes);
                                      mayQuickEdit python: context.mayQuickEdit('itemAssembly', bypassWritePermissionCheck=True);
                                      class_if_highlighted python: redefinedItemAssemblies and 'highlightValue' or '';
                                      class_to_use python: mayQuickEdit and (class_if_highlighted and class_if_highlighted + ' collapsibleHeader' or ' collapsibleHeader') or class_if_highlighted + ' collapsibleHeader'">
-                    <dl id="itemAssembly"
-                        class="collapsible inline collapsedOnLoad">
-                        <dt tal:attributes="class class_to_use" style="font-size: 100%;">
+                    <dl tal:attributes="class python: (request.get('showPersons', 'true')=='true') and 'collapsible inline' or 'collapsible inline collapsedOnLoad'">
+                        <dt tal:attributes="class class_to_use" style="font-size: 100%;" onclick="togglePersonsCookie()">
                             <span i18n:translate="item_assembly" class="item_attribute_label">
                                 Item assembly
                             </span>
@@ -122,20 +121,20 @@
                                 <tal:comment replace="nothing">Display a label 'Attendees' if we use item excused and absents,
                                                                if only using 'assembly', the entire information is in this single field
                                                                where absents are striked.</tal:comment>
-                                <tal:displayAssemblyLabel condition="python: 'assemblyExcused' in usedMeetingAttributes or 'assemblyAbsents' in usedMeetingAttributes">
+                                <tal:displayAssemblyLabel condition="python: ('assemblyExcused' in usedMeetingAttributes or 'assemblyExcused' in redefinedItemAssemblies) or ('assemblyAbsents' in usedMeetingAttributes or 'assemblyAbsents' in redefinedItemAssemblies)">
                                     <span class="item_attribute_label"
                                           tal:attributes="class python: 'assembly' in redefinedItemAssemblies and 'item_attribute_label highlightValue' or 'item_attribute_label'"
                                           i18n:translate="attendees_for_item"></span>:&nbsp;&nbsp;
                                 </tal:displayAssemblyLabel>
                                 <span tal:replace="structure python: context.getStrikedItemAssembly() or '-'">Assembly excused</span>
                             </div>
-                            <div tal:condition="python: 'assemblyExcused' in usedMeetingAttributes">
+                            <div tal:condition="python: 'assemblyExcused' in usedMeetingAttributes or 'assemblyExcused' in redefinedItemAssemblies">
                                 <span class="item_attribute_label"
                                       tal:attributes="class python: 'assemblyExcused' in redefinedItemAssemblies and 'item_attribute_label highlightValue' or 'item_attribute_label'"
                                       i18n:translate="PloneMeeting_label_itemAssemblyExcused"></span>:&nbsp;&nbsp;
                                 <span tal:replace="structure python: context.getItemAssemblyExcused() or '-'">Assembly excused</span>
                             </div>
-                            <div tal:condition="python: 'assemblyAbsents' in usedMeetingAttributes">
+                            <div tal:condition="python: 'assemblyAbsents' in usedMeetingAttributes or 'assemblyAbsents' in redefinedItemAssemblies">
                                 <span class="item_attribute_label"
                                       tal:attributes="class python: 'assemblyAbsents' in redefinedItemAssemblies and 'item_attribute_label highlightValue' or 'item_attribute_label'"
                                       i18n:translate="PloneMeeting_label_itemAssemblyAbsents"></span>:&nbsp;&nbsp;
@@ -145,6 +144,19 @@
                     </dl>
                 </tal:defines>
             </div>
+
+            <dl tal:condition="python: meeting and ('attendees' in usedMeetingAttributes) and meeting.getAttendees()"
+                tal:attributes="class python: (request.get('showPersons', 'true')=='true') and 'collapsible inline' or 'collapsible inline collapsedOnLoad'">
+              <dt class="collapsibleHeader" onclick="togglePersonsCookie()">
+                <span class="meeting_attribute_label" i18n:translate="assembly_and_signatures">
+                    Meeting assembly and signatures
+                </span>
+              </dt>
+              <dd class="collapsibleContent">
+                <tal:comment replace="nothing">People (item attendees, signers and votes)</tal:comment>
+                <metal:people use-macro="here/@@pm-macros/itemPeople"/>
+              </dd>
+            </dl>
 
             <tal:comment replace="nothing">Item keywords</tal:comment>
             <div class="discreet" tal:condition="python: 'itemKeywords' in usedAttrs">
@@ -358,7 +370,7 @@
             </div>
             <tal:comment replace="nothing">Item signatures</tal:comment>
             <div class="discreet"
-                 tal:condition="python: meeting and ('signatures' in usedMeetingAttributes)">
+                 tal:condition="python: meeting and ('signatures' in usedMeetingAttributes or meeting.getSignatures() or context.getItemSignatures())">
                 <tal:defines define="redefinedItemSignatures python: context.getItemSignatures(real=True);
                                      mayQuickEdit python: context.mayQuickEdit('itemSignatures', bypassWritePermissionCheck=True);
                                      class_if_highlighted python: redefinedItemSignatures and 'highlightValue' or '';
@@ -383,9 +395,6 @@
         </td>
       </tr>
     </table>
-
-    <tal:comment replace="nothing">People (item attendees, signers and votes)</tal:comment>
-    <metal:people use-macro="here/@@pm-macros/itemPeople"/>
 
     <tal:comment replace="nothing">Description</tal:comment>
     <tal:field define="fieldName python: 'description'; ajaxEdit python:True">

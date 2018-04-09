@@ -404,13 +404,9 @@ document.location.reload(true);
 
 <div id="meeting_users_"
      metal:define-macro="itemPeople" i18n:domain="PloneMeeting"
-     onmouseover="javascript:initializePMOverlays()"
-     class="ajax-pm-frame"
      tal:define="usedAttrs usedAttrs|meetingConfig/getUsedItemAttributes;
                  meeting context/getMeeting;
-                 usedMeetingAttributes usedMeetingAttributes|meetingConfig/getUsedMeetingAttributes"
-     tal:condition="python: meeting and ('attendees' in usedMeetingAttributes)"
-     tal:attributes="style python: (request.get('showPersons', 'true')=='true') and 'display:table' or 'display:none'">
+                 usedMeetingAttributes usedMeetingAttributes|meetingConfig/getUsedMeetingAttributes">
 <form id="itemPeopleForm" name="itemPeopleForm" method="post">
 <table tal:define="allUsers meeting/getAllUsedHeldPositions;
                    showVotes context/showVotes;
@@ -480,7 +476,7 @@ document.location.reload(true);
        <tal:comment replace="nothing">Show "absent" icon if the user was absent for this item</tal:comment>
        <tal:left condition="python: not isPresent and aUid not in (excused + absents)">
        <img tal:attributes="src string: $portal_url/leaving.gif"
-            title="left_now" i18n:attributes="title"/>
+            title="item_attendee_absent" i18n:attributes="title"/>
        <tal:comment replace="nothing">Remove info user being an item absent</tal:comment>
        <a href="#" class="link-overlay-pm" tal:attributes="href string:item_welcome_attendee_form?person_uid=${aUid}"
           tal:condition="python:context._mayChangeAttendees(aUid)">

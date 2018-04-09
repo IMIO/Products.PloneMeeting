@@ -20,59 +20,24 @@
                        useUserReplacements meetingConfig/getUseUserReplacements;">
 
       <script language="javascript">
-      function showOrHideReplField(userId, show) {
-        // Shows of hides "replacement" field for p_userId, depending on p_show.
-        var repl = document.getElementById('muser_'+userId+'_replacement');
-        if (repl) {
-          if (!show) {
-            // Hide the field, and set 'nobody' as replacement.
-            repl.value = '';
-            repl.style.display = 'none';
-          }
-          else {
-            // Show the field.
-            repl.style.display = '';
-          }
-        }
-        /* If we need to show the "replacement" field, it means that p_userId
-           will not attend, so we will remove it from every "replacement" list,
-           so it will not be possible to select him as replacement. */
-        var userTable = document.getElementById('meeting_users');
-        var selectWidgets = userTable.getElementsByTagName('select');
-        for (var i=0; i<selectWidgets.length; i++) {
-          for (var j=0; j<selectWidgets[i].options.length; j++){
-            if (selectWidgets[i].options[j].value == userId) {
-              if (show) {
-                // We will hide this option, and unselect it if it was selected.
-                if (selectWidgets[i].options[j].selected) {
-                  selectWidgets[i].value = '';
-                }
-                selectWidgets[i].options[j].style.display = 'none';
-                selectWidgets[i].options[j].disabled = true;
-              }
-              else {
-                // We need to show it.
-                selectWidgets[i].options[j].style.display = '';
-                selectWidgets[i].options[j].disabled = false;
-              }
-            }
-          }
-        }
-      }
-      // When a checkbox is unchecked, what other one will we check?
-      var checkWillUncheck = {"attendee":"excused", "excused":"attendee",
-                              "absent":"attendee", "lateAttendee":"attendee"};
+      // some checkbowes may not be checked toghether
+      var only_one_selected = ['attendee', 'excused', 'absent', 'lateAttendee'];
       function onClickBox(box, boxType, userId) {
-        if (box.checked && boxType in checkWillUncheck) {
-          // We must uncheck every other box for this user
-          for (var bType in checkWillUncheck) {
-            if (bType != boxType) {
-              var obox = document.getElementById('muser_'+userId+'_'+bType);
-              // It may not exist if the corresponding field is not used.
-              if (obox) obox.checked = false;
+            if (box.checked && (only_one_selected.indexOf(boxType) != -1)) {
+                // unckeck every other only_one_selected boxes
+                only_one_selected.forEach(function(bType) {
+                if (bType != boxType) {
+                    var obox = document.getElementById('muser_'+userId+'_'+bType);
+                    if (obox) obox.checked = false;}
+                });
             }
-          }
-        }
+            // finally, if the attendee box is unckecked, disable the 'signatory' box
+            var attendee_box = document.getElementById('muser_'+userId+'_attendee');
+            var signer_box = document.getElementById('muser_'+userId+'_signer');
+            if (signer_box) {
+                if (!attendee_box.checked) {signer_box.checked = false; signer_box.disabled = true;}
+                else {signer_box.disabled = false;}
+            }
       }
       </script>
 
@@ -208,6 +173,7 @@
                      tal:condition="python: muid in allSigners"
                      tal:attributes="id cbid; name cbid;
                                      checked python: test(errors, request.get(cbid, '')=='on', muid in signers);
+                                     disabled python: test(errors, request.get(cbid, '')!='on', muid not in attendees);
                                      onClick python: 'onClickBox(this, \'signer\', \'%s\')' % muid"/>
             </td>
           </tal:defines>
