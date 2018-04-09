@@ -2306,6 +2306,14 @@ class testMeeting(PloneMeetingTestCase):
         self.assertEqual(sorted(meeting2.getBeforeFrozenStates()),
                          ['created'])
 
+        # if no frozen state found, every states are considered as before frozen
+        # connect 'published' state to 'decided'
+        meeting_wf = self.wfTool.get('meeting_workflow')
+        meeting_wf.states.deleteStates(['frozen'])
+        cfg.at_post_edit_script()
+        self.assertEqual(sorted(meeting.getBeforeFrozenStates()),
+                         ['archived', 'closed', 'created', 'decided', 'published'])
+
     def test_pm_GetPrettyLink(self):
         """Test the Meeting.getPrettyLink method."""
         self.changeUser('pmManager')
