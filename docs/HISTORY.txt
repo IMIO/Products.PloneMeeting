@@ -7,7 +7,28 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Versions 3.0.x are for Plone < 4.3
 - Versions 3.1.+ are for Plone 4.3+
 
-4.1b7 (unreleased)
+4.1b8 (unreleased)
+------------------
+
+- When an annex is modified, update parent's (item, meeting or advice) modification date, as it was already
+  the case when a new annex is added or when it is deleted
+- Added adaptable method MeetingItem.showObservations used in the widget condition of field MeetingItem.observations
+- Factorized PMDocumentGenerationHelperView(ATDocumentGenerationHelperView) to BaseDGHV(object) so we can
+  use it for dexterity contenttypes.  Item, Meeting and Folder helper views now inherits from the BaseDGHV
+  + ATDocumentGenerationHelperView and the meetingadvice helper view inherits from BaseDGHV + 
+  DXDocumentGenerationHelperView
+- Fixed problem in CKeditor where toolbar was lost when maximizing a CKeditor containing a very long text
+- In content edited with CKeditor, force margin-bottom under tables to 0em because it is rendered this way
+  with appy.pod (2 tables above each other are glued together by default in LibreOffice)
+- Added getProposingGroup index to plone.app.querystring fields selectable on a Collection
+- Make sure the link to meeting displayed in items dashboard is not enabled if current user may not see the meeting
+- If a MeetingConfig is in a configGroup, prepend linked Plone groups (powerobservers, meetingmanagers, ...) title
+  with the title of the configGroup, this is useful when using several MC having same title if different configGroups
+- Added workflow adaptationis 'accepted_out_of_meeting' that makes it possible to accept an item that is 'validated'
+  and still not linked to a meeting.  Differents variants are provided : with emergency or not and with duplication
+  of the item and validation of resulting item or not
+
+4.1b7 (2018-03-19)
 ------------------
 
 - Refactored meetingitem_view to use @@display-annexes to display annexes and decision annexes.  Only display
@@ -15,6 +36,22 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   appear in the existing annexes popup
 - Make sure special "non_selectable_value_" values are not selectable in MeetingItem.optionalAdvisers.  Use
   JS to override the onClick event of these input values
+- Bugfix in MeetingConfig.updateAnnexConfidentiality that applied default confidentiality to every advices of
+  the application and not only to the currently updated MeetingConfig related advices
+- Added reindexIndexes method to the PM Migrator so it is easy to reindex some portal_catalog indexes
+- Resurrected the getConfigId index so it is possible to query portal_catalog for MeetingConfig id
+- Hide batch actions to non MeetingManagers on the meeting_view dashboards
+- Added new constant config.ITEM_STATES_NOT_LINKED_TO_MEETING to define item states when an item is not presented
+  to a meeting.  This is used by MeetingItem.wfActions.doCorrect to know when an item needs to be removed
+  from a meeting
+- Added Workflow adaptations to remove an item that is presented into a meeting and send it back to previous
+  states than validated : 'Send item back to item created', 'Send item back to pre-validated',
+  'Send item back to proposed'
+- Added adaptable method MeetingItem._getAllGroupsManagingItem that returns every groups that are managing an
+  item, this is used by PMCategorizedObjectInfoAdapter._item_visible_for_groups when giving access to confidential
+  annexes to proposing group
+- Added attribute MeetingConfig.hideHistoryTo that makes it possible to hide history link on every elements to
+  (restricted) power observers
 
 4.1b6 (2018-03-07)
 ------------------
