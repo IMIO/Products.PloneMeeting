@@ -271,14 +271,6 @@ def postInstall(context):
     viewer_settings['show_search_on_group_view'] = False
     viewer_settings['storage_type'] = 'Blob'
 
-    # make sure the 'previous_review_state' is available in portal_atct
-    portal_atct = api.portal.get_tool('portal_atct')
-    portal_atct.updateIndex(index='previous_review_state',
-                            friendlyName='Previous review state',
-                            description='The previous object workflow state',
-                            enabled=True,
-                            criteria='ATListCriterion')
-
     # configure Products.cron4plone
     # add a call to @@update-delay-aware-advices that will update
     # data regarding the delay-aware advices : call updateAdvices on every items

@@ -402,6 +402,8 @@ class IMeetingItemDocumentation:
            ids that will be used for id and translated for title."""
     def showAdvices(self):
         """This controls if advices need to be shown on the item view."""
+    def showObservations(self):
+        """This controls if field MeetingItem.observations must be shown."""
     def _mayUpdateItemReference(self):
         """Condition to update item reference.  By default the item reference
            will be updated if item is in a meeting and meeting review_state is
@@ -411,6 +413,9 @@ class IMeetingItemDocumentation:
            By default this will be the proposingGroup.
            Given p_review_state may be used to know what group manage item in which review_state.
            This method must return a MeetingGroup."""
+    def _getAllGroupsManagingItem(self):
+        """Returns the list of groups that manages the item during the entire item life.
+           See _getGroupManagingItem docstring for more informations."""
 
 
 class IMeetingItemWorkflowConditions(Interface):

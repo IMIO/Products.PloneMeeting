@@ -17,6 +17,7 @@ from plone import api
 from plone.indexer import indexer
 from Products.PluginIndexes.common.UnIndex import _marker
 from Products.PloneMeeting.interfaces import IMeeting
+from Products.PloneMeeting.interfaces import IMeetingContent
 from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
@@ -25,6 +26,16 @@ from Products.PloneMeeting.utils import get_annexes
 
 REAL_GROUP_ID_PATTERN = 'real_group_id__{0}'
 DELAYAWARE_REAL_GROUP_ID_PATTERN = 'delay_real_group_id__{0}'
+
+
+@indexer(IItem)
+def getConfigId(obj):
+    """
+      Indexes the MeetingConfig id.
+    """
+    tool = api.portal.get_tool('portal_plonemeeting')
+    cfg = tool.getMeetingConfig(obj)
+    return cfg and cfg.getId() or _marker
 
 
 @indexer(IMeeting)
@@ -43,7 +54,7 @@ def title_or_id(obj):
     return obj.title_or_id(withTypeName=False)
 
 
-@indexer(IMeetingItem)
+@indexer(IMeetingContent)
 def previous_review_state(obj):
     """
       Indexes the previous review_state, aka the review_state before current review_state

@@ -116,21 +116,10 @@
                   collective.iconifiedcategory.interfaces.IIconifiedSignedChangedEvent"
              handler=".events.onAnnexSignedChanged" />
 
-  <!-- if 'auto-conversion' is enabled in collective.documentviewer, convert MeetingFiles upon creation -->
-  <subscriber for=".interfaces.IMeetingFile
-                   Products.Archetypes.interfaces.IObjectInitializedEvent"
-              handler=".MeetingFile.convertToImages" />
-
-  <!-- when an item is duplicated, convert annexes if necessary -->
-  <subscriber for=".interfaces.IMeetingFile
-                   OFS.interfaces.IObjectClonedEvent"
-              handler=".MeetingFile.prepareClonedAnnexForConversion" />
-
-  <!-- when collective.documentviewer conversion finished, check that everything is right -->
-  <subscriber for=".interfaces.IMeetingFile
-                   collective.documentviewer.interfaces.IConversionFinishedEvent"
-              handler=".MeetingFile.checkAfterConversion" />
-
+  <subscriber for="imio.annex.content.annex.IAnnex
+                   zope.lifecycleevent.IObjectModifiedEvent"
+              handler=".events.onAnnexModified" />
+ 
   <subscriber for="imio.annex.content.annex.IAnnex
                    zope.container.interfaces.IObjectRemovedEvent"
               handler=".events.onAnnexRemoved" />

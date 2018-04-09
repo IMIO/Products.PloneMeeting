@@ -3,6 +3,7 @@
 from operator import attrgetter
 
 from zope.component.hooks import getSite
+from zope.globalrequest import getRequest
 from zope.i18n import translate
 from zope.interface import implements
 from zope.schema.vocabulary import SimpleVocabulary
@@ -158,6 +159,7 @@ class ItemProposingGroupsVocabulary(object):
         res = sorted(res_active, key=attrgetter('title'))
 
         res_not_active = []
+        request = getattr(context, 'REQUEST', getRequest())
         for group in notActiveGroups:
             res_not_active.append(
                 SimpleTerm(group.getId(),
@@ -165,7 +167,7 @@ class ItemProposingGroupsVocabulary(object):
                            translate('${element_title} (Inactive)',
                                      domain='PloneMeeting',
                                      mapping={'element_title': safe_unicode(group.Title())},
-                                     context=context.REQUEST)
+                                     context=request)
                            )
                 )
         res = res + sorted(res_not_active, key=attrgetter('title'))
@@ -754,7 +756,7 @@ class OtherMCCorrespondenceVocabulary(object):
                     res.append(SimpleTerm(
                         cat.UID(),
                         cat.UID(),
-                        u'%s → %s → %s' % (
+                        u'%s 🡒 %s 🡒 %s' % (
                             safe_unicode(cfg.Title()),
                             translate('Item annexes',
                                       domain='PloneMeeting',
@@ -764,7 +766,7 @@ class OtherMCCorrespondenceVocabulary(object):
                         res.append(SimpleTerm(
                             subcat.UID(),
                             subcat.UID(),
-                            u'%s → %s → %s → %s' % (
+                            u'%s 🡒 %s 🡒 %s 🡒 %s' % (
                                 safe_unicode(cfg.Title()),
                                 translate('Item annexes',
                                           domain='PloneMeeting',
@@ -776,7 +778,7 @@ class OtherMCCorrespondenceVocabulary(object):
                     res.append(SimpleTerm(
                         cat.UID(),
                         cat.UID(),
-                        u'%s → %s → %s' % (
+                        u'%s 🡒 %s 🡒 %s' % (
                             safe_unicode(cfg.Title()),
                             translate('Item decision annexes',
                                       domain='PloneMeeting',
@@ -786,7 +788,7 @@ class OtherMCCorrespondenceVocabulary(object):
                         res.append(SimpleTerm(
                             subcat.UID(),
                             subcat.UID(),
-                            u'%s → %s → %s → %s' % (
+                            u'%s 🡒 %s 🡒 %s 🡒 %s' % (
                                 safe_unicode(cfg.Title()),
                                 translate('Item annexes',
                                           domain='PloneMeeting',
@@ -817,14 +819,14 @@ class StorePodTemplateAsAnnexVocabulary(object):
                 res.append(SimpleTerm(
                     cat.UID(),
                     cat.UID(),
-                    u'{0} → {1}'.format(
+                    u'{0} 🡒 {1}'.format(
                         safe_unicode(annexes_group.Title()),
                         safe_unicode(cat.Title()))))
                 for subcat in cat.objectValues():
                     res.append(SimpleTerm(
                         subcat.UID(),
                         subcat.UID(),
-                        u'{0} → {1} → {2}'.format(
+                        u'{0} 🡒 {1} 🡒 {2}'.format(
                             safe_unicode(annexes_group.Title()),
                             safe_unicode(cat.Title()),
                             safe_unicode(subcat.Title()))))
@@ -861,7 +863,7 @@ class ItemTemplatesStorableAsAnnexVocabulary(object):
                         u'{0} ({1} / {2})'.format(
                             safe_unicode(pod_template.Title()),
                             output_format,
-                            u'{0} → {1}'.format(
+                            u'{0} 🡒 {1}'.format(
                                 safe_unicode(annex_group_title),
                                 safe_unicode(annex_type.Title())))))
         return SimpleVocabulary(res)
@@ -912,7 +914,7 @@ class PMExistingPODTemplate(ExistingPODTemplateFactory):
     def _renderTermTitle(self, brain):
         template = brain.getObject()
         cfg = template.aq_inner.aq_parent.aq_parent
-        return u'{} → {} → {}'.format(
+        return u'{} 🡒 {} 🡒 {}'.format(
             safe_unicode(cfg.Title()),
             safe_unicode(brain.Title),
             safe_unicode(brain.getObject().odt_file.filename))

@@ -48,6 +48,7 @@ from imio.annex.columns import ActionsColumn
 from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
+from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.indexes import SearchableText
@@ -831,8 +832,7 @@ class testAnnexes(PloneMeetingTestCase):
         # only members able to add annexes are able to change position
         self.validateItem(item)
         self.assertEqual(item.queryState(), 'validated')
-        self.changeUser('pmObserver1')
-        self.assertTrue(self.hasPermission(View, item))
+        self.assertFalse(self.hasPermission(AddAnnex, item))
         self.assertRaises(Unauthorized, item.folder_position_typeaware, position='up', id=annex1.getId())
 
     def test_pm_AnnexesCreationDateKeptWhenItemDuplicated(self):
@@ -1117,19 +1117,19 @@ class testAnnexes(PloneMeetingTestCase):
                 continue
             mc_title = mc.Title()
             values = [
-                u'{0} \u2192 Item annexes \u2192 Financial analysis'.format(mc_title),
-                u'{0} \u2192 Item annexes \u2192 Financial analysis '
-                u'\u2192 Financial analysis sub annex'.format(mc_title),
-                u'{0} \u2192 Item annexes \u2192 Legal analysis'.format(mc_title),
-                u'{0} \u2192 Item annexes \u2192 Budget analysis'.format(mc_title),
-                u'{0} \u2192 Item annexes \u2192 Budget analysis '
-                u'\u2192 Budget analysis sub annex'.format(mc_title),
-                u'{0} \u2192 Item annexes \u2192 Other annex(es)'.format(mc_title),
-                u'{0} \u2192 Item decision annexes \u2192 Decision annex(es)'.format(mc_title)]
+                u'{0} 🡒 Item annexes 🡒 Financial analysis'.format(mc_title),
+                u'{0} 🡒 Item annexes 🡒 Financial analysis '
+                u'🡒 Financial analysis sub annex'.format(mc_title),
+                u'{0} 🡒 Item annexes 🡒 Legal analysis'.format(mc_title),
+                u'{0} 🡒 Item annexes 🡒 Budget analysis'.format(mc_title),
+                u'{0} 🡒 Item annexes 🡒 Budget analysis '
+                u'🡒 Budget analysis sub annex'.format(mc_title),
+                u'{0} 🡒 Item annexes 🡒 Other annex(es)'.format(mc_title),
+                u'{0} 🡒 Item decision annexes 🡒 Decision annex(es)'.format(mc_title)]
             expected.extend(values)
         self.assertEqual([term.title for term in vocab(annex_type)._terms], expected)
 
-    def test_pm_annex_type_only_for_meeting_managers(self):
+    def test_pm_Annex_type_only_for_meeting_managers(self):
         """An ItemAnnexContentCategory may be defined only selectable by MeetingManagers."""
         cfg = self.meetingConfig
         vocab = queryUtility(IVocabularyFactory, 'collective.iconifiedcategory.categories')
@@ -1164,7 +1164,7 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertTrue(overhead_analysis_category_id in term_tokens)
         self.assertTrue(budget_analysis_subannex_category_id in term_tokens)
 
-    def test_pm_actions_panel_history_only_for_managers(self):
+    def test_pm_Actions_panel_history_only_for_managers(self):
         """The 'history' icon in the actions panel is only shown to real Managers."""
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -1176,6 +1176,54 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertFalse('@@historyview' in column.renderCell(annex_brain))
         self.changeUser('admin')
         self.assertTrue('@@historyview' in column.renderCell(annex_brain))
+
+    def test_pm_ParentModificationDateUpdatedWhenAnnexChanged(self):
+        """When an annex is added/modified/removed, the parent modification date is updated."""
+
+        catalog = api.portal.get_tool('portal_catalog')
+
+        def _check_parent_modified(parent, parent_modified, annex):
+            """ """
+            parent_uid = parent.UID()
+            # modification date was updated
+            self.assertNotEqual(parent_modified, item.modified())
+            parent_modified = parent.modified()
+            self.assertEqual(catalog(UID=parent_uid)[0].modified, parent_modified)
+
+            # edit the annex
+            notify(ObjectModifiedEvent(annex))
+            # modification date was updated
+            self.assertNotEqual(parent_modified, item.modified())
+            parent_modified = parent.modified()
+            self.assertEqual(catalog(UID=parent_uid)[0].modified, parent_modified)
+
+            # remove an annex
+            self.portal.restrictedTraverse('@@delete_givenuid')(annex.UID())
+            # modification date was updated
+            self.assertNotEqual(parent_modified, item.modified())
+            parent_modified = parent.modified()
+            self.assertEqual(catalog(UID=parent_uid)[0].modified, parent_modified)
+
+        # on MeetingItem
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        parent_modified = item.modified()
+        self.assertEqual(catalog(UID=item.UID())[0].modified, parent_modified)
+        # add an annex
+        annex = self.addAnnex(item)
+        _check_parent_modified(item, parent_modified, annex)
+        # add a decision annex
+        decision_annex = self.addAnnex(item, relatedTo='item_decision')
+        _check_parent_modified(item, parent_modified, decision_annex)
+
+        # on Meeting
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2018/03/19'))
+        parent_modified = meeting.modified()
+        self.assertEqual(catalog(UID=meeting.UID())[0].modified, parent_modified)
+        # add an annex
+        annex = self.addAnnex(meeting)
+        _check_parent_modified(meeting, parent_modified, annex)
 
 
 def test_suite():

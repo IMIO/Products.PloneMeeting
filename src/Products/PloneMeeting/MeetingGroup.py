@@ -36,6 +36,7 @@ from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import WriteRiskyConfig
 from Products.PloneMeeting.profiles import GroupDescriptor
 from Products.PloneMeeting.utils import computeCertifiedSignatures
+from Products.PloneMeeting.utils import createOrUpdatePloneGroup
 from Products.PloneMeeting.utils import get_all_suffixes
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getFieldContent
@@ -367,14 +368,14 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
                 raise PloneMeetingError("You can't create this MeetingGroup "
                                         "because a Plone groupe having id "
                                         "'%s' already exists." % groupId)
-        self._createPloneGroupForAllSuffixes()
+        self._createOrUpdatePloneGroupForAllSuffixes()
         self._invalidateCachedVocabularies()
         self.adapted().onEdit(isCreated=True)  # Call product-specific code
 
     security.declarePrivate('at_post_edit_script')
 
     def at_post_edit_script(self):
-        self._createPloneGroupForAllSuffixes()
+        self._createOrUpdatePloneGroupForAllSuffixes()
         self._invalidateCachedVocabularies()
         self.adapted().onEdit(isCreated=False)
 
@@ -386,7 +387,7 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.groupsinchargevocabulary")
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.askedadvicesvocabulary")
 
-    def _createPloneGroupForAllSuffixes(self):
+    def _createOrUpdatePloneGroupForAllSuffixes(self):
         """ """
         for groupSuffix in get_all_suffixes(self.getId()):
             self._createOrUpdatePloneGroup(groupSuffix)
@@ -395,23 +396,11 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
         '''This will create the PloneGroup that corresponds to me
            and p_groupSuffix, if group already exists, it will just update it's title.'''
         groupId = self.getPloneGroupId(groupSuffix)
-        enc = self.portal_properties.site_properties.getProperty(
-            'default_charset')
-        groupTitle = '%s (%s)' % (
-            self.Title().decode(enc),
-            translate(groupSuffix, domain='PloneMeeting', context=self.REQUEST))
-        # a default Plone group title is NOT unicode.  If a Plone group title is
-        # edited TTW, his title is no more unicode if it was previously...
-        # make sure we behave like Plone...
-        groupTitle = groupTitle.encode(enc)
-        portal_groups = api.portal.get_tool('portal_groups')
-        group_created = portal_groups.addGroup(groupId, title=groupTitle)
-        if group_created:
+        groupTitle = self.Title()
+        wasCreated = createOrUpdatePloneGroup(groupId=groupId, groupTitle=groupTitle, groupSuffix=groupSuffix)
+        if wasCreated:
+            portal_groups = api.portal.get_tool('portal_groups')
             portal_groups.setRolesForGroup(groupId, ('MeetingObserverGlobal',))
-        else:
-            # update the title so Plone groups title are coherent
-            # with MeetingGroup title in case it is updated thereafter
-            portal_groups.editGroup(groupId, title=groupTitle)
 
     security.declarePublic('getSelf')
 

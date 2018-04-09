@@ -3907,7 +3907,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # on the parameter MeetingConfig.toDiscussSetOnItemInsert
         # check test test_pm_ToDiscussFieldBehaviourWhenCloned
         NEUTRAL_FIELDS = [
-            'answerers', 'completeness', 'emergency', 'id',
+            'answerers', 'completeness', 'emergency', 'id', 'isAcceptableOutOfMeeting',
             'itemAbsents', 'itemAssembly', 'itemAssemblyAbsents',
             'itemAssemblyExcused', 'itemInitiator', 'itemIsSigned',
             'itemKeywords', 'itemNumber', 'itemReference', 'itemSignatories',
@@ -5842,6 +5842,22 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(IContentDeletable(itemWithNotGivenAdvice).mayDelete())
         self.assertFalse(IContentDeletable(itemWithGivenAdvice).mayDelete())
         self.assertTrue(IContentDeletable(itemWithInheritedGivenAdvices).mayDelete())
+
+    def test_pm_ShowObservations(self):
+        """By default, MeetingItem.showObservations returns True but
+           observations are shown if attribute used in configuration."""
+        self.changeUser('pmCreator1')
+        cfg = self.meetingConfig
+        cfg.setUsedItemAttributes(())
+        item = self.create('MeetingItem')
+        widget = item.getField('observations').widget
+        self.assertFalse(widget.testCondition(item.aq_inner.aq_parent, self.portal, item))
+        self.assertTrue(item.adapted().showObservations())
+        cfg.setUsedItemAttributes(('observations', ))
+        # MeetingItem.attributeIsUsed is RAMCached
+        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attributeIsUsed')
+        self.assertTrue(widget.testCondition(item.aq_inner.aq_parent, self.portal, item))
+        self.assertTrue(item.adapted().showObservations())
 
 
 def test_suite():

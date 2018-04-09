@@ -58,82 +58,70 @@
     <table cellpadding="0" cellspacing="0">
       <tr valign="top">
         <td tal:condition="python: 'associatedGroups' in usedAttrs"><metal:field use-macro="python:here.widget('associatedGroups', mode='edit')"/></td>
-        <td tal:condition="context/isAdvicesEnabled"><metal:field use-macro="python:here.widget('optionalAdvisers', mode='edit')"/></td>
+        <td tal:condition="context/showOptionalAdvisers"><metal:field use-macro="python:here.widget('optionalAdvisers', mode='edit')"/></td>
         <td tal:condition="context/isCopiesEnabled"><metal:field use-macro="python:here.widget('copyGroups', mode='edit')"/></td>
         <td><metal:field use-macro="python:here.widget('itemSignatories', mode='edit')"/></td>
       </tr>
     </table>
-    <tal:comment replace="nothing">Preferred meeting, item keywords, privacy</tal:comment>
-    <table cellpadding="0" cellspacing="0">
-        <tr valign="top">
-           <td>
-            <metal:field use-macro="python:here.widget('preferredMeeting', mode='edit')"/>
-           </td>
-        </tr>
-        <tr>
-           <td tal:condition="python:'sendToAuthority' in usedAttrs">
-            <metal:field use-macro="python:here.widget('sendToAuthority', mode='edit')"/>
-           </td>
-           <td tal:condition="python:'privacy' in usedAttrs">
-            <metal:field use-macro="python:here.widget('privacy', mode='edit')"/>
-           </td>
-           <td tal:condition="python:'itemKeywords' in usedAttrs">
-            <metal:field use-macro="python:here.widget('itemKeywords', mode='edit')"/>
-           </td>
-        </tr>
-        <tr>
-            <td colspan="5"
-                tal:define="showOtherMeetingConfigsClonableToSpecialFields python: cfg.getMeetingConfigsToCloneTo() and ('otherMeetingConfigsClonableToEmergency' in usedAttrs or 'otherMeetingConfigsClonableToPrivacy' in usedAttrs)"
-                tal:attributes="style python: showOtherMeetingConfigsClonableToSpecialFields and 'border: 1px solid lightgrey;; min-width: 600px;;' or ''">
-                <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableTo', mode='edit')"/>
-                <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableToPrivacy', mode='edit')"/>
-                <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableToEmergency', mode='edit', label=0)"/>
-                <tal:scriptForOtherMeetingConfigsClonableToSpecificFields condition="showOtherMeetingConfigsClonableToSpecialFields">
-                <script type="text/javascript">
-                    $("input[id^='otherMeetingConfigsClonableTo_']").each(function()
-                        {
-                         $(this).bind("click", function() {
-                            number = this.id.split('_')[1]
-                            otherMCEmergencyField = $('#otherMeetingConfigsClonableToEmergency_' + number);
-                            otherMCPrivacyField = $('#otherMeetingConfigsClonableToPrivacy_' + number);
-                            if (this.checked) {
-                                otherMCEmergencyField.attr('disabled', false);
-                                otherMCPrivacyField.attr('disabled', false);
-                            }
-                            else {
-                                otherMCEmergencyField.attr('checked', false);
-                                otherMCEmergencyField.attr('disabled', true);
-                                otherMCPrivacyField.attr('checked', false);
-                                otherMCPrivacyField.attr('disabled', true);
-                            };
-                            });
-                        });
-    
-                    jQuery(document).ready(function($) {
-                    $("input[id^='otherMeetingConfigsClonableTo_']").each(function()
-                        {
-                        if (!$(this).attr('checked')) {
-                            number = this.id.split('_')[1]
-                            otherMCEmergencyField = $('#otherMeetingConfigsClonableToEmergency_' + number);
-                            otherMCEmergencyField.attr('checked', false);
-                            otherMCEmergencyField.attr('disabled', true);
-                            otherMCPrivacyField = $('#otherMeetingConfigsClonableToPrivacy_' + number);
-                            otherMCPrivacyField.attr('checked', false);
-                            otherMCPrivacyField.attr('disabled', true);
-                            };
-                        });
+
+    <metal:field use-macro="python:here.widget('preferredMeeting', mode='edit')"/>
+    <metal:field use-macro="python:here.widget('sendToAuthority', mode='edit')"/>
+    <metal:field use-macro="python:here.widget('isAcceptableOutOfMeeting', mode='edit')"/>
+    <metal:field use-macro="python:here.widget('privacy', mode='edit')"/>
+    <metal:field use-macro="python:here.widget('itemKeywords', mode='edit')"/>
+
+    <div tal:define="showOtherMeetingConfigsClonableToSpecialFields python: cfg.getMeetingConfigsToCloneTo() and ('otherMeetingConfigsClonableToEmergency' in usedAttrs or 'otherMeetingConfigsClonableToPrivacy' in usedAttrs)"
+          tal:attributes="style python: showOtherMeetingConfigsClonableToSpecialFields and 'border: 1px solid lightgrey;; min-width: 600px;;' or ''">
+        <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableTo', mode='edit')"/>
+        <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableToPrivacy', mode='edit')"/>
+        <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableToEmergency', mode='edit', label=0)"/>
+        <tal:scriptForOtherMeetingConfigsClonableToSpecificFields condition="showOtherMeetingConfigsClonableToSpecialFields">
+        <script type="text/javascript">
+            $("input[id^='otherMeetingConfigsClonableTo_']").each(function()
+                {
+                 $(this).bind("click", function() {
+                    number = this.id.split('_')[1]
+                    otherMCEmergencyField = $('#otherMeetingConfigsClonableToEmergency_' + number);
+                    otherMCPrivacyField = $('#otherMeetingConfigsClonableToPrivacy_' + number);
+                    if (this.checked) {
+                        otherMCEmergencyField.attr('disabled', false);
+                        otherMCPrivacyField.attr('disabled', false);
+                    }
+                    else {
+                        otherMCEmergencyField.attr('checked', false);
+                        otherMCEmergencyField.attr('disabled', true);
+                        otherMCPrivacyField.attr('checked', false);
+                        otherMCPrivacyField.attr('disabled', true);
+                    };
                     });
-                </script>
-                </tal:scriptForOtherMeetingConfigsClonableToSpecificFields>
-            </td>
-        </tr>
-    </table><br />
+                });
+
+            jQuery(document).ready(function($) {
+            $("input[id^='otherMeetingConfigsClonableTo_']").each(function()
+                {
+                if (!$(this).attr('checked')) {
+                    number = this.id.split('_')[1]
+                    otherMCEmergencyField = $('#otherMeetingConfigsClonableToEmergency_' + number);
+                    otherMCEmergencyField.attr('checked', false);
+                    otherMCEmergencyField.attr('disabled', true);
+                    otherMCPrivacyField = $('#otherMeetingConfigsClonableToPrivacy_' + number);
+                    otherMCPrivacyField.attr('checked', false);
+                    otherMCPrivacyField.attr('disabled', true);
+                    };
+                });
+            });
+        </script>
+        </tal:scriptForOtherMeetingConfigsClonableToSpecificFields>
+    </div><br />
 
     <tal:comment replace="nothing">Budget-related information</tal:comment>
-    <metal:field use-macro="python:here.widget('budgetRelated', mode='edit')"/>
-    <div id="hideBudgetInfosIfNotBudgetRelated">
-        <metal:field use-macro="python:here.widget('budgetInfos', mode='edit')"/>
-    </div>
+    <fieldset tal:condition="python: 'budgetInfos' in usedAttrs">
+      <legend i18n:translate="">Budget</legend>
+        <metal:field use-macro="python:here.widget('budgetRelated', mode='edit')"/>
+        <div id="hideBudgetInfosIfNotBudgetRelated">
+            <metal:field use-macro="python:here.widget('budgetInfos', mode='edit')"/>
+        </div>
+    </fieldset>
 
     <metal:field use-macro="python:here.widget('oralQuestion', mode='edit')"/>
     <metal:field use-macro="python:here.widget('itemInitiator', mode='edit')"/>

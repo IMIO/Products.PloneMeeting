@@ -215,6 +215,8 @@ div.ploneMeetingSelectContainer.annex_type_img_select_box div#annex_type_img_sel
 #content div[id^='hook_'] table[style*='border: medium none;'] tr td,
 #content div[id^='hook_'] table[style*='border:medium none;'] tr th,
 #content div[id^='hook_'] table[style*='border:medium none;'] tr td,
+#content div[id^='hook_'] table[style*='border-collapse:collapse; border:none'] tr th,
+#content div[id^='hook_'] table[style*='border-collapse:collapse; border:none'] tr td,
 #content div.pmMoreInfo table[border='0'] tr th,
 #content div.pmMoreInfo table[border='0'] tr td {
     border: 1px dotted darkgrey;
@@ -244,6 +246,13 @@ body.cke_editable table.cke_show_border:not([border='0']):not([style*="border"])
 }
 div.pmMoreInfo table td {
    vertical-align: inherit;
+}
+
+/* no margin under table in content */
+#content div[id^='hook_'] table,
+body.cke_editable table,
+#content div.pmMoreInfo table {
+   margin-bottom: 0em !important;
 }
 
 #content table.no-style-table.advices {
@@ -322,6 +331,8 @@ div.pm_search_no_result_info {
 .state-decided, .label-state-decided,
 .state-decisions_published, .label-state-decisions_published { color: black !important; }
 .state-accepted, .label-state-accepted,
+.state-accepted_out_of_meeting, .label-state-accepted_out_of_meeting,
+.state-accepted_out_of_meeting_emergency, .label-state-accepted_out_of_meeting_emergency,
 .state-confirmed, .label-state-confirmed { color: green !important; }
 .state-delayed, .label-state-delayed,
 .state-marked_not_applicable, .label-state-marked_not_applicable,
@@ -395,7 +406,6 @@ div.pm_search_no_result_info {
 
 /* Styles used for the annexes dropdown menus, derived from Plone styles
    "contentAction" and "actionMenu" */
-.contentActionsAX { }
 .onTop { z-index: 20 !important; }
 .onBottom { z-index: 0 }
 .contentActionsAX td a { padding: 0 0.3em; border: 0 none white; }
@@ -1163,7 +1173,7 @@ span.advices_of_type {
 }
 
 /* display advices horizontally on the item view */
-body.template-meetingitem_view td.itemAdvicesCell div.contentActionsAX > dl {
+body.template-meetingitem_view td#itemAdvicesCell div.contentActionsAX > dl {
     display: inline-block;
 }
 
@@ -1506,7 +1516,7 @@ body.section-portal_plonemeeting #archetypes-fieldname-customViewFields {
 
 #archetypes-fieldname-otherMeetingConfigsClonableToEmergency,
 #archetypes-fieldname-otherMeetingConfigsClonableToPrivacy {
-    display: inherit;
+    display: inline-block;
 }
 #archetypes-fieldname-otherMeetingConfigsClonableToEmergency {
     width: 425px;
@@ -1620,6 +1630,11 @@ div.pmMoreInfo table[cellpadding='0'] tr th {
 /* increase height of CKeditor styles combobox */
 div.cke.cke_combopanel {
     height: 300px;
+}
+
+/* this avoid losing toolbar when maximizing a CKeditor with very long content */
+.cke_inner.cke_reset.cke_maximized {
+    position: fixed !important;
 }
 
 /* hide collective.documentviewer message on portaltype-configurablepodtemplate

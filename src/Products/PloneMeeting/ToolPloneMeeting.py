@@ -1683,7 +1683,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
         seconds = time.time() - startTime
         logger.info('updateAllLocalRoles finished in %.2f seconds(s) (about %d minute(s)), that is %d by second.' %
-                    (seconds, round(float(seconds)/60.0), numberOfBrains/seconds))
+                    (seconds, round(float(seconds) / 60.0), numberOfBrains / seconds))
         self.plone_utils.addPortalMessage('Done.')
         return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 
@@ -1770,7 +1770,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             return False
 
         # we only recompute if cfgs, user groups or params changed
-        cfg_infos = [cfg._p_mtime for cfg in self.objectValues('MeetingConfig')]
+        cfg_infos = [(cfg._p_mtime, cfg.id) for cfg in self.objectValues('MeetingConfig')]
         user = self.REQUEST['AUTHENTICATED_USER']
         return (cfg_infos, user.getGroups(), config_group, check_access, as_items)
 

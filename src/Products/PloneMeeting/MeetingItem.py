@@ -78,6 +78,7 @@ from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_COMPLETENESS_ASKERS
 from Products.PloneMeeting.config import ITEM_COMPLETENESS_EVALUATORS
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
+from Products.PloneMeeting.config import ITEM_STATES_NOT_LINKED_TO_MEETING
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 from Products.PloneMeeting.config import MEETING_NOT_CLOSED_STATES
 from Products.PloneMeeting.config import MEETINGROLES
@@ -427,6 +428,32 @@ class MeetingItemWorkflowConditions(object):
         """ """
         return self._mayWaitAdvices(self._getWaitingAdvicesStateFrom('prevalidated'))
 
+    security.declarePublic('mayAccept_out_of_meeting')
+
+    def mayAccept_out_of_meeting(self):
+        """ """
+        res = False
+        if self.context.getIsAcceptableOutOfMeeting():
+            tool = api.portal.get_tool('portal_plonemeeting')
+            if _checkPermission(ReviewPortalContent, self.context) and tool.isManager(self.context):
+                res = True
+        return res
+
+    security.declarePublic('mayAccept_out_of_meeting_emergency')
+
+    def mayAccept_out_of_meeting_emergency(self):
+        """ """
+        res = False
+        emergency = self.context.getEmergency()
+        if emergency == 'emergency_accepted':
+            tool = api.portal.get_tool('portal_plonemeeting')
+            if _checkPermission(ReviewPortalContent, self.context) and tool.isManager(self.context):
+                res = True
+        # if at least emergency is asked, then return a No message
+        elif emergency != 'no_emergency':
+            res = No(_('emergency_accepted_required_to_accept_out_of_meeting_emergency'))
+        return res
+
 
 InitializeClass(MeetingItemWorkflowConditions)
 
@@ -523,6 +550,26 @@ class MeetingItemWorkflowActions(object):
     def doItemFreeze(self, stateChange):
         pass
 
+    security.declarePrivate('doAccept_out_of_meeting')
+
+    def doAccept_out_of_meeting(self, stateChange):
+        """Duplicate item to validated if WFAdaptation
+           'accepted_out_of_meeting_and_duplicated' is used."""
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        if 'accepted_out_of_meeting_and_duplicated' in cfg.getWorkflowAdaptations():
+            self._duplicateAndValidate(cloneEventAction='create_from_accepted_out_of_meeting')
+
+    security.declarePrivate('doAccept_out_of_meeting_emergency')
+
+    def doAccept_out_of_meeting_emergency(self, stateChange):
+        """Duplicate item to validated if WFAdaptation
+           'accepted_out_of_meeting_and_duplicated' is used."""
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        if 'accepted_out_of_meeting_emergency_and_duplicated' in cfg.getWorkflowAdaptations():
+            self._duplicateAndValidate(cloneEventAction='create_from_accepted_out_of_meeting_emergency')
+
     security.declarePrivate('doAccept')
 
     def doAccept(self, stateChange):
@@ -553,16 +600,13 @@ class MeetingItemWorkflowActions(object):
                                keepProposingGroup=True,
                                setCurrentAsPredecessor=True)
 
-    security.declarePrivate('doPostpone_next_meeting')
-
-    def doPostpone_next_meeting(self, stateChange):
-        '''When an item is 'postponed_next_meeting', we will duplicate it:
-           the copy is automatically validated and will be linked to this one.'''
+    def _duplicateAndValidate(self, cloneEventAction):
+        """Duplicate and keep link self.context and validate the new item."""
         creator = self.context.Creator()
         # We create a copy in the initial item state, in the folder of creator.
         clonedItem = self.context.clone(copyAnnexes=True,
                                         newOwnerId=creator,
-                                        cloneEventAction='create_from_postponed_next_meeting',
+                                        cloneEventAction=cloneEventAction,
                                         keepProposingGroup=True,
                                         setCurrentAsPredecessor=True,
                                         inheritAdvices=True)
@@ -574,10 +618,18 @@ class MeetingItemWorkflowActions(object):
         with api.env.adopt_roles(roles=['Manager']):
             # trigger transitions until 'validated', aka one step before 'presented'
             # set a special value in the REQUEST so guards may use it if necessary
-            self.context.REQUEST.set('postponing_item', True)
+            self.context.REQUEST.set('duplicating_and_validating_item', True)
             for tr in cfg.getTransitionsForPresentingAnItem()[0:-1]:
                 wfTool.doActionFor(clonedItem, tr, comment=wf_comment)
-            self.context.REQUEST.set('postponing_item', False)
+            self.context.REQUEST.set('duplicating_and_validating_item', False)
+        return clonedItem
+
+    security.declarePrivate('doPostpone_next_meeting')
+
+    def doPostpone_next_meeting(self, stateChange):
+        '''When an item is 'postponed_next_meeting', we will duplicate it:
+           the copy is automatically validated and will be linked to this one.'''
+        clonedItem = self._duplicateAndValidate(cloneEventAction='create_from_postponed_next_meeting')
         # Send, if configured, a mail to the person who created the item
         clonedItem.sendMailIfRelevant('itemPostponedNextMeeting', 'Owner', isRole=True)
 
@@ -604,8 +656,8 @@ class MeetingItemWorkflowActions(object):
           Most of times we do nothing, but in some case, we check the old/new state and
           do some specific treatment.
         """
-        # If we go back to "validated" check if we were in a meeting
-        if stateChange.new_state.id == "validated" and self.context.hasMeeting():
+        # Remove item from meeting if necessary when going to a state where item is not linked to a meeting
+        if stateChange.new_state.id in ITEM_STATES_NOT_LINKED_TO_MEETING and self.context.hasMeeting():
             # We may have to send a mail
             self.context.sendMailIfRelevant('itemUnpresented', 'Owner', isRole=True)
             # remove the item from the meeting
@@ -842,7 +894,7 @@ schema = Schema((
         name='emergency',
         default='no_emergency',
         widget=SelectionWidget(
-            condition="python: here.attributeIsUsed('emergency') and not here.isDefinedInTool()",
+            condition="python: here.showEmergency()",
             description="Emergency",
             description_msgid="item_emergency_descr",
             visible=False,
@@ -898,7 +950,7 @@ schema = Schema((
         widget=MultiSelectionWidget(
             description="OptionalAdvisersItem",
             description_msgid="optional_advisers_item_descr",
-            condition='python:here.isAdvicesEnabled()',
+            condition='python:here.showOptionalAdvisers()',
             format="checkbox",
             size=10,
             label='Optionaladvisers',
@@ -1048,7 +1100,7 @@ schema = Schema((
         name='observations',
         widget=RichWidget(
             label_msgid="PloneMeeting_itemObservations",
-            condition="python: here.attributeIsUsed('observations')",
+            condition="python: here.attributeIsUsed('observations') and here.adapted().showObservations()",
             label='Observations',
             i18n_domain='PloneMeeting',
         ),
@@ -1304,6 +1356,18 @@ schema = Schema((
         enforceVocabulary=True,
         multiValued=1,
         vocabulary='listOtherMeetingConfigsClonableToPrivacy',
+    ),
+    BooleanField(
+        name='isAcceptableOutOfMeeting',
+        default=False,
+        widget=BooleanField._properties['widget'](
+            condition="here/showIsAcceptableOutOfMeeting",
+            description="IsAcceptableOutOfMeeting",
+            description_msgid="is_acceptable_out_of_meeting_descr",
+            label='Isacceptableoutofmeeting',
+            label_msgid='PloneMeeting_label_isAcceptableOutOfMeeting',
+            i18n_domain='PloneMeeting',
+        ),
     ),
     BooleanField(
         name='sendToAuthority',
@@ -1629,6 +1693,40 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(self)
         return cfg.getDefaultMeetingItemMotivation()
 
+    security.declarePublic('showObservations')
+
+    def showObservations(self):
+        '''See doc in interfaces.py.'''
+        return True
+
+    security.declarePublic('showIsAcceptableOutOfMeeting')
+
+    def showIsAcceptableOutOfMeeting(self):
+        '''Show the MeetingItem.isAcceptableOutOfMeeting field if WFAdaptation
+           'accepted_out_of_meeting' or 'accepted_out_of_meeting_and_duplicated'
+           is used..'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        wfAdaptations = cfg.getWorkflowAdaptations()
+        return 'accepted_out_of_meeting' in wfAdaptations or \
+            'accepted_out_of_meeting_and_duplicated' in wfAdaptations
+
+    security.declarePublic('showEmergency')
+
+    def showEmergency(self):
+        '''Show the MeetingItem.emergency field if :
+          - in usedItemAttributes;
+          - or if WFAdaptation 'accepted_out_of_meeting_emergency' or
+            'accepted_out_of_meeting_emergency_and_duplicated' is enabled;
+          - and hide it if isDefinedInTool.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        wfAdaptations = cfg.getWorkflowAdaptations()
+        return (self.attributeIsUsed('emergency') or
+                ('accepted_out_of_meeting' in wfAdaptations or
+                'accepted_out_of_meeting_and_duplicated' in wfAdaptations)) and \
+            not self.isDefinedInTool()
+
     security.declarePublic('showInternalNotes')
 
     def showInternalNotes(self):
@@ -1740,7 +1838,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         wfTool = api.portal.get_tool('portal_workflow')
         return bool(wfTool.getTransitionsFor(item))
 
-    security.declareProtected('Modify portal content', 'setTakenOverBy')
+    security.declareProtected(ModifyPortalContent, 'setTakenOverBy')
 
     def setTakenOverBy(self, value, **kwargs):
         '''Override MeetingItem.takenOverBy mutator so we can manage
@@ -1926,7 +2024,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return True
         return False
 
-    security.declareProtected('Modify portal content', 'setItemIsSigned')
+    security.declareProtected(ModifyPortalContent, 'setItemIsSigned')
 
     def setItemIsSigned(self, value, **kwargs):
         '''Overrides the field 'itemIsSigned' mutator to check if the field is
@@ -1937,7 +2035,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             raise Unauthorized
         self.getField('itemIsSigned').set(self, value, **kwargs)
 
-    security.declareProtected('Modify portal content', 'setManuallyLinkedItems')
+    security.declareProtected(ModifyPortalContent, 'setManuallyLinkedItems')
 
     def setManuallyLinkedItems(self, value, **kwargs):
         '''Overrides the field 'manuallyLinkedItems' mutator so we synchronize
@@ -3165,13 +3263,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return True
         return False
 
-    security.declareProtected('Modify portal content', 'transformRichTextField')
+    security.declareProtected(ModifyPortalContent, 'transformRichTextField')
 
     def transformRichTextField(self, fieldName, richContent):
         '''See doc in interfaces.py.'''
         return richContent
 
-    security.declareProtected('Modify portal content', 'onEdit')
+    security.declareProtected(ModifyPortalContent, 'onEdit')
 
     def onEdit(self, isCreated):
         '''See doc in interfaces.py.'''
@@ -4959,6 +5057,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         item = self.getSelf()
         return item.getProposingGroup(True)
 
+    def _getAllGroupsManagingItem(self):
+        '''See doc in interfaces.py.'''
+        item = self.getSelf()
+        return [item.getProposingGroup(True)]
+
     def _assign_roles_to_group_suffixes(self,
                                         meetingGroup,
                                         suffixes=MEETING_GROUP_SUFFIXES,
@@ -4971,7 +5074,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             portal_groups = api.portal.get_tool('portal_groups')
             for groupSuffix in suffixes:
                 # like it is the case for groupSuffix 'advisers'
-                if not roles[groupSuffix]:
+                if not roles.get(groupSuffix, None):
                     continue
                 # if we have a Plone group related to this suffix, apply a local role for it
                 groupId = meetingGroup.getPloneGroupId(groupSuffix)
@@ -4982,7 +5085,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     continue
                 self.manage_addLocalRoles(groupId, (roles[groupSuffix],))
 
-    security.declareProtected('Modify portal content', 'updateLocalRoles')
+    security.declareProtected(ModifyPortalContent, 'updateLocalRoles')
 
     def updateLocalRoles(self, **kwargs):
         '''Updates the local roles of this item, regarding :
@@ -5130,12 +5233,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self._versionateAdvicesOnItemEdit()
         return BaseFolder.processForm(self, data=data, metadata=metadata, REQUEST=REQUEST, values=values)
 
-    security.declarePublic('isAdvicesEnabled')
+    security.declarePublic('showOptionalAdvisers')
 
-    def isAdvicesEnabled(self):
-        '''Is the "advices" functionality enabled for this meeting config?'''
+    def showOptionalAdvisers(self):
+        '''Show 'MeetingItem.optionalAdvisers' if the "advices" functionality is enabled
+           and if there are selectable optional advices.'''
         tool = api.portal.get_tool('portal_plonemeeting')
-        return tool.getMeetingConfig(self).getUseAdvices()
+        cfg = tool.getMeetingConfig(self)
+        if cfg.getUseAdvices() and self.listOptionalAdvisers():
+            return True
 
     security.declarePublic('isCopiesEnabled')
 
@@ -5620,7 +5726,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Regarding item state, the item has to be :
         # - current state in itemAutoSentToOtherMCStates;
         # - current state in itemManualSentToOtherMCStates/itemAutoSentToOtherMCStates
-        #   and user have 'Modify portal content' or is a MeetingManager.
+        #   and user have ModifyPortalContent or is a MeetingManager.
         item_state = item.queryState()
         if not ((automatically and
                  item_state in cfg.getItemAutoSentToOtherMCStates()) or
@@ -6117,7 +6223,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if lastValidationDate and (lastValidationDate < deadline):
             return True
 
-    security.declareProtected('Modify portal content', 'onWelcomePerson')
+    security.declareProtected(ModifyPortalContent, 'onWelcomePerson')
 
     def onWelcomePerson(self):
         '''Some user (a late attendee) has entered the meeting just before
@@ -6147,7 +6253,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            person_uid in meeting.getAttendees():
             return True
 
-    security.declareProtected('Modify portal content', 'onByebyePerson')
+    security.declareProtected(ModifyPortalContent, 'onByebyePerson')
 
     def onByebyePerson(self):
         '''Some user (in request.userId) has left the meeting:
@@ -6182,7 +6288,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 absents.append(userId)
             self.setItemAbsents(absents)
 
-    security.declareProtected('Modify portal content', 'ItemAssemblyDescrMethod')
+    security.declareProtected(ModifyPortalContent, 'ItemAssemblyDescrMethod')
 
     def ItemAssemblyDescrMethod(self):
         '''Special handling of itemAssembly field description where we display
@@ -6214,7 +6320,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self.getMeeting().getAssembly() or '-')
         return value + collapsibleMeetingAssembly
 
-    security.declareProtected('Modify portal content', 'ItemAssemblyExcusedDescrMethod')
+    security.declareProtected(ModifyPortalContent, 'ItemAssemblyExcusedDescrMethod')
 
     def ItemAssemblyExcusedDescrMethod(self):
         '''Special handling of itemAssemblyExcused field description where we display
@@ -6237,7 +6343,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 self.getMeeting().getAssemblyExcused() or '-')
         return value + collapsibleMeetingAssemblyExcused
 
-    security.declareProtected('Modify portal content', 'ItemAssemblyAbsentsDescrMethod')
+    security.declareProtected(ModifyPortalContent, 'ItemAssemblyAbsentsDescrMethod')
 
     def ItemAssemblyAbsentsDescrMethod(self):
         '''Special handling of itemAssemblyAbsents field description where we display
@@ -6260,7 +6366,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 self.getMeeting().getAssemblyAbsents() or '-')
         return value + collapsibleMeetingAssemblyAbsents
 
-    security.declareProtected('Modify portal content', 'ItemSignaturesDescrMethod')
+    security.declareProtected(ModifyPortalContent, 'ItemSignaturesDescrMethod')
 
     def ItemSignaturesDescrMethod(self):
         '''Special handling of itemSignatures field description where we display

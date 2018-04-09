@@ -314,7 +314,9 @@ class Migrate_To_4_0(Migrator):
                 'Moving to imio.dashboard ({0}) : adding '
                 '"on list type" as first value of "insertingMethodsOnAddItem"...'.format(cfgId))
             insertingMethodsOnAddItem = list(cfg.getInsertingMethodsOnAddItem())
-            if not insertingMethodsOnAddItem[0]['insertingMethod'] == 'on_list_type':
+            # use insertingMethod 'on_list_type' if not using 'at_the_end'
+            if not insertingMethodsOnAddItem[0]['insertingMethod'] == 'on_list_type' and \
+               not insertingMethodsOnAddItem[0]['insertingMethod'] == 'at_the_end':
                 insertingMethodsOnAddItem.insert(0, {'insertingMethod': 'on_list_type', 'reverse': '0'})
                 cfg.setInsertingMethodsOnAddItem(insertingMethodsOnAddItem)
             tabId = '%s_action' % cfg.getId()
@@ -1427,7 +1429,7 @@ class Migrate_To_4_0(Migrator):
             self.upgradeProfile('collective.ckeditor:default')
             self.runProfileSteps(product='imio.annex', steps=['typeinfo'])
             self.ps.runAllImportStepsFromProfile('imio.helpers:default')
-            # make sure form-widgets-raiseOnError_for_non_managers is enabled
+            # make sure raiseOnError_for_non_managers is enabled
             api.portal.set_registry_record(
                 'collective.documentgenerator.browser.controlpanel.'
                 'IDocumentGeneratorControlPanelSchema.raiseOnError_for_non_managers',
@@ -1436,6 +1438,9 @@ class Migrate_To_4_0(Migrator):
             # especially ConfigurablePodTemplate that remves mailing_lists attribute
             # reapply PloneMeeting types tool step
             self.runProfileSteps(product='Products.PloneMeeting', steps=['typeinfo'])
+            # reapply registry.xml to add the getProposingGroup plone.app.querystring query field
+            self.runProfileSteps(product='Products.PloneMeeting', steps=['plone.app.registry'])
+            # correct content_category id of annexes if necessary
             self._adaptAnnexContentCategory()
             # make sure we use resolveuid for images so URL is always correct even if item id changed
             cke_props = self.portal.portal_properties.ckeditor_properties

@@ -124,7 +124,8 @@ class PMGlobalSectionsViewlet(GlobalSectionsViewlet):
                     cfg_ids = [cfg['id'] for cfg in
                                grouped_configs[(action['data-config_group'], action['name'])]]
                     for cfg_id in cfg_ids:
-                        if "/mymeetings/%s" % cfg_id in path:
+                        # select groupedConfig tab in the application and when on the MC in the configuration
+                        if "/mymeetings/%s" % cfg_id in path or "/portal_plonemeeting/%s" % cfg_id in path:
                             return {'portal': action['id'], }
             # XXX end of change by PM
 
@@ -281,7 +282,7 @@ class PMDocumentGeneratorLinksViewlet(DocumentGeneratorLinksViewlet, BaseGenerat
             annex_type_uid = template.store_as_annex
             res['store_as_annex_uid'] = annex_type_uid
             annex_type = api.content.find(UID=annex_type_uid)[0].getObject()
-            annex_type_title = '{0} → {1}'.format(
+            annex_type_title = '{0} 🡒 {1}'.format(
                 annex_type.aq_parent.Title(),
                 annex_type.Title())
             res['store_as_annex_title'] = annex_type_title
@@ -1164,10 +1165,11 @@ class PMTransitionBatchActionForm(TransitionBatchActionForm):
 
     def available(self):
         """Only available to users having operational roles in the application.
-           This is essentially dont to hide this to (restricted)powerobservers."""
+           This is essentially done to hide this to (restricted)powerobservers
+           and to non MeetingManagers on the meeting_view."""
         tool = api.portal.get_tool('portal_plonemeeting')
-        return bool(tool.userIsAmong(suffixes=get_all_suffixes(None)) or
-                    tool.isManager(self.context))
+        return tool.isManager(self.context) or \
+            (not self.context.meta_type == 'Meeting' and bool(tool.userIsAmong(suffixes=get_all_suffixes(None))))
 
 
 class PMContentHistoryView(IHContentHistoryView):
@@ -1176,6 +1178,18 @@ class PMContentHistoryView(IHContentHistoryView):
       We want to display the content_history as a table.
     '''
     histories_to_handle = (u'revision', u'workflow', u'data_changes')
+
+    def show_history(self):
+        """Override to take MeetingConfig.hideHistoryTo into account."""
+        res = super(PMContentHistoryView, self).show_history()
+        if res:
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(self.context)
+            hideHistoryTo = cfg.getHideHistoryTo()
+            if ('power_observers' in hideHistoryTo and tool.isPowerObserverForCfg(cfg)) or \
+               ('restricted_power_observers' in hideHistoryTo and tool.isPowerObserverForCfg(cfg, isRestricted=True)):
+                res = False
+        return res
 
 
 class PMCatalogNavigationTabs(CatalogNavigationTabs):

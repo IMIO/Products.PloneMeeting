@@ -112,6 +112,7 @@ from Products.PloneMeeting.interfaces import IMeetingItemWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingWorkflowActions
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
 from Products.PloneMeeting.utils import computeCertifiedSignatures
+from Products.PloneMeeting.utils import createOrUpdatePloneGroup
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
@@ -923,7 +924,7 @@ schema = Schema((
         ),
         schemata="data",
         multiValued=1,
-        vocabulary='listHideCssClassesTo',
+        vocabulary='listPowerObserversTypes',
         default=defValues.hideCssClassesTo,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
@@ -1929,6 +1930,23 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
+    LinesField(
+        name='hideHistoryTo',
+        default=defValues.hideHistoryTo,
+        widget=MultiSelectionWidget(
+            description="HideHistoryTo",
+            description_msgid="hide_history_to_descr",
+            format="checkbox",
+            label='Hidehistoryto',
+            label_msgid='PloneMeeting_label_hideHistoryTo',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        multiValued=1,
+        vocabulary='listPowerObserversTypes',
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
     BooleanField(
         name='hideItemHistoryCommentsToUsersOutsideProposingGroup',
         default=defValues.hideItemHistoryCommentsToUsersOutsideProposingGroup,
@@ -2070,7 +2088,7 @@ schema = Schema((
         ),
         schemata="advices",
         multiValued=1,
-        vocabulary='listAdviceConfidentialFor',
+        vocabulary='listPowerObserversTypes',
         default=defValues.adviceConfidentialFor,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
@@ -2087,7 +2105,7 @@ schema = Schema((
         ),
         schemata="advices",
         multiValued=1,
-        vocabulary='listHideNotViewableLinkedItemsTo',
+        vocabulary='listPowerObserversTypes',
         default=defValues.hideNotViewableLinkedItemsTo,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
@@ -2299,9 +2317,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                      'pre_validation_keep_reviewer_permissions', 'items_come_validated',
                      'archiving', 'no_publication', 'no_proposal', 'everyone_reads_all',
                      'reviewers_take_back_validated_item', 'creator_edits_unless_closed',
+                     'presented_item_back_to_itemcreated', 'presented_item_back_to_proposed',
+                     'presented_item_back_to_prevalidated',
                      'return_to_proposing_group', 'return_to_proposing_group_with_last_validation',
-                     'return_to_proposing_group_with_all_validations', 'hide_decisions_when_under_writing',
-                     'waiting_advices', 'postpone_next_meeting', 'mark_not_applicable',
+                     'return_to_proposing_group_with_all_validations',
+                     'hide_decisions_when_under_writing', 'waiting_advices',
+                     'accepted_out_of_meeting', 'accepted_out_of_meeting_and_duplicated',
+                     'accepted_out_of_meeting_emergency', 'accepted_out_of_meeting_emergency_and_duplicated',
+                     'postpone_next_meeting', 'mark_not_applicable',
                      'removed', 'removed_and_duplicated', 'refused')
 
     def _searchesInfo(self):
@@ -2311,7 +2334,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # compute states to use in the searchlivingitems collection
         wfTool = api.portal.get_tool('portal_workflow')
         itemWF = wfTool.getWorkflowsFor(itemType)[0]
-        livingItemStates = [state for state in itemWF.states if state not in self.getItemDecidedStates()]
+        livingItemStates = [state for state in itemWF.states
+                            if state not in self.getItemDecidedStates()]
         infos = OrderedDict(
             [
                 # My items
@@ -3326,23 +3350,43 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
         if '' in values:
             values.remove('')
+
+        # conflicts
         msg = translate('wa_conflicts', domain='PloneMeeting', context=self.REQUEST)
         if 'items_come_validated' in values and \
             ('creator_initiated_decisions' in values or
              'pre_validation' in values or
              'pre_validation_keep_reviewer_permissions' in values or
-             'reviewers_take_back_validated_item' in values):
+             'reviewers_take_back_validated_item' in values or
+             'presented_item_back_to_itemcreated' in values or
+             'presented_item_back_to_prevalidated' in values or
+             'presented_item_back_to_proposed' in values):
                 return msg
         if ('archiving' in values) and (len(values) > 1):
             # Archiving is incompatible with any other workflow adaptation
             return msg
         if 'no_proposal' in values and \
-           ('pre_validation' in values or 'pre_validation_keep_reviewer_permissions' in values):
+            ('pre_validation' in values or
+             'pre_validation_keep_reviewer_permissions' in values or
+             'presented_item_back_to_proposed' in values):
             return msg
         if 'pre_validation' in values and 'pre_validation_keep_reviewer_permissions' in values:
             return msg
         if 'removed' in values and 'removed_and_duplicated' in values:
             return msg
+        if 'accepted_out_of_meeting' in values and \
+           'accepted_out_of_meeting_and_duplicated' in values:
+            return msg
+        if 'accepted_out_of_meeting_emergency' in values and \
+           'accepted_out_of_meeting_emergency_and_duplicated' in values:
+            return msg
+
+        # 'presented_item_back_to_prevalidated' needs 'pre_validation'
+        if 'presented_item_back_to_prevalidated' in values and \
+           ('pre_validation' not in values and 'pre_validation_keep_reviewer_permissions' not in values):
+            return translate('wa_presented_item_back_to_prevalidated_needs_pre_validation_error',
+                             domain='PloneMeeting',
+                             context=self.REQUEST)
 
         # several 'return_to_proposing_group' values may not be selected together
         return_to_prop_group_wf_adaptations = [v for v in values if v.startswith('return_to_proposing_group')]
@@ -3441,6 +3485,20 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # check that no more meetings are in this state
             if catalog(portal_type=self.getMeetingTypeName(), review_state='decisions_published'):
                 return translate('wa_removed_hide_decisions_when_under_writing_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+        if 'accepted_out_of_meeting' in removed:
+            # this will remove the 'accepted_out_of_meeting' state for Item
+            # check that no more items are in this state
+            if catalog(portal_type=self.getItemTypeName(), review_state='accepted_out_of_meeting'):
+                return translate('wa_removed_accepted_out_of_meeting_error',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+        if 'accepted_out_of_meeting_emergency' in removed:
+            # this will remove the 'accepted_out_of_meeting_emergency' state for Item
+            # check that no more items are in this state
+            if catalog(portal_type=self.getItemTypeName(), review_state='accepted_out_of_meeting_emergency'):
+                return translate('wa_removed_accepted_out_of_meeting_emergency_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
         if 'postpone_next_meeting' in removed:
@@ -4104,11 +4162,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 )
         return DisplayList(res).sortedByValue()
 
-    security.declarePrivate('listAdviceConfidentialFor')
+    security.declarePrivate('listPowerObserversTypes')
 
-    def listAdviceConfidentialFor(self):
+    def listPowerObserversTypes(self):
         '''
-          Vocabulary for the 'adviceConfidentialFor' field.
+          Vocabulary displaying power observers types.
         '''
         res = DisplayList((
             ('power_observers', translate('confidential_for_power_observers',
@@ -4119,22 +4177,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                                      context=self.REQUEST)),
         ))
         return res
-
-    security.declarePrivate('listHideCssClassesTo')
-
-    def listHideCssClassesTo(self):
-        '''
-          Vocabulary for the 'hideCssClassesTo' field.
-        '''
-        return self.listAdviceConfidentialFor()
-
-    security.declarePrivate('listHideNotViewableLinkedItemsTo')
-
-    def listHideNotViewableLinkedItemsTo(self):
-        '''
-          Vocabulary for the 'hideNotViewableLinkedItemsTo' field.
-        '''
-        return self.listAdviceConfidentialFor()
 
     security.declarePrivate('isVotable')
 
@@ -4444,24 +4486,17 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                 context=self.REQUEST)
                 self.plone_utils.addPortalMessage(msg)
 
-    def _createSuffixedGroup(self, suffix):
-        '''Create a group for this MeetingConfig using given p_suffix
-           to manage group id and group title.
+    def _createOrUpdatePloneGroup(self, groupSuffix):
+        '''Create a group for this MeetingConfig using given p_groupSuffix to manage group id and group title.
            This will return groupId and True if group was added, False otherwise.'''
-        groupId = "%s_%s" % (self.getId(), suffix)
-        wasCreated = False
-        if groupId not in self.portal_groups.listGroupIds():
-            wasCreated = True
-            enc = self.portal_properties.site_properties.getProperty(
-                'default_charset')
-            groupTitle = '%s (%s)' % (
-                self.Title().decode(enc),
-                translate(suffix, domain='PloneMeeting', context=self.REQUEST))
-            # a default Plone group title is NOT unicode.  If a Plone group title is
-            # edited TTW, his title is no more unicode if it was previously...
-            # make sure we behave like Plone...
-            groupTitle = groupTitle.encode(enc)
-            self.portal_groups.addGroup(groupId, title=groupTitle)
+        groupId = "{0}_{1}".format(self.getId(), groupSuffix)
+        groupTitle = self.Title()
+        # prepend configGroup if any
+        if self.getConfigGroup():
+            configGroupValue = self.Vocabulary('configGroup')[0].getValue(self.getConfigGroup())
+            groupTitle = "{0} - {1}".format(configGroupValue, groupTitle)
+
+        wasCreated = createOrUpdatePloneGroup(groupId=groupId, groupTitle=groupTitle, groupSuffix=groupSuffix)
         return groupId, wasCreated
 
     security.declarePrivate('createPowerObserversGroup')
@@ -4469,30 +4504,30 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def createPowerObserversGroup(self):
         '''Creates Plone groups to manage (restricted) power observers.'''
         tool = api.portal.get_tool('portal_plonemeeting')
-        for grpSuffix in (RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX,
-                          POWEROBSERVERS_GROUP_SUFFIX, ):
-            groupId, wasCreated = self._createSuffixedGroup(grpSuffix)
+        for groupSuffix in (RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX,
+                            POWEROBSERVERS_GROUP_SUFFIX, ):
+            groupId, wasCreated = self._createOrUpdatePloneGroup(groupSuffix)
             if wasCreated:
                 # now define local_roles on the tool so it is accessible by this group
-                tool.manage_addLocalRoles(groupId, (READER_USECASES[grpSuffix],))
+                tool.manage_addLocalRoles(groupId, (READER_USECASES[groupSuffix],))
                 # but we do not want this group to access every MeetingConfigs so
                 # remove inheritance on self and define these local_roles for self too
                 self.__ac_local_roles_block__ = True
-                self.manage_addLocalRoles(groupId, (READER_USECASES[grpSuffix],))
+                self.manage_addLocalRoles(groupId, (READER_USECASES[groupSuffix],))
 
     security.declarePrivate('createBudgetImpactEditorsGroup')
 
     def createBudgetImpactEditorsGroup(self):
         '''Creates a Plone group that will be used to apply the 'MeetingBudgetImpactEditor'
            local role on every items of this MeetingConfig regarding self.itemBudgetInfosStates.'''
-        self._createSuffixedGroup(suffix=BUDGETIMPACTEDITORS_GROUP_SUFFIX)
+        self._createOrUpdatePloneGroup(groupSuffix=BUDGETIMPACTEDITORS_GROUP_SUFFIX)
 
     security.declarePrivate('createMeetingManagersGroup')
 
     def createMeetingManagersGroup(self):
         '''Creates a Plone group that will be used to apply the 'MeetingManager'
            local role on every plonemeeting folders of this MeetingConfig and on this MeetingConfig.'''
-        groupId, wasCreated = self._createSuffixedGroup(suffix=MEETINGMANAGERS_GROUP_SUFFIX)
+        groupId, wasCreated = self._createOrUpdatePloneGroup(groupSuffix=MEETINGMANAGERS_GROUP_SUFFIX)
         if wasCreated:
             # now define local_roles on the tool so it is accessible by this group
             tool = api.portal.get_tool('portal_plonemeeting')
@@ -4507,7 +4542,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def createItemTemplateManagersGroup(self):
         '''Creates a Plone group that will be used to store users able to manage item templates.'''
-        groupId, wasCreated = self._createSuffixedGroup(suffix=ITEMTEMPLATESMANAGERS_GROUP_SUFFIX)
+        groupId, wasCreated = self._createOrUpdatePloneGroup(groupSuffix=ITEMTEMPLATESMANAGERS_GROUP_SUFFIX)
         if wasCreated:
             # now define local_roles on the tool so it is accessible by this group
             tool = api.portal.get_tool('portal_plonemeeting')
@@ -4515,6 +4550,17 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             self.manage_addLocalRoles(groupId, (READER_USECASES[ITEMTEMPLATESMANAGERS_GROUP_SUFFIX],))
             # give 'Manager' local role to group in the itemtemplates folder
             self.itemtemplates.manage_addLocalRoles(groupId, ('Manager', ))
+
+    def _createOrUpdateAllPloneGroups(self):
+        """Create or update every linked Plone groups."""
+        # Create the corresponding group that will contain MeetingPowerObservers
+        self.createPowerObserversGroup()
+        # Create the corresponding group that will contain MeetingBudgetImpactEditors
+        self.createBudgetImpactEditorsGroup()
+        # Create the corresponding group that will contain MeetingManagers
+        self.createMeetingManagersGroup()
+        # Create the corresponding group that will contain item templates Managers
+        self.createItemTemplateManagersGroup()
 
     security.declarePrivate('at_post_create_script')
 
@@ -4537,15 +4583,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         self.updateIsDefaultFields()
         # Make sure we have 'text/html' for every Rich fields
         forceHTMLContentTypeForEmptyRichFields(self)
-        # Create the corresponding group that will contain MeetingPowerObservers
-        self.createPowerObserversGroup()
-        # Create the corresponding group that will contain MeetingBudgetImpactEditors
-        self.createBudgetImpactEditorsGroup()
-        # Create the corresponding group that will contain MeetingManagers
-        self.createMeetingManagersGroup()
-        # Create the corresponding group that will contain item templates Managers
-        self.createItemTemplateManagersGroup()
-        self.adapted().onEdit(isCreated=True)  # Call sub-product code if any
+        # Create every linked Plone groups
+        self._createOrUpdateAllPloneGroups()
+        # Call sub-product code if any
+        self.adapted().onEdit(isCreated=True)
 
     security.declarePrivate('at_post_edit_script')
 
@@ -4553,6 +4594,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         ''' '''
         # invalidateAll ram.cache
         cleanRamCache()
+        # Update title of every linked Plone groups
+        self._createOrUpdateAllPloneGroups()
         # Update portal types
         self.registerPortalTypes()
         # Update customViewFields defined on DashboardCollections
@@ -5689,19 +5732,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                     force_confidential_to=None):
         '''Update the confidentiality of existing annexes regarding default value
            for confidentiality defined in the corresponding annex type.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        advice_portal_types = tool.getAdvicePortalTypes()
-        cfgId = self.getId()
 
         def _update(brains):
             numberOfBrains = len(brains)
             i = 1
             for brain in brains:
-                # filter out advices to only update advices of current MeetingConfig
-                if brain.portal_type in advice_portal_types and \
-                   cfgId not in brain.getPath():
-                    continue
-
                 obj = brain.getObject()
                 logger.info(
                     '%d/%d Initializing %s confidentiality of %s at %s' %
@@ -5711,6 +5746,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                      brain.portal_type,
                      '/'.join(obj.getPhysicalPath())))
                 i = i + 1
+
                 annexes = get_annexes(obj, annex_portal_types)
                 if not annexes:
                     continue
@@ -5731,8 +5767,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
         catalog = api.portal.get_tool('portal_catalog')
         for portal_type in portal_types:
-            brains = catalog(portal_type=portal_type)
+            brains = catalog(portal_type=portal_type, getConfigId=self.getId())
             _update(brains)
+        logger.info('Done.')
 
     security.declarePublic('updateAdviceConfidentiality')
 

@@ -276,6 +276,13 @@
                 <span metal:use-macro="python: here.widget('sendToAuthority', mode='view')" />
             </div>
 
+            <tal:comment replace="nothing">Is acceptable out of meeting?</tal:comment>
+            <div class="discreet" tal:condition="context/showIsAcceptableOutOfMeeting">
+                <span class="item_attribute_label"
+                      i18n:translate="PloneMeeting_label_isAcceptableOutOfMeeting"></span>:&nbsp;&nbsp;
+                <span metal:use-macro="python: here.widget('isAcceptableOutOfMeeting', mode='view')" />
+            </div>
+
             <tal:comment replace="nothing">Other MeetingConfigs Clonable To</tal:comment>
             <div class="discreet"
                  tal:condition="python: otherMCs or context.showClonableToOtherMeetingConfigs()"
@@ -391,20 +398,22 @@
 
     <tal:comment replace="nothing">Budgetary informations, manage fields budgetRelated and budgetInfos</tal:comment>
     <tal:block condition="python: 'budgetInfos' in usedAttrs and member.has_permission('PloneMeeting: Read budget infos', context)">
+    <fieldset>
+      <legend i18n:translate="">Budget</legend>
         <p class="item-before-budget-related"></p>
         <metal:budgetInfos use-macro="here/@@pm-macros/budgetInfos" />
 
         <tal:displayBudgetInfos define="fieldName string:budgetInfos;
                                         ajaxEdit string:True;">
-          <br /><br />
           <div id="hideBudgetInfosIfNotBudgetRelated"
                 style="display: none;"
                 tal:define="defaultDisplay python: context.getBudgetRelated() and 'block' or 'none';"
                 tal:attributes="style string:display:${defaultDisplay};">
+              <br />
               <metal:f use-macro="context/@@pm-macros/viewContentField"/>
           </div>
         </tal:displayBudgetInfos>
-
+    </fieldset>
     </tal:block>
 
     <tal:comment replace="nothing">Motivation</tal:comment>
@@ -433,7 +442,7 @@
             </td>
           </tal:annexes>
           <tal:comment replace="nothing">Advices</tal:comment>
-          <td tal:condition="python: context.adapted().showAdvices()">
+          <td id="itemAdvicesCell" tal:condition="python: context.adapted().showAdvices()">
               <fieldset tal:define="meetingItem python: context" style="height: 26px;">
               <legend i18n:translate="PloneMeeting_label_advices">Advices</legend>
                   <tal:advice replace="structure context/@@advices-icons" />

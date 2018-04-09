@@ -201,7 +201,8 @@ class AnnexableAdapter(object):
             data['number'] = i
             data['images'] = []
             data['number_of_images'] = annex_annotations['collective.documentviewer']['num_pages']
-            # we need to traverse to something like : @@dvpdffiles/c/7/c7e2e8b5597c4dc28cf2dee9447dcf9a/large/dump_1.png
+            # we need to traverse to something like :
+            # @@dvpdffiles/c/7/c7e2e8b5597c4dc28cf2dee9447dcf9a/large/dump_1.png
             dvpdffiles = portal.unrestrictedTraverse('@@dvpdffiles')
             filetraverser = dvpdffiles.publishTraverse(self.request, annexUID[0])
             filetraverser = dvpdffiles.publishTraverse(self.request, annexUID[1])
@@ -629,6 +630,22 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
             res.append(('accepted_but_modified.png', translate('icon_help_accepted_but_modified',
                                                                domain="PloneMeeting",
                                                                context=self.request)))
+        elif itemState == 'accepted_out_of_meeting':
+            res.append(('accept_out_of_meeting.png',
+                        translate('icon_help_accepted_out_of_meeting',
+                                  domain="PloneMeeting",
+                                  context=self.request,
+                                  default=translate('accepted_out_of_meeting',
+                                                    domain="plone",
+                                                    context=self.request))))
+        elif itemState == 'accepted_out_of_meeting_emergency':
+            res.append(('accept_out_of_meeting_emergency.png',
+                        translate('icon_help_accepted_out_of_meeting_emergency',
+                                  domain="PloneMeeting",
+                                  context=self.request,
+                                  default=translate('accepted_out_of_meeting_emergency',
+                                                    domain="plone",
+                                                    context=self.request))))
         elif itemState == 'pre_accepted':
             res.append(('pre_accepted.png', translate('icon_help_pre_accepted',
                                                       domain="PloneMeeting",
@@ -818,6 +835,12 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
                                                 domain="PloneMeeting",
                                                 mapping={'fullname': safe_unicode(tool.getUserName(takenOverBy))},
                                                 context=self.request)))
+
+        if self.context.getIsAcceptableOutOfMeeting():
+            res.append(('acceptable_out_of_meeting.png',
+                        translate('PloneMeeting_label_isAcceptableOutOfMeeting',
+                                  domain="PloneMeeting",
+                                  context=self.request)))
         return res
 
 
@@ -907,7 +930,7 @@ class PMDataChangesHistoryAdapter(ImioWfHistoryAdapter):
         res = []
         i = -1
         full_datachanges_history.reverse()
-        while (i+1) < len(full_datachanges_history):
+        while (i + 1) < len(full_datachanges_history):
             i += 1
             new_event = full_datachanges_history[i].copy()
             new_event['changes'] = {}
@@ -918,7 +941,7 @@ class PMDataChangesHistoryAdapter(ImioWfHistoryAdapter):
                     if xhtmlContentIsEmpty(oldValue):
                         val = '-'
                     else:
-                        newValue = findNewValue(self.context, name, full_datachanges_history, i-1)
+                        newValue = findNewValue(self.context, name, full_datachanges_history, i - 1)
                         # Compute the diff between oldValue and newValue
                         iMsg, dMsg = getHistoryTexts(self.context, event)
                         comparator = HtmlDiff(oldValue, newValue, iMsg, dMsg)
@@ -1164,7 +1187,7 @@ class BaseItemsToValidateOfHighestHierarchicLevelAdapter(CompoundCriterionBaseAd
                     '%s__reviewprocess__%s' % (mGroupId, review_state) for review_state in review_states]
                 reviewProcessInfos.extend(reviewProcessInfo)
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
-                'reviewProcessInfo':  {'query': reviewProcessInfos}, }
+                'reviewProcessInfo': {'query': reviewProcessInfos}, }
 
 
 class ItemsToValidateOfHighestHierarchicLevelAdapter(BaseItemsToValidateOfHighestHierarchicLevelAdapter):
@@ -1690,11 +1713,12 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
     def _suffix_proposinggroup(self, visible_fors):
         """ """
         res = []
-        proposingGroup = self.parent.getProposingGroup(theObject=True)
+        groups_managing_item = self.context.adapted()._getAllGroupsManagingItem()
         for visible_for in visible_fors:
             if visible_for.startswith(PROPOSINGGROUPPREFIX):
                 suffix = visible_for.replace(PROPOSINGGROUPPREFIX, '')
-                res.append(proposingGroup.getPloneGroupId(suffix))
+                for group_managing_item in groups_managing_item:
+                    res.append(group_managing_item.getPloneGroupId(suffix))
         return res
 
     def _suffix_profile_proposinggroup(self, visible_fors):

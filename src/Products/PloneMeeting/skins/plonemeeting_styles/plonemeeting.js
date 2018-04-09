@@ -855,8 +855,6 @@ if (/msie/.test(navigator.userAgent.toLowerCase())) {
 /* make sure not_selectable inputs in MeetingItem.optionalAdvisers are not selectable ! */
 $(document).ready(function () {
     $("input[value^='not_selectable_value_'").each(function() {
-        this.click(function() {
-            return false;
-        });
+        this.disabled = true;
     });
 });

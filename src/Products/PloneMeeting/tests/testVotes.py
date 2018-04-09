@@ -37,7 +37,7 @@ class testVotes(PloneMeetingTestCase):
 
     def setUp(self):
         # call parent setUp
-        PloneMeetingTestCase.setUp(self)
+        super(testVotes, self).setUp()
         # avoid recurring items
         self.changeUser('admin')
         self.meetingConfig.recurringitems.manage_delObjects(

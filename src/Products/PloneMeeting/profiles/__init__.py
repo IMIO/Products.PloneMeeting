@@ -359,7 +359,10 @@ class MeetingConfigDescriptor(Descriptor):
                          'customAdvisers', 'selectableCopyGroups', 'itemCopyGroupsStates', 'votesEncoder',
                          'meetingTopicStates', 'decisionTopicStates', 'itemFieldsToKeepConfigSortingFor',
                          'listTypes', 'selectablePrivacies', 'xhtmlTransformFields', 'xhtmlTransformTypes',
-                         'usedVoteValues', 'insertingMethodsOnAddItem')
+                         'usedVoteValues', 'insertingMethodsOnAddItem', 'itemAnnexConfidentialVisibleFor',
+                         'adviceAnnexConfidentialVisibleFor', 'meetingAnnexConfidentialVisibleFor',
+                         'enableAdviceConfidentiality', 'adviceConfidentialityDefault', 'adviceConfidentialFor',
+                         'hideNotViewableLinkedItemsTo', 'hideHistoryTo')
     excludedFields = ['maxDaysDecisions', 'meetingAppDefaultView']
 
     # The 'instance' static attribute stores an instance used for assigning
@@ -526,6 +529,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.selectableCopyGroups = []
         self.itemCopyGroupsStates = ['accepted', 'delayed', ]
         self.hideItemHistoryCommentsToUsersOutsideProposingGroup = False
+        self.hideHistoryTo = ()
         self.restrictAccessToSecretItems = False
         self.itemWithGivenAdviceIsNotDeletable = False
         self.ownerMayDeleteAnnexDecision = False
@@ -657,7 +661,8 @@ class PloneMeetingConfiguration(Descriptor):
         return klass.instance
     get = classmethod(get)
 
-    multiSelectFields = ('availableOcrLanguages', 'modelAdaptations', 'workingDays', )
+    multiSelectFields = ('availableOcrLanguages', 'modelAdaptations',
+                         'workingDays', 'configGroups')
 
     def __init__(self, meetingFolderTitle, meetingConfigs, groups):
         self.meetingFolderTitle = meetingFolderTitle

@@ -34,6 +34,7 @@ from plone.memoize.view import memoize_contextless
 from Products.Five import BrowserView
 from plone import api
 from collective.documentgenerator.helper.archetypes import ATDocumentGenerationHelperView
+from collective.documentgenerator.helper.dexterity import DXDocumentGenerationHelperView
 from collective.eeafaceted.batchactions import _ as _CEBA
 from collective.eeafaceted.batchactions.browser.views import BaseBatchActionForm
 from eea.facetednavigation.browser.app.view import FacetedContainerView
@@ -511,7 +512,7 @@ class PortletTodoUpdateView(BrowserView):
         return ''
 
 
-class PMDocumentGenerationHelperView(ATDocumentGenerationHelperView):
+class BaseDGHV(object):
     """ """
 
     def imageOrientation(self, image):
@@ -687,7 +688,7 @@ class PMDocumentGenerationHelperView(ATDocumentGenerationHelperView):
         return scan_id
 
 
-class FolderDocumentGenerationHelperView(PMDocumentGenerationHelperView):
+class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV):
     """ """
 
     def selected_indexAdvisers_data(self, brains):
@@ -756,7 +757,7 @@ class MeetingDocumentGenerationHelperView(FolderDocumentGenerationHelperView):
     """ """
 
 
-class ItemDocumentGenerationHelperView(PMDocumentGenerationHelperView):
+class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV):
     """ """
     def printMeetingDate(self, returnDateTime=False, noMeetingMarker='-'):
         """Print meeting date, manage fact that item is not linked to a meeting,
@@ -772,7 +773,7 @@ class ItemDocumentGenerationHelperView(PMDocumentGenerationHelperView):
             return noMeetingMarker
 
 
-class AdviceDocumentGenerationHelperView(PMDocumentGenerationHelperView):
+class AdviceDocumentGenerationHelperView(DXDocumentGenerationHelperView, BaseDGHV):
     """ """
 
 
