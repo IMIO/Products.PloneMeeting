@@ -982,7 +982,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     def listAssemblyMembers(self):
         '''Returns the active MeetingUsers having usage "assemblyMember".'''
-        res = ((held_pos.UID(), held_pos.Title())
+        res = ((held_pos.UID(), held_pos.get_short_title())
                for held_pos in self.getAllUsedHeldPositions(includeAllActive=True))
         return DisplayList(res)
 
@@ -990,7 +990,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     def listSignatories(self):
         '''Returns the active MeetingUsers having usage "signer".'''
-        res = ((held_pos.UID(), held_pos.Title())
+        res = ((held_pos.UID(), held_pos.get_short_title())
                for held_pos in self.getAllUsedHeldPositions(usages=['signer', ],
                                                             includeAllActive=True))
         return DisplayList(res)
