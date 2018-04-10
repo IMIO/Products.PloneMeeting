@@ -2270,9 +2270,14 @@ class testMeeting(PloneMeetingTestCase):
            Test this especially because it is cached.
            This test is very WF specific and only works with the base meeting_workflow."""
         cfg = self.meetingConfig
-        cfg2 = self.meetingConfig2
+        cfg.setWorkflowAdaptations(())
         cfg.setMeetingWorkflow('meeting_workflow')
         cfg.at_post_edit_script()
+        cfg2 = self.meetingConfig2
+        cfg2.setWorkflowAdaptations(())
+        cfg2.setMeetingWorkflow('meeting_workflow')
+        cfg2.at_post_edit_script()
+
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=DateTime())
         self.assertEqual(sorted(meeting.getBeforeFrozenStates()),
