@@ -5327,22 +5327,28 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         ''' Returns True if we are currently using MeetingUsers.'''
         return bool('attendees' in self.getUsedMeetingAttributes())
 
-    security.declarePublic('getMeetingUsers')
+    security.declarePublic('getHeldPositions')
 
-    def getMeetingUsers(self, usages=('assemblyMember',), onlyActive=True, theObjects=True):
-        '''Returns the MeetingUsers having at least one usage among
+    def getHeldPositions(self, usages=[], onlyActive=True):
+        '''Returns the held_positions having at least one usage among
            p_usage.  if p_onlyActive is True, only active MeetingUsers are returned.'''
-        review_state = ('inactive', 'active',)
-        if onlyActive:
-            review_state = 'active'
-        brains = self.portal_catalog(portal_type='MeetingUser',
-                                     # KeywordIndex 'indexUsages' use 'OR' by default
-                                     getConfigId=self.id, indexUsages=usages,
-                                     review_state=review_state,
-                                     sort_on='getObjPositionInParent')
-        if not theObjects:
-            return brains
-        return [b.getObject() for b in brains]
+        portal = api.portal.get()
+        wfTool = api.portal.get_tool('portal_workflow')
+        organization = portal.contacts.get('plonegroup-organization').get(self.getId())
+        catalog = api.portal.get_tool('portal_catalog')
+        # use catalog to also query positions in sub organizations
+        positions = [brain.getObject() for brain in catalog(path='/'.join(organization.getPhysicalPath()),
+                     portal_type='position', sort_on='getObjPositionInParent')]
+        res = []
+        for position in positions:
+            for held_position in position.get_held_positions():
+                position = held_position.get_position()
+                if usages and not set(usages).intersection(set(position.usages)):
+                    continue
+                if not onlyActive or \
+                   (onlyActive and wfTool.getInfoFor(held_position, 'review_state') == 'active'):
+                    res.append(held_position)
+        return res
 
     security.declarePrivate('addCategory')
 
