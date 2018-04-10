@@ -413,8 +413,12 @@ document.location.reload(true);
                    usedVoteValues meetingConfig/getUsedVoteValues;
                    excused meeting/getExcused;
                    absents meeting/getAbsents;
+                   signers meeting/getSignatories;
                    itemAbsents context/getItemAbsents;
                    itemSigners context/getItemSignatories;
+                   showExcused python: 'excused' in usedMeetingAttributes or excused;
+                   showAbsents python: 'absents' in usedMeetingAttributes or absents or itemAbsents;
+                   showSignatories python: 'signatories' in usedMeetingAttributes or signers or itemSigners;
                    voters python: context.getAttendees(usage='voter');
                    global showSave python:False;
                    global showRefresh python: False;
@@ -428,9 +432,9 @@ document.location.reload(true);
   <tr valign="top">
     <th class="nosort" i18n:translate="item_specific"></th>
     <th class="nosort" i18n:translate="is_attendee"></th>
-    <th class="nosort" tal:condition="python: 'excused' in usedMeetingAttributes" i18n:translate="is_excused"></th>
-    <th class="nosort" tal:condition="python: 'absents' in usedMeetingAttributes" i18n:translate="is_absent"></th>
-    <th class="nosort" tal:condition="python: 'signatories' in usedMeetingAttributes" i18n:translate="is_signer"></th>
+    <th class="nosort" tal:condition="showExcused" i18n:translate="is_excused"></th>
+    <th class="nosort" tal:condition="showAbsents" i18n:translate="is_absent"></th>
+    <th class="nosort" tal:condition="showSignatories" i18n:translate="is_signer"></th>
     <th class="nosort" tal:condition="showVotes" i18n:translate="is_voter"></th>
     <th class="nosort" tal:condition="python: showVotes and not secret" i18n:translate="vote_value"></th>
     <th class="nosort" tal:condition="python: showVotes and secret" align="left">
@@ -497,17 +501,17 @@ document.location.reload(true);
        </a>
      </td>
  
-     <td align="center" tal:condition="python: 'excused' in usedMeetingAttributes">
+     <td align="center" tal:condition="showExcused">
        <img tal:attributes="src string: $portal_url/checked.gif"
             tal:condition="python: aUid in excused"/>
      </td>
  
-     <td align="center" tal:condition="python: 'absents' in usedMeetingAttributes">
+     <td align="center" tal:condition="showAbsents">
        <img tal:attributes="src string: $portal_url/checked.gif"
             tal:condition="python: aUid in absents"/>
      </td>
  
-     <td align="center" tal:condition="python: 'signatories' in usedMeetingAttributes">
+     <td align="center" tal:condition="showSignatories">
        <img tal:attributes="src string: $portal_url/checked.gif"
             tal:condition="python: aUid in itemSigners"/>
      </td>

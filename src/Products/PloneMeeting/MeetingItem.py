@@ -3015,11 +3015,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getItemSignatories')
 
     def getItemSignatories(self, theObjects=False, includeDeleted=True,
-                           includeReplacements=False):
+                           includeReplacements=False, real=False, **kwargs):
         '''Returns the signatories for this item. If no signatory is defined,
            meeting signatories are returned, taking into account user
            replacements or not (depending on p_includeReplacements).
         '''
+        res = self.getField('itemSignatories').get(self, **kwargs)
+        if real:
+            return res
         res = getHeldPositionObjs(self, 'itemSignatories', theObjects)
         if not res and self.hasMeeting():
             res = self.getMeeting().getSignatories(theObjects)
@@ -3041,6 +3044,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res.append('assemblyExcused')
         if self.getItemAssemblyAbsents(real=True):
             res.append('assemblyAbsents')
+        if self.getItemAbsents():
+            res.append('itemAbsents')
         return res
 
     security.declarePublic('getItemAssembly')

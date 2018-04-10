@@ -71,15 +71,18 @@
                              excused context/getExcused;
                              absents context/getAbsents;
                              signers context/getSignatories;
-                             lateAttendees context/getLateAttendees">
+                             lateAttendees context/getLateAttendees;
+                             showExcused python: 'excused' in usedAttrs or excused;
+                             showAbsents python: 'absents' in usedAttrs or absents;
+                             showSignatories python: 'signatories' in usedAttrs or signers;">
           <tal:comment replace="nothing">Column captions</tal:comment>
           <thead>
           <tr>
             <th class="nosort"></th>
             <th class="nosort" i18n:translate="is_attendee"></th>
-            <th class="nosort" tal:condition="python: 'excused' in usedAttrs" i18n:translate="is_excused"></th>
-            <th class="nosort" tal:condition="python: 'absents' in usedAttrs" i18n:translate="is_absent"></th>
-            <th class="nosort" tal:condition="python: 'signatories' in usedAttrs" i18n:translate="is_signer"></th>
+            <th class="nosort" tal:condition="showExcused" i18n:translate="is_excused"></th>
+            <th class="nosort" tal:condition="showAbsents" i18n:translate="is_absent"></th>
+            <th class="nosort" tal:condition="showSignatories" i18n:translate="is_signer"></th>
           </tr>
           </thead>
           <tbody>
@@ -100,15 +103,15 @@
                        title="left_after" i18n:attributes="title"/><span style="color:black" tal:content="python: departNumber-1"></span>
                 </tal:left>
               </td>
-              <td align="center" tal:condition="python: 'excused' in usedAttrs">
+              <td align="center" tal:condition="showExcused">
                 <img tal:attributes="src string: $portal_url/checked.gif"
                      tal:condition="python: aUid in excused"/>
               </td>
-              <td align="center" tal:condition="python: 'absents' in usedAttrs">
+              <td align="center" tal:condition="showAbsents">
                 <img tal:attributes="src string: $portal_url/checked.gif"
                      tal:condition="python: aUid in absents"/>
               </td>
-              <td align="center" tal:condition="python: 'signatories' in usedAttrs">
+              <td align="center" tal:condition="showSignatories">
                 <img tal:attributes="src string: $portal_url/checked.gif"
                      tal:condition="python: aUid in signers"/>
               </td>
@@ -121,39 +124,39 @@
       <tal:comment replace="nothing">Assembly and signatures.  Backward compatibility for people that used the 'assembly' or 'signatures'
  field before and the 'attendees' now, if the field is not empty, we display it</tal:comment>
       <tal:assemblyFields condition="python: 'assembly' in usedAttrs or 'signatures' in usedAttrs or context.getAssembly() or context.getSignatures()">
-        <tal:defines define="usedAssemblyFields python: ((context.getAssembly() or 'assembly' in usedAttrs) and 'assembly',
+        <tal:defines define="showAssemblyFields python: ((context.getAssembly() or 'assembly' in usedAttrs) and 'assembly',
                                                          (context.getAssemblyExcused() or 'assemblyExcused' in usedAttrs) and 'assemblyExcused',
                                                          (context.getAssemblyAbsents() or 'assemblyAbsents' in usedAttrs) and 'assemblyAbsents',
                                                          (context.getAssemblyGuests() or 'assemblyGuests' in usedAttrs) and 'assemblyGuests',
                                                          (context.getAssemblyProxies() or 'assemblyProxies' in usedAttrs) and 'assemblyProxies',
                                                          (context.getAssemblyStaves() or 'assemblyStaves' in usedAttrs) and 'assemblyStaves',
                                                          (context.getSignatures() or 'signatures' in usedAttrs) and 'signatures',);
-                             colWidthPercentage python: int(100/len(usedAssemblyFields));">
-          <fieldset tal:condition="python: 'assembly' in usedAssemblyFields">
+                             colWidthPercentage python: int(100/len(showAssemblyFields));">
+          <fieldset tal:condition="python: 'assembly' in showAssemblyFields">
               <legend tal:content="context/getLabelAssembly">Assembly</legend>
               <span tal:replace="structure python: context.getRawAssembly() and context.getStrikedAssembly() or '<p>-</p>'"/>
           </fieldset>
-          <fieldset tal:condition="python: 'assemblyExcused' in usedAssemblyFields">
+          <fieldset tal:condition="python: 'assemblyExcused' in showAssemblyFields">
               <legend i18n:translate="meeting_assemblyExcused">Excused</legend>
               <span tal:replace="structure python: context.getAssemblyExcused() or '<p>-</p>'"/>
           </fieldset>
-          <fieldset tal:condition="python: 'assemblyAbsents' in usedAssemblyFields">
+          <fieldset tal:condition="python: 'assemblyAbsents' in showAssemblyFields">
               <legend i18n:translate="meeting_assemblyAbsents">Absents</legend>
               <span tal:replace="structure python: context.getAssemblyAbsents() or '<p>-</p>'"/>
           </fieldset>
-          <fieldset tal:condition="python: 'assemblyGuests' in usedAssemblyFields">
+          <fieldset tal:condition="python: 'assemblyGuests' in showAssemblyFields">
               <legend i18n:translate="meeting_assemblyGuests">Guests</legend>
               <span tal:replace="structure python: context.getAssemblyGuests() or '<p>-</p>'"/>
           </fieldset>
-          <fieldset tal:condition="python: 'assemblyProxies' in usedAssemblyFields">
+          <fieldset tal:condition="python: 'assemblyProxies' in showAssemblyFields">
               <legend i18n:translate="meeting_assemblyProxies">Proxies</legend>
               <span tal:replace="structure python: context.getAssemblyProxies() or '<p>-</p>'"/>
           </fieldset>
-          <fieldset tal:condition="python: 'assemblyStaves' in usedAssemblyFields">
+          <fieldset tal:condition="python: 'assemblyStaves' in showAssemblyFields">
               <legend i18n:translate="meeting_assemblyStaves">Staves</legend>
               <span tal:replace="structure python: context.getAssemblyStaves() or '<p>-</p>'"/>
           </fieldset>
-          <fieldset tal:condition="python: 'signatures' in usedAssemblyFields">
+          <fieldset tal:condition="python: 'signatures' in showAssemblyFields">
               <legend i18n:translate="meeting_signatures">Signatures</legend>
               <span tal:replace="structure python: context.getSignatures(mimetype='text/x-html-safe') or '<p>-</p>'"/>
           </fieldset>
