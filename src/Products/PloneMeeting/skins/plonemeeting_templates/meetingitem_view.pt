@@ -370,7 +370,7 @@
             </div>
             <tal:comment replace="nothing">Item signatures</tal:comment>
             <div class="discreet"
-                 tal:condition="python: meeting and ('signatures' in usedMeetingAttributes or meeting.getSignatures() or context.getItemSignatures())">
+                 tal:condition="python: meeting and ('signatures' in usedMeetingAttributes or context.getItemSignatures())">
                 <tal:defines define="redefinedItemSignatures python: context.getItemSignatures(real=True);
                                      mayQuickEdit python: context.mayQuickEdit('itemSignatures', bypassWritePermissionCheck=True);
                                      class_if_highlighted python: redefinedItemSignatures and 'highlightValue' or '';
@@ -387,7 +387,7 @@
                             </a>
                         </dt>
                         <dd class="collapsibleContent">
-                            <tal:itemSignatures replace="structure python: context.getItemSignatures().replace('\n', '<br />')">Signatures</tal:itemSignatures>
+                            <tal:itemSignatures replace="structure python: context.getItemSignatures().replace('\n', '<br />') or '<p>-</p>'">Signatures</tal:itemSignatures>
                         </dd>
                     </dl>
                 </tal:defines>
