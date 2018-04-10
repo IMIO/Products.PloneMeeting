@@ -53,6 +53,7 @@ from Products.PloneMeeting.config import MEETING_STATES_ACCEPTING_ITEMS
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.tests.testUtils import ASSEMBLY_CORRECT_VALUE
 from Products.PloneMeeting.tests.testUtils import ASSEMBLY_WRONG_VALUE
 from Products.PloneMeeting.utils import getCurrentMeetingObject
@@ -2270,16 +2271,22 @@ class testMeeting(PloneMeetingTestCase):
            Test this especially because it is cached.
            This test is very WF specific and only works with the base meeting_workflow."""
         cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        if 'no_publication' not in cfg.listWorkflowAdaptations() or \
+           'no_publication' not in cfg2.listWorkflowAdaptations():
+            pm_logger.info("Bypassing test test_pm_GetBeforeFrozenStates because "
+                           "it needs the 'no_publication' workflow adaptation.")
+            return
+
         cfg.setWorkflowAdaptations(())
         cfg.setMeetingWorkflow('meeting_workflow')
         cfg.at_post_edit_script()
-        cfg2 = self.meetingConfig2
         cfg2.setWorkflowAdaptations(())
         cfg2.setMeetingWorkflow('meeting_workflow')
         cfg2.at_post_edit_script()
 
         self.changeUser('pmManager')
-        meeting = self.create('Meeting', date=DateTime())
+        meeting = self.create('Meeting', date=DateTime('2018/04/09'))
         self.assertEqual(sorted(meeting.getBeforeFrozenStates()),
                          ['created', 'published'])
         # use the no_publication WF adaptation to remove state 'published'
@@ -2298,7 +2305,7 @@ class testMeeting(PloneMeetingTestCase):
 
         # different for 2 meetingConfigs
         self.setMeetingConfig(cfg2.getId())
-        meeting2 = self.create('Meeting', date=DateTime())
+        meeting2 = self.create('Meeting', date=DateTime('2018/04/09'))
         self.assertEqual(sorted(meeting2.getBeforeFrozenStates()),
                          ['created', 'published'])
         cfg2.setWorkflowAdaptations(('no_publication', ))
