@@ -5327,7 +5327,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         ''' Returns True if we are currently using MeetingUsers.'''
         return bool('attendees' in self.getUsedMeetingAttributes())
 
-    security.declarePublic('getMeetingUsers')
+    security.declarePublic('getHeldPositions')
 
     def getHeldPositions(self, usages=[], onlyActive=True):
         '''Returns the held_positions having at least one usage among
@@ -5335,7 +5335,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         portal = api.portal.get()
         wfTool = api.portal.get_tool('portal_workflow')
         organization = portal.contacts.get('plonegroup-organization').get(self.getId())
-        positions = organization.get_positions()
+        catalog = api.portal.get_tool('portal_catalog')
+        # use catalog to also query positions in sub organizations
+        positions = [brain.getObject() for brain in catalog(path='/'.join(organization.getPhysicalPath()),
+                     portal_type='position', sort_on='getObjPositionInParent')]
         res = []
         for position in positions:
             for held_position in position.get_held_positions():
