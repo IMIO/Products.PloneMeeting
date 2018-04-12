@@ -1387,7 +1387,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         meetingWF = wfTool.getWorkflowsFor(self)[0]
         # get the 'frozen' state
         if 'frozen' not in meetingWF.states:
-            return ''
+            # every states are 'not frozen' states
+            return meetingWF.states.keys()
         frozenState = meetingWF.states['frozen']
         # get back to the meeting WF initial state
         res = []
