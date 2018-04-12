@@ -101,6 +101,7 @@ jQuery(document).ready(function($) {
     inheritedItemInfos();
     usersGroupInfos();
     groupedConfigs();
+    advicesInfos();
 
     // inserting methods infos on meeting_view
     tooltipster_helper(selector='.tooltipster-inserting-methods-helper-msg',
@@ -131,7 +132,8 @@ function initializePMOverlays(){
     inheritedItemInfos();
     usersGroupInfos();
     categorizedChildsInfos();
-    
+    advicesInfos();
+
     jQuery(function($) {
         // Content history popup
         $('a.overlay-history').prepOverlay({
@@ -232,9 +234,17 @@ function usersGroupInfos() {
                        data_parameters=['group_id']);
 }
 
+function advicesInfos() {
+    tooltipster_helper(selector='.tooltipster-advices-infos',
+                       view_name='@@advices-infos',
+                       data_parameters=['adviceType'],
+                       options={zIndex: 1,
+                                position: 'left',
+                                functionReady_callback:initializePMOverlays});
+}
+
 function groupedConfigs() {
     tooltipster_helper(selector='li[id*="portaltab-mc_config_group_"] a',
                        view_name='@@display-grouped-configs',
-                       data_parameters=['config_group'],
-                       theme='tooltipster-shadow');
+                       data_parameters=['config_group']);
 }

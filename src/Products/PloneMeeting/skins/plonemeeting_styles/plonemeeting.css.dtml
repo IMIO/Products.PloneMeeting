@@ -532,7 +532,8 @@ body.template-meetingitem_view td.itemAnnexesCell dd.actionMenuContentAX {
     display: none;
 }
 
-.actionMenuContentAdvice {
+/* advice infos tooltipster */
+div.adviceInfos {
     width: 700px;
 }
 

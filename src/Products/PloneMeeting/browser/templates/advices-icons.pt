@@ -1,0 +1,76 @@
+<tal:defines i18n:domain="PloneMeeting"
+             define="item_url context/absolute_url;
+                     advicesByType view/advicesByType;
+                     advisableGroups view/advisableGroups;
+                     advicesToAdd python: [info[0] for info in advisableGroups[0]];
+                     advicesToWarn python: view.advicesDelayToWarn();">
+  
+      <tal:advicesToAddOrExisting condition="python: advicesByType or advicesToAdd">
+      <tal:definesIfSomethingToShow define="cfg python: view.cfg;
+                                            displayedAddIcon python: False;
+                                            adviceStyle python: cfg.getUserParam('adviceStyle', context.REQUEST);
+                                            pm_utils context/@@pm_utils;
+                                            displayAdviceConfidentiality python: cfg.getEnableAdviceConfidentiality() and view.tool.isManager(context);
+                                            isRealManager python: view.tool.isManager(context, realManagers=True);
+                                            item_review_state context/queryState;">
+      <tal:comment replace="nothing">For history reasons, we use cfg.listAdviceTypes to be sure
+                                     that a deactivated adviceType is still shown.</tal:comment>
+      <tal:menu repeat="adviceType python: ['not_given', 'hidden_during_redaction', 'considered_not_given_hidden_during_redaction'] + cfg.listAdviceTypes().keys()">
+        <tal:adviceType condition="python: adviceType in advicesByType">
+
+            <a href="#"
+               tal:define="adviceToWarn python: advicesToWarn.get(adviceType, None)"
+               onclick="event.preventDefault();"
+               tal:attributes="class python: adviceToWarn and 'tooltipster-advices-infos deactivated warn_delay_advice' or 'tooltipster-advices-infos deactivated';
+                              data-adviceType string:${adviceType};
+                              data-base_url string:${item_url}">
+
+              <img tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_$adviceType.png;
+                                   title adviceType;"
+                   i18n:attributes="title"/><span class="advices_of_type" tal:content="python: len(advicesByType[adviceType])"></span>
+
+              <tal:adviceWarnDelay tal:condition="adviceToWarn">
+                <tal:defines define="adviceToWarnGroupId python: advicesToWarn[adviceType][0];
+                                     adviceToWarnIcon python: advicesToWarn[adviceType][1];">
+                    <img src="advice_with_delay_big.png"
+                         style="outline: none; margin-left: 5px;"
+                         tal:attributes="src string:${view/portal_url}/${adviceToWarnIcon};"/>
+                    <span tal:define="class_if_not_given string:advice_delay advice_delay_${adviceToWarnGroupId/delay_infos/delay_status};"
+                          tal:content="adviceToWarnGroupId/delay_infos/left_delay"
+                          title="An advice on this item still needs to be given respecting given delay."
+                          i18n:attributes="title"
+                          tal:attributes="class class_if_not_given" />
+                </tal:defines>
+              </tal:adviceWarnDelay>
+            </a>
+
+            <tal:comment replace="nothing">Icon for adding an advice</tal:comment>
+            <div tal:condition="python: advicesToAdd and not displayedAddIcon" style="display: inline;">
+            <tal:loop tal:repeat="advice_portal_type python: view.getAddableAdvicePortalTypes(advicesToAdd)">
+              <a href="++add++meetingadvice"
+                 class="link-overlay-pm-advice"
+                 tal:define="global displayedAddIcon python: True"
+                 tal:attributes="href string:${item_url}/++add++${advice_portal_type}">
+                <img i18n:attributes="title"
+                     title="#"
+                     tal:attributes="src string:${view/portal_url}/new_${advice_portal_type}.png;
+                                     title string:add_new_${advice_portal_type}" />
+              </a>
+            </tal:loop>
+            </div>
+         </tal:adviceType>
+      </tal:menu>
+      </tal:definesIfSomethingToShow>
+      </tal:advicesToAddOrExisting>
+      <div tal:condition="not: advicesByType">
+        <tal:comment replace="nothing">Icon for adding an advice for power advisers</tal:comment>
+        <div style="display: inline">&nbsp;-&nbsp;&nbsp;&nbsp;</div>
+        <div tal:condition="python: advicesToAdd" style="display: inline">
+          <a href="++add++meetingadvice" class="link-overlay-pm-advice" tal:attributes="href string:${item_url}/++add++meetingadvice">
+            <img i18n:attributes="title"
+                 title="add_new_meetingadvice"
+                 tal:attributes="src string:${view/portal_url}/new_meetingadvice.png;" />
+          </a>
+        </div>
+  </div>
+</tal:defines>

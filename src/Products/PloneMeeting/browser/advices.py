@@ -33,6 +33,22 @@ from imio.actionspanel.interfaces import IContentDeletable
 from imio.history.browser.views import IHVersionPreviewView
 
 
+def delay_icon(memberIsAdviserForGroup, adviceInfo):
+    """In case this is a delay aware advie, return a delay_icon is advie is not_given/hidden_during_redaction."""
+    if not memberIsAdviserForGroup:
+        return 'advice_with_delay_disabled_big.png'
+    else:
+        delay_status = adviceInfo['delay_infos']['delay_status']
+        if delay_status == 'still_time':
+            return 'advice_with_delay_big_green.png'
+        elif delay_status == 'still_time_but_alert':
+            return 'advice_with_delay_big_orange.png'
+        elif delay_status == 'timed_out':
+            return 'advice_with_delay_big_red.png'
+        else:
+            return 'advice_with_delay_big.png'
+
+
 class AdvicesIcons(BrowserView):
     """
       Advices displayed as icons.
@@ -52,11 +68,12 @@ class AdvicesIcons(BrowserView):
             return '<div style="display: inline">&nbsp;-&nbsp;&nbsp;&nbsp;</div>'
         return super(AdvicesIcons, self).__call__()
 
-    def advicesDelayToWarn(self, userAdviserGroupIds):
+    def advicesDelayToWarn(self):
         """We will warn if :
            - 'not_given' are in the addable advices;
            - 'hidden_during_redaction' or 'asked_again' are in the editable advices."""
 
+        userAdviserGroupIds = [group.getId() for group in self.tool.getGroupsForUser(suffixes=['advisers'])]
         advicesToWarn = {}
 
         def _updateAdvicesToWarn(adviceType):
@@ -74,12 +91,12 @@ class AdvicesIcons(BrowserView):
                    adviceInfo['delay_infos']['left_delay'] < smaller_delay:
                     if groupId in userAdviserGroupIds:
                         # determinate delay_icon to use
-                        advicesToWarn[adviceType] = adviceInfo, self.delay_icon(True, adviceInfo)
+                        advicesToWarn[adviceType] = adviceInfo, delay_icon(True, adviceInfo)
                     # check if we already have a adviceToWarn, if user was adviser
                     # for this group, it is prioritary
                     elif not advicesToWarn.get(adviceType) or \
                             (advicesToWarn.get(adviceType) and not advicesToWarn[adviceType][1] == 0):
-                        advicesToWarn[adviceType] = adviceInfo, self.delay_icon(False, adviceInfo)
+                        advicesToWarn[adviceType] = adviceInfo, delay_icon(False, adviceInfo)
                     else:
                         continue
                     smaller_delay = adviceInfo['delay_infos']['left_delay']
@@ -91,21 +108,6 @@ class AdvicesIcons(BrowserView):
 
         return advicesToWarn
 
-    def delay_icon(self, memberIsAdviserForGroup, adviceInfo):
-        """In case this is a delay aware advie, return a delay_icon is advie is not_given/hidden_during_redaction."""
-        if not memberIsAdviserForGroup:
-            return 'advice_with_delay_disabled_big.png'
-        else:
-            delay_status = adviceInfo['delay_infos']['delay_status']
-            if delay_status == 'still_time':
-                return 'advice_with_delay_big_green.png'
-            elif delay_status == 'still_time_but_alert':
-                return 'advice_with_delay_big_orange.png'
-            elif delay_status == 'timed_out':
-                return 'advice_with_delay_big_red.png'
-            else:
-                return 'advice_with_delay_big.png'
-
     def getAddableAdvicePortalTypes(self, advicesToAdd):
         """ """
         res = []
@@ -115,6 +117,25 @@ class AdvicesIcons(BrowserView):
                 res.append(advice_portal_type)
         return res
 
+
+class AdvicesIconsInfos(BrowserView):
+    """ """
+
+    def __init__(self, context, request):
+        """ """
+        super(AdvicesIconsInfos, self).__init__(context, request)
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
+        self.portal = api.portal.get()
+        self.portal_url = self.portal.absolute_url()
+        self.advisableGroups = self.context.getAdvicesGroupsInfosForUser()
+        self.advicesByType = self.context.getAdvicesByType()
+
+    def __call__(self, adviceType):
+        """ """
+        self.adviceType = adviceType
+        return self.index()
+
     def showLinkToInherited(self, adviceIsInherited, adviceHolder):
         """ """
         return bool(adviceIsInherited and self.context._appendLinkedItem(adviceHolder, only_viewable=True))
@@ -122,6 +143,10 @@ class AdvicesIcons(BrowserView):
     def mayDelete(self, advice):
         """ """
         return IContentDeletable(advice).mayDelete(advisableGroups=self.advisableGroups)
+
+    def delay_icon(self, memberIsAdviserForGroup, adviceInfo):
+        """Makes it callable in the template."""
+        return delay_icon(memberIsAdviserForGroup, adviceInfo)
 
 
 class ChangeAdviceHiddenDuringRedactionView(BrowserView):
