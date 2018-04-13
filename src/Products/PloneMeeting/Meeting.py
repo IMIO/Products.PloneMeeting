@@ -1372,8 +1372,10 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getBeforeFrozenStates_cachekey(method, self):
         '''cachekey method for self.getBeforeFrozenStates.'''
-        # do only compute one time
-        return True
+        # do only re-compute if cfg changed
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        return (cfg.getId(), cfg._p_mtime)
 
     @ram.cache(getBeforeFrozenStates_cachekey)
     def getBeforeFrozenStates(self):
@@ -1385,7 +1387,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         meetingWF = wfTool.getWorkflowsFor(self)[0]
         # get the 'frozen' state
         if 'frozen' not in meetingWF.states:
-            return ''
+            # every states are 'not frozen' states
+            return meetingWF.states.keys()
         frozenState = meetingWF.states['frozen']
         # get back to the meeting WF initial state
         res = []

@@ -737,7 +737,7 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
             res.append(subres)
         return res
 
-    def get_all_items_dghv_with_single_advice(self, brains):
+    def get_all_items_dghv_with_single_advice(self, brains, adviserId=None):
         """
         :param brains: the brains collection representing @Product.PloneMeeting.MeetingItem
         :return: an array of dictionary which contains 2 keys.
@@ -751,10 +751,13 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
         res = []
         for brain in brains:
             item = brain.getObject()
-            advices = item.getAdviceDataFor(item)
+            advices = item.getAdviceDataFor(item, adviserId)
             if advices:
-                for advice in advices:
-                    res.append({'itemView': self.getDGHV(item), 'advice': advices[advice]})
+                if adviserId:
+                    res.append({'itemView': self.getDGHV(item), 'advice': advices})
+                else:
+                    for advice in advices:
+                        res.append({'itemView': self.getDGHV(item), 'advice': advices[advice]})
             else:
                 res.append({'itemView': self.getDGHV(item), 'advice': None})
 
