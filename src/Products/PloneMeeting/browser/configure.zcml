@@ -583,7 +583,7 @@
         template="templates/advices-icons.pt"
         permission="zope2.View"/>
     <browser:page
-        name="advices-infos"
+        name="advices-icons-infos"
         for="*"
         class=".advices.AdvicesIconsInfos"
         template="templates/advices-icons-infos.pt"

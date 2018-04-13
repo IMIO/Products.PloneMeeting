@@ -195,6 +195,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         logout()
         self.cleanMemoize()
         cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.getGroupsForUser')
+        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.getPloneGroupsForUser')
         cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.isPowerObserverForCfg')
         cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.isManager')
         cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.userIsAmong')

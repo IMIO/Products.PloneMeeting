@@ -19,11 +19,12 @@
         <tal:adviceType condition="python: adviceType in advicesByType">
 
             <a href="#"
-               tal:define="adviceToWarn python: advicesToWarn.get(adviceType, None)"
+               tal:define="adviceToWarn python: advicesToWarn.get(adviceType, None);
+                           tooltipster_base_class view/get_tooltipster_base_class;"
                onclick="event.preventDefault();"
-               tal:attributes="class python: adviceToWarn and 'tooltipster-advices-infos deactivated warn_delay_advice' or 'tooltipster-advices-infos deactivated';
-                              data-adviceType string:${adviceType};
-                              data-base_url string:${item_url}">
+               tal:attributes="class python: adviceToWarn and tooltipster_base_class + ' deactivated warn_delay_advice' or tooltipster_base_class + ' deactivated';
+                               data-adviceType string:${adviceType};
+                               data-base_url string:${item_url}">
 
               <img tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_$adviceType.png;
                                    title adviceType;"

@@ -2436,8 +2436,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return True
         # Check that the user belongs to the proposing group.
         proposingGroup = item.getProposingGroup()
-        user = api.user.get_current()
-        userGroups = user.getGroups()
+        userGroups = tool.getPloneGroupsForUser()
         for ploneGroup in userGroups:
             if ploneGroup.startswith('%s_' % proposingGroup):
                 return True

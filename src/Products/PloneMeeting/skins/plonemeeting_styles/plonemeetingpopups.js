@@ -236,7 +236,13 @@ function usersGroupInfos() {
 
 function advicesInfos() {
     tooltipster_helper(selector='.tooltipster-advices-infos',
-                       view_name='@@advices-infos',
+                       view_name='@@advices-icons-infos',
+                       data_parameters=['adviceType'],
+                       options={zIndex: 1,
+                                position: 'bottom',
+                                functionReady_callback:initializePMOverlays});
+    tooltipster_helper(selector='.tooltipster-dashboard-advices-infos',
+                       view_name='@@advices-icons-infos',
                        data_parameters=['adviceType'],
                        options={zIndex: 1,
                                 position: 'left',

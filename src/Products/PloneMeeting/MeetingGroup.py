@@ -321,8 +321,8 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
         """Return the Plone groups linked to this MeetingGroup
            the currently connected user is in."""
         ploneGroups = self.getPloneGroups(idsOnly=True, suffixes=suffixes)
-        member = api.user.get_current()
-        return list(set(ploneGroups).intersection(set(member.getGroups())))
+        tool = api.portal.get_tool('portal_plonemeeting')
+        return list(set(ploneGroups).intersection(set(tool.getPloneGroupsForUser())))
 
     def getOrder(self, associatedGroupIds=None, onlyActive=True):
         '''At what position am I among all the active groups ? If
