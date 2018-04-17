@@ -32,6 +32,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Load advices infos asynchronously when hovering the advices icons
 - Use ToolPloneMeeting.getPloneGroupsForUser to get member.getGroups, as it is cached, call to getGroups is only
   done one time.  Still need to improve it so it is only invalidated when user groups changed
+- Refactored the plonemeetingpopups.js overlays and tootipster related JS to remove useless calls
+  (imio.actionspanel transition) and try to only call relevant JS when necessary
 
 4.1b7 (2018-03-19)
 ------------------

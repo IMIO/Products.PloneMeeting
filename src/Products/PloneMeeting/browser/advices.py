@@ -28,7 +28,7 @@ from zope.lifecycleevent import ObjectModifiedEvent
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
 from Products.Five import BrowserView
-from Products.PloneMeeting.interfaces import IMeetingContent
+from Products.PloneMeeting.interfaces import IMeetingItem
 from plone import api
 from imio.actionspanel.interfaces import IContentDeletable
 from imio.history.browser.views import IHVersionPreviewView
@@ -124,7 +124,7 @@ class AdvicesIcons(BrowserView):
         published = self.request.get('PUBLISHED', None)
         published = published and published.aq_parent or self.context
         base_class = 'tooltipster-dashboard-advices-infos'
-        if IMeetingContent.providedBy(published):
+        if IMeetingItem.providedBy(published):
             base_class = 'tooltipster-advices-infos'
         return base_class
 

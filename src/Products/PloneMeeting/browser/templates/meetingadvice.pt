@@ -47,7 +47,9 @@
             </tal:loop>
         </table>
 
-        <tal:annexes replace="structure context/@@display-annexes" />
+        <div class="meeting-advice-view">
+          <tal:annexes replace="structure context/@@display-annexes" />
+        </div>
 
         <tal:close_button condition="python: 'ajax_load' in context.REQUEST">
           <div class="visualClear"></div>

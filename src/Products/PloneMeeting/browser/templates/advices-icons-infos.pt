@@ -354,7 +354,7 @@
           </tal:loop>
 
   <script type="text/javascript" language="javascript">
-      initializePMOverlays();
+      initializeAdvicePopup();
   </script>
 
   </tal:defines>

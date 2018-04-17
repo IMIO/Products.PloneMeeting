@@ -11,6 +11,9 @@ function adviceAddEdit() {
                 launchCKInstances();
                 // add an event handler onclick on the save button
                 saveAdvice();
+                // save advice_url as it is no more reachable when closing the overlay with the cross
+                var rel_num = this.getOverlay().attr('id');
+                this.advice_url = $("[rel='#" + rel_num + "']").attr('href');
                 return true;
             },
             onClose : function (e) {
@@ -20,13 +23,10 @@ function adviceAddEdit() {
                   CKEDITOR.instances[v].destroy();
                 });
                 // unlock current element
-                // compute url, find link to advice edit and remove trailing '/edit'
-                var rel_num = this.getOverlay().attr('id');
-                advice_url = $("[rel='#" + rel_num + "']").attr('href');
                 // do not unlock if we were on the '++add++meetingadvice' form
-                if (advice_url.indexOf('++add++meetingadvice') === -1) {
+                if (this.advice_url.indexOf('++add++meetingadvice') === -1) {
                     // remove '/edit'
-                    advice_url = advice_url.slice(0, -5);
+                    advice_url = this.advice_url.slice(0, -5);
                     // now we have the edit link, take the href and remove the '/edit'
                     $.ajax({
                         url: advice_url + "/@@plone_lock_operations/safe_unlock", });
@@ -47,13 +47,40 @@ function advicePreview() {
             config: {
                 onBeforeLoad : function (e) {
                     // tooltipster for annexes
-                    categorizedChildsInfos();
+                    categorizedChildsInfos({selector: 'div.meeting-advice-view .tooltipster-childs-infos', });
                     return true;
                 },
             }
        });
     });
 }
+
+// the content history popup
+function contentHistory() {
+    jQuery(function($) {
+        // Content history popup
+        $('a.overlay-history').prepOverlay({
+           subtype: 'ajax',
+           filter: 'h2, #content-history',
+           urlmatch: '@@historyview',
+           urlreplace: '@@contenthistorypopup'
+        });
+  });
+}
+
+// common overlays
+// the content history popup
+function pmCommonOverlays() {
+    jQuery(function($){
+        // Every common overelays, must stay at the bottom of every defined overlays!!!
+        // Or it is taken before others because selector matches
+        $('a.link-overlay-pm').prepOverlay({
+            subtype: 'ajax',
+            closeselector: '[name="form.buttons.cancel"]',
+       });
+    });
+}
+
 
 // when opened in an overlay, save advice using an ajax call, this is done for faceted
 function saveAdvice() {
@@ -95,10 +122,6 @@ function saveAdvice() {
 }
 
 jQuery(document).ready(function($) {
-    // advice popups
-    adviceAddEdit();
-    advicePreview();
-    inheritedItemInfos();
     usersGroupInfos();
     groupedConfigs();
     advicesInfos();
@@ -108,57 +131,26 @@ jQuery(document).ready(function($) {
                        view_name='@@display-inserting-methods-helper-msg',
                        data_parameters={});
 
-    jQuery(function($){
-        // Every common overelays, must stay at the bottom of every defined overlays!!!
-        // Or it is taken before others because selector matches
-        $('a.link-overlay-pm').prepOverlay({
-            subtype: 'ajax',
-            closeselector: '[name="form.buttons.cancel"]',
-       });
-    });
+    pmCommonOverlays();
 });
 
-// prepare overlays in ajax frames
-// this method is made to initialize overlays in the ajax-frame
-// because they are not correctly initialized at page load
-// How does it work?  We add a handler "onmouseover" the produced div
-// containing the ajax-frame that only appear when the ajax-frame is loaded
-// "onmouseover" we initialize the overlays than remove the "onmouseover" event
-// so overlays are only initialized once...
-function initializePMOverlays(){
-    // advice popups
+// prepare overlays and tooltipsters in dashboards
+function initializeDashboard(){
+    usersGroupInfos();
+    categorizedChildsInfos();
+    advicesInfos();
+    contentHistory();
+    pmCommonOverlays();
+}
+
+function initializeAdvicePopup(){
+    // when an advice popup tooltipster is opened, we need to init JS on it
+    categorizedChildsInfos({selector: 'td.advice_annexes .tooltipster-childs-infos', });
     adviceAddEdit();
     advicePreview();
     inheritedItemInfos();
     usersGroupInfos();
-    categorizedChildsInfos();
-    advicesInfos();
-
-    jQuery(function($) {
-        // Content history popup
-        $('a.overlay-history').prepOverlay({
-           subtype: 'ajax',
-           filter: 'h2, #content-history',
-           urlmatch: '@@historyview',
-           urlreplace: '@@contenthistorypopup'
-        });
-  });
-
-  jQuery(function($) {
-    // every common overlays
-    $('a.link-overlay-pm').prepOverlay({
-          subtype: 'ajax',
-          closeselector: '[name="form.buttons.cancel"]',
-    });
-  });
-
-  jQuery(function($) {
-    // Add transition confirmation popup
-    $('a.link-overlay-actionspanel.transition-overlay').prepOverlay({
-          subtype: 'ajax',
-          closeselector: '[name="form.buttons.cancel"]',
-    });
-  });
+    contentHistory();
 }
 
 function overOverlays(){
@@ -177,17 +169,7 @@ function overOverlays(){
     });
 }
 
-// Open every links having the classicpopup class in a... classic popup...
-jQuery(document).ready(function($) {
-    jQuery('a.classicpopup').live('click', function(){
-        newwindow=window.open($(this).attr('href'),'','height=auto,width=auto');
-        if (window.focus) {newwindow.focus();}
-        return false;
-    });
-});
-
-
-jQuery(function($) {
+function editAnnex(){
   $('a.link-overlay-pm-annex').prepOverlay({
         subtype: 'ajax',
         closeselector: '[name="form.buttons.cancel"]',
@@ -205,7 +187,7 @@ jQuery(function($) {
             },
             onClose : function (e) {
                 // unlock current element
-                // compute url, find link to advice edit and remove trailing '/edit'
+                // compute url, find link to annex edit and remove trailing '/edit'
                 var rel_num = this.getOverlay().attr('id');
                 obj_url = $("[rel='#" + rel_num + "']").attr('href');
                 // do not unlock if we were on the '++add++annex' form
@@ -220,7 +202,7 @@ jQuery(function($) {
             }
         }
   });
-});
+}
 
 function inheritedItemInfos() {
     tooltipster_helper(selector='.tooltipster-inherited-advice',
@@ -235,18 +217,36 @@ function usersGroupInfos() {
 }
 
 function advicesInfos() {
-    tooltipster_helper(selector='.tooltipster-advices-infos',
-                       view_name='@@advices-icons-infos',
-                       data_parameters=['adviceType'],
-                       options={zIndex: 1,
-                                position: 'bottom',
-                                functionReady_callback:initializePMOverlays});
-    tooltipster_helper(selector='.tooltipster-dashboard-advices-infos',
-                       view_name='@@advices-icons-infos',
-                       data_parameters=['adviceType'],
-                       options={zIndex: 1,
-                                position: 'left',
-                                functionReady_callback:initializePMOverlays});
+    tooltipster_helper(
+      selector='.tooltipster-advices-infos',
+      view_name='@@advices-icons-infos',
+      data_parameters=['adviceType'],
+      options={zIndex: 1,
+               position: 'bottom',
+               trigger: 'custom',
+               triggerOpen: {
+                  mouseenter: true,
+                  },
+               triggerClose: {
+                  click: true,
+                  },
+               functionReady_callback: initializeAdvicePopup,
+               close_other_tips: true});
+    tooltipster_helper(
+      selector='.tooltipster-dashboard-advices-infos',
+      view_name='@@advices-icons-infos',
+      data_parameters=['adviceType'],
+      options={zIndex: 1,
+               position: 'left',
+               trigger: 'custom',
+               triggerOpen: {
+                  mouseenter: true,
+                  },
+               triggerClose: {
+                  click: true,
+                  },
+               functionReady_callback: initializeAdvicePopup,
+               close_other_tips: true});
 }
 
 function groupedConfigs() {

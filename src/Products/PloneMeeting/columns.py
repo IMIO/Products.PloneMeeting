@@ -102,20 +102,14 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
         if not self.header_js:
             # avoid problems while concataining None and unicode
             self.header_js = u''
+        # activate necessary javascripts
         self.header_js += u'<script type="text/javascript">jQuery(document).ready' + \
-            u'(initializeMenusAXStartingAt($("#content")));initializePMOverlays();' + \
+            u'(initializeMenusAXStartingAt($("#content")));initializeDashboard();' + \
             u'initializeIconifiedCategoryWidget();</script>'
 
         if self.table.batch and self.table.batch[0].meta_type == 'MeetingItem':
             # change header title to "Purpose"
             self.header = "header_purpose"
-            # activate necessary javascripts
-            if not self.header_js:
-                # avoid problems while concataining None and unicode
-                self.header_js = u''
-            self.header_js += u'<script type="text/javascript">jQuery(document).ready' + \
-                u'(initializeMenusAXStartingAt($("#content")));initializePMOverlays();' + \
-                u'initializeIconifiedCategoryWidget();</script>'
             showHideMsg = translate("show_or_hide_details",
                                     domain="PloneMeeting",
                                     context=self.request,

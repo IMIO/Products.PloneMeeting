@@ -439,14 +439,12 @@ div.pm_search_no_result_info {
 }
 
 #faceted-form table.listing td.td_cell_advices {
-    padding-left: 0.3em;
-    padding-right: 0;
+    padding-left: 0.25em;
+    padding-right: 0.25em;
 }
 
-/* display advices menu more on the right on the dashboards */
-td.td_cell_advices .actionMenuAX .actionMenuContentAX {
-    right: 70px;
-    top: 0;
+td.td_cell_advices div.categorized-elements {
+    padding-bottom: 0.25em;
 }
 
 /* skin menu displayed but avoid skinning contained <ul> */
@@ -960,7 +958,7 @@ table.listing th.th_header_CreationDate {
 }
 table.listing th.th_header_advices,
 table.listing th.th_header_privacy {
-    width: 60px;
+    width: 63px;
 }
 
 /* hide border between listType and itemNumber */
