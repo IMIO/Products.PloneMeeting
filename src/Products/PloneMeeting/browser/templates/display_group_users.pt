@@ -1,4 +1,4 @@
-<div id="content" i18n:domain="plone">
+<div id="content" class="group_members_tooltipster" i18n:domain="plone">
     <h3 i18n:translate="heading_group_members_of">Members of group <span style="font-style: italic;"
                                                                          i18n:name="groupname"
                                                                          tal:content="view/group_title">group title</span></h3>

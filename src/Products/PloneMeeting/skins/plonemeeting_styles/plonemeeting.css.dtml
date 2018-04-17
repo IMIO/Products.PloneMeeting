@@ -433,9 +433,14 @@ td.td_cell_advices div.categorized-elements {
     display: none;
 }
 
-/* advice infos tooltipster */
-div.adviceInfos {
+div#content.advice_infos_tooltipster {
     width: 700px;
+}
+
+div#content.group_members_tooltipster {
+    padding-left: 0.5em;
+    padding-right: 0.5em;
+    padding-top: 0.5em;
 }
 
 /* annexes displayed in the annexes_form (table of annexes) */
@@ -918,9 +923,14 @@ body[class*="itemtemplates"].template-manage-portlets a.link-parent {
     display: inline !important;
 }
 
-.overlay-history .pb-ajax > div {
-    width: 97%;
+/* increase width of history table in overlay */
+.pb-ajax > div > div#content-history {
+    width: 105%;
 }
+.pb-ajax > div > div#content-history div#content {
+    margin-left: 0;
+}
+
 
 .apButtonAction_linkedplonegroups {
     background-image: url("group.png");
@@ -1550,6 +1560,7 @@ div.grouped-configs {
 div.tooltipster-categorized-elements {
     min-width: 350px;
     max-width: 500px;
+    padding: 0.25em;
 }
 /* arrow position when tooltipster displayed to top (annexes at bottom of the screen) */
 .tooltipster-sidetip.tooltipster-top .tooltipster-arrow {

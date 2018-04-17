@@ -1,6 +1,6 @@
 <div i18n:domain="PloneMeeting"
      id="content"
-     class="adviceInfos"
+     class="advice_infos_tooltipster"
      tal:define="item_url context/absolute_url;
                  adviceType view/adviceType;
                  advicesByType view/advicesByType;
