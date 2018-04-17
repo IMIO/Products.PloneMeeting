@@ -1016,6 +1016,10 @@ div#optionalAdvisers input[value="not_selectable_value_non_delay_aware_optional_
     font-style: italic;
 }
 
+div.discreet.advice_additional_infos {
+    margin-top: 0.75em;
+}
+
 /* skin the way number of days left for delay-aware advice is displayed (colors, ...) */
 .advice_delay {
     position: relative;

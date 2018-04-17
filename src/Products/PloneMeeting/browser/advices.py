@@ -159,6 +159,10 @@ class AdvicesIconsInfos(BrowserView):
         """Makes it callable in the template."""
         return delay_icon(memberIsAdviserForGroup, adviceInfo)
 
+    def authorname(self):
+        author = api.user.get(self.context.Creator())
+        return author and author.getProperty('fullname') or self.context.Creator()
+
 
 class ChangeAdviceHiddenDuringRedactionView(BrowserView):
     """View that toggle the advice.advice_hide_during_redaction attribute."""

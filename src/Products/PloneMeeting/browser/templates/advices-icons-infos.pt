@@ -340,9 +340,13 @@
                 <div class="customAdviceMessage" tal:content="structure customAdviceMessage" />
             </tal:customAdviceMessage>
 
-            <div class="discreet" style="text-align: right;">
+            <div class="discreet advice_additional_infos" style="text-align: right;">
               <tal:author condition="nocall:obj">
-                <span i18n:translate="">Created by <span i18n:name="advice_creator" tal:content="obj/Creator">Advice creator</span></span>
+                <tal:i18n i18n:domain="plone" i18n:translate="label_by_author">
+                by
+                <span tal:content="view/authorname"
+                      i18n:name="author">Roland Barthes</span>
+                </tal:i18n>
               </tal:author>
               <tal:delayinfos condition="python: advice['delay'] and advice['delay_started_on']">
                <span tal:condition="nocall:obj"> - </span><span i18n:translate="">Asked on <span i18n:name="advice_asked_on_date" tal:content="advice/delay_infos/delay_started_on_localized">2013/05/08</span></span>
