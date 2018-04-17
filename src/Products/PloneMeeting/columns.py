@@ -103,8 +103,7 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
             # avoid problems while concataining None and unicode
             self.header_js = u''
         # activate necessary javascripts
-        self.header_js += u'<script type="text/javascript">jQuery(document).ready' + \
-            u'(initializeMenusAXStartingAt($("#content")));initializeDashboard();' + \
+        self.header_js += u'<script type="text/javascript">initializeDashboard();' + \
             u'initializeIconifiedCategoryWidget();</script>'
 
         if self.table.batch and self.table.batch[0].meta_type == 'MeetingItem':

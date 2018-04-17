@@ -408,29 +408,6 @@ div.pm_search_no_result_info {
    "contentAction" and "actionMenu" */
 .onTop { z-index: 20 !important; }
 .onBottom { z-index: 0 }
-.contentActionsAX td a { padding: 0 0.3em; border: 0 none white; }
-
-.actionItems li { background-image: none; }
-.actionMenuAX { position: relative; margin: 0; padding: 0; }
-.actionMenuAX .actionMenuHeaderAX { margin: 0; padding: 0; font-size: 90%;}
-.actionMenuAX.activated .actionMenuHeaderAX { position: relative; }
-.actionMenuAX .actionMenuHeaderAX a { display: inline; }
-.actionMenuAX.activated .actionMenuHeaderAX a,
-.actionMenuAX.deactivated .actionMenuHeaderAX a {
-    padding: 0 0.2em 0 0.2em !important;
-    border: 0 none white;
-}
-
-.actionMenuDisabled { padding: 0 0.5em 0 0.5em !important;}
-.actionMenuAX .actionMenuContentAX {
-    display: none;
-    position: absolute;
-    top: 1.7em; /* Position of the popup menu relative to its "anchor"=the main menu) */
-    right: -1px;
-    height: auto;
-    padding: 0;
-    margin: 0;
-}
 
 /* the number displayed in the table of annexes */
 .td_cell_number-column {
@@ -447,82 +424,8 @@ td.td_cell_advices div.categorized-elements {
     padding-bottom: 0.25em;
 }
 
-/* skin menu displayed but avoid skinning contained <ul> */
-#content .actionMenuAX .actionMenuContentAX > ul:first-of-type {
-    display: block;
-    background-color: white;
-    border: 1px solid #CCCCCC;
-    margin-top: -1px;
-    padding-top: 0.5em;
-    padding-bottom: 0.5em;
-    padding-left: 0.5em;
-    padding-right: 0.5em;
-    cursor: pointer;
-    list-style: none;
-    box-shadow: 0px 0px 5px 5px rgba(0,0,0,0.2);
-    border-radius: 5px;
-    min-width: 250px;
-}
-/* add some padding at the bottom of the advice menuAx panel */
-#content .actionMenuContentAX.actionMenuContentAdvice > ul {
-    padding-bottom: 0.5em;
-}
-
 #content td.advice_annexes {
     padding-top: 0.3em;
-}
-
-.actionMenuAX.activated { z-index: 20; }
-.actionMenuAX.deactivated { z-index: 0; }
-.actionMenuAX.activated .actionMenuContentAX {
-    z-index: 20;
-    display: block;
-}
-.actionMenuAX.deactivated .actionMenuContentAX { display: none !important; }
-
-#content .actionMenuAX .actionMenuContentAX li {
-    float: none;
-    padding: 0;
-    margin: 0;
-    border: 0;
-    line-height: 1.5em;
-}
-
-#content .actionMenuAX .actionMenuContentAX .selected {
-    display: block;
-    white-space: nowrap;
-    padding: 0 0.5em;
-    margin: 0.0em 0;
-}
-
-#content .actionMenuAX .actionMenuContentAX .actionSeparator {
-    margin-top: 0.1em;
-    padding-top: 0.1em;
-    border-top: &dtml-borderWidth; &dtml-borderStyle; &dtml-contentViewBorderColor;;
-}
-
-#content .actionMenuAX .actionMenuContentAX .actionSeparator div.currentDefaultPage {
-    margin-top: 0.2em;
-    padding: 0.2em 0.5em 0em 0.5em;
-    white-space: nowrap;
-    border-top: &dtml-borderWidth; &dtml-borderStyle; &dtml-contentViewBorderColor;;
-}
-
-#content .actionMenuAX .actionMenuContentAX .actionSeparator div.actionLabel {
-    margin-top: 0.2em;
-    padding: 0.2em 0.5em 0em 0.5em;
-    white-space: nowrap;
-    border-top: &dtml-borderWidth; &dtml-borderStyle; &dtml-contentViewBorderColor;;
-    background-color: &dtml-contentViewBorderColor;;
-    color: &dtml-contentViewBackgroundColor;;
-    cursor: default;
-}
-
-/* on the item view, display the annexes dropdown to the right
-   so it does not moves out of the screen on the left */
-body.template-meetingitem_view td.itemAnnexesCell dd.actionMenuContentAX {
-    left: -4em;
-    right: inherit;
 }
 
 /* collective.documentviewer : hide some elements... */
@@ -589,23 +492,6 @@ dd li a.erroredConversion, tr span.erroredConversion {
     position: relative;
     top: -1px;
     margin-left: -0.5em !important;
-}
-
-#objectMenu.actionMenuAX .actionMenuContentAX li { display: block; }
-#objectMenu.actionMenuAX .actionMenuContentAX li,
-#objectMenu.actionMenuAX .actionMenuContentAX li a:hover {
-      background-position: 3px 50%;
-      margin-left: 0;
-}
-#objectMenu.actionMenuAX .actionMenuContentAX li a { padding-left: 22px; }
-
-.actionMenuSelected {
-    display: block;
-    cursor: default;
-    background-image: url(<dtml-var portal_url>/bullet_icon.gif);
-    background-repeat: no-repeat;
-    background-position: 0% 3px;
-    padding-left: 16px !important;
 }
 
 #templateMenu li a { padding-left: 16px; }
@@ -722,7 +608,7 @@ td[class^="meeting_item_listType_"] div[id^="pm_menu_item_listType"].pmDropdown 
 }
 
 div[id^="pm_menu_advice_change_delay"].pmDropdown {
-    right: 25px;
+    right: 0px;
     font-weight: normal;
 }
 
@@ -1013,10 +899,6 @@ body.template-search_form #content label {
     vertical-align: text-top;
 }
 
-#meetingDecideSeveralItems {
-    float:right;
-}
-
 /* hide the personal-preferences tab when the user go to his preferences to avoid him to do nasty things... */
 #contentview-user_data-personal-preferences {
     display: none;
@@ -1141,11 +1023,6 @@ div#optionalAdvisers input[value="not_selectable_value_non_delay_aware_optional_
     margin-right: -6px;
     font-weight: bold;
     display: inline-block;
-}
-/* add a border under the advice delay warning and advice type to link it together */
-#content a.warn_delay_advice {
-    border-bottom: 1px solid lightgrey !important;
-    padding-bottom: 2px !important;
 }
 
 .advice_delay_never_giveable,
@@ -1284,11 +1161,6 @@ a.template_send_mailing_list {
 a.template_send_mailing_list {
     line-height: 1em;
 }
-/* need to set !important because used in the advice popup where actionMenuAX defines padding */
-div a.advice_delay_change_value {
-    padding-right: 50px !important;
-    display: inline !important;
-}
 
 .item_no_emergency,
 #content a:link.item_no_emergency {
@@ -1422,10 +1294,6 @@ dl.portlet.portletWidgetCollection div.widget-portlet li a {
     color: red;
 }
 
-/* align annexes icons displayed in the pretty_link column to the right */
-td.pretty_link table.contentActionsAX {
-    float: right;
-}
 /* align pretty_link icons when displayed in the element's title */
 h1.documentFirstHeading span.pretty_link_icons {
     vertical-align: inherit;
