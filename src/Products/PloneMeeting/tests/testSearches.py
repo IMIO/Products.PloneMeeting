@@ -389,9 +389,9 @@ class testSearches(PloneMeetingTestCase):
         adapter = getAdapter(cfg,
                              ICompoundCriterionFilter,
                              name='items-in-copy')
-        # admin is just member of 'AuthenticatedUsers'
+        # admin does not belong to any group
         self.assertEquals(adapter.query,
-                          {'getCopyGroups': {'query': ['AuthenticatedUsers']},
+                          {'getCopyGroups': {'query': []},
                            'portal_type':  {'query': itemTypeName}})
         # as creator, query is correct
         self.changeUser('pmCreator1')
