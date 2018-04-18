@@ -1142,9 +1142,7 @@ class ItemsInCopyAdapter(CompoundCriterionBaseAdapter):
     @ram.cache(itemsincopy_cachekey)
     def query_itemsincopy(self):
         '''Queries all items for which the current user is in copyGroups.'''
-        groupsTool = api.portal.get_tool('portal_groups')
-        member = api.user.get_current()
-        userGroups = groupsTool.getGroupsForPrincipal(member)
+        userGroups = self.tool.getPloneGroupsForUser()
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 # KeywordIndex 'getCopyGroups' use 'OR' by default
                 'getCopyGroups': {'query': userGroups}, }
@@ -1159,10 +1157,8 @@ class BaseItemsToValidateOfHighestHierarchicLevelAdapter(CompoundCriterionBaseAd
         '''Return a list of items that the user can validate regarding his highest hierarchic level.
            So if a user is 'prereviewer' and 'reviewier', the search will only return items
            in state corresponding to his 'reviewer' role.'''
-        member = api.user.get_current()
-        groupsTool = api.portal.get_tool('portal_groups')
-        groupIds = groupsTool.getGroupsForPrincipal(member)
-        highestReviewerLevel = self.cfg._highestReviewerLevel(groupIds)
+        userGroups = self.tool.getPloneGroupsForUser()
+        highestReviewerLevel = self.cfg._highestReviewerLevel(userGroups)
         if not highestReviewerLevel:
             # in this case, we do not want to display a result
             # we return an unknown review_state
@@ -1177,10 +1173,10 @@ class BaseItemsToValidateOfHighestHierarchicLevelAdapter(CompoundCriterionBaseAd
             review_states = ['prevalidated']
 
         reviewProcessInfos = []
-        for groupId in groupIds:
-            if groupId.endswith('_%s' % highestReviewerLevel):
+        for userGroupId in userGroups:
+            if userGroupId.endswith('_%s' % highestReviewerLevel):
                 # append group name without suffix
-                mGroupId = groupId[:-len('_%s' % highestReviewerLevel)]
+                mGroupId = userGroupId[:-len('_%s' % highestReviewerLevel)]
                 review_states = [
                     '%s%s' % (prefix_review_state, review_state) for review_state in review_states]
                 reviewProcessInfo = [
@@ -1235,18 +1231,16 @@ class BaseItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(CompoundCrit
            So get highest hierarchic level of each group of the user and
            take into account lowest levels too.'''
         # search every highest reviewer level for each group of the user
-        member = api.user.get_current()
-        groupsTool = api.portal.get_tool('portal_groups')
         userMeetingGroups = self.tool.getGroupsForUser()
-        groupIds = groupsTool.getGroupsForPrincipal(member)
+        userGroups = self.tool.getPloneGroupsForUser()
         reviewProcessInfos = []
         for mGroup in userMeetingGroups:
             ploneGroups = []
             # find Plone groups of the mGroup the user is in
             mGroupId = mGroup.getId()
-            for groupId in groupIds:
-                if groupId.startswith('%s_' % mGroupId):
-                    ploneGroups.append(groupId)
+            for userGroupId in userGroups:
+                if userGroupId.startswith('%s_' % mGroupId):
+                    ploneGroups.append(userGroupId)
             # now that we have Plone groups of the mGroup
             # we can get highest hierarchic level and find sub levels
             highestReviewerLevel = self.cfg._highestReviewerLevel(ploneGroups)
@@ -1316,23 +1310,21 @@ class BaseItemsToValidateOfMyReviewerGroupsAdapter(CompoundCriterionBaseAdapter)
         '''Return a list of items that the user could validate.  So it returns every items the current
            user is able to validate at any state of the validation process.  So if a user is 'prereviewer'
            and 'reviewer' for a group, the search will return items in both states.'''
-        member = api.user.get_current()
-        groupsTool = api.portal.get_tool('portal_groups')
-        groupIds = groupsTool.getGroupsForPrincipal(member)
+        userGroups = self.tool.getPloneGroupsForUser()
         reviewProcessInfos = []
         reviewers = reviewersFor(self.cfg.getItemWorkflow())
-        for groupId in groupIds:
+        for userGroupId in userGroups:
             for reviewer_suffix, review_states in reviewers.items():
                 # current user may be able to validate at at least
                 # one level of the entire validation process, we take it into account
-                if groupId.endswith('_%s' % reviewer_suffix):
+                if userGroupId.endswith('_%s' % reviewer_suffix):
                     # specific management for workflows using the 'pre_validation' wfAdaptation
                     if reviewer_suffix == 'reviewers' and \
                         ('pre_validation' in self.cfg.getWorkflowAdaptations() or
                          'pre_validation_keep_reviewer_permissions' in self.cfg.getWorkflowAdaptations()) and \
                        review_states == ['proposed']:
                         review_states = ['prevalidated']
-                    mGroupId = groupId[:-len(reviewer_suffix) - 1]
+                    mGroupId = userGroupId[:-len(reviewer_suffix) - 1]
                     review_states = [
                         '%s%s' % (prefix_review_state, review_state) for review_state in review_states]
                     reviewProcessInfo = [

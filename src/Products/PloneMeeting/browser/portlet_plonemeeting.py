@@ -47,7 +47,7 @@ class Renderer(base.Renderer, FacetedRenderer):
     def available(self):
         '''Defines if the portlet is available in the context.'''
         available = FacetedRenderer(self.context, self.request, self.view, self.manager, self.data).available
-        return available and self.tool.isPloneMeetingUser()
+        return available
 
     def _isPortletOutsideFaceted(self, context, criteriaHolder):
         """Are we outside the faceted?"""

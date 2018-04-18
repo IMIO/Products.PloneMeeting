@@ -849,26 +849,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             obj = self.unrestrictedTraverse(value.getPath())
         return _checkPermission(View, obj)
 
-    security.declarePublic('isPloneMeetingUser')
-
-    def isPloneMeetingUser(self):
-        '''Is the current user a PloneMeeting user (ie, does it have at least
-           one of the roles used in PloneMeeting ?'''
-        user = api.user.get_current()
-        if not user:
-            return
-        for role in user.getRoles():
-            if role in ploneMeetingRoles:
-                return True
-        # or maybe it is a user that is only a MeetingManager
-        if self.isManager(self):
-            return True
-        # or maybe this is a user in a _powerobservers group
-        for groupId in self.getPloneGroupsForUser():
-            if groupId.endswith(POWEROBSERVERS_GROUP_SUFFIX) or \
-               groupId.endswith(RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX):
-                return True
-
     def isManager_cachekey(method, self, context, realManagers=False):
         '''cachekey method for self.isManager.'''
         # we only recompute if REQUEST changed
