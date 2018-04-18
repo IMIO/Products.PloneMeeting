@@ -931,7 +931,6 @@ body[class*="itemtemplates"].template-manage-portlets a.link-parent {
     margin-left: 0;
 }
 
-
 .apButtonAction_linkedplonegroups {
     background-image: url("group.png");
 }
