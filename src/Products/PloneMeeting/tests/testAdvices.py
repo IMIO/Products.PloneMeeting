@@ -1986,8 +1986,8 @@ class testAdvices(PloneMeetingTestCase):
                'advice_hide_during_redaction': False,
                'advice_comment': RichTextValue(u'My comment')})
         # for now advice is deletable
-        advices_icons = item.restrictedTraverse('@@advices-icons')
-        self.assertTrue(advices_icons.mayDelete(developers_advice))
+        advices_icons_infos = item.restrictedTraverse('@@advices-icons-infos')
+        self.assertTrue(advices_icons_infos.mayDelete(developers_advice))
         # give advice
         self.changeUser('pmReviewer2')
         vendors_advice = createContentInContainer(
@@ -1998,8 +1998,8 @@ class testAdvices(PloneMeetingTestCase):
                'advice_hide_during_redaction': False,
                'advice_comment': RichTextValue(u'My comment')})
         # for now advice is deletable
-        advices_icons = item.restrictedTraverse('@@advices-icons')
-        self.assertTrue(advices_icons.mayDelete(vendors_advice))
+        advices_icons_infos = item.restrictedTraverse('@@advices-icons-infos')
+        self.assertTrue(advices_icons_infos.mayDelete(vendors_advice))
 
         # ask developers_advice again
         changeView = developers_advice.restrictedTraverse('@@change-advice-asked-again')
@@ -2007,20 +2007,20 @@ class testAdvices(PloneMeetingTestCase):
         changeView()
         self.assertEqual(developers_advice.advice_type, 'asked_again')
         # advice asker may obviously not delete it
-        self.assertFalse(advices_icons.mayDelete(developers_advice))
+        self.assertFalse(advices_icons_infos.mayDelete(developers_advice))
         # and advisers neither
         self.changeUser('pmAdviser1')
-        self.assertFalse(advices_icons.mayDelete(developers_advice))
+        self.assertFalse(advices_icons_infos.mayDelete(developers_advice))
         # even when advice_type is changed
         developers_advice.advice_type = 'positive'
         notify(ObjectModifiedEvent(developers_advice))
-        self.assertFalse(advices_icons.mayDelete(developers_advice))
+        self.assertFalse(advices_icons_infos.mayDelete(developers_advice))
 
         # when an advice is officially given, it is historized so advice is no more deletable
         self.proposeItem(item)
-        self.assertFalse(advices_icons.mayDelete(developers_advice))
+        self.assertFalse(advices_icons_infos.mayDelete(developers_advice))
         self.changeUser('pmReviewer2')
-        self.assertFalse(advices_icons.mayDelete(vendors_advice))
+        self.assertFalse(advices_icons_infos.mayDelete(vendors_advice))
 
     def test_pm_AdviceHistorizedWithItemDataWhenAdviceGiven(self):
         """When an advice is given, it is versioned and relevant item infos are saved.
@@ -2859,20 +2859,20 @@ class testAdvices(PloneMeetingTestCase):
         cfg.setItemRestrictedPowerObserversStates(('itemcreated', ))
 
         self.changeUser('powerobserver1')
-        advicesIconsViewItem1 = item1.restrictedTraverse('advices-icons')
-        advicesIconsViewItem2 = item2.restrictedTraverse('advices-icons')
+        advicesIconsInfosViewItem1 = item1.restrictedTraverse('advices-icons-infos')
+        advicesIconsInfosViewItem2 = item2.restrictedTraverse('advices-icons-infos')
         # shown on the advices-icons
-        self.assertTrue(advicesIconsViewItem2.showLinkToInherited(True, item1))
-        self.assertTrue('data-advice_id' in advicesIconsViewItem2())
+        self.assertTrue(advicesIconsInfosViewItem2.showLinkToInherited(True, item1))
+        self.assertTrue('data-advice_id' in advicesIconsInfosViewItem2(adviceType='positive'))
         # not for adviceHolder
-        self.assertFalse('data-advice_id' in advicesIconsViewItem1())
+        self.assertFalse('data-advice_id' in advicesIconsInfosViewItem1(adviceType='positive'))
 
         # do item1 no more visible
         self.proposeItem(item1)
         self.assertFalse(self.hasPermission(View, item1))
         # not more shown on the advices-icons
-        self.assertFalse(advicesIconsViewItem2.showLinkToInherited(True, item1))
-        self.assertFalse('data-advice_id' in advicesIconsViewItem2())
+        self.assertFalse(advicesIconsInfosViewItem2.showLinkToInherited(True, item1))
+        self.assertFalse('data-advice_id' in advicesIconsInfosViewItem2(adviceType='positive'))
 
 
 def test_suite():

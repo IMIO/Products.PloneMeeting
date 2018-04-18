@@ -404,7 +404,7 @@ document.location.reload(true);
 
 <div id="meeting_users_"
      metal:define-macro="itemPeople" i18n:domain="PloneMeeting"
-     onmouseover="javascript:initializePMOverlays()"
+     onmouseover="pmCommonOverlays();"
      class="ajax-pm-frame"
      tal:define="usedAttrs usedAttrs|meetingConfig/getUsedItemAttributes;
                  meeting context/getMeeting;

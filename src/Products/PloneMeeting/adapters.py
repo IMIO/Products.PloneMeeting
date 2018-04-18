@@ -1752,15 +1752,6 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
     def __init__(self, context, request, brain):
         super(PMCategorizedObjectAdapter, self).__init__(context, request, brain)
 
-    def _user_groups_cachekey(method, self, as_ids=False):
-        '''cachekey method for self._user_groups.'''
-        return str(self.request._debug)
-
-    @ram.cache(_user_groups_cachekey)
-    def _user_groups(self):
-        user = api.user.get_current()
-        return user.getGroups()
-
     def _use_isPrivacyViewable_cachekey(method, self):
         '''cachekey method for self._use_isPrivacyViewable.'''
         return str(self.request._debug)
@@ -1795,7 +1786,7 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
         if self.context.meta_type == 'Meeting':
             # if we have a SUFFIXPROFILEPREFIX prefixed group,
             # check using "userIsAmong", this is only done for Meetings
-            if set(self._user_groups()).intersection(infos['visible_for_groups']):
+            if set(tool.getPloneGroupsForUser()).intersection(infos['visible_for_groups']):
                 return True
             # build suffixes to pass to tool.userIsAmong
             tool = api.portal.get_tool('portal_plonemeeting')

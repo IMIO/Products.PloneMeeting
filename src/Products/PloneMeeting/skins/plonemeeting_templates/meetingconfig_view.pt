@@ -22,7 +22,7 @@
                       tal:define="isRealManager python: context.portal_plonemeeting.isManager(context, True);
                                   mode python:'view';
                                   pageName request/pageName|string:default;
-                                  member context/portal_plonemeeting/getUser;
+                                  member context/@@plone_portal_state/member;
                                   schematas here/Schemata;
                                   fieldsets python:[key for key in schematas.keys() if (key != 'metadata')];
                                   displayable_fieldsets python: list(fieldsets);
