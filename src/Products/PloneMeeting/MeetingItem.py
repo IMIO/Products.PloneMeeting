@@ -2852,8 +2852,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             else:
                 res = self.getField('category').get(self, **kwargs)
                 # avoid problems with acquisition
-                if theObject and res in cfg.categories.objectIds():
-                    res = getattr(cfg.categories, res)
+                if theObject:
+                    res = getattr(cfg.categories.aq_base, res)
         except AttributeError:
             res = ''
         return res
