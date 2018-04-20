@@ -2848,14 +2848,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         try:
             res = ''
             if cfg.getUseGroupsAsCategories():
-                res = self.getProposingGroup(theObject=True)
+                res = self.getProposingGroup(theObject=theObject)
             else:
-                categoryId = self.getField('category').get(self, **kwargs)
+                res = self.getField('category').get(self, **kwargs)
                 # avoid problems with acquisition
-                if categoryId in cfg.categories.objectIds():
-                    res = getattr(cfg.categories, categoryId)
-            if res and not theObject:
-                res = res.id
+                if theObject and res in cfg.categories.objectIds():
+                    res = getattr(cfg.categories, res)
         except AttributeError:
             res = ''
         return res
