@@ -1553,7 +1553,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # hide the decision?
         msg = self._mayNotViewDecisionMsg()
         return msg or self.getField('motivation').get(self, **kwargs)
-    getRawMotivation = getMotivation
+
+    security.declarePublic('getRawMotivation')
+
+    def getRawMotivation(self, **kwargs):
+        '''See self.getMotivation docstring.'''
+        # hide the decision?
+        msg = self._mayNotViewDecisionMsg()
+        return msg or self.getField('motivation').getRaw(self, **kwargs)
 
     security.declarePublic('getDecision')
 
@@ -1564,7 +1571,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # hide the decision?
         msg = self._mayNotViewDecisionMsg()
         return msg or self.getField('decision').get(self, **kwargs)
-    getRawDecision = getDecision
+
+    security.declarePublic('getRawDecision')
+
+    def getRawDecision(self, **kwargs):
+        '''See self.getDecision docstring.'''
+        # hide the decision?
+        msg = self._mayNotViewDecisionMsg()
+        return msg or self.getField('decision').getRaw(self, **kwargs)
 
     security.declarePrivate('validate_category')
 
@@ -2850,10 +2864,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if cfg.getUseGroupsAsCategories():
                 res = self.getProposingGroup(theObject=theObject)
             else:
-                res = self.getField('category').get(self, **kwargs)
-                # avoid problems with acquisition
+                cat_id = self.getField('category').get(self, **kwargs)
                 if theObject:
-                    res = getattr(cfg.categories.aq_base, res)
+                    # avoid problems with acquisition
+                    if cat_id in cfg.categories.objectIds():
+                        res = getattr(cfg.categories, cat_id)
+                else:
+                    res = cat_id
         except AttributeError:
             res = ''
         return res
