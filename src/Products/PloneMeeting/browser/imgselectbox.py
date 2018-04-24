@@ -1,3 +1,4 @@
+from zope.globalrequest import getRequest
 from Products.Five.browser import BrowserView
 from plone import api
 from plone.memoize.view import memoize
@@ -10,7 +11,7 @@ class BaseImgSelectBoxView(BrowserView):
     def __init__(self, context, request):
         super(BaseImgSelectBoxView, self).__init__(context, request)
         self.context = context
-        self.request = request
+        self.request = getRequest()
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
 
@@ -133,7 +134,7 @@ class GoToMeetingImgSelectBoxView(BaseImgSelectBoxView):
         # avoid displaying old Meeting when going to a dashboard (my items, ...)
         if self.request.getURL().endswith('facetednavigation_view'):
             return
-        current = getCurrentMeetingObject(self.context)
+        current = getCurrentMeetingObject(self.request)
         if current and current.UID() in [brain.UID for brain in self.brains]:
             return current
 

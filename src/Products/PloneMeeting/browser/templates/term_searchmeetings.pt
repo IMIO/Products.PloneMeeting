@@ -8,7 +8,7 @@
     <ul class="fewMeetings">
         <li tal:condition="python: nbOfMeetings <= maxShownMeetings"
                   tal:repeat="brain brains">
-            <div tal:attributes="class python: context.REQUEST['URL'].startswith(brain.getURL()) and 'portletSelected' or ''">
+            <div tal:attributes="class python: brain.getURL() in view.request.getURL() and 'portletSelected' or ''">
                <tal:meetingPrettyLink replace="structure python: brain.getObject().getPrettyLink(prefixed=False)" />
             </div>
         </li>
