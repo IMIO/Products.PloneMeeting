@@ -187,7 +187,7 @@ class MeetingItemWorkflowConditions(object):
         '''We may propose an item if the workflow permits it and if the
            necessary fields are filled.  In the case an item is transferred from
            another meetingConfig, the category could not be defined.'''
-        if not self.context.getCategory():
+        if not self.context.getCategory(theObject=True):
             return No(_('required_category_ko'))
         if _checkPermission(ReviewPortalContent, self.context):
             return True
@@ -209,7 +209,7 @@ class MeetingItemWorkflowConditions(object):
     def mayPresent(self):
         # if WFAdaptation 'items_come_validated' is enabled, an item
         # could miss it's category
-        if not self.context.getCategory():
+        if not self.context.getCategory(theObject=True):
             return No(_('required_category_ko'))
         # only MeetingManagers may present an item, the 'Review portal content'
         # permission is not enough as MeetingReviewer may have the 'Review portal content'
@@ -389,7 +389,7 @@ class MeetingItemWorkflowConditions(object):
     def _mayWaitAdvices(self, destination_state):
         """Helper method used in every mayWait_advices_from_ guards."""
         res = False
-        if not self.context.getCategory():
+        if not self.context.getCategory(theObject=True):
             return No(_('required_category_ko'))
         # check if there are advices to give in destination state
         hasAdvicesToGive = self._hasAdvicesToGive(destination_state)
@@ -5654,7 +5654,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # categories, we check if a mapping is defined in the configuration of the original item
         if not cfg.getUseGroupsAsCategories() and \
            not destMeetingConfig.getUseGroupsAsCategories():
-            originalCategory = getattr(cfg.categories, self.getCategory())
+            originalCategory = self.getCategory(theObject=True)
             # find out if something is defined when sending an item to destMeetingConfig
             for destCat in originalCategory.getCategoryMappingsWhenCloningToOtherMC():
                 if destCat.split('.')[0] == destMeetingConfigId:
