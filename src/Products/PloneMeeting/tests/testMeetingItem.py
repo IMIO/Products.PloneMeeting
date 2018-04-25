@@ -1499,6 +1499,24 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(clonedItem.adviceIsInherited('group2'))
         self.assertTrue(clonedItem.adviceIsInherited('poweradvisers'))
 
+    def test_pm_DuplicatedItemDoesNotKeepDecisionAnnexes(self):
+        """When an item is duplicated using the 'duplicate and keep link',
+           decision annexes are not kept."""
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.addAnnex(item)
+        self.addAnnex(item, relatedTo='item_decision')
+        self.assertTrue(get_annexes(item, portal_types=['annex']))
+        self.assertTrue(get_annexes(item, portal_types=['annexDecision']))
+        # cloned and link not kept, decison annexes are removed
+        clonedItem = item.clone()
+        self.assertTrue(get_annexes(clonedItem, portal_types=['annex']))
+        self.assertFalse(get_annexes(clonedItem, portal_types=['annexDecision']))
+        # cloned but link kept, decison annexes are also removed
+        clonedItemWithLink = item.clone(setCurrentAsPredecessor=True)
+        self.assertTrue(get_annexes(clonedItemWithLink, portal_types=['annex']))
+        self.assertFalse(get_annexes(clonedItemWithLink, portal_types=['annexDecision']))
+
     def test_pm_PreviousReviewStateIndex(self):
         """Test the previous_review_state index, especially when datachange is enabled."""
         cfg = self.meetingConfig
