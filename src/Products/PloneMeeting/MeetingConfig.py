@@ -839,16 +839,20 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
-    BooleanField(
-        name='keepAdvicesOnSentToOtherMC',
-        default=defValues.keepAdvicesOnSentToOtherMC,
-        widget=BooleanField._properties['widget'](
-            description="KeepAdvicesOnSentToOtherMC",
-            description_msgid="keep_advices_on_sent_to_other_mc_descr",
-            label='Keepadvicesonsenttoothermc',
-            label_msgid='PloneMeeting_label_keepAdvicesOnSentToOtherMC',
+    LinesField(
+        name='contentsKeptOnSentToOtherMC',
+        default=defValues.contentsKeptOnSentToOtherMC,
+        widget=MultiSelectionWidget(
+            description="ContentsKeptOnSentToOtherMC",
+            description_msgid="contents_kept_on_sent_to_other_mc_descr",
+            format="checkbox",
+            label='Contentskeptonsenttoothermc',
+            label_msgid='PloneMeeting_label_contentsKeptOnSentToOtherMC',
             i18n_domain='PloneMeeting',
         ),
+        multiValued=1,
+        vocabulary='listContentsKeptOnSentToOtherMCs',
+        enforceVocabulary=True,
         schemata="data",
         write_permission="PloneMeeting: Write risky config",
     ),
@@ -3748,6 +3752,28 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                           domain='PloneMeeting',
                           context=self.REQUEST,
                           default="Automated (annexes are printed by the application)")),
+               ]
+        return DisplayList(tuple(res))
+
+    security.declarePrivate('listContentsKeptOnSentToOtherMCs')
+
+    def listContentsKeptOnSentToOtherMCs(self):
+        '''Vocabulary for field 'contentsKeptOnSentToOtherMC'.'''
+        res = [('annexes',
+                translate('content_kept_annexes',
+                          domain='PloneMeeting',
+                          context=self.REQUEST,
+                          default="Annexes")),
+               ('decision_annexes',
+                translate('content_kept_decision_annexes',
+                          domain='PloneMeeting',
+                          context=self.REQUEST,
+                          default="Decision annexes")),
+               ('advices',
+                translate('content_kept_advices',
+                          domain='PloneMeeting',
+                          context=self.REQUEST,
+                          default="Advices")),
                ]
         return DisplayList(tuple(res))
 

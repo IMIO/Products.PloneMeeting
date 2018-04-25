@@ -34,6 +34,11 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   done one time.  Still need to improve it so it is only invalidated when user groups changed
 - Refactored the plonemeetingpopups.js overlays and tootipster related JS to remove useless calls
   (imio.actionspanel transition) and try to only call relevant JS when necessary
+- MeetingItem.clone gets a new parameter 'copyDecisionAnnexes=False'.  Now decision annexes are no more kept when
+  an item is duplicated, the only configurable functionnality is in MeetingConfig.contentsKeptOnSentToOtherMC
+  where you can define what content to keep when an item is sent to another MeetingConfig : annexes, decision annexes
+  and advices.  Furthermore parameter MeetingConfig.contentsKeptOnSentToOtherMC replaces parameter
+  MeetingConfig.keepAdvicesOnSentToOtherMC
 
 4.1b7 (2018-03-19)
 ------------------

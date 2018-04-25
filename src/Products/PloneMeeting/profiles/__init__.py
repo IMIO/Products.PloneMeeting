@@ -523,7 +523,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.meetingPresentItemWhenNoCurrentMeetingStates = []
         self.itemAutoSentToOtherMCStates = ['accepted', ]
         self.itemManualSentToOtherMCStates = []
-        self.keepAdvicesOnSentToOtherMC = False
+        self.contentsKeptOnSentToOtherMC = ['annexes', 'decision_annexes']
         self.advicesKeptOnSentToOtherMC = []
         self.useCopies = False
         self.selectableCopyGroups = []

@@ -690,9 +690,7 @@ class testMeetingItem(PloneMeetingTestCase):
             at.enabled = False
         # no available annex types, try to clone newItem now
         self.changeUser('pmManager')
-        # clean status message so we check that a new one is added
-        del IAnnotations(self.request)['statusmessages']
-        clonedItem = originalItem.clone(copyAnnexes=True)
+        clonedItem = originalItem.clone(copyAnnexes=True, copyDecisionAnnexes=True)
         # annexes were kept
         self.assertEqual(len(get_annexes(clonedItem, portal_types=['annex'])), 2)
         self.assertEqual(len(get_annexes(clonedItem, portal_types=['annexDecision'])), 2)
@@ -714,7 +712,7 @@ class testMeetingItem(PloneMeetingTestCase):
     def test_pm_SendItemToOtherMCKeepAdvices(self):
         '''Test when sending an item to another MeetingConfig and every advices are kept.'''
         cfg = self.meetingConfig
-        cfg.setKeepAdvicesOnSentToOtherMC(True)
+        cfg.setContentsKeptOnSentToOtherMC(('advices', 'annexes', ))
         data = self._setupSendItemToOtherMC(with_advices=True)
         originalItem = data['originalItem']
 
@@ -738,7 +736,7 @@ class testMeetingItem(PloneMeetingTestCase):
         '''Test when sending an item to another MeetingConfig and some advices are kept.'''
         cfg = self.meetingConfig
         cfg2 = self.meetingConfig2
-        cfg.setKeepAdvicesOnSentToOtherMC(True)
+        cfg.setContentsKeptOnSentToOtherMC(('advices', 'annexes', ))
         cfg.setAdvicesKeptOnSentToOtherMC(['delay_real_group_id__unique_id_123'])
         data = self._setupSendItemToOtherMC(with_advices=True)
         originalItem = data['originalItem']
@@ -777,7 +775,7 @@ class testMeetingItem(PloneMeetingTestCase):
            Here we test that 'developers' advice is NOT kept as the asked advice
            is the 'row_id' developers advice and the one we keep is the normal developers advice.'''
         cfg = self.meetingConfig
-        cfg.setKeepAdvicesOnSentToOtherMC(True)
+        cfg.setContentsKeptOnSentToOtherMC(('advices', 'annexes', ))
         cfg.setAdvicesKeptOnSentToOtherMC(['real_group_id__developers'])
         data = self._setupSendItemToOtherMC(with_advices=True)
         originalItem = data['originalItem']

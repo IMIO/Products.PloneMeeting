@@ -76,7 +76,6 @@ from Products.PloneMeeting.config import MEETING_CONFIG
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import PloneMeetingError
-from Products.PloneMeeting.config import ploneMeetingRoles
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import PROJECTNAME
@@ -1129,7 +1128,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePrivate('pasteItem')
 
-    def pasteItem(self, destFolder, copiedData, copyAnnexes=False,
+    def pasteItem(self, destFolder, copiedData,
+                  copyAnnexes=False, copyDecisionAnnexes=False,
                   newOwnerId=None, copyFields=DEFAULT_COPIED_FIELDS,
                   newPortalType=None, keepProposingGroup=False):
         '''Paste objects (previously copied) in destFolder. If p_newOwnerId
@@ -1145,11 +1145,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         loggedUserId = api.user.get_current().getId()
         userLocalRoles = destFolder.get_local_roles_for_userid(loggedUserId)
         destFolder.manage_addLocalRoles(loggedUserId, ('Owner',))
-        # save in the REQUEST if we want to copyAnnexes so conversion
-        # to images is not done if it is not the case...
-        # as annexes are actually pasted then removed if not copyAnnexes
-        # we have to do this to prevent annexes being converted uselessly...
-        self.REQUEST.set('copyAnnexes', copyAnnexes)
 
         # make sure 'update_all_categorized_elements' is not called while processing annexes
         self.REQUEST.set('defer_update_categorized_elements', True)
@@ -1231,18 +1226,26 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             unrestrictedRemoveGivenObject(image)
 
         # Manage annexes.
-        # we will remove annexes if copyAnnexes is False or if we could not find
-        # a corresponding annexType in the destMeetingConfig
+        # remove relevant annexes then manage kept ones, we remove kept annexes
+        # if we can not find a corresponding annexType in the destMeetingConfig
         plone_utils = api.portal.get_tool('plone_utils')
-        if not copyAnnexes:
+        if copyAnnexes is False:
             # Delete the annexes that have been copied.
-            for annex in get_annexes(newItem):
+            for annex in get_annexes(newItem, portal_types=['annex']):
                 unrestrictedRemoveGivenObject(annex)
-        else:
+        if copyDecisionAnnexes is False:
+            # Delete the decision annexes that have been copied.
+            for annex in get_annexes(newItem, portal_types=['annexDecision']):
+                unrestrictedRemoveGivenObject(annex)
+        # if we have left annexes, we manage it
+        if get_annexes(newItem):
             # manage the otherMCCorrespondence
             oldAnnexes = get_categorized_elements(copiedItem, result_type='objects')
             for oldAnnex in oldAnnexes:
-                newAnnex = getattr(newItem, oldAnnex.getId())
+                newAnnex = getattr(newItem, oldAnnex.getId(), None)
+                if not newAnnex:
+                    # this annex was removed
+                    continue
                 # In case the item is copied from another MeetingConfig, we need
                 # to update every annex.content_category because it still refers
                 # the annexType in the old MeetingConfig the item is copied from

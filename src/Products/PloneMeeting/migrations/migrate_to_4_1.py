@@ -5,6 +5,7 @@ import os
 from zope.interface import alsoProvides
 from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
 from plone import api
+from Products.CMFPlone.utils import base_hasattr
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_NEW
 from Products.PloneMeeting.migrations import Migrator
 
@@ -95,6 +96,26 @@ class Migrate_To_4_1(Migrator):
         portal_tabs.manage_delObjects(ids=actions_to_delete)
         logger.info('Done.')
 
+    def _manageContentsKeptWhenItemSentToOtherMC(self):
+        """Parameter MeetingConfig.keepAdvicesOnSentToOtherMC was replaced by
+           MeetingConfig.contentsKeptOnSentToOtherMC."""
+        logger.info("Migrating field MeetingConfig.keepAdvicesOnSentToOtherMC to "
+                    "MeetingConfig.contentsKeptOnSentToOtherMC...")
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            if not base_hasattr(cfg, 'keepAdvicesOnSentToOtherMC'):
+                # already migrated
+                logger.info('Already migrated ...')
+                logger.info('Done.')
+            keepAdvicesOnSentToOtherMC = cfg.keepAdvicesOnSentToOtherMC
+            contentsKeptOnSentToOtherMC = cfg.getContentsKeptOnSentToOtherMC()
+            # we kept advices
+            if keepAdvicesOnSentToOtherMC:
+                contentsKeptOnSentToOtherMC += ('advices', )
+                cfg.setContentsKeptOnSentToOtherMC(contentsKeptOnSentToOtherMC)
+            delattr(cfg, 'keepAdvicesOnSentToOtherMC')
+
+        logger.info('Done.')
+
     def run(self, step=None):
         logger.info('Migrating to PloneMeeting 4.1...')
 
@@ -128,6 +149,7 @@ class Migrate_To_4_1(Migrator):
         self._updateCollectionColumns()
         self._markSearchesFoldersWithIBatchActionsMarker()
         self._removeMCPortalTabs()
+        self._manageContentsKeptWhenItemSentToOtherMC()
 
 
 # The migration function -------------------------------------------------------

@@ -5445,9 +5445,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePrivate('clone')
 
-    def clone(self, copyAnnexes=True, newOwnerId=None, cloneEventAction=None,
-              destFolder=None, copyFields=DEFAULT_COPIED_FIELDS, newPortalType=None,
-              keepProposingGroup=False, setCurrentAsPredecessor=False,
+    def clone(self, copyAnnexes=True, copyDecisionAnnexes=False, newOwnerId=None,
+              cloneEventAction=None, destFolder=None, copyFields=DEFAULT_COPIED_FIELDS,
+              newPortalType=None, keepProposingGroup=False, setCurrentAsPredecessor=False,
               manualLinkToPredecessor=False, inheritAdvices=False, inheritedAdviceIds=[]):
         '''Clones me in the PloneMeetingFolder of the current user, or
            p_newOwnerId if given (this guy will also become owner of this
@@ -5499,6 +5499,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # clone
         newItem = tool.pasteItem(destFolder, copiedData, copyAnnexes=copyAnnexes,
+                                 copyDecisionAnnexes=copyDecisionAnnexes,
                                  newOwnerId=newOwnerId, copyFields=copyFields,
                                  newPortalType=newPortalType,
                                  keepProposingGroup=keepProposingGroup)
@@ -5636,9 +5637,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # special case for 'budgetRelated' that works together with 'budgetInfos'
                 if field == 'budgetInfos':
                     fieldsToCopy.remove('budgetRelated')
-        keepAdvices = cfg.getKeepAdvicesOnSentToOtherMC()
+        contentsKeptOnSentToOtherMC = cfg.getContentsKeptOnSentToOtherMC()
+        keepAdvices = 'advices' in contentsKeptOnSentToOtherMC
         keptAdvices = keepAdvices and cfg.getAdvicesKeptOnSentToOtherMC(as_group_ids=True, item=self) or []
-        newItem = self.clone(copyAnnexes=True, newOwnerId=newOwnerId,
+        copyAnnexes = 'annexes' in contentsKeptOnSentToOtherMC
+        copyDecisionAnnexes = 'decision_annexes' in contentsKeptOnSentToOtherMC
+        newItem = self.clone(copyAnnexes=copyAnnexes,
+                             copyDecisionAnnexes=copyDecisionAnnexes,
+                             newOwnerId=newOwnerId,
                              cloneEventAction=cloneEventAction,
                              destFolder=destFolder, copyFields=fieldsToCopy,
                              newPortalType=destMeetingConfig.getItemTypeName(),
