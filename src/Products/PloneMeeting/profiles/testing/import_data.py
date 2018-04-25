@@ -273,7 +273,7 @@ meetingPma.assembly = 'Gauthier Bastien, Gilles Demaret, Kilian Soree, ' \
                       'Arnaud Hubaux, Jean-Michel Abe, Stephan Geulette, ' \
                       'Godefroid Chapelle, Gaetan Deberdt, Gaetan Delannay'
 meetingPma.signatures = 'Bill Gates, Steve Jobs'
-meetingPma.categories = [development, research]
+meetingPma.categories = [development, research, events]
 meetingPma.classifiers = [classifier1, classifier2, classifier3]
 meetingPma.annexTypes = [financialAnalysis, budgetAnalysisCfg1, overheadAnalysis,
                          itemAnnex, decisionAnnex, marketingAnalysis,
