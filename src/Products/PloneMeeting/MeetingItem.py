@@ -2153,6 +2153,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     newLinkedUidsToStore.remove(linkedItem.UID())
                 newLinkedUidsToStore.sort(_sortByMeetingDate)
                 linkedItem.getField('manuallyLinkedItems').set(linkedItem, newLinkedUidsToStore, **kwargs)
+                # make change in linkedItem.at_ordered_refs until it is fixed in Products.Archetypes
+                linkedItem._p_changed = True
 
             # now if links were removed, remove linked items on every removed items...
             removedUids = set(stored).difference(set(value))
@@ -2163,6 +2165,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         continue
                     removedItem = removedItemBrains[0]._unrestrictedGetObject()
                     removedItem.getField('manuallyLinkedItems').set(removedItem, [], **kwargs)
+                    # make change in linkedItem.at_ordered_refs until it is fixed in Products.Archetypes
+                    removedItem._p_changed = True
 
             # save newUids, newLinkedUids and removedUids in the REQUEST
             # so it can be used by submethods like subscribers
@@ -2170,7 +2174,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self.REQUEST.set('manuallyLinkedItems_newLinkedUids', newLinkedUids)
             self.REQUEST.set('manuallyLinkedItems_removedUids', removedUids)
 
-        self.getField('manuallyLinkedItems').set(self, valueToStore, **kwargs)
+            self.getField('manuallyLinkedItems').set(self, valueToStore, **kwargs)
+            # make change in linkedItem.at_ordered_refs until it is fixed in Products.Archetypes
+            self._p_changed = True
 
     security.declarePrivate('setCategory')
 
