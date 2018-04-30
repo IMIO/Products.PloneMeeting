@@ -107,24 +107,24 @@ class testFaceted(PloneMeetingTestCase):
         terms = vocab(pmFolder)
         self.assertEquals(
             [term.title for term in vocab(pmFolder)],
-            [u'New category', u'New title', u'Research topics'])
+            [u'Events', u'New category', u'New title', u'Research topics'])
 
         # disable a category
         self.do(newCat, 'deactivate')
         self.assertEquals(
             [term.title for term in vocab(pmFolder)],
-            [u'New title', u'Research topics', u'New category (Inactive)'])
+            [u'Events', u'New title', u'Research topics', u'New category (Inactive)'])
         # term.value is the category id
         self.assertEquals(
             [term.value for term in vocab(pmFolder)],
-            [u'development', u'research', u'new-category'])
+            [u'events', u'development', u'research', u'new-category'])
 
         # remove a category
         self.portal.restrictedTraverse('@@delete_givenuid')(newCat.UID())
         # cache was cleaned
         self.assertEquals(
             [term.title for term in vocab(pmFolder)],
-            [u'New title', u'Research topics'])
+            [u'Events', u'New title', u'Research topics'])
 
     def test_pm_ItemClassifiersVocabulary(self):
         '''Test the "Products.PloneMeeting.vocabularies.classifiersvocabulary"

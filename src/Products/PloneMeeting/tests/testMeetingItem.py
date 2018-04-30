@@ -2789,9 +2789,9 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('siteadmin')
         self.do(cfg.categories.development, 'deactivate')
         self.assertEqual(item.listCategories().values(),
-                         [u'Development topics', u'Research topics'])
+                         [u'Development topics', u'Events', u'Research topics'])
         self.assertEqual(item2.listCategories().values(),
-                         [u'Research topics'])
+                         [u'Events', u'Research topics'])
 
     def test_pm_ListCategoriesNaturalSorting(self):
         '''
@@ -2834,11 +2834,11 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # not in itemFieldsToKeepConfigSortingFor for now
         self.assertFalse('category' in cfg.getItemFieldsToKeepConfigSortingFor())
-        self.assertEqual(item.listCategories().keys(),
-                         ['cat1', 'development', 'research'])
+        self.assertEqual(item.listCategories().values(),
+                         [u'Category 1', u'Development topics', u'Events', u'Research topics'])
         cfg.setItemFieldsToKeepConfigSortingFor(('category', ))
-        self.assertEqual(item.listCategories().keys(),
-                         ['development', 'research', 'cat1'])
+        self.assertEqual(item.listCategories().values(),
+                         [u'Development topics', u'Research topics', u'Events', u'Category 1'])
 
     def test_pm_ListOptionalAdvisersVocabulary(self):
         '''
