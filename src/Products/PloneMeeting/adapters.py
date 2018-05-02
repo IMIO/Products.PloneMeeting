@@ -1627,7 +1627,7 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
             self.context.manage_permission("Access contents information", (), acquire=True)
             grp_reader_localroles = [
                 grp_id for grp_id in self.context.__ac_local_roles__
-                if self.context.__ac_local_roles__[grp_id] == [READER_USECASES['confidentialannex']]]
+                if [READER_USECASES['confidentialannex'] in self.context.__ac_local_roles__[grp_id]]]
             self.context.manage_delLocalRoles(grp_reader_localroles)
             if self.context.confidential:
                 self.context.manage_permission(
@@ -1732,7 +1732,7 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
             elif visible_for == '{0}copy_groups'.format(READERPREFIX):
                 res = res + list(self.parent.getAllCopyGroups(auto_real_group_ids=True))
             elif visible_for == '{0}groupincharge'.format(READERPREFIX):
-                groupInCharge = self.parent.getGroupInCharge(True)
+                groupInCharge = self.parent.adapted().getGroupInCharge(True)
                 if groupInCharge:
                     res.append(groupInCharge.getPloneGroupId(suffix='observers'))
         return res

@@ -37,6 +37,14 @@ from Products.statusmessages.interfaces import IStatusMessage
 class testMeetingGroup(PloneMeetingTestCase):
     '''Tests the MeetingCategory class methods.'''
 
+    def _setUpGroupInCharge(self, item):
+        """As group in charge is an adaptable method, it may be setup differently."""
+        item.setGroupInCharge('developers')
+
+    def _tearDownGroupInCharge(self, item):
+        """As group in charge is an adaptable method, it may be setup differently."""
+        item.setGroupInCharge('')
+
     def test_pm_CanNotRemoveUsedMeetingGroup(self):
         '''While removing a MeetingGroup, it should raise if it is used somewhere...'''
         cfg = self.meetingConfig
@@ -185,7 +193,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         item.setAssociatedGroups(())
         item.setOptionalAdvisers(())
         self.assertTrue('developers_advisers' not in item.adviceIndex)
-        item.setGroupInCharge('developers')
+        self._setUpGroupInCharge(item)
         item._update_after_edit()
         transaction.commit()
         with self.assertRaises(BeforeDeleteException) as cm:
@@ -193,7 +201,7 @@ class testMeetingGroup(PloneMeetingTestCase):
         self.assertEquals(cm.exception.message, can_not_delete_meetinggroup_meetingitem)
 
         # check with item having copyGroups
-        item.setGroupInCharge('')
+        self._tearDownGroupInCharge(item)
         cfg.setUseCopies(True)
         item.setCopyGroups(('developers_reviewers', ))
         item._update_after_edit()

@@ -142,7 +142,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
     def tearDown(self):
         self._cleanExistingTmpAnnexFile()
 
-    def createUser(self, username, roles):
+    def createUser(self, username, roles=['Member'], groups=[]):
         '''Creates a user named p_username with some p_roles.'''
         newUser = api.user.create(
             email='test@test.be',
@@ -151,6 +151,8 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             roles=[],
             properties={})
         setRoles(self.portal, username, roles)
+        for group in groups:
+            self.portal.portal_groups.addPrincipalToGroup(username, group)
         _createHomeFolder(self.portal, username)
         return newUser
 

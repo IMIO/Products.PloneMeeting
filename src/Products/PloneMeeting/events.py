@@ -275,7 +275,7 @@ def onGroupWillBeRemoved(group, event):
         obj = brain.getObject()
         if (obj.getProposingGroup() == groupId) or \
            (groupId in obj.getAssociatedGroups()) or \
-           (obj.getGroupInCharge() == groupId) or \
+           (obj.adapted().getGroupInCharge() == groupId) or \
            (groupId in obj.adviceIndex) or \
            set(obj.getCopyGroups()).intersection(suffixedGroups):
             # The meetingGroup is linked to an existing item, we can not delete it.

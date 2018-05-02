@@ -2895,9 +2895,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getGroupInCharge')
 
     def getGroupInCharge(self, theObject=False, **kwargs):
-        '''This redefined accessor may return the groupInCharge id or the real
-           group if p_theObject is True.'''
-        res = self.getField('groupInCharge').get(self, **kwargs)  # = group id
+        '''See docstring in interfaces.py.'''
+        item = self.getSelf()
+        res = item.getField('groupInCharge').get(item, **kwargs)  # = group id
         if res and theObject:
             tool = api.portal.get_tool('portal_plonemeeting')
             res = getattr(tool, res)
@@ -3494,7 +3494,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 return values.index(toCloneTo[0])
         elif insertMethod == 'on_groups_in_charge':
             proposingGroup = self.getProposingGroup(True)
-            groupInCharge = self.getGroupInCharge(True)
+            groupInCharge = self.adapted().getGroupInCharge(True)
             if not groupInCharge:
                 raise Exception("No valid groupInCharge defined for {0}".format(proposingGroup.getId()))
             return groupInCharge.getOrder(onlyActive=False)
@@ -5272,7 +5272,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         itemState = self.queryState()
         if itemState not in cfg.getItemGroupInChargeStates():
             return
-        groupInCharge = self.getGroupInCharge(True)
+        groupInCharge = self.adapted().getGroupInCharge(True)
         if not groupInCharge:
             return
         observersPloneGroupId = groupInCharge.getPloneGroupId('observers')

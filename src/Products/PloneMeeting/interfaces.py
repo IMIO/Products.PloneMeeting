@@ -416,6 +416,10 @@ class IMeetingItemDocumentation:
     def _getAllGroupsManagingItem(self):
         """Returns the list of groups that manages the item during the entire item life.
            See _getGroupManagingItem docstring for more informations."""
+    def getGroupInCharge(self, theObject=False, **kwargs):
+        """Redefine field MeetingItem.groupInCharge accessor to be able to return
+           groupInCharge id or the real group if p_theObject is True.
+           Default behaviour is to get the group stored in the groupInCharge field."""
 
 
 class IMeetingItemWorkflowConditions(Interface):
