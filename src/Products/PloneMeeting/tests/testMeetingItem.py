@@ -22,6 +22,7 @@
 # 02110-1301, USA.
 #
 
+import transaction
 from os import path
 
 from AccessControl import Unauthorized
@@ -4420,6 +4421,32 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(item1_UID in item2.getRawManuallyLinkedItems())
         self.assertFalse(item1_UID in item3.getRawManuallyLinkedItems())
         self.assertFalse(item1_UID in item4.getRawManuallyLinkedItems())
+
+    def test_pm_ManuallyLinkedItemsChangesPersisted(self):
+        '''Make sure changes to dict at_ordered_refs that keeps order of references
+           is persisted, it was not the case on other objects than context.'''
+        # create an item for 'developers' and one for 'vendors'
+        self.changeUser('pmCreator1')
+        item1 = self.create('MeetingItem')
+        item2 = self.create('MeetingItem')
+
+        # first time, _p_changed would have been set because at_ordered_refs dict is added
+        item1.setManuallyLinkedItems([item2.UID()])
+        self.assertTrue(item1._p_changed)
+        self.assertTrue(item2._p_changed)
+        transaction.commit()
+        # not changed if manually linked items not touched
+        item1.setManuallyLinkedItems([item2.UID()])
+        self.assertFalse(item1._p_changed)
+        self.assertFalse(item2._p_changed)
+        # changes
+        item1.setManuallyLinkedItems([])
+        self.assertTrue(item1._p_changed)
+        self.assertTrue(item2._p_changed)
+        transaction.commit()
+        item1.setManuallyLinkedItems([item2.UID()])
+        self.assertTrue(item1._p_changed)
+        self.assertTrue(item2._p_changed)
 
     def test_pm_Completeness(self):
         '''Test the item-completeness view and relevant methods in MeetingItem.'''
