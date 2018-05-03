@@ -125,6 +125,7 @@ jQuery(document).ready(function($) {
     usersGroupInfos();
     groupedConfigs();
     advicesInfos();
+    adviceAddEdit();
 
     // inserting methods infos on meeting_view
     tooltipster_helper(selector='.tooltipster-inserting-methods-helper-msg',
@@ -136,9 +137,9 @@ jQuery(document).ready(function($) {
 
 // prepare overlays and tooltipsters in dashboards
 function initializeDashboard(){
-    usersGroupInfos();
     categorizedChildsInfos();
     advicesInfos();
+    adviceAddEdit();
     contentHistory();
     pmCommonOverlays();
 }
