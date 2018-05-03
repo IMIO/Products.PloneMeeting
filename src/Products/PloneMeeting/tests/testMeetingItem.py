@@ -2013,11 +2013,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse('vendors_observers' in item.__ac_local_roles__)
 
         # define a group in charge
-        proposingGroup.setGroupsInCharge(('vendors',))
-        item.setProposingGroupWithGroupInCharge(
-            '{0}__groupincharge__{1}'.format(
-                item.getProposingGroup(), 'vendors'))
-        item.updateLocalRoles()
+        self._setUpGroupInCharge(item)
         self.assertTrue(READER_USECASES['groupincharge'] in item.__ac_local_roles__['vendors_observers'])
 
         # not right state in the configuration

@@ -386,3 +386,16 @@ class PloneMeetingTestingHelpers:
                'advice_type': u'positive',
                'advice_comment': RichTextValue(u'My comment')})
         return item, advice
+
+    def _setUpGroupInCharge(self, item, group='vendors'):
+        """As group in charge is an adaptable method, it may be setup differently."""
+        proposingGroup = item.getProposingGroup(theObject=True)
+        proposingGroup.setGroupsInCharge((group, ))
+        item.setProposingGroupWithGroupInCharge(
+            '{0}__groupincharge__{1}'.format(
+                item.getProposingGroup(), group))
+        item.updateLocalRoles()
+
+    def _tearDownGroupInCharge(self, item):
+        """As group in charge is an adaptable method, it may be setup differently."""
+        item.setGroupInCharge('')

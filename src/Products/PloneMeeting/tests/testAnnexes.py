@@ -190,14 +190,6 @@ class testAnnexes(PloneMeetingTestCase):
         self._checkElementConfidentialAnnexAccess(cfg, item, annexNotConfidential, annexConfidential,
                                                   annexes_table, categorized_child)
 
-    def _setUpGroupInCharge(self, item):
-        """As group in charge is an adaptable method, it may be setup differently."""
-        proposingGroup = item.getProposingGroup(theObject=True)
-        proposingGroup.setGroupsInCharge(('vendors', ))
-        item.setProposingGroupWithGroupInCharge(
-            '{0}__groupincharge__{1}'.format(
-                item.getProposingGroup(), 'vendors'))
-
     def test_pm_ItemGetCategorizedElementsWithConfidentialityForGroupInCharge(self):
         ''' '''
         cfg = self.meetingConfig
@@ -212,7 +204,6 @@ class testAnnexes(PloneMeetingTestCase):
         cfg.setItemAnnexConfidentialVisibleFor(('reader_groupincharge', ))
         update_all_categorized_elements(item)
         self._setUpGroupInCharge(item)
-        item.updateLocalRoles()
 
         self.changeUser('pmReviewer2')
         self._checkElementConfidentialAnnexAccess(cfg, item, annexNotConfidential, annexConfidential,
@@ -433,10 +424,7 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertFalse(proposingGroup.getGroupsInCharge())
         cfg.setAdviceAnnexConfidentialVisibleFor(('reader_groupincharge', ))
         update_all_categorized_elements(item)
-        proposingGroup.setGroupsInCharge(('vendors', ))
-        item.setProposingGroupWithGroupInCharge(
-            '{0}__groupincharge__{1}'.format(
-                item.getProposingGroup(), 'vendors'))
+        self._setUpGroupInCharge(item)
         item.updateLocalRoles()
 
         self.changeUser('pmReviewer2')
