@@ -1627,7 +1627,7 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
             self.context.manage_permission("Access contents information", (), acquire=True)
             grp_reader_localroles = [
                 grp_id for grp_id in self.context.__ac_local_roles__
-                if [READER_USECASES['confidentialannex'] in self.context.__ac_local_roles__[grp_id]]]
+                if READER_USECASES['confidentialannex'] in self.context.__ac_local_roles__[grp_id]]
             self.context.manage_delLocalRoles(grp_reader_localroles)
             if self.context.confidential:
                 self.context.manage_permission(
