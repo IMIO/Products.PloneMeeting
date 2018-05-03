@@ -389,11 +389,7 @@ class PloneMeetingTestingHelpers:
 
     def _setUpGroupInCharge(self, item, group='vendors'):
         """As group in charge is an adaptable method, it may be setup differently."""
-        proposingGroup = item.getProposingGroup(theObject=True)
-        proposingGroup.setGroupsInCharge((group, ))
-        item.setProposingGroupWithGroupInCharge(
-            '{0}__groupincharge__{1}'.format(
-                item.getProposingGroup(), group))
+        item.setGroupInCharge(group)
         item.updateLocalRoles()
 
     def _tearDownGroupInCharge(self, item):
