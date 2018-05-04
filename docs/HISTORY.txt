@@ -63,6 +63,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Added getProposingGroup index to plone.app.querystring fields selectable on a Collection
 - Fixed bug in Meeting.getBeforeFrozenStates that always returned the same values for different Meetings of
   different MeetingConfigs that could lead to inconsistency
+- In MeetingItem.setManuallyLinkedItems, make sure changes are persisted by setting _p_changed=True manually,
+  especially on other objects we are setting the references because a Products.Archetypes bug does not make changes
+  in at_ordered_refs dict persistent (https://github.com/plone/Products.Archetypes/issues/104)
 
 4.0 (2017-08-04)
 ----------------
