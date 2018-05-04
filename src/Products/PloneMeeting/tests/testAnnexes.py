@@ -298,8 +298,8 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertTrue('Annex confidential' in annexes_table())
         categorized_child.update()
         result = categorized_child.index()
-        self.assertTrue('Annex not confidential' in result)
-        self.assertTrue('Annex confidential' in result)
+        self.assertTrue('<span title="">not confidential</span>' in result)
+        self.assertTrue('<span title="">confidential</span>' in result)
 
     def _checkMayNotAccessConfidentialAnnexes(self,
                                               item,
@@ -315,8 +315,8 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertFalse('Annex confidential' in annexes_table())
         categorized_child.update()
         result = categorized_child.index()
-        self.assertTrue('Annex not confidential' in result)
-        self.assertFalse('Annex confidential' in result)
+        self.assertTrue('<span title="">not confidential</span>' in result)
+        self.assertFalse('<span title="">confidential</span>' in result)
 
     def _setupConfidentialityOnAdviceAnnexes(self):
         """ """
