@@ -139,7 +139,7 @@ class Migrate_To_4_1(Migrator):
                            dependency_strategy=DEPENDENCY_STRATEGY_NEW)
 
         # common upgrades
-        self.upgradeDependencies()
+        self.upgradeAll()
         self.updateHolidays()
         self.reindexIndexes(idxs=['linkedMeetingUID', 'getConfigId'])
 
@@ -163,7 +163,8 @@ def migrate(context):
        5) Add '_itemtemplatesmanagers' groups;
        6) Update collections columns as column 'check_box_item' was renamed to 'select_row';
        7) Synch searches to mark searches sub folders with the IBatchActionsMarker;
-       8) Remove MeetingConfig tabs from portal_actions portal_tabs.
+       8) Remove MeetingConfig tabs from portal_actions portal_tabs;
+       9) Migrate MeetingConfig.keepAdvicesOnSentToOtherMC to MeetingConfig.contentsKeptOnSentToOtherMC.
     '''
     migrator = Migrate_To_4_1(context)
     migrator.run()
