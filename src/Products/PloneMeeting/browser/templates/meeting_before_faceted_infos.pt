@@ -63,7 +63,7 @@
     </dt>
     <dd class="collapsibleContent">
 
-      <tal:comment replace="nothing">Attendees, excused, absents, signatories</tal:comment>
+      <tal:comment replace="nothing">Attendees, excused, absents, replacements, signatories</tal:comment>
       <table id="meeting_users" class="listing discreet" cellspacing="0" cellpadding="0"
              tal:condition="python: 'attendees' in usedAttrs and not context.getAssembly()">
         <tal:defines define="allUsers context/getAllUsedHeldPositions;
@@ -72,6 +72,8 @@
                              absents context/getAbsents;
                              signers context/getSignatories;
                              lateAttendees context/getLateAttendees;
+                             useUserReplacements cfg/getUseUserReplacements;
+                             userReplacements context/getUserReplacements;
                              showExcused python: 'excused' in usedAttrs or excused;
                              showAbsents python: 'absents' in usedAttrs or absents;
                              showSignatories python: 'signatories' in usedAttrs or signers;">
@@ -83,6 +85,7 @@
             <th class="nosort" tal:condition="showExcused" i18n:translate="is_excused"></th>
             <th class="nosort" tal:condition="showAbsents" i18n:translate="is_absent"></th>
             <th class="nosort" tal:condition="showSignatories" i18n:translate="is_signer"></th>
+            <th class="nosort" tal:condition="useUserReplacements" i18n:translate="is_replaced"></th>
           </tr>
           </thead>
           <tbody>
@@ -114,6 +117,9 @@
               <td align="center" tal:condition="showSignatories">
                 <img tal:attributes="src string: $portal_url/checked.gif"
                      tal:condition="python: aUid in signers"/>
+              </td>
+              <td tal:condition="useUserReplacements">
+                <span tal:condition="python: aUid in userReplacements" tal:content="python: context.displayUserReplacement(userReplacements[aUid])"></span>
               </td>
             </tal:defines>
           </tr>

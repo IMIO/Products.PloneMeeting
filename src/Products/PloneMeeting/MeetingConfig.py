@@ -52,6 +52,7 @@ from zope.i18n import translate
 from zope.interface import alsoProvides
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from plone.memoize import ram
+from plone.app.layout.navigation.navtree import buildFolderTree
 from plone.app.portlets.portlets import navigation
 from plone.namedfile.file import NamedBlobFile
 from plone.namedfile.file import NamedBlobImage
@@ -5353,22 +5354,30 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def getHeldPositions(self, usages=[], onlyActive=True):
         '''Returns the held_positions having at least one usage among
            p_usage.  if p_onlyActive is True, only active MeetingUsers are returned.'''
+        def _get_held_positions(positions, res=[]):
+            """ """
+            for position_item in positions['children']:
+                position = position_item['item'].getObject()
+                for held_position in position.get_held_positions():
+                    position = held_position.get_position()
+                    if usages and not set(usages).intersection(set(position.usages)):
+                        continue
+                    if not onlyActive or \
+                       (onlyActive and wfTool.getInfoFor(held_position, 'review_state') == 'active'):
+                        res.append(held_position)
+                if position_item['children']:
+                    _get_held_positions(position_item, res)
+            return res
+
         portal = api.portal.get()
         wfTool = api.portal.get_tool('portal_workflow')
         organization = portal.contacts.get('plonegroup-organization').get(self.getId())
-        catalog = api.portal.get_tool('portal_catalog')
-        # use catalog to also query positions in sub organizations
-        positions = [brain.getObject() for brain in catalog(path='/'.join(organization.getPhysicalPath()),
-                     portal_type='position', sort_on='getObjPositionInParent')]
-        res = []
-        for position in positions:
-            for held_position in position.get_held_positions():
-                position = held_position.get_position()
-                if usages and not set(usages).intersection(set(position.usages)):
-                    continue
-                if not onlyActive or \
-                   (onlyActive and wfTool.getInfoFor(held_position, 'review_state') == 'active'):
-                    res.append(held_position)
+        # we need to keep the order and we have sub organization so use buildFolderTree
+        # used in the navigation portlet to get the positions in correct order
+        positions_tree = buildFolderTree(
+            organization,
+            query={'path': '/'.join(organization.getPhysicalPath())})
+        res = _get_held_positions(positions_tree)
         return res
 
     security.declarePrivate('addCategory')

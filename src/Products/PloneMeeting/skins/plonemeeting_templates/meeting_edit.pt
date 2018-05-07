@@ -21,6 +21,45 @@
       <script language="javascript">
       // some checkbowes may not be checked toghether
       var only_one_selected = ['attendee', 'excused', 'absent', 'lateAttendee'];
+      function showOrHideReplField(userId, show) {
+        // Shows of hides "replacement" field for p_userId, depending on p_show.
+        var repl = document.getElementById('muser_'+userId+'_replacement');
+        if (repl) {
+          if (!show) {
+            // Hide the field, and set 'nobody' as replacement.
+            repl.value = '';
+            repl.style.display = 'none';
+          }
+          else {
+            // Show the field.
+            repl.style.display = '';
+          }
+        }
+        /* If we need to show the "replacement" field, it means that p_userId
+           will not attend, so we will remove it from every "replacement" list,
+           so it will not be possible to select him as replacement. */
+        var userTable = document.getElementById('meeting_users');
+        var selectWidgets = userTable.getElementsByTagName('select');
+        for (var i=0; i<selectWidgets.length; i++) {
+          for (var j=0; j<selectWidgets[i].options.length; j++){
+            if (selectWidgets[i].options[j].value == userId) {
+              if (show) {
+                // We will hide this option, and unselect it if it was selected.
+                if (selectWidgets[i].options[j].selected) {
+                  selectWidgets[i].value = '';
+                }
+                selectWidgets[i].options[j].style.display = 'none';
+                selectWidgets[i].options[j].disabled = true;
+              }
+              else {
+                // We need to show it.
+                selectWidgets[i].options[j].style.display = '';
+                selectWidgets[i].options[j].disabled = false;
+              }
+            }
+          }
+        }
+      }
       function onClickBox(box, boxType, userId) {
             if (box.checked && (only_one_selected.indexOf(boxType) != -1)) {
                 // unckeck every other only_one_selected boxes
@@ -37,6 +76,16 @@
                 if (!attendee_box.checked) {signer_box.checked = false; signer_box.disabled = true;}
                 else {signer_box.disabled = false;}
             }
+
+        // Must we show or hide the "replacements" column?
+        if (!box.checked && (boxType == 'attendee')) {
+          showOrHideReplField(userId, 1);
+        }
+        if ((box.checked && (boxType == 'excused')) ||
+           (box.checked && (boxType == 'absent'))) {
+          showOrHideReplField(userId, 2);
+            }
+        else {showOrHideReplField(userId, 0);}
       }
       </script>
 
@@ -132,6 +181,8 @@
                 i18n:translate="is_absent"></th>
             <th tal:condition="python: 'signatories' in usedAttrs"
                 i18n:translate="is_signer"></th>
+            <th tal:condition="useUserReplacements"
+                i18n:translate="is_replaced"></th>
           </tr>
           </thead>
           <tbody>
@@ -174,6 +225,26 @@
                                      checked python: test(errors, request.get(cbid, '')=='on', muid in signers);
                                      disabled python: test(errors, request.get(cbid, '')!='on', muid not in attendees);
                                      onClick python: 'onClickBox(this, \'signer\', \'%s\')' % muid"/>
+            </td>
+            <td tal:condition="useUserReplacements">
+              <select tal:define="mid mUser/getId;
+                                  sid python: 'muser_%s_replacement' % muid;
+                                  aid python: 'muser_%s_attendee' % muid;
+                                  show python: test(errors, not request.get(aid,''), muid in (excused + absents))"
+                      tal:attributes="id sid; name sid;
+                                      style python: test(show, '', 'display:none')">
+                <option value="">-</option>
+                <tal:other repeat="oUser python: context.adapted().filterPossibleUserReplacement(allUsers)">
+                  <option tal:define="ouid oUser/UID;
+                                      show python: test(errors, request.get('muser_%s_attendee'%ouid,'')=='on', ouid in attendees)"
+                          tal:condition="python: ouid != muid"
+                          tal:content="oUser/Title"
+                          tal:attributes="value ouid;
+                                          style python: test(show, '', 'display:none');
+                                          selected python: test(errors, request.get(sid)==ouid, (muid in userReplacements) and (userReplacements[muid]==ouid))" >
+                  </option>
+                </tal:other>
+              </select>
             </td>
           </tal:defines>
           </tr>

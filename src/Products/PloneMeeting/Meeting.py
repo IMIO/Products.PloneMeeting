@@ -1089,6 +1089,14 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         '''See docstring in previous method.'''
         return getHeldPositionObjs(self, 'lateAttendees', theObjects)
 
+    security.declarePublic('displayUserReplacement')
+
+    def displayUserReplacement(self, held_position_uid):
+        '''Display the user remplacement from p_held_position_uid.'''
+        catalog = api.portal.get_tool('portal_catalog')
+        held_position = catalog(UID=held_position_uid)[0].getObject()
+        return held_position.get_short_title()
+
     security.declarePublic('getEntranceItem')
 
     def getEntranceItem(self, userId):
@@ -1723,6 +1731,12 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             return {}
         return self.userReplacements
 
+    security.declarePublic('filterPossibleUserReplacement')
+
+    def filterPossibleUserReplacement(self, allUsers):
+        '''Adaptable method to filter possible user replacement.'''
+        return allUsers
+
     security.declarePrivate('updateMeetingUsers')
 
     def updateMeetingUsers(self):
@@ -1732,6 +1746,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         usedAttrs = cfg.getUsedMeetingAttributes()
+        useReplacements = cfg.getUseUserReplacements()
         # Do it only if MeetingUser-based user management is enabled.
         if 'attendees' not in usedAttrs:
             return
@@ -1747,6 +1762,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             signers = []
         if 'lateAttendees' in usedAttrs:
             lateAttendees = []
+        if useReplacements:
+            replacements = {}
 
         for key in self.REQUEST.keys():
             if not key.startswith('muser_'):
@@ -1763,6 +1780,10 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                     signers.append(position_uid)
                 elif key.endswith('_lateAttendee'):
                     lateAttendees.append(position_uid)
+                elif key.endswith('_replacement'):
+                    replacement = self.REQUEST.get(key)
+                    if replacement:
+                        replacements[position_uid] = replacement
             except NameError:
                 pass
         # Update the DB fields.
@@ -1775,6 +1796,13 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             self.setSignatories(signers)
         if 'lateAttendees' in usedAttrs:
             self.setLateAttendees(lateAttendees)
+        if useReplacements:
+            if hasattr(self.aq_base, 'userReplacements'):
+                del self.userReplacements
+            # In the userReplacements dict, keys are uids of held positions of
+            # users being replaced; values are uids of held potision of
+            # replacement users.
+            self.userReplacements = replacements
 
     security.declarePrivate('at_post_create_script')
 

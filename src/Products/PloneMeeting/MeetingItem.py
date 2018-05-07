@@ -6294,7 +6294,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
              (request.byeType == 'leaves_now').
            We will record this info, excepted if request["action"] tells us to
            remove it instead.'''
-        import ipdb; ipdb.set_trace()
         tool = api.portal.get_tool('portal_plonemeeting')
         if not tool.isManager(self) or not _checkPermission(ModifyPortalContent, self):
             raise Unauthorized

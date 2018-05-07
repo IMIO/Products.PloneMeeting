@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from collective.contact.core.content.held_position import HeldPosition
-from Products.CMFPlone.utils import safe_unicode
 
 
 class PMHeldPosition(HeldPosition):
@@ -13,7 +12,7 @@ class PMHeldPosition(HeldPosition):
            - if position is in a sub organization, we display also sub-organization titles;
            - the person title.
            """
-        sub_organizations_label = ''
+        sub_organizations_label = u''
         # display sub-organizations title if any
         organization = self.get_organization()
         root_organization = organization.get_root_organization()
@@ -23,14 +22,14 @@ class PMHeldPosition(HeldPosition):
             organization = organization.aq_parent
         if sub_organizations:
             sub_organizations_label = u"({0}) ".format("🡒".join(
-                [sub_organization.Title() for sub_organization in sub_organizations]))
+                [sub_organization.title for sub_organization in sub_organizations]))
 
-        held_position_label = self.label and self.label or self.get_position().Title()
+        held_position_label = self.label and self.label or self.get_position().title
         person_label = self.get_person_title()
         return u"{0}{1} : {2}".format(
             sub_organizations_label,
-            safe_unicode(held_position_label),
-            safe_unicode(person_label))
+            held_position_label,
+            person_label)
 
     def get_position_usages(self):
         """Shortcut to get usages defined on linked position."""
