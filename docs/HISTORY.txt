@@ -7,7 +7,13 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Versions 3.0.x are for Plone < 4.3
 - Versions 3.1.+ are for Plone 4.3+
 
-4.1b8 (unreleased)
+4.1b9 (unreleased)
+------------------
+
+- Nothing changed yet.
+
+
+4.1b8 (2018-05-04)
 ------------------
 
 - When an annex is modified, update parent's (item, meeting or advice) modification date, as it was already
@@ -24,9 +30,25 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Make sure the link to meeting displayed in items dashboard is not enabled if current user may not see the meeting
 - If a MeetingConfig is in a configGroup, prepend linked Plone groups (powerobservers, meetingmanagers, ...) title
   with the title of the configGroup, this is useful when using several MC having same title if different configGroups
-- Added workflow adaptationis 'accepted_out_of_meeting' that makes it possible to accept an item that is 'validated'
+- Added workflow adaptation 'accepted_out_of_meeting' that makes it possible to accept an item that is 'validated'
   and still not linked to a meeting.  Differents variants are provided : with emergency or not and with duplication
   of the item and validation of resulting item or not
+- Fixed bug in Meeting.getBeforeFrozenStates that always returned the same values for different Meetings of
+  different MeetingConfigs that could lead to inconsistency
+- Load advices infos asynchronously when hovering the advices icons
+- Use ToolPloneMeeting.getPloneGroupsForUser to get member.getGroups, as it is cached, call to getGroups is only
+  done one time.  Still need to improve it so it is only invalidated when user groups changed
+- Refactored the plonemeetingpopups.js overlays and tootipster related JS to remove useless calls
+  (imio.actionspanel transition) and try to only call relevant JS when necessary
+- MeetingItem.clone gets a new parameter 'copyDecisionAnnexes=False'.  Now decision annexes are no more kept when
+  an item is duplicated, the only configurable functionnality is in MeetingConfig.contentsKeptOnSentToOtherMC
+  where you can define what content to keep when an item is sent to another MeetingConfig : annexes, decision annexes
+  and advices.  Furthermore parameter MeetingConfig.contentsKeptOnSentToOtherMC replaces parameter
+  MeetingConfig.keepAdvicesOnSentToOtherMC
+- In MeetingItem.setManuallyLinkedItems, make sure changes are persisted by setting _p_changed=True manually,
+  especially on other objects we are setting the references because a Products.Archetypes bug does not make changes
+  in at_ordered_refs dict persistent (https://github.com/plone/Products.Archetypes/issues/104)
+- Do MeetingItem.getGroupInCharge an adaptable method so it can be overrided if necessary
 
 4.1b7 (2018-03-19)
 ------------------

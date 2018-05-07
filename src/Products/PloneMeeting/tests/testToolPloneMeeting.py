@@ -182,15 +182,17 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # the role is no more given...
         self.assertTrue(not self.hasPermission(ManagePortal, clonedItem))
 
-    def test_pm_CloneItemWithContent(self):
+    def test_pm_CloneItemWithAnnexes(self):
         '''Clones a given item containing annexes in parent item folder.'''
         self.changeUser('pmManager')
         item1 = self.create('MeetingItem')
-        # Add one annex
+        # Add one annex and one decision annex
         annex1 = self.addAnnex(item1)
+        self.addAnnex(item1, relatedTo='item_decision')
         self.assertFalse(annex1.to_print, None)
         annex1.to_print = True
         workingFolder = item1.getParentNode()
+        # clone copyAnnexes=True and copyDecisionAnnexes=False by default
         clonedItem = item1.clone()
         self.assertEquals(
             set([item1, clonedItem]), set(workingFolder.objectValues('MeetingItem')))
@@ -215,6 +217,11 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertEquals(len(clonedItem2.categorized_elements), 0)
         self.assertEquals(set([clonedItem2]),
                           set(clonedItem2.getParentNode().objectValues('MeetingItem')))
+
+        # test when only keeping decision annexes
+        clonedItem3 = item1.clone(copyAnnexes=False, copyDecisionAnnexes=True)
+        self.assertEquals(len(clonedItem3.categorized_elements), 1)
+        self.assertEquals(get_annexes(clonedItem3)[0].portal_type, 'annexDecision')
 
     def test_pm_CloneItemWithContentNotRemovableByPermission(self):
         '''Clones a given item in parent item folder. Here we test that even

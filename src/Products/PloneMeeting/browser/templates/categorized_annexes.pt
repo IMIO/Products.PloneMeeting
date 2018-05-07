@@ -52,6 +52,11 @@
           <tal:annexes replace="structure python: context.restrictedTraverse('categorized-childs')(portal_type='annexDecision')" />
         </div>
       </fieldset>
+      <script>
+        jQuery(document).ready(function($) {
+          editAnnex();
+        });
+      </script>
     </div>
   </body>
 </html>

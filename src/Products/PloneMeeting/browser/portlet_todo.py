@@ -81,10 +81,7 @@ class Renderer(base.Renderer, FacetedRenderer):
         '''Must we show the portlet_todo ?'''
         if not self.cfg:
             return False
-        if self.tool.isPloneMeetingUser() and \
-           self.tool.isInPloneMeeting(context) and \
-           (self.cfg.getToDoListSearches()) and \
-           (self.getSearches()):
+        if self.cfg.getToDoListSearches() and self.getSearches():
             return True
         return False
 

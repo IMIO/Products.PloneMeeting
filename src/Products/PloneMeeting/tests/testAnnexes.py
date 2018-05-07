@@ -203,11 +203,7 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertFalse(proposingGroup.getGroupsInCharge())
         cfg.setItemAnnexConfidentialVisibleFor(('reader_groupincharge', ))
         update_all_categorized_elements(item)
-        proposingGroup.setGroupsInCharge(('vendors', ))
-        item.setProposingGroupWithGroupInCharge(
-            '{0}__groupincharge__{1}'.format(
-                item.getProposingGroup(), 'vendors'))
-        item.updateLocalRoles()
+        self._setUpGroupInCharge(item)
 
         self.changeUser('pmReviewer2')
         self._checkElementConfidentialAnnexAccess(cfg, item, annexNotConfidential, annexConfidential,
@@ -302,8 +298,8 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertTrue('Annex confidential' in annexes_table())
         categorized_child.update()
         result = categorized_child.index()
-        self.assertTrue('Annex not confidential' in result)
-        self.assertTrue('Annex confidential' in result)
+        self.assertTrue('<span title="">not confidential</span>' in result)
+        self.assertTrue('<span title="">confidential</span>' in result)
 
     def _checkMayNotAccessConfidentialAnnexes(self,
                                               item,
@@ -319,8 +315,8 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertFalse('Annex confidential' in annexes_table())
         categorized_child.update()
         result = categorized_child.index()
-        self.assertTrue('Annex not confidential' in result)
-        self.assertFalse('Annex confidential' in result)
+        self.assertTrue('<span title="">not confidential</span>' in result)
+        self.assertFalse('<span title="">confidential</span>' in result)
 
     def _setupConfidentialityOnAdviceAnnexes(self):
         """ """
@@ -428,10 +424,7 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertFalse(proposingGroup.getGroupsInCharge())
         cfg.setAdviceAnnexConfidentialVisibleFor(('reader_groupincharge', ))
         update_all_categorized_elements(item)
-        proposingGroup.setGroupsInCharge(('vendors', ))
-        item.setProposingGroupWithGroupInCharge(
-            '{0}__groupincharge__{1}'.format(
-                item.getProposingGroup(), 'vendors'))
+        self._setUpGroupInCharge(item)
         item.updateLocalRoles()
 
         self.changeUser('pmReviewer2')

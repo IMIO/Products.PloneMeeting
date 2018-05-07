@@ -586,7 +586,13 @@
         name="advices-icons"
         for="*"
         class=".advices.AdvicesIcons"
-        template="templates/advices_icons.pt"
+        template="templates/advices-icons.pt"
+        permission="zope2.View"/>
+    <browser:page
+        name="advices-icons-infos"
+        for="*"
+        class=".advices.AdvicesIconsInfos"
+        template="templates/advices-icons-infos.pt"
         permission="zope2.View"/>
     <browser:view
         name="pm-notify-event"

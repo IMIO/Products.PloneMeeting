@@ -76,7 +76,6 @@ from Products.PloneMeeting.config import MEETING_CONFIG
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import PloneMeetingError
-from Products.PloneMeeting.config import ploneMeetingRoles
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import PROJECTNAME
@@ -505,6 +504,22 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 res.append(meetingConfig)
         return res
 
+    def getPloneGroupsForUser_cachekey(method, self, userId=None):
+        '''cachekey method for self.getPloneGroupsForUser.'''
+        # we only recompute if REQUEST changed
+        return str(self.REQUEST._debug), userId
+
+    security.declarePublic('getPloneGroupsForUser')
+
+    @ram.cache(getPloneGroupsForUser_cachekey)
+    def getPloneGroupsForUser(self, userId=None):
+        """Just return user.getGroups but cached so it is only done once by REQUEST."""
+        if userId:
+            user = api.user.get(userId)
+        else:
+            user = api.user.get_current()
+        return user.getGroups()
+
     def getGroupsForUser_cachekey(method, self, userId=None, active=True, suffixes=[], zope=False, omittedSuffixes=[]):
         '''cachekey method for self.getGroupsForUser.'''
         # we only recompute if param or REQUEST changed
@@ -521,8 +536,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            else, we return Zope/Plone groups. If p_omittedSuffixes, we do not consider
            groups the user is in using those suffixes.'''
         res = []
-        user = self.getUser(userId)
-        groupIds = user.getGroups()
+        groupIds = self.getPloneGroupsForUser(userId)
         if active:
             mGroups = self.getMeetingGroups()
         else:
@@ -576,11 +590,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''Check if the currently logged user is in at least one of p_suffixes-related Plone
            group.  p_suffixes is a list of suffixes.
            If p_onlyActive is True, we will check if the linked MeetingGroup is active.'''
-        user = self.getUser()
         if onlyActive:
             activeMeetingGroupIds = [group.getId() for group in self.getMeetingGroups(onlyActive=True)]
         res = False
-        for groupId in user.getGroups():
+        for groupId in self.getPloneGroupsForUser():
             # check if the groupId ends with a least one of the p_suffixes
             keep_groupId = [suffix for suffix in suffixes if groupId.endswith('_%s' % suffix)]
             if keep_groupId:
@@ -835,26 +848,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             obj = self.unrestrictedTraverse(value.getPath())
         return _checkPermission(View, obj)
 
-    security.declarePublic('isPloneMeetingUser')
-
-    def isPloneMeetingUser(self):
-        '''Is the current user a PloneMeeting user (ie, does it have at least
-           one of the roles used in PloneMeeting ?'''
-        user = api.user.get_current()
-        if not user:
-            return
-        for role in user.getRoles():
-            if role in ploneMeetingRoles:
-                return True
-        # or maybe it is a user that is only a MeetingManager
-        if self.isManager(self):
-            return True
-        # or maybe this is a user in a _powerobservers group
-        for groupId in user.getGroups():
-            if groupId.endswith(POWEROBSERVERS_GROUP_SUFFIX) or \
-               groupId.endswith(RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX):
-                return True
-
     def isManager_cachekey(method, self, context, realManagers=False):
         '''cachekey method for self.isManager.'''
         # we only recompute if REQUEST changed
@@ -890,12 +883,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
           If p_iRestricted is True, it will check if current user is a
           restricted power observer.
         """
-        member = api.user.get_current()
         if not isRestricted:
             groupId = "%s_%s" % (cfg.getId(), POWEROBSERVERS_GROUP_SUFFIX)
         else:
             groupId = "%s_%s" % (cfg.getId(), RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX)
-        if groupId in self.portal_groups.getGroupsForPrincipal(member):
+        if groupId in self.getPloneGroupsForUser():
             return True
         return False
 
@@ -923,8 +915,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def showPloneMeetingTab_cachekey(method, self, cfg):
         '''cachekey method for self.showPloneMeetingTab.'''
         # we only recompute if user groups changed or self changed
-        user = self.REQUEST['AUTHENTICATED_USER']
-        return (cfg._p_mtime, user.getGroups(), cfg)
+        return (cfg._p_mtime, self.getPloneGroupsForUser(), cfg)
 
     @ram.cache(showPloneMeetingTab_cachekey)
     def showPloneMeetingTab(self, cfg):
@@ -956,16 +947,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            and outside PloneMeeting, show it on Faceted enabled elements.'''
         return context.restrictedTraverse('@@faceted_subtyper').is_faceted and \
             (not self.isInPloneMeeting(context, True) or context.portal_type == 'Folder')
-
-    security.declarePublic('getUser')
-
-    def getUser(self, userId=None):
-        '''Returns the Zope User object for user having p_userId.'''
-        membershipTool = api.portal.get_tool('portal_membership')
-        if not userId:
-            return membershipTool.getAuthenticatedMember()
-        else:
-            return membershipTool.getMemberById(userId)
 
     security.declarePublic('getUserName')
 
@@ -1147,7 +1128,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePrivate('pasteItem')
 
-    def pasteItem(self, destFolder, copiedData, copyAnnexes=False,
+    def pasteItem(self, destFolder, copiedData,
+                  copyAnnexes=False, copyDecisionAnnexes=False,
                   newOwnerId=None, copyFields=DEFAULT_COPIED_FIELDS,
                   newPortalType=None, keepProposingGroup=False):
         '''Paste objects (previously copied) in destFolder. If p_newOwnerId
@@ -1163,11 +1145,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         loggedUserId = api.user.get_current().getId()
         userLocalRoles = destFolder.get_local_roles_for_userid(loggedUserId)
         destFolder.manage_addLocalRoles(loggedUserId, ('Owner',))
-        # save in the REQUEST if we want to copyAnnexes so conversion
-        # to images is not done if it is not the case...
-        # as annexes are actually pasted then removed if not copyAnnexes
-        # we have to do this to prevent annexes being converted uselessly...
-        self.REQUEST.set('copyAnnexes', copyAnnexes)
 
         # make sure 'update_all_categorized_elements' is not called while processing annexes
         self.REQUEST.set('defer_update_categorized_elements', True)
@@ -1249,18 +1226,26 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             unrestrictedRemoveGivenObject(image)
 
         # Manage annexes.
-        # we will remove annexes if copyAnnexes is False or if we could not find
-        # a corresponding annexType in the destMeetingConfig
+        # remove relevant annexes then manage kept ones, we remove kept annexes
+        # if we can not find a corresponding annexType in the destMeetingConfig
         plone_utils = api.portal.get_tool('plone_utils')
-        if not copyAnnexes:
+        if copyAnnexes is False:
             # Delete the annexes that have been copied.
-            for annex in get_annexes(newItem):
+            for annex in get_annexes(newItem, portal_types=['annex']):
                 unrestrictedRemoveGivenObject(annex)
-        else:
+        if copyDecisionAnnexes is False:
+            # Delete the decision annexes that have been copied.
+            for annex in get_annexes(newItem, portal_types=['annexDecision']):
+                unrestrictedRemoveGivenObject(annex)
+        # if we have left annexes, we manage it
+        if get_annexes(newItem):
             # manage the otherMCCorrespondence
             oldAnnexes = get_categorized_elements(copiedItem, result_type='objects')
             for oldAnnex in oldAnnexes:
-                newAnnex = getattr(newItem, oldAnnex.getId())
+                newAnnex = getattr(newItem, oldAnnex.getId(), None)
+                if not newAnnex:
+                    # this annex was removed
+                    continue
                 # In case the item is copied from another MeetingConfig, we need
                 # to update every annex.content_category because it still refers
                 # the annexType in the old MeetingConfig the item is copied from
@@ -1771,8 +1756,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
         # we only recompute if cfgs, user groups or params changed
         cfg_infos = [(cfg._p_mtime, cfg.id) for cfg in self.objectValues('MeetingConfig')]
-        user = self.REQUEST['AUTHENTICATED_USER']
-        return (cfg_infos, user.getGroups(), config_group, check_access, as_items)
+        return (cfg_infos, self.getPloneGroupsForUser(), config_group, check_access, as_items)
 
     security.declarePublic('getGroupedConfigs')
 

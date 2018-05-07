@@ -185,15 +185,14 @@ class testMeetingGroup(PloneMeetingTestCase):
         item.setAssociatedGroups(())
         item.setOptionalAdvisers(())
         self.assertTrue('developers_advisers' not in item.adviceIndex)
-        item.setGroupInCharge('developers')
-        item._update_after_edit()
+        self._setUpGroupInCharge(item, group='developers')
         transaction.commit()
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(developers.UID(), catch_before_delete_exception=False)
         self.assertEquals(cm.exception.message, can_not_delete_meetinggroup_meetingitem)
 
         # check with item having copyGroups
-        item.setGroupInCharge('')
+        self._tearDownGroupInCharge(item)
         cfg.setUseCopies(True)
         item.setCopyGroups(('developers_reviewers', ))
         item._update_after_edit()

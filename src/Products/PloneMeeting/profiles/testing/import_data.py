@@ -150,6 +150,7 @@ pmCreator2 = UserDescriptor('pmCreator2', [], email="pmcreator2@plonemeeting.org
 pmReviewer2 = UserDescriptor('pmReviewer2', [], email="pmreviewer2@plonemeeting.org", fullname='M. PMReviewer Two')
 pmReviewerLevel2 = UserDescriptor('pmReviewerLevel2', [],
                                   email="pmreviewerlevel2@plonemeeting.org", fullname='M. PMReviewer Level Two')
+pmObserver2 = UserDescriptor('pmObserver2', [], email="pmobserver2@plonemeeting.org", fullname='M. PMObserver Two')
 pmAdviser1 = UserDescriptor('pmAdviser1', [], email="pmadviser1@plonemeeting.org", fullname='M. PMAdviser One')
 voter1 = UserDescriptor('voter1', [], email="voter1@plonemeeting.org", fullname='M. Voter One')
 voter2 = UserDescriptor('voter2', [], email="voter2@plonemeeting.org", fullname='M. Voter Two')
@@ -211,6 +212,7 @@ vendors = GroupDescriptor('vendors', 'Vendors', 'Devil')
 vendors.creators.append(pmCreator2)
 vendors.reviewers.append(pmReviewer2)
 vendors.observers.append(pmReviewer2)
+vendors.observers.append(pmObserver2)
 vendors.advisers.append(pmReviewer2)
 vendors.advisers.append(pmManager)
 
@@ -273,7 +275,7 @@ meetingPma.assembly = 'Gauthier Bastien, Gilles Demaret, Kilian Soree, ' \
                       'Arnaud Hubaux, Jean-Michel Abe, Stephan Geulette, ' \
                       'Godefroid Chapelle, Gaetan Deberdt, Gaetan Delannay'
 meetingPma.signatures = 'Bill Gates, Steve Jobs'
-meetingPma.categories = [development, research]
+meetingPma.categories = [development, research, events]
 meetingPma.classifiers = [classifier1, classifier2, classifier3]
 meetingPma.annexTypes = [financialAnalysis, budgetAnalysisCfg1, overheadAnalysis,
                          itemAnnex, decisionAnnex, marketingAnalysis,

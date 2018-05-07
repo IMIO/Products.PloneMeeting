@@ -12,7 +12,6 @@
                        border python: test(member.has_role('Manager'), 'enable_border', 'disable_border');
                        dummy python:request.set(border, 1);
                        tool python: context.portal_plonemeeting;
-                       member tool/getUser;
                        portal context/portal_url/getPortalObject;
                        meetingConfig python: tool.getMeetingConfig(here);
                        bilingual python: 'secondLanguage' in tool.getModelAdaptations();

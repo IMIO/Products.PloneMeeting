@@ -200,8 +200,7 @@ def getCurrentMeetingObject(context):
     if not (className in ('Meeting', 'MeetingItem')):
         # check if we are on a Script or so or calling a BrowserView
         if className in methodTypes or 'SimpleViewClass' in className:
-            # We are changing the state of an element. We must then check the
-            # referer
+            # We are changing the state of an element. We must then check the referer
             refererUrl = context.REQUEST.get('HTTP_REFERER')
             referer = urlparse.urlparse(refererUrl)[2]
             if referer.endswith('/view') or \
@@ -212,7 +211,8 @@ def getCurrentMeetingObject(context):
                 referer = os.path.dirname(referer)
             # We add the portal path if necessary
             # (in case Apache rewrites the uri for example)
-            portal_path = context.portal_url.getPortalPath()
+            portal_url = api.portal.get_tool('portal_url')
+            portal_path = portal_url.getPortalPath()
             if not referer.startswith(portal_path):
                 # The rewrite rule has modified the URL. First, remove any
                 # added URL prefix.
@@ -221,7 +221,8 @@ def getCurrentMeetingObject(context):
                 # Then, add the real portal as URL prefix.
                 referer = portal_path + referer
             # take care that the Meeting may contains annexes
-            res = context.portal_catalog(path=referer, meta_type='Meeting')
+            catalog = api.portal.get_tool('portal_catalog')
+            res = catalog(path=referer, meta_type='Meeting')
             if res:
                 obj = res[0].getObject()
         else:

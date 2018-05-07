@@ -24,6 +24,8 @@
 
 from zope.component import getMultiAdapter
 from zope.component import getUtility
+from zope.event import notify
+from zope.lifecycleevent import ObjectModifiedEvent
 from plone.portlets.interfaces import IPortletManager, IPortletRenderer
 from Products.PloneMeeting.browser import portlet_plonemeeting
 from Products.PloneMeeting.browser import portlet_todo
@@ -63,9 +65,10 @@ class testPortlets(PloneMeetingTestCase):
         '''Test the portlet_plonemeeting itemTemplates icon that is shown if item templates
            are defined in the configuration, no matter current user have item templates or not,
            this way we have something coherent between users, even for users without itemTemplates.'''
+        cfg = self.meetingConfig
         # remove every templates and add one restricted to 'developers'
         self.changeUser('siteadmin')
-        self._removeConfigObjectsFor(self.meetingConfig, folders=['recurringitems', 'itemtemplates'])
+        self._removeConfigObjectsFor(cfg, folders=['recurringitems', 'itemtemplates'])
         itemTemplate = self.create('MeetingItemTemplate')
         itemTemplate.setTemplateUsingGroups(('developers', ))
         itemTemplate.reindexObject(idxs=['templateUsingGroups', ])
@@ -82,21 +85,22 @@ class testPortlets(PloneMeetingTestCase):
         itemsCategory(widget=None)
         self.assertTrue(itemsCategory.templateItems())
         # no matter actually there are no itemTemplates available for him...
-        self.assertFalse(self.meetingConfig.getItemTemplates(as_brains=True, onlyActive=True, filtered=True))
+        self.assertFalse(cfg.getItemTemplates(as_brains=True, onlyActive=True, filtered=True))
 
     def test_pm_FromPortletTodo(self):
         """While getting searches in portlet_todo, the TAL condition for searches have
            a 'fromPortletTodo=True', it is not the case in the portlet_plonemeeting, this way
            we may know that we are in portlet_todo or portlet_plonemeeting and display
            searches using a different condition."""
+        cfg = self.meetingConfig
         self._setup_portlets()
         # by default, no condition, viewable in both portlets
-        searches = self.meetingConfig.searches
+        searches = cfg.searches
         searchAllItems = searches.searches_items.searchallitems
         searchAllItems.tal_condition = ''
         searchAllItemsUID = searchAllItems.UID()
         # select 'searchallitems' in the MeetingConfig.toDoListSearches
-        self.meetingConfig.setToDoListSearches([searchAllItems])
+        cfg.setToDoListSearches([searchAllItems])
 
         # viewable in portlet_plonemeeting
         self.changeUser('pmCreator1')
@@ -107,6 +111,7 @@ class testPortlets(PloneMeetingTestCase):
         # set 'python: fromPortletTodo' as condition for a search, it will be displayed
         # in the portlet_todo but not in the portlet_plonemeeting
         searchAllItems.tal_condition = 'python: fromPortletTodo'
+        notify(ObjectModifiedEvent(searchAllItems))
         # not viewable in portlet_plonemeeting
         self.assertFalse(searchAllItemsUID in self.portlet_pm_renderer.render())
         # but viewable in portlet_todo

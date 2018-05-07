@@ -187,7 +187,7 @@ class MeetingItemWorkflowConditions(object):
         '''We may propose an item if the workflow permits it and if the
            necessary fields are filled.  In the case an item is transferred from
            another meetingConfig, the category could not be defined.'''
-        if not self.context.getCategory():
+        if not self.context.getCategory(theObject=True):
             return No(_('required_category_ko'))
         if _checkPermission(ReviewPortalContent, self.context):
             return True
@@ -209,7 +209,7 @@ class MeetingItemWorkflowConditions(object):
     def mayPresent(self):
         # if WFAdaptation 'items_come_validated' is enabled, an item
         # could miss it's category
-        if not self.context.getCategory():
+        if not self.context.getCategory(theObject=True):
             return No(_('required_category_ko'))
         # only MeetingManagers may present an item, the 'Review portal content'
         # permission is not enough as MeetingReviewer may have the 'Review portal content'
@@ -389,7 +389,7 @@ class MeetingItemWorkflowConditions(object):
     def _mayWaitAdvices(self, destination_state):
         """Helper method used in every mayWait_advices_from_ guards."""
         res = False
-        if not self.context.getCategory():
+        if not self.context.getCategory(theObject=True):
             return No(_('required_category_ko'))
         # check if there are advices to give in destination state
         hasAdvicesToGive = self._hasAdvicesToGive(destination_state)
@@ -1527,7 +1527,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # hide the decision?
         msg = self._mayNotViewDecisionMsg()
         return msg or self.getField('motivation').get(self, **kwargs)
-    getRawMotivation = getMotivation
+
+    security.declarePublic('getRawMotivation')
+
+    def getRawMotivation(self, **kwargs):
+        '''See self.getMotivation docstring.'''
+        # hide the decision?
+        msg = self._mayNotViewDecisionMsg()
+        return msg or self.getField('motivation').getRaw(self, **kwargs)
 
     security.declarePublic('getDecision')
 
@@ -1538,7 +1545,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # hide the decision?
         msg = self._mayNotViewDecisionMsg()
         return msg or self.getField('decision').get(self, **kwargs)
-    getRawDecision = getDecision
+
+    security.declarePublic('getRawDecision')
+
+    def getRawDecision(self, **kwargs):
+        '''See self.getDecision docstring.'''
+        # hide the decision?
+        msg = self._mayNotViewDecisionMsg()
+        return msg or self.getField('decision').getRaw(self, **kwargs)
 
     security.declarePrivate('validate_category')
 
@@ -2113,6 +2127,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     newLinkedUidsToStore.remove(linkedItem.UID())
                 newLinkedUidsToStore.sort(_sortByMeetingDate)
                 linkedItem.getField('manuallyLinkedItems').set(linkedItem, newLinkedUidsToStore, **kwargs)
+                # make change in linkedItem.at_ordered_refs until it is fixed in Products.Archetypes
+                linkedItem._p_changed = True
 
             # now if links were removed, remove linked items on every removed items...
             removedUids = set(stored).difference(set(value))
@@ -2123,6 +2139,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         continue
                     removedItem = removedItemBrains[0]._unrestrictedGetObject()
                     removedItem.getField('manuallyLinkedItems').set(removedItem, [], **kwargs)
+                    # make change in linkedItem.at_ordered_refs until it is fixed in Products.Archetypes
+                    removedItem._p_changed = True
 
             # save newUids, newLinkedUids and removedUids in the REQUEST
             # so it can be used by submethods like subscribers
@@ -2130,7 +2148,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self.REQUEST.set('manuallyLinkedItems_newLinkedUids', newLinkedUids)
             self.REQUEST.set('manuallyLinkedItems_removedUids', removedUids)
 
-        self.getField('manuallyLinkedItems').set(self, valueToStore, **kwargs)
+            self.getField('manuallyLinkedItems').set(self, valueToStore, **kwargs)
+            # make change in linkedItem.at_ordered_refs until it is fixed in Products.Archetypes
+            self._p_changed = True
 
     security.declarePrivate('setCategory')
 
@@ -2410,8 +2430,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return True
         # Check that the user belongs to the proposing group.
         proposingGroup = item.getProposingGroup()
-        user = api.user.get_current()
-        userGroups = user.getGroups()
+        userGroups = tool.getPloneGroupsForUser()
         for ploneGroup in userGroups:
             if ploneGroup.startswith('%s_' % proposingGroup):
                 return True
@@ -2823,14 +2842,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         try:
             res = ''
             if cfg.getUseGroupsAsCategories():
-                res = self.getProposingGroup(theObject=True)
+                res = self.getProposingGroup(theObject=theObject)
             else:
-                categoryId = self.getField('category').get(self, **kwargs)
-                # avoid problems with acquisition
-                if categoryId in cfg.categories.objectIds():
-                    res = getattr(cfg.categories, categoryId)
-            if res and not theObject:
-                res = res.id
+                cat_id = self.getField('category').get(self, **kwargs)
+                if theObject:
+                    # avoid problems with acquisition
+                    if cat_id in cfg.categories.objectIds():
+                        res = getattr(cfg.categories, cat_id)
+                else:
+                    res = cat_id
         except AttributeError:
             res = ''
         return res
@@ -2849,9 +2869,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getGroupInCharge')
 
     def getGroupInCharge(self, theObject=False, **kwargs):
-        '''This redefined accessor may return the groupInCharge id or the real
-           group if p_theObject is True.'''
-        res = self.getField('groupInCharge').get(self, **kwargs)  # = group id
+        '''See docstring in interfaces.py.'''
+        item = self.getSelf()
+        res = item.getField('groupInCharge').get(item, **kwargs)  # = group id
         if res and theObject:
             tool = api.portal.get_tool('portal_plonemeeting')
             res = getattr(tool, res)
@@ -3430,7 +3450,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 return values.index(toCloneTo[0])
         elif insertMethod == 'on_groups_in_charge':
             proposingGroup = self.getProposingGroup(True)
-            groupInCharge = self.getGroupInCharge(True)
+            groupInCharge = self.adapted().getGroupInCharge(True)
             if not groupInCharge:
                 raise Exception("No valid groupInCharge defined for {0}".format(proposingGroup.getId()))
             return groupInCharge.getOrder(onlyActive=False)
@@ -5208,7 +5228,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         itemState = self.queryState()
         if itemState not in cfg.getItemGroupInChargeStates():
             return
-        groupInCharge = self.getGroupInCharge(True)
+        groupInCharge = self.adapted().getGroupInCharge(True)
         if not groupInCharge:
             return
         observersPloneGroupId = groupInCharge.getPloneGroupId('observers')
@@ -5387,9 +5407,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePrivate('clone')
 
-    def clone(self, copyAnnexes=True, newOwnerId=None, cloneEventAction=None,
-              destFolder=None, copyFields=DEFAULT_COPIED_FIELDS, newPortalType=None,
-              keepProposingGroup=False, setCurrentAsPredecessor=False,
+    def clone(self, copyAnnexes=True, copyDecisionAnnexes=False, newOwnerId=None,
+              cloneEventAction=None, destFolder=None, copyFields=DEFAULT_COPIED_FIELDS,
+              newPortalType=None, keepProposingGroup=False, setCurrentAsPredecessor=False,
               manualLinkToPredecessor=False, inheritAdvices=False, inheritedAdviceIds=[]):
         '''Clones me in the PloneMeetingFolder of the current user, or
            p_newOwnerId if given (this guy will also become owner of this
@@ -5441,6 +5461,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         # clone
         newItem = tool.pasteItem(destFolder, copiedData, copyAnnexes=copyAnnexes,
+                                 copyDecisionAnnexes=copyDecisionAnnexes,
                                  newOwnerId=newOwnerId, copyFields=copyFields,
                                  newPortalType=newPortalType,
                                  keepProposingGroup=keepProposingGroup)
@@ -5578,9 +5599,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # special case for 'budgetRelated' that works together with 'budgetInfos'
                 if field == 'budgetInfos':
                     fieldsToCopy.remove('budgetRelated')
-        keepAdvices = cfg.getKeepAdvicesOnSentToOtherMC()
+        contentsKeptOnSentToOtherMC = cfg.getContentsKeptOnSentToOtherMC()
+        keepAdvices = 'advices' in contentsKeptOnSentToOtherMC
         keptAdvices = keepAdvices and cfg.getAdvicesKeptOnSentToOtherMC(as_group_ids=True, item=self) or []
-        newItem = self.clone(copyAnnexes=True, newOwnerId=newOwnerId,
+        copyAnnexes = 'annexes' in contentsKeptOnSentToOtherMC
+        copyDecisionAnnexes = 'decision_annexes' in contentsKeptOnSentToOtherMC
+        newItem = self.clone(copyAnnexes=copyAnnexes,
+                             copyDecisionAnnexes=copyDecisionAnnexes,
+                             newOwnerId=newOwnerId,
                              cloneEventAction=cloneEventAction,
                              destFolder=destFolder, copyFields=fieldsToCopy,
                              newPortalType=destMeetingConfig.getItemTypeName(),
@@ -5590,7 +5616,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # categories, we check if a mapping is defined in the configuration of the original item
         if not cfg.getUseGroupsAsCategories() and \
            not destMeetingConfig.getUseGroupsAsCategories():
-            originalCategory = getattr(cfg.categories, self.getCategory())
+            originalCategory = self.getCategory(theObject=True)
             # find out if something is defined when sending an item to destMeetingConfig
             for destCat in originalCategory.getCategoryMappingsWhenCloningToOtherMC():
                 if destCat.split('.')[0] == destMeetingConfigId:
