@@ -1,8 +1,10 @@
+# -*- coding: utf-8 -*-
+
 from DateTime import DateTime
 from AccessControl import Unauthorized
 from Products.Five.browser import BrowserView
-from Products.CMFCore.utils import getToolByName
 from Products.Archetypes import DisplayList
+from plone import api
 
 
 class ItemCompletenessView(BrowserView):
@@ -12,7 +14,7 @@ class ItemCompletenessView(BrowserView):
         super(BrowserView, self).__init__(context, request)
         self.context = context
         self.request = request
-        self.portal_url = getToolByName(self, 'portal_url').getPortalObject().absolute_url()
+        self.portal_url = api.portal.get().absolute_url()
 
     def listSelectableCompleteness(self):
         '''Returns a list of completeness the current user can set the item to.'''
@@ -78,8 +80,7 @@ class ChangeItemCompletenessView(BrowserView):
             raise Unauthorized
         self.context.setCompleteness(new_completeness_value)
         # add a line to the item's completeness_changes_history
-        membershipTool = getToolByName(self.context, 'portal_membership')
-        member = membershipTool.getAuthenticatedMember()
+        member = api.user.get_current()
         history_data = {'action': new_completeness_value,
                         'actor': member.getId(),
                         'time': DateTime(),

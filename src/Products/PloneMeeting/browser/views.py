@@ -598,7 +598,6 @@ class BaseDGHV(object):
                           withDelayLabel=True,
                           withAuthor=True):
         '''Helper method to have a printable version of advices.'''
-        membershipTool = api.portal.get_tool('portal_membership')
         itemAdvicesByType = item.getAdvicesByType()
         res = ""
         if withAdvicesTitle:
@@ -641,6 +640,7 @@ class BaseDGHV(object):
                 if withAuthor and not adviceType == NOT_GIVEN_ADVICE_VALUE:
                     adviceHolder = advice.get('adviceHolder', item)
                     adviceObj = adviceHolder.getAdviceObj(advice['id'])
+                    membershipTool = api.portal.get_tool('portal_membership')
                     author = membershipTool.getMemberInfo(adviceObj.Creator())
                     if author:
                         author = author['fullname']

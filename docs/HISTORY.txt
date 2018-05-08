@@ -10,8 +10,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 4.1b9 (unreleased)
 ------------------
 
-- Nothing changed yet.
-
+- Make user groups related cache longer than for a REQUEST.  We use the source_groups._principal_groups._p_mtime
+  to check if users groups were adapted to invalidate cache.  Now methods getPloneGroupsForUser, getGroupsForUser,
+  userIsAmong, isManager and isPowerObserverForCfg are cached as long as some user groups configuration was not changed.
 
 4.1b8 (2018-05-04)
 ------------------

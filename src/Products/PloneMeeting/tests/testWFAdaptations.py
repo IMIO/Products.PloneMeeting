@@ -2283,7 +2283,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.create('MeetingGroup', id='group2',  title='NewGroup2', acronym='N.G.2')
         self.create('MeetingGroup', id='poweradvisers',  title='Power advisers', acronym='PA')
         cfg.setSelectableAdvisers(('vendors', 'group1', 'group2', 'poweradvisers'))
-        self.portal.portal_groups.addPrincipalToGroup('pmAdviser1', 'poweradvisers_advisers')
+        self._addPrincipalToGroup('pmAdviser1', 'poweradvisers_advisers')
         cfg.setCustomAdvisers(
             [{'row_id': 'unique_id_123',
               'group': 'vendors',

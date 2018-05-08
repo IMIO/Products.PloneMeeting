@@ -1414,7 +1414,7 @@ class ItemsToAdviceAdapter(CompoundCriterionBaseAdapter):
 
     def itemstoadvice_cachekey(method, self):
         '''cachekey method for query.'''
-        return str(self.context.REQUEST._debug)
+        return str(self.request._debug)
 
     @property
     @ram.cache(itemstoadvice_cachekey)

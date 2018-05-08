@@ -1265,8 +1265,8 @@ class testAdvices(PloneMeetingTestCase):
         # right, give 'View' access, now pmAdviser1 will be able to see the item
         # add pmAdviser1 to power observers
         self.changeUser('siteadmin')
-        self.portal.portal_groups.addPrincipalToGroup('pmAdviser1', '%s_%s' %
-                                                      (cfg.getId(), POWEROBSERVERS_GROUP_SUFFIX))
+        self._addPrincipalToGroup('pmAdviser1',
+                                  '%s_%s' % (cfg.getId(), POWEROBSERVERS_GROUP_SUFFIX))
         item.updateLocalRoles()
         self.changeUser('pmAdviser1')
         # pmAdviser1 can give advice for developers even if
@@ -1290,7 +1290,7 @@ class testAdvices(PloneMeetingTestCase):
         self.failUnless(self.hasPermission(View, item))
         # but if he is also adviser for 'vendors', he can give it also
         self.changeUser('admin')
-        self.portal.portal_groups.addPrincipalToGroup('pmAdviser1', 'vendors_advisers')
+        self._addPrincipalToGroup('pmAdviser1', 'vendors_advisers')
         cfg.setPowerAdvisersGroups(('developers', 'vendors', ))
         item.updateLocalRoles()
         # now as pmAdviser1 is adviser for vendors and vendors is a PowerAdviser,
@@ -2589,7 +2589,7 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('siteadmin')
         cfg = self.meetingConfig
         self.do(self.tool.endUsers, 'activate')
-        self.portal.portal_groups.addPrincipalToGroup('pmAdviser1', 'endUsers_advisers')
+        self._addPrincipalToGroup('pmAdviser1', 'endUsers_advisers')
         cfg.setSelectableAdvisers(cfg.getSelectableAdvisers() + ('endUsers', ))
         cfg.setPowerAdvisersGroups(('endUsers', ))
 
