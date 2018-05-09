@@ -45,7 +45,7 @@
                   </tal:adviceWarnDelay>
                 </a>
               </div>
-  
+
               <tal:comment replace="nothing">Icon for adding an advice</tal:comment>
               <div tal:condition="python: advicesToAdd and not displayedAddIcon" style="display: inline;">
               <tal:loop tal:repeat="advice_portal_type python: view.getAddableAdvicePortalTypes(advicesToAdd)">
@@ -60,6 +60,9 @@
                 </a>
               </tal:loop>
               </div>
+              <tal:display_vertically condition="python: tooltipster_base_class=='tooltipster-dashboard-advices-infos'">
+                <br />
+              </tal:display_vertically> 
            </tal:adviceType>
         </tal:defines>
       </tal:menu>
