@@ -495,7 +495,6 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         cfg_modified = cfg.modified()
         user = self.request['AUTHENTICATED_USER']
         userGroups = self.tool.getPloneGroupsForUser()
-        userRoles = user.getRoles()
         # if item is validated, the 'present' action could appear if a meeting
         # is now available for the item to be inserted into
         isPresentable = False
@@ -503,7 +502,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
             isPresentable = self.context.wfConditions().mayPresent()
 
         return (self.context, self.context.modified(), self.context.adviceIndex, cfg_modified,
-                user.getId(), userGroups, userRoles, annotations,
+                user.getId(), userGroups, annotations,
                 meetingModified, useIcons, showTransitions, appendTypeNameToTransitionLabel, showEdit,
                 showOwnDelete, showActions, showAddContent, showHistory, showHistoryLastEventHasComments,
                 showArrows, isPresentable, kwargs)
@@ -605,13 +604,12 @@ class MeetingActionsPanelView(BaseActionsPanelView):
         cfg_modified = cfg.modified()
         user = self.request['AUTHENTICATED_USER']
         userGroups = self.tool.getPloneGroupsForUser()
-        userRoles = user.getRoles()
         invalidate_meeting_actions_panel_cache = False
         if hasattr(self.context, 'invalidate_meeting_actions_panel_cache'):
             invalidate_meeting_actions_panel_cache = True
             delattr(self.context, 'invalidate_meeting_actions_panel_cache')
         return (self.context, self.context.modified(), self.context.getRawItems(), cfg_modified,
-                user.getId(), userGroups, userRoles, invalidate_meeting_actions_panel_cache,
+                user.getId(), userGroups, invalidate_meeting_actions_panel_cache,
                 useIcons, showTransitions, appendTypeNameToTransitionLabel, showEdit,
                 showOwnDelete, showActions, showAddContent, showHistory, showHistoryLastEventHasComments,
                 showArrows, kwargs)

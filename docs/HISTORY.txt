@@ -10,8 +10,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 4.1b10 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Removed check on "member.getRoles()" in the actions_panel __call__ cachekey.
 
 4.1b9 (2018-05-09)
 ------------------
