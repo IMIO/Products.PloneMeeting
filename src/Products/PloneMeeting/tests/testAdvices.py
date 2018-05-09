@@ -1987,6 +1987,8 @@ class testAdvices(PloneMeetingTestCase):
                'advice_comment': RichTextValue(u'My comment')})
         # for now advice is deletable
         advices_icons_infos = item.restrictedTraverse('@@advices-icons-infos')
+        # some values are initialized when view is called (__call__)
+        advices_icons_infos(adviceType=u'positive')
         self.assertTrue(advices_icons_infos.mayDelete(developers_advice))
         # give advice
         self.changeUser('pmReviewer2')
@@ -1999,6 +2001,8 @@ class testAdvices(PloneMeetingTestCase):
                'advice_comment': RichTextValue(u'My comment')})
         # for now advice is deletable
         advices_icons_infos = item.restrictedTraverse('@@advices-icons-infos')
+        # some values are initialized when view is called (__call__)
+        advices_icons_infos(adviceType=u'negative')
         self.assertTrue(advices_icons_infos.mayDelete(vendors_advice))
 
         # ask developers_advice again
@@ -2007,6 +2011,8 @@ class testAdvices(PloneMeetingTestCase):
         changeView()
         self.assertEqual(developers_advice.advice_type, 'asked_again')
         # advice asker may obviously not delete it
+        # some values are initialized when view is called (__call__)
+        advices_icons_infos(adviceType=u'asked_again')
         self.assertFalse(advices_icons_infos.mayDelete(developers_advice))
         # and advisers neither
         self.changeUser('pmAdviser1')
@@ -2014,12 +2020,15 @@ class testAdvices(PloneMeetingTestCase):
         # even when advice_type is changed
         developers_advice.advice_type = 'positive'
         notify(ObjectModifiedEvent(developers_advice))
+        advices_icons_infos(adviceType=u'positive')
         self.assertFalse(advices_icons_infos.mayDelete(developers_advice))
 
         # when an advice is officially given, it is historized so advice is no more deletable
         self.proposeItem(item)
         self.assertFalse(advices_icons_infos.mayDelete(developers_advice))
         self.changeUser('pmReviewer2')
+        # some values are initialized when view is called (__call__)
+        advices_icons_infos(adviceType=u'negative')
         self.assertFalse(advices_icons_infos.mayDelete(vendors_advice))
 
     def test_pm_AdviceHistorizedWithItemDataWhenAdviceGiven(self):
