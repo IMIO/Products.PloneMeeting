@@ -7,6 +7,12 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Versions 3.0.x are for Plone < 4.3
 - Versions 3.1.+ are for Plone 4.3+
 
+4.1b10 (unreleased)
+-------------------
+
+- Nothing changed yet.
+
+
 4.1b9 (2018-05-09)
 ------------------
 
