@@ -54,9 +54,7 @@ class AdvicesIcons(BrowserView):
     """
       Advices displayed as icons.
     """
-    def __init__(self, context, request):
-        """ """
-        super(AdvicesIcons, self).__init__(context, request)
+    def __call__(self):
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
         self.portal = api.portal.get()
@@ -64,7 +62,6 @@ class AdvicesIcons(BrowserView):
         self.advisableGroups = self.context.getAdvicesGroupsInfosForUser()
         self.advicesByType = self.context.getAdvicesByType()
 
-    def __call__(self):
         if not self.context.adapted().isPrivacyViewable():
             return '<div style="display: inline">&nbsp;-&nbsp;&nbsp;&nbsp;</div>'
         return super(AdvicesIcons, self).__call__()
@@ -132,18 +129,14 @@ class AdvicesIcons(BrowserView):
 class AdvicesIconsInfos(BrowserView):
     """ """
 
-    def __init__(self, context, request):
+    def __call__(self, adviceType):
         """ """
-        super(AdvicesIconsInfos, self).__init__(context, request)
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
         self.portal = api.portal.get()
         self.portal_url = self.portal.absolute_url()
         self.advisableGroups = self.context.getAdvicesGroupsInfosForUser()
         self.advicesByType = self.context.getAdvicesByType()
-
-    def __call__(self, adviceType):
-        """ """
         self.adviceType = adviceType
         return self.index()
 

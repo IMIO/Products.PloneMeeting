@@ -1,10 +1,12 @@
 # -*- coding: utf-8 -*-
 
-from zope.component import getMultiAdapter
 from zope.i18n import translate
 from AccessControl import Unauthorized
 from Products.Five import BrowserView
-from Products.CMFCore.utils import getToolByName
+from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFCore.utils import _checkPermission
+from Products.PloneMeeting.config import WriteBudgetInfos
+from plone import api
 
 
 class Discuss(BrowserView):
@@ -14,8 +16,7 @@ class Discuss(BrowserView):
     def __init__(self, context, request):
         self.context = context
         self.request = request
-        self.portal_state = getMultiAdapter((self.context, self.request), name=u'plone_portal_state')
-        self.portal = self.portal_state.portal()
+        self.portal = api.portal.get()
 
     def isAsynchToggleEnabled(self):
         """
@@ -32,8 +33,7 @@ class Discuss(BrowserView):
           asynchronously, meaning that the entire page is not fully reloaded but only the
           relevant icon.
         """
-        member = self.portal_state.member()
-        if not member.has_permission('Modify portal content', self.context):
+        if not _checkPermission(ModifyPortalContent, self.context):
             raise Unauthorized
 
         toDiscuss = not self.context.getToDiscuss()
@@ -52,7 +52,7 @@ class Discuss(BrowserView):
         title = self.context.translate(title_msgid,
                                        domain="PloneMeeting")
 
-        portal_url = self.portal_state.portal_url()
+        portal_url = self.portal.absolute_url()
         src = "%s/%s" % (portal_url, filename)
 
         html = self.IMG_TEMPLATE % (src, title, name)
@@ -98,22 +98,21 @@ class TakenOverBy(BrowserView):
     def __init__(self, context, request):
         self.context = context
         self.request = request
-        self.portal_state = getMultiAdapter((self.context, self.request), name=u'plone_portal_state')
-        self.portal = self.portal_state.portal()
+        self.portal = api.portal.get()
 
     def toggle(self, takenOverByFrom):
-        member = self.portal_state.member()
         if not self.context.adapted().mayTakeOver():
             raise Unauthorized
 
+        member = api.user.get_current()
         memberId = member.getId()
 
-        tool = getToolByName(self.context, 'portal_plonemeeting')
+        tool = api.portal.get_tool('portal_plonemeeting')
         currentlyTakenOverBy = self.context.getTakenOverBy()
         if currentlyTakenOverBy and \
            not currentlyTakenOverBy == takenOverByFrom and \
            not currentlyTakenOverBy == memberId:
-            plone_utils = getToolByName(self.context, 'plone_utils')
+            plone_utils = api.portal.get_tool('plone_utils')
             plone_utils.addPortalMessage(
                 self.context.translate("The item you tried to take over was already taken "
                                        "over in between by ${fullname}. You can take it over "
@@ -150,7 +149,7 @@ class TakenOverBy(BrowserView):
 
         if newlyTakenOverBy:
             taken_over_by = translate('Taken over by ${fullname}',
-                                      mapping={'fullname': unicode(tool.getUserName(member.getId()),
+                                      mapping={'fullname': unicode(tool.getUserName(memberId),
                                                                    'utf-8')},
                                       domain="PloneMeeting",
                                       default="Taken over by ${fullname}",
@@ -175,8 +174,7 @@ class AdviceIsConfidential(BrowserView):
     def __init__(self, context, request):
         self.context = context
         self.request = request
-        self.portal_state = getMultiAdapter((self.context, self.request), name=u'plone_portal_state')
-        self.portal = self.portal_state.portal()
+        self.portal = api.portal.get()
 
     def toggle(self, UID):
         # get the adviceId
@@ -202,7 +200,7 @@ class AdviceIsConfidential(BrowserView):
         title = translate(title_msgid,
                           domain="PloneMeeting",
                           context=self.request)
-        portal_url = self.portal_state.portal_url()
+        portal_url = self.portal.absolute_url()
         src = "%s/%s" % (portal_url, filename)
         html = self.IMG_TEMPLATE % (src, title, name)
         self.context._update_after_edit()
@@ -219,12 +217,10 @@ class BudgetRelated(BrowserView):
     def __init__(self, context, request):
         self.context = context
         self.request = request
-        self.portal_state = getMultiAdapter((self.context, self.request), name=u'plone_portal_state')
-        self.portal = self.portal_state.portal()
+        self.portal = api.portal.get()
 
     def toggle(self):
-        member = self.portal.restrictedTraverse('@@plone_portal_state').member()
-        if not member.has_permission('PloneMeeting: Write budget infos', self.context):
+        if not _checkPermission(WriteBudgetInfos, self.context):
             raise Unauthorized
 
         beforeToggleBudgetRelated = self.context.getBudgetRelated()
@@ -249,7 +245,7 @@ class BudgetRelated(BrowserView):
         img_title = translate(img_title_msgid,
                               domain="PloneMeeting",
                               context=self.request)
-        portal_url = self.portal_state.portal_url()
+        portal_url = self.portal.absolute_url()
         src = "%s/%s" % (portal_url, filename)
         budgetRelatedClass = beforeToggleBudgetRelated and 'notBudgetRelated' or 'budgetRelated'
         html = self.IMG_TEMPLATE % (src, name, img_title, budgetRelatedClass, label)
