@@ -839,6 +839,7 @@ table.listing th.th_header_Creator,
 table.listing th.th_header_getProposingGroup {
     width: 100px;
 }
+table.listing th.th_header_advices,
 table.listing th.th_header_review_state,
 table.listing th.th_header_linkedMeetingDate,
 table.listing th.th_header_getPreferredMeetingDate,
@@ -847,7 +848,6 @@ table.listing th.th_header_ModificationDate,
 table.listing th.th_header_CreationDate {
     width: 90px;
 }
-table.listing th.th_header_advices,
 table.listing th.th_header_privacy {
     width: 63px;
 }
