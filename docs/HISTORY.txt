@@ -66,6 +66,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - In MeetingItem.setManuallyLinkedItems, make sure changes are persisted by setting _p_changed=True manually,
   especially on other objects we are setting the references because a Products.Archetypes bug does not make changes
   in at_ordered_refs dict persistent (https://github.com/plone/Products.Archetypes/issues/104)
+- Added migration step to ensure that annexes mimetype is correct.
 
 4.0 (2017-08-04)
 ----------------

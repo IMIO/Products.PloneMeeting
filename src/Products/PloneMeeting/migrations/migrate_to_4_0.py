@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import mimetypes
 import os
 import time
 import logging
@@ -1331,6 +1332,26 @@ class Migrate_To_4_0(Migrator):
         logger.info('Adapted {0} links.'.format(number_of_migrated_links))
         logger.info('Done.')
 
+    def _fixAnnexesMimeType(self):
+        """In some cases, mimetype used for annex is not correct because
+           it was not found in mimetypes_registry.  Now that we do not use
+           mimetypes_registry for this, make sure mimetype used for annexes
+           is correct using the mimetypes builtin method."""
+        logger.info('Fixing annexes mimetype...')
+        catalog = api.portal.get_tool('portal_catalog')
+        brains = catalog(portal_type=['annex', 'annexDecision'])
+        for brain in brains:
+            annex = brain.getObject()
+            current_content_type = annex.file.contentType
+            filename = annex.file.filename
+            extension = os.path.splitext(filename)[1].lower()
+            mimetype = mimetypes.types_map.get(extension)
+            if mimetype and mimetype != current_content_type:
+                logger.info('Fixing mimetype for annex at {0}, old was {1}, now will be {2}...'.format(
+                    '/'.join(annex.getPhysicalPath()), current_content_type, mimetype))
+                annex.file.contentType = mimetype
+        logger.info('Done.')
+
     def run(self, step=None):
         logger.info('Migrating to PloneMeeting 4.0...')
         if not step or step == 1:
@@ -1448,6 +1469,8 @@ class Migrate_To_4_0(Migrator):
             cke_props.allow_link_byuid = True
             # make sure links internal images use resolveuid
             self._adaptInternalImagesLinkToUseResolveUID()
+            # make sure annexes have correct mimetype
+            self._fixAnnexesMimeType()
             # recook CSS and JS
             self.cleanRegistries()
 
@@ -1550,9 +1573,11 @@ def migrate_step3(context):
 
 def migrate_step4(context):
     '''This migration function will:
+       This is an additional step for profiles that were already moved to v4.0...
 
-       29) Update annexes content_category.  This is an additional step for
-           profiles that were already moved to v4.0...
+       29) Update annexes content_category;
+       30) Make sure links internal images use resolveuid;
+       31) Make sure annexes have correct mimetype.
     '''
     migrator = Migrate_To_4_0(context)
     migrator.run(step=4)
