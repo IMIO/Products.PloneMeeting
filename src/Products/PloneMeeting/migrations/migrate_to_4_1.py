@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import logging
+import mimetypes
 import os
 from zope.interface import alsoProvides
 from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
@@ -106,6 +107,8 @@ class Migrate_To_4_1(Migrator):
                 # already migrated
                 logger.info('Already migrated ...')
                 logger.info('Done.')
+                return
+
             keepAdvicesOnSentToOtherMC = cfg.keepAdvicesOnSentToOtherMC
             contentsKeptOnSentToOtherMC = cfg.getContentsKeptOnSentToOtherMC()
             # we kept advices
@@ -114,6 +117,26 @@ class Migrate_To_4_1(Migrator):
                 cfg.setContentsKeptOnSentToOtherMC(contentsKeptOnSentToOtherMC)
             delattr(cfg, 'keepAdvicesOnSentToOtherMC')
 
+        logger.info('Done.')
+
+    def _fixAnnexesMimeType(self):
+        """In some cases, mimetype used for annex is not correct because
+           it was not found in mimetypes_registry.  Now that we do not use
+           mimetypes_registry for this, make sure mimetype used for annexes
+           is correct using the mimetypes builtin method."""
+        logger.info('Fixing annexes mimetype...')
+        catalog = api.portal.get_tool('portal_catalog')
+        brains = catalog(portal_type=['annex', 'annexDecision'])
+        for brain in brains:
+            annex = brain.getObject()
+            current_content_type = annex.file.contentType
+            filename = annex.file.filename
+            extension = os.path.splitext(filename)[1].lower()
+            mimetype = mimetypes.types_map.get(extension)
+            if mimetype and mimetype != current_content_type:
+                logger.info('Fixing mimetype for annex at {0}, old was {1}, now will be {2}...'.format(
+                    '/'.join(annex.getPhysicalPath()), current_content_type, mimetype))
+                annex.file.contentType = mimetype
         logger.info('Done.')
 
     def run(self, step=None):
@@ -150,6 +173,7 @@ class Migrate_To_4_1(Migrator):
         self._markSearchesFoldersWithIBatchActionsMarker()
         self._removeMCPortalTabs()
         self._manageContentsKeptWhenItemSentToOtherMC()
+        self._fixAnnexesMimeType()
 
 
 # The migration function -------------------------------------------------------
@@ -164,7 +188,8 @@ def migrate(context):
        6) Update collections columns as column 'check_box_item' was renamed to 'select_row';
        7) Synch searches to mark searches sub folders with the IBatchActionsMarker;
        8) Remove MeetingConfig tabs from portal_actions portal_tabs;
-       9) Migrate MeetingConfig.keepAdvicesOnSentToOtherMC to MeetingConfig.contentsKeptOnSentToOtherMC.
+       9) Migrate MeetingConfig.keepAdvicesOnSentToOtherMC to MeetingConfig.contentsKeptOnSentToOtherMC;
+       10) Fix annex mimetype in case there was a problem with old annexes using uncomplete mimetypes_registry.
     '''
     migrator = Migrate_To_4_1(context)
     migrator.run()

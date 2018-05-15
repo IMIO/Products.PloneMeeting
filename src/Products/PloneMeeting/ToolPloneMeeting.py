@@ -65,6 +65,7 @@ from collective.iconifiedcategory.utils import get_categories
 from collective.iconifiedcategory.utils import update_all_categorized_elements
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.dashboard.utils import enableFacetedDashboardFor
+from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import invalidate_cachekey_volatile_for
 from imio.helpers.security import is_develop_environment
 from imio.helpers.security import generate_password
@@ -504,10 +505,19 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 res.append(meetingConfig)
         return res
 
+    def _users_groups_last_modified(self):
+        """Return the _p_mtime of source_groups._principal_groups that
+           stores associations between principals and groups changed."""
+        portal = self.aq_inner.aq_parent
+        source_groups = portal.acl_users.source_groups
+        return source_groups._principal_groups._p_mtime
+
     def getPloneGroupsForUser_cachekey(method, self, userId=None):
         '''cachekey method for self.getPloneGroupsForUser.'''
-        # we only recompute if REQUEST changed
-        return str(self.REQUEST._debug), userId
+        date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting.getPloneGroupsForUser')
+        return (date,
+                self._users_groups_last_modified(),
+                (userId or self.REQUEST.get('AUTHENTICATED_USER', api.user.get_current())))
 
     security.declarePublic('getPloneGroupsForUser')
 
@@ -522,8 +532,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     def getGroupsForUser_cachekey(method, self, userId=None, active=True, suffixes=[], zope=False, omittedSuffixes=[]):
         '''cachekey method for self.getGroupsForUser.'''
-        # we only recompute if param or REQUEST changed
-        return (str(self.REQUEST._debug), userId, active, suffixes, zope, omittedSuffixes)
+        date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting.getGroupsForUser')
+        return (date,
+                self._users_groups_last_modified(),
+                (userId or self.REQUEST.get('AUTHENTICATED_USER', api.user.get_current())),
+                active, suffixes, zope, omittedSuffixes)
 
     security.declarePublic('getGroupsForUser')
 
@@ -580,8 +593,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     def userIsAmong_cachekey(method, self, suffixes, onlyActive=True):
         '''cachekey method for self.userIsAmong.'''
-        # we only recompute if param or REQUEST changed
-        return (str(self.REQUEST._debug), suffixes, onlyActive)
+        date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting.userIsAmong')
+        return (date,
+                self._users_groups_last_modified(),
+                self.REQUEST.get('AUTHENTICATED_USER', api.user.get_current()),
+                suffixes, onlyActive)
 
     security.declarePublic('userIsAmong')
 
@@ -850,8 +866,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     def isManager_cachekey(method, self, context, realManagers=False):
         '''cachekey method for self.isManager.'''
-        # we only recompute if REQUEST changed
-        return (str(self.REQUEST._debug), context, realManagers)
+        return (self._users_groups_last_modified(),
+                (self.REQUEST.get('AUTHENTICATED_USER', api.user.get_current())),
+                context, realManagers)
 
     security.declarePublic('isManager')
 
@@ -868,8 +885,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     def isPowerObserverForCfg_cachekey(method, self, cfg, isRestricted=False):
         '''cachekey method for self.isPowerObserverForCfg.'''
-        # we only recompute if REQUEST changed
-        return (str(self.REQUEST._debug), cfg, isRestricted)
+        return (self._users_groups_last_modified(),
+                (self.REQUEST.get('AUTHENTICATED_USER', api.user.get_current())),
+                cfg, isRestricted)
 
     security.declarePublic('isPowerObserverForCfg')
 
@@ -1732,7 +1750,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     def getAdvicePortalTypes_cachekey(method, self, as_ids=False):
         '''cachekey method for self.getAdvicePortalTypes.'''
-        # we only recompute if param or REQUEST changed
         return (str(self.REQUEST._debug), as_ids)
 
     security.declarePublic('getAdvicePortalTypes')

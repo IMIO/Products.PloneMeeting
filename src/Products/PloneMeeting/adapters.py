@@ -1414,7 +1414,7 @@ class ItemsToAdviceAdapter(CompoundCriterionBaseAdapter):
 
     def itemstoadvice_cachekey(method, self):
         '''cachekey method for query.'''
-        return str(self.context.REQUEST._debug)
+        return str(self.request._debug)
 
     @property
     @ram.cache(itemstoadvice_cachekey)
@@ -1743,6 +1743,7 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
 
     def __init__(self, context, request, brain):
         super(PMCategorizedObjectAdapter, self).__init__(context, request, brain)
+        self.tool = api.portal.get_tool('portal_plonemeeting')
 
     def _use_isPrivacyViewable_cachekey(method, self):
         '''cachekey method for self._use_isPrivacyViewable.'''
@@ -1751,16 +1752,14 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
     @ram.cache(_use_isPrivacyViewable_cachekey)
     def _use_isPrivacyViewable(self):
         """ """
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
+        cfg = self.tool.getMeetingConfig(self.context)
         if cfg.getRestrictAccessToSecretItems():
             return True
         return False
 
     def can_view(self):
         # bypass for MeetingManagers
-        tool = api.portal.get_tool('portal_plonemeeting')
-        if tool.isManager(self.context):
+        if self.tool.isManager(self.context):
             return True
 
         # is the context a MeetingItem and privacy viewable?
@@ -1778,15 +1777,14 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
         if self.context.meta_type == 'Meeting':
             # if we have a SUFFIXPROFILEPREFIX prefixed group,
             # check using "userIsAmong", this is only done for Meetings
-            if set(tool.getPloneGroupsForUser()).intersection(infos['visible_for_groups']):
+            if set(self.tool.getPloneGroupsForUser()).intersection(infos['visible_for_groups']):
                 return True
             # build suffixes to pass to tool.userIsAmong
-            tool = api.portal.get_tool('portal_plonemeeting')
             suffixes = []
             for group in infos['visible_for_groups']:
                 if group.startswith(SUFFIXPROFILEPREFIX):
                     suffixes.append(group.replace(SUFFIXPROFILEPREFIX, ''))
-            if suffixes and tool.userIsAmong(suffixes):
+            if suffixes and self.tool.userIsAmong(suffixes):
                 return True
             return False
 

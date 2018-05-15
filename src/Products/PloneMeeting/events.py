@@ -198,6 +198,10 @@ def onGroupTransition(mGroup, event):
 
     # invalidate cache of relevant vocabularies
     mGroup._invalidateCachedVocabularies()
+    # invalidate cache for MeetingGroups related methods
+    invalidate_cachekey_volatile_for('Products.PloneMeeting.ToolPloneMeeting.getGroupsForUser')
+    invalidate_cachekey_volatile_for('Products.PloneMeeting.ToolPloneMeeting.getPloneGroupsForUser')
+    invalidate_cachekey_volatile_for('Products.PloneMeeting.ToolPloneMeeting.userIsAmong')
 
 
 def onGroupWillBeRemoved(group, event):

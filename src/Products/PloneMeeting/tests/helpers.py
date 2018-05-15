@@ -324,7 +324,7 @@ class PloneMeetingTestingHelpers:
                                  password='12345',
                                  roles=('Member', ),
                                  domains=())
-        self.portal.portal_groups.addPrincipalToGroup(user_id, group_id)
+        self._addPrincipalToGroup(user_id, group_id)
         membershipTool.deleteMembers((user_id, ))
         # now we have a 'not found' user in developers_creators
         self.assertTrue((user_id, '<{0}: not found>'.format(user_id)) in

@@ -152,7 +152,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             properties={})
         setRoles(self.portal, username, roles)
         for group in groups:
-            self.portal.portal_groups.addPrincipalToGroup(username, group)
+            self._addPrincipalToGroup(username, group)
         _createHomeFolder(self.portal, username)
         return newUser
 
@@ -196,11 +196,6 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         '''Logs out currently logged user and logs in p_loginName.'''
         logout()
         self.cleanMemoize()
-        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.getGroupsForUser')
-        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.getPloneGroupsForUser')
-        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.isPowerObserverForCfg')
-        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.isManager')
-        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.userIsAmong')
         if loginName == 'admin':
             login(self.app, loginName)
         else:
@@ -443,7 +438,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         groups = [group for group in member.getGroups() if group.endswith('_%s' % reviewers.keys()[0])]
         groups = [group.replace(reviewers.keys()[0], reviewers.keys()[-1]) for group in groups]
         for group in groups:
-            self.portal.portal_groups.addPrincipalToGroup(member.getId(), group)
+            self._addPrincipalToGroup(member.getId(), group)
 
     # Workflow-related methods -------------------------------------------------
     def do(self, obj, transition, comment=''):
@@ -473,3 +468,19 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         viewlet_manager = self._get_viewlet_manager(context, manager_name)
         viewlet = viewlet_manager.get(viewlet_name)
         return viewlet
+
+    def _addPrincipalToGroup(self, principal_id, group_id):
+        """We need to transaction.commit so source_groups._principal_groups._p_mtime
+           is updated because it is used in various getGroups cache keys."""
+        self.portal.portal_groups.addPrincipalToGroup(principal_id, group_id)
+        transaction.commit()
+        # we also need to changeUser so getGroups is updated
+        self.changeUser(self.member.getId())
+
+    def _removePrincipalFromGroup(self, principal_id, group_id):
+        """We need to transaction.commit so source_groups._principal_groups._p_mtime
+           is updated because it is used in various getGroups cache keys."""
+        self.portal.portal_groups.removePrincipalFromGroup(principal_id, group_id)
+        transaction.commit()
+        # we also need to changeUser so getGroups is updated
+        self.changeUser(self.member.getId())

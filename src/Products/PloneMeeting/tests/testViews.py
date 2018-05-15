@@ -1055,6 +1055,102 @@ class testViews(PloneMeetingTestCase):
         viewlet.update()
         self.assertEqual(viewlet.selected_portal_tab, 'mc_{0}'.format(cfg2Id))
 
+    def _setUpDashBoard(self):
+        """ """
+        # create a folder2 that will be displayed in the dashboard
+        self.changeUser('pmManager')
+        self.meeting = self._createMeetingWithItems()
+        view = self.getMeetingFolder().restrictedTraverse('@@document-generation')
+        self.helper = view.get_generation_context_helper()
+
+    def test_pm_get_all_items_dghv(self):
+        self._setUpDashBoard()
+        brains = self.meetingConfig.portal_catalog(meta_type="MeetingItem")
+        result = self.helper.get_all_items_dghv(brains)
+        itemList = [brain.getObject() for brain in brains]
+        self.assertListEqual(itemList, [view.real_context for view in result])
+
+    def test_pm_get_all_items_dghv_with_advice(self):
+        def compute_data(item, advisorIds=None):
+            brains = self.meetingConfig.portal_catalog(meta_type="MeetingItem")
+            result = self.helper.get_all_items_dghv_with_advice(brains, advisorIds)
+            itemList = [brain.getObject() for brain in brains]
+            index = itemList.index(item)
+            return result, itemList, index
+
+        def assert_results(item, advisorIds=None, advisorIdsToBeReturned=[], occurenceOfItem=1):
+            result, itemList, index = compute_data(item, advisorIds)
+            if occurenceOfItem == 1:
+                self.assertListEqual(itemList, [itemRes['itemView'].real_context for itemRes in result])
+            else:
+                itemList = [itemRes['itemView'].real_context for itemRes in result]
+                self.assertEqual(occurenceOfItem, itemList.count(item))
+            if advisorIdsToBeReturned:
+                for advisor in advisorIdsToBeReturned:
+                    self.assertEqual(result.pop(index)['advice'], item.getAdviceDataFor(item, advisor))
+                    index = itemList.index(item)
+            else:
+                self.assertIsNone(result[index]['advice'])
+
+        self._setUpDashBoard()
+        brains = self.meetingConfig.portal_catalog(meta_type="MeetingItem")
+        result = self.helper.get_all_items_dghv_with_advice(brains)
+        itemList = [brain.getObject() for brain in brains]
+        self.assertListEqual(itemList, [itemRes['itemView'].real_context for itemRes in result])
+
+        self.meetingConfig.setCustomAdvisers(
+            [{'row_id': 'unique_id_123',
+              'group': 'developers',
+              'gives_auto_advice_on': '',
+              'for_item_created_from': '2016/08/08',
+              'delay': '5',
+              'delay_label': ''},])
+        self.meetingConfig.setPowerAdvisersGroups(('vendors',))
+        self.meetingConfig.setItemPowerObserversStates(('itemcreated',))
+        self.meetingConfig.setItemAdviceStates(('itemcreated',))
+        self.meetingConfig.setItemAdviceEditStates(('itemcreated',))
+        self.meetingConfig.setItemAdviceViewStates(('itemcreated',))
+        self.meetingConfig.at_post_edit_script()
+
+        item = self.create('MeetingItem')
+        item._update_after_edit()
+
+        assert_results(item)
+        assert_results(item, ['vendors'])
+        assert_results(item, ['developers'])
+
+        item.setOptionalAdvisers(('developers__rowid__unique_id_123'))
+        item._update_after_edit()
+
+        # test with 1 not given advice
+        assert_results(item, advisorIdsToBeReturned=['developers'])
+        assert_results(item, ['vendors'])
+        assert_results(item, ['developers'], ['developers'])
+
+        # test with 1 given advice
+        self.changeUser('pmAdviser1')
+        createContentInContainer(item,
+                                 'meetingadvice',
+                                 **{'advice_group': 'developers',
+                                    'advice_type': u'positive',
+                                    'advice_comment': RichTextValue(u'My comment')})
+        self.changeUser('pmManager')
+        assert_results(item, advisorIdsToBeReturned=['developers'])
+        assert_results(item, ['vendors'])
+        assert_results(item, ['developers'], ['developers'])
+
+        self.changeUser('pmReviewer2')
+        createContentInContainer(item,
+                                 'meetingadvice',
+                                 **{'advice_group': 'vendors',
+                                    'advice_type': u'negative',
+                                    'advice_comment': RichTextValue(u'My comment')})
+
+        self.changeUser('pmManager')
+        assert_results(item, advisorIdsToBeReturned=['vendors', 'developers'], occurenceOfItem=2)
+        assert_results(item, ['vendors'], ['vendors'])
+        assert_results(item, ['developers'], ['developers'])
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

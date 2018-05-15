@@ -294,13 +294,13 @@ class testMeetingGroup(PloneMeetingTestCase):
         developers = self.tool.developers
         self.do(developers, 'deactivate')
         self.changeUser('pmManager')
-        self.assertTrue('developers' not in item.listAssociatedGroups())
+        self.assertFalse('developers' in item.listAssociatedGroups())
         # remove proposingGroup or it will appear in the vocabulary as 'developers' is currently used...
         item.setProposingGroup('')
-        self.assertTrue('developers' not in item.listProposingGroups())
-        self.assertTrue('developers_reviewers' not in item.listCopyGroups())
-        self.assertTrue('developers' not in item.listOptionalAdvisers())
-        self.assertTrue(not self.tool.userIsAmong(['creators']))
+        self.assertFalse('developers' in item.listProposingGroups())
+        self.assertFalse('developers_reviewers' in item.listCopyGroups())
+        self.assertFalse('developers' in item.listOptionalAdvisers())
+        self.assertFalse(self.tool.userIsAmong(['creators']))
 
     def test_pm_UpdateLinkedPloneGroupsTitle(self):
         '''When the title of a MeetingGroup changed, the title of linked Plone groups is changed accordingly.'''
@@ -482,12 +482,12 @@ class testMeetingGroup(PloneMeetingTestCase):
                                  password='12345',
                                  roles=('Member', ),
                                  domains=())
-        self.portal.portal_groups.addPrincipalToGroup('test_user1', 'developers_creators')
-        self.portal.portal_groups.addPrincipalToGroup('test_user2', 'vendors_advisers')
-        self.portal.portal_groups.addPrincipalToGroup('test_user2', 'developers_advisers')
-        self.portal.portal_groups.addPrincipalToGroup('test_user2', 'developers_creators')
-        self.portal.portal_groups.addPrincipalToGroup('test_user2', 'developers_observers')
-        self.portal.portal_groups.addPrincipalToGroup('test_user2', 'developers_reviewers')
+        self._addPrincipalToGroup('test_user1', 'developers_creators')
+        self._addPrincipalToGroup('test_user2', 'vendors_advisers')
+        self._addPrincipalToGroup('test_user2', 'developers_advisers')
+        self._addPrincipalToGroup('test_user2', 'developers_creators')
+        self._addPrincipalToGroup('test_user2', 'developers_observers')
+        self._addPrincipalToGroup('test_user2', 'developers_reviewers')
 
         self.changeUser('test_user1')
         self.assertFalse(self.tool.vendors.userPloneGroups())

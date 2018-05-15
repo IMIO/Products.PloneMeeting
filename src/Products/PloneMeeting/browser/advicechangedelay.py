@@ -16,7 +16,6 @@ from Products.CMFCore.Expression import createExprContext
 from Products.CMFCore.Expression import Expression
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
-from Products.CMFCore.utils import getToolByName
 from Products.Five.browser import BrowserView
 from Products.PloneMeeting import logger
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
@@ -31,9 +30,10 @@ class AdviceDelaysView(BrowserView):
         super(BrowserView, self).__init__(context, request)
         self.context = context
         self.request = request
-        self.portal = getToolByName(self, 'portal_url').getPortalObject()
+        self.portal = api.portal.get()
         self.portal_url = self.portal.absolute_url()
         self.advice = self.request.get('advice_change_delay_advice')
+        self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.request.get('advice_change_delay_cfg')
 
     def listSelectableDelays(self, row_id):
@@ -57,8 +57,7 @@ class AdviceDelaysView(BrowserView):
         else:
             # advice is automatic, only Managers and MeetingManagers can change an automatic advice delay
             # and only if the advice still could not be given or if it is currently editable
-            tool = getToolByName(self.context, 'portal_plonemeeting')
-            if not tool.isManager(self.context) or not _checkPermission(ModifyPortalContent, self.context):
+            if not self.tool.isManager(self.context) or not _checkPermission(ModifyPortalContent, self.context):
                 return False
 
         return True
@@ -108,13 +107,12 @@ class AdviceDelaysView(BrowserView):
            By default it is shown to MeetingManagers, advisers of p_adviceId and members of the proposingGroup.'''
         if not adviceId:
             adviceId = self.advice['id']
-        tool = api.portal.get_tool('portal_plonemeeting')
         # MeetingManagers and advisers of the group
         # can access the delay changes history
-        userAdviserGroupIds = [group.getId() for group in tool.getGroupsForUser(suffixes=['advisers'])]
-        if tool.isManager(self.context) or \
+        userAdviserGroupIds = [group.getId() for group in self.tool.getGroupsForUser(suffixes=['advisers'])]
+        if self.tool.isManager(self.context) or \
            adviceId in userAdviserGroupIds or \
-           self.context.getProposingGroup(theObject=True) in tool.getGroupsForUser():
+           self.context.getProposingGroup(theObject=True) in self.tool.getGroupsForUser():
             return True
         else:
             return False

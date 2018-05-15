@@ -598,7 +598,6 @@ class BaseDGHV(object):
                           withDelayLabel=True,
                           withAuthor=True):
         '''Helper method to have a printable version of advices.'''
-        membershipTool = api.portal.get_tool('portal_membership')
         itemAdvicesByType = item.getAdvicesByType()
         res = ""
         if withAdvicesTitle:
@@ -641,6 +640,7 @@ class BaseDGHV(object):
                 if withAuthor and not adviceType == NOT_GIVEN_ADVICE_VALUE:
                     adviceHolder = advice.get('adviceHolder', item)
                     adviceObj = adviceHolder.getAdviceObj(advice['id'])
+                    membershipTool = api.portal.get_tool('portal_membership')
                     author = membershipTool.getMemberInfo(adviceObj.Creator())
                     if author:
                         author = author['fullname']
@@ -729,9 +729,21 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
             res.append(subres)
         return res
 
-    def get_all_items_dghv_with_single_advice(self, brains, adviserId=None):
+    def get_all_items_dghv(self, brains):
         """
         :param brains: the brains collection representing @Product.PloneMeeting.MeetingItem
+        :return: the list of DocumentGeneratorHelperViews for these MeetingItems
+        """
+        res = []
+        for brain in brains:
+            item = brain.getObject()
+            res.append(self.getDGHV(item))
+        return res
+
+    def get_all_items_dghv_with_advice(self, brains, adviserIds=[]):
+        """
+        :param brains: the brains collection representing @Product.PloneMeeting.MeetingItem
+        :param adviserIds : list of adviser Ids to keep. By default it empty. Which means all advisers are kept.
         :return: an array of dictionary which contains 2 keys.
                  itemView : the documentgenerator helper view of a MeetingItem.
                  advice   : the data from a single advice linked to this MeetingItem as extracted with getAdviceDataFor.
@@ -743,16 +755,22 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
         res = []
         for brain in brains:
             item = brain.getObject()
-            advices = item.getAdviceDataFor(item, adviserId)
-            if advices:
-                if adviserId:
-                    res.append({'itemView': self.getDGHV(item), 'advice': advices})
-                else:
+            if adviserIds:
+                itemInserted = False
+                for adviserId in adviserIds:
+                    advice = item.getAdviceDataFor(item, adviserId)
+                    if advice:
+                        res.append({'itemView': self.getDGHV(item), 'advice': advice})
+                        itemInserted = True
+                if not itemInserted:
+                    res.append({'itemView': self.getDGHV(item), 'advice': None})
+            else:
+                advices = item.getAdviceDataFor(item)
+                if advices:
                     for advice in advices:
                         res.append({'itemView': self.getDGHV(item), 'advice': advices[advice]})
-            else:
-                res.append({'itemView': self.getDGHV(item), 'advice': None})
-
+                else:
+                    res.append({'itemView': self.getDGHV(item), 'advice': None})
         return res
 
 

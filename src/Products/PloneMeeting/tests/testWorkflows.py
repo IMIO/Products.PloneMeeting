@@ -485,7 +485,7 @@ class testWorkflows(PloneMeetingTestCase):
                     proposingGroup='developers',
                     meetingTransitionInsertingMe='_init_')
         self.createUser('pmManagerRestricted', ('MeetingManager', ))
-        self.portal.portal_groups.addPrincipalToGroup('pmManagerRestricted', 'developers_creators')
+        self._addPrincipalToGroup('pmManagerRestricted', 'developers_creators')
         self.changeUser('pmManagerRestricted')
         # first check that current 'pmManager' may not 'propose'
         # an item created with proposing group 'vendors'

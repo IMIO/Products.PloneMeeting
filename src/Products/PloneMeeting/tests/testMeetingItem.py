@@ -184,6 +184,26 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmReviewer1')
         self.assertTrue(item.listProposingGroups().keys() == ['developers', 'vendors', ])
 
+    def test_pm_ListProposingGroupsCaching(self):
+        '''If a user is added or removed from a _creators group, listProposingGroups
+           behaves as expected.'''
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        self.assertEqual(item.listProposingGroups().keys(), ['developers'])
+        self._addPrincipalToGroup('pmCreator1', 'vendors_creators')
+        self.assertEqual(item.listProposingGroups().keys(), ['developers', 'vendors'])
+        # add user to a disabled group
+        self._addPrincipalToGroup('pmCreator1', 'endUsers_creators')
+        self.assertEqual(item.listProposingGroups().keys(), ['developers', 'vendors'])
+        # enable disabled group
+        self.changeUser('siteadmin')
+        self.do(self.tool.endUsers, 'activate')
+        self.changeUser('pmCreator1')
+        self.assertEqual(item.listProposingGroups().keys(), ['developers', 'endUsers', 'vendors'])
+        # remove user from vendors
+        self._removePrincipalFromGroup('pmCreator1', 'vendors_creators')
+        self.assertEqual(item.listProposingGroups().keys(), ['developers', 'endUsers'])
+
     def test_pm_ListProposingGroupsKeepConfigSorting(self):
         """If 'proposingGroup' selected in MeetingConfig.itemFieldsToKeepConfigSortingFor,
            the vocabulary keeps config order, not sorted alphabetically."""
@@ -211,7 +231,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.tool.developers.setGroupsInCharge(('group1', ))
         self.tool.vendors.setGroupsInCharge(('group2', ))
         # make pmCreator1 creator for vendors
-        self.portal.portal_groups.addPrincipalToGroup('pmCreator1', 'vendors_creators')
+        self._addPrincipalToGroup('pmCreator1', 'vendors_creators')
         self.changeUser('pmCreator1')
         item1 = self.create('MeetingItem')
         self.assertEqual(item1.listProposingGroupsWithGroupsInCharge().items(),
@@ -1439,7 +1459,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.create('MeetingGroup', id='group2',  title='NewGroup2', acronym='N.G.2')
         self.create('MeetingGroup', id='poweradvisers',  title='Power advisers', acronym='PA')
         cfg.setSelectableAdvisers(('vendors', 'group1', 'group2', 'poweradvisers'))
-        self.portal.portal_groups.addPrincipalToGroup('pmAdviser1', 'poweradvisers_advisers')
+        self._addPrincipalToGroup('pmAdviser1', 'poweradvisers_advisers')
         cfg.setCustomAdvisers(
             [{'row_id': 'unique_id_123',
               'group': 'vendors',
@@ -1832,11 +1852,11 @@ class testMeetingItem(PloneMeetingTestCase):
         # specify that powerObservers will be able to see the items of self.meetingConfig
         # when the item is in some state.  For example here, a 'presented' item is not viewable
         # Add 'powerobserver1' user to the self.meetingConfig corresponding 'powerobservers' group
-        self.portal.portal_groups.addPrincipalToGroup('powerobserver1', '%s_%s' %
-                                                      (self.meetingConfig.getId(), POWEROBSERVERS_GROUP_SUFFIX))
+        self._addPrincipalToGroup('powerobserver1',
+                                  '%s_%s' % (self.meetingConfig.getId(), POWEROBSERVERS_GROUP_SUFFIX))
         # Add 'powerobserver2' user to the self.meetingConfig2 corresponding 'powerobservers' group
-        self.portal.portal_groups.addPrincipalToGroup('powerobserver2', '%s_%s' %
-                                                      (self.meetingConfig2.getId(), POWEROBSERVERS_GROUP_SUFFIX))
+        self._addPrincipalToGroup('powerobserver2',
+                                  '%s_%s' % (self.meetingConfig2.getId(), POWEROBSERVERS_GROUP_SUFFIX))
         # launch check for self.meetingConfig where 'powerobserver1'
         # can see in some states but never for 'powerobserver2'
         self._checkPowerObserversGroupFor('powerobserver1', 'powerobserver2')
@@ -2103,8 +2123,8 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.setRestrictAccessToSecretItems(True)
         cfg.setItemCopyGroupsStates(('validated', ))
         # make powerobserver1 a PowerObserver
-        self.portal.portal_groups.addPrincipalToGroup('powerobserver1', '%s_%s' %
-                                                      (cfg.getId(), POWEROBSERVERS_GROUP_SUFFIX))
+        self._addPrincipalToGroup('powerobserver1',
+                                  '%s_%s' % (cfg.getId(), POWEROBSERVERS_GROUP_SUFFIX))
 
         # create a 'public' and a 'secret' item
         self.changeUser('pmManager')
@@ -5321,7 +5341,7 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # nevertheless, if powerobserver1 may edit the item, he will see the classes
         # add powerobserver1 to 'developers_creators' then check
-        self.portal.portal_groups.addPrincipalToGroup('powerobserver1', 'developers_creators')
+        self._addPrincipalToGroup('powerobserver1', 'developers_creators')
         self.changeUser('powerobserver1')
         self.assertEqual(item.getProposingGroup(), 'developers')
         self.assertEqual(item.getDecision(), TEXT)
