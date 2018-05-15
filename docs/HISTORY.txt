@@ -12,6 +12,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 
 - Removed check on "member.getRoles()" in the actions_panel __call__ cachekey.
 - Added migration step to ensure that annexes mimetype is correct.
+- Fixed bug in advice infos popup where the displayed author was item creator instead advice creator.
 
 4.1b9 (2018-05-09)
 ------------------
