@@ -621,10 +621,10 @@ class testViews(PloneMeetingTestCase):
         itemList = [brain.getObject() for brain in brains]
         self.assertListEqual(itemList, [view.real_context for view in result])
 
-    def test_pm_get_all_items_dghv_with_single_advice(self):
+    def test_pm_get_all_items_dghv_with_advice(self):
         def compute_data(item, advisorIds=None):
             brains = self.meetingConfig.portal_catalog(meta_type="MeetingItem")
-            result = self.helper.get_all_items_dghv_with_single_advice(brains, advisorIds)
+            result = self.helper.get_all_items_dghv_with_advice(brains, advisorIds)
             itemList = [brain.getObject() for brain in brains]
             index = itemList.index(item)
             return result, itemList, index
@@ -645,7 +645,7 @@ class testViews(PloneMeetingTestCase):
 
         self._setUpDashBoard()
         brains = self.meetingConfig.portal_catalog(meta_type="MeetingItem")
-        result = self.helper.get_all_items_dghv_with_single_advice(brains)
+        result = self.helper.get_all_items_dghv_with_advice(brains)
         itemList = [brain.getObject() for brain in brains]
         self.assertListEqual(itemList, [itemRes['itemView'].real_context for itemRes in result])
 

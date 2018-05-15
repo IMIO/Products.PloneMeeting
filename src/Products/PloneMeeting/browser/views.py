@@ -748,7 +748,7 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
             res.append(self.getDGHV(item))
         return res
 
-    def get_all_items_dghv_with_single_advice(self, brains, adviserIds=[]):
+    def get_all_items_dghv_with_advice(self, brains, adviserIds=[]):
         """
         :param brains: the brains collection representing @Product.PloneMeeting.MeetingItem
         :param adviserIds : list of adviser Ids to keep. By default it empty. Which means all advisers are kept.
