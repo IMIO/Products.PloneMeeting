@@ -67,6 +67,11 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   especially on other objects we are setting the references because a Products.Archetypes bug does not make changes
   in at_ordered_refs dict persistent (https://github.com/plone/Products.Archetypes/issues/104)
 - Added migration step to ensure that annexes mimetype is correct.
+- Removed MeetingConfig.getMeetingsAcceptingItemsAdditionalManagerStates, use the config.MEETING_STATES_ACCEPTING_ITEMS
+  to know in which states a meeting may accept items.  Use also config.MEETING_STATES_ACCEPTING_ITEMS instead
+  Meeting.acceptItemsStates that was removed as well.
+- Use TransitionEvent instead ObjectEvent as base class for MeetingAfterTransitionEvent and ItemAfterTransitionEvent
+  so we have transition and old_state/new_state infos on the event instance.
 
 4.0 (2017-08-04)
 ----------------

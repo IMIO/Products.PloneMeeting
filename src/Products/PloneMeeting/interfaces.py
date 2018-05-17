@@ -658,8 +658,6 @@ class IMeetingConfigDocumentation:
            a plugin that added his own workflowAdaptations validates it.'''
     def onEdit(isCreated):
         '''Called when an object p_isCreated or edited.'''
-    def getMeetingsAcceptingItemsAdditionalManagerStates():
-        '''Additional states for MeetingManagers in which meetings are still accepting items.'''
 
 
 class IMeetingConfigCustom(IMeetingConfig):

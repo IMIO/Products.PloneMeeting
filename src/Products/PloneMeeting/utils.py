@@ -69,6 +69,7 @@ from Products.CMFCore.permissions import View
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting import PloneMeetingError
 from Products.PloneMeeting import PMMessageFactory as _
+from Products.DCWorkflow.events import TransitionEvent
 from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import AddAnnexDecision
 from Products.PloneMeeting.config import ADD_SUBCONTENT_PERMISSIONS
@@ -1624,7 +1625,7 @@ class MeetingLocalRolesUpdatedEvent(ObjectEvent):
         self.old_local_roles = old_local_roles
 
 
-class MeetingAfterTransitionEvent(ObjectEvent):
+class MeetingAfterTransitionEvent(TransitionEvent):
     '''
       Event triggered at the end of the onMeetingTransition,
       so we are sure that subplugins registering to this event
@@ -1632,20 +1633,14 @@ class MeetingAfterTransitionEvent(ObjectEvent):
     '''
     implements(IMeetingAfterTransitionEvent)
 
-    def __init__(self, object):
-        self.object = object
 
-
-class ItemAfterTransitionEvent(ObjectEvent):
+class ItemAfterTransitionEvent(TransitionEvent):
     '''
       Event triggered at the end of the onItemTransition,
       so we are sure that subplugins registering to this event
       will be called after.
     '''
     implements(IItemAfterTransitionEvent)
-
-    def __init__(self, object):
-        self.object = object
 
 
 class ItemDuplicatedEvent(ObjectEvent):

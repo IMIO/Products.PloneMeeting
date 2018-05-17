@@ -3151,6 +3151,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEquals(
             [m.id for m in cfg.getMeetingsAcceptingItems()],
             [meeting.getId()])
+        self.assertTrue(meeting.wfConditions().mayAcceptItems())
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         # not for creators
         self.changeUser('pmCreator1')
