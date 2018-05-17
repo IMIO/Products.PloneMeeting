@@ -13,6 +13,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Removed check on "member.getRoles()" in the actions_panel __call__ cachekey.
 - Added migration step to ensure that annexes mimetype is correct.
 - Fixed bug in advice infos popup where the displayed author was item creator instead advice creator.
+- Removed MeetingConfig.getMeetingsAcceptingItemsAdditionalManagerStates, use the config.MEETING_STATES_ACCEPTING_ITEMS
+  to know in which states a meeting may accept items.  Use also config.MEETING_STATES_ACCEPTING_ITEMS instead
+  Meeting.acceptItemsStates that was removed as well.
 
 4.1b9 (2018-05-09)
 ------------------

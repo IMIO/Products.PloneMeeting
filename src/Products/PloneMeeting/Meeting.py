@@ -112,14 +112,8 @@ class MeetingWorkflowConditions(object):
     implements(IMeetingWorkflowConditions)
     security = ClassSecurityInfo()
 
-    # Item states when a decision was not take yet.
-    notDecidedStates = ('presented', 'itempublished', 'itemfrozen')
-    notDecidedStatesPlusDelayed = notDecidedStates + ('delayed',)
     # Item states when a final decision is taken
     archivableStates = ('confirmed', 'delayed', 'refused')
-
-    # Meeting states for meetings accepting items
-    acceptItemsStates = ('created', 'published', 'frozen', 'decided')
 
     def __init__(self, meeting):
         self.context = meeting
@@ -141,7 +135,7 @@ class MeetingWorkflowConditions(object):
 
     def mayAcceptItems(self):
         if _checkPermission(ReviewPortalContent, self.context) and \
-           (self.context.queryState() in self.acceptItemsStates):
+           (self.context.queryState() in MEETING_STATES_ACCEPTING_ITEMS):
             return True
 
     security.declarePublic('mayPublish')
@@ -895,7 +889,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         meetingUids = [b.getObject().UID() for b in meetings]
         meetingUids.append(ITEM_NO_PREFERRED_MEETING_VALUE)
 
-        if not meeting.queryState() in MEETING_NOT_CLOSED_STATES:
+        if meeting.queryState() not in MEETING_NOT_CLOSED_STATES:
             res.append({'i': 'getPreferredMeeting',
                         'o': 'plone.app.querystring.operation.selection.is',
                         'v': meetingUids})
