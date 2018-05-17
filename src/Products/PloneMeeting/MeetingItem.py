@@ -80,7 +80,6 @@ from Products.PloneMeeting.config import ITEM_COMPLETENESS_EVALUATORS
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import ITEM_STATES_NOT_LINKED_TO_MEETING
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
-from Products.PloneMeeting.config import MEETING_NOT_CLOSED_STATES
 from Products.PloneMeeting.config import MEETINGROLES
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
@@ -315,21 +314,11 @@ class MeetingItemWorkflowConditions(object):
                                 context=self.context.REQUEST)}))
         return False
 
-    security.declarePublic('meetingIsPublished')
-
-    def meetingIsPublished(self):
-        res = False
-        if self.context.hasMeeting() and \
-           (self.context.getMeeting().queryState() in MEETING_NOT_CLOSED_STATES):
-            res = True
-        return res
-
     security.declarePublic('mayPublish')
 
     def mayPublish(self):
         res = False
-        if _checkPermission(ReviewPortalContent, self.context) and \
-           self.meetingIsPublished():
+        if _checkPermission(ReviewPortalContent, self.context):
             res = True
         return res
 

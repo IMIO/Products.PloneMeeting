@@ -60,7 +60,6 @@ from Products.PloneMeeting.browser.itemchangeorder import _to_integer
 from Products.PloneMeeting.browser.itemchangeorder import _is_integer
 from Products.PloneMeeting.browser.itemchangeorder import _use_same_integer
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
-from Products.PloneMeeting.config import MEETING_NOT_CLOSED_STATES
 from Products.PloneMeeting.config import MEETING_STATES_ACCEPTING_ITEMS
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
@@ -880,20 +879,22 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                 'o': 'plone.app.querystring.operation.selection.is',
                 'v': 'validated'},
                ]
-        # First, get meetings accepting items for which the date is lower or
-        # equal to the date of this meeting (self)
-        catalog = api.portal.get_tool('portal_catalog')
-        meetings = catalog(
-            portal_type=cfg.getMeetingTypeName(),
-            getDate={'query': meeting.getDate(), 'range': 'max'}, )
-        meetingUids = [b.getObject().UID() for b in meetings]
-        meetingUids.append(ITEM_NO_PREFERRED_MEETING_VALUE)
 
-        if meeting.queryState() not in MEETING_NOT_CLOSED_STATES:
+        # before frozen state, accept items having any preferred meeting
+        if meeting.queryState() in self.getBeforeFrozenStates():
+            # Get meetings accepting items for which the date is lower or
+            # equal to the date of this meeting (self)
+            catalog = api.portal.get_tool('portal_catalog')
+            meetings = catalog(
+                portal_type=cfg.getMeetingTypeName(),
+                getDate={'query': meeting.getDate(), 'range': 'max'}, )
+            meetingUids = [b.UID for b in meetings]
+            meetingUids.append(ITEM_NO_PREFERRED_MEETING_VALUE)
             res.append({'i': 'getPreferredMeeting',
                         'o': 'plone.app.querystring.operation.selection.is',
                         'v': meetingUids})
         else:
+            # after frozen state, only query items for which preferred meeting is self
             res.append({'i': 'getPreferredMeeting',
                         'o': 'plone.app.querystring.operation.selection.is',
                         'v': meeting.UID()})

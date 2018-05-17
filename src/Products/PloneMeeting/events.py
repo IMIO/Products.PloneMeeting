@@ -547,8 +547,7 @@ def onAnnexAdded(annex, event):
                 parent.updateLocalRoles(invalidate=True)
 
             # Potentially I must notify MeetingManagers through email.
-            if parent.wfConditions().meetingIsPublished():
-                parent.sendMailIfRelevant('annexAdded', 'MeetingManager', isRole=True)
+            parent.sendMailIfRelevant('annexAdded', 'MeetingManager', isRole=True)
 
         # update modificationDate, it is used for caching and co
         parent.setModificationDate(DateTime())

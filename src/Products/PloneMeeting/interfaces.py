@@ -447,8 +447,6 @@ class IMeetingItemWorkflowConditions(Interface):
            several 'back' transitions from the same state.'''
     def mayPublish():
         '''May one publish me?'''
-    def meetingIsPublished():
-        '''Is the meeting where I am included published ?'''
     def mayFreeze():
         '''May one freeze me ?'''
     def mayArchive():

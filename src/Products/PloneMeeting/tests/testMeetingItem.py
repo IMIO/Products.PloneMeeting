@@ -2266,7 +2266,7 @@ class testMeetingItem(PloneMeetingTestCase):
           is about inserting it in a living meeting.  An item is supposed late when
           the date of validation is newer than the date of freeze of the meeting
           we want to insert the item in.  A late item can be inserted in a meeting when
-          the meeting is in MEETING_NOT_CLOSED_STATES states.
+          the meeting is in no more in before frozen states.
         '''
         # no matter who create the item, do everything as MeetingManager
         self.changeUser('pmManager')
@@ -2287,12 +2287,10 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failIf(lateItem.wfConditions().isLateFor(meeting))
         # set preferredMeeting so it is considered as late now...
         lateItem.setPreferredMeeting(meeting.UID())
-        # if the meeting is not in relevant states (MEETING_NOT_CLOSED_STATES),
-        # the item is not considered as late...
+        # if the meeting is not in relevant states, the item is not considered as late...
         self.backToState(meeting, 'created')
         self.failIf(lateItem.wfConditions().isLateFor(meeting))
         # now make the item considered as late item again and test
-        # every states of MEETING_NOT_CLOSED_STATES
         self.freezeMeeting(meeting)
         self.backToState(lateItem, 'itemcreated')
         self.validateItem(lateItem)
