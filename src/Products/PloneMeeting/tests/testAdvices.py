@@ -2883,6 +2883,35 @@ class testAdvices(PloneMeetingTestCase):
         self.assertFalse(advicesIconsInfosViewItem2.showLinkToInherited(True, item1))
         self.assertFalse('data-advice_id' in advicesIconsInfosViewItem2(adviceType='positive'))
 
+    def test_pm_AdviceAuthorDisplayedInAdviceInfos(self):
+        """Test that the advice creator is displayed on the @@advices-icons-infos."""
+        cfg = self.meetingConfig
+        cfg.setItemAdviceStates([self._stateMappingFor('itemcreated'), ])
+        cfg.setItemAdviceEditStates([self._stateMappingFor('itemcreated'), ])
+        cfg.setItemAdviceViewStates([self._stateMappingFor('itemcreated'), ])
+        self.changeUser('pmCreator1')
+        # create an item and ask the advice of group 'developers'
+        data = {
+            'title': 'Item to advice',
+            'category': 'maintenance',
+            'optionalAdvisers': ('developers', )
+        }
+        item = self.create('MeetingItem', **data)
+
+        self.changeUser('pmAdviser1')
+        # before advice is given, creator is obviously not displayed
+        advices_icons_infos = item.restrictedTraverse('@@advices-icons-infos')
+        adviser_fullname = '<span>{0}</span>'.format(self.member.getProperty('fullname'))
+        self.assertFalse(adviser_fullname in advices_icons_infos(adviceType=u'not_given'))
+        createContentInContainer(
+            item,
+            'meetingadvice',
+            **{'advice_group': 'developers',
+               'advice_type': u'positive',
+               'advice_hide_during_redaction': False,
+               'advice_comment': RichTextValue(u'My comment')})
+        self.assertTrue(adviser_fullname in advices_icons_infos(adviceType=u'positive'))
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
