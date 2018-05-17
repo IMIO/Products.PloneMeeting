@@ -80,6 +80,7 @@ from Products.PloneMeeting.utils import getLastEvent
 from Products.PloneMeeting.utils import getMeetingUsers
 from Products.PloneMeeting.utils import getFieldVersion
 from Products.PloneMeeting.utils import getDateFromDelta
+from Products.PloneMeeting.utils import getStatesBefore
 from Products.PloneMeeting.utils import hasHistory
 from Products.PloneMeeting.utils import ItemDuplicatedFromConfigEvent
 from Products.PloneMeeting.utils import MeetingLocalRolesUpdatedEvent
@@ -881,7 +882,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                ]
 
         # before frozen state, accept items having any preferred meeting
-        if meeting.queryState() in self.getBeforeFrozenStates():
+        if meeting.queryState() in self.getStatesBefore('frozen'):
             # Get meetings accepting items for which the date is lower or
             # equal to the date of this meeting (self)
             catalog = api.portal.get_tool('portal_catalog')
@@ -1366,38 +1367,19 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             return None
         return brains[0].getObject()
 
-    def getBeforeFrozenStates_cachekey(method, self):
-        '''cachekey method for self.getBeforeFrozenStates.'''
-        # do only re-compute if cfg changed
+    def getStatesBefore_cachekey(method, self, review_state):
+        '''cachekey method for self.getStatesBefore.'''
+        # do only re-compute if cfg changed or params changed
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        return (cfg.getId(), cfg._p_mtime)
+        return (cfg.getId(), cfg._p_mtime, review_state)
 
-    @ram.cache(getBeforeFrozenStates_cachekey)
-    def getBeforeFrozenStates(self):
+    @ram.cache(getStatesBefore_cachekey)
+    def getStatesBefore(self, review_state):
         """
-          Returns states before the meeting is frozen, so states where
-          an item is still not considered as a late item.
+          Returns states before the p_review_state state.
         """
-        wfTool = api.portal.get_tool('portal_workflow')
-        meetingWF = wfTool.getWorkflowsFor(self)[0]
-        # get the 'frozen' state
-        if 'frozen' not in meetingWF.states:
-            # every states are 'not frozen' states
-            return meetingWF.states.keys()
-        frozenState = meetingWF.states['frozen']
-        # get back to the meeting WF initial state
-        res = []
-        initial_state = meetingWF.initial_state
-        new_state_id = ''
-        new_state = frozenState
-        while not new_state_id == initial_state:
-            for transition in new_state.transitions:
-                if transition.startswith('backTo'):
-                    new_state_id = meetingWF.transitions[transition].new_state_id
-                    res.append(new_state_id)
-                    new_state = meetingWF.states[new_state_id]
-        return res
+        return getStatesBefore(self, review_state)
 
     security.declareProtected("Modify portal content", 'insertItem')
 

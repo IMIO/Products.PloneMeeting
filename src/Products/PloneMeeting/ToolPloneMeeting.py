@@ -20,6 +20,7 @@ from AccessControl import Unauthorized
 from Acquisition import aq_base
 from DateTime import DateTime
 from OFS import CopySupport
+from persistent.mapping import PersistentMapping
 from ZODB.POSException import ConflictError
 from zope.annotation.interfaces import IAnnotations
 from zope.i18n import translate
@@ -1204,20 +1205,15 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             oldWFName = wftool.getWorkflowsFor(copiedItem)[0].id
             newWFName = wftool.getWorkflowsFor(newItem)[0].id
             oldHistory = newItem.workflow_history
-            tmpDict = {newWFName: oldHistory[oldWFName]}
-            newItem.workflow_history = tmpDict
+            tmpDict = PersistentMapping({newWFName: oldHistory[oldWFName]})
             # make sure current review_state is right, in case initial_state
             # of newPortalType WF is not the same as original portal_type WF, correct this
             newItemWF = wftool.getWorkflowsFor(newItem)[0]
-            if not newItemWF._getWorkflowStateOf(newItem) or not \
-               wftool.getInfoFor(newItem, 'review_state') == newItemWF.initial_state:
+            if tmpDict[newWFName][0]['review_state'] != newItemWF.initial_state:
                 # in this case, the current wf state is wrong, we will correct it
-                newItem.workflow_history = {}
-                # this will initialize wf initial state if workflow_history is empty
-                initial_state = wftool.getWorkflowsFor(newItem)[0]._getWorkflowStateOf(newItem)
-                tmpDict[newWFName][0]['review_state'] = initial_state.id
-                newItem.workflow_history = tmpDict
-            # update security settings of new item has workflow permissions could have changed...
+                tmpDict[newWFName][0]['review_state'] = newItemWF.initial_state
+            newItem.workflow_history = tmpDict
+            # update security settings of new item as workflow permissions could have changed...
             newItemWF.updateRoleMappingsFor(newItem)
 
         # remove contained meetingadvices

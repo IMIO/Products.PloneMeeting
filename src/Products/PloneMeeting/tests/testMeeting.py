@@ -1023,13 +1023,13 @@ class testMeeting(PloneMeetingTestCase):
         lateItem.setPreferredMeeting(meeting.UID())
 
         # presenting an item in a before frozen state will insert it as normal
-        self.assertTrue(meeting.queryState() in meeting.getBeforeFrozenStates())
+        self.assertTrue(meeting.queryState() in meeting.getStatesBefore('frozen'))
         self.presentItem(normalItem)
         self.assertEquals(normalItem.getListType(), 'normal')
 
         # freeze the meeting and insert the late item
         self.freezeMeeting(meeting)
-        self.assertFalse(meeting.queryState() in meeting.getBeforeFrozenStates())
+        self.assertFalse(meeting.queryState() in meeting.getStatesBefore('frozen'))
         self.presentItem(lateItem)
         self.assertEquals(lateItem.getListType(), 'late')
 
@@ -1037,7 +1037,7 @@ class testMeeting(PloneMeetingTestCase):
         # and insert it again, it will be inserted as a normal item
         self.backToState(meeting, 'created')
         self.backToState(lateItem, 'validated')
-        self.assertTrue(meeting.queryState() in meeting.getBeforeFrozenStates())
+        self.assertTrue(meeting.queryState() in meeting.getStatesBefore('frozen'))
         self.presentItem(lateItem)
         self.assertEquals(lateItem.getListType(), 'normal')
 
@@ -1571,15 +1571,15 @@ class testMeeting(PloneMeetingTestCase):
         item.REQUEST['PUBLISHED'] = item
 
         # for now, the next meeting is used
-        self.assertTrue(meeting1.queryState() in meeting1.getBeforeFrozenStates())
-        self.assertTrue(meeting2.queryState() in meeting1.getBeforeFrozenStates())
+        self.assertTrue(meeting1.queryState() in meeting1.getStatesBefore('frozen'))
+        self.assertTrue(meeting2.queryState() in meeting2.getStatesBefore('frozen'))
         self.assertTrue(meeting1.getDate() < meeting2.getDate())
         self.assertEqual(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting1)
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject')
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         # freeze meeting1, meeting2 is used
         self.freezeMeeting(meeting1)
-        self.assertFalse(meeting1.queryState() in meeting1.getBeforeFrozenStates())
+        self.assertFalse(meeting1.queryState() in meeting1.getStatesBefore('frozen'))
         self.assertEqual(item.getMeetingToInsertIntoWhenNoCurrentMeetingObject(), meeting2)
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject')
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
@@ -2266,15 +2266,16 @@ class testMeeting(PloneMeetingTestCase):
         # cleanUp zmcl.load_config because it impact other tests
         zcml.cleanUp()
 
-    def test_pm_GetBeforeFrozenStates(self):
-        """This should return states before the 'frozen' state.
+    def test_pm_GetStatesBefore(self):
+        """This should return states before a given state.
+           Essentially used to get states before the 'frozen' state.
            Test this especially because it is cached.
            This test is very WF specific and only works with the base meeting_workflow."""
         cfg = self.meetingConfig
         cfg2 = self.meetingConfig2
         if 'no_publication' not in cfg.listWorkflowAdaptations() or \
            'no_publication' not in cfg2.listWorkflowAdaptations():
-            pm_logger.info("Bypassing test test_pm_GetBeforeFrozenStates because "
+            pm_logger.info("Bypassing test test_pm_GetStatesBefore because "
                            "it needs the 'no_publication' workflow adaptation.")
             return
 
@@ -2287,35 +2288,35 @@ class testMeeting(PloneMeetingTestCase):
 
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=DateTime('2018/04/09'))
-        self.assertEqual(sorted(meeting.getBeforeFrozenStates()),
+        self.assertEqual(sorted(meeting.getStatesBefore('frozen')),
                          ['created', 'published'])
         # use the no_publication WF adaptation to remove state 'published'
         cfg.setWorkflowAdaptations(('no_publication', ))
         # do not use at_post_edit_script that does a cleanRamCache()
         cfg.registerPortalTypes()
         transaction.commit()
-        self.assertEqual(sorted(meeting.getBeforeFrozenStates()),
+        self.assertEqual(sorted(meeting.getStatesBefore('frozen')),
                          ['created'])
         cfg.setWorkflowAdaptations(())
         # do not use at_post_edit_script that does a cleanRamCache()
         cfg.registerPortalTypes()
         transaction.commit()
-        self.assertEqual(sorted(meeting.getBeforeFrozenStates()),
+        self.assertEqual(sorted(meeting.getStatesBefore('frozen')),
                          ['created', 'published'])
 
         # different for 2 meetingConfigs
         self.setMeetingConfig(cfg2.getId())
         meeting2 = self.create('Meeting', date=DateTime('2018/04/09'))
-        self.assertEqual(sorted(meeting2.getBeforeFrozenStates()),
+        self.assertEqual(sorted(meeting2.getStatesBefore('frozen')),
                          ['created', 'published'])
         cfg2.setWorkflowAdaptations(('no_publication', ))
         cfg2.registerPortalTypes()
         transaction.commit()
 
         # different values for different meetings
-        self.assertEqual(sorted(meeting.getBeforeFrozenStates()),
+        self.assertEqual(sorted(meeting.getStatesBefore('frozen')),
                          ['created', 'published'])
-        self.assertEqual(sorted(meeting2.getBeforeFrozenStates()),
+        self.assertEqual(sorted(meeting2.getStatesBefore('frozen')),
                          ['created'])
 
         # if no frozen state found, every states are considered as before frozen
@@ -2323,7 +2324,7 @@ class testMeeting(PloneMeetingTestCase):
         meeting_wf = self.wfTool.get('meeting_workflow')
         meeting_wf.states.deleteStates(['frozen'])
         cfg.at_post_edit_script()
-        self.assertEqual(sorted(meeting.getBeforeFrozenStates()),
+        self.assertEqual(sorted(meeting.getStatesBefore('frozen')),
                          ['archived', 'closed', 'created', 'decided', 'published'])
 
     def test_pm_GetPrettyLink(self):

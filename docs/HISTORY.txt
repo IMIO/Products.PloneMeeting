@@ -19,6 +19,10 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Removed config.MEETING_NOT_CLOSED_STATES constant that is useless since we have the
   Meeting.getBeforeFrozenStates method.  Also optimized the Meeting._availableItemsQuery to only compute
   meetingUids when necessary.
+- Make sure ToolPloneMeeting.pasteItems do not change workflow_history from PersistentMapping to dict or imio.actionspanel
+  fails to abort changes that occured to item review_state in case an exception is raised.
+- Replaced Meeting.getBeforeFrozenStates by Meeting.getStatesBefore('frozen') as we need the same method to get states
+  before the 'published' states Meeting.getStatesBefore('published') to protect MeetingItemWorkflowConditions.mayPublish.
 
 4.1b9 (2018-05-09)
 ------------------

@@ -27,6 +27,7 @@ from os import path
 
 from AccessControl import Unauthorized
 from DateTime import DateTime
+from persistent.mapping import PersistentMapping
 from Products.Five import zcml
 
 from zope.annotation.interfaces import IAnnotations
@@ -1559,7 +1560,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # does not fail if no workflow_history
         item.workflow_history[item.workflow_history.keys()[0]] = {}
         self.assertEquals(previous_review_state(item)(), _marker)
-        item.workflow_history = {}
+        item.workflow_history = PersistentMapping()
         self.assertEquals(previous_review_state(item)(), _marker)
 
     def test_pm_WFHistoryAndDAtaChangesHistoryAreSeparated(self):
@@ -2299,7 +2300,7 @@ class testMeetingItem(PloneMeetingTestCase):
         for tr in self.TRANSITIONS_FOR_CLOSING_MEETING_2:
             if tr in self.transitions(meeting):
                 self.do(meeting, tr)
-            if meeting.queryState() not in meeting.getBeforeFrozenStates():
+            if meeting.queryState() not in meeting.getStatesBefore('frozen'):
                 self.failUnless(lateItem.wfConditions().isLateFor(meeting))
             else:
                 self.failIf(lateItem.wfConditions().isLateFor(meeting))

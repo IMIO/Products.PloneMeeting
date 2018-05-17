@@ -319,7 +319,9 @@ class MeetingItemWorkflowConditions(object):
     def mayPublish(self):
         res = False
         if _checkPermission(ReviewPortalContent, self.context):
-            res = True
+            meeting = self.context.getMeeting()
+            if meeting.queryState() not in meeting.getStatesBefore('published'):
+                res = True
         return res
 
     security.declarePublic('mayFreeze')
@@ -328,7 +330,7 @@ class MeetingItemWorkflowConditions(object):
         res = False
         if _checkPermission(ReviewPortalContent, self.context):
             meeting = self.context.hasMeeting() and self.context.getMeeting() or None
-            if meeting and not meeting.queryState() in meeting.getBeforeFrozenStates():
+            if meeting and not meeting.queryState() in meeting.getStatesBefore('frozen'):
                 res = True
         return res
 
@@ -354,7 +356,7 @@ class MeetingItemWorkflowConditions(object):
 
     def isLateFor(self, meeting):
         '''See doc in interfaces.py.'''
-        if meeting and (not meeting.queryState() in meeting.getBeforeFrozenStates()) and \
+        if meeting and (not meeting.queryState() in meeting.getStatesBefore('frozen')) and \
            (meeting.UID() == self.context.getPreferredMeeting()):
             return True
         return False
@@ -512,7 +514,7 @@ class MeetingItemWorkflowActions(object):
         meeting.insertItem(self.context, forceNormal=self._forceInsertNormal())
         # If the meeting is already frozen and this item is a "late" item,
         # I must set automatically the item to "itemfrozen".
-        before_frozen_states = meeting.getBeforeFrozenStates()
+        before_frozen_states = meeting.getStatesBefore('frozen')
         if before_frozen_states and meeting.queryState() not in before_frozen_states:
             self._freezePresentedItem()
         # We may have to send a mail.
@@ -2405,7 +2407,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # also in case no meetingStates, a closed meeting could be returned, check
             # that current user may edit returned meeting
             if meeting.wfConditions().mayAcceptItems() and (
-                    meeting.queryState() in meeting.getBeforeFrozenStates() or
+                    meeting.queryState() in meeting.getStatesBefore('frozen') or
                     self.wfConditions().isLateFor(meeting)):
                 return meeting
         return None
@@ -2970,7 +2972,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         item = self.getSelf()
         meeting = item.getMeeting()
         return bool(
-            meeting and meeting.queryState() not in meeting.getBeforeFrozenStates())
+            meeting and meeting.queryState() not in meeting.getStatesBefore('frozen'))
 
     security.declarePublic('updateItemReference')
 
