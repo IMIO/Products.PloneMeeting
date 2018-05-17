@@ -85,6 +85,7 @@ from Products.PloneMeeting.config import DEFAULT_MEETING_COLUMNS
 from Products.PloneMeeting.config import ITEM_ICON_COLORS
 from Products.PloneMeeting.config import MEETING_CONFIG
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
+from Products.PloneMeeting.config import MEETING_STATES_ACCEPTING_ITEMS
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETINGREVIEWERS
 from Products.PloneMeeting.config import MEETINGROLES
@@ -5753,10 +5754,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                                 xmlpath=os.path.dirname(__file__) +
                                                 '/faceted_conf/default_dashboard_widgets.xml')
 
-    def getMeetingsAcceptingItemsAdditionalManagerStates(self):
-        '''See doc in interfaces.py.'''
-        return ('decided', 'published', 'decisions_published')
-
     def getMeetingsAcceptingItems_cachekey(method, self, review_states=('created', 'frozen'), inTheFuture=False):
         '''cachekey method for self.getMeetingsAcceptingItems.'''
         return (self, str(self.REQUEST._debug), review_states, inTheFuture)
@@ -5770,7 +5767,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # he is able to add a meetingitem to a 'decided' meeting.
         # except if we specifically restricted given p_review_states.
         if review_states == ('created', 'frozen') and tool.isManager(self):
-            review_states += self.adapted().getMeetingsAcceptingItemsAdditionalManagerStates()
+            review_states += MEETING_STATES_ACCEPTING_ITEMS
 
         query = {'portal_type': self.getMeetingTypeName(),
                  'review_state': review_states,
