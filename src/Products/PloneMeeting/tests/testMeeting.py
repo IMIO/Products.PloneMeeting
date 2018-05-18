@@ -2290,6 +2290,8 @@ class testMeeting(PloneMeetingTestCase):
         meeting = self.create('Meeting', date=DateTime('2018/04/09'))
         self.assertEqual(sorted(meeting.getStatesBefore('frozen')),
                          ['created', 'published'])
+        self.assertEqual(sorted(meeting.getStatesBefore('published')),
+                         ['created'])
         # use the no_publication WF adaptation to remove state 'published'
         cfg.setWorkflowAdaptations(('no_publication', ))
         # do not use at_post_edit_script that does a cleanRamCache()
@@ -2297,12 +2299,17 @@ class testMeeting(PloneMeetingTestCase):
         transaction.commit()
         self.assertEqual(sorted(meeting.getStatesBefore('frozen')),
                          ['created'])
+        # state not found, every states are returned
+        self.assertEqual(sorted(meeting.getStatesBefore('published')),
+                         ['archived', 'closed', 'created', 'decided', 'frozen'])
         cfg.setWorkflowAdaptations(())
         # do not use at_post_edit_script that does a cleanRamCache()
         cfg.registerPortalTypes()
         transaction.commit()
         self.assertEqual(sorted(meeting.getStatesBefore('frozen')),
                          ['created', 'published'])
+        self.assertEqual(sorted(meeting.getStatesBefore('published')),
+                         ['created'])
 
         # different for 2 meetingConfigs
         self.setMeetingConfig(cfg2.getId())
@@ -2316,8 +2323,12 @@ class testMeeting(PloneMeetingTestCase):
         # different values for different meetings
         self.assertEqual(sorted(meeting.getStatesBefore('frozen')),
                          ['created', 'published'])
+        self.assertEqual(sorted(meeting.getStatesBefore('published')),
+                         ['created'])
         self.assertEqual(sorted(meeting2.getStatesBefore('frozen')),
                          ['created'])
+        self.assertEqual(sorted(meeting2.getStatesBefore('published')),
+                         ['archived', 'closed', 'created', 'decided', 'frozen'])
 
         # if no frozen state found, every states are considered as before frozen
         # connect 'published' state to 'decided'
