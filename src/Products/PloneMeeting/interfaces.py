@@ -447,8 +447,6 @@ class IMeetingItemWorkflowConditions(Interface):
            several 'back' transitions from the same state.'''
     def mayPublish():
         '''May one publish me?'''
-    def meetingIsPublished():
-        '''Is the meeting where I am included published ?'''
     def mayFreeze():
         '''May one freeze me ?'''
     def mayArchive():
@@ -661,8 +659,6 @@ class IMeetingConfigDocumentation:
            a plugin that added his own workflowAdaptations validates it.'''
     def onEdit(isCreated):
         '''Called when an object p_isCreated or edited.'''
-    def getMeetingsAcceptingItemsAdditionalManagerStates():
-        '''Additional states for MeetingManagers in which meetings are still accepting items.'''
     def extraAdviceTypes(self):
         """Method for defining extra advice types, needs to return a list of
            ids that will be used for id and translated for title."""

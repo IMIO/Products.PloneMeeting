@@ -142,8 +142,7 @@ class AnnexableAdapter(object):
                 self.context.updateLocalRoles(invalidate=True)
 
             # Potentially I must notify MeetingManagers through email.
-            if self.context.wfConditions().meetingIsPublished():
-                self.context.sendMailIfRelevant('annexAdded', 'MeetingManager', isRole=True)
+            self.context.sendMailIfRelevant('annexAdded', 'MeetingManager', isRole=True)
 
         # After processForm that itself calls at_post_create_script,
         # current user may loose permission to edit

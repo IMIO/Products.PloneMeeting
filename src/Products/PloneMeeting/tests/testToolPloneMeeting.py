@@ -23,8 +23,9 @@
 #
 
 import transaction
-from DateTime import DateTime
 from AccessControl import Unauthorized
+from DateTime import DateTime
+from persistent.mapping import PersistentMapping
 from zope.i18n import translate
 from zope.testing.testrunner.find import find_test_files
 
@@ -41,6 +42,7 @@ from plone.dexterity.utils import createContentInContainer
 
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.utils import get_annexes
 
 
@@ -341,6 +343,46 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # Now check that annex types are kept
         self.failUnless(get_annexes(res1)[0].content_category)
         self.failUnless(get_annexes(res1)[1].content_category)
+
+    def test_pm_PasteItemWorkflowHistory(self):
+        """Make sure paste item does not change type of workflow_history that
+           must be a PersistentMapping in various cases."""
+        cfg2 = self.meetingConfig2
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item_wf_id = self.wfTool.getWorkflowsFor(item)[0].id
+        self.assertTrue(isinstance(item.workflow_history, PersistentMapping))
+        self.addAnnex(item)
+        destFolder = item.getParentNode()
+        copiedData = destFolder.manage_copyObjects(ids=[item.id, ])
+        res1 = self.tool.pasteItem(destFolder, copiedData, copyAnnexes=True)
+        self.assertTrue(isinstance(res1.workflow_history, PersistentMapping))
+        self.assertNotEqual(item.workflow_history[item_wf_id][0]['time'],
+                            res1.workflow_history[item_wf_id][0]['time'])
+        self.assertEqual(item.workflow_history[item_wf_id][0]['review_state'],
+                         res1.workflow_history[item_wf_id][0]['review_state'])
+        res2 = self.tool.pasteItem(destFolder, copiedData, newPortalType=item.portal_type)
+        self.assertTrue(isinstance(res2.workflow_history, PersistentMapping))
+        self.assertNotEqual(item.workflow_history[item_wf_id][0]['time'],
+                            res2.workflow_history[item_wf_id][0]['time'])
+        self.assertEqual(item.workflow_history[item_wf_id][0]['review_state'],
+                         res2.workflow_history[item_wf_id][0]['review_state'])
+
+        # now test while using newPortalType and WF initial_state is different in new WF
+        if 'items_come_validated' not in cfg2.listWorkflowAdaptations():
+            pm_logger.info(
+                "Could not test ToolPloneMeeting.pasteItem for items using different WF initial_states, "
+                "because WF adaptation 'items_come_validated' is not available for meetingConfig2.")
+            return
+        cfg2.setWorkflowAdaptations(('items_come_validated', ))
+        cfg2.at_post_edit_script()
+        res3 = self.tool.pasteItem(destFolder, copiedData, newPortalType=cfg2.getItemTypeName())
+        self.assertTrue(isinstance(res3.workflow_history, PersistentMapping))
+        self.assertFalse(item_wf_id in res3.workflow_history)
+        res3_wf_id = self.wfTool.getWorkflowsFor(res3)[0].id
+        self.assertNotEqual(item.workflow_history[item_wf_id][0]['time'],
+                            res3.workflow_history[res3_wf_id][0]['time'])
+        self.assertEqual(res3.workflow_history[res3_wf_id][0]['review_state'], 'validated')
 
     def test_pm_ShowPloneMeetingTab(self):
         '''Test when PM tabs are shown.'''

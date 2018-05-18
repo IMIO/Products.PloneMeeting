@@ -60,7 +60,6 @@ from Products.PloneMeeting.browser.itemchangeorder import _to_integer
 from Products.PloneMeeting.browser.itemchangeorder import _is_integer
 from Products.PloneMeeting.browser.itemchangeorder import _use_same_integer
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
-from Products.PloneMeeting.config import MEETING_NOT_CLOSED_STATES
 from Products.PloneMeeting.config import MEETING_STATES_ACCEPTING_ITEMS
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
@@ -82,6 +81,7 @@ from Products.PloneMeeting.utils import getLastEvent
 from Products.PloneMeeting.utils import getHeldPositionObjs
 from Products.PloneMeeting.utils import getFieldVersion
 from Products.PloneMeeting.utils import getDateFromDelta
+from Products.PloneMeeting.utils import getStatesBefore
 from Products.PloneMeeting.utils import hasHistory
 from Products.PloneMeeting.utils import ItemDuplicatedFromConfigEvent
 from Products.PloneMeeting.utils import MeetingLocalRolesUpdatedEvent
@@ -113,14 +113,8 @@ class MeetingWorkflowConditions(object):
     implements(IMeetingWorkflowConditions)
     security = ClassSecurityInfo()
 
-    # Item states when a decision was not take yet.
-    notDecidedStates = ('presented', 'itempublished', 'itemfrozen')
-    notDecidedStatesPlusDelayed = notDecidedStates + ('delayed',)
     # Item states when a final decision is taken
     archivableStates = ('confirmed', 'delayed', 'refused')
-
-    # Meeting states for meetings accepting items
-    acceptItemsStates = ('created', 'published', 'frozen', 'decided')
 
     def __init__(self, meeting):
         self.context = meeting
@@ -142,7 +136,7 @@ class MeetingWorkflowConditions(object):
 
     def mayAcceptItems(self):
         if _checkPermission(ReviewPortalContent, self.context) and \
-           (self.context.queryState() in self.acceptItemsStates):
+           (self.context.queryState() in MEETING_STATES_ACCEPTING_ITEMS):
             return True
 
     security.declarePublic('mayPublish')
@@ -887,20 +881,22 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                 'o': 'plone.app.querystring.operation.selection.is',
                 'v': 'validated'},
                ]
-        # First, get meetings accepting items for which the date is lower or
-        # equal to the date of this meeting (self)
-        catalog = api.portal.get_tool('portal_catalog')
-        meetings = catalog(
-            portal_type=cfg.getMeetingTypeName(),
-            getDate={'query': meeting.getDate(), 'range': 'max'}, )
-        meetingUids = [b.getObject().UID() for b in meetings]
-        meetingUids.append(ITEM_NO_PREFERRED_MEETING_VALUE)
 
-        if not meeting.queryState() in MEETING_NOT_CLOSED_STATES:
+        # before frozen state, accept items having any preferred meeting
+        if meeting.queryState() in self.getStatesBefore('frozen'):
+            # Get meetings accepting items for which the date is lower or
+            # equal to the date of this meeting (self)
+            catalog = api.portal.get_tool('portal_catalog')
+            meetings = catalog(
+                portal_type=cfg.getMeetingTypeName(),
+                getDate={'query': meeting.getDate(), 'range': 'max'}, )
+            meetingUids = [b.UID for b in meetings]
+            meetingUids.append(ITEM_NO_PREFERRED_MEETING_VALUE)
             res.append({'i': 'getPreferredMeeting',
                         'o': 'plone.app.querystring.operation.selection.is',
                         'v': meetingUids})
         else:
+            # after frozen state, only query items for which preferred meeting is self
             res.append({'i': 'getPreferredMeeting',
                         'o': 'plone.app.querystring.operation.selection.is',
                         'v': meeting.UID()})
@@ -1370,38 +1366,19 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             return None
         return brains[0].getObject()
 
-    def getBeforeFrozenStates_cachekey(method, self):
-        '''cachekey method for self.getBeforeFrozenStates.'''
-        # do only re-compute if cfg changed
+    def getStatesBefore_cachekey(method, self, review_state):
+        '''cachekey method for self.getStatesBefore.'''
+        # do only re-compute if cfg changed or params changed
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        return (cfg.getId(), cfg._p_mtime)
+        return (cfg.getId(), cfg._p_mtime, review_state)
 
-    @ram.cache(getBeforeFrozenStates_cachekey)
-    def getBeforeFrozenStates(self):
+    @ram.cache(getStatesBefore_cachekey)
+    def getStatesBefore(self, review_state):
         """
-          Returns states before the meeting is frozen, so states where
-          an item is still not considered as a late item.
+          Returns states before the p_review_state state.
         """
-        wfTool = api.portal.get_tool('portal_workflow')
-        meetingWF = wfTool.getWorkflowsFor(self)[0]
-        # get the 'frozen' state
-        if 'frozen' not in meetingWF.states:
-            # every states are 'not frozen' states
-            return meetingWF.states.keys()
-        frozenState = meetingWF.states['frozen']
-        # get back to the meeting WF initial state
-        res = []
-        initial_state = meetingWF.initial_state
-        new_state_id = ''
-        new_state = frozenState
-        while not new_state_id == initial_state:
-            for transition in new_state.transitions:
-                if transition.startswith('backTo'):
-                    new_state_id = meetingWF.transitions[transition].new_state_id
-                    res.append(new_state_id)
-                    new_state = meetingWF.states[new_state_id]
-        return res
+        return getStatesBefore(self, review_state)
 
     security.declareProtected("Modify portal content", 'insertItem')
 

@@ -132,7 +132,7 @@ def onMeetingTransition(meeting, event):
     do(action, event)
     # update items references if meeting is going from beforeFrozen state
     # to frozen state or the other way round
-    beforeFrozenStates = meeting.getBeforeFrozenStates()
+    beforeFrozenStates = meeting.getStatesBefore('frozen')
     if (event.old_state.id in beforeFrozenStates and
         event.new_state.id not in beforeFrozenStates) or \
        (event.old_state.id not in beforeFrozenStates and
@@ -547,8 +547,7 @@ def onAnnexAdded(annex, event):
                 parent.updateLocalRoles(invalidate=True)
 
             # Potentially I must notify MeetingManagers through email.
-            if parent.wfConditions().meetingIsPublished():
-                parent.sendMailIfRelevant('annexAdded', 'MeetingManager', isRole=True)
+            parent.sendMailIfRelevant('annexAdded', 'MeetingManager', isRole=True)
 
         # update modificationDate, it is used for caching and co
         parent.setModificationDate(DateTime())

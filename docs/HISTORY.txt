@@ -12,6 +12,17 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 
 - Removed check on "member.getRoles()" in the actions_panel __call__ cachekey.
 - Added migration step to ensure that annexes mimetype is correct.
+- Fixed bug in advice infos popup where the displayed author was item creator instead advice creator.
+- Removed MeetingConfig.getMeetingsAcceptingItemsAdditionalManagerStates, use the config.MEETING_STATES_ACCEPTING_ITEMS
+  to know in which states a meeting may accept items.  Use also config.MEETING_STATES_ACCEPTING_ITEMS instead
+  Meeting.acceptItemsStates that was removed as well.
+- Removed config.MEETING_NOT_CLOSED_STATES constant that is useless since we have the
+  Meeting.getBeforeFrozenStates method.  Also optimized the Meeting._availableItemsQuery to only compute
+  meetingUids when necessary.
+- Make sure ToolPloneMeeting.pasteItems do not change workflow_history from PersistentMapping to dict or imio.actionspanel
+  fails to abort changes that occured to item review_state in case an exception is raised.
+- Replaced Meeting.getBeforeFrozenStates by Meeting.getStatesBefore('frozen') as we need the same method to get states
+  before the 'published' states Meeting.getStatesBefore('published') to protect MeetingItemWorkflowConditions.mayPublish.
 
 4.1b9 (2018-05-09)
 ------------------

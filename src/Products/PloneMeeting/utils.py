@@ -1577,6 +1577,30 @@ def reviewersFor(workflow_id=None):
     return MEETINGREVIEWERS.get('*')
 
 
+def getStatesBefore(obj, review_state_id):
+    """
+      Returns states before the p_review_state_id state.
+    """
+    wfTool = api.portal.get_tool('portal_workflow')
+    wf = wfTool.getWorkflowsFor(obj)[0]
+    # get the review_state state
+    if review_state_id not in wf.states:
+        # return every states
+        return wf.states.keys()
+    # get back to the meeting WF initial state
+    res = []
+    initial_state = wf.initial_state
+    new_state_id = ''
+    new_state = wf.states[review_state_id]
+    while not new_state_id == initial_state:
+        for transition in new_state.transitions:
+            if transition.startswith('backTo'):
+                new_state_id = wf.transitions[transition].new_state_id
+                res.append(new_state_id)
+                new_state = wf.states[new_state_id]
+    return res
+
+
 class AdvicesUpdatedEvent(ObjectEvent):
     implements(IAdvicesUpdatedEvent)
 

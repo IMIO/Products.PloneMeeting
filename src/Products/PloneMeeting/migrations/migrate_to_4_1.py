@@ -3,6 +3,7 @@
 import logging
 import mimetypes
 import os
+from persistent.mapping import PersistentMapping
 from zope.interface import alsoProvides
 from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
 from plone import api
@@ -139,6 +140,22 @@ class Migrate_To_4_1(Migrator):
                 annex.file.contentType = mimetype
         logger.info('Done.')
 
+    def _fixItemsWorkflowHistoryType(self):
+        """A bug in ToolPloneMeeting.pasteItems was changing the workflow_history
+           to a simple dict.  Make sure existing items use a PersistentMapping."""
+        logger.info('Fixing items workflow_history...')
+        catalog = api.portal.get_tool('portal_catalog')
+        brains = catalog(meta_type=['MeetingItem'])
+        i = 0
+        for brain in brains:
+            item = brain.getObject()
+            if not isinstance(item.workflow_history, PersistentMapping):
+                i = i + 1
+                persisted_workflow_history = PersistentMapping(item.workflow_history)
+                item.workflow_history = persisted_workflow_history
+        logger.info('Fixed workflow_history for {0} items.'.format(i))
+        logger.info('Done.')
+
     def run(self, step=None):
         logger.info('Migrating to PloneMeeting 4.1...')
 
@@ -174,6 +191,7 @@ class Migrate_To_4_1(Migrator):
         self._removeMCPortalTabs()
         self._manageContentsKeptWhenItemSentToOtherMC()
         self._fixAnnexesMimeType()
+        self._fixItemsWorkflowHistoryType()
 
 
 # The migration function -------------------------------------------------------
@@ -189,7 +207,8 @@ def migrate(context):
        7) Synch searches to mark searches sub folders with the IBatchActionsMarker;
        8) Remove MeetingConfig tabs from portal_actions portal_tabs;
        9) Migrate MeetingConfig.keepAdvicesOnSentToOtherMC to MeetingConfig.contentsKeptOnSentToOtherMC;
-       10) Fix annex mimetype in case there was a problem with old annexes using uncomplete mimetypes_registry.
+       10) Fix annex mimetype in case there was a problem with old annexes using uncomplete mimetypes_registry;
+       11) Make sure workflow_history stored on items is a PersistentMapping.
     '''
     migrator = Migrate_To_4_1(context)
     migrator.run()

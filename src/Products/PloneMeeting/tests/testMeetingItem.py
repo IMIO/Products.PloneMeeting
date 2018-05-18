@@ -27,6 +27,7 @@ from os import path
 
 from AccessControl import Unauthorized
 from DateTime import DateTime
+from persistent.mapping import PersistentMapping
 from Products.Five import zcml
 
 from zope.annotation.interfaces import IAnnotations
@@ -1559,7 +1560,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # does not fail if no workflow_history
         item.workflow_history[item.workflow_history.keys()[0]] = {}
         self.assertEquals(previous_review_state(item)(), _marker)
-        item.workflow_history = {}
+        item.workflow_history = PersistentMapping()
         self.assertEquals(previous_review_state(item)(), _marker)
 
     def test_pm_WFHistoryAndDAtaChangesHistoryAreSeparated(self):
@@ -2266,7 +2267,7 @@ class testMeetingItem(PloneMeetingTestCase):
           is about inserting it in a living meeting.  An item is supposed late when
           the date of validation is newer than the date of freeze of the meeting
           we want to insert the item in.  A late item can be inserted in a meeting when
-          the meeting is in MEETING_NOT_CLOSED_STATES states.
+          the meeting is in no more in before frozen states.
         '''
         # no matter who create the item, do everything as MeetingManager
         self.changeUser('pmManager')
@@ -2287,12 +2288,10 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failIf(lateItem.wfConditions().isLateFor(meeting))
         # set preferredMeeting so it is considered as late now...
         lateItem.setPreferredMeeting(meeting.UID())
-        # if the meeting is not in relevant states (MEETING_NOT_CLOSED_STATES),
-        # the item is not considered as late...
+        # if the meeting is not in relevant states, the item is not considered as late...
         self.backToState(meeting, 'created')
         self.failIf(lateItem.wfConditions().isLateFor(meeting))
         # now make the item considered as late item again and test
-        # every states of MEETING_NOT_CLOSED_STATES
         self.freezeMeeting(meeting)
         self.backToState(lateItem, 'itemcreated')
         self.validateItem(lateItem)
@@ -2301,7 +2300,7 @@ class testMeetingItem(PloneMeetingTestCase):
         for tr in self.TRANSITIONS_FOR_CLOSING_MEETING_2:
             if tr in self.transitions(meeting):
                 self.do(meeting, tr)
-            if meeting.queryState() not in meeting.getBeforeFrozenStates():
+            if meeting.queryState() not in meeting.getStatesBefore('frozen'):
                 self.failUnless(lateItem.wfConditions().isLateFor(meeting))
             else:
                 self.failIf(lateItem.wfConditions().isLateFor(meeting))
@@ -3188,6 +3187,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEquals(
             [m.id for m in cfg.getMeetingsAcceptingItems()],
             [meeting.getId()])
+        self.assertTrue(meeting.wfConditions().mayAcceptItems())
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
         # not for creators
         self.changeUser('pmCreator1')

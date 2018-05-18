@@ -227,10 +227,8 @@ HISTORY_COMMENT_NOT_VIEWABLE = "<span class='discreet'>Access to this comment is
 ADVICE_STATES_ALIVE = ('advice_under_edit', )
 ADVICE_STATES_ENDED = ('advice_given', )
 
-# In those states, the meeting is not closed.
-MEETING_NOT_CLOSED_STATES = ('published', 'frozen', 'decided', 'decisions_published')
 # In those states, the meeting accept items, normal or late
-MEETING_STATES_ACCEPTING_ITEMS = ('created', 'frozen', 'published', 'decided')
+MEETING_STATES_ACCEPTING_ITEMS = ('created', 'frozen', 'published', 'decided', 'decisions_published')
 
 # In those states, an item is not linked to a meeting
 ITEM_STATES_NOT_LINKED_TO_MEETING = (
