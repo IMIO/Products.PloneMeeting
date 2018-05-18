@@ -3,6 +3,10 @@
 from collective.contact.core.content.held_position import HeldPosition
 
 
+class IPMHeldPosition(object):
+    """ """
+
+
 class PMHeldPosition(HeldPosition):
     """Override HeldPosition to add some fields and methods."""
 

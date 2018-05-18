@@ -21,11 +21,11 @@
       <script language="javascript">
       // some checkbowes may not be checked toghether
       var only_one_selected = ['attendee', 'excused', 'absent', 'lateAttendee'];
-      function showOrHideReplField(userId, show) {
+      function showOrHideReplField(userId, hide_select, enable_user) {
         // Shows of hides "replacement" field for p_userId, depending on p_show.
         var repl = document.getElementById('muser_'+userId+'_replacement');
         if (repl) {
-          if (!show) {
+          if (hide_select) {
             // Hide the field, and set 'nobody' as replacement.
             repl.value = '';
             repl.style.display = 'none';
@@ -43,7 +43,7 @@
         for (var i=0; i<selectWidgets.length; i++) {
           for (var j=0; j<selectWidgets[i].options.length; j++){
             if (selectWidgets[i].options[j].value == userId) {
-              if (show) {
+              if (enable_user == 0) {
                 // We will hide this option, and unselect it if it was selected.
                 if (selectWidgets[i].options[j].selected) {
                   selectWidgets[i].value = '';
@@ -51,7 +51,7 @@
                 selectWidgets[i].options[j].style.display = 'none';
                 selectWidgets[i].options[j].disabled = true;
               }
-              else {
+              else if (enable_user == 1) {
                 // We need to show it.
                 selectWidgets[i].options[j].style.display = '';
                 selectWidgets[i].options[j].disabled = false;
@@ -77,15 +77,16 @@
                 else {signer_box.disabled = false;}
             }
 
-        // Must we show or hide the "replacements" column?
-        if (!box.checked && (boxType == 'attendee')) {
-          showOrHideReplField(userId, 1);
-        }
-        if ((box.checked && (boxType == 'excused')) ||
-           (box.checked && (boxType == 'absent'))) {
-          showOrHideReplField(userId, 2);
+        if (boxType == 'attendee' && box.checked) {
+            showOrHideReplField(userId, hide_select=1, enable_user=1);
+        } else if (boxType == 'attendee' && !box.checked) {
+            showOrHideReplField(userId, hide_select=1, enable_user=0);
+        } else if (boxType == 'excused' || boxType == 'absent') {
+            if (box.checked) {
+                  showOrHideReplField(userId, hide_select=0, enable_user=0);
             }
-        else {showOrHideReplField(userId, 0);}
+            else {showOrHideReplField(userId, hide_select=1, enable_user=0);}
+            }
       }
       </script>
 
@@ -238,7 +239,7 @@
                   <option tal:define="ouid oUser/UID;
                                       show python: test(errors, request.get('muser_%s_attendee'%ouid,'')=='on', ouid in attendees)"
                           tal:condition="python: ouid != muid"
-                          tal:content="oUser/Title"
+                          tal:content="oUser/get_short_title"
                           tal:attributes="value ouid;
                                           style python: test(show, '', 'display:none');
                                           selected python: test(errors, request.get(sid)==ouid, (muid in userReplacements) and (userReplacements[muid]==ouid))" >
