@@ -189,7 +189,7 @@
           <tbody>
           <tr tal:repeat="mUser allUsers">
           <tal:defines define="muid mUser/UID;">
-            <td><b tal:content="mUser/get_short_title"></b></td>
+            <td><img tal:attributes="src string:${mUser/getIcon}" /> <b tal:content="mUser/get_short_title"></b></td>
             <td align="center">
               <input type="checkbox" class="noborder"
                      tal:define="cbid python: 'muser_%s_attendee' % muid;"
