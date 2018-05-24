@@ -212,18 +212,9 @@
            name="select_row" />
     </configure>
 
-    <configure package="eea.facetednavigation">
-        <browser:page
-            for=".interfaces.IFacetedNavigable"
-            name="facetednavigation_view"
-            template="browser/template/view.pt"
-            class="Products.PloneMeeting.browser.overrides.PMFacetedContainerView"
-            permission="zope2.View"
-        />
     <adapter for="eea.facetednavigation.interfaces.IFacetedNavigable"
              provides="eea.facetednavigation.interfaces.ICriteria"
              factory="Products.PloneMeeting.adapters.Criteria" />
-    </configure>
 
     <!-- Vocabularies -->
     <utility component=".vocabularies.PMExistingPODTemplateFactory"

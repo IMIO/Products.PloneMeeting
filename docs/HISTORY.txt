@@ -10,7 +10,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 4.1b11 (unreleased)
 -------------------
 
-- Nothing changed yet.
+- Adapted code to new behavior of collective.eeafaceted.collectionwidget where the redirection to the default collection
+  is done by the facetenavigation_view and no more by the widget.default method.
 
 
 4.1b10 (2018-05-22)
