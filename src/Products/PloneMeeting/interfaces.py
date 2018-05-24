@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
 from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
+from collective.eeafaceted.collectionwidget.interfaces import ICollectiveEeafacetedCollectionwidgetLayer
 from ftw.labels.interfaces import ILabelSupport
 from zope.interface import Interface
 from zope.component.interfaces import IObjectEvent
-from zope.publisher.interfaces.browser import IBrowserRequest
 
 
 class IAdvicesUpdatedEvent(IObjectEvent):
@@ -71,9 +71,10 @@ class IRedirect(Interface):
         """
 
 
-class IPloneMeetingLayer(IBrowserRequest):
+class IPloneMeetingLayer(ICollectiveEeafacetedCollectionwidgetLayer):
     """
-      Define a layer so some elements are only added for it
+      Define a layer so some elements are only added for it.
+      We inherit from other packages layers we want to be able to override.
     """
     pass
 

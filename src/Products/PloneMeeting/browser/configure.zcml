@@ -793,14 +793,15 @@
         allowed_attributes="topLevelTabs"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer" />
 
+    <!-- Override facetednavigation_view -->
     <configure package="eea.facetednavigation">
         <browser:page
             for=".interfaces.IFacetedNavigable"
             name="facetednavigation_view"
             template="browser/template/view.pt"
-            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
             class="Products.PloneMeeting.browser.overrides.PMFacetedContainerView"
-            permission="zope2.View" />
+            permission="zope2.View"
+            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer "/>
     </configure>
 
 </configure>
