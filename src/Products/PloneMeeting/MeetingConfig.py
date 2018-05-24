@@ -2224,6 +2224,22 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
+    LinesField(
+        name='orderedContacts',
+        widget=InAndOutWidget(
+            description="OrderedContacts",
+            description_msgid="ordered_contacts_descr",
+            label='Orderedcontacts',
+            label_msgid='PloneMeeting_label_orderedContacts',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="contacts",
+        multiValued=1,
+        vocabulary='listSelectableContacts',
+        default=defValues.orderedContacts,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
     StringField(
         name='meetingItemTemplateToStoreAsAnnex',
         widget=SelectionWidget(
@@ -2826,7 +2842,21 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         else:
             return self.getField('maxShownListings').get(self, **kwargs)
 
-    security.declarePublic('listConfigGroups')
+    security.declarePrivate('listSelectableContacts')
+
+    def listSelectableContacts(self):
+        """ """
+        catalog = api.portal.get_tool('portal_catalog')
+        brains = catalog(portal_type='held_position', sort_on='sortable_title')
+        res = []
+        for brain in brains:
+            held_position = brain.getObject()
+            res.append(
+                (held_position.UID(),
+                 held_position.get_short_title(include_usages=True)))
+        return DisplayList(res)
+
+    security.declarePrivate('listConfigGroups')
 
     def listConfigGroups(self):
         """ """
@@ -5098,6 +5128,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 signatures = listifySignatures(signatures)
         return signatures
 
+    security.declarePublic('getOrderedContacts')
+
+    def getOrderedContacts(self, usages=[], onlyActive=False, **kwargs):
+        '''Overrides field 'orderedContacts' accessor to be able to pass
+           the p_usages and p_onlyActive parameters.  This will filter out
+           selected held_positions on usage and review_state.'''
+        orderedContacts = self.getField('orderedContacts').get(self, **kwargs)
+        return orderedContacts
+
     def getFileTypes_cachekey(method, self, relatedTo='*', typesIds=[], onlySelectable=True, includeSubTypes=True):
         '''cachekey method for self.getFileTypes.'''
         # check last object modified and last time container was modified (element added or removed)
@@ -5346,8 +5385,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('isUsingMeetingUsers')
 
-    def isUsingMeetingUsers(self):
-        ''' Returns True if we are currently using MeetingUsers.'''
+    def isUsingContacts(self):
+        ''' Returns True if we are currently using contacts.'''
         return bool('attendees' in self.getUsedMeetingAttributes())
 
     security.declarePublic('getHeldPositions')
@@ -5360,8 +5399,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             for position_item in positions['children']:
                 position = position_item['item'].getObject()
                 for held_position in position.get_held_positions():
-                    position = held_position.get_position()
-                    if usages and not set(usages).intersection(set(position.usages)):
+                    held_position_usages = held_position.usages or []
+                    if usages and not set(usages).intersection(set(held_position_usages)):
                         continue
                     if not onlyActive or \
                        (onlyActive and wfTool.getInfoFor(held_position, 'review_state') == 'active'):
@@ -5372,7 +5411,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
         portal = api.portal.get()
         wfTool = api.portal.get_tool('portal_workflow')
-        organization = portal.contacts.get('plonegroup-organization').get(self.getId())
+        organization = portal.contacts
         # we need to keep the order and we have sub organization so use buildFolderTree
         # used in the navigation portlet to get the positions in correct order
         positions_tree = buildFolderTree(

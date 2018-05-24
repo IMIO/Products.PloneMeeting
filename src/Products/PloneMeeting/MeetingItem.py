@@ -3004,9 +3004,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if forceUseCertifiedSignaturesOnMeetingConfig:
             return cfg.getCertifiedSignatures(computed=True, listified=True)
 
-        # if we do not use MeetingUsers, compute certified signatures calling
+        # if we do not use contacts, compute certified signatures calling
         # it on the MeetingGroup (that will call the MeetingConfig if nothing defined on it)
-        if not cfg.isUsingMeetingUsers():
+        if not cfg.isUsingContacts():
             # get certified signatures computed, this will return a list with pair
             # of function/signatures, so ['function1', 'name1', 'function2', 'name2', 'function3', 'name3', ]
             # this list is ordered by signature number defined on the MeetingGroup/MeetingConfig

@@ -37,7 +37,7 @@ from collective.iconifiedcategory.interfaces import ICategorizedConfidential
 from collective.iconifiedcategory.interfaces import ICategorizedPrint
 from collective.iconifiedcategory.interfaces import ICategorizedSigned
 from collective.iconifiedcategory import utils as collective_iconifiedcategory_utils
-from eea.facetednavigation.browser.app.view import FacetedContainerView
+from collective.eeafaceted.collectionwidget.browser.views import FacetedDashboardView
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.actionspanel.browser.viewlets import ActionsPanelViewlet
 from imio.actionspanel.browser.views import ActionsPanelView
@@ -345,7 +345,7 @@ class PloneMeetingOverviewControlPanel(OverviewControlPanel):
         return versions
 
 
-class PMFacetedContainerView(FacetedContainerView):
+class PMFacetedContainerView(FacetedDashboardView):
     '''
       Override to disable border on the meetingFolder view and to redirect to correct pmFolder
       in case a user is sent to the pmFolder of another user.
@@ -357,17 +357,44 @@ class PMFacetedContainerView(FacetedContainerView):
         if 'portal_plonemeeting' not in self.context.absolute_url() and \
            not IMeeting.providedBy(self.context):
             self.request.set('disable_border', 1)
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
+
+    def getPloneMeetingFolder(self):
+        '''Returns the current PM folder.'''
+        return self.tool.getPloneMeetingFolder(self.cfg.getId())
+
+    @property
+    def _criteriaHolder(self):
+        '''Override method coming from FacetedRenderer as we know that criteria are stored on the meetingFolder.'''
+        # return corresponding folder in the configuration
+        if self.context.getId().endswith('searches_items'):
+            return self.cfg.searches.searches_items
+        elif self.context.getId().endswith('searches_meetings'):
+            return self.cfg.searches.searches_meetings
+        elif self.context.getId().endswith('searches_decisions'):
+            return self.cfg.searches.searches_decisions
+        else:
+            return self.cfg.searches
 
     def __call__(self):
         """Make sure a user, even a Manager that is not the Zope Manager is redirected
            to it's own pmFolder if it is on the pmFolder of another user."""
+
+        res = super(PMFacetedContainerView, self).__call__()
+
+        if self.request.RESPONSE.status == 302 and \
+           self.context != self._criteriaHolder and \
+           self.request.RESPONSE.getHeader('location').startswith(self.cfg.searches.absolute_url()):
+            self.request.RESPONSE.setHeader('location', self.getPloneMeetingFolder().absolute_url() + '/searches_items')
+
         if not check_zope_admin():
             if self.context.getProperty('meeting_config') and \
                (not self.context.getOwner().getId() == api.user.get_current().getId()):
                 tool = api.portal.get_tool('portal_plonemeeting')
                 userPMFolder = tool.getPloneMeetingFolder(self.context.getProperty('meeting_config'))
                 self.request.RESPONSE.redirect(userPMFolder.absolute_url())
-        return super(PMFacetedContainerView, self).__call__()
+        return res
 
 
 class PMRenderTermView(RenderTermPortletView):

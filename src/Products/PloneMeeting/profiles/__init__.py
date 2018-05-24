@@ -362,7 +362,7 @@ class MeetingConfigDescriptor(Descriptor):
                          'usedVoteValues', 'insertingMethodsOnAddItem', 'itemAnnexConfidentialVisibleFor',
                          'adviceAnnexConfidentialVisibleFor', 'meetingAnnexConfidentialVisibleFor',
                          'enableAdviceConfidentiality', 'adviceConfidentialityDefault', 'adviceConfidentialFor',
-                         'hideNotViewableLinkedItemsTo', 'hideHistoryTo')
+                         'hideNotViewableLinkedItemsTo', 'hideHistoryTo', 'orderedContacts')
     excludedFields = ['maxDaysDecisions', 'meetingAppDefaultView']
 
     # The 'instance' static attribute stores an instance used for assigning
@@ -641,6 +641,9 @@ class MeetingConfigDescriptor(Descriptor):
         self.usedVoteValues = ('not_yet', 'yes', 'no', 'abstain')
         self.defaultVoteValue = 'not_yet'
         self.voteCondition = 'True'
+
+        # Users parameters -----------------------------------------------------
+        self.orderedContacts = []
 
         # Doc parameters -------------------------------------------------------
         self.meetingItemTemplateToStoreAsAnnex = ''

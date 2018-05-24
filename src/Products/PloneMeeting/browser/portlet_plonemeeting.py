@@ -49,51 +49,15 @@ class Renderer(base.Renderer, FacetedRenderer):
         available = FacetedRenderer(self.context, self.request, self.view, self.manager, self.data).available
         return available
 
-    def _isPortletOutsideFaceted(self, context, criteriaHolder):
-        """Are we outside the faceted?"""
-        criteriaHolderUrl = criteriaHolder.absolute_url()
-        contextUrl = context.absolute_url()
-        # if we are on a pmFolder, we want to redirect to the 'searches_items' subfolder
-        if context.getProperty('meeting_config') and not self.request['URL'].endswith('folder_contents'):
-            return False
-        return not contextUrl.split('/')[-1] == criteriaHolderUrl.split('/')[-1]
-
-    @property
-    def widget_render(self):
-        """Override to redirect to right folder when redirected to default collection
-           because as we use collections of the MeetingConfig, user would be redirected
-           in the portal_plonemeeting..."""
-        rendered_widgets = super(Renderer, self).widget_render
-        # manipulate redirect to default config except if we are actually in the MeetingConfig/searches folder
-        if self.request.RESPONSE.status == 302 and \
-           not self.context == self._criteriaHolder and \
-           self.request.RESPONSE.getHeader('location').startswith(self.cfg.searches.absolute_url()):
-            self.request.RESPONSE.setHeader('location', self.getPloneMeetingFolder().absolute_url() + '/searches_items')
-        return rendered_widgets
-
     @property
     def _criteriaHolder(self):
-        '''Override method coming from FacetedRenderer as we know that criteria are stored on the meetingFolder.'''
-        pmFolder = self.getPloneMeetingFolder()
-        # if we are on a Meeting, it provides IFacetedNavigable but we want to display user pmFolder facetednav
-        contextURL = self.context.absolute_url()
-        if ('portal_plonemeeting' not in contextURL and
-            not contextURL.startswith(pmFolder.absolute_url())) or \
-           IMeeting.providedBy(self.context):
-            return self.cfg.searches
-        # we are on a subFolder of the pmFolder (searches_items for example)
-        if IFacetedNavigable.providedBy(self.context):
-            # return corresponding folder in the configuration
-            if self.context.getId().endswith('searches_items'):
-                return self.cfg.searches.searches_items
-            elif self.context.getId().endswith('searches_meetings'):
-                return self.cfg.searches.searches_meetings
-            elif self.context.getId().endswith('searches_decisions'):
-                return self.cfg.searches.searches_decisions
-            else:
-                return self.cfg.searches
-        else:
-            return self.cfg.searches
+        '''Override to not consider IMeeting as a criteria holder.'''
+        parent = self.context
+        # look up parents until we found the criteria holder or we reach the 'Plone Site'
+        while parent and not parent.portal_type == 'Plone Site':
+            if IFacetedNavigable.providedBy(parent) and not IMeeting.providedBy(parent):
+                return parent
+            parent = parent.aq_inner.aq_parent
 
     def render(self):
         return self._template()

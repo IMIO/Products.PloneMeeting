@@ -24,9 +24,8 @@
     <utility factory=".advice.MeetingAdviceSchemaPolicy"
              name="schema_policy_meetingadvice"
     />
-    <utility factory=".position.PMPositionSchemaPolicy"
-             name="schema_policy_pm_position"
+    <utility factory=".held_position.PMHeldPositionSchemaPolicy"
+             name="schema_policy_pm_held_position"
     />
-
 
 </configure>

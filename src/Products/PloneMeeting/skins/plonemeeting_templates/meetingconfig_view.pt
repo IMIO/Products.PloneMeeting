@@ -25,8 +25,7 @@
                                   member context/@@plone_portal_state/member;
                                   schematas here/Schemata;
                                   fieldsets python:[key for key in schematas.keys() if (key != 'metadata')];
-                                  displayable_fieldsets python: list(fieldsets);
-                                  dummy python: displayable_fieldsets.insert(-1, 'users')">
+                                  displayable_fieldsets python: list(fieldsets);">
 
     <tal:hideToNonManagers condition="python: isRealManager or context.portal_plonemeeting.isManager(context)">
 
