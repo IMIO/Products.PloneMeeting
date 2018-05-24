@@ -123,6 +123,7 @@ from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import listifySignatures
 from Products.PloneMeeting.utils import reviewersFor
 from Products.PloneMeeting.utils import updateAnnexesAccess
+from Products.PloneMeeting.widgets import PMInAndOutWidget
 from Products.PloneMeeting.validators import WorkflowInterfacesValidator
 from Products.PloneMeeting.Meeting import Meeting
 from Products.PloneMeeting.MeetingItem import MeetingItem
@@ -2226,14 +2227,15 @@ schema = Schema((
     ),
     LinesField(
         name='orderedContacts',
-        widget=InAndOutWidget(
+        widget=PMInAndOutWidget(
             description="OrderedContacts",
             description_msgid="ordered_contacts_descr",
             label='Orderedcontacts',
             label_msgid='PloneMeeting_label_orderedContacts',
             i18n_domain='PloneMeeting',
+            size='20',
         ),
-        schemata="contacts",
+        schemata="users",
         multiValued=1,
         vocabulary='listSelectableContacts',
         default=defValues.orderedContacts,
@@ -2853,7 +2855,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             held_position = brain.getObject()
             res.append(
                 (held_position.UID(),
-                 held_position.get_short_title(include_usages=True)))
+                 held_position.get_short_title(include_usages=True, include_defaults=True)))
         return DisplayList(res)
 
     security.declarePrivate('listConfigGroups')

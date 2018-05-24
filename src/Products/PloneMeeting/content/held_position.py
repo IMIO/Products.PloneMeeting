@@ -1,13 +1,14 @@
 # -*- coding: utf-8 -*-
 
 import zope.schema
-from collective.contact.core.content.held_position import HeldPosition
 from collective.contact.core import _
+from collective.contact.core.content.held_position import HeldPosition
 from collective.contact.core.content.held_position import IHeldPosition
-from zope.globalrequest import getRequest
 from plone.autoform import directives as form
 from plone.dexterity.schema import DexteritySchemaPolicy
+from Products.PloneMeeting.utils import plain_render
 from z3c.form.browser.checkbox import CheckBoxFieldWidget
+from zope.globalrequest import getRequest
 from zope.i18n import translate
 
 
@@ -63,9 +64,9 @@ class PMHeldPosition(HeldPosition):
         else:
             res = u"{0}, {1}".format(person_label, held_position_label)
         if include_usages:
-            res = res + u" {0}: {1}".format(_("Usages"), self.usages)
+            res = res + u" ({0}: {1})".format(_("Usages"), plain_render(self, 'usages') or '-')
         if include_defaults:
-            res = res + u" {0}: {1}".format(_("Defaults"), self.defaults)
+            res = res + u" ({0}: {1})".format(_("Defaults"), plain_render(self, 'defaults') or '-')
         return res
 
     def get_position_usages(self):

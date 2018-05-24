@@ -48,6 +48,7 @@ from plone.app.textfield import RichText
 from plone.autoform.interfaces import WRITE_PERMISSIONS_KEY
 from plone.dexterity.interfaces import IDexterityContent
 from plone import api
+from collective.excelexport.exportables.dexterityfields import get_exportable_for_fieldname
 from collective.iconifiedcategory.interfaces import IIconifiedInfos
 from imio.helpers.xhtml import addClassToLastChildren
 from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
@@ -1599,6 +1600,13 @@ def getStatesBefore(obj, review_state_id):
                 res.append(new_state_id)
                 new_state = wf.states[new_state_id]
     return res
+
+
+def plain_render(obj, fieldname):
+    """ """
+    request = getRequest()
+    exportable = get_exportable_for_fieldname(obj, fieldname, request)
+    return exportable.render_value(obj)
 
 
 class AdvicesUpdatedEvent(ObjectEvent):

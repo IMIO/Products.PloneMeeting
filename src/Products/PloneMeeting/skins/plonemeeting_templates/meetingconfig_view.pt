@@ -1090,66 +1090,13 @@
 
     <tal:users condition="python: pageName=='users'">
     <p i18n:translate="meetingconfig_users_descr" class='pageNameDescr'></p><br />
-
-    <tal:comment replace="nothing">Meeting users</tal:comment>
-    <a name="meetingusers"></a>
-    <fieldset>
-      <legend>
-        <span i18n:translate="users"></span>
-        <img tal:attributes="src string: $portal_url/questionMark.png;
-                             onClick python:'toggleDoc(\'usersDoc\')'"
-             style="cursor:pointer"/>
-      </legend>
-      <div id="usersDoc" style="display:none">
-        <p class="discreet" i18n:translate="meeting_users_descr" /><br />
-      </div>
-      <table class="listing nosort" width="100%"
-            tal:define="mFolder python:context.meetingusers;
-                        mFolderUrl mFolder/absolute_url;">
-      <tr>
-        <th class="nosort" width="20%" i18n:translate="listingheader_title">Title</th>
-        <th class="nosort" width="20%" i18n:translate="plonemeeting_identifier">Identifier</th>
-        <th class="nosort" width="20%" i18n:translate="PloneMeeting_label_duty">Duty</th>
-        <th class="nosort" width="20%" i18n:translate="PloneMeeting_label_usages">Usages</th>
-        <th class="nosort" width="50px" i18n:translate="heading_is_active">Active?</th>
-        <th class="nosort" width="130px" i18n:translate="heading_actions">Actions</th>
-      </tr>
-      <tr tal:condition="python: not mFolder.objectValues('MeetingUser')">
-        <td colspan="6" align="center" i18n:translate="">no_meeting_user</td>
-      </tr>
-      <tal:loop repeat="obj python:mFolder.objectValues('MeetingUser')">
-        <tr tal:define="isActive python: here.portal_workflow.getInfoFor(obj, 'review_state') == 'active';
-                        oddrow repeat/obj/odd;
-                        classOddEven python: oddrow and 'even' or 'odd';"
-            tal:attributes="class python: not isActive and classOddEven+' state-inactive' or classOddEven"
-            valign="top">
-        <td><h5><a tal:attributes="href obj/absolute_url" tal:content="obj/Title"></a></h5></td>
-        <td tal:content="obj/getId"></td>
-        <td tal:content="python: obj.getBilingual('duty')"></td>
-        <td tal:define="usageIds obj/getUsages"
-            tal:content="python: ', '.join([context.translate('meeting_user_usage_%s' % u, domain='PloneMeeting') for u in usageIds])">
-        </td>
-        <tal:comment replace="nothing">Active ?</tal:comment>
-        <td i18n:domain="plone">
-          <span tal:condition="isActive" i18n:translate="">Yes</span>
-          <span tal:condition="not: isActive" i18n:translate="">No</span>
-        </td>
-        <td align="right">
-          <tal:actions replace="structure python: obj.restrictedTraverse('@@actions_panel')(showActions=False, showTransitions=False, showArrows=True)" />
-        </td>
-      </tr>
-      </tal:loop>
+      <table width="100%" class="discreet">
+        <tr valign="top">
+          <td tal:define="field python:here.getField('orderedContacts')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+        </tr>
       </table>
-
-      <form name="addUserForm"
-            tal:attributes="action python: context.absolute_url() + '/addUser'"
-            tal:condition="isRealManager"
-            style="text-align:right; padding-top: 0.5em;">
-        <label for="userid" style="vertical-align: middle;" i18n:translate="plonemeeting_identifier"></label>
-        <input type="text" name="userid"/>
-        <input class="context" type="submit" value="add_object" i18n:attributes="value"/>
-      </form>
-    </fieldset>
     </tal:users>
 
     <tal:doc condition="python: pageName=='doc'">
