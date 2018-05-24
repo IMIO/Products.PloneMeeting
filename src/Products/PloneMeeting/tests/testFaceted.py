@@ -584,24 +584,25 @@ class testFaceted(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         pmFolder = self.getMeetingFolder()
         item = self.create('MeetingItem')
-        self.assertEquals(self.request.RESPONSE.status, 200)
-        item()
 
-        # not redirected
+        # call to pmFolder redirects to searches_items
         self.assertEquals(self.request.RESPONSE.status, 200)
-        # if we were redirected to the item view, it is still the case
-        self.request.RESPONSE.redirect(item.absolute_url())
+        pmFolder()
         self.assertEquals(self.request.RESPONSE.status, 302)
-        self.assertEquals(self.request.RESPONSE.getHeader('location'),
-                          item.absolute_url())
+        self.assertEquals(
+            self.request.RESPONSE.getHeader('location'), pmFolder.absolute_url() + '/searches_items')
 
-        # when user is redirected to the default collection in the configuration
-        # in place, user is redirected to his pmFolder searches_items folder
-        self.request.RESPONSE.redirect(self.meetingConfig.searches.searches_items.absolute_url())
+        # not redirected if on an item
+        self.request.RESPONSE.status = 200
         item()
-        self.assertEquals(self.request.RESPONSE.status, 302)
-        self.assertEquals(self.request.RESPONSE.getHeader('location'),
-                          pmFolder.absolute_url() + '/searches_items')
+        self.assertEquals(self.request.RESPONSE.status, 200)
+
+        # not redirected if on an meeting
+        self.changeUser('pmManager')
+        pmFolder = self.getMeetingFolder()
+        meeting = self.create('Meeting', date=DateTime('2018/05/23'))
+        meeting.restrictedTraverse('view')()
+        self.assertEquals(self.request.RESPONSE.status, 200)
 
     def test_pm_DisabledCollectionsAreIgnored(self):
         """If a DashboardCollection is disabled in the MeetingConfig,

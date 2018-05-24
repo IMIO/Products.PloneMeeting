@@ -54,10 +54,22 @@ class Renderer(base.Renderer, FacetedRenderer):
         '''Override to not consider IMeeting as a criteria holder.'''
         parent = self.context
         # look up parents until we found the criteria holder or we reach the 'Plone Site'
+        found = False
         while parent and not parent.portal_type == 'Plone Site':
             if IFacetedNavigable.providedBy(parent) and not IMeeting.providedBy(parent):
-                return parent
+                found = True
+                break
             parent = parent.aq_inner.aq_parent
+        if found:
+            # return corresponding folder in the configuration
+            if parent.getId().endswith('searches_items'):
+                return self.cfg.searches.searches_items
+            elif parent.getId().endswith('searches_meetings'):
+                return self.cfg.searches.searches_meetings
+            elif parent.getId().endswith('searches_decisions'):
+                return self.cfg.searches.searches_decisions
+            else:
+                return self.cfg.searches
 
     def render(self):
         return self._template()

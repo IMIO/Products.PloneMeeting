@@ -38,14 +38,14 @@ class testPortlets(PloneMeetingTestCase):
     def _setup_portlets(self):
         """ """
         self.changeUser('pmCreator1')
-        mFolder = self.getMeetingFolder(self.meetingConfig)
+        searches_items = self.getMeetingFolder(self.meetingConfig).searches_items
         self.view = self.portal.restrictedTraverse('@@plone')
         self.manager = getUtility(IPortletManager,
                                   name='plone.leftcolumn',
                                   context=self.portal)
         self.portlet_pm_assignment = portlet_plonemeeting.Assignment()
         self.portlet_pm_renderer = getMultiAdapter(
-            (mFolder,
+            (searches_items,
              self.request,
              self.view,
              self.manager,
@@ -54,7 +54,7 @@ class testPortlets(PloneMeetingTestCase):
         self.portlet_todo_assignment = portlet_todo.Assignment(batch_size=5,
                                                                title_length=100)
         self.portlet_todo_renderer = getMultiAdapter(
-            (mFolder,
+            (searches_items,
              self.request,
              self.view,
              self.manager,
