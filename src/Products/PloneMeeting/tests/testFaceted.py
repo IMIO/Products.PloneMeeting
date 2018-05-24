@@ -41,14 +41,16 @@ class testFaceted(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         self.request.RESPONSE.setHeader('location', '')
         creatorPMFolder = self.tool.getPloneMeetingFolder(cfgId)
+        self.assertEqual(creatorPMFolder.getLayout(), 'facetednavigation_view')
         creatorPMFolderUrl = creatorPMFolder.absolute_url()
         # access the pmFolder
-        creatorPMFolder.restrictedTraverse('@@facetednavigation_view')()
+        creatorPMFolder()
         # user was redirected to his pmFolder '/searches_items'
         self.assertTrue(self.request.RESPONSE.getStatus() == 302)
-        self.assertTrue(self.request.RESPONSE.getHeader('location') == creatorPMFolderUrl + '/searches_items')
+        self.assertTrue(
+            self.request.RESPONSE.getHeader('location') == creatorPMFolderUrl + '/searches_items')
 
-        # as another simple user, it raises Unauthorized
+        # as another simple user or MeetingManager, Unauthorized as other pm folder is private
         self.changeUser('pmReviewer1')
         self.assertRaises(Unauthorized, creatorPMFolder.restrictedTraverse, '@@facetednavigation_view')
         self.changeUser('pmManager')
@@ -59,9 +61,9 @@ class testFaceted(PloneMeetingTestCase):
         self.request.RESPONSE.setHeader('location', '')
         siteadminPMFolder = self.tool.getPloneMeetingFolder(cfgId)
         siteadminPMFolderUrl = siteadminPMFolder.absolute_url()
-        creatorPMFolder.restrictedTraverse('@@facetednavigation_view')()
-        self.assertEquals(self.request.RESPONSE.getHeader('location'),
-                          siteadminPMFolderUrl + '/searches_items')
+        creatorPMFolder()
+        self.assertEquals(
+            self.request.RESPONSE.getHeader('location'), siteadminPMFolderUrl + '/searches_items')
 
         # if a user is using folder_contents, then he is not redirected
         self.request.RESPONSE.setHeader('location', '')

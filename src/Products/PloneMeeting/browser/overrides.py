@@ -53,7 +53,6 @@ from imio.prettylink.interfaces import IPrettyLink
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFPlone.browser.navigation import CatalogNavigationTabs
 from Products.CMFPlone.utils import safe_unicode
-from Products.CPUtils.Extensions.utils import check_zope_admin
 from Products.PloneMeeting import utils as pm_utils
 from Products.PloneMeeting.config import BARCODE_INSERTED_ATTR_ID
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
@@ -388,12 +387,6 @@ class PMFacetedContainerView(FacetedDashboardView):
            self.request.RESPONSE.getHeader('location').startswith(self.cfg.searches.absolute_url()):
             self.request.RESPONSE.setHeader('location', self.getPloneMeetingFolder().absolute_url() + '/searches_items')
 
-        if not check_zope_admin():
-            if self.context.getProperty('meeting_config') and \
-               (not self.context.getOwner().getId() == api.user.get_current().getId()):
-                tool = api.portal.get_tool('portal_plonemeeting')
-                userPMFolder = tool.getPloneMeetingFolder(self.context.getProperty('meeting_config'))
-                self.request.RESPONSE.redirect(userPMFolder.absolute_url())
         return res
 
 
