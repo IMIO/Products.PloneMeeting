@@ -26,6 +26,7 @@ from zope.component import getMultiAdapter
 from zope.component import getUtility
 from zope.event import notify
 from zope.lifecycleevent import ObjectModifiedEvent
+from imio.helpers.cache import cleanRamCacheFor
 from plone.portlets.interfaces import IPortletManager, IPortletRenderer
 from Products.PloneMeeting.browser import portlet_plonemeeting
 from Products.PloneMeeting.browser import portlet_todo
@@ -104,6 +105,7 @@ class testPortlets(PloneMeetingTestCase):
 
         # viewable in portlet_plonemeeting
         self.changeUser('pmCreator1')
+        cleanRamCacheFor('Products.PloneMeeting.adapters.compute_criteria')
         self.assertTrue(searchAllItemsUID in self.portlet_pm_renderer.render())
         # and viewable in portlet_todo
         self.assertTrue(searchAllItemsUID in self.portlet_todo_renderer.render())
