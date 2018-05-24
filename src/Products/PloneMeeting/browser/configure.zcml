@@ -286,11 +286,17 @@
       />
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItem"
-        name="byebyeuser"
-        class=".byebyeuser.ByebyeUser"
-        permission="zope2.View"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        template="templates/byebyeuser.pt"
+        name="item_byebye_attendee_form"
+        class=".itemattendee.ByeByeAttendeeForm"
+        permission="zope2.View"
+      />
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        name="item_welcome_attendee_form"
+        class=".itemattendee.WelcomeAttendeeForm"
+        permission="zope2.View"
       />
 
     <!-- Asynchronous calls (ajax) -->
@@ -792,5 +798,15 @@
         permission="zope.Public"
         allowed_attributes="topLevelTabs"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer" />
+
+    <configure package="eea.facetednavigation">
+        <browser:page
+            for=".interfaces.IFacetedNavigable"
+            name="facetednavigation_view"
+            template="browser/template/view.pt"
+            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+            class="Products.PloneMeeting.browser.overrides.PMFacetedContainerView"
+            permission="zope2.View" />
+    </configure>
 
 </configure>
