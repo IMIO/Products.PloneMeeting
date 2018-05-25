@@ -1560,6 +1560,20 @@ div.grouped-configs {
     height: 6px;
 }
 
+table#meeting_users td {
+   padding: 0.5em;
+}
+table#meeting_users td.draggable {
+   cursor: ns-resize;
+}
+table tr.tDnD_whileDrag {
+   border: 2px solid grey;
+}
+
+table tr.tDnD_whileDrag td {
+   background-color: yellow !important;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */

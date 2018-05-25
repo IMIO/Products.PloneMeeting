@@ -41,6 +41,7 @@ from App.class_init import InitializeClass
 from DateTime import DateTime
 from DateTime.DateTime import _findLocalTimeZoneName
 from OFS.ObjectManager import BeforeDeleteException
+from persistent.list import PersistentList
 from zope.component import getMultiAdapter
 from zope.event import notify
 from zope.i18n import translate
@@ -974,48 +975,54 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                              domain='PloneMeeting',
                              context=self.REQUEST)
 
-    security.declarePublic('listAssemblyMembers')
+    security.declarePrivate('listAssemblyMembers')
 
     def listAssemblyMembers(self):
-        '''Returns the active MeetingUsers having usage "assemblyMember".'''
+        '''Returns the active contacts having usage "assemblyMember".'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
         res = ((held_pos.UID(), held_pos.get_short_title())
-               for held_pos in self.getAllUsedHeldPositions(includeAllActive=True))
+               for held_pos in cfg.getContacts(usages=['assemblyMember', ]))
         return DisplayList(res)
 
-    security.declarePublic('listSignatories')
+    security.declarePrivate('listSignatories')
 
     def listSignatories(self):
-        '''Returns the active MeetingUsers having usage "signer".'''
+        '''Returns the active contacts having usage "signer".'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
         res = ((held_pos.UID(), held_pos.get_short_title())
-               for held_pos in self.getAllUsedHeldPositions(usages=['signer', ],
-                                                            includeAllActive=True))
+               for held_pos in cfg.getContacts(usages=['signer', ]))
         return DisplayList(res)
 
     security.declarePublic('getAllUsedHeldPositions')
 
-    def getAllUsedHeldPositions(self, usages=[], includeAllActive=False):
-        '''This will return every held_positions for current MeetingConfig
-           no matter they are active or not.  This make it possible to deactivate a Person or
-           held_position but still see it on old meetings.  If p_includeAllActive is True,
-           every active persons (with usage assemblyMember, aka linked to a position)
-           will be added so adding a Person in the configuration will make it useable
-           while editing an existing meeting.'''
-        # used Persons are held_positions really saved in attendees, absents, excused, replacements
-        heldPositionUids = set(self.getAttendees()).union(set(self.getAbsents())).union(set(self.getExcused()))
-        # keep order as defined in the configuration
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-        # get every potential assembly members, inactive included
-        allHeldPositions = cfg.getHeldPositions(usages=usages, onlyActive=False)
-        if includeAllActive:
-            allActiveHeldPositions = cfg.getHeldPositions(usages=usages, onlyActive=True)
-            allActiveHeldPositionsUids = [held_pos.UID() for held_pos in allActiveHeldPositions]
-            # include selected users + all existing active users
-            return [held_pos for held_pos in allHeldPositions if
-                    (held_pos.UID() in heldPositionUids or held_pos.UID() in allActiveHeldPositionsUids)]
-        else:
-            # only include selected users
-            return [held_pos for held_pos in allHeldPositions if held_pos.UID() in heldPositionUids]
+    def getAllUsedHeldPositions(self, include_new=False):
+        '''This will return every currently stored held_positions.
+           If include_new=True, extra held_positions newly selected in the
+           configuration are added.
+           '''
+        # used Persons are held_positions stored in orderedContacts
+        contacts = hasattr(self.aq_base, 'orderedContacts') and list(self.orderedContacts) or []
+        if include_new:
+            # now getContacts from MeetingConfig and append new contacts at the end
+            # this is the case while adding new contact and editing existing meeting
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(self)
+            selectable_contacts = cfg.getOrderedContacts()
+            new_selectable_contacts = [c for c in selectable_contacts if c not in contacts]
+            contacts = contacts + new_selectable_contacts
+        # query held_positions
+        catalog = api.portal.get_tool('portal_catalog')
+        brains = catalog(UID=contacts)
+
+        # make sure we have correct order because query was not sorted
+        # we need to sort found brains according to uids
+        def getKey(item):
+            return contacts.index(item.UID)
+        brains = sorted(brains, key=getKey)
+        held_positions = [brain.getObject() for brain in brains]
+        return held_positions
 
     security.declarePublic('getDefaultAttendees')
 
@@ -1025,7 +1032,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         if self.attributeIsUsed('attendees'):
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self)
-            res = [held_pos.UID() for held_pos in cfg.getHeldPositions()
+            res = [held_pos.UID() for held_pos in cfg.getContacts(usages=['assemblyMember'])
                    if 'present' in held_pos.get_position().defaults]
         return res
 
@@ -1038,7 +1045,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         if self.attributeIsUsed('signatories'):
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self)
-            res = [held_pos.UID() for held_pos in cfg.getHeldPositions()
+            res = [held_pos.UID() for held_pos in cfg.getContacts(usages=['signer'])
                    if 'signer' in held_pos.get_position().defaults]
         return res
 
@@ -1741,6 +1748,9 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             lateAttendees = []
         if useReplacements:
             replacements = {}
+        # save the ordered contacts so we rely on this, especially when
+        # users are disabled in the configuration
+        self.orderedContacts = PersistentList()
 
         for key in self.REQUEST.keys():
             if not key.startswith('muser_'):
@@ -1749,14 +1759,18 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             try:
                 if key.endswith('_attendee'):
                     attendees.append(position_uid)
+                    self.orderedContacts.append(position_uid)
                 elif key.endswith('_excused'):
                     excused.append(position_uid)
+                    self.orderedContacts.append(position_uid)
                 elif key.endswith('_absent'):
                     absents.append(position_uid)
-                elif key.endswith('_signer'):
-                    signers.append(position_uid)
+                    self.orderedContacts.append(position_uid)
                 elif key.endswith('_lateAttendee'):
                     lateAttendees.append(position_uid)
+                    self.orderedContacts.append(position_uid)
+                elif key.endswith('_signer'):
+                    signers.append(position_uid)
                 elif key.endswith('_replacement'):
                     replacement = self.REQUEST.get(key)
                     if replacement:

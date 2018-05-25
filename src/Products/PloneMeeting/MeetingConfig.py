@@ -52,7 +52,6 @@ from zope.i18n import translate
 from zope.interface import alsoProvides
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from plone.memoize import ram
-from plone.app.layout.navigation.navtree import buildFolderTree
 from plone.app.portlets.portlets import navigation
 from plone.namedfile.file import NamedBlobFile
 from plone.namedfile.file import NamedBlobImage
@@ -5391,36 +5390,29 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         ''' Returns True if we are currently using contacts.'''
         return bool('attendees' in self.getUsedMeetingAttributes())
 
-    security.declarePublic('getHeldPositions')
+    security.declarePublic('getContacts')
 
-    def getHeldPositions(self, usages=[], onlyActive=True):
-        '''Returns the held_positions having at least one usage among
-           p_usage.  if p_onlyActive is True, only active MeetingUsers are returned.'''
-        def _get_held_positions(positions, res=[]):
-            """ """
-            for position_item in positions['children']:
-                position = position_item['item'].getObject()
-                for held_position in position.get_held_positions():
-                    held_position_usages = held_position.usages or []
-                    if usages and not set(usages).intersection(set(held_position_usages)):
-                        continue
-                    if not onlyActive or \
-                       (onlyActive and wfTool.getInfoFor(held_position, 'review_state') == 'active'):
-                        res.append(held_position)
-                if position_item['children']:
-                    _get_held_positions(position_item, res)
-            return res
+    def getContacts(self, usages=[]):
+        '''Returns the contacts (held_positions) having at least one usage among
+           p_usage.  if p_onlyActive is True, only active held_positions are returned.
+           If p_includeAllActive is True, we return every existing active held_positions.'''
+        query = {}
+        # either we received uids or we use uids stored in orderedContacts
+        orderedContacts = self.getOrderedContacts()
+        query['UID'] = self.getOrderedContacts()
+        brains = api.content.find(**query)
+        held_positions = [brain.getObject() for brain in brains]
+        # filter usages
+        if usages:
+            held_positions = [held_position for held_position in held_positions
+                              if set(held_position.usages or []).intersection(set(usages))]
 
-        portal = api.portal.get()
-        wfTool = api.portal.get_tool('portal_workflow')
-        organization = portal.contacts
-        # we need to keep the order and we have sub organization so use buildFolderTree
-        # used in the navigation portlet to get the positions in correct order
-        positions_tree = buildFolderTree(
-            organization,
-            query={'path': '/'.join(organization.getPhysicalPath())})
-        res = _get_held_positions(positions_tree)
-        return res
+        # make sure we have correct order because query was not sorted
+        # we need to sort found brains according to uids
+        def getKey(item):
+            return orderedContacts.index(item.UID())
+        held_positions = sorted(held_positions, key=getKey)
+        return held_positions
 
     security.declarePrivate('addCategory')
 
