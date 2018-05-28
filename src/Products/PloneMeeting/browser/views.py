@@ -800,6 +800,8 @@ class MeetingDocumentGenerationHelperView(FolderDocumentGenerationHelperView):
         excused = self.context.getExcused()
         absents = self.context.getAbsents()
         lateAttendees = self.context.getLateAttendees()
+        lateAttendees = self.context.getLateAttendees()
+        replaced = self.context.getReplaced()
         for contact in contacts:
             res[contact.UID()] = [contact, contact.get_short_title(include_sub_organizations=False)]
 
@@ -812,12 +814,15 @@ class MeetingDocumentGenerationHelperView(FolderDocumentGenerationHelperView):
                 if contact_uid in attendees:
                     res[contact_uid][1] = u"{0}, {1}".format(res[contact_uid][1],
                                                              self._format_attendee_value_alone(u'présent'))
-                elif contact_uid in excused:
+                elif contact_uid in excused and contact_uid not in replaced:
                     res[contact_uid][1] = u"{0}, {1}".format(res[contact_uid][1],
                                                              self._format_attendee_value_alone(u'excusé'))
-                elif contact_uid in absents:
+                elif contact_uid in absents and contact_uid not in replaced:
                     res[contact_uid][1] = u"{0}, {1}".format(res[contact_uid][1],
                                                              self._format_attendee_value_alone(u'absent'))
+                elif contact_uid in replaced:
+                    res[contact_uid][1] = u"{0}, {1}".format(res[contact_uid][1],
+                                                             self._format_attendee_value_alone(u'remplacé'))
                 elif contact_uid in lateAttendees:
                     res[contact_uid][1] = u"{0}, {1}".format(res[contact_uid][1],
                                                              self._format_attendee_value_alone(u'présent en retard'))

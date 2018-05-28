@@ -1025,6 +1025,13 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         signer_uids = self._getContacts('signer', theObjects=theObjects)
         return {signer_uid: self.orderedContacts[signer_uid]['signature_number'] for signer_uid in signer_uids}
 
+    security.declarePublic('getReplacements')
+
+    def getReplaced(self, theObjects=False):
+        '''See docstring in previous method.'''
+        replaced_uids = self._getContacts('replacement', theObjects=theObjects)
+        return {replaced_uid: self.orderedContacts[replaced_uid]['signature_number'] for replaced_uid in replaced_uids}
+
     security.declarePublic('displayUserReplacement')
 
     def displayUserReplacement(self, held_position_uid):
