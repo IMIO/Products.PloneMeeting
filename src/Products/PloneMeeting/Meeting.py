@@ -1022,8 +1022,11 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getSignatories(self, theObjects=False):
         '''See docstring in previous method.'''
-        signer_uids = self._getContacts('signer', theObjects=theObjects)
-        return {signer_uid: self.orderedContacts[signer_uid]['signature_number'] for signer_uid in signer_uids}
+        signers = self._getContacts('signer', theObjects=theObjects)
+        if theObjects:
+            return {signer: self.orderedContacts[signer.UID()]['signature_number'] for signer in signers}
+        else:
+            return {signer_uid: self.orderedContacts[signer_uid]['signature_number'] for signer_uid in signers}
 
     security.declarePublic('getReplacements')
 
