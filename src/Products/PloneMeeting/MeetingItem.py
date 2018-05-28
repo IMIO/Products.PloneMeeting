@@ -2703,13 +2703,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('listItemSignatories')
 
     def listItemSignatories(self):
-        '''Returns a list of available signatories for the item.'''
+        '''Returns a list of available signatories for the item.
+           Every attendees could be signatories.'''
         res = []
         meeting = self.getMeeting()
         if meeting:
-            signers = meeting.getSignatories(theObjects=True)
-            for signer in signers:
-                res.append((signer.UID(), signer.get_short_title()))
+            pass
         return DisplayList(tuple(res))
 
     security.declarePublic('listItemAbsents')
@@ -3034,7 +3033,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = self.getField('itemSignatories').get(self, **kwargs)
         if real:
             return res
-        res = getHeldPositionObjs(self, 'itemSignatories', theObjects)
         if not res and self.hasMeeting():
             res = self.getMeeting().getSignatories(theObjects)
         return res

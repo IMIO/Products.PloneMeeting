@@ -2874,7 +2874,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePrivate('listAttributes')
 
-    def listAttributes(self, schema, optionalOnly=False):
+    def listAttributes(self, schema, optionalOnly=False, as_display_list=True):
         res = []
         for field in schema.fields():
             # Take all of them or optionals only, depending on p_optionalOnly
@@ -2892,7 +2892,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                                    context=self.REQUEST),
                                          field.getName())
                             ))
-        return DisplayList(tuple(res))
+        if as_display_list:
+            res = DisplayList(tuple(res))
+        return res
 
     security.declarePrivate('listUsedItemAttributes')
 
@@ -2907,7 +2909,19 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('listUsedMeetingAttributes')
 
     def listUsedMeetingAttributes(self):
-        return self.listAttributes(Meeting.schema, optionalOnly=True)
+        optional_fields = self.listAttributes(Meeting.schema, optionalOnly=True, as_display_list=False)
+        contact_fields = ['attendees', 'excused', 'absents', 'lateAttendees', 'signatories']
+        contact_fields.reverse()
+        index = [name for name, value in optional_fields].index('place')
+        for contact_field in contact_fields:
+            optional_fields.insert(
+                index,
+                (contact_field,
+                 '%s (%s)' % (translate('PloneMeeting_label_{0}'.format(contact_field),
+                                        domain='PloneMeeting',
+                                        context=self.REQUEST),
+                              contact_field)))
+        return DisplayList(tuple(optional_fields))
 
     security.declarePrivate('listMeetingAttributes')
 

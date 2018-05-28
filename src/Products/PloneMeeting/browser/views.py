@@ -777,6 +777,65 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
 class MeetingDocumentGenerationHelperView(FolderDocumentGenerationHelperView):
     """ """
 
+    def _format_attendee_value_alone(self, value):
+        """ """
+        return u"<strong>{0}</strong>".format(value)
+
+    def _render_as_html(self, tree, groupByDuty=False, groupByParentOrg=False):
+        """ """
+        res = []
+        if groupByParentOrg:
+            for org, contact_infos in tree.items():
+                res.append(u"<strong><u>{0}</u></strong>".format(org.title))
+                for contact_info in contact_infos:
+                    res.append(contact_info[1])
+        return u'<br />'.join(res)
+
+    def printAttendees(self, groupByDuty=False, groupByParentOrg=False, render_as_html=True):
+        """ """
+        res = OrderedDict()
+        # generate content then group by sub organization if necessary
+        contacts = self.context.getAllUsedHeldPositions()
+        attendees = self.context.getAttendees()
+        excused = self.context.getExcused()
+        absents = self.context.getAbsents()
+        lateAttendees = self.context.getLateAttendees()
+        for contact in contacts:
+            res[contact.UID()] = [contact, contact.get_short_title(include_sub_organizations=False)]
+
+        # manage duty
+        if groupByDuty:
+            pass
+        else:
+            # append presence to end of value
+            for contact_uid, contact_infos in res.items():
+                if contact_uid in attendees:
+                    res[contact_uid][1] = u"{0}, {1}".format(res[contact_uid][1],
+                                                             self._format_attendee_value_alone(u'présent'))
+                elif contact_uid in excused:
+                    res[contact_uid][1] = u"{0}, {1}".format(res[contact_uid][1],
+                                                             self._format_attendee_value_alone(u'excusé'))
+                elif contact_uid in absents:
+                    res[contact_uid][1] = u"{0}, {1}".format(res[contact_uid][1],
+                                                             self._format_attendee_value_alone(u'absent'))
+                elif contact_uid in lateAttendees:
+                    res[contact_uid][1] = u"{0}, {1}".format(res[contact_uid][1],
+                                                             self._format_attendee_value_alone(u'présent en retard'))
+
+        # manage group by sub organization
+        if groupByParentOrg:
+            by_suborg_res = OrderedDict()
+            for contact_uid, contact_infos in res.items():
+                orga = contact_infos[0].get_organization()
+                if orga not in by_suborg_res:
+                    by_suborg_res[orga] = []
+                by_suborg_res[orga].append(contact_infos)
+            res = by_suborg_res
+
+        if render_as_html:
+            res = self._render_as_html(res, groupByDuty=groupByDuty, groupByParentOrg=groupByParentOrg)
+        return res
+
 
 class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV):
     """ """

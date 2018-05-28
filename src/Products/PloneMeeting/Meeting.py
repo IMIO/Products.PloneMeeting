@@ -18,8 +18,6 @@ from Products.Archetypes.atapi import BooleanField
 from Products.Archetypes.atapi import DateTimeField
 from Products.Archetypes.atapi import DisplayList
 from Products.Archetypes.atapi import IntegerField
-from Products.Archetypes.atapi import LinesField
-from Products.Archetypes.atapi import MultiSelectionWidget
 from Products.Archetypes.atapi import OrderedBaseFolder
 from Products.Archetypes.atapi import OrderedBaseFolderSchema
 from Products.Archetypes.atapi import ReferenceField
@@ -436,21 +434,6 @@ schema = Schema((
         ),
         default_content_type='text/plain',
         default_method="getDefaultSignatures",
-    ),
-    LinesField(
-        name='signatories',
-        widget=MultiSelectionWidget(
-            condition="python: here.attributeIsUsed('signatories')",
-            format="checkbox",
-            label_msgid="meeting_signatories",
-            label='Signatories',
-            i18n_domain='PloneMeeting',
-        ),
-        multiValued=1,
-        vocabulary='listSignatories',
-        default_method="getDefaultSignatories",
-        enforceVocabulary=True,
-        optional=True,
     ),
     TextField(
         name='assembly',
@@ -976,32 +959,28 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getDefaultAttendees')
 
     def getDefaultAttendees(self):
-        '''The default attendees are the active held_positions in the corresponding meeting configuration.'''
-        res = []
-        if self.attributeIsUsed('attendees'):
-            tool = api.portal.get_tool('portal_plonemeeting')
-            cfg = tool.getMeetingConfig(self)
-            res = [held_pos.UID() for held_pos in cfg.getContacts(usages=['assemblyMember'])
-                   if 'present' in held_pos.get_position().defaults]
+        '''The default attendees are the active held_positions
+           with 'present' in defaults.'''
+        used_held_positions = self.getAllUsedHeldPositions(include_new=True)
+        res = [held_pos.UID() for held_pos in used_held_positions
+               if held_pos.defaults and 'present' in held_pos.defaults]
         return res
 
     security.declarePublic('getDefaultSignatories')
 
     def getDefaultSignatories(self):
-        '''The default signatories are the active MeetingUsers having usage
-           "signer" and whose "signatureIsDefault" is True.'''
-        res = []
-        if self.attributeIsUsed('signatories'):
-            tool = api.portal.get_tool('portal_plonemeeting')
-            cfg = tool.getMeetingConfig(self)
-            res = [held_pos.UID() for held_pos in cfg.getContacts(usages=['signer'])
-                   if 'signer' in held_pos.get_position().defaults]
-        return res
+        '''The default signatiries are the active held_positions
+           with a defined signature_number.'''
+        used_held_positions = self.getAllUsedHeldPositions(include_new=True)
+        res = [held_pos for held_pos in used_held_positions
+               if held_pos.defaults and 'present' in held_pos.defaults and held_pos.signature_number]
+        return {signer.UID(): signer.signature_number for signer in res}
 
     def _getContacts(self, contact_type, theObjects=False):
         """ """
         res = []
-        for uid, infos in self.orderedContacts.items():
+        orderedContacts = getattr(self, 'orderedContacts', OrderedDict())
+        for uid, infos in orderedContacts.items():
             if infos[contact_type]:
                 res.append(uid)
         if theObjects:
@@ -1659,7 +1638,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
     def getUserReplacements(self):
         '''Gets the dict storing user replacements.'''
         res = {}
-        for uid, infos in self.orderedContacts.items():
+        orderedContacts = getattr(self, 'orderedContacts', OrderedDict())
+        for uid, infos in orderedContacts.items():
             if infos['replacement']:
                 res[uid] = infos['replacement']
         return res
@@ -1713,6 +1693,13 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             signatory, signature_number = key.split('__signaturenumber__')
             self.orderedContacts[signatory]['signer'] = True
             self.orderedContacts[signatory]['signature_number'] = signature_number
+
+        # manage replacements, remove ''
+        meeting_replacements = [
+            replacer for replacer in self.REQUEST.get('meeting_replacements', []) if replacer]
+        for key in meeting_replacements:
+            replaced, replacer = key.split('__replacedby__')
+            self.orderedContacts[replaced]['replacement'] = replacer
 
     security.declarePrivate('at_post_create_script')
 

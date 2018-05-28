@@ -1019,8 +1019,6 @@ class PositionUsagesVocabulary(object):
         res = []
         res.append(
             SimpleTerm('assemblyMember', 'assemblyMember', 'assemblyMember'))
-        res.append(
-            SimpleTerm('signer', 'signer', 'signer'))
         return SimpleVocabulary(res)
 
 PositionUsagesVocabularyFactory = PositionUsagesVocabulary()
@@ -1034,8 +1032,20 @@ class PositionDefaultsVocabulary(object):
         res = []
         res.append(
             SimpleTerm('present', 'present', 'present'))
-        res.append(
-            SimpleTerm('signer', 'signer', 'signer'))
         return SimpleVocabulary(res)
 
 PositionDefaultsVocabularyFactory = PositionDefaultsVocabulary()
+
+
+class SignatureNumberVocabulary(object):
+    """ """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        res = []
+        for signature_number in range(1, 11):
+            res.append(
+                SimpleTerm(str(signature_number), str(signature_number), str(signature_number)))
+        return SimpleVocabulary(res)
+
+SignatureNumberVocabularyFactory = SignatureNumberVocabulary()

@@ -31,11 +31,18 @@ class IPMHeldPosition(IHeldPosition):
         required=False,
     )
 
+    signature_number = zope.schema.Choice(
+        title=_("Signature number"),
+        description=_("If this contact is a default signer, select signature number"),
+        vocabulary="Products.PloneMeeting.vocabularies.pmsignaturenumbervocabulary",
+        required=False,
+    )
+
 
 class PMHeldPosition(HeldPosition):
     """Override HeldPosition to add some fields and methods."""
 
-    def get_short_title(self, include_usages=False, include_defaults=False):
+    def get_short_title(self, include_usages=False, include_defaults=False, include_sub_organizations=True):
         """Returns short name for held position :
            - the label if defined on held_position object or position title;
            - if position is in a sub organization, we display also sub-organization titles;
@@ -48,9 +55,10 @@ class PMHeldPosition(HeldPosition):
         organization = self.get_organization()
         root_organization = organization.get_root_organization()
         sub_organizations = []
-        while organization != root_organization:
-            sub_organizations.append(organization)
-            organization = organization.aq_parent
+        if include_sub_organizations:
+            while organization != root_organization:
+                sub_organizations.append(organization)
+                organization = organization.aq_parent
         person_label = self.get_person_title()
         held_position_label = self.label or translate(
             'No label defined on held position',
