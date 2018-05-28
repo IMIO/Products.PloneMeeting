@@ -1,5 +1,0 @@
-<?xml version="1.0"?>
-<object name="position" meta_type="Dexterity FTI" i18n:domain="collective.contact.core"
-   xmlns:i18n="http://xml.zope.org/namespaces/i18n">
- <property name="schema_policy">schema_policy_pm_position</property>
-</object>
