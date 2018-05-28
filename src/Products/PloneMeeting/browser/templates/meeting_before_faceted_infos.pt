@@ -115,8 +115,10 @@
                      tal:condition="python: aUid in absents"/>
               </td>
               <td align="center" tal:condition="showSignatories">
-                <img tal:attributes="src string: $portal_url/checked.gif"
-                     tal:condition="python: aUid in signers"/>
+               <tal:is_signer condition="python: aUid in signers">
+                <img tal:attributes="src string: $portal_url/checked.gif" />
+                <span tal:content="python: signers[aUid]" />
+               </tal:is_signer>
               </td>
               <td tal:condition="useUserReplacements">
                 <span tal:condition="python: aUid in userReplacements" tal:content="python: context.displayUserReplacement(userReplacements[aUid])"></span>

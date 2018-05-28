@@ -58,7 +58,7 @@ class PMHeldPosition(HeldPosition):
             default='No label defined on held position')
         res = ''
         if sub_organizations:
-            sub_organizations_label = u"({0}) ".format("🡒".join(
+            sub_organizations_label = u"{0}".format("🡒".join(
                 [sub_organization.title for sub_organization in sub_organizations]))
             res = u"{0}, {1} ({2})".format(person_label, held_position_label, sub_organizations_label)
         else:

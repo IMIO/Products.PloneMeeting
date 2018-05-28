@@ -2705,11 +2705,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def listItemSignatories(self):
         '''Returns a list of available signatories for the item.'''
         res = []
-        if self.hasMeeting():
-            # Get IDs of attendees
-            for held_position in self.getMeeting().getAttendees(theObjects=True):
-                if 'signer' in held_position.get_position_usages():
-                    res.append((held_position.UID(), held_position.get_short_title()))
+        meeting = self.getMeeting()
+        if meeting:
+            signers = meeting.getSignatories(theObjects=True)
+            for signer in signers:
+                res.append((signer.UID(), signer.get_short_title()))
         return DisplayList(tuple(res))
 
     security.declarePublic('listItemAbsents')
@@ -3923,19 +3923,19 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         res = []
-        for u in cfg.getHeldPositions(usages=['asker', ]):
-            value = ''
-            gender = u.getGender()
-            if gender:
-                value = "%s " % translate('gender_%s_extended' % gender,
-                                          domain='PloneMeeting',
-                                          default='',
-                                          context=self.REQUEST)
-            value = value + unicode(u.Title(), 'utf-8')
-            duty = unicode(u.getDuty(), 'utf-8')
-            if duty:
-                value = value + ", %s" % duty
-            res.append((u.id, value))
+        # for u in cfg.getHeldPositions(usages=['asker', ]):
+        #     value = ''
+        #     gender = u.getGender()
+        #     if gender:
+        #         value = "%s " % translate('gender_%s_extended' % gender,
+        #                                   domain='PloneMeeting',
+        #                                   default='',
+        #                                   context=self.REQUEST)
+        #     value = value + unicode(u.Title(), 'utf-8')
+        #     duty = unicode(u.getDuty(), 'utf-8')
+        #     if duty:
+        #         value = value + ", %s" % duty
+        #     res.append((u.id, value))
         return DisplayList(res).sortedByValue()
 
     security.declarePublic('getItemInitiator')

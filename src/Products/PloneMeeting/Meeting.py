@@ -41,7 +41,6 @@ from App.class_init import InitializeClass
 from DateTime import DateTime
 from DateTime.DateTime import _findLocalTimeZoneName
 from OFS.ObjectManager import BeforeDeleteException
-from persistent.list import PersistentList
 from zope.component import getMultiAdapter
 from zope.event import notify
 from zope.i18n import translate
@@ -79,7 +78,6 @@ from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import getWorkflowAdapter
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getLastEvent
-from Products.PloneMeeting.utils import getHeldPositionObjs
 from Products.PloneMeeting.utils import getFieldVersion
 from Products.PloneMeeting.utils import getDateFromDelta
 from Products.PloneMeeting.utils import getStatesBefore
@@ -541,55 +539,6 @@ schema = Schema((
         default_method="getDefaultAssemblyStaves",
         default_content_type="text/plain",
     ),
-    LinesField(
-        name='attendees',
-        widget=MultiSelectionWidget(
-            condition="python: here.attributeIsUsed('attendees')",
-            label='Attendees',
-            label_msgid='PloneMeeting_label_attendees',
-            i18n_domain='PloneMeeting',
-        ),
-        optional=True,
-        multiValued=1,
-        vocabulary='listAssemblyMembers',
-        default_method="getDefaultAttendees",
-    ),
-    LinesField(
-        name='excused',
-        widget=MultiSelectionWidget(
-            condition="python: here.attributeIsUsed('excused')",
-            label='Excused',
-            label_msgid='PloneMeeting_label_excused',
-            i18n_domain='PloneMeeting',
-        ),
-        optional=True,
-        multiValued=1,
-        vocabulary='listAssemblyMembers',
-    ),
-    LinesField(
-        name='absents',
-        widget=MultiSelectionWidget(
-            condition="python: here.attributeIsUsed('absents')",
-            label='Absents',
-            label_msgid='PloneMeeting_label_absents',
-            i18n_domain='PloneMeeting',
-        ),
-        optional=True,
-        multiValued=1,
-        vocabulary='listAssemblyMembers',
-    ),
-    LinesField(
-        name='lateAttendees',
-        widget=MultiSelectionWidget(
-            condition="python: here.attributeIsUsed('lateAttendees')",
-            label='Lateattendees',
-            label_msgid='PloneMeeting_label_lateAttendees',
-            i18n_domain='PloneMeeting',
-        ),
-        optional=True,
-        multiValued=1,
-        vocabulary='listAssemblyMembers',
-    ),
     StringField(
         name='place',
         widget=StringField._properties['widget'](
@@ -1049,48 +998,53 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                    if 'signer' in held_pos.get_position().defaults]
         return res
 
+    def _getContacts(self, contact_type, theObjects=False):
+        """ """
+        res = []
+        for uid, infos in self.orderedContacts.items():
+            if infos[contact_type]:
+                res.append(uid)
+        if theObjects:
+            catalog = api.portal.get_tool('portal_catalog')
+            brains = catalog(UID=res)
+            res = [brain.getObject() for brain in brains]
+
+            # keep correct order that was lost by catalog query
+            def getKey(item):
+                return self.orderedContacts.keys().index(item.UID())
+            res = sorted(res, key=getKey)
+        return tuple(res)
+
     security.declarePublic('getAttendees')
 
     def getAttendees(self, theObjects=False):
-        '''Returns the attendees in this meeting. When used by Archetypes,
-           this method returns a list of attendee ids; when used elsewhere
-           (with p_theObjects=True), it returns a list of true MeetingUser
-           objects.'''
-        return getHeldPositionObjs(self, 'attendees', theObjects)
+        '''Returns the attendees in this meeting.'''
+        return self._getContacts('attendee', theObjects=theObjects)
 
     security.declarePublic('getExcused')
 
     def getExcused(self, theObjects=False):
         '''See docstring in previous method.'''
-        return getHeldPositionObjs(self, 'excused', theObjects)
+        return self._getContacts('excused', theObjects=theObjects)
 
     security.declarePublic('getAbsents')
 
     def getAbsents(self, theObjects=False):
         '''See docstring in previous method.'''
-        return getHeldPositionObjs(self, 'absents', theObjects)
-
-    security.declarePublic('getItemAbsents')
-
-    def getItemAbsents(self):
-        '''Returns a dict. Keys are meeting user IDs; every value is the list
-           of items for which this user is noted as 'itemAbsent' in the field
-           of the same name (fields meeting.departures/entrances are not taken
-           into account).'''
-        res = {}
-        for item in self.getItems():
-            for userId in item.getItemAbsents():
-                if userId in res:
-                    res[userId].append(item)
-                else:
-                    res[userId] = [item]
-        return res
+        return self._getContacts('absent', theObjects=theObjects)
 
     security.declarePublic('getLateAttendees')
 
     def getLateAttendees(self, theObjects=False):
         '''See docstring in previous method.'''
-        return getHeldPositionObjs(self, 'lateAttendees', theObjects)
+        return self._getContacts('lateAttendee', theObjects=theObjects)
+
+    security.declarePublic('getSignatories')
+
+    def getSignatories(self, theObjects=False):
+        '''See docstring in previous method.'''
+        signer_uids = self._getContacts('signer', theObjects=theObjects)
+        return {signer_uid: self.orderedContacts[signer_uid]['signature_number'] for signer_uid in signer_uids}
 
     security.declarePublic('displayUserReplacement')
 
@@ -1201,13 +1155,6 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                     res.append(getattr(cfg.meetingusers, userId))
                 else:
                     res.append(userId)
-        return res
-
-    security.declarePublic('getSignatories')
-
-    def getSignatories(self, theObjects=False):
-        '''See docstring in previous method.'''
-        res = getHeldPositionObjs(self, 'signatories', theObjects)
         return res
 
     security.declarePrivate('setDate')
@@ -1711,9 +1658,11 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getUserReplacements(self):
         '''Gets the dict storing user replacements.'''
-        if not hasattr(self.aq_base, 'userReplacements'):
-            return {}
-        return self.userReplacements
+        res = {}
+        for uid, infos in self.orderedContacts.items():
+            if infos['replacement']:
+                res[uid] = infos['replacement']
+        return res
 
     security.declarePublic('filterPossibleUserReplacement')
 
@@ -1730,70 +1679,40 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         usedAttrs = cfg.getUsedMeetingAttributes()
-        useReplacements = cfg.getUseUserReplacements()
         # Do it only if MeetingUser-based user management is enabled.
         if 'attendees' not in usedAttrs:
             return
-        # Store user-related info coming from the request. This info comes from
-        # a custom widget, so we need to update the database fields "by hand"
-        # here. All request keys from this widget are prefixed with "muser_".
-        attendees = []
-        if 'excused' in usedAttrs:
-            excused = []
-        if 'absents' in usedAttrs:
-            absents = []
-        if 'signatories' in usedAttrs:
-            signers = []
-        if 'lateAttendees' in usedAttrs:
-            lateAttendees = []
-        if useReplacements:
-            replacements = {}
+
         # save the ordered contacts so we rely on this, especially when
         # users are disabled in the configuration
-        self.orderedContacts = PersistentList()
+        self.orderedContacts = OrderedDict()
 
-        for key in self.REQUEST.keys():
-            if not key.startswith('muser_'):
-                continue
+        # manage attendees, excused, absents, lateAttendees
+        meeting_attendees = self.REQUEST.get('meeting_attendees', [])
+        for key in meeting_attendees:
+            # remove leading muser_
             position_uid = key[6:].rsplit('_', 1)[0]
-            try:
-                if key.endswith('_attendee'):
-                    attendees.append(position_uid)
-                    self.orderedContacts.append(position_uid)
-                elif key.endswith('_excused'):
-                    excused.append(position_uid)
-                    self.orderedContacts.append(position_uid)
-                elif key.endswith('_absent'):
-                    absents.append(position_uid)
-                    self.orderedContacts.append(position_uid)
-                elif key.endswith('_lateAttendee'):
-                    lateAttendees.append(position_uid)
-                    self.orderedContacts.append(position_uid)
-                elif key.endswith('_signer'):
-                    signers.append(position_uid)
-                elif key.endswith('_replacement'):
-                    replacement = self.REQUEST.get(key)
-                    if replacement:
-                        replacements[position_uid] = replacement
-            except NameError:
-                pass
-        # Update the DB fields.
-        self.setAttendees(attendees)
-        if 'excused' in usedAttrs:
-            self.setExcused(excused)
-        if 'absents' in usedAttrs:
-            self.setAbsents(absents)
-        if 'signatories' in usedAttrs:
-            self.setSignatories(signers)
-        if 'lateAttendees' in usedAttrs:
-            self.setLateAttendees(lateAttendees)
-        if useReplacements:
-            if hasattr(self.aq_base, 'userReplacements'):
-                del self.userReplacements
-            # In the userReplacements dict, keys are uids of held positions of
-            # users being replaced; values are uids of held potision of
-            # replacement users.
-            self.userReplacements = replacements
+            if position_uid not in self.orderedContacts:
+                self.orderedContacts[position_uid] = \
+                    {'attendee': False, 'excused': False, 'absent': False,
+                     'lateAttendee': False, 'signer': False, 'signature_number': 0,
+                     'replacement': None}
+            if key.endswith('_attendee'):
+                self.orderedContacts[position_uid]['attendee'] = True
+            elif key.endswith('_excused'):
+                self.orderedContacts[position_uid]['excused'] = True
+            elif key.endswith('_absent'):
+                self.orderedContacts[position_uid]['absent'] = True
+            elif key.endswith('_lateAttendee'):
+                self.orderedContacts[position_uid]['lateAttendee'] = True
+
+        # manage signatories, remove ''
+        meeting_signatories = [
+            signatory for signatory in self.REQUEST.get('meeting_signatories', []) if signatory]
+        for key in meeting_signatories:
+            signatory, signature_number = key.split('__signaturenumber__')
+            self.orderedContacts[signatory]['signer'] = True
+            self.orderedContacts[signatory]['signature_number'] = signature_number
 
     security.declarePrivate('at_post_create_script')
 

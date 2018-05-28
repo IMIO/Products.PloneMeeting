@@ -1560,19 +1560,23 @@ div.grouped-configs {
     height: 6px;
 }
 
+/* meeting_users table on meeting_edit */
 table#meeting_users td {
    padding: 0.5em;
 }
 table#meeting_users td.draggable {
    cursor: ns-resize;
 }
-table tr.tDnD_whileDrag {
-   border: 2px solid grey;
+table#meeting_users select[id$="_replacement"] {
+   width: 500px;
+}
+table.listing tbody tr.odd.selected td,
+table.listing tbody tr.odd.dragging td,
+table.listing tbody tr.even.selected td,
+table.listing tbody tr.even.dragging td {
+    background-color: #ffa;
 }
 
-table tr.tDnD_whileDrag td {
-   background-color: yellow !important;
-}
 
 /* </dtml-with> */
 
