@@ -12,7 +12,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 
 - Adapted code to new behavior of collective.eeafaceted.collectionwidget where the redirection to the default collection
   is done by the facetenavigation_view and no more by the widget.default method.
-
+- Use source_groups._principal_groups.byValue(0) either source_groups._principal_groups._p_mtime to check if users/groups
+  mapping changed because in some cases (???) the _p_mtime is not changed, relying on stored value is more robust.
 
 4.1b10 (2018-05-22)
 -------------------
