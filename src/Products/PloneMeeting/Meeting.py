@@ -16,7 +16,6 @@ import interfaces
 
 from Products.Archetypes.atapi import BooleanField
 from Products.Archetypes.atapi import DateTimeField
-from Products.Archetypes.atapi import DisplayList
 from Products.Archetypes.atapi import IntegerField
 from Products.Archetypes.atapi import OrderedBaseFolder
 from Products.Archetypes.atapi import OrderedBaseFolderSchema
@@ -427,7 +426,7 @@ schema = Schema((
         allowable_content_types=('text/plain',),
         optional=True,
         widget=TextAreaWidget(
-            condition="python: here.attributeIsUsed('signatures')",
+            condition="python: here.attributeIsUsed('signatures') or here.getSignatures()",
             label_msgid="meeting_signatures",
             label='Signatures',
             i18n_domain='PloneMeeting',
@@ -439,7 +438,7 @@ schema = Schema((
         name='assembly',
         allowable_content_types="text/plain",
         widget=TextAreaWidget(
-            condition="python: here.attributeIsUsed('assembly')",
+            condition="python: here.attributeIsUsed('assembly') or here.getAssembly()",
             label_msgid="meeting_assembly",
             description="MeetingAssembly",
             description_msgid="assembly_meeting_descr",
@@ -457,7 +456,7 @@ schema = Schema((
         allowable_content_types="text/plain",
         optional=True,
         widget=TextAreaWidget(
-            condition="python: here.attributeIsUsed('assemblyExcused')",
+            condition="python: here.attributeIsUsed('assemblyExcused') or here.getAssemblyExcused()",
             description="MeetingAssemblyExcused",
             description_msgid="assembly_excused_meeting_descr",
             label='Assemblyexcused',
@@ -472,7 +471,7 @@ schema = Schema((
         allowable_content_types="text/plain",
         optional=True,
         widget=TextAreaWidget(
-            condition="python: here.attributeIsUsed('assemblyAbsents')",
+            condition="python: here.attributeIsUsed('assemblyAbsents') or here.getAssemblyAbsents()",
             description="MeetingAssemblyAbsents",
             description_msgid="assembly_absents_meeting_descr",
             label='Assemblyabsents',
@@ -487,7 +486,7 @@ schema = Schema((
         allowable_content_types="text/plain",
         optional=True,
         widget=TextAreaWidget(
-            condition="python: here.attributeIsUsed('assemblyGuests')",
+            condition="python: here.attributeIsUsed('assemblyGuests') or here.getAssemblyGuests()",
             label='Assemblyguests',
             label_msgid='meeting_assemblyGuests',
             i18n_domain='PloneMeeting',
@@ -500,7 +499,7 @@ schema = Schema((
         allowable_content_types="text/plain",
         optional=True,
         widget=TextAreaWidget(
-            condition="python: here.attributeIsUsed('assemblyProxies')",
+            condition="python: here.attributeIsUsed('assemblyProxies') or here.getAssemblyProxies()",
             label='Assemblyproxies',
             label_msgid='meeting_assemblyProxies',
             i18n_domain='PloneMeeting',
@@ -513,7 +512,7 @@ schema = Schema((
         allowable_content_types="text/plain",
         optional=True,
         widget=TextAreaWidget(
-            condition="python: here.attributeIsUsed('assemblyStaves')",
+            condition="python: here.attributeIsUsed('assemblyStaves') or here.getAssemblyStaves()",
             label='Assemblystaves',
             label_msgid='meeting_assemblyStaves',
             i18n_domain='PloneMeeting',
@@ -907,26 +906,6 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                              domain='PloneMeeting',
                              context=self.REQUEST)
 
-    security.declarePrivate('listAssemblyMembers')
-
-    def listAssemblyMembers(self):
-        '''Returns the active contacts having usage "assemblyMember".'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-        res = ((held_pos.UID(), held_pos.get_short_title())
-               for held_pos in cfg.getContacts(usages=['assemblyMember', ]))
-        return DisplayList(res)
-
-    security.declarePrivate('listSignatories')
-
-    def listSignatories(self):
-        '''Returns the active contacts having usage "signer".'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-        res = ((held_pos.UID(), held_pos.get_short_title())
-               for held_pos in cfg.getContacts(usages=['signer', ]))
-        return DisplayList(res)
-
     security.declarePublic('getAllUsedHeldPositions')
 
     def getAllUsedHeldPositions(self, include_new=False):
@@ -937,7 +916,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         # used Persons are held_positions stored in orderedContacts
         contacts = hasattr(self.aq_base, 'orderedContacts') and list(self.orderedContacts) or []
         if include_new:
-            # now getContacts from MeetingConfig and append new contacts at the end
+            # now getOrderedContacts from MeetingConfig and append new contacts at the end
             # this is the case while adding new contact and editing existing meeting
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self)
@@ -1037,11 +1016,15 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('displayUserReplacement')
 
-    def displayUserReplacement(self, held_position_uid):
+    def displayUserReplacement(self, held_position_uid, include_held_position_label=True):
         '''Display the user remplacement from p_held_position_uid.'''
         catalog = api.portal.get_tool('portal_catalog')
         held_position = catalog(UID=held_position_uid)[0].getObject()
-        return held_position.get_short_title()
+        if include_held_position_label:
+            return held_position.get_short_title()
+        else:
+            person = held_position.get_person()
+            return person.get_title()
 
     security.declarePublic('getEntranceItem')
 
@@ -1505,67 +1488,15 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             return tool.getMeetingConfig(self).getAssemblyStaves()
         return ''
 
-    security.declarePublic('getStrikedAssembly')
+    security.declarePublic('getAssembly')
 
-    def getStrikedAssembly(self, groupByDuty=True, use_mltAssembly=False):
-        '''
-          Generates a HTML version of the assembly :
-          - strikes absents (represented using [[Member assembly name]])
-          - add a 'mltAssembly' class to generated <p> so it can be used in the Pod Template
-          If p_groupByDuty is True, the result will be generated with members having the same
-          duty grouped, and the duty only displayed once at the end of the list of members
-          having this duty...  This is only relevant if MeetingUsers are enabled.
-        '''
-        meeting = self.getSelf()
-        # either we use free textarea to define assembly...
-        if meeting.getAssembly():
-            return toHTMLStrikedContent(meeting.getAssembly(),
-                                        use_mltAssembly=use_mltAssembly)
-        # ... or we use MeetingUsers
-        elif meeting.getAttendees():
-            res = []
-            attendeeIds = meeting.getAttendees()
-            groupedByDuty = OrderedDict()
-            for mUser in meeting.getAllUsedMeetingUsers():
-                userId = mUser.getId()
-                userTitle = mUser.Title()
-                userDuty = mUser.getDuty()
-                # if we group by duty, create an OrderedDict where the key is the duty
-                # and the value is a list of meetingUsers having this duty
-                if groupByDuty:
-                    if userDuty not in groupedByDuty:
-                        groupedByDuty[userDuty] = []
-                    if userId in attendeeIds:
-                        groupedByDuty[userDuty].append(mUser.Title())
-                    else:
-                        groupedByDuty[userDuty].append("<strike>%s</strike>" % userTitle)
-                else:
-                    if userId in attendeeIds:
-                        res.append("%s - %s" % (mUser.Title(), userDuty))
-                    else:
-                        res.append("<strike>%s - %s</strike>" % (mUser.Title(), userDuty))
-            if groupByDuty:
-                for duty in groupedByDuty:
-                    # check if every member of given duty are striked, we strike the duty also
-                    everyStriked = True
-                    for elt in groupedByDuty[duty]:
-                        if not elt.startswith('<strike>'):
-                            everyStriked = False
-                            break
-                    res.append(', '.join(groupedByDuty[duty]) + ' - ' + duty)
-                    if len(groupedByDuty[duty]) > 1:
-                        # add a trailing 's' to the duty if several members have the same duty...
-                        res[-1] = res[-1] + 's'
-                    if everyStriked:
-                        lastAdded = res[-1]
-                        # strike the entire line and remove existing <strike> tags
-                        lastAdded = "<strike>" + lastAdded.replace('<strike>', '').replace('</strike>', '') + \
-                                    "</strike>"
-                        res[-1] = lastAdded
-            if use_mltAssembly:
-                return "<p class='mltAssembly'>" + '<br />'.join(res) + "</p>"
-            else:
-                return "<p>" + "<br />".join(res) + "</p>"
+    def getAssembly(self, striked=False, **kwargs):
+        '''Returns the assembly for this meeting.
+           If p_striked is True, return striked assembly.'''
+        res = self.getField('assembly').get(self, **kwargs)
+        if striked:
+            res = toHTMLStrikedContent(res)
+        return res
 
     security.declarePrivate('getDefaultSignatures')
 

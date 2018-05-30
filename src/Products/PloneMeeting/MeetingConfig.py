@@ -2852,9 +2852,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         res = []
         for brain in brains:
             held_position = brain.getObject()
-            res.append(
-                (held_position.UID(),
-                 held_position.get_short_title(include_usages=True, include_defaults=True)))
+            if held_position.usages and 'assemblyMember' in held_position.usages:
+                res.append(
+                    (held_position.UID(),
+                     held_position.get_short_title(include_usages=True, include_defaults=True)))
         return DisplayList(res)
 
     security.declarePrivate('listConfigGroups')
@@ -5143,15 +5144,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 signatures = listifySignatures(signatures)
         return signatures
 
-    security.declarePublic('getOrderedContacts')
-
-    def getOrderedContacts(self, usages=[], onlyActive=False, **kwargs):
-        '''Overrides field 'orderedContacts' accessor to be able to pass
-           the p_usages and p_onlyActive parameters.  This will filter out
-           selected held_positions on usage and review_state.'''
-        orderedContacts = self.getField('orderedContacts').get(self, **kwargs)
-        return orderedContacts
-
     def getFileTypes_cachekey(method, self, relatedTo='*', typesIds=[], onlySelectable=True, includeSubTypes=True):
         '''cachekey method for self.getFileTypes.'''
         # check last object modified and last time container was modified (element added or removed)
@@ -5403,30 +5395,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def isUsingContacts(self):
         ''' Returns True if we are currently using contacts.'''
         return bool('attendees' in self.getUsedMeetingAttributes())
-
-    security.declarePublic('getContacts')
-
-    def getContacts(self, usages=[]):
-        '''Returns the contacts (held_positions) having at least one usage among
-           p_usage.  if p_onlyActive is True, only active held_positions are returned.
-           If p_includeAllActive is True, we return every existing active held_positions.'''
-        query = {}
-        # either we received uids or we use uids stored in orderedContacts
-        orderedContacts = self.getOrderedContacts()
-        query['UID'] = self.getOrderedContacts()
-        brains = api.content.find(**query)
-        held_positions = [brain.getObject() for brain in brains]
-        # filter usages
-        if usages:
-            held_positions = [held_position for held_position in held_positions
-                              if set(held_position.usages or []).intersection(set(usages))]
-
-        # make sure we have correct order because query was not sorted
-        # we need to sort found brains according to uids
-        def getKey(item):
-            return orderedContacts.index(item.UID())
-        held_positions = sorted(held_positions, key=getKey)
-        return held_positions
 
     security.declarePrivate('addCategory')
 

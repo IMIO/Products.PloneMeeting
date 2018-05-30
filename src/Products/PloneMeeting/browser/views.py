@@ -687,6 +687,106 @@ class BaseDGHV(object):
         self.request.set(ITEM_SCAN_ID_NAME, scan_id)
         return scan_id
 
+    def _format_attendee_value_alone(self, value):
+        """ """
+        return u"<strong>{0}</strong>".format(value)
+
+    def _render_as_html(self, tree, groupByDuty=False, groupByParentOrg=False):
+        """ """
+        res = []
+        if groupByParentOrg:
+            for org, contact_infos in tree.items():
+                res.append(u"<strong><u>{0}</u></strong>".format(org.title))
+                for contact_info in contact_infos:
+                    res.append(contact_info[1])
+        else:
+            for contact_uid, contact_info in tree.items():
+                res.append(contact_info[1])
+        return u'<br />'.join(res)
+
+    def printAttendees(self,
+                       groupByDuty=False,
+                       groupByParentOrg=False,
+                       render_as_html=True,
+                       attendee_value_format=u"{0}, {1}",
+                       attendee_type_format=u"<strong>{0}</strong>",
+                       custom_attendee_type_values={},
+                       show_replaced_by=True,
+                       replaced_by_format=u'<strong>remplacé par {0}</strong>',
+                       include_replace_by_held_position_label=True):
+        """ """
+        attendee_type_values = {'attendee': u'présent',
+                                'excused': u'excusé',
+                                'absent': u'absent',
+                                'replaced': u'remplacé',
+                                'late_attendee': u'présent en retard',
+                                'item_absent': u'absent pour ce point'}
+        attendee_type_values.update(custom_attendee_type_values)
+        res = OrderedDict()
+        if self.context.meta_type == 'Meeting':
+            meeting = self.context
+            attendees = meeting.getAttendees()
+            item_absents = []
+        else:
+            # MeetingItem
+            meeting = self.context.getMeeting()
+            attendees = self.context.getAttendees(includeAbsents=False)
+            item_absents = self.context.getItemAbsents()
+        # generate content then group by sub organization if necessary
+        contacts = meeting.getAllUsedHeldPositions()
+        excused = meeting.getExcused()
+        absents = meeting.getAbsents()
+        lateAttendees = meeting.getLateAttendees()
+        replaced = meeting.getReplaced()
+        for contact in contacts:
+            res[contact.UID()] = [contact, contact.get_short_title(include_sub_organizations=False)]
+
+        # manage duty
+        if groupByDuty:
+            pass
+        else:
+            # append presence to end of value
+            for contact_uid, contact_infos in res.items():
+                if contact_uid in attendees:
+                    res[contact_uid][1] = attendee_value_format.format(
+                        res[contact_uid][1], attendee_type_format.format(attendee_type_values['attendee']))
+                elif contact_uid in excused and contact_uid not in replaced:
+                    res[contact_uid][1] = attendee_value_format.format(
+                        res[contact_uid][1], attendee_type_format.format(attendee_type_values['excused']))
+                elif contact_uid in absents and contact_uid not in replaced:
+                    res[contact_uid][1] = attendee_value_format.format(
+                        res[contact_uid][1], attendee_type_format.format(attendee_type_values['absent']))
+                elif contact_uid in lateAttendees:
+                    res[contact_uid][1] = attendee_value_format.format(
+                        res[contact_uid][1], attendee_type_format.format(attendee_type_values['late_attendee']))
+                elif contact_uid in item_absents:
+                    res[contact_uid][1] = attendee_value_format.format(
+                        res[contact_uid][1], attendee_type_format.format(attendee_type_values['item_absent']))
+                elif contact_uid in replaced:
+                    if show_replaced_by:
+                        res[contact_uid][1] = attendee_value_format.format(
+                            res[contact_uid][1], replaced_by_format.format(
+                                meeting.displayUserReplacement(
+                                    contact_uid,
+                                    include_held_position_label=include_replace_by_held_position_label)))
+                    else:
+                        res[contact_uid][1] = attendee_value_format.format(
+                            res[contact_uid][1], attendee_type_format.format(attendee_type_values['replaced']))
+
+        # manage group by sub organization
+        if groupByParentOrg:
+            by_suborg_res = OrderedDict()
+            for contact_uid, contact_infos in res.items():
+                orga = contact_infos[0].get_organization()
+                if orga not in by_suborg_res:
+                    by_suborg_res[orga] = []
+                by_suborg_res[orga].append(contact_infos)
+            res = by_suborg_res
+
+        if render_as_html:
+            res = self._render_as_html(res, groupByDuty=groupByDuty, groupByParentOrg=groupByParentOrg)
+        return res
+
 
 class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV):
     """ """
@@ -777,73 +877,10 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
 class MeetingDocumentGenerationHelperView(FolderDocumentGenerationHelperView):
     """ """
 
-    def _format_attendee_value_alone(self, value):
-        """ """
-        return u"<strong>{0}</strong>".format(value)
-
-    def _render_as_html(self, tree, groupByDuty=False, groupByParentOrg=False):
-        """ """
-        res = []
-        if groupByParentOrg:
-            for org, contact_infos in tree.items():
-                res.append(u"<strong><u>{0}</u></strong>".format(org.title))
-                for contact_info in contact_infos:
-                    res.append(contact_info[1])
-        return u'<br />'.join(res)
-
-    def printAttendees(self, groupByDuty=False, groupByParentOrg=False, render_as_html=True):
-        """ """
-        res = OrderedDict()
-        # generate content then group by sub organization if necessary
-        contacts = self.context.getAllUsedHeldPositions()
-        attendees = self.context.getAttendees()
-        excused = self.context.getExcused()
-        absents = self.context.getAbsents()
-        lateAttendees = self.context.getLateAttendees()
-        lateAttendees = self.context.getLateAttendees()
-        replaced = self.context.getReplaced()
-        for contact in contacts:
-            res[contact.UID()] = [contact, contact.get_short_title(include_sub_organizations=False)]
-
-        # manage duty
-        if groupByDuty:
-            pass
-        else:
-            # append presence to end of value
-            for contact_uid, contact_infos in res.items():
-                if contact_uid in attendees:
-                    res[contact_uid][1] = u"{0}, {1}".format(res[contact_uid][1],
-                                                             self._format_attendee_value_alone(u'présent'))
-                elif contact_uid in excused and contact_uid not in replaced:
-                    res[contact_uid][1] = u"{0}, {1}".format(res[contact_uid][1],
-                                                             self._format_attendee_value_alone(u'excusé'))
-                elif contact_uid in absents and contact_uid not in replaced:
-                    res[contact_uid][1] = u"{0}, {1}".format(res[contact_uid][1],
-                                                             self._format_attendee_value_alone(u'absent'))
-                elif contact_uid in replaced:
-                    res[contact_uid][1] = u"{0}, {1}".format(res[contact_uid][1],
-                                                             self._format_attendee_value_alone(u'remplacé'))
-                elif contact_uid in lateAttendees:
-                    res[contact_uid][1] = u"{0}, {1}".format(res[contact_uid][1],
-                                                             self._format_attendee_value_alone(u'présent en retard'))
-
-        # manage group by sub organization
-        if groupByParentOrg:
-            by_suborg_res = OrderedDict()
-            for contact_uid, contact_infos in res.items():
-                orga = contact_infos[0].get_organization()
-                if orga not in by_suborg_res:
-                    by_suborg_res[orga] = []
-                by_suborg_res[orga].append(contact_infos)
-            res = by_suborg_res
-
-        if render_as_html:
-            res = self._render_as_html(res, groupByDuty=groupByDuty, groupByParentOrg=groupByParentOrg)
-        return res
-
 
 class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV):
     """ """
+
     def printMeetingDate(self, returnDateTime=False, noMeetingMarker='-'):
         """Print meeting date, manage fact that item is not linked to a meeting,
            in this case p_noMeetingMarker is returned.

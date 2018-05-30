@@ -1577,6 +1577,13 @@ table.listing tbody tr.even.dragging td {
     background-color: #ffa;
 }
 
+/* check in item people tables */
+#content span.people {
+    font-family: 'FontAwesome';
+}
+#content span.people-checked:before {
+    content: "\f00c";
+}
 
 /* </dtml-with> */
 

@@ -1198,16 +1198,13 @@ def updateCollectionCriterion(collection, i, v):
             break
 
 
-def toHTMLStrikedContent(content, use_mltAssembly=False):
+def toHTMLStrikedContent(plain_content):
     """
       p_content is HTML having elements to strike between [[]].
-      We will replace these [[]] by <strike> tags.  Moreover, we will append the 'mltAssembly'
-      class to the <p> that surrounds the given p_content HTML.
+      We will replace these [[]] by <strike> tags.
     """
-    content = content.replace('[[', '<strike>').replace(']]', '</strike>')
-    if use_mltAssembly:
-        content = content.replace('<p>', '<p class="mltAssembly">')
-    return content
+    plain_content = plain_content.replace('[[', '<strike>').replace(']]', '</strike>')
+    return plain_content
 
 
 def _itemNumber_to_storedItemNumber(number):

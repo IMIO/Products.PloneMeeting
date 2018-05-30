@@ -2067,15 +2067,11 @@ class testMeeting(PloneMeetingTestCase):
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=DateTime())
         meeting.setAssembly('Simple assembly')
-        self.assertEquals(meeting.getStrikedAssembly(),
+        self.assertEquals(meeting.getAssembly(striked=True),
                           '<p>Simple assembly</p>')
-        self.assertEquals(meeting.getStrikedAssembly(use_mltAssembly=True),
-                          '<p class="mltAssembly">Simple assembly</p>')
         meeting.setAssembly('Assembly with [[striked]] part')
-        self.assertEquals(meeting.getStrikedAssembly(),
+        self.assertEquals(meeting.getAssembly(striked=True),
                           '<p>Assembly with <strike>striked</strike> part</p>')
-        self.assertEquals(meeting.getStrikedAssembly(use_mltAssembly=True),
-                          '<p class="mltAssembly">Assembly with <strike>striked</strike> part</p>')
 
     def test_pm_ChangingMeetingDateUpdateLinkedItemsMeetingDateMetadata(self):
         """When the date of a meeting is changed, the linked items are reindexed,

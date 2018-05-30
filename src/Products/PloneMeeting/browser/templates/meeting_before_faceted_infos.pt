@@ -122,6 +122,8 @@
               </td>
               <td tal:condition="useUserReplacements">
                 <span tal:condition="python: aUid in userReplacements" tal:content="python: context.displayUserReplacement(userReplacements[aUid])"></span>
+                <span tal:condition="python: aUid in excused + absents and aUid not in userReplacements">-</span>
+
               </td>
             </tal:defines>
           </tr>
@@ -142,7 +144,7 @@
                              colWidthPercentage python: int(100/len(showAssemblyFields));">
           <fieldset tal:condition="python: 'assembly' in showAssemblyFields">
               <legend tal:content="context/getLabelAssembly">Assembly</legend>
-              <span tal:replace="structure python: context.getRawAssembly() and context.getStrikedAssembly() or '<p>-</p>'"/>
+              <span tal:replace="structure python: context.getRawAssembly() and context.getAssembly(striked=True) or '<p>-</p>'"/>
           </fieldset>
           <fieldset tal:condition="python: 'assemblyExcused' in showAssemblyFields">
               <legend i18n:translate="meeting_assemblyExcused">Excused</legend>

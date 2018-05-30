@@ -12,7 +12,6 @@
 import logging
 from zope.interface import implements
 from appy.gen import No
-from collections import OrderedDict
 from copy import deepcopy
 from datetime import datetime
 from DateTime import DateTime
@@ -37,6 +36,7 @@ from plone.memoize import ram
 from Products.Archetypes.atapi import BaseFolder
 from Products.Archetypes.atapi import BooleanField
 from Products.Archetypes.atapi import DisplayList
+from Products.Archetypes.atapi import InAndOutWidget
 from Products.Archetypes.atapi import IntegerField
 from Products.Archetypes.atapi import LinesField
 from Products.Archetypes.atapi import MultiSelectionWidget
@@ -1195,7 +1195,7 @@ schema = Schema((
     ),
     LinesField(
         name='itemSignatories',
-        widget=MultiSelectionWidget(
+        widget=InAndOutWidget(
             condition="python: here.portal_plonemeeting.isManager(here) and here.hasMeeting() and "
                       "here.getMeeting().attributeIsUsed('signatories')",
             description="ItemSignatories",
@@ -2704,11 +2704,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def listItemSignatories(self):
         '''Returns a list of available signatories for the item.
-           Every attendees could be signatories.'''
+           Every attendees could be signatory.'''
         res = []
         meeting = self.getMeeting()
-        if meeting:
-            pass
+        attendees = meeting.getAttendees(theObjects=True)
+        for attendee in attendees:
+            res.append(
+                (attendee.UID(),
+                 attendee.get_short_title()))
         return DisplayList(tuple(res))
 
     security.declarePublic('listItemAbsents')
@@ -3024,17 +3027,32 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getItemSignatories')
 
-    def getItemSignatories(self, theObjects=False, includeDeleted=True,
-                           includeReplacements=False, real=False, **kwargs):
+    def getItemSignatories(self, real=False, theObjects=False, **kwargs):
         '''Returns the signatories for this item. If no signatory is defined,
-           meeting signatories are returned, taking into account user
-           replacements or not (depending on p_includeReplacements).
+           meeting signatories are returned.
+           If p_real=False, the returned result is an OrderedDict with
+           signatory uid as key and 'signature_number' as value.
         '''
         res = self.getField('itemSignatories').get(self, **kwargs)
         if real:
             return res
+
+        if res:
+            if theObjects:
+                catalog = api.portal.get_tool('portal_catalog')
+                brains = catalog(UID=res)
+                res = [brain.getObject() for brain in brains]
+
+                # keep correct order that was lost by catalog query
+                def getKey(item):
+                    return self.getItemSignatories(real=True).index(item.UID())
+                res = sorted(res, key=getKey)
+                res = {signer: res.index(signer) + 1 for signer in res}
+            else:
+                res = {signer_uid: res.index(signer_uid) + 1 for signer_uid in res}
+
         if not res and self.hasMeeting():
-            res = self.getMeeting().getSignatories(theObjects)
+            res = self.getMeeting().getSignatories(theObjects=theObjects)
         return res
 
     security.declarePublic('redefinedItemAssemblies')
@@ -3059,7 +3077,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getItemAssembly')
 
-    def getItemAssembly(self, real=False, **kwargs):
+    def getItemAssembly(self, real=False, striked=False, **kwargs):
         '''Returns the assembly for this item.
            If no assembly is defined, meeting assembly is returned.'''
         res = self.getField('itemAssembly').get(self, **kwargs)
@@ -3067,6 +3085,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return res
         if not res and self.hasMeeting():
             res = self.getMeeting().getAssembly(**kwargs)
+        if striked:
+            res = toHTMLStrikedContent(res)
         return res
 
     security.declarePublic('getItemAssemblyExcused')
@@ -3093,71 +3113,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res = self.getMeeting().getAssemblyAbsents(**kwargs)
         return res
 
-    security.declarePublic('getStrikedItemAssembly')
+    security.declarePublic('displayStrikedItemAssembly')
 
-    def getStrikedItemAssembly(self,
-                               groupByDuty=True,
-                               use_mltAssembly=False):
-        '''
-          Generates a HTML version of the itemAssembly :
-          - strikes absents (represented using [[Member assembly name]])
-          - add a 'mltAssembly' class to generated <p> so it can be used in the Pod Template
-          If p_groupByDuty is True, the result will be generated with members having the same
-          duty grouped, and the duty only displayed once at the end of the list of members
-          having this duty...  This is only relevant if MeetingUsers are enabled.
-        '''
-        item = self.getSelf()
-        # either we use free textarea to define assembly...
-        if item.getItemAssembly():
-            return toHTMLStrikedContent(item.getItemAssembly(),
-                                        use_mltAssembly=use_mltAssembly)
-        # ... or we use MeetingUsers
-        elif item.getAttendees():
-            res = []
-            attendeeIds = [attendee.getId() for attendee in item.getAttendees()]
-            meeting = item.getMeeting()
-            groupedByDuty = OrderedDict()
-            for mUser in meeting.getAllUsedMeetingUsers():
-                userId = mUser.getId()
-                userTitle = mUser.Title()
-                userDuty = mUser.getDuty()
-                # if we group by duty, create an OrderedDict where the key is the duty
-                # and the value is a list of meetingUsers having this duty
-                if groupByDuty:
-                    if userDuty not in groupedByDuty:
-                        groupedByDuty[userDuty] = []
-                    if userId in attendeeIds:
-                        groupedByDuty[userDuty].append(mUser.Title())
-                    else:
-                        groupedByDuty[userDuty].append("<strike>%s</strike>" % userTitle)
-                else:
-                    if userId in attendeeIds:
-                        res.append("%s - %s" % (mUser.Title(), userDuty))
-                    else:
-                        res.append("<strike>%s - %s</strike>" % (mUser.Title(), userDuty))
-            if groupByDuty:
-                for duty in groupedByDuty:
-                    # check if every member of given duty are striked, we strike the duty also
-                    everyStriked = True
-                    for elt in groupedByDuty[duty]:
-                        if not elt.startswith('<strike>'):
-                            everyStriked = False
-                            break
-                    res.append(', '.join(groupedByDuty[duty]) + ' - ' + duty)
-                    if len(groupedByDuty[duty]) > 1:
-                        # add a trailing 's' to the duty if several members have the same duty...
-                        res[-1] = res[-1] + 's'
-                    if everyStriked:
-                        lastAdded = res[-1]
-                        # strike the entire line and remove existing <strike> tags
-                        lastAdded = "<strike>" + \
-                                    lastAdded.replace('<strike>', '').replace('</strike>', '') + \
-                                    "</strike>"
-                        res[-1] = lastAdded
-            if use_mltAssembly:
-                return "<p class='mltAssembly'>" + '<br />'.join(res) + "</p>"
-            else:
-                return "<p>" + "<br />".join(res) + "</p>"
+    def displayStrikedItemAssembly(self):
+        """ """
+        return toHTMLStrikedContent(self.getItemAssembly())
 
     security.declarePublic('getItemAbsents')
 
