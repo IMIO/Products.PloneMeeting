@@ -506,19 +506,19 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 res.append(meetingConfig)
         return res
 
-    def _users_groups_last_modified(self):
-        """Return the _p_mtime of source_groups._principal_groups that
-           stores associations between principals and groups changed."""
+    def _users_groups_value(self):
+        """Return the byValue representation of the _principal_groups BTree
+           to check if it changed, meaning that users/groups associations changed."""
         portal = self.aq_inner.aq_parent
         source_groups = portal.acl_users.source_groups
-        return source_groups._principal_groups._p_mtime
+        return source_groups._principal_groups.byValue(0)
 
     def getPloneGroupsForUser_cachekey(method, self, userId=None):
         '''cachekey method for self.getPloneGroupsForUser.'''
         date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting.getPloneGroupsForUser')
         return (date,
-                self._users_groups_last_modified(),
-                (userId or self.REQUEST.get('AUTHENTICATED_USER', api.user.get_current())))
+                self._users_groups_value(),
+                userId or api.user.get_current())
 
     security.declarePublic('getPloneGroupsForUser')
 
@@ -535,8 +535,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''cachekey method for self.getGroupsForUser.'''
         date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting.getGroupsForUser')
         return (date,
-                self._users_groups_last_modified(),
-                (userId or self.REQUEST.get('AUTHENTICATED_USER', api.user.get_current())),
+                self._users_groups_value(),
+                (userId or api.user.get_current()),
                 active, suffixes, zope, omittedSuffixes)
 
     security.declarePublic('getGroupsForUser')
@@ -596,8 +596,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''cachekey method for self.userIsAmong.'''
         date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting.userIsAmong')
         return (date,
-                self._users_groups_last_modified(),
-                self.REQUEST.get('AUTHENTICATED_USER', api.user.get_current()),
+                self._users_groups_value(),
+                api.user.get_current(),
                 suffixes, onlyActive)
 
     security.declarePublic('userIsAmong')
@@ -867,8 +867,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     def isManager_cachekey(method, self, context, realManagers=False):
         '''cachekey method for self.isManager.'''
-        return (self._users_groups_last_modified(),
-                (self.REQUEST.get('AUTHENTICATED_USER', api.user.get_current())),
+        return (self._users_groups_value(),
+                api.user.get_current(),
                 context, realManagers)
 
     security.declarePublic('isManager')
@@ -886,8 +886,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     def isPowerObserverForCfg_cachekey(method, self, cfg, isRestricted=False):
         '''cachekey method for self.isPowerObserverForCfg.'''
-        return (self._users_groups_last_modified(),
-                (self.REQUEST.get('AUTHENTICATED_USER', api.user.get_current())),
+        return (self._users_groups_value(),
+                api.user.get_current(),
                 cfg, isRestricted)
 
     security.declarePublic('isPowerObserverForCfg')

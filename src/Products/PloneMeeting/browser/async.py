@@ -136,7 +136,7 @@ class TakenOverBy(BrowserView):
         name = 'takenOverByNo'
         title_msgid = 'taken_over_by_no_edit'
         if newlyTakenOverBy:
-            if self.request['AUTHENTICATED_USER'].getId() == newlyTakenOverBy:
+            if memberId == newlyTakenOverBy:
                 css_class = 'takenOverByCurrentUser'
             else:
                 css_class = 'takenOverByOtherUser'

@@ -493,7 +493,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         annotations = IAnnotations(self.context)
         cfg = self.tool.getMeetingConfig(self.context)
         cfg_modified = cfg.modified()
-        user = self.request['AUTHENTICATED_USER']
+        user = api.user.get_current()
         userGroups = self.tool.getPloneGroupsForUser()
         # if item is validated, the 'present' action could appear if a meeting
         # is now available for the item to be inserted into
@@ -602,7 +602,7 @@ class MeetingActionsPanelView(BaseActionsPanelView):
            - user groups changed.'''
         cfg = self.tool.getMeetingConfig(self.context)
         cfg_modified = cfg.modified()
-        user = self.request['AUTHENTICATED_USER']
+        user = api.user.get_current()
         userGroups = self.tool.getPloneGroupsForUser()
         invalidate_meeting_actions_panel_cache = False
         if hasattr(self.context, 'invalidate_meeting_actions_panel_cache'):

@@ -23,6 +23,11 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   fails to abort changes that occured to item review_state in case an exception is raised.
 - Replaced Meeting.getBeforeFrozenStates by Meeting.getStatesBefore('frozen') as we need the same method to get states
   before the 'published' states Meeting.getStatesBefore('published') to protect MeetingItemWorkflowConditions.mayPublish.
+- Use source_groups._principal_groups.byValue(0) either source_groups._principal_groups._p_mtime to check if users/groups
+  mapping changed because in some cases (???) the _p_mtime is not changed, relying on stored value is more robust.
+- In ToolPloneMeeting.getPloneGroupsForUser, do not get user from REQUEST['AUTHENTICATED_USER'] because in some egde cases
+  like use of api.env.adopt_user, the value stored there is not always the current user.
+  Systematically use api.user.get_current to get current user.
 
 4.1b9 (2018-05-09)
 ------------------

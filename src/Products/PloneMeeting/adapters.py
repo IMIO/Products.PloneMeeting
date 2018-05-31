@@ -527,10 +527,10 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
             if meeting:
                 meeting_modified = meeting.modified()
         # manage takenOverBy
-        current_member = None
+        current_member_id = None
         takenOverBy = self.context.getTakenOverBy()
         if takenOverBy:
-            current_member = self.request['AUTHENTICATED_USER'].getId()
+            current_member_id = api.user.get_current().getId()
         # manage when displaying the icon with informations about
         # the predecessor living in another MC
         predecessor_modified = None
@@ -547,7 +547,7 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
             if self.context._getSentToOtherMCAnnotationKey(destMeetingConfigId) in ann]
         return res + (meeting_modified,
                       takenOverBy,
-                      current_member,
+                      current_member_id,
                       predecessor_modified,
                       other_mc_to_clone_to,
                       other_mc_cloned_to_ann_keys)
@@ -828,7 +828,8 @@ class ItemPrettyLinkAdapter(PrettyLinkAdapter):
             takenOverBy = self.context.getTakenOverBy()
             if takenOverBy:
                 # if taken over, display a different icon if taken over by current user or not
-                takenOverByCurrentUser = self.request['AUTHENTICATED_USER'].getId() == takenOverBy and True or False
+                user = api.user.get_current()
+                takenOverByCurrentUser = bool(user.getId() == takenOverBy)
                 iconName = takenOverByCurrentUser and 'takenOverByCurrentUser.png' or 'takenOverByOtherUser.png'
                 res.append((iconName, translate(u'Taken over by ${fullname}',
                                                 domain="PloneMeeting",

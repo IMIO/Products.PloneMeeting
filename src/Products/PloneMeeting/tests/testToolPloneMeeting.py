@@ -36,6 +36,7 @@ from collective.iconifiedcategory.utils import get_category_object
 from imio.helpers.cache import cleanRamCacheFor
 from Products.CMFCore.permissions import ManagePortal
 from Products.CMFPlone.utils import safe_unicode
+from plone import api
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.interfaces import IDexterityContent
 from plone.dexterity.utils import createContentInContainer
@@ -914,6 +915,37 @@ class testToolPloneMeeting(PloneMeetingTestCase):
                 {'label': 'ConfigGroup3', 'row_id': 'unique_id_3'},
                 )),
                          error_msg)
+
+    def test_pm_GetPloneGroupsForUser(self):
+        """Test that this cached method behaves normally."""
+        # works with different users
+        self.changeUser('pmCreator1')
+        pmcreator1_groups = self.member.getGroups()
+        self.assertEqual(self.tool.getPloneGroupsForUser(), pmcreator1_groups)
+        self.changeUser('pmReviewer1')
+        pmreviewer1_groups = self.member.getGroups()
+        self.assertEqual(self.tool.getPloneGroupsForUser(), pmreviewer1_groups)
+        self.assertNotEqual(pmcreator1_groups, pmreviewer1_groups)
+
+        # is aware of user groups changes
+        self.assertFalse('vendors_creators' in pmreviewer1_groups)
+        self._addPrincipalToGroup('pmReviewer1', 'vendors_creators')
+        pmreviewer1_groups = self.member.getGroups()
+        self.assertTrue('vendors_creators' in self.tool.getPloneGroupsForUser())
+        self.assertEqual(self.tool.getPloneGroupsForUser(), pmreviewer1_groups)
+
+        # we may pass a userId
+        self.assertEqual(self.tool.getPloneGroupsForUser(userId='pmCreator1'), pmcreator1_groups)
+        self.assertEqual(
+            self.tool.getPloneGroupsForUser(userId='pmReviewer1'), self.tool.getPloneGroupsForUser())
+
+        # works also when using api.env.adopt_user like it is the case
+        # in MeetingItem.setHistorizedTakenOverBy
+        pmCreator1 = api.user.get('pmCreator1')
+        with api.env.adopt_user(user=pmCreator1):
+            self.assertEqual(self.tool.getPloneGroupsForUser(), pmcreator1_groups)
+            self.assertEqual(self.tool.getPloneGroupsForUser(userId='pmCreator1'), pmcreator1_groups)
+            self.assertEqual(self.tool.getPloneGroupsForUser(userId='pmReviewer1'), pmreviewer1_groups)
 
 
 def test_suite():
