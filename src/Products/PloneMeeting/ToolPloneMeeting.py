@@ -518,7 +518,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting.getPloneGroupsForUser')
         return (date,
                 self._users_groups_value(),
-                (userId or self.REQUEST.get('AUTHENTICATED_USER', api.user.get_current())))
+                userId or api.user.get_current())
 
     security.declarePublic('getPloneGroupsForUser')
 
@@ -536,7 +536,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting.getGroupsForUser')
         return (date,
                 self._users_groups_value(),
-                (userId or self.REQUEST.get('AUTHENTICATED_USER', api.user.get_current())),
+                (userId or api.user.get_current()),
                 active, suffixes, zope, omittedSuffixes)
 
     security.declarePublic('getGroupsForUser')
@@ -597,7 +597,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting.userIsAmong')
         return (date,
                 self._users_groups_value(),
-                self.REQUEST.get('AUTHENTICATED_USER', api.user.get_current()),
+                api.user.get_current(),
                 suffixes, onlyActive)
 
     security.declarePublic('userIsAmong')
@@ -868,7 +868,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def isManager_cachekey(method, self, context, realManagers=False):
         '''cachekey method for self.isManager.'''
         return (self._users_groups_value(),
-                (self.REQUEST.get('AUTHENTICATED_USER', api.user.get_current())),
+                api.user.get_current(),
                 context, realManagers)
 
     security.declarePublic('isManager')
@@ -887,7 +887,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def isPowerObserverForCfg_cachekey(method, self, cfg, isRestricted=False):
         '''cachekey method for self.isPowerObserverForCfg.'''
         return (self._users_groups_value(),
-                (self.REQUEST.get('AUTHENTICATED_USER', api.user.get_current())),
+                api.user.get_current(),
                 cfg, isRestricted)
 
     security.declarePublic('isPowerObserverForCfg')

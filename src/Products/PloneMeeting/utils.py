@@ -847,7 +847,7 @@ def getFieldVersion(obj, name, changes):
        historical modifications of field content are highlighted.'''
     lastVersion = obj.getField(name).getAccessor(obj)()
     # highlight blank lines at the end of the text if current user may edit the obj
-    member = obj.REQUEST['AUTHENTICATED_USER']
+    member = api.user.get_current()
     if member.has_permission(ModifyPortalContent, obj):
         lastVersion = markEmptyTags(lastVersion,
                                     tagTitle=translate('blank_line',
