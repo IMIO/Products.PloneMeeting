@@ -2704,10 +2704,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def listItemSignatories(self):
         '''Returns a list of available signatories for the item.
-           Every attendees could be signatory.'''
+           Every attendees for this item could be signatory.'''
         res = []
-        meeting = self.getMeeting()
-        attendees = meeting.getAttendees(theObjects=True)
+        attendees = self.getAttendees(theObjects=True)
         for attendee in attendees:
             res.append(
                 (attendee.UID(),
@@ -5839,21 +5838,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getAttendees')
 
-    def getAttendees(self, usage=None, includeAbsents=False):
-        '''Returns the attendees for this item. Takes into account
-           self.itemAbsents, excepted if p_includeAbsents is True. If a given
-           p_usage is defined, the method returns only users having this
-           p_usage.'''
+    def getAttendees(self, theObjects=False):
+        '''Returns the attendees for this item.'''
         res = []
-        if usage == 'signer':
-            raise 'Please use MeetingItem.getItemSignatories instead.'
         if not self.hasMeeting():
             return res
-        itemAbsents = set(self.getItemAbsents())
         meeting = self.getMeeting()
-        attendees = meeting.getAttendees()
-        if not includeAbsents:
-            attendees = set(attendees).difference(itemAbsents)
+        attendees = meeting.getAttendees(theObjects=False)
+        itemAbsents = self.getItemAbsents()
+        attendees = [attendee for attendee in attendees
+                     if attendee not in itemAbsents]
+        # get really present attendees now
+        attendees = meeting._getContacts(uids=attendees, theObjects=theObjects)
         return attendees
 
     security.declarePublic('getAssembly')

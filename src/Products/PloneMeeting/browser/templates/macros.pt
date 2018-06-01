@@ -416,11 +416,12 @@ document.location.reload(true);
                    absents meeting/getAbsents;
                    itemSigners context/getItemSignatories;
                    realItemSigners python: context.getItemSignatories(real=True);
+                   itemAttendees context/getAttendees;
                    itemAbsents context/getItemAbsents;
                    showExcused python: 'excused' in usedMeetingAttributes or excused;
                    showAbsents python: 'absents' in usedMeetingAttributes or absents or itemAbsents;
                    showSignatories python: 'signatories' in usedMeetingAttributes or signers;
-                   voters python: context.getAttendees(usage='voter');
+                   voters python: [];
                    global showSave python:False;
                    global showRefresh python: False;
                    error request/error | python:'';
@@ -470,7 +471,7 @@ document.location.reload(true);
   <tbody>
   <tr tal:repeat="mUser allUsers">
     <tal:attendee define="aUid mUser/UID;
-                          isPresent python: mUser.UID() not in itemAbsents + excused + absents">
+                          isPresent python: mUser.UID() in itemAttendees">
      <td><b tal:content="mUser/get_short_title"></b></td>
      <td align="center"
          tal:attributes="onmouseover python: 'setByeByeButton(\'%s\', \'visible\')' % aUid;

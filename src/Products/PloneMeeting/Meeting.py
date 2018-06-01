@@ -51,6 +51,7 @@ from Products.CMFCore.permissions import View
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from Products.CMFCore.utils import _checkPermission
 from plone import api
+from plone.api.validation import mutually_exclusive_parameters
 from imio.prettylink.interfaces import IPrettyLink
 from Products.PloneMeeting.browser.itemchangeorder import _compute_value_to_add
 from Products.PloneMeeting.browser.itemchangeorder import _to_integer
@@ -955,13 +956,18 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                if held_pos.defaults and 'present' in held_pos.defaults and held_pos.signature_number]
         return {signer.UID(): signer.signature_number for signer in res}
 
-    def _getContacts(self, contact_type, theObjects=False):
+    @mutually_exclusive_parameters('contact_type', 'uids')
+    def _getContacts(self, contact_type=None, uids=None, theObjects=False):
         """ """
         res = []
         orderedContacts = getattr(self, 'orderedContacts', OrderedDict())
-        for uid, infos in orderedContacts.items():
-            if infos[contact_type]:
-                res.append(uid)
+        if contact_type:
+            for uid, infos in orderedContacts.items():
+                if infos[contact_type]:
+                    res.append(uid)
+        else:
+            res = uids
+
         if theObjects:
             catalog = api.portal.get_tool('portal_catalog')
             brains = catalog(UID=res)
