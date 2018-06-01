@@ -1584,6 +1584,17 @@ table.listing tbody tr.even.dragging td {
 #content span.people-checked:before {
     content: "\f00c";
 }
+#content span.people-leave:before {
+    content: "\f08b";
+    color: orange;
+    font-size: 120%;
+}
+
+#content span.people-remove-left:before {
+    content: "\f00d";
+    color: red;
+    font-size: 120%;
+}
 
 /* </dtml-with> */
 

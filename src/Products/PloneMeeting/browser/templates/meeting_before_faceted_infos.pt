@@ -93,8 +93,8 @@
             <tal:defines define="aUid mUser/UID">
               <td><b tal:content="mUser/get_short_title"></b></td>
               <td align="center">
-                <img tal:attributes="src string: $portal_url/checked.gif"
-                     tal:condition="python: aUid in attendees"/>
+                <span tal:condition="python: aUid in attendees" class="people people-checked" ></span>
+
                 <tal:comment replace="nothing">Info about users late-entering the meeting</tal:comment>
                 <tal:late condition="python: aUid in lateAttendees">
                   <img tal:attributes="src string: $portal_url/entrance.gif"
@@ -107,16 +107,14 @@
                 </tal:left>
               </td>
               <td align="center" tal:condition="showExcused">
-                <img tal:attributes="src string: $portal_url/checked.gif"
-                     tal:condition="python: aUid in excused"/>
+                <span tal:condition="python: aUid in excused" class="people people-checked" ></span>
               </td>
               <td align="center" tal:condition="showAbsents">
-                <img tal:attributes="src string: $portal_url/checked.gif"
-                     tal:condition="python: aUid in absents"/>
+                <span tal:condition="python: aUid in absents" class="people people-checked" ></span>
               </td>
               <td align="center" tal:condition="showSignatories">
                <tal:is_signer condition="python: aUid in signers">
-                <img tal:attributes="src string: $portal_url/checked.gif" />
+                <span class="people people-checked" ></span>
                 <span tal:content="python: signers[aUid]" />
                </tal:is_signer>
               </td>

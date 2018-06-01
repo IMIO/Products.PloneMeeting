@@ -999,13 +999,16 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getSignatories')
 
-    def getSignatories(self, theObjects=False):
+    def getSignatories(self, theObjects=False, by_signature_number=False):
         '''See docstring in previous method.'''
         signers = self._getContacts('signer', theObjects=theObjects)
         if theObjects:
-            return {signer: self.orderedContacts[signer.UID()]['signature_number'] for signer in signers}
+            res = {signer: self.orderedContacts[signer.UID()]['signature_number'] for signer in signers}
         else:
-            return {signer_uid: self.orderedContacts[signer_uid]['signature_number'] for signer_uid in signers}
+            res = {signer_uid: self.orderedContacts[signer_uid]['signature_number'] for signer_uid in signers}
+        if by_signature_number:
+            res = {v: k for k, v in res.items()}
+        return res
 
     security.declarePublic('getReplacements')
 

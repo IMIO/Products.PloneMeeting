@@ -107,22 +107,29 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
 
     def _doApply(self):
         """ """
-        if not self.context._mayChangeAttendees(self.person_uid):
+        if not self.context._mayChangeAttendees():
             raise Unauthorized
 
-        # apply itemAbsents
-        items_to_update = _itemsToUpdate(
-            from_item_number=self.context.getItemNumber(relativeTo='meeting'),
-            until_item_number=self.apply_until_item_number,
-            meeting=self.context.getMeeting())
-        for item_to_update in items_to_update:
-            item_absents = list(item_to_update.getItemAbsents())
-            if self.person_uid not in item_absents:
-                item_absents.append(self.person_uid)
-                item_to_update.setItemAbsents(item_absents)
-
         plone_utils = api.portal.get_tool('plone_utils')
-        plone_utils.addPortalMessage(_("Attendee has been set absent."))
+        # return a portal_message if trying to byebye an attendee that is
+        # specifically selected as itemSignatory on current item
+        if self.person_uid in self.context.getItemSignatories(real=True):
+            plone_utils.addPortalMessage(
+                _("Can not set absent a person selected as signatory for current item!"),
+                type='warning')
+        else:
+            # apply itemAbsents
+            items_to_update = _itemsToUpdate(
+                from_item_number=self.context.getItemNumber(relativeTo='meeting'),
+                until_item_number=self.apply_until_item_number,
+                meeting=self.context.getMeeting())
+            for item_to_update in items_to_update:
+                item_absents = list(item_to_update.getItemAbsents())
+                if self.person_uid not in item_absents:
+                    item_absents.append(self.person_uid)
+                    item_to_update.setItemAbsents(item_absents)
+            plone_utils.addPortalMessage(_("Attendee has been set absent."))
+
         self._finishedSent = True
 
 
@@ -149,7 +156,7 @@ class WelcomeAttendeeForm(BaseAttendeeForm):
 
     def _doApply(self):
         """ """
-        if not self.context._mayChangeAttendees(self.person_uid):
+        if not self.context._mayChangeAttendees():
             raise Unauthorized
 
         # apply itemAbsents

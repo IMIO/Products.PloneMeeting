@@ -3027,11 +3027,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getItemSignatories')
 
-    def getItemSignatories(self, real=False, theObjects=False, **kwargs):
+    def getItemSignatories(self, real=False, theObjects=False, by_signature_number=False, **kwargs):
         '''Returns the signatories for this item. If no signatory is defined,
            meeting signatories are returned.
            If p_real=False, the returned result is an OrderedDict with
            signatory uid as key and 'signature_number' as value.
+           if p_ by_signature_number is True, signatories are return with signature_number
+           as key and signer as value, by default this is the other way round.
         '''
         res = self.getField('itemSignatories').get(self, **kwargs)
         if real:
@@ -3053,6 +3055,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         if not res and self.hasMeeting():
             res = self.getMeeting().getSignatories(theObjects=theObjects)
+        if by_signature_number:
+            res = {v: k for k, v in res.items()}
         return res
 
     security.declarePublic('redefinedItemAssemblies')
@@ -6222,15 +6226,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 meeting.entrances = PersistentMapping()
             meeting.entrances[userId] = self.getItemNumber(relativeTo='meeting')
 
-    def _mayChangeAttendees(self, person_uid):
-        """Check that :
-           - user may quickEdit itemAbsents;
-           - person_uid is actually a present attendee."""
-        meeting = self.getMeeting()
-        if meeting and \
-           self.mayQuickEdit(
-            'itemAbsents', bypassWritePermissionCheck=True) and \
-           person_uid in meeting.getAttendees():
+    def _mayChangeAttendees(self):
+        """Check that user may quickEdit itemAbsents."""
+        if self.mayQuickEdit('itemAbsents', bypassWritePermissionCheck=True):
             return True
 
     security.declareProtected(ModifyPortalContent, 'onByebyePerson')

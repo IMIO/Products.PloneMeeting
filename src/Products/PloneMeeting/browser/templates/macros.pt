@@ -479,25 +479,23 @@ document.location.reload(true);
        <span tal:condition="isPresent" class="people people-checked" ></span>
  
        <tal:comment replace="nothing">Show "absent" icon if the user was absent for this item</tal:comment>
-       <tal:left condition="python: not isPresent and aUid not in (excused + absents)">
-       <img tal:attributes="src string: $portal_url/leaving.gif"
-            title="item_attendee_absent" i18n:attributes="title"/>
-       <tal:comment replace="nothing">Remove info user being an item absent</tal:comment>
-       <a href="#" class="link-overlay-pm" tal:attributes="href string:item_welcome_attendee_form?person_uid=${aUid}"
-          tal:condition="python:context._mayChangeAttendees(aUid)">
-        <img title="person_welcome" i18n:attributes="title"
-            tal:attributes="src string: $portal_url/delete_small.png;
-                            id python: 'welcome_%s' % aUid;
-                            name  python: 'welcome_%s' % aUid;" />
-       </a>
+       <tal:left condition="python: aUid in itemAbsents">
+ 
+         <span class="people people-leave" title="item_attendee_absent" i18n:attributes="title" style="cursor: help;"></span>
+         <tal:comment replace="nothing">Remove info user being an item absent</tal:comment>
+         <a href="#" class="link-overlay-pm" tal:attributes="href string:item_welcome_attendee_form?person_uid=${aUid}"
+            tal:condition="python: context._mayChangeAttendees()">
+          <span class="people people-remove-left" title="person_welcome" i18n:attributes="title"
+              tal:attributes="id python: 'welcome_%s' % aUid;
+                              name  python: 'welcome_%s' % aUid;" />
+         </a>
        </tal:left>
  
        <tal:comment replace="nothing">Button for byebying a user</tal:comment>
        <a href="#" class="link-overlay-pm" tal:attributes="href string:item_byebye_attendee_form?person_uid=${aUid}"
-          tal:condition="python:context._mayChangeAttendees(aUid) and isPresent">
-        <img title="person_byebye" i18n:attributes="title" style="visibility: hidden"
-            tal:attributes="src string: $portal_url/departure.gif;
-                            id python: 'byebye_%s' % aUid;
+          tal:condition="python:context._mayChangeAttendees() and isPresent">
+        <span class="people people-leave" title="person_byebye" i18n:attributes="title" style="visibility: hidden"
+            tal:attributes="id python: 'byebye_%s' % aUid;
                             name  python: 'byebye_%s' % aUid;" />
        </a>
      </td>
@@ -507,8 +505,7 @@ document.location.reload(true);
      </td>
  
      <td align="center" tal:condition="showAbsents">
-       <img tal:attributes="src string: $portal_url/checked.gif"
-            tal:condition="python: aUid in absents"/>
+       <span tal:condition="python: aUid in absents" class="people people-checked" ></span>
      </td>
  
      <td align="center" tal:condition="showSignatories">
@@ -520,8 +517,7 @@ document.location.reload(true);
       </tal:itemSigner>
      </td>
      <td align="center" tal:condition="showVotes">
-       <img tal:attributes="src string: $portal_url/checked.gif"
-            tal:condition="python: aUid in voters"/>
+       <span tal:condition="python: aUid in voters" class="people people-checked" ></span>
      </td>
      <td align="center" tal:condition="python: showVotes and not secret">
      <tal:showVote condition="python: (aUid in voters) and isPresent">
