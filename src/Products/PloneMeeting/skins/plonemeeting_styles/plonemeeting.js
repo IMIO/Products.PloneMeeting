@@ -670,25 +670,24 @@ function changeForceInsertNormalCookie(input) {
 // functionnality when displayed on the meetingitem_edit form
 $(document).ready(function () {
 
-budgetRelated = $('input#budgetRelated');
-if (budgetRelated.length) {
-  budgetInfos = $('div#hideBudgetInfosIfNotBudgetRelated');
-  if (!budgetRelated[0].checked) {
-    budgetInfos.hide();
-  }
-
-  budgetRelated.on('click', function() {
-    if (this.checked) {
-      budgetInfos.hide().fadeIn("fast");
+  budgetRelated = $('input#budgetRelated');
+  if (budgetRelated.length) {
+    budgetInfos = $('div#hideBudgetInfosIfNotBudgetRelated');
+    if (!budgetRelated[0].checked) {
+      budgetInfos.hide();
     }
-    else {
-      budgetInfos.fadeOut("fast", function() {
-      $(this).hide();
+
+    budgetRelated.on('click', function() {
+      if (this.checked) {
+        budgetInfos.hide().fadeIn("fast");
+      }
+      else {
+        budgetInfos.fadeOut("fast", function() {
+        $(this).hide();
+      });
+    }
     });
   }
-  });
-
-}
 
 });
 

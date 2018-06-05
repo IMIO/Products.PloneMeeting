@@ -429,7 +429,7 @@ class AskedAdvicesVocabulary(object):
                 referer = referer.replace('/edit', '')
                 referer = referer.replace('?pageName=gui', '')
                 context = portal.restrictedTraverse(referer)
-                if not context.portal_type == 'DashboardCollection':
+                if not hasattr(context, 'portal_type') or not context.portal_type == 'DashboardCollection':
                     return SimpleVocabulary(res)
 
         self.tool = api.portal.get_tool('portal_plonemeeting')

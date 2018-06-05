@@ -470,17 +470,11 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         return viewlet
 
     def _addPrincipalToGroup(self, principal_id, group_id):
-        """We need to transaction.commit so source_groups._principal_groups._p_mtime
-           is updated because it is used in various getGroups cache keys."""
+        """We need to changeUser so getGroups is updated."""
         self.portal.portal_groups.addPrincipalToGroup(principal_id, group_id)
-        transaction.commit()
-        # we also need to changeUser so getGroups is updated
         self.changeUser(self.member.getId())
 
     def _removePrincipalFromGroup(self, principal_id, group_id):
-        """We need to transaction.commit so source_groups._principal_groups._p_mtime
-           is updated because it is used in various getGroups cache keys."""
+        """We need to changeUser so getGroups is updated."""
         self.portal.portal_groups.removePrincipalFromGroup(principal_id, group_id)
-        transaction.commit()
-        # we also need to changeUser so getGroups is updated
         self.changeUser(self.member.getId())
