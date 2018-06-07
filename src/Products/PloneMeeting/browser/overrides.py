@@ -398,7 +398,7 @@ class PMRenderTermView(RenderTermPortletView):
         if self.context.getId() in ['searchallmeetings', 'searchlastdecisions']:
             self.tool = api.portal.get_tool('portal_plonemeeting')
             self.cfg = self.tool.getMeetingConfig(self.context)
-            self.brains = self.context.results()
+            self.brains = self.context.getQuery()
             return ViewPageTemplateFile("templates/term_searchmeetings.pt")(self)
         return self.index()
 
