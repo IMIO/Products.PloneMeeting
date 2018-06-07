@@ -24,9 +24,9 @@ from collective.iconifiedcategory.vocabularies import CategoryVocabulary
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from ftw.labels.interfaces import ILabelJar
 from imio.annex.content.annex import IAnnex
-from imio.dashboard.content.dashboardcollection import IDashboardCollection
-from imio.dashboard.vocabulary import ConditionAwareCollectionVocabulary
-from imio.dashboard.vocabulary import DashboardCollectionsVocabulary
+from collective.eeafaceted.dashboard.content.dashboardcollection import IDashboardCollection
+from collective.eeafaceted.dashboard.vocabulary import ConditionAwareCollectionVocabulary
+from collective.eeafaceted.dashboard.vocabulary import DashboardCollectionsVocabulary
 from imio.helpers.cache import get_cachekey_volatile
 from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
@@ -47,7 +47,7 @@ class PMConditionAwareCollectionVocabulary(ConditionAwareCollectionVocabulary):
         catalog = api.portal.get_tool('portal_catalog')
         brains = catalog(
             path=dict(query='/'.join(root.getPhysicalPath())),
-            meta_type='DashboardCollection',
+            portal_type='DashboardCollection',
             review_state='active',
             sort_on='getObjPositionInParent'
         )

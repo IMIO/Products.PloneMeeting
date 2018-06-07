@@ -11,6 +11,7 @@ from Products.PloneMeeting.config import AddAnnexDecision
 from Products.PloneMeeting.interfaces import IMeeting
 from Products.PloneMeeting.utils import displaying_available_items
 
+from collective.eeafaceted.dashboard.columns import PrettyLinkColumn
 from collective.eeafaceted.z3ctable.columns import AbbrColumn
 from collective.eeafaceted.z3ctable.columns import BaseColumn
 from collective.eeafaceted.z3ctable.columns import BrowserViewCallColumn
@@ -20,7 +21,6 @@ from collective.eeafaceted.z3ctable.columns import I18nColumn
 from collective.eeafaceted.z3ctable.columns import VocabularyColumn
 from imio.annex.columns import ActionsColumn as AnnexActionsColumn
 from imio.dashboard.columns import ActionsColumn
-from imio.dashboard.columns import PrettyLinkColumn
 from imio.prettylink.interfaces import IPrettyLink
 
 
