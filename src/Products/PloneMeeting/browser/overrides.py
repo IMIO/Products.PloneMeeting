@@ -42,10 +42,10 @@ from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.actionspanel.browser.viewlets import ActionsPanelViewlet
 from imio.actionspanel.browser.views import ActionsPanelView
 from imio.annex import utils as imio_annex_utils
-from imio.dashboard.browser.overrides import IDDocumentGenerationView
-from imio.dashboard.browser.overrides import IDDashboardDocumentGeneratorLinksViewlet
-from imio.dashboard.browser.views import RenderTermPortletView
-from imio.dashboard.content.pod_template import IDashboardPODTemplate
+from collective.eeafaceted.dashboard.browser.overrides import DashboardDocumentGenerationView
+from collective.eeafaceted.dashboard.browser.overrides import DashboardDocumentGeneratorLinksViewlet
+from collective.eeafaceted.dashboard.browser.views import RenderTermPortletView
+from collective.eeafaceted.dashboard.content.pod_template import IDashboardPODTemplate
 from imio.history.browser.views import IHContentHistoryView
 from imio.history.browser.views import IHDocumentBylineViewlet
 from imio.prettylink.interfaces import IPrettyLink
@@ -308,7 +308,7 @@ class PMDocumentGeneratorLinksViewlet(DocumentGeneratorLinksViewlet, BaseGenerat
                          default="Store as annex of type \"${annex_type_title}\"")
 
 
-class PMDashboardDocumentGeneratorLinksViewlet(IDDashboardDocumentGeneratorLinksViewlet, BaseGeneratorLinksViewlet):
+class PMDashboardDocumentGeneratorLinksViewlet(DashboardDocumentGeneratorLinksViewlet, BaseGeneratorLinksViewlet):
     """ """
 
     render = ViewPageTemplateFile('templates/generationlinks.pt')
@@ -792,7 +792,7 @@ class ConfigActionsPanelView(ActionsPanelView):
         return ''
 
 
-class PMDocumentGenerationView(IDDocumentGenerationView):
+class PMDocumentGenerationView(DashboardDocumentGenerationView):
     """Redefine the DocumentGenerationView to extend context available in the template
        and to handle POD templates sent to mailing lists."""
 
