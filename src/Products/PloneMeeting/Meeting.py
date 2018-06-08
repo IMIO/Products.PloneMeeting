@@ -910,9 +910,9 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         else:
             return 'getItemNumber'
 
-    security.declarePublic('getCustomViewFields')
+    security.declarePublic('selectedViewFields')
 
-    def getCustomViewFields(self):
+    def selectedViewFields(self):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
@@ -929,7 +929,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             itemsListVisibleColumns.insert(0, u'getItemNumber')
             itemsListVisibleColumns.insert(0, u'listType')
         itemsListVisibleColumns.append(u'select_row')
-        return itemsListVisibleColumns
+        # selectedViewFields must return a list of tuple
+        return [(elt, elt) for elt in itemsListVisibleColumns]
 
     security.declarePrivate('validate_date')
 

@@ -28,8 +28,6 @@ from Products.Archetypes.atapi import TextAreaWidget
 from Products.Archetypes.atapi import registerType
 from Products.Archetypes.atapi import Schema
 
-from zope.interface import implements
-
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 
 from Products.DataGridField import DataGridField
@@ -50,6 +48,8 @@ from zope.component import getMultiAdapter
 from zope.container.interfaces import INameChooser
 from zope.i18n import translate
 from zope.interface import alsoProvides
+from zope.interface import implements
+from zope.schema.interfaces import IVocabularyFactory
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from plone.memoize import ram
 from plone.app.portlets.portlets import navigation
@@ -4253,21 +4253,25 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         itemColumns = list(self.getItemColumns())
         for iColumn in DEFAULT_ITEM_COLUMNS:
             itemColumns.insert(iColumn['position'], iColumn['name'])
-        for collection in self.searches.searches_items.objectValues('DashboardCollection'):
+
+        for collection in self.searches.searches_items.objectValues():
             # available customViewFieldIds, as done in an adapter, we compute it for each collection
-            customViewFieldIds = collection.listMetaDataFields(exclude=True).keys()
+            vocab_factory = getUtility(IVocabularyFactory, "plone.app.contenttypes.metadatafields")
+            vocab = vocab_factory(collection)
+            customViewFieldIds = vocab.by_token.keys()
             # set elements existing in both lists, we do not use set() because it is not ordered
-            collection.setCustomViewFields(tuple([iCol for iCol in itemColumns if iCol in customViewFieldIds]))
+            collection.customViewFields = tuple([iCol for iCol in itemColumns if iCol in customViewFieldIds])
         # update meeting related collections
         meetingColumns = list(self.getMeetingColumns())
         for mColumn in DEFAULT_MEETING_COLUMNS:
             meetingColumns.insert(mColumn['position'], mColumn['name'])
-        for collection in (self.searches.searches_meetings.objectValues('DashboardCollection') +
-                           self.searches.searches_decisions.objectValues('DashboardCollection')):
-            # available customViewFieldIds, as done in an adapter, we compute it for each collection
-            customViewFieldIds = collection.listMetaDataFields(exclude=True).keys()
+        for collection in (self.searches.searches_meetings.objectValues() +
+                           self.searches.searches_decisions.objectValues()):
+            vocab_factory = getUtility(IVocabularyFactory, "plone.app.contenttypes.metadatafields")
+            vocab = vocab_factory(collection)
+            customViewFieldIds = vocab.by_token.keys()
             # set elements existing in both lists, we do not use set() because it is not ordered
-            collection.setCustomViewFields(tuple([mCol for mCol in meetingColumns if mCol in customViewFieldIds]))
+            collection.customViewFields = tuple([mCol for mCol in meetingColumns if mCol in customViewFieldIds])
 
     def _setDuplicatedWorkflowFor(self, portalTypeName, workflowName):
         """Set the correct workflow for given p_portalTypeName.

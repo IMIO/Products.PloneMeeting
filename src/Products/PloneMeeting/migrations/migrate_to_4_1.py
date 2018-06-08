@@ -166,6 +166,8 @@ class Migrate_To_4_1(Migrator):
         except AttributeError:
             self.portal.portal_css.cookResources()
 
+        self.upgradeAll()
+
         # reinstall so versions are correctly shown in portal_quickinstaller
         # plone.app.versioningbehavior is installed
         self.reinstall(profiles=['profile-Products.PloneMeeting:default', ],
@@ -179,7 +181,6 @@ class Migrate_To_4_1(Migrator):
                            dependency_strategy=DEPENDENCY_STRATEGY_NEW)
 
         # common upgrades
-        self.upgradeAll()
         self.updateHolidays()
         self.reindexIndexes(idxs=['linkedMeetingUID', 'getConfigId'])
 

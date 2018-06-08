@@ -748,10 +748,10 @@
                 <th class="nosort" width="50px" i18n:translate="heading_is_active">Active?</th>
                 <th class="nosort" width="130px" i18n:translate="heading_actions">Actions</th>
               </tr>
-              <tr tal:condition="python: not cFolder.objectValues('DashboardCollection')">
+              <tr tal:condition="python: not cFolder.objectValues()">
                 <td colspan="5" align="center" i18n:translate="">no_collection_folder</td>
               </tr>
-              <tal:loop repeat="obj python:cFolder.objectValues('DashboardCollection')">
+              <tal:loop repeat="obj python:cFolder.objectValues()">
               <tr tal:define="isActive python: here.portal_workflow.getInfoFor(obj, 'review_state') == 'active';
                               oddrow repeat/obj/odd;
                               classOddEven python: oddrow and 'even' or 'odd';"
@@ -767,23 +767,22 @@
                     <label class="formQuestion">
                       <span i18n:translate="" i18n:domain="plone">Sort the collection on this index</span>
                     </label> :
-                    <span tal:content="obj/getSort_on" i18n:domain="plone" i18n:translate="">Sort on</span>
+                    <span tal:content="obj/sort_on" i18n:domain="plone" i18n:translate="">Sort on</span>
                   </div>
                   <div>
                     <label class="formQuestion">
                       <span i18n:translate="" i18n:domain="plone">Sort the results in reversed order</span>
                     </label> :
-                    <span tal:content="python: obj.getSort_reversed() and 'boolean_value_true' or 'boolean_value_false'"
+                    <span tal:content="python: obj.sort_reversed and 'boolean_value_true' or 'boolean_value_false'"
                           i18n:translate="">Sort reversed</span>
                   </div>
                   <div>
                     <label class="formQuestion">
-                      <span i18n:translate="" i18n:domain="imio.dashboard">Show number of items in filter</span>
+                      <span i18n:translate="" i18n:domain="collective.eeafaceted.dashboard">Show number of items in filter</span>
                     </label> :
-                    <span tal:content="python: obj.getShowNumberOfItems() and 'boolean_value_true' or 'boolean_value_false'"
+                    <span tal:content="python: obj.showNumberOfItems and 'boolean_value_true' or 'boolean_value_false'"
                           i18n:translate="">Show number of items in filter</span>
                   </div>
-                  
                 </td>
                 <td>
                   <span tal:content="obj/tal_condition">TAL Condition</span>
