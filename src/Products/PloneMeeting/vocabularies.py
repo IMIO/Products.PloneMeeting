@@ -24,8 +24,8 @@ from collective.iconifiedcategory.vocabularies import CategoryVocabulary
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from ftw.labels.interfaces import ILabelJar
 from imio.annex.content.annex import IAnnex
-from collective.eeafaceted.dashboard.content.dashboardcollection import IDashboardCollection
-from collective.eeafaceted.dashboard.vocabulary import ConditionAwareCollectionVocabulary
+from collective.eeafaceted.collectionwidget.interfaces import IDashboardCollection
+from collective.eeafaceted.dashboard.vocabulary import CachedCollectionVocabulary
 from collective.eeafaceted.dashboard.vocabulary import DashboardCollectionsVocabulary
 from imio.helpers.cache import get_cachekey_volatile
 from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
@@ -36,7 +36,7 @@ from Products.PloneMeeting.indexes import REAL_GROUP_ID_PATTERN
 from Products.PloneMeeting.indexes import DELAYAWARE_REAL_GROUP_ID_PATTERN
 
 
-class PMConditionAwareCollectionVocabulary(ConditionAwareCollectionVocabulary):
+class PMConditionAwareCollectionVocabulary(CachedCollectionVocabulary):
     implements(IVocabularyFactory)
 
     def _brains(self, context):
