@@ -12,8 +12,8 @@ from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 
 from collective.behavior.talcondition.interfaces import ITALConditionable
 from collective.behavior.talcondition.utils import evaluateExpressionFor
+from collective.eeafaceted.dashboard.browser.facetedcollectionportlet import Renderer as FacetedRenderer
 from eea.facetednavigation.widgets.sorting.widget import Widget as SortingWidget
-from imio.dashboard.browser.facetedcollectionportlet import Renderer as FacetedRenderer
 from imio.dashboard.utils import _get_criterion
 from imio.dashboard.utils import getCollectionLinkCriterion
 

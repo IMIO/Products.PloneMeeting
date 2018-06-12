@@ -166,6 +166,9 @@ class Migrate_To_4_1(Migrator):
         except AttributeError:
             self.portal.portal_css.cookResources()
 
+        # upgrade eea.facetednavigation before others so js are registered
+        # and other packages may insert their own js at correct position
+        self.upgradeProfile('eea.facetednavigation:default')
         self.upgradeAll()
 
         # reinstall so versions are correctly shown in portal_quickinstaller

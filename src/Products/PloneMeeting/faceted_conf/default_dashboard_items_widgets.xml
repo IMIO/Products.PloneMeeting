@@ -72,7 +72,7 @@
    <property
       name="vocabulary">Products.PloneMeeting.vocabularies.proposinggroupsforfacetedfiltervocabulary</property>
    <property name="catalog"></property>
-   <property name="maxitems"></property>
+   <property name="maxitems">0</property>
    <property name="sortreversed">0</property>
    <property name="default"/>
   </criterion>
@@ -92,7 +92,7 @@
    <property
       name="vocabulary">Products.PloneMeeting.vocabularies.categoriesvocabulary</property>
    <property name="catalog"></property>
-   <property name="maxitems"></property>
+   <property name="maxitems">0</property>
    <property name="sortreversed">0</property>
    <property name="default"/>
   </criterion>
@@ -112,7 +112,7 @@
    <property
       name="vocabulary">Products.PloneMeeting.vocabularies.itemreviewstatesvocabulary</property>
    <property name="catalog"></property>
-   <property name="maxitems"></property>
+   <property name="maxitems">0</property>
    <property name="sortreversed">0</property>
    <property name="default"/>
   </criterion>
@@ -132,7 +132,7 @@
    <property
       name="vocabulary">Products.PloneMeeting.vocabularies.askedadvicesvocabulary</property>
    <property name="catalog"></property>
-   <property name="maxitems"></property>
+   <property name="maxitems">0</property>
    <property name="sortreversed">0</property>
    <property name="default"/>
   </criterion>
@@ -152,7 +152,7 @@
    <property
       name="vocabulary">Products.PloneMeeting.vocabularies.advicetypesvocabulary</property>
    <property name="catalog"></property>
-   <property name="maxitems"></property>
+   <property name="maxitems">0</property>
    <property name="sortreversed">0</property>
    <property name="default"/>
   </criterion>
@@ -172,7 +172,7 @@
    <property
       name="vocabulary">Products.PloneMeeting.vocabularies.meetingdatesvocabulary</property>
    <property name="catalog"></property>
-   <property name="maxitems"></property>
+   <property name="maxitems">0</property>
    <property name="sortreversed">0</property>
    <property name="default"/>
   </criterion>
@@ -192,7 +192,7 @@
    <property
       name="vocabulary">Products.PloneMeeting.vocabularies.meetingdatesvocabulary</property>
    <property name="catalog"></property>
-   <property name="maxitems"></property>
+   <property name="maxitems">0</property>
    <property name="sortreversed">0</property>
    <property name="default"/>
   </criterion>
@@ -212,7 +212,7 @@
    <property
       name="vocabulary">Products.PloneMeeting.vocabularies.creatorsvocabulary</property>
    <property name="catalog"></property>
-   <property name="maxitems"></property>
+   <property name="maxitems">0</property>
    <property name="sortreversed">0</property>
    <property name="default"/>
   </criterion>
@@ -232,7 +232,7 @@
    <property
       name="vocabulary">Products.PloneMeeting.vocabularies.creatorsvocabulary</property>
    <property name="catalog"></property>
-   <property name="maxitems"></property>
+   <property name="maxitems">0</property>
    <property name="sortreversed">0</property>
    <property name="default"/>
   </criterion>
@@ -285,7 +285,7 @@
    <property
       name="vocabulary">Products.PloneMeeting.vocabularies.senttoinfosvocabulary</property>
    <property name="catalog"></property>
-   <property name="maxitems"></property>
+   <property name="maxitems">0</property>
    <property name="sortreversed">0</property>
    <property name="default"/>
   </criterion>
@@ -305,7 +305,7 @@
    <property
       name="vocabulary">Products.PloneMeeting.vocabularies.sendtoauthorityvocabulary</property>
    <property name="catalog"></property>
-   <property name="maxitems"></property>
+   <property name="maxitems">0</property>
    <property name="sortreversed">0</property>
    <property name="default"/>
   </criterion>
@@ -325,7 +325,7 @@
    <property
       name="vocabulary">Products.PloneMeeting.vocabularies.downorupworkflowagainvocabulary</property>
    <property name="catalog"></property>
-   <property name="maxitems"></property>
+   <property name="maxitems">0</property>
    <property name="sortreversed">0</property>
    <property name="default"/>
   </criterion>
@@ -345,7 +345,7 @@
    <property
       name="vocabulary">Products.PloneMeeting.vocabularies.listtypesvocabulary</property>
    <property name="catalog"></property>
-   <property name="maxitems"></property>
+   <property name="maxitems">0</property>
    <property name="sortreversed">0</property>
    <property name="default"/>
   </criterion>
@@ -365,7 +365,7 @@
    <property
       name="vocabulary">Products.PloneMeeting.vocabularies.hasannexestoprintvocabulary</property>
    <property name="catalog"></property>
-   <property name="maxitems"></property>
+   <property name="maxitems">0</property>
    <property name="sortreversed">0</property>
    <property name="default"/>
   </criterion>
@@ -385,7 +385,7 @@
    <property
       name="vocabulary">Products.PloneMeeting.vocabularies.privaciesvocabulary</property>
    <property name="catalog"></property>
-   <property name="maxitems"></property>
+   <property name="maxitems">0</property>
    <property name="sortreversed">0</property>
    <property name="default"/>
   </criterion>
@@ -405,7 +405,7 @@
    <property
       name="vocabulary">Products.PloneMeeting.vocabularies.polltypesvocabulary</property>
    <property name="catalog"></property>
-   <property name="maxitems"></property>
+   <property name="maxitems">0</property>
    <property name="sortreversed">0</property>
    <property name="default"/>
   </criterion>
@@ -425,7 +425,7 @@
    <property
       name="vocabulary">Products.PloneMeeting.vocabularies.groupsinchargevocabulary</property>
    <property name="catalog"></property>
-   <property name="maxitems"></property>
+   <property name="maxitems">0</property>
    <property name="sortreversed">0</property>
    <property name="default"/>
   </criterion>
@@ -445,7 +445,7 @@
    <property
       name="vocabulary">Products.PloneMeeting.vocabularies.classifiersvocabulary</property>
    <property name="catalog"></property>
-   <property name="maxitems"></property>
+   <property name="maxitems">0</property>
    <property name="sortreversed">0</property>
    <property name="default"/>
   </criterion>
@@ -465,7 +465,7 @@
    <property
       name="vocabulary">Products.PloneMeeting.vocabularies.hasannexestosignvocabulary</property>
    <property name="catalog"></property>
-   <property name="maxitems"></property>
+   <property name="maxitems">0</property>
    <property name="sortreversed">0</property>
    <property name="default"/>
   </criterion>
@@ -485,7 +485,7 @@
    <property
       name="vocabulary">Products.PloneMeeting.vocabularies.ftwlabelsvocabulary</property>
    <property name="catalog"></property>
-   <property name="maxitems"></property>
+   <property name="maxitems">0</property>
    <property name="sortreversed">0</property>
    <property name="default"/>
   </criterion>

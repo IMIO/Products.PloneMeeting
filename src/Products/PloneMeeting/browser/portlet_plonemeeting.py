@@ -1,8 +1,8 @@
 from zope.interface import implements
 from zope.formlib import form
 
+from collective.eeafaceted.dashboard.browser.facetedcollectionportlet import Renderer as FacetedRenderer
 from eea.facetednavigation.interfaces import IFacetedNavigable
-from imio.dashboard.browser.facetedcollectionportlet import Renderer as FacetedRenderer
 
 from plone.app.portlets.portlets import base
 from plone.portlets.interfaces import IPortletDataProvider

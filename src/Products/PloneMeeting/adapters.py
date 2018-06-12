@@ -1006,9 +1006,11 @@ class Criteria(eeaCriteria):
     @ram.cache(manage_criteria_cachekey)
     def compute_criteria(self, context):
         """ """
+        req = context.REQUEST
         # return really stored widgets when necessary
         if 'portal_plonemeeting' in context.absolute_url() or \
-           context.REQUEST.get('enablingFacetedDashboard', False):
+           req.get('enablingFacetedDashboard', False) or \
+           (req.get('PARENTS', [])[0] == api.portal.get_tool('portal_setup')):  # migrating
             super(Criteria, self).__init__(context)
             return self.context, self.criteria
         try:

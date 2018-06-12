@@ -25,8 +25,8 @@ from eea.facetednavigation.interfaces import IFacetedNavigable
 from ftw.labels.interfaces import ILabelJar
 from imio.annex.content.annex import IAnnex
 from collective.eeafaceted.collectionwidget.interfaces import IDashboardCollection
-from collective.eeafaceted.dashboard.vocabulary import CachedCollectionVocabulary
 from collective.eeafaceted.dashboard.vocabulary import DashboardCollectionsVocabulary
+from imio.dashboard.vocabulary import CachedCollectionVocabulary
 from imio.helpers.cache import get_cachekey_volatile
 from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
