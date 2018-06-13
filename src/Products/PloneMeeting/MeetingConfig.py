@@ -67,7 +67,7 @@ from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
 from collective.iconifiedcategory.utils import get_category_object
 from eea.facetednavigation.interfaces import ICriteria
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
-from imio.dashboard.utils import _get_criterion
+from collective.eeafaceted.collectionwidget.utils import _get_criterion
 from imio.helpers.cache import cleanRamCache
 from imio.helpers.content import validate_fields
 from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations

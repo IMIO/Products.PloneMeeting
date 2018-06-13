@@ -35,7 +35,7 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFPlone import PloneMessageFactory
 from Products.CMFPlone.CatalogTool import getIcon
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
-from imio.dashboard.utils import _get_criterion
+from collective.eeafaceted.collectionwidget.utils import _get_criterion
 
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
