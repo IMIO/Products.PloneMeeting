@@ -1206,7 +1206,7 @@
                          i18n:domain="imio.dashboard"
                          title="DashboardPODTemplate"
                          tal:condition="python: obj.portal_type == 'DashboardPODTemplate'"
-                         tal:attributes="src string:${portal_url}/++resource++imio.dashboard/dashboardpodtemplate.png" />
+                         tal:attributes="src string:${portal_url}/++resource++collective.eeafaceted.dashboard/dashboardpodtemplate.png" />
                     <span tal:content="obj/Title" />
                   </a>
                 </h5>
