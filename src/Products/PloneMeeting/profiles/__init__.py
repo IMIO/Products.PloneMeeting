@@ -342,7 +342,7 @@ class MeetingConfigDescriptor(Descriptor):
                          'recordItemHistoryStates', 'usedMeetingAttributes',
                          'historizedMeetingAttributes', 'recordMeetingHistoryStates',
                          'availableItemsListVisibleColumns', 'itemsListVisibleColumns', 'itemsListVisibleFields',
-                         'itemColumns', 'meetingColumns',
+                         'itemColumns', 'meetingColumns', 'toDoListSearches',
                          'dashboardItemsListingsFilters', 'dashboardMeetingAvailableItemsFilters',
                          'dashboardMeetingLinkedItemsFilters', 'groupsShownInDashboardFilter',
                          'workflowAdaptations', 'transitionsToConfirm', 'transitionsForPresentingAnItem',
@@ -568,6 +568,8 @@ class MeetingConfigDescriptor(Descriptor):
                             'getProposingGroup', 'linkedMeetingDate', 'actions']
         # columns shown on meetings listings.  Order is important!
         self.meetingColumns = ['Creator', 'CreationDate', 'review_state', 'actions']
+        # searches display on portlet_todo
+        self.toDoListSearches = []
         # advanced filters shown
         self.dashboardItemsListingsFilters = ('c4', 'c6', 'c7', 'c8', 'c9', 'c10',
                                               'c11', 'c12', 'c13', 'c14', 'c15', 'c16')

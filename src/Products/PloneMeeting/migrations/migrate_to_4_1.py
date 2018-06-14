@@ -156,6 +156,20 @@ class Migrate_To_4_1(Migrator):
         logger.info('Fixed workflow_history for {0} items.'.format(i))
         logger.info('Done.')
 
+    def _migrateToDoListSearches(self):
+        """Field MeetingConfig.toDoListSearches was a reference field,
+           we moved it to an InAndOutWidget because new DashboardCollection
+           are not referenceable by default."""
+        logger.info('Migrating to do searches...')
+        reference_catalog = api.portal.get_tool('reference_catalog')
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            reference_uids = [ref.targetUID for ref in reference_catalog.getReferences(cfg, 'ToDoSearches')]
+            if reference_uids:
+                # need to migrate
+                cfg.deleteReferences('ToDoSearches')
+                cfg.setToDoListSearches(reference_uids)
+        logger.info('Done.')
+
     def run(self, step=None):
         logger.info('Migrating to PloneMeeting 4.1...')
 
@@ -196,6 +210,7 @@ class Migrate_To_4_1(Migrator):
         self._manageContentsKeptWhenItemSentToOtherMC()
         self._fixAnnexesMimeType()
         self._fixItemsWorkflowHistoryType()
+        self._migrateToDoListSearches()
 
 
 # The migration function -------------------------------------------------------

@@ -23,7 +23,7 @@ from zope.i18n import translate
 from plone import api
 from collective.iconifiedcategory import CAT_SEPARATOR
 from Products.CMFPlone.interfaces.constrains import IConstrainTypes
-from imio.dashboard.utils import _updateDefaultCollectionFor
+from collective.eeafaceted.collectionwidget.utils import _updateDefaultCollectionFor
 from Products.PloneMeeting.config import PloneMeetingError
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import registerClasses

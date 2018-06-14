@@ -19,7 +19,6 @@ from Products.Archetypes.atapi import LinesField
 from Products.Archetypes.atapi import MultiSelectionWidget
 from Products.Archetypes.atapi import OrderedBaseFolderSchema
 from Products.Archetypes.atapi import OrderedBaseFolder
-from Products.Archetypes.atapi import ReferenceField
 from Products.Archetypes.atapi import RichWidget
 from Products.Archetypes.atapi import StringField
 from Products.Archetypes.atapi import SelectionWidget
@@ -50,7 +49,6 @@ from zope.i18n import translate
 from zope.interface import alsoProvides
 from zope.interface import implements
 from zope.schema.interfaces import IVocabularyFactory
-from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from plone.memoize import ram
 from plone.app.portlets.portlets import navigation
 from plone.namedfile.file import NamedBlobFile
@@ -1289,26 +1287,20 @@ schema = Schema((
         schemata="gui",
         write_permission="PloneMeeting: Write risky config",
     ),
-    ReferenceField(
+    LinesField(
         name='toDoListSearches',
-        referencesSortable=True,
-        widget=ReferenceBrowserWidget(
-            allow_search=False,
-            allow_browse=False,
-            allow_sorting=True,
+        widget=InAndOutWidget(
             description="ToDoListSearches",
             description_msgid="to_do_list_searches",
-            startup_directory="searches/searches_items",
-            show_results_without_query=True,
-            restrict_browsing_to_startup_directory=True,
             label='Todolistsearches',
             label_msgid='PloneMeeting_label_toDoListSearches',
             i18n_domain='PloneMeeting',
         ),
         schemata="gui",
-        multiValued=True,
-        relationship="ToDoSearches",
-        allowed_types=('DashboardCollection',),
+        multiValued=1,
+        vocabulary='listToDoListSearches',
+        default=defValues.toDoListSearches,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
@@ -2825,7 +2817,35 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         else:
             return self.getField('maxShownListings').get(self, **kwargs)
 
-    security.declarePublic('listConfigGroups')
+    security.declarePublic('getToDoListSearches')
+
+    def getToDoListSearches(self, theObjects=False, **kwargs):
+        '''Overrides the field 'toDoListSearches' acessor to manage theObjects.'''
+        res = self.getField('toDoListSearches').get(self, **kwargs)
+        if theObjects:
+            catalog = api.portal.get_tool('portal_catalog')
+            brains = catalog(UID=res)
+            searches = [brain.getObject() for brain in brains]
+
+            # keep order as defined in the field
+            def getKey(item):
+                return res.index(item.UID())
+            res = sorted(searches, key=getKey)
+
+        return res
+
+    security.declarePrivate('listToDoListSearches')
+
+    def listToDoListSearches(self):
+        """ """
+        searches = self.searches.searches_items.objectValues()
+        res = []
+        for search in searches:
+            res.append(
+                (search.UID(), search.Title()))
+        return DisplayList(res)
+
+    security.declarePrivate('listConfigGroups')
 
     def listConfigGroups(self):
         """ """
@@ -4442,7 +4462,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                           context=self.REQUEST,
                                           target_language=default_language,
                                           default=collectionId))
-            collection.setCustomViewFields(['Title', 'CreationDate', 'Creator', 'review_state', 'actions'])
+            collection.customViewFields = ['Title', 'CreationDate', 'Creator', 'review_state', 'actions']
             if not collectionData['active']:
                 api.content.transition(collection, 'deactivate')
             collection.reindexObject()

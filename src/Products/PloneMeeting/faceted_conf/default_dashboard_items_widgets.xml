@@ -74,7 +74,6 @@
    <property name="catalog"></property>
    <property name="maxitems">0</property>
    <property name="sortreversed">0</property>
-   <property name="default"/>
   </criterion>
 
   <criterion name="c5" i18n:attributes="title">
@@ -94,7 +93,6 @@
    <property name="catalog"></property>
    <property name="maxitems">0</property>
    <property name="sortreversed">0</property>
-   <property name="default"/>
   </criterion>
 
   <criterion name="c6" i18n:attributes="title">
@@ -114,7 +112,6 @@
    <property name="catalog"></property>
    <property name="maxitems">0</property>
    <property name="sortreversed">0</property>
-   <property name="default"/>
   </criterion>
 
   <criterion name="c7" i18n:attributes="title">
@@ -134,7 +131,6 @@
    <property name="catalog"></property>
    <property name="maxitems">0</property>
    <property name="sortreversed">0</property>
-   <property name="default"/>
   </criterion>
 
   <criterion name="c8" i18n:attributes="title">
@@ -146,7 +142,7 @@
    <property name="count">0</property>
    <property name="sortcountable">0</property>
    <property name="hidezerocount">0</property>
-   <property name="index">combined__indexAdvisers</property>
+   <property name="index">indexAdvisers</property>
    <property name="operator">or</property>
    <property name="operator_visible">0</property>
    <property
@@ -154,7 +150,6 @@
    <property name="catalog"></property>
    <property name="maxitems">0</property>
    <property name="sortreversed">0</property>
-   <property name="default"/>
   </criterion>
 
   <criterion name="c9" i18n:attributes="title">
@@ -174,7 +169,6 @@
    <property name="catalog"></property>
    <property name="maxitems">0</property>
    <property name="sortreversed">0</property>
-   <property name="default"/>
   </criterion>
 
   <criterion name="c10" i18n:attributes="title">
@@ -194,7 +188,6 @@
    <property name="catalog"></property>
    <property name="maxitems">0</property>
    <property name="sortreversed">0</property>
-   <property name="default"/>
   </criterion>
 
   <criterion name="c11" i18n:attributes="title">
@@ -214,7 +207,6 @@
    <property name="catalog"></property>
    <property name="maxitems">0</property>
    <property name="sortreversed">0</property>
-   <property name="default"/>
   </criterion>
 
   <criterion name="c12" i18n:attributes="title">
@@ -234,7 +226,6 @@
    <property name="catalog"></property>
    <property name="maxitems">0</property>
    <property name="sortreversed">0</property>
-   <property name="default"/>
   </criterion>
 
   <criterion name="c13" i18n:attributes="title">
@@ -287,7 +278,6 @@
    <property name="catalog"></property>
    <property name="maxitems">0</property>
    <property name="sortreversed">0</property>
-   <property name="default"/>
   </criterion>
 
   <criterion name="c17" i18n:attributes="title">
@@ -307,7 +297,6 @@
    <property name="catalog"></property>
    <property name="maxitems">0</property>
    <property name="sortreversed">0</property>
-   <property name="default"/>
   </criterion>
 
   <criterion name="c18" i18n:attributes="title">
@@ -327,7 +316,6 @@
    <property name="catalog"></property>
    <property name="maxitems">0</property>
    <property name="sortreversed">0</property>
-   <property name="default"/>
   </criterion>
 
   <criterion name="c19" i18n:attributes="title">
@@ -347,7 +335,6 @@
    <property name="catalog"></property>
    <property name="maxitems">0</property>
    <property name="sortreversed">0</property>
-   <property name="default"/>
   </criterion>
 
   <criterion name="c20" i18n:attributes="title">
@@ -367,7 +354,6 @@
    <property name="catalog"></property>
    <property name="maxitems">0</property>
    <property name="sortreversed">0</property>
-   <property name="default"/>
   </criterion>
 
   <criterion name="c21" i18n:attributes="title">
@@ -387,7 +373,6 @@
    <property name="catalog"></property>
    <property name="maxitems">0</property>
    <property name="sortreversed">0</property>
-   <property name="default"/>
   </criterion>
 
   <criterion name="c22" i18n:attributes="title">
@@ -407,7 +392,6 @@
    <property name="catalog"></property>
    <property name="maxitems">0</property>
    <property name="sortreversed">0</property>
-   <property name="default"/>
   </criterion>
 
   <criterion name="c23" i18n:attributes="title">
@@ -427,7 +411,6 @@
    <property name="catalog"></property>
    <property name="maxitems">0</property>
    <property name="sortreversed">0</property>
-   <property name="default"/>
   </criterion>
 
   <criterion name="c24" i18n:attributes="title">
@@ -447,7 +430,6 @@
    <property name="catalog"></property>
    <property name="maxitems">0</property>
    <property name="sortreversed">0</property>
-   <property name="default"/>
   </criterion>
 
   <criterion name="c25" i18n:attributes="title">
@@ -467,7 +449,6 @@
    <property name="catalog"></property>
    <property name="maxitems">0</property>
    <property name="sortreversed">0</property>
-   <property name="default"/>
   </criterion>
 
   <criterion name="c26" i18n:attributes="title">
@@ -487,7 +468,6 @@
    <property name="catalog"></property>
    <property name="maxitems">0</property>
    <property name="sortreversed">0</property>
-   <property name="default"/>
   </criterion>
 
  </criteria>

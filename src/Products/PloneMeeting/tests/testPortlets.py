@@ -101,7 +101,7 @@ class testPortlets(PloneMeetingTestCase):
         searchAllItems.tal_condition = ''
         searchAllItemsUID = searchAllItems.UID()
         # select 'searchallitems' in the MeetingConfig.toDoListSearches
-        cfg.setToDoListSearches([searchAllItems])
+        cfg.setToDoListSearches([searchAllItemsUID])
 
         # viewable in portlet_plonemeeting
         self.changeUser('pmCreator1')

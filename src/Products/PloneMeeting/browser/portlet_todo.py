@@ -103,7 +103,7 @@ class Renderer(base.Renderer, FacetedRenderer):
                 'cfg': self.cfg,
                 'fromPortletTodo': True}
 
-        for search in self.cfg.getToDoListSearches():
+        for search in self.cfg.getToDoListSearches(theObjects=True):
             if ITALConditionable.providedBy(search):
                 data.update({'obj': search})
                 if not evaluateExpressionFor(search, extra_expr_ctx=data):
@@ -118,13 +118,10 @@ class Renderer(base.Renderer, FacetedRenderer):
         sorting_criterion = _get_criterion(self.cfg.searches.searches_items, SortingWidget.widget_type)
         if sorting_criterion and sorting_criterion.default:
             sort_on = sorting_criterion.default.split('(reverse)')[0]
-            sort_order = '(reverse)' in sorting_criterion.default and 'descending' or ''
         else:
             sort_on = collection.getSort_on()
-            sort_order = collection.getSort_reversed() and 'descending' or ''
-        return collection.getQuery(**{'limit': self.data.batch_size,
-                                      'sort_on': sort_on,
-                                      'sort_order': sort_order})
+        return collection.results(**{'limit': self.data.batch_size,
+                                     'sort_on': sort_on})
 
     def getColoredLink(self, brain):
         """

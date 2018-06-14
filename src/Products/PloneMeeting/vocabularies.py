@@ -24,7 +24,7 @@ from collective.iconifiedcategory.vocabularies import CategoryVocabulary
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from ftw.labels.interfaces import ILabelJar
 from imio.annex.content.annex import IAnnex
-from collective.eeafaceted.collectionwidget.interfaces import IDashboardCollection
+from collective.eeafaceted.collectionwidget.content.dashboardcollection import IDashboardCollection
 from collective.eeafaceted.dashboard.vocabulary import DashboardCollectionsVocabulary
 from imio.dashboard.vocabulary import CachedCollectionVocabulary
 from imio.helpers.cache import get_cachekey_volatile
@@ -422,8 +422,9 @@ class AskedAdvicesVocabulary(object):
         if not hasattr(context, 'REQUEST'):
             # sometimes, the DashboardCollection is the first parent in the REQUEST.PARENTS...
             portal = getSite()
-            context = portal.REQUEST['PARENTS'][0]
-            if not context.portal_type == 'DashboardCollection':
+            published = portal.REQUEST.get('PUBLISHED', None)
+            context = hasattr(published, 'context') and published.context or None
+            if not context:
                 # if not first parent, try to get it from HTTP_REFERER
                 referer = portal.REQUEST['HTTP_REFERER'].replace(portal.absolute_url() + '/', '')
                 referer = referer.replace('/edit', '')

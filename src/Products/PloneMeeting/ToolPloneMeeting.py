@@ -958,15 +958,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         else:
             return True
 
-    security.declarePublic('showFacetedCriteriaAction')
-
-    def showFacetedCriteriaAction(self, context):
-        '''Show the 'Faceted criteria' action?
-           If in PloneMeeting, do it only if on a Faceted enabled Folder (hide it on Meetings),
-           and outside PloneMeeting, show it on Faceted enabled elements.'''
-        return context.restrictedTraverse('@@faceted_subtyper').is_faceted and \
-            (not self.isInPloneMeeting(context, True) or context.portal_type == 'Folder')
-
     security.declarePublic('getUserName')
 
     def getUserName(self, userId):
