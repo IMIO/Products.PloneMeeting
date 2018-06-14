@@ -1377,7 +1377,7 @@ body.template-versions_history_form[class*="portaltype-meetingadvice"] #content-
 
 /* hide the customViewFields on the DashboardCollection
    added to a MeetingConfig as it is managed by the MeetingConfig */
-body.section-portal_plonemeeting #archetypes-fieldname-customViewFields {
+body.portaltype-dashboardcollection div#formfield-form-widgets-ICollection-customViewFields {
     display: none;
 }
 
