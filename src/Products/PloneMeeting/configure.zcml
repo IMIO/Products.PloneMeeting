@@ -12,8 +12,11 @@
   <include package="collective.ckeditor"/>
   <include package="collective.documentviewer"/>
   <include package="collective.datagridcolumns"/>
+  <include package="collective.eeafaceted.collectionwidget"/>
+  <include package="collective.eeafaceted.dashboard"/>
   <include package="collective.iconifieddocumentactions"/>
   <include package="collective.iconifiedcategory"/>
+  <include package="collective.js.tablednd"/>
   <include package="collective.js.fancytree"/>
   <include package="collective.js.jqueryui"/>
   <include package="collective.messagesviewlet"/>
@@ -22,6 +25,7 @@
   <include package="imio.pm.ws"/>
   <include package="imio.dashboard"/>
   <include zcml:condition="installed imio.zamqp.pm" package="imio.zamqp.pm" />
+  <include package="plone.app.contenttypes" />
   <include package="plone.app.dexterity" />
   <include package="plone.directives.form" file="meta.zcml" />
   <include package="plone.directives.form" />
