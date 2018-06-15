@@ -1352,6 +1352,13 @@ class Migrate_To_4_0(Migrator):
                 annex.file.contentType = mimetype
         logger.info('Done.')
 
+    def _disableCKeditorForceTextPlain(self):
+        """Disable force paste as plain text in CKeditor."""
+        logger.info('Disable force paste as plain text in CKeditor...')
+        cke_props = self.portal.portal_properties.ckeditor_properties
+        cke_props.forcePasteAsPlainText = False
+        logger.info('Done.')
+
     def run(self, step=None):
         logger.info('Migrating to PloneMeeting 4.0...')
         if not step or step == 1:
@@ -1471,6 +1478,8 @@ class Migrate_To_4_0(Migrator):
             self._adaptInternalImagesLinkToUseResolveUID()
             # make sure annexes have correct mimetype
             self._fixAnnexesMimeType()
+            # disable force paste text plain in CKeditor
+            self._disableCKeditorForceTextPlain()
             # recook CSS and JS
             self.cleanRegistries()
 
@@ -1577,7 +1586,8 @@ def migrate_step4(context):
 
        29) Update annexes content_category;
        30) Make sure links internal images use resolveuid;
-       31) Make sure annexes have correct mimetype.
+       31) Make sure annexes have correct mimetype;
+       32) Disable force paste as plain text in CKeditor.
     '''
     migrator = Migrate_To_4_0(context)
     migrator.run(step=4)
