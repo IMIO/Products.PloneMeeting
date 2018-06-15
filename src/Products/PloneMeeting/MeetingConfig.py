@@ -120,6 +120,7 @@ from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import listifySignatures
 from Products.PloneMeeting.utils import reviewersFor
 from Products.PloneMeeting.utils import updateAnnexesAccess
+from Products.PloneMeeting.widgets import PMInAndOutWidget
 from Products.PloneMeeting.validators import WorkflowInterfacesValidator
 from Products.PloneMeeting.Meeting import Meeting
 from Products.PloneMeeting.MeetingItem import MeetingItem
@@ -2215,6 +2216,23 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
+    LinesField(
+        name='orderedContacts',
+        widget=PMInAndOutWidget(
+            description="OrderedContacts",
+            description_msgid="ordered_contacts_descr",
+            label='Orderedcontacts',
+            label_msgid='PloneMeeting_label_orderedContacts',
+            i18n_domain='PloneMeeting',
+            size='20',
+        ),
+        schemata="users",
+        multiValued=1,
+        vocabulary='listSelectableContacts',
+        default=defValues.orderedContacts,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
     StringField(
         name='meetingItemTemplateToStoreAsAnnex',
         widget=SelectionWidget(
@@ -2845,6 +2863,22 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 (search.UID(), search.Title()))
         return DisplayList(res)
 
+    security.declarePrivate('listSelectableContacts')
+
+    def listSelectableContacts(self):
+
+        """ """
+        catalog = api.portal.get_tool('portal_catalog')
+        brains = catalog(portal_type='held_position', sort_on='sortable_title')
+        res = []
+        for brain in brains:
+            held_position = brain.getObject()
+            if held_position.usages and 'assemblyMember' in held_position.usages:
+                res.append(
+                    (held_position.UID(),
+                     held_position.get_short_title(include_usages=True, include_defaults=True)))
+        return DisplayList(res)
+
     security.declarePrivate('listConfigGroups')
 
     def listConfigGroups(self):
@@ -2862,7 +2896,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePrivate('listAttributes')
 
-    def listAttributes(self, schema, optionalOnly=False):
+    def listAttributes(self, schema, optionalOnly=False, as_display_list=True):
         res = []
         for field in schema.fields():
             # Take all of them or optionals only, depending on p_optionalOnly
@@ -2880,7 +2914,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                                    context=self.REQUEST),
                                          field.getName())
                             ))
-        return DisplayList(tuple(res))
+        if as_display_list:
+            res = DisplayList(tuple(res))
+        return res
 
     security.declarePrivate('listUsedItemAttributes')
 
@@ -2895,7 +2931,19 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('listUsedMeetingAttributes')
 
     def listUsedMeetingAttributes(self):
-        return self.listAttributes(Meeting.schema, optionalOnly=True)
+        optional_fields = self.listAttributes(Meeting.schema, optionalOnly=True, as_display_list=False)
+        contact_fields = ['attendees', 'excused', 'absents', 'lateAttendees', 'signatories']
+        contact_fields.reverse()
+        index = [name for name, value in optional_fields].index('place')
+        for contact_field in contact_fields:
+            optional_fields.insert(
+                index,
+                (contact_field,
+                 '%s (%s)' % (translate('PloneMeeting_label_{0}'.format(contact_field),
+                                        domain='PloneMeeting',
+                                        context=self.REQUEST),
+                              contact_field)))
+        return DisplayList(tuple(optional_fields))
 
     security.declarePrivate('listMeetingAttributes')
 
@@ -5369,26 +5417,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('isUsingMeetingUsers')
 
-    def isUsingMeetingUsers(self):
-        ''' Returns True if we are currently using MeetingUsers.'''
+    def isUsingContacts(self):
+        ''' Returns True if we are currently using contacts.'''
         return bool('attendees' in self.getUsedMeetingAttributes())
-
-    security.declarePublic('getMeetingUsers')
-
-    def getMeetingUsers(self, usages=('assemblyMember',), onlyActive=True, theObjects=True):
-        '''Returns the MeetingUsers having at least one usage among
-           p_usage.  if p_onlyActive is True, only active MeetingUsers are returned.'''
-        review_state = ('inactive', 'active',)
-        if onlyActive:
-            review_state = 'active'
-        brains = self.portal_catalog(portal_type='MeetingUser',
-                                     # KeywordIndex 'indexUsages' use 'OR' by default
-                                     getConfigId=self.id, indexUsages=usages,
-                                     review_state=review_state,
-                                     sort_on='getObjPositionInParent')
-        if not theObjects:
-            return brains
-        return [b.getObject() for b in brains]
 
     security.declarePrivate('addCategory')
 

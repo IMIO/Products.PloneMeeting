@@ -214,7 +214,9 @@ class Migrate_To_4_1(Migrator):
                            ignore_dependencies=False,
                            dependency_strategy=DEPENDENCY_STRATEGY_NEW)
 
-        # common upgrades
+        # install collective.js.tablednd
+        self.upgradeDependencies()
+        self.cleanRegistries()
         self.updateHolidays()
         self.reindexIndexes(idxs=['linkedMeetingUID', 'getConfigId'])
 

@@ -4648,16 +4648,12 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setItemAssembly('Simple assembly')
-        self.assertEquals(item.getStrikedItemAssembly(),
+        self.assertEquals(item.getItemAssembly(striked=True),
                           '<p>Simple assembly</p>')
-        self.assertEquals(item.getStrikedItemAssembly(use_mltAssembly=True),
-                          '<p class="mltAssembly">Simple assembly</p>')
         # set a striked element
         item.setItemAssembly('Assembly with [[striked]] part')
-        self.assertEquals(item.getStrikedItemAssembly(),
+        self.assertEquals(item.getItemAssembly(striked=True),
                           '<p>Assembly with <strike>striked</strike> part</p>')
-        self.assertEquals(item.getStrikedItemAssembly(use_mltAssembly=True),
-                          '<p class="mltAssembly">Assembly with <strike>striked</strike> part</p>')
 
     def test_pm_DownOrUpWorkflowAgain(self):
         """Test the MeetingItem.downOrUpWorkflowAgain behavior."""

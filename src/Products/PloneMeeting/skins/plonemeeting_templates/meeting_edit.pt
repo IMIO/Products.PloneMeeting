@@ -19,14 +19,13 @@
                        useUserReplacements meetingConfig/getUseUserReplacements;">
 
       <script language="javascript">
-      // When a checkbox is unchecked, what other one will we check?
-      var uncheckWillCheck = {"attendee":"excused", "excused":"attendee",
-                              "absent":"attendee", "lateAttendee":"attendee"};
-      function showOrHideReplField(userId, show) {
+      // some checkbowes may not be checked toghether
+      var only_one_selected = ['attendee', 'excused', 'absent', 'lateAttendee'];
+      function showOrHideReplField(userId, hide_select, enable_user) {
         // Shows of hides "replacement" field for p_userId, depending on p_show.
         var repl = document.getElementById('muser_'+userId+'_replacement');
         if (repl) {
-          if (!show) {
+          if (hide_select) {
             // Hide the field, and set 'nobody' as replacement.
             repl.value = '';
             repl.style.display = 'none';
@@ -43,8 +42,8 @@
         var selectWidgets = userTable.getElementsByTagName('select');
         for (var i=0; i<selectWidgets.length; i++) {
           for (var j=0; j<selectWidgets[i].options.length; j++){
-            if (selectWidgets[i].options[j].value == userId) {
-              if (show) {
+            if (selectWidgets[i].options[j].value.endsWith('__replacedby__' + userId)) {
+              if (enable_user == 0) {
                 // We will hide this option, and unselect it if it was selected.
                 if (selectWidgets[i].options[j].selected) {
                   selectWidgets[i].value = '';
@@ -52,7 +51,7 @@
                 selectWidgets[i].options[j].style.display = 'none';
                 selectWidgets[i].options[j].disabled = true;
               }
-              else {
+              else if (enable_user == 1) {
                 // We need to show it.
                 selectWidgets[i].options[j].style.display = '';
                 selectWidgets[i].options[j].disabled = false;
@@ -62,38 +61,32 @@
         }
       }
       function onClickBox(box, boxType, userId) {
-        if (!box.checked){
-          // A box has been unchecked. We must check another one.
-          var checkType = uncheckWillCheck[boxType];
-          var obox = document.getElementById('muser_'+userId+'_'+checkType);
-          if (obox) obox.checked = true;
-          // Moreover, uncheck attendees => uncheck lateAttendees
-          if (boxType == 'attendee') {
-            var obox = document.getElementById('muser_'+userId+'_lateAttendee');
-            if (obox) obox.checked = false;
-          }
-        }
-        else {
-          // We must uncheck every other box for this user
-          for (var bType in uncheckWillCheck) {
-            if (bType != boxType) {
-              var obox = document.getElementById('muser_'+userId+'_'+bType);
-              // It may not exist if the corresponding field is not used.
-              if (obox) obox.checked = false;
+            if (box.checked && (only_one_selected.indexOf(boxType) != -1)) {
+                // unckeck every other only_one_selected boxes
+                only_one_selected.forEach(function(bType) {
+                if (bType != boxType) {
+                    var obox = document.getElementById('muser_'+userId+'_'+bType);
+                    if (obox) obox.checked = false;}
+                });
             }
-          }
-          // Exception: late attendees checked => attendees checked
-          if (boxType == 'lateAttendee') {
-            document.getElementById('muser_'+userId+'_attendee').checked=true;
-          }
-        }
-        // Must we show or hide the "replacements" column?
-        if ((!box.checked && (boxType == 'attendee')) ||
-            (box.checked && (boxType == 'excused')) ||
-            (box.checked && (boxType == 'absent'))) {
-          showOrHideReplField(userId, true);
-        }
-        else showOrHideReplField(userId, false);
+            // finally, if the attendee box is unckecked, disable the 'signatory' box
+            var attendee_box = document.getElementById('muser_'+userId+'_attendee');
+            var signer_box = document.getElementById('muser_'+userId+'_signer');
+            if (signer_box) {
+                if (!attendee_box.checked) {signer_box.checked = false; signer_box.value = ''; signer_box.disabled = true;}
+                else {signer_box.disabled = false;}
+            }
+
+        if (boxType == 'attendee' && box.checked) {
+            showOrHideReplField(userId, hide_select=1, enable_user=1);
+        } else if (boxType == 'attendee' && !box.checked) {
+            showOrHideReplField(userId, hide_select=1, enable_user=0);
+        } else if (boxType == 'excused' || boxType == 'absent') {
+            if (box.checked) {
+                  showOrHideReplField(userId, hide_select=0, enable_user=0);
+            }
+            else {showOrHideReplField(userId, hide_select=1, enable_user=0);}
+            }
       }
       </script>
 
@@ -167,98 +160,140 @@
         
         <tal:comment replace="nothing">User table: attendees, lateAttendees, absents, signatories, replacements</tal:comment>
         <tal:users condition="python: 'attendees' in usedAttrs">
-        <table id="meeting_users" name="meeting_users" class="vertical listing" i18n:domain="PloneMeeting"
-               tal:define="allUsers python: context.getAllUsedMeetingUsers(includeAllActive=True);
-                           attendees context/getAttendees;
+
+        <table id="meeting_users" name="meeting_users" class="listing" i18n:domain="PloneMeeting"
+               tal:define="allUsers python: context.getAllUsedHeldPositions(include_new=True);
+                           attendees python: context.getAttendees() or context.getDefaultAttendees();
                            lateAttendees context/getLateAttendees;
                            excused context/getExcused;
                            absents context/getAbsents;
-                           signers context/getSignatories;
-                           allSigners python: [u.getId() for u in meetingConfig.getMeetingUsers(usages=('signer',), onlyActive=False)];
+                           signers python: context.getSignatories() or context.getDefaultSignatories();
                            userReplacements context/getUserReplacements">
           <tal:comment replace="nothing">Column captions</tal:comment>
           <thead>
-          <tr>
-            <th></th>
-            <th i18n:translate="is_attendee"></th>
-            <th tal:condition="python: 'lateAttendees' in usedAttrs"
-                i18n:translate="is_late_attendee"></th>
-            <th tal:condition="python: 'excused' in usedAttrs"
-                i18n:translate="is_excused"></th>
-            <th tal:condition="python: 'absents' in usedAttrs"
-                i18n:translate="is_absent"></th>
-            <th tal:condition="python: 'signatories' in usedAttrs"
-                i18n:translate="is_signer"></th>
-            <th tal:condition="useUserReplacements" i18n:translate="is_replaced"></th>
-          </tr>
+            <tr>
+              <th class="nosort"></th>
+              <th class="nosort"></th>
+              <th class="nosort" i18n:translate="is_attendee"></th>
+              <th class="nosort" tal:condition="python: 'lateAttendees' in usedAttrs"
+                  i18n:translate="is_late_attendee"></th>
+              <th class="nosort" tal:condition="python: 'excused' in usedAttrs"
+                  i18n:translate="is_excused"></th>
+              <th class="nosort" tal:condition="python: 'absents' in usedAttrs"
+                  i18n:translate="is_absent"></th>
+              <th class="nosort" tal:condition="python: 'signatories' in usedAttrs"
+                  i18n:translate="is_signer"></th>
+              <th class="nosort" tal:condition="useUserReplacements"
+                  i18n:translate="is_replaced"></th>
+            </tr>
           </thead>
           <tbody>
-          <tr tal:repeat="mUser allUsers">
-            <td><b tal:content="mUser/Title"></b></td>
-            <td align="center">
-              <input type="checkbox" class="noborder"
-                     tal:define="mid mUser/getId;
-                                 cbid python: 'muser_%s_attendee' % mid;"
-                     tal:attributes="id cbid; name cbid;
-                                     checked python: test(errors, request.get(cbid, '')=='on', mid in attendees);
-                                     onClick python: 'onClickBox(this, \'attendee\', \'%s\')' % mid"/>
-            </td>
-            <td align="center" tal:condition="python: 'lateAttendees' in usedAttrs">
-              <input type="checkbox" class="noborder"
-                     tal:define="mid mUser/getId;
-                                 cbid python: 'muser_%s_lateAttendee' % mid;"
-                     tal:attributes="id cbid; name cbid;
-                                     checked python: test(errors, request.get(cbid, '')=='on', mid in lateAttendees);
-                                     onClick python: 'onClickBox(this, \'lateAttendee\', \'%s\')' % mid"/>
-            </td>
-            <td align="center" tal:condition="python: 'excused' in usedAttrs">
-              <input type="checkbox" class="noborder"
-                     tal:define="mid mUser/getId;
-                                 cbid python: 'muser_%s_excused' % mid;"
-                     tal:attributes="id cbid; name cbid;
-                                     checked python: test(errors, request.get(cbid, '')=='on', mid in excused);
-                                     onClick python: 'onClickBox(this, \'excused\', \'%s\')' % mid"/>
-            </td>
-            <td align="center" tal:condition="python: 'absents' in usedAttrs">
-              <input type="checkbox" class="noborder"
-                     tal:define="mid mUser/getId;
-                                 cbid python: 'muser_%s_absent' % mid;"
-                     tal:attributes="id cbid; name cbid;
-                                     checked python: test(errors, request.get(cbid, '')=='on', mid in absents);
-                                     onClick python: 'onClickBox(this, \'absent\', \'%s\')' % mid"/>
-            </td>
-            <td align="center" tal:condition="python: 'signatories' in usedAttrs">
-              <input type="checkbox" class="noborder"
-                     tal:define="mid mUser/getId;
-                                 cbid python: 'muser_%s_signer' % mid;"
-                     tal:condition="python: mid in allSigners"
-                     tal:attributes="id cbid; name cbid;
-                                     checked python: test(errors, request.get(cbid, '')=='on', mid in signers);
-                                     onClick python: 'onClickBox(this, \'signer\', \'%s\')' % mid"/>
-            </td>
-            <td tal:condition="useUserReplacements">
-              <select tal:define="mid mUser/getId;
-                                  sid python: 'muser_%s_replacement' % mid;
-                                  aid python: 'muser_%s_attendee' % mid;
-                                  show python: test(errors, not request.get(aid,''), mid not in attendees)"
-                      tal:attributes="id sid; name sid;
-                                      style python: test(show, '', 'display:none')">
-                <option value="">-</option>
-                <tal:other repeat="oUser allUsers">
-                  <option tal:define="oid oUser/getId;
-                                      show python: test(errors, request.get('muser_%s_attendee'%oid,'')=='on', oid in attendees)"
-                          tal:condition="python: oid != mid"
-                          tal:content="oUser/Title"
-                          tal:attributes="value oid;
-                                          style python: test(show, '', 'display:none');
-                                          selected python: test(errors, request.get(sid)==oid, (mid in userReplacements) and (userReplacements[mid]==oid))" >
-                  </option>
-                </tal:other>
-              </select>
-            </td>
-          </tr>
+            <tr tal:repeat="mUser allUsers">
+                  <td class="draggable">⣿</td>
+                  <tal:defines define="muid mUser/UID;">
+                    <td><img tal:attributes="src string:${mUser/getIcon}" /> <b tal:content="mUser/get_short_title"></b></td>
+                    <td align="center">
+                      <input type="checkbox" class="noborder"
+                             tal:define="cbid python: 'muser_%s_attendee' % muid;"
+                             tal:attributes="id cbid;
+                                             name string:meeting_attendees:list;
+                                             value cbid;
+                                             checked python: test(errors, cbid in request.get('meeting_attendees', []), muid in attendees);
+                                             onClick python: 'onClickBox(this, \'attendee\', \'%s\')' % muid"/>
+                    </td>
+                    <td align="center" tal:condition="python: 'lateAttendees' in usedAttrs">
+                      <input type="checkbox" class="noborder"
+                             tal:define="cbid python: 'muser_%s_lateAttendee' % muid;"
+                             tal:attributes="id cbid;
+                                             name string:meeting_attendees:list;
+                                             value cbid;
+                                             checked python: test(errors, cbid in request.get('meeting_attendees', []), muid in lateAttendees);
+                                             onClick python: 'onClickBox(this, \'lateAttendee\', \'%s\')' % muid"/>
+                    </td>
+                    <td align="center" tal:condition="python: 'excused' in usedAttrs">
+                      <input type="checkbox" class="noborder"
+                             tal:define="cbid python: 'muser_%s_excused' % muid;"
+                             tal:attributes="id cbid;
+                                             name string:meeting_attendees:list;
+                                             value cbid;
+                                             checked python: test(errors, cbid in request.get('meeting_attendees', []), muid in excused);
+                                             onClick python: 'onClickBox(this, \'excused\', \'%s\')' % muid"/>
+                    </td>
+                    <td align="center" tal:condition="python: 'absents' in usedAttrs">
+                      <input type="checkbox" class="noborder"
+                             tal:define="cbid python: 'muser_%s_absent' % muid;"
+                             tal:attributes="id cbid;
+                                             name string:meeting_attendees:list;
+                                             value cbid;
+                                             checked python: test(errors, cbid in request.get('meeting_attendees', []), muid in absents);
+                                             onClick python: 'onClickBox(this, \'absent\', \'%s\')' % muid"/>
+                    </td>
+                    <td align="center" tal:condition="python: 'signatories' in usedAttrs">
+                      <select tal:define="sid python: 'muser_%s_signer' % muid;"
+                             tal:attributes="id sid;
+                                             name string:meeting_signatories:list;
+                                             value sid;
+                                             disabled python: test(errors, not [v for v in request.get('meeting_signatories', []) if v.startswith(muid)], muid not in attendees);
+                                             onClick python: 'onClickBox(this, \'signer\', \'%s\')' % muid">
+                        <option value="">-</option>
+                        <tal:signature_number repeat="signature_number python: [str(i) for i in range(1, 11)]">
+                              <tal:defines define="value string:${muid}__signaturenumber__${signature_number};">
+                              <option
+                                  tal:attributes="
+                                  value value;
+                                  selected python: test(errors, value in request.get('meeting_signatories', []), (muid in signers and signers[muid]==signature_number))"
+                                  tal:content="signature_number">1</option>
+                              </tal:defines>
+                              <span tal:content="muid" />
+                              <span tal:content="signers" />
+                              <span tal:content="signature_number" />
+                              <span tal:content="python: muid in signers and signers[muid]==signature_number" />
+                              
+                        </tal:signature_number>
+                      </select>
+                    </td>
+                    <td tal:condition="useUserReplacements">
+                      <select tal:define="mid mUser/getId;
+                                          sid python: 'muser_%s_replacement' % muid;
+                                          aid python: 'muser_%s_attendee' % muid;
+                                          eid python: 'muser_%s_excused' % muid;
+                                          abid python: 'muser_%s_absent' % muid;
+                                          show python: test(errors, (eid in request.get('meeting_attendees', []) or abid in request.get('meeting_attendees', [])), muid in (excused + absents))"
+                              tal:attributes="id sid;
+                                              name string:meeting_replacements:list;
+                                              style python: test(show, '', 'display:none')">
+                        <option value="">-</option>
+                        <tal:other repeat="oUser python: context.adapted().filterPossibleUserReplacement(allUsers)">
+                          <tal:defines define="value string:${muid}__replacedby__${oUser/UID};">
+                          <option tal:define="ouid oUser/UID;
+                                              show python: test(errors, 'muser_%s_attendee' % ouid in request.get('meeting_attendees', []), ouid in attendees)"
+                                  tal:condition="python: ouid != muid"
+                                  tal:content="oUser/get_short_title"
+                                  tal:attributes="value value;
+                                                  data-icon string:held_position_icon.png;
+                                                  style python: test(show, '', 'display:none');
+                                                  selected python: test(errors, value in request.get('meeting_replacements', []), (muid in userReplacements) and (userReplacements[muid]==ouid))" >
+                          </option>
+                          </tal:defines>
+                        </tal:other>
+                      </select>
+                    </td>
+                  </tal:defines>
+            </tr>
           </tbody>
         </table>
+        <script type="text/javascript">
+            $(document).ready(function() {
+                // initialize drag and drop
+                $('#meeting_users').tableDnD({
+                    onDrop: function(table, row) {
+                       alert($.tableDnD.serialize());
+                      },
+                      dragHandle: ".draggable",
+                      onDragClass: "dragindicator dragging"
+                  });
+            });
+        </script>
         </tal:users>
 
         <metal:field use-macro="python:here.widget('signatures', mode='edit')"/>

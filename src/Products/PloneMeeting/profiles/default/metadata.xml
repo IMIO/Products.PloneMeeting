@@ -10,6 +10,7 @@
     <dependency>profile-collective.js.fancytree:default</dependency>
     <dependency>profile-collective.js.fancytree:theme-vista</dependency>
     <dependency>profile-collective.js.iframeresizer:default</dependency>
+    <dependency>profile-collective.js.tablednd:default</dependency>
     <dependency>profile-collective.messagesviewlet:messages</dependency>
     <dependency>profile-communesplone.layout:default</dependency>
     <dependency>profile-ftw.labels:default</dependency>

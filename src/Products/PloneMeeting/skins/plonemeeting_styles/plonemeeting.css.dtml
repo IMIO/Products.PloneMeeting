@@ -1560,6 +1560,42 @@ div.grouped-configs {
     height: 6px;
 }
 
+/* meeting_users table on meeting_edit */
+table#meeting_users td {
+   padding: 0.5em;
+}
+table#meeting_users td.draggable {
+   cursor: ns-resize;
+}
+table#meeting_users select[id$="_replacement"] {
+   width: 500px;
+}
+table.listing tbody tr.odd.selected td,
+table.listing tbody tr.odd.dragging td,
+table.listing tbody tr.even.selected td,
+table.listing tbody tr.even.dragging td {
+    background-color: #ffa;
+}
+
+/* check in item people tables */
+#content span.people {
+    font-family: 'FontAwesome';
+}
+#content span.people-checked:before {
+    content: "\f00c";
+}
+#content span.people-leave:before {
+    content: "\f08b";
+    color: orange;
+    font-size: 120%;
+}
+
+#content span.people-remove-left:before {
+    content: "\f00d";
+    color: red;
+    font-size: 120%;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */
