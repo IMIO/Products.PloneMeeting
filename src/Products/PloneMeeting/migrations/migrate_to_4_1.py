@@ -170,6 +170,23 @@ class Migrate_To_4_1(Migrator):
                 cfg.setToDoListSearches(reference_uids)
         logger.info('Done.')
 
+    def _upgradeImioDashboard(self):
+        """Move to eea.facetednavigation 10+."""
+        logger.info('Upgrading imio.dashboard...')
+        catalog = self.portal.portal_catalog
+        # before upgrading profile, we must save DashboardCollection that are not enabled
+        # before we used a workflow state but now it is a attribute 'enabled' on the DashboardCollection
+        brains = catalog(portal_type='DashboardCollection', review_state='inactive')
+        disabled_collection_uids = [brain.UID for brain in brains]
+        self.upgradeProfile('imio.dashboard:default')
+        # now disable relevant DashboardCollections
+        brains = catalog(UID=disabled_collection_uids)
+        for brain in brains:
+            collection = brain.getObject()
+            collection.enabled = False
+            collection.reindexObject()
+        logger.info('Done.')
+
     def run(self, step=None):
         logger.info('Migrating to PloneMeeting 4.1...')
 
@@ -180,9 +197,9 @@ class Migrate_To_4_1(Migrator):
         except AttributeError:
             self.portal.portal_css.cookResources()
 
-        # upgrade eea.facetednavigation before others so js are registered
-        # and other packages may insert their own js at correct position
-        self.upgradeProfile('eea.facetednavigation:default')
+        # upgrade imio.dashboard first as it takes care of migrating certain
+        # profiles in particular order
+        self._upgradeImioDashboard()
         self.upgradeAll()
 
         # reinstall so versions are correctly shown in portal_quickinstaller

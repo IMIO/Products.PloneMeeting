@@ -185,7 +185,7 @@ def postInstall(context):
 
     pol = ppw.portal_plonemeeting_policy
     pol.setTitle(_(u'PloneMeeting tool policy'))
-    pol.setChain('DashboardCollection', ('plonemeeting_activity_managers_workflow',))
+    pol.setChain('DashboardCollection', ('',))
     pol.setChainForPortalTypes(
         ('MeetingGroup', 'MeetingConfig', 'MeetingCategory'), ('plonemeeting_activity_workflow',))
     # use onestate workflow for Folders contained in the tool/MeetingConfigs

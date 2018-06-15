@@ -205,7 +205,7 @@ class PMConfigActionsPanelViewlet(ActionsPanelViewlet):
         if cfg:
             cfg_url = cfg.absolute_url()
         parent = self.context.getParentNode()
-        if self.context.meta_type == 'DashboardCollection':
+        if self.context.portal_type == 'DashboardCollection':
             url = '{0}?pageName=gui#searches'.format(cfg_url)
         elif parent.meta_type == 'ATFolder':
             # p_context is a sub-object in a sub-folder within a config

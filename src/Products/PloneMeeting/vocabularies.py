@@ -48,7 +48,7 @@ class PMConditionAwareCollectionVocabulary(CachedCollectionVocabulary):
         brains = catalog(
             path=dict(query='/'.join(root.getPhysicalPath())),
             portal_type='DashboardCollection',
-            review_state='active',
+            enabled=True,
             sort_on='getObjPositionInParent'
         )
         return brains

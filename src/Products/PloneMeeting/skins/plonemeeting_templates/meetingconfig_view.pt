@@ -752,7 +752,7 @@
                 <td colspan="5" align="center" i18n:translate="">no_collection_folder</td>
               </tr>
               <tal:loop repeat="obj python:cFolder.objectValues()">
-              <tr tal:define="isActive python: here.portal_workflow.getInfoFor(obj, 'review_state') == 'active';
+              <tr tal:define="isActive obj/enabled;
                               oddrow repeat/obj/odd;
                               classOddEven python: oddrow and 'even' or 'odd';"
                   tal:attributes="class python: not isActive and classOddEven+' state-inactive' or classOddEven"
