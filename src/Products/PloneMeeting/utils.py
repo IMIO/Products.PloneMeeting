@@ -770,20 +770,6 @@ class FakeMeetingUser:
 InitializeClass(FakeMeetingUser)
 
 
-def getHeldPositionObjs(obj, fieldName, theObjects=False):
-    '''Gets the meeting users defined on a given p_obj (item or meeting) within
-       a given p_fieldName. Here's the meaning of the remaining params:
-       * theObjects  If True, the method will return MeetingUser instances
-                     instead of MeetingUser IDs (False value is used for
-                     Archetypes getters.'''
-    res = obj.getField(fieldName).get(obj)
-    if not theObjects:
-        return res
-    # we have UIDs, query catalog to get objects
-    catalog = api.portal.get_tool('portal_catalog')
-    objs = [brain.getObject() for brain in catalog(UID=res)]
-    return objs
-
 # ------------------------------------------------------------------------------
 mainTypes = ('MeetingItem', 'Meeting', 'MeetingFile')
 

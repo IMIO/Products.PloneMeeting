@@ -109,7 +109,6 @@ from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import getFieldContent
 from Products.PloneMeeting.utils import getFieldVersion
 from Products.PloneMeeting.utils import getLastEvent
-from Products.PloneMeeting.utils import getHeldPositionObjs
 from Products.PloneMeeting.utils import getWorkflowAdapter
 from Products.PloneMeeting.utils import hasHistory
 from Products.PloneMeeting.utils import ItemDuplicatedEvent
@@ -3124,11 +3123,19 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getItemAbsents')
 
-    def getItemAbsents(self, theObjects=False):
+    def getItemAbsents(self, theObjects=False, **kwargs):
         '''Gets the absents on this item. Returns the absents as noted in field
            "itemAbsents" and adds also.'''
-        res = getHeldPositionObjs(self, 'itemAbsents', theObjects)
-        return res
+        res = []
+        if not self.hasMeeting():
+            return res
+        meeting = self.getMeeting()
+        stored_absents = self.getField('itemAbsents').get(self, **kwargs)
+        if theObjects:
+            item_absents = meeting._getContacts(uids=stored_absents, theObjects=theObjects)
+        else:
+            item_absents = tuple(stored_absents)
+        return item_absents
 
     security.declarePublic('mustShowItemReference')
 
@@ -6226,40 +6233,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         """Check that user may quickEdit itemAbsents."""
         if self.mayQuickEdit('itemAbsents', bypassWritePermissionCheck=True):
             return True
-
-    security.declareProtected(ModifyPortalContent, 'onByebyePerson')
-
-    def onByebyePerson(self):
-        '''Some user (in request.userId) has left the meeting:
-           1) either just after discussion on this item
-             (request.byeType == 'leaves_after'),
-           2) or while discussing this particular item
-             (request.byeType == 'leaves_now').
-           We will record this info, excepted if request["action"] tells us to
-           remove it instead.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        if not tool.isManager(self) or not _checkPermission(ModifyPortalContent, self):
-            raise Unauthorized
-        rq = self.REQUEST
-        userId = rq['userId']
-        mustDelete = rq.get('actionType') == 'delete'
-        if rq['byeType'] == 'leaves_after':
-            # Case 1)
-            meeting = self.getMeeting()
-            if mustDelete:
-                del meeting.departures[userId]
-            else:
-                if not hasattr(meeting.aq_base, 'departures'):
-                    meeting.departures = PersistentMapping()
-                meeting.departures[userId] = self.getItemNumber(relativeTo='meeting') + 100
-        else:
-            # Case 2)
-            absents = list(self.getItemAbsents())
-            if mustDelete:
-                absents.remove(userId)
-            else:
-                absents.append(userId)
-            self.setItemAbsents(absents)
 
     security.declareProtected(ModifyPortalContent, 'ItemAssemblyDescrMethod')
 
