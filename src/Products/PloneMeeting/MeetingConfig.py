@@ -5367,7 +5367,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # we have ids and we need UIDs
             res = []
             for coll_id in data['dashboard_collections_ids']:
-                collection = getattr(self.searches.searches_items, coll_id)
+                if coll_id in self.searches.searches_items.objectIds():
+                    collection = getattr(self.searches.searches_items, coll_id)
+                elif coll_id in self.searches.searches_meetings.objectIds():
+                    collection = getattr(self.searches.searches_meetings, coll_id)
+                else:
+                    collection = getattr(self.searches.searches_decisions, coll_id)
                 res.append(collection.UID())
             data['dashboard_collections'] = res
 
