@@ -119,7 +119,7 @@ class Renderer(base.Renderer, FacetedRenderer):
         if sorting_criterion and sorting_criterion.default:
             sort_on = sorting_criterion.default.split('(reverse)')[0]
         else:
-            sort_on = collection.getSort_on()
+            sort_on = collection.sort_on
         return collection.results(**{'limit': self.data.batch_size,
                                      'sort_on': sort_on})
 

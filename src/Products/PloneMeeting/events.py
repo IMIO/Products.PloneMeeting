@@ -17,6 +17,7 @@ from persistent.mapping import PersistentMapping
 from OFS.ObjectManager import BeforeDeleteException
 from zExceptions import Redirect
 from zope.event import notify
+from zope.globalrequest import getRequest
 from zope.i18n import translate
 from zope.lifecycleevent import IObjectRemovedEvent
 from Products.CMFCore.WorkflowCore import WorkflowException
@@ -760,3 +761,27 @@ def onPloneGroupDeleted(event):
             request=request,
             type='error')
         raise Redirect(request.get('ACTUAL_URL'))
+
+
+def onHeldPositionRemoved(held_pos, event):
+    '''Do not delete a held_position that have been used on a meeting or an item.'''
+    catalog = api.portal.get_tool('portal_catalog')
+    brains = catalog(meta_type='Meeting')
+    held_pos_uid = held_pos.UID()
+    for brain in brains:
+        meeting = brain.getObject()
+        orderedContacts = getattr(meeting, 'orderedContacts', {})
+        if held_pos_uid in orderedContacts:
+            request = getRequest()
+            msg = translate(
+                u"You cannot delete the held position \"${held_position_title}\", because "
+                u"it is used by meeting at \"${meeting_url}\" !",
+                domain='PloneMeeting',
+                mapping={'held_position_title': safe_unicode(held_pos.Title()),
+                         'meeting_url': meeting.absolute_url()},
+                context=request)
+            api.portal.show_message(
+                message=msg,
+                request=request,
+                type='error')
+            raise Redirect(request.get('HTTP_REFERER'))

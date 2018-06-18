@@ -100,6 +100,7 @@
                    Products.DCWorkflow.interfaces.IAfterTransitionEvent"
               handler=".events.onAdviceTransition" />
 
+  <!-- imio.annex events -->
   <subscriber for="imio.annex.content.annex.IAnnex
                    zope.lifecycleevent.interfaces.IObjectAddedEvent"
               handler=".events.onAnnexAdded" />
@@ -124,11 +125,14 @@
                    zope.container.interfaces.IObjectRemovedEvent"
               handler=".events.onAnnexRemoved" />
 
-  <subscriber
-    for="imio.annex.content.annex.IAnnex
-         imio.annex.interfaces.IAnnexFileChangedEvent"
-    handler=".events.onAnnexFileChanged"
-    />
+  <subscriber for="imio.annex.content.annex.IAnnex
+                   imio.annex.interfaces.IAnnexFileChangedEvent"
+              handler=".events.onAnnexFileChanged" />
+
+  <!-- collective.contact.core held_position events -->
+  <subscriber for="collective.contact.core.interfaces.IHeldPosition
+                   zope.container.interfaces.IObjectRemovedEvent"
+              handler=".events.onHeldPositionRemoved" />
 
   <!-- DashboardCollection events -->
   <subscriber for="imio.dashboard.interfaces.IDashboardCollection
