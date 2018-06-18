@@ -443,7 +443,7 @@
           </tal:annexes>
           <tal:comment replace="nothing">Advices</tal:comment>
           <td id="itemAdvicesCell" tal:condition="python: context.adapted().showAdvices()">
-              <fieldset tal:define="meetingItem python: context" style="height: 26px;">
+              <fieldset tal:define="meetingItem python: context" style="min-height: 26px;">
               <legend i18n:translate="PloneMeeting_label_advices">Advices</legend>
                   <tal:advice replace="structure context/@@advices-icons" />
               </fieldset>
