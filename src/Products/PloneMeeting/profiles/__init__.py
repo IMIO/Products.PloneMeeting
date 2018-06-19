@@ -363,7 +363,7 @@ class MeetingConfigDescriptor(Descriptor):
                          'adviceAnnexConfidentialVisibleFor', 'meetingAnnexConfidentialVisibleFor',
                          'enableAdviceConfidentiality', 'adviceConfidentialityDefault', 'adviceConfidentialFor',
                          'hideNotViewableLinkedItemsTo', 'hideHistoryTo', 'orderedContacts')
-    excludedFields = ['maxDaysDecisions', 'meetingAppDefaultView']
+    excludedFields = ['maxDaysDecisions', 'meetingAppDefaultView', 'addContacts']
 
     # The 'instance' static attribute stores an instance used for assigning
     # default values to a meeting config being created through-the-web.
@@ -644,7 +644,8 @@ class MeetingConfigDescriptor(Descriptor):
         self.defaultVoteValue = 'not_yet'
         self.voteCondition = 'True'
 
-        # Users parameters -----------------------------------------------------
+        # Contacts parameters -----------------------------------------------------
+        self.addContacts = False
         self.orderedContacts = []
 
         # Doc parameters -------------------------------------------------------

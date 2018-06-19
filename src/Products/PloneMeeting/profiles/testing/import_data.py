@@ -348,6 +348,7 @@ meetingPma.podTemplates = [agendaTemplate, decisionsTemplate, itemTemplate, dash
 meetingPma.selectableCopyGroups = [developers.getIdSuffixed('reviewers'), vendors.getIdSuffixed('reviewers'), ]
 meetingPma.meetingConfigsToCloneTo = [{'meeting_config': 'plonegov-assembly',
                                        'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}, ]
+meetingPma.addContacts = True
 
 # Plonegov-assembly
 meetingPga = MeetingConfigDescriptor(

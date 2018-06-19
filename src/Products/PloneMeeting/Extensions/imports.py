@@ -14,10 +14,13 @@ from plone.registry.interfaces import IRegistry
 from Products.CMFPlone.utils import safe_unicode
 from Products.CPUtils.Extensions.utils import check_zope_admin
 
-from collective.behavior.internalnumber.behavior import IInternalNumberBehavior
+try:
+    from collective.behavior.internalnumber.behavior import IInternalNumberBehavior
+except ImportError:
+    pass
+
 from collective.contact.plonegroup.config import ORGANIZATIONS_REGISTRY
 
-from imio.dms.mail.Extensions.imports import change_levels, sort_by_level, assert_value_in_list, assert_date
 from imio.pyutils import system
 
 
@@ -41,129 +44,23 @@ def get_organizations(self, obj=False):
     return '\n'.join(['%s;%s' % (t[0], t[1]) for t in terms])
 
 
-def import_principals(self, create='', dochange='', path=''):
-    """
-        Import principals from the file 'Extensions/principals.csv' containing
-        GroupId;GroupTitle;Userid;Name;email;Validateur;Ã‰diteur;Lecteur
-    """
-    if not check_zope_admin():
-        return "You must be a zope manager to run this script"
-    exm = self.REQUEST['PUBLISHED']
-    path = os.path.dirname(exm.filepath())
-    #path = '%s/../../Extensions' % os.environ.get('INSTANCE_HOME')
-    # Open file
-    lines = system.read_file(os.path.join(path, 'principals.csv'), skip_empty=True)
-    regtool = self.portal_registration
-    cu = False
-    if create not in ('', '0', 'False', 'false'):
-        cu = True
-    doit = False
-    if dochange not in ('', '0', 'False', 'false'):
-        doit = True
-    orgas = get_organizations(self, obj=True)
-    i = 0
-    out = []
-    for line in lines:
-        i += 1
-        if i == 1:
-            continue
-        try:
-            data = line.split(';')
-            orgid = data[0]
-            orgtit = data[1].strip()
-            userid = data[2]
-            fullname = data[3]
-            email = data[4]
-            validateur = data[5]
-            editeur = data[6]
-            lecteur = data[7]
-        except Exception, ex:
-            return "Problem line %d, '%s': %s" % (i, line, safe_encode(ex.message))
-        # check userid
-        if not userid.isalnum() or not userid.islower():
-            out.append("Line %d: userid '%s' is not alpha lowercase" % (i, userid))
-            continue
-        # check user
-        user = api.user.get(username=userid)
-        if user is None:
-            if not cu:
-                out.append("Line %d: userid '%s' not found" % (i, userid))
-                continue
-            else:
-                try:
-                    out.append("=> Create user '%s': '%s', '%s'" % (userid, fullname, email))
-                    if doit:
-                        user = api.user.create(username=userid, email=email, password=regtool.generatePassword(),
-                                               properties={'fullname': fullname},
-                                               )
-                except Exception, ex:
-                    out.append("Line %d, cannot create user: %s" % (i, safe_encode(ex.message)))
-                    continue
-        # groups
-        if user is not None:
-            try:
-                groups = api.group.get_groups(username=userid)
-            except Exception, ex:
-                if user is not None:
-                    out.append("Line %d, cannot get groups of userid '%s': %s" % (i, userid, safe_encode(ex.message)))
-                # continue
-        else:
-            groups = []
-
-        # check organization
-        if orgid:
-            if not [uid for uid, tit in orgas if uid == orgid]:
-                out.append("Line %d, cannot find org_uid '%s' in organizations" % (i, orgid))
-                continue
-        else:
-            tmp = [uid for uid, tit in orgas if tit == safe_unicode(orgtit)]
-            if tmp:
-                orgid = tmp[0]
-            else:
-                out.append("Line %d, cannot find org_uid from org title '%s'" % (i, orgtit))
-                continue
-
-        for (name, value) in [('validateur', validateur), ('editeur', editeur), ('lecteur', lecteur)]:
-            value = value.strip()
-            if not value:
-                # We don't remove a user from a group
-                continue
-            # check groupid
-            gid = "%s_%s" % (orgid, name)
-            group = api.group.get(groupname=gid)
-            if group is None:
-                out.append("Line %d: groupid '%s' not found" % (i, gid))
-                continue
-            # add user in group
-            if gid not in groups:
-                out.append("=> Add user '%s' to group '%s' (%s)" % (userid, gid, orgtit))
-                if doit:
-                    try:
-                        api.group.add_user(groupname=gid, username=userid)
-                    except Exception, ex:
-                        out.append("Line %d, cannot add userid '%s' to group '%s': %s"
-                                   % (i, userid, gid, safe_encode(ex.message)))
-    return '\n'.join(out)
-
-
 def import_contacts(self, dochange='', ownorg='', only='ORGS|PERS|HP', path=''):
     """
         Import contacts from several files in 'Extensions'
-        * organizations.csv:    ID;ID Parent;IntitulÃ©;Description;Type;Adr par;Rue;NumÃ©ro;Comp adr;CP;LocalitÃ©;TÃ©l;Gsm;
-                                Fax;Courriel;Site;RÃ©gion;Pays;UID
-        * persons.csv:  ID;Nom;PrÃ©nom;Genre;CivilitÃ©;Naissance;Adr par;Rue;NumÃ©ro;Comp adr;CP;LocalitÃ©;TÃ©l;Gsm;
-                        Fax;Courriel;Site;RÃ©gion;Pays;Num int;UID
-        * positions.csv:    ID;ID org;IntitulÃ©;Description;Type;Adr par;Rue;NumÃ©ro;Comp adr;CP;LocalitÃ©;TÃ©l;Gsm;Fax;
-                            Courriel;Site;RÃ©gion;Pays;UID
-        * heldpositions.csv:    ID;ID person;ID org;ID fct;IntitulÃ© fct;DÃ©but fct;Fin fct;Adr par;Rue;NumÃ©ro;Comp adr;
-                                CP;LocalitÃ©;TÃ©l;Gsm;Fax;Courriel;Site;RÃ©gion;Pays;UID
+        * organizations.csv:    ID;ID Parent;Intitulé;Description;Type;Adr par;Rue;Numéro;Comp adr;
+                                CP;Localité;Tél;Gsm;Fax;Courriel;Site;Région;Pays;UID
+        * persons.csv:  ID;Nom;Prénom;Genre;Civilité;Naissance;Adr par;Rue;Numéro;Comp adr;
+                        CP;Localité;Tél;Gsm;Fax;Courriel;Site;Région;Pays;Num int;UID
+        * positions.csv:    ID;ID org;Intitulé;Description;Type;Adr par;Rue;Numéro;Comp adr;
+                            CP;Localité;Tél;Gsm;Fax;Courriel;Site;Région;Pays;UID
+        * heldpositions.csv:    ID;ID person;ID org;ID fct;Intitulé fct;Début fct;Fin fct;Adr par;Rue;
+                                Numéro;Comp adr;CP;Localité;Tél;Gsm;Fax;Courriel;Site;Région;Pays;UID
     """
     if not check_zope_admin():
         return "You must be a zope manager to run this script"
     doit = False
     if dochange not in ('', '0', 'False', 'false'):
         doit = True
-    exm = self.REQUEST['PUBLISHED']
     portal = api.portal.get()
     contacts = portal['contacts']
 
@@ -208,10 +105,9 @@ def import_contacts(self, dochange='', ownorg='', only='ORGS|PERS|HP', path=''):
     for typ in ['types', 'levels']:
         org_infos[typ] = OrderedDict([(t['name'], t['token']) for t in getattr(contacts, 'organization_%s' % typ)])
         if not len(org_infos[typ]):
-            org_infos[typ] = OrderedDict([(u'Non dÃ©fini', 'non-defini')])
+            org_infos[typ] = OrderedDict([(u'Non défini', 'non-defini')])
     org_infos_o = copy.deepcopy(org_infos)
     # read the organization file
-    path = os.path.dirname(exm.filepath())
     lines = []
     if 'ORGS' in only:
         lines = system.read_csv(os.path.join(path, 'organizations.csv'), strip_chars=' ', strict=True)
@@ -236,8 +132,8 @@ def import_contacts(self, dochange='', ownorg='', only='ORGS|PERS|HP', path=''):
             return "!! ORGS: problem line %d, duplicated uid: %s, already found line %s" % (i, uid, uids[uid])
         elif uid:
             uids[uid] = 'orgs: %d' % i
-        # ID;ID Par;IntitulÃ©;Description;Type;Use par adr,Rue;NumÃ©ro;Comp adr;CP;LocalitÃ©;TÃ©l;Gsm;Fax;Courriel;Site;
-        # RÃ©gion;Pays;UID
+        # ID;ID Par;Intitulé;Description;Type;Use par adr,Rue;Numéro;Comp adr;CP;Localité;Tél;Gsm;Fax;Courriel;Site;
+        # Région;Pays;UID
         orgs[id] = {'lev': 1, 'prt': idp, 'tit': data[2], 'desc': data[3], 'upa': data[5] and int(data[5]) or '',
                     'st': data[6], 'nb': data[7], 'box': data[8], 'zip': is_zip(data[9], i, 'ORGS', data[17]),
                     'loc': data[10], 'tel': check_phone(digit(data[11]), i, 'ORGS', data[17]),
@@ -257,11 +153,6 @@ def import_contacts(self, dochange='', ownorg='', only='ORGS|PERS|HP', path=''):
             orgs[id]['typ'] = org_infos[typ][utyp]
         else:  # we take the first value
             orgs[id]['typ'] = org_infos[typ].values()[0]
-
-    # adapt organization levels and sort
-    for idp in childs:
-        change_levels(idp, childs, orgs)
-    orgs = sort_by_level(orgs)
 
     # updating contacts options
     for typ in ['types', 'levels']:
@@ -347,8 +238,8 @@ def import_contacts(self, dochange='', ownorg='', only='ORGS|PERS|HP', path=''):
     lines = []
     if 'PERS' in only:
         lines = system.read_csv(os.path.join(path, 'persons.csv'), strip_chars=' ', strict=True)
-    # ID;Nom;PrÃ©nom;Genre;CivilitÃ©;Naissance;Adr par;Rue;NumÃ©ro;Comp adr;CP;LocalitÃ©;TÃ©l;Gsm;
-    # Fax;Courriel;Site;RÃ©gion;Pays;Num int;UID
+    # ID;Nom;Prénom;Genre;Civilité;Naissance;Adr par;Rue;Numéro;Comp adr;CP;Localité;Tél;Gsm;
+    # Fax;Courriel;Site;Région;Pays;Num int;UID
     if lines:
         data = lines.pop(0)
         lendata = len(data)
@@ -369,8 +260,8 @@ def import_contacts(self, dochange='', ownorg='', only='ORGS|PERS|HP', path=''):
             cell_phone = safe_unicode(check_phone(digit(data[13]), i, 'PERS', data[18]))
             fax = safe_unicode(check_phone(digit(data[14]), i, 'PERS', data[18]))
             zipc = safe_unicode(is_zip(data[10], i, 'PERS', data[18]))
-            gender = assert_value_in_list(data[3], ['', 'F', 'M'])
-            birthday = assert_date(data[5])
+            gender = data[3]
+            birthday = data[5]
         except AssertionError, ex:
             errors.append("!! PERS: problem line %d: %s" % (i, safe_encode(ex.message)))
         except Exception, ex:
@@ -463,8 +354,8 @@ def import_contacts(self, dochange='', ownorg='', only='ORGS|PERS|HP', path=''):
     lines = []
     if 'HP' in only:
         lines = system.read_csv(os.path.join(path, 'heldpositions.csv'), strip_chars=' ', strict=True)
-    # ID;ID person;ID org;ID fct;IntitulÃ© fct;DÃ©but fct;Fin fct;Adr par;Rue;NumÃ©ro;Comp adr;
-    # CP;LocalitÃ©;TÃ©l;Gsm;Fax;Courriel;Site;RÃ©gion;Pays;UID
+    # ID;ID person;ID org;ID fct;Intitulé fct;Début fct;Fin fct;Adr par;Rue;Numéro;Comp adr;
+    # CP;Localité;Tél;Gsm;Fax;Courriel;Site;Région;Pays;UID
     if lines:
         data = lines.pop(0)
         lendata = len(data)
@@ -480,8 +371,8 @@ def import_contacts(self, dochange='', ownorg='', only='ORGS|PERS|HP', path=''):
         id, pid, oid, title, uid = data[0], data[1], data[2], data[4], data[20]
         errors = []
         try:
-            start = assert_date(data[5])
-            end = assert_date(data[6])
+            start = data[5]
+            end = data[6]
             phone = safe_unicode(check_phone(digit(data[13]), i, 'PERS', data[19]))
             cell_phone = safe_unicode(check_phone(digit(data[14]), i, 'PERS', data[19]))
             fax = safe_unicode(check_phone(digit(data[15]), i, 'PERS', data[19]))
@@ -551,7 +442,8 @@ def import_contacts(self, dochange='', ownorg='', only='ORGS|PERS|HP', path=''):
                                          zip_code=zipc, city=safe_unicode(data[12]),
                                          phone=phone, cell_phone=cell_phone, fax=fax, email=safe_unicode(data[16]),
                                          website=safe_unicode(data[17]), region=safe_unicode(data[18]),
-                                         country=safe_unicode(data[19]), use_parent_address=bool(upa))
+                                         country=safe_unicode(data[19]), use_parent_address=bool(upa),
+                                         usages=['assemblyMember'], defaults=['present'])
                 out.append("%04d hp: new hp '%s' for '%s' created" % (i, safe_encode(title), pers.Title()))
                 hps[id]['obj'] = obj
             else:

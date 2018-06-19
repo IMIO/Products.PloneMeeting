@@ -27,6 +27,7 @@ from collective.eeafaceted.collectionwidget.utils import _updateDefaultCollectio
 from Products.PloneMeeting.config import PloneMeetingError
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import registerClasses
+from Products.PloneMeeting.Extensions.imports import import_contacts
 from Products.PloneMeeting.model.adaptations import performModelAdaptations
 from Products.PloneMeeting.ToolPloneMeeting import MEETING_CONFIG_ERROR
 from Products.PloneMeeting.utils import updateCollectionCriterion
@@ -175,6 +176,10 @@ class ToolInitializer:
             error = field.validate_vocabulary(cfg, cfg.getField(field.getName()).get(cfg), {})
             if error:
                 raise PloneMeetingError(MEETING_CONFIG_ERROR % (cfg.getId(), error))
+
+        if data.addContacts:
+            # add contacts using the CSV import
+            import_contacts(self.site, dochange=True, path=self.profilePath)
 
     def _manageOtherMCCorrespondences(self, cfg):
         def _convert_to_real_other_mc_correspondences(annex_type):

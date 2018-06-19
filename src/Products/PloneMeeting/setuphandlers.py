@@ -14,7 +14,9 @@ from zope.component import queryUtility
 from zope.i18n import translate
 from Products.CMFPlacefulWorkflow.PlacefulWorkflowTool import WorkflowPolicyConfig_id
 from plone import api
+from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.messagesviewlet.utils import add_message
+from Products.CMFPlone.utils import base_hasattr
 from Products.cron4plone.browser.configlets.cron_configuration import ICronConfiguration
 from Products.CPUtils.Extensions.utils import configure_ckeditor
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_REAPPLY
@@ -318,6 +320,24 @@ def postInstall(context):
         'collective.documentgenerator.browser.controlpanel.'
         'IDocumentGeneratorControlPanelSchema.raiseOnError_for_non_managers',
         True)
+
+    # create contacts directory and plonegroup-organization
+    if not base_hasattr(site, 'contacts'):
+        position_types = [{'name': u'Défaut', 'token': 'default'}, ]
+        organization_types = [{'name': u'Défaut', 'token': 'default'}, ]
+        organization_levels = [{'name': u'Défaut', 'token': 'default'}, ]
+        params = {'title': "Contacts",
+                  'position_types': position_types,
+                  'organization_types': organization_types,
+                  'organization_levels': organization_levels,
+                  }
+        site.invokeFactory('directory', 'contacts', **params)
+        contacts = site['contacts']
+        # Organisations creation (in directory)
+        params = {'title': u"Mon organisation",
+                  'organization_type': u'default', }
+        contacts.invokeFactory('organization', PLONEGROUP_ORG, **params)
+
     # reorder css
     _reorderCSS(site)
 

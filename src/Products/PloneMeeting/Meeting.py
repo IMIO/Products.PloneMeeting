@@ -935,7 +935,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             return contacts.index(item.UID)
         brains = sorted(brains, key=getKey)
         held_positions = [brain.getObject() for brain in brains]
-        return held_positions
+        return tuple(held_positions)
 
     security.declarePublic('getDefaultAttendees')
 
@@ -1601,12 +1601,37 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         '''Adaptable method to filter possible user replacement.'''
         return allUsers
 
-    security.declarePrivate('updateMeetingUsers')
+    def _doUpdateContacts(self, attendees=OrderedDict(), signatories={}, replacements={}):
+        ''' '''
+        # attendees must be an OrderedDict to keep order
+        if not isinstance(attendees, OrderedDict):
+            raise ValueError('Parameter attendees passed to Meeting._doUpdateContacts must be an OrderedDict !!!')
+        # save the ordered contacts so we rely on this, especially when
+        # users are disabled in the configuration
+        self.orderedContacts = OrderedDict()
 
-    def updateMeetingUsers(self):
+        for attendee_uid, attendee_type in attendees.items():
+            if attendee_uid not in self.orderedContacts:
+                self.orderedContacts[attendee_uid] = \
+                    {'attendee': False, 'excused': False, 'absent': False,
+                     'lateAttendee': False, 'signer': False, 'signature_number': 0,
+                     'replacement': None}
+            self.orderedContacts[attendee_uid][attendee_type] = True
+
+        for signatory_uid, signature_number in signatories.items():
+            self.orderedContacts[signatory_uid]['signer'] = True
+            self.orderedContacts[signatory_uid]['signature_number'] = signature_number
+
+        for replaced_uid, replacer_uid in replacements.items():
+            self.orderedContacts[replaced_uid]['replacement'] = replacer_uid
+        self._p_changed = True
+
+    security.declarePrivate('updateContacts')
+
+    def updateContacts(self):
         '''After a meeting has been created or edited, we update here the info
-           related to meeting users implied in the meeting: attendees,
-           signatories, replacements...'''
+           related to contacts implied in the meeting: attendees, excused,
+           absents, signatories, replacements, ...'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         usedAttrs = cfg.getUsedMeetingAttributes()
@@ -1614,43 +1639,32 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         if 'attendees' not in usedAttrs:
             return
 
-        # save the ordered contacts so we rely on this, especially when
-        # users are disabled in the configuration
-        self.orderedContacts = OrderedDict()
-
         # manage attendees, excused, absents, lateAttendees
         meeting_attendees = self.REQUEST.get('meeting_attendees', [])
+        # remove leading muser_ and return a list of tuples, position_uid, attendee_type
+        attendees = OrderedDict()
         for key in meeting_attendees:
             # remove leading muser_
-            position_uid = key[6:].rsplit('_', 1)[0]
-            if position_uid not in self.orderedContacts:
-                self.orderedContacts[position_uid] = \
-                    {'attendee': False, 'excused': False, 'absent': False,
-                     'lateAttendee': False, 'signer': False, 'signature_number': 0,
-                     'replacement': None}
-            if key.endswith('_attendee'):
-                self.orderedContacts[position_uid]['attendee'] = True
-            elif key.endswith('_excused'):
-                self.orderedContacts[position_uid]['excused'] = True
-            elif key.endswith('_absent'):
-                self.orderedContacts[position_uid]['absent'] = True
-            elif key.endswith('_lateAttendee'):
-                self.orderedContacts[position_uid]['lateAttendee'] = True
+            position_uid, attendee_type = key[6:].split('_')
+            attendees[position_uid] = attendee_type
 
         # manage signatories, remove ''
         meeting_signatories = [
             signatory for signatory in self.REQUEST.get('meeting_signatories', []) if signatory]
+        signatories = {}
         for key in meeting_signatories:
             signatory, signature_number = key.split('__signaturenumber__')
-            self.orderedContacts[signatory]['signer'] = True
-            self.orderedContacts[signatory]['signature_number'] = signature_number
+            signatories[signatory] = signature_number
 
         # manage replacements, remove ''
         meeting_replacements = [
             replacer for replacer in self.REQUEST.get('meeting_replacements', []) if replacer]
+        replacements = {}
         for key in meeting_replacements:
             replaced, replacer = key.split('__replacedby__')
-            self.orderedContacts[replaced]['replacement'] = replacer
+            replacements[replaced] = replacer
+
+        self._doUpdateContacts(attendees, signatories, replacements)
 
     security.declarePrivate('at_post_create_script')
 
@@ -1660,8 +1674,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         self.updateTitle()
         self.updatePlace()
         self.computeDates()
-        # Update user-related info (attendees, signatories, replacements...)
-        self.updateMeetingUsers()
+        # Update contact-related info (attendees, signatories, replacements...)
+        self.updateContacts()
         tool = api.portal.get_tool('portal_plonemeeting')
         meetingConfig = tool.getMeetingConfig(self)
         self.setMeetingConfigVersion(meetingConfig.getConfigVersion())
@@ -1704,8 +1718,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         '''Updates the meeting title.'''
         self.updateTitle()
         self.updatePlace()
-        # Update user-related info (attendees, signatories, replacements...)
-        self.updateMeetingUsers()
+        # Update contact-related info (attendees, signatories, replacements...)
+        self.updateContacts()
         # Add a line in history if historized fields have changed
         addDataChange(self)
         # Apply potential transformations to richtext fields
