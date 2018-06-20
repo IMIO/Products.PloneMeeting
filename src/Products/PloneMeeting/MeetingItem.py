@@ -1483,7 +1483,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def getPrettyLink(self, **kwargs):
         """Return the IPrettyLink version of the title."""
         adapted = IPrettyLink(self)
-        adapted.showContentIcon = True
+        adapted.showContentIcon = kwargs.get('showContentIcon', True)
         for k, v in kwargs.items():
             setattr(adapted, k, v)
         return adapted.getLink()
@@ -2712,12 +2712,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                  attendee.get_short_title()))
         return DisplayList(tuple(res))
 
-    security.declarePublic('listItemAbsents')
-
-    def listItemAbsents(self):
-        '''Not required anymore because field "itemAbsents" is never shown.'''
-        return []
-
     security.declarePublic('listEmergencies')
 
     def listEmergencies(self):
@@ -3124,17 +3118,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getItemAbsents')
 
     def getItemAbsents(self, theObjects=False, **kwargs):
-        '''Gets the absents on this item. Returns the absents as noted in field
-           "itemAbsents" and adds also.'''
+        '''Gets the absents for this item.
+           Absent for an item are stored in the Meeting.itemAbsents dict.'''
         res = []
         if not self.hasMeeting():
             return res
         meeting = self.getMeeting()
-        stored_absents = self.getField('itemAbsents').get(self, **kwargs)
+        meeting_item_absents = meeting.getItemAbsents().get(self.UID(), [])
         if theObjects:
-            item_absents = meeting._getContacts(uids=stored_absents, theObjects=theObjects)
+            item_absents = meeting._getContacts(uids=meeting_item_absents, theObjects=theObjects)
         else:
-            item_absents = tuple(stored_absents)
+            item_absents = tuple(meeting_item_absents)
         return item_absents
 
     security.declarePublic('mustShowItemReference')

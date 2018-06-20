@@ -1133,3 +1133,25 @@ class DisplayMeetingConfigsOfConfigGroup(BrowserView):
         """Returns the list of MeetingConfigs the current user has access to."""
         grouped_configs = self.tool.getGroupedConfigs(config_group=self.config_group)
         return [getattr(self.tool, config_info['id']) for config_info in grouped_configs.values()[0]]
+
+
+class DisplayMeetingItemAbsents(BrowserView):
+    """This view will display the items a given absent is absent for."""
+
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+
+    def __call__(self, absent_uid):
+        """ """
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.absent_uid = absent_uid
+        return self.index()
+
+    def getAbsentForItems(self):
+        """Returns the list of items the absent_uid is absent for."""
+        item_uids = self.context.getItemAbsents(by_absents=True).get(self.absent_uid, [])
+        catalog = api.portal.get_tool('portal_catalog')
+        brains = catalog(UID=item_uids, sort_on='getItemNumber')
+        objs = [brain.getObject() for brain in brains]
+        return objs

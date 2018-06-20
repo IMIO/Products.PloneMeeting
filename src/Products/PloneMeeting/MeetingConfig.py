@@ -1777,6 +1777,7 @@ schema = Schema((
         multiValued=1,
         vocabulary='listActiveMeetingGroupsForPowerAdvisers',
         default=defValues.powerAdvisersGroups,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(

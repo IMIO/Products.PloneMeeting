@@ -76,7 +76,8 @@
                              userReplacements context/getUserReplacements;
                              showExcused python: 'excused' in usedAttrs or excused;
                              showAbsents python: 'absents' in usedAttrs or absents;
-                             showSignatories python: 'signatories' in usedAttrs or signers;">
+                             showSignatories python: 'signatories' in usedAttrs or signers;
+                             itemAbsents python: context.getItemAbsents(by_absents=True);">
           <tal:comment replace="nothing">Column captions</tal:comment>
           <thead>
           <tr>
@@ -94,6 +95,11 @@
               <td><b tal:content="mUser/get_short_title"></b></td>
               <td align="center">
                 <span tal:condition="python: aUid in attendees" class="people people-checked" ></span>
+                <acronym class="tooltipster-meeting-item-absents"
+                         tal:attributes="data-base_url string:${context/absolute_url};
+                                         data-absent_uid string:${aUid};">
+                  <span tal:condition="python: aUid in itemAbsents" class="people people-leave"></span>
+                </acronym>
 
                 <tal:comment replace="nothing">Info about users late-entering the meeting</tal:comment>
                 <tal:late condition="python: aUid in lateAttendees">

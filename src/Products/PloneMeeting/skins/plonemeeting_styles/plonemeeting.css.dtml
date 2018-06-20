@@ -433,7 +433,8 @@ td.td_cell_advices div.categorized-elements {
     display: none;
 }
 
-div#content.advice_infos_tooltipster {
+div#content.advice_infos_tooltipster,
+div#content.meeting_item_absents_tooltipster {
     width: 700px;
 }
 

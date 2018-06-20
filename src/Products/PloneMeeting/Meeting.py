@@ -9,11 +9,14 @@
 # GNU General Public License (GPL)
 #
 
+import interfaces
+import itertools
+import logging
+import os
+
 from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
 from zope.interface import implements
-import interfaces
-
 from Products.Archetypes.atapi import BooleanField
 from Products.Archetypes.atapi import DateTimeField
 from Products.Archetypes.atapi import IntegerField
@@ -27,17 +30,14 @@ from Products.Archetypes.atapi import StringField
 from Products.Archetypes.atapi import TextAreaWidget
 from Products.Archetypes.atapi import TextField
 from Products.Archetypes.event import ObjectEditedEvent
-
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
-
-import logging
-import os
 from appy.gen import No
 from collections import OrderedDict
 from App.class_init import InitializeClass
 from DateTime import DateTime
 from DateTime.DateTime import _findLocalTimeZoneName
 from OFS.ObjectManager import BeforeDeleteException
+from persistent.mapping import PersistentMapping
 from zope.component import getMultiAdapter
 from zope.event import notify
 from zope.i18n import translate
@@ -1024,6 +1024,22 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         replaced_uids = self._getContacts('replacement', theObjects=theObjects)
         return {replaced_uid: self.orderedContacts[replaced_uid]['signature_number'] for replaced_uid in replaced_uids}
 
+    security.declarePublic('getItemAbsents')
+
+    def getItemAbsents(self, by_absents=False):
+        '''Return itemAbsents, by default the itemAbsents dict has the item UID as key and list of
+           absents as values but if 'p_by_absents' is True, the informations are returned with absent
+           as key and list of items as value.'''
+        if by_absents:
+            # values are now keys, concatenate a list of lists and remove duplicates
+            keys = tuple(set(list(itertools.chain.from_iterable(self.itemAbsents.values()))))
+            data = {}
+            for key in keys:
+                data[key] = [k for k, v in self.itemAbsents.items() if key in v]
+        else:
+            data = self.itemAbsents.copy()
+        return data
+
     security.declarePublic('displayUserReplacement')
 
     def displayUserReplacement(self, held_position_uid, include_held_position_label=True):
@@ -1424,6 +1440,11 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             # does not exist anymore and is no more in the items list
             # so we pass
             pass
+        # remove item UID from self.itemAbsents
+        item_uid = item.UID()
+        if item_uid in self.itemAbsents:
+            del self.itemAbsents[item_uid]
+
         self.setItems(items)
         # Update item numbers
         # in case itemNumber was a subnumber (or a master having subnumber),
@@ -1608,7 +1629,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             raise ValueError('Parameter attendees passed to Meeting._doUpdateContacts must be an OrderedDict !!!')
         # save the ordered contacts so we rely on this, especially when
         # users are disabled in the configuration
-        self.orderedContacts = OrderedDict()
+        self.orderedContacts.clear()
 
         for attendee_uid, attendee_type in attendees.items():
             if attendee_uid not in self.orderedContacts:
@@ -1669,8 +1690,11 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('at_post_create_script')
 
     def at_post_create_script(self):
-        '''Initializes the meeting title and inserts recurring items if
-           relevant.'''
+        ''' '''
+        # place to store item absents
+        self.itemAbsents = PersistentMapping()
+        # place to store attendees when using contacts
+        self.orderedContacts = OrderedDict()
         self.updateTitle()
         self.updatePlace()
         self.computeDates()

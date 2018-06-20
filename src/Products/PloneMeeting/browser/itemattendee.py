@@ -111,10 +111,11 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
             raise Unauthorized
 
         plone_utils = api.portal.get_tool('plone_utils')
+        meeting = self.context.getMeeting()
         items_to_update = _itemsToUpdate(
             from_item_number=self.context.getItemNumber(relativeTo='meeting'),
             until_item_number=self.apply_until_item_number,
-            meeting=self.context.getMeeting())
+            meeting=meeting)
 
         # return a portal_message if trying to byebye an attendee that is
         # specifically selected as itemSignatory on current item
@@ -133,10 +134,11 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
 
         # apply itemAbsents
         for item_to_update in items_to_update:
-            item_absents = list(item_to_update.getItemAbsents())
+            item_to_update_uid = item_to_update.UID()
+            item_absents = meeting.itemAbsents.get(item_to_update_uid, [])
             if self.person_uid not in item_absents:
                 item_absents.append(self.person_uid)
-                item_to_update.setItemAbsents(item_absents)
+                meeting.itemAbsents[item_to_update_uid] = item_absents
         plone_utils.addPortalMessage(_("Attendee has been set absent."))
         self._finishedSent = True
 
@@ -168,15 +170,17 @@ class WelcomeAttendeeForm(BaseAttendeeForm):
             raise Unauthorized
 
         # apply itemAbsents
+        meeting = self.context.getMeeting()
         items_to_update = _itemsToUpdate(
             from_item_number=self.context.getItemNumber(relativeTo='meeting'),
             until_item_number=self.apply_until_item_number,
-            meeting=self.context.getMeeting())
+            meeting=meeting)
         for item_to_update in items_to_update:
-            item_absents = list(item_to_update.getItemAbsents())
+            item_to_update_uid = item_to_update.UID()
+            item_absents = meeting.itemAbsents.get(item_to_update_uid, [])
             if self.person_uid in item_absents:
                 item_absents.remove(self.person_uid)
-                item_to_update.setItemAbsents(item_absents)
+                meeting.itemAbsents[item_to_update_uid] = item_absents
 
         plone_utils = api.portal.get_tool('plone_utils')
         plone_utils.addPortalMessage(_("Attendee has been set back present."))
