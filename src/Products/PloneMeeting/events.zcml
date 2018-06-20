@@ -130,8 +130,8 @@
               handler=".events.onAnnexFileChanged" />
 
   <!-- collective.contact.core held_position events -->
-  <subscriber for="collective.contact.core.interfaces.IHeldPosition
-                   zope.container.interfaces.IObjectRemovedEvent"
+  <subscriber for="Products.PloneMeeting.content.held_position.IPMHeldPosition
+                   OFS.interfaces.IObjectWillBeRemovedEvent"
               handler=".events.onHeldPositionRemoved" />
 
   <!-- DashboardCollection events -->

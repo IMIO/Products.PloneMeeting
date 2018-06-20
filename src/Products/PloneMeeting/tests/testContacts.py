@@ -27,6 +27,7 @@ from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from plone import api
 from z3c.relationfield.relation import RelationValue
+from zExceptions import Redirect
 from zope.component import getUtility
 from zope.intid.interfaces import IIntIds
 
@@ -92,6 +93,31 @@ class testContacts(PloneMeetingTestCase):
         cfg.setOrderedContacts(())
         self.assertEqual(
             meeting.getAllUsedHeldPositions(), meeting.getAttendees(theObjects=True))
+
+    def test_pm_CanNotDeleteUsedHeldPosition(self):
+        ''' '''
+        cfg = self.meetingConfig
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime())
+        person = self.portal.contacts.get('alain-alain')
+        hp = person.get_held_positions()[0]
+        hp_uid = hp.UID()
+        self.assertTrue(hp_uid in meeting.getAttendees())
+        # hp not deletable because used in MC and meeting
+        self.changeUser('siteadmin')
+        self.assertRaises(Redirect, api.content.delete, hp)
+
+        # unselect from MeetingConfig.orderedContacts, still not deletable because used by a meeting
+        orderedContacts = list(cfg.getOrderedContacts())
+        orderedContacts.remove(hp_uid)
+        cfg.setOrderedContacts(orderedContacts)
+        self.assertRaises(Redirect, api.content.delete, hp)
+
+        # unselect hp from meeting, now it is deletable
+        del meeting.orderedContacts[hp.UID()]
+        self.assertFalse(hp_uid in meeting.getAttendees())
+        api.content.delete(hp)
+        self.assertFalse(person.get_held_positions())
 
 
 def test_suite():
