@@ -43,7 +43,7 @@ class BaseAttendeeForm(form.Form):
     def __init__(self, context, request):
         self.context = context
         self.request = request
-        self.label = translate(self.label)
+        self.label = translate(self.label, domain='PloneMeeting', context=request)
 
     def updateWidgets(self):
         # XXX manipulate self.fields BEFORE doing form.Form.updateWidgets
@@ -92,7 +92,7 @@ class IByeByeAttendee(IBaseAttendee):
     apply_until_item_number = schema.TextLine(
         title=_(u"Apply until item number"),
         description=_(u"If you specify a number, this attendee will be defined as "
-                      u"absent from current item to entered item number.  "
+                      u"absent from current item to entered item number. "
                       u"Leave empty to only apply for current item."),
         required=False,
         constraint=validate_apply_until_item_number,)
@@ -101,7 +101,7 @@ class IByeByeAttendee(IBaseAttendee):
 class ByeByeAttendeeForm(BaseAttendeeForm):
     """ """
 
-    label = (u"Manage specific absents for items")
+    label = _(u'person_byebye')
     schema = IByeByeAttendee
     fields = field.Fields(IByeByeAttendee)
 
@@ -151,7 +151,7 @@ class IWelcomeAttendee(IBaseAttendee):
     apply_until_item_number = schema.TextLine(
         title=_(u"Apply until item number"),
         description=_(u"If you specify a number, this attendee will be defined as "
-                      u"back into the meeting from current item to entered item number.  "
+                      u"back into the meeting from current item to entered item number. "
                       u"Leave empty to only apply for current item."),
         required=False,
         constraint=validate_apply_until_item_number,)
@@ -160,7 +160,7 @@ class IWelcomeAttendee(IBaseAttendee):
 class WelcomeAttendeeForm(BaseAttendeeForm):
     """ """
 
-    label = (u"Welcome attendee from this item to...")
+    label = _(u"person_welcome")
     schema = IWelcomeAttendee
     fields = field.Fields(IWelcomeAttendee)
 
