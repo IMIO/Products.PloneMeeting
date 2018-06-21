@@ -3940,7 +3940,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # on the parameter MeetingConfig.toDiscussSetOnItemInsert
         # check test test_pm_ToDiscussFieldBehaviourWhenCloned
         NEUTRAL_FIELDS = [
-            'answerers', 'completeness', 'emergency', 'id', 'isAcceptableOutOfMeeting',
+            'completeness', 'emergency', 'id', 'isAcceptableOutOfMeeting',
             'itemAbsents', 'itemAssembly', 'itemAssemblyAbsents',
             'itemAssemblyExcused', 'itemInitiator', 'itemIsSigned',
             'itemKeywords', 'itemNumber', 'itemReference', 'itemSignatories',
@@ -3948,7 +3948,7 @@ class testMeetingItem(PloneMeetingTestCase):
             'meetingTransitionInsertingMe', 'inAndOutMoves', 'notes',
             'marginalNotes', 'observations', 'pollTypeObservations',
             'predecessor', 'preferredMeeting', 'proposingGroup',
-            'questioners', 'takenOverBy', 'templateUsingGroups',
+            'takenOverBy', 'templateUsingGroups',
             'toDiscuss', 'votesAreSecret', 'otherMeetingConfigsClonableToEmergency',
             'internalNotes', 'externalIdentifier']
         NEUTRAL_FIELDS += self._extraNeutralFields()

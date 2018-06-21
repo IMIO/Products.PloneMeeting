@@ -1025,7 +1025,7 @@ class Criteria(eeaCriteria):
             return self.context, self.criteria
         # meeting view
         kept_filters = []
-        resultsperpagedefault = "20"
+        resultsperpagedefault = 20
         meeting_view = False
         if IMeeting.providedBy(context):
             meeting_view = True

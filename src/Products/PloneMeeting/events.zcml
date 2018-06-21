@@ -135,8 +135,8 @@
               handler=".events.onHeldPositionRemoved" />
 
   <!-- DashboardCollection events -->
-  <subscriber for="imio.dashboard.interfaces.IDashboardCollection
-                   Products.Archetypes.interfaces.IObjectInitializedEvent"
+  <subscriber for="collective.eeafaceted.collectionwidget.interfaces.IDashboardCollection
+                   zope.lifecycleevent.interfaces.IObjectAddedEvent"
               handler=".events.onDashboardCollectionAdded" />
 
 </configure>

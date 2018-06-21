@@ -26,6 +26,7 @@ from Products.Archetypes.atapi import TextField
 from Products.Archetypes.atapi import TextAreaWidget
 from Products.Archetypes.atapi import registerType
 from Products.Archetypes.atapi import Schema
+from Products.Archetypes.utils import IntDisplayList
 
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 
@@ -1372,7 +1373,7 @@ schema = Schema((
         enforceVocabulary=False,
         write_permission="PloneMeeting: Write risky config",
     ),
-    StringField(
+    IntegerField(
         name='maxShownListings',
         widget=SelectionWidget(
             description="MaxShownListings",
@@ -1384,10 +1385,9 @@ schema = Schema((
         schemata="gui",
         vocabulary='listResultsPerPage',
         default=defValues.maxShownListings,
-        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
-    StringField(
+    IntegerField(
         name='maxShownAvailableItems',
         widget=SelectionWidget(
             description="MaxShownAvailableItems",
@@ -1399,10 +1399,9 @@ schema = Schema((
         schemata="gui",
         vocabulary='listResultsPerPage',
         default=defValues.maxShownAvailableItems,
-        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
-    StringField(
+    IntegerField(
         name='maxShownMeetingItems',
         widget=SelectionWidget(
             description="MaxShownMeetingItems",
@@ -1414,7 +1413,6 @@ schema = Schema((
         schemata="gui",
         vocabulary='listResultsPerPage',
         default=defValues.maxShownMeetingItems,
-        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
@@ -2817,7 +2815,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 ResultsPerPageWidget.widget_type)
             criteria = ICriteria(self.searches.searches_items)
             # need to use ICriteria.edit to make change persistent
-            criteria.edit(criterion.__name__, **{'default': safe_unicode(value)})
+            criteria.edit(criterion.__name__, **{'default': value})
         self.getField('maxShownListings').set(self, value, **kwargs)
 
     security.declarePublic('getMaxShownListings')
@@ -2832,9 +2830,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             self.searches.searches_items,
             ResultsPerPageWidget.widget_type)
         if criterion:
-            return criterion.default
+            value = criterion.default
         else:
-            return self.getField('maxShownListings').get(self, **kwargs)
+            value = self.getField('maxShownListings').get(self, **kwargs)
+        return safe_unicode(value)
 
     security.declarePublic('getToDoListSearches')
 
@@ -2975,8 +2974,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             and 'maxShownMeetingItems' fields."""
         res = []
         for number in range(20, 1001, 20):
-            res.append((str(number), str(number)))
-        return DisplayList(tuple(res))
+            res.append((number, str(number)))
+        return IntDisplayList(tuple(res))
 
     security.declarePrivate('listSelectableAdvisers')
 

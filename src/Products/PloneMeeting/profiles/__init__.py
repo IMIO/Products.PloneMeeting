@@ -577,9 +577,9 @@ class MeetingConfigDescriptor(Descriptor):
         self.dashboardMeetingLinkedItemsFilters = ('c4', 'c6', 'c7', 'c11', 'c12', 'c16', 'c19')
         self.groupsShownInDashboardFilter = []
         # default batching value, this must be a multiple of "20"
-        self.maxShownListings = "20"
-        self.maxShownAvailableItems = "20"
-        self.maxShownMeetingItems = "40"
+        self.maxShownListings = 20
+        self.maxShownAvailableItems = 20
+        self.maxShownMeetingItems = 40
 
         # Mail-related parameters -----------------------------------------------
         # Mail mode can be: activated, deactivated, test.

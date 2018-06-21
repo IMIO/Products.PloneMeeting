@@ -11,10 +11,12 @@
    <element value="ContentCategoryGroup"/>
    <element value="ContentSubcategory"/>
    <element value="DashboardPodTemplate"/>
+   <element value="directory"/>
    <element value="Document"/>
    <element value="Event"/>
    <element value="File"/>
    <element value="Folder"/>
+   <element value="held_position"/>
    <element value="Image"/>
    <element value="ItemAnnexContentCategory"/>
    <element value="ItemAnnexContentSubcategory"/>
@@ -32,7 +34,10 @@
    <element value="MeetingItemTemplate"/>
    <element value="MeetingItemRecurring"/>
    <element value="MeetingUser"/>
+   <element value="organization"/>
+   <element value="person"/>
    <element value="PODTemplate"/>
+   <element value="position"/>
    <element value="StyleTemplate"/>
    <element value="SubTemplate"/>
    <element value="ToolPloneMeeting"/>

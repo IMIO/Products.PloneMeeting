@@ -25,6 +25,8 @@
 from DateTime import DateTime
 from AccessControl import Unauthorized
 from zope.component import queryUtility
+from zope.event import notify
+from zope.lifecycleevent import ObjectModifiedEvent
 from zope.schema.interfaces import IVocabularyFactory
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
@@ -617,7 +619,9 @@ class testFaceted(PloneMeetingTestCase):
         self.assertTrue(searchAllItems in vocab(searches))
         # disable it then test again
         self.changeUser('siteadmin')
-        self.do(searchAllItems, 'deactivate')
+        searchAllItems.enabled = False
+        # invalidate vocabulary cache
+        notify(ObjectModifiedEvent(searchAllItems))
         self.changeUser('pmCreator1')
         self.assertFalse(searchAllItems in vocab(searches))
 
