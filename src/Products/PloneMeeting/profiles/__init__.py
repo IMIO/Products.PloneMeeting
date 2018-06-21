@@ -342,7 +342,7 @@ class MeetingConfigDescriptor(Descriptor):
                          'recordItemHistoryStates', 'usedMeetingAttributes',
                          'historizedMeetingAttributes', 'recordMeetingHistoryStates',
                          'availableItemsListVisibleColumns', 'itemsListVisibleColumns', 'itemsListVisibleFields',
-                         'itemColumns', 'meetingColumns',
+                         'itemColumns', 'meetingColumns', 'toDoListSearches',
                          'dashboardItemsListingsFilters', 'dashboardMeetingAvailableItemsFilters',
                          'dashboardMeetingLinkedItemsFilters', 'groupsShownInDashboardFilter',
                          'workflowAdaptations', 'transitionsToConfirm', 'transitionsForPresentingAnItem',
@@ -362,8 +362,8 @@ class MeetingConfigDescriptor(Descriptor):
                          'usedVoteValues', 'insertingMethodsOnAddItem', 'itemAnnexConfidentialVisibleFor',
                          'adviceAnnexConfidentialVisibleFor', 'meetingAnnexConfidentialVisibleFor',
                          'enableAdviceConfidentiality', 'adviceConfidentialityDefault', 'adviceConfidentialFor',
-                         'hideNotViewableLinkedItemsTo', 'hideHistoryTo')
-    excludedFields = ['maxDaysDecisions', 'meetingAppDefaultView']
+                         'hideNotViewableLinkedItemsTo', 'hideHistoryTo', 'orderedContacts')
+    excludedFields = ['maxDaysDecisions', 'meetingAppDefaultView', 'addContacts']
 
     # The 'instance' static attribute stores an instance used for assigning
     # default values to a meeting config being created through-the-web.
@@ -568,6 +568,8 @@ class MeetingConfigDescriptor(Descriptor):
                             'getProposingGroup', 'linkedMeetingDate', 'actions']
         # columns shown on meetings listings.  Order is important!
         self.meetingColumns = ['Creator', 'CreationDate', 'review_state', 'actions']
+        # searches display on portlet_todo
+        self.toDoListSearches = []
         # advanced filters shown
         self.dashboardItemsListingsFilters = ('c4', 'c6', 'c7', 'c8', 'c9', 'c10',
                                               'c11', 'c12', 'c13', 'c14', 'c15', 'c16')
@@ -575,9 +577,9 @@ class MeetingConfigDescriptor(Descriptor):
         self.dashboardMeetingLinkedItemsFilters = ('c4', 'c6', 'c7', 'c11', 'c12', 'c16', 'c19')
         self.groupsShownInDashboardFilter = []
         # default batching value, this must be a multiple of "20"
-        self.maxShownListings = "20"
-        self.maxShownAvailableItems = "20"
-        self.maxShownMeetingItems = "40"
+        self.maxShownListings = 20
+        self.maxShownAvailableItems = 20
+        self.maxShownMeetingItems = 40
 
         # Mail-related parameters -----------------------------------------------
         # Mail mode can be: activated, deactivated, test.
@@ -641,6 +643,10 @@ class MeetingConfigDescriptor(Descriptor):
         self.usedVoteValues = ('not_yet', 'yes', 'no', 'abstain')
         self.defaultVoteValue = 'not_yet'
         self.voteCondition = 'True'
+
+        # Contacts parameters -----------------------------------------------------
+        self.addContacts = False
+        self.orderedContacts = []
 
         # Doc parameters -------------------------------------------------------
         self.meetingItemTemplateToStoreAsAnnex = ''

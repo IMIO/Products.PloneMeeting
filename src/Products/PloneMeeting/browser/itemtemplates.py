@@ -77,7 +77,7 @@ class ItemTemplateView(BrowserView):
         for itemTemplate in itemTemplates:
             folderPath = '/'.join(itemTemplate.getPath().split('/')[0:-1])
             # keep every folders of folderPath in case the itemtemplate is in a sub/sub/sub/...folder
-            while not folderPath in folderPathsToKeep:
+            while folderPath not in folderPathsToKeep:
                 folderPathsToKeep.append(folderPath)
                 folderPath = '/'.join(folderPath.split('/')[0:-1])
         query = self.cfg._itemTemplatesQuery(onlyActive=True, filtered=True)

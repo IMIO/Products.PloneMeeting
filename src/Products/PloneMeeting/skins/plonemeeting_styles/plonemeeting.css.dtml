@@ -433,7 +433,8 @@ td.td_cell_advices div.categorized-elements {
     display: none;
 }
 
-div#content.advice_infos_tooltipster {
+div#content.advice_infos_tooltipster,
+div#content.meeting_item_absents_tooltipster {
     width: 700px;
 }
 
@@ -1377,7 +1378,7 @@ body.template-versions_history_form[class*="portaltype-meetingadvice"] #content-
 
 /* hide the customViewFields on the DashboardCollection
    added to a MeetingConfig as it is managed by the MeetingConfig */
-body.section-portal_plonemeeting #archetypes-fieldname-customViewFields {
+body.portaltype-dashboardcollection div#formfield-form-widgets-ICollection-customViewFields {
     display: none;
 }
 
@@ -1558,6 +1559,42 @@ div.grouped-configs {
 /* arrow position when tooltipster displayed to top (annexes at bottom of the screen) */
 .tooltipster-sidetip.tooltipster-top .tooltipster-arrow {
     height: 6px;
+}
+
+/* meeting_users table on meeting_edit */
+table#meeting_users td {
+   padding: 0.5em;
+}
+table#meeting_users td.draggable {
+   cursor: ns-resize;
+}
+table#meeting_users select[id$="_replacement"] {
+   width: 500px;
+}
+table.listing tbody tr.odd.selected td,
+table.listing tbody tr.odd.dragging td,
+table.listing tbody tr.even.selected td,
+table.listing tbody tr.even.dragging td {
+    background-color: #ffa;
+}
+
+/* check in item people tables */
+#content span.people {
+    font-family: 'FontAwesome';
+}
+#content span.people-checked:before {
+    content: "\f00c";
+}
+#content span.people-leave:before {
+    content: "\f08b";
+    color: orange;
+    font-size: 120%;
+}
+
+#content span.people-remove-left:before {
+    content: "\f00d";
+    color: red;
+    font-size: 120%;
 }
 
 /* </dtml-with> */

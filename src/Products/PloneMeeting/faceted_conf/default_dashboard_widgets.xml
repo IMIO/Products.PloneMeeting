@@ -10,7 +10,6 @@
    <property name="section">default</property>
    <property name="hidden">1</property>
    <property name="vocabulary"></property>
-   <property name="default"></property>
   </criterion>
 
   <criterion name="c1">
@@ -27,7 +26,6 @@
    <property name="hidealloption">1</property>
    <property name="maxitems">0</property>
    <property name="sortreversed">0</property>
-   <property name="default"></property>
   </criterion>
 
  </criteria>

@@ -3,6 +3,7 @@
 import logging
 import mimetypes
 import os
+from collections import OrderedDict
 from persistent.mapping import PersistentMapping
 from zope.interface import alsoProvides
 from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
@@ -236,6 +237,11 @@ class Migrate_To_4_1(Migrator):
         except AttributeError:
             self.portal.portal_css.cookResources()
 
+        # upgrade imio.dashboard first as it takes care of migrating certain
+        # profiles in particular order
+        self._upgradeImioDashboard()
+        self.upgradeAll()
+
         # reinstall so versions are correctly shown in portal_quickinstaller
         # plone.app.versioningbehavior is installed
         self.reinstall(profiles=['profile-Products.PloneMeeting:default', ],
@@ -248,8 +254,9 @@ class Migrate_To_4_1(Migrator):
                            ignore_dependencies=False,
                            dependency_strategy=DEPENDENCY_STRATEGY_NEW)
 
-        # common upgrades
-        self.upgradeAll()
+        # install collective.js.tablednd
+        self.upgradeDependencies()
+        self.cleanRegistries()
         self.updateHolidays()
         self.reindexIndexes(idxs=['linkedMeetingUID', 'getConfigId'])
 
@@ -262,23 +269,30 @@ class Migrate_To_4_1(Migrator):
         self._manageContentsKeptWhenItemSentToOtherMC()
         self._fixAnnexesMimeType()
         self._fixItemsWorkflowHistoryType()
+        self._migrateToDoListSearches()
+        self._adaptForContacts()
 
 
 # The migration function -------------------------------------------------------
 def migrate(context):
     '''This migration function will:
 
-       1) Reinstall PloneMeeting and upgrade dependencies;
-       2) Enable 'refused' WF adaptation;
-       3) Reinstall plugin if not PloneMeeting;
-       4) Run common upgrades (dependencies, holidays, reindexes);
-       5) Add '_itemtemplatesmanagers' groups;
-       6) Update collections columns as column 'check_box_item' was renamed to 'select_row';
-       7) Synch searches to mark searches sub folders with the IBatchActionsMarker;
-       8) Remove MeetingConfig tabs from portal_actions portal_tabs;
-       9) Migrate MeetingConfig.keepAdvicesOnSentToOtherMC to MeetingConfig.contentsKeptOnSentToOtherMC;
-       10) Fix annex mimetype in case there was a problem with old annexes using uncomplete mimetypes_registry;
-       11) Make sure workflow_history stored on items is a PersistentMapping.
+       1) Upgrade imio.dashboard;
+       2) Upgrade all others packages;
+       3) Reinstall PloneMeeting and upgrade dependencies;
+       4) Enable 'refused' WF adaptation;
+       5) Reinstall plugin if not PloneMeeting;
+       6) Run common upgrades (dependencies, clean registries, holidays, reindexes);
+       7) Add new faceted filters;
+       8) Add '_itemtemplatesmanagers' groups;
+       9) Update collections columns as column 'check_box_item' was renamed to 'select_row';
+       10) Synch searches to mark searches sub folders with the IBatchActionsMarker;
+       11) Remove MeetingConfig tabs from portal_actions portal_tabs;
+       12) Migrate MeetingConfig.keepAdvicesOnSentToOtherMC to MeetingConfig.contentsKeptOnSentToOtherMC;
+       13) Fix annex mimetype in case there was a problem with old annexes using uncomplete mimetypes_registry;
+       14) Make sure workflow_history stored on items is a PersistentMapping;
+       15) Migrate MeetingConfig.toDoListSearches as it is no more a ReferenceField;
+       16) Adapt application for Contacts.
     '''
     migrator = Migrate_To_4_1(context)
     migrator.run()

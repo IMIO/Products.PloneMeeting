@@ -101,7 +101,7 @@ class testPortlets(PloneMeetingTestCase):
         searchAllItems.tal_condition = ''
         searchAllItemsUID = searchAllItems.UID()
         # select 'searchallitems' in the MeetingConfig.toDoListSearches
-        cfg.setToDoListSearches([searchAllItems])
+        cfg.setToDoListSearches([searchAllItemsUID])
 
         # viewable in portlet_plonemeeting
         self.changeUser('pmCreator1')
@@ -114,6 +114,7 @@ class testPortlets(PloneMeetingTestCase):
         # in the portlet_todo but not in the portlet_plonemeeting
         searchAllItems.tal_condition = 'python: fromPortletTodo'
         notify(ObjectModifiedEvent(searchAllItems))
+        self._setup_portlets()
         # not viewable in portlet_plonemeeting
         self.assertFalse(searchAllItemsUID in self.portlet_pm_renderer.render())
         # but viewable in portlet_todo

@@ -111,19 +111,14 @@ function setDescriptionsVisiblity(mustShow) {
 }
 
 // Function that toggles the persons visibility
-function togglePersons() {
-  persons = document.getElementById('meeting_users_');
-  if (!persons) persons = document.getElementById('meeting_users');
-  if (!persons) return;
+function togglePersonsCookie() {
   show = readCookie('showPersons');
   if (!show) show = 'true';
   if (show == 'true') {
     createCookie('showPersons', 'false');
-    persons.style.display = 'none';
   }
   else {
     createCookie('showPersons', 'true');
-    persons.style.display = 'table';
   }
 }
 
@@ -675,25 +670,24 @@ function changeForceInsertNormalCookie(input) {
 // functionnality when displayed on the meetingitem_edit form
 $(document).ready(function () {
 
-budgetRelated = $('input#budgetRelated');
-if (budgetRelated.length) {
-  budgetInfos = $('div#hideBudgetInfosIfNotBudgetRelated');
-  if (!budgetRelated[0].checked) {
-    budgetInfos.hide();
-  }
-
-  budgetRelated.on('click', function() {
-    if (this.checked) {
-      budgetInfos.hide().fadeIn("fast");
+  budgetRelated = $('input#budgetRelated');
+  if (budgetRelated.length) {
+    budgetInfos = $('div#hideBudgetInfosIfNotBudgetRelated');
+    if (!budgetRelated[0].checked) {
+      budgetInfos.hide();
     }
-    else {
-      budgetInfos.fadeOut("fast", function() {
-      $(this).hide();
+
+    budgetRelated.on('click', function() {
+      if (this.checked) {
+        budgetInfos.hide().fadeIn("fast");
+      }
+      else {
+        budgetInfos.fadeOut("fast", function() {
+        $(this).hide();
+      });
+    }
     });
   }
-  });
-
-}
 
 });
 

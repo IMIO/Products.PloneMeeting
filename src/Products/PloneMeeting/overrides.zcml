@@ -135,7 +135,7 @@
             layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
             permission="zope2.View" />
         <browser:page
-            for="plone.app.collection.interfaces.ICollection"
+            for="collective.eeafaceted.collectionwidget.interfaces.IDashboardCollection"
             name="actions_panel"
             class="Products.PloneMeeting.browser.overrides.ConfigActionsPanelView"
             template="browser/actions_panel.pt"

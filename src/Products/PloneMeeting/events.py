@@ -760,3 +760,40 @@ def onPloneGroupDeleted(event):
             request=request,
             type='error')
         raise Redirect(request.get('ACTUAL_URL'))
+
+
+def onHeldPositionRemoved(held_pos, event):
+    '''Do not delete a held_position that have been used on a meeting or
+       is selected in a MeetingConfig.orderedContacts.'''
+    held_pos_uid = held_pos.UID()
+    # first check MeetingConfigs
+    tool = api.portal.get_tool('portal_plonemeeting')
+    using_obj = None
+    for cfg in tool.objectValues('MeetingConfig'):
+        if held_pos_uid in cfg.getOrderedContacts():
+            using_obj = cfg
+            break
+    # check meetings
+    if not using_obj:
+        catalog = api.portal.get_tool('portal_catalog')
+        brains = catalog(meta_type='Meeting')
+        for brain in brains:
+            meeting = brain.getObject()
+            orderedContacts = getattr(meeting, 'orderedContacts', {})
+            if held_pos_uid in orderedContacts:
+                using_obj = meeting
+                break
+
+    if using_obj:
+        msg = translate(
+            u"You cannot delete the held position \"${held_position_title}\", because "
+            u"it is used by element at \"${obj_url}\" !",
+            domain='PloneMeeting',
+            mapping={'held_position_title': safe_unicode(held_pos.Title()),
+                     'obj_url': using_obj.absolute_url()},
+            context=held_pos.REQUEST)
+        api.portal.show_message(
+            message=msg,
+            request=held_pos.REQUEST,
+            type='error')
+        raise Redirect(held_pos.REQUEST.get('HTTP_REFERER'))

@@ -24,9 +24,9 @@ from collective.iconifiedcategory.vocabularies import CategoryVocabulary
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from ftw.labels.interfaces import ILabelJar
 from imio.annex.content.annex import IAnnex
-from imio.dashboard.content.dashboardcollection import IDashboardCollection
-from imio.dashboard.vocabulary import ConditionAwareCollectionVocabulary
-from imio.dashboard.vocabulary import DashboardCollectionsVocabulary
+from collective.eeafaceted.collectionwidget.content.dashboardcollection import IDashboardCollection
+from collective.eeafaceted.dashboard.vocabulary import DashboardCollectionsVocabulary
+from imio.dashboard.vocabulary import CachedCollectionVocabulary
 from imio.helpers.cache import get_cachekey_volatile
 from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
@@ -36,7 +36,7 @@ from Products.PloneMeeting.indexes import REAL_GROUP_ID_PATTERN
 from Products.PloneMeeting.indexes import DELAYAWARE_REAL_GROUP_ID_PATTERN
 
 
-class PMConditionAwareCollectionVocabulary(ConditionAwareCollectionVocabulary):
+class PMConditionAwareCollectionVocabulary(CachedCollectionVocabulary):
     implements(IVocabularyFactory)
 
     def _brains(self, context):
@@ -48,7 +48,7 @@ class PMConditionAwareCollectionVocabulary(ConditionAwareCollectionVocabulary):
         brains = catalog(
             path=dict(query='/'.join(root.getPhysicalPath())),
             meta_type='DashboardCollection',
-            review_state='active',
+            enabled=True,
             sort_on='getObjPositionInParent'
         )
         return brains
@@ -422,8 +422,9 @@ class AskedAdvicesVocabulary(object):
         if not hasattr(context, 'REQUEST'):
             # sometimes, the DashboardCollection is the first parent in the REQUEST.PARENTS...
             portal = getSite()
-            context = portal.REQUEST['PARENTS'][0]
-            if not context.portal_type == 'DashboardCollection':
+            published = portal.REQUEST.get('PUBLISHED', None)
+            context = hasattr(published, 'context') and published.context or None
+            if not context:
                 # if not first parent, try to get it from HTTP_REFERER
                 referer = portal.REQUEST['HTTP_REFERER'].replace(portal.absolute_url() + '/', '')
                 referer = referer.replace('/edit', '')
@@ -1009,3 +1010,43 @@ class FTWLabelsVocabulary(object):
         return SimpleVocabulary(res)
 
 FTWLabelsVocabularyFactory = FTWLabelsVocabulary()
+
+
+class PositionUsagesVocabulary(object):
+    """ """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        res = []
+        res.append(
+            SimpleTerm('assemblyMember', 'assemblyMember', 'assemblyMember'))
+        return SimpleVocabulary(res)
+
+PositionUsagesVocabularyFactory = PositionUsagesVocabulary()
+
+
+class PositionDefaultsVocabulary(object):
+    """ """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        res = []
+        res.append(
+            SimpleTerm('present', 'present', 'present'))
+        return SimpleVocabulary(res)
+
+PositionDefaultsVocabularyFactory = PositionDefaultsVocabulary()
+
+
+class SignatureNumberVocabulary(object):
+    """ """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        res = []
+        for signature_number in range(1, 11):
+            res.append(
+                SimpleTerm(str(signature_number), str(signature_number), str(signature_number)))
+        return SimpleVocabulary(res)
+
+SignatureNumberVocabularyFactory = SignatureNumberVocabulary()

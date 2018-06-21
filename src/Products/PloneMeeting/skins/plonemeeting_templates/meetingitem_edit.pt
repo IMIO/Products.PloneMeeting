@@ -59,7 +59,6 @@
         <td tal:condition="python: 'associatedGroups' in usedAttrs"><metal:field use-macro="python:here.widget('associatedGroups', mode='edit')"/></td>
         <td tal:condition="context/showOptionalAdvisers"><metal:field use-macro="python:here.widget('optionalAdvisers', mode='edit')"/></td>
         <td tal:condition="context/isCopiesEnabled"><metal:field use-macro="python:here.widget('copyGroups', mode='edit')"/></td>
-        <td tal:condition="python: 'itemSignatories' in usedAttrs"><metal:field use-macro="python:here.widget('itemSignatories', mode='edit')"/></td>
       </tr>
     </table>
 
@@ -162,6 +161,8 @@
     <metal:field use-macro="python:here.widget('itemAssemblyExcused', mode='edit')"/>
     <metal:field use-macro="python:here.widget('itemAssemblyAbsents', mode='edit')"/>
     <metal:field use-macro="python:here.widget('itemSignatures', mode='edit')"/>
+
+    <metal:field use-macro="python:here.widget('itemSignatories', mode='edit')"/>
 
 </metal:widgets>
 </metal:base_body>

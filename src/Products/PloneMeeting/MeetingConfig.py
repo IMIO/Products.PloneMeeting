@@ -19,7 +19,6 @@ from Products.Archetypes.atapi import LinesField
 from Products.Archetypes.atapi import MultiSelectionWidget
 from Products.Archetypes.atapi import OrderedBaseFolderSchema
 from Products.Archetypes.atapi import OrderedBaseFolder
-from Products.Archetypes.atapi import ReferenceField
 from Products.Archetypes.atapi import RichWidget
 from Products.Archetypes.atapi import StringField
 from Products.Archetypes.atapi import SelectionWidget
@@ -27,8 +26,7 @@ from Products.Archetypes.atapi import TextField
 from Products.Archetypes.atapi import TextAreaWidget
 from Products.Archetypes.atapi import registerType
 from Products.Archetypes.atapi import Schema
-
-from zope.interface import implements
+from Products.Archetypes.utils import IntDisplayList
 
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 
@@ -50,7 +48,8 @@ from zope.component import getMultiAdapter
 from zope.container.interfaces import INameChooser
 from zope.i18n import translate
 from zope.interface import alsoProvides
-from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
+from zope.interface import implements
+from zope.schema.interfaces import IVocabularyFactory
 from plone.memoize import ram
 from plone.app.portlets.portlets import navigation
 from plone.namedfile.file import NamedBlobFile
@@ -67,7 +66,7 @@ from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
 from collective.iconifiedcategory.utils import get_category_object
 from eea.facetednavigation.interfaces import ICriteria
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
-from imio.dashboard.utils import _get_criterion
+from collective.eeafaceted.collectionwidget.utils import _get_criterion
 from imio.helpers.cache import cleanRamCache
 from imio.helpers.content import validate_fields
 from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
@@ -122,6 +121,7 @@ from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import listifySignatures
 from Products.PloneMeeting.utils import reviewersFor
 from Products.PloneMeeting.utils import updateAnnexesAccess
+from Products.PloneMeeting.widgets import PMInAndOutWidget
 from Products.PloneMeeting.validators import WorkflowInterfacesValidator
 from Products.PloneMeeting.Meeting import Meeting
 from Products.PloneMeeting.MeetingItem import MeetingItem
@@ -1289,26 +1289,20 @@ schema = Schema((
         schemata="gui",
         write_permission="PloneMeeting: Write risky config",
     ),
-    ReferenceField(
+    LinesField(
         name='toDoListSearches',
-        referencesSortable=True,
-        widget=ReferenceBrowserWidget(
-            allow_search=False,
-            allow_browse=False,
-            allow_sorting=True,
+        widget=InAndOutWidget(
             description="ToDoListSearches",
             description_msgid="to_do_list_searches",
-            startup_directory="searches/searches_items",
-            show_results_without_query=True,
-            restrict_browsing_to_startup_directory=True,
             label='Todolistsearches',
             label_msgid='PloneMeeting_label_toDoListSearches',
             i18n_domain='PloneMeeting',
         ),
         schemata="gui",
-        multiValued=True,
-        relationship="ToDoSearches",
-        allowed_types=('DashboardCollection',),
+        multiValued=1,
+        vocabulary='listToDoListSearches',
+        default=defValues.toDoListSearches,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
@@ -1379,7 +1373,7 @@ schema = Schema((
         enforceVocabulary=False,
         write_permission="PloneMeeting: Write risky config",
     ),
-    StringField(
+    IntegerField(
         name='maxShownListings',
         widget=SelectionWidget(
             description="MaxShownListings",
@@ -1391,10 +1385,9 @@ schema = Schema((
         schemata="gui",
         vocabulary='listResultsPerPage',
         default=defValues.maxShownListings,
-        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
-    StringField(
+    IntegerField(
         name='maxShownAvailableItems',
         widget=SelectionWidget(
             description="MaxShownAvailableItems",
@@ -1406,10 +1399,9 @@ schema = Schema((
         schemata="gui",
         vocabulary='listResultsPerPage',
         default=defValues.maxShownAvailableItems,
-        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
-    StringField(
+    IntegerField(
         name='maxShownMeetingItems',
         widget=SelectionWidget(
             description="MaxShownMeetingItems",
@@ -1421,7 +1413,6 @@ schema = Schema((
         schemata="gui",
         vocabulary='listResultsPerPage',
         default=defValues.maxShownMeetingItems,
-        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
@@ -1784,6 +1775,7 @@ schema = Schema((
         multiValued=1,
         vocabulary='listActiveMeetingGroupsForPowerAdvisers',
         default=defValues.powerAdvisersGroups,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
@@ -2220,6 +2212,23 @@ schema = Schema((
         schemata="votes",
         vocabulary='listPollTypes',
         default=defValues.defaultPollType,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
+        name='orderedContacts',
+        widget=PMInAndOutWidget(
+            description="OrderedContacts",
+            description_msgid="ordered_contacts_descr",
+            label='Orderedcontacts',
+            label_msgid='PloneMeeting_label_orderedContacts',
+            i18n_domain='PloneMeeting',
+            size='20',
+        ),
+        schemata="users",
+        multiValued=1,
+        vocabulary='listSelectableContacts',
+        default=defValues.orderedContacts,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
@@ -2806,7 +2815,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 ResultsPerPageWidget.widget_type)
             criteria = ICriteria(self.searches.searches_items)
             # need to use ICriteria.edit to make change persistent
-            criteria.edit(criterion.__name__, **{'default': safe_unicode(value)})
+            criteria.edit(criterion.__name__, **{'default': value})
         self.getField('maxShownListings').set(self, value, **kwargs)
 
     security.declarePublic('getMaxShownListings')
@@ -2821,11 +2830,56 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             self.searches.searches_items,
             ResultsPerPageWidget.widget_type)
         if criterion:
-            return criterion.default
+            value = criterion.default
         else:
-            return self.getField('maxShownListings').get(self, **kwargs)
+            value = self.getField('maxShownListings').get(self, **kwargs)
+        return safe_unicode(value)
 
-    security.declarePublic('listConfigGroups')
+    security.declarePublic('getToDoListSearches')
+
+    def getToDoListSearches(self, theObjects=False, **kwargs):
+        '''Overrides the field 'toDoListSearches' acessor to manage theObjects.'''
+        res = self.getField('toDoListSearches').get(self, **kwargs)
+        if theObjects:
+            catalog = api.portal.get_tool('portal_catalog')
+            brains = catalog(UID=res)
+            searches = [brain.getObject() for brain in brains]
+
+            # keep order as defined in the field
+            def getKey(item):
+                return res.index(item.UID())
+            res = sorted(searches, key=getKey)
+
+        return res
+
+    security.declarePrivate('listToDoListSearches')
+
+    def listToDoListSearches(self):
+        """ """
+        searches = self.searches.searches_items.objectValues()
+        res = []
+        for search in searches:
+            res.append(
+                (search.UID(), search.Title()))
+        return DisplayList(res)
+
+    security.declarePrivate('listSelectableContacts')
+
+    def listSelectableContacts(self):
+
+        """ """
+        catalog = api.portal.get_tool('portal_catalog')
+        brains = catalog(portal_type='held_position', sort_on='sortable_title')
+        res = []
+        for brain in brains:
+            held_position = brain.getObject()
+            if held_position.usages and 'assemblyMember' in held_position.usages:
+                res.append(
+                    (held_position.UID(),
+                     held_position.get_short_title(include_usages=True, include_defaults=True)))
+        return DisplayList(res)
+
+    security.declarePrivate('listConfigGroups')
 
     def listConfigGroups(self):
         """ """
@@ -2842,7 +2896,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePrivate('listAttributes')
 
-    def listAttributes(self, schema, optionalOnly=False):
+    def listAttributes(self, schema, optionalOnly=False, as_display_list=True):
         res = []
         for field in schema.fields():
             # Take all of them or optionals only, depending on p_optionalOnly
@@ -2860,7 +2914,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                                    context=self.REQUEST),
                                          field.getName())
                             ))
-        return DisplayList(tuple(res))
+        if as_display_list:
+            res = DisplayList(tuple(res))
+        return res
 
     security.declarePrivate('listUsedItemAttributes')
 
@@ -2875,7 +2931,19 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('listUsedMeetingAttributes')
 
     def listUsedMeetingAttributes(self):
-        return self.listAttributes(Meeting.schema, optionalOnly=True)
+        optional_fields = self.listAttributes(Meeting.schema, optionalOnly=True, as_display_list=False)
+        contact_fields = ['attendees', 'excused', 'absents', 'lateAttendees', 'signatories']
+        contact_fields.reverse()
+        index = [name for name, value in optional_fields].index('place')
+        for contact_field in contact_fields:
+            optional_fields.insert(
+                index,
+                (contact_field,
+                 '%s (%s)' % (translate('PloneMeeting_label_{0}'.format(contact_field),
+                                        domain='PloneMeeting',
+                                        context=self.REQUEST),
+                              contact_field)))
+        return DisplayList(tuple(optional_fields))
 
     security.declarePrivate('listMeetingAttributes')
 
@@ -2906,8 +2974,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             and 'maxShownMeetingItems' fields."""
         res = []
         for number in range(20, 1001, 20):
-            res.append((str(number), str(number)))
-        return DisplayList(tuple(res))
+            res.append((number, str(number)))
+        return IntDisplayList(tuple(res))
 
     security.declarePrivate('listSelectableAdvisers')
 
@@ -4253,21 +4321,25 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         itemColumns = list(self.getItemColumns())
         for iColumn in DEFAULT_ITEM_COLUMNS:
             itemColumns.insert(iColumn['position'], iColumn['name'])
-        for collection in self.searches.searches_items.objectValues('DashboardCollection'):
+
+        for collection in self.searches.searches_items.objectValues():
             # available customViewFieldIds, as done in an adapter, we compute it for each collection
-            customViewFieldIds = collection.listMetaDataFields(exclude=True).keys()
+            vocab_factory = getUtility(IVocabularyFactory, "plone.app.contenttypes.metadatafields")
+            vocab = vocab_factory(collection)
+            customViewFieldIds = vocab.by_token.keys()
             # set elements existing in both lists, we do not use set() because it is not ordered
-            collection.setCustomViewFields(tuple([iCol for iCol in itemColumns if iCol in customViewFieldIds]))
+            collection.customViewFields = tuple([iCol for iCol in itemColumns if iCol in customViewFieldIds])
         # update meeting related collections
         meetingColumns = list(self.getMeetingColumns())
         for mColumn in DEFAULT_MEETING_COLUMNS:
             meetingColumns.insert(mColumn['position'], mColumn['name'])
-        for collection in (self.searches.searches_meetings.objectValues('DashboardCollection') +
-                           self.searches.searches_decisions.objectValues('DashboardCollection')):
-            # available customViewFieldIds, as done in an adapter, we compute it for each collection
-            customViewFieldIds = collection.listMetaDataFields(exclude=True).keys()
+        for collection in (self.searches.searches_meetings.objectValues() +
+                           self.searches.searches_decisions.objectValues()):
+            vocab_factory = getUtility(IVocabularyFactory, "plone.app.contenttypes.metadatafields")
+            vocab = vocab_factory(collection)
+            customViewFieldIds = vocab.by_token.keys()
             # set elements existing in both lists, we do not use set() because it is not ordered
-            collection.setCustomViewFields(tuple([mCol for mCol in meetingColumns if mCol in customViewFieldIds]))
+            collection.customViewFields = tuple([mCol for mCol in meetingColumns if mCol in customViewFieldIds])
 
     def _setDuplicatedWorkflowFor(self, portalTypeName, workflowName):
         """Set the correct workflow for given p_portalTypeName.
@@ -4438,7 +4510,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                           context=self.REQUEST,
                                           target_language=default_language,
                                           default=collectionId))
-            collection.setCustomViewFields(['Title', 'CreationDate', 'Creator', 'review_state', 'actions'])
+            collection.customViewFields = ['Title', 'CreationDate', 'Creator', 'review_state', 'actions']
             if not collectionData['active']:
                 api.content.transition(collection, 'deactivate')
             collection.reindexObject()
@@ -5345,26 +5417,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('isUsingMeetingUsers')
 
-    def isUsingMeetingUsers(self):
-        ''' Returns True if we are currently using MeetingUsers.'''
+    def isUsingContacts(self):
+        ''' Returns True if we are currently using contacts.'''
         return bool('attendees' in self.getUsedMeetingAttributes())
-
-    security.declarePublic('getMeetingUsers')
-
-    def getMeetingUsers(self, usages=('assemblyMember',), onlyActive=True, theObjects=True):
-        '''Returns the MeetingUsers having at least one usage among
-           p_usage.  if p_onlyActive is True, only active MeetingUsers are returned.'''
-        review_state = ('inactive', 'active',)
-        if onlyActive:
-            review_state = 'active'
-        brains = self.portal_catalog(portal_type='MeetingUser',
-                                     # KeywordIndex 'indexUsages' use 'OR' by default
-                                     getConfigId=self.id, indexUsages=usages,
-                                     review_state=review_state,
-                                     sort_on='getObjPositionInParent')
-        if not theObjects:
-            return brains
-        return [b.getObject() for b in brains]
 
     security.declarePrivate('addCategory')
 

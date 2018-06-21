@@ -100,27 +100,21 @@
    <object name="local_roles" meta_type="CMF Action">
     <property name="available_expr">python: not here.portal_plonemeeting.isInPloneMeeting(here, True)</property>
    </object>
-   <!-- Hide the 'Faceted criteria' everywhere except in the configuration -->
-   <object name="faceted.configure" meta_type="CMF Action">
-    <property name="available_expr">python: here.portal_plonemeeting.showFacetedCriteriaAction(here)</property>
+   <!-- Remove old eea.facetednavigation actions from object category -->
+   <object name="faceted.configure" meta_type="CMF Action" remove="true">
    </object>
-   <object name="faceted.sync" meta_type="CMF Action">
-    <property name="visible">False</property>
+   <object name="faceted.sync" meta_type="CMF Action" remove="true">
    </object>
-   <object name="faceted.disable" meta_type="CMF Action">
-    <property name="visible">False</property>
+   <object name="faceted.disable" meta_type="CMF Action" remove="true">
    </object>
-   <object name="faceted.enable" meta_type="CMF Action">
-    <property name="visible">False</property>
+   <object name="faceted.enable" meta_type="CMF Action" remove="true">
    </object>
-   <object name="faceted.search.disable" meta_type="CMF Action">
-    <property name="visible">False</property>
+   <object name="faceted.search.disable" meta_type="CMF Action" remove="true">
    </object>
-   <object name="faceted.search.enable" meta_type="CMF Action">
-    <property name="visible">False</property>
+   <object name="faceted.search.enable" meta_type="CMF Action" remove="true">
    </object>
-   <object name="iconifiedcategory" meta_type="CMF Action">
-    <property name="visible">False</property>
+   <!-- Hide some object actions -->
+   <object name="iconifiedcategory" meta_type="CMF Action" remove="true">
    </object>
   </object>
 

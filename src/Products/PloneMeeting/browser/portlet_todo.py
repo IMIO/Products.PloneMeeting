@@ -12,10 +12,10 @@ from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 
 from collective.behavior.talcondition.interfaces import ITALConditionable
 from collective.behavior.talcondition.utils import evaluateExpressionFor
+from collective.eeafaceted.dashboard.browser.facetedcollectionportlet import Renderer as FacetedRenderer
 from eea.facetednavigation.widgets.sorting.widget import Widget as SortingWidget
-from imio.dashboard.browser.facetedcollectionportlet import Renderer as FacetedRenderer
-from imio.dashboard.utils import _get_criterion
-from imio.dashboard.utils import getCollectionLinkCriterion
+from collective.eeafaceted.collectionwidget.utils import _get_criterion
+from collective.eeafaceted.collectionwidget.utils import getCollectionLinkCriterion
 
 from zope.i18nmessageid import MessageFactory
 _ = MessageFactory('PloneMeeting')
@@ -103,7 +103,7 @@ class Renderer(base.Renderer, FacetedRenderer):
                 'cfg': self.cfg,
                 'fromPortletTodo': True}
 
-        for search in self.cfg.getToDoListSearches():
+        for search in self.cfg.getToDoListSearches(theObjects=True):
             if ITALConditionable.providedBy(search):
                 data.update({'obj': search})
                 if not evaluateExpressionFor(search, extra_expr_ctx=data):
@@ -118,13 +118,10 @@ class Renderer(base.Renderer, FacetedRenderer):
         sorting_criterion = _get_criterion(self.cfg.searches.searches_items, SortingWidget.widget_type)
         if sorting_criterion and sorting_criterion.default:
             sort_on = sorting_criterion.default.split('(reverse)')[0]
-            sort_order = '(reverse)' in sorting_criterion.default and 'descending' or ''
         else:
-            sort_on = collection.getSort_on()
-            sort_order = collection.getSort_reversed() and 'descending' or ''
-        return collection.getQuery(**{'limit': self.data.batch_size,
-                                      'sort_on': sort_on,
-                                      'sort_order': sort_order})
+            sort_on = collection.sort_on
+        return collection.results(**{'limit': self.data.batch_size,
+                                     'sort_on': sort_on})
 
     def getColoredLink(self, brain):
         """

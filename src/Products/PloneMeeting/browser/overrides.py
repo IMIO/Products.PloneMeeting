@@ -42,10 +42,10 @@ from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.actionspanel.browser.viewlets import ActionsPanelViewlet
 from imio.actionspanel.browser.views import ActionsPanelView
 from imio.annex import utils as imio_annex_utils
-from imio.dashboard.browser.overrides import IDDocumentGenerationView
-from imio.dashboard.browser.overrides import IDDashboardDocumentGeneratorLinksViewlet
-from imio.dashboard.browser.views import RenderTermPortletView
-from imio.dashboard.content.pod_template import IDashboardPODTemplate
+from collective.eeafaceted.dashboard.browser.overrides import DashboardDocumentGenerationView
+from collective.eeafaceted.dashboard.browser.overrides import DashboardDocumentGeneratorLinksViewlet
+from collective.eeafaceted.dashboard.browser.views import RenderTermPortletView
+from collective.eeafaceted.dashboard.content.pod_template import IDashboardPODTemplate
 from imio.history.browser.views import IHContentHistoryView
 from imio.history.browser.views import IHDocumentBylineViewlet
 from imio.prettylink.interfaces import IPrettyLink
@@ -205,7 +205,7 @@ class PMConfigActionsPanelViewlet(ActionsPanelViewlet):
         if cfg:
             cfg_url = cfg.absolute_url()
         parent = self.context.getParentNode()
-        if self.context.meta_type == 'DashboardCollection':
+        if self.context.portal_type == 'DashboardCollection':
             url = '{0}?pageName=gui#searches'.format(cfg_url)
         elif parent.meta_type == 'ATFolder':
             # p_context is a sub-object in a sub-folder within a config
@@ -308,7 +308,7 @@ class PMDocumentGeneratorLinksViewlet(DocumentGeneratorLinksViewlet, BaseGenerat
                          default="Store as annex of type \"${annex_type_title}\"")
 
 
-class PMDashboardDocumentGeneratorLinksViewlet(IDDashboardDocumentGeneratorLinksViewlet, BaseGeneratorLinksViewlet):
+class PMDashboardDocumentGeneratorLinksViewlet(DashboardDocumentGeneratorLinksViewlet, BaseGeneratorLinksViewlet):
     """ """
 
     render = ViewPageTemplateFile('templates/generationlinks.pt')
@@ -393,14 +393,14 @@ class PMFacetedContainerView(FacetedDashboardView):
 class PMRenderTermView(RenderTermPortletView):
 
     def __call__(self, term, category, widget):
-        super(PMRenderTermView, self).__call__(term, category, widget)
+        rendered_term = super(PMRenderTermView, self).__call__(term, category, widget)
         # display the searchallmeetings as a selection list
         if self.context.getId() in ['searchallmeetings', 'searchlastdecisions']:
             self.tool = api.portal.get_tool('portal_plonemeeting')
             self.cfg = self.tool.getMeetingConfig(self.context)
             self.brains = self.context.getQuery()
-            return ViewPageTemplateFile("templates/term_searchmeetings.pt")(self)
-        return self.index()
+            rendered_term = ViewPageTemplateFile("templates/term_searchmeetings.pt")(self)
+        return rendered_term
 
     def getMeetingPrettyLink(self, brain):
         """ """
@@ -792,7 +792,7 @@ class ConfigActionsPanelView(ActionsPanelView):
         return ''
 
 
-class PMDocumentGenerationView(IDDocumentGenerationView):
+class PMDocumentGenerationView(DashboardDocumentGenerationView):
     """Redefine the DocumentGenerationView to extend context available in the template
        and to handle POD templates sent to mailing lists."""
 

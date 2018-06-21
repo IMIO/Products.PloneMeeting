@@ -90,7 +90,7 @@
         permission="zope2.View"/>
     <browser:viewlet
         name="plonemeeting.actionspanel"
-        for="plone.app.collection.interfaces.ICollection"
+        for="plone.app.contenttypes.interfaces.ICollection"
         manager="plone.app.layout.viewlets.interfaces.IBelowContentBody"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         class="Products.PloneMeeting.browser.overrides.PMConfigActionsPanelViewlet"
@@ -258,6 +258,14 @@
       permission="zope2.View"
       />
 
+    <browser:page
+      for="Products.PloneMeeting.interfaces.IMeeting"
+      name="display-meeting-item-absents"
+      template="templates/meeting_item_absents.pt"
+      class=".views.DisplayMeetingItemAbsents"
+      permission="zope2.View"
+      />
+
     <!-- a view that will make some utils available -->
     <browser:page
         for="*"
@@ -282,17 +290,23 @@
         class=".itemtemplates.ItemTemplateView"
         permission="zope2.View"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        template="templates/itemtemplates.pt"
-      />
+        template="templates/itemtemplates.pt" />
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItem"
-        name="byebyeuser"
-        class=".byebyeuser.ByebyeUser"
-        permission="zope2.View"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-        template="templates/byebyeuser.pt"
-      />
+        name="item_byebye_attendee_form"
+        class=".itemattendee.ByeByeAttendeeForm"
+        permission="zope2.View"
+        template="templates/byebyeuser.pt" />
 
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        name="item_welcome_attendee_form"
+        class=".itemattendee.WelcomeAttendeeForm"
+        permission="zope2.View"
+        template="templates/byebyeuser.pt" />
+ 
     <!-- Asynchronous calls (ajax) -->
     <browser:page
         name="toggle_to_discuss"

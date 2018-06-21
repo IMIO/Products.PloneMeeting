@@ -35,7 +35,7 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFPlone import PloneMessageFactory
 from Products.CMFPlone.CatalogTool import getIcon
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
-from imio.dashboard.utils import _get_criterion
+from collective.eeafaceted.collectionwidget.utils import _get_criterion
 
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
@@ -1194,7 +1194,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         itemColumns = list(cfg.getItemColumns())
         for column in DEFAULT_ITEM_COLUMNS:
             itemColumns.insert(column['position'], column['name'])
-        self.assertEquals(newItemCol.getCustomViewFields(), tuple(itemColumns))
+        self.assertEquals(newItemCol.customViewFields, tuple(itemColumns))
         # meeting related collection
         newMeetingColId = searches.searches_meetings.invokeFactory('DashboardCollection', id='newMeetingCol')
         newMeetingCol = getattr(searches.searches_meetings, newMeetingColId)
@@ -1202,12 +1202,12 @@ class testMeetingConfig(PloneMeetingTestCase):
         meetingColumns = list(cfg.getMeetingColumns())
         for column in DEFAULT_MEETING_COLUMNS:
             meetingColumns.insert(column['position'], column['name'])
-        self.assertEquals(newMeetingCol.getCustomViewFields(), tuple(meetingColumns))
+        self.assertEquals(newMeetingCol.customViewFields, tuple(meetingColumns))
         # decision related collection
         newDecisionColId = searches.searches_decisions.invokeFactory('DashboardCollection', id='newDecisionCol')
         newDecisionCol = getattr(searches.searches_decisions, newDecisionColId)
         newDecisionCol.processForm(values={'dummy': None})
-        self.assertEquals(newDecisionCol.getCustomViewFields(), tuple(meetingColumns))
+        self.assertEquals(newDecisionCol.customViewFields, tuple(meetingColumns))
 
     def test_pm_WorkflowsForGeneratedTypes(self):
         """Workflows used for the generated Meeting and MeetigItem portal_types
@@ -1284,9 +1284,9 @@ class testMeetingConfig(PloneMeetingTestCase):
 
     def test_pm_MaxShownListings(self):
         """Field MeetingConfig.maxShownListings is synchronized with faceted filter 'resultsperpage'."""
-        # default value works while used in import_data, default is '100' here
+        # default value works while used in import_data, default is 100 here
         cfg = self.meetingConfig
-        self.assertEqual(cfg.getMaxShownListings(), u'100')
+        self.assertEqual(cfg.getMaxShownListings(), 100)
         # no resultsperpage widget on 'cfg.searches'
         self.assertIsNone(
             _get_criterion(
@@ -1296,14 +1296,14 @@ class testMeetingConfig(PloneMeetingTestCase):
         # filter on searches_items is synchronized
         criterion = _get_criterion(cfg.searches.searches_items, ResultsPerPageWidget.widget_type)
         # sync from cfg to faceted widget
-        self.assertEqual(criterion.default, u'100')
-        cfg.setMaxShownListings('80')
-        self.assertEqual(criterion.default, u'80')
-        self.assertEqual(cfg.getMaxShownListings(), u'80')
+        self.assertEqual(criterion.default, 100)
+        cfg.setMaxShownListings(80)
+        self.assertEqual(criterion.default, 80)
+        self.assertEqual(cfg.getMaxShownListings(), 80)
         # sync from faceted widget to cfg
-        criterion.default = u'60'
-        self.assertEqual(criterion.default, u'60')
-        self.assertEqual(cfg.getMaxShownListings(), u'60')
+        criterion.default = 60
+        self.assertEqual(criterion.default, 60)
+        self.assertEqual(cfg.getMaxShownListings(), 60)
 
     def test_pm_UpdateLinkedPloneGroupsTitle(self):
         '''When the title of a MeetingConfig changed, the title of linked Plone groups is changed accordingly.'''

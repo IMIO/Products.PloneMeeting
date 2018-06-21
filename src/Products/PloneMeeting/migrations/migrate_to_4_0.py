@@ -19,7 +19,7 @@ from collective.documentgenerator.config import set_oo_port
 from collective.documentgenerator.config import set_uno_path
 from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.utils import update_all_categorized_elements
-from imio.dashboard.utils import _updateDefaultCollectionFor
+from collective.eeafaceted.collectionwidget.utils import _updateDefaultCollectionFor
 from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.catalog import removeIndexes
 from Products.CMFPlone.utils import base_hasattr

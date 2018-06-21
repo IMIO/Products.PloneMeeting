@@ -12,7 +12,6 @@
 import logging
 from zope.interface import implements
 from appy.gen import No
-from collections import OrderedDict
 from copy import deepcopy
 from datetime import datetime
 from DateTime import DateTime
@@ -37,6 +36,7 @@ from plone.memoize import ram
 from Products.Archetypes.atapi import BaseFolder
 from Products.Archetypes.atapi import BooleanField
 from Products.Archetypes.atapi import DisplayList
+from Products.Archetypes.atapi import InAndOutWidget
 from Products.Archetypes.atapi import IntegerField
 from Products.Archetypes.atapi import LinesField
 from Products.Archetypes.atapi import MultiSelectionWidget
@@ -109,7 +109,6 @@ from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import getFieldContent
 from Products.PloneMeeting.utils import getFieldVersion
 from Products.PloneMeeting.utils import getLastEvent
-from Products.PloneMeeting.utils import getMeetingUsers
 from Products.PloneMeeting.utils import getWorkflowAdapter
 from Products.PloneMeeting.utils import hasHistory
 from Products.PloneMeeting.utils import ItemDuplicatedEvent
@@ -1195,7 +1194,7 @@ schema = Schema((
     ),
     LinesField(
         name='itemSignatories',
-        widget=MultiSelectionWidget(
+        widget=InAndOutWidget(
             condition="python: here.portal_plonemeeting.isManager(here) and here.hasMeeting() and "
                       "here.getMeeting().attributeIsUsed('signatories')",
             description="ItemSignatories",
@@ -1402,32 +1401,6 @@ schema = Schema((
         optional=True,
         vocabulary='listCompleteness',
     ),
-    LinesField(
-        name='questioners',
-        widget=MultiSelectionWidget(
-            visible=False,
-            format="checkbox",
-            label='Questioners',
-            label_msgid='PloneMeeting_label_questioners',
-            i18n_domain='PloneMeeting',
-        ),
-        enforceVocabulary=False,
-        optional=True,
-        multiValued=1,
-    ),
-    LinesField(
-        name='answerers',
-        widget=MultiSelectionWidget(
-            visible=False,
-            format="checkbox",
-            label='Answerers',
-            label_msgid='PloneMeeting_label_answerers',
-            i18n_domain='PloneMeeting',
-        ),
-        enforceVocabulary=False,
-        optional=True,
-        multiValued=1,
-    ),
     BooleanField(
         name='itemIsSigned',
         default=False,
@@ -1510,7 +1483,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def getPrettyLink(self, **kwargs):
         """Return the IPrettyLink version of the title."""
         adapted = IPrettyLink(self)
-        adapted.showContentIcon = True
+        adapted.showContentIcon = kwargs.get('showContentIcon', True)
         for k, v in kwargs.items():
             setattr(adapted, k, v)
         return adapted.getLink()
@@ -2729,20 +2702,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('listItemSignatories')
 
     def listItemSignatories(self):
-        '''Returns a list of available signatories for the item.'''
+        '''Returns a list of available signatories for the item.
+           Every attendees for this item could be signatory.'''
         res = []
-        if self.hasMeeting():
-            # Get IDs of attendees
-            for m in self.getMeeting().getAttendees(theObjects=True):
-                if 'signer' in m.getUsages():
-                    res.append((m.id, m.Title()))
+        attendees = self.getAttendees(theObjects=True)
+        for attendee in attendees:
+            res.append(
+                (attendee.UID(),
+                 attendee.get_short_title()))
         return DisplayList(tuple(res))
-
-    security.declarePublic('listItemAbsents')
-
-    def listItemAbsents(self):
-        '''Not required anymore because field "itemAbsents" is never shown.'''
-        return []
 
     security.declarePublic('listEmergencies')
 
@@ -3030,9 +2998,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if forceUseCertifiedSignaturesOnMeetingConfig:
             return cfg.getCertifiedSignatures(computed=True, listified=True)
 
-        # if we do not use MeetingUsers, compute certified signatures calling
+        # if we do not use contacts, compute certified signatures calling
         # it on the MeetingGroup (that will call the MeetingConfig if nothing defined on it)
-        if not cfg.isUsingMeetingUsers():
+        if not cfg.isUsingContacts():
             # get certified signatures computed, this will return a list with pair
             # of function/signatures, so ['function1', 'name1', 'function2', 'name2', 'function3', 'name3', ]
             # this list is ordered by signature number defined on the MeetingGroup/MeetingConfig
@@ -3040,7 +3008,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 computed=True, context=item, from_group_in_charge=from_group_in_charge)
         else:
             # we use MeetingUsers
-            signatories = cfg.getMeetingUsers(usages=('signer',))
+            signatories = cfg.getHeldPositions(usages=('signer',))
             res = []
             for signatory in signatories:
                 if signatory.getSignatureIsDefault():
@@ -3051,18 +3019,36 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getItemSignatories')
 
-    def getItemSignatories(self, theObjects=False, includeDeleted=True,
-                           includeReplacements=False):
+    def getItemSignatories(self, real=False, theObjects=False, by_signature_number=False, **kwargs):
         '''Returns the signatories for this item. If no signatory is defined,
-           meeting signatories are returned, taking into account user
-           replacements or not (depending on p_includeReplacements).
+           meeting signatories are returned.
+           If p_real=False, the returned result is an OrderedDict with
+           signatory uid as key and 'signature_number' as value.
+           if p_ by_signature_number is True, signatories are return with signature_number
+           as key and signer as value, by default this is the other way round.
         '''
-        res = getMeetingUsers(self, 'itemSignatories', theObjects,
-                              includeDeleted, self.getMeeting())
+        res = self.getField('itemSignatories').get(self, **kwargs)
+        if real:
+            return res
+
+        if res:
+            if theObjects:
+                catalog = api.portal.get_tool('portal_catalog')
+                brains = catalog(UID=res)
+                res = [brain.getObject() for brain in brains]
+
+                # keep correct order that was lost by catalog query
+                def getKey(item):
+                    return self.getItemSignatories(real=True).index(item.UID())
+                res = sorted(res, key=getKey)
+                res = {signer: res.index(signer) + 1 for signer in res}
+            else:
+                res = {signer_uid: res.index(signer_uid) + 1 for signer_uid in res}
+
         if not res and self.hasMeeting():
-            res = self.getMeeting().getSignatories(theObjects,
-                                                   includeDeleted,
-                                                   includeReplacements=includeReplacements)
+            res = self.getMeeting().getSignatories(theObjects=theObjects)
+        if by_signature_number:
+            res = {v: k for k, v in res.items()}
         return res
 
     security.declarePublic('redefinedItemAssemblies')
@@ -3081,11 +3067,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res.append('assemblyExcused')
         if self.getItemAssemblyAbsents(real=True):
             res.append('assemblyAbsents')
+        if self.getItemAbsents():
+            res.append('itemAbsents')
         return res
 
     security.declarePublic('getItemAssembly')
 
-    def getItemAssembly(self, real=False, **kwargs):
+    def getItemAssembly(self, real=False, striked=False, **kwargs):
         '''Returns the assembly for this item.
            If no assembly is defined, meeting assembly is returned.'''
         res = self.getField('itemAssembly').get(self, **kwargs)
@@ -3093,6 +3081,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return res
         if not res and self.hasMeeting():
             res = self.getMeeting().getAssembly(**kwargs)
+        if striked:
+            res = toHTMLStrikedContent(res)
         return res
 
     security.declarePublic('getItemAssemblyExcused')
@@ -3119,99 +3109,27 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res = self.getMeeting().getAssemblyAbsents(**kwargs)
         return res
 
-    security.declarePublic('getStrikedItemAssembly')
+    security.declarePublic('displayStrikedItemAssembly')
 
-    def getStrikedItemAssembly(self,
-                               groupByDuty=True,
-                               use_mltAssembly=False):
-        '''
-          Generates a HTML version of the itemAssembly :
-          - strikes absents (represented using [[Member assembly name]])
-          - add a 'mltAssembly' class to generated <p> so it can be used in the Pod Template
-          If p_groupByDuty is True, the result will be generated with members having the same
-          duty grouped, and the duty only displayed once at the end of the list of members
-          having this duty...  This is only relevant if MeetingUsers are enabled.
-        '''
-        item = self.getSelf()
-        # either we use free textarea to define assembly...
-        if item.getItemAssembly():
-            return toHTMLStrikedContent(item.getItemAssembly(),
-                                        use_mltAssembly=use_mltAssembly)
-        # ... or we use MeetingUsers
-        elif item.getAttendees():
-            res = []
-            attendeeIds = [attendee.getId() for attendee in item.getAttendees()]
-            meeting = item.getMeeting()
-            groupedByDuty = OrderedDict()
-            for mUser in meeting.getAllUsedMeetingUsers():
-                userId = mUser.getId()
-                userTitle = mUser.Title()
-                userDuty = mUser.getDuty()
-                # if we group by duty, create an OrderedDict where the key is the duty
-                # and the value is a list of meetingUsers having this duty
-                if groupByDuty:
-                    if userDuty not in groupedByDuty:
-                        groupedByDuty[userDuty] = []
-                    if userId in attendeeIds:
-                        groupedByDuty[userDuty].append(mUser.Title())
-                    else:
-                        groupedByDuty[userDuty].append("<strike>%s</strike>" % userTitle)
-                else:
-                    if userId in attendeeIds:
-                        res.append("%s - %s" % (mUser.Title(), userDuty))
-                    else:
-                        res.append("<strike>%s - %s</strike>" % (mUser.Title(), userDuty))
-            if groupByDuty:
-                for duty in groupedByDuty:
-                    # check if every member of given duty are striked, we strike the duty also
-                    everyStriked = True
-                    for elt in groupedByDuty[duty]:
-                        if not elt.startswith('<strike>'):
-                            everyStriked = False
-                            break
-                    res.append(', '.join(groupedByDuty[duty]) + ' - ' + duty)
-                    if len(groupedByDuty[duty]) > 1:
-                        # add a trailing 's' to the duty if several members have the same duty...
-                        res[-1] = res[-1] + 's'
-                    if everyStriked:
-                        lastAdded = res[-1]
-                        # strike the entire line and remove existing <strike> tags
-                        lastAdded = "<strike>" + \
-                                    lastAdded.replace('<strike>', '').replace('</strike>', '') + \
-                                    "</strike>"
-                        res[-1] = lastAdded
-            if use_mltAssembly:
-                return "<p class='mltAssembly'>" + '<br />'.join(res) + "</p>"
-            else:
-                return "<p>" + "<br />".join(res) + "</p>"
+    def displayStrikedItemAssembly(self):
+        """ """
+        return toHTMLStrikedContent(self.getItemAssembly())
 
     security.declarePublic('getItemAbsents')
 
-    def getItemAbsents(self, theObjects=False, includeDeleted=True,
-                       includeMeetingDepartures=False):
-        '''Gets the absents on this item. Returns the absents as noted in field
-           "itemAbsents" and adds also, if p_includeMeetingDepartures is True,
-           people noted as absents in field Meeting.departures.'''
-        res = getMeetingUsers(self, 'itemAbsents', theObjects, includeDeleted)
-        if includeMeetingDepartures and self.hasMeeting():
-            gone = self.getMeeting().getDepartures(self,
-                                                   when='before',
-                                                   theObjects=theObjects,
-                                                   alsoEarlier=True)
-            res += tuple(gone)
-        return res
-
-    security.declarePublic('getQuestioners')
-
-    def getQuestioners(self, theObjects=False, includeDeleted=True):
-        '''Gets the questioners for this item.'''
-        return getMeetingUsers(self, 'questioners', theObjects, includeDeleted)
-
-    security.declarePublic('getAnswerers')
-
-    def getAnswerers(self, theObjects=False, includeDeleted=True):
-        '''Gets the answerers for this item.'''
-        return getMeetingUsers(self, 'answerers', theObjects, includeDeleted)
+    def getItemAbsents(self, theObjects=False, **kwargs):
+        '''Gets the absents for this item.
+           Absent for an item are stored in the Meeting.itemAbsents dict.'''
+        res = []
+        if not self.hasMeeting():
+            return res
+        meeting = self.getMeeting()
+        meeting_item_absents = meeting.getItemAbsents().get(self.UID(), [])
+        if theObjects:
+            item_absents = meeting._getContacts(uids=meeting_item_absents, theObjects=theObjects)
+        else:
+            item_absents = tuple(meeting_item_absents)
+        return item_absents
 
     security.declarePublic('mustShowItemReference')
 
@@ -3965,21 +3883,21 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def listItemInitiators(self):
         '''Returns the active MeetingUsers having usage "asker".'''
         tool = api.portal.get_tool('portal_plonemeeting')
-        meetingConfig = tool.getMeetingConfig(self)
+        cfg = tool.getMeetingConfig(self)
         res = []
-        for u in meetingConfig.getMeetingUsers(usages=['asker', ]):
-            value = ''
-            gender = u.getGender()
-            if gender:
-                value = "%s " % translate('gender_%s_extended' % gender,
-                                          domain='PloneMeeting',
-                                          default='',
-                                          context=self.REQUEST)
-            value = value + unicode(u.Title(), 'utf-8')
-            duty = unicode(u.getDuty(), 'utf-8')
-            if duty:
-                value = value + ", %s" % duty
-            res.append((u.id, value))
+        # for u in cfg.getHeldPositions(usages=['asker', ]):
+        #     value = ''
+        #     gender = u.getGender()
+        #     if gender:
+        #         value = "%s " % translate('gender_%s_extended' % gender,
+        #                                   domain='PloneMeeting',
+        #                                   default='',
+        #                                   context=self.REQUEST)
+        #     value = value + unicode(u.Title(), 'utf-8')
+        #     duty = unicode(u.getDuty(), 'utf-8')
+        #     if duty:
+        #         value = value + ", %s" % duty
+        #     res.append((u.id, value))
         return DisplayList(res).sortedByValue()
 
     security.declarePublic('getItemInitiator')
@@ -5921,39 +5839,19 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getAttendees')
 
-    def getAttendees(self, usage=None, includeDeleted=False,
-                     includeAbsents=False, includeReplacements=False):
-        '''Returns the attendees for this item. Takes into account
-           self.itemAbsents, excepted if p_includeAbsents is True. If a given
-           p_usage is defined, the method returns only users having this
-           p_usage.'''
+    def getAttendees(self, theObjects=False):
+        '''Returns the attendees for this item.'''
         res = []
-        if usage == 'signer':
-            raise 'Please use MeetingItem.getItemSignatories instead.'
         if not self.hasMeeting():
             return res
-        # Prevent wrong parameters use
-        if includeDeleted and usage:
-            includeDeleted = False
-        itemAbsents = ()
         meeting = self.getMeeting()
-        if not includeAbsents:
-            # item absents are absents for the item, absents from an item before this one
-            # and lateAttendees that still not arrived
-            itemAbsents = list(self.getItemAbsents()) + meeting.getDepartures(self, when='before', alsoEarlier=True)
-        # remove lateAttendees that arrived before this item
-        lateAttendees = meeting.getLateAttendees()
-        arrivedLateAttendees = meeting.getEntrances(self, when='during') + meeting.getEntrances(self, when='before')
-        stillNotArrivedLateAttendees = set(lateAttendees).difference(set(arrivedLateAttendees))
-        itemAbsents = itemAbsents + list(stillNotArrivedLateAttendees)
-        for attendee in meeting.getAttendees(True,
-                                             includeDeleted=includeDeleted,
-                                             includeReplacements=includeReplacements):
-            if attendee.id in itemAbsents:
-                continue
-            if not usage or (usage in attendee.getUsages()):
-                res.append(attendee)
-        return res
+        attendees = meeting.getAttendees(theObjects=False)
+        itemAbsents = self.getItemAbsents()
+        attendees = [attendee for attendee in attendees
+                     if attendee not in itemAbsents]
+        # get really present attendees now
+        attendees = meeting._getContacts(uids=attendees, theObjects=theObjects)
+        return attendees
 
     security.declarePublic('getAssembly')
 
@@ -6169,7 +6067,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def onSaveItemPeopleInfos(self):
         '''This method is called when the user saves item-related people info:
-           votes, questioners, answerers.'''
+           - votes.'''
         rq = self.REQUEST
         # If votes are secret, we get vote counts. Else, we get vote values.
         secret = self.getVotesAreSecret()
@@ -6181,9 +6079,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         rq.set('error', True)  # If everything OK, we'll set "False" in the end.
         # If allYes is True, we must set vote value "yes" for every voter.
         allYes = rq.get('allYes') == 'true'
-        # Questioners / answerers
-        questioners = []
-        answerers = []
         for key in rq.keys():
             if key.startswith('vote_value_') and not secret:
                 voterId = key[11:]
@@ -6217,19 +6112,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         return
                 numberOfVotes += v
                 requestVotes[voteValue] = v
-            elif key.startswith('questioner_'):
-                questioners.append(key[11:])
-            elif key.startswith('answerer_'):
-                answerers.append(key[9:])
-        # Update questioners / answerers
-        mayEditQAs = self.mayEditQAs()
-        # if something received and user can not edit QAs, raise...
-        if (answerers or questioners) and not mayEditQAs:
-            raise Exception("This user can't update this info.")
-        # if the user can update QAs, proceed
-        elif mayEditQAs:
-            self.setQuestioners(questioners)
-            self.setAnswerers(answerers)
         # Check the total number of votes
         if secret:
             if numberOfVotes != numberOfVoters:
@@ -6291,15 +6173,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 return False
         return True
 
-    security.declarePublic('mayEditQAs')
-
-    def mayEditQAs(self):
-        '''May the logged user edit questioners and answerers for this item?'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        res = tool.isManager(self) and self.hasMeeting() and \
-            self.getMeeting().getDate().isPast()
-        return res
-
     security.declarePublic('setFieldFromAjax')
 
     def setFieldFromAjax(self, fieldName, fieldValue):
@@ -6350,39 +6223,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 meeting.entrances = PersistentMapping()
             meeting.entrances[userId] = self.getItemNumber(relativeTo='meeting')
 
-    security.declareProtected(ModifyPortalContent, 'onByebyePerson')
-
-    def onByebyePerson(self):
-        '''Some user (in request.userId) has left the meeting:
-           1) either just after discussion on this item
-             (request.byeType == 'leaves_after'),
-           2) or while discussing this particular item
-             (request.byeType == 'leaves_now').
-           We will record this info, excepted if request["action"] tells us to
-           remove it instead.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        if not tool.isManager(self) or not _checkPermission(ModifyPortalContent, self):
-            raise Unauthorized
-        rq = self.REQUEST
-        userId = rq['userId']
-        mustDelete = rq.get('actionType') == 'delete'
-        if rq['byeType'] == 'leaves_after':
-            # Case 1)
-            meeting = self.getMeeting()
-            if mustDelete:
-                del meeting.departures[userId]
-            else:
-                if not hasattr(meeting.aq_base, 'departures'):
-                    meeting.departures = PersistentMapping()
-                meeting.departures[userId] = self.getItemNumber(relativeTo='meeting') + 1
-        else:
-            # Case 2)
-            absents = list(self.getItemAbsents())
-            if mustDelete:
-                absents.remove(userId)
-            else:
-                absents.append(userId)
-            self.setItemAbsents(absents)
+    def _mayChangeAttendees(self):
+        """Check that user may quickEdit itemAbsents."""
+        if self.mayQuickEdit('itemAbsents', bypassWritePermissionCheck=True):
+            return True
 
     security.declareProtected(ModifyPortalContent, 'ItemAssemblyDescrMethod')
 

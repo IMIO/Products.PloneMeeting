@@ -56,6 +56,7 @@ from plone.memoize import ram
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.documentviewer.async import queueJob
 from collective.documentviewer.settings import GlobalSettings
+from collective.eeafaceted.dashboard.utils import enableFacetedDashboardFor
 from collective.iconifiedcategory.behaviors.iconifiedcategorization import IconifiedCategorization
 from collective.iconifiedcategory.interfaces import IIconifiedPreview
 from collective.iconifiedcategory.utils import calculate_category_id
@@ -65,7 +66,6 @@ from collective.iconifiedcategory.utils import get_config_root
 from collective.iconifiedcategory.utils import get_categories
 from collective.iconifiedcategory.utils import update_all_categorized_elements
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
-from imio.dashboard.utils import enableFacetedDashboardFor
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import invalidate_cachekey_volatile_for
 from imio.helpers.security import is_develop_environment
@@ -957,15 +957,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             return False
         else:
             return True
-
-    security.declarePublic('showFacetedCriteriaAction')
-
-    def showFacetedCriteriaAction(self, context):
-        '''Show the 'Faceted criteria' action?
-           If in PloneMeeting, do it only if on a Faceted enabled Folder (hide it on Meetings),
-           and outside PloneMeeting, show it on Faceted enabled elements.'''
-        return context.restrictedTraverse('@@faceted_subtyper').is_faceted and \
-            (not self.isInPloneMeeting(context, True) or context.portal_type == 'Folder')
 
     security.declarePublic('getUserName')
 

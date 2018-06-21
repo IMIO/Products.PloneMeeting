@@ -129,7 +129,7 @@ class testSearches(PloneMeetingTestCase):
         collection = cfg.searches.searches_items.searchallitemstoadvice
         # by default, no item to advice...
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstoadvice')
-        self.failIf(collection.getQuery())
+        self.failIf(collection.results())
         # an advice can be given when an item is 'proposed'
         self.assertEquals(cfg.getItemAdviceStates(), (self._stateMappingFor('proposed'), ))
         # create an item to advice
@@ -139,18 +139,18 @@ class testSearches(PloneMeetingTestCase):
         # as the item is "itemcreated", advices are not givable
         self.changeUser('pmAdviser1')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstoadvice')
-        self.failIf(collection.getQuery())
+        self.failIf(collection.results())
         # now propose the item
         self.changeUser('pmCreator1')
         self.proposeItem(item)
         # only advisers can give an advice, so a creator for example will not see it
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstoadvice')
-        self.failIf(collection.getQuery())
+        self.failIf(collection.results())
         # now test as advisers
         self.changeUser('pmAdviser1')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstoadvice')
-        self.assertEquals(len(collection.getQuery()), 1)
-        self.assertEquals(collection.getQuery()[0].UID, item.UID())
+        self.assertEquals(len(collection.results()), 1)
+        self.assertEquals(collection.results()[0].UID, item.UID())
         # when an advice on an item is given, the item is no more returned by searchItemsToAdvice
         # so pmAdviser1 gives his advice
         createContentInContainer(item,
@@ -159,12 +159,12 @@ class testSearches(PloneMeetingTestCase):
                                     'advice_type': u'positive',
                                     'advice_comment': RichTextValue(u'My comment')})
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstoadvice')
-        self.failIf(collection.getQuery())
+        self.failIf(collection.results())
         # pmReviewer2 is adviser for 'vendors', delay-aware advices are also returned
         self.changeUser('pmReviewer2')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstoadvice')
-        self.assertEquals(len(collection.getQuery()), 1)
-        self.assertEquals(collection.getQuery()[0].UID, item.UID())
+        self.assertEquals(len(collection.results()), 1)
+        self.assertEquals(collection.results()[0].UID, item.UID())
         # when an advice on an item is given, the item is no more returned by searchItemsToAdvice
         # so pmReviewer2 gives his advice
         advice = createContentInContainer(item,
@@ -173,7 +173,7 @@ class testSearches(PloneMeetingTestCase):
                                              'advice_type': u'negative',
                                              'advice_comment': RichTextValue(u'My comment')})
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstoadvice')
-        self.failIf(collection.getQuery())
+        self.failIf(collection.results())
 
         # ask advice again, it will appear to 'pmReviewer2' in the query
         self.backToState(item, 'itemcreated')
@@ -182,16 +182,16 @@ class testSearches(PloneMeetingTestCase):
         self.proposeItem(item)
         self.changeUser('pmReviewer2')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstoadvice')
-        self.assertEquals(len(collection.getQuery()), 1)
-        self.assertEquals(collection.getQuery()[0].UID, item.UID())
+        self.assertEquals(len(collection.results()), 1)
+        self.assertEquals(collection.results()[0].UID, item.UID())
 
         # a given advice that is 'hidden_during_redaction' is also found by this search
         advice.advice_type = u'positive'
         changeView = advice.restrictedTraverse('@@change-advice-hidden-during-redaction')
         changeView()
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstoadvice')
-        self.assertEquals(len(collection.getQuery()), 1)
-        self.assertEquals(collection.getQuery()[0].UID, item.UID())
+        self.assertEquals(len(collection.results()), 1)
+        self.assertEquals(collection.results()[0].UID, item.UID())
 
     def test_pm_SearchAdvisedItems(self):
         '''Test the 'search-advised-items' adapter.  This should return a list of items
@@ -233,7 +233,7 @@ class testSearches(PloneMeetingTestCase):
         # by default, no advised item...
         self.changeUser('pmAdviser1')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_adviseditems')
-        self.failIf(collection.getQuery())
+        self.failIf(collection.results())
         # an advice can be given when an item is 'proposed'
         self.assertEquals(cfg.getItemAdviceStates(), (self._stateMappingFor('proposed'), ))
         # create an item to advice
@@ -249,15 +249,15 @@ class testSearches(PloneMeetingTestCase):
                                              'advice_type': u'positive',
                                              'advice_comment': RichTextValue(u'My comment')})
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_adviseditems')
-        self.failUnless(collection.getQuery())
+        self.failUnless(collection.results())
         # another user will not see given advices
         self.changeUser('pmCreator1')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_adviseditems')
-        self.failIf(collection.getQuery())
+        self.failIf(collection.results())
         # other advisers of the same group will also see advised items
         self.changeUser('pmManager')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_adviseditems')
-        self.failUnless(collection.getQuery())
+        self.failUnless(collection.results())
         # now create a second item and ask advice to the vendors (pmManager)
         # it will be returned for pmManager but not for pmAdviser1
         self.changeUser('pmCreator1')
@@ -272,13 +272,13 @@ class testSearches(PloneMeetingTestCase):
                                     'advice_comment': RichTextValue(u'My comment')})
         # pmManager will see 2 items and pmAdviser1, just one, none for a non adviser
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_adviseditems')
-        self.failUnless(len(collection.getQuery()) == 2)
+        self.failUnless(len(collection.results()) == 2)
         self.changeUser('pmAdviser1')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_adviseditems')
-        self.failUnless(len(collection.getQuery()) == 1)
+        self.failUnless(len(collection.results()) == 1)
         self.changeUser('pmCreator1')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_adviseditems')
-        self.failIf(collection.getQuery())
+        self.failIf(collection.results())
 
         # ask advice again to 'pmAdviser1'
         # if an advice is asked again, it stiil appears in the given advice
@@ -289,8 +289,8 @@ class testSearches(PloneMeetingTestCase):
         self.proposeItem(item1)
         self.changeUser('pmAdviser1')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_adviseditems')
-        self.failUnless(len(collection.getQuery()) == 1)
-        self.assertEquals(collection.getQuery()[0].UID, item1.UID())
+        self.failUnless(len(collection.results()) == 1)
+        self.assertEquals(collection.results()[0].UID, item1.UID())
 
     def test_pm_SearchAdvisedItemsWithDelay(self):
         '''Test the 'search-advised-items-with-delay' adapter.  This should return a list
@@ -327,7 +327,7 @@ class testSearches(PloneMeetingTestCase):
         # by default, no advised item...
         self.changeUser('pmAdviser1')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_adviseditemswithdelay')
-        self.failIf(collection.getQuery())
+        self.failIf(collection.results())
         # an advice can be given when an item is 'proposed'
         self.assertEquals(cfg.getItemAdviceStates(), (self._stateMappingFor('proposed'), ))
         # create an item to advice
@@ -344,7 +344,7 @@ class testSearches(PloneMeetingTestCase):
                                     'advice_comment': RichTextValue(u'My comment')})
         # non delay-aware advices are not found
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_adviseditemswithdelay')
-        self.failIf(collection.getQuery())
+        self.failIf(collection.results())
         # now create a second item and ask a delay-aware advice
         self.changeUser('admin')
         originalCustomAdvisers = {'row_id': 'unique_id_123',
@@ -369,10 +369,10 @@ class testSearches(PloneMeetingTestCase):
                                     'advice_comment': RichTextValue(u'My comment')})
         # pmManager will see 2 items and pmAdviser1, just one, none for a non adviser
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_adviseditemswithdelay')
-        self.failUnless(len(collection.getQuery()) == 1)
+        self.failUnless(len(collection.results()) == 1)
         self.changeUser('pmCreator1')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_adviseditemswithdelay')
-        self.failIf(collection.getQuery())
+        self.failIf(collection.results())
 
     def test_pm_SearchItemsInCopy(self):
         '''Test the 'search-items-in-copy' adapter.  This should return a list of items
@@ -409,16 +409,16 @@ class testSearches(PloneMeetingTestCase):
         item.setCopyGroups(('vendors_reviewers',))
         item._update_after_edit()
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemsincopy')
-        self.failIf(collection.getQuery())
+        self.failIf(collection.results())
         # connect as a member of 'developers_reviewers'
         self.changeUser('pmReviewer2')
         # the item is not proposed so not listed
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemsincopy')
-        self.failIf(collection.getQuery())
+        self.failIf(collection.results())
         # propose the item, it will be listed
         self.proposeItem(item)
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemsincopy')
-        self.failUnless(collection.getQuery())
+        self.failUnless(collection.results())
 
     def test_pm_SearchItemsInCopyWithAutoCopyGroups(self):
         '''Test the 'search-items-in-copy' adapter when using auto copyGroups.'''
@@ -439,7 +439,7 @@ class testSearches(PloneMeetingTestCase):
                          ('vendors_reviewers', ))
         self.proposeItem(item)
         self.changeUser('pmReviewer2')
-        self.failUnless(collection.getQuery())
+        self.failUnless(collection.results())
 
     def test_pm_SearchMyItemsTakenOver(self):
         '''Test the 'search-my-items-taken-over' method.  This should return
@@ -467,16 +467,16 @@ class testSearches(PloneMeetingTestCase):
         collection = cfg.searches.searches_items.searchmyitemstakenover
         item = self.create('MeetingItem')
         # by default nothing is returned
-        self.failIf(collection.getQuery())
+        self.failIf(collection.results())
         # now take item over
         item.setTakenOverBy(self.member.getId())
         item.reindexObject(idxs=['getTakenOverBy', ])
         # now it is returned
-        self.failUnless(collection.getQuery())
+        self.failUnless(collection.results())
         # takenOverBy is set back to '' on each transition
         self.proposeItem(item)
         self.assertTrue(not item.getTakenOverBy())
-        self.failIf(collection.getQuery())
+        self.failIf(collection.results())
 
     def _searchItemsToValidateOfHighestHierarchicLevelReviewerInfo(self, cfg):
         """ """
@@ -526,24 +526,24 @@ class testSearches(PloneMeetingTestCase):
         # jump to first level of validation
         self.do(item, self.TRANSITIONS_FOR_PROPOSING_ITEM_1[0])
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstovalidateofhighesthierarchiclevel')
-        self.failIf(collection.getQuery())
+        self.failIf(collection.results())
         self.changeUser('pmReviewerLevel1')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstovalidateofhighesthierarchiclevel')
-        self.failUnless(collection.getQuery())
+        self.failUnless(collection.results())
         # now as 'pmReviewerLevel2', the item should not be returned
         # as he only see items of his highest hierarchic level
         self.changeUser('pmReviewerLevel2')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstovalidateofhighesthierarchiclevel')
-        self.failIf(collection.getQuery())
+        self.failIf(collection.results())
         # pass the item to second last level of hierarchy, where 'pmReviewerLevel2' is reviewer for
         self.changeUser('pmReviewerLevel1')
         # jump to last level of validation
         self.proposeItem(item)
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstovalidateofhighesthierarchiclevel')
-        self.failIf(collection.getQuery())
+        self.failIf(collection.results())
         self.changeUser('pmReviewerLevel2')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstovalidateofhighesthierarchiclevel')
-        self.failUnless(collection.getQuery())
+        self.failUnless(collection.results())
 
         # now give a view on the item by 'pmReviewer2' and check if, as a reviewer,
         # the search does returns him the item, it should not as he is just a reviewer
@@ -560,13 +560,13 @@ class testSearches(PloneMeetingTestCase):
         self.failUnless(self.hasPermission('View', item))
         # but the search will not return it
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstovalidateofhighesthierarchiclevel')
-        self.failIf(collection.getQuery())
+        self.failIf(collection.results())
         # if the item is validated, it will not appear for pmReviewer1 anymore
         self.changeUser('pmReviewer1')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstovalidateofhighesthierarchiclevel')
-        self.failUnless(collection.getQuery())
+        self.failUnless(collection.results())
         self.validateItem(item)
-        self.failIf(collection.getQuery())
+        self.failIf(collection.results())
 
     def test_pm_SearchItemsToValidateOfMyReviewerGroups(self):
         '''Test the 'items-to-validate-of-my-reviewer-groups' adapter.
@@ -626,15 +626,15 @@ class testSearches(PloneMeetingTestCase):
         self.do(item1, self.TRANSITIONS_FOR_PROPOSING_ITEM_1[0])
         self.do(item2, self.TRANSITIONS_FOR_PROPOSING_ITEM_1[0])
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstovalidateofmyreviewergroups')
-        self.failIf(collection.getQuery())
+        self.failIf(collection.results())
         # as first level user, he will see items
         self.changeUser('pmReviewerLevel1')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstovalidateofmyreviewergroups')
-        self.failUnless(len(collection.getQuery()) == 2)
+        self.failUnless(len(collection.results()) == 2)
         # as second level user, he will not see items of first level also
         self.changeUser('pmReviewerLevel2')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstovalidateofmyreviewergroups')
-        self.failIf(collection.getQuery())
+        self.failIf(collection.results())
 
         # define 'pmReviewerLevel2' as a prereviewer (first validation level reviewer)
         self._turnUserIntoPrereviewer(self.member)
@@ -642,17 +642,17 @@ class testSearches(PloneMeetingTestCase):
         self.changeUser('pmReviewerLevel2')
         # he can access first validation level items
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstovalidateofmyreviewergroups')
-        self.failUnless(len(collection.getQuery()) == 2)
+        self.failUnless(len(collection.results()) == 2)
         # move item1 to last validation level
         self.proposeItem(item1)
         # both items still returned by the search for 'pmReviewerLevel2'
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstovalidateofmyreviewergroups')
-        self.failUnless(len(collection.getQuery()) == 2)
+        self.failUnless(len(collection.results()) == 2)
         # but now, the search only returns item2 to 'pmReviewerLevel1'
         self.changeUser('pmReviewerLevel1')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstovalidateofmyreviewergroups')
-        self.failUnless(len(collection.getQuery()) == 1)
-        self.failUnless(collection.getQuery()[0].UID == item2.UID())
+        self.failUnless(len(collection.results()) == 1)
+        self.failUnless(collection.results()[0].UID == item2.UID())
 
     def runSearchItemsToValidateOfEveryReviewerLevelsAndLowerLevelsTest(self):
         '''
@@ -704,7 +704,7 @@ class testSearches(PloneMeetingTestCase):
         patchedQuery = list(collection.query)
         patchedQuery[0]['v'] = 'items-to-validate-of-every-reviewer-levels-and-lower-levels'
         collection.query = patchedQuery
-        self.failIf(collection.getQuery())
+        self.failIf(collection.results())
         # as first level user, he will see items
         self.changeUser('pmReviewerLevel1')
         # find state to use for current reviewer
@@ -713,21 +713,21 @@ class testSearches(PloneMeetingTestCase):
         self.assertEquals(adapter.query,
                           {'portal_type': {'query': itemTypeName},
                            'reviewProcessInfo': {'query': reviewProcessInfo}})
-        self.failUnless(len(collection.getQuery()) == 2)
+        self.failUnless(len(collection.results()) == 2)
         # as second level user, he will also see items because items are from lower reviewer levels
         self.changeUser('pmReviewerLevel2')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstovalidateofeveryreviewerlevelsandlowerlevels')
-        self.failUnless(len(collection.getQuery()) == 2)
+        self.failUnless(len(collection.results()) == 2)
 
         # now propose item1, both items are still viewable to 'pmReviewerLevel2', but 'pmReviewerLevel1'
         # will only see item of 'his' highest hierarchic level
         self.proposeItem(item1)
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstovalidateofeveryreviewerlevelsandlowerlevels')
-        self.failUnless(len(collection.getQuery()) == 2)
+        self.failUnless(len(collection.results()) == 2)
         self.changeUser('pmReviewerLevel1')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstovalidateofeveryreviewerlevelsandlowerlevels')
-        self.failUnless(len(collection.getQuery()) == 1)
-        self.failUnless(collection.getQuery()[0].UID == item2.UID())
+        self.failUnless(len(collection.results()) == 1)
+        self.failUnless(collection.results()[0].UID == item2.UID())
 
     def test_pm_SearchItemsToCorrect(self):
         '''Test the 'items-to-correct' CompoundCriterion adapter.  This should return
@@ -779,14 +779,14 @@ class testSearches(PloneMeetingTestCase):
         self.presentItem(vendorsItem)
         collection = cfg.searches.searches_items.searchitemstocorrect
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstocorrect')
-        self.failIf(collection.getQuery())
+        self.failIf(collection.results())
         self.do(developersItem, 'return_to_proposing_group')
         self.do(vendorsItem, 'return_to_proposing_group')
 
         # pmManager may only edit developersItem
         self.assertTrue(self.hasPermission(ModifyPortalContent, developersItem))
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstocorrect')
-        res = collection.getQuery()
+        res = collection.results()
         self.failUnless(len(res) == 1)
         self.failUnless(res[0].UID == developersItem.UID())
 
@@ -794,7 +794,7 @@ class testSearches(PloneMeetingTestCase):
         self.changeUser('pmCreator2')
         self.assertTrue(self.hasPermission(ModifyPortalContent, vendorsItem))
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstocorrect')
-        res = collection.getQuery()
+        res = collection.results()
         self.failUnless(len(res) == 1)
         self.failUnless(res[0].UID == vendorsItem.UID())
 
@@ -853,7 +853,7 @@ class testSearches(PloneMeetingTestCase):
         self.presentItem(vendorsItem)
         collection = cfg.searches.searches_items.searchitemstocorrecttovalidate
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstocorrecttovalidateofhighesthierarchiclevel')
-        self.failIf(collection.getQuery())
+        self.failIf(collection.results())
         self.do(developersItem, 'return_to_proposing_group')
         self.do(vendorsItem, 'return_to_proposing_group')
 
@@ -867,7 +867,7 @@ class testSearches(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(ModifyPortalContent, developersItem))
         cleanRamCacheFor(
             'Products.PloneMeeting.adapters.query_itemstocorrecttovalidateofhighesthierarchiclevel')
-        res = collection.getQuery()
+        res = collection.results()
         self.failUnless(len(res) == 1)
         self.failUnless(res[0].UID == developersItem.UID())
 
@@ -876,7 +876,7 @@ class testSearches(PloneMeetingTestCase):
         self.assertTrue(not self.hasPermission(ModifyPortalContent, vendorsItem))
         cleanRamCacheFor(
             'Products.PloneMeeting.adapters.query_itemstocorrecttovalidateofhighesthierarchiclevel')
-        res = collection.getQuery()
+        res = collection.results()
         self.failUnless(len(res) == 0)
 
         # pmReviewer2 may only edit vendorsItem
@@ -884,7 +884,7 @@ class testSearches(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(ModifyPortalContent, vendorsItem))
         cleanRamCacheFor(
             'Products.PloneMeeting.adapters.query_itemstocorrecttovalidateofhighesthierarchiclevel')
-        res = collection.getQuery()
+        res = collection.results()
         self.failUnless(len(res) == 1)
         self.failUnless(res[0].UID == vendorsItem.UID())
 
@@ -952,7 +952,7 @@ class testSearches(PloneMeetingTestCase):
         collection = cfg.searches.searches_items.searchitemstocorrecttovalidateoffeveryreviewergroups
         cleanRamCacheFor(
             'Products.PloneMeeting.adapters.query_itemstocorrecttovalidateofeveryreviewerlevelsandlowerlevels')
-        self.failIf(collection.getQuery())
+        self.failIf(collection.results())
 
         self.do(developersItem, 'return_to_proposing_group')
         self.do(vendorsItem, 'return_to_proposing_group')
@@ -967,7 +967,7 @@ class testSearches(PloneMeetingTestCase):
         self.assertTrue(not self.hasPermission(ModifyPortalContent, developersItem))
         cleanRamCacheFor(
             'Products.PloneMeeting.adapters.query_itemstocorrecttovalidateofeveryreviewerlevelsandlowerlevels')
-        res = collection.getQuery()
+        res = collection.results()
         self.failUnless(len(res) == 0)
 
         # pmCreator2 can't edit vendorsItem
@@ -975,7 +975,7 @@ class testSearches(PloneMeetingTestCase):
         self.assertTrue(not self.hasPermission(ModifyPortalContent, vendorsItem))
         cleanRamCacheFor(
             'Products.PloneMeeting.adapters.query_itemstocorrecttovalidateofeveryreviewerlevelsandlowerlevels')
-        res = collection.getQuery()
+        res = collection.results()
         self.failUnless(len(res) == 0)
 
         self.changeUser('admin')
@@ -987,7 +987,7 @@ class testSearches(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(ModifyPortalContent, developersItem))
         cleanRamCacheFor(
             'Products.PloneMeeting.adapters.query_itemstocorrecttovalidateofeveryreviewerlevelsandlowerlevels')
-        res = collection.getQuery()
+        res = collection.results()
         self.failUnless(len(res) == 1)
         self.failUnless(res[0].UID == developersItem.UID())
 
@@ -996,7 +996,7 @@ class testSearches(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(ModifyPortalContent, vendorsItem))
         cleanRamCacheFor(
             'Products.PloneMeeting.adapters.query_itemstocorrecttovalidateofeveryreviewerlevelsandlowerlevels')
-        res = collection.getQuery()
+        res = collection.results()
         self.failUnless(len(res) == 1)
         self.failUnless(res[0].UID == vendorsItem.UID())
 

@@ -48,6 +48,7 @@ from plone.app.textfield import RichText
 from plone.autoform.interfaces import WRITE_PERMISSIONS_KEY
 from plone.dexterity.interfaces import IDexterityContent
 from plone import api
+from collective.excelexport.exportables.dexterityfields import get_exportable_for_fieldname
 from collective.iconifiedcategory.interfaces import IIconifiedInfos
 from imio.helpers.xhtml import addClassToLastChildren
 from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
@@ -769,40 +770,6 @@ class FakeMeetingUser:
 InitializeClass(FakeMeetingUser)
 
 
-def getMeetingUsers(obj, fieldName, theObjects=False, includeDeleted=True,
-                    meetingForRepls=None):
-    '''Gets the meeting users defined on a given p_obj (item or meeting) within
-       a given p_fieldName. Here's the meaning of the remaining params:
-       * theObjects  If True, the method will return MeetingUser instances
-                     instead of MeetingUser IDs (False value is used for
-                     Archetypes getters.
-       * includeDeleted  (works only when p_theObjects is True)
-                     If True, the method will return a FakeMeetingUser
-                     instance for every MeetingUser that has been deleted.
-       * meetingForRepls (works only when p_theObjects is True)
-                     If given, it is a Meeting instance; it means that we
-                     need to take care of user replacements as defined on
-                     this meeting. In this case we will return
-                     a FakeMeetingUser instance for every replaced user, whose
-                     "duty" will be initialized with the replacement duty of
-                     the original user.'''
-    res = obj.getField(fieldName).get(obj)
-    if not theObjects:
-        return res
-    cfg = obj.portal_plonemeeting.getMeetingConfig(obj)
-    newRes = []
-    for id in res:
-        mUser = getattr(cfg.meetingusers, id, None)
-        if not mUser:
-            if includeDeleted:
-                newRes.append(FakeMeetingUser(id))
-        else:
-            if not meetingForRepls:  # Simply add the MeetingUser to the result
-                newRes.append(mUser)
-            else:
-                newRes.append(mUser.getForUseIn(meetingForRepls))
-    return newRes
-
 # ------------------------------------------------------------------------------
 mainTypes = ('MeetingItem', 'Meeting', 'MeetingFile')
 
@@ -1217,16 +1184,13 @@ def updateCollectionCriterion(collection, i, v):
             break
 
 
-def toHTMLStrikedContent(content, use_mltAssembly=False):
+def toHTMLStrikedContent(plain_content):
     """
       p_content is HTML having elements to strike between [[]].
-      We will replace these [[]] by <strike> tags.  Moreover, we will append the 'mltAssembly'
-      class to the <p> that surrounds the given p_content HTML.
+      We will replace these [[]] by <strike> tags.
     """
-    content = content.replace('[[', '<strike>').replace(']]', '</strike>')
-    if use_mltAssembly:
-        content = content.replace('<p>', '<p class="mltAssembly">')
-    return content
+    plain_content = plain_content.replace('[[', '<strike>').replace(']]', '</strike>')
+    return plain_content
 
 
 def _itemNumber_to_storedItemNumber(number):
@@ -1619,6 +1583,13 @@ def getStatesBefore(obj, review_state_id):
                 res.append(new_state_id)
                 new_state = wf.states[new_state_id]
     return res
+
+
+def plain_render(obj, fieldname):
+    """ """
+    request = getRequest()
+    exportable = get_exportable_for_fieldname(obj, fieldname, request)
+    return exportable.render_value(obj)
 
 
 class AdvicesUpdatedEvent(ObjectEvent):
