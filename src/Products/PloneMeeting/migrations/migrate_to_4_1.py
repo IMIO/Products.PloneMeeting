@@ -156,6 +156,76 @@ class Migrate_To_4_1(Migrator):
         logger.info('Fixed workflow_history for {0} items.'.format(i))
         logger.info('Done.')
 
+    def _migrateToDoListSearches(self):
+        """Field MeetingConfig.toDoListSearches was a reference field,
+           we moved it to an InAndOutWidget because new DashboardCollection
+           are not referenceable by default."""
+        logger.info('Migrating to do searches...')
+        reference_catalog = api.portal.get_tool('reference_catalog')
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            reference_uids = [ref.targetUID for ref in reference_catalog.getReferences(cfg, 'ToDoSearches')]
+            if reference_uids:
+                # need to migrate
+                cfg.deleteReferences('ToDoSearches')
+                cfg.setToDoListSearches(reference_uids)
+        logger.info('Done.')
+
+    def _upgradeImioDashboard(self):
+        """Move to eea.facetednavigation 10+."""
+        logger.info('Upgrading imio.dashboard...')
+        catalog = self.portal.portal_catalog
+        # before upgrading profile, we must save DashboardCollection that are not enabled
+        # before we used a workflow state but now it is a attribute 'enabled' on the DashboardCollection
+        brains = catalog(portal_type='DashboardCollection', review_state='inactive')
+        disabled_collection_uids = [brain.UID for brain in brains]
+        self.upgradeProfile('imio.dashboard:default')
+        # now disable relevant DashboardCollections
+        brains = catalog(UID=disabled_collection_uids)
+        for brain in brains:
+            collection = brain.getObject()
+            collection.enabled = False
+            collection.reindexObject()
+        # need to adapt fields maxShownListings, maxShownListings and maxShownAvailableItems
+        # of MeetingConfig that are now integers
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            # maxShownListings
+            field = cfg.getField('maxShownListings')
+            value = field.get(cfg)
+            field.set(cfg, int(value))
+            # maxShownAvailableItems
+            field = cfg.getField('maxShownAvailableItems')
+            value = field.get(cfg)
+            field.set(cfg, int(value))
+            # maxShownMeetingItems
+            field = cfg.getField('maxShownMeetingItems')
+            value = field.get(cfg)
+            field.set(cfg, int(value))
+        logger.info('Done.')
+
+    def _adaptForContacts(self):
+        """Add new attributes 'orderedContacts' and 'itemAbsents' to existing meetings.
+           Remove attribute 'itemAbsents' from existing items."""
+        logger.info('Adapting application for contacts...')
+        catalog = api.portal.get_tool('portal_catalog')
+        brains = catalog(meta_type=['Meeting'])
+        logger.info('Adapting meetings...')
+        for brain in brains:
+            meeting = brain.getObject()
+            if hasattr(meeting, 'orderedContacts'):
+                # already migrated
+                break
+            meeting.orderedContacts = OrderedDict()
+            meeting.itemAbsents = PersistentMapping()
+        logger.info('Adapting items...')
+        brains = catalog(meta_type=['MeetingItem'])
+        for brain in brains:
+            item = brain.getObject()
+            if not hasattr(item, 'itemAbsents'):
+                # already migrated
+                break
+            delattr(item, 'itemAbsents')
+        logger.info('Done.')
+
     def run(self, step=None):
         logger.info('Migrating to PloneMeeting 4.1...')
 
