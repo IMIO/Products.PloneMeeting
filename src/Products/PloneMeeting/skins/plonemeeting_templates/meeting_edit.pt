@@ -16,7 +16,7 @@
                        meetingConfig python: tool.getMeetingConfig(here);
                        bilingual python: 'secondLanguage' in tool.getModelAdaptations();
                        usedAttrs meetingConfig/getUsedMeetingAttributes;
-                       useUserReplacements meetingConfig/getUseUserReplacements;">
+                       useUserReplacements python: 'replacements' in usedAttrs;">
 
       <script language="javascript">
       // some checkbowes may not be checked toghether

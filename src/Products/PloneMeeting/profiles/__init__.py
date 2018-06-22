@@ -475,8 +475,6 @@ class MeetingConfigDescriptor(Descriptor):
         # which a "delta" is applied as defined hereafter (same format as
         # above fields).
         self.preMeetingDateDefault = '4.08:30'
-        # Will we manage replacements of users ?
-        self.useUserReplacements = False
         # annex confidentiality, setting something in 3 attributes here
         # under will automatically enable confidentiality on relevant CategoryGroup
         self.itemAnnexConfidentialVisibleFor = ()

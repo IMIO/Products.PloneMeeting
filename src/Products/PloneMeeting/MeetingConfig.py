@@ -242,6 +242,23 @@ schema = Schema((
         columns=('signatureNumber', 'name', 'function', 'date_from', 'date_to'),
         allow_empty_rows=False,
     ),
+    LinesField(
+        name='orderedContacts',
+        widget=PMInAndOutWidget(
+            description="OrderedContacts",
+            description_msgid="ordered_contacts_descr",
+            label='Orderedcontacts',
+            label_msgid='PloneMeeting_label_orderedContacts',
+            i18n_domain='PloneMeeting',
+            size='20',
+        ),
+        schemata="assembly_and_signatures",
+        multiValued=1,
+        vocabulary='listSelectableContacts',
+        default=defValues.orderedContacts,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write harmless config",
+    ),
     TextField(
         name='places',
         default=defValues.places,
@@ -758,19 +775,6 @@ schema = Schema((
             description_msgid="pre_meeting_date_default_descr",
             label='Premeetingdatedefault',
             label_msgid='PloneMeeting_label_preMeetingDateDefault',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="data",
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    BooleanField(
-        name='useUserReplacements',
-        default=defValues.useUserReplacements,
-        widget=BooleanField._properties['widget'](
-            description="UseUserReplacements",
-            description_msgid="use_user_replacements_descr",
-            label='Useuserreplacements',
-            label_msgid='PloneMeeting_label_useUserReplacements',
             i18n_domain='PloneMeeting',
         ),
         schemata="data",
@@ -2216,23 +2220,6 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
-    LinesField(
-        name='orderedContacts',
-        widget=PMInAndOutWidget(
-            description="OrderedContacts",
-            description_msgid="ordered_contacts_descr",
-            label='Orderedcontacts',
-            label_msgid='PloneMeeting_label_orderedContacts',
-            i18n_domain='PloneMeeting',
-            size='20',
-        ),
-        schemata="users",
-        multiValued=1,
-        vocabulary='listSelectableContacts',
-        default=defValues.orderedContacts,
-        enforceVocabulary=True,
-        write_permission="PloneMeeting: Write risky config",
-    ),
     StringField(
         name='meetingItemTemplateToStoreAsAnnex',
         widget=SelectionWidget(
@@ -2933,7 +2920,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def listUsedMeetingAttributes(self):
         optional_fields = self.listAttributes(Meeting.schema, optionalOnly=True, as_display_list=False)
-        contact_fields = ['attendees', 'excused', 'absents', 'lateAttendees', 'signatories']
+        contact_fields = ['attendees', 'excused', 'absents', 'lateAttendees', 'signatories', 'replacements']
         contact_fields.reverse()
         index = [name for name, value in optional_fields].index('place')
         for contact_field in contact_fields:

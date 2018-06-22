@@ -72,7 +72,7 @@
                              absents context/getAbsents;
                              signers context/getSignatories;
                              lateAttendees context/getLateAttendees;
-                             useUserReplacements cfg/getUseUserReplacements;
+                             useUserReplacements python: 'replacements' in usedAttrs;
                              userReplacements context/getUserReplacements;
                              showExcused python: 'excused' in usedAttrs or excused;
                              showAbsents python: 'absents' in usedAttrs or absents;
