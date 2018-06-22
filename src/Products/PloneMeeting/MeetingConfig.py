@@ -66,6 +66,7 @@ from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
 from collective.iconifiedcategory.utils import get_category_object
 from eea.facetednavigation.interfaces import ICriteria
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
+from collective.eeafaceted.collectionwidget.interfaces import IDashboardCollection
 from collective.eeafaceted.collectionwidget.utils import _get_criterion
 from imio.helpers.cache import cleanRamCache
 from imio.helpers.content import validate_fields
@@ -4323,23 +4324,28 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             itemColumns.insert(iColumn['position'], iColumn['name'])
 
         for collection in self.searches.searches_items.objectValues():
-            # available customViewFieldIds, as done in an adapter, we compute it for each collection
-            vocab_factory = getUtility(IVocabularyFactory, "plone.app.contenttypes.metadatafields")
-            vocab = vocab_factory(collection)
-            customViewFieldIds = vocab.by_token.keys()
-            # set elements existing in both lists, we do not use set() because it is not ordered
-            collection.customViewFields = tuple([iCol for iCol in itemColumns if iCol in customViewFieldIds])
+            # bypass old collections, necessary for migration from old DashboardCollection to new ones
+            if IDashboardCollection.providedBy(collection):
+                # available customViewFieldIds, as done in an adapter, we compute it for each collection
+                vocab_factory = getUtility(IVocabularyFactory, "plone.app.contenttypes.metadatafields")
+                vocab = vocab_factory(collection)
+                customViewFieldIds = vocab.by_token.keys()
+                # set elements existing in both lists, we do not use set() because it is not ordered
+                collection.customViewFields = tuple([iCol for iCol in itemColumns if iCol in customViewFieldIds])
         # update meeting related collections
         meetingColumns = list(self.getMeetingColumns())
         for mColumn in DEFAULT_MEETING_COLUMNS:
             meetingColumns.insert(mColumn['position'], mColumn['name'])
+
         for collection in (self.searches.searches_meetings.objectValues() +
                            self.searches.searches_decisions.objectValues()):
-            vocab_factory = getUtility(IVocabularyFactory, "plone.app.contenttypes.metadatafields")
-            vocab = vocab_factory(collection)
-            customViewFieldIds = vocab.by_token.keys()
-            # set elements existing in both lists, we do not use set() because it is not ordered
-            collection.customViewFields = tuple([mCol for mCol in meetingColumns if mCol in customViewFieldIds])
+            # bypass old collections, necessary for migration from old DashboardCollection to new ones
+            if IDashboardCollection.providedBy(collection):
+                vocab_factory = getUtility(IVocabularyFactory, "plone.app.contenttypes.metadatafields")
+                vocab = vocab_factory(collection)
+                customViewFieldIds = vocab.by_token.keys()
+                # set elements existing in both lists, we do not use set() because it is not ordered
+                collection.customViewFields = tuple([mCol for mCol in meetingColumns if mCol in customViewFieldIds])
 
     def _setDuplicatedWorkflowFor(self, portalTypeName, workflowName):
         """Set the correct workflow for given p_portalTypeName.
