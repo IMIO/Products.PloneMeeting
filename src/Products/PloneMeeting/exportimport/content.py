@@ -180,6 +180,7 @@ class ToolInitializer:
         if data.addContacts:
             # add contacts using the CSV import
             import_contacts(self.site, dochange=True, path=self.profilePath)
+            cfg.setOrderedContacts(cfg.listSelectableContacts().keys())
 
     def _manageOtherMCCorrespondences(self, cfg):
         def _convert_to_real_other_mc_correspondences(annex_type):

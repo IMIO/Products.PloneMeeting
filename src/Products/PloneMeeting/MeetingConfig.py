@@ -4505,7 +4505,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                           default=collectionId))
             collection.customViewFields = ['Title', 'CreationDate', 'Creator', 'review_state', 'actions']
             if not collectionData['active']:
-                api.content.transition(collection, 'deactivate')
+                collection.enabled = False
             collection.reindexObject()
 
     def _getCloneToOtherMCActionId(self, destMeetingConfigId, meetingConfigId, emergency=False):

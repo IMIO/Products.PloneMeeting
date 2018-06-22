@@ -434,7 +434,12 @@ class AskedAdvicesVocabulary(object):
                     return SimpleVocabulary(res)
 
         self.tool = api.portal.get_tool('portal_plonemeeting')
-        self.cfg = self.tool.getMeetingConfig(context)
+        try:
+            # in some case, like Plone Site creation, context is the Zope app...
+            self.cfg = self.tool.getMeetingConfig(context)
+        except:
+            return SimpleVocabulary(res)
+
         advisers = self._getAdvisers()
         for adviser in advisers:
             termTitle = None
