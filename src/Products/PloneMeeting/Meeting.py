@@ -908,6 +908,12 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                              domain='PloneMeeting',
                              context=self.REQUEST)
 
+    security.declarePublic('displayStrikedAssembly')
+
+    def displayStrikedAssembly(self):
+        """ """
+        return toHTMLStrikedContent(self.getAssembly())
+
     security.declarePublic('getAllUsedHeldPositions')
 
     def getAllUsedHeldPositions(self, include_new=False):
@@ -1518,16 +1524,6 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             tool = api.portal.get_tool('portal_plonemeeting')
             return tool.getMeetingConfig(self).getAssemblyStaves()
         return ''
-
-    security.declarePublic('getAssembly')
-
-    def getAssembly(self, striked=False, **kwargs):
-        '''Returns the assembly for this meeting.
-           If p_striked is True, return striked assembly.'''
-        res = self.getField('assembly').get(self, **kwargs)
-        if striked:
-            res = toHTMLStrikedContent(res)
-        return res
 
     security.declarePrivate('getDefaultSignatures')
 

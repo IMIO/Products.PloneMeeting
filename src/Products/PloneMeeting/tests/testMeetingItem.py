@@ -4647,12 +4647,20 @@ class testMeetingItem(PloneMeetingTestCase):
         """Test use of utils.toHTMLStrikedContent for itemAssembly."""
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
+        template = self.meetingConfig.podtemplates.itemTemplate
+        # call the document-generation view
+        self.request.set('template_uid', template.UID())
+        self.request.set('output_format', 'odt')
+        view = item.restrictedTraverse('@@document-generation')
+        view()
+        helper = view.get_generation_context_helper()
+
         item.setItemAssembly('Simple assembly')
-        self.assertEquals(item.getItemAssembly(striked=True),
-                          '<p>Simple assembly</p>')
+        self.assertEqual(helper.printAssembly(striked=True),
+                         '<p>Simple assembly</p>')
         # set a striked element
         item.setItemAssembly('Assembly with [[striked]] part')
-        self.assertEquals(item.getItemAssembly(striked=True),
+        self.assertEquals(helper.printAssembly(striked=True),
                           '<p>Assembly with <strike>striked</strike> part</p>')
 
     def test_pm_DownOrUpWorkflowAgain(self):

@@ -148,7 +148,7 @@
                              colWidthPercentage python: int(100/len(showAssemblyFields));">
           <fieldset tal:condition="python: 'assembly' in showAssemblyFields">
               <legend tal:content="context/getLabelAssembly">Assembly</legend>
-              <span tal:replace="structure python: context.getRawAssembly() and context.getAssembly(striked=True) or '<p>-</p>'"/>
+              <span tal:replace="structure python: context.getRawAssembly() and context.displayStrikedAssembly() or '<p>-</p>'"/>
           </fieldset>
           <fieldset tal:condition="python: 'assemblyExcused' in showAssemblyFields">
               <legend i18n:translate="meeting_assemblyExcused">Excused</legend>

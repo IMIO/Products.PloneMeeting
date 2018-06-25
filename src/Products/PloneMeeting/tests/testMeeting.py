@@ -2066,12 +2066,20 @@ class testMeeting(PloneMeetingTestCase):
         """Test use of utils.toHTMLStrikedContent for assembly."""
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=DateTime())
+        template = self.meetingConfig.podtemplates.agendaTemplate
+        # call the document-generation view
+        self.request.set('template_uid', template.UID())
+        self.request.set('output_format', 'odt')
+        view = meeting.restrictedTraverse('@@document-generation')
+        view()
+        helper = view.get_generation_context_helper()
+
         meeting.setAssembly('Simple assembly')
-        self.assertEquals(meeting.getAssembly(striked=True),
-                          '<p>Simple assembly</p>')
+        self.assertEqual(helper.printAssembly(),
+                         '<p>Simple assembly</p>')
         meeting.setAssembly('Assembly with [[striked]] part')
-        self.assertEquals(meeting.getAssembly(striked=True),
-                          '<p>Assembly with <strike>striked</strike> part</p>')
+        self.assertEqual(helper.printAssembly(),
+                         '<p>Assembly with <strike>striked</strike> part</p>')
 
     def test_pm_ChangingMeetingDateUpdateLinkedItemsMeetingDateMetadata(self):
         """When the date of a meeting is changed, the linked items are reindexed,

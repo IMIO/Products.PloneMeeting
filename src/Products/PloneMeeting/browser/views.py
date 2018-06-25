@@ -54,6 +54,7 @@ from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
 from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import signatureNotAlone
+from Products.PloneMeeting.utils import toHTMLStrikedContent
 from Products.PloneMeeting.indexes import _to_coded_adviser_index
 
 
@@ -703,6 +704,17 @@ class BaseDGHV(object):
             for contact_uid, contact_info in tree.items():
                 res.append(contact_info[1])
         return u'<br />'.join(res)
+
+    def printAssembly(self, striked=True):
+        '''Returns the assembly for this meeting or item.
+           If p_striked is True, return striked assembly.'''
+        if self.context.meta_type == 'Meeting':
+            res = self.context.getAssembly()
+        else:
+            res = self.context.getItemAssembly()
+        if striked:
+            res = toHTMLStrikedContent(res)
+        return res
 
     def printAttendees(self,
                        groupByDuty=False,

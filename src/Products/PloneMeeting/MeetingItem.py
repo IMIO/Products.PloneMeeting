@@ -3073,7 +3073,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getItemAssembly')
 
-    def getItemAssembly(self, real=False, striked=False, **kwargs):
+    def getItemAssembly(self, real=False, **kwargs):
         '''Returns the assembly for this item.
            If no assembly is defined, meeting assembly is returned.'''
         res = self.getField('itemAssembly').get(self, **kwargs)
@@ -3081,8 +3081,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return res
         if not res and self.hasMeeting():
             res = self.getMeeting().getAssembly(**kwargs)
-        if striked:
-            res = toHTMLStrikedContent(res)
         return res
 
     security.declarePublic('getItemAssemblyExcused')
