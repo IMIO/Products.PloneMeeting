@@ -261,7 +261,7 @@ def import_contacts(self, dochange='', ownorg='', only='ORGS|PERS|HP', path=''):
             fax = safe_unicode(check_phone(digit(data[14]), i, 'PERS', data[18]))
             zipc = safe_unicode(is_zip(data[10], i, 'PERS', data[18]))
             gender = data[3]
-            birthday = data[5]
+            birthday = data[5] or None
         except AssertionError, ex:
             errors.append("!! PERS: problem line %d: %s" % (i, safe_encode(ex.message)))
         except Exception, ex:
@@ -371,8 +371,8 @@ def import_contacts(self, dochange='', ownorg='', only='ORGS|PERS|HP', path=''):
         id, pid, oid, title, uid = data[0], data[1], data[2], data[4], data[20]
         errors = []
         try:
-            start = data[5]
-            end = data[6]
+            start = data[5] or None
+            end = data[6] or None
             phone = safe_unicode(check_phone(digit(data[13]), i, 'PERS', data[19]))
             cell_phone = safe_unicode(check_phone(digit(data[14]), i, 'PERS', data[19]))
             fax = safe_unicode(check_phone(digit(data[15]), i, 'PERS', data[19]))
