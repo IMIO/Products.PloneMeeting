@@ -56,9 +56,9 @@ class PMHeldPosition(HeldPosition):
         organization = self.get_organization()
         root_organization = organization.get_root_organization()
         sub_organizations = []
-        if root_organization.getId() != PLONEGROUP_ORG:
-            sub_organizations.append(root_organization)
         if include_sub_organizations:
+            if root_organization.getId() != PLONEGROUP_ORG:
+                sub_organizations.append(root_organization)
             while organization != root_organization:
                 sub_organizations.append(organization)
                 organization = organization.aq_parent
@@ -83,6 +83,17 @@ class PMHeldPosition(HeldPosition):
     def get_position_usages(self):
         """Shortcut to get usages defined on linked position."""
         return self.get_position().usages
+
+    def get_person_short_title(self, include_person_title=False, abbreviate_firstname=True):
+        """ """
+        person = self.get_person()
+        firstname = person.firstname
+        if abbreviate_firstname:
+            firstname = u"{0}.".format(firstname[:1])
+        person_title = u''
+        if include_person_title:
+            person_title = u'{0} '.format(person.person_title)
+        return u'{0}{1} {2}'.format(person_title, firstname, person.lastname)
 
 
 class PMHeldPositionSchemaPolicy(DexteritySchemaPolicy):

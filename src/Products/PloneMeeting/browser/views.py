@@ -705,6 +705,11 @@ class BaseDGHV(object):
                 res.append(contact_info[1])
         return u'<br />'.join(res)
 
+    def printFullname(self, user_id):
+        """ """
+        user = api.user.get(user_id)
+        return user and user.getProperty('fullname') or user_id
+
     def printAssembly(self, striked=True):
         '''Returns the assembly for this meeting or item.
            If p_striked is True, return striked assembly.'''
@@ -742,14 +747,14 @@ class BaseDGHV(object):
         else:
             # MeetingItem
             meeting = self.context.getMeeting()
-            attendees = self.context.getAttendees(includeAbsents=False)
+            attendees = self.context.getAttendees()
             item_absents = self.context.getItemAbsents()
         # generate content then group by sub organization if necessary
         contacts = meeting.getAllUsedHeldPositions()
         excused = meeting.getExcused()
         absents = meeting.getAbsents()
         lateAttendees = meeting.getLateAttendees()
-        replaced = meeting.getReplaced()
+        replaced = meeting.getReplacements()
         for contact in contacts:
             res[contact.UID()] = [contact, contact.get_short_title(include_sub_organizations=False)]
 
@@ -779,8 +784,9 @@ class BaseDGHV(object):
                         res[contact_uid][1] = attendee_value_format.format(
                             res[contact_uid][1], replaced_by_format.format(
                                 meeting.displayUserReplacement(
-                                    contact_uid,
-                                    include_held_position_label=include_replace_by_held_position_label)))
+                                    replaced[contact_uid],
+                                    include_held_position_label=include_replace_by_held_position_label,
+                                    include_sub_organizations=False)))
                     else:
                         res[contact_uid][1] = attendee_value_format.format(
                             res[contact_uid][1], attendee_type_format.format(attendee_type_values['replaced']))

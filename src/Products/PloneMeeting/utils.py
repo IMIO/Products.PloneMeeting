@@ -56,6 +56,8 @@ from imio.helpers.xhtml import markEmptyTags
 from imio.helpers.xhtml import removeBlanks
 from imio.helpers.xhtml import storeImagesLocally
 from imio.helpers.xhtml import xhtmlContentIsEmpty
+from imio.history.interfaces import IImioHistory
+from imio.history.utils import getLastAction
 from Products.Archetypes.event import ObjectEditedEvent
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.MailHost.MailHost import MailHostError
@@ -848,39 +850,11 @@ def getFieldVersion(obj, name, changes):
 
 
 # ------------------------------------------------------------------------------
-def getLastEvent(obj, transition=None, notBefore='transfer'):
-    '''Returns, from the workflow history of p_obj, the event that corresponds
-       to the most recent triggering of p_transition (=its name). p_transition
-       can be a list of names: in this case, it returns the event about the most
-       recently triggered transition (ie, accept, refuse or delay). If
-       p_notBefore is given, it corresponds to a kind of start transition for
-       the search: we will not search in the history preceding the last
-       triggering of this transition. This is useful when history of an item
-       is the combined history of this item from several sites, and we want
-       to search only within history of the "last" site, so we want to ignore
-       everything that occurrred before the last "transfer" transition.
-       If p_transition is None, the very last event is returned'''
-    wfTool = api.portal.get_tool('portal_workflow')
-
-    try:
-        history = obj.workflow_history[wfTool.getWorkflowsFor(obj)[0].getId()]
-    except KeyError:
-        # if relevant workflow is not found in the history, return None
-        return None
-    if not transition:
-        return history[-1]
-    i = len(history) - 1
-    while i >= 0:
-        event = history[i]
-        if notBefore and (event['action'] == notBefore):
-            return
-        if isinstance(transition, basestring):
-            condition = event['action'] == transition
-        else:
-            condition = event['action'] in transition
-        if condition:
-            return event
-        i -= 1
+def getLastEvent(obj, transition='last'):
+    '''Shortcut to get last p_transition workflow_history event.'''
+    adapter = getAdapter(obj, IImioHistory, 'workflow')
+    last_event = getLastAction(adapter, action=transition)
+    return last_event
 
 
 # ------------------------------------------------------------------------------

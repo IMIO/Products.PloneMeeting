@@ -1025,10 +1025,10 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getReplacements')
 
-    def getReplaced(self, theObjects=False):
+    def getReplacements(self, theObjects=False):
         '''See docstring in previous method.'''
         replaced_uids = self._getContacts('replacement', theObjects=theObjects)
-        return {replaced_uid: self.orderedContacts[replaced_uid]['signature_number'] for replaced_uid in replaced_uids}
+        return {replaced_uid: self.orderedContacts[replaced_uid]['replacement'] for replaced_uid in replaced_uids}
 
     security.declarePublic('getItemAbsents')
 
@@ -1048,12 +1048,16 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('displayUserReplacement')
 
-    def displayUserReplacement(self, held_position_uid, include_held_position_label=True):
+    def displayUserReplacement(self,
+                               held_position_uid,
+                               include_held_position_label=True,
+                               include_sub_organizations=True):
         '''Display the user remplacement from p_held_position_uid.'''
         catalog = api.portal.get_tool('portal_catalog')
         held_position = catalog(UID=held_position_uid)[0].getObject()
         if include_held_position_label:
-            return held_position.get_short_title()
+            return held_position.get_short_title(
+                include_sub_organizations=include_sub_organizations)
         else:
             person = held_position.get_person()
             return person.get_title()
@@ -1631,7 +1635,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             if attendee_uid not in self.orderedContacts:
                 self.orderedContacts[attendee_uid] = \
                     {'attendee': False, 'excused': False, 'absent': False,
-                     'lateAttendee': False, 'signer': False, 'signature_number': 0,
+                     'lateAttendee': False, 'signer': False, 'signature_number': None,
                      'replacement': None}
             self.orderedContacts[attendee_uid][attendee_type] = True
 
