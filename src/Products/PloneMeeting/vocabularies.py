@@ -418,7 +418,7 @@ class AskedAdvicesVocabulary(object):
         # in case we have no REQUEST, it means that we are editing a DashboardCollection
         # for which when this vocabulary is used for the 'indexAdvisers' queryField used
         # on a DashboardCollection (when editing the DashboardCollection), the context
-        # is portal_registry without a REQUEST...  Get the DashboardCollection as context
+        # is portal_registry without a REQUEST...
         if not hasattr(context, 'REQUEST'):
             # sometimes, the DashboardCollection is the first parent in the REQUEST.PARENTS...
             portal = getSite()
@@ -429,8 +429,10 @@ class AskedAdvicesVocabulary(object):
                 referer = portal.REQUEST['HTTP_REFERER'].replace(portal.absolute_url() + '/', '')
                 referer = referer.replace('/edit', '')
                 referer = referer.replace('?pageName=gui', '')
-                context = portal.restrictedTraverse(referer)
-                if not hasattr(context, 'portal_type') or not context.portal_type == 'DashboardCollection':
+                referer = referer.split('?_authenticator=')[0]
+                context = portal.unrestrictedTraverse(referer)
+                if not hasattr(context, 'portal_type') or \
+                   not (context.portal_type == 'DashboardCollection' or context.portal_type.startswith('Meeting')):
                     return SimpleVocabulary(res)
 
         self.tool = api.portal.get_tool('portal_plonemeeting')
