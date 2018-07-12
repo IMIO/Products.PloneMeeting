@@ -1249,7 +1249,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                  theObjects=True,
                  additional_catalog_query={},
                  unrestricted=False,
-                 force_linked_items_query=False,
+                 force_linked_items_query=True,
                  **kwargs):
         '''Overrides the Meeting.items accessor.
            Items can be filtered depending on :
@@ -1485,8 +1485,6 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         # force disable 'need_Meeting_updateItemReferences' from REQUEST
         self.REQUEST.set('need_Meeting_updateItemReferences', False)
 
-        # as we could be in the 'available items' faceted part, when inserting
-        # an item from the meeting_view, we set force_linked_items_query=True
         # we query items from startNumber to last item of the meeting
         # moreover we getItems unrestricted to be sure we have every elements
         brains = self.getItems(
@@ -1495,8 +1493,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             unrestricted=True,
             additional_catalog_query={
                 'getItemNumber': {'query': startNumber,
-                                  'range': 'min'}, },
-            force_linked_items_query=True)
+                                  'range': 'min'}, })
         for brain in brains:
             item = brain._unrestrictedGetObject()
             item.updateItemReference()
