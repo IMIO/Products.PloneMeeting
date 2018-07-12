@@ -5253,7 +5253,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             meeting = self.getMeeting()
             # use catalog query so returned items are really accessible by current user
             brains = meeting.getItems(ordered=True,
-                                      useCatalog=True,
+                                      theObjects=False,
                                       force_linked_items_query=True)
             itemUids = [brain.UID for brain in brains]
             itemUid = self.UID()

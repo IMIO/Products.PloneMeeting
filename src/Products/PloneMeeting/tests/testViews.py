@@ -779,7 +779,7 @@ class testViews(PloneMeetingTestCase):
         form = meeting.restrictedTraverse('@@store-items-template-as-annex-batch-action')
 
         # store annex for 3 first items
-        first_3_item_uids = [item.UID for item in meeting.getItems(ordered=True, useCatalog=True)[0:3]]
+        first_3_item_uids = [item.UID for item in meeting.getItems(ordered=True, theObjects=False)[0:3]]
         self.request.form['form.widgets.uids'] = ','.join(first_3_item_uids)
         form.update()
         form.handleApply(form, None)
@@ -796,7 +796,7 @@ class testViews(PloneMeetingTestCase):
             self.assertFalse(annexes)
 
         # call again with next 3 uids
-        next_3_item_uids = [item.UID for item in meeting.getItems(ordered=True, useCatalog=True)[3:6]]
+        next_3_item_uids = [item.UID for item in meeting.getItems(ordered=True, theObjects=False)[3:6]]
         self.request.form['form.widgets.uids'] = ','.join(next_3_item_uids)
         form.brains = None
         form.update()
@@ -810,7 +810,7 @@ class testViews(PloneMeetingTestCase):
         self.assertFalse(annexes)
 
         # call a last time, last is stored and it does not fail when no items left
-        last_item_uid = meeting.getItems(ordered=True, useCatalog=True)[-1].UID
+        last_item_uid = meeting.getItems(ordered=True, theObjects=False)[-1].UID
         self.request.form['form.widgets.uids'] = last_item_uid
         form.brains = None
         form.update()
@@ -821,7 +821,7 @@ class testViews(PloneMeetingTestCase):
             self.assertTrue(annexes[0].used_pod_template_id, itemTemplateId)
 
         # call when nothing to do, nothing is done
-        item_uids = [item.UID for item in meeting.getItems(ordered=True, useCatalog=True)]
+        item_uids = [item.UID for item in meeting.getItems(ordered=True, theObjects=False)]
         self.request.form['form.widgets.uids'] = item_uids
         form.update()
         form.handleApply(form, None)
@@ -1104,7 +1104,7 @@ class testViews(PloneMeetingTestCase):
               'gives_auto_advice_on': '',
               'for_item_created_from': '2016/08/08',
               'delay': '5',
-              'delay_label': ''},])
+              'delay_label': ''}, ])
         self.meetingConfig.setPowerAdvisersGroups(('vendors',))
         self.meetingConfig.setItemPowerObserversStates(('itemcreated',))
         self.meetingConfig.setItemAdviceStates(('itemcreated',))

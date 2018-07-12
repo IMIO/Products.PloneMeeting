@@ -20,6 +20,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Moved to eea.facetednavigation 10+, rely on collective.eeafaceted.dashboard.
 - Integrated collective.contact.core and collective.contact.plonegroup to manage contacts in assemblies and signatories.
 - Rely on collective.js.tablednd to manage contacts assembly on meeting.
+- Meeting.getItems useCatalog=False parameter was replaced by theObjects=True.  Method was refactored to always use a catalog
+  query to get items and return objects if useObject=True.
+  This way we may use parameter 'additional_catalog_query' in both cases.
 
 4.1b10 (2018-05-22)
 -------------------

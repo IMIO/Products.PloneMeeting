@@ -1743,7 +1743,7 @@ class testMeeting(PloneMeetingTestCase):
         meeting = self._createMeetingWithItems()
         itemsInOrder = meeting.getItems(ordered=True)
         self.assertTrue(len(itemsInOrder) == 7)
-        # we have MeetingItems as useCatalog=False by default
+        # we have MeetingItems as theObjects=True by default
         self.assertTrue(isinstance(itemsInOrder[0], MeetingItem))
         # items are ordered
         self.assertEquals([item.getItemNumber() for item in itemsInOrder],
@@ -1761,21 +1761,21 @@ class testMeeting(PloneMeetingTestCase):
         self.assertTrue(len(meeting.getItems(listTypes=['late'])) == 0)
 
         # can also use catalog
-        brainsInOrder = meeting.getItems(ordered=True, useCatalog=True)
+        brainsInOrder = meeting.getItems(ordered=True, theObjects=False)
         self.assertTrue(len(brainsInOrder) == 7)
         # we have brains
         self.assertTrue(isinstance(brainsInOrder[0], AbstractCatalogBrain))
         # items are ordered
         self.assertEquals([brain.getItemNumber for brain in brainsInOrder],
                           [100, 200, 300, 400, 500, 600, 700])
-        self.assertTrue(len(meeting.getItems(uids=itemUids, useCatalog=True)) == 4)
+        self.assertTrue(len(meeting.getItems(uids=itemUids, theObjects=False)) == 4)
         # we can specify the listType
-        self.assertTrue(len(meeting.getItems(listTypes=['normal'], useCatalog=True)) == 7)
-        self.assertTrue(len(meeting.getItems(listTypes=['late'], useCatalog=True)) == 0)
+        self.assertTrue(len(meeting.getItems(listTypes=['normal'], theObjects=False)) == 7)
+        self.assertTrue(len(meeting.getItems(listTypes=['late'], theObjects=False)) == 0)
 
-    def test_pm_GetItemsWithUseCatalogFalse(self):
+    def test_pm_GetItemsWithTheObjectsTrue(self):
         '''Test that Meeting.getItems method may not be used to get not accessible items.
-           When using getItems(useCatalog=False) as we use directly the getField method
+           When using getItems(theObjects=True) as we use directly the getField method
            that gets linked items without checking permission, we reimplemented that, make
            sure a user could not access items he may not...
            If p_uids is not given to Meeting.getItems, only MeetingManagers may call that,
@@ -1785,26 +1785,26 @@ class testMeeting(PloneMeetingTestCase):
         cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'at_the_end',
                                            'reverse': '0'}, ))
 
-        # as MeetingManager, if useCatalog=False, uids may not be provided, it returns every items
+        # as MeetingManager, if theObjects=True, uids may not be provided, it returns every items
         self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
-        allItemObjs = meeting.getItems(useCatalog=False, uids=[], ordered=True)
-        self.assertEquals(len(allItemObjs),
-                          7)
+        allItemObjs = meeting.getItems(theObjects=True, uids=[], ordered=True)
+        self.assertEquals(len(allItemObjs), 7)
         # if uids are provided, result is filtered
-        self.assertEquals(len(meeting.getItems(useCatalog=False, uids=[allItemObjs[0].UID(), allItemObjs[1].UID()])),
-                          2)
+        self.assertEquals(
+            len(meeting.getItems(theObjects=True, uids=[allItemObjs[0].UID(), allItemObjs[1].UID()])),
+            2)
 
-        # as a non MeetingManager, if useCatalog=False, uids must be provided
+        # as a non MeetingManager, if theObjects=True, uids must be provided
         self.changeUser('pmCreator1')
         cleanRamCacheFor('Products.PloneMeeting.Meeting.getItems')
-        self.assertRaises(Unauthorized, meeting.getItems, useCatalog=False, uids=[])
+        self.assertRaises(Unauthorized, meeting.getItems, theObjects=True, uids=[])
         # if uids of elements that user may not see are passed, asked items are not returned
         # pmCreator1 may only see items of 'vendors' group
         self.assertEquals(allItemObjs[0].getProposingGroup(), 'developers')
         self.assertEquals(allItemObjs[2].getProposingGroup(), 'vendors')
         # only item of group 'developers' is returned
-        items = meeting.getItems(useCatalog=False, uids=[allItemObjs[0].UID(), allItemObjs[2].UID()])
+        items = meeting.getItems(theObjects=True, uids=[allItemObjs[0].UID(), allItemObjs[2].UID()])
         self.assertEquals([item.UID() for item in items],
                           [allItemObjs[0].UID()])
 
@@ -1938,7 +1938,7 @@ class testMeeting(PloneMeetingTestCase):
                               name='no_items',
                               action='',
                               icon_expr='',
-                              condition="python: not context.getItems(useCatalog=True)",
+                              condition="python: not context.getItems(theObjects=False)",
                               permission=('View',),
                               visible=True,
                               category='object_buttons')
@@ -2422,12 +2422,12 @@ class testMeeting(PloneMeetingTestCase):
         self.presentItem(item2)
         self.assertEqual(
             [item.getObject().getItemReference() for
-             item in meeting.getItems(ordered=True, useCatalog=True, unrestricted=True)],
+             item in meeting.getItems(ordered=True, theObjects=False, unrestricted=True)],
             ['', '', '', ''])
         self.freezeMeeting(meeting)
         self.assertEqual(
             [item.getObject().getItemReference() for
-             item in meeting.getItems(ordered=True, useCatalog=True, unrestricted=True)],
+             item in meeting.getItems(ordered=True, theObjects=False, unrestricted=True)],
             ['Ref. 20170418/1', 'Ref. 20170418/2', 'Ref. 20170418/3', 'Ref. 20170418/4'])
         # change itemReferenceFormat to check if references are updated
         cfg.setItemReferenceFormat('item/getItemNumber')
@@ -2443,7 +2443,7 @@ class testMeeting(PloneMeetingTestCase):
         # references where not updated
         self.assertEqual(
             [brain._unrestrictedGetObject().getItemReference() for
-             brain in meeting.getItems(ordered=True, useCatalog=True, unrestricted=True)],
+             brain in meeting.getItems(ordered=True, theObjects=False, unrestricted=True)],
             ['Ref. 20170418/1', 'Ref. 20170418/2', 'Ref. 20170418/3', 'Ref. 20170418/4'])
 
         # now test that Meeting.updateItemReferences may be done
@@ -2459,14 +2459,14 @@ class testMeeting(PloneMeetingTestCase):
         self.assertFalse(self.hasPermission(View, item2))
         # there are unaccessible items
         self.assertTrue(
-            len(meeting.getItems(ordered=True, useCatalog=True)) < meeting.numberOfItems())
+            len(meeting.getItems(ordered=True, theObjects=False)) < meeting.numberOfItems())
         # enable item references update
         self.request.set('need_Meeting_updateItemReferences', True)
         # make sure it will be changed
         meeting.updateItemReferences()
         self.assertEqual(
             [brain._unrestrictedGetObject().getItemReference() for
-             brain in meeting.getItems(ordered=True, useCatalog=True, unrestricted=True)],
+             brain in meeting.getItems(ordered=True, theObjects=False, unrestricted=True)],
             [100, 200, 300, 400])
 
 

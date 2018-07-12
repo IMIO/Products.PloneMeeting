@@ -47,7 +47,6 @@ from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.cache import invalidate_cachekey_volatile_for
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import ReviewPortalContent
-from Products.CMFCore.permissions import View
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from Products.CMFCore.utils import _checkPermission
 from plone import api
@@ -1247,7 +1246,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                  uids=[],
                  listTypes=[],
                  ordered=False,
-                 useCatalog=False,
+                 theObjects=True,
                  additional_catalog_query={},
                  unrestricted=False,
                  force_linked_items_query=False,
@@ -1257,55 +1256,44 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
            - list of given p_uids;
            - given p_listTypes;
            - returned ordered (by getItemNumber) if p_ordered is True;
+           - if p_theObjects is True, MeetingItems are returned, else, brains are returned;
            - if p_unrestricted is True it will return every items, not checking permission;
            - if p_force_linked_items_query is True, it will call self.getRawQuery with
              same parameter and force use of query showing linked items, not displaying
              available items.
         '''
-        if useCatalog:
-            # execute the query using the portal_catalog
-            catalog = api.portal.get_tool('portal_catalog')
-            catalog_query = self.getRawQuery(force_linked_items_query=force_linked_items_query)
-            if listTypes:
-                catalog_query.append({'i': 'listType',
-                                      'o': 'plone.app.querystring.operation.selection.is',
-                                      'v': listTypes},)
-            if uids:
-                catalog_query.append({'i': 'UID',
-                                      'o': 'plone.app.querystring.operation.selection.is',
-                                      'v': uids},)
-            if ordered:
-                query = queryparser.parseFormquery(
-                    self,
-                    catalog_query,
-                    sort_on=self.getSort_on(force_linked_items_query=force_linked_items_query))
-            else:
-                query = queryparser.parseFormquery(self, catalog_query)
-
-            # append additional_catalog_query
-            query.update(additional_catalog_query)
-            if unrestricted:
-                res = catalog.unrestrictedSearchResults(**query)
-            else:
-                res = catalog(**query)
+        # execute the query using the portal_catalog
+        catalog = api.portal.get_tool('portal_catalog')
+        catalog_query = self.getRawQuery(force_linked_items_query=force_linked_items_query)
+        if listTypes:
+            catalog_query.append({'i': 'listType',
+                                  'o': 'plone.app.querystring.operation.selection.is',
+                                  'v': listTypes},)
+        if uids:
+            catalog_query.append({'i': 'UID',
+                                  'o': 'plone.app.querystring.operation.selection.is',
+                                  'v': uids},)
+        if ordered:
+            query = queryparser.parseFormquery(
+                self,
+                catalog_query,
+                sort_on=self.getSort_on(force_linked_items_query=force_linked_items_query))
         else:
-            res = self.getField('items').get(self, **kwargs)
+            query = queryparser.parseFormquery(self, catalog_query)
+
+        # append additional_catalog_query
+        query.update(additional_catalog_query)
+        if unrestricted:
+            res = catalog.unrestrictedSearchResults(**query)
+        else:
+            res = catalog(**query)
+
+        if theObjects:
             # if not filtering on uids, accessing the 'items' directly is only available to (Meeting)Managers
             tool = api.portal.get_tool('portal_plonemeeting')
             if not uids and not unrestricted and not tool.isManager(self):
                 raise Unauthorized
-            if uids:
-                member = api.user.get_current()
-                keptItems = []
-                for item in res:
-                    if item.UID() in uids and member.has_permission(View, item):
-                        keptItems.append(item)
-                res = keptItems
-            if listTypes:
-                res = [item for item in res if item.getListType() in listTypes]
-            if ordered:
-                # Sort items according to item number
-                res.sort(key=lambda x: x.getItemNumber())
+            res = [brain._unrestrictedGetObject() for brain in res]
         return res
 
     security.declarePublic('getItemsInOrder')
@@ -1503,7 +1491,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         # moreover we getItems unrestricted to be sure we have every elements
         brains = self.getItems(
             ordered=True,
-            useCatalog=True,
+            theObjects=False,
             unrestricted=True,
             additional_catalog_query={
                 'getItemNumber': {'query': startNumber,
