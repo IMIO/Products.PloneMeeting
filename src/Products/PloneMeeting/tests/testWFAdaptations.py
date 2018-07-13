@@ -1351,7 +1351,7 @@ class testWFAdaptations(PloneMeetingTestCase):
             self._return_to_proposing_group_active_wf_functionality()
             # disable WFA so test with cfg2 while inactive works
             cfg.setWorkflowAdaptations(())
-            performWorkflowAdaptations(cfg, logger=pm_logger)
+            cfg.at_post_edit_script()
 
     def _return_to_proposing_group_inactive(self):
         '''Tests while 'return_to_proposing_group' wfAdaptation is inactive.'''
