@@ -1597,6 +1597,14 @@ table.listing tbody tr.even.dragging td {
     font-size: 120%;
 }
 
+div.item-send-to-other-mc {
+   display: inline-block;
+}
+div.item-send-to-other-mc-multiple-fields {
+   border: 1px solid lightgrey;
+   min-width: 600px;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */
