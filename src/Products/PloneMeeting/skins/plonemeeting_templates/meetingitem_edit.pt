@@ -69,7 +69,7 @@
     <metal:field use-macro="python:here.widget('itemKeywords', mode='edit')"/>
 
     <div tal:define="showOtherMeetingConfigsClonableToSpecialFields python: cfg.getMeetingConfigsToCloneTo() and ('otherMeetingConfigsClonableToEmergency' in usedAttrs or 'otherMeetingConfigsClonableToPrivacy' in usedAttrs)"
-          tal:attributes="style python: showOtherMeetingConfigsClonableToSpecialFields and 'border: 1px solid lightgrey;; min-width: 600px;;' or ''">
+          tal:attributes="class python: showOtherMeetingConfigsClonableToSpecialFields and 'item-send-to-other-mc-multiple-fields item-send-to-other-mc' or 'item-send-to-other-mc'">
         <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableTo', mode='edit')"/>
         <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableToPrivacy', mode='edit')"/>
         <metal:field use-macro="python:here.widget('otherMeetingConfigsClonableToEmergency', mode='edit', label=0)"/>
@@ -110,7 +110,9 @@
             });
         </script>
         </tal:scriptForOtherMeetingConfigsClonableToSpecificFields>
-    </div><br />
+    </div>
+    <div style='clear: both'></div>
+    <br />
 
     <tal:comment replace="nothing">Budget-related information</tal:comment>
     <fieldset tal:condition="python: 'budgetInfos' in usedAttrs">
