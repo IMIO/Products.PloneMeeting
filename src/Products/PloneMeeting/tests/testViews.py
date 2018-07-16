@@ -1071,8 +1071,10 @@ class testViews(PloneMeetingTestCase):
         self.assertListEqual(itemList, [view.real_context for view in result])
 
     def test_pm_get_all_items_dghv_with_advice(self):
+        cfg = self.meetingConfig
+
         def compute_data(item, advisorIds=None):
-            brains = self.meetingConfig.portal_catalog(meta_type="MeetingItem")
+            brains = cfg.portal_catalog(meta_type="MeetingItem")
             result = self.helper.get_all_items_dghv_with_advice(brains, advisorIds)
             itemList = [brain.getObject() for brain in brains]
             index = itemList.index(item)
@@ -1093,24 +1095,24 @@ class testViews(PloneMeetingTestCase):
                 self.assertIsNone(result[index]['advice'])
 
         self._setUpDashBoard()
-        brains = self.meetingConfig.portal_catalog(meta_type="MeetingItem")
+        brains = self.portal.portal_catalog(meta_type="MeetingItem")
         result = self.helper.get_all_items_dghv_with_advice(brains)
         itemList = [brain.getObject() for brain in brains]
         self.assertListEqual(itemList, [itemRes['itemView'].real_context for itemRes in result])
 
-        self.meetingConfig.setCustomAdvisers(
+        cfg.setCustomAdvisers(
             [{'row_id': 'unique_id_123',
               'group': 'developers',
               'gives_auto_advice_on': '',
               'for_item_created_from': '2016/08/08',
               'delay': '5',
               'delay_label': ''}, ])
-        self.meetingConfig.setPowerAdvisersGroups(('vendors',))
-        self.meetingConfig.setItemPowerObserversStates(('itemcreated',))
-        self.meetingConfig.setItemAdviceStates(('itemcreated',))
-        self.meetingConfig.setItemAdviceEditStates(('itemcreated',))
-        self.meetingConfig.setItemAdviceViewStates(('itemcreated',))
-        self.meetingConfig.at_post_edit_script()
+        cfg.setPowerAdvisersGroups(('vendors',))
+        cfg.setItemPowerObserversStates(('itemcreated',))
+        cfg.setItemAdviceStates(('itemcreated',))
+        cfg.setItemAdviceEditStates(('itemcreated',))
+        cfg.setItemAdviceViewStates(('itemcreated',))
+        cfg.at_post_edit_script()
 
         item = self.create('MeetingItem')
         item._update_after_edit()
