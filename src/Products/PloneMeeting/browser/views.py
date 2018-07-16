@@ -33,6 +33,8 @@ from plone.memoize.view import memoize_contextless
 
 from Products.Five import BrowserView
 from plone import api
+from collective.contact.core.utils import get_gender_and_number
+from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.documentgenerator.helper.archetypes import ATDocumentGenerationHelperView
 from collective.documentgenerator.helper.dexterity import DXDocumentGenerationHelperView
 from collective.eeafaceted.batchactions import _ as _CEBA
@@ -695,14 +697,11 @@ class BaseDGHV(object):
     def _render_as_html(self, tree, groupByDuty=False, groupByParentOrg=False):
         """ """
         res = []
-        if groupByParentOrg:
-            for org, contact_infos in tree.items():
+        for org, contact_infos in tree.items():
+            if groupByParentOrg:
                 res.append(u"<strong><u>{0}</u></strong>".format(org.title))
-                for contact_info in contact_infos:
-                    res.append(contact_info[1])
-        else:
-            for contact_uid, contact_info in tree.items():
-                res.append(contact_info[1])
+            for contact_value in contact_infos.values():
+                res.append(contact_value)
         return u'<br />'.join(res)
 
     def printFullname(self, user_id):
@@ -756,50 +755,58 @@ class BaseDGHV(object):
         lateAttendees = meeting.getLateAttendees()
         replaced = meeting.getReplacements()
         for contact in contacts:
-            res[contact.UID()] = [contact, contact.get_short_title(include_sub_organizations=False)]
+            res[contact] = contact.get_short_title(include_sub_organizations=False)
+
+        # manage group by sub organization
+        if groupByParentOrg:
+            by_suborg_res = OrderedDict()
+            for contact, contact_short_title in res.items():
+                orga = contact.get_organization()
+                if orga not in by_suborg_res:
+                    by_suborg_res[orga] = OrderedDict()
+                by_suborg_res[orga][contact] = contact_short_title
+            res = by_suborg_res
+        else:
+            # get same format for rest of the treatment
+            res = OrderedDict({self.portal.contacts.get(PLONEGROUP_ORG):
+                               OrderedDict(res.items())})
+
+        import ipdb; ipdb.set_trace()
 
         # manage duty
         if groupByDuty:
             pass
         else:
             # append presence to end of value
-            for contact_uid, contact_infos in res.items():
-                if contact_uid in attendees:
-                    res[contact_uid][1] = attendee_value_format.format(
-                        res[contact_uid][1], attendee_type_format.format(attendee_type_values['attendee']))
-                elif contact_uid in excused and contact_uid not in replaced:
-                    res[contact_uid][1] = attendee_value_format.format(
-                        res[contact_uid][1], attendee_type_format.format(attendee_type_values['excused']))
-                elif contact_uid in absents and contact_uid not in replaced:
-                    res[contact_uid][1] = attendee_value_format.format(
-                        res[contact_uid][1], attendee_type_format.format(attendee_type_values['absent']))
-                elif contact_uid in lateAttendees:
-                    res[contact_uid][1] = attendee_value_format.format(
-                        res[contact_uid][1], attendee_type_format.format(attendee_type_values['late_attendee']))
-                elif contact_uid in item_absents:
-                    res[contact_uid][1] = attendee_value_format.format(
-                        res[contact_uid][1], attendee_type_format.format(attendee_type_values['item_absent']))
-                elif contact_uid in replaced:
-                    if show_replaced_by:
-                        res[contact_uid][1] = attendee_value_format.format(
-                            res[contact_uid][1], replaced_by_format.format(
-                                meeting.displayUserReplacement(
-                                    replaced[contact_uid],
-                                    include_held_position_label=include_replace_by_held_position_label,
-                                    include_sub_organizations=False)))
-                    else:
-                        res[contact_uid][1] = attendee_value_format.format(
-                            res[contact_uid][1], attendee_type_format.format(attendee_type_values['replaced']))
-
-        # manage group by sub organization
-        if groupByParentOrg:
-            by_suborg_res = OrderedDict()
-            for contact_uid, contact_infos in res.items():
-                orga = contact_infos[0].get_organization()
-                if orga not in by_suborg_res:
-                    by_suborg_res[orga] = []
-                by_suborg_res[orga].append(contact_infos)
-            res = by_suborg_res
+            for orga, contact_infos in res.items():
+                for contact, contact_value in contact_infos.items():
+                    contact_uid = contact.UID()
+                    if contact_uid in attendees:
+                        res[orga][contact] = attendee_value_format.format(
+                            res[orga][contact], attendee_type_format.format(attendee_type_values['attendee']))
+                    elif contact_uid in excused and contact_uid not in replaced:
+                        res[orga][contact] = attendee_value_format.format(
+                            res[orga][contact], attendee_type_format.format(attendee_type_values['excused']))
+                    elif contact_uid in absents and contact_uid not in replaced:
+                        res[orga][contact] = attendee_value_format.format(
+                            res[orga][contact], attendee_type_format.format(attendee_type_values['absent']))
+                    elif contact_uid in lateAttendees:
+                        res[orga][contact] = attendee_value_format.format(
+                            res[orga][contact], attendee_type_format.format(attendee_type_values['late_attendee']))
+                    elif contact_uid in item_absents:
+                        res[orga][contact] = attendee_value_format.format(
+                            res[orga][contact], attendee_type_format.format(attendee_type_values['item_absent']))
+                    elif contact_uid in replaced:
+                        if show_replaced_by:
+                            res[orga][contact] = attendee_value_format.format(
+                                res[orga][contact], replaced_by_format.format(
+                                    meeting.displayUserReplacement(
+                                        replaced[contact_uid],
+                                        include_held_position_label=include_replace_by_held_position_label,
+                                        include_sub_organizations=False)))
+                        else:
+                            res[contact_uid][1] = attendee_value_format.format(
+                                res[contact_uid][1], attendee_type_format.format(attendee_type_values['replaced']))
 
         if render_as_html:
             res = self._render_as_html(res, groupByDuty=groupByDuty, groupByParentOrg=groupByParentOrg)

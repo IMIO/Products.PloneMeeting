@@ -39,6 +39,11 @@ class IPMHeldPosition(IHeldPosition):
         required=False,
     )
 
+    position_type = zope.schema.Choice(
+        title=_("Type"),
+        vocabulary="PositionTypes",
+        )
+
 
 class PMHeldPosition(HeldPosition):
     """Override HeldPosition to add some fields and methods."""
