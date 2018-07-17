@@ -5,6 +5,7 @@ from collective.contact.core import _
 from collective.contact.core.content.held_position import HeldPosition
 from collective.contact.core.content.held_position import IHeldPosition
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
+from collective.excelexport.exportables.dexterityfields import get_exportable_for_fieldname
 from plone.autoform import directives as form
 from plone.dexterity.schema import DexteritySchemaPolicy
 from Products.PloneMeeting.utils import plain_render
@@ -99,6 +100,22 @@ class PMHeldPosition(HeldPosition):
         if include_person_title:
             person_title = u'{0} '.format(person.person_title)
         return u'{0}{1} {2}'.format(person_title, firstname, person.lastname)
+
+    def gender_and_number_from_position_type(self):
+        """Split the position_type and generates a dict with gender and number possibilities."""
+        value = get_exportable_for_fieldname(self, 'position_type', getRequest()).render_value(self)
+        values = value.split('|')
+        if len(values) > 1:
+            res = {'MS': values[0],
+                   'MP': values[1],
+                   'FS': values[2],
+                   'FP': values[3]}
+        else:
+            res = {'MS': values[0],
+                   'MP': values[0],
+                   'FS': values[0],
+                   'FP': values[0]}
+        return res
 
 
 class PMHeldPositionSchemaPolicy(DexteritySchemaPolicy):
