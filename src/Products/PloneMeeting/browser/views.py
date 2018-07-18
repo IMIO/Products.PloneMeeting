@@ -823,30 +823,207 @@ class BaseDGHV(object):
     def printAttendeesByType(self,
                              groupByParentOrg=False,
                              groupByPositionType=False,
+                             pos_attendee_separator=', ',
+                             single_pos_attendee_ender=';',
                              render_as_html=True,
-                             position_type_format=u", {0}",
+                             position_type_format=u", {0};",
                              custom_grouped_attendee_type_patterns={},
                              show_replaced_by=True,
                              replaced_by_format={'M': u'<strong>remplacé par {0}</strong>',
                                                  'F': u'<strong>remplacée par {0}</strong>'},
                              include_replace_by_held_position_label=True,
-                             ignored_pos_type_ids=['default']):
+                             ignored_pos_type_ids=['default'],
+                             include_person_title=True,
+                             included_attendee_types=['attendee', 'excused', 'absent',
+                                                      'replaced', 'late_attendee', 'item_absent'],
+                             striked_attendee_types=['excused'],
+                             striked_attendee_pattern=u'<strike>{0}</strike>'):
 
         def _render_as_html(tree, groupByParentOrg=False, groupByPositionType=False):
             """ """
             res = []
             for attendee_type, global_contact_infos in tree.items():
+                every_contacts = []
+                sub_res = []
                 for org, contact_infos in global_contact_infos.items():
-                    sub_res = []
                     if groupByParentOrg:
-                        res.append(u"<strong><u>{0}</u></strong>".format(org.title))
+                        sub_res.append(u"<strong><u>{0}</u></strong>".format(org.title))
                     if groupByPositionType:
-                        gn = get_gender_and_number(contacts)
-                        grouped_contacts = ', '.join([contact.get_short_title() for contact in contacts])
-                        grouped_contacts = grouped_contacts + position_type_format.format(grouped_attendee_type_patterns[attendee_type][gn])
-                        sub_res.append()
-                    for position_type, contacts in contact_infos.items():
-                        res.append(contact_value)
+                        for position_type, contacts in contact_infos.items():
+                            every_contacts.extend(contacts)
+                            position_type_value = u''
+                            if not position_type.startswith('__no_position_type__'):
+                                gn = get_gender_and_number(contacts)
+                                position_type_value = contacts[0].gender_and_number_from_position_type()[gn]
+                            grouped_contacts_value = []
+                            for contact in contacts:
+                                if position_type_value:
+                                    contact_value = contact.get_person_short_title(include_person_title=include_person_title)
+                                else:
+                                    contact_value = contact.get_short_title(include_sub_organizations=False)
+                                if contact.UID() in striked_contact_uids:
+                                    contact_value = striked_attendee_pattern.format(contact_value)
+                                grouped_contacts_value.append(contact_value)
+                            grouped_contacts_value = pos_attendee_separator.join(grouped_contacts_value)
+                            if position_type_value:
+                                grouped_contacts_value = grouped_contacts_value + position_type_format.format(
+                                    position_type_value)
+                            else:
+                                grouped_contacts_value = grouped_contacts_value + single_pos_attendee_ender
+                            sub_res.append(grouped_contacts_value)
+                    else:
+                        grouped_contacts_value = pos_attendee_separator.join(
+                            [contact.get_short_title(include_sub_organizations=False)
+                             for contact in contact_infos]) + single_pos_attendee_ender
+                        every_contacts.extend(contact_infos)
+                        sub_res.append(grouped_contacts_value)
+                if every_contacts:
+                    gn = get_gender_and_number(every_contacts)
+                    attendee_type_value = grouped_attendee_type_patterns[attendee_type].get(
+                        gn, grouped_attendee_type_patterns[attendee_type]['*'])
+                    if attendee_type_value:
+                        res.append(attendee_type_value)
+                    res.extend(sub_res)
+            return u'<br />'.join(res)
+
+        grouped_attendee_type_patterns = {
+             'attendee': {'MS': u'<strong><u>Présent&nbsp;:</u></strong>',
+                          'MP': u'<strong><u>Présents&nbsp;:</u></strong>',
+                          'FS': u'<strong><u>Présente&nbsp;:</u></strong>',
+                          'FP': u'<strong><u>Présentes&nbsp;:</u></strong>',
+                          '*':  u'<strong><u>Présents&nbsp;:</u></strong>'},
+             'excused': {'MS': u'<strong><u>Excusé&nbsp;:</u></strong>',
+                         'MP': u'<strong><u>Excusés&nbsp;:</u></strong>',
+                         'FS': u'<strong><u>Excusée&nbsp;:</u></strong>',
+                         'FP': u'<strong><u>Excusées&nbsp;:</u></strong>',
+                         '*':  u'<strong><u>Excusés&nbsp;:</u></strong>'},
+             'absent': {'MS': u'<strong><u>Absent&nbsp;:</u></strong>',
+                        'MP': u'<strong><u>Absents&nbsp;:</u></strong>',
+                        'FS': u'<strong><u>Absente&nbsp;:</u></strong>',
+                        'FP': u'<strong><u>Absentes&nbsp;:</u></strong>',
+                        '*':  u'<strong><u>Absents&nbsp;:</u></strong>'},
+             'replaced': {'MS': u'<strong><u>Remplacé&nbsp;:</u></strong>',
+                          'MP': u'<strong><u>Remplacés&nbsp;:</u></strong>',
+                          'FS': u'<strong><u>Remplacée&nbsp;:</u></strong>',
+                          'FP': u'<strong><u>Remplacées&nbsp;:</u></strong>',
+                          '*':  u'<strong><u>Remplacés&nbsp;:</u></strong>'},
+             'late_attendee': {'MS': u'<strong><u>Présent en retard&nbsp;:</u></strong>',
+                               'MP': u'<strong><u>Présents en retard&nbsp;:</u></strong>',
+                               'FS': u'<strong><u>Présente en retard&nbsp;:</u></strong>',
+                               'FP': u'<strong><u>Présentes en retard&nbsp;:</u></strong>',
+                               '*':  u'<strong><u>Présents en retard&nbsp;:</u></strong>'},
+             'item_absent': {'MS': u'<strong><u>Absent pour ce point&nbsp;:</u></strong>',
+                             'MP': u'<strong><u>Absents pour ce point&nbsp;:</u></strong>',
+                             'FS': u'<strong><u>Absente pour ce point&nbsp;:</u></strong>',
+                             'FP': u'<strong><u>Absentes pour ce point&nbsp;:</u></strong>',
+                             '*':  u'<strong><u>Absents pour ce point&nbsp;:</u></strong>'},
+        }
+        grouped_attendee_type_patterns.update(custom_grouped_attendee_type_patterns)
+
+        # initial values
+        meeting, attendees, item_absents, contacts, excused, absents, lateAttendees, replaced = self._get_attendees()
+
+        res = OrderedDict({key: [] for key in grouped_attendee_type_patterns.keys()})
+        striked_contact_uids = []
+        for contact in contacts:
+            contact_uid = contact.UID()
+            contact_attendee_type = contact_uid in item_absents and 'item_absent' or \
+                contact_uid in attendees and 'attendee' or \
+                contact_uid in excused and 'excused' or \
+                contact_uid in absents and 'absent' or \
+                contact_uid in lateAttendees and 'late_attendee' or \
+                contact_uid in replaced and 'replaced'
+            if (contact_attendee_type == 'attendee' or contact_attendee_type in striked_attendee_types) and \
+                    'attendee' in included_attendee_types:
+                if contact_attendee_type in striked_attendee_types:
+                    striked_contact_uids.append(contact.UID())
+                res['attendee'].append(contact)
+            elif contact_attendee_type in included_attendee_types and \
+                    contact_attendee_type not in striked_attendee_types:
+                res[contact_attendee_type].append(contact)
+
+        # manage groupByParentOrg
+        # if used or not, we output the same format to continue process easier
+        for attendee_type, contacts in res.items():
+            by_suborg_res = OrderedDict()
+            for contact in contacts:
+                # include orga to have same format when using groupByParentOrg or not
+                orga = groupByParentOrg and contact.get_organization() or self.portal.contacts.get(PLONEGROUP_ORG)
+                if orga not in by_suborg_res:
+                    by_suborg_res[orga] = []
+                by_suborg_res[orga].append(contact)
+            res[attendee_type] = by_suborg_res
+
+        if groupByPositionType:
+            for attendee_type, contact_infos in res.items():
+                for orga, contacts in contact_infos.items():
+                    by_pos_type_res = OrderedDict()
+                    for contact in contacts:
+                        used_contact_position_type = contact.position_type
+                        if contact.position_type in ignored_pos_type_ids:
+                            # in this case, we use the special value prefixed by __no_position_type__
+                            # so contacts are still ordered
+                            used_contact_position_type = '__no_position_type__{0}'.format(contact.UID())
+                            by_pos_type_res[used_contact_position_type] = []
+                        elif contact.position_type not in by_pos_type_res:
+                            by_pos_type_res[used_contact_position_type] = []
+                        by_pos_type_res[used_contact_position_type].append(contact)
+                    res[attendee_type][orga] = by_pos_type_res
+
+        if render_as_html:
+            res = _render_as_html(res, groupByParentOrg=groupByParentOrg, groupByPositionType=groupByPositionType)
+        return res
+
+
+    def printAttendeesWithStrikedByType(self,
+                             groupByParentOrg=False,
+                             groupByPositionType=False,
+                             pos_attendee_separator=', ',
+                             single_pos_attendee_ender=';',
+                             render_as_html=True,
+                             position_type_format=u", {0};",
+                             custom_grouped_attendee_type_patterns={},
+                             show_replaced_by=True,
+                             replaced_by_format={'M': u'<strong>remplacé par {0}</strong>',
+                                                 'F': u'<strong>remplacée par {0}</strong>'},
+                             include_replace_by_held_position_label=True,
+                             ignored_pos_type_ids=['default'],
+                             include_person_title=True):
+
+        def _render_as_html(tree, groupByParentOrg=False, groupByPositionType=False):
+            """ """
+            res = []
+            for attendee_type, global_contact_infos in tree.items():
+                every_contacts = []
+                sub_res = []
+                for org, contact_infos in global_contact_infos.items():
+                    if groupByParentOrg:
+                        sub_res.append(u"<strong><u>{0}</u></strong>".format(org.title))
+                    if groupByPositionType:
+                        for position_type, contacts in contact_infos.items():
+                            every_contacts.extend(contacts)
+                            position_type_value = u''
+                            if not position_type.startswith('__no_position_type__'):
+                                gn = get_gender_and_number(contacts)
+                                position_type_value = contacts[0].gender_and_number_from_position_type()[gn]
+                            grouped_contacts_value = pos_attendee_separator.join(
+                                [position_type_value and contact.get_person_short_title(include_person_title=include_person_title)
+                                 or contact.get_short_title(include_sub_organizations=False) for contact in contacts])
+                            if position_type_value:
+                                grouped_contacts_value = grouped_contacts_value + position_type_format.format(
+                                    position_type_value)
+                            else:
+                                grouped_contacts_value = grouped_contacts_value + single_pos_attendee_ender
+                            sub_res.append(grouped_contacts_value)
+                    else:
+                        grouped_contacts_value = pos_attendee_separator.join(
+                            [contact.get_short_title(include_sub_organizations=False) for contact in contact_infos]) + single_pos_attendee_ender
+                        every_contacts.extend(contact_infos)
+                        sub_res.append(grouped_contacts_value)
+                if every_contacts:
+                    gn = get_gender_and_number(every_contacts)
+                    res.append(grouped_attendee_type_patterns[attendee_type][gn])
+                    res.extend(sub_res)
             return u'<br />'.join(res)
 
         grouped_attendee_type_patterns = {
@@ -925,7 +1102,7 @@ class BaseDGHV(object):
                     res[attendee_type][orga] = by_pos_type_res
 
         if render_as_html:
-            res = _render_as_html(res, groupByParentOrg=groupByParentOrg)
+            res = _render_as_html(res, groupByParentOrg=groupByParentOrg, groupByPositionType=groupByPositionType)
         return res
 
 
