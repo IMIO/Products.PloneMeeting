@@ -1,5 +1,6 @@
 # encoding: utf-8
 
+from collective.documentgenerator.content.vocabulary import ExistingPODTemplateFactory
 from collective.documentgenerator.content.vocabulary import PortalTypesVocabularyFactory
 from collective.eeafaceted.collectionwidget.content.dashboardcollection import IDashboardCollection
 from collective.eeafaceted.dashboard.vocabulary import DashboardCollectionsVocabulary
@@ -27,13 +28,6 @@ from zope.interface import implements
 from zope.schema.interfaces import IVocabularyFactory
 from zope.schema.vocabulary import SimpleTerm
 from zope.schema.vocabulary import SimpleVocabulary
-
-
-# temporary fix until collective.documentgenerator is released
-try:
-    from collective.documentgenerator.content.vocabulary import ExistingPODTemplateFactory
-except ImportError:
-    from builtins import object as ExistingPODTemplateFactory
 
 
 class PMConditionAwareCollectionVocabulary(CachedCollectionVocabulary):
