@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
-from DateTime import DateTime
 from AccessControl import Unauthorized
-from Products.Five.browser import BrowserView
-from Products.Archetypes import DisplayList
+from DateTime import DateTime
 from plone import api
+from Products.Archetypes import DisplayList
+from Products.Five.browser import BrowserView
 
 
 class ItemCompletenessView(BrowserView):

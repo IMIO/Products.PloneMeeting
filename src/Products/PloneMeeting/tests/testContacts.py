@@ -22,10 +22,10 @@
 # 02110-1301, USA.
 #
 
-from DateTime import DateTime
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
-from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from DateTime import DateTime
 from plone import api
+from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from z3c.relationfield.relation import RelationValue
 from zExceptions import Redirect
 from zope.component import getUtility

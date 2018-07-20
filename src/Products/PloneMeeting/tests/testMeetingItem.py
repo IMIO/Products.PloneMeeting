@@ -22,49 +22,33 @@
 # 02110-1301, USA.
 #
 
-import transaction
-from os import path
-
 from AccessControl import Unauthorized
-from DateTime import DateTime
-from persistent.mapping import PersistentMapping
-from Products.Five import zcml
-
-from zope.annotation.interfaces import IAnnotations
-from zope.component import getAdapter
-from zope.event import notify
-from zope.i18n import translate
-from zope.interface import Invalid
-from zope.lifecycleevent import ObjectModifiedEvent
-
-from Products.PluginIndexes.common.UnIndex import _marker
 from collective.iconifiedcategory.event import IconifiedPrintChangedEvent
 from collective.iconifiedcategory.event import IconifiedSignedChangedEvent
 from collective.iconifiedcategory.utils import calculate_category_id
-from collective.iconifiedcategory.utils import get_categorized_elements
 from collective.iconifiedcategory.utils import get_categories
+from collective.iconifiedcategory.utils import get_categorized_elements
 from collective.iconifiedcategory.utils import get_category_object
 from collective.iconifiedcategory.utils import get_config_root
 from collective.iconifiedcategory.utils import get_group
+from DateTime import DateTime
 from imio.actionspanel.interfaces import IContentDeletable
+from imio.helpers.cache import cleanRamCacheFor
 from imio.history.interfaces import IImioHistory
+from imio.prettylink.interfaces import IPrettyLink
+from os import path
+from persistent.mapping import PersistentMapping
 from plone import api
 from plone.app.testing import logout
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 from plone.memoize.instance import Memojito
-
-from Products.PloneTestCase.setup import _createHomeFolder
+from Products import PloneMeeting as products_plonemeeting
 from Products.CMFCore.permissions import AddPortalContent
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.CMFCore.utils import getToolByName
-from Products.statusmessages.interfaces import IStatusMessage
-
-from imio.helpers.cache import cleanRamCacheFor
-from imio.prettylink.interfaces import IPrettyLink
-
-from Products import PloneMeeting as products_plonemeeting
+from Products.Five import zcml
 from Products.PloneMeeting.browser.itemassembly import item_assembly_default
 from Products.PloneMeeting.browser.itemassembly import validate_item_assembly
 from Products.PloneMeeting.browser.itemsignatures import item_signatures_default
@@ -94,6 +78,17 @@ from Products.PloneMeeting.utils import getLastEvent
 from Products.PloneMeeting.utils import getTransitionToReachState
 from Products.PloneMeeting.utils import ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR
 from Products.PloneMeeting.utils import setFieldFromAjax
+from Products.PloneTestCase.setup import _createHomeFolder
+from Products.PluginIndexes.common.UnIndex import _marker
+from Products.statusmessages.interfaces import IStatusMessage
+from zope.annotation.interfaces import IAnnotations
+from zope.component import getAdapter
+from zope.event import notify
+from zope.i18n import translate
+from zope.interface import Invalid
+from zope.lifecycleevent import ObjectModifiedEvent
+
+import transaction
 
 
 class testMeetingItem(PloneMeetingTestCase):

@@ -18,11 +18,12 @@
 # AppConfig.py in your product's root directory. The items in there
 # will be included (by importing) in this file if found.
 
-import pkg_resources
-
 from collections import OrderedDict
 from Products.CMFCore.permissions import setDefaultRoles
 from zope.i18nmessageid import MessageFactory
+
+import pkg_resources
+
 
 PMMessageFactory = MessageFactory("PloneMeeting")
 

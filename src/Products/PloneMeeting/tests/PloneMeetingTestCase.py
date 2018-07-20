@@ -20,40 +20,39 @@
 # 02110-1301, USA.
 #
 
-import os.path
-import transaction
-import unittest
 from AccessControl.SecurityManagement import getSecurityManager
 from collections import OrderedDict
-
+from collective.iconifiedcategory.utils import calculate_category_id
+from collective.iconifiedcategory.utils import get_config_root
+from imio.helpers.cache import cleanRamCacheFor
+from imio.helpers.testing import testing_logger
+from plone import api
+from plone import namedfile
+from plone.app.testing import login
+from plone.app.testing import logout
+from plone.app.testing.helpers import setRoles
+from plone.dexterity.utils import createContentInContainer
+from Products.Five.browser import BrowserView
+from Products.PloneMeeting.config import DEFAULT_USER_PASSWORD
+from Products.PloneMeeting.config import TOOL_FOLDER_ANNEX_TYPES
+from Products.PloneMeeting.Meeting import Meeting_schema
+from Products.PloneMeeting.MeetingItem import MeetingItem_schema
+from Products.PloneMeeting.testing import PM_TESTING_PROFILE_FUNCTIONAL
+from Products.PloneMeeting.tests.helpers import PloneMeetingTestingHelpers
+from Products.PloneMeeting.utils import cleanMemoize
+from Products.PloneMeeting.utils import reviewersFor
+from Products.PloneTestCase.setup import _createHomeFolder
 from z3c.form.testing import TestRequest as z3c_form_TestRequest
 from zope.component import getMultiAdapter
 from zope.event import notify
 from zope.traversing.interfaces import BeforeTraverseEvent
 from zope.viewlet.interfaces import IViewletManager
 
-from plone import api
-from plone import namedfile
-from plone.app.testing.helpers import setRoles
-from plone.app.testing import login, logout
-from plone.dexterity.utils import createContentInContainer
-
-from Products.Five.browser import BrowserView
-from Products.PloneTestCase.setup import _createHomeFolder
-
-from collective.iconifiedcategory.utils import calculate_category_id
-from collective.iconifiedcategory.utils import get_config_root
-from imio.helpers.cache import cleanRamCacheFor
-from imio.helpers.testing import testing_logger
+import os.path
 import Products.PloneMeeting
-from Products.PloneMeeting.config import DEFAULT_USER_PASSWORD
-from Products.PloneMeeting.config import TOOL_FOLDER_ANNEX_TYPES
-from Products.PloneMeeting.MeetingItem import MeetingItem_schema
-from Products.PloneMeeting.Meeting import Meeting_schema
-from Products.PloneMeeting.testing import PM_TESTING_PROFILE_FUNCTIONAL
-from Products.PloneMeeting.tests.helpers import PloneMeetingTestingHelpers
-from Products.PloneMeeting.utils import cleanMemoize
-from Products.PloneMeeting.utils import reviewersFor
+import transaction
+import unittest
+
 
 # Force application logging level to DEBUG so we can use logger in tests
 pm_logger = testing_logger('PloneMeeting: testing')

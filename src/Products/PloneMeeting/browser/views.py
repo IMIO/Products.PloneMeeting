@@ -20,19 +20,7 @@
 # 02110-1301, USA.
 #
 
-import cgi
-import json
-import lxml
-
 from collections import OrderedDict
-
-from zope.i18n import translate
-
-from plone.memoize.view import memoize
-from plone.memoize.view import memoize_contextless
-
-from Products.Five import BrowserView
-from plone import api
 from collective.contact.core.utils import get_gender_and_number
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.documentgenerator.helper.archetypes import ATDocumentGenerationHelperView
@@ -42,22 +30,31 @@ from collective.eeafaceted.batchactions.browser.views import BaseBatchActionForm
 from eea.facetednavigation.browser.app.view import FacetedContainerView
 from eea.facetednavigation.interfaces import ICriteria
 from ftw.labels.interfaces import ILabeling
-from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
 from imio.helpers.xhtml import addClassToContent
+from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
 from imio.helpers.xhtml import imagesToPath
+from plone import api
+from plone.memoize.view import memoize
+from plone.memoize.view import memoize_contextless
 from Products.CMFCore.permissions import ModifyPortalContent
+from Products.Five import BrowserView
 from Products.PloneMeeting import logger
+from Products.PloneMeeting.browser.itemchangeorder import _is_integer
+from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import ADVICE_STATES_ALIVE
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
-from Products.PloneMeeting.config import PMMessageFactory as _
-from Products.PloneMeeting.browser.itemchangeorder import _is_integer
+from Products.PloneMeeting.indexes import _to_coded_adviser_index
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
 from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import signatureNotAlone
 from Products.PloneMeeting.utils import toHTMLStrikedContent
-from Products.PloneMeeting.indexes import _to_coded_adviser_index
+from zope.i18n import translate
+
+import cgi
+import json
+import lxml
 
 
 class PloneMeetingAjaxView(BrowserView):

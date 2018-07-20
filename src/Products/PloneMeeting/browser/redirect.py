@@ -1,7 +1,7 @@
-from zope.component.hooks import getSite
-from zope.interface import implements
 from Products.Five import BrowserView
 from Products.PloneMeeting.interfaces import IRedirect
+from zope.component.hooks import getSite
+from zope.interface import implements
 
 
 class RedirectView(BrowserView):

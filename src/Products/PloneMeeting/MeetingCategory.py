@@ -10,9 +10,9 @@
 #
 
 from AccessControl import ClassSecurityInfo
-from zope.i18n import translate
-from zope.interface import implements
+from imio.helpers.cache import invalidate_cachekey_volatile_for
 from OFS.ObjectManager import BeforeDeleteException
+from plone import api
 from Products.Archetypes.atapi import AttributeStorage
 from Products.Archetypes.atapi import BaseContent
 from Products.Archetypes.atapi import BaseSchema
@@ -23,12 +23,15 @@ from Products.Archetypes.atapi import registerType
 from Products.Archetypes.atapi import Schema
 from Products.Archetypes.atapi import StringField
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
-import interfaces
-from plone import api
-from imio.helpers.cache import invalidate_cachekey_volatile_for
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import WriteRiskyConfig
-from Products.PloneMeeting.utils import getCustomAdapter, getFieldContent
+from Products.PloneMeeting.utils import getCustomAdapter
+from Products.PloneMeeting.utils import getFieldContent
+from zope.i18n import translate
+from zope.interface import implements
+
+import interfaces
+
 
 __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
 <g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""

@@ -10,12 +10,13 @@
 #
 
 from DateTime import DateTime
+from Products.PloneMeeting.utils import getInterface
+from Products.validation.interfaces.IValidator import IValidator
 from zope.component import getGlobalSiteManager
 from zope.component.hooks import getSite
 from zope.i18n import translate
 from zope.interface import implements
-from Products.validation.interfaces.IValidator import IValidator
-from Products.PloneMeeting.utils import getInterface
+
 
 __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
 <g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""

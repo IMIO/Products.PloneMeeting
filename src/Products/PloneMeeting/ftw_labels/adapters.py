@@ -7,8 +7,8 @@
 # GNU General Public License (GPL)
 #
 
-from plone import api
 from ftw.labels.interfaces import ILabelJar
+from plone import api
 
 
 def ftw_labels_jar_discovery(context):

@@ -20,36 +20,18 @@
 # 02110-1301, USA.
 #
 
-import os
-import os.path
-import re
-import urlparse
-import socket
 from AccessControl import ClassSecurityInfo
 from AccessControl.Permission import Permission
 from App.class_init import InitializeClass
 from appy.shared.diff import HtmlDiff
-from datetime import timedelta
-from email.MIMEMultipart import MIMEMultipart
-from email.MIMEBase import MIMEBase
-from email.MIMEText import MIMEText
-from email import Encoders
-from DateTime import DateTime
-from zope.annotation import IAnnotations
-from zope.i18n import translate
-from zope.component import getAdapter
-from zope.component import queryUtility
-from zope.component.interfaces import ObjectEvent
-from zope.event import notify
-from zope.globalrequest import getRequest
-from zope.interface import implements
-from zope.security.interfaces import IPermission
-from plone.app.textfield import RichText
-from plone.autoform.interfaces import WRITE_PERMISSIONS_KEY
-from plone.dexterity.interfaces import IDexterityContent
-from plone import api
 from collective.excelexport.exportables.dexterityfields import get_exportable_for_fieldname
 from collective.iconifiedcategory.interfaces import IIconifiedInfos
+from DateTime import DateTime
+from datetime import timedelta
+from email import Encoders
+from email.MIMEBase import MIMEBase
+from email.MIMEMultipart import MIMEMultipart
+from email.MIMEText import MIMEText
 from imio.helpers.xhtml import addClassToLastChildren
 from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
 from imio.helpers.xhtml import markEmptyTags
@@ -58,30 +40,34 @@ from imio.helpers.xhtml import storeImagesLocally
 from imio.helpers.xhtml import xhtmlContentIsEmpty
 from imio.history.interfaces import IImioHistory
 from imio.history.utils import getLastAction
+from plone import api
+from plone.app.textfield import RichText
+from plone.autoform.interfaces import WRITE_PERMISSIONS_KEY
+from plone.dexterity.interfaces import IDexterityContent
 from Products.Archetypes.event import ObjectEditedEvent
-from Products.CMFCore.WorkflowCore import WorkflowException
-from Products.MailHost.MailHost import MailHostError
 from Products.CMFCore.permissions import AccessContentsInformation
 from Products.CMFCore.permissions import AddPortalContent
 from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ManageProperties
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
+from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFPlone.utils import safe_unicode
 from Products.DCWorkflow.events import TransitionEvent
+from Products.MailHost.MailHost import MailHostError
+from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.config import ADD_SUBCONTENT_PERMISSIONS
 from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import AddAnnexDecision
-from Products.PloneMeeting.config import ADD_SUBCONTENT_PERMISSIONS
 from Products.PloneMeeting.config import PloneMeetingError
-from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import TOOL_ID
 from Products.PloneMeeting.interfaces import IAdviceAfterAddEvent
 from Products.PloneMeeting.interfaces import IAdviceAfterModifyEvent
 from Products.PloneMeeting.interfaces import IAdvicesUpdatedEvent
 from Products.PloneMeeting.interfaces import IItemAfterTransitionEvent
 from Products.PloneMeeting.interfaces import IItemDuplicatedEvent
-from Products.PloneMeeting.interfaces import IItemDuplicatedToOtherMCEvent
 from Products.PloneMeeting.interfaces import IItemDuplicatedFromConfigEvent
+from Products.PloneMeeting.interfaces import IItemDuplicatedToOtherMCEvent
 from Products.PloneMeeting.interfaces import IItemListTypeChangedEvent
 from Products.PloneMeeting.interfaces import IItemLocalRolesUpdatedEvent
 from Products.PloneMeeting.interfaces import IMeetingAfterTransitionEvent
@@ -95,8 +81,24 @@ from Products.PloneMeeting.interfaces import IMeetingItemCustom
 from Products.PloneMeeting.interfaces import IMeetingLocalRolesUpdatedEvent
 from Products.PloneMeeting.interfaces import IMeetingUserCustom
 from Products.PloneMeeting.interfaces import IToolPloneMeetingCustom
+from zope.annotation import IAnnotations
+from zope.component import getAdapter
+from zope.component import queryUtility
+from zope.component.interfaces import ObjectEvent
+from zope.event import notify
+from zope.globalrequest import getRequest
+from zope.i18n import translate
+from zope.interface import implements
+from zope.security.interfaces import IPermission
 
 import logging
+import os
+import os.path
+import re
+import socket
+import urlparse
+
+
 logger = logging.getLogger('PloneMeeting')
 
 # PloneMeetingError-related constants ------------------------------------------

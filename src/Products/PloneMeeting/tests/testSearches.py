@@ -22,21 +22,19 @@
 # 02110-1301, USA.
 #
 
-from DateTime import DateTime
-
-from zope.component import getAdapter
-from Products.CMFCore.permissions import ModifyPortalContent
-from plone.app.textfield.value import RichTextValue
-from plone.dexterity.utils import createContentInContainer
-from eea.facetednavigation.interfaces import ICriteria
 from collective.compoundcriterion.interfaces import ICompoundCriterionFilter
 from collective.eeafaceted.collectionwidget.widgets.widget import CollectionWidget
+from DateTime import DateTime
+from eea.facetednavigation.interfaces import ICriteria
 from imio.helpers.cache import cleanRamCacheFor
+from plone.app.textfield.value import RichTextValue
+from plone.dexterity.utils import createContentInContainer
+from Products.CMFCore.permissions import ModifyPortalContent
 from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
-from Products.PloneMeeting.utils import reviewersFor
-
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
+from Products.PloneMeeting.utils import reviewersFor
+from zope.component import getAdapter
 
 
 class testSearches(PloneMeetingTestCase):

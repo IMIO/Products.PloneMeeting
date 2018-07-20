@@ -7,25 +7,8 @@
 # GNU General Public License (GPL)
 #
 
-import logging
 from AccessControl import Unauthorized
 from appy.shared.diff import HtmlDiff
-
-from persistent.list import PersistentList
-from zope.annotation import IAnnotations
-from zope.i18n import translate
-from zope.globalrequest import getRequest
-
-from plone.memoize import ram
-from plone.memoize.instance import memoize
-
-from Products.CMFCore.permissions import ModifyPortalContent
-from Products.CMFCore.utils import _checkPermission
-from Products.MimetypesRegistry.common import MimeTypeException
-from Products.CMFPlone.utils import safe_unicode
-from plone import api
-from plone.api.exc import InvalidParameterError
-
 from collective.documentviewer.settings import GlobalSettings
 from collective.iconifiedcategory.adapter import CategorizedObjectAdapter
 from collective.iconifiedcategory.adapter import CategorizedObjectInfoAdapter
@@ -36,17 +19,26 @@ from eea.facetednavigation.widgets.resultsperpage.widget import Widget as Result
 from eea.facetednavigation.widgets.storage import Criterion
 from imio.actionspanel.adapters import ContentDeletableAdapter as APContentDeletableAdapter
 from imio.helpers.xhtml import xhtmlContentIsEmpty
-from imio.history.adapters import ImioWfHistoryAdapter
 from imio.history.adapters import BaseImioHistoryAdapter
+from imio.history.adapters import ImioWfHistoryAdapter
 from imio.prettylink.adapters import PrettyLinkAdapter
+from persistent.list import PersistentList
+from plone import api
+from plone.api.exc import InvalidParameterError
+from plone.memoize import ram
+from plone.memoize.instance import memoize
+from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFCore.utils import _checkPermission
+from Products.CMFPlone.utils import safe_unicode
+from Products.MimetypesRegistry.common import MimeTypeException
+from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import AddAnnexDecision
-from Products.PloneMeeting.config import DUPLICATE_EVENT_ACTION
 from Products.PloneMeeting.config import DUPLICATE_AND_KEEP_LINK_EVENT_ACTION
+from Products.PloneMeeting.config import DUPLICATE_EVENT_ACTION
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import MEETINGROLES
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
-from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.interfaces import IMeeting
 from Products.PloneMeeting.MeetingConfig import CONFIGGROUPPREFIX
@@ -58,6 +50,12 @@ from Products.PloneMeeting.utils import findNewValue
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import getHistoryTexts
 from Products.PloneMeeting.utils import reviewersFor
+from zope.annotation import IAnnotations
+from zope.globalrequest import getRequest
+from zope.i18n import translate
+
+import logging
+
 
 logger = logging.getLogger('PloneMeeting')
 

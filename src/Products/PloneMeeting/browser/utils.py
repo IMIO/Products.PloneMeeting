@@ -1,7 +1,6 @@
 from bs4 import BeautifulSoup
-from zope.component import getMultiAdapter
-
 from Products.Five import BrowserView
+from zope.component import getMultiAdapter
 
 
 class Utils(BrowserView):

@@ -9,28 +9,23 @@
 # GNU General Public License (GPL)
 #
 
-import logging
-from zope.interface import implements
-from appy.gen import No
-from copy import deepcopy
-from datetime import datetime
-from DateTime import DateTime
-from natsort import realsorted
-from persistent.list import PersistentList
-from persistent.mapping import PersistentMapping
 from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
 from AccessControl.PermissionRole import rolesForPermissionOn
 from Acquisition import aq_base
 from App.class_init import InitializeClass
-from OFS.ObjectManager import BeforeDeleteException
+from appy.gen import No
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
-from zope.annotation.interfaces import IAnnotations
-from zope.component import getMultiAdapter
-from zope.component import queryUtility
-from zope.event import notify
-from zope.i18n import translate
-from zope.schema.interfaces import IVocabularyFactory
+from collective.behavior.talcondition.utils import _evaluateExpression
+from copy import deepcopy
+from DateTime import DateTime
+from datetime import datetime
+from imio.actionspanel.utils import unrestrictedRemoveGivenObject
+from imio.prettylink.interfaces import IPrettyLink
+from natsort import realsorted
+from OFS.ObjectManager import BeforeDeleteException
+from persistent.list import PersistentList
+from persistent.mapping import PersistentMapping
 from plone import api
 from plone.memoize import ram
 from Products.Archetypes.atapi import BaseFolder
@@ -62,9 +57,7 @@ from Products.CMFCore.utils import _checkPermission
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from Products.CMFPlone.utils import safe_unicode
-from collective.behavior.talcondition.utils import _evaluateExpression
-from imio.actionspanel.utils import unrestrictedRemoveGivenObject
-from imio.prettylink.interfaces import IPrettyLink
+from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import AddAdvice
 from Products.PloneMeeting.config import AUTO_COPY_GROUP_PREFIX
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
@@ -73,8 +66,8 @@ from Products.PloneMeeting.config import DEFAULT_COPIED_FIELDS
 from Products.PloneMeeting.config import DUPLICATE_AND_KEEP_LINK_EVENT_ACTION
 from Products.PloneMeeting.config import DUPLICATE_EVENT_ACTION
 from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_SAME_MC
-from Products.PloneMeeting.config import HIDE_DECISION_UNDER_WRITING_MSG
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
+from Products.PloneMeeting.config import HIDE_DECISION_UNDER_WRITING_MSG
 from Products.PloneMeeting.config import ITEM_COMPLETENESS_ASKERS
 from Products.PloneMeeting.config import ITEM_COMPLETENESS_EVALUATORS
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
@@ -85,7 +78,6 @@ from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import PloneMeetingError
-from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import READER_USECASES
@@ -93,10 +85,10 @@ from Products.PloneMeeting.config import RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
 from Products.PloneMeeting.config import WriteMarginalNotes
 from Products.PloneMeeting.interfaces import IMeetingItem
-from Products.PloneMeeting.model.adaptations import RETURN_TO_PROPOSING_GROUP_MAPPINGS
-from Products.PloneMeeting.Meeting import Meeting
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowConditions
+from Products.PloneMeeting.Meeting import Meeting
+from Products.PloneMeeting.model.adaptations import RETURN_TO_PROPOSING_GROUP_MAPPINGS
 from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
 from Products.PloneMeeting.utils import addDataChange
@@ -104,8 +96,8 @@ from Products.PloneMeeting.utils import AdvicesUpdatedEvent
 from Products.PloneMeeting.utils import cleanMemoize
 from Products.PloneMeeting.utils import fieldIsEmpty
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
-from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCurrentMeetingObject
+from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getFieldContent
 from Products.PloneMeeting.utils import getFieldVersion
 from Products.PloneMeeting.utils import getLastEvent
@@ -124,6 +116,15 @@ from Products.PloneMeeting.utils import transformAllRichTextFields
 from Products.PloneMeeting.utils import updateAnnexesAccess
 from Products.PloneMeeting.utils import validate_item_assembly_value
 from Products.PloneMeeting.utils import workday
+from zope.annotation.interfaces import IAnnotations
+from zope.component import getMultiAdapter
+from zope.component import queryUtility
+from zope.event import notify
+from zope.i18n import translate
+from zope.interface import implements
+from zope.schema.interfaces import IVocabularyFactory
+
+import logging
 
 
 __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN

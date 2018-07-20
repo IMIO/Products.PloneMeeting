@@ -1,11 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from AccessControl import Unauthorized
-from zope import schema
-from zope.component.hooks import getSite
-from zope.i18n import translate
-from zope.interface import Interface
-from z3c.form import field, form, button
 from plone import api
 from plone.z3cform.layout import wrap_form
 from Products.PloneMeeting.browser.itemassembly import _itemsToUpdate
@@ -13,6 +8,13 @@ from Products.PloneMeeting.browser.itemassembly import validate_apply_until_item
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IRedirect
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
+from z3c.form import button
+from z3c.form import field
+from z3c.form import form
+from zope import schema
+from zope.component.hooks import getSite
+from zope.i18n import translate
+from zope.interface import Interface
 
 
 def person_uid_default():

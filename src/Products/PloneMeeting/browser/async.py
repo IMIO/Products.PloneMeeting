@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 
-from zope.i18n import translate
 from AccessControl import Unauthorized
-from Products.Five import BrowserView
+from plone import api
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
+from Products.Five import BrowserView
 from Products.PloneMeeting.config import WriteBudgetInfos
-from plone import api
+from zope.i18n import translate
 
 
 class Discuss(BrowserView):

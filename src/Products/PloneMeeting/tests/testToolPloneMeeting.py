@@ -22,29 +22,28 @@
 # 02110-1301, USA.
 #
 
-import transaction
 from AccessControl import Unauthorized
-from DateTime import DateTime
-from persistent.mapping import PersistentMapping
-from zope.i18n import translate
-from zope.testing.testrunner.find import find_test_files
-
 from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.utils import get_categories
 from collective.iconifiedcategory.utils import get_categorized_elements
 from collective.iconifiedcategory.utils import get_category_object
+from DateTime import DateTime
 from imio.helpers.cache import cleanRamCacheFor
-from Products.CMFCore.permissions import ManagePortal
-from Products.CMFPlone.utils import safe_unicode
+from persistent.mapping import PersistentMapping
 from plone import api
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.interfaces import IDexterityContent
 from plone.dexterity.utils import createContentInContainer
-
+from Products.CMFCore.permissions import ManagePortal
+from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.utils import get_annexes
+from zope.i18n import translate
+from zope.testing.testrunner.find import find_test_files
+
+import transaction
 
 
 class testToolPloneMeeting(PloneMeetingTestCase):

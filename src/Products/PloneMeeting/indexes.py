@@ -8,21 +8,20 @@
 #
 
 from DateTime import DateTime
-
-from OFS.interfaces import IItem
-
-from zope.component import getAdapter
 from imio.history.interfaces import IImioHistory
+from OFS.interfaces import IItem
 from plone import api
 from plone.indexer import indexer
-from Products.PluginIndexes.common.UnIndex import _marker
-from Products.PloneMeeting.interfaces import IMeeting
-from Products.PloneMeeting.interfaces import IMeetingContent
-from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
+from Products.PloneMeeting.interfaces import IMeeting
+from Products.PloneMeeting.interfaces import IMeetingContent
+from Products.PloneMeeting.interfaces import IMeetingItem
 from Products.PloneMeeting.utils import get_annexes
+from Products.PluginIndexes.common.UnIndex import _marker
+from zope.component import getAdapter
+
 
 REAL_GROUP_ID_PATTERN = 'real_group_id__{0}'
 DELAYAWARE_REAL_GROUP_ID_PATTERN = 'delay_real_group_id__{0}'

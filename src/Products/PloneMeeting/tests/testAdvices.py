@@ -22,29 +22,20 @@
 # 02110-1301, USA.
 #
 
-from os import path
-
+from AccessControl import Unauthorized
+from collective.iconifiedcategory.utils import get_categorized_elements
+from DateTime import DateTime
 from datetime import datetime
 from datetime import timedelta
-from DateTime import DateTime
-from AccessControl import Unauthorized
-from zope.component import queryUtility
-from zope.event import notify
-from zope.lifecycleevent import ObjectModifiedEvent
-from zope.schema.interfaces import RequiredMissing
-from zope.schema.interfaces import IVocabularyFactory
-
+from imio.helpers.cache import cleanRamCacheFor
+from os import path
+from plone import api
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
-
-from collective.iconifiedcategory.utils import get_categorized_elements
-from imio.helpers.cache import cleanRamCacheFor
-
 from Products.CMFCore.permissions import AddPortalContent
 from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
-from plone import api
 from Products.PloneMeeting.config import AddAdvice
 from Products.PloneMeeting.config import ADVICE_STATES_ALIVE
 from Products.PloneMeeting.config import ADVICE_STATES_ENDED
@@ -56,6 +47,11 @@ from Products.PloneMeeting.indexes import indexAdvisers
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.utils import getLastEvent
 from Products.PloneMeeting.utils import isModifiedSinceLastVersion
+from zope.component import queryUtility
+from zope.event import notify
+from zope.lifecycleevent import ObjectModifiedEvent
+from zope.schema.interfaces import IVocabularyFactory
+from zope.schema.interfaces import RequiredMissing
 
 
 class testAdvices(PloneMeetingTestCase):

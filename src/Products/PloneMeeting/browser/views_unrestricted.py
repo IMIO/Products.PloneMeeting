@@ -1,11 +1,9 @@
 from AccessControl import Unauthorized
-
-from zope.component import getMultiAdapter
-from zope.i18n import translate
-
-from Products.Five import BrowserView
 from plone import api
 from plone.memoize.view import memoize
+from Products.Five import BrowserView
+from zope.component import getMultiAdapter
+from zope.i18n import translate
 
 
 class UnrestrictedMethodsView(BrowserView):

@@ -1,7 +1,7 @@
-from zope.event import notify
 from Products.Archetypes.event import EditBegunEvent
 from Products.Archetypes.event import EditCancelledEvent
 from Products.Five import BrowserView
+from zope.event import notify
 
 
 class NotifyEvent(BrowserView):

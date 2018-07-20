@@ -9,31 +9,34 @@
 # GNU General Public License (GPL)
 #
 
-import interfaces
-import time
-import OFS.Moniker
-
-from collections import OrderedDict
-from datetime import datetime
 from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
 from Acquisition import aq_base
+from collections import OrderedDict
+from collective.behavior.talcondition.utils import _evaluateExpression
+from collective.documentviewer.async import queueJob
+from collective.documentviewer.settings import GlobalSettings
+from collective.eeafaceted.dashboard.utils import enableFacetedDashboardFor
+from collective.iconifiedcategory.behaviors.iconifiedcategorization import IconifiedCategorization
+from collective.iconifiedcategory.interfaces import IIconifiedPreview
+from collective.iconifiedcategory.utils import calculate_category_id
+from collective.iconifiedcategory.utils import get_categories
+from collective.iconifiedcategory.utils import get_categorized_elements
+from collective.iconifiedcategory.utils import get_category_object
+from collective.iconifiedcategory.utils import get_config_root
+from collective.iconifiedcategory.utils import update_all_categorized_elements
 from DateTime import DateTime
+from datetime import datetime
+from imio.actionspanel.utils import unrestrictedRemoveGivenObject
+from imio.helpers.cache import get_cachekey_volatile
+from imio.helpers.cache import invalidate_cachekey_volatile_for
+from imio.helpers.security import generate_password
+from imio.helpers.security import is_develop_environment
+from imio.prettylink.interfaces import IPrettyLink
 from OFS import CopySupport
 from persistent.mapping import PersistentMapping
-from ZODB.POSException import ConflictError
-from zope.annotation.interfaces import IAnnotations
-from zope.i18n import translate
-from zope.interface import implements
-
-from Products.ZCatalog.Catalog import AbstractCatalogBrain
-from Products.CMFCore.permissions import ModifyPortalContent
-from Products.CMFCore.permissions import View
-from Products.CMFCore.utils import _checkPermission
-from Products.CMFCore.utils import UniqueObject
-from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
-from Products.CMFPlone.utils import safe_unicode
-
+from plone import api
+from plone.memoize import ram
 from Products.Archetypes.atapi import BooleanField
 from Products.Archetypes.atapi import DisplayList
 from Products.Archetypes.atapi import LinesField
@@ -46,55 +49,49 @@ from Products.Archetypes.atapi import SelectionWidget
 from Products.Archetypes.atapi import StringField
 from Products.Archetypes.atapi import TextAreaWidget
 from Products.Archetypes.atapi import TextField
-
 from Products.ATContentTypes import permission as ATCTPermissions
+from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFCore.permissions import View
+from Products.CMFCore.utils import _checkPermission
+from Products.CMFCore.utils import UniqueObject
+from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
+from Products.CMFPlone.utils import safe_unicode
 from Products.DataGridField import DataGridField
 from Products.DataGridField.Column import Column
-
-from plone import api
-from plone.memoize import ram
-from collective.behavior.talcondition.utils import _evaluateExpression
-from collective.documentviewer.async import queueJob
-from collective.documentviewer.settings import GlobalSettings
-from collective.eeafaceted.dashboard.utils import enableFacetedDashboardFor
-from collective.iconifiedcategory.behaviors.iconifiedcategorization import IconifiedCategorization
-from collective.iconifiedcategory.interfaces import IIconifiedPreview
-from collective.iconifiedcategory.utils import calculate_category_id
-from collective.iconifiedcategory.utils import get_categorized_elements
-from collective.iconifiedcategory.utils import get_category_object
-from collective.iconifiedcategory.utils import get_config_root
-from collective.iconifiedcategory.utils import get_categories
-from collective.iconifiedcategory.utils import update_all_categorized_elements
-from imio.actionspanel.utils import unrestrictedRemoveGivenObject
-from imio.helpers.cache import get_cachekey_volatile
-from imio.helpers.cache import invalidate_cachekey_volatile_for
-from imio.helpers.security import is_develop_environment
-from imio.helpers.security import generate_password
-from imio.prettylink.interfaces import IPrettyLink
 from Products.PloneMeeting import logger
+from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import ADD_CONTENT_PERMISSIONS
 from Products.PloneMeeting.config import DEFAULT_COPIED_FIELDS
 from Products.PloneMeeting.config import MEETING_CONFIG
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import PloneMeetingError
-from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import PY_DATETIME_WEEKDAYS
 from Products.PloneMeeting.config import RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import ROOT_FOLDER
 from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
+from Products.PloneMeeting.model.adaptations import performModelAdaptations
 from Products.PloneMeeting.profiles import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.profiles import PloneMeetingConfiguration
-from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import get_all_suffixes
+from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
 from Products.PloneMeeting.utils import monthsIds
 from Products.PloneMeeting.utils import weekdaysIds
 from Products.PloneMeeting.utils import workday
-from Products.PloneMeeting.model.adaptations import performModelAdaptations
+from Products.ZCatalog.Catalog import AbstractCatalogBrain
+from ZODB.POSException import ConflictError
+from zope.annotation.interfaces import IAnnotations
+from zope.i18n import translate
+from zope.interface import implements
+
+import interfaces
+import OFS.Moniker
+import time
+
 
 __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
 <g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""

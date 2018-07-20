@@ -21,6 +21,19 @@
 #
 
 from AccessControl import Unauthorized
+from plone import api
+from plone.z3cform.layout import wrap_form
+from Products.CMFCore.utils import getToolByName
+from Products.CMFPlone.utils import safe_unicode
+from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.interfaces import IRedirect
+from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
+from Products.PloneMeeting.utils import validate_item_assembly_value
+from z3c.form import button
+from z3c.form import field
+from z3c.form import form
+from z3c.form.contentprovider import ContentProviders
+from z3c.form.interfaces import IFieldsAndContentProvidersForm
 from zope import interface
 from zope import schema
 from zope.browserpage.viewpagetemplatefile import ViewPageTemplateFile
@@ -28,20 +41,7 @@ from zope.component.hooks import getSite
 from zope.contentprovider.provider import ContentProviderBase
 from zope.i18n import translate
 from zope.interface import implements
-from z3c.form import button
-from z3c.form import field
-from z3c.form import form
-from z3c.form.interfaces import IFieldsAndContentProvidersForm
-from z3c.form.contentprovider import ContentProviders
-from plone.z3cform.layout import wrap_form
 
-from Products.CMFCore.utils import getToolByName
-from Products.CMFPlone.utils import safe_unicode
-from plone import api
-from Products.PloneMeeting.config import PMMessageFactory as _
-from Products.PloneMeeting.interfaces import IRedirect
-from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
-from Products.PloneMeeting.utils import validate_item_assembly_value
 
 USING_ABSENTS_OR_EXCUSED_MSGID = u"Enter the item attendees to be applied. By default, the value of the field is " \
     "what is defined on the meeting. If you do not change this value, nothing will be applied on the item. If you " \

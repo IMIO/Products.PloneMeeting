@@ -9,22 +9,24 @@
 # GNU General Public License (GPL)
 #
 
-import logging
-from zope.component import queryUtility
-from zope.i18n import translate
-from Products.CMFPlacefulWorkflow.PlacefulWorkflowTool import WorkflowPolicyConfig_id
-from plone import api
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.messagesviewlet.utils import add_message
+from imio.helpers.catalog import addOrUpdateColumns
+from imio.helpers.catalog import addOrUpdateIndexes
+from plone import api
+from Products.CMFPlacefulWorkflow.PlacefulWorkflowTool import WorkflowPolicyConfig_id
 from Products.CMFPlone.utils import base_hasattr
-from Products.cron4plone.browser.configlets.cron_configuration import ICronConfiguration
 from Products.CPUtils.Extensions.utils import configure_ckeditor
+from Products.cron4plone.browser.configlets.cron_configuration import ICronConfiguration
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_REAPPLY
+from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG
 from Products.PloneMeeting.config import HAS_ZAMQP
-from Products.PloneMeeting.config import PMMessageFactory as _
-from imio.helpers.catalog import addOrUpdateIndexes
-from imio.helpers.catalog import addOrUpdateColumns
+from zope.component import queryUtility
+from zope.i18n import translate
+
+import logging
+
 
 __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
 <g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""

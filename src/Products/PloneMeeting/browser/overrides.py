@@ -9,11 +9,34 @@
 
 from AccessControl import Unauthorized
 from Acquisition import aq_base
-from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
-from zope.annotation import IAnnotations
-from zope.i18n import translate
-from zope.interface import alsoProvides
+from archetypes.referencebrowserwidget.browser.view import ReferenceBrowserPopup
+from collective.behavior.talcondition.utils import _evaluateExpression
+from collective.ckeditor.browser.ckeditorfinder import CKFinder
+from collective.documentgenerator.content.pod_template import IPODTemplate
+from collective.documentgenerator.viewlets.generationlinks import DocumentGeneratorLinksViewlet
+from collective.eeafaceted.batchactions.browser.views import TransitionBatchActionForm
+from collective.eeafaceted.collectionwidget.browser.views import FacetedDashboardView
+from collective.eeafaceted.collectionwidget.browser.views import RenderCategoryView
+from collective.eeafaceted.dashboard.browser.overrides import DashboardDocumentGenerationView
+from collective.eeafaceted.dashboard.browser.overrides import DashboardDocumentGeneratorLinksViewlet
+from collective.eeafaceted.dashboard.browser.views import RenderTermPortletView
+from collective.eeafaceted.dashboard.content.pod_template import IDashboardPODTemplate
+from collective.iconifiedcategory import utils as collective_iconifiedcategory_utils
+from collective.iconifiedcategory.browser.actionview import ConfidentialChangeView
+from collective.iconifiedcategory.browser.tabview import CategorizedTabView
+from collective.iconifiedcategory.browser.views import CategorizedChildInfosView
+from collective.iconifiedcategory.interfaces import ICategorizedConfidential
+from collective.iconifiedcategory.interfaces import ICategorizedPrint
+from collective.iconifiedcategory.interfaces import ICategorizedSigned
+from eea.facetednavigation.interfaces import IFacetedNavigable
+from imio.actionspanel.browser.viewlets import ActionsPanelViewlet
+from imio.actionspanel.browser.views import ActionsPanelView
+from imio.annex import utils as imio_annex_utils
+from imio.history.browser.views import IHContentHistoryView
+from imio.history.browser.views import IHDocumentBylineViewlet
+from imio.prettylink.interfaces import IPrettyLink
 from plone import api
+from plone import namedfile
 from plone.app.content.browser.foldercontents import FolderContentsView
 from plone.app.controlpanel.overview import OverviewControlPanel
 from plone.app.layout.viewlets.common import ContentActionsViewlet
@@ -21,38 +44,10 @@ from plone.app.layout.viewlets.common import GlobalSectionsViewlet
 from plone.memoize import ram
 from plone.memoize.instance import memoize
 from plone.memoize.view import memoize_contextless
-from plone import namedfile
-
-from archetypes.referencebrowserwidget.browser.view import ReferenceBrowserPopup
-from collective.behavior.talcondition.utils import _evaluateExpression
-from collective.ckeditor.browser.ckeditorfinder import CKFinder
-from collective.documentgenerator.content.pod_template import IPODTemplate
-from collective.documentgenerator.viewlets.generationlinks import DocumentGeneratorLinksViewlet
-from collective.eeafaceted.batchactions.browser.views import TransitionBatchActionForm
-from collective.eeafaceted.collectionwidget.browser.views import RenderCategoryView
-from collective.iconifiedcategory.browser.actionview import ConfidentialChangeView
-from collective.iconifiedcategory.browser.tabview import CategorizedTabView
-from collective.iconifiedcategory.browser.views import CategorizedChildInfosView
-from collective.iconifiedcategory.interfaces import ICategorizedConfidential
-from collective.iconifiedcategory.interfaces import ICategorizedPrint
-from collective.iconifiedcategory.interfaces import ICategorizedSigned
-from collective.iconifiedcategory import utils as collective_iconifiedcategory_utils
-from collective.eeafaceted.collectionwidget.browser.views import FacetedDashboardView
-from eea.facetednavigation.interfaces import IFacetedNavigable
-from imio.actionspanel.browser.viewlets import ActionsPanelViewlet
-from imio.actionspanel.browser.views import ActionsPanelView
-from imio.annex import utils as imio_annex_utils
-from collective.eeafaceted.dashboard.browser.overrides import DashboardDocumentGenerationView
-from collective.eeafaceted.dashboard.browser.overrides import DashboardDocumentGeneratorLinksViewlet
-from collective.eeafaceted.dashboard.browser.views import RenderTermPortletView
-from collective.eeafaceted.dashboard.content.pod_template import IDashboardPODTemplate
-from imio.history.browser.views import IHContentHistoryView
-from imio.history.browser.views import IHDocumentBylineViewlet
-from imio.prettylink.interfaces import IPrettyLink
-
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFPlone.browser.navigation import CatalogNavigationTabs
 from Products.CMFPlone.utils import safe_unicode
+from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.PloneMeeting import utils as pm_utils
 from Products.PloneMeeting.config import BARCODE_INSERTED_ATTR_ID
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
@@ -61,6 +56,9 @@ from Products.PloneMeeting.utils import get_all_suffixes
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import sendMail
+from zope.annotation import IAnnotations
+from zope.i18n import translate
+from zope.interface import alsoProvides
 
 
 class PMFolderContentsView(FolderContentsView):

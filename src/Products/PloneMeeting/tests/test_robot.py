@@ -23,10 +23,9 @@
 #
 
 from plone.testing import layered
+from Products.PloneMeeting.testing import PM_TESTING_ROBOT
 
 import robotsuite
-
-from Products.PloneMeeting.testing import PM_TESTING_ROBOT
 
 
 def test_suite():

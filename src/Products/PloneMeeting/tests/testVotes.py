@@ -22,12 +22,12 @@
 # 02110-1301, USA.
 #
 
-from DateTime import DateTime
 from AccessControl import Unauthorized
-from zope.i18n import translate
-
+from DateTime import DateTime
 from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from zope.i18n import translate
+
 
 ################################################################################
 #                                                                              #

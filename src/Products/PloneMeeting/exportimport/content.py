@@ -19,11 +19,10 @@
 # 02110-1301, USA.
 #
 
-from zope.i18n import translate
-from plone import api
-from collective.iconifiedcategory import CAT_SEPARATOR
-from Products.CMFPlone.interfaces.constrains import IConstrainTypes
 from collective.eeafaceted.collectionwidget.utils import _updateDefaultCollectionFor
+from collective.iconifiedcategory import CAT_SEPARATOR
+from plone import api
+from Products.CMFPlone.interfaces.constrains import IConstrainTypes
 from Products.PloneMeeting.config import PloneMeetingError
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import registerClasses
@@ -31,6 +30,7 @@ from Products.PloneMeeting.Extensions.imports import import_contacts
 from Products.PloneMeeting.model.adaptations import performModelAdaptations
 from Products.PloneMeeting.ToolPloneMeeting import MEETING_CONFIG_ERROR
 from Products.PloneMeeting.utils import updateCollectionCriterion
+from zope.i18n import translate
 
 
 # PloneMeeting-Error related constants -----------------------------------------

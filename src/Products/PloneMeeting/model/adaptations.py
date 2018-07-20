@@ -3,15 +3,12 @@
 '''This module allows to perform some standard sets of adaptations in the
    PloneMeeting data structures and workflows.'''
 
-import string
-
-from Products.Archetypes.atapi import StringField
-from Products.Archetypes.atapi import TextField
-from Products.Archetypes.atapi import StringWidget
-from Products.Archetypes.atapi import RichWidget
-from Products.Archetypes.atapi import TextAreaWidget
-
 from plone import api
+from Products.Archetypes.atapi import RichWidget
+from Products.Archetypes.atapi import StringField
+from Products.Archetypes.atapi import StringWidget
+from Products.Archetypes.atapi import TextAreaWidget
+from Products.Archetypes.atapi import TextField
 from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import ReviewPortalContent
@@ -20,6 +17,9 @@ from Products.PloneMeeting.config import ReadDecision
 from Products.PloneMeeting.config import WriteDecision
 from Products.PloneMeeting.config import WriteItemMeetingManagerFields
 from Products.PloneMeeting.utils import updateCollectionCriterion
+
+import string
+
 
 # Stuff for performing workflow adaptations ------------------------------------
 noGlobalObsStates = ('itempublished', 'itemfrozen', 'accepted', 'refused',

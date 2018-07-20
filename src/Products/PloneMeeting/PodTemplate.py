@@ -14,30 +14,34 @@ __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
 __docformat__ = 'plaintext'
 
 from AccessControl import ClassSecurityInfo
+from AccessControl import Unauthorized
+from appy.pod.renderer import Renderer
+from appy.shared.utils import normalizeString
 from Products.Archetypes.atapi import *
-from zope.interface import implements
-import interfaces
-
+from Products.CMFCore.Expression import createExprContext
+from Products.CMFCore.Expression import Expression
+from Products.CMFCore.utils import getToolByName
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
-
+from Products.PageTemplates.Expressions import getEngine
 from Products.PloneMeeting.config import *
+from Products.PloneMeeting.config import PloneMeetingError
+from Products.PloneMeeting.interfaces import IAnnexable
+from Products.PloneMeeting.utils import clonePermissions
+from Products.PloneMeeting.utils import getCustomAdapter
+from Products.PloneMeeting.utils import getFieldContent
+from Products.PloneMeeting.utils import sendMail
+from StringIO import StringIO
+from zope.interface import implements
 
+import appy.pod
+import interfaces
+import logging
 ##code-section module-header #fill in your manual code here
 import os
 import tempfile
 import time
-import appy.pod
-from appy.pod.renderer import Renderer
-from appy.shared.utils import normalizeString
-from StringIO import StringIO
-from Products.PloneMeeting.config import PloneMeetingError
-from Products.PloneMeeting.interfaces import IAnnexable
-from Products.PloneMeeting.utils import clonePermissions, getCustomAdapter, sendMail, getFieldContent
-from Products.CMFCore.Expression import Expression, createExprContext
-from Products.PageTemplates.Expressions import getEngine
-from Products.CMFCore.utils import getToolByName
-from AccessControl import Unauthorized
-import logging
+
+
 logger = logging.getLogger('PloneMeeting')
 
 MAILINGLIST_CONDITION_ERROR = 'There was an error in the TAL expression ' \

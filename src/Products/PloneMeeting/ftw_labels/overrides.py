@@ -7,10 +7,10 @@
 # GNU General Public License (GPL)
 #
 
-from plone import api
-from imio.helpers.cache import cleanRamCacheFor
 from ftw.labels.portlets.labeljar import Renderer as ftw_labels_renderer
 from ftw.labels.viewlets.labeling import LabelingViewlet
+from imio.helpers.cache import cleanRamCacheFor
+from plone import api
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
 

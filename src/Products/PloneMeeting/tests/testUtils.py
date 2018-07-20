@@ -22,8 +22,9 @@
 # 02110-1301, USA.
 #
 
-from Products.PloneMeeting.utils import validate_item_assembly_value
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from Products.PloneMeeting.utils import validate_item_assembly_value
+
 
 ASSEMBLY_CORRECT_VALUE = u'[[Text]][[Text]]'
 ASSEMBLY_WRONG_VALUE = u'[[Text Text'

@@ -1,13 +1,11 @@
 from AccessControl import Unauthorized
+from plone import api
+from Products.Five.browser import BrowserView
+from Products.PloneMeeting.config import PloneMeetingError
+from Products.PloneMeeting.utils import ItemListTypeChangedEvent
 from zope.component import queryUtility
 from zope.event import notify
 from zope.schema.interfaces import IVocabularyFactory
-from Products.Five.browser import BrowserView
-
-from plone import api
-
-from Products.PloneMeeting.config import PloneMeetingError
-from Products.PloneMeeting.utils import ItemListTypeChangedEvent
 
 
 class ItemListTypeView(BrowserView):

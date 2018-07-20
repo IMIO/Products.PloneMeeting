@@ -22,15 +22,16 @@
 # 02110-1301, USA.
 #
 
+from imio.helpers.cache import cleanRamCacheFor
+from plone.portlets.interfaces import IPortletManager
+from plone.portlets.interfaces import IPortletRenderer
+from Products.PloneMeeting.browser import portlet_plonemeeting
+from Products.PloneMeeting.browser import portlet_todo
+from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from zope.component import getMultiAdapter
 from zope.component import getUtility
 from zope.event import notify
 from zope.lifecycleevent import ObjectModifiedEvent
-from imio.helpers.cache import cleanRamCacheFor
-from plone.portlets.interfaces import IPortletManager, IPortletRenderer
-from Products.PloneMeeting.browser import portlet_plonemeeting
-from Products.PloneMeeting.browser import portlet_todo
-from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 
 
 class testPortlets(PloneMeetingTestCase):

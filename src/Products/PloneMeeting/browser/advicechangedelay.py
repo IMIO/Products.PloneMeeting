@@ -1,26 +1,25 @@
 # -*- coding: utf-8 -*-
 
-from DateTime import DateTime
 from AccessControl import Unauthorized
-from zope import interface
-from zope import schema
-from zope.component.hooks import getSite
-from zope.i18n import translate
-from z3c.form import button
-from z3c.form import field
-from z3c.form import form
-from plone.z3cform.layout import wrap_form
-
+from DateTime import DateTime
 from plone import api
+from plone.z3cform.layout import wrap_form
 from Products.CMFCore.Expression import createExprContext
 from Products.CMFCore.Expression import Expression
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
 from Products.Five.browser import BrowserView
 from Products.PloneMeeting import logger
-from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.MeetingItem import ADVICE_AVAILABLE_ON_CONDITION_ERROR
+from z3c.form import button
+from z3c.form import field
+from z3c.form import form
+from zope import interface
+from zope import schema
+from zope.component.hooks import getSite
+from zope.i18n import translate
 
 
 class AdviceDelaysView(BrowserView):

@@ -23,15 +23,15 @@
 #
 
 from AccessControl import Unauthorized
-from zope.event import notify
-from zope.lifecycleevent import ObjectModifiedEvent
+from imio.actionspanel.interfaces import IContentDeletable
+from imio.history.browser.views import IHVersionPreviewView
+from plone import api
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
 from Products.Five import BrowserView
 from Products.PloneMeeting.interfaces import IMeetingItem
-from plone import api
-from imio.actionspanel.interfaces import IContentDeletable
-from imio.history.browser.views import IHVersionPreviewView
+from zope.event import notify
+from zope.lifecycleevent import ObjectModifiedEvent
 
 
 def delay_icon(memberIsAdviserForGroup, adviceInfo):

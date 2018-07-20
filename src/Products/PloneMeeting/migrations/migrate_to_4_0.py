@@ -1,36 +1,35 @@
 # -*- coding: utf-8 -*-
 
-import mimetypes
-import os
-import time
-import logging
-
 from Acquisition import aq_base
+from collective.documentgenerator.config import set_oo_port
+from collective.documentgenerator.config import set_uno_path
+from collective.eeafaceted.collectionwidget.utils import _updateDefaultCollectionFor
+from collective.iconifiedcategory.utils import calculate_category_id
+from collective.iconifiedcategory.utils import update_all_categorized_elements
 from DateTime import DateTime
+from imio.helpers.cache import cleanRamCacheFor
+from imio.helpers.catalog import removeIndexes
 from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
-from zope.i18n import translate
-
 from plone import api
 from plone.namedfile.file import NamedBlobFile
 from plone.namedfile.file import NamedBlobImage
-from Products.CMFPlone.utils import safe_unicode
-from collective.documentgenerator.config import set_oo_port
-from collective.documentgenerator.config import set_uno_path
-from collective.iconifiedcategory.utils import calculate_category_id
-from collective.iconifiedcategory.utils import update_all_categorized_elements
-from collective.eeafaceted.collectionwidget.utils import _updateDefaultCollectionFor
-from imio.helpers.cache import cleanRamCacheFor
-from imio.helpers.catalog import removeIndexes
 from Products.CMFPlone.utils import base_hasattr
+from Products.CMFPlone.utils import safe_unicode
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_NEW
-
 from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.migrations import Migrator
 from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import updateCollectionCriterion
+from zope.i18n import translate
+
+import logging
+import mimetypes
+import os
+import time
+
 
 logger = logging.getLogger('PloneMeeting')
 

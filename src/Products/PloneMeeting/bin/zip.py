@@ -1,6 +1,12 @@
 # Imports ----------------------------------------------------------------------
-import os, os.path, zipfile, sys, shutil
 from clean import Cleaner
+
+import os
+import os.path
+import shutil
+import sys
+import zipfile
+
 
 # ------------------------------------------------------------------------------
 class FolderDeleter:

@@ -22,16 +22,16 @@
 # 02110-1301, USA.
 #
 
-import transaction
 from OFS.ObjectManager import BeforeDeleteException
-from zope.i18n import translate
-from zExceptions import Redirect
-
 from plone import api
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.statusmessages.interfaces import IStatusMessage
+from zExceptions import Redirect
+from zope.i18n import translate
+
+import transaction
 
 
 class testMeetingGroup(PloneMeetingTestCase):

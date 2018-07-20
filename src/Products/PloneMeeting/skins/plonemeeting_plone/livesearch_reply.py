@@ -11,14 +11,15 @@ from Products.CMFCore.utils import getToolByName
 from Products.CMFPlone import PloneMessageFactory as _
 from Products.CMFPlone.browser.navtree import getNavigationRoot
 from Products.CMFPlone.utils import safe_unicode
-from Products.PythonScripts.standard import url_quote_plus
+from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PythonScripts.standard import html_quote
+from Products.PythonScripts.standard import url_quote_plus
+
 
 ploneUtils = getToolByName(context, 'plone_utils')
 portal_url = getToolByName(context, 'portal_url')()
 # XXX begin changes by PloneMeeting, define advanced_search_url
 tool = getToolByName(context, 'portal_plonemeeting')
-from Products.PloneMeeting.utils import getCurrentMeetingObject
 currentMeetingObject = getCurrentMeetingObject(context)
 mc = None
 if currentMeetingObject:

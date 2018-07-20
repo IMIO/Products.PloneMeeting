@@ -20,16 +20,17 @@
 # 02110-1301, USA.
 #
 
-import sys
-import re
-import urlparse
+from appy.shared.dav import Resource
+from appy.shared.utils import FolderDeleter
+
 import os
 import os.path
 import random
-import time
+import re
 import socket
-from appy.shared.dav import Resource
-from appy.shared.utils import FolderDeleter
+import sys
+import time
+import urlparse
 
 
 class PerformanceTester:

@@ -21,25 +21,26 @@
 #
 
 from AccessControl import Unauthorized
-from zope.contentprovider.provider import ContentProviderBase
-from zope.i18n import translate
-from zope import interface, schema
-from zope.component.hooks import getSite
-from zope.interface import implements
-from z3c.form import form, field, button
-from z3c.form.interfaces import IFieldsAndContentProvidersForm
-from z3c.form.contentprovider import ContentProviders
-
-from zope.browserpage.viewpagetemplatefile import ViewPageTemplateFile
-
+from plone.z3cform.layout import wrap_form
 from Products.CMFCore.utils import getToolByName
 from Products.CMFPlone.utils import safe_unicode
-from plone.z3cform.layout import wrap_form
 from Products.PloneMeeting.browser.itemassembly import _itemsToUpdate
 from Products.PloneMeeting.browser.itemassembly import validate_apply_until_item_number
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IRedirect
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
+from z3c.form import button
+from z3c.form import field
+from z3c.form import form
+from z3c.form.contentprovider import ContentProviders
+from z3c.form.interfaces import IFieldsAndContentProvidersForm
+from zope import interface
+from zope import schema
+from zope.browserpage.viewpagetemplatefile import ViewPageTemplateFile
+from zope.component.hooks import getSite
+from zope.contentprovider.provider import ContentProviderBase
+from zope.i18n import translate
+from zope.interface import implements
 
 
 def item_signatures_default():

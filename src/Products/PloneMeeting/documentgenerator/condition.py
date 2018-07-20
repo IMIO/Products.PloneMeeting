@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-from plone import api
 from collective.documentgenerator.content.condition import ConfigurablePODTemplateCondition
+from plone import api
 
 
 class PMConfigurablePODTemplateCondition(ConfigurablePODTemplateCondition):

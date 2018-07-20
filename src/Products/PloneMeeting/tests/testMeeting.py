@@ -22,34 +22,26 @@
 # 02110-1301, USA.
 #
 
-import transaction
+from AccessControl import Unauthorized
 from copy import deepcopy
-from os import path
-
 from DateTime import DateTime
 from DateTime.DateTime import _findLocalTimeZoneName
-from AccessControl import Unauthorized
-from Products.Five import zcml
-from zope.i18n import translate
-
+from imio.helpers.cache import cleanRamCacheFor
+from os import path
+from plone.app.querystring.querybuilder import queryparser
+from plone.app.textfield.value import RichTextValue
+from plone.dexterity.utils import createContentInContainer
+from Products import PloneMeeting as products_plonemeeting
 from Products.CMFCore.permissions import AccessContentsInformation
 from Products.CMFCore.permissions import AddPortalContent
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import ReviewPortalContent
 from Products.CMFCore.permissions import View
-from Products.ZCatalog.Catalog import AbstractCatalogBrain
-
-from plone.app.textfield.value import RichTextValue
-from plone.app.querystring.querybuilder import queryparser
-from plone.dexterity.utils import createContentInContainer
-
-from imio.helpers.cache import cleanRamCacheFor
-
-from Products import PloneMeeting as products_plonemeeting
+from Products.Five import zcml
 from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
-from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETING_STATES_ACCEPTING_ITEMS
+from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
@@ -58,6 +50,10 @@ from Products.PloneMeeting.tests.testUtils import ASSEMBLY_CORRECT_VALUE
 from Products.PloneMeeting.tests.testUtils import ASSEMBLY_WRONG_VALUE
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import setFieldFromAjax
+from Products.ZCatalog.Catalog import AbstractCatalogBrain
+from zope.i18n import translate
+
+import transaction
 
 
 class testMeeting(PloneMeetingTestCase):

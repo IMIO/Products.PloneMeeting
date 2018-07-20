@@ -7,12 +7,13 @@
 # GNU General Public License (GPL)
 #
 
-from plone.testing import z2, zca
+from plone.app.robotframework.testing import REMOTE_LIBRARY_BUNDLE_FIXTURE
 from plone.app.testing import FunctionalTesting
 from plone.app.testing import IntegrationTesting
 from plone.app.testing import PloneWithPackageLayer
+from plone.testing import z2
+from plone.testing import zca
 
-from plone.app.robotframework.testing import REMOTE_LIBRARY_BUNDLE_FIXTURE
 import Products.PloneMeeting
 
 

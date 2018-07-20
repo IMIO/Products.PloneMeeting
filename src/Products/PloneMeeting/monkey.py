@@ -1,11 +1,10 @@
 
 from Acquisition import aq_base
-from Products.Archetypes.BaseObject import BaseObject
-from Products.PortalTransforms.cache import Cache
-from Products.PloneMeeting import logger
-
 from plone import api
 from plone.app.querystring import queryparser
+from Products.Archetypes.BaseObject import BaseObject
+from Products.PloneMeeting import logger
+from Products.PortalTransforms.cache import Cache
 
 
 def _patched_equal(context, row):

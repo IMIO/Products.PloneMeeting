@@ -1,16 +1,18 @@
 # -*- coding: utf-8 -*-
 
-import logging
-import mimetypes
-import os
 from collections import OrderedDict
-from persistent.mapping import PersistentMapping
-from zope.interface import alsoProvides
 from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
+from persistent.mapping import PersistentMapping
 from plone import api
 from Products.CMFPlone.utils import base_hasattr
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_NEW
 from Products.PloneMeeting.migrations import Migrator
+from zope.interface import alsoProvides
+
+import logging
+import mimetypes
+import os
+
 
 logger = logging.getLogger('PloneMeeting')
 

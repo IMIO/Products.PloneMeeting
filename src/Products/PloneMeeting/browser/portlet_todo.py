@@ -1,23 +1,21 @@
-from zope import schema
-from zope.component import getMultiAdapter
-from zope.interface import implements
-from zope.formlib import form
-
-from plone.memoize.view import memoize
-from plone.app.portlets.portlets import base
-from plone.portlets.interfaces import IPortletDataProvider
-
-from plone import api
-from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
-
 from collective.behavior.talcondition.interfaces import ITALConditionable
 from collective.behavior.talcondition.utils import evaluateExpressionFor
-from collective.eeafaceted.dashboard.browser.facetedcollectionportlet import Renderer as FacetedRenderer
-from eea.facetednavigation.widgets.sorting.widget import Widget as SortingWidget
 from collective.eeafaceted.collectionwidget.utils import _get_criterion
 from collective.eeafaceted.collectionwidget.utils import getCollectionLinkCriterion
-
+from collective.eeafaceted.dashboard.browser.facetedcollectionportlet import Renderer as FacetedRenderer
+from eea.facetednavigation.widgets.sorting.widget import Widget as SortingWidget
+from plone import api
+from plone.app.portlets.portlets import base
+from plone.memoize.view import memoize
+from plone.portlets.interfaces import IPortletDataProvider
+from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
+from zope import schema
+from zope.component import getMultiAdapter
+from zope.formlib import form
 from zope.i18nmessageid import MessageFactory
+from zope.interface import implements
+
+
 _ = MessageFactory('PloneMeeting')
 
 

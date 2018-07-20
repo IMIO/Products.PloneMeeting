@@ -20,12 +20,12 @@
 # 02110-1301, USA.
 #
 
-from zope.component import getMultiAdapter
 from collective.eeafaceted.batchactions.browser.viewlets import BatchActionsViewlet
+from plone import api
 from plone.app.layout.viewlets import ViewletBase
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.PloneMeeting.utils import displaying_available_items
-from plone import api
+from zope.component import getMultiAdapter
 
 
 class WorkflowState(ViewletBase):

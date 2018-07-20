@@ -22,30 +22,29 @@
 # 02110-1301, USA.
 #
 
-from os import path
-from datetime import datetime
-from DateTime import DateTime
 from AccessControl import Unauthorized
-from Products.Five import zcml
-from zope.component import getAdapter
-from zope.component import getMultiAdapter
-from zope.i18n import translate
+from DateTime import DateTime
+from datetime import datetime
+from ftw.labels.interfaces import ILabeling
+from ftw.labels.interfaces import ILabelJar
+from os import path
 from plone import api
 from plone.app.testing import logout
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
+from Products import PloneMeeting as products_plonemeeting
 from Products.CMFCore.ActionInformation import Action
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
-from Products.statusmessages.interfaces import IStatusMessage
-
-from ftw.labels.interfaces import ILabeling
-from ftw.labels.interfaces import ILabelJar
-
-from Products import PloneMeeting as products_plonemeeting
+from Products.Five import zcml
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.utils import get_annexes
+from Products.statusmessages.interfaces import IStatusMessage
+from zope.component import getAdapter
+from zope.component import getMultiAdapter
+from zope.i18n import translate
+
 
 SAMPLE_ERROR_MESSAGE = u'This is the error message!'
 

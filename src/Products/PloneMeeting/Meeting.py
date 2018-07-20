@@ -9,14 +9,23 @@
 # GNU General Public License (GPL)
 #
 
-import interfaces
-import itertools
-import logging
-import os
-
 from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
-from zope.interface import implements
+from App.class_init import InitializeClass
+from appy.gen import No
+from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
+from collections import OrderedDict
+from DateTime import DateTime
+from DateTime.DateTime import _findLocalTimeZoneName
+from imio.helpers.cache import cleanRamCacheFor
+from imio.helpers.cache import invalidate_cachekey_volatile_for
+from imio.prettylink.interfaces import IPrettyLink
+from OFS.ObjectManager import BeforeDeleteException
+from persistent.mapping import PersistentMapping
+from plone import api
+from plone.api.validation import mutually_exclusive_parameters
+from plone.app.querystring.querybuilder import queryparser
+from plone.memoize import ram
 from Products.Archetypes.atapi import BooleanField
 from Products.Archetypes.atapi import DateTimeField
 from Products.Archetypes.atapi import IntegerField
@@ -30,35 +39,17 @@ from Products.Archetypes.atapi import StringField
 from Products.Archetypes.atapi import TextAreaWidget
 from Products.Archetypes.atapi import TextField
 from Products.Archetypes.event import ObjectEditedEvent
-from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
-from appy.gen import No
-from collections import OrderedDict
-from App.class_init import InitializeClass
-from DateTime import DateTime
-from DateTime.DateTime import _findLocalTimeZoneName
-from OFS.ObjectManager import BeforeDeleteException
-from persistent.mapping import PersistentMapping
-from zope.component import getMultiAdapter
-from zope.event import notify
-from zope.i18n import translate
-from plone.app.querystring.querybuilder import queryparser
-from plone.memoize import ram
-from imio.helpers.cache import cleanRamCacheFor
-from imio.helpers.cache import invalidate_cachekey_volatile_for
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import ReviewPortalContent
-from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from Products.CMFCore.utils import _checkPermission
-from plone import api
-from plone.api.validation import mutually_exclusive_parameters
-from imio.prettylink.interfaces import IPrettyLink
+from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from Products.PloneMeeting.browser.itemchangeorder import _compute_value_to_add
-from Products.PloneMeeting.browser.itemchangeorder import _to_integer
 from Products.PloneMeeting.browser.itemchangeorder import _is_integer
+from Products.PloneMeeting.browser.itemchangeorder import _to_integer
 from Products.PloneMeeting.browser.itemchangeorder import _use_same_integer
+from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import MEETING_STATES_ACCEPTING_ITEMS
-from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import READER_USECASES
@@ -72,12 +63,12 @@ from Products.PloneMeeting.utils import addRecurringItemsIfRelevant
 from Products.PloneMeeting.utils import displaying_available_items
 from Products.PloneMeeting.utils import fieldIsEmpty
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
-from Products.PloneMeeting.utils import getWorkflowAdapter
 from Products.PloneMeeting.utils import getCustomAdapter
-from Products.PloneMeeting.utils import getLastEvent
-from Products.PloneMeeting.utils import getFieldVersion
 from Products.PloneMeeting.utils import getDateFromDelta
+from Products.PloneMeeting.utils import getFieldVersion
+from Products.PloneMeeting.utils import getLastEvent
 from Products.PloneMeeting.utils import getStatesBefore
+from Products.PloneMeeting.utils import getWorkflowAdapter
 from Products.PloneMeeting.utils import hasHistory
 from Products.PloneMeeting.utils import ItemDuplicatedFromConfigEvent
 from Products.PloneMeeting.utils import MeetingLocalRolesUpdatedEvent
@@ -87,6 +78,15 @@ from Products.PloneMeeting.utils import toHTMLStrikedContent
 from Products.PloneMeeting.utils import transformAllRichTextFields
 from Products.PloneMeeting.utils import updateAnnexesAccess
 from Products.PloneMeeting.utils import validate_item_assembly_value
+from zope.component import getMultiAdapter
+from zope.event import notify
+from zope.i18n import translate
+from zope.interface import implements
+
+import interfaces
+import itertools
+import logging
+import os
 
 
 __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN

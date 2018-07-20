@@ -22,10 +22,10 @@
 # 02110-1301, USA.
 #
 
-from zope.i18n import translate
 from OFS.ObjectManager import BeforeDeleteException
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from zope.i18n import translate
 
 
 class testMeetingCategory(PloneMeetingTestCase):

@@ -14,9 +14,8 @@ __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
 __docformat__ = 'plaintext'
 
 from AccessControl import ClassSecurityInfo
-from zope.interface import implements
-import interfaces
-
+from collective.datagridcolumns.MultiSelectColumn import MultiSelectColumn
+from plone import api
 from Products.Archetypes.atapi import AttributeStorage
 from Products.Archetypes.atapi import BaseContent
 from Products.Archetypes.atapi import BaseSchema
@@ -30,18 +29,20 @@ from Products.Archetypes.atapi import Schema
 from Products.Archetypes.atapi import SelectionWidget
 from Products.Archetypes.atapi import StringField
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
-from Products.DataGridField import DataGridField, DataGridWidget
-from Products.DataGridField.Column import Column
-
-#from OFS.ObjectManager import BeforeDeleteException
-from zope.i18n import translate
 from Products.CMFPlone.utils import safe_unicode
-from plone import api
+from Products.DataGridField import DataGridField
+from Products.DataGridField import DataGridWidget
+from Products.DataGridField.CheckboxColumn import CheckboxColumn
+from Products.DataGridField.Column import Column
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import WriteRiskyConfig
-from Products.PloneMeeting.utils import getCustomAdapter, getFieldContent
-from Products.DataGridField.CheckboxColumn import CheckboxColumn
-from collective.datagridcolumns.MultiSelectColumn import MultiSelectColumn
+from Products.PloneMeeting.utils import getCustomAdapter
+from Products.PloneMeeting.utils import getFieldContent
+#from OFS.ObjectManager import BeforeDeleteException
+from zope.i18n import translate
+from zope.interface import implements
+
+import interfaces
 
 
 schema = Schema((

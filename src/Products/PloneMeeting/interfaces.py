@@ -3,8 +3,8 @@
 from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
 from collective.eeafaceted.collectionwidget.interfaces import ICollectiveEeafacetedCollectionwidgetLayer
 from ftw.labels.interfaces import ILabelSupport
-from zope.interface import Interface
 from zope.component.interfaces import IObjectEvent
+from zope.interface import Interface
 
 
 class IAdvicesUpdatedEvent(IObjectEvent):

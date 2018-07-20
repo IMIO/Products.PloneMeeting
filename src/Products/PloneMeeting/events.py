@@ -9,32 +9,27 @@
 # GNU General Public License (GPL)
 #
 
-import logging
 from AccessControl import Unauthorized
-from DateTime import DateTime
-from persistent.list import PersistentList
-from persistent.mapping import PersistentMapping
-from OFS.ObjectManager import BeforeDeleteException
-from zExceptions import Redirect
-from zope.event import notify
-from zope.i18n import translate
-from zope.lifecycleevent import IObjectRemovedEvent
-from Products.CMFCore.WorkflowCore import WorkflowException
-from plone.app.textfield import RichText
-from plone.app.textfield.value import RichTextValue
-from plone import api
 from collective.documentviewer.async import queueJob
 from collective.iconifiedcategory.utils import update_all_categorized_elements
+from DateTime import DateTime
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.cache import invalidate_cachekey_volatile_for
 from imio.helpers.xhtml import storeImagesLocally
+from OFS.ObjectManager import BeforeDeleteException
+from persistent.list import PersistentList
+from persistent.mapping import PersistentMapping
+from plone import api
+from plone.app.textfield import RichText
+from plone.app.textfield.value import RichTextValue
+from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFPlone.utils import safe_unicode
+from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import ADVICE_GIVEN_HISTORIZED_COMMENT
 from Products.PloneMeeting.config import BARCODE_INSERTED_ATTR_ID
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
-from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import addRecurringItemsIfRelevant
 from Products.PloneMeeting.utils import AdviceAfterAddEvent
@@ -44,6 +39,13 @@ from Products.PloneMeeting.utils import ItemAfterTransitionEvent
 from Products.PloneMeeting.utils import MeetingAfterTransitionEvent
 from Products.PloneMeeting.utils import meetingTriggerTransitionOnLinkedItems
 from Products.PloneMeeting.utils import sendMailIfRelevant
+from zExceptions import Redirect
+from zope.event import notify
+from zope.i18n import translate
+from zope.lifecycleevent import IObjectRemovedEvent
+
+import logging
+
 
 __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
 <g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""

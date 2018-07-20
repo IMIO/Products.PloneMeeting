@@ -1,21 +1,13 @@
 # -*- coding: utf-8 -*-
 
 from AccessControl import Unauthorized
+from imio.prettylink.interfaces import IPrettyLink
 from persistent.list import PersistentList
-from zope.interface import implements
-from zope import schema
-from zope.i18n import translate
-from zope.schema.interfaces import IVocabularyFactory
-from zope.schema.vocabulary import SimpleTerm, SimpleVocabulary
-
-from z3c.form.browser.radio import RadioFieldWidget
-
+from plone import api
 from plone.app.textfield import RichText
 from plone.dexterity.content import Container
 from plone.dexterity.schema import DexteritySchemaPolicy
 from plone.directives import form
-
-from plone import api
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IMeetingContent
 from Products.PloneMeeting.utils import findMeetingAdvicePortalType
@@ -23,7 +15,13 @@ from Products.PloneMeeting.utils import getLastEvent
 from Products.PloneMeeting.utils import isModifiedSinceLastVersion
 from Products.PloneMeeting.utils import main_item_data
 from Products.PloneMeeting.utils import version_object
-from imio.prettylink.interfaces import IPrettyLink
+from z3c.form.browser.radio import RadioFieldWidget
+from zope import schema
+from zope.i18n import translate
+from zope.interface import implements
+from zope.schema.interfaces import IVocabularyFactory
+from zope.schema.vocabulary import SimpleTerm
+from zope.schema.vocabulary import SimpleVocabulary
 
 
 class IMeetingAdvice(IMeetingContent):

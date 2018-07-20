@@ -1,9 +1,9 @@
-from zope.interface import implements
-from Products.CMFCore.permissions import ModifyPortalContent
-from Products.CMFCore.utils import _checkPermission
+from imio.helpers.xhtml import removeCssClasses
 from plone import api
 from plone.outputfilters.interfaces import IFilter
-from imio.helpers.xhtml import removeCssClasses
+from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFCore.utils import _checkPermission
+from zope.interface import implements
 
 
 class HighlightRemover(object):

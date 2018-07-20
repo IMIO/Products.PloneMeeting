@@ -23,12 +23,11 @@
 #
 
 from DateTime import DateTime
-from profilehooks import timecall
 from plone import api
-
+from PloneMeetingTestCase import pm_logger
 from Products.CMFCore.utils import getToolByName
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
-from PloneMeetingTestCase import pm_logger
+from profilehooks import timecall
 
 
 class testPerformances(PloneMeetingTestCase):

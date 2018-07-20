@@ -1,8 +1,8 @@
-from zope.globalrequest import getRequest
-from Products.Five.browser import BrowserView
 from plone import api
 from plone.memoize.view import memoize
+from Products.Five.browser import BrowserView
 from Products.PloneMeeting.utils import getCurrentMeetingObject
+from zope.globalrequest import getRequest
 
 
 class BaseImgSelectBoxView(BrowserView):

@@ -24,20 +24,23 @@
 # 02110-1301, USA.
 #
 
-import logging
-from Products.Archetypes import listTypes
-from Products.Archetypes.atapi import process_types
-from Products.CMFCore import DirectoryView
-from Products.CMFCore import utils as cmfutils
-from Products.CMFPlone.utils import ToolInit
-from Products.validation.validators.BaseValidators import baseValidators
-from Products.validation.validators.BaseValidators import protocols
-from Products.validation import validation
-from validators import CertifiedSignaturesValidator
 from config import ADD_CONTENT_PERMISSIONS
 from config import DEFAULT_ADD_CONTENT_PERMISSION
 from config import product_globals
 from config import PROJECTNAME
+from Products.Archetypes import listTypes
+from Products.Archetypes.atapi import process_types
+from Products.CMFCore import utils as cmfutils
+from Products.CMFCore import DirectoryView
+from Products.CMFPlone.utils import ToolInit
+from Products.validation import validation
+from Products.validation.validators.BaseValidators import baseValidators
+from Products.validation.validators.BaseValidators import protocols
+from validators import CertifiedSignaturesValidator
+
+import logging
+
+
 DirectoryView.registerDirectory('skins', product_globals)
 
 logger = logging.getLogger('PloneMeeting')

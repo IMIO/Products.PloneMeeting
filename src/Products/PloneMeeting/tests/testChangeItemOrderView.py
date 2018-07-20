@@ -23,10 +23,10 @@
 #
 
 from AccessControl import Unauthorized
-from zope.i18n import translate
-from Products.statusmessages.interfaces import IStatusMessage
-from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
+from Products.statusmessages.interfaces import IStatusMessage
+from zope.i18n import translate
 
 
 class testChangeItemOrderView(PloneMeetingTestCase):

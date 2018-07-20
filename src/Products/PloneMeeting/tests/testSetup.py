@@ -22,11 +22,10 @@
 # 02110-1301, USA.
 #
 
-from Products.CMFPlone.factory import addPloneSite
+from plone import api
 from plone.app.testing import login
 from plone.app.testing.interfaces import DEFAULT_LANGUAGE
-from plone import api
-
+from Products.CMFPlone.factory import addPloneSite
 from Products.GenericSetup.context import DirectoryImportContext
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_REAPPLY
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase

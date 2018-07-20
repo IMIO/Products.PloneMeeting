@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-import zope.schema
 from collective.contact.core import _
 from collective.contact.core.content.held_position import HeldPosition
 from collective.contact.core.content.held_position import IHeldPosition
@@ -12,6 +11,8 @@ from Products.PloneMeeting.utils import plain_render
 from z3c.form.browser.checkbox import CheckBoxFieldWidget
 from zope.globalrequest import getRequest
 from zope.i18n import translate
+
+import zope.schema
 
 
 class IPMHeldPosition(IHeldPosition):

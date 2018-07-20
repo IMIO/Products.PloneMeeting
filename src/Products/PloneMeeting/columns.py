@@ -1,16 +1,4 @@
 # encoding: utf-8
-from DateTime import DateTime
-from zope.i18n import translate
-
-from plone import api
-
-from Products.CMFCore.permissions import ModifyPortalContent
-from Products.CMFCore.utils import _checkPermission
-from Products.PloneMeeting.config import AddAnnex
-from Products.PloneMeeting.config import AddAnnexDecision
-from Products.PloneMeeting.interfaces import IMeeting
-from Products.PloneMeeting.utils import displaying_available_items
-
 from collective.eeafaceted.dashboard.columns import PrettyLinkColumn
 from collective.eeafaceted.z3ctable.columns import AbbrColumn
 from collective.eeafaceted.z3ctable.columns import BaseColumn
@@ -19,9 +7,18 @@ from collective.eeafaceted.z3ctable.columns import CheckBoxColumn
 from collective.eeafaceted.z3ctable.columns import ColorColumn
 from collective.eeafaceted.z3ctable.columns import I18nColumn
 from collective.eeafaceted.z3ctable.columns import VocabularyColumn
+from DateTime import DateTime
 from imio.annex.columns import ActionsColumn as AnnexActionsColumn
 from imio.dashboard.columns import ActionsColumn
 from imio.prettylink.interfaces import IPrettyLink
+from plone import api
+from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFCore.utils import _checkPermission
+from Products.PloneMeeting.config import AddAnnex
+from Products.PloneMeeting.config import AddAnnexDecision
+from Products.PloneMeeting.interfaces import IMeeting
+from Products.PloneMeeting.utils import displaying_available_items
+from zope.i18n import translate
 
 
 class ItemCategoryColumn(VocabularyColumn):

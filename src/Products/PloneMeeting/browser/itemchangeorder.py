@@ -1,7 +1,7 @@
 from AccessControl import Unauthorized
-from zope.i18n import translate
 from Products.Five import BrowserView
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
+from zope.i18n import translate
 
 
 def _to_integer(number):

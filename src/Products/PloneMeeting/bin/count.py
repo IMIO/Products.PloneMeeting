@@ -1,6 +1,8 @@
 # ------------------------------------------------------------------------------
-import os
 from appy.shared.utils import LinesCounter
+
+import os
+
 
 # ------------------------------------------------------------------------------
 hsFolder = os.path.dirname(os.getcwd())

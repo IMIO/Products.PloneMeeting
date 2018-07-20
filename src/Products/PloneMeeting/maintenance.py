@@ -26,6 +26,8 @@ from Products.PloneMeeting.indexes import DELAYAWARE_REAL_GROUP_ID_PATTERN
 from Products.PloneMeeting.indexes import REAL_GROUP_ID_PATTERN
 
 import logging
+
+
 logger = logging.getLogger('PloneMeeting')
 
 

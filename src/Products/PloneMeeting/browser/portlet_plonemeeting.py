@@ -1,17 +1,15 @@
-from zope.interface import implements
-from zope.formlib import form
-
 from collective.eeafaceted.dashboard.browser.facetedcollectionportlet import Renderer as FacetedRenderer
 from eea.facetednavigation.interfaces import IFacetedNavigable
-
 from plone.app.portlets.portlets import base
 from plone.portlets.interfaces import IPortletDataProvider
-
 from Products.CMFCore.utils import getToolByName
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.PloneMeeting.interfaces import IMeeting
-
+from zope.formlib import form
 from zope.i18nmessageid import MessageFactory
+from zope.interface import implements
+
+
 _ = MessageFactory('PloneMeeting')
 
 

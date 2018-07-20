@@ -22,10 +22,9 @@
 # 02110-1301, USA.
 #
 
-from zope.i18n import translate
-from Products.validation import validation
-
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from Products.validation import validation
+from zope.i18n import translate
 
 
 class testValidators(PloneMeetingTestCase):

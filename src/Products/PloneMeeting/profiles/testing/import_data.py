@@ -34,6 +34,7 @@ from Products.PloneMeeting.profiles import PodTemplateDescriptor
 from Products.PloneMeeting.profiles import RecurringItemDescriptor
 from Products.PloneMeeting.profiles import UserDescriptor
 
+
 # First meeting type: a fictitious PloneGov assembly ---------------------------
 
 # Categories

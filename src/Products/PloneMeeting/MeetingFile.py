@@ -13,37 +13,37 @@ __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
 <g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""
 __docformat__ = 'plaintext'
 
-import os
-import os.path
-
 from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
-from zope.annotation import IAnnotations
-from zope.i18n import translate
-from zope.interface import implements
-
+from collective.documentviewer.async import asyncInstalled
+from plone import api
+from plone.app.blob.content import ATBlob
+from plone.app.blob.content import ATBlobSchema
 from Products.Archetypes.atapi import BaseContent
 from Products.Archetypes.atapi import BooleanField
 from Products.Archetypes.atapi import registerType
 from Products.Archetypes.atapi import Schema
 from Products.Archetypes.atapi import StringField
+from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFCore.permissions import View
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
-
-from plone.app.blob.content import ATBlob
-from plone.app.blob.content import ATBlobSchema
-from plone import api
-
-from Products.CMFCore.permissions import View, ModifyPortalContent
 from Products.CMFPlone.CatalogTool import getObjSize
-from collective.documentviewer.async import asyncInstalled
-from Products.PloneMeeting.config import MAX_FILE_SIZE_WARNING
 from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.config import MAX_FILE_SIZE_WARNING
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.interfaces import IMeetingFile
-from Products.PloneMeeting.utils import getCustomAdapter, sendMailIfRelevant
+from Products.PloneMeeting.utils import getCustomAdapter
+from Products.PloneMeeting.utils import sendMailIfRelevant
+from zope.annotation import IAnnotations
+from zope.i18n import translate
+from zope.interface import implements
 
 import logging
+import os
+import os.path
+
+
 logger = logging.getLogger('PloneMeeting')
 
 # Error-related constants ------------------------------------------------------

@@ -22,23 +22,17 @@
 # 02110-1301, USA.
 #
 
-from collections import OrderedDict
-from DateTime import DateTime
-
 from AccessControl import Unauthorized
-from OFS.ObjectManager import BeforeDeleteException
-from zope.i18n import translate
-
+from collections import OrderedDict
+from collective.eeafaceted.collectionwidget.utils import _get_criterion
 from collective.iconifiedcategory.utils import get_category_object
-
+from DateTime import DateTime
+from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
+from OFS.ObjectManager import BeforeDeleteException
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFPlone import PloneMessageFactory
 from Products.CMFPlone.CatalogTool import getIcon
-from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
-from collective.eeafaceted.collectionwidget.utils import _get_criterion
-
-from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
-from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
+from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from Products.PloneMeeting.config import DEFAULT_ITEM_COLUMNS
 from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
@@ -47,13 +41,16 @@ from Products.PloneMeeting.config import ITEM_ICON_COLORS
 from Products.PloneMeeting.config import ITEMTEMPLATESMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
-from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import TOOL_FOLDER_SEARCHES
 from Products.PloneMeeting.config import WriteHarmlessConfig
 from Products.PloneMeeting.MeetingConfig import DUPLICATE_SHORT_NAME
+from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
+from zope.i18n import translate
+
 
 MC_GROUP_SUFFIXES = (
     BUDGETIMPACTEDITORS_GROUP_SUFFIX,

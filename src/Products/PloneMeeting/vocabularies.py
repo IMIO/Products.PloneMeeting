@@ -1,39 +1,39 @@
 # encoding: utf-8
 
-from operator import attrgetter
-
-from zope.component.hooks import getSite
-from zope.globalrequest import getRequest
-from zope.i18n import translate
-from zope.interface import implements
-from zope.schema.vocabulary import SimpleVocabulary
-from zope.schema.interfaces import IVocabularyFactory
-from zope.schema.vocabulary import SimpleTerm
-from Products.CMFPlone.utils import safe_unicode
-
-from plone import api
-from plone.memoize import ram
-# temporary fix until collective.documentgenerator is released
-try:
-    from collective.documentgenerator.content.vocabulary import ExistingPODTemplateFactory
-except ImportError:
-    from builtins import object as ExistingPODTemplateFactory
 from collective.documentgenerator.content.vocabulary import PortalTypesVocabularyFactory
+from collective.eeafaceted.collectionwidget.content.dashboardcollection import IDashboardCollection
+from collective.eeafaceted.dashboard.vocabulary import DashboardCollectionsVocabulary
 from collective.iconifiedcategory.vocabularies import CategoryTitleVocabulary
 from collective.iconifiedcategory.vocabularies import CategoryVocabulary
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from ftw.labels.interfaces import ILabelJar
 from imio.annex.content.annex import IAnnex
-from collective.eeafaceted.collectionwidget.content.dashboardcollection import IDashboardCollection
-from collective.eeafaceted.dashboard.vocabulary import DashboardCollectionsVocabulary
 from imio.dashboard.vocabulary import CachedCollectionVocabulary
 from imio.helpers.cache import get_cachekey_volatile
+from operator import attrgetter
+from plone import api
+from plone.memoize import ram
+from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
-from Products.PloneMeeting.indexes import REAL_GROUP_ID_PATTERN
 from Products.PloneMeeting.indexes import DELAYAWARE_REAL_GROUP_ID_PATTERN
+from Products.PloneMeeting.indexes import REAL_GROUP_ID_PATTERN
+from zope.component.hooks import getSite
+from zope.globalrequest import getRequest
+from zope.i18n import translate
+from zope.interface import implements
+from zope.schema.interfaces import IVocabularyFactory
+from zope.schema.vocabulary import SimpleTerm
+from zope.schema.vocabulary import SimpleVocabulary
+
+
+# temporary fix until collective.documentgenerator is released
+try:
+    from collective.documentgenerator.content.vocabulary import ExistingPODTemplateFactory
+except ImportError:
+    from builtins import object as ExistingPODTemplateFactory
 
 
 class PMConditionAwareCollectionVocabulary(CachedCollectionVocabulary):

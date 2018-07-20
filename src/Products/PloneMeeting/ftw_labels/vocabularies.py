@@ -1,14 +1,13 @@
 # encoding: utf-8
 
-from zope.interface import implements
-from zope.schema.vocabulary import SimpleVocabulary
-from zope.schema.interfaces import IVocabularyFactory
-from zope.schema.vocabulary import SimpleTerm
-
+from ftw.labels.interfaces import ILabelJar
 from imio.helpers.cache import get_cachekey_volatile
 from plone import api
 from plone.memoize import ram
-from ftw.labels.interfaces import ILabelJar
+from zope.interface import implements
+from zope.schema.interfaces import IVocabularyFactory
+from zope.schema.vocabulary import SimpleTerm
+from zope.schema.vocabulary import SimpleVocabulary
 
 
 class FTWLabelsVocabulary(object):

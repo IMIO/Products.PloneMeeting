@@ -1,11 +1,9 @@
-from zope.component import getMultiAdapter
-
 from plone.app.layout.navigation.navtree import buildFolderTree
 from plone.app.layout.navigation.navtree import NavtreeStrategyBase
-
+from Products.CMFCore.utils import getToolByName
 from Products.Five.browser import BrowserView
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
-from Products.CMFCore.utils import getToolByName
+from zope.component import getMultiAdapter
 
 
 class ItemTemplateView(BrowserView):

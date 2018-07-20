@@ -1,27 +1,29 @@
 # -*- coding: utf-8 -*-
-import copy
-import os
 from collections import OrderedDict
-from zope.component import getUtility
-from zope.intid.interfaces import IIntIds
-from zope.lifecycleevent import modified
-from z3c.relationfield.relation import RelationValue
-import phonenumbers
+from collective.contact.plonegroup.config import ORGANIZATIONS_REGISTRY
+from imio.pyutils import system
 from plone import api
-from plone.i18n.normalizer.interfaces import IIDNormalizer
 from plone.app.uuid.utils import uuidToObject
+from plone.i18n.normalizer.interfaces import IIDNormalizer
 from plone.registry.interfaces import IRegistry
 from Products.CMFPlone.utils import safe_unicode
 from Products.CPUtils.Extensions.utils import check_zope_admin
+from z3c.relationfield.relation import RelationValue
+from zope.component import getUtility
+from zope.intid.interfaces import IIntIds
+from zope.lifecycleevent import modified
+
+import copy
+import os
+import phonenumbers
+
 
 try:
     from collective.behavior.internalnumber.behavior import IInternalNumberBehavior
 except ImportError:
     pass
 
-from collective.contact.plonegroup.config import ORGANIZATIONS_REGISTRY
 
-from imio.pyutils import system
 
 
 def safe_encode(value, encoding='utf-8'):

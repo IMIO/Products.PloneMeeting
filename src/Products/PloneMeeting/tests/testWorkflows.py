@@ -22,22 +22,23 @@
 # 02110-1301, USA.
 #
 
-import transaction
-from DateTime import DateTime
 from AccessControl import Unauthorized
-from OFS.ObjectManager import BeforeDeleteException
-from zope.i18n import translate
-from Products.CMFCore.permissions import AddPortalContent
-from Products.CMFCore.WorkflowCore import WorkflowException
-from Products.statusmessages.interfaces import IStatusMessage
+from DateTime import DateTime
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.cache import cleanRamCacheFor
+from OFS.ObjectManager import BeforeDeleteException
+from Products.CMFCore.permissions import AddPortalContent
+from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import AddAnnexDecision
 from Products.PloneMeeting.config import WriteItemMeetingManagerFields
+from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
-from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
+from Products.statusmessages.interfaces import IStatusMessage
+from zope.i18n import translate
+
+import transaction
 
 
 class testWorkflows(PloneMeetingTestCase):

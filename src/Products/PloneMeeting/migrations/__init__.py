@@ -15,11 +15,13 @@
    through the ZMI. Every migration function corresponds to a import step in
    portal_setup.'''
 
+from DateTime import DateTime
+from imio.migrator.migrator import Migrator as BaseMigrator
+from plone import api
+
 # ------------------------------------------------------------------------------
 import logging
-from DateTime import DateTime
-from plone import api
-from imio.migrator.migrator import Migrator as BaseMigrator
+
 
 logger = logging.getLogger('PloneMeeting')
 
