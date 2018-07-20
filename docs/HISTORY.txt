@@ -23,6 +23,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Meeting.getItems useCatalog=False parameter was replaced by theObjects=True.  Method was refactored to always use a catalog
   query to get items and return objects if useObject=True.
   This way we may use parameter 'additional_catalog_query' in both cases.
+- Use 'isort' to sort every imports following Plone recommandations.
+- Added printing methods 'print_attendees' and 'print_attendees_by_type' to be able to print attendees when using contacts.
 
 4.1b10 (2018-05-22)
 -------------------
