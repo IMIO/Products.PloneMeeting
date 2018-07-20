@@ -100,17 +100,6 @@
                                          data-absent_uid string:${aUid};">
                   <span tal:condition="python: aUid in itemAbsents" class="people people-leave"></span>
                 </acronym>
-
-                <tal:comment replace="nothing">Info about users late-entering the meeting</tal:comment>
-                <tal:late condition="python: aUid in lateAttendees">
-                  <img tal:attributes="src string: $portal_url/entrance.gif"
-                    title="present_since" i18n:attributes="title"/><span style="color:black"
-                    tal:content="python: context.getEntranceItem(aUid) or '?'"></span>
-                </tal:late>
-                <tal:left define="departNumber python: context.getDepartureItem(aUid)" condition="departNumber">
-                  <img tal:attributes="src string: $portal_url/departure.gif"
-                       title="left_after" i18n:attributes="title"/><span style="color:black" tal:content="python: departNumber-1"></span>
-                </tal:left>
               </td>
               <td align="center" tal:condition="showExcused">
                 <span tal:condition="python: aUid in excused" class="people people-checked" ></span>

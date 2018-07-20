@@ -1561,6 +1561,13 @@ div.grouped-configs {
     height: 6px;
 }
 
+#content span.inserting-methods-infos:before {
+   font-family: 'FontAwesome';
+   content: "\f059";
+   color: &dtml-globalBorderColor;;
+   font-size: 120%;
+}
+
 /* meeting_users table on meeting_edit */
 table#meeting_users td {
    padding: 0.5em;

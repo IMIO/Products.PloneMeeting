@@ -6202,25 +6202,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if lastValidationDate and (lastValidationDate < deadline):
             return True
 
-    security.declareProtected(ModifyPortalContent, 'onWelcomePerson')
-
-    def onWelcomePerson(self):
-        '''Some user (a late attendee) has entered the meeting just before
-           discussing this item: we will record this info, excepted if
-           request["action"] tells us to remove the info instead.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        if not tool.isManager(self) or not _checkPermission(ModifyPortalContent, self):
-            raise Unauthorized
-        rq = self.REQUEST
-        userId = rq['userId']
-        meeting = self.getMeeting()
-        if rq['actionType'] == 'delete':
-            del meeting.entrances[userId]
-        else:
-            if not hasattr(meeting.aq_base, 'entrances'):
-                meeting.entrances = PersistentMapping()
-            meeting.entrances[userId] = self.getItemNumber(relativeTo='meeting')
-
     def _mayChangeAttendees(self):
         """Check that user may quickEdit itemAbsents."""
         if self.mayQuickEdit('itemAbsents', bypassWritePermissionCheck=True):

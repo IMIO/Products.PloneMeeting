@@ -215,18 +215,11 @@ class MeetingWorkflowConditions(object):
     security.declarePublic('mayChangeItemsOrder')
 
     def mayChangeItemsOrder(self):
-        if not _checkPermission(ModifyPortalContent, self.context):
-            return
-        # the meeting can not be in a closed state
-        if self.context.queryState() in Meeting.meetingClosedStates:
-            return
-        # Once dictionaries "entrances" and "departures" are filled, changing
-        # items order would lead to database incoherences.
-        if hasattr(self, 'entrances') and self.entrances:
-            return
-        if hasattr(self, 'departures') and self.departures:
-            return
-        return True
+        res = True
+        if not _checkPermission(ModifyPortalContent, self.context) or \
+           self.context.queryState() in Meeting.meetingClosedStates:
+            res = False
+        return res
 
 InitializeClass(MeetingWorkflowConditions)
 
@@ -1015,9 +1008,11 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         '''See docstring in previous method.'''
         signers = self._getContacts('signer', theObjects=theObjects)
         if theObjects:
-            res = {signer: self.orderedContacts[signer.UID()]['signature_number'] for signer in signers}
+            res = {signer: self.orderedContacts[signer.UID()]['signature_number']
+                   for signer in signers}
         else:
-            res = {signer_uid: self.orderedContacts[signer_uid]['signature_number'] for signer_uid in signers}
+            res = {signer_uid: self.orderedContacts[signer_uid]['signature_number']
+                   for signer_uid in signers}
         if by_signature_number:
             res = {v: k for k, v in res.items()}
         return res
@@ -1027,7 +1022,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
     def getReplacements(self, theObjects=False):
         '''See docstring in previous method.'''
         replaced_uids = self._getContacts('replacement', theObjects=theObjects)
-        return {replaced_uid: self.orderedContacts[replaced_uid]['replacement'] for replaced_uid in replaced_uids}
+        return {replaced_uid: self.orderedContacts[replaced_uid]['replacement']
+                for replaced_uid in replaced_uids}
 
     security.declarePublic('getItemAbsents')
 
@@ -1060,109 +1056,6 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         else:
             person = held_position.get_person()
             return person.get_title()
-
-    security.declarePublic('getEntranceItem')
-
-    def getEntranceItem(self, userId):
-        '''p_userId represents a special user that was not present in the
-           meeting since its beginning (=a late attendee). This method returns,
-           if known, the number of the item when the person has entered the
-           meeting (so the person has effectively attended discussion on this
-           item).'''
-        if hasattr(self.aq_base, 'entrances') and (userId in self.entrances):
-            return self.entrances[userId]
-
-    security.declarePublic('hasEntrance')
-
-    def hasEntrance(self, item, when='after'):
-        '''Is there at least one people that entered this meeting after (or
-           before, if p_when is "before") discussion on p_item?'''
-        if not hasattr(self.aq_base, 'entrances'):
-            return
-        itemNumber = item.getItemNumber(relativeTo='meeting')
-        if when == 'after':
-            itemNumber += 1
-        for number in self.entrances.itervalues():
-            if number == itemNumber:
-                return True
-
-    security.declarePublic('getEntrances')
-
-    def getEntrances(self, item, when='after', theObjects=False):
-        '''Gets the list of people that entered this meeting after (or
-           before, if p_when is "before" or during if p_when is "during") discussion on p_item.'''
-        res = []
-        if not hasattr(self.aq_base, 'entrances'):
-            return res
-        if theObjects:
-            tool = api.portal.get_tool('portal_plonemeeting')
-            cfg = tool.getMeetingConfig(self)
-        itemNumber = item.getItemNumber(relativeTo='meeting')
-        for userId, number in self.entrances.iteritems():
-            if (when == 'before' and number < itemNumber) or \
-               (when == 'after' and number > itemNumber) or \
-               (when == 'during' and number == itemNumber):
-                if theObjects:
-                    res.append(getattr(cfg.meetingusers, userId))
-                else:
-                    res.append(userId)
-        return res
-
-    security.declarePublic('getDepartureItem')
-
-    def getDepartureItem(self, userId, for_display=False):
-        '''p_userId represents a special user that left the meeting BEFORE
-           having discussed some item. This method returns, if known, the number
-           of this item.'''
-        departure = ''
-        if hasattr(self.aq_base, 'departures') and (userId in self.departures):
-            departure = self.departures[userId]
-        if departure and for_display:
-            return _storedItemNumber_to_itemNumber(departure, forceShowDecimal=False)
-        else:
-            return departure
-
-    security.declarePublic('hasDeparture')
-
-    def hasDeparture(self, item, when='after'):
-        '''Is there at least one people that left this meeting after (or
-           before, if p_when is "before") discussion on p_item?'''
-        if not hasattr(self.aq_base, 'departures'):
-            return
-        itemNumber = item.getItemNumber(relativeTo='meeting')
-        if when == 'after':
-            itemNumber += 1
-        for number in self.departures.itervalues():
-            if number == itemNumber:
-                return True
-
-    security.declarePublic('getDepartures')
-
-    def getDepartures(self, item, when='after', theObjects=False,
-                      alsoEarlier=False):
-        '''Gets the list of people that left the meeting after (or
-           before, if p_when is "before") discussion on p_item. If p_alsoEarlier
-           is True, it also includes people that left the meeting earlier.'''
-        res = []
-        if not hasattr(self.aq_base, 'departures'):
-            return res
-        if theObjects:
-            tool = api.portal.get_tool('portal_plonemeeting')
-            cfg = tool.getMeetingConfig(self)
-        itemNumber = item.getItemNumber(relativeTo='meeting')
-        if when == 'after':
-            itemNumber += 1
-        for userId, number in self.departures.iteritems():
-            if alsoEarlier:
-                condition = number <= itemNumber
-            else:
-                condition = number == itemNumber
-            if condition:
-                if theObjects:
-                    res.append(getattr(cfg.meetingusers, userId))
-                else:
-                    res.append(userId)
-        return res
 
     security.declarePrivate('setDate')
 
