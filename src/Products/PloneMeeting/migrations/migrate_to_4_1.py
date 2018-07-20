@@ -250,13 +250,16 @@ class Migrate_To_4_1(Migrator):
         # upgrade imio.dashboard first as it takes care of migrating certain
         # profiles in particular order
         self._upgradeImioDashboard()
-        self.upgradeAll()
 
         # reinstall so versions are correctly shown in portal_quickinstaller
         # plone.app.versioningbehavior is installed
         self.reinstall(profiles=['profile-Products.PloneMeeting:default', ],
                        ignore_dependencies=False,
                        dependency_strategy=DEPENDENCY_STRATEGY_NEW)
+
+        # upgrade all after PM reinstall
+        self.upgradeAll()
+
         # enable 'refused' WFAdadaption before reinstalling if relevant
         self._enableRefusedWFAdaptation()
         if self.profile_name != 'profile-Products.PloneMeeting:default':
