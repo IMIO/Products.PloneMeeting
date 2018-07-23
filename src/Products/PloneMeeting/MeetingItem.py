@@ -737,7 +737,7 @@ schema = Schema((
         allowable_content_types=('text/html',),
         default_output_type="text/x-html-safe",
         accessor="Description",
-        optional=False,
+        optional=True,
     ),
     TextField(
         name='detailedDescription',

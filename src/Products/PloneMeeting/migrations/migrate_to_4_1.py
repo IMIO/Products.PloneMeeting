@@ -237,6 +237,17 @@ class Migrate_To_4_1(Migrator):
             delattr(cfg, 'useUserReplacements')
         logger.info('Done.')
 
+    def _selectDescriptionInUsedItemAttributes(self):
+        """Now that 'MeetingItem.description' is an optional field, we need to
+           select it on existing MeetingConfigs."""
+        logger.info('Selecting "description" in every MeetingConfig.usedItemAttributes...')
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            usedItemAttrs = list(cfg.getUsedItemAttributes())
+            if 'description' not in usedItemAttrs:
+                usedItemAttrs.insert(0, 'description')
+                cfg.setUsedItemAttributes(usedItemAttrs)
+        logger.info('Done.')
+
     def run(self, step=None):
         logger.info('Migrating to PloneMeeting 4.1...')
 
@@ -284,6 +295,7 @@ class Migrate_To_4_1(Migrator):
         self._fixItemsWorkflowHistoryType()
         self._migrateToDoListSearches()
         self._adaptForContacts()
+        self._selectDescriptionInUsedItemAttributes()
 
 
 # The migration function -------------------------------------------------------
@@ -305,7 +317,8 @@ def migrate(context):
        13) Fix annex mimetype in case there was a problem with old annexes using uncomplete mimetypes_registry;
        14) Make sure workflow_history stored on items is a PersistentMapping;
        15) Migrate MeetingConfig.toDoListSearches as it is no more a ReferenceField;
-       16) Adapt application for Contacts.
+       16) Adapt application for Contacts;
+       17) Select 'description' in MeetingConfig.usedItemAttributes.
     '''
     migrator = Migrate_To_4_1(context)
     migrator.run()

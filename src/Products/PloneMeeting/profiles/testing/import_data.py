@@ -281,7 +281,7 @@ meetingPma.classifiers = [classifier1, classifier2, classifier3]
 meetingPma.annexTypes = [financialAnalysis, budgetAnalysisCfg1, overheadAnalysis,
                          itemAnnex, decisionAnnex, marketingAnalysis,
                          adviceAnnex, adviceLegalAnalysis, meetingAnnex]
-meetingPma.usedItemAttributes = ('toDiscuss', 'itemTags', 'itemIsSigned',)
+meetingPma.usedItemAttributes = ('description', 'toDiscuss', 'itemTags', 'itemIsSigned',)
 meetingPma.usedMeetingAttributes = ('place',)
 meetingPma.maxShownListings = '100'
 meetingPma.itemDecidedStates = ('accepted', 'delayed', 'confirmed', 'itemarchived')
@@ -364,7 +364,7 @@ meetingPga.classifiers = [classifier1, classifier2, classifier3]
 meetingPga.annexTypes = [financialAnalysis, legalAnalysis,
                          budgetAnalysisCfg2, itemAnnex, decisionAnnex,
                          adviceAnnex, adviceLegalAnalysis, meetingAnnex]
-meetingPga.usedItemAttributes = ('toDiscuss', 'associatedGroups', 'itemIsSigned',)
+meetingPga.usedItemAttributes = ('description', 'toDiscuss', 'associatedGroups', 'itemIsSigned',)
 meetingPga.transitionsForPresentingAnItem = ('propose', 'validate', 'present', )
 meetingPga.onMeetingTransitionItemTransitionToTrigger = ({'meeting_transition': 'publish',
                                                           'item_transition': 'itempublish'},

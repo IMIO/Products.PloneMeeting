@@ -11,46 +11,47 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 -------------------
 
 - Adapted code to new behavior of collective.eeafaceted.collectionwidget where the redirection to the default collection
-  is done by the facetenavigation_view and no more by the widget.default method.
+  is done by the facetenavigation_view and no more by the widget.default method
 - Use source_groups._principal_groups.byValue(0) instead source_groups._principal_groups._p_mtime to check if users/groups
-  mapping changed because in some cases (???) the _p_mtime is not changed, relying on stored value is more robust.
+  mapping changed because in some cases (???) the _p_mtime is not changed, relying on stored value is more robust
 - In ToolPloneMeeting.getPloneGroupsForUser, do not get user from REQUEST['AUTHENTICATED_USER'] because in some egde cases
-  like use of api.env.adopt_user, the value stored there is not always the current user.
-  Systematically use api.user.get_current to get current user.
-- Moved to eea.facetednavigation 10+, rely on collective.eeafaceted.dashboard.
-- Integrated collective.contact.core and collective.contact.plonegroup to manage contacts in assemblies and signatories.
-- Rely on collective.js.tablednd to manage contacts assembly on meeting.
+  like use of api.env.adopt_user, the value stored there is not always the current user
+  Systematically use api.user.get_current to get current user
+- Moved to eea.facetednavigation 10+, rely on collective.eeafaceted.dashboard
+- Integrated collective.contact.core and collective.contact.plonegroup to manage contacts in assemblies and signatories
+- Rely on collective.js.tablednd to manage contacts assembly on meeting
 - Meeting.getItems useCatalog=False parameter was replaced by theObjects=True.  Method was refactored to always use a catalog
-  query to get items and return objects if useObject=True.
-  This way we may use parameter 'additional_catalog_query' in both cases.
-- Use 'isort' to sort every imports following Plone recommandations.
-- Added printing methods 'print_attendees' and 'print_attendees_by_type' to be able to print attendees when using contacts.
+  query to get items and return objects if useObject=True
+  This way we may use parameter 'additional_catalog_query' in both cases
+- Use 'isort' to sort every imports following Plone recommandations
+- Added printing methods 'print_attendees' and 'print_attendees_by_type' to be able to print attendees when using contacts
+- Made MeetingItem.description an optional field
 
 4.1b10 (2018-05-22)
 -------------------
 
-- Removed check on "member.getRoles()" in the actions_panel __call__ cachekey.
-- Added migration step to ensure that annexes mimetype is correct.
-- Fixed bug in advice infos popup where the displayed author was item creator instead advice creator.
+- Removed check on "member.getRoles()" in the actions_panel __call__ cachekey
+- Added migration step to ensure that annexes mimetype is correct
+- Fixed bug in advice infos popup where the displayed author was item creator instead advice creator
 - Removed MeetingConfig.getMeetingsAcceptingItemsAdditionalManagerStates, use the config.MEETING_STATES_ACCEPTING_ITEMS
   to know in which states a meeting may accept items.  Use also config.MEETING_STATES_ACCEPTING_ITEMS instead
-  Meeting.acceptItemsStates that was removed as well.
+  Meeting.acceptItemsStates that was removed as well
 - Removed config.MEETING_NOT_CLOSED_STATES constant that is useless since we have the
   Meeting.getBeforeFrozenStates method.  Also optimized the Meeting._availableItemsQuery to only compute
-  meetingUids when necessary.
+  meetingUids when necessary
 - Make sure ToolPloneMeeting.pasteItems do not change workflow_history from PersistentMapping to dict or imio.actionspanel
-  fails to abort changes that occured to item review_state in case an exception is raised.
+  fails to abort changes that occured to item review_state in case an exception is raised
 - Replaced Meeting.getBeforeFrozenStates by Meeting.getStatesBefore('frozen') as we need the same method to get states
-  before the 'published' states Meeting.getStatesBefore('published') to protect MeetingItemWorkflowConditions.mayPublish.
+  before the 'published' states Meeting.getStatesBefore('published') to protect MeetingItemWorkflowConditions.mayPublish
 
 4.1b9 (2018-05-09)
 ------------------
 
 - Make user groups related cache longer than for a REQUEST.  We use the source_groups._principal_groups._p_mtime
   to check if users groups were adapted to invalidate cache.  Now methods getPloneGroupsForUser, getGroupsForUser,
-  userIsAmong, isManager and isPowerObserverForCfg are cached as long as some user groups configuration was not changed.
+  userIsAmong, isManager and isPowerObserverForCfg are cached as long as some user groups configuration was not changed
 - Display advices column same width as other common columns so the "Add advice" icon is displayed on same line than
-  "not given advices" icons.
+  "not given advices" icons
 
 4.1b8 (2018-05-04)
 ------------------
