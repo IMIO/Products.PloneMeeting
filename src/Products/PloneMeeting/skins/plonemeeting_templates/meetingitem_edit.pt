@@ -31,8 +31,7 @@
     <tal:field define="fieldName python: 'description'">
       <metal:f use-macro="context/@@pm-macros/editContentField"/>
     </tal:field>
-    <tal:field define="fieldName python: 'detailedDescription';"
-               condition="python: 'detailedDescription' in usedAttrs">
+    <tal:field define="fieldName python: 'detailedDescription';">
       <metal:f use-macro="context/@@pm-macros/editContentField"/>
     </tal:field>
     <tal:comment replace="nothing">Proposing group, category, classifier, toDiscuss</tal:comment>
@@ -141,12 +140,10 @@
     <tal:field define="fieldName python: 'marginalNotes'">
       <metal:f use-macro="context/@@pm-macros/editContentField"/>
     </tal:field>
-    <tal:field define="fieldName python: 'internalNotes'"
-               condition="python: 'internalNotes' in usedAttrs" >
+    <tal:field define="fieldName python: 'internalNotes'">
       <metal:f use-macro="context/@@pm-macros/editContentField"/>
     </tal:field>
-    <tal:field define="fieldName python: 'observations'"
-               condition="python: 'observations' in usedAttrs" >
+    <tal:field define="fieldName python: 'observations'">
       <metal:f use-macro="context/@@pm-macros/editContentField"/>
     </tal:field>
 

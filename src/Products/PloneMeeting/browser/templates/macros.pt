@@ -56,7 +56,7 @@
    tal:define="field python: context.getField(fieldName);
                isRich python: field.widget.getName() == 'RichWidget';
                isOptional field/optional|python:False;
-               isUsed python: isOptional and fieldName in usedAttrs or True;"
+               isUsed python: isOptional and fieldName in usedAttrs or not isOptional;"
    tal:condition="python: isUsed and member.has_permission(field.read_permission, context)">
   <tal:monolanguage condition="not: bilingual">
     <metal:field use-macro="python:context.widget(fieldName, mode='edit')"/>

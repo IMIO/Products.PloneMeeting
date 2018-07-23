@@ -310,36 +310,28 @@
             </tr>
           </table>
         </fieldset>
-        <tal:field define="fieldName python: 'inAndOutMoves'"
-                   condition="python: context.showMeetingManagerReservedField('inAndOutMoves')">
+        <tal:field define="fieldName python: 'inAndOutMoves'">
           <metal:f use-macro="context/@@pm-macros/editContentField"/>
         </tal:field>
-        <tal:field define="fieldName python: 'notes'"
-                   condition="python: context.showMeetingManagerReservedField('notes')">
+        <tal:field define="fieldName python: 'notes'">
           <metal:f use-macro="context/@@pm-macros/editContentField"/>
         </tal:field>
-        <tal:field define="fieldName python: 'authorityNotice'"
-                   condition="python: context.showMeetingManagerReservedField('authorityNotice')">
+        <tal:field define="fieldName python: 'authorityNotice'">
           <metal:f use-macro="context/@@pm-macros/editContentField"/>
         </tal:field>
-        <tal:field define="fieldName python: 'observations'"
-                   condition="python: context.showMeetingManagerReservedField('observations')">
+        <tal:field define="fieldName python: 'observations'">
           <metal:f use-macro="context/@@pm-macros/editContentField"/>
         </tal:field>
-        <tal:field define="fieldName python: 'preObservations'"
-                   condition="python: context.showMeetingManagerReservedField('preObservations')">
+        <tal:field define="fieldName python: 'preObservations'">
           <metal:f use-macro="context/@@pm-macros/editContentField"/>
         </tal:field>
-        <tal:field define="fieldName python: 'committeeObservations'"
-                   condition="python: context.showMeetingManagerReservedField('committeeObservations')">
+        <tal:field define="fieldName python: 'committeeObservations'">
           <metal:f use-macro="context/@@pm-macros/editContentField"/>
         </tal:field>
-        <tal:field define="fieldName python: 'publicMeetingObservations'"
-                   condition="python: context.showMeetingManagerReservedField('publicMeetingObservations')">
+        <tal:field define="fieldName python: 'publicMeetingObservations'">
           <metal:f use-macro="context/@@pm-macros/editContentField"/>
         </tal:field>
-        <tal:field define="fieldName python: 'secretMeetingObservations'"
-                   condition="python: context.showMeetingManagerReservedField('secretMeetingObservations')">
+        <tal:field define="fieldName python: 'secretMeetingObservations'">
           <metal:f use-macro="context/@@pm-macros/editContentField"/>
         </tal:field>
 
