@@ -26,6 +26,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Use 'isort' to sort every imports following Plone recommandations
 - Added printing methods 'print_attendees' and 'print_attendees_by_type' to be able to print attendees when using contacts
 - Made MeetingItem.description an optional field
+- Moved MeetingConfig.manage_beforeDelete to events.onConfigWillBeRemoved.  Moreover, when deleting a MeetingConfig, check
+  that it is not used in another MeetingConfig (MeetingConfig.meetingConfigsToCloneTo and annex types other_mc_correspondences
+  field of annex types of other MeetingConfigs)
 
 4.1b10 (2018-05-22)
 -------------------

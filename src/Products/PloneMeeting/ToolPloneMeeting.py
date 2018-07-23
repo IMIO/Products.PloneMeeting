@@ -657,6 +657,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            sub-objects of the meeting config will be searched there.'''
         cData = configData.getData()
         if cData['id'] in self.objectIds():
+            logger.info(
+                'A MeetingConfig with id {0} already exists, passing...'.format(
+                    cData['id']))
             return
         self.invokeFactory('MeetingConfig', **cData)
         cfgId = configData.id

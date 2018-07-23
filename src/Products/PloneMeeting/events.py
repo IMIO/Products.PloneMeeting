@@ -27,9 +27,17 @@ from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import ADVICE_GIVEN_HISTORIZED_COMMENT
 from Products.PloneMeeting.config import BARCODE_INSERTED_ATTR_ID
+from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
+from Products.PloneMeeting.config import ITEMTEMPLATESMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
+from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
+from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
+from Products.PloneMeeting.config import RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX
+from Products.PloneMeeting.config import ROOT_FOLDER
+from Products.PloneMeeting.config import TOOL_FOLDER_SEARCHES
+
 from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import addRecurringItemsIfRelevant
 from Products.PloneMeeting.utils import AdviceAfterAddEvent
@@ -272,7 +280,7 @@ def onGroupWillBeRemoved(group, event):
                               context=group.REQUEST))
     # In the application
     # most of times, the real groupId is stored, but for MeetingItem.copyGroups, we
-    # store suffixed elements of the group, so compute suffixed elements for self and compare
+    # store suffixed elements of the group, so compute suffixed elements for config and compare
     suffixedGroups = set()
     for groupSuffix in MEETING_GROUP_SUFFIXES:
         suffixedGroups.add(group.getPloneGroupId(groupSuffix))
@@ -289,6 +297,126 @@ def onGroupWillBeRemoved(group, event):
                 translate("can_not_delete_meetinggroup_meetingitem",
                           domain="plone",
                           context=group.REQUEST))
+
+
+def _itemAnnexTypes(cfg):
+    ''' '''
+    annex_types = []
+    for folder in (cfg.annexes_types.item_annexes,
+                   cfg.annexes_types.item_decision_annexes):
+        for annex_type in folder.objectValues():
+            annex_types.append(annex_type)
+            annex_types = annex_types + list(annex_type.objectValues())
+    return annex_types
+
+
+def onConfigWillBeRemoved(config, event):
+    '''Checks if the current meetingConfig can be deleted :
+      - no Meeting and MeetingItem linked to this config can exist
+      - the meetingConfig folder of the Members must be empty.'''
+
+    # If we are trying to remove the whole Plone Site, bypass this hook.
+    # bypass also if we are in the creation process
+    if event.object.meta_type == 'Plone Site' or config._at_creation_flag:
+        return
+
+    can_not_delete_meetingconfig_meeting = \
+        translate('can_not_delete_meetingconfig_meeting',
+                  domain="plone",
+                  context=config.REQUEST)
+    can_not_delete_meetingconfig_meetingitem = \
+        translate('can_not_delete_meetingconfig_meetingitem',
+                  domain="plone",
+                  context=config.REQUEST)
+    can_not_delete_meetingconfig_meetingfolder = \
+        translate('can_not_delete_meetingconfig_meetingfolder',
+                  domain="plone",
+                  context=config.REQUEST)
+
+    # Check that no Meeting and no MeetingItem remains.
+    catalog = api.portal.get_tool('portal_catalog')
+    brains = catalog(portal_type=config.getMeetingTypeName())
+    if brains:
+        # We found at least one Meeting.
+        raise BeforeDeleteException(can_not_delete_meetingconfig_meeting)
+    brains = catalog(portal_type=config.getItemTypeName())
+    if brains:
+        # We found at least one MeetingItem.
+        raise BeforeDeleteException(can_not_delete_meetingconfig_meetingitem)
+
+    # Check that every meetingConfig folder of Members is empty.
+    membershipTool = api.portal.get_tool('portal_membership')
+    members = membershipTool.getMembersFolder()
+    meetingConfigId = config.getId()
+    searches_folder_ids = [info[0] for info in config.subFoldersInfo[TOOL_FOLDER_SEARCHES][2]]
+    for member in members.objectValues():
+        # Get the right meetingConfigFolder
+        if hasattr(member, ROOT_FOLDER):
+            root_folder = getattr(member, ROOT_FOLDER)
+            if hasattr(root_folder, meetingConfigId):
+                # We found the right folder, check if it is empty
+                configFolder = getattr(root_folder, meetingConfigId)
+                objectIds = configFolder.objectIds()
+                if set(objectIds).difference(searches_folder_ids):
+                    raise BeforeDeleteException(can_not_delete_meetingconfig_meetingfolder)
+
+    # Check that meetingConfig is not used in another MeetingConfig
+    tool = api.portal.get_tool('portal_plonemeeting')
+    # build list of config annex type uids
+    current_cfg_annex_types = _itemAnnexTypes(config)
+    current_cfg_annex_type_uids = [annex_type.UID() for annex_type in current_cfg_annex_types]
+    for other_cfg in tool.objectValues('MeetingConfig'):
+        if other_cfg == config:
+            continue
+        # check MeetingConfig.meetingConfigsToCloneTo
+        meetingConfigs = [v['meeting_config'] for v in other_cfg.getMeetingConfigsToCloneTo()]
+        if meetingConfigId in meetingConfigs:
+            can_not_delete_meetingconfig_meetingconfig = \
+                translate('can_not_delete_meetingconfig_meetingconfig',
+                          mapping={'other_config_title': safe_unicode(other_cfg.Title())},
+                          domain="plone",
+                          context=config.REQUEST)
+            raise BeforeDeleteException(can_not_delete_meetingconfig_meetingconfig)
+        # check other_mc_correspondences on every other MeetingConfig annex types
+        other_cfg_annex_types = _itemAnnexTypes(other_cfg)
+        other_cfg_annex_type_correspondence_uids = []
+        for annex_type in other_cfg_annex_types:
+            other_cfg_annex_type_correspondence_uids = other_cfg_annex_type_correspondence_uids + \
+                list(annex_type.other_mc_correspondences)
+        if set(current_cfg_annex_type_uids).intersection(other_cfg_annex_type_correspondence_uids):
+            can_not_delete_meetingconfig_annex_types = \
+                translate('can_not_delete_meetingconfig_annex_types',
+                          mapping={'other_config_title': safe_unicode(other_cfg.Title())},
+                          domain="plone",
+                          context=config.REQUEST)
+            raise BeforeDeleteException(can_not_delete_meetingconfig_annex_types)
+
+    # If everything is OK, we can remove every meetingFolder
+    for member in members.objectValues():
+        # Get the right meetingConfigFolder
+        if hasattr(member, ROOT_FOLDER):
+            root_folder = getattr(member, ROOT_FOLDER)
+            if hasattr(root_folder, meetingConfigId):
+                # We found the right folder, remove it
+                root_folder.manage_delObjects(meetingConfigId)
+    # Remove the portal types which are specific to this meetingConfig
+    portal_types = api.portal.get_tool('portal_types')
+    for pt in [config.getMeetingTypeName(),
+               config.getItemTypeName(),
+               config.getItemTypeName(configType='MeetingItemRecurring'),
+               config.getItemTypeName(configType='MeetingItemTemplate')]:
+        if hasattr(portal_types.aq_base, pt):
+            # It may not be the case if the object is a temp object
+            # being deleted from portal_factory
+            portal_types.manage_delObjects([pt])
+    # Remove groups added by the MeetingConfig (budgetimpacteditors, powerobservers, ...)
+    portal_groups = api.portal.get_tool('portal_groups')
+    for suffix in (MEETINGMANAGERS_GROUP_SUFFIX,
+                   POWEROBSERVERS_GROUP_SUFFIX,
+                   RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX,
+                   BUDGETIMPACTEDITORS_GROUP_SUFFIX,
+                   ITEMTEMPLATESMANAGERS_GROUP_SUFFIX):
+        portal_groups.removeGroup("%s_%s" % (config.getId(), suffix))
 
 
 def onGroupRemoved(group, event):

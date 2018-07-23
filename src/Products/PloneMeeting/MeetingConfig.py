@@ -22,7 +22,6 @@ from eea.facetednavigation.widgets.resultsperpage.widget import Widget as Result
 from imio.helpers.cache import cleanRamCache
 from imio.helpers.content import validate_fields
 from OFS.Image import File
-from OFS.ObjectManager import BeforeDeleteException
 from plone import api
 from plone.app.portlets.portlets import navigation
 from plone.memoize import ram
@@ -30,7 +29,6 @@ from plone.namedfile.file import NamedBlobFile
 from plone.namedfile.file import NamedBlobImage
 from plone.portlets.interfaces import IPortletAssignmentMapping
 from plone.portlets.interfaces import IPortletManager
-from Products.Archetypes.atapi import BaseFolder
 from Products.Archetypes.atapi import BooleanField
 from Products.Archetypes.atapi import DisplayList
 from Products.Archetypes.atapi import InAndOutWidget
@@ -77,7 +75,6 @@ from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX
-from Products.PloneMeeting.config import ROOT_FOLDER
 from Products.PloneMeeting.config import TOOL_FOLDER_ANNEX_TYPES
 from Products.PloneMeeting.config import TOOL_FOLDER_CATEGORIES
 from Products.PloneMeeting.config import TOOL_FOLDER_CLASSIFIERS
@@ -5322,84 +5319,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def onEdit(self, isCreated):
         '''See doc in interfaces.py.'''
         pass
-
-    security.declarePrivate('manage_beforeDelete')
-
-    def manage_beforeDelete(self, item, container):
-        '''Checks if the current meetingConfig can be deleted :
-          - no Meeting and MeetingItem linked to this config can exist
-          - the meetingConfig folder of the Members must be empty.'''
-        # If we are trying to remove the Plone Site, bypass this hook.
-        # bypass also if we are in the creation process
-        if not item.meta_type == "Plone Site" and not item._at_creation_flag:
-            can_not_delete_meetingconfig_meeting = \
-                translate('can_not_delete_meetingconfig_meeting',
-                          domain="plone",
-                          context=self.REQUEST)
-            can_not_delete_meetingconfig_meetingitem = \
-                translate('can_not_delete_meetingconfig_meetingitem',
-                          domain="plone",
-                          context=self.REQUEST)
-            can_not_delete_meetingconfig_meetingfolder = \
-                translate('can_not_delete_meetingconfig_meetingfolder',
-                          domain="plone",
-                          context=self.REQUEST)
-
-            # Checks that no Meeting and no MeetingItem remains.
-            catalog = api.portal.get_tool('portal_catalog')
-            brains = catalog(portal_type=self.getMeetingTypeName())
-            if brains:
-                # We found at least one Meeting.
-                raise BeforeDeleteException(can_not_delete_meetingconfig_meeting)
-            brains = catalog(portal_type=self.getItemTypeName())
-            if brains:
-                # We found at least one MeetingItem.
-                raise BeforeDeleteException(can_not_delete_meetingconfig_meetingitem)
-            # Check that every meetingConfig folder of Members is empty.
-            membershipTool = api.portal.get_tool('portal_membership')
-            members = membershipTool.getMembersFolder()
-            meetingFolderId = self.getId()
-            searches_folder_ids = [info[0] for info in self.subFoldersInfo[TOOL_FOLDER_SEARCHES][2]]
-            for member in members.objectValues():
-                # Get the right meetingConfigFolder
-                if hasattr(member, ROOT_FOLDER):
-                    root_folder = getattr(member, ROOT_FOLDER)
-                    if hasattr(root_folder, meetingFolderId):
-                        # We found the right folder, check if it is empty
-                        configFolder = getattr(root_folder, meetingFolderId)
-                        objectIds = configFolder.objectIds()
-                        if set(objectIds).difference(searches_folder_ids):
-                            raise BeforeDeleteException(can_not_delete_meetingconfig_meetingfolder)
-            # If everything is OK, we can remove every meetingFolder
-            for member in members.objectValues():
-                # Get the right meetingConfigFolder
-                if hasattr(member, ROOT_FOLDER):
-                    root_folder = getattr(member, ROOT_FOLDER)
-                    if hasattr(root_folder, meetingFolderId):
-                        # We found the right folder, remove it
-                        root_folder.manage_delObjects(meetingFolderId)
-            # Remove the corresponding action from portal_actions
-            actionId = '%s_action' % meetingFolderId
-            portal_actions = api.portal.get_tool('portal_actions')
-            portalTabs = portal_actions.portal_tabs
-            if hasattr(portalTabs.aq_base, actionId):
-                portalTabs.manage_delObjects([actionId])
-            # Remove the portal types which are specific to this meetingConfig
-            portal_types = api.portal.get_tool('portal_types')
-            for pt in [self.getMeetingTypeName(), self.getItemTypeName()]:
-                if hasattr(portal_types.aq_base, pt):
-                    # It may not be the case if the object is a temp object
-                    # being deleted from portal_factory
-                    portal_types.manage_delObjects([pt])
-            # Remove groups added by the MeetingConfig (budgetimpacteditors, powerobservers, ...)
-            portal_groups = api.portal.get_tool('portal_groups')
-            for suffix in (MEETINGMANAGERS_GROUP_SUFFIX,
-                           POWEROBSERVERS_GROUP_SUFFIX,
-                           RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX,
-                           BUDGETIMPACTEDITORS_GROUP_SUFFIX,
-                           ITEMTEMPLATESMANAGERS_GROUP_SUFFIX):
-                portal_groups.removeGroup("%s_%s" % (self.getId(), suffix))
-        BaseFolder.manage_beforeDelete(self, item, container)
 
     security.declarePublic('getCustomFields')
 

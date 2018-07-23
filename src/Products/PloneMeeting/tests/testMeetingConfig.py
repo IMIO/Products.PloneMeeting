@@ -2,7 +2,7 @@
 #
 # File: testMeetingConfig.py
 #
-# Copyright (c) 2015 by Imio.be
+# Copyright (c) 2018 by Imio.be
 #
 # GNU General Public License (GPL)
 #
@@ -46,6 +46,7 @@ from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import TOOL_FOLDER_SEARCHES
 from Products.PloneMeeting.config import WriteHarmlessConfig
+from Products.PloneMeeting.events import _itemAnnexTypes
 from Products.PloneMeeting.MeetingConfig import DUPLICATE_SHORT_NAME
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
@@ -1064,8 +1065,15 @@ class testMeetingConfig(PloneMeetingTestCase):
 
     def test_pm_CanNotRemoveUsedMeetingConfig(self):
         '''While removing a MeetingConfig, it should raise if it is used somewhere...'''
+        # work with cfg2 where meetingConfigsToCloneTo and other_mc_correspondences are defined
         cfg = self.meetingConfig
         cfgId = cfg.getId()
+        cfg2 = self.meetingConfig2
+        cfg2Id = cfg2.getId()
+        cfg2.setMeetingConfigsToCloneTo(
+            ({'meeting_config': cfgId,
+              'trigger_workflow_transitions_until': '__nothing__'},)
+            )
 
         # a user can not delete the MeetingConfig
         self.changeUser('pmManager')
@@ -1110,7 +1118,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertEquals(cm.exception.message, can_not_delete_meetingconfig_meetingitem)
         self.portal.restrictedTraverse('@@delete_givenuid')(item.UID())
 
-        # fails if another element then searches_xxx folder exists in the pmFolders
+        # fails if another element than searches_xxx folder exists in the pmFolders
         self.changeUser('pmManager')
         pmFolder = self.tool.getPloneMeetingFolder(cfgId)
         afileId = pmFolder.invokeFactory('File', id='afile')
@@ -1125,9 +1133,37 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertEquals(cm.exception.message, can_not_delete_meetingconfig_meetingfolder)
         self.portal.restrictedTraverse('@@delete_givenuid')(afile.UID())
 
-        self.assertTrue(cfgId in self.tool.objectIds())
-        self.tool.manage_delObjects([cfgId, ])
-        self.assertFalse(cfgId in self.tool.objectIds())
+        # fails if used in another MeetingConfig (meetingConfigsToCloneTo)
+        with self.assertRaises(BeforeDeleteException) as cm:
+            self.tool.manage_delObjects([cfgId, ])
+        can_not_delete_meetingconfig_meetingconfig = \
+            translate('can_not_delete_meetingconfig_meetingconfig',
+                      domain="plone",
+                      context=self.request)
+        self.assertEquals(cm.exception.message, can_not_delete_meetingconfig_meetingconfig)
+        cfg2.setMeetingConfigsToCloneTo(())
+
+        # fails if an annex_type is used by another MeetingConfig annex_type in other_mc_correspondences
+        # here we use cfg2 where correspondences are defined
+        self._removeConfigObjectsFor(cfg2)
+        cfg.setMeetingConfigsToCloneTo(())
+        with self.assertRaises(BeforeDeleteException) as cm:
+            self.tool.manage_delObjects([cfg2Id, ])
+        can_not_delete_meetingconfig_annex_types = \
+            translate('can_not_delete_meetingconfig_annex_types',
+                      domain="plone",
+                      context=self.request)
+        self.assertEquals(cm.exception.message, can_not_delete_meetingconfig_annex_types)
+        annex_types = _itemAnnexTypes(cfg)
+        for annex_type in annex_types:
+            annex_type.other_mc_correspondences = set()
+
+        # everything ok, MeetingConfig may be deleted
+        self.assertTrue(cfgId in self.tool.objectIds() and cfg2Id in self.tool.objectIds())
+        self.tool.manage_delObjects([cfgId, cfg2Id])
+        self.assertFalse(cfgId in self.tool.objectIds() or cfg2Id in self.tool.objectIds())
+        # elements created by MeetingConfig were deleted (portal_types, groups, metingFolders)
+        import ipdb; ipdb.set_trace()
 
     def test_pm_ConfigLinkedGroupsRemovedWhenConfigDeleted(self, ):
         """When the MeetingConfig is deleted, created groups are removed too :
