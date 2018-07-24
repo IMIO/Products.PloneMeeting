@@ -1165,12 +1165,12 @@ class testMeetingConfig(PloneMeetingTestCase):
         # elements created by MeetingConfig were deleted (portal_types, groups, metingFolders)
         # portal_types
         all_portal_type_ids = self.portal.portal_types.listContentTypes()
-        self.assertEqual([pt for pt in all_portal_type_ids if cfg.getShortName() in pt], [])
-        self.assertEqual([pt for pt in all_portal_type_ids if cfg2.getShortName() in pt], [])
-        # groups
+        self.assertEqual([pt for pt in all_portal_type_ids if pt.endswith(cfg.getShortName())], [])
+        self.assertEqual([pt for pt in all_portal_type_ids if pt.endswith(cfg2.getShortName())], [])
+        # groups, cfg id is suffixed with different values
         all_group_ids = self.portal.portal_groups.listGroupIds()
-        self.assertEqual([gr for gr in all_group_ids if cfgId in gr], [])
-        self.assertEqual([gr for gr in all_group_ids if cfg2Id in gr], [])
+        self.assertEqual([gr for gr in all_group_ids if gr.startswith(cfgId)], [])
+        self.assertEqual([gr for gr in all_group_ids if gr.startswith(cfg2Id)], [])
         # meetingFolders
         for member_folder in self.portal.Members.objectValues():
             mymeetings = member_folder.get('mymeetings', None)
