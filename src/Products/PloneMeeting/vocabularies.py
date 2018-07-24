@@ -379,7 +379,7 @@ class AskedAdvicesVocabulary(object):
         """ """
         res = []
         # customAdvisers
-        customAdvisers = self.cfg.getCustomAdvisers()
+        customAdvisers = self.cfg and self.cfg.getCustomAdvisers() or []
         for customAdviser in customAdvisers:
             if customAdviser['delay']:
                 # build using DELAYAWARE_REAL_GROUP_ID_PATTERN

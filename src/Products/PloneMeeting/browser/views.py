@@ -1313,14 +1313,25 @@ class DisplayMeetingConfigsOfConfigGroup(BrowserView):
 
     def __call__(self, config_group):
         """ """
-        self.tool = api.portal.get_tool('portal_plonemeeting')
         self.config_group = config_group
         return self.index()
 
     def getViewableMeetingConfigs(self):
         """Returns the list of MeetingConfigs the current user has access to."""
-        grouped_configs = self.tool.getGroupedConfigs(config_group=self.config_group)
-        return [getattr(self.tool, config_info['id']) for config_info in grouped_configs.values()[0]]
+        tool = api.portal.get_tool('portal_plonemeeting')
+        grouped_configs = tool.getGroupedConfigs(config_group=self.config_group)
+        res = []
+        for config_info in grouped_configs.values()[0]:
+            cfg = getattr(tool, config_info['id'])
+            res.append(
+                {'config': cfg,
+                 'url': tool.getPloneMeetingFolder(
+                    cfg.getId()).absolute_url() + '/searches_items'})
+        # make sure 'content-type' header of response is correct because during
+        # faceted initialization, 'content-type' is turned to 'text/xml' and it
+        # breaks to tooltipster displaying the result in the tooltip...
+        self.request.RESPONSE.setHeader('content-type', 'text/html')
+        return res
 
 
 class DisplayMeetingItemAbsents(BrowserView):
