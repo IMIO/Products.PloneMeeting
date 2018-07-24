@@ -2034,7 +2034,7 @@ class testAdvices(PloneMeetingTestCase):
         # item data are saved if cfg.historizeItemDataWhenAdviceIsGiven
         self.assertTrue(cfg.getHistorizeItemDataWhenAdviceIsGiven())
         # make sure we know what item rich text fields are enabled
-        cfg.setUsedItemAttributes(('detailedDescription', 'motivation', ))
+        cfg.setUsedItemAttributes(('description', 'detailedDescription', 'motivation', ))
         cfg.setItemAdviceStates([self._stateMappingFor('proposed'), ])
         cfg.setItemAdviceEditStates([self._stateMappingFor('proposed'), ])
         cfg.setItemAdviceViewStates([self._stateMappingFor('proposed'), ])
@@ -2179,7 +2179,7 @@ class testAdvices(PloneMeetingTestCase):
         # item data are saved if cfg.historizeItemDataWhenAdviceIsGiven
         self.assertTrue(cfg.getHistorizeItemDataWhenAdviceIsGiven())
         # make sure we know what item rich text fields are enabled
-        cfg.setUsedItemAttributes(('detailedDescription', 'motivation', ))
+        cfg.setUsedItemAttributes(('description', 'detailedDescription', 'motivation', ))
         cfg.setItemAdviceStates([self._stateMappingFor('proposed'), ])
         cfg.setItemAdviceEditStates([self._stateMappingFor('proposed'), ])
         cfg.setItemAdviceViewStates([self._stateMappingFor('proposed'), ])

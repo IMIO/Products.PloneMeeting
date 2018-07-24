@@ -457,8 +457,8 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg2 = self.meetingConfig2
         cfg2Id = cfg2.getId()
         # enable motivation and budgetInfos in cfg1, not in cfg2
-        cfg.setUsedItemAttributes(('motivation', 'budgetInfos'))
-        cfg2.setUsedItemAttributes(('itemIsSigned', 'privacy'))
+        cfg.setUsedItemAttributes(('description', 'motivation', 'budgetInfos'))
+        cfg2.setUsedItemAttributes(('description', 'itemIsSigned', 'privacy'))
         cfg.setItemManualSentToOtherMCStates((self._stateMappingFor('itemcreated')))
 
         # create and send
