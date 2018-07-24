@@ -1163,7 +1163,23 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.tool.manage_delObjects([cfgId, cfg2Id])
         self.assertFalse(cfgId in self.tool.objectIds() or cfg2Id in self.tool.objectIds())
         # elements created by MeetingConfig were deleted (portal_types, groups, metingFolders)
-        import ipdb; ipdb.set_trace()
+        # portal_types
+        all_portal_type_ids = self.portal.portal_types.listContentTypes()
+        self.assertEqual([pt for pt in all_portal_type_ids if cfg.getShortName() in pt], [])
+        self.assertEqual([pt for pt in all_portal_type_ids if cfg2.getShortName() in pt], [])
+        # groups
+        all_group_ids = self.portal.portal_groups.listGroupIds()
+        self.assertEqual([gr for gr in all_group_ids if cfgId in gr], [])
+        self.assertEqual([gr for gr in all_group_ids if cfg2Id in gr], [])
+        # meetingFolders
+        for member_folder in self.portal.Members.objectValues():
+            mymeetings = member_folder.get('mymeetings', None)
+            if mymeetings:
+                self.assertEqual(mymeetings.objectIds(), [])
+            else:
+                pm_logger.info(
+                    "{0}: no 'mymeetings' folder for user '{1}'".format(
+                        self._testMethodName, member_folder.id))
 
     def test_pm_ConfigLinkedGroupsRemovedWhenConfigDeleted(self, ):
         """When the MeetingConfig is deleted, created groups are removed too :
