@@ -404,7 +404,6 @@ document.location.reload(true);
 
 <div id="meeting_users_"
      metal:define-macro="itemPeople" i18n:domain="PloneMeeting"
-     onmouseover="pmCommonOverlays();"
      tal:define="usedAttrs usedAttrs|meetingConfig/getUsedItemAttributes;
                  meeting context/getMeeting;
                  usedMeetingAttributes usedMeetingAttributes|meetingConfig/getUsedMeetingAttributes">
@@ -590,6 +589,9 @@ document.location.reload(true);
   <tbody>
 </table>
 </form>
+<script>
+ pmCommonOverlays();
+</script>
 </div>
 
 <tal:comment replace="nothing">
