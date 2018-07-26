@@ -3936,9 +3936,9 @@ class testMeetingItem(PloneMeetingTestCase):
         # check test test_pm_ToDiscussFieldBehaviourWhenCloned
         NEUTRAL_FIELDS = [
             'completeness', 'emergency', 'id', 'isAcceptableOutOfMeeting',
-            'itemAbsents', 'itemAssembly', 'itemAssemblyAbsents',
+            'itemAssembly', 'itemAssemblyAbsents',
             'itemAssemblyExcused', 'itemInitiator', 'itemIsSigned',
-            'itemKeywords', 'itemNumber', 'itemReference', 'itemSignatories',
+            'itemKeywords', 'itemNumber', 'itemReference',
             'itemSignatures', 'itemTags', 'listType', 'manuallyLinkedItems',
             'meetingTransitionInsertingMe', 'inAndOutMoves', 'notes',
             'marginalNotes', 'observations', 'pollTypeObservations',
