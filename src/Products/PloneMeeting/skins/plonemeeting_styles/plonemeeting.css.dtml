@@ -1603,6 +1603,7 @@ table.listing tbody tr.even.dragging td {
 #content span.people-edit-itemabsent:before,
 #content span.people-edit-signatory:before {
     color: orange;
+    border-bottom: 1px dotted;
 }
 
 #content span.people-edit-signatory:before {
@@ -1629,6 +1630,7 @@ span.signatory-replacer {
     content: "\f00d";
     color: red;
     font-size: 120%;
+    border-bottom: 1px dotted;
 }
 
 div.item-send-to-other-mc {
@@ -1642,6 +1644,11 @@ div.item-send-to-other-mc-multiple-fields {
 /* hide downloard vcard link on contacts */
 p#download_vcard {
    display: none;
+}
+
+/* input to enter item number to go to on the item widget navigation */
+#content input.goto_meeting {
+   vertical-align: baseline;
 }
 
 /* </dtml-with> */

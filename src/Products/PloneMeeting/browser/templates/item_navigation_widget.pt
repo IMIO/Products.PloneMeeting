@@ -54,7 +54,7 @@
     <tal:comment replace="nothing">Go to meetingitem_view for a given item number</tal:comment>
     <span class="discreet" tal:condition="python: lastItemNumber!=False">&nbsp;&nbsp;
         <span i18n:translate="">goto_item</span>
-        &nbsp;&nbsp;<input id="goto_meeting"
+        &nbsp;&nbsp;<input class="goto_meeting"
                            type="text"
                            size="3"
                            tal:attributes="onKeyPress string:if (event.keyCode==13) gotoItem($(this), $lastItemNumberDisplay);" />
