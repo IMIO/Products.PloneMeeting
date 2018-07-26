@@ -219,6 +219,7 @@ class Migrate_To_4_1(Migrator):
                 break
             meeting.orderedContacts = OrderedDict()
             meeting.itemAbsents = PersistentMapping()
+            meeting.itemSignatories = PersistentMapping()
 
         logger.info('Adapting items...')
         brains = catalog(meta_type=['MeetingItem'])
@@ -228,6 +229,7 @@ class Migrate_To_4_1(Migrator):
                 # already migrated
                 break
             delattr(item, 'itemAbsents')
+            delattr(item, 'itemSignatories')
 
         logger.info('Adapting meeting configs...')
         for cfg in self.tool.objectValues('MeetingConfig'):

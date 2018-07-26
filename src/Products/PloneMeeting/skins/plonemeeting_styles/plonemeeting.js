@@ -351,8 +351,8 @@ function byebyeUser(widget) {
   closeDialog('confirmByebyeUser');
 }
 
-function setByeByeButton(userId, visibility) {
-  var button = document.getElementById('byebye_' + userId);
+function setHiddenButton(userId, visibility, prefix='byebye_') {
+  var button = document.getElementById(prefix + userId);
   if (!button) return;
   button.style.visibility = visibility;
 }

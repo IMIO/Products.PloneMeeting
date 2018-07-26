@@ -361,7 +361,7 @@ def import_contacts(self, dochange='', ownorg='', only='ORGS|PERS|HP', path=''):
     if lines:
         data = lines.pop(0)
         lendata = len(data)
-        if lendata < 21 or data[20] != 'UID':
+        if lendata < 24 or data[23] != 'UID':
             return "Problem decoding first line: bad columns in heldpositions.csv ?"
         intids = getUtility(IIntIds)
     hps = {}
@@ -370,7 +370,7 @@ def import_contacts(self, dochange='', ownorg='', only='ORGS|PERS|HP', path=''):
         if len(data) != lendata:
             return "!! HP: problem line %d, invalid column number %d <> %d: %s" % (i, lendata, len(data),
                                                                                    ['%s' % cell for cell in data])
-        id, pid, oid, title, uid = data[0], data[1], data[2], data[4], data[20]
+        id, pid, oid, title, uid = data[0], data[1], data[2], data[4], data[23]
         errors = []
         try:
             start = data[5] or None
@@ -445,7 +445,8 @@ def import_contacts(self, dochange='', ownorg='', only='ORGS|PERS|HP', path=''):
                                          phone=phone, cell_phone=cell_phone, fax=fax, email=safe_unicode(data[16]),
                                          website=safe_unicode(data[17]), region=safe_unicode(data[18]),
                                          country=safe_unicode(data[19]), use_parent_address=bool(upa),
-                                         usages=['assemblyMember'], defaults=['present'])
+                                         defaults=data[20].split('|'), usages=data[21].split('|'),
+                                         signature_number=data[22] or None)
                 out.append("%04d hp: new hp '%s' for '%s' created" % (i, safe_encode(title), pers.Title()))
                 hps[id]['obj'] = obj
             else:

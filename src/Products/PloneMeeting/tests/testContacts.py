@@ -22,6 +22,7 @@
 # 02110-1301, USA.
 #
 
+from AccessControl import Unauthorized
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from DateTime import DateTime
 from plone import api
@@ -146,7 +147,8 @@ class testContacts(PloneMeetingTestCase):
         person = self.portal.contacts.get('alain-alain')
         hp = person.get_held_positions()[0]
         hp_uid = hp.UID()
-        byebye_form = item1.restrictedTraverse('@@item_byebye_attendee_form')
+        byebye_form = item1.restrictedTraverse('@@item_byebye_attendee_form').form_instance
+        byebye_form.meeting = meeting
         byebye_form.person_uid = hp_uid
         byebye_form.apply_until_item_number = 200
         self.assertFalse(item1.getItemAbsents())
@@ -163,18 +165,82 @@ class testContacts(PloneMeetingTestCase):
             sorted([item1_uid, item2_uid]))
 
         # welcome person on item2
-        welcome_form = item2.restrictedTraverse('@@item_welcome_attendee_form')
+        welcome_form = item2.restrictedTraverse('@@item_welcome_attendee_form').form_instance
+        welcome_form.meeting = meeting
         welcome_form.person_uid = hp_uid
         welcome_form.apply_until_item_number = u''
         welcome_form._doApply()
         self.assertEqual(item1.getItemAbsents(), (hp_uid, ))
         self.assertFalse(item2.getItemAbsents())
 
-        # when an item is removed from meeting,
-        # itemAbsents info regarding this item are removed as well
-        self.assertTrue(item1_uid in meeting.itemAbsents)
-        self.backToState(item1, 'validated')
-        self.assertFalse(item1_uid in meeting.itemAbsents)
+    def test_pm_ItemSignatories(self):
+        '''Item signatories management, define item signatory and remove item signatory.'''
+        cfg = self.meetingConfig
+        # remove recurring items
+        self._removeConfigObjectsFor(cfg)
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime())
+        meeting_signatories = meeting.getSignatories()
+        self.assertTrue(meeting_signatories)
+        item1 = self.create('MeetingItem')
+        item2 = self.create('MeetingItem')
+        item1_uid = item1.UID()
+        item2_uid = item2.UID()
+        self.presentItem(item1)
+        self.presentItem(item2)
+
+        # for now signatories are the same on meeting and items
+        self.assertEqual(meeting_signatories, item1.getItemSignatories())
+        self.assertEqual(meeting_signatories, item2.getItemSignatories())
+        self.assertFalse(meeting.getItemSignatories())
+        self.assertFalse(item1.getItemSignatories(real=True))
+        self.assertFalse(item2.getItemSignatories(real=True))
+
+        # redefine signatory person on item1 and item2
+        person = self.portal.contacts.get('alain-alain')
+        hp = person.get_held_positions()[0]
+        hp_uid = hp.UID()
+        signatory_form = item1.restrictedTraverse('@@item_redefine_signatory_form').form_instance
+        signatory_form.meeting = meeting
+        signatory_form.person_uid = hp_uid
+        signatory_form.apply_until_item_number = 200
+        signatory_form.signature_number = '1'
+        signatory_form._doApply()
+
+        self.assertEqual(item1.getItemSignatories(real=True), {hp_uid: '1'})
+        self.assertEqual(item2.getItemSignatories(real=True), {hp_uid: '1'})
+        self.assertTrue(hp_uid in item1.getItemSignatories())
+        self.assertTrue(hp_uid in item2.getItemSignatories())
+        meeting_item_signatories = meeting.getItemSignatories()
+        self.assertTrue(item1_uid in meeting_item_signatories)
+        self.assertTrue(item2_uid in meeting_item_signatories)
+
+        # remove redefined signatory on item2
+        remove_signatory_form = item2.restrictedTraverse('@@item_remove_redefined_signatory_form').form_instance
+        remove_signatory_form.meeting = meeting
+        remove_signatory_form.person_uid = hp_uid
+        remove_signatory_form.apply_until_item_number = u''
+        remove_signatory_form._doApply()
+        self.assertTrue(hp_uid in item1.getItemSignatories())
+        self.assertFalse(hp_uid in item2.getItemSignatories())
+        meeting_item_signatories = meeting.getItemSignatories()
+        self.assertTrue(item1_uid in meeting_item_signatories)
+        self.assertFalse(item2_uid in meeting_item_signatories)
+
+        # trying to define a forbidden signatory (already signatory on meeting or not present)
+        # will raise Unauthorized
+        # 1) already signatory, try to define meeting signatory 2 as item signatory 2
+        meeting_signatory_2_uid = meeting.getSignatories(by_signature_number=True)['2']
+        signatory_form.person_uid = meeting_signatory_2_uid
+        self.assertRaises(Unauthorized, signatory_form._doApply)
+
+        # set an attendee absent on item and try to select him as signatory on item1
+        absent = self.portal.contacts.get('yves-pays').get_held_positions()[0]
+        absent_uid = absent.UID()
+        meeting.orderedContacts[absent_uid]['attendee'] = False
+        meeting.orderedContacts[absent_uid]['excused'] = True
+        self.assertTrue(absent_uid in meeting.getExcused())
+        signatory_form.person_uid = absent_uid
 
     def test_pm_MeetingGetItemAbsents(self):
         '''Test the Meeting.getItemAbsents method.'''
@@ -198,7 +264,8 @@ class testContacts(PloneMeetingTestCase):
         person = self.portal.contacts.get('alain-alain')
         hp = person.get_held_positions()[0]
         hp_uid = hp.UID()
-        byebye_form = item1.restrictedTraverse('@@item_byebye_attendee_form')
+        byebye_form = item1.restrictedTraverse('@@item_byebye_attendee_form').form_instance
+        byebye_form.meeting = meeting
         byebye_form.person_uid = hp_uid
         byebye_form.apply_until_item_number = 200
         self.assertFalse(item1.getItemAbsents())
@@ -208,19 +275,43 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(item2.getItemAbsents(), (hp_uid, ))
 
         # welcome person on item2
-        welcome_form = item2.restrictedTraverse('@@item_welcome_attendee_form')
+        welcome_form = item2.restrictedTraverse('@@item_welcome_attendee_form').form_instance
+        welcome_form.meeting = meeting
         welcome_form.person_uid = hp_uid
         welcome_form.apply_until_item_number = u''
         welcome_form._doApply()
         self.assertEqual(item1.getItemAbsents(), (hp_uid, ))
         self.assertFalse(item2.getItemAbsents())
 
-        # when an item is removed from meeting,
-        # itemAbsents info regarding this item are removed as well
-        item1_uid = item1.UID()
-        self.assertTrue(item1_uid in meeting.itemAbsents)
-        self.backToState(item1, 'validated')
-        self.assertFalse(item1_uid in meeting.itemAbsents)
+    def test_pm_ItemContactsWhenItemRemovedFromMeeting(self):
+        '''When an item is removed from a meeting, redefined informations
+           regarding item absents and signatories are reinitialized.'''
+        cfg = self.meetingConfig
+        # remove recurring items
+        self._removeConfigObjectsFor(cfg)
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime())
+        item = self.create('MeetingItem')
+        self.presentItem(item)
+
+        # add an item absent
+        absent = self.portal.contacts.get('alain-alain')
+        absent_hp = absent.get_held_positions()[0]
+        absent_hp_uid = absent_hp.UID()
+        meeting.itemAbsents[item.UID()] = [absent_hp_uid]
+        self.assertTrue(absent_hp_uid in meeting.getItemAbsents(by_absents=True))
+
+        # redefine signatories on item
+        signer = self.portal.contacts.get('yves-pays')
+        signer_hp = signer.get_held_positions()[0]
+        signer_hp_uid = signer_hp.UID()
+        meeting.itemSignatories[item.UID()] = {'1': signer_hp_uid}
+        self.assertTrue(signer_hp_uid in item.getItemSignatories())
+
+        # remove item from meeting, everything is reinitialized
+        self.backToState(item, 'validated')
+        self.assertFalse(absent_hp_uid in meeting.getItemAbsents(by_absents=True))
+        self.assertFalse(signer_hp_uid in item.getItemSignatories())
 
 
 def test_suite():

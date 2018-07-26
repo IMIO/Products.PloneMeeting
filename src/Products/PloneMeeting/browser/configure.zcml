@@ -295,17 +295,26 @@
         for="Products.PloneMeeting.interfaces.IMeetingItem"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         name="item_byebye_attendee_form"
-        class=".itemattendee.ByeByeAttendeeForm"
-        permission="zope2.View"
-        template="templates/byebyeuser.pt" />
-
+        class=".itemattendee.ByeByeAttendeeFormWrapper"
+        permission="zope2.View" />
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItem"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         name="item_welcome_attendee_form"
-        class=".itemattendee.WelcomeAttendeeForm"
-        permission="zope2.View"
-        template="templates/byebyeuser.pt" />
+        class=".itemattendee.WelcomeAttendeeFormWrapper"
+        permission="zope2.View" />
+     <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        name="item_redefine_signatory_form"
+        class=".itemattendee.RedefinedSignatoryFormWrapper"
+        permission="zope2.View" />
+      <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        name="item_remove_redefined_signatory_form"
+        class=".itemattendee.RemoveRedefinedSignatoryFormWrapper"
+        permission="zope2.View" />
  
     <!-- Asynchronous calls (ajax) -->
     <browser:page

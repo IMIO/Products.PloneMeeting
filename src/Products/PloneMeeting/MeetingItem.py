@@ -31,7 +31,6 @@ from plone.memoize import ram
 from Products.Archetypes.atapi import BaseFolder
 from Products.Archetypes.atapi import BooleanField
 from Products.Archetypes.atapi import DisplayList
-from Products.Archetypes.atapi import InAndOutWidget
 from Products.Archetypes.atapi import IntegerField
 from Products.Archetypes.atapi import LinesField
 from Products.Archetypes.atapi import MultiSelectionWidget
@@ -1192,35 +1191,6 @@ schema = Schema((
         ),
         default_output_type='text/plain',
         default_content_type='text/plain',
-    ),
-    LinesField(
-        name='itemSignatories',
-        widget=InAndOutWidget(
-            condition="python: here.portal_plonemeeting.isManager(here) and here.hasMeeting() and "
-                      "here.getMeeting().attributeIsUsed('signatories')",
-            description="ItemSignatories",
-            description_msgid="item_signatories_descr",
-            size=10,
-            format="checkbox",
-            label='Itemsignatories',
-            label_msgid='PloneMeeting_label_itemSignatories',
-            i18n_domain='PloneMeeting',
-        ),
-        multiValued=1,
-        vocabulary='listItemSignatories',
-    ),
-    LinesField(
-        name='itemAbsents',
-        widget=MultiSelectionWidget(
-            visible=False,
-            format="checkbox",
-            label='Itemabsents',
-            label_msgid='PloneMeeting_label_itemAbsents',
-            i18n_domain='PloneMeeting',
-        ),
-        enforceVocabulary=False,
-        multiValued=1,
-        vocabulary='listItemAbsents',
     ),
     LinesField(
         name='copyGroups',
@@ -2700,19 +2670,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res.append((tag, tag))
         return DisplayList(tuple(res))
 
-    security.declarePublic('listItemSignatories')
-
-    def listItemSignatories(self):
-        '''Returns a list of available signatories for the item.
-           Every attendees for this item could be signatory.'''
-        res = []
-        attendees = self.getAttendees(theObjects=True)
-        for attendee in attendees:
-            res.append(
-                (attendee.UID(),
-                 attendee.get_short_title()))
-        return DisplayList(tuple(res))
-
     security.declarePublic('listEmergencies')
 
     def listEmergencies(self):
@@ -3008,7 +2965,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return item.getProposingGroup(theObject=True).getCertifiedSignatures(
                 computed=True, context=item, from_group_in_charge=from_group_in_charge)
         else:
-            # we use MeetingUsers
+            # we use contacts
             signatories = cfg.getHeldPositions(usages=('signer',))
             res = []
             for signatory in signatories:
@@ -3017,40 +2974,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     res.append("%s %s" % (particule, signatory.getDuty()))
                     res.append("%s" % signatory.Title())
             return '\n'.join(res)
-
-    security.declarePublic('getItemSignatories')
-
-    def getItemSignatories(self, real=False, theObjects=False, by_signature_number=False, **kwargs):
-        '''Returns the signatories for this item. If no signatory is defined,
-           meeting signatories are returned.
-           If p_real=False, the returned result is an OrderedDict with
-           signatory uid as key and 'signature_number' as value.
-           if p_ by_signature_number is True, signatories are return with signature_number
-           as key and signer as value, by default this is the other way round.
-        '''
-        res = self.getField('itemSignatories').get(self, **kwargs)
-        if real:
-            return res
-
-        if res:
-            if theObjects:
-                catalog = api.portal.get_tool('portal_catalog')
-                brains = catalog(UID=res)
-                res = [brain.getObject() for brain in brains]
-
-                # keep correct order that was lost by catalog query
-                def getKey(item):
-                    return self.getItemSignatories(real=True).index(item.UID())
-                res = sorted(res, key=getKey)
-                res = {signer: res.index(signer) + 1 for signer in res}
-            else:
-                res = {signer_uid: res.index(signer_uid) + 1 for signer_uid in res}
-
-        if not res and self.hasMeeting():
-            res = self.getMeeting().getSignatories(theObjects=theObjects)
-        if by_signature_number:
-            res = {v: k for k, v in res.items()}
-        return res
 
     security.declarePublic('redefinedItemAssemblies')
 
@@ -3129,6 +3052,37 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         else:
             item_absents = tuple(meeting_item_absents)
         return item_absents
+
+    security.declarePublic('getItemSignatories')
+
+    def getItemSignatories(self, theObjects=False, by_signature_number=False, real=False, **kwargs):
+        '''Returns the signatories for this item. If no signatory is defined,
+           meeting signatories are returned.
+           If p_theObjects=False, the returned result is an dict with
+           signatory uid as key and 'signature_number' as value.
+           Else, the key is the signatory contact object.
+        '''
+        res = []
+        if not self.hasMeeting():
+            return res
+        meeting = self.getMeeting()
+        if real:
+            signatories = {}
+        else:
+            signatories = meeting.getSignatories(by_signature_number=True)
+        item_signatories = meeting.getItemSignatories().get(self.UID(), {})
+        signatories.update(item_signatories)
+
+        if theObjects:
+            uids = signatories.values()
+            signatories_objs = meeting._getContacts(uids=uids, theObjects=theObjects)
+            reversed_signatories = {v: k for k, v in signatories.items()}
+            signatories = {reversed_signatories[signatory.UID()]: signatory for signatory in signatories_objs}
+
+        if not by_signature_number:
+            signatories = {v: k for k, v in signatories.items()}
+
+        return signatories
 
     security.declarePublic('mustShowItemReference')
 
@@ -3220,6 +3174,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 unrestrictedRemoveGivenObject(item)
                 return True
 
+    def _checkMayQuickEdit(self, bypassWritePermissionCheck=False, permission=ModifyPortalContent, expression=''):
+        """ """
+        tool = api.portal.get_tool('portal_plonemeeting')
+        member = api.user.get_current()
+        if (bypassWritePermissionCheck or member.has_permission(permission, self)) and \
+           _evaluateExpression(self, expression) and not \
+           (self.hasMeeting() and self.getMeeting().queryState() in Meeting.meetingClosedStates) or \
+           tool.isManager(self, realManagers=True):
+            return True
+
     security.declarePublic('mayQuickEdit')
 
     def mayQuickEdit(self, fieldName, bypassWritePermissionCheck=False):
@@ -3229,16 +3193,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            the item is presented in is not considered as 'closed'.  Bypass if current user is
            a real Manager (Site Administrator/Manager).
            If p_bypassWritePermissionCheck is True, we will not check for write_permission.'''
-        portal = api.portal.get()
-        tool = api.portal.get_tool('portal_plonemeeting')
-        member = api.user.get_current()
         field = self.Schema()[fieldName]
-        if (bypassWritePermissionCheck or member.has_permission(field.write_permission, self)) and \
-           self.Schema()[fieldName].widget.testCondition(self.getParentNode(), portal, self) and not \
-           (self.hasMeeting() and self.getMeeting().queryState() in Meeting.meetingClosedStates) or \
-           tool.isManager(self, realManagers=True):
-            return True
-        return False
+        return self._checkMayQuickEdit(
+            bypassWritePermissionCheck=bypassWritePermissionCheck,
+            permission=field.write_permission,
+            expression=self.Schema()[fieldName].widget.condition)
 
     security.declareProtected(ModifyPortalContent, 'transformRichTextField')
 
@@ -6204,8 +6163,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _mayChangeAttendees(self):
         """Check that user may quickEdit itemAbsents."""
-        if self.mayQuickEdit('itemAbsents', bypassWritePermissionCheck=True):
-            return True
+        tool = api.portal.get_tool('portal_plonemeeting')
+        return tool.isManager(self) and self._checkMayQuickEdit()
 
     security.declareProtected(ModifyPortalContent, 'ItemAssemblyDescrMethod')
 

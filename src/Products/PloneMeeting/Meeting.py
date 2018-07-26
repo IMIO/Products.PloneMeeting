@@ -57,7 +57,6 @@ from Products.PloneMeeting.config import RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.interfaces import IMeetingWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingWorkflowConditions
 from Products.PloneMeeting.utils import _addManagedPermissions
-from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
 from Products.PloneMeeting.utils import addDataChange
 from Products.PloneMeeting.utils import addRecurringItemsIfRelevant
 from Products.PloneMeeting.utils import displaying_available_items
@@ -1041,6 +1040,22 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             data = self.itemAbsents.copy()
         return data
 
+    security.declarePublic('getItemSignatories')
+
+    def getItemSignatories(self, by_signatories=False):
+        '''Return itemSignatories, by default the itemSignatories dict has the item UID as key and list
+           of signatories as values but if 'p_by_signatories' is True, the informations are returned with
+           signatory as key and list of items as value.'''
+        if by_signatories:
+            # values are now keys, concatenate a list of lists and remove duplicates
+            keys = tuple(set(list(itertools.chain.from_iterable(self.itemSignatories.values()))))
+            data = {}
+            for key in keys:
+                data[key] = [k for k, v in self.itemSignatories.items() if key in v]
+        else:
+            data = self.itemSignatories.copy()
+        return data
+
     security.declarePublic('displayUserReplacement')
 
     def displayUserReplacement(self,
@@ -1331,10 +1346,13 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             # does not exist anymore and is no more in the items list
             # so we pass
             pass
-        # remove item UID from self.itemAbsents
+
+        # remove item UID from self.itemAbsents and self.itemSignatories
         item_uid = item.UID()
         if item_uid in self.itemAbsents:
             del self.itemAbsents[item_uid]
+        if item_uid in self.itemSignatories:
+            del self.itemSignatories[item_uid]
 
         self.setItems(items)
         # Update item numbers
@@ -1571,6 +1589,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         ''' '''
         # place to store item absents
         self.itemAbsents = PersistentMapping()
+        # place to store item signatories
+        self.itemSignatories = PersistentMapping()
         # place to store attendees when using contacts
         self.orderedContacts = OrderedDict()
         self.updateTitle()

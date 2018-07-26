@@ -23,6 +23,7 @@ from collective.eeafaceted.collectionwidget.utils import _updateDefaultCollectio
 from collective.iconifiedcategory import CAT_SEPARATOR
 from plone import api
 from Products.CMFPlone.interfaces.constrains import IConstrainTypes
+from Products.PloneMeeting import logger
 from Products.PloneMeeting.config import PloneMeetingError
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import registerClasses
@@ -179,7 +180,8 @@ class ToolInitializer:
 
         if data.addContacts:
             # add contacts using the CSV import
-            import_contacts(self.site, dochange=True, path=self.profilePath)
+            output = import_contacts(self.site, dochange=True, path=self.profilePath)
+            logger.info(output)
             cfg.setOrderedContacts(cfg.listSelectableContacts().keys())
 
     def _manageOtherMCCorrespondences(self, cfg):

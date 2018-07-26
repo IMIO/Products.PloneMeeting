@@ -66,17 +66,23 @@ class BaseAttendeeForm(form.Form):
         if errors:
             self.status = self.formErrorsMessage
             return
-        # do adapt item signatures
-        self.person_uid = data.get('person_uid')
+        # store every data on self
+        for k, v in data.items():
+            setattr(self, k, v)
         self.apply_until_item_number = \
             _itemNumber_to_storedItemNumber(
                 data.get('apply_until_item_number') or u'0'
                 )
+        self.meeting = self.context.getMeeting()
         self._doApply()
 
     @button.buttonAndHandler(_('Cancel'), name='cancel')
     def handleCancel(self, action):
         self._finishedSent = True
+
+    def mayChangeAttendees(self):
+        """ """
+        return self.context._mayChangeAttendees()
 
     def _doApply(self):
         """ """
@@ -109,18 +115,18 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
 
     def _doApply(self):
         """ """
-        if not self.context._mayChangeAttendees():
+        if not self.mayChangeAttendees():
             raise Unauthorized
 
         plone_utils = api.portal.get_tool('plone_utils')
-        meeting = self.context.getMeeting()
         items_to_update = _itemsToUpdate(
             from_item_number=self.context.getItemNumber(relativeTo='meeting'),
             until_item_number=self.apply_until_item_number,
-            meeting=meeting)
+            meeting=self.meeting)
 
         # return a portal_message if trying to byebye an attendee that is
-        # specifically selected as itemSignatory on current item
+        # a signatory, either defined on the meeting or redefined on the item
+        # user will first have to select another signatory on meeting or item
         for item_to_update in items_to_update:
             if self.person_uid in item_to_update.getItemSignatories(real=True):
                 plone_utils.addPortalMessage(
@@ -137,10 +143,10 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
         # apply itemAbsents
         for item_to_update in items_to_update:
             item_to_update_uid = item_to_update.UID()
-            item_absents = meeting.itemAbsents.get(item_to_update_uid, [])
+            item_absents = self.meeting.itemAbsents.get(item_to_update_uid, [])
             if self.person_uid not in item_absents:
                 item_absents.append(self.person_uid)
-                meeting.itemAbsents[item_to_update_uid] = item_absents
+                self.meeting.itemAbsents[item_to_update_uid] = item_absents
         plone_utils.addPortalMessage(_("Attendee has been set absent."))
         self._finishedSent = True
 
@@ -168,25 +174,133 @@ class WelcomeAttendeeForm(BaseAttendeeForm):
 
     def _doApply(self):
         """ """
-        if not self.context._mayChangeAttendees():
+        if not self.mayChangeAttendees():
             raise Unauthorized
 
         # apply itemAbsents
-        meeting = self.context.getMeeting()
         items_to_update = _itemsToUpdate(
             from_item_number=self.context.getItemNumber(relativeTo='meeting'),
             until_item_number=self.apply_until_item_number,
-            meeting=meeting)
+            meeting=self.meeting)
         for item_to_update in items_to_update:
             item_to_update_uid = item_to_update.UID()
-            item_absents = meeting.itemAbsents.get(item_to_update_uid, [])
+            item_absents = self.meeting.itemAbsents.get(item_to_update_uid, [])
             if self.person_uid in item_absents:
                 item_absents.remove(self.person_uid)
-                meeting.itemAbsents[item_to_update_uid] = item_absents
+                self.meeting.itemAbsents[item_to_update_uid] = item_absents
 
         plone_utils = api.portal.get_tool('plone_utils')
         plone_utils.addPortalMessage(_("Attendee has been set back present."))
         self._finishedSent = True
 
 
-ByeByeAttendeeFormWrapper = wrap_form(ByeByeAttendeeForm)
+WelcomeAttendeeFormWrapper = wrap_form(WelcomeAttendeeForm)
+
+
+class IRedefinedSignatory(IBaseAttendee):
+
+    apply_until_item_number = schema.TextLine(
+        title=_(u"Apply until item number"),
+        description=_(u"If you specify a number, this attendee will be defined as "
+                      u"signatory from current item to entered item number. "
+                      u"Leave empty to only apply for current item."),
+        required=False,
+        constraint=validate_apply_until_item_number,)
+
+    signature_number = schema.Choice(
+        title=_(u"Signature number"),
+        description=_(u""),
+        required=True,
+        values=['1', '2', '3', '4', '5'])
+
+
+class RedefinedSignatoryForm(BaseAttendeeForm):
+    """ """
+
+    label = _(u'redefine_signatory')
+    schema = IRedefinedSignatory
+    fields = field.Fields(IRedefinedSignatory)
+
+    def mayChangeAttendees(self):
+        """ """
+        res = super(RedefinedSignatoryForm, self).mayChangeAttendees()
+        if res:
+            # check that person_uid :
+            # - is not already a signatory;
+            # - is present.
+            if self.person_uid in self.meeting.getSignatories() or \
+               self.person_uid not in self.meeting.getAttendees():
+                res = False
+        return res
+
+    def _doApply(self):
+        """ """
+        if not self.mayChangeAttendees():
+            raise Unauthorized
+
+        plone_utils = api.portal.get_tool('plone_utils')
+        items_to_update = _itemsToUpdate(
+            from_item_number=self.context.getItemNumber(relativeTo='meeting'),
+            until_item_number=self.apply_until_item_number,
+            meeting=self.meeting)
+
+        # apply signatory
+        for item_to_update in items_to_update:
+            item_to_update_uid = item_to_update.UID()
+            item_signatories = self.meeting.getItemSignatories().get(item_to_update_uid, {})
+            if self.person_uid not in item_signatories.values():
+                item_signatories[self.signature_number] = self.person_uid
+                self.meeting.itemSignatories[item_to_update_uid] = item_signatories
+        plone_utils.addPortalMessage(_("Attendee has been set signatory."))
+        self._finishedSent = True
+
+
+RedefinedSignatoryFormWrapper = wrap_form(RedefinedSignatoryForm)
+
+
+class IRemoveRedefinedSignatory(IBaseAttendee):
+
+    apply_until_item_number = schema.TextLine(
+        title=_(u"Apply until item number"),
+        description=_(u"If you specify a number, this attendee will be not be "
+                      u"considered item signatory from current item to entered item number. "
+                      u"Leave empty to only apply for current item."),
+        required=False,
+        constraint=validate_apply_until_item_number,)
+
+
+class RemoveRedefinedSignatoryForm(BaseAttendeeForm):
+    """ """
+
+    label = _(u'remove_redefined_signatory')
+    schema = IRemoveRedefinedSignatory
+    fields = field.Fields(IRemoveRedefinedSignatory)
+
+    def _doApply(self):
+        """ """
+        if not self.mayChangeAttendees():
+            raise Unauthorized
+
+        plone_utils = api.portal.get_tool('plone_utils')
+        items_to_update = _itemsToUpdate(
+            from_item_number=self.context.getItemNumber(relativeTo='meeting'),
+            until_item_number=self.apply_until_item_number,
+            meeting=self.meeting)
+
+        # apply signatory
+        for item_to_update in items_to_update:
+            item_to_update_uid = item_to_update.UID()
+            item_signatories = self.meeting.getItemSignatories().get(item_to_update_uid, {})
+            signature_number = [k for k, v in item_signatories.items() if v == self.person_uid]
+            if signature_number:
+                del item_signatories[signature_number[0]]
+                # if no more redefined item signatories, remove item UID from meeting.itemSignatories
+                if item_signatories:
+                    self.meeting.itemSignatories[item_to_update_uid] = item_signatories
+                else:
+                    del self.meeting.itemSignatories[item_to_update_uid]
+            plone_utils.addPortalMessage(_("Attendee is no more defined as item signatory."))
+        self._finishedSent = True
+
+
+RemoveRedefinedSignatoryFormWrapper = wrap_form(RemoveRedefinedSignatoryForm)

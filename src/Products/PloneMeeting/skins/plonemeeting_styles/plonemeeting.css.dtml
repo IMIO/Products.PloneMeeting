@@ -1592,13 +1592,40 @@ table.listing tbody tr.even.dragging td {
 #content span.people-checked:before {
     content: "\f00c";
 }
-#content span.people-leave:before {
-    content: "\f08b";
+#content span.people-edit-itemabsent:before,
+#content span.people-left:before {
+    content: "\f2f5";
+    font-size: 120%;
+}
+#content span.people-left:before {
+    color: red;
+}
+#content span.people-edit-itemabsent:before,
+#content span.people-edit-signatory:before {
     color: orange;
+}
+
+#content span.people-edit-signatory:before {
+    content: "\f5b7";
+    font-size: 120%;
+}
+#content span.people-signatory-replacer:before {
+    content: "\f00c";
     font-size: 120%;
 }
 
-#content span.people-remove-left:before {
+span.signatory-checked,
+span.signatory-replaced,
+span.signatory-replacer {
+   cursor: help;
+}
+span.signatory-replaced,
+span.signatory-replacer {
+   color: red;
+}
+
+#content span.people-remove-left:before,
+#content span.people-remove-redefined-signatory:before {
     content: "\f00d";
     color: red;
     font-size: 120%;
@@ -1610,6 +1637,11 @@ div.item-send-to-other-mc {
 div.item-send-to-other-mc-multiple-fields {
    border: 1px solid lightgrey;
    min-width: 600px;
+}
+
+/* hide downloard vcard link on contacts */
+p#download_vcard {
+   display: none;
 }
 
 /* </dtml-with> */
