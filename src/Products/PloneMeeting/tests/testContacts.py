@@ -312,6 +312,9 @@ class testContacts(PloneMeetingTestCase):
         self.backToState(item, 'validated')
         self.assertFalse(absent_hp_uid in meeting.getItemAbsents(by_absents=True))
         self.assertFalse(signer_hp_uid in item.getItemSignatories())
+        self.assertFalse(item.getItemAbsents())
+        self.assertFalse(item.redefinedItemAssemblies())
+        self.assertFalse(item.getItemSignatories())
 
 
 def test_suite():

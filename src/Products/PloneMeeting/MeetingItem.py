@@ -2977,11 +2977,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('redefinedItemAssemblies')
 
-    def redefinedItemAssemblies(self, usedItemAttributes):
+    def redefinedItemAssemblies(self):
         '''
           Helper method that returns list of redefined assembly attributes if assembly of item has been redefined,
           this is used on the item view.  Depending on used item attributes (assembly, excused, absents),
-          if ont of relevant attribute has been redefined, it will return True.
+          if one of relevant attribute has been redefined, it will return True.
         '''
         res = []
         # check if assembly redefined
@@ -2991,6 +2991,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res.append('assemblyExcused')
         if self.getItemAssemblyAbsents(real=True):
             res.append('assemblyAbsents')
+        # when using contacts
         if self.getItemAbsents():
             res.append('itemAbsents')
         return res

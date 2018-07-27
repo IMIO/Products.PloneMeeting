@@ -39,7 +39,7 @@ class BaseAttendeeForm(form.Form):
     """Factorize common code used by ByeBye attendee and Welcome attendee forms."""
 
     description = u''
-    _finishedSent = False
+    _finished = False
     ignoreContext = True  # don't use context to get widget data
 
     def __init__(self, context, request):
@@ -78,7 +78,7 @@ class BaseAttendeeForm(form.Form):
 
     @button.buttonAndHandler(_('Cancel'), name='cancel')
     def handleCancel(self, action):
-        self._finishedSent = True
+        self._finished = True
 
     def mayChangeAttendees(self):
         """ """
@@ -89,7 +89,7 @@ class BaseAttendeeForm(form.Form):
         raise NotImplementedError('This must be overrided!')
 
     def render(self):
-        if self._finishedSent:
+        if self._finished:
             IRedirect(self.request).redirect(self.context.absolute_url())
             return ""
         return super(BaseAttendeeForm, self).render()
@@ -137,7 +137,7 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
                         _("Please check item at ${item_url}.",
                           mapping={'item_url': item_to_update.absolute_url()}),
                         type='warning')
-                self._finishedSent = True
+                self._finished = True
                 return
 
         # apply itemAbsents
@@ -148,7 +148,7 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
                 item_absents.append(self.person_uid)
                 self.meeting.itemAbsents[item_to_update_uid] = item_absents
         plone_utils.addPortalMessage(_("Attendee has been set absent."))
-        self._finishedSent = True
+        self._finished = True
 
 
 ByeByeAttendeeFormWrapper = wrap_form(ByeByeAttendeeForm)
@@ -191,7 +191,7 @@ class WelcomeAttendeeForm(BaseAttendeeForm):
 
         plone_utils = api.portal.get_tool('plone_utils')
         plone_utils.addPortalMessage(_("Attendee has been set back present."))
-        self._finishedSent = True
+        self._finished = True
 
 
 WelcomeAttendeeFormWrapper = wrap_form(WelcomeAttendeeForm)
@@ -252,7 +252,7 @@ class RedefinedSignatoryForm(BaseAttendeeForm):
                 item_signatories[self.signature_number] = self.person_uid
                 self.meeting.itemSignatories[item_to_update_uid] = item_signatories
         plone_utils.addPortalMessage(_("Attendee has been set signatory."))
-        self._finishedSent = True
+        self._finished = True
 
 
 RedefinedSignatoryFormWrapper = wrap_form(RedefinedSignatoryForm)
@@ -300,7 +300,7 @@ class RemoveRedefinedSignatoryForm(BaseAttendeeForm):
                 else:
                     del self.meeting.itemSignatories[item_to_update_uid]
             plone_utils.addPortalMessage(_("Attendee is no more defined as item signatory."))
-        self._finishedSent = True
+        self._finished = True
 
 
 RemoveRedefinedSignatoryFormWrapper = wrap_form(RemoveRedefinedSignatoryForm)

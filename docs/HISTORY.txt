@@ -29,6 +29,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Moved MeetingConfig.manage_beforeDelete to events.onConfigWillBeRemoved.  Moreover, when deleting a MeetingConfig, check
   that it is not used in another MeetingConfig (MeetingConfig.meetingConfigsToCloneTo and annex types other_mc_correspondences
   field of annex types of other MeetingConfigs)
+- When an item is removed from a meeting, make sure fields related to assembly and signatures (or attendees and signatories
+  when using contacts) are emptied
 
 4.1b10 (2018-05-22)
 -------------------

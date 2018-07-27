@@ -2510,6 +2510,18 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(formAssembly.context.getItemAssembly(real=True))
         self.assertFalse(formAssembly.context.getItemSignatures(real=True))
 
+        # if an item is removed from meeting, itemAssembly and itemSignatures
+        # fields are emptied
+        item5.setItemAssemblyAbsents('<p>Item assembly absents</p>')
+        item5.setItemAssemblyExcused('<p>Item assembly excused</p>')
+        self.assertTrue(item5.getItemAssembly(real=True))
+        self.assertTrue(item5.redefinedItemAssemblies())
+        self.assertTrue(item5.getItemSignatures(real=True))
+        self.backToState(item5, 'validated')
+        self.assertFalse(item5.getItemAssembly(real=True))
+        self.assertFalse(item5.redefinedItemAssemblies())
+        self.assertFalse(item5.getItemSignatures(real=True))
+
         # if the linked meeting is considered as closed, the items are not editable anymore
         self.closeMeeting(meeting)
         self.assertRaises(Unauthorized, formAssembly.update)

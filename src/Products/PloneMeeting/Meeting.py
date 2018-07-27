@@ -1355,6 +1355,12 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         if item_uid in self.itemSignatories:
             del self.itemSignatories[item_uid]
 
+        # make sure item assembly/signatures related fields are emptied
+        item.setItemAssembly('')
+        item.setItemAssemblyAbsents('')
+        item.setItemAssemblyExcused('')
+        item.setItemSignatures('')
+
         self.setItems(items)
         # Update item numbers
         # in case itemNumber was a subnumber (or a master having subnumber),
