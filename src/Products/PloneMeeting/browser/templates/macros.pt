@@ -413,14 +413,14 @@ document.location.reload(true);
                    usedVoteValues meetingConfig/getUsedVoteValues;
                    excused meeting/getExcused;
                    absents meeting/getAbsents;
-                   itemSigners context/getItemSignatories;
-                   realItemSigners python: context.getItemSignatories(real=True);
-                   meetingSigners meeting/getSignatories;
+                   itemSignatories context/getItemSignatories;
+                   realItemSignatories python: context.getItemSignatories(real=True);
+                   meetingSignatories meeting/getSignatories;
                    itemAttendees context/getAttendees;
                    itemAbsents context/getItemAbsents;
                    showExcused python: 'excused' in usedMeetingAttributes or excused;
                    showAbsents python: 'absents' in usedMeetingAttributes or absents or itemAbsents;
-                   showSignatories python: 'signatories' in usedMeetingAttributes or signers;
+                   showSignatories python: 'signatories' in usedMeetingAttributes or itemSignatories;
                    voters python: [];
                    global showSave python:False;
                    global showRefresh python: False;
@@ -519,22 +519,24 @@ document.location.reload(true);
          tal:attributes="onmouseover python: 'setHiddenButton(\'%s\', \'visible\', prefix=\'redefine_signatory_\')' % aUid;
                          onmouseout python: 'setHiddenButton(\'%s\', \'hidden\', prefix=\'redefine_signatory_\')' % aUid">
 
-      <tal:meetingSigner condition="python: aUid not in realItemSigners and aUid in meetingSigners and aUid in itemSigners">
+      <tal:meetingSigner condition="python: aUid not in realItemSignatories and aUid in meetingSignatories and aUid in itemSignatories">
        <span class="signatory-checked" title="Original meeting signatory" i18n:attributes="title">
          <span class="fa people-checked"></span>
-         <span tal:content="python: meetingSigners[aUid]" />
+         <span tal:content="python: meetingSignatories[aUid]" />
        </span>
       </tal:meetingSigner>
-      <tal:replacedMeetingSigner condition="python: aUid in meetingSigners and aUid not in itemSigners">
+      <tal:replacedMeetingSigner condition="python: aUid in meetingSignatories and aUid not in itemSignatories">
        (<span class="signatory-checked" title="Meeting signatory replaced for this item" i18n:attributes="title">
         <span class="fa people-checked"></span>
-        <span tal:content="python: meetingSigners[aUid]" />
+        <span tal:content="python: meetingSignatories[aUid]" />
        </span>)
       </tal:replacedMeetingSigner>
-      <tal:replacerMeetingSigner condition="python: aUid in realItemSigners">
-       <span class="signatory-replacer" title="Signatory specifically defined for this item" i18n:attributes="title">
-        <span class="fa people-signatory-replacer"></span>
-        <span tal:content="python: realItemSigners[aUid]" />
+      <tal:replacerMeetingSigner condition="python: aUid in realItemSignatories">
+       <span tal:condition="python: aUid in itemSignatories"
+                class="tooltipster-meeting-item-signatories fa people-signatory-replacer people-action"
+                tal:attributes="data-base_url string:${context/absolute_url};
+                                data-signatory_uid string:${aUid};">
+        <span class="item-signatory-replacer-signature-number" tal:content="python: realItemSignatories[aUid]" />
        </span>
 
        <tal:comment replace="nothing">Remove info user being an item signatory</tal:comment>
@@ -547,7 +549,7 @@ document.location.reload(true);
 
       <tal:comment replace="nothing">Button for redefining a signatory</tal:comment>
       <a href="#" class="link-overlay-pm" tal:attributes="href string:item_redefine_signatory_form?person_uid=${aUid}"
-         tal:condition="python:context._mayChangeAttendees() and isPresent and (aUid not in itemSigners and aUid not in meetingSigners)">
+         tal:condition="python:context._mayChangeAttendees() and isPresent and (aUid not in itemSignatories and aUid not in meetingSignatories)">
        <span class="fa people-edit-signatory people-action" title="Define this attendee as signatory for this item" i18n:attributes="title" style="visibility: hidden"
            tal:attributes="id python: 'redefine_signatory_%s' % aUid;
                            name  python: 'redefine_signatory_%s' % aUid;" />

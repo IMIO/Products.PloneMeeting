@@ -267,7 +267,7 @@
       />
 
     <browser:page
-      for="Products.PloneMeeting.interfaces.IMeeting"
+      for="Products.PloneMeeting.interfaces.IMeetingContent"
       name="display-meeting-item-signatories"
       template="templates/meeting_item_signatories.pt"
       class=".views.DisplayMeetingItemSignatories"

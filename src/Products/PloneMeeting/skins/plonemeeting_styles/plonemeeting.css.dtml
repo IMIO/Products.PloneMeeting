@@ -1584,7 +1584,8 @@ table.listing tbody tr.even.dragging td {
 }
 
 /* check in item people tables */
-#content span.people-checked:before {
+#content span.people-checked:before,
+#content span.people-signatory-checked:before {
     content: "\f00c";
 }
 #content span.people-edit-itemabsent:before,
@@ -1611,6 +1612,16 @@ table.listing tbody tr.even.dragging td {
 #content span.people-signatory-replacer:before {
     content: "\f00c";
     font-size: 120%;
+    color: red;
+    cursor: help;
+}
+.item-signatory-replacer-signature-number {
+    font-family: &dtml-fontFamily;;
+    font-weight: normal;
+}
+.tooltipster-meeting-item-signatories {
+   cursor: help;
+   color: red;
 }
 
 span.signatory-checked,

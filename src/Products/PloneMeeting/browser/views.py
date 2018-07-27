@@ -45,6 +45,7 @@ from Products.PloneMeeting.config import ADVICE_STATES_ALIVE
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.indexes import _to_coded_adviser_index
+from Products.PloneMeeting.interfaces import IMeeting
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
 from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
 from Products.PloneMeeting.utils import get_annexes
@@ -1340,6 +1341,8 @@ class DisplayMeetingItemAbsents(BrowserView):
     def __init__(self, context, request):
         self.context = context
         self.request = request
+        # this view is called on meeting or item
+        self.meeting = IMeeting.providedBy(self.context) and self.context or self.context.getMeeting()
 
     def __call__(self, absent_uid):
         """ """
@@ -1349,8 +1352,7 @@ class DisplayMeetingItemAbsents(BrowserView):
 
     def getItemsForAbsent(self):
         """Returns the list of items the absent_uid is absent for."""
-        meeting = self.context.meta_type == 'Meeting' and self.context or self.context.getMeeting()
-        item_uids = meeting.getItemAbsents(by_absents=True).get(self.absent_uid, [])
+        item_uids = self.meeting.getItemAbsents(by_absents=True).get(self.absent_uid, [])
         catalog = api.portal.get_tool('portal_catalog')
         brains = catalog(UID=item_uids, sort_on='getItemNumber')
         objs = [brain.getObject() for brain in brains]
@@ -1363,6 +1365,8 @@ class DisplayMeetingItemSignatories(BrowserView):
     def __init__(self, context, request):
         self.context = context
         self.request = request
+        # this view is called on meeting or item
+        self.meeting = IMeeting.providedBy(self.context) and self.context or self.context.getMeeting()
 
     def __call__(self, signatory_uid):
         """ """
@@ -1372,7 +1376,7 @@ class DisplayMeetingItemSignatories(BrowserView):
 
     def getItemsForSignatory(self):
         """Returns the list of items the signatory_uid is signatory for."""
-        item_uids = self.context.getItemSignatories(by_signatories=True).get(self.signatory_uid, [])
+        item_uids = self.meeting.getItemSignatories(by_signatories=True).get(self.signatory_uid, [])
         catalog = api.portal.get_tool('portal_catalog')
         brains = catalog(UID=item_uids, sort_on='getItemNumber')
         objs = [brain.getObject() for brain in brains]

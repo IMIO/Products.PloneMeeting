@@ -113,12 +113,11 @@
                 <span class="fa people-checked" ></span>
                 <span tal:content="python: signers[aUid]" />
                </tal:is_signer>
-               <acronym tal:condition="python: aUid in itemSignatories"
-                        class="tooltipster-meeting-item-signatories"
+               <span tal:condition="python: aUid in itemSignatories"
+                        class="tooltipster-meeting-item-signatories fa people-signatory-replacer people-action"
                         tal:attributes="data-base_url string:${context/absolute_url};
                                         data-signatory_uid string:${aUid};">
-                 <span class="fa people-signatory-replacer signatory-replacer"></span>
-               </acronym>
+               </span>
 
               </td>
               <td tal:condition="useUserReplacements">
