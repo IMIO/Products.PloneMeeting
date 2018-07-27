@@ -56,7 +56,7 @@
     <acronym class="tooltipster-inserting-methods-helper-msg"
              tal:condition="python: view.tool.isManager(context)"
              tal:attributes="data-base_url string:${context/absolute_url}">
-      <span class="inserting-methods-infos"></span>
+      <span class="fa fa-question-circle inserting-methods-infos"></span>
     </acronym>
   </h2>
 

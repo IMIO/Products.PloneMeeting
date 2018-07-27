@@ -135,7 +135,11 @@ jQuery(document).ready(function($) {
     tooltipster_helper(selector='.tooltipster-meeting-item-absents',
                        view_name='@@display-meeting-item-absents',
                        data_parameters=['absent_uid']);
-
+    // item signatories on meeting_view
+    tooltipster_helper(selector='.tooltipster-meeting-item-signatories',
+                       view_name='@@display-meeting-item-signatories',
+                       data_parameters=['signatory_uid']);
+                       
     pmCommonOverlays();
 });
 

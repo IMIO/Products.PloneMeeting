@@ -1047,14 +1047,15 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
            of signatories as values but if 'p_by_signatories' is True, the informations are returned with
            signatory as key and list of items as value.'''
         if by_signatories:
-            # values are now keys, concatenate a list of lists and remove duplicates
-            keys = tuple(set(list(itertools.chain.from_iterable(self.itemSignatories.values()))))
-            data = {}
-            for key in keys:
-                data[key] = [k for k, v in self.itemSignatories.items() if key in v]
+            signatories = {}
+            for item_uid, signatories_infos in self.itemSignatories.items():
+                for signature_number, signatory_uid in signatories_infos.items():
+                    if signatory_uid not in signatories:
+                        signatories[signatory_uid] = []
+                    signatories[signatory_uid].append(item_uid)
         else:
-            data = self.itemSignatories.copy()
-        return data
+            signatories = self.itemSignatories.copy()
+        return signatories
 
     security.declarePublic('displayUserReplacement')
 

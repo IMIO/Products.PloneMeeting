@@ -1335,7 +1335,7 @@ class DisplayMeetingConfigsOfConfigGroup(BrowserView):
 
 
 class DisplayMeetingItemAbsents(BrowserView):
-    """This view will display the items a given absent is absent for."""
+    """This view will display the items a given attendee was defined as absent for."""
 
     def __init__(self, context, request):
         self.context = context
@@ -1347,9 +1347,31 @@ class DisplayMeetingItemAbsents(BrowserView):
         self.absent_uid = absent_uid
         return self.index()
 
-    def getAbsentForItems(self):
+    def getItemsForAbsent(self):
         """Returns the list of items the absent_uid is absent for."""
         item_uids = self.context.getItemAbsents(by_absents=True).get(self.absent_uid, [])
+        catalog = api.portal.get_tool('portal_catalog')
+        brains = catalog(UID=item_uids, sort_on='getItemNumber')
+        objs = [brain.getObject() for brain in brains]
+        return objs
+
+
+class DisplayMeetingItemSignatories(BrowserView):
+    """This view will display the items a given attendee was defined as signatory for."""
+
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+
+    def __call__(self, signatory_uid):
+        """ """
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.signatory_uid = signatory_uid
+        return self.index()
+
+    def getItemsForSignatory(self):
+        """Returns the list of items the signatory_uid is signatory for."""
+        item_uids = self.context.getItemSignatories(by_signatories=True).get(self.signatory_uid, [])
         catalog = api.portal.get_tool('portal_catalog')
         brains = catalog(UID=item_uids, sort_on='getItemNumber')
         objs = [brain.getObject() for brain in brains]

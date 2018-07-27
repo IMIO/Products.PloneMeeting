@@ -1562,8 +1562,6 @@ div.grouped-configs {
 }
 
 #content span.inserting-methods-infos:before {
-   font-family: 'FontAwesome';
-   content: "\f059";
    color: &dtml-globalBorderColor;;
    font-size: 120%;
 }
@@ -1586,9 +1584,6 @@ table.listing tbody tr.even.dragging td {
 }
 
 /* check in item people tables */
-#content span.people {
-    font-family: 'FontAwesome';
-}
 #content span.people-checked:before {
     content: "\f00c";
 }
