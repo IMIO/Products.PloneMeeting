@@ -129,7 +129,8 @@ class AnnexTypeDescriptor(Descriptor):
                  enabled=True,
                  subTypes=(),
                  confidential=False,
-                 to_print=False):
+                 to_print=False,
+                 description=u''):
         self.id = id
         self.title = title
         self.icon = icon
@@ -142,6 +143,7 @@ class AnnexTypeDescriptor(Descriptor):
         self.to_sign = to_sign
         self.signed = signed
         self.enabled = enabled
+        self.description = description
 
 
 class ItemAnnexTypeDescriptor(AnnexTypeDescriptor):
@@ -245,13 +247,13 @@ class PodTemplateDescriptor(Descriptor):
         self.pod_portal_types = []
         # ids of DashboardCollections to restrict the DashboardPODTemplate to
         self.dashboard_collections_ids = []
-        self.tal_condition = ''
+        self.tal_condition = u''
         self.mailing_lists = u''
         self.enabled = enabled
         self.dashboard = dashboard
         self.context_variables = []
         self.style_template = []
-        self.roles_bypassing_talcondition = []
+        self.roles_bypassing_talcondition = set()
         self.store_as_annex = None
         self.store_as_annex_title_expr = u''
 

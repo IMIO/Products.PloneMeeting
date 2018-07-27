@@ -5416,7 +5416,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             confidential=at.confidential,
             to_sign=at.to_sign,
             signed=at.signed,
-            enabled=at.enabled
+            enabled=at.enabled,
+            description=at.description,
         )
         # store an empty set in other_mc_correspondences for validation
         # then store intermediate value that will be reworked at the end
@@ -5439,7 +5440,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 confidential=subType.confidential,
                 to_sign=at.to_sign,
                 signed=at.signed,
-                enabled=subType.enabled
+                enabled=subType.enabled,
+                description=at.description,
             )
             if sub_portal_type == 'ItemAnnexContentSubcategory':
                 annexSubType.other_mc_correspondences = set()

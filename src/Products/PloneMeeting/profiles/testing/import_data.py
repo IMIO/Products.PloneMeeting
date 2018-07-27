@@ -121,23 +121,23 @@ meetingAnnex = AnnexTypeDescriptor(
 agendaTemplate = PodTemplateDescriptor('agendaTemplate', 'Meeting agenda')
 agendaTemplate.odt_file = 'Agenda.odt'
 agendaTemplate.pod_portal_types = ['MeetingPma']
-agendaTemplate.tal_condition = ''
+agendaTemplate.tal_condition = u''
 
 decisionsTemplate = PodTemplateDescriptor('decisionsTemplate',
                                           'Meeting decisions')
 decisionsTemplate.odt_file = 'Decisions.odt'
 decisionsTemplate.pod_portal_types = ['MeetingPma']
-decisionsTemplate.tal_condition = 'python:here.adapted().isDecided()'
-decisionsTemplate.roles_bypassing_talcondition = ['Manager']
+decisionsTemplate.tal_condition = u'python:here.adapted().isDecided()'
+decisionsTemplate.roles_bypassing_talcondition = set(['Manager'])
 
 itemTemplate = PodTemplateDescriptor('itemTemplate', 'Meeting item')
 itemTemplate.odt_file = 'Item.odt'
 itemTemplate.pod_portal_types = ['MeetingItemPma']
-itemTemplate.tal_condition = ''
+itemTemplate.tal_condition = u''
 
 dashboardTemplate = PodTemplateDescriptor('dashboardTemplate', 'Dashboard summary', dashboard=True)
 dashboardTemplate.odt_file = 'Dashboard.odt'
-dashboardTemplate.tal_condition = 'python: context.absolute_url().endswith("/searches_items")'
+dashboardTemplate.tal_condition = u'python: context.absolute_url().endswith("/searches_items")'
 
 # Test users and groups
 pmManager = UserDescriptor('pmManager', [], email="pmmanager@plonemeeting.org", fullname='M. PMManager')
