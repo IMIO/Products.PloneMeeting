@@ -96,12 +96,11 @@
               <td><b tal:content="mUser/get_short_title"></b></td>
               <td align="center">
                 <span tal:condition="python: aUid in attendees" class="fa people-checked" ></span>
-                <acronym tal:condition="python: aUid in itemAbsents"
-                         class="tooltipster-meeting-item-absents"
+                <span tal:condition="python: aUid in itemAbsents"
+                         class="tooltipster-meeting-item-absents fa people-left people-action"
                          tal:attributes="data-base_url string:${context/absolute_url};
                                          data-absent_uid string:${aUid};">
-                  <span class="fa people-left"></span>
-                </acronym>
+                </span>
               </td>
               <td align="center" tal:condition="showExcused">
                 <span tal:condition="python: aUid in excused" class="fa people-checked" ></span>

@@ -259,7 +259,7 @@
       />
 
     <browser:page
-      for="Products.PloneMeeting.interfaces.IMeeting"
+      for="Products.PloneMeeting.interfaces.IMeetingContent"
       name="display-meeting-item-absents"
       template="templates/meeting_item_absents.pt"
       class=".views.DisplayMeetingItemAbsents"

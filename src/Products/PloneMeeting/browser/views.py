@@ -1349,7 +1349,8 @@ class DisplayMeetingItemAbsents(BrowserView):
 
     def getItemsForAbsent(self):
         """Returns the list of items the absent_uid is absent for."""
-        item_uids = self.context.getItemAbsents(by_absents=True).get(self.absent_uid, [])
+        meeting = self.context.meta_type == 'Meeting' and self.context or self.context.getMeeting()
+        item_uids = meeting.getItemAbsents(by_absents=True).get(self.absent_uid, [])
         catalog = api.portal.get_tool('portal_catalog')
         brains = catalog(UID=item_uids, sort_on='getItemNumber')
         objs = [brain.getObject() for brain in brains]

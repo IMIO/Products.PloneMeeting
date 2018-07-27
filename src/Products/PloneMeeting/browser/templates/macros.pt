@@ -482,11 +482,16 @@ document.location.reload(true);
        <tal:comment replace="nothing">Show "absent" icon if the user was absent for this item</tal:comment>
        <tal:left condition="python: aUid in itemAbsents">
  
-         <span class="fa people-left" title="item_attendee_absent" i18n:attributes="title" style="cursor: help;"></span>
+        <span tal:condition="python: aUid in itemAbsents"
+                 class="tooltipster-meeting-item-absents fa people-left people-action"
+                 tal:attributes="data-base_url string:${context/absolute_url};
+                                 data-absent_uid string:${aUid};">
+        </span>
+
          <tal:comment replace="nothing">Remove info user being an item absent</tal:comment>
          <a href="#" class="link-overlay-pm" tal:attributes="href string:item_welcome_attendee_form?person_uid=${aUid}"
             tal:condition="python: context._mayChangeAttendees()">
-          <span class="fa people-remove-left" title="person_welcome" i18n:attributes="title"
+          <span class="fa people-remove-left people-action" title="person_welcome" i18n:attributes="title"
               tal:attributes="id python: 'welcome_%s' % aUid;
                               name  python: 'welcome_%s' % aUid;" />
          </a>
@@ -495,7 +500,7 @@ document.location.reload(true);
        <tal:comment replace="nothing">Button for byebying a user</tal:comment>
        <a href="#" class="link-overlay-pm" tal:attributes="href string:item_byebye_attendee_form?person_uid=${aUid}"
           tal:condition="python:context._mayChangeAttendees() and isPresent">
-        <span class="fa people-edit-itemabsent" title="person_byebye" i18n:attributes="title" style="visibility: hidden"
+        <span class="fa people-edit-itemabsent people-action" title="person_byebye" i18n:attributes="title" style="visibility: hidden"
             tal:attributes="id python: 'byebye_%s' % aUid;
                             name  python: 'byebye_%s' % aUid;" />
        </a>
@@ -535,7 +540,7 @@ document.location.reload(true);
        <tal:comment replace="nothing">Remove info user being an item signatory</tal:comment>
        <a href="#" class="link-overlay-pm" tal:attributes="href string:item_remove_redefined_signatory_form?person_uid=${aUid}"
           tal:condition="python: context._mayChangeAttendees()">
-        <span class="fa people-remove-redefined-signatory" title="Remove attendee from signatory defined for this item" i18n:attributes="title" />
+        <span class="fa people-remove-redefined-signatory people-action" title="Remove attendee from signatory defined for this item" i18n:attributes="title" />
        </a>
 
       </tal:replacerMeetingSigner>
@@ -543,7 +548,7 @@ document.location.reload(true);
       <tal:comment replace="nothing">Button for redefining a signatory</tal:comment>
       <a href="#" class="link-overlay-pm" tal:attributes="href string:item_redefine_signatory_form?person_uid=${aUid}"
          tal:condition="python:context._mayChangeAttendees() and isPresent and (aUid not in itemSigners and aUid not in meetingSigners)">
-       <span class="fa people-edit-signatory" title="Define this attendee as signatory for this item" i18n:attributes="title" style="visibility: hidden"
+       <span class="fa people-edit-signatory people-action" title="Define this attendee as signatory for this item" i18n:attributes="title" style="visibility: hidden"
            tal:attributes="id python: 'redefine_signatory_%s' % aUid;
                            name  python: 'redefine_signatory_%s' % aUid;" />
       </a>
@@ -589,24 +594,24 @@ document.location.reload(true);
      </td>
     </tal:attendee>
   </tr>
-  <tr>
+  <tr tal:condition="showVotes">
     <th colspan="7" tal:define="maySwitchVotes context/maySwitchVotes">
       <tal:comment replace="nothing">Switch mode (secret / not secret)</tal:comment>
       <img style="cursor:pointer;" title="switch_votes" i18n:attributes="title" align="right"
-           tal:condition="python: showVotes and isManager and maySwitchVotes"
+           tal:condition="python: isManager and maySwitchVotes"
            tal:attributes="src string: $portal_url/switch.gif;
                            onClick python:'switchVotes(\'%s\', \'%s\')' % (context.absolute_url(), secret)"/>
       <img style="cursor:help;" title="switch_votes_why_cannot" i18n:attributes="title" align="right"
-           tal:condition="python: showVotes and isManager and not maySwitchVotes"
+           tal:condition="python: isManager and not maySwitchVotes"
            tal:attributes="src string: $portal_url/switch_not_allowed.gif;"/>
       <tal:comment replace="nothing">Set 'yes' for everybody</tal:comment>
       <img style="cursor:pointer;" title="update_votes_yes" i18n:attributes="title"
-           tal:condition="python: showVotes and showSave" align="right"
+           tal:condition="python: showSave" align="right"
            tal:attributes="src string:$portal_url/yes.gif;
                            onClick python:'saveItemPeopleInfos(\'%s\', true)' % context.absolute_url()"/>
       <tal:comment replace="nothing">Save votes</tal:comment>
       <img style="cursor:pointer" title="save" i18n:attributes="title"
-           tal:condition="python: showVotes and showSave" align="right"
+           tal:condition="python: showSave" align="right"
            tal:attributes="src string:$portal_url/save.gif;
                            onClick python:'saveItemPeopleInfos(\'%s\')' % context.absolute_url()"/>
       <tal:comment replace="nothing">Refresh votes</tal:comment>

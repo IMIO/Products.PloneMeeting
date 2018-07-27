@@ -1594,10 +1594,13 @@ table.listing tbody tr.even.dragging td {
 }
 #content span.people-left:before {
     color: red;
+    cursor: help;
 }
 #content span.people-edit-itemabsent:before,
 #content span.people-edit-signatory:before {
     color: orange;
+}
+#content span.people-action {
     border-bottom: 1px dotted;
 }
 
@@ -1625,7 +1628,6 @@ span.signatory-replacer {
     content: "\f00d";
     color: red;
     font-size: 120%;
-    border-bottom: 1px dotted;
 }
 
 div.item-send-to-other-mc {
