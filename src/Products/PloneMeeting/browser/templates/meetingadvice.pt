@@ -30,7 +30,7 @@
         </tal:back_to_item>
         <table class="no-style-table" width="100%">
             <tal:loop repeat="widget view/widgets/values">
-            <tr tal:condition="python: widget.mode != 'hidden'">
+            <tr tal:condition="python: widget.mode != 'hidden'" tal:attributes="id string:row-${widget/id}">
                 <td class="table_widget_label"><label tal:content="widget/label">Label</label></td>
                 <td class="table_widget_value">
                     <tal:adviceType condition="python: widget.name == 'form.widgets.advice_type'">
