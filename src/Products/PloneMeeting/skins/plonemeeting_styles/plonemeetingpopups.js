@@ -130,7 +130,8 @@ jQuery(document).ready(function($) {
     // inserting methods infos on meeting_view
     tooltipster_helper(selector='.tooltipster-inserting-methods-helper-msg',
                        view_name='@@display-inserting-methods-helper-msg',
-                       data_parameters=[]);
+                       data_parameters=[],
+                       options={trigger: 'click'});
     // item absents on meeting_view
     tooltipster_helper(selector='.tooltipster-meeting-item-absents',
                        view_name='@@display-meeting-item-absents',

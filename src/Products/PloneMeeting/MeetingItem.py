@@ -1135,8 +1135,9 @@ schema = Schema((
         allowable_content_types=('text/plain',),
         optional=True,
         widget=TextAreaWidget(
-            condition="python: here.attributeIsUsed('itemAssembly') and here.portal_plonemeeting.isManager(here) "
-                      "and here.hasMeeting() and here.getMeeting().attributeIsUsed('assembly')",
+            condition="python: here.getItemAssembly() or (here.attributeIsUsed('itemAssembly') and "
+            "here.portal_plonemeeting.isManager(here) and here.hasMeeting() and "
+            "here.getMeeting().attributeIsUsed('assembly'))",
             description="ItemAssemblyDescrMethod",
             description_msgid="item_assembly_descr",
             label_method="getLabelItemAssembly",
@@ -1151,8 +1152,8 @@ schema = Schema((
         name='itemAssemblyExcused',
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
-            condition="python: here.portal_plonemeeting.isManager(here) and here.hasMeeting() and "
-                      "here.getMeeting().attributeIsUsed('assemblyExcused')",
+            condition="python: here.getItemAssemblyExcused() or (here.portal_plonemeeting.isManager(here) and "
+            "here.hasMeeting() and here.getMeeting().attributeIsUsed('assemblyExcused'))",
             description="ItemAssemblyExcusedDescrMethod",
             description_msgid="item_assembly_excused_descr",
             label='Itemassemblyexcused',
@@ -1166,8 +1167,8 @@ schema = Schema((
         name='itemAssemblyAbsents',
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
-            condition="python: here.portal_plonemeeting.isManager(here) and here.hasMeeting() and "
-                      "here.getMeeting().attributeIsUsed('assemblyAbsents')",
+            condition="python: here.getItemAssemblyAbsents() or (here.portal_plonemeeting.isManager(here) and "
+            "here.hasMeeting() and here.getMeeting().attributeIsUsed('assemblyAbsents'))",
             description="ItemAssemblyAbsentsDescrMethod",
             description_msgid="item_assembly_absents_descr",
             label='Itemassemblyabsents',
@@ -1181,8 +1182,8 @@ schema = Schema((
         name='itemSignatures',
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
-            condition="python: here.portal_plonemeeting.isManager(here) and here.hasMeeting() and "
-                      "here.getMeeting().attributeIsUsed('signatures')",
+            condition="python: here.getItemSignatures() or (here.portal_plonemeeting.isManager(here) and "
+                      "here.hasMeeting() and here.getMeeting().attributeIsUsed('signatures'))",
             description="ItemSignaturesDescrMethod",
             description_msgid="item_signatures_descr",
             label='Itemsignatures',
@@ -6190,15 +6191,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         value = translate(self.Schema()['itemAssembly'].widget.description_msgid,
                           domain='PloneMeeting',
                           context=self.REQUEST).encode(enc) + '<br/>'
-        collapsibleMeetingAssembly = """<dl id="meetingAssembly" class="collapsible inline collapsedOnLoad">
-<dt class="collapsibleHeader">%s</dt>
-<dd class="collapsibleContent">
+        collapsibleMeetingAssembly = """<div class="collapsible"
+ onclick="toggleDoc('collapsible-item-assembly');">&nbsp;%s</div>
+<div id="collapsible-item-assembly" class="collapsible-content" style="display: none;">
+<div class="collapsible-inner-content">
 %s
-</dd>
-</dl>""" % (translate(msg,
-                      domain='PloneMeeting',
-                      context=self.REQUEST).encode(enc),
-            self.getMeeting().getAssembly() or '-')
+</div>
+</div>""" % (translate(msg,
+                       domain='PloneMeeting',
+                       context=self.REQUEST).encode(enc),
+             self.getMeeting().getAssembly() or '-')
         return value + collapsibleMeetingAssembly
 
     security.declareProtected(ModifyPortalContent, 'ItemAssemblyExcusedDescrMethod')
@@ -6213,15 +6215,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                           domain='PloneMeeting',
                           context=self.REQUEST).encode(enc) + '<br/>'
         collapsibleMeetingAssemblyExcused = \
-            """<dl id="meetingAssemblyExcused" class="collapsible inline collapsedOnLoad">
-<dt class="collapsibleHeader">%s</dt>
-<dd class="collapsibleContent">
+            """<div class="collapsible"
+ onclick="toggleDoc('collapsible-item-assembly-excused');">&nbsp;%s</div>
+<div id="collapsible-item-assembly-excused" class="collapsible-content" style="display: none;">
+<div class="collapsible-inner-content">
 %s
-</dd>
-</dl>""" % (translate('assembly_excused_defined_on_meeting',
-                      domain='PloneMeeting',
-                      context=self.REQUEST).encode(enc),
-                self.getMeeting().getAssemblyExcused() or '-')
+</div>
+</div>""" % (translate('assembly_excused_defined_on_meeting',
+                       domain='PloneMeeting',
+                       context=self.REQUEST).encode(enc),
+             self.getMeeting().getAssemblyExcused() or '-')
         return value + collapsibleMeetingAssemblyExcused
 
     security.declareProtected(ModifyPortalContent, 'ItemAssemblyAbsentsDescrMethod')
@@ -6236,15 +6239,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                           domain='PloneMeeting',
                           context=self.REQUEST).encode(enc) + '<br/>'
         collapsibleMeetingAssemblyAbsents = \
-            """<dl id="meetingAssemblyAbsents" class="collapsible inline collapsedOnLoad">
-<dt class="collapsibleHeader">%s</dt>
-<dd class="collapsibleContent">
+            """<div class="collapsible"
+ onclick="toggleDoc('collapsible-item-assembly-absents');">&nbsp;%s</div>
+<div id="collapsible-item-assembly-absents" class="collapsible-content" style="display: none;">
+<div class="collapsible-inner-content">
 %s
-</dd>
-</dl>""" % (translate('assembly_absents_defined_on_meeting',
-                      domain='PloneMeeting',
-                      context=self.REQUEST).encode(enc),
-                self.getMeeting().getAssemblyAbsents() or '-')
+</div>
+</div>""" % (translate('assembly_absents_defined_on_meeting',
+                       domain='PloneMeeting',
+                       context=self.REQUEST).encode(enc),
+             self.getMeeting().getAssemblyAbsents() or '-')
         return value + collapsibleMeetingAssemblyAbsents
 
     security.declareProtected(ModifyPortalContent, 'ItemSignaturesDescrMethod')
@@ -6258,15 +6262,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         value = translate(self.Schema()['itemSignatures'].widget.description_msgid,
                           domain='PloneMeeting',
                           context=self.REQUEST).encode(enc) + '<br/>'
-        collapsibleMeetingSignatures = """<dl id="meetingSignatures" class="collapsible inline collapsedOnLoad">
-<dt class="collapsibleHeader">%s</dt>
-<dd class="collapsibleContent">
+        collapsibleMeetingSignatures = """<div class="collapsible"
+ onclick="toggleDoc('collapsible-item-signatures');">&nbsp;%s</div>
+<div id="collapsible-item-signatures" class="collapsible-content" style="display: none;">
+<div class="collapsible-inner-content">
 %s
-</dd>
-</dl>""" % (translate('signatures_defined_on_meeting',
-                      domain='PloneMeeting',
-                      context=self.REQUEST).encode(enc),
-            self.getMeeting().getSignatures().replace('\n', '<br />'))
+</div>
+</div>""" % (translate('signatures_defined_on_meeting',
+                       domain='PloneMeeting',
+                       context=self.REQUEST).encode(enc),
+             self.getMeeting().getSignatures().replace('\n', '<br />'))
         return value + collapsibleMeetingSignatures
 
     security.declarePublic('getLabelItemAssembly')

@@ -79,16 +79,14 @@
     <a name="MeetingGroup"></a>
      <fieldset>
         <legend><span i18n:translate="meeting_groups"></span>
-          <img tal:attributes="src string: $portal_url/questionMark.png;
-                               onClick python:'toggleDoc(\'groupDoc\')'"
-               style="cursor:pointer"/>
-            <a href="#"
-               title="add_object"
-               i18n:attributes="title"
-               tal:condition="isRealManager"
-               tal:attributes="href string:${context/absolute_url}/createObject?type_name=MeetingGroup">
-              <img src="#" tal:attributes="src string: $portal_url/new.png" />
-            </a>
+          <span class="fa fa-question-circle help-doc" onClick="toggleDoc('groupDoc', toggle_parent_active=false);"></span>
+          <a href="#"
+             title="add_object"
+             i18n:attributes="title"
+             tal:condition="isRealManager"
+             tal:attributes="href string:${context/absolute_url}/createObject?type_name=MeetingGroup">
+             <img src="#" tal:attributes="src string: $portal_url/new.png" />
+          </a>
         </legend>
         <div id="groupDoc" style="display:none">
             <p class="discreet" i18n:translate="meeting_groups_descr"></p>

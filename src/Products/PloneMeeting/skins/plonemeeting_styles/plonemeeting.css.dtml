@@ -1566,9 +1566,10 @@ div.grouped-configs {
     height: 6px;
 }
 
-#content span.inserting-methods-infos:before {
-   color: &dtml-globalBorderColor;;
-   font-size: 120%;
+#content span.help-doc:before {
+   border-bottom: 1px dotted;
+   padding-bottom: 2px;
+   cursor: pointer;
 }
 
 /* meeting_users table on meeting_edit */
@@ -1661,9 +1662,49 @@ p#download_vcard {
 
 /* input to enter item number to go to on the item widget navigation */
 #content input.goto_meeting {
-   vertical-align: baseline;
+    vertical-align: baseline;
 }
 
+.collapsible-content {
+    /*max-height: 0;*/
+    overflow: hidden;
+    transition: max-height 0.2s ease-out;
+}
+.collapsible-inner-content {
+    margin: 0.2em;
+    padding: 0.3em;
+    background-color: &dtml-evenRowBackgroundColor;;
+    border:1px solid &dtml-tableHeaderBackgroundColor;;
+}
+.collapsible-content.collapsed-on-load {
+    max-height: inherit;
+}
+
+div.collapsible {
+    background-color: transparent;
+    cursor: pointer;
+    border: none;
+    text-align: left;
+    outline: none;
+    display: block;
+}
+
+.active, .collapsible:hover {
+    background-color: transparent;
+}
+
+.collapsible:before {
+    font-family: "Font Awesome 5 Free";
+    content: "\f0fe";
+    color: grey;
+    font-weight: bold;
+    margin-left: 2px;
+}
+
+.active:before {
+    font-family: "Font Awesome 5 Free";
+    content: "\f146";
+}
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */

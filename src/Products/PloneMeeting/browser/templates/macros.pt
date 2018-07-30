@@ -428,7 +428,7 @@ document.location.reload(true);
                    secret context/getVotesAreSecret;
                    isManager python: tool.isManager(context);
                    mayEditItem python: member.has_permission('Modify portal content', context);"
-       id="meeting_users" class="listing discreet" cellspacing="0" cellpadding="0">
+       id="meeting_users" class="listing" cellspacing="0" cellpadding="0">
   <tal:comment replace="nothing">Column headers</tal:comment>
   <thead>
   <tr valign="top">

@@ -161,8 +161,6 @@
     <metal:field use-macro="python:here.widget('itemAssemblyAbsents', mode='edit')"/>
     <metal:field use-macro="python:here.widget('itemSignatures', mode='edit')"/>
 
-    <metal:field use-macro="python:here.widget('itemSignatories', mode='edit')"/>
-
 </metal:widgets>
 </metal:base_body>
 </div>
