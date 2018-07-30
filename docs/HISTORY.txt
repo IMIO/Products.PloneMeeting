@@ -31,6 +31,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   field of annex types of other MeetingConfigs)
 - When an item is removed from a meeting, make sure fields related to assembly and signatures (or attendees and signatories
   when using contacts) are emptied
+- In MeetingItem.getPrettyLink, take isPrivacyViewable into account
 
 4.1b10 (2018-05-22)
 -------------------

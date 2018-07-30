@@ -873,10 +873,10 @@ class PMWfHistoryAdapter(ImioWfHistoryAdapter):
     def ignorableHistoryComments(self):
         """Add some more ignorable history comments."""
         ignorable_history_comment = super(PMWfHistoryAdapter, self).ignorableHistoryComments()
-        ignorable_history_comment += ('create_meeting_item_from_template_comments',
-                                      'create_from_predecessor_comments',
-                                      '{0}_comments'.format(DUPLICATE_AND_KEEP_LINK_EVENT_ACTION),
-                                      '{0}_comments'.format(DUPLICATE_EVENT_ACTION),
+        ignorable_history_comment += (u'create_meeting_item_from_template_comments',
+                                      u'create_from_predecessor_comments',
+                                      u'{0}_comments'.format(DUPLICATE_AND_KEEP_LINK_EVENT_ACTION),
+                                      u'{0}_comments'.format(DUPLICATE_EVENT_ACTION),
                                       u'wf_transition_triggered_by_application')
         return ignorable_history_comment
 

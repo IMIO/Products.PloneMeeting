@@ -438,6 +438,11 @@ div#content.meeting_item_absents_tooltipster {
     width: 700px;
 }
 
+/* display pretty link "not viewable" correctly */
+div#content.meeting_item_absents_tooltipster div.pretty_link {
+   display: inline-block;
+}
+
 div#content.group_members_tooltipster {
     padding-left: 0.5em;
     padding-right: 0.5em;

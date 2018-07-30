@@ -101,7 +101,7 @@
 
             <tal:comment replace="nothing">Assembly and signatures</tal:comment>
             <dl tal:condition="nocall:meeting"
-                tal:define="redefinedItemAssemblies python: context.redefinedItemAssemblies(usedMeetingAttributes);
+                tal:define="redefinedItemAssemblies python: context.redefinedItemAssemblies();
                             redefinedItemSignatures python: context.getItemSignatures(real=True) or context.getItemSignatories(real=True);"
                 tal:attributes="class python: (request.get('showPersons', 'true')=='true') and 'collapsible inline' or 'collapsible inline collapsedOnLoad'">
               <dt class="collapsibleHeader" onclick="togglePersonsCookie()">

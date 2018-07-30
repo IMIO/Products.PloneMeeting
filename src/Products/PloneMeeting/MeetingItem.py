@@ -1457,6 +1457,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         adapted.showContentIcon = kwargs.get('showContentIcon', True)
         for k, v in kwargs.items():
             setattr(adapted, k, v)
+        if not self.adapted().isPrivacyViewable():
+            adapted.isViewable = False
         return adapted.getLink()
 
     def _mayNotViewDecisionMsg(self):
