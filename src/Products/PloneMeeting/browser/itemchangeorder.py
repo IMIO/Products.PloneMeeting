@@ -1,7 +1,12 @@
+# -*- coding: utf-8 -*-
+
 from AccessControl import Unauthorized
-from zope.i18n import translate
+from plone import api
 from Products.Five import BrowserView
+from Products.PloneMeeting import logger
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
+from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
+from zope.i18n import translate
 
 
 def _to_integer(number):
@@ -58,7 +63,8 @@ class ChangeItemOrderView(BrowserView):
         if not meeting.wfConditions().mayChangeItemsOrder():
             raise Unauthorized
 
-        itemNumber = self.context.getItemNumber()
+        oldIndex = self.context.getItemNumber()
+        plone_utils = api.portal.get_tool('plone_utils')
 
         # Move the item up (-1), down (+1) or at a given position ?
         if moveType == 'number':
@@ -67,7 +73,7 @@ class ChangeItemOrderView(BrowserView):
                 # In this case, wishedNumber specifies the new position where
                 # the item must be moved.
             except (ValueError, TypeError):
-                self.context.plone_utils.addPortalMessage(
+                plone_utils.addPortalMessage(
                     translate(msgid='item_number_invalid',
                               domain='PloneMeeting',
                               context=self.request),
@@ -76,7 +82,6 @@ class ChangeItemOrderView(BrowserView):
 
         nbOfItems = len(meeting.getRawItems())
         items = meeting.getItems(ordered=True)
-        oldIndex = self.context.getItemNumber()
 
         # Calibrate and validate moveValue
         if moveType == 'number':
@@ -84,8 +89,8 @@ class ChangeItemOrderView(BrowserView):
             moveNumber = _itemNumber_to_storedItemNumber(wishedNumber)
             moveNumberIsInteger = _is_integer(moveNumber)
             # Is this move allowed ?
-            if moveNumber == itemNumber:
-                self.context.plone_utils.addPortalMessage(
+            if moveNumber == oldIndex:
+                plone_utils.addPortalMessage(
                     translate(msgid='item_did_not_move',
                               domain='PloneMeeting',
                               context=self.request),
@@ -104,7 +109,7 @@ class ChangeItemOrderView(BrowserView):
                (not moveNumberIsInteger and
                 (not meeting.getItemByNumber(moveNumber - 1)
                  or moveNumber - 1 == oldIndex)):
-                self.context.plone_utils.addPortalMessage(
+                plone_utils.addPortalMessage(
                     translate(msgid='item_illegal_move',
                               domain='PloneMeeting',
                               context=self.request),
@@ -115,7 +120,7 @@ class ChangeItemOrderView(BrowserView):
             # up, must not be first
             if (moveType == 'down' and self.context == items[-1]) or \
                (moveType == 'up' and self.context == items[0]):
-                self.context.plone_utils.addPortalMessage(
+                plone_utils.addPortalMessage(
                     translate(msgid='item_illegal_switch',
                               domain='PloneMeeting',
                               context=self.request),
@@ -133,7 +138,7 @@ class ChangeItemOrderView(BrowserView):
                 if (currentIsInteger and not previousIsInteger) or (not currentIsInteger and previousIsInteger):
                     illegal_swtich = True
             if illegal_swtich:
-                self.context.plone_utils.addPortalMessage(
+                plone_utils.addPortalMessage(
                     translate(msgid='item_illegal_switch',
                               domain='PloneMeeting',
                               context=self.request),
@@ -161,7 +166,6 @@ class ChangeItemOrderView(BrowserView):
                 otherItem.reindexObject(idxs=['getItemNumber'])
             else:
                 # Move the item to an absolute position
-                oldIndex = self.context.getItemNumber()
                 self.context.setItemNumber(moveNumber)
                 self.context.reindexObject(idxs=['getItemNumber'])
                 # get items again now that context number was updated
@@ -327,6 +331,15 @@ class ChangeItemOrderView(BrowserView):
         # when items order on meeting changed, it is considered modified,
         # do this before updateItemReferences
         meeting.notifyModified()
+
+        member = api.user.get_current()
+        logger.info('Element at {0} was moved from position {1} to position {2} by {3} on meeting at {4}'.format(
+            '/'.join(self.context.getPhysicalPath()),
+            _storedItemNumber_to_itemNumber(oldIndex, forceShowDecimal=False),
+            self.context.getItemNumber(for_display=True),
+            member.getId(),
+            '/'.join(meeting.getPhysicalPath())
+            ))
 
         # update item references starting from minus between oldIndex and new itemNumber
         meeting.updateItemReferences(startNumber=min(oldIndex, self.context.getItemNumber()))
