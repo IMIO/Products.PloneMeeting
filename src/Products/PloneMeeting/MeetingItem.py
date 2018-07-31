@@ -1135,7 +1135,7 @@ schema = Schema((
         allowable_content_types=('text/plain',),
         optional=True,
         widget=TextAreaWidget(
-            condition="python: here.getItemAssembly() or (here.attributeIsUsed('itemAssembly') and "
+            condition="python: here.getItemAssembly(real=True) or (here.attributeIsUsed('itemAssembly') and "
             "here.portal_plonemeeting.isManager(here) and here.hasMeeting() and "
             "here.getMeeting().attributeIsUsed('assembly'))",
             description="ItemAssemblyDescrMethod",
@@ -1152,7 +1152,7 @@ schema = Schema((
         name='itemAssemblyExcused',
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
-            condition="python: here.getItemAssemblyExcused() or (here.portal_plonemeeting.isManager(here) and "
+            condition="python: here.getItemAssemblyExcused(real=True) or (here.portal_plonemeeting.isManager(here) and "
             "here.hasMeeting() and here.getMeeting().attributeIsUsed('assemblyExcused'))",
             description="ItemAssemblyExcusedDescrMethod",
             description_msgid="item_assembly_excused_descr",
@@ -1167,7 +1167,7 @@ schema = Schema((
         name='itemAssemblyAbsents',
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
-            condition="python: here.getItemAssemblyAbsents() or (here.portal_plonemeeting.isManager(here) and "
+            condition="python: here.getItemAssemblyAbsents(real=True) or (here.portal_plonemeeting.isManager(here) and "
             "here.hasMeeting() and here.getMeeting().attributeIsUsed('assemblyAbsents'))",
             description="ItemAssemblyAbsentsDescrMethod",
             description_msgid="item_assembly_absents_descr",
@@ -1182,7 +1182,7 @@ schema = Schema((
         name='itemSignatures',
         allowable_content_types=('text/plain',),
         widget=TextAreaWidget(
-            condition="python: here.getItemSignatures() or (here.portal_plonemeeting.isManager(here) and "
+            condition="python: here.getItemSignatures(real=True) or (here.portal_plonemeeting.isManager(here) and "
                       "here.hasMeeting() and here.getMeeting().attributeIsUsed('signatures'))",
             description="ItemSignaturesDescrMethod",
             description_msgid="item_signatures_descr",
