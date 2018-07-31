@@ -163,7 +163,7 @@
 
         <table id="meeting_users" name="meeting_users" class="listing" i18n:domain="PloneMeeting"
                tal:define="allUsers python: context.getAllUsedHeldPositions(include_new=True);
-                           attendees python: context.getAttendees() or context.getDefaultAttendees();
+                           attendees python: context.getAttendees() or (not context.getAllUsedHeldPositions(include_new=False) and context.getDefaultAttendees()) or [];
                            lateAttendees context/getLateAttendees;
                            excused context/getExcused;
                            absents context/getAbsents;
