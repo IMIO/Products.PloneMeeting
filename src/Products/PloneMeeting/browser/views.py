@@ -390,7 +390,7 @@ class ObjectGoToView(BrowserView):
       Manage go to a given itemNumber.  This method is used
       in the item navigation widget (go to previous item, go to next item, ...)
     """
-    def __call__(self, itemNumber):
+    def __call__(self, itemNumber, way='previous'):
         """
           p_itemNumber is the number of the item we want to go to.  This item
           is in the same meeting than self.context.
@@ -408,6 +408,28 @@ class ObjectGoToView(BrowserView):
             return self.request.RESPONSE.redirect(self.context.absolute_url())
         else:
             obj = brains[0].getObject()
+            # check if obj isPrivacyViewable, if not, find the previous/next viewable item
+            next_obj = None
+            # if on last or first item, change way
+            if way == 'last':
+                way = 'previous'
+            elif way == 'first':
+                way = 'next'
+            not_accessible_item_found = False
+            while not obj.adapted().isPrivacyViewable() and not next_obj == obj and not next_obj == self.context:
+                not_accessible_item_found = True
+                next_obj = obj.getSiblingItem(whichItem=way, itemNumber=False)
+                if next_obj:
+                    next_obj = next_obj.getObject()
+                else:
+                    next_obj = self.context
+                obj = next_obj
+            if not_accessible_item_found:
+                self.context.plone_utils.addPortalMessage(
+                    translate(msgid='item_number_not_accessible_redirected_to_closest_item',
+                              domain='PloneMeeting',
+                              context=self.request),
+                    type='warning')
             return self.request.RESPONSE.redirect(obj.absolute_url())
 
 

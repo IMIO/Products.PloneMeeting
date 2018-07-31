@@ -125,11 +125,11 @@ class ChangeItemOrderView(BrowserView):
             currentIsInteger = _is_integer(self.context.getItemNumber())
             illegal_swtich = False
             if moveType == 'down':
-                nextIsInteger = _is_integer(self.context.getSiblingItemNumber('next'))
+                nextIsInteger = _is_integer(self.context.getSiblingItem('next'))
                 if (currentIsInteger and not nextIsInteger) or (not currentIsInteger and nextIsInteger):
                     illegal_swtich = True
             elif moveType == 'up':
-                previousIsInteger = _is_integer(self.context.getSiblingItemNumber('previous'))
+                previousIsInteger = _is_integer(self.context.getSiblingItem('previous'))
                 if (currentIsInteger and not previousIsInteger) or (not currentIsInteger and previousIsInteger):
                     illegal_swtich = True
             if illegal_swtich:
@@ -150,10 +150,10 @@ class ChangeItemOrderView(BrowserView):
                         # actually it is not possible in the UI because the 'up'
                         # icon is not displayed on the first item
                         return
-                    otherNumber = self.context.getSiblingItemNumber('previous')
+                    otherNumber = self.context.getSiblingItem('previous')
                 else:
                     # moveType == 'down'
-                    otherNumber = self.context.getSiblingItemNumber('next')
+                    otherNumber = self.context.getSiblingItem('next')
                 otherItem = meeting.getItemByNumber(otherNumber)
                 self.context.setItemNumber(otherItem.getItemNumber())
                 self.context.reindexObject(idxs=['getItemNumber'])

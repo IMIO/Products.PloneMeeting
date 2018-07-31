@@ -27,6 +27,7 @@ from DateTime import DateTime
 from datetime import datetime
 from ftw.labels.interfaces import ILabeling
 from ftw.labels.interfaces import ILabelJar
+from imio.helpers.cache import cleanRamCacheFor
 from os import path
 from plone import api
 from plone.app.testing import logout
@@ -1151,6 +1152,73 @@ class testViews(PloneMeetingTestCase):
         assert_results(item, advisorIdsToBeReturned=['vendors', 'developers'], occurenceOfItem=2)
         assert_results(item, ['vendors'], ['vendors'])
         assert_results(item, ['developers'], ['developers'])
+
+    def test_pm_goto_object(self):
+        """Test the item navigation widget."""
+        cfg = self.meetingConfig
+        # remove recurring items in self.meetingConfig
+        self._removeConfigObjectsFor(cfg)
+        cfg.setRestrictAccessToSecretItems(True)
+        cfg.setItemRestrictedPowerObserversStates(('presented', ))
+        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'at_the_end',
+                                           'reverse': '0'}, ))
+        # create 2 'public' items and 1 'secret' item
+        self.changeUser('pmManager')
+        publicItem1 = self.create('MeetingItem')
+        publicItem2 = self.create('MeetingItem')
+        secretItem1 = self.create('MeetingItem')
+        secretItem1.setPrivacy('secret')
+        secretItem1.reindexObject()
+        secretItem2 = self.create('MeetingItem')
+        secretItem2.setPrivacy('secret')
+        secretItem2.reindexObject()
+        secretItem3 = self.create('MeetingItem')
+        secretItem3.setPrivacy('secret')
+        secretItem3.reindexObject()
+        # create meeting and present items
+        meeting = self.create('Meeting', date=DateTime('2018/07/31'))
+        self.presentItem(secretItem1)
+        self.presentItem(publicItem1)
+        self.presentItem(secretItem2)
+        self.presentItem(publicItem2)
+        self.presentItem(secretItem3)
+        self.assertEqual(
+            meeting.getItems(ordered=True),
+            [secretItem1, publicItem1, secretItem2, publicItem2, secretItem3])
+
+        self.changeUser('restrictedpowerobserver1')
+        # go on first item and navigate to following items
+        # getSiblingItem is not taking care of isPrivacyViewable, but the object_goto view does
+        self.assertEqual(publicItem1.getSiblingItem('first'), secretItem1.getItemNumber())
+        self.assertEqual(publicItem1.getSiblingItem('next'), secretItem2.getItemNumber())
+
+        # the object_goto view is taking care of not sending a user where he does not have access
+        # user does not have access to secretItem so even if getSiblingItem returns it
+        # the view will send user to the next viewable item
+        self.assertFalse(secretItem1.isPrivacyViewable())
+        self.assertFalse(secretItem2.isPrivacyViewable())
+        self.assertFalse(secretItem3.isPrivacyViewable())
+        self.assertEqual(publicItem1.getSiblingItem('last'), secretItem3.getItemNumber())
+        view = publicItem1.restrictedTraverse('@@object_goto')
+        # first, next and last items are not accessible (not privacy viewable)
+        self.assertEqual(view('3', 'next'), publicItem2.absolute_url())
+        self.assertEqual(view('1', 'previous'), view.context.absolute_url())
+        self.assertEqual(view('1', 'first'), view.context.absolute_url())
+        self.assertEqual(view('5', 'last'), publicItem2.absolute_url())
+
+        # do secret items accessible
+        secretItem1.setPrivacy('public')
+        secretItem1.reindexObject()
+        secretItem2.setPrivacy('public')
+        secretItem2.reindexObject()
+        secretItem3.setPrivacy('public')
+        secretItem3.reindexObject()
+        # MeetingItem.isPrivacyViewable is RAMCached
+        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.isPrivacyViewable')
+        self.assertEqual(view('3', 'next'), secretItem2.absolute_url())
+        self.assertEqual(view('1', 'previous'), secretItem1.absolute_url())
+        self.assertEqual(view('1', 'first'), secretItem1.absolute_url())
+        self.assertEqual(view('5', 'last'), secretItem3.absolute_url())
 
 
 def test_suite():

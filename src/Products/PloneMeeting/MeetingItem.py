@@ -5199,9 +5199,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(self)
         return cfg.getUseVotes()
 
-    security.declarePublic('getSiblingItemNumber')
+    security.declarePublic('getSiblingItem')
 
-    def getSiblingItemNumber(self, whichItem):
+    def getSiblingItem(self, whichItem, itemNumber=True):
         '''If this item is within a meeting, this method returns the itemNumber of
            a sibling item that may be accessed by the current user. p_whichItem
            can be:
@@ -5211,6 +5211,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            - 'last' (the last item of the meeting).
            If there is no sibling (or if it has no sense to ask for this
            sibling), the method returns None.
+           If p_itemNumber is True (default), we return the getItemNumber.
         '''
         sibling = None
         if self.hasMeeting():
@@ -5224,15 +5225,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             if whichItem == 'previous':
                 # Is a previous item available ?
                 if not itemUidIndex == 0:
-                    sibling = brains[itemUidIndex - 1].getItemNumber
+                    sibling = brains[itemUidIndex - 1]
             elif whichItem == 'next':
                 # Is a next item available ?
                 if not itemUidIndex == len(itemUids) - 1:
-                    sibling = brains[itemUidIndex + 1].getItemNumber
+                    sibling = brains[itemUidIndex + 1]
             elif whichItem == 'first':
-                sibling = brains[0].getItemNumber
+                sibling = brains[0]
             elif whichItem == 'last':
-                sibling = brains[-1].getItemNumber
+                sibling = brains[-1]
+        if sibling and itemNumber:
+            sibling = sibling.getItemNumber
         return sibling
 
     security.declarePublic('listCopyGroups')
