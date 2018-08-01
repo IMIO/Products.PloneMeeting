@@ -2760,6 +2760,18 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Returns the possibly translated title.'''
         return getFieldContent(self, 'title', force)
 
+    security.declarePublic('Title')
+
+    def Title(self, include_config_group=False, **kwargs):
+        '''Returns the title and include config group value if p_include_config_group is True.'''
+        title = self.title
+        if include_config_group and self.getConfigGroup():
+            # prepend configGroup
+            configGroupValue = self.Vocabulary('configGroup')[0].getValue(self.getConfigGroup())
+            title = u"{0} - {1}".format(configGroupValue, title)
+        # Title returns utf-8
+        return title.encode('utf-8')
+
     security.declarePrivate('setAllItemTagsField')
 
     def setAllItemTagsField(self):
@@ -4577,12 +4589,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Create a group for this MeetingConfig using given p_groupSuffix to manage group id and group title.
            This will return groupId and True if group was added, False otherwise.'''
         groupId = "{0}_{1}".format(self.getId(), groupSuffix)
-        groupTitle = self.Title()
-        # prepend configGroup if any
-        if self.getConfigGroup():
-            configGroupValue = self.Vocabulary('configGroup')[0].getValue(self.getConfigGroup())
-            groupTitle = "{0} - {1}".format(configGroupValue, groupTitle)
-
+        groupTitle = self.Title(include_config_group=True)
         wasCreated = createOrUpdatePloneGroup(groupId=groupId, groupTitle=groupTitle, groupSuffix=groupSuffix)
         return groupId, wasCreated
 

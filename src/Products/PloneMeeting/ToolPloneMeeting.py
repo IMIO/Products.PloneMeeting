@@ -1760,7 +1760,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
         # we only recompute if cfgs, user groups or params changed
         cfg_infos = [(cfg._p_mtime, cfg.id) for cfg in self.objectValues('MeetingConfig')]
-        return (cfg_infos, self.getPloneGroupsForUser(), config_group, check_access, as_items)
+        return (self.modified(), cfg_infos, self.getPloneGroupsForUser(), config_group, check_access, as_items)
 
     security.declarePublic('getGroupedConfigs')
 

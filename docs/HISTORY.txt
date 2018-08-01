@@ -36,6 +36,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - In the @@object_goto view, take care of not sending a user to an item he has no access because of MeetingItem.isPrivacyViewable.
   If a next/previous/first/last item is not accessible, user is redirected to the closest accessible item
 - Add line to the Zope log when item order is changed on a meeting (using collective.fingerpointing log_info method)
+- Override MeetingConfig.Title method to handle a 'include_config_group=False' parameter making it easier to prepend the config
+  group (if any) when displaying the MeetingConfig title
 
 4.1b10 (2018-05-22)
 -------------------

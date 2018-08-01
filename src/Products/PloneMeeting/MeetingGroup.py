@@ -248,7 +248,7 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
             for key, value in cfgItemStates:
                 # build a strong id
                 res.append(("%s__state__%s" % (cfgId, key),
-                            "%s - %s" % (unicode(cfg.Title(), 'utf-8'), value)))
+                            "%s - %s" % (unicode(cfg.Title(include_config_group=True), 'utf-8'), value)))
         return DisplayList(tuple(res)).sortedByValue()
 
     security.declarePrivate('listKeepAccessToItemWhenAdviceIsGiven')
