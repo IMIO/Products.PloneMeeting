@@ -1022,6 +1022,7 @@ def getHistory(obj, startNumber=0, batchSize=500, checkMayView=True, history_typ
     wfTool = api.portal.get_tool('portal_workflow')
     wfName = wfTool.getWorkflowsFor(obj)[0].getId()
     history = list(obj.workflow_history[wfName])
+    history.reverse()
     stopIndex = startNumber + batchSize - 1
     i = -1
     while (i+1) < len(history):

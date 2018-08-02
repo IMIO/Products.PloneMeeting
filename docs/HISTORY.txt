@@ -72,6 +72,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   Meeting.acceptItemsStates that was removed as well.
 - Use TransitionEvent instead ObjectEvent as base class for MeetingAfterTransitionEvent and ItemAfterTransitionEvent
   so we have transition and old_state/new_state infos on the event instance.
+- Bugfix in utils.getHistory for the datachanges history, need to reverse history before proceeding or comparison is
+  made on wrong parent change.
+- Add line to the Zope log when item order is changed on a meeting
 
 4.0 (2017-08-04)
 ----------------
