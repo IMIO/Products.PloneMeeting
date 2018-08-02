@@ -2995,7 +2995,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if self.getItemAssemblyAbsents(real=True):
             res.append('assemblyAbsents')
         # when using contacts
-        if self.getItemAbsents():
+        if self.getItemAbsents(theObjects=True):
             res.append('itemAbsents')
         return res
 

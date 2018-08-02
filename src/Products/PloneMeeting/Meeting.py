@@ -1558,9 +1558,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
            absents, signatories, replacements, ...'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        usedAttrs = cfg.getUsedMeetingAttributes()
-        # Do it only if MeetingUser-based user management is enabled.
-        if 'attendees' not in usedAttrs:
+
+        if not cfg.isUsingContacts():
             return
 
         # manage attendees, excused, absents, lateAttendees

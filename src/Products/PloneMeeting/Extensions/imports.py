@@ -24,8 +24,6 @@ except ImportError:
     pass
 
 
-
-
 def safe_encode(value, encoding='utf-8'):
     """
         Converts a value to encoding, even if it is already encoded.
