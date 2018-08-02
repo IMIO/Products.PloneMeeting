@@ -50,7 +50,11 @@ class IPMHeldPosition(IHeldPosition):
 class PMHeldPosition(HeldPosition):
     """Override HeldPosition to add some fields and methods."""
 
-    def get_short_title(self, include_usages=False, include_defaults=False, include_sub_organizations=True):
+    def get_short_title(self,
+                        include_usages=False,
+                        include_defaults=False,
+                        include_signature_number=False,
+                        include_sub_organizations=True):
         """Returns short name for held position :
            - the label if defined on held_position object or position title;
            - if position is in a sub organization, we display also sub-organization titles;
@@ -85,6 +89,8 @@ class PMHeldPosition(HeldPosition):
             res = res + u" ({0}: {1})".format(_("Usages"), plain_render(self, 'usages') or '-')
         if include_defaults:
             res = res + u" ({0}: {1})".format(_("Defaults"), plain_render(self, 'defaults') or '-')
+        if include_defaults:
+            res = res + u" ({0}: {1})".format(_("Signature number"), plain_render(self, 'signature_number') or '-')
         return res
 
     def get_position_usages(self):

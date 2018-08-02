@@ -2871,7 +2871,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if held_position.usages and 'assemblyMember' in held_position.usages:
                 res.append(
                     (held_position.UID(),
-                     held_position.get_short_title(include_usages=True, include_defaults=True)))
+                     held_position.get_short_title(
+                        include_usages=True,
+                        include_defaults=True,
+                        include_signature_number=True)))
         return DisplayList(res)
 
     security.declarePrivate('listConfigGroups')
