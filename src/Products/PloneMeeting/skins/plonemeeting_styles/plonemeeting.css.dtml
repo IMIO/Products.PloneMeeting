@@ -705,6 +705,7 @@ p.indent-firstline {text-indent: 40px;}
     float:right;
     display: inline;
     padding-right: 5px;
+    font-size: 120%;
 }
 
 .todoSeeAll {
@@ -1282,6 +1283,10 @@ div.highlightBlankRow:before {
 /* on the meetingconfig view, move itemIconColor value to let place for the icon */
 span[id^="parent-fieldname-itemIconColor"] {
     padding-left: 20px;
+}
+
+dl.portletWidgetCollection dt span {
+   vertical-align: middle;
 }
 
 dl.portletWidgetCollection div.portlet_add_icons {

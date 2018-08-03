@@ -14,25 +14,24 @@
         <span tal:content="cfg/Title">MeetingConfig title</span>
         <div class="portletPloneMeetingHeaderIcons">
             <a style="display: inline;"
+               class="fa fa-home"
                href="#"
-               tal:attributes="href meetingFolder/searches_items/absolute_url">
-            <img style="cursor:pointer"
-                 tal:attributes="src string:$portal_url/pm_home.png;
-                                 title cfg/getName"/>
+               tal:attributes="href meetingFolder/searches_items/absolute_url;
+                               title cfg/getName">
             </a>
             <a style="display: inline;"
+               class="fa fa-cog"
                tal:condition="python: tool.isManager(view.context)"
                href="#"
+               title="pm_configuration" i18n:attributes="title"
                tal:attributes="href cfg/absolute_url">
-            <img style="cursor:pointer" title="pm_configuration" i18n:attributes="title"
-                 tal:attributes="src string:$portal_url/pm_config.png"/>
             </a>
             <a style="display: inline;"
+               class="fa fa-user"
                tal:condition="tool/getEnableUserPreferences"
                href="#"
+               title="user_preferences" i18n:attributes="title"
                tal:attributes="href string:${cfg/absolute_url}/gotoPreferences;">
-            <img style="cursor:pointer" title="user_preferences" i18n:attributes="title"
-                 tal:attributes="src string:$portal_url/pm_preferences.png"/>
             </a>
         </div>
     </dt>
