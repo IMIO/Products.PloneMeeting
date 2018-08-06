@@ -250,6 +250,20 @@ class Migrate_To_4_1(Migrator):
                 cfg.setUsedItemAttributes(usedItemAttrs)
         logger.info('Done.')
 
+    def _migrateGroupsShownInDashboardFilter(self):
+        """MeetingConfig.groupsHiddenInDashboardFilter was MeetingConfig.groupsShownInDashboardFilter."""
+        logger.info('Migrating "MeetingConfig.groupsShownInDashboardFilter" to '
+                    '"MeetingConfig.groupsHiddenInDashboardFilter"...')
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            if not hasattr(cfg, 'groupsShownInDashboardFilter'):
+                # already migrated
+                break
+            group_ids = cfg.getField('groupsHiddenInDashboardFilter').Vocabulary(cfg).keys()
+            new_values = [group_id for group_id in group_ids if group_id not in cfg.groupsShownInDashboardFilter]
+            cfg.setGroupsHiddenInDashboardFilter(new_values)
+            delattr(cfg, 'groupsShownInDashboardFilter')
+        logger.info('Done.')
+
     def run(self, step=None):
         logger.info('Migrating to PloneMeeting 4.1...')
 
@@ -298,7 +312,7 @@ class Migrate_To_4_1(Migrator):
         self._migrateToDoListSearches()
         self._adaptForContacts()
         self._selectDescriptionInUsedItemAttributes()
-
+        self._migrateGroupsShownInDashboardFilter()
 
 # The migration function -------------------------------------------------------
 def migrate(context):
@@ -320,7 +334,8 @@ def migrate(context):
        14) Make sure workflow_history stored on items is a PersistentMapping;
        15) Migrate MeetingConfig.toDoListSearches as it is no more a ReferenceField;
        16) Adapt application for Contacts;
-       17) Select 'description' in MeetingConfig.usedItemAttributes.
+       17) Select 'description' in MeetingConfig.usedItemAttributes;
+       18) Migrate MeetingConfig.groupsShownInDashboardFilter to MeetingConfig.groupsHiddenInDashboardFilter.
     '''
     migrator = Migrate_To_4_1(context)
     migrator.run()

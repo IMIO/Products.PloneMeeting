@@ -189,13 +189,14 @@ class ItemProposingGroupsForFacetedFilterVocabulary(object):
         groups = tool.getMeetingGroups(onlyActive=False, caching=False)
         activeGroups = [group for group in groups if group.queryState() == 'active']
         notActiveGroups = [group for group in groups if not group.queryState() == 'active']
-        groupsToShow = cfg.getGroupsShownInDashboardFilter()
+        groupsToHide = cfg.getGroupsHiddenInDashboardFilter()
         res_active = []
         for group in activeGroups:
-            if not groupsToShow or group.getId() in groupsToShow:
+            group_id = group.getId()
+            if not groupsToHide or group_id not in groupsToHide:
                 res_active.append(
-                    SimpleTerm(group.getId(),
-                               group.getId(),
+                    SimpleTerm(group_id,
+                               group_id,
                                safe_unicode(group.Title())
                                )
                     )
@@ -203,10 +204,11 @@ class ItemProposingGroupsForFacetedFilterVocabulary(object):
 
         res_not_active = []
         for group in notActiveGroups:
-            if not groupsToShow or group.getId() in groupsToShow:
+            group_id = group.getId()
+            if not groupsToHide or group_id not in groupsToHide:
                 res_not_active.append(
-                    SimpleTerm(group.getId(),
-                               group.getId(),
+                    SimpleTerm(group_id,
+                               group_id,
                                translate('${element_title} (Inactive)',
                                          domain='PloneMeeting',
                                          mapping={'element_title': safe_unicode(group.Title())},

@@ -346,7 +346,7 @@ class MeetingConfigDescriptor(Descriptor):
                          'availableItemsListVisibleColumns', 'itemsListVisibleColumns', 'itemsListVisibleFields',
                          'itemColumns', 'meetingColumns', 'toDoListSearches',
                          'dashboardItemsListingsFilters', 'dashboardMeetingAvailableItemsFilters',
-                         'dashboardMeetingLinkedItemsFilters', 'groupsShownInDashboardFilter',
+                         'dashboardMeetingLinkedItemsFilters', 'groupsHiddenInDashboardFilter',
                          'workflowAdaptations', 'transitionsToConfirm', 'transitionsForPresentingAnItem',
                          'onTransitionFieldTransforms', 'onMeetingTransitionItemTransitionToTrigger',
                          'meetingPresentItemWhenNoCurrentMeetingStates',
@@ -575,7 +575,7 @@ class MeetingConfigDescriptor(Descriptor):
                                               'c11', 'c12', 'c13', 'c14', 'c15', 'c16')
         self.dashboardMeetingAvailableItemsFilters = ('c4', 'c11', 'c16')
         self.dashboardMeetingLinkedItemsFilters = ('c4', 'c6', 'c7', 'c11', 'c12', 'c16', 'c19')
-        self.groupsShownInDashboardFilter = []
+        self.groupsHiddenInDashboardFilter = []
         # default batching value, this must be a multiple of "20"
         self.maxShownListings = 20
         self.maxShownAvailableItems = 20

@@ -343,20 +343,20 @@ class testFaceted(PloneMeetingTestCase):
 
     def test_pm_ProposingGroupsForFacetedVocabulary(self):
         '''Test that vocabulary "Products.PloneMeeting.vocabularies.proposinggroupsforfacetedfiltervocabulary"
-           relies on MeetingConfig.groupsShownInDashboardFilter.'''
+           relies on MeetingConfig.groupsHiddenInDashboardFilter.'''
         cfg = self.meetingConfig
         self.changeUser('siteadmin')
         pmFolder = self.getMeetingFolder()
         vocab = queryUtility(
             IVocabularyFactory,
             "Products.PloneMeeting.vocabularies.proposinggroupsforfacetedfiltervocabulary")
-        # by default when MeetingConfig.groupsShownInDashboardFilter is empty, every groups are returned
-        self.assertEqual(cfg.getGroupsShownInDashboardFilter(), ())
+        # by default when MeetingConfig.groupsHiddenInDashboardFilter is empty, every groups are returned
+        self.assertEqual(cfg.getGroupsHiddenInDashboardFilter(), ())
         self.assertEquals(
             [term.title for term in vocab(pmFolder)],
             [u'Developers', u'Vendors', u'End users (Inactive)'])
-        # now define values in MeetingConfig.groupsShownInDashboardFilter
-        cfg.setGroupsShownInDashboardFilter(('developers', 'endUsers'))
+        # now define values in MeetingConfig.groupsHiddenInDashboardFilter
+        cfg.setGroupsHiddenInDashboardFilter(('vendors', ))
         cfg.at_post_edit_script()
         self.assertEquals(
             [term.title for term in vocab(pmFolder)],

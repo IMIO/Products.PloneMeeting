@@ -39,6 +39,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Override MeetingConfig.Title method to handle a 'include_config_group=False' parameter making it easier to prepend the config
   group (if any) when displaying the MeetingConfig title
 - Use FontAwesome for portlet PM header icons
+- Moved MeetingConfig.groupsShownInDashboardFilter to MeetingConfig.groupsHiddenInDashboardFilter
 
 4.1b10 (2018-05-22)
 -------------------
