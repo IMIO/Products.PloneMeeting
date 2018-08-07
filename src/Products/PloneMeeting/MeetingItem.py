@@ -2716,6 +2716,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         return 'late'
 
+    security.declarePrivate('getListTypeNormalValue')
+
+    def getListTypeNormalValue(self, meeting):
+        '''See doc in interfaces.py.'''
+        return 'normal'
+
     security.declarePublic('showCategory')
 
     def showCategory(self):
