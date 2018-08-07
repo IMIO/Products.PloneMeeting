@@ -144,6 +144,10 @@ class AdvicesIconsInfos(BrowserView):
         """ """
         return bool(adviceIsInherited and self.context._appendLinkedItem(adviceHolder, only_viewable=True))
 
+    def mayRemoveInheritedAdvice(self, adviceIsInherited, advice_id):
+        """Must be MeetingManager to remove an inherited advice."""
+        return bool(adviceIsInherited and self.tool.isManager(self.context))
+
     def mayDelete(self, advice):
         """ """
         return IContentDeletable(advice).mayDelete(advisableGroups=self.advisableGroups)

@@ -438,6 +438,10 @@ div#content.meeting_item_absents_tooltipster {
     width: 700px;
 }
 
+div#content.advice_infos_tooltipster legend acronym {
+   margin-right: 0.25em;
+}
+
 /* display pretty link "not viewable" correctly */
 div#content.meeting_item_absents_tooltipster div.pretty_link {
    display: inline-block;

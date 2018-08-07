@@ -461,6 +461,15 @@
         permission="zope2.View"
       />
 
+    <!-- Form that manage removing advice inheritance -->
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        name="advice-remove-inheritance"
+        class=".adviceinheritance.AdviceRemoveInheritanceFormWrapper"
+        permission="zope2.View"
+      />
+
     <!-- the view that display MeetingItem.emergency_changes_history in a popup -->
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItem"
