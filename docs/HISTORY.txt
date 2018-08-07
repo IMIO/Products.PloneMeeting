@@ -40,6 +40,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   group (if any) when displaying the MeetingConfig title
 - Use FontAwesome for portlet PM header icons
 - Moved MeetingConfig.groupsShownInDashboardFilter to MeetingConfig.groupsHiddenInDashboardFilter
+- Added adaptable method MeetingItem.getListTypeNormalValue to be able to specify another value than 'normal' for the listType of
+  an item that not isLate.  This way it is possible to manage different values for a normal item
 
 4.1b10 (2018-05-22)
 -------------------

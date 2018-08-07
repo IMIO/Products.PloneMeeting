@@ -1256,6 +1256,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             item.setListType(item.adapted().getListTypeLateValue(self))
             toDiscussValue = cfg.getToDiscussLateDefault()
         else:
+            item.setListType(item.adapted().getListTypeNormalValue(self))
             toDiscussValue = cfg.getToDiscussDefault()
         items = self.getItems(ordered=True)
         # Set the correct value for the 'toDiscuss' field if required
