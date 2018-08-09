@@ -364,7 +364,8 @@ class MeetingConfigDescriptor(Descriptor):
                          'usedVoteValues', 'insertingMethodsOnAddItem', 'itemAnnexConfidentialVisibleFor',
                          'adviceAnnexConfidentialVisibleFor', 'meetingAnnexConfidentialVisibleFor',
                          'enableAdviceConfidentiality', 'adviceConfidentialityDefault', 'adviceConfidentialFor',
-                         'hideNotViewableLinkedItemsTo', 'hideHistoryTo', 'orderedContacts')
+                         'hideNotViewableLinkedItemsTo', 'inheritedAdviceRemoveableByAdviser',
+                         'hideHistoryTo', 'orderedContacts')
     excludedFields = ['maxDaysDecisions', 'meetingAppDefaultView', 'addContacts']
 
     # The 'instance' static attribute stores an instance used for assigning
@@ -487,6 +488,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.adviceConfidentialityDefault = False
         self.adviceConfidentialFor = ()
         self.hideNotViewableLinkedItemsTo = ()
+        self.inheritedAdviceRemoveableByAdviser = False
         # List of other meetingConfigs, item of this meetingConfig
         # will be clonable to
         self.meetingConfigsToCloneTo = []

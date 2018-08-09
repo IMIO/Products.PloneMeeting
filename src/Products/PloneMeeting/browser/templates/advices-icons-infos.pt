@@ -7,7 +7,7 @@
                  advisableGroups view/advisableGroups;
                  advicesToAdd python: [info[0] for info in advisableGroups[0]];
                  advicesToEdit python: [info[0] for info in advisableGroups[1]];
-                 userAdviserGroupIds python: [group.getId() for group in view.tool.getGroupsForUser(suffixes=['advisers'])];">
+                 userAdviserGroupIds view/userAdviserGroupIds;">
   <tal:defines define="cfg python: view.cfg;
                        displayedAddIcon python: False;
                        adviceStyle python: cfg.getUserParam('adviceStyle', context.REQUEST);
@@ -63,6 +63,7 @@
                          </acronym>
                          <acronym tal:condition="python: view.mayRemoveInheritedAdvice(adviceIsInherited, advice['id'])">
                             <a title="Remove advice inheritance"
+                               class="link-overlay-pm"
                                i18n:domain="PloneMeeting"
                                i18n:attributes="title"
                                style="display: inline-block; padding: 0; cursor: pointer;"

@@ -42,6 +42,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Moved MeetingConfig.groupsShownInDashboardFilter to MeetingConfig.groupsHiddenInDashboardFilter
 - Added adaptable method MeetingItem.getListTypeNormalValue to be able to specify another value than 'normal' for the listType of
   an item that not isLate.  This way it is possible to manage different values for a normal item
+- Added possibility to remove an inherited advice.  This is doable by MeetingManagers as long as item is editable or by
+  advisers of the original advice when item is in a review_state where advices may be deleted
 
 4.1b10 (2018-05-22)
 -------------------

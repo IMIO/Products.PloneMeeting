@@ -1070,6 +1070,10 @@
           <td tal:define="field python:here.getField('hideNotViewableLinkedItemsTo')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
+          <td tal:define="field python:here.getField('inheritedAdviceRemoveableByAdviser')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td></td>
         </tr>
       </table>
     </tal:advices>

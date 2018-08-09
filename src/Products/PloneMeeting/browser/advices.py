@@ -138,6 +138,8 @@ class AdvicesIconsInfos(BrowserView):
         self.advisableGroups = self.context.getAdvicesGroupsInfosForUser()
         self.advicesByType = self.context.getAdvicesByType()
         self.adviceType = adviceType
+        self.userAdviserGroupIds = [group.getId() for group in
+                                    self.tool.getGroupsForUser(suffixes=['advisers'])]
         return self.index()
 
     def showLinkToInherited(self, adviceIsInherited, adviceHolder):
@@ -145,8 +147,19 @@ class AdvicesIconsInfos(BrowserView):
         return bool(adviceIsInherited and self.context._appendLinkedItem(adviceHolder, only_viewable=True))
 
     def mayRemoveInheritedAdvice(self, adviceIsInherited, advice_id):
-        """Must be MeetingManager to remove an inherited advice."""
-        return bool(adviceIsInherited and self.tool.isManager(self.context))
+        """To remove an inherited advice, must be :
+           - MeetingManager;
+           - or adviser for p_advice_id group and current item in a itemAdviceEditStates review_state."""
+        res = False
+        if adviceIsInherited:
+            if self.tool.isManager(self.context) and self.context.mayQuickEdit('optionalAdvisers'):
+                res = True
+            else:
+                if self.cfg.getInheritedAdviceRemoveableByAdviser() and \
+                   advice_id in self.userAdviserGroupIds and \
+                   self.context.queryState() in self.tool.get(advice_id).getItemAdviceEditStates(cfg=self.cfg):
+                    return True
+        return res
 
     def mayDelete(self, advice):
         """ """

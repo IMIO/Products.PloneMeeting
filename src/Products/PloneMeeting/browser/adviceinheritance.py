@@ -1,19 +1,24 @@
 # -*- coding: utf-8 -*-
 
 from AccessControl import Unauthorized
+from collective.fingerpointing.config import AUDIT_MESSAGE
+from collective.fingerpointing.logger import log_info
+from collective.fingerpointing.utils import get_request_information
+from imio.actionspanel.utils import findViewableURL
+from plone import api
+from plone.autoform import directives
+from plone.autoform.form import AutoExtensibleForm
+from plone.supermodel import model
 from plone.z3cform.layout import wrap_form
 from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.utils import cleanMemoize
 from z3c.form import button
 from z3c.form import form
 from zope import schema
 from zope.component.hooks import getSite
 from zope.i18n import translate
-from plone.supermodel import model
-from plone.autoform.form import AutoExtensibleForm
-from plone.autoform import directives
 from zope.schema.vocabulary import SimpleTerm
 from zope.schema.vocabulary import SimpleVocabulary
-from plone import api
 
 
 def advice_id_default():
@@ -38,8 +43,8 @@ class IAdviceRemoveInheritance(model.Schema):
         title=_(u"Inherited advice action"),
         description=_(u""),
         vocabulary=SimpleVocabulary(
-            [SimpleTerm('remove', 'remove', 'Remove inherited advice'),
-             SimpleTerm('ask_locally', 'ask_locally', 'Remove inherited advice and ask advice locally')]),
+            [SimpleTerm('remove', 'remove', _(u"Remove inherited advice")),
+             SimpleTerm('ask_locally', 'ask_locally', _(u"Remove inherited advice and ask advice locally"))]),
         required=True)
 
 
@@ -77,24 +82,21 @@ class AdviceRemoveInheritanceForm(AutoExtensibleForm, form.EditForm):
         if not advice_infos.mayRemoveInheritedAdvice(advice_is_inherited, data['advice_id']):
             raise Unauthorized
 
-        # if 'ask_localy', check if advice_id may be asked locally, in case it is not the case
-        # return a portal_message but do not remove the inherited advice
+        # if 'ask_localy', check if advice_id may be asked locally, if it is not the case
+        # return a portal message but do not remove the inherited advice
         advice_asked_locally = False
         if data['inherited_advice_action'] == 'ask_locally':
-            tool = api.portal.get_tool('portal_plonemeeting')
-            cfg = tool.getMeetingConfig(self.context)
-            if cfg.getUseAdvices():
+            if self.context.showOptionalAdvisers():
                 optionalAdvisers = list(self.context.getOptionalAdvisers())
-                if data['advice_id'] not in optionalAdvisers and \
-                   data['advice_id'] in self.context.listOptionalAdvisers().keys():
-                    optionalAdvisers.append(data['advice_id'])
-                    self.context.setOptionalAdvisers(optionalAdvisers)
+                if data['advice_id'] in self.context.listOptionalAdvisers().keys():
+                    optionalAdvisers = list(self.context.getOptionalAdvisers())
+                    if data['advice_id'] not in optionalAdvisers:
+                        optionalAdvisers.append(data['advice_id'])
+                        self.context.setOptionalAdvisers(optionalAdvisers)
                     advice_asked_locally = True
             if not advice_asked_locally:
                 api.portal.show_message(
-                    message='Your current configuration does not allow you to ask '
-                            'this advice locally, the inherited advice was not removed. '
-                            'Contact your system administrator if necessary.',
+                    message=_('remove_advice_inheritance_ask_locally_not_configured'),
                     request=self.request,
                     type='warning')
                 self.request.RESPONSE.redirect(self.context.absolute_url())
@@ -103,13 +105,25 @@ class AdviceRemoveInheritanceForm(AutoExtensibleForm, form.EditForm):
         self.context.updateLocalRoles()
         if advice_asked_locally:
             api.portal.show_message(
-                message='Advice inheritance was removed and advice is asked locally',
+                message=_('remove_advice_inheritance_removed_and_asked_locally'),
                 request=self.request)
         else:
             api.portal.show_message(
-                message='Advice inheritance was removed',
+                message=_('remove_advice_inheritance_removed'),
                 request=self.request)
-        self.request.RESPONSE.redirect(self.context.absolute_url())
+        # in case an adviser removed inherited advice and may not
+        # see the item anymore, we redirect him to a viewable place
+        cleanMemoize(self.context, prefixes=['borg.localrole.workspace.checkLocalRolesAllowed'])
+        url = findViewableURL(self.context, self.request)
+        self.request.RESPONSE.redirect(url)
+
+        # add logging message to fingerpointing log
+        user, ip = get_request_information()
+        action = 'advice inheritance removed'
+        extras = 'item={0} advice_id={1}'.format(
+            '/'.join(self.context.getPhysicalPath()), data['advice_id'])
+        log_info(AUDIT_MESSAGE.format(user, ip, action, extras))
+
         return
 
     @button.buttonAndHandler(_('Cancel'), name='cancel')
