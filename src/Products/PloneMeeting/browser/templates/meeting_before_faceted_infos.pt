@@ -183,7 +183,7 @@ field before and the 'attendees' now, if the field is not empty, we display it</
   <tal:pre condition="python: 'preMeetingDate' in usedAttrs">
   <span class="meeting_attribute_label" i18n:translate="pre_meeting"></span>:&nbsp;&nbsp;
   <span class="meeting_attribute_label" i18n:translate="PloneMeeting_label_preMeetingDate"></span>:&nbsp;&nbsp;<span
-     tal:replace="python: toLocalizedTime(context.getPreMeetingDate(),long_format=1)"></span>
+     tal:replace="python:context.getPreMeetingDate() and toLocalizedTime(context.getPreMeetingDate(), long_format=1) or '-'"></span>
   </tal:pre>
   <tal:prePlace tal:condition="python: 'preMeetingPlace' in usedAttrs">
     &nbsp;&nbsp;<span class="meeting_attribute_label" i18n:translate="PloneMeeting_label_preMeetingPlace"></span>:&nbsp;&nbsp;
