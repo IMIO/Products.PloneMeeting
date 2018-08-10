@@ -70,11 +70,11 @@ function contentHistory() {
 
 // common overlays
 // the content history popup
-function pmCommonOverlays() {
+function pmCommonOverlays(selector_prefix='') {
     jQuery(function($){
         // Every common overelays, must stay at the bottom of every defined overlays!!!
         // Or it is taken before others because selector matches
-        $('a.link-overlay-pm').prepOverlay({
+        $(selector_prefix + 'a.link-overlay-pm').prepOverlay({
             subtype: 'ajax',
             closeselector: '[name="form.buttons.cancel"]',
        });
@@ -161,6 +161,8 @@ function initializeAdvicePopup(){
     inheritedItemInfos();
     usersGroupInfos();
     contentHistory();
+    // overlay for remove inherited advice
+    pmCommonOverlays(selector_prefix='div.advice_infos_tooltipster ');
 }
 
 function overOverlays(){

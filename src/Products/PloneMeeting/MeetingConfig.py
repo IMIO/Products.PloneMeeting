@@ -2108,6 +2108,20 @@ schema = Schema((
         write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(
+        name='inheritedAdviceRemoveableByAdviser',
+        default=defValues.inheritedAdviceRemoveableByAdviser,
+        widget=BooleanField._properties['widget'](
+            description="InheritedAdviceRemoveableByAdviser",
+            description_msgid="inherited_advice_removeable_by_adviser_descr",
+            label='Inheritedadviceremoveablebyadviser',
+            label_msgid='PloneMeeting_label_inheritedAdviceRemoveableByAdviser',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        write_permission="PloneMeeting: Write risky config",
+    ),
+
+    BooleanField(
         name='useVotes',
         default=defValues.useVotes,
         widget=BooleanField._properties['widget'](

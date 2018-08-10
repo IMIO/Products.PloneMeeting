@@ -47,8 +47,10 @@ from Products.PloneMeeting.indexes import indexAdvisers
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.utils import getLastEvent
 from Products.PloneMeeting.utils import isModifiedSinceLastVersion
+from Products.statusmessages.interfaces import IStatusMessage
 from zope.component import queryUtility
 from zope.event import notify
+from zope.i18n import translate
 from zope.lifecycleevent import ObjectModifiedEvent
 from zope.schema.interfaces import IVocabularyFactory
 from zope.schema.interfaces import RequiredMissing
@@ -2907,6 +2909,80 @@ class testAdvices(PloneMeetingTestCase):
                'advice_hide_during_redaction': False,
                'advice_comment': RichTextValue(u'My comment')})
         self.assertTrue(adviser_fullname in advices_icons_infos(adviceType=u'positive'))
+
+    def test_pm_RemoveInheritedAdviceByMeetingManager(self):
+        """A MeetingManager may remove an inherited advice as long as
+           able to quickEdit 'optionalAdvisers' field on item."""
+        cfg = self.meetingConfig
+        item1, item2, vendors_advice, developers_advice = self._setupInheritedAdvice()
+        self.changeUser('pmManager')
+        self.assertTrue(item2.adviceIndex['vendors']['inherited'])
+        # 1) test removing inheritance, make sure 'vendors' not in optionalAdvisers
+        item2.setOptionalAdvisers(())
+        self.request['form.widgets.advice_id'] = u'vendors'
+        self.request['form.widgets.inherited_advice_action'] = 'remove'
+        form = item2.restrictedTraverse('@@advice-remove-inheritance').form_instance
+        form.update()
+        form.handleSaveRemoveAdviceInheritance(form, None)
+        self.assertFalse('vendors' in item2.adviceIndex)
+
+        # 2) test removing inheritance and asking advice locally
+        # 2.1) as 'vendors' advice is askable, it works
+        item1, item2, vendors_advice, developers_advice = self._setupInheritedAdvice()
+        self.changeUser('pmManager')
+        self.assertTrue(item2.adviceIndex['vendors']['inherited'])
+        self.request['form.widgets.inherited_advice_action'] = 'ask_locally'
+        form = item2.restrictedTraverse('@@advice-remove-inheritance').form_instance
+        form.update()
+        form.handleSaveRemoveAdviceInheritance(form, None)
+        # asked locally and no more inherited
+        self.assertTrue(item2.adviceIndex['vendors'])
+        self.assertFalse(item2.adviceIndex['vendors']['inherited'])
+
+        # 2.2) if advice is not askable, advice inheritance is not removed
+        cfg.setSelectableAdvisers(())
+        item1, item2, vendors_advice, developers_advice = self._setupInheritedAdvice()
+        self.changeUser('pmManager')
+        self.assertTrue(item2.adviceIndex['vendors']['inherited'])
+        self.request['form.widgets.inherited_advice_action'] = 'ask_locally'
+        form = item2.restrictedTraverse('@@advice-remove-inheritance').form_instance
+        form.update()
+        form.handleSaveRemoveAdviceInheritance(form, None)
+        # nothing was done as advice may not be asked locally
+        self.assertTrue(item2.adviceIndex['vendors']['inherited'])
+        # a portal_message was added
+        ask_locally_not_configured_msg = translate(
+            'remove_advice_inheritance_ask_locally_not_configured',
+            domain='PloneMeeting',
+            context=self.request)
+        messages = IStatusMessage(self.request).show()
+        self.assertEqual(messages[-1].message, ask_locally_not_configured_msg)
+
+    def test_pm_RemoveInheritedAdviceByAdviser(self):
+        """An adviser may remove an inherited advice he is adviser for
+           if item is in a state where advices may be removed (itemAdviceEditStates)."""
+        cfg = self.meetingConfig
+        item1, item2, vendors_advice, developers_advice = self._setupInheritedAdvice()
+        # pmReviewer2 is adviser for 'vendors'
+        self.changeUser('pmReviewer2')
+        self.assertTrue(item2.adviceIndex['vendors']['inherited'])
+        # 1) check 'remove', for now, not removeable because item not in relevant state
+        item2.setOptionalAdvisers(())
+        self.request['form.widgets.advice_id'] = u'vendors'
+        self.request['form.widgets.inherited_advice_action'] = 'remove'
+        form = item2.restrictedTraverse('@@advice-remove-inheritance').form_instance
+        form.update()
+        self.assertRaises(Unauthorized, form.handleSaveRemoveAdviceInheritance, form, None)
+        # add item review_state to itemAdviceEditStates
+        cfg.setItemAdviceEditStates((item2.queryState(),))
+        item2.updateLocalRoles()
+        # still raises as removing advice inheritance not enabled in MeetingConfig
+        self.assertRaises(Unauthorized, form.handleSaveRemoveAdviceInheritance, form, None)
+        cfg.setInheritedAdviceRemoveableByAdviser(True)
+        form.handleSaveRemoveAdviceInheritance(form, None)
+        self.assertFalse('vendors' in item2.adviceIndex)
+        # in this case, as adviser removed inherited advice, he does not have access anymore to item...
+        self.assertFalse(self.hasPermission('View', item2))
 
 
 def test_suite():
