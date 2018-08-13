@@ -94,7 +94,7 @@
                             <img src="group_users.png" tal:attributes="src string:${view/portal_url}/group_users.png"/>
                            </a>
                         </acronym>
-                        <acronym tal:attributes="title python: context.getAdviceHelpMessageFor(**advice)"><img tal:attributes="src string:${view/portal_url}/help.png;"/></acronym>
+                        <span tal:attributes="title python: context.getAdviceHelpMessageFor(**advice)" class="fa fa-question-circle help-doc pmHelp" />
                         <tal:confidentiality condition="displayAdviceConfidentiality" replace="structure python: context.restrictedTraverse('@@advice-confidentiality')(advice)" />
                         <acronym tal:condition="python: obj and context.adapted().mayAskAdviceAgain(obj)">
                            <img tal:condition="python: not advice['type'] == 'asked_again'"
@@ -121,7 +121,6 @@
                               title="History"
                               i18n:domain="plone"
                               i18n:attributes="title"
-                              style="display: inline-block;"
                               href="@@historyview"
                               tal:attributes="href string:${obj_absolute_url}/@@historyview">
                                <img src="++resource++imio.actionspanel/history.gif"

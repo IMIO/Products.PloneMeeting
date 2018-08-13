@@ -298,7 +298,7 @@ class Migrate_To_4_1(Migrator):
         self.upgradeDependencies()
         self.cleanRegistries()
         self.updateHolidays()
-        self.reindexIndexes(idxs=['linkedMeetingUID', 'getConfigId'])
+        self.reindexIndexes(idxs=['linkedMeetingUID', 'getConfigId', 'indexAdvisers'])
 
         # migration steps
         self._addNewFacetedFilters()
@@ -313,6 +313,9 @@ class Migrate_To_4_1(Migrator):
         self._adaptForContacts()
         self._selectDescriptionInUsedItemAttributes()
         self._migrateGroupsShownInDashboardFilter()
+        # update local roles to fix 'delay_when_stopped' on advice with delay
+        self.tool.updateAllLocalRoles(meta_type=('MeetingItem', ))
+
 
 # The migration function -------------------------------------------------------
 def migrate(context):

@@ -747,6 +747,10 @@ p.indent-firstline {text-indent: 40px;}
     cursor: pointer;
 }
 
+.pmAction {
+    cursor: pointer;
+}
+
 .adviceInfo,
 .budgetRelatedEditable,
 .toDiscussEditable,
@@ -1578,7 +1582,6 @@ div.grouped-configs {
 #content span.help-doc:before {
    border-bottom: 1px dotted;
    padding-bottom: 2px;
-   cursor: pointer;
 }
 
 /* meeting_users table on meeting_edit */
@@ -1637,6 +1640,10 @@ table.listing tbody tr.even.dragging td {
 .tooltipster-meeting-item-signatories {
    cursor: help;
    color: red;
+}
+
+.pmHelp {
+   cursor: help;
 }
 
 span.signatory-checked,

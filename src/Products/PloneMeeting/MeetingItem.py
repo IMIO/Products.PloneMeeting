@@ -4280,9 +4280,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getAdviceDataFor')
 
-    def getAdviceDataFor(self, item, adviserId=None):
+    def getAdviceDataFor(self,
+                         item,
+                         adviserId=None,
+                         hide_advices_under_redaction=True,
+                         show_hidden_advice_data_to_group_advisers=True):
         '''Returns data info for given p_adviserId adviser id.
            If not p_adviserId is given, every advice infos are returned.
+           If p_hide_advices_under_redaction is True, we hide relevant informations of
+           advices hidden during redaction but if p_show_hidden_advice_data_to_group_advisers
+           is True, the advisers of the hidden advices will see the data.
            We receive p_item as the current item to be sure that this public
            method can not be called thru the web (impossible to pass an object as parameter),
            but it is still callable using a Script (Python) or useable in a TAL expression...'''
@@ -4290,19 +4297,47 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             raise Unauthorized
 
         data = {}
+        tool = api.portal.get_tool('portal_plonemeeting')
+        adviser_group_ids = [group.getId() for group in tool.getGroupsForUser(suffixes=['advisers'])]
         for adviceInfo in self.adviceIndex.values():
             advId = adviceInfo['id']
             # if advice is inherited get real adviceInfo
             if adviceInfo['inherited']:
                 adviceInfo = self.getInheritedAdviceInfo(advId)
             data[advId] = adviceInfo.copy()
+            # hide advice data if relevant
+            if hide_advices_under_redaction and \
+                (not show_hidden_advice_data_to_group_advisers or
+                    (show_hidden_advice_data_to_group_advisers and
+                     advId not in adviser_group_ids)):
+                advice_type = self._shownAdviceTypeFor(adviceInfo)
+                if advice_type == HIDDEN_DURING_REDACTION_ADVICE_VALUE:
+                    msgid = 'advice_hidden_during_redaction_help'
+                else:
+                    msgid = 'advice_hidden_during_redaction_considered_not_given_help'
+                data[advId]['type'] = advice_type
+                data[advId]['comment'] = translate(
+                    msgid=msgid,
+                    domain='PloneMeeting',
+                    context=self.REQUEST)
+
             # optimize some saved data
             data[advId]['type_translated'] = translate(data[advId]['type'],
                                                        domain='PloneMeeting',
                                                        context=self.REQUEST)
             # add meetingadvice object if given
             adviceHolder = adviceInfo.get('adviceHolder', self)
-            data[advId]['given_advice'] = adviceHolder.getAdviceObj(advId)
+            given_advice = adviceHolder.getAdviceObj(advId)
+            data[advId]['given_advice'] = given_advice
+            data[advId]['creator_id'] = None
+            data[advId]['creator_fullname'] = None
+            if given_advice:
+                creator_id = given_advice.Creator()
+                creator = api.user.get(creator_id)
+                creator_fullname = creator and creator.getProperty('fullname') or creator_id
+                data[advId]['creator_id'] = creator_id
+                data[advId]['creator_fullname'] = creator_fullname
+
         if adviserId:
             data = data.get(adviserId, {})
         return data
@@ -4853,7 +4888,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         left_delay = networkdays(datetime.now(),
                                  limit_date,
                                  holidays=holidays,
-                                 weekends=weekends) - 1
+                                 weekends=weekends)
         data['left_delay'] = left_delay
 
         if left_delay >= 0:
@@ -4915,7 +4950,23 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                            domain="PloneMeeting",
                                            mapping={'daysToGiveAdvice': adviceInfos['delay']},
                                            context=self.REQUEST)
-        return help_msg
+        # advice review_states related informations (addable, editable/removeable, viewable)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        mGroup = tool.get(adviceInfos['id'])
+        item_advice_states = mGroup.getItemAdviceStates(cfg)
+        translated_item_advice_states = []
+        for state in item_advice_states:
+            translated_item_advice_states.append(
+                translate(state, domain='plone', context=self.REQUEST)
+            )
+        translated_item_advice_states = u', '.join(translated_item_advice_states)
+        advice_states_msg = translate(
+            'This advice is addable in following states : ${item_advice_states}.',
+            mapping={'item_advice_states': translated_item_advice_states},
+            domain="PloneMeeting",
+            context=self.REQUEST)
+        return help_msg + '\n' + advice_states_msg
 
     security.declarePrivate('at_post_create_script')
 

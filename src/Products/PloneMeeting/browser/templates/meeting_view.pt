@@ -53,7 +53,7 @@
 
   <h2 class="presented-items">
     <span i18n:translate="presented_items">Presented items</span> (<span class="meeting_number_of_items" tal:content="context/numberOfItems"/>)
-    <span class="fa fa-question-circle help-doc tooltipster-inserting-methods-helper-msg"
+    <span class="fa fa-question-circle help-doc pmAction tooltipster-inserting-methods-helper-msg"
              tal:condition="python: view.tool.isManager(context)"
              tal:attributes="data-base_url string:${context/absolute_url}">
     </span>

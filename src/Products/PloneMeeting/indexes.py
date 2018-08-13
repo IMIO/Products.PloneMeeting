@@ -266,9 +266,9 @@ def templateUsingGroups(obj):
     return _marker
 
 
-def _to_coded_adviser_index(obj, groupId, advice):
+def _to_coded_adviser_index(obj, groupId, advice_infos):
     """Build an 'index' version of the adviser state so it is searchable and so on."""
-    def _computeSuffixFor(groupId, advice, advice_type):
+    def _computeSuffixFor(groupId, advice_infos, advice_type):
         '''
           Compute the suffix that will be appended depending on advice state.
         '''
@@ -282,9 +282,9 @@ def _to_coded_adviser_index(obj, groupId, advice):
                 suffixes.append('_advice_delay_exceeded')
             else:
                 # does the relevant group may add the advice in current item state?
-                if advice['advice_addable']:
+                if advice_infos['advice_addable']:
                     suffixes.append('_advice_not_given')
-                elif advice['advice_editable']:
+                elif advice_infos['advice_editable']:
                     if advice_type == 'asked_again':
                         suffixes.append('_advice_asked_again')
                     elif advice_type == HIDDEN_DURING_REDACTION_ADVICE_VALUE:
@@ -292,28 +292,28 @@ def _to_coded_adviser_index(obj, groupId, advice):
                 else:
                     suffixes.append('_advice_not_giveable')
 
-        if advice['type'] != NOT_GIVEN_ADVICE_VALUE:
+        if advice_infos['type'] != NOT_GIVEN_ADVICE_VALUE:
             # if advice was given, is it still editable or not?
             # we return the current advice review_state
             # by default, a still editable advice is 'advice_under_edit'
             # and a no more editable advice is 'advice_given'
-            advice = getattr(obj, advice['advice_id'])
-            suffixes.append('_%s' % advice.queryState())
+            advice_obj = getattr(obj, advice_infos['advice_id'])
+            suffixes.append('_%s' % advice_obj.queryState())
         return suffixes
 
     res = []
-    isDelayAware = obj.adviceIndex[groupId]['delay'] and True or False
+    isDelayAware = advice_infos['delay'] and True or False
     # compute suffixes
     # we compute the 'advice_type' to take into account 'hidden_during_redaction'
-    advice_type = obj._shownAdviceTypeFor(advice)
-    suffixes = _computeSuffixFor(groupId, advice, advice_type)
+    advice_type = obj._shownAdviceTypeFor(advice_infos)
+    suffixes = _computeSuffixFor(groupId, advice_infos, advice_type)
     # we also index the 'real_group_id_' so we can query who we asked
     # advice to, without passing the advice state
     for suffix in suffixes:
         if isDelayAware:
             res.append('delay__' + groupId + suffix)
             # 'real_group_id_'
-            real_group_id = DELAYAWARE_REAL_GROUP_ID_PATTERN.format(advice['row_id'])
+            real_group_id = DELAYAWARE_REAL_GROUP_ID_PATTERN.format(advice_infos['row_id'])
             res.append(real_group_id)
             # 'real_group_id_' with suffixed advice_type
             res.append(real_group_id + '__' + advice_type)
@@ -349,8 +349,13 @@ def indexAdvisers(obj):
         return _marker
 
     res = []
-    for groupId, advice in obj.adviceIndex.iteritems():
-        res += _to_coded_adviser_index(obj, groupId, advice)
+    for groupId, advice_infos in obj.adviceIndex.iteritems():
+        adviceHolder = obj
+        # use original advice data if advice is inherited
+        if obj.adviceIsInherited(groupId):
+            advice_infos = obj.getInheritedAdviceInfo(groupId)
+            adviceHolder = advice_infos['adviceHolder']
+        res += _to_coded_adviser_index(adviceHolder, groupId, advice_infos)
     # remove double entry, it could be the case for the 'advice_type' alone
     res = list(set(res))
     res.sort()

@@ -44,6 +44,14 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   an item that not isLate.  This way it is possible to manage different values for a normal item
 - Added possibility to remove an inherited advice.  This is doable by MeetingManagers as long as item is editable or by
   advisers of the original advice when item is in a review_state where advices may be deleted
+- Fixed bug in indexAdvisers of an inherited advice to index original advice data as data on inherited advice are not completed
+- Added parameters 'hide_advices_under_redaction=True' and 'show_hidden_advice_data_to_group_advisers' to
+  MeetingItem.getAdviceDataFor that adapt 'type', 'type_translated' and 'comment' if advice is 'hidden_during_redaction'
+  or 'considered_not_given_hidden_during_redaction'.  By default data is hidden for everyone except for advisers of group that
+  gave the advice
+- MeetingItem.getAdviceDataFor returned data now include 'creator_id' and 'creator_fullname'
+- Display informations about advice addable states on the help icon in the advice popup
+- Fixed one day delta error in 'delay_when_stopped' value of advice with delay, the delay was one day too long
 
 4.1b10 (2018-05-22)
 -------------------

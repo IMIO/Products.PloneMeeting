@@ -1244,7 +1244,7 @@ def version_object(obj, keep_modified=True, only_once=False, comment=''):
 # taken from http://mscerts.programming4.us/fr/639402.aspx
 # adapted to fit our needs
 def networkdays(start_date, end_date, holidays=[], weekends=(5, 6, )):
-    delta_days = (end_date - start_date).days + 1
+    delta_days = (end_date - start_date).days
     full_weeks, extra_days = divmod(delta_days, 7)
     # num_workdays = how many days/week you work * total # of weeks
     num_workdays = (full_weeks + 1) * (7 - len(weekends))

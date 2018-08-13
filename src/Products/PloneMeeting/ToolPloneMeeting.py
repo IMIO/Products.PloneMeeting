@@ -1651,8 +1651,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     def updateAllLocalRoles(self, meta_type=('Meeting', 'MeetingItem')):
         '''Update local_roles on Meeting and MeetingItem,
-           this is used to reflect configuration changes regarding powerObservers,
-           budgetImpactEditors, copyGroups and advices.'''
+           this is used to reflect configuration changes regarding access.'''
         if not self.isManager(self, realManagers=True):
             raise Unauthorized
 

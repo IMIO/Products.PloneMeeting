@@ -1114,7 +1114,7 @@ class testAdvices(PloneMeetingTestCase):
         # the advice is asked but not giveable
         self.assertTrue('vendors' in item.adviceIndex)
         # check 'PloneMeeting: add advice' permission
-        self.assertTrue(not self.hasPermission(AddAdvice, item))
+        self.assertFalse(self.hasPermission(AddAdvice, item))
         # put the item in a state where we can add an advice
         self.changeUser('pmCreator1')
         self.proposeItem(item)
@@ -1126,9 +1126,9 @@ class testAdvices(PloneMeetingTestCase):
         item.adviceIndex['vendors']['delay_started_on'] = datetime(2012, 1, 1)
         item.updateLocalRoles()
         # if delay is negative, we show complete delay
-        self.assertTrue(item.getDelayInfosForAdvice('vendors')['left_delay'] == 5)
-        self.assertTrue(item.getDelayInfosForAdvice('vendors')['delay_status'] == 'timed_out')
-        self.assertTrue(not self.hasPermission(AddAdvice, item))
+        self.assertEqual(item.getDelayInfosForAdvice('vendors')['left_delay'], 5)
+        self.assertEqual(item.getDelayInfosForAdvice('vendors')['delay_status'], 'timed_out')
+        self.assertFalse(self.hasPermission(AddAdvice, item))
         # recover delay, add the advice and check the 'edit' behaviour
         item.adviceIndex['vendors']['delay_started_on'] = datetime.now()
         item.updateLocalRoles()
@@ -1150,9 +1150,9 @@ class testAdvices(PloneMeetingTestCase):
         # when delay is exceeded, left_delay is complete delay so we show it in red
         # we do not show the exceeded delay because it could be very large (-654?)
         # and represent nothing...
-        self.assertTrue(item.getDelayInfosForAdvice('vendors')['left_delay'] == 5)
+        self.assertEqual(item.getDelayInfosForAdvice('vendors')['left_delay'], 5)
         # 'delay_status' is 'timed_out'
-        self.assertTrue(item.getDelayInfosForAdvice('vendors')['delay_status'] == 'timed_out')
+        self.assertEqual(item.getDelayInfosForAdvice('vendors')['delay_status'], 'timed_out')
         self.assertTrue(not self.hasPermission(ModifyPortalContent, advice))
 
     def test_pm_MeetingGroupDefinedItemAdviceStatesValuesOverridesMeetingConfigValues(self):
@@ -2661,6 +2661,80 @@ class testAdvices(PloneMeetingTestCase):
         # but works if right parameters are passed
         self.assertTrue(item.getAdviceDataFor(item) == {})
 
+    def test_pm_GetAdviceDataForAdviceHiddenDuringRedaction(self):
+        '''Test the getAdviceDataFor method p_hide_advices_under_redaction parameter.'''
+        cfg = self.meetingConfig
+        cfg.setItemAdviceStates(['itemcreated', ])
+        cfg.setItemAdviceEditStates(['itemcreated', ])
+        cfg.setItemAdviceViewStates(['itemcreated', ])
+        self.changeUser('pmCreator1')
+        # create an item and ask the advice of group 'vendors'
+        data = {
+            'title': 'Item to advice',
+            'category': 'maintenance',
+            'optionalAdvisers': ('vendors',)
+        }
+        item = self.create('MeetingItem', **data)
+        # give advice
+        self.changeUser('pmReviewer2')
+        advice = createContentInContainer(item,
+                                          'meetingadvice',
+                                          **{'advice_group': 'vendors',
+                                             'advice_type': u'positive',
+                                             'advice_hide_during_redaction': False,
+                                             'advice_comment': RichTextValue(u'My comment')})
+        changeView = advice.restrictedTraverse('@@change-advice-hidden-during-redaction')
+        changeView()
+        self.assertTrue(advice.advice_hide_during_redaction is True)
+        # by default, hide_advices_under_redaction=True, it hides advice_type and comment
+        # access by adviser
+        # hidden data
+        hidden_advice_data = item.getAdviceDataFor(
+            item, adviserId='vendors', show_hidden_advice_data_to_group_advisers=False)
+        self.assertEqual(hidden_advice_data['type'], 'hidden_during_redaction')
+        self.assertEqual(hidden_advice_data['type_translated'], u'Hidden during redaction')
+        self.assertEqual(
+            hidden_advice_data['comment'],
+            translate('advice_hidden_during_redaction_help',
+                      domain='PloneMeeting',
+                      context=self.request))
+        # access by adviser
+        # shown data
+        shown_advice_data = item.getAdviceDataFor(item, adviserId='vendors')
+        self.assertEqual(shown_advice_data['type'], 'positive')
+        self.assertEqual(shown_advice_data['type_translated'], u'Positive')
+        self.assertEqual(shown_advice_data['comment'], 'My comment')
+
+        # access by non adviser
+        # hidden data
+        self.changeUser(item.Creator())
+        hidden_advice_data = item.getAdviceDataFor(item, adviserId='vendors')
+        self.assertEqual(hidden_advice_data['type'], 'hidden_during_redaction')
+        self.assertEqual(hidden_advice_data['type_translated'], u'Hidden during redaction')
+        self.assertEqual(
+            hidden_advice_data['comment'],
+            translate('advice_hidden_during_redaction_help',
+                      domain='PloneMeeting',
+                      context=self.request))
+        # access by non adviser
+        # shown data
+        shown_advice_data = item.getAdviceDataFor(item, adviserId='vendors', hide_advices_under_redaction=False)
+        self.assertEqual(shown_advice_data['type'], 'positive')
+        self.assertEqual(shown_advice_data['type_translated'], u'Positive')
+        self.assertEqual(shown_advice_data['comment'], 'My comment')
+
+        # when advice is considered not_given because hidden during redaction, data is correct
+        # hidden data
+        self.validateItem(item)
+        hidden_advice_data = item.getAdviceDataFor(item, adviserId='vendors')
+        self.assertEqual(hidden_advice_data['type'], 'considered_not_given_hidden_during_redaction')
+        self.assertEqual(hidden_advice_data['type_translated'], u'Considered not given because hidden during redaction')
+        self.assertEqual(
+            hidden_advice_data['comment'],
+            translate('advice_hidden_during_redaction_considered_not_given_help',
+                      domain='PloneMeeting',
+                      context=self.request))
+
     def test_pm_GetAdviceDataForInheritedAdvice(self):
         '''Test the getAdviceDataFor method when the advice is inherited.'''
         item1, item2, vendors_advice, developers_advice = self._setupInheritedAdvice()
@@ -2983,6 +3057,11 @@ class testAdvices(PloneMeetingTestCase):
         self.assertFalse('vendors' in item2.adviceIndex)
         # in this case, as adviser removed inherited advice, he does not have access anymore to item...
         self.assertFalse(self.hasPermission('View', item2))
+
+    def test_pm_IndexAdvisersInheritedAdvice(self):
+        '''Test the indexAdvisers of an inherited advice.  Values have to be same as original advice.'''
+        item1, item2, vendors_advice, developers_advice = self._setupInheritedAdvice()
+        self.assertEqual(indexAdvisers(item1)(), indexAdvisers(item2)())
 
 
 def test_suite():
