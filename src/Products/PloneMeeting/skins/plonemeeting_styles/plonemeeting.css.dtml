@@ -1539,10 +1539,11 @@ div.cke.cke_combopanel {
 /* hide collective.documentviewer message on portaltype-configurablepodtemplate
  * that says that element is still not converted */
 body.portaltype-configurablepodtemplate dl.portalMessage,
+body.portaltype-contentcategory dl.portalMessage,
 body.portaltype-dashboardpodtemplate dl.portalMessage,
 body.portaltype-file dl.portalMessage,
 body.portaltype-itemannexcontentcategory dl.portalMessage,
-body.portaltype-contentcategory dl.portalMessage {
+body.portaltype-styletemplate dl.portalMessage {
     display: none;
 }
 

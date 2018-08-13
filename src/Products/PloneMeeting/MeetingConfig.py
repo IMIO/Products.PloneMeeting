@@ -2309,7 +2309,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                     'ContentCategoryGroup', ('ContentCategory', )))
                                   ),
         TOOL_FOLDER_POD_TEMPLATES: (('Document templates', 'Folder'),
-                                    ('ConfigurablePODTemplate', 'DashboardPODTemplate'),
+                                    ('ConfigurablePODTemplate', 'DashboardPODTemplate', 'StyleTemplate'),
                                     ()
                                     ),
         TOOL_FOLDER_MEETING_USERS: (('Meeting users', 'Folder'),

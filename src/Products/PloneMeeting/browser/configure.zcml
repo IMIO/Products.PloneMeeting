@@ -91,6 +91,15 @@
     <browser:viewlet
         name="plonemeeting.actionspanel"
         for="plone.app.contenttypes.interfaces.ICollection"
+        for="collective.documentgenerator.content.style_template.IStyleTemplate"
+        manager="plone.app.layout.viewlets.interfaces.IBelowContentBody"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        class="Products.PloneMeeting.browser.overrides.PMConfigActionsPanelViewlet"
+        template="templates/actions_panel_config_viewlet.pt"
+        permission="zope2.View"/>
+    <browser:viewlet
+        name="plonemeeting.actionspanel"
+        for="plone.app.contenttypes.interfaces.ICollection"
         manager="plone.app.layout.viewlets.interfaces.IBelowContentBody"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         class="Products.PloneMeeting.browser.overrides.PMConfigActionsPanelViewlet"

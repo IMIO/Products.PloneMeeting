@@ -926,6 +926,22 @@ class PMExistingPODTemplate(ExistingPODTemplateFactory):
 PMExistingPODTemplateFactory = PMExistingPODTemplate()
 
 
+class PMStyleTemplatesVocabulary(StyleTemplatesVocabularyFactory):
+    """
+    Override to display the MeetingConfig title in the term title as
+    style templates are useable cross MetingConfigs.
+    """
+    implements(IVocabularyFactory)
+
+    def _renderTermTitle(self, brain):
+        obj = brain.getObject()
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(obj)
+        return '{0} ({1})'.format(brain.Title, cfg.Title())
+
+PMStyleTemplatesVocabularyFactory = PMStyleTemplatesVocabulary()
+
+
 class PMDashboardCollectionsVocabulary(DashboardCollectionsVocabulary):
     """
     Vocabulary factory for 'dashboard_collections' field of DashboardPODTemplate.
@@ -1053,3 +1069,4 @@ class SignatureNumberVocabulary(object):
         return SimpleVocabulary(res)
 
 SignatureNumberVocabularyFactory = SignatureNumberVocabulary()
+

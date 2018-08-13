@@ -228,6 +228,17 @@ class ItemAnnexSubTypeDescriptor(AnnexSubTypeDescriptor):
         self.only_for_meeting_managers = only_for_meeting_managers
 
 
+class StyleTemplateDescriptor(Descriptor):
+
+    def __init__(self, id, title, description='', enabled=True):
+        self.id = id
+        self.title = title
+        self.description = description
+        # Filename of the POD template to use. This file must be present in the
+        # "templates" folder of a profile.
+        self.odt_file = None
+
+
 class PodTemplateDescriptor(Descriptor):
     multiSelectFields = ('pod_formats',
                          'pod_portal_types',
