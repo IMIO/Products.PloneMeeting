@@ -354,6 +354,11 @@ def indexAdvisers(obj):
         # use original advice data if advice is inherited
         if obj.adviceIsInherited(groupId):
             advice_infos = obj.getInheritedAdviceInfo(groupId)
+            # when an advice is inherited from an already inherited advice,
+            # when pasting new item, the predecessor is still not set so no adviceHolder
+            # is available, in this case, we continue as item will be reindexed after
+            if not advice_infos:
+                continue
             adviceHolder = advice_infos['adviceHolder']
         res += _to_coded_adviser_index(adviceHolder, groupId, advice_infos)
     # remove double entry, it could be the case for the 'advice_type' alone
