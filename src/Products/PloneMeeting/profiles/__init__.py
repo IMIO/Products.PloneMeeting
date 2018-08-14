@@ -234,12 +234,13 @@ class StyleTemplateDescriptor(Descriptor):
         self.id = id
         self.title = title
         self.description = description
+        self.enabled = enabled
         # Filename of the POD template to use. This file must be present in the
         # "templates" folder of a profile.
         self.odt_file = None
 
 
-class PodTemplateDescriptor(Descriptor):
+class PodTemplateDescriptor(StyleTemplateDescriptor):
     multiSelectFields = ('pod_formats',
                          'pod_portal_types',
                          'dashboard_collections_ids',
@@ -248,19 +249,13 @@ class PodTemplateDescriptor(Descriptor):
                          'roles_bypassing_talcondition')
 
     def __init__(self, id, title, description='', enabled=True, dashboard=False):
-        self.id = id
-        self.title = title
-        self.description = description
-        # Filename of the POD template to use. This file must be present in the
-        # "templates" folder of a profile.
-        self.odt_file = None
+        super(PodTemplateDescriptor, self).__init__(id, title, description, enabled)
         self.pod_formats = ['odt', ]
         self.pod_portal_types = []
         # ids of DashboardCollections to restrict the DashboardPODTemplate to
         self.dashboard_collections_ids = []
         self.tal_condition = u''
         self.mailing_lists = u''
-        self.enabled = enabled
         self.dashboard = dashboard
         self.context_variables = []
         self.style_template = []

@@ -1,18 +1,19 @@
 # -*- coding: utf-8 -*-
 
-from collections import OrderedDict
-from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
-from persistent.mapping import PersistentMapping
-from plone import api
-from Products.CMFPlone.utils import base_hasattr
-from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_NEW
-from Products.PloneMeeting.migrations import Migrator
-from zope.interface import alsoProvides
-
 import logging
 import mimetypes
 import os
+from collections import OrderedDict
 
+from Products.PloneMeeting.migrations import Migrator
+from Products.PloneMeeting.config import TOOL_FOLDER_POD_TEMPLATES
+
+from Products.CMFPlone.utils import base_hasattr
+from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_NEW
+from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
+from persistent.mapping import PersistentMapping
+from plone import api
+from zope.interface import alsoProvides
 
 logger = logging.getLogger('PloneMeeting')
 
@@ -264,6 +265,18 @@ class Migrate_To_4_1(Migrator):
             delattr(cfg, 'groupsShownInDashboardFilter')
         logger.info('Done.')
 
+    def _enableStyleTemplates(self):
+        """Content type StyleTemplate is now added to meetingConfigs."""
+        logger.info("Enabling StyleTemplate ...")
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            folder =  cfg.get(TOOL_FOLDER_POD_TEMPLATES)
+            allowed_content_types =  folder.getLocallyAllowedTypes()
+            if not 'StyleTemplate' in allowed_content_types:
+                allowed_content_types += ('StyleTemplate',)
+                folder.setLocallyAllowedTypes(allowed_content_types)
+                folder.reindexObject()
+        logger.info('Done.')
+
     def run(self, step=None):
         logger.info('Migrating to PloneMeeting 4.1...')
 
@@ -313,6 +326,7 @@ class Migrate_To_4_1(Migrator):
         self._adaptForContacts()
         self._selectDescriptionInUsedItemAttributes()
         self._migrateGroupsShownInDashboardFilter()
+        self._enableStyleTemplates()
         # update local roles to fix 'delay_when_stopped' on advice with delay
         self.tool.updateAllLocalRoles(meta_type=('MeetingItem', ))
 
