@@ -1037,7 +1037,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             for key in keys:
                 data[key] = [k for k, v in self.itemAbsents.items() if key in v]
         else:
-            data = self.itemAbsents.copy()
+            data = self.itemAbsents.data
         return data
 
     security.declarePublic('getItemSignatories')
@@ -1054,7 +1054,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                         signatories[signatory_uid] = []
                     signatories[signatory_uid].append(item_uid)
         else:
-            signatories = self.itemSignatories.copy()
+            signatories = self.itemSignatories.data
         return signatories
 
     security.declarePublic('displayUserReplacement')

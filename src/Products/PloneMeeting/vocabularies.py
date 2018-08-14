@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-from collective.documentgenerator.content.vocabulary import ExistingPODTemplateFactory
+from collective.documentgenerator.content.vocabulary import ExistingPODTemplateFactory, StyleTemplatesVocabularyFactory
 from collective.documentgenerator.content.vocabulary import PortalTypesVocabularyFactory
 from collective.eeafaceted.collectionwidget.content.dashboardcollection import IDashboardCollection
 from collective.eeafaceted.dashboard.vocabulary import DashboardCollectionsVocabulary
