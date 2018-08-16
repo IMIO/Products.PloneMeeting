@@ -238,6 +238,7 @@ class StyleTemplateDescriptor(Descriptor):
         # Filename of the POD template to use. This file must be present in the
         # "templates" folder of a profile.
         self.odt_file = None
+        self.is_style=True
 
 
 class PodTemplateDescriptor(StyleTemplateDescriptor):
@@ -262,6 +263,7 @@ class PodTemplateDescriptor(StyleTemplateDescriptor):
         self.roles_bypassing_talcondition = set()
         self.store_as_annex = None
         self.store_as_annex_title_expr = u''
+        self.is_style=False
 
 
 class PloneGroupDescriptor(Descriptor):
@@ -499,6 +501,8 @@ class MeetingConfigDescriptor(Descriptor):
         # will be clonable to
         self.meetingConfigsToCloneTo = []
 
+        # Style templates
+        self.styleTemplates = []
         # POD templates --------------------------------------------------------
         self.podTemplates = []
         # MeetingUsers --------------------------------------------------------

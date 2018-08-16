@@ -5398,6 +5398,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def _validate_dx_content(self, obj):
         errors = validate_fields(obj)
         if errors:
+            import ipdb; ipdb.set_trace()
             raise PloneMeetingError(
                 ADDED_TYPE_ERROR % (obj.portal_type,
                                     obj.id,
@@ -5492,21 +5493,24 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         )
         f.close()
         data = pt.getData(odt_file=odt_file)
-        podType = data['dashboard'] and 'DashboardPODTemplate' or 'ConfigurablePODTemplate'
+        if data ['is_style']:
+            podType = 'StyleTemplate'
+        else:
+            podType = data['dashboard'] and 'DashboardPODTemplate' or 'ConfigurablePODTemplate'
 
-        if podType == 'DashboardPODTemplate':
-            # manage dashboard_collections from dashboard_collection_ids
-            # we have ids and we need UIDs
-            res = []
-            for coll_id in data['dashboard_collections_ids']:
-                if coll_id in self.searches.searches_items.objectIds():
-                    collection = getattr(self.searches.searches_items, coll_id)
-                elif coll_id in self.searches.searches_meetings.objectIds():
-                    collection = getattr(self.searches.searches_meetings, coll_id)
-                else:
-                    collection = getattr(self.searches.searches_decisions, coll_id)
-                res.append(collection.UID())
-            data['dashboard_collections'] = res
+            if podType == 'DashboardPODTemplate':
+                # manage dashboard_collections from dashboard_collection_ids
+                # we have ids and we need UIDs
+                res = []
+                for coll_id in data['dashboard_collections_ids']:
+                    if coll_id in self.searches.searches_items.objectIds():
+                        collection = getattr(self.searches.searches_items, coll_id)
+                    elif coll_id in self.searches.searches_meetings.objectIds():
+                        collection = getattr(self.searches.searches_meetings, coll_id)
+                    else:
+                        collection = getattr(self.searches.searches_decisions, coll_id)
+                    res.append(collection.UID())
+                data['dashboard_collections'] = res
 
         podTemplate = api.content.create(
             type=podType,

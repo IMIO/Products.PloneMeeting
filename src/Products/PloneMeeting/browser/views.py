@@ -1134,9 +1134,15 @@ class CheckPodTemplatesView(BrowserView):
         messages['no_pod_portal_types'] = []
         messages['not_enabled'] = []
         messages['dashboard_templates_not_managed'] = []
+        messages['style_templates_not_managed'] = []
         messages['clean'] = []
 
         for pod_template in self.cfg.podtemplates.objectValues():
+
+            # we do not manage 'DashboardPODTemplate' automatically for now...
+            if pod_template.portal_type == 'StyleTemplate':
+                messages['style_templates_not_managed'].append((pod_template, None))
+                continue
 
             # we do not manage 'DashboardPODTemplate' automatically for now...
             if pod_template.portal_type == 'DashboardPODTemplate':
