@@ -712,16 +712,8 @@
           <td tal:define="field python:here.getField('groupsHiddenInDashboardFilter')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td>
-          </td>
-          <td>
-          </td>
-        </tr>
-        <tr valign="top">
           <td tal:define="field python:here.getField('usersHiddenInDashboardFilter')">
             <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
-          <td>
           </td>
           <td>
           </td>
