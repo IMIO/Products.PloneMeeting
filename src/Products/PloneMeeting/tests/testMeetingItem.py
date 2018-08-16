@@ -1505,16 +1505,16 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.setHistorizedItemAttributes(('decision', ))
         cfg.setRecordItemHistoryStates((self._stateMappingFor('proposed'), ))
 
-        self.changeUser('pmCreator1')
+        self.changeUser('pmManager')
         item = self.create('MeetingItem')
+        self.create('Meeting', date=DateTime('2018/08/16'))
         self.assertEquals(previous_review_state(item)(), _marker)
-        self.proposeItem(item)
-        previous_state = item.getHistory(history_types=['workflow'])[-2]['review_state']
-        self.assertEquals(previous_review_state(item)(), previous_state)
+        self.presentItem(item)
+        self.assertEquals(previous_review_state(item)(), 'validated')
 
         # now check that it does not interact when datachange is enabled
         setFieldFromAjax(item, 'decision', self.decisionText)
-        self.assertEquals(previous_review_state(item)(), previous_state)
+        self.assertEquals(previous_review_state(item)(), 'validated')
 
         # does not fail if no workflow_history
         item.workflow_history[item.workflow_history.keys()[0]] = {}
