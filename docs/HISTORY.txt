@@ -54,6 +54,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Fixed one day delta error in 'delay_when_stopped' value of advice with delay, the delay was one day too long
 - Added field MeetingConfig.usersHiddenInDashboardFilter useable in faceted filters displaying creators like the 'Creator'
   filter or the 'Taken over by' filter
+- Added 'tool' and 'cfg' to the list of variables useable in DashboardPODTemplate tal_condition field like it was already the
+  case for ConfigurablePODTemplate
 
 4.1b10 (2018-05-22)
 -------------------
