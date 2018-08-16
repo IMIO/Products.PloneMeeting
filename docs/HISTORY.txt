@@ -77,6 +77,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Add line to the Zope log when item order is changed on a meeting
 - Added adaptable method MeetingItem.getListTypeNormalValue to be able to specify another value than 'normal' for the listType of
   an item that not isLate.  This way it is possible to manage different values for a normal item
+- Bugfix in utils.getHistory, call reverse() on result before returning it because we bugfixed datachanges history by adding
+  a reverse() before handeling it...  This caused wrong previous_review_state...
 
 4.0 (2017-08-04)
 ----------------

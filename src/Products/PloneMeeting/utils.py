@@ -1083,6 +1083,7 @@ def getHistory(obj, startNumber=0, batchSize=500, checkMayView=True, history_typ
                 if not adapter.mayViewComment(event):
                     event['comments'] = HISTORY_COMMENT_NOT_VIEWABLE
         res.append(event)
+    res.reverse()
     return res
 
 
