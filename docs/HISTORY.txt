@@ -52,6 +52,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - MeetingItem.getAdviceDataFor returned data now include 'creator_id' and 'creator_fullname'
 - Display informations about advice addable states on the help icon in the advice popup
 - Fixed one day delta error in 'delay_when_stopped' value of advice with delay, the delay was one day too long
+- Added field MeetingConfig.usersHiddenInDashboardFilter useable in faceted filters displaying creators like the 'Creator'
+  filter or the 'Taken over by' filter
 
 4.1b10 (2018-05-22)
 -------------------

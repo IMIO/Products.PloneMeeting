@@ -67,6 +67,7 @@ class PMConditionAwareCollectionVocabulary(CachedCollectionVocabulary):
                 'cfg': cfg,
                 'fromPortletTodo': False}
 
+
 PMConditionAwareCollectionVocabularyFactory = PMConditionAwareCollectionVocabulary()
 
 
@@ -96,7 +97,7 @@ class ItemCategoriesVocabulary(object):
                            term_id,
                            safe_unicode(category.Title())
                            )
-                )
+            )
         res = sorted(res_active, key=attrgetter('title'))
 
         res_not_active = []
@@ -110,9 +111,10 @@ class ItemCategoriesVocabulary(object):
                                      mapping={'element_title': safe_unicode(category.Title())},
                                      context=context.REQUEST)
                            )
-                )
+            )
         res = res + sorted(res_not_active, key=attrgetter('title'))
         return SimpleVocabulary(res)
+
 
 ItemCategoriesVocabularyFactory = ItemCategoriesVocabulary()
 
@@ -123,6 +125,7 @@ class ItemClassifiersVocabulary(ItemCategoriesVocabulary):
     def __call__(self, context, classifiers=True):
         """ """
         return super(ItemClassifiersVocabulary, self).__call__(context, classifiers=True)
+
 
 ItemClassifiersVocabularyFactory = ItemClassifiersVocabulary()
 
@@ -149,7 +152,7 @@ class ItemProposingGroupsVocabulary(object):
                            group.getId(),
                            safe_unicode(group.Title())
                            )
-                )
+            )
         res = sorted(res_active, key=attrgetter('title'))
 
         res_not_active = []
@@ -163,7 +166,7 @@ class ItemProposingGroupsVocabulary(object):
                                      mapping={'element_title': safe_unicode(group.Title())},
                                      context=request)
                            )
-                )
+            )
         res = res + sorted(res_not_active, key=attrgetter('title'))
         return SimpleVocabulary(res)
 
@@ -199,7 +202,7 @@ class ItemProposingGroupsForFacetedFilterVocabulary(object):
                                group_id,
                                safe_unicode(group.Title())
                                )
-                    )
+                )
         res = sorted(res_active, key=attrgetter('title'))
 
         res_not_active = []
@@ -214,9 +217,10 @@ class ItemProposingGroupsForFacetedFilterVocabulary(object):
                                          mapping={'element_title': safe_unicode(group.Title())},
                                          context=context.REQUEST)
                                )
-                    )
+                )
         res = res + sorted(res_not_active, key=attrgetter('title'))
         return SimpleVocabulary(res)
+
 
 ItemProposingGroupsForFacetedFilterVocabularyFactory = ItemProposingGroupsForFacetedFilterVocabulary()
 
@@ -248,6 +252,7 @@ class GroupsInChargeVocabulary(object):
         res = sorted(res, key=attrgetter('title'))
         return SimpleVocabulary(res)
 
+
 GroupsInChargeVocabularyFactory = GroupsInChargeVocabulary()
 
 
@@ -274,6 +279,7 @@ class ItemProposingGroupAcronymsVocabulary(object):
         res = sorted(res, key=attrgetter('title'))
         return SimpleVocabulary(res)
 
+
 ItemProposingGroupAcronymsVocabularyFactory = ItemProposingGroupAcronymsVocabulary()
 
 
@@ -292,6 +298,7 @@ class MeetingReviewStatesVocabulary(object):
                        )
         return SimpleVocabulary(res)
 
+
 MeetingReviewStatesVocabularyFactory = MeetingReviewStatesVocabulary()
 
 
@@ -309,6 +316,7 @@ class ItemReviewStatesVocabulary(object):
                                   safe_unicode(state_title))
                        )
         return SimpleVocabulary(res)
+
 
 ItemReviewStatesVocabularyFactory = ItemReviewStatesVocabulary()
 
@@ -336,7 +344,44 @@ class CreatorsVocabulary(object):
         res = sorted(res, key=attrgetter('title'))
         return SimpleVocabulary(res)
 
+
 CreatorsVocabularyFactory = CreatorsVocabulary()
+
+
+class CreatorsForFacetedFilterVocabulary(object):
+    implements(IVocabularyFactory)
+
+    def __call___cachekey(method, self, context):
+        '''cachekey method for self.__call__.'''
+        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.creatorsforfacetedfiltervocabulary')
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        return date, cfg
+
+    @ram.cache(__call___cachekey)
+    def __call__(self, context):
+        """ """
+        catalog = api.portal.get_tool('portal_catalog')
+        res = []
+
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        creatorsToHide = cfg.getUsersHiddenInDashboardFilter()
+        creators = catalog.uniqueValuesFor('Creator')
+        filteredCreators = [creator for creator in creators if creator not in creatorsToHide]
+
+        for creator in filteredCreators:
+            member = api.user.get(creator)
+            value = member and member.getProperty('fullname') or creator
+            res.append(SimpleTerm(creator,
+                                  creator,
+                                  safe_unicode(value))
+                       )
+        res = sorted(res, key=attrgetter('title'))
+        return SimpleVocabulary(res)
+
+
+CreatorsForFacetedFilterVocabularyFactory = CreatorsForFacetedFilterVocabulary()
 
 
 class MeetingDatesVocabulary(object):
@@ -370,6 +415,7 @@ class MeetingDatesVocabulary(object):
                                   tool.formatMeetingDate(brain, withHour=True))
                        )
         return SimpleVocabulary(res)
+
 
 MeetingDatesVocabularyFactory = MeetingDatesVocabulary()
 
@@ -428,7 +474,7 @@ class AskedAdvicesVocabulary(object):
                 referer = referer.split('?_authenticator=')[0]
                 context = portal.unrestrictedTraverse(referer)
                 if not hasattr(context, 'portal_type') or \
-                   not (context.portal_type == 'DashboardCollection' or context.portal_type.startswith('Meeting')):
+                        not (context.portal_type == 'DashboardCollection' or context.portal_type.startswith('Meeting')):
                     return SimpleVocabulary(res)
 
         self.tool = api.portal.get_tool('portal_plonemeeting')
@@ -472,6 +518,7 @@ class AskedAdvicesVocabulary(object):
                            )
         res = sorted(res, key=attrgetter('title'))
         return SimpleVocabulary(res)
+
 
 AskedAdvicesVocabularyFactory = AskedAdvicesVocabulary()
 
@@ -522,6 +569,7 @@ class AdviceTypesVocabulary(object):
                    )
         return SimpleVocabulary(res)
 
+
 AdviceTypesVocabularyFactory = AdviceTypesVocabulary()
 
 
@@ -556,6 +604,7 @@ class SentToInfosVocabulary(object):
                            )
         return SimpleVocabulary(res)
 
+
 SentToInfosVocabularyFactory = SentToInfosVocabulary()
 
 
@@ -579,6 +628,7 @@ class SendToAuthorityVocabulary(object):
                    )
         return SimpleVocabulary(res)
 
+
 SendToAuthorityVocabularyFactory = SendToAuthorityVocabulary()
 
 
@@ -601,6 +651,7 @@ class HasAnnexesToPrintVocabulary(object):
                                                      context=context.REQUEST)))
                    )
         return SimpleVocabulary(res)
+
 
 HasAnnexesToPrintVocabularyFactory = HasAnnexesToPrintVocabulary()
 
@@ -631,6 +682,7 @@ class HasAnnexesToSignVocabulary(object):
                    )
         return SimpleVocabulary(res)
 
+
 HasAnnexesToSignVocabularyFactory = HasAnnexesToSignVocabulary()
 
 
@@ -655,6 +707,7 @@ class DownOrUpWorkflowAgainVocabulary(object):
 
         return SimpleVocabulary(res)
 
+
 DownOrUpWorkflowAgainVocabularyFactory = DownOrUpWorkflowAgainVocabulary()
 
 
@@ -675,6 +728,7 @@ class ListTypesVocabulary(object):
                        )
         return SimpleVocabulary(res)
 
+
 ListTypesVocabularyFactory = ListTypesVocabulary()
 
 
@@ -690,11 +744,11 @@ class SelectablePrivaciesVocabulary(object):
                 key,
                 key,
                 safe_unicode(translate(key,
-                             domain='PloneMeeting',
-                             context=context.REQUEST)))
-                       )
+                                       domain='PloneMeeting',
+                                       context=context.REQUEST))))
 
         return SimpleVocabulary(res)
+
 
 SelectablePrivaciesVocabularyFactory = SelectablePrivaciesVocabulary()
 
@@ -713,10 +767,10 @@ class PrivaciesVocabulary(object):
                 key,
                 key,
                 safe_unicode(translate(key,
-                             domain='PloneMeeting',
-                             context=context.REQUEST)))
-                       )
+                                       domain='PloneMeeting',
+                                       context=context.REQUEST))))
         return SimpleVocabulary(res)
+
 
 PrivaciesVocabularyFactory = PrivaciesVocabulary()
 
@@ -736,6 +790,7 @@ class PollTypesVocabulary(object):
                                                          domain='PloneMeeting',
                                                          context=context.REQUEST))))
         return SimpleVocabulary(res)
+
 
 PollTypesVocabularyFactory = PollTypesVocabulary()
 
@@ -801,6 +856,7 @@ class OtherMCCorrespondenceVocabulary(object):
                                 safe_unicode(subcat.Title()))))
         return SimpleVocabulary(res)
 
+
 OtherMCCorrespondenceVocabularyFactory = OtherMCCorrespondenceVocabulary()
 
 
@@ -835,6 +891,7 @@ class StorePodTemplateAsAnnexVocabulary(object):
                             safe_unicode(cat.Title()),
                             safe_unicode(subcat.Title()))))
         return SimpleVocabulary(res)
+
 
 StorePodTemplateAsAnnexVocabularyFactory = StorePodTemplateAsAnnexVocabulary()
 
@@ -872,6 +929,7 @@ class ItemTemplatesStorableAsAnnexVocabulary(object):
                                 safe_unicode(annex_type.Title())))))
         return SimpleVocabulary(res)
 
+
 ItemTemplatesStorableAsAnnexVocabularyFactory = ItemTemplatesStorableAsAnnexVocabulary()
 
 
@@ -906,6 +964,7 @@ class PMPortalTypesVocabulary(PortalTypesVocabularyFactory):
         else:
             return super(PMPortalTypesVocabulary, self).__call__(context)
 
+
 PMPortalTypesVocabularyFactory = PMPortalTypesVocabulary()
 
 
@@ -922,6 +981,7 @@ class PMExistingPODTemplate(ExistingPODTemplateFactory):
             safe_unicode(cfg.Title()),
             safe_unicode(brain.Title),
             safe_unicode(brain.getObject().odt_file.filename))
+
 
 PMExistingPODTemplateFactory = PMExistingPODTemplate()
 
@@ -947,6 +1007,7 @@ class PMDashboardCollectionsVocabulary(DashboardCollectionsVocabulary):
             [SimpleTerm(b.UID, b.UID, b.Title) for b in collection_brains]
         )
         return vocabulary
+
 
 PMDashboardCollectionsVocabularyFactory = PMDashboardCollectionsVocabulary()
 
@@ -1012,6 +1073,7 @@ class FTWLabelsVocabulary(object):
                 label['title']))
         return SimpleVocabulary(res)
 
+
 FTWLabelsVocabularyFactory = FTWLabelsVocabulary()
 
 
@@ -1024,6 +1086,7 @@ class PositionUsagesVocabulary(object):
         res.append(
             SimpleTerm('assemblyMember', 'assemblyMember', 'assemblyMember'))
         return SimpleVocabulary(res)
+
 
 PositionUsagesVocabularyFactory = PositionUsagesVocabulary()
 
@@ -1038,6 +1101,7 @@ class PositionDefaultsVocabulary(object):
             SimpleTerm('present', 'present', 'present'))
         return SimpleVocabulary(res)
 
+
 PositionDefaultsVocabularyFactory = PositionDefaultsVocabulary()
 
 
@@ -1051,5 +1115,6 @@ class SignatureNumberVocabulary(object):
             res.append(
                 SimpleTerm(str(signature_number), str(signature_number), str(signature_number)))
         return SimpleVocabulary(res)
+
 
 SignatureNumberVocabularyFactory = SignatureNumberVocabulary()

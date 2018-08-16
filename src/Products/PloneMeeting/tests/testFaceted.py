@@ -419,6 +419,35 @@ class testFaceted(PloneMeetingTestCase):
         # cache was cleaned
         self.assertEquals(len(vocab(pmFolder)), 4)
 
+    def test_pm_CreatorsForFacetedVocabulary(self):
+        '''Test the "Products.PloneMeeting.vocabularies.creatorsforfacetedvocabulary"
+                   vocabulary, especially because it is cached.'''
+        cfg = self.meetingConfig
+        self.changeUser('pmCreator1')
+        pmFolder = self.getMeetingFolder()
+        vocab = queryUtility(
+            IVocabularyFactory,
+            "Products.PloneMeeting.vocabularies.creatorsforfacetedfiltervocabulary")
+        # once get, it is cached
+        self.assertEquals(len(vocab(pmFolder)), 3)
+
+        # if a new pmFolder is created, then the cache is cleaned
+        # get pmFolder for user 'pmManager'
+        self.changeUser('pmManager')
+        pmFolder = self.getMeetingFolder()
+        # cache was cleaned
+        self.assertEquals(len(vocab(pmFolder)), 4)
+
+        cfg.setUsersHiddenInDashboardFilter(('pmCreator1',))
+        cfg.at_post_edit_script()
+        # cache was cleaned and pmCreator is not in the list anymore
+        self.assertEquals(len(vocab(pmFolder)), 3)
+
+        cfg.setUsersHiddenInDashboardFilter(())
+        cfg.at_post_edit_script()
+        # cache was cleaned and pmCreator is back in the list
+        self.assertEquals(len(vocab(pmFolder)), 4)
+
     def test_pm_AskedAdvicesVocabularies(self):
         '''Test the "Products.PloneMeeting.vocabularies.askedadvicesvocabulary"
            vocabulary, especially because it is cached.'''

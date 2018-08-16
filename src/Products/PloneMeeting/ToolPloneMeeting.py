@@ -777,6 +777,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         mc_folder.manage_addLocalRoles("%s_%s" % (cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX), ('MeetingManager',))
         # clean cache for "Products.PloneMeeting.vocabularies.creatorsvocabulary"
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.creatorsvocabulary")
+        invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.creatorsforfacetedfiltervocabulary")
 
     security.declarePublic('getMeetingConfig')
 

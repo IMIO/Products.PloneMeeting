@@ -23,6 +23,8 @@
            name="Products.PloneMeeting.vocabularies.meetingreviewstatesvocabulary" />
   <utility component=".vocabularies.CreatorsVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.creatorsvocabulary" />
+  <utility component=".vocabularies.CreatorsForFacetedFilterVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.creatorsforfacetedfiltervocabulary" />
   <utility component=".vocabularies.MeetingDatesVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.meetingdatesvocabulary" />
   <utility component=".vocabularies.AskedAdvicesVocabularyFactory"
