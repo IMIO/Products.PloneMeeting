@@ -20,7 +20,7 @@
 # 02110-1301, USA.
 
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
-from Products.PloneMeeting.profiles import AnnexTypeDescriptor
+from Products.PloneMeeting.profiles import AnnexTypeDescriptor, StyleTemplateDescriptor
 from Products.PloneMeeting.profiles import CategoryDescriptor
 from Products.PloneMeeting.profiles import GroupDescriptor
 from Products.PloneMeeting.profiles import ItemAnnexSubTypeDescriptor
@@ -117,11 +117,15 @@ adviceLegalAnalysis = AnnexTypeDescriptor(
 meetingAnnex = AnnexTypeDescriptor(
     'meeting-annex', 'Meeting annex(es)', u'itemAnnex.png', relatedTo='meeting')
 
+# Style Template ---------------------------------------------------------------
+stylesemplate = StyleTemplateDescriptor('styles', 'Styles')
+stylesemplate.odt_file = 'styles.odt'
 # Pod templates
 agendaTemplate = PodTemplateDescriptor('agendaTemplate', 'Meeting agenda')
 agendaTemplate.odt_file = 'Agenda.odt'
 agendaTemplate.pod_portal_types = ['MeetingPma']
 agendaTemplate.tal_condition = u''
+agendaTemplate.style_template = ['styles']
 
 decisionsTemplate = PodTemplateDescriptor('decisionsTemplate',
                                           'Meeting decisions')
