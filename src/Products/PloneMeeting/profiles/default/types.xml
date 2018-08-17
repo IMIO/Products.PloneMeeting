@@ -28,5 +28,7 @@
  <object name="ContentCategoryGroup" meta_type="Dexterity FTI"/>
  <object name="ItemAnnexContentCategory" meta_type="Dexterity FTI"/>
  <object name="ItemAnnexContentSubcategory" meta_type="Dexterity FTI"/>
+ <object name="directory" meta_type="Dexterity FTI"/>
  <object name="held_position" meta_type="Dexterity FTI"/>
+ <object name="meetingorganization" meta_type="Dexterity FTI"/>
 </object>
