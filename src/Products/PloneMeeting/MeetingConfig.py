@@ -5415,7 +5415,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def _validate_dx_content(self, obj):
         errors = validate_fields(obj)
         if errors:
-            import ipdb; ipdb.set_trace()
             raise PloneMeetingError(
                 ADDED_TYPE_ERROR % (obj.portal_type,
                                     obj.id,
@@ -5510,7 +5509,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         )
         f.close()
         data = pt.getData(odt_file=odt_file)
-        if data ['is_style']:
+        if data['is_style']:
             podType = 'StyleTemplate'
         else:
             podType = data['dashboard'] and 'DashboardPODTemplate' or 'ConfigurablePODTemplate'
