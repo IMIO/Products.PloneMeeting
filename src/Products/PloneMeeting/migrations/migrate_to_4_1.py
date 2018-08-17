@@ -11,6 +11,7 @@ from Products.PloneMeeting.config import TOOL_FOLDER_POD_TEMPLATES
 from Products.CMFPlone.utils import base_hasattr
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_NEW
 from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
+from eea.facetednavigation.interfaces import ICriteria
 from persistent.mapping import PersistentMapping
 from plone import api
 from zope.interface import alsoProvides
@@ -21,19 +22,34 @@ logger = logging.getLogger('PloneMeeting')
 # The migration class ----------------------------------------------------------
 class Migrate_To_4_1(Migrator):
 
-    def _addNewFacetedFilters(self):
+    def _updateFacetedFilters(self):
         """Add new faceted filters :
            - 'Has annexes to sign?';
-           - 'Labels'."""
-        logger.info("Adding new faceted filters 'Has annexes to sign?' and 'Labels' for every MeetingConfigs...")
+           - 'Labels'.
+           Update vocabulary used for :
+           - Creator;
+           - Taken over by."""
+        logger.info("Updating faceted filters for every MeetingConfigs...")
+
         xmlpath = os.path.join(
             os.path.dirname(__file__),
             '../faceted_conf/upgrade_step_add_item_widgets.xml')
 
         for cfg in self.tool.objectValues('MeetingConfig'):
             obj = cfg.searches.searches_items
+            # add new faceted filters
             obj.unrestrictedTraverse('@@faceted_exportimport').import_xml(
                 import_file=open(xmlpath))
+            # update vocabulary for relevant filters
+            criteria = ICriteria(obj)
+            criteria.edit(
+                'c11', **{
+                    'vocabulary':
+                        'Products.PloneMeeting.vocabularies.creatorsforfacetedfiltervocabulary'})
+            criteria.edit(
+                'c12', **{
+                    'vocabulary':
+                        'Products.PloneMeeting.vocabularies.creatorsforfacetedfiltervocabulary'})
         logger.info('Done.')
 
     def _addItemTemplatesManagersGroup(self):
@@ -314,7 +330,7 @@ class Migrate_To_4_1(Migrator):
         self.reindexIndexes(idxs=['linkedMeetingUID', 'getConfigId', 'indexAdvisers'])
 
         # migration steps
-        self._addNewFacetedFilters()
+        self._updateFacetedFilters()
         self._addItemTemplatesManagersGroup()
         self._updateCollectionColumns()
         self._markSearchesFoldersWithIBatchActionsMarker()

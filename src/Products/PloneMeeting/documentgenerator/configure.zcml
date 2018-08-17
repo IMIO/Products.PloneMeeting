@@ -4,4 +4,11 @@
            xmlns:i18n="http://namespaces.zope.org/i18n"
            i18n_domain="PloneMeeting">
 
+    <adapter for="collective.documentgenerator.content.pod_template.IConfigurablePODTemplate
+                  Products.PloneMeeting.interfaces.IMeetingContent"
+             factory="Products.PloneMeeting.documentgenerator.condition.PMConfigurablePODTemplateCondition" />
+    <adapter for="collective.eeafaceted.dashboard.content.pod_template.IDashboardPODTemplate
+                  Products.ATContentTypes.interfaces.folder.IATBTreeFolder"
+             factory="Products.PloneMeeting.documentgenerator.condition.PMDashboardPODTemplateCondition" />
+
 </configure>

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from collective.documentgenerator.content.condition import ConfigurablePODTemplateCondition
+from collective.eeafaceted.dashboard.content.pod_template import DashboardPODTemplateCondition
 from plone import api
 
 
@@ -30,3 +31,16 @@ class PMConfigurablePODTemplateCondition(ConfigurablePODTemplateCondition):
             allowed_types.append(cfg.getItemTypeName(configType='MeetingItemTemplate'))
             allowed_types.append(cfg.getItemTypeName(configType='MeetingItemRecurring'))
         return not allowed_types or context.portal_type in allowed_types
+
+
+class PMDashboardPODTemplateCondition(DashboardPODTemplateCondition):
+    """ """
+
+    def _extra_expr_ctx(self):
+        """ """
+        extra_context = super(PMDashboardPODTemplateCondition, self)._extra_expr_ctx()
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        extra_context.update({'tool': tool,
+                              'cfg': cfg})
+        return extra_context

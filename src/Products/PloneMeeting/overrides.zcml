@@ -150,13 +150,6 @@
             permission="zope2.View" />
     </configure>
 
-    <configure package="collective.documentgenerator">
-        <!-- Override ConfigurablePODTemplateCondition to redefine _extra_expr_ctx -->
-        <adapter for="collective.documentgenerator.content.pod_template.IConfigurablePODTemplate
-                      zope.interface.Interface"
-                 factory="Products.PloneMeeting.documentgenerator.condition.PMConfigurablePODTemplateCondition" />
-    </configure>
-
     <configure package="collective.eeafaceted.collectionwidget">
         <browser:page
             for="OFS.interfaces.IItem"

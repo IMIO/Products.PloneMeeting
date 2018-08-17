@@ -1373,6 +1373,23 @@ schema = Schema((
         enforceVocabulary=False,
         write_permission="PloneMeeting: Write risky config",
     ),
+    LinesField(
+        name='usersHiddenInDashboardFilter',
+        widget=MultiSelectionWidget(
+            description="UsersHiddenInDashboardFilter",
+            description_msgid="users_hidden_in_dashboard_filter_descr",
+            format="checkbox",
+            label='Usershiddenindashboardfilter',
+            label_msgid='PloneMeeting_label_usersHiddenInDashboardFilter',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="gui",
+        multiValued=1,
+        vocabulary_factory='Products.PloneMeeting.vocabularies.creatorsvocabulary',
+        default=defValues.usersHiddenInDashboardFilter,
+        enforceVocabulary=False,
+        write_permission="PloneMeeting: Write risky config",
+    ),
     IntegerField(
         name='maxShownListings',
         widget=SelectionWidget(
