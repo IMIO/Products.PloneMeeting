@@ -349,6 +349,7 @@ meetingPma.meetingPowerObserversStates = ('frozen', 'published', 'decided', 'clo
 meetingPma.useVotes = True
 meetingPma.meetingUsers = [pmReviewer1_voter, pmManager_observer,
                            cadranel_signer, muser_voter1, muser_voter2]
+meetingPma.styleTemplates = [stylesemplate]
 meetingPma.podTemplates = [agendaTemplate, decisionsTemplate, itemTemplate, dashboardTemplate]
 meetingPma.selectableCopyGroups = [developers.getIdSuffixed('reviewers'), vendors.getIdSuffixed('reviewers'), ]
 meetingPma.meetingConfigsToCloneTo = [{'meeting_config': 'plonegov-assembly',
