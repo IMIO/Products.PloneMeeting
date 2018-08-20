@@ -22,6 +22,7 @@ from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_REAPPLY
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG
 from Products.PloneMeeting.config import HAS_ZAMQP
+from Products.PloneMeeting.config import ManageOwnOrganizationFields
 from zope.component import queryUtility
 from zope.i18n import translate
 
@@ -339,6 +340,10 @@ def postInstall(context):
         params = {'title': u"Mon organisation",
                   'organization_type': u'default', }
         contacts.invokeFactory('organization', PLONEGROUP_ORG, **params)
+        own_orga = contacts[PLONEGROUP_ORG]
+        own_orga.manage_permission(
+            ManageOwnOrganizationFields, ('Manager', 'Site Administrator'),
+            acquire=0)
 
     # reorder css
     _reorderCSS(site)

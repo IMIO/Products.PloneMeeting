@@ -18,7 +18,7 @@ class ICertifiedSignaturesRowSchema(Interface):
     signature_number = schema.Choice(
         title=_("Certified signatures signature number"),
         description=_("Select the signature number, keep signatures ordered by number."),
-        vocabulary='Products.PloneMeeting.content.organization.certified_signatures.signature_number_vocabulary',
+        vocabulary='Products.PloneMeeting.vocabularies.signaturenumbervocabulary',
         required=True,
     )
 
@@ -49,40 +49,53 @@ class ICertifiedSignaturesRowSchema(Interface):
     )
 
 
-class IMeetingOrganization(IOrganization):
-    """ """
+class IPMOrganization(IOrganization):
+    """These fields are for organizations added to the 'plonegroup-organization' organization.
+       We protect these fields with read/write permission so it is only
+       shown on organization added to 'plonegroup-organization'."""
+
+    form.read_permission(acronym='PloneMeeting.manage_internal_organization_fields')
+    form.write_permission(acronym='PloneMeeting.manage_internal_organization_fields')
     acronym = schema.TextLine(
         title=_("Acronym"),
         required=False,
     )
 
+    form.read_permission(item_advice_states='PloneMeeting.manage_internal_organization_fields')
+    form.write_permission(item_advice_states='PloneMeeting.manage_internal_organization_fields')
     form.widget('item_advice_states', CheckBoxFieldWidget, multiple='multiple')
     item_advice_states = schema.List(
         title=_("PloneMeeting_label_itemAdviceStates"),
         description=_("group_item_advice_states_descr"),
         value_type=schema.Choice(
-            vocabulary="Products.PloneMeeting.vocabularies.itemstates"),
+            vocabulary="Products.PloneMeeting.vocabularies.itemallstates"),
         required=False,
     )
 
+    form.read_permission(item_advice_edit_states='PloneMeeting.manage_internal_organization_fields')
+    form.write_permission(item_advice_edit_states='PloneMeeting.manage_internal_organization_fields')
     form.widget('item_advice_edit_states', CheckBoxFieldWidget, multiple='multiple')
     item_advice_edit_states = schema.List(
         title=_("PloneMeeting_label_itemAdviceEditStates"),
         description=_("group_item_advice_edit_states_descr"),
         value_type=schema.Choice(
-            vocabulary="Products.PloneMeeting.vocabularies.itemstates"),
+            vocabulary="Products.PloneMeeting.vocabularies.itemallstates"),
         required=False,
     )
 
+    form.read_permission(item_advice_view_states='PloneMeeting.manage_internal_organization_fields')
+    form.write_permission(item_advice_view_states='PloneMeeting.manage_internal_organization_fields')
     form.widget('item_advice_view_states', CheckBoxFieldWidget, multiple='multiple')
     item_advice_view_states = schema.List(
         title=_("PloneMeeting_label_itemAdviceViewStates"),
         description=_("group_item_advice_view_states_descr"),
         value_type=schema.Choice(
-            vocabulary="Products.PloneMeeting.vocabularies.itemstates"),
+            vocabulary="Products.PloneMeeting.vocabularies.itemallstates"),
         required=False,
     )
 
+    form.read_permission(keep_access_to_item_when_advice_is_given='PloneMeeting.manage_internal_organization_fields')
+    form.write_permission(keep_access_to_item_when_advice_is_given='PloneMeeting.manage_internal_organization_fields')
     keep_access_to_item_when_advice_is_given = schema.Choice(
         title=_(u'PloneMeeting_label_keepAccessToItemWhenAdviceIsGiven'),
         description=_("group_keep_access_to_item_when_advice_is_given_descr"),
@@ -90,12 +103,16 @@ class IMeetingOrganization(IOrganization):
         required=True,
     )
 
+    form.read_permission(as_copy_group_on='PloneMeeting.manage_internal_organization_fields')
+    form.write_permission(as_copy_group_on='PloneMeeting.manage_internal_organization_fields')
     as_copy_group_on = schema.TextLine(
         title=_("PloneMeeting_label_asCopyGroupOn"),
         description=_("as_copy_group_on_descr"),
         required=False,
     )
 
+    form.read_permission(certified_signatures='PloneMeeting.manage_internal_organization_fields')
+    form.write_permission(certified_signatures='PloneMeeting.manage_internal_organization_fields')
     form.widget('certified_signatures', DataGridFieldFactory)
     certified_signatures = schema.List(
         title=_(u'PloneMeeting_label_group_certifiedSignatures'),
@@ -108,17 +125,19 @@ class IMeetingOrganization(IOrganization):
         default=[],
     )
 
+    form.read_permission(groups_in_charge='PloneMeeting.manage_internal_organization_fields')
+    form.write_permission(groups_in_charge='PloneMeeting.manage_internal_organization_fields')
     form.widget('groups_in_charge', CheckBoxFieldWidget, multiple='multiple')
     groups_in_charge = schema.List(
         title=_("PloneMeeting_label_groupsInCharge"),
         description=_("groups_in_charge_descr"),
         value_type=schema.Choice(
-            vocabulary="Products.PloneMeeting.vocabularies.activemeetingorgnizations"),
+            vocabulary="collective.contact.plonegroup.organization_services"),
         required=False,
     )
 
 
-class MeetingOrganization(Organization):
+class PMOrganization(Organization):
     """Override Organization to add some fields and methods."""
 
 
@@ -126,4 +145,4 @@ class PMOrganizationSchemaPolicy(DexteritySchemaPolicy):
     """ """
 
     def bases(self, schemaName, tree):
-        return (IMeetingOrganization, )
+        return (IPMOrganization, )

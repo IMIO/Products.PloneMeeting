@@ -37,7 +37,7 @@ class IPMHeldPosition(IHeldPosition):
     signature_number = zope.schema.Choice(
         title=_("Signature number"),
         description=_("If this contact is a default signer, select signature number"),
-        vocabulary="Products.PloneMeeting.vocabularies.pmsignaturenumbervocabulary",
+        vocabulary="Products.PloneMeeting.vocabularies.signaturenumbervocabulary",
         required=False,
     )
 

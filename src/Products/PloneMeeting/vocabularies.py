@@ -1112,9 +1112,75 @@ class SignatureNumberVocabulary(object):
     def __call__(self, context):
         res = []
         for signature_number in range(1, 11):
-            res.append(
-                SimpleTerm(str(signature_number), str(signature_number), str(signature_number)))
+            sign_num_str = str(signature_number)
+            res.append(SimpleTerm(sign_num_str, sign_num_str, sign_num_str))
         return SimpleVocabulary(res)
 
 
 SignatureNumberVocabularyFactory = SignatureNumberVocabulary()
+
+
+class ItemAllStatesVocabulary(object):
+    """ """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        tool = api.portal.get_tool('portal_plonemeeting')
+        res = []
+        for cfg in tool.getActiveConfigs():
+            cfgItemStates = cfg.listStates('Item')
+            cfgId = cfg.getId()
+            u_cfg_title = safe_unicode(cfg.Title(include_config_group=True))
+            # cfgItemStates is a list of tuple, ready to move to a DisplayList
+            for key, value in cfgItemStates:
+                # build a strong id
+                term_key = u"{0}__state__{1}".format(cfgId, key)
+                term_value = u"{0} - {1}".format(u_cfg_title, value)
+                res.append(
+                    SimpleTerm(term_key, term_key, term_value))
+
+        return SimpleVocabulary(res)
+
+ItemAllStatesVocabularyFactory = ItemAllStatesVocabulary()
+
+
+class KeepAccessToItemWhenAdviceIsGivenVocabulary(object):
+    """ """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        res = []
+        res.append(
+            SimpleTerm('', '', translate(
+                'use_meetingconfig_value',
+                domain='PloneMeeting',
+                context=context.REQUEST)))
+        res.append(
+            SimpleTerm('0', '0', translate(
+                'boolean_value_false',
+                domain='PloneMeeting',
+                context=context.REQUEST)))
+        res.append(
+            SimpleTerm('1', '1', translate(
+                'boolean_value_true',
+                domain='PloneMeeting',
+                context=context.REQUEST)))
+        return SimpleVocabulary(res)
+
+KeepAccessToItemWhenAdviceIsGivenVocabularyFactory = KeepAccessToItemWhenAdviceIsGivenVocabulary()
+
+
+class ActiveInternalOrganizationsVocabulary(object):
+    """ """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        res = []
+        tool = api.portal.get_tool('portal_plonemeeting')
+        for orga in tool.getInternalOrganizations(only_active=False):
+            key = orga.getId()
+            value = orga.Title()
+            res.append(SimpleTerm(key, key, value))
+        return SimpleVocabulary(res)
+
+ActiveInternalOrganizationsVocabularyFactory = ActiveInternalOrganizationsVocabulary()

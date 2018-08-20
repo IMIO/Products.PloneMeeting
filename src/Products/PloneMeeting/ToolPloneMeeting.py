@@ -14,6 +14,7 @@ from AccessControl import Unauthorized
 from Acquisition import aq_base
 from collections import OrderedDict
 from collective.behavior.talcondition.utils import _evaluateExpression
+from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.documentviewer.async import queueJob
 from collective.documentviewer.settings import GlobalSettings
 from collective.eeafaceted.dashboard.utils import enableFacetedDashboardFor
@@ -77,6 +78,7 @@ from Products.PloneMeeting.profiles import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.profiles import PloneMeetingConfiguration
 from Products.PloneMeeting.utils import get_all_suffixes
 from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import get_my_orga
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
 from Products.PloneMeeting.utils import monthsIds
@@ -487,6 +489,41 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                         data.append(group)
                 else:
                     data.append(group)
+            if caching:
+                cache[key] = data
+        return data
+
+    security.declarePublic('getMeetingGroups')
+
+    def getInternalOrganizations(self, not_empty_suffix=None, only_active=True, caching=True):
+        '''Gets the organizations from plonegroup-organization.
+           If p_not_empty_suffix is True, we check that organization suffixes passed as argument are not empty.
+           If it is the case, we do not return the organization neither.
+           If p_only_active is True, we also check the organization current review_state.
+           If p_caching is True (by default), the method call will be cached in the REQUEST.
+           WARNING, we can not use ram.cache here because it can not be used when returning
+           persistent objects (single, list, dict, ... of persistent objects), so we need to manage
+           caching manually...'''
+        data = None
+        if caching:
+            key = "tool-getinternalorganizations-%s-%s" % (
+                (not_empty_suffix or ''), str(only_active))
+            cache = IAnnotations(self.REQUEST)
+            data = cache.get(key, None)
+        if data is None:
+            data = []
+            for orga in get_my_orga().objectValues():
+                if only_active and api.content.get_state(orga) != 'active':
+                    continue
+                # Check that there is at least one user in the notEmptySuffix
+                # of the Plone group
+                if not_empty_suffix:
+                    ploneGroupId = get_plone_group_id(orga, suffix=not_empty_suffix)
+                    zopeGroup = api.group.get(ploneGroupId)
+                    if len(zopeGroup.getMemberIds()):
+                        data.append(orga)
+                else:
+                    data.append(orga)
             if caching:
                 cache[key] = data
         return data

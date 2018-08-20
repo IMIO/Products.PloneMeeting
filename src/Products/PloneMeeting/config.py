@@ -54,11 +54,13 @@ AddAnnex = 'PloneMeeting: Add annex'
 AddAnnexDecision = 'PloneMeeting: Add annexDecision'
 AddItem = 'PloneMeeting: Add MeetingItem'
 AddMeeting = 'PloneMeeting: Add Meeting'
+ManageOwnOrganizationFields = 'PloneMeeting: Manage internal organization fields'
 setDefaultRoles(ReadDecision, ('Manager',))
 setDefaultRoles(WriteDecision, ('Manager',))
 setDefaultRoles(AddAnnex, ('Manager',))
 setDefaultRoles(AddAnnexDecision, ('Manager',))
 setDefaultRoles(WriteMarginalNotes, ('Manager',))
+setDefaultRoles(ManageOwnOrganizationFields, ())
 
 # Permissions
 DEFAULT_ADD_CONTENT_PERMISSION = "Add portal content"

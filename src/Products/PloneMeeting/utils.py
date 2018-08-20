@@ -24,6 +24,7 @@ from AccessControl import ClassSecurityInfo
 from AccessControl.Permission import Permission
 from App.class_init import InitializeClass
 from appy.shared.diff import HtmlDiff
+from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.excelexport.exportables.dexterityfields import get_exportable_for_fieldname
 from collective.iconifiedcategory.interfaces import IIconifiedInfos
 from DateTime import DateTime
@@ -1239,6 +1240,12 @@ def version_object(obj, keep_modified=True, only_once=False, comment=''):
     pr.save(obj=obj, comment=comment)
     # set back modified on obj so version timestamp is > obj modified
     obj.setModificationDate(obj_modified)
+
+
+def get_my_orga():
+    """ """
+    portal = api.portal.get()
+    return portal.contacts.get(PLONEGROUP_ORG)
 
 
 # taken from http://mscerts.programming4.us/fr/639402.aspx

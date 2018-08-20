@@ -53,6 +53,8 @@
               title="PloneMeeting: Add annex"/>
   <permission id="PloneMeeting.AddAnnexDecision"
               title="PloneMeeting: Add annexDecision"/>
+  <permission id="PloneMeeting.manage_internal_organization_fields"
+              title="PloneMeeting: Manage internal organization fields"/>
 
   <adapter for=".interfaces.IMeetingItem"
            factory=".MeetingItem.MeetingItemWorkflowConditions"
