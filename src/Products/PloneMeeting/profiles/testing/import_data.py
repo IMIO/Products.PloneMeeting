@@ -133,11 +133,13 @@ decisionsTemplate.odt_file = 'Decisions.odt'
 decisionsTemplate.pod_portal_types = ['MeetingPma']
 decisionsTemplate.tal_condition = u'python:here.adapted().isDecided()'
 decisionsTemplate.roles_bypassing_talcondition = set(['Manager'])
+decisionsTemplate.style_template = ['styles']
 
 itemTemplate = PodTemplateDescriptor('itemTemplate', 'Meeting item')
 itemTemplate.odt_file = 'Item.odt'
 itemTemplate.pod_portal_types = ['MeetingItemPma']
 itemTemplate.tal_condition = u''
+itemTemplate.style_template = ['styles']
 
 dashboardTemplate = PodTemplateDescriptor('dashboardTemplate', 'Dashboard summary', dashboard=True)
 dashboardTemplate.odt_file = 'Dashboard.odt'
