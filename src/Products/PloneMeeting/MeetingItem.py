@@ -3515,7 +3515,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # first time group_id is added to adviceIndex, it does not exist in old_adviceIndex
         old_adviceInfo = old_adviceIndex.get(group_id, {})
         if adviceInfo.get('delay_infos', {}) and \
-           old_adviceInfo.get('delay_infos', {}):
+           old_adviceInfo.get('delay_infos', {}) and \
+           not self._advice_is_given(group_id):
             # take also into account freshly expired delays
             just_timed_out = _just_timed_out(adviceInfo, old_adviceInfo)
             if _delay_in_alert(adviceInfo, old_adviceInfo) or just_timed_out:
@@ -3526,16 +3527,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 event_id = 'adviceDelayWarning'
                 if left_delay == -1 or just_timed_out:
                     event_id = 'adviceDelayExpired'
-                if event_id not in cfg.getMailItemEvents():
-                    return
-                plone_group_id = '{0}_advisers'.format(group_id)
-                self._sendMailToGroupMembers(
-                    plone_group_id,
-                    event_id,
-                    mapping={'left_delay': left_delay,
-                             'limit_date': limit_date,
-                             'group_name': self.adviceIndex[group_id]['name'],
-                             'delay_label': self.adviceIndex[group_id]['delay_label']})
+                if event_id in cfg.getMailItemEvents():
+                    plone_group_id = '{0}_advisers'.format(group_id)
+                    self._sendMailToGroupMembers(
+                        plone_group_id,
+                        event_id,
+                        mapping={'left_delay': left_delay,
+                                 'limit_date': limit_date,
+                                 'group_name': self.adviceIndex[group_id]['name'],
+                                 'delay_label': self.adviceIndex[group_id]['delay_label']})
 
     def getUnhandledInheritedAdvisersData(self, adviserIds, optional):
         """ """
@@ -5212,11 +5212,21 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         if cfg.getVersionateAdviceIfGivenAndItemModified():
-            for adviceInfo in self.adviceIndex.itervalues():
-                if not adviceInfo.get('advice_id', None) or adviceInfo['hidden_during_redaction']:
+            for advice_id, adviceInfo in self.adviceIndex.items():
+                if not self._advice_is_given(advice_id):
                     continue
                 adviceObj = self.get(adviceInfo['advice_id'])
                 adviceObj.versionate_if_relevant(comment='Versioned because item was edited.')
+
+    def _advice_is_given(self, advice_id):
+        """Return True if advice is not given."""
+        is_given = True
+        advice_info = self.adviceIndex.get(advice_id, {})
+        if not advice_info or \
+           advice_info['type'] in (NOT_GIVEN_ADVICE_VALUE, 'asked_again') or \
+           advice_info['hidden_during_redaction']:
+            is_given = False
+        return is_given
 
     security.declareProtected(ModifyPortalContent, 'processForm')
 
