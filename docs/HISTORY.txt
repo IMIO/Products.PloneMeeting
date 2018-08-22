@@ -56,6 +56,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   filter or the 'Taken over by' filter
 - Added 'tool' and 'cfg' to the list of variables useable in DashboardPODTemplate tal_condition field like it was already the
   case for ConfigurablePODTemplate
+- Only send delay expiration/expired mail notifications if advice is not given
+  (not_given, asked_again or hidden_during_redaction)
 
 4.1b10 (2018-05-22)
 -------------------
@@ -73,8 +75,6 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   fails to abort changes that occured to item review_state in case an exception is raised
 - Replaced Meeting.getBeforeFrozenStates by Meeting.getStatesBefore('frozen') as we need the same method to get states
   before the 'published' states Meeting.getStatesBefore('published') to protect MeetingItemWorkflowConditions.mayPublish
-- Only send delay expiration/expired mail notifications if advice is not given
-  (not_given, asked_again or hidden_during_redaction)
 
 4.1b9 (2018-05-09)
 ------------------
