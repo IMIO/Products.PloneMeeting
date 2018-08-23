@@ -121,6 +121,13 @@
             layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
             permission="zope2.View" />
         <browser:page
+            for="collective.contact.plonegroup.interfaces.IPloneGroupContact"
+            name="actions_panel"
+            class="Products.PloneMeeting.browser.overrides.ConfigActionsPanelView"
+            template="browser/actions_panel.pt"
+            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+            permission="zope2.View" />
+        <browser:page
             for="collective.documentgenerator.content.pod_template.IConfigurablePODTemplate"
             name="actions_panel"
             class="Products.PloneMeeting.browser.overrides.ConfigActionsPanelView"

@@ -1582,6 +1582,7 @@ div.grouped-configs {
 #content span.help-doc:before {
    border-bottom: 1px dotted;
    padding-bottom: 2px;
+   cursor: pointer;
 }
 
 /* meeting_users table on meeting_edit */
@@ -1721,6 +1722,13 @@ div.collapsible {
     font-family: "Font Awesome 5 Free";
     content: "\f146";
 }
+
+/* hide app_parameters for plonegroup root organization */
+body:not([class*='subsection-plonegroup-organization-']).template-view div:not([class^='tooltip']) fieldset#form-groups-app_parameters,
+body:not([class*='subsection-plonegroup-organization-']).template-edit a#fieldsetlegend-app_parameters {
+   display: none;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */

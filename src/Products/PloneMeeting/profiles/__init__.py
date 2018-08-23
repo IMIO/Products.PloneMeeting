@@ -674,6 +674,7 @@ class PloneMeetingConfiguration(Descriptor):
                          'workingDays', 'configGroups')
 
     def __init__(self, meetingFolderTitle, meetingConfigs, groups):
+        self.precedenceOrder = []
         self.meetingFolderTitle = meetingFolderTitle
         self.functionalAdminEmail = ''
         self.functionalAdminName = ''

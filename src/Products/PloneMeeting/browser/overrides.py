@@ -12,6 +12,7 @@ from Acquisition import aq_base
 from archetypes.referencebrowserwidget.browser.view import ReferenceBrowserPopup
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.ckeditor.browser.ckeditorfinder import CKFinder
+from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.documentgenerator.content.pod_template import IPODTemplate
 from collective.documentgenerator.viewlets.generationlinks import DocumentGeneratorLinksViewlet
 from collective.eeafaceted.batchactions.browser.views import TransitionBatchActionForm
@@ -198,6 +199,7 @@ class PMConfigActionsPanelViewlet(ActionsPanelViewlet):
         '''Computes the URL for "back" links in the tool or in a config.'''
         url = ''
         tool = api.portal.get_tool('portal_plonemeeting')
+        tool_url = tool.absolute_url()
         cfg = tool.getMeetingConfig(self.context)
         cfg_url = ''
         if cfg:
@@ -217,10 +219,13 @@ class PMConfigActionsPanelViewlet(ActionsPanelViewlet):
                                           'ItemAnnexContentSubcategory',
                                           ):
             url = '{0}?pageName=data#annexes_types'.format(cfg_url, )
+        elif self.context.portal_type == 'organization' and \
+                self.context.getId() != PLONEGROUP_ORG:
+            url = '{0}/contacts/{1}'.format(self.site_url, PLONEGROUP_ORG)
         else:
-            # We are in a subobject from the tool.
-            url = tool.absolute_url()
-            url += '#%s' % self.context.meta_type
+            # We are in a subobject from the tool or on the PLONEGROUP_ORG
+            url = tool_url
+            url += '#%s' % self.context.portal_type
         return url
 
 
@@ -739,6 +744,9 @@ class ConfigActionsPanelView(ActionsPanelView):
 
         if self.context.meta_type == 'MeetingGroup':
             self.SECTIONS_TO_RENDER += ('renderLinkedPloneGroups', )
+        if self.context.portal_type == 'organization':
+            self.SECTIONS_TO_RENDER += ('renderLinkedPloneGroups', )
+
         self.tool = api.portal.get_tool('portal_plonemeeting')
 
     def renderArrows(self):
@@ -768,24 +776,28 @@ class ConfigActionsPanelView(ActionsPanelView):
             return "#MeetingConfig"
         if self.context.meta_type == "MeetingGroup":
             return "#MeetingGroup"
+        if self.context.portal_type == "organization":
+            return "#organization"
+
         # most are used on the 'data' fieldset, use this as default
         cfg = self.tool.getMeetingConfig(self.context)
         return "{0}/?pageName=data#{1}".format(cfg.absolute_url(), folderId)
 
     def mayEdit(self):
         """
-          We override mayEdit because for elements of the configuration,
+          We override mayEdit because for MeetingConfig,
           some users have 'Modify portal content' but no field to edit...
           In the case there is no field to edit, do not display the edit action.
         """
         return self.member.has_permission(ModifyPortalContent, self.context) and \
-            self.context.Schema().editableFields(self.context.Schema())
+            (not self.context.portal_type == 'MeetingConfig' or
+             self.context.Schema().editableFields(self.context.Schema()))
 
     def renderLinkedPloneGroups(self):
         """
           Add a link to linked Plone groups for a MeetingGroup.
         """
-        if self.tool.isManager(self.context, True):
+        if self.tool.isManager(self.context, True) and self.context.getId() != PLONEGROUP_ORG:
             return ViewPageTemplateFile("templates/actions_panel_config_linkedplonegroups.pt")(self)
         return ''
 

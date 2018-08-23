@@ -2,11 +2,11 @@
 
 from collective.contact.core import _
 from collective.contact.core.content.organization import IOrganization
-from collective.contact.core.content.organization import Organization
 from collective.z3cform.datagridfield import DataGridFieldFactory
 from collective.z3cform.datagridfield import DictRow
 from plone.autoform import directives as form
 from plone.dexterity.schema import DexteritySchemaPolicy
+from plone.supermodel import model
 from z3c.form.browser.checkbox import CheckBoxFieldWidget
 from zope import schema
 from zope.interface import Interface
@@ -42,7 +42,7 @@ class ICertifiedSignaturesRowSchema(Interface):
     )
 
     date_to = schema.Date(
-        title=_("Date to"),
+        title=_("Certified signatures valid to (included)"),
         description=_("Enter valid to date, use following format : YYYY/MM/DD, "
                       "leave empty so it is always valid."),
         required=False,
@@ -136,9 +136,12 @@ class IPMOrganization(IOrganization):
         required=False,
     )
 
-
-class PMOrganization(Organization):
-    """Override Organization to add some fields and methods."""
+    model.fieldset('app_parameters',
+                   label=u"Application parameters",
+                   fields=['acronym', 'item_advice_states',
+                           'item_advice_edit_states', 'item_advice_view_states',
+                           'keep_access_to_item_when_advice_is_given', 'as_copy_group_on',
+                           'certified_signatures', 'groups_in_charge'])
 
 
 class PMOrganizationSchemaPolicy(DexteritySchemaPolicy):

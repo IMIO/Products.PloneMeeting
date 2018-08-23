@@ -84,6 +84,7 @@ from Products.PloneMeeting.utils import getCustomSchemaFields
 from Products.PloneMeeting.utils import monthsIds
 from Products.PloneMeeting.utils import weekdaysIds
 from Products.PloneMeeting.utils import workday
+from Products.PloneMeeting.widgets import PMInAndOutWidget
 from Products.ZCatalog.Catalog import AbstractCatalogBrain
 from ZODB.POSException import ConflictError
 from zope.annotation.interfaces import IAnnotations
@@ -110,6 +111,21 @@ defValues = PloneMeetingConfiguration.get()
 
 schema = Schema((
 
+    LinesField(
+        name='precedenceOrder',
+        widget=PMInAndOutWidget(
+            description="PrecedenceOrder",
+            description_msgid="precedence_order_descr",
+            label='Precedenceorder',
+            label_msgid='PloneMeeting_label_precedenceOrder',
+            i18n_domain='PloneMeeting',
+            size='20',
+        ),
+        multiValued=1,
+        vocabulary='listSelectableInternalOrganizations',
+        default=defValues.precedenceOrder,
+        enforceVocabulary=True,
+    ),
     StringField(
         name='meetingFolderTitle',
         default=defValues.meetingFolderTitle,
@@ -1098,7 +1114,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         )
         return DisplayList(res)
 
-    security.declarePublic('listWeekDays')
+    security.declarePrivate('listWeekDays')
 
     def listWeekDays(self):
         '''Method returning list of week days used in vocabularies.'''
@@ -1111,6 +1127,13 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     translate('weekday_%s' % day,
                               domain='plonelocales',
                               context=self.REQUEST))
+        return res
+
+    security.declarePrivate('listSelectableInternalOrganizations')
+
+    def listSelectableInternalOrganizations(self):
+        '''Method returning list of selectable internal organizations.'''
+        res = DisplayList()
         return res
 
     def getNonWorkingDayNumbers_cachekey(method, self):

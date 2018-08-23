@@ -104,6 +104,15 @@
         class="Products.PloneMeeting.browser.overrides.PMConfigActionsPanelViewlet"
         template="templates/actions_panel_config_viewlet.pt"
         permission="zope2.View"/>
+    <browser:viewlet
+        name="plonemeeting.actionspanel"
+        for="collective.contact.plonegroup.interfaces.IPloneGroupContact"
+        manager="plone.app.layout.viewlets.interfaces.IBelowContentBody"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        class="Products.PloneMeeting.browser.overrides.PMConfigActionsPanelViewlet"
+        template="templates/actions_panel_config_viewlet.pt"
+        permission="zope2.View"/>
+
 
     <!-- batchactions viewlet for IMeeting -->
     <browser:viewlet
@@ -843,6 +852,14 @@
             permission="zope2.View"
             layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer "/>
     </configure>
+
+    <browser:page
+        for="collective.contact.plonegroup.interfaces.IPloneGroupContact"
+        name="suborganizations"
+        template="templates/suborganizations.pt"
+        class="Products.PloneMeeting.browser.suborganizations.PMSubOrganizations"
+        permission="zope2.View"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer "/>
 
 </configure>
 

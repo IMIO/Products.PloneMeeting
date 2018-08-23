@@ -430,7 +430,7 @@
                                        class python: not isActive and 'state-inactive' or ''"
                        tal:content="cat/Title">Category title</a>
                   </h5>
-                  <div class="discreet" tal:define="descr cat/Description" tal:condition="descr" tal:content="descr">Collection description</div>
+                  <div class="discreet" tal:define="descr cat/Description" tal:condition="descr" tal:content="descr">Category description</div>
                   <tal:additionalInformations
                     define="obj python: cat;
                             excludedFields python: ('id', 'description', 'title')">
@@ -441,18 +441,17 @@
                     <table class="listing nosort" style="text-align: right;" width="100%">
                       <tr>
                         <th class="nosort" width="200px">
-                  <span i18n:translate="heading_subtypes">Sub types</span>
-                  <tal:forRealManagers condition="isRealManager">
-                    <a href="#"
-                       title="add_object"
-                       i18n:attributes="title"
-                       tal:define="cat_url cat/absolute_url;
-                                   addable_content_category_type python: cat.allowedContentTypes()[0].id"
-                       tal:attributes="href string:${cat_url}/++add++${addable_content_category_type}">
-                      <img src="#" tal:attributes="src string: $portal_url/new.png" />
-                    </a>
-                  </tal:forRealManagers>
-
+                          <span i18n:translate="heading_subtypes">Sub types</span>
+                          <tal:forRealManagers condition="isRealManager">
+                            <a href="#"
+                               title="add_object"
+                               i18n:attributes="title"
+                               tal:define="cat_url cat/absolute_url;
+                                           addable_content_category_type python: cat.allowedContentTypes()[0].id"
+                               tal:attributes="href string:${cat_url}/++add++${addable_content_category_type}">
+                              <img src="#" tal:attributes="src string: $portal_url/new.png" />
+                            </a>
+                          </tal:forRealManagers>
                         </th>
                         <th class="nosort" width="50px" i18n:translate="heading_is_active">Active?</th>
                         <th class="nosort" width="130px" i18n:translate="heading_actions">Actions</th>
@@ -470,7 +469,7 @@
                             <a tal:attributes="href sub_cat/absolute_url;
                                                class python: not isActive and 'state-inactive' or ''"
                                tal:content="sub_cat/Title">Subcategory title</a>
-                            <div class="discreet" tal:define="descr sub_cat/Description" tal:condition="descr" tal:content="descr">Collection description</div>
+                            <div class="discreet" tal:define="descr sub_cat/Description" tal:condition="descr" tal:content="descr">Sub category description</div>
                             <tal:additionalInformations
                               define="obj python: sub_cat;
                                       excludedFields python: ('id', 'description', 'title')">

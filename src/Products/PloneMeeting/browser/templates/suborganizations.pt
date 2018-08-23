@@ -1,0 +1,60 @@
+<div i18n:domain="PloneMeeting">
+<h5><tal:block i18n:translate="contained_organizations_help">Organizations of &quot;<span i18n:name="orga_title" tal:content="context/Title">organization title</span>&quot;</tal:block> :</h5>
+<table class="vertical listing nosort" width="100%"
+       tal:define="organizations python: view.get_sub_organizations(context);
+                   ajax_load request/ajax_load | nothing;">
+    <tr>
+        <th class="nosort">
+          <span i18n:translate="listingheader_title">Title</span>
+          <tal:add_organization condition="python: not ajax_load and view.may_add_organization(context)">
+            <a href="#"
+               title="add_object"
+               i18n:attributes="title"
+               tal:define="context_url context/absolute_url"
+               tal:attributes="href string:${context_url}/++add++organization">
+              <img src="#" tal:attributes="src string:${view/portal_url}/new.png" />
+            </a>
+          </tal:add_organization>
+        </th>
+        <th class="nosort" width="50px" i18n:translate="heading_is_active">Active?</th>
+        <th class="nosort" width="130px" i18n:translate="heading_actions">Actions</th>
+    </tr>
+    <tal:loop repeat="orga organizations">
+        <tr tal:define="is_active python: view.is_active(orga);
+                        oddrow repeat/orga/odd;
+                        classOddEven python: oddrow and 'even' or 'odd';
+                        orga_url orga/absolute_url"
+            tal:attributes="class classOddEven"
+            valign="top">
+          <td>
+            <h5>
+              <a tal:attributes="href orga_url;
+                                 class python: not is_active and 'state-inactive' or ''"
+                 tal:content="orga/Title">Organization title</a>
+            </h5>
+            
+            <div class="discreet" tal:define="descr orga/Description" tal:condition="descr" tal:content="descr">Organization description</div>
+            <tal:additionalInformations
+              define="obj python: orga;
+                      excludedFields python: ('id', 'description', 'title')">
+              <metal:addtionalInformations use-macro="here/@@pm-macros/additionalInformations" />
+            </tal:additionalInformations>
+
+            <tal:sub_organizations>
+               <div tal:replace="structure orga/@@suborganizations" />
+            </tal:sub_organizations>
+          </td>
+          <td i18n:domain="plone">
+            <span tal:condition="is_active" i18n:translate="">Yes</span>
+            <span class="state-inactive" tal:condition="not: is_active" i18n:translate="">No</span>
+          </td>
+          <td align="right">
+            <tal:actions replace="structure python: orga.restrictedTraverse('@@actions_panel')(showActions=False, showTransitions=False, showArrows=True)" />
+          </td>
+        </tr>
+        </tal:loop>
+        <tr tal:condition="not: organizations">
+          <td colspan="5" align="center" i18n:translate="">No sub organizations.</td>
+        </tr>
+      </table>
+</div>
