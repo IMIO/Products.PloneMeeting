@@ -79,6 +79,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   an item that not isLate.  This way it is possible to manage different values for a normal item
 - Bugfix in utils.getHistory, call reverse() on result before returning it because we bugfixed datachanges history by adding
   a reverse() before handeling it...  This caused wrong previous_review_state...
+  case for ConfigurablePODTemplate
+- Only send delay expiration/expired mail notifications if advice is not given
+  (not_given, asked_again or hidden_during_redaction)
 
 4.0 (2017-08-04)
 ----------------
