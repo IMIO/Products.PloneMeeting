@@ -1729,6 +1729,16 @@ body:not([class*='subsection-plonegroup-organization-']).template-edit a#fieldse
    display: none;
 }
 
+div.organization_level:not([class*='organization_level_0']),
+div.config_sub_categories {
+    margin-left: 1.5em;
+    margin-top: 0.5em;
+}
+div[class*='organization_level_']:not([class*='organization_level_0']) table,
+div.config_sub_categories table {
+   border-left: 5px solid grey;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */

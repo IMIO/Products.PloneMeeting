@@ -101,17 +101,6 @@
              </a>
            </li>
          </ul>
-        <table width="100%">
-          <tr valign="top">
-            <td tal:define="field python:here.getField('precedenceOrder')">
-              <span metal:use-macro="here/widgets/field/macros/view" />
-            </td>
-            <td>
-            </td>
-            <td>
-            </td>
-          </tr>
-        </table>
        </fieldset>
 
       <!-- collective.documentgenerator configuration -->

@@ -861,5 +861,13 @@
         permission="zope2.View"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer "/>
 
+    <browser:page
+        name="contact-plonegroup-settings"
+        for="Products.CMFPlone.interfaces.IPloneSiteRoot"
+        permission="plone.app.controlpanel.Site"
+        class=".plonegroup_settings.PlonegroupSettingsView"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer "/>
+
+
 </configure>
 

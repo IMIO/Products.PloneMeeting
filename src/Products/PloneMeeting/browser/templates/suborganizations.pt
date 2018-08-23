@@ -1,5 +1,5 @@
-<div i18n:domain="PloneMeeting">
-<h5><tal:block i18n:translate="contained_organizations_help">Organizations of &quot;<span i18n:name="orga_title" tal:content="context/Title">organization title</span>&quot;</tal:block> :</h5>
+<div i18n:domain="PloneMeeting" tal:attributes="class string:organization_level organization_level_${view/level};">
+<h5><tal:block i18n:translate="contained_organizations_help">Organizations in &quot;<span i18n:name="orga_title" tal:content="context/Title">organization title</span>&quot;</tal:block> :</h5>
 <table class="vertical listing nosort" width="100%"
        tal:define="organizations python: view.get_sub_organizations(context);
                    ajax_load request/ajax_load | nothing;">
@@ -27,21 +27,26 @@
             tal:attributes="class classOddEven"
             valign="top">
           <td>
+            <dl tal:condition="python: view.display_plonegroup_warning(orga)" class="portalMessage warning">
+                <dd i18n:translate="warning_plonegroup_not_selected">
+                    This organization is not selected in the organizations of the <a i18n:name="plonegroup_settings_url"
+                    tal:attributes="href string:${view/portal_url}/@@contact-plonegroup-settings">plonegroup settings</a>.</dd>
+            </dl>
             <h5>
               <a tal:attributes="href orga_url;
                                  class python: not is_active and 'state-inactive' or ''"
                  tal:content="orga/Title">Organization title</a>
             </h5>
-            
+
             <div class="discreet" tal:define="descr orga/Description" tal:condition="descr" tal:content="descr">Organization description</div>
             <tal:additionalInformations
               define="obj python: orga;
-                      excludedFields python: ('id', 'description', 'title')">
+                      excludedFields python: ('id', 'description', 'title', 'organization_type')">
               <metal:addtionalInformations use-macro="here/@@pm-macros/additionalInformations" />
             </tal:additionalInformations>
 
             <tal:sub_organizations>
-               <div tal:replace="structure orga/@@suborganizations" />
+               <div tal:replace="structure python: orga.restrictedTraverse('@@suborganizations')(level=view.level + 1)" />
             </tal:sub_organizations>
           </td>
           <td i18n:domain="plone">

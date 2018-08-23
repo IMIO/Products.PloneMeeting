@@ -783,13 +783,18 @@ This works for an AT and for a DX.</tal:comment>
                            dummy python: context.REQUEST.set('URL', obj.absolute_url() + '/view')">
     <tal:loop
         define="view python: obj.restrictedTraverse('view');
-                dummy python: view.update();"
-        repeat="widget view/widgets/values">
+                dummy python: view.update();
+                groups view/groups;
+                widgets python: [group.widgets.values() for group in groups];
+                dummy python: widgets.insert(0, view.widgets.values())"
+        repeat="group_of_widgets widgets">
+       <tal:widget_loop repeat="widget group_of_widgets">
         <div class="discreet"
               tal:condition="python: not widget.name.replace('form.widgets.', '') in excludedFields and widget.value not in (None, '', '--NOVALUE--', u'', (), [], ['--NOVALUE--'])">
           <label class="horizontal" tal:content="widget/label" />
           <div tal:content="structure widget/render" />
         </div>
+       </tal:widget_loop>
     </tal:loop>
     <tal:unpatch_url define="dummy python: context.REQUEST.set('URL', oldURL)" />
     </tal:patch_url>

@@ -382,7 +382,7 @@
             <table class="listing nosort" style="text-align: right;" width="100%"
                    tal:define="cat_group_url cat_group/absolute_url" width="100%;">
               <tr>
-                <th class="nosort" width="200px">
+                <th class="nosort">
                   <h2 style="display: inline;">
                     <a href=""
                        tal:attributes="href cat_group/absolute_url"
@@ -437,7 +437,7 @@
                     <metal:addtionalInformations use-macro="here/@@pm-macros/additionalInformations" />
                   </tal:additionalInformations>
 
-                  <tal:annexesSubcategories>
+                  <div class="config_sub_categories">
                     <table class="listing nosort" style="text-align: right;" width="100%">
                       <tr>
                         <th class="nosort" width="200px">
@@ -466,9 +466,12 @@
                             tal:attributes="class classOddEven"
                             valign="top">
                           <td>
+                            <h5>
                             <a tal:attributes="href sub_cat/absolute_url;
                                                class python: not isActive and 'state-inactive' or ''"
-                               tal:content="sub_cat/Title">Subcategory title</a>
+                               tal:content="sub_cat/Title">
+                              Subcategory title</a>
+                            </h5>
                             <div class="discreet" tal:define="descr sub_cat/Description" tal:condition="descr" tal:content="descr">Sub category description</div>
                             <tal:additionalInformations
                               define="obj python: sub_cat;
@@ -486,7 +489,7 @@
                         </tr>
                       </tal:loop>
                     </table>
-                  </tal:annexesSubcategories>
+                  </div>
                 </td>
                 <td i18n:domain="plone">
                   <span tal:condition="isActive" i18n:translate="">Yes</span>

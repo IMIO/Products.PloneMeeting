@@ -10,3 +10,7 @@ class PloneMeetingMacros(BrowserView):
           Call the given p_macro on given p_page (that is a BrowserView containing macros)
         """
         return self.context.unrestrictedTraverse(page)[macro]
+
+    def tra(self):
+        """ """
+        import ipdb; ipdb.set_trace()

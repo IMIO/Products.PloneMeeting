@@ -84,7 +84,6 @@ from Products.PloneMeeting.utils import getCustomSchemaFields
 from Products.PloneMeeting.utils import monthsIds
 from Products.PloneMeeting.utils import weekdaysIds
 from Products.PloneMeeting.utils import workday
-from Products.PloneMeeting.widgets import PMInAndOutWidget
 from Products.ZCatalog.Catalog import AbstractCatalogBrain
 from ZODB.POSException import ConflictError
 from zope.annotation.interfaces import IAnnotations
@@ -111,21 +110,6 @@ defValues = PloneMeetingConfiguration.get()
 
 schema = Schema((
 
-    LinesField(
-        name='precedenceOrder',
-        widget=PMInAndOutWidget(
-            description="PrecedenceOrder",
-            description_msgid="precedence_order_descr",
-            label='Precedenceorder',
-            label_msgid='PloneMeeting_label_precedenceOrder',
-            i18n_domain='PloneMeeting',
-            size='20',
-        ),
-        multiValued=1,
-        vocabulary='listSelectableInternalOrganizations',
-        default=defValues.precedenceOrder,
-        enforceVocabulary=True,
-    ),
     StringField(
         name='meetingFolderTitle',
         default=defValues.meetingFolderTitle,
