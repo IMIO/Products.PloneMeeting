@@ -222,6 +222,13 @@
     <utility provides="zope.schema.interfaces.IVocabularyFactory"
              name="collective.iconifiedcategory.category_titles"
              factory=".vocabularies.PMCategoryTitleVocabulary" />
+
+    <!-- Merge templates Vocabulary -->
+    <utility
+        factory=".vocabularies.PMMergeTemplatesVocabularyFactory"
+        name="collective.documentgenerator.MergeTemplates"
+        provides="zope.schema.interfaces.IVocabularyFactory"
+    />
   
     <browser:page
       for="collective.eeafaceted.batchactions.interfaces.IBatchActionsMarker"
