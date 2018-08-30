@@ -11,6 +11,7 @@
   <include package="Products.PasswordStrength" />
   <include package="collective.ckeditor"/>
   <include package="collective.contact.core"/>
+  <include package="collective.contact.plonegroup"/>
   <include package="collective.documentviewer"/>
   <include package="collective.datagridcolumns"/>
   <include package="collective.eeafaceted.collectionwidget"/>

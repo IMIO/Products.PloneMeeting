@@ -118,7 +118,7 @@
                   </span>
               </div>
               <div id="collapsible-assembly-and-signatures" class="collapsible-content discreet"
-                  tal:attributes="style python: (request.get('showPersons', 'true')=='true') and 'display: block;;' or 'display: none;;'">
+                  tal:attributes="style python: (request.get('showPersons', 'false')=='true') and 'display: block;;' or 'display: none;;'">
                 <div class="collapsible-inner-content">
                 <fieldset tal:condition="python: ('itemAssembly' in usedAttrs or context.getItemAssembly()) and ('assembly' in usedMeetingAttributes or meeting.getAssembly())">
                       <tal:defines define="mayQuickEdit python: context.mayQuickEdit('itemAssembly', bypassWritePermissionCheck=True);
