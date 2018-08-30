@@ -1,6 +1,6 @@
 # encoding: utf-8
 
-from collective.documentgenerator.content.vocabulary import ExistingPODTemplateFactory
+from collective.documentgenerator.content.vocabulary import ExistingPODTemplateFactory, MergeTemplatesVocabularyFactory
 from collective.documentgenerator.content.vocabulary import PortalTypesVocabularyFactory
 from collective.eeafaceted.collectionwidget.content.dashboardcollection import IDashboardCollection
 from collective.eeafaceted.dashboard.vocabulary import DashboardCollectionsVocabulary
@@ -1118,3 +1118,15 @@ class SignatureNumberVocabulary(object):
 
 
 SignatureNumberVocabularyFactory = SignatureNumberVocabulary()
+
+class PMMergeTemplatesVocabularyFactory(MergeTemplatesVocabularyFactory):
+
+    def _portal_types(self):
+        return ['ConfigurablePODTemplate']
+
+    def _render_term_title(self, brain):
+        obj = brain.getObject()
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(obj)
+        return '{0} ({1})'.format(brain.Title, cfg.Title())
+

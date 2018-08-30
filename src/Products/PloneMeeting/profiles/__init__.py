@@ -234,7 +234,8 @@ class PodTemplateDescriptor(Descriptor):
                          'dashboard_collections_ids',
                          'context_variables',
                          'style_template',
-                         'roles_bypassing_talcondition')
+                         'roles_bypassing_talcondition',
+                         'merge_templates')
 
     def __init__(self, id, title, description='', enabled=True, dashboard=False):
         self.id = id
@@ -256,6 +257,7 @@ class PodTemplateDescriptor(Descriptor):
         self.roles_bypassing_talcondition = set()
         self.store_as_annex = None
         self.store_as_annex_title_expr = u''
+        self.merge_templates = []
 
 
 class PloneGroupDescriptor(Descriptor):

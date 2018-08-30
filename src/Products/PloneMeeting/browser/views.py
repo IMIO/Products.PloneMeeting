@@ -19,8 +19,10 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
 #
-
+import copy
 from collections import OrderedDict
+
+import Products
 from collective.contact.core.utils import get_gender_and_number
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.documentgenerator.helper.archetypes import ATDocumentGenerationHelperView
@@ -998,6 +1000,11 @@ class BaseDGHV(object):
                                   group_position_type=group_position_type)
         return res
 
+    def sub_context(self, obj, sub_pod_template):
+        helperView = obj.restrictedTraverse('@@document-generation')
+        generation_helper_view = helperView._get_generation_context(self.getDGHV(obj), sub_pod_template)
+        return generation_helper_view
+
 
 class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV):
     """ """
@@ -1138,6 +1145,7 @@ class CheckPodTemplatesView(BrowserView):
 
         for pod_template in self.cfg.podtemplates.objectValues():
 
+            import ipdb; ipdb.set_trace()
             # we do not manage 'DashboardPODTemplate' automatically for now...
             if pod_template.portal_type == 'DashboardPODTemplate':
                 messages['dashboard_templates_not_managed'].append((pod_template, None))
