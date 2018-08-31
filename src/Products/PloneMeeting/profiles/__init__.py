@@ -22,6 +22,7 @@ from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
 from Products.PloneMeeting.config import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.config import EXTRA_GROUP_SUFFIXES
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
+import copy
 
 
 class Descriptor(object):
@@ -35,7 +36,9 @@ class Descriptor(object):
            Archetypes object. Any element in p_kw will replace the value
            from p_self.'''
         res = {}
-        for k, v in self.__dict__.iteritems():
+        # make sure self.__dict__ is not modified
+        data = copy.deepcopy(self.__dict__)
+        for k, v in data.iteritems():
             if k in self.excludedFields:
                 continue
             if k in kw:
@@ -47,7 +50,7 @@ class Descriptor(object):
                     res[k] = v
         # Add elements from kw that do not correspond to a field on self
         for k, v in kw.iteritems():
-            if k not in self.__dict__:
+            if k not in data:
                 res[k] = v
         return res
 
@@ -238,7 +241,7 @@ class StyleTemplateDescriptor(Descriptor):
         # Filename of the POD template to use. This file must be present in the
         # "templates" folder of a profile.
         self.odt_file = None
-        self.is_style=True
+        self.is_style = True
 
 
 class PodTemplateDescriptor(StyleTemplateDescriptor):
