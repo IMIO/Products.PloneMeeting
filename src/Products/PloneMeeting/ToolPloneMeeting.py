@@ -708,14 +708,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 setattr(category_group, attr, True)
         for descr in configData.annexTypes:
             cfg.addAnnexType(descr, source)
+        # first create style templates so it exist before being used by a pod template
         for descr in configData.styleTemplates:
-            styleTemplate = cfg.addPodTemplate(descr, source)
-            styleTemplate.reindexObject()
-            # Need to replace with uids after StyleTemplate creation before creating PodTeplates that use this style
-            for pod_descr in configData.podTemplates:
-                if descr.id in pod_descr.style_template:
-                    new_style_list = [styleTemplate.UID() if style == descr.id else style for style in pod_descr.style_template]
-                    pod_descr.style_template = new_style_list
+            cfg.addPodTemplate(descr, source)
         for descr in configData.podTemplates:
             cfg.addPodTemplate(descr, source)
         for mud in configData.meetingUsers:

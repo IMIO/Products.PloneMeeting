@@ -5528,6 +5528,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     res.append(collection.UID())
                 data['dashboard_collections'] = res
 
+        # associate style template with pod template if necessary
+        if not data['is_style'] and data['style_template']:
+            # we have a list of style templates
+            data['style_template'] = [folder.get(style_template).UID()
+                                      for style_template in data['style_template']]
+
         podTemplate = api.content.create(
             type=podType,
             container=folder,
