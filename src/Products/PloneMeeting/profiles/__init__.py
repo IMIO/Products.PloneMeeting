@@ -22,6 +22,7 @@ from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
 from Products.PloneMeeting.config import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.config import EXTRA_GROUP_SUFFIXES
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
+import copy
 
 
 class Descriptor(object):
@@ -38,8 +39,6 @@ class Descriptor(object):
         for k, v in self.__dict__.iteritems():
             if k in self.excludedFields:
                 continue
-            if k in kw:
-                v = kw[k]
             if type(v) not in (list, tuple):
                 res[k] = v
             else:
@@ -49,7 +48,15 @@ class Descriptor(object):
         for k, v in kw.iteritems():
             if k not in self.__dict__:
                 res[k] = v
+        res = copy.deepcopy(res)
+
+        # avoid empty blobfile because deepcopy doesn't seem to handle them properly
+        for k in kw:
+            if k in self.__dict__ and not k in self.excludedFields:
+                self.__dict__[k] = kw[k]
+
         return res
+
 
     def setBilingual(self, name, value):
         '''Field named p_name is potentially a bilingual field. If it is the
@@ -258,6 +265,7 @@ class PodTemplateDescriptor(Descriptor):
         self.store_as_annex = None
         self.store_as_annex_title_expr = u''
         self.merge_templates = []
+        # self.current_md5 = u''
 
 
 class PloneGroupDescriptor(Descriptor):

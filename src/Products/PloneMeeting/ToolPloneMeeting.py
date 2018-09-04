@@ -709,15 +709,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         for descr in configData.annexTypes:
             cfg.addAnnexType(descr, source)
 
-        created_template = {}
         for descr in configData.podTemplates:
-            for sub_template in descr.merge_templates:
-                sub_template_id = sub_template['template']
-                if sub_template_id in created_template:
-                    sub_template['template'] = created_template[sub_template_id].UID()
-
             pod_template = cfg.addPodTemplate(descr, source)
-            created_template[descr.id] = pod_template
 
         for mud in configData.meetingUsers:
             mu = cfg.addMeetingUser(mud, source)

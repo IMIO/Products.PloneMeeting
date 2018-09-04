@@ -5415,6 +5415,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def _validate_dx_content(self, obj):
         errors = validate_fields(obj)
         if errors:
+            import ipdb; ipdb.set_trace()
             raise PloneMeetingError(
                 ADDED_TYPE_ERROR % (obj.portal_type,
                                     obj.id,
@@ -5509,6 +5510,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         )
         f.close()
         data = pt.getData(odt_file=odt_file)
+
         podType = data['dashboard'] and 'DashboardPODTemplate' or 'ConfigurablePODTemplate'
 
         if podType == 'DashboardPODTemplate':
@@ -5525,11 +5527,17 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 res.append(collection.UID())
             data['dashboard_collections'] = res
 
+        for sub_template in data['merge_templates']:
+            sub_template['template'] = folder.get(sub_template['template']).UID()
+
         podTemplate = api.content.create(
             type=podType,
             container=folder,
             **data)
         self._validate_dx_content(podTemplate)
+        if podTemplate.odt_file.getSize() == 0:
+            import ipdb
+            ipdb.set_trace()
         return podTemplate
 
     security.declarePrivate('addMeetingUser')
