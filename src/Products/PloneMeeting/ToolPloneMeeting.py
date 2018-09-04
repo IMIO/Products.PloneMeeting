@@ -710,7 +710,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             cfg.addAnnexType(descr, source)
 
         for descr in configData.podTemplates:
-            pod_template = cfg.addPodTemplate(descr, source)
+            cfg.addPodTemplate(descr, source)
 
         for mud in configData.meetingUsers:
             mu = cfg.addMeetingUser(mud, source)

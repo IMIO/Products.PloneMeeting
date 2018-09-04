@@ -18,11 +18,12 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
 
+import copy
+
 from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
 from Products.PloneMeeting.config import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.config import EXTRA_GROUP_SUFFIXES
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
-import copy
 
 
 class Descriptor(object):
@@ -44,6 +45,7 @@ class Descriptor(object):
             else:
                 if k in self.multiSelectFields:
                     res[k] = v
+
         # Add elements from kw that do not correspond to a field on self
         for k, v in kw.iteritems():
             if k not in self.__dict__:
@@ -53,7 +55,7 @@ class Descriptor(object):
         # avoid empty blobfile because deepcopy doesn't seem to handle them properly
         for k in kw:
             if k in self.__dict__ and not k in self.excludedFields:
-                self.__dict__[k] = kw[k]
+                res[k] = kw[k]
 
         return res
 
@@ -265,7 +267,6 @@ class PodTemplateDescriptor(Descriptor):
         self.store_as_annex = None
         self.store_as_annex_title_expr = u''
         self.merge_templates = []
-        # self.current_md5 = u''
 
 
 class PloneGroupDescriptor(Descriptor):

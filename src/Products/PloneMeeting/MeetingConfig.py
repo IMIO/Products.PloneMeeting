@@ -9,70 +9,30 @@
 # GNU General Public License (GPL)
 #
 
-from AccessControl import ClassSecurityInfo
-from AccessControl import Unauthorized
+import logging
+import os
 from collections import OrderedDict
-from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
-from collective.eeafaceted.collectionwidget.interfaces import IDashboardCollection
-from collective.eeafaceted.collectionwidget.utils import _get_criterion
-from collective.iconifiedcategory.utils import get_category_object
-from DateTime import DateTime
-from eea.facetednavigation.interfaces import ICriteria
-from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
-from imio.helpers.cache import cleanRamCache
-from imio.helpers.content import validate_fields
-from OFS.Image import File
-from plone import api
-from plone.app.portlets.portlets import navigation
-from plone.memoize import ram
-from plone.namedfile.file import NamedBlobFile
-from plone.namedfile.file import NamedBlobImage
-from plone.portlets.interfaces import IPortletAssignmentMapping
-from plone.portlets.interfaces import IPortletManager
-from Products.Archetypes.atapi import BooleanField
-from Products.Archetypes.atapi import DisplayList
-from Products.Archetypes.atapi import InAndOutWidget
-from Products.Archetypes.atapi import IntegerField
-from Products.Archetypes.atapi import LinesField
-from Products.Archetypes.atapi import MultiSelectionWidget
-from Products.Archetypes.atapi import OrderedBaseFolder
-from Products.Archetypes.atapi import OrderedBaseFolderSchema
-from Products.Archetypes.atapi import registerType
-from Products.Archetypes.atapi import RichWidget
-from Products.Archetypes.atapi import Schema
-from Products.Archetypes.atapi import SelectionWidget
-from Products.Archetypes.atapi import StringField
-from Products.Archetypes.atapi import TextAreaWidget
-from Products.Archetypes.atapi import TextField
-from Products.Archetypes.utils import IntDisplayList
-from Products.CMFCore.Expression import Expression
-from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
-from Products.CMFPlone import PloneMessageFactory
-from Products.CMFPlone.interfaces.constrains import IConstrainTypes
-from Products.CMFPlone.utils import base_hasattr
-from Products.CMFPlone.utils import safe_unicode
-from Products.DataGridField import DataGridField
-from Products.DataGridField.CheckboxColumn import CheckboxColumn
-from Products.DataGridField.Column import Column
-from Products.DataGridField.SelectColumn import SelectColumn
-from Products.PloneMeeting.config import PMMessageFactory as _
+
+from Products.PloneMeeting.Meeting import Meeting
+from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from Products.PloneMeeting.config import CLONE_TO_OTHER_MC_ACTION_SUFFIX
 from Products.PloneMeeting.config import CLONE_TO_OTHER_MC_EMERGENCY_ACTION_SUFFIX
 from Products.PloneMeeting.config import DEFAULT_ITEM_COLUMNS
 from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
 from Products.PloneMeeting.config import DEFAULT_MEETING_COLUMNS
-from Products.PloneMeeting.config import ITEM_ICON_COLORS
 from Products.PloneMeeting.config import ITEMTEMPLATESMANAGERS_GROUP_SUFFIX
+from Products.PloneMeeting.config import ITEM_ICON_COLORS
+from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
+from Products.PloneMeeting.config import MEETINGROLES
 from Products.PloneMeeting.config import MEETING_CONFIG
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 from Products.PloneMeeting.config import MEETING_STATES_ACCEPTING_ITEMS
-from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
-from Products.PloneMeeting.config import MEETINGROLES
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
-from Products.PloneMeeting.config import PloneMeetingError
+from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import PROJECTNAME
+from Products.PloneMeeting.config import PloneMeetingError
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import TOOL_FOLDER_ANNEX_TYPES
@@ -93,23 +53,67 @@ from Products.PloneMeeting.interfaces import IMeetingItemWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowConditions
 from Products.PloneMeeting.interfaces import IMeetingWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingWorkflowConditions
-from Products.PloneMeeting.Meeting import Meeting
-from Products.PloneMeeting.MeetingItem import MeetingItem
 from Products.PloneMeeting.model.adaptations import getValidationReturnedStates
 from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
 from Products.PloneMeeting.utils import computeCertifiedSignatures
 from Products.PloneMeeting.utils import createOrUpdatePloneGroup
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
-from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
 from Products.PloneMeeting.utils import getFieldContent
+from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import listifySignatures
 from Products.PloneMeeting.utils import reviewersFor
 from Products.PloneMeeting.utils import updateAnnexesAccess
 from Products.PloneMeeting.validators import WorkflowInterfacesValidator
 from Products.PloneMeeting.widgets import PMInAndOutWidget
+
+from AccessControl import ClassSecurityInfo
+from AccessControl import Unauthorized
+from DateTime import DateTime
+from OFS.Image import File
+from Products.Archetypes.atapi import BooleanField
+from Products.Archetypes.atapi import DisplayList
+from Products.Archetypes.atapi import InAndOutWidget
+from Products.Archetypes.atapi import IntegerField
+from Products.Archetypes.atapi import LinesField
+from Products.Archetypes.atapi import MultiSelectionWidget
+from Products.Archetypes.atapi import OrderedBaseFolder
+from Products.Archetypes.atapi import OrderedBaseFolderSchema
+from Products.Archetypes.atapi import RichWidget
+from Products.Archetypes.atapi import Schema
+from Products.Archetypes.atapi import SelectionWidget
+from Products.Archetypes.atapi import StringField
+from Products.Archetypes.atapi import TextAreaWidget
+from Products.Archetypes.atapi import TextField
+from Products.Archetypes.atapi import registerType
+from Products.Archetypes.utils import IntDisplayList
+from Products.CMFCore.Expression import Expression
+from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
+from Products.CMFPlone import PloneMessageFactory
+from Products.CMFPlone.interfaces.constrains import IConstrainTypes
+from Products.CMFPlone.utils import base_hasattr
+from Products.CMFPlone.utils import safe_unicode
+from Products.DataGridField import DataGridField
+from Products.DataGridField.CheckboxColumn import CheckboxColumn
+from Products.DataGridField.Column import Column
+from Products.DataGridField.SelectColumn import SelectColumn
+from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
+from collective.eeafaceted.collectionwidget.interfaces import IDashboardCollection
+from collective.eeafaceted.collectionwidget.utils import _get_criterion
+from collective.iconifiedcategory.utils import get_category_object
+from eea.facetednavigation.interfaces import ICriteria
+from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
+from imio.helpers.cache import cleanRamCache
+from imio.helpers.content import validate_fields
+from plone import api
+from plone.app.portlets.portlets import navigation
+from plone.memoize import ram
+from plone.namedfile.file import NamedBlobFile
+from plone.namedfile.file import NamedBlobImage
+from plone.portlets.interfaces import IPortletAssignmentMapping
+from plone.portlets.interfaces import IPortletManager
 from zope.annotation import IAnnotations
 from zope.component import getMultiAdapter
 from zope.component import getUtility
@@ -118,10 +122,6 @@ from zope.i18n import translate
 from zope.interface import alsoProvides
 from zope.interface import implements
 from zope.schema.interfaces import IVocabularyFactory
-
-import logging
-import os
-
 
 __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
 <g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""
@@ -5415,7 +5415,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def _validate_dx_content(self, obj):
         errors = validate_fields(obj)
         if errors:
-            import ipdb; ipdb.set_trace()
             raise PloneMeetingError(
                 ADDED_TYPE_ERROR % (obj.portal_type,
                                     obj.id,
@@ -5535,9 +5534,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             container=folder,
             **data)
         self._validate_dx_content(podTemplate)
-        if podTemplate.odt_file.getSize() == 0:
-            import ipdb
-            ipdb.set_trace()
         return podTemplate
 
     security.declarePrivate('addMeetingUser')

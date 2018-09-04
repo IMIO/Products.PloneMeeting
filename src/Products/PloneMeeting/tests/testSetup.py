@@ -48,6 +48,12 @@ class testSetup(PloneMeetingTestCase):
         """This is made for subpackages to test that defined profiles
            containing an import_data works as expected."""
         login(self.app, 'admin')
+
+        api.portal.set_registry_record(
+            'collective.documentgenerator.browser.controlpanel.'
+            'IDocumentGeneratorControlPanelSchema.raiseOnError_for_non_managers',
+            True)
+
         # get current package name based on testing layer
         profile_names = self._currentSetupProfileNames(excluded=(':default', ':testing'))
         i = 1
