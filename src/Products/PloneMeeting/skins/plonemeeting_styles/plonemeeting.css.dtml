@@ -1479,13 +1479,6 @@ div.customAdviceMessage {
     margin-bottom: 0.5em;
 }
 
-.tooltip.pb-ajax {
-    padding: 1em;
-    width: 500px;
-    box-shadow: 0px 0px 5px 5px rgba(0,0,0,0.2);
-    /* when displaying group users, force font-weight to normal or it is displayed bold */
-    font-weight: normal;
-}
 span.no_users {
     font-style: italic;
 }
@@ -1737,6 +1730,12 @@ div.config_sub_categories {
 div[class*='organization_level_']:not([class*='organization_level_0']) table,
 div.config_sub_categories table {
    border-left: 5px solid grey;
+}
+
+/* highlight organizations not selectable in plonegroup */
+div.highlight.selectable_for_plonegroup_false label,
+div.highlight.selectable_for_plonegroup_false div span {
+   color: red;
 }
 
 /* </dtml-with> */

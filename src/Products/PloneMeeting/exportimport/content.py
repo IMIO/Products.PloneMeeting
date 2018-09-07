@@ -32,6 +32,7 @@ from Products.PloneMeeting.model.adaptations import performModelAdaptations
 from Products.PloneMeeting.ToolPloneMeeting import MEETING_CONFIG_ERROR
 from Products.PloneMeeting.utils import updateCollectionCriterion
 from zope.i18n import translate
+from collective.contact.plonegroup.config import FUNCTIONS_REGISTRY
 
 
 # PloneMeeting-Error related constants -----------------------------------------
@@ -50,12 +51,13 @@ class ToolInitializer:
         # productname default's name space is 'Products'.
         # If a name space is found, then Products namespace is not used
         self.productname = '.' in productname and productname or 'Products.%s' % productname
+        self.request = self.context.REQUEST
         self.site = context.getSite()
         self.tool = self.site.portal_plonemeeting
         # set correct title
         self.tool.setTitle(translate('pm_configuration',
                            domain='PloneMeeting',
-                           context=self.site.REQUEST))
+                           context=self.request))
         self.profileData = self.getProfileData()
         # Initialize the tool if we have data
         if not self.profileData:
@@ -91,6 +93,19 @@ class ToolInitializer:
         # if we already have existing MeetingGroups, we do not add additional ones
         alreadyHaveGroups = bool(self.tool.objectValues('MeetingGroup'))
         if not alreadyHaveGroups:
+            # create plonegroup functions (suffix) before creating groups
+            functions = api.portal.get_registry_record(FUNCTIONS_REGISTRY)
+            function_ids = [function['fct_id'] for function in functions]
+            # append new functions
+            suffixes = list(d.suffixes)
+            for suffix in suffixes:
+                if suffix['fct_id'] not in function_ids:
+                    copied_suffix = suffix.copy()
+                    copied_suffix['fct_title'] = translate(copied_suffix['fct_title'],
+                                                           domain='PloneMeeting',
+                                                           context=self.request)
+                    functions.append(copied_suffix)
+            api.portal.set_registry_record(FUNCTIONS_REGISTRY, functions)
             self.tool.addUsersAndGroups(d.groups)
         savedMeetingConfigsToCloneTo = {}
 

@@ -20,7 +20,6 @@
 
 from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
 from Products.PloneMeeting.config import DEFAULT_USER_PASSWORD
-from Products.PloneMeeting.config import EXTRA_GROUP_SUFFIXES
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 
 
@@ -295,7 +294,7 @@ class MeetingUserDescriptor(Descriptor):
         self.active = active
 
 
-class GroupDescriptor(Descriptor):
+class OrgaDescriptor(Descriptor):
     multiSelectFields = ('certifiedSignatures', 'itemAdviceStates',
                          'itemAdviceEditStates', 'itemAdviceViewStates',
                          'groupsInCharge')
@@ -305,16 +304,18 @@ class GroupDescriptor(Descriptor):
 
     def get(klass):
         if not klass.instance:
-            klass.instance = GroupDescriptor(None, None, None)
+            klass.instance = OrgaDescriptor(None, None, None)
         return klass.instance
     get = classmethod(get)
 
     def __init__(self, id, title, acronym, description='',
-                 active=True, asCopyGroupOn='', groupsInCharge=[]):
+                 active=True, asCopyGroupOn='', groupsInCharge=[],
+                 suffixes=MEETING_GROUP_SUFFIXES):
         self.id = id
         self.setBilingual('title', title)
         self.acronym = acronym
         self.setBilingual('description', description)
+        self.parent_path = ''
         self.itemAdviceStates = []
         self.itemAdviceEditStates = []
         self.itemAdviceViewStates = []
@@ -323,14 +324,14 @@ class GroupDescriptor(Descriptor):
         self.certifiedSignatures = []
         self.groupsInCharge = groupsInCharge
         # Add lists of users (observers, reviewers, etc) ~[UserDescriptor]~
-        for role in MEETING_GROUP_SUFFIXES + EXTRA_GROUP_SUFFIXES.get(id, []):
-            setattr(self, role, [])
+        for suffix in suffixes:
+            setattr(self, suffix['fct_id'], [])
         self.active = active
 
     def getUsers(self):
         res = []
-        for role in MEETING_GROUP_SUFFIXES:
-            for user in getattr(self, role):
+        for suffix in MEETING_GROUP_SUFFIXES:
+            for user in getattr(self, suffix['fct_id']):
                 if user not in res:
                     res.append(user)
         return res
@@ -434,7 +435,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.historizedMeetingAttributes = []
         # Meeting states into which item events will be stored in item's history
         self.recordMeetingHistoryStates = ()
-        # Do you want to use MeetingGroups as categories ? In this case, you
+        # Do you want to use Organizations as categories ? In this case, you
         # do not need to define categories anymore.
         self.useGroupsAsCategories = True
         # Must the "toDiscuss" value be set when inserting an item into a
@@ -609,7 +610,7 @@ class MeetingConfigDescriptor(Descriptor):
         # List of item states when it is possible for 'Budget impact reviewers' to edit the budgetInfos
         self.itemBudgetInfosStates = []
         self.itemGroupInChargeStates = []
-        # List of MeetingGroup ids to consider as Power advisers
+        # List of Organization uids to consider as Power advisers
         self.powerAdvisersGroups = []
         # List of item and meeting states the users in the MeetingConfig
         # corresponding powerObservers group will see the item/meeting
@@ -716,4 +717,6 @@ class PloneMeetingConfiguration(Descriptor):
         self.meetingConfigs = meetingConfigs  # ~[MeetingConfigDescriptor]~
         self.groups = groups  # ~[GroupDescriptor]~
         self.usersOutsideGroups = []  # ~[UserDescriptor]~
+        self.suffixes = MEETING_GROUP_SUFFIXES
+
 # ------------------------------------------------------------------------------

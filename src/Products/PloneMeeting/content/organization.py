@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from collective.contact.core import _
 from collective.contact.core.content.organization import IOrganization
 from collective.contact.plonegroup.config import ORGANIZATIONS_REGISTRY
 from collective.z3cform.datagridfield import DataGridFieldFactory
@@ -9,6 +8,7 @@ from plone import api
 from plone.autoform import directives as form
 from plone.dexterity.schema import DexteritySchemaPolicy
 from plone.supermodel import model
+from Products.PloneMeeting.config import PMMessageFactory as _
 from z3c.form.browser.checkbox import CheckBoxFieldWidget
 from z3c.form.browser.radio import RadioFieldWidget
 from zope import schema
@@ -62,7 +62,7 @@ class IPMOrganization(IOrganization):
     form.read_permission(acronym='PloneMeeting.manage_internal_organization_fields')
     form.write_permission(acronym='PloneMeeting.manage_internal_organization_fields')
     acronym = schema.TextLine(
-        title=_("Acronym"),
+        title=_("PloneMeeting_label_acronym"),
         required=False,
     )
 
@@ -145,13 +145,14 @@ class IPMOrganization(IOrganization):
     form.write_permission(selectable_for_plonegroup='PloneMeeting.manage_internal_organization_fields')
     form.widget('selectable_for_plonegroup', RadioFieldWidget)
     selectable_for_plonegroup = schema.Bool(
-        title=_(u'Selectable for plonegroup'),
+        title=_(u'PloneMeeting_label_selectable_for_plonegroup'),
+        description=_(u'selectable_for_plonegroup_descr'),
         required=False,
         default=True,
     )
 
     model.fieldset('app_parameters',
-                   label=u"Application parameters",
+                   label=_(u"Application parameters"),
                    fields=['acronym', 'item_advice_states',
                            'item_advice_edit_states', 'item_advice_view_states',
                            'keep_access_to_item_when_advice_is_given', 'as_copy_group_on',

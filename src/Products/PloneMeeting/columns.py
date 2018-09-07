@@ -1,11 +1,12 @@
 # encoding: utf-8
-from collective.eeafaceted.dashboard.columns import PrettyLinkColumn
+from collective.contact.plonegroup.browser.tables import OrgaPrettyLinkWithAdditionalInfosColumn
 from collective.eeafaceted.z3ctable.columns import AbbrColumn
 from collective.eeafaceted.z3ctable.columns import BaseColumn
 from collective.eeafaceted.z3ctable.columns import BrowserViewCallColumn
 from collective.eeafaceted.z3ctable.columns import CheckBoxColumn
 from collective.eeafaceted.z3ctable.columns import ColorColumn
 from collective.eeafaceted.z3ctable.columns import I18nColumn
+from collective.eeafaceted.z3ctable.columns import PrettyLinkColumn
 from collective.eeafaceted.z3ctable.columns import VocabularyColumn
 from DateTime import DateTime
 from imio.annex.columns import ActionsColumn as AnnexActionsColumn
@@ -300,3 +301,9 @@ class ReviewStateTitle(I18nColumn):
         wfTool = api.portal.get_tool('portal_workflow')
         wf = wfTool.getWorkflowsFor(obj)[0]
         return wf.states.get(item.review_state).title
+
+
+class PMOrgaPrettyLinkWithAdditionalInfosColumn(OrgaPrettyLinkWithAdditionalInfosColumn):
+    """ """
+    ai_highlighted_fields = ['selectable_for_plonegroup']
+    ai_generate_css_class_fields = ['selectable_for_plonegroup']

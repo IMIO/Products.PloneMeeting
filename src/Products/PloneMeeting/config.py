@@ -103,7 +103,13 @@ MEETINGROLES = {'creators': 'MeetingMember',
                 'reviewers': 'MeetingReviewer',
                 'observers': 'MeetingObserverLocal',
                 'advisers': None}
-MEETING_GROUP_SUFFIXES = MEETINGROLES.keys()
+MEETING_GROUP_SUFFIXES = [
+    {'fct_title': u'advisers', 'fct_id': u'advisers'},
+    {'fct_title': u'creators', 'fct_id': u'creators'},
+    {'fct_title': u'observers', 'fct_id': u'observers'},
+    {'fct_title': u'prereviewers', 'fct_id': u'prereviewers'},
+    {'fct_title': u'reviewers', 'fct_id': u'reviewers'},
+    ]
 
 # specific suffixes in case a workflow involving several suffixes is used by some group ids
 # this will be like :

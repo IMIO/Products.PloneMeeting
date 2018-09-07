@@ -1168,19 +1168,3 @@ class KeepAccessToItemWhenAdviceIsGivenVocabulary(object):
         return SimpleVocabulary(res)
 
 KeepAccessToItemWhenAdviceIsGivenVocabularyFactory = KeepAccessToItemWhenAdviceIsGivenVocabulary()
-
-
-class ActiveInternalOrganizationsVocabulary(object):
-    """ """
-    implements(IVocabularyFactory)
-
-    def __call__(self, context):
-        res = []
-        tool = api.portal.get_tool('portal_plonemeeting')
-        for orga in tool.getInternalOrganizations(only_active=False):
-            key = orga.getId()
-            value = orga.Title()
-            res.append(SimpleTerm(key, key, value))
-        return SimpleVocabulary(res)
-
-ActiveInternalOrganizationsVocabularyFactory = ActiveInternalOrganizationsVocabulary()
