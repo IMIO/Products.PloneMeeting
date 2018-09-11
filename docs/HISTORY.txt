@@ -7,7 +7,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Versions 3.0.x are for Plone < 4.3
 - Versions 3.1.+ are for Plone 4.3+
 
-4.1b11 (unreleased)
+4.1b11 (2018-09-11)
 -------------------
 
 - Adapted code to new behavior of collective.eeafaceted.collectionwidget where the redirection to the default collection
