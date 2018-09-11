@@ -78,8 +78,4 @@
        <value key="group" i18n:domain="plone" i18n:translate="">Metadata</value>
     </records>
 
-    <records interface="Products.PloneMeeting.browser.plonegroup_settings.IPMContactPlonegroupConfig"
-             prefix="collective.contact.plonegroup.browser.settings.IContactPlonegroupConfig.">
-    </records>
-
 </registry>
