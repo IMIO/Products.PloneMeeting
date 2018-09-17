@@ -1,5 +1,6 @@
 # encoding: utf-8
 
+from collective.contact.plonegroup.utils import get_organization
 from collective.documentgenerator.content.vocabulary import ExistingPODTemplateFactory
 from collective.documentgenerator.content.vocabulary import PortalTypesVocabularyFactory
 from collective.eeafaceted.collectionwidget.content.dashboardcollection import IDashboardCollection
@@ -142,28 +143,27 @@ class ItemProposingGroupsVocabulary(object):
     def __call__(self, context):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
-        groups = tool.getMeetingGroups(onlyActive=False, caching=False)
-        activeGroups = [group for group in groups if group.queryState() == 'active']
-        notActiveGroups = [group for group in groups if not group.queryState() == 'active']
+        not_active_orgs = tool.get_internal_organizations(only_active=False, caching=False)
+        active_orgs = tool.get_internal_organizations(only_active=False, caching=False)
         res_active = []
-        for group in activeGroups:
+        for active_org in active_orgs:
             res_active.append(
-                SimpleTerm(group.getId(),
-                           group.getId(),
-                           safe_unicode(group.Title())
+                SimpleTerm(active_org.UID(),
+                           active_org.UID(),
+                           safe_unicode(active_org.get_title())
                            )
             )
         res = sorted(res_active, key=attrgetter('title'))
 
         res_not_active = []
         request = getattr(context, 'REQUEST', getRequest())
-        for group in notActiveGroups:
+        for not_active_org in not_active_orgs:
             res_not_active.append(
-                SimpleTerm(group.getId(),
-                           group.getId(),
+                SimpleTerm(not_active_org.UID(),
+                           not_active_org.UID(),
                            translate('${element_title} (Inactive)',
                                      domain='PloneMeeting',
-                                     mapping={'element_title': safe_unicode(group.Title())},
+                                     mapping={'element_title': safe_unicode(not_active_org.get_title())},
                                      context=request)
                            )
             )
@@ -189,32 +189,32 @@ class ItemProposingGroupsForFacetedFilterVocabulary(object):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        groups = tool.getMeetingGroups(onlyActive=False, caching=False)
-        activeGroups = [group for group in groups if group.queryState() == 'active']
-        notActiveGroups = [group for group in groups if not group.queryState() == 'active']
+        not_active_orgs = tool.get_internal_organizations(only_active=False, caching=False)
+        active_orgs = tool.get_internal_organizations(only_active=False, caching=False)
+        res_active = []
         groupsToHide = cfg.getGroupsHiddenInDashboardFilter()
         res_active = []
-        for group in activeGroups:
-            group_id = group.getId()
-            if not groupsToHide or group_id not in groupsToHide:
+        for active_org in active_orgs:
+            org_uid = active_org.UID()
+            if not groupsToHide or org_uid not in groupsToHide:
                 res_active.append(
-                    SimpleTerm(group_id,
-                               group_id,
-                               safe_unicode(group.Title())
+                    SimpleTerm(org_uid,
+                               org_uid,
+                               safe_unicode(active_org.get_title())
                                )
                 )
         res = sorted(res_active, key=attrgetter('title'))
 
         res_not_active = []
-        for group in notActiveGroups:
-            group_id = group.getId()
-            if not groupsToHide or group_id not in groupsToHide:
+        for not_active_org in not_active_orgs:
+            org_uid = not_active_org.UID()
+            if not groupsToHide or org_uid not in groupsToHide:
                 res_not_active.append(
-                    SimpleTerm(group_id,
-                               group_id,
+                    SimpleTerm(org_uid,
+                               org_uid,
                                translate('${element_title} (Inactive)',
                                          domain='PloneMeeting',
-                                         mapping={'element_title': safe_unicode(group.Title())},
+                                         mapping={'element_title': safe_unicode(not_active_org.get_title())},
                                          context=context.REQUEST)
                                )
                 )
@@ -237,17 +237,17 @@ class GroupsInChargeVocabulary(object):
     def __call__(self, context):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
-        groups = tool.getMeetingGroups(onlyActive=False, caching=False)
+        orgs = tool.get_internal_organizations(only_active=False, caching=False)
         res = []
-        for group in groups:
-            for group_in_charge_id in group.getGroupsInCharge():
+        for org in orgs:
+            for group_in_charge_uid in org.groups_in_charge:
                 # manage duplicates
-                group_in_charge = tool.get(group_in_charge_id)
-                if group_in_charge and group_in_charge not in res:
-                    res.append(group_in_charge)
-        res = [SimpleTerm(gic.getId(),
-                          gic.getId(),
-                          safe_unicode(gic.Title()))
+                orga = get_organization(group_in_charge_uid)
+                if orga and orga not in res:
+                    res.append(orga)
+        res = [SimpleTerm(orga.UID(),
+                          orga.UID(),
+                          safe_unicode(orga.get_title()))
                for gic in res]
         res = sorted(res, key=attrgetter('title'))
         return SimpleVocabulary(res)
@@ -268,12 +268,13 @@ class ItemProposingGroupAcronymsVocabulary(object):
     def __call__(self, context):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
-        groups = tool.getMeetingGroups(onlyActive=False, caching=False)
+        orgs = tool.get_internal_organizations(only_active=False, caching=False)
         res = []
-        for group in groups:
-            res.append(SimpleTerm(group.getId(),
-                                  group.getId(),
-                                  safe_unicode(group.getAcronym())
+        for org in orgs:
+            org_uid = org.UID()
+            res.append(SimpleTerm(org_uid,
+                                  org_uid,
+                                  safe_unicode(org.acronym)
                                   )
                        )
         res = sorted(res, key=attrgetter('title'))
@@ -438,10 +439,10 @@ class AskedAdvicesVocabulary(object):
                 res.append(REAL_GROUP_ID_PATTERN.format(customAdviser['group']))
 
         # classic advisers
-        for mGroup in self.tool.getMeetingGroups(caching=False):
-            formatted = REAL_GROUP_ID_PATTERN.format(mGroup.getId())
+        for orga in self.tool.get_internal_organizations(caching=False):
+            formatted = REAL_GROUP_ID_PATTERN.format(orga.UID())
             if formatted not in res:
-                res.append(REAL_GROUP_ID_PATTERN.format(mGroup.getId()))
+                res.append(REAL_GROUP_ID_PATTERN.format(orga.UID()))
         # remove duplicates, it can be the case when several custom advisers
         # not delay aware are defined for the same group
         return list(set(res))

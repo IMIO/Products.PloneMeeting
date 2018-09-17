@@ -17,6 +17,9 @@ from App.class_init import InitializeClass
 from appy.gen import No
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from collective.behavior.talcondition.utils import _evaluateExpression
+from collective.contact.plonegroup.utils import get_all_suffixes
+from collective.contact.plonegroup.utils import get_organization
+from collective.contact.plonegroup.utils import get_plone_group_id
 from copy import deepcopy
 from DateTime import DateTime
 from datetime import datetime
@@ -27,6 +30,7 @@ from OFS.ObjectManager import BeforeDeleteException
 from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
 from plone import api
+from plone.app.uuid.utils import uuidToObject
 from plone.memoize import ram
 from Products.Archetypes.atapi import BaseFolder
 from Products.Archetypes.atapi import BooleanField
@@ -71,7 +75,6 @@ from Products.PloneMeeting.config import ITEM_COMPLETENESS_ASKERS
 from Products.PloneMeeting.config import ITEM_COMPLETENESS_EVALUATORS
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import ITEM_STATES_NOT_LINKED_TO_MEETING
-from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 from Products.PloneMeeting.config import MEETINGROLES
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
@@ -146,7 +149,7 @@ AS_COPYGROUP_CONDITION_ERROR = 'There was an error in the TAL expression ' \
     'defining if the group must be set as copyGroup for group "%s". ' \
     'Please check this in your meeting config. %s'
 AS_COPYGROUP_RES_ERROR = 'While setting automatically added copyGroups, the Plone group suffix \'%s\' ' \
-                         'returned by the expression on MeetingGroup \'%s\' does not exist.'
+                         'returned by the expression on organization \'%s\' does not exist.'
 WRONG_TRANSITION = 'Transition "%s" is inappropriate for adding recurring ' \
     'items.'
 REC_ITEM_ERROR = 'There was an error while trying to generate recurring ' \
@@ -1723,8 +1726,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return True
 
         # user must be in one of the proposingGroup Plone groups
-        mGroup = self.getProposingGroup(theObject=True)
-        if mGroup.userPloneGroups():
+        orga_uid = self.getProposingGroup()
+        if tool.getPloneGroupsForUser(orga_uid=orga_uid):
             return True
         return False
 
@@ -2394,11 +2397,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return True
         # Check that the user belongs to the proposing group.
         proposingGroup = item.getProposingGroup()
-        userGroups = tool.getPloneGroupsForUser()
-        for ploneGroup in userGroups:
-            if ploneGroup.startswith('%s_' % proposingGroup):
+        userInProposingGroup = tool.getPloneGroupsForUser(orga_uid=proposingGroup)
+        if userInProposingGroup:
                 return True
         # Check if the user is in the copyGroups
+        userGroups = tool.getPloneGroupsForUser()
         if set(item.getAllCopyGroups(auto_real_group_ids=True)).intersection(userGroups):
             return True
         # Check if the user has advices to add or give for item
@@ -2406,9 +2409,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # check if in item.adviceIndex
         userAdviserGroups = [userGroup for userGroup in userGroups if userGroup.endswith('_advisers')]
         for userAdviserGroup in userAdviserGroups:
-            meetingGroupId = userAdviserGroup.replace('_advisers', '')
-            if meetingGroupId in item.adviceIndex and \
-               item.adviceIndex[meetingGroupId]['item_viewable_by_advisers']:
+            org = get_organization(userAdviserGroup)
+            org_uid = org.UID()
+            if org_uid in item.adviceIndex and \
+               item.adviceIndex[org_uid]['item_viewable_by_advisers']:
                 return True
 
     def isViewable(self):
@@ -2444,13 +2448,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('listTemplateUsingGroups')
 
     def listTemplateUsingGroups(self):
-        '''Returns a list of groups that will restrict the use of this item
+        '''Returns a list of orgs that will restrict the use of this item
            when used (usage) as an item template.'''
         res = []
         tool = api.portal.get_tool('portal_plonemeeting')
-        meetingGroups = tool.getMeetingGroups()
-        for group in meetingGroups:
-            res.append((group.id, group.Title()))
+        orgs = tool.get_internal_organizations()
+        for org in orgs:
+            res.append((org.UID(), org.get_title()))
         return DisplayList(tuple(res))
 
     security.declarePublic('listMeetingsAcceptingItems')
@@ -2575,22 +2579,22 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('listProposingGroups')
 
     def listProposingGroups(self):
-        '''Return the MeetingGroup(s) that may propose this item. If no group is
-           set yet, this method returns the MeetingGroup(s) the user belongs
-           to. If a group is already set, it is returned.
+        '''This is used as vocabulary for field 'proposingGroup'.
+           Return the organization(s) the user is creator for.
            If this item is being created or edited in portal_plonemeeting (as a
            recurring item), the list of active groups is returned.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         isDefinedInTool = self.isDefinedInTool()
         # bypass for Managers, pass idDefinedInTool to True so Managers
-        # can select any available MeetingGroup
+        # can select any available organizations
         isManager = tool.isManager(self, realManagers=True)
         # show every groups for Managers or when isDefinedInTool
-        res = tool.getSelectableGroups(onlySelectable=not bool(isDefinedInTool or isManager))
+        res = tool.getSelectableOrgs(onlySelectable=not bool(isDefinedInTool or isManager))
         res = DisplayList(tuple(res))
         # make sure current selected proposingGroup is listed here
-        if self.getProposingGroup() and not self.getProposingGroup() in res.keys():
+        proposingGroup = self.getProposingGroup()
+        if proposingGroup and proposingGroup not in res.keys():
             current_group = self.getProposingGroup(theObject=True)
             res.add(current_group.getId(), current_group.getName())
         # add a 'make_a_choice' value when the used on an itemtemplate
@@ -2644,21 +2648,21 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            excepted if we are on an archive site.'''
         res = []
         tool = api.portal.get_tool('portal_plonemeeting')
-        for group in tool.getMeetingGroups(notEmptySuffix="creators"):
-            res.append((group.id, group.getName()))
+        for orga in tool.get_internal_organizations(not_empty_suffix="creators"):
+            res.append((orga.UID(), orga.get_title()))
 
         # make sure associatedGroups actually stored have their corresponding
         # term in the vocabulary, if not, add it
         associatedGroups = self.getAssociatedGroups()
         if associatedGroups:
             associatedGroupsInVocab = [group[0] for group in res]
-            for groupId in associatedGroups:
-                if groupId not in associatedGroupsInVocab:
-                    mGroup = getattr(tool, groupId, None)
-                    if mGroup:
-                        res.append((groupId, getattr(tool, groupId).getName()))
+            for orga_uid in associatedGroups:
+                if orga_uid not in associatedGroupsInVocab:
+                    orga = uuidToObject(orga_uid)
+                    if orga:
+                        res.append((orga_uid, orga.get_title()))
                     else:
-                        res.append((groupId, groupId))
+                        res.append((orga_uid, orga_uid))
 
         return DisplayList(tuple(res)).sortedByValue()
 
@@ -2814,8 +2818,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            group if p_theObject is True.'''
         res = self.getField('proposingGroup').get(self, **kwargs)  # = group id
         if res and theObject:
-            tool = api.portal.get_tool('portal_plonemeeting')
-            res = getattr(tool, res)
+            res = uuidToObject(res)
         return res
 
     security.declarePublic('getGroupInCharge')
@@ -2966,11 +2969,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return cfg.getCertifiedSignatures(computed=True, listified=True)
 
         # if we do not use contacts, compute certified signatures calling
-        # it on the MeetingGroup (that will call the MeetingConfig if nothing defined on it)
+        # it on the organization (that will call the MeetingConfig if nothing defined on it)
         if not cfg.isUsingContacts():
             # get certified signatures computed, this will return a list with pair
             # of function/signatures, so ['function1', 'name1', 'function2', 'name2', 'function3', 'name3', ]
-            # this list is ordered by signature number defined on the MeetingGroup/MeetingConfig
+            # this list is ordered by signature number defined on the organization/MeetingConfig
             return item.getProposingGroup(theObject=True).getCertifiedSignatures(
                 computed=True, context=item, from_group_in_charge=from_group_in_charge)
         else:
@@ -3298,8 +3301,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         elif insertMethod == 'on_categories':
             return len(cfg.getCategories(onlySelectable=False))
         elif insertMethod in ('on_proposing_groups', 'on_all_groups', 'on_groups_in_charge'):
-            # for 'on_groups_in_charge', for efficiency, we return len of every MeetingGroups
-            return len(tool.getMeetingGroups(onlyActive=False))
+            # for 'on_groups_in_charge', for efficiency, we return len of every organizations
+            return len(tool.get_internal_organizations(only_active=False))
         elif insertMethod == 'on_privacy':
             return len(cfg.getSelectablePrivacies())
         elif insertMethod == 'on_to_discuss':
@@ -3537,25 +3540,25 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                  'group_name': self.adviceIndex[group_id]['name'],
                                  'delay_label': self.adviceIndex[group_id]['delay_label']})
 
-    def getUnhandledInheritedAdvisersData(self, adviserIds, optional):
+    def getUnhandledInheritedAdvisersData(self, adviserUids, optional):
         """ """
         predecessor = self.getPredecessor()
         res = []
-        for adviserId in adviserIds:
+        for adviserUid in adviserUids:
             # adviserId could not exist if we removed an inherited initiative advice for example
-            if not predecessor.adviceIndex.get(adviserId, None):
+            if not predecessor.adviceIndex.get(adviserUid, None):
                 continue
-            if (optional and not predecessor.adviceIndex[adviserId]['optional']):
+            if (optional and not predecessor.adviceIndex[adviserUid]['optional']):
                 continue
             res.append(
-                {'meetingGroupId': predecessor.adviceIndex[adviserId]['id'],
-                 'meetingGroupName': predecessor.adviceIndex[adviserId]['name'],
+                {'org_uid': predecessor.adviceIndex[adviserUid]['id'],
+                 'org_title': predecessor.adviceIndex[adviserUid]['name'],
                  'gives_auto_advice_on_help_message':
-                    predecessor.adviceIndex[adviserId]['gives_auto_advice_on_help_message'],
-                 'row_id': predecessor.adviceIndex[adviserId]['row_id'],
-                 'delay': predecessor.adviceIndex[adviserId]['delay'],
-                 'delay_left_alert': predecessor.adviceIndex[adviserId]['delay_left_alert'],
-                 'delay_label': predecessor.adviceIndex[adviserId]['delay_label'], })
+                    predecessor.adviceIndex[adviserUid]['gives_auto_advice_on_help_message'],
+                 'row_id': predecessor.adviceIndex[adviserUid]['row_id'],
+                 'delay': predecessor.adviceIndex[adviserUid]['delay'],
+                 'delay_left_alert': predecessor.adviceIndex[adviserUid]['delay_left_alert'],
+                 'delay_label': predecessor.adviceIndex[adviserUid]['delay_label'], })
         return res
 
     security.declarePublic('getOptionalAdvisersData')
@@ -3570,16 +3573,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         for adviser in self.getOptionalAdvisers():
             # if this is a delay-aware adviser, we have the data in the adviser id
             if '__rowid__' in adviser:
-                meetingGroupId, row_id = self._decodeDelayAwareId(adviser)
+                org_uid, row_id = self._decodeDelayAwareId(adviser)
                 customAdviserInfos = cfg._dataForCustomAdviserRowId(row_id)
                 delay = customAdviserInfos['delay']
                 delay_left_alert = customAdviserInfos['delay_left_alert']
                 delay_label = customAdviserInfos['delay_label']
             else:
-                meetingGroupId = adviser
+                org_uid = adviser
                 row_id = delay = delay_left_alert = delay_label = ''
-            res.append({'meetingGroupId': meetingGroupId,
-                        'meetingGroupName': getattr(tool, meetingGroupId).getName(),
+            res.append({'org_uid': org_uid,
+                        'org_title': get_organization(org_uid).get_title(),
                         'gives_auto_advice_on_help_message': '',
                         'row_id': row_id,
                         'delay': delay,
@@ -3592,7 +3595,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def getAutomaticAdvisersData(self):
         '''Who are the automatic advisers for this item? We get it by
            evaluating the TAL expression on current MeetingConfig.customAdvisers and checking if
-           corresponding group contains at least one adviser. The method returns a list of MeetingGroup
+           corresponding group contains at least one adviser. The method returns a list of organization
            ids.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
@@ -3621,8 +3624,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 logger.warning(AUTOMATIC_ADVICE_CONDITION_ERROR % str(e))
 
             if eRes:
-                res.append({'meetingGroupId': customAdviser['group'],
-                            'meetingGroupName': getattr(tool, customAdviser['group']).getName(),
+                res.append({'org_uid': customAdviser['group'],
+                            'org_title': get_organization(customAdviser['group']).get_title(),
                             'row_id': customAdviser['row_id'],
                             'gives_auto_advice_on_help_message': customAdviser['gives_auto_advice_on_help_message'],
                             'delay': customAdviser['delay'],
@@ -3658,17 +3661,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def addAutoCopyGroups(self, isCreated):
         '''What group should be automatically set as copyGroups for this item?
            We get it by evaluating the TAL expression on every active
-           MeetingGroup.asCopyGroupOn. The expression returns a list of suffixes
+           organization.as_copy_group_on. The expression returns a list of suffixes
            or an empty list.  The method update existing copyGroups and add groups
            prefixed with AUTO_COPY_GROUP_PREFIX.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         # empty stored autoCopyGroups
         self.autoCopyGroups = PersistentList()
 
-        for mGroup in tool.getMeetingGroups():
+        for orga in tool.get_internal_organizations():
             try:
                 suffixes = _evaluateExpression(self,
-                                               expression=mGroup.getAsCopyGroupOn(),
+                                               expression=orga.as_copy_group_on(),
                                                roles_bypassing_expression=[],
                                                extra_expr_ctx={'item': self,
                                                                'isCreated': isCreated},
@@ -3678,22 +3681,22 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # The expression is supposed to return a list a Plone group suffixes
                 # check that the real linked Plone groups are selectable
                 for suffix in suffixes:
-                    if suffix not in MEETING_GROUP_SUFFIXES:
+                    if suffix not in get_all_suffixes(orga.UID()):
                         # If the suffix returned by the expression does not exist
                         # log it, it is a configuration problem
                         logger.warning(AS_COPYGROUP_RES_ERROR % (suffix,
-                                                                 mGroup.getId()))
+                                                                 orga.UID()))
                         continue
-                    ploneGroupId = mGroup.getPloneGroupId(suffix)
-                    autoPloneGroupId = '{0}{1}'.format(AUTO_COPY_GROUP_PREFIX, ploneGroupId)
-                    self.autoCopyGroups.append(autoPloneGroupId)
+                    plone_group_id = get_plone_group_id(orga, suffix)
+                    auto_plone_group_id = '{0}{1}'.format(AUTO_COPY_GROUP_PREFIX, plone_group_id)
+                    self.autoCopyGroups.append(auto_plone_group_id)
             except Exception, e:
-                logger.warning(AS_COPYGROUP_CONDITION_ERROR % (mGroup.getId(), str(e)))
+                logger.warning(AS_COPYGROUP_CONDITION_ERROR % (orga.UID(), str(e)))
 
     def _optionalDelayAwareAdvisers(self):
         '''Returns the 'delay-aware' advisers.
            This will return a list of dict where dict contains :
-           'meetingGroupId', 'delay' and 'delay_label'.'''
+           'orga_uid', 'delay' and 'delay_label'.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         res = []
@@ -3735,8 +3738,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 continue
 
             # ok add the adviser
-            res.append({'meetingGroupId': customAdviserConfig['group'],
-                        'meetingGroupName': getattr(tool, customAdviserConfig['group']).getName(),
+            res.append({'orga_uid': customAdviserConfig['group'],
+                        'orga_title': getattr(tool, customAdviserConfig['group']).getName(),
                         'delay': customAdviserConfig['delay'],
                         'delay_label': customAdviserConfig['delay_label'],
                         'row_id': customAdviserConfig['row_id']})
@@ -3745,27 +3748,27 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('listOptionalAdvisers')
 
     def listOptionalAdvisers(self, include_selected=True):
-        '''Optional advisers for this item are MeetingGroups that are not among
+        '''Optional advisers for this item are organizations that are not among
            automatic advisers and that have at least one adviser.
            If p_include_selected is True, we ensure thtat the currently selected
            elements on self are present in the vocabulary.'''
-        def _displayDelayAwareValue(delay_label, group_name, delay):
-            group_name = safe_unicode(group_name)
+        def _displayDelayAwareValue(delay_label, orga_title, delay):
+            orga_title = safe_unicode(orga_title)
             delay_label = safe_unicode(delay_label)
             if delay_label:
                 value_to_display = translate('advice_delay_with_label',
                                              domain='PloneMeeting',
-                                             mapping={'group_name': group_name,
+                                             mapping={'orga_title': orga_title,
                                                       'delay': delay,
                                                       'delay_label': delay_label},
-                                             default='${group_name} - ${delay} day(s) (${delay_label})',
+                                             default='${orga_title} - ${delay} day(s) (${delay_label})',
                                              context=self.REQUEST).encode('utf-8')
             else:
                 value_to_display = translate('advice_delay_without_label',
                                              domain='PloneMeeting',
-                                             mapping={'group_name': group_name,
+                                             mapping={'orga_title': group_name,
                                                       'delay': delay},
-                                             default='${group_name} - ${delay} day(s)',
+                                             default='${orga_title} - ${delay} day(s)',
                                              context=self.REQUEST).encode('utf-8')
             return value_to_display
 
@@ -3779,38 +3782,39 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # a delay-aware adviser has a special id so we can handle it specifically after
             for delayAwareAdviser in delayAwareAdvisers:
                 adviserId = "%s__rowid__%s" % \
-                            (delayAwareAdviser['meetingGroupId'],
+                            (delayAwareAdviser['orga_uid'],
                              delayAwareAdviser['row_id'])
                 delay = delayAwareAdviser['delay']
                 delay_label = delayAwareAdviser['delay_label']
-                group_name = delayAwareAdviser['meetingGroupName']
+                group_name = delayAwareAdviser['orga_title']
                 value_to_display = _displayDelayAwareValue(delay_label, group_name, delay)
                 resDelayAwareAdvisers.append((adviserId, value_to_display))
 
         resNonDelayAwareAdvisers = []
         selectableAdvisers = cfg.getSelectableAdvisers()
-        for mGroupId in selectableAdvisers:
-            mGroup = tool.get(mGroupId)
-            resNonDelayAwareAdvisers.append((mGroupId, mGroup.getName()))
+        for orga_uid in selectableAdvisers:
+            orga = get_organization(orga_uid)
+            resNonDelayAwareAdvisers.append((orga_uid, orga.get_title()))
 
         # make sure optionalAdvisers actually stored have their corresponding
         # term in the vocabulary, if not, add it
         if include_selected:
             optionalAdvisers = self.getOptionalAdvisers()
             if optionalAdvisers:
-                optionalAdvisersInVocab = [group[0] for group in resNonDelayAwareAdvisers] + \
-                                          [group[0] for group in resDelayAwareAdvisers]
-                for groupId in optionalAdvisers:
-                    if groupId not in optionalAdvisersInVocab:
-                        if '__rowid__' in groupId:
-                            meetingGroupId, row_id = self._decodeDelayAwareId(groupId)
+                optionalAdvisersInVocab = [org[0] for org in resNonDelayAwareAdvisers] + \
+                                          [org[0] for org in resDelayAwareAdvisers]
+                for optionalAdviser in optionalAdvisers:
+                    if optionalAdviser not in optionalAdvisersInVocab:
+                        orga = get_organization(orga_uid)
+                        if '__rowid__' in optionalAdviser:
+                            orga_uid, row_id = self._decodeDelayAwareId(optionalAdviser)
                             delay = cfg._dataForCustomAdviserRowId(row_id)['delay']
-                            delay_label = self.adviceIndex[meetingGroupId]['delay_label']
-                            group_name = getattr(tool, meetingGroupId).getName()
-                            value_to_display = _displayDelayAwareValue(delay_label, group_name, delay)
-                            resDelayAwareAdvisers.append((groupId, value_to_display))
+                            delay_label = self.adviceIndex[orga_uid]['delay_label']
+                            orga_title = orga.get_title()
+                            value_to_display = _displayDelayAwareValue(delay_label, orga_title, delay)
+                            resDelayAwareAdvisers.append((optionalAdviser, value_to_display))
                         else:
-                            resNonDelayAwareAdvisers.append((groupId, getattr(tool, groupId).getName()))
+                            resNonDelayAwareAdvisers.append((optionalAdviser, orga.get_title()))
 
         # now create the listing
         # sort elements by value before potentially prepending a special value here under
@@ -3840,8 +3844,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _decodeDelayAwareId(self, delayAwareId):
         '''
-          Decode a 'delay-aware' id, we receive something like 'groupname__rowid__myuniquerowid.20141215'.
-          We return the groupId and the row_id.
+          Decode a 'delay-aware' id, we receive something like 'orgauid__rowid__myuniquerowid.20141215'.
+          We return the orga_uid and the row_id.
         '''
         infos = delayAwareId.split('__rowid__')
         return infos[0], infos[1]
@@ -3912,8 +3916,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if not cfg.getUseAdvices():
             return ([], [])
         # Logged user must be an adviser
-        meetingGroups = tool.getGroupsForUser(suffixes=['advisers'])
-        if not meetingGroups:
+        orgs = tool.get_orgs_for_user(suffixes=['advisers'])
+        if not orgs:
             return ([], [])
         # Produce the lists of groups to which the user belongs and for which,
         # - no advice has been given yet (list of advices to add)
@@ -3922,23 +3926,23 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         toEdit = []
         powerAdvisers = cfg.getPowerAdvisersGroups()
         itemState = self.queryState()
-        for group in meetingGroups:
-            groupId = group.getId()
-            if groupId in self.adviceIndex:
-                advice = self.adviceIndex[groupId]
+        for org in orgs:
+            org_uid = org.UID()
+            if org_uid in self.adviceIndex:
+                advice = self.adviceIndex[org_uid]
                 if advice['type'] == NOT_GIVEN_ADVICE_VALUE and \
                    advice['advice_addable'] and \
-                   self.adapted()._adviceIsAddableByCurrentUser(groupId):
-                    toAdd.append((groupId, group.getName()))
+                   self.adapted()._adviceIsAddableByCurrentUser(org_uid):
+                    toAdd.append((org_uid, org.get_title()))
                 if advice['type'] != NOT_GIVEN_ADVICE_VALUE and \
                    advice['advice_editable'] and \
-                   self.adapted()._adviceIsEditableByCurrentUser(groupId):
-                    toEdit.append((groupId, group.getName()))
+                   self.adapted()._adviceIsEditableByCurrentUser(org_uid):
+                    toEdit.append((org_uid, org.get_title()))
             # if not in self.adviceIndex, aka not already given
             # check if group is a power adviser and if he is allowed
             # to add an advice in current item state
-            elif groupId in powerAdvisers and itemState in group.getItemAdviceStates(cfg):
-                toAdd.append((groupId, group.getName()))
+            elif org_uid in powerAdvisers and itemState in org.getItemAdviceStates(cfg):
+                toAdd.append((org_uid, org.get_title()))
         return (toAdd, toEdit)
 
     def _advicePortalTypeForAdviser(self, groupId):
@@ -4508,8 +4512,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # now get inherited advices that are not in optional advisers and
         # automatic advisers, it is the case for not_asked advices or when sending
         # an item to another MC
-        handledAdviserIds = [optAdviser['meetingGroupId'] for optAdviser in optionalAdvisers]
-        handledAdviserIds += [autoAdviser['meetingGroupId'] for autoAdviser in automaticAdvisers]
+        handledAdviserIds = [optAdviser['org_uid'] for optAdviser in optionalAdvisers]
+        handledAdviserIds += [autoAdviser['org_uid'] for autoAdviser in automaticAdvisers]
         # when inheritedAdviserIds, adviceIndex is empty
         unhandledAdviserIds = [adviserId for adviserId in inheritedAdviserIds
                                if adviserId not in handledAdviserIds]
@@ -4531,7 +4535,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # We create an empty dictionary that will store advice info
                 # once the advice will have been created.  But for now, we already
                 # store known infos coming from the configuration and from selected otpional advisers
-                groupId = adviceInfo['meetingGroupId']
+                groupId = adviceInfo['org_uid']
                 self.adviceIndex[groupId] = d = PersistentMapping()
                 d['type'] = NOT_GIVEN_ADVICE_VALUE
                 d['optional'] = optional
@@ -4783,23 +4787,23 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self.reindexObject(idxs=['indexAdvisers', ])
         self.REQUEST.set('currentlyUpdatingAdvice', False)
 
-    def _itemToAdviceIsViewable(self, groupId):
+    def _itemToAdviceIsViewable(self, org_uid):
         '''See doc in interfaces.py.'''
         return True
 
-    def _adviceIsAddable(self, groupId):
+    def _adviceIsAddable(self, org_uid):
         '''See doc in interfaces.py.'''
         return True
 
-    def _adviceIsAddableByCurrentUser(self, groupId):
+    def _adviceIsAddableByCurrentUser(self, org_uid):
         '''See doc in interfaces.py.'''
         return True
 
-    def _adviceIsEditable(self, groupId):
+    def _adviceIsEditable(self, org_uid):
         '''See doc in interfaces.py.'''
         return True
 
-    def _adviceIsEditableByCurrentUser(self, groupId):
+    def _adviceIsEditableByCurrentUser(self, org_uid):
         '''See doc in interfaces.py.'''
         return True
 
@@ -5060,27 +5064,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return [item.getProposingGroup(True)]
 
     def _assign_roles_to_group_suffixes(self,
-                                        meetingGroup,
-                                        suffixes=MEETING_GROUP_SUFFIXES,
-                                        roles=MEETINGROLES):
-        """Method that do the work of assigning roles to every suffixed group
-           of a MeetingGroup.
-           This will assign roles defined in p_roles to every group p_suffixes
-           of p_meetingGroup MeetingGroup."""
-        if meetingGroup:
-            portal_groups = api.portal.get_tool('portal_groups')
-            for groupSuffix in suffixes:
-                # like it is the case for groupSuffix 'advisers'
-                if not roles.get(groupSuffix, None):
-                    continue
-                # if we have a Plone group related to this suffix, apply a local role for it
-                groupId = meetingGroup.getPloneGroupId(groupSuffix)
-                ploneGroup = portal_groups.getGroupById(groupId)
-                if not ploneGroup:
-                    # in some case, MEETING_GROUP_SUFFIXES are used to manage
-                    # only some groups so some other may not have a linked Plone group
-                    continue
-                self.manage_addLocalRoles(groupId, (roles[groupSuffix],))
+                                        organization):
+        """Method that do the work of assigning roles to every suffixed group of an organization."""
+        org_uid = organization.UID()
+        for suffix in get_all_suffixes(org_uid):
+            # if we have a Plone group related to this suffix, apply a local role for it
+            plone_group_id = get_plone_group_id(org_uid, suffix)
+            self.manage_addLocalRoles(
+                plone_group_id, (MEETINGROLES[suffix], )
+            )
 
     security.declareProtected(ModifyPortalContent, 'updateLocalRoles')
 
@@ -5100,8 +5092,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self.manage_addLocalRoles(self.owner_info()['id'], ('Owner',))
 
         # Add the local roles corresponding to the group managing the item
-        meetingGroup = self.adapted()._getGroupManagingItem(self.queryState())
-        self._assign_roles_to_group_suffixes(meetingGroup)
+        orga = self.adapted()._getGroupManagingItem(self.queryState())
+        self._assign_roles_to_group_suffixes(orga)
 
         # update local roles regarding copyGroups
         isCreated = kwargs.get('isCreated', None)

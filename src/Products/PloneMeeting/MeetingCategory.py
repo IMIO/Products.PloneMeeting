@@ -225,14 +225,13 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
     security.declarePublic('listUsingGroups')
 
     def listUsingGroups(self):
-        '''Returns a list of groups that will restrict the use of this category
-           for.'''
+        '''Returns a list of groups that will restrict the use of this category for.'''
         res = []
-        # Get every Plone group related to a MeetingGroup
+        # Get every Plone group related to an organization
         tool = api.portal.get_tool('portal_plonemeeting')
-        meetingGroups = tool.getMeetingGroups()
-        for group in meetingGroups:
-            res.append((group.id, group.Title()))
+        orgs = tool.get_internal_organizations()
+        for orga in orgs:
+            res.append((orga.UID(), orga.get_title()))
         return DisplayList(tuple(res))
 
     security.declarePublic('listCategoriesOfOtherMCs')

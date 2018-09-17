@@ -14,8 +14,9 @@ from AccessControl import Unauthorized
 from Acquisition import aq_base
 from collections import OrderedDict
 from collective.behavior.talcondition.utils import _evaluateExpression
-from collective.contact.plonegroup.browser.settings import getOwnOrganization
 from collective.contact.plonegroup.config import ORGANIZATIONS_REGISTRY
+from collective.contact.plonegroup.utils import get_organization
+from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.documentviewer.async import queueJob
 from collective.documentviewer.settings import GlobalSettings
@@ -66,7 +67,6 @@ from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import ADD_CONTENT_PERMISSIONS
 from Products.PloneMeeting.config import DEFAULT_COPIED_FIELDS
 from Products.PloneMeeting.config import MEETING_CONFIG
-from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import PloneMeetingError
 from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
@@ -451,54 +451,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def getCustomFields(self, cols):
         return getCustomSchemaFields(schema, self.schema, cols)
 
-    security.declarePublic('getMeetingGroup')
+    security.declarePublic('get_internal_organizations')
 
-    def getMeetingGroup(self, ploneGroupId):
-        '''Returns the MeetingGroup linked to the Plone group with id
-            p_ploneGroupId.'''
-        for suffix in MEETING_GROUP_SUFFIXES:
-            if ploneGroupId.endswith('_%s' % suffix):
-                mGroupId = ploneGroupId.replace('_%s' % suffix, '')
-                return getattr(self.aq_base, mGroupId, None)
-
-    security.declarePublic('getMeetingGroups')
-
-    def getMeetingGroups(self, notEmptySuffix=None, onlyActive=True, caching=True):
-        '''Gets the MeetingGroups, if p_notEmptySuffix is True, we check that group
-           suffixes passed as argument are not empty. If it is the case, we do
-           not return the group neither.  If p_onlyActive is True, we also check
-           the MeetingGroup current review_state.
-           If p_caching is True (by default), the method call will be cached in the REQUEST.
-           WARNING, we can not use ram.cache here because it can not be used when returning
-           persistent objects (single, list, dict, ... of persistent objects), so we need to manage
-           caching manually...'''
-        data = None
-        if caching:
-            key = "tool-getmeetinggroups-%s-%s" % ((notEmptySuffix and notEmptySuffix.lower() or ''),
-                                                   str(onlyActive))
-            cache = IAnnotations(self.REQUEST)
-            data = cache.get(key, None)
-        if data is None:
-            data = []
-            for group in self.objectValues('MeetingGroup'):
-                if onlyActive and not group.queryState() == 'active':
-                    continue
-                # Check that there is at least one user in the notEmptySuffix
-                # of the Plone group
-                if notEmptySuffix:
-                    ploneGroupId = group.getPloneGroupId(suffix=notEmptySuffix)
-                    zopeGroup = self.acl_users.getGroup(ploneGroupId)
-                    if len(zopeGroup.getMemberIds()):
-                        data.append(group)
-                else:
-                    data.append(group)
-            if caching:
-                cache[key] = data
-        return data
-
-    security.declarePublic('getInternalOrganizations')
-
-    def getInternalOrganizations(self, not_empty_suffix=None, only_active=True, caching=True):
+    def get_internal_organizations(self, not_empty_suffix=None, only_active=True, caching=True):
         '''Gets the organizations from plonegroup-organization.
            If p_not_empty_suffix is True, we check that organization suffixes passed as argument are not empty.
            If it is the case, we do not return the organization neither.
@@ -509,7 +464,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            caching manually...'''
         data = None
         if caching:
-            key = "tool-getinternalorganizations-%s-%s" % (
+            key = "tool-get_internal_organizations-%s-%s" % (
                 (not_empty_suffix or ''), str(only_active))
             cache = IAnnotations(self.REQUEST)
             data = cache.get(key, None)
@@ -558,83 +513,87 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         source_groups = portal.acl_users.source_groups
         return source_groups._principal_groups.byValue(0)
 
-    def getPloneGroupsForUser_cachekey(method, self, userId=None):
+    def getPloneGroupsForUser_cachekey(method, self, userId=None, orga_uid=None):
         '''cachekey method for self.getPloneGroupsForUser.'''
         date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting.getPloneGroupsForUser')
         return (date,
                 self._users_groups_value(),
-                userId or api.user.get_current())
+                userId or api.user.get_current(),
+                orga_uid)
 
     security.declarePublic('getPloneGroupsForUser')
 
     @ram.cache(getPloneGroupsForUser_cachekey)
-    def getPloneGroupsForUser(self, userId=None):
+    def getPloneGroupsForUser(self, userId=None, orga_uid=None):
         """Just return user.getGroups but cached so it is only done once by REQUEST."""
         if userId:
             user = api.user.get(userId)
         else:
             user = api.user.get_current()
-        return user.getGroups()
+        user_groups = user.getGroups()
+        if orga_uid:
+            user_groups = [plone_group for plone_group in user_groups if plone_group.startswith(orga_uid)]
+        return user_groups
 
-    def getGroupsForUser_cachekey(method, self, userId=None, active=True, suffixes=[], zope=False, omittedSuffixes=[]):
-        '''cachekey method for self.getGroupsForUser.'''
-        date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting.getGroupsForUser')
+    def get_orgs_for_user_cachekey(method, self, user_id=None, active=True, suffixes=[], zope=False, omitted_suffixes=[]):
+        '''cachekey method for self.get_orgs_for_user.'''
+        date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting.get_orgs_for_user')
         return (date,
                 self._users_groups_value(),
-                (userId or api.user.get_current()),
-                active, suffixes, zope, omittedSuffixes)
+                (user_id or api.user.get_current()),
+                 active, suffixes, zope, omitted_suffixes)
 
-    security.declarePublic('getGroupsForUser')
+    security.declarePublic('get_orgs_for_user')
 
-    @ram.cache(getGroupsForUser_cachekey)
-    def getGroupsForUser(self, userId=None, active=True, suffixes=[], zope=False, omittedSuffixes=[]):
-        '''Gets the groups p_userId belongs to. If p_userId is None, we use the
+    @ram.cache(get_orgs_for_user_cachekey)
+    def get_orgs_for_user(self, user_id=None, active=True, suffixes=[], zope=False, omitted_suffixes=[]):
+        '''Gets the organizations p_user_id belongs to. If p_user_id is None, we use the
            authenticated user. If active is True, we select only active
-           MeetingGroups. If p_suffixes is not empty, we select only groups having
-           at least one of p_suffixes. If p_zope is False, we return MeetingGroups;
-           else, we return Zope/Plone groups. If p_omittedSuffixes, we do not consider
-           groups the user is in using those suffixes.'''
+           organizations. If p_suffixes is not empty, we select only orgs having
+           at least one of p_suffixes. If p_zope is False, we return organizations;
+           else, we return Plone groups. If p_omitted_suffixes, we do not consider
+           orgs the user is in using those suffixes.'''
         res = []
-        groupIds = self.getPloneGroupsForUser(userId)
+        group_ids = self.get_plone_groups_for_user(user_id)
         if active:
-            mGroups = self.getMeetingGroups()
+            orgs = self.get_internal_organizations()
         else:
-            mGroups = self.objectValues('MeetingGroup')
-        for mGroup in mGroups:
-            for gSuffix in MEETING_GROUP_SUFFIXES:
-                if suffixes and (gSuffix not in suffixes):
+            orgs = self.get_internal_organizations(only_active=False)
+        for org in orgs:
+            for suffix in get_all_suffixes():
+                if suffixes and (suffix not in suffixes):
                     continue
-                if gSuffix in omittedSuffixes:
+                if suffix in omitted_suffixes:
                     continue
-                groupId = mGroup.getPloneGroupId(gSuffix)
-                if groupId not in groupIds:
+                plone_group_id = get_plone_group_id(org, suffix)
+                if plone_group_id not in group_ids:
                     continue
                 # If we are here, the user belongs to this group.
                 if not zope:
-                    # Add the MeetingGroup
-                    if mGroup not in res:
-                        res.append(mGroup)
+                    # Add the organization
+                    if org not in res:
+                        res.append(org)
                 else:
-                    # Add the Zope/Plone group
-                    res.append(self.portal_groups.getGroupById(groupId))
+                    # Add the Plone group
+                    res.append(api.group.get(plone_group_id))
         return res
 
-    security.declarePublic('getSelectableGroups')
+    security.declarePublic('get_selectable_orgs')
 
-    def getSelectableGroups(self, onlySelectable=True, userId=None):
+    def get_selectable_orgs(self, only_selectable=True, user_id=None):
         """
-          Returns the selectable groups for given p_userId or currently connected user.
-          If p_onlySelectable is True, we will only return groups for which current user is creator.
-          If p_userId is given, it will get groups for which p_userId is creator.
+          Returns the selectable organizations for given p_user_id or currently connected user.
+          If p_only_selectable is True, we will only return orgs for which current user is creator.
+          If p_user_id is given, it will get orgs for which p_user_id is creator.
         """
         res = []
-        if onlySelectable:
-            userMeetingGroups = self.getGroupsForUser(userId=userId, suffixes=['creators', ])
-            for group in userMeetingGroups:
-                res.append((group.id, group.getName()))
+        if only_selectable:
+            user_orgs = self.get_orgs_for_user(user_id=user_id, suffixes=['creators', ])
+            for org in user_orgs:
+                res.append((org.UID(), org.get_title()))
         else:
-            for group in self.getMeetingGroups():
-                res.append((group.id, group.getName()))
+            for org in self.get_internal_organizations():
+                res.append((org.UID(), org.get_title()))
         return res
 
     def userIsAmong_cachekey(method, self, suffixes, onlyActive=True):
@@ -651,19 +610,18 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def userIsAmong(self, suffixes, onlyActive=True):
         '''Check if the currently logged user is in at least one of p_suffixes-related Plone
            group.  p_suffixes is a list of suffixes.
-           If p_onlyActive is True, we will check if the linked MeetingGroup is active.'''
+           If p_onlyActive is True, we will check if the linked organization is active.'''
         if onlyActive:
-            activeMeetingGroupIds = [group.getId() for group in self.getMeetingGroups(onlyActive=True)]
+            activeOrgsUids = [org.UID() for org in self.get_internal_organizations(only_active=True)]
         res = False
-        for groupId in self.getPloneGroupsForUser():
+        for plone_group_id in self.getPloneGroupsForUser():
             # check if the groupId ends with a least one of the p_suffixes
-            keep_groupId = [suffix for suffix in suffixes if groupId.endswith('_%s' % suffix)]
-            if keep_groupId:
+            keep_group_id = [suffix for suffix in suffixes if plone_group_id.endswith('_%s' % suffix)]
+            if keep_group_id:
                 if onlyActive:
-                    # check that the linked MeetingGroup is active
-                    group = self.getMeetingGroup(groupId)
+                    orga = get_organization(plone_group_id)
                     # we could not find the group, for example if suffix is 'powerobservers'
-                    if not group or group.getId() in activeMeetingGroupIds:
+                    if not orga or orga.UID() not in activeOrgsUids:
                         res = True
                         break
                 else:
@@ -1496,8 +1454,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('addUsersAndGroups')
 
     def addUsersAndGroups(self, groups):
-        '''Creates MeetingGroups (and potentially Plone users in it) in the
-           tool based on p_groups which is a list of GroupDescriptor instances.'''
+        '''Creates organizations (and potentially Plone users in linked Plone groups) in the
+           tool based on p_groups which is a list of OrgaDescriptor instances.'''
         plone_utils = api.portal.get_tool('plone_utils')
         # if we are in dev, we use DEFAULT_USER_PASSWORD, else we will generate a
         # password that is compliant with the current password policy...
@@ -1514,7 +1472,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             # It could be the case if we are reapplying a configuration
             orga = getattr(self, orgaDescr.id, None)
             if not orga:
-                container = getOwnOrganization()
+                container = get_own_organization()
                 if orgaDescr.parent_path:
                     # find parent orga following parent path from container
                     container = container.restrictedTraverse(orgaDescr.parent_path)

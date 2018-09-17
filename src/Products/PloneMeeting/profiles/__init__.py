@@ -295,9 +295,9 @@ class MeetingUserDescriptor(Descriptor):
 
 
 class OrgaDescriptor(Descriptor):
-    multiSelectFields = ('certifiedSignatures', 'itemAdviceStates',
-                         'itemAdviceEditStates', 'itemAdviceViewStates',
-                         'groupsInCharge')
+    multiSelectFields = ('certified_signatures', 'item_advice_states',
+                         'item_advice_edit_states', 'item_advice_view_states',
+                         'groups_in_charge')
     # The 'instance' static attribute stores an instance used for assigning
     # default values to a meeting config being created through-the-web.
     instance = None
@@ -309,20 +309,20 @@ class OrgaDescriptor(Descriptor):
     get = classmethod(get)
 
     def __init__(self, id, title, acronym, description='',
-                 active=True, asCopyGroupOn='', groupsInCharge=[],
+                 active=True, as_copy_group_on='', groups_in_charge=[],
                  suffixes=MEETING_GROUP_SUFFIXES):
         self.id = id
         self.setBilingual('title', title)
         self.acronym = acronym
         self.setBilingual('description', description)
         self.parent_path = ''
-        self.itemAdviceStates = []
-        self.itemAdviceEditStates = []
-        self.itemAdviceViewStates = []
-        self.keepAccessToItemWhenAdviceIsGiven = ''
-        self.asCopyGroupOn = asCopyGroupOn
-        self.certifiedSignatures = []
-        self.groupsInCharge = groupsInCharge
+        self.item_advice_states = []
+        self.item_advice_edit_states = []
+        self.item_advice_view_states = []
+        self.keep_access_to_item_when_advice_is_given = ''
+        self.as_copy_group_on = as_copy_group_on
+        self.certified_signatures = []
+        self.groups_in_charge = groups_in_charge
         # Add lists of users (observers, reviewers, etc) ~[UserDescriptor]~
         for suffix in suffixes:
             setattr(self, suffix['fct_id'], [])

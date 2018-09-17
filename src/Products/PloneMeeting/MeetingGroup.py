@@ -287,33 +287,6 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
            p_suffix.'''
         return '%s_%s' % (self.id, suffix)
 
-    def getPloneGroups(self, idsOnly=False, acl=False, suffixes=[]):
-        '''Returns the list of Plone groups tied to this MeetingGroup. If
-           p_acl is True, it returns True PAS groups. Else, it returns Plone
-           wrappers from portal_groups.
-           If some p_suffixes are defined, only these Plone groups are returned.'''
-        res = []
-        for suffix in get_all_suffixes(self.getId()):
-            if suffixes and suffix not in suffixes:
-                continue
-            groupId = self.getPloneGroupId(suffix)
-            if idsOnly:
-                res.append(groupId)
-            else:
-                if acl:
-                    group = self.acl_users.getGroupByName(groupId)
-                else:
-                    group = self.portal_groups.getGroupById(groupId)
-                res.append(group)
-        return res
-
-    def userPloneGroups(self, suffixes=[]):
-        """Return the Plone groups linked to this MeetingGroup
-           the currently connected user is in."""
-        ploneGroups = self.getPloneGroups(idsOnly=True, suffixes=suffixes)
-        tool = api.portal.get_tool('portal_plonemeeting')
-        return list(set(ploneGroups).intersection(set(tool.getPloneGroupsForUser())))
-
     def getOrder(self, associatedGroupIds=None, onlyActive=True):
         '''At what position am I among all the active groups ? If
            p_associatedGroupIds is not None or empty, this method must return

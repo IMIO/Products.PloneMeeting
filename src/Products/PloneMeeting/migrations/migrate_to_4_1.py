@@ -2,12 +2,18 @@
 
 from collections import OrderedDict
 from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
+from collective.contact.plonegroup.config import FUNCTIONS_REGISTRY
+from collective.contact.plonegroup.config import ORGANIZATIONS_REGISTRY
+from collective.contact.plonegroup.utils import get_own_organization
 from eea.facetednavigation.interfaces import ICriteria
 from persistent.mapping import PersistentMapping
 from plone import api
 from Products.CMFPlone.utils import base_hasattr
+from Products.CMFPlone.utils import safe_unicode
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_NEW
+from Products.PloneMeeting.config import MEETINGROLES
 from Products.PloneMeeting.migrations import Migrator
+from zope.i18n import translate
 from zope.interface import alsoProvides
 
 import logging
@@ -255,6 +261,43 @@ class Migrate_To_4_1(Migrator):
             delattr(cfg, 'useUserReplacements')
         logger.info('Done.')
 
+    def _adaptForPlonegroup(self):
+        """Migrate MeetingGroups to contacts and configure plonegroup."""
+        logger.info('Adapting application for plonegroup...')
+        own_org = get_own_organization()
+        if own_org.objectValues():
+            # already migrated
+            logger.info('Done.')
+            return
+
+        enabled_orgs = []
+        for mGroup in self.tool.objectValues('MeetingGroup'):
+            data = {'id': mGroup.getId(),
+                    'title': mGroup.Title(),
+                    'description': mGroup.Description(),
+                    'acronym': mGroup.getAcronym(),
+                    'item_advice_states': mGroup.getItemAdviceStates(),
+                    'item_advice_edit_states': mGroup.getItemAdviceEditStates(),
+                    'item_advice_view_states': mGroup.getItemAdviceViewStates(),
+                    'keep_access_to_item_when_advice_is_given': mGroup.getKeepAccessToItemWhenAdviceIsGiven(),
+                    'as_copy_group_on': mGroup.getAsCopyGroupOn(),
+                    'certified_signatures': mGroup.getCertifiedSignatures(),
+                    'groups_in_charge': mGroup.getGroupsInCharge(),
+                    'selectable_for_plonegroup': True, }
+            contact = api.content.create(container=own_org, type='organization', **data)
+            if mGroup.queryState() == 'active':
+                enabled_orgs.append(contact.UID())
+
+        # configure Plonegroup
+        meeting_roles = MEETINGROLES.keys()
+        functions = [
+            {'fct_id': safe_unicode(role),
+             'fct_title': translate(role, domain='PloneMeeting', context=self.request),
+             'fct_orgs': []} for role in meeting_roles]
+        api.portal.set_registry_record(FUNCTIONS_REGISTRY, functions)
+        api.portal.set_registry_record(ORGANIZATIONS_REGISTRY, enabled_orgs)
+        logger.info('Done.')
+
     def _selectDescriptionInUsedItemAttributes(self):
         """Now that 'MeetingItem.description' is an optional field, we need to
            select it on existing MeetingConfigs."""
@@ -327,6 +370,7 @@ class Migrate_To_4_1(Migrator):
         self._fixItemsWorkflowHistoryType()
         self._migrateToDoListSearches()
         self._adaptForContacts()
+        self._adaptForPlonegroup()
         self._selectDescriptionInUsedItemAttributes()
         self._migrateGroupsShownInDashboardFilter()
         # update local roles to fix 'delay_when_stopped' on advice with delay

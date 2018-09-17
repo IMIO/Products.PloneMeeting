@@ -230,7 +230,7 @@ def onGroupWillBeRemoved(group, event):
     tool = api.portal.get_tool('portal_plonemeeting')
     groupId = group.getId()
 
-    for mGroup in tool.getMeetingGroups(onlyActive=False):
+    for mGroup in tool.get_internal_organizations(only_active=False):
         if groupId in mGroup.getGroupsInCharge():
             raise BeforeDeleteException(translate("can_not_delete_meetinggroup_groupincharge",
                                                   mapping={'group_title': safe_unicode(mGroup.Title())},
@@ -870,26 +870,6 @@ def onDashboardCollectionAdded(collection, event):
     cfg = tool.getMeetingConfig(collection)
     if cfg:
         cfg.updateCollectionColumns()
-
-
-def onPloneGroupDeleted(event):
-    '''Do not delete a Plone group that is linked to a MeetingGroup.'''
-    group_id = event.principal
-    portal = api.portal.get()
-    request = portal.REQUEST
-    tool = api.portal.get_tool('portal_plonemeeting')
-    mGroup = tool.getMeetingGroup(group_id)
-    if mGroup:
-        msg = translate(
-            "You cannot delete the group \"${group_id}\", linked to MeetingGroup \"${meeting_group}\" !",
-            domain='PloneMeeting',
-            mapping={'group_id': group_id, 'meeting_group': safe_unicode(mGroup.Title())},
-            context=request)
-        api.portal.show_message(
-            message=msg,
-            request=request,
-            type='error')
-        raise Redirect(request.get('ACTUAL_URL'))
 
 
 def onHeldPositionRemoved(held_pos, event):

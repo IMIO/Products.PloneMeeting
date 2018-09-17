@@ -2,7 +2,7 @@
 #
 # File: MeetingConfig.py
 #
-# Copyright (c) 2017 by Imio.be
+# Copyright (c) 2017 by Imio.beget
 # Generator: ArchGenXML Version 2.7
 #            http://plone.org/products/archgenxml
 #
@@ -12,6 +12,8 @@
 from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
 from collections import OrderedDict
+from collective.contact.plonegroup.utils import get_organization
+from collective.contact.plonegroup.utils import get_plone_groups
 from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
 from collective.eeafaceted.collectionwidget.interfaces import IDashboardCollection
 from collective.eeafaceted.collectionwidget.utils import _get_criterion
@@ -1732,7 +1734,7 @@ schema = Schema((
                                visible=False),
                      'group':
                         SelectColumn("Custom adviser group",
-                                     vocabulary="listActiveMeetingGroupsForCustomAdvisers"),
+                                     vocabulary="listActiveOrgsForCustomAdvisers"),
                      'gives_auto_advice_on':
                         Column("Custom adviser gives automatic advice on",
                                col_description="gives_auto_advice_on_col_description"),
@@ -1790,7 +1792,7 @@ schema = Schema((
         ),
         schemata="advices",
         multiValued=1,
-        vocabulary='listActiveMeetingGroupsForPowerAdvisers',
+        vocabulary='listActiveOrgsForPowerAdvisers',
         default=defValues.powerAdvisersGroups,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
@@ -3014,9 +3016,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
         res = []
         # display every groups and mark empty advisers group
-        activeGroups = tool.getMeetingGroups(onlyActive=True)
-        nonEmptyMeetingGroups = tool.getMeetingGroups(notEmptySuffix='advisers',
-                                                      onlyActive=False)
+        activeOrgs = tool.get_internal_organizations(only_active=True)
+        nonEmptyOrgs = tool.get_internal_organizations(
+            not_empty_suffix='advisers', only_active=False)
         advisers_msg = translate('advisers',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
@@ -3024,12 +3026,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                                  mapping={'suffix': advisers_msg},
                                                  domain='PloneMeeting',
                                                  context=self.REQUEST)
-        for mGroup in activeGroups:
+        for orga in activeOrgs:
             # display if a group is disabled or empty
-            title = safe_unicode(mGroup.getName()) + u' (%s)' % mGroup.getId()
-            if mGroup not in nonEmptyMeetingGroups:
+            title = safe_unicode(orga.get_title()) + u' (%s)' % orga.UID()
+            if orga not in nonEmptyOrgs:
                 title = title + ' (%s)' % non_empty_advisers_group_msg
-            res.append((mGroup.getId(), title))
+            res.append((orga.UID(), title))
         return DisplayList(res).sortedByValue()
 
     security.declarePrivate('validate_shortName')
@@ -4078,48 +4080,48 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             res.append((t.id, name))
         return res
 
-    security.declarePrivate('listActiveMeetingGroupsForPowerAdvisers')
+    security.declarePrivate('listActiveOrgsForPowerAdvisers')
 
-    def listActiveMeetingGroupsForPowerAdvisers(self):
+    def listActiveOrgsForPowerAdvisers(self):
         """
           Vocabulary for the powerAdvisersGroups field.
-          It returns every active MeetingGroups.
+          It returns every active organizations.
         """
         res = []
         tool = api.portal.get_tool('portal_plonemeeting')
-        for mGroup in tool.getMeetingGroups():
-            res.append((mGroup.getId(), mGroup.getName()))
-        # make sure that if a configuration was defined for a group
+        for orga in tool.get_internal_organizations():
+            res.append((orga.UID(), orga.get_title()))
+        # make sure that if a configuration was defined for an organization
         # that is now inactive, it is still displayed
         storedPowerAdvisersGroups = self.getPowerAdvisersGroups()
         if storedPowerAdvisersGroups:
-            groupsInVocab = [group[0] for group in res]
+            orgsInVocab = [org[0] for org in res]
             for storedPowerAdvisersGroup in storedPowerAdvisersGroups:
-                if storedPowerAdvisersGroup not in groupsInVocab:
-                    mGroup = getattr(tool, storedPowerAdvisersGroup)
-                    res.append((mGroup.getId(), mGroup.getName()))
+                if storedPowerAdvisersGroup not in orgsInVocab:
+                    orga = get_organization(storedPowerAdvisersGroup)
+                    res.append((orga.UID(), orga.get_title()))
         return DisplayList(res).sortedByValue()
 
-    security.declarePrivate('listActiveMeetingGroupsForCustomAdvisers')
+    security.declarePrivate('listActiveOrgsForCustomAdvisers')
 
-    def listActiveMeetingGroupsForCustomAdvisers(self):
+    def listActiveOrgsForCustomAdvisers(self):
         """
           Vocabulary for the customAdvisers.group DatagridField attribute.
-          It returns every active MeetingGroups.
+          It returns every active organizations.
         """
         res = []
         tool = api.portal.get_tool('portal_plonemeeting')
-        for mGroup in tool.getMeetingGroups():
-            res.append((mGroup.getId(), mGroup.getName()))
-        # make sure that if a configuration was defined for a group
+        for orga in tool.get_internal_organizations():
+            res.append((orga.UID(), orga.get_title()))
+        # make sure that if a configuration was defined for an organization
         # that is now inactive, it is still displayed
         storedCustomAdviserGroups = [customAdviser['group'] for customAdviser in self.getCustomAdvisers()]
         if storedCustomAdviserGroups:
-            groupsInVocab = [group[0] for group in res]
+            orgsInVocab = [org[0] for org in res]
             for storedCustomAdviserGroup in storedCustomAdviserGroups:
-                if storedCustomAdviserGroup not in groupsInVocab:
-                    mGroup = getattr(tool, storedCustomAdviserGroup)
-                    res.append((mGroup.getId(), mGroup.getName()))
+                if storedCustomAdviserGroup not in orgsInVocab:
+                    orga = get_organization(storedCustomAdviserGroup)
+                    res.append((orga.UID(), orga.get_title()))
         return DisplayList(res).sortedByValue()
 
     def listItemFieldsToKeepConfigSortingFor(self):
@@ -5261,7 +5263,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 catFolder = self.classifiers
             elif self.getUseGroupsAsCategories():
                 tool = api.portal.get_tool('portal_plonemeeting')
-                data = tool.getMeetingGroups()
+                data = tool.get_internal_organizations()
                 if caching:
                     cache[key] = data
                 return data
@@ -5336,11 +5338,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Returns a list of groups that can be selected on an item as copy for the item.'''
         res = []
         tool = api.portal.get_tool('portal_plonemeeting')
-        meetingGroups = tool.getMeetingGroups()
-        for mg in meetingGroups:
-            meetingPloneGroups = mg.getPloneGroups()
-            for ploneGroup in meetingPloneGroups:
-                res.append((ploneGroup.id, ploneGroup.getProperty('title')))
+        orgs = tool.get_internal_organizations()
+        for orga in orgs:
+            plone_groups = get_plone_groups(orga.UID())
+            for plone_group in plone_groups:
+                res.append((plone_group.id, plone_group.getProperty('title')))
         return DisplayList(tuple(res))
 
     security.declarePublic('getSelf')

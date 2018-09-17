@@ -450,20 +450,20 @@ class UpdateDelayAwareAdvicesView(BrowserView):
           so items with delay-aware advices still addable/editable.
         '''
         tool = api.portal.get_tool('portal_plonemeeting')
-        # compute the indexAdvisers index, take every groups, including disabled ones
+        # compute the indexAdvisers index, take every orgs, including disabled ones
         # then constuct every possibles cases, by default there is 2 possible values :
-        # delay__groupId1__advice_not_given, delay__groupId1__advice_under_edit
-        # delay__groupId2__advice_not_given, delay__groupId2__advice_under_edit
+        # delay__orgUid1__advice_not_given, delay__orgUid1__advice_under_edit
+        # delay__orgUid2__advice_not_given, delay__orgUid2__advice_under_edit
         # ...
-        meetingGroups = tool.getMeetingGroups(onlyActive=False)
-        groupIds = [meetingGroup.getId() for meetingGroup in meetingGroups]
+        orgs = tool.get_internal_organizations(only_active=False)
+        org_uids = [org.UID() for org in orgs]
         indexAdvisers = []
-        for groupId in groupIds:
+        for org_uid in org_uids:
             # advice giveable but not given
-            indexAdvisers.append("delay__%s_advice_not_given" % groupId)
+            indexAdvisers.append("delay__%s_advice_not_given" % org_uid)
             # now advice given and still editable
             for advice_state in ADVICE_STATES_ALIVE:
-                indexAdvisers.append("delay__%s_%s" % (groupId, advice_state))
+                indexAdvisers.append("delay__%s_%s" % (org_uid, advice_state))
         query = {}
         query['indexAdvisers'] = indexAdvisers
         return query
