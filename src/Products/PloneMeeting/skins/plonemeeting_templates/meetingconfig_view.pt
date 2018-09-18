@@ -1138,13 +1138,14 @@
          </a>
         </legend>
         <p class="discreet" i18n:translate="pod_templates_descr"></p><br />
+        <h3 i18n:translate="">Style templates</h3>
         <table class="listing nosort"
                align="right"
                width="100%"
                tal:define="templates python: pFolder.getFolderContents(contentFilter={'portal_type': ('StyleTemplate',)}, full_objects=True)">
           <tr>
             <th class="nosort" width="20px"></th>
-            <th class="nosort" i18n:translate="listingheader_style_templates">Style templates</th>
+            <th class="nosort" i18n:translate="listingheader_title">Title</th>
             <th class="nosort" width="130px"  i18n:translate="heading_actions">Actions</th>
           </tr>
           <tr tal:condition="python: not templates">
@@ -1178,6 +1179,7 @@
           </tal:loop>
         </table>
 
+        <h3 i18n:translate="">Document templates</h3>
         <table class="listing nosort" align="right" width="100%"
                tal:define="templates python:pFolder.getFolderContents(contentFilter={'portal_type': ('ConfigurablePODTemplate', 'DashboardPODTemplate')}, full_objects=True)" width="100%;">
           <tr>
@@ -1205,7 +1207,7 @@
                   <a tal:attributes="href obj/absolute_url;">
                     <img src="#"
                          i18n:attributes="title"
-                         i18n:domain="imio.dashboard"
+                         i18n:domain="collective.eeafaceted.dashboard"
                          title="DashboardPODTemplate"
                          tal:condition="python: obj.portal_type == 'DashboardPODTemplate'"
                          tal:attributes="src string:${portal_url}/++resource++collective.eeafaceted.dashboard/dashboardpodtemplate.png" />

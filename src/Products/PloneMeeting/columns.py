@@ -1,5 +1,6 @@
 # encoding: utf-8
 from collective.eeafaceted.z3ctable.columns import AbbrColumn
+from collective.eeafaceted.z3ctable.columns import ActionsColumn
 from collective.eeafaceted.z3ctable.columns import BaseColumn
 from collective.eeafaceted.z3ctable.columns import BrowserViewCallColumn
 from collective.eeafaceted.z3ctable.columns import CheckBoxColumn
@@ -9,7 +10,6 @@ from collective.eeafaceted.z3ctable.columns import PrettyLinkColumn
 from collective.eeafaceted.z3ctable.columns import VocabularyColumn
 from DateTime import DateTime
 from imio.annex.columns import ActionsColumn as AnnexActionsColumn
-from imio.dashboard.columns import ActionsColumn
 from imio.prettylink.interfaces import IPrettyLink
 from plone import api
 from Products.CMFCore.permissions import ModifyPortalContent
