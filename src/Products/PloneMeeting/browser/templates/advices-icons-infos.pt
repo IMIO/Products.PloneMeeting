@@ -37,7 +37,7 @@
                                tal:attributes="src string:${view/portal_url}/${delay_icon};"/>
                           <span class="advice_delay"
                                 tal:content="advice/delay_infos/left_delay"
-                                tal:attributes="class python: (advice['type'] in ('not_given', 'asked_again') or advice['hidden_during_redaction']) and class_if_not_given or 'advice_delay'" />
+                                tal:attributes="class python: context._advice_is_given(advice['id']) and 'advice_delay' or class_if_not_given" />
                         </tal:defines>
                      </span>
                      <tal:not_asked_advice_icon condition="advice/not_asked">

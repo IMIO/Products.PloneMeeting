@@ -12,6 +12,8 @@ recursive-exclude src svnignore
 recursive-include bin *.sh
 recursive-include docs *.txt
 recursive-include docs *.GPL
+recursive-include src *.csv
+recursive-include src *.ods
 recursive-include src *.GPL
 recursive-include src *.TXT
 recursive-include src *.ZPL
