@@ -20,7 +20,7 @@
 # 02110-1301, USA.
 
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
-from Products.PloneMeeting.profiles import AnnexTypeDescriptor, StyleTemplateDescriptor
+from Products.PloneMeeting.profiles import AnnexTypeDescriptor
 from Products.PloneMeeting.profiles import CategoryDescriptor
 from Products.PloneMeeting.profiles import GroupDescriptor
 from Products.PloneMeeting.profiles import ItemAnnexSubTypeDescriptor
@@ -32,6 +32,7 @@ from Products.PloneMeeting.profiles import PloneGroupDescriptor
 from Products.PloneMeeting.profiles import PloneMeetingConfiguration
 from Products.PloneMeeting.profiles import PodTemplateDescriptor
 from Products.PloneMeeting.profiles import RecurringItemDescriptor
+from Products.PloneMeeting.profiles import StyleTemplateDescriptor
 from Products.PloneMeeting.profiles import UserDescriptor
 
 
@@ -118,8 +119,8 @@ meetingAnnex = AnnexTypeDescriptor(
     'meeting-annex', 'Meeting annex(es)', u'itemAnnex.png', relatedTo='meeting')
 
 # Style Template ---------------------------------------------------------------
-stylesemplate = StyleTemplateDescriptor('styles', 'Styles')
-stylesemplate.odt_file = 'styles.odt'
+stylesTemplate = StyleTemplateDescriptor('styles', 'Styles')
+stylesTemplate.odt_file = 'styles.odt'
 # Pod templates
 agendaTemplate = PodTemplateDescriptor('agendaTemplate', 'Meeting agenda')
 agendaTemplate.odt_file = 'Agenda.odt'
@@ -351,7 +352,7 @@ meetingPma.meetingPowerObserversStates = ('frozen', 'published', 'decided', 'clo
 meetingPma.useVotes = True
 meetingPma.meetingUsers = [pmReviewer1_voter, pmManager_observer,
                            cadranel_signer, muser_voter1, muser_voter2]
-meetingPma.styleTemplates = [stylesemplate]
+meetingPma.styleTemplates = [stylesTemplate]
 meetingPma.podTemplates = [agendaTemplate, decisionsTemplate, itemTemplate, dashboardTemplate]
 meetingPma.selectableCopyGroups = [developers.getIdSuffixed('reviewers'), vendors.getIdSuffixed('reviewers'), ]
 meetingPma.meetingConfigsToCloneTo = [{'meeting_config': 'plonegov-assembly',

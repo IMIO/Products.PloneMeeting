@@ -1141,7 +1141,7 @@
         <table class="listing nosort"
                align="right"
                width="100%"
-               tal:define="templates python: pFolder.getFolderContents(contentFilter={'portal_type': ('StyleTemplate',)},full_objects=True)">
+               tal:define="templates python: pFolder.getFolderContents(contentFilter={'portal_type': ('StyleTemplate',)}, full_objects=True)">
           <tr>
             <th class="nosort" width="20px"></th>
             <th class="nosort" i18n:translate="listingheader_style_templates">Style templates</th>
