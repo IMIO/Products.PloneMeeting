@@ -340,8 +340,8 @@ def postInstall(context):
         params = {'title': u"Mon organisation",
                   'organization_type': u'default', }
         contacts.invokeFactory('organization', PLONEGROUP_ORG, **params)
-        own_orga = contacts[PLONEGROUP_ORG]
-        own_orga.manage_permission(
+        own_org = contacts[PLONEGROUP_ORG]
+        own_org.manage_permission(
             ManageOwnOrganizationFields, ('Manager', 'Site Administrator'),
             acquire=0)
 

@@ -74,11 +74,11 @@ class testContacts(PloneMeetingTestCase):
         # add a new hp in configuration
         self.changeUser('siteadmin')
         person = self.portal.contacts.get('alain-alain')
-        orga = self.portal.contacts.get(PLONEGROUP_ORG)
+        org = self.portal.contacts.get(PLONEGROUP_ORG)
         intids = getUtility(IIntIds)
         new_hp = api.content.create(
             container=person, type='held_position', label='New held position',
-            title='New held position', position=RelationValue(intids.getId(orga)),
+            title='New held position', position=RelationValue(intids.getId(org)),
             usages=['assemblyMember'])
         self.changeUser('pmManager')
         # still no new value as not selected in MeetingConfig.orderedContacts

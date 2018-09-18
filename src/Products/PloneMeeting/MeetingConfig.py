@@ -13,6 +13,7 @@ from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
 from collections import OrderedDict
 from collective.contact.plonegroup.utils import get_organization
+from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_plone_groups
 from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
 from collective.eeafaceted.collectionwidget.interfaces import IDashboardCollection
@@ -3012,13 +3013,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def listSelectableAdvisers(self):
         '''List advisers that will be selectable in the MeetingItem.optionalAdvisers field.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
 
         res = []
         # display every groups and mark empty advisers group
-        activeOrgs = tool.get_internal_organizations(only_active=True)
-        nonEmptyOrgs = tool.get_internal_organizations(
-            not_empty_suffix='advisers', only_active=False)
+        activeOrgs = get_organizations(only_selected=True)
+        nonEmptyOrgs = get_organizations(only_selected=False, not_empty_suffix='advisers')
         advisers_msg = translate('advisers',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
@@ -3026,12 +3025,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                                  mapping={'suffix': advisers_msg},
                                                  domain='PloneMeeting',
                                                  context=self.REQUEST)
-        for orga in activeOrgs:
+        for org in activeOrgs:
             # display if a group is disabled or empty
-            title = safe_unicode(orga.get_title()) + u' (%s)' % orga.UID()
-            if orga not in nonEmptyOrgs:
+            title = safe_unicode(org.get_full_title(first_index=1)) + u' (%s)' % org.UID()
+            if org not in nonEmptyOrgs:
                 title = title + ' (%s)' % non_empty_advisers_group_msg
-            res.append((orga.UID(), title))
+            res.append((org.UID(), title))
         return DisplayList(res).sortedByValue()
 
     security.declarePrivate('validate_shortName')
@@ -4088,9 +4087,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
           It returns every active organizations.
         """
         res = []
-        tool = api.portal.get_tool('portal_plonemeeting')
-        for orga in tool.get_internal_organizations():
-            res.append((orga.UID(), orga.get_title()))
+        for org in get_organizations():
+            res.append((org.UID(), org.get_full_title(first_index=1)))
         # make sure that if a configuration was defined for an organization
         # that is now inactive, it is still displayed
         storedPowerAdvisersGroups = self.getPowerAdvisersGroups()
@@ -4098,8 +4096,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             orgsInVocab = [org[0] for org in res]
             for storedPowerAdvisersGroup in storedPowerAdvisersGroups:
                 if storedPowerAdvisersGroup not in orgsInVocab:
-                    orga = get_organization(storedPowerAdvisersGroup)
-                    res.append((orga.UID(), orga.get_title()))
+                    org = get_organization(storedPowerAdvisersGroup)
+                    res.append((org.UID(), org.get_full_title(first_index=1)))
         return DisplayList(res).sortedByValue()
 
     security.declarePrivate('listActiveOrgsForCustomAdvisers')
@@ -4110,9 +4108,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
           It returns every active organizations.
         """
         res = []
-        tool = api.portal.get_tool('portal_plonemeeting')
-        for orga in tool.get_internal_organizations():
-            res.append((orga.UID(), orga.get_title()))
+        for org in get_organizations():
+            res.append((org.UID(), org.get_full_title(first_index=1)))
         # make sure that if a configuration was defined for an organization
         # that is now inactive, it is still displayed
         storedCustomAdviserGroups = [customAdviser['group'] for customAdviser in self.getCustomAdvisers()]
@@ -4120,8 +4117,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             orgsInVocab = [org[0] for org in res]
             for storedCustomAdviserGroup in storedCustomAdviserGroups:
                 if storedCustomAdviserGroup not in orgsInVocab:
-                    orga = get_organization(storedCustomAdviserGroup)
-                    res.append((orga.UID(), orga.get_title()))
+                    org = get_organization(storedCustomAdviserGroup)
+                    res.append((org.UID(), org.get_full_title(first_index=1)))
         return DisplayList(res).sortedByValue()
 
     def listItemFieldsToKeepConfigSortingFor(self):
@@ -5262,8 +5259,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if classifiers:
                 catFolder = self.classifiers
             elif self.getUseGroupsAsCategories():
-                tool = api.portal.get_tool('portal_plonemeeting')
-                data = tool.get_internal_organizations()
+                data = get_organizations()
                 if caching:
                     cache[key] = data
                 return data
@@ -5337,10 +5333,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def listSelectableCopyGroups(self):
         '''Returns a list of groups that can be selected on an item as copy for the item.'''
         res = []
-        tool = api.portal.get_tool('portal_plonemeeting')
-        orgs = tool.get_internal_organizations()
-        for orga in orgs:
-            plone_groups = get_plone_groups(orga.UID())
+        orgs = get_organizations()
+        for org in orgs:
+            plone_groups = get_plone_groups(org.UID())
             for plone_group in plone_groups:
                 res.append((plone_group.id, plone_group.getProperty('title')))
         return DisplayList(tuple(res))
@@ -5578,15 +5573,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getAdvicesKeptOnSentToOtherMC')
 
-    def getAdvicesKeptOnSentToOtherMC(self, as_group_ids=False, item=None, **kwargs):
-        """If p_as_group_ids is True, we return group_ids from what is stored.
+    def getAdvicesKeptOnSentToOtherMC(self, as_org_uids=False, item=None, **kwargs):
+        """If p_as_org_uids is True, we return org_uids from what is stored.
            We store values as 'adviser pattern', it can looks like :
-           "real_group_id__group_id" or "delay_real_group_id__row_id".
-           We double check regarding item.adviceIndex, indeed, a same group_id can
+           "real_group_id__org_uid" or "delay_real_group_id__row_id".
+           We double check regarding item.adviceIndex, indeed, a same org_uid can
            be returned by the 2 patterns.
         """
         values = self.getField('advicesKeptOnSentToOtherMC').get(self, **kwargs)
-        if not as_group_ids:
+        if not as_org_uids:
             return values
 
         res = []
@@ -5597,16 +5592,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # it ends with a row_id
                 row_id = value.replace(rendered_delay_pattern, '')
                 infos = self._dataForCustomAdviserRowId(row_id)
-                group_id = infos['group']
-                if group_id in item.adviceIndex and \
-                   item.adviceIndex[group_id]['row_id'] == row_id:
+                org_uid = infos['group']
+                if org_uid in item.adviceIndex and \
+                   item.adviceIndex[org_uid]['row_id'] == row_id:
                     res.append(infos['group'])
             else:
-                # it ends with a group id
-                group_id = value.replace(rendered_pattern, '')
-                if group_id in item.adviceIndex and \
-                   not item.adviceIndex[group_id]['row_id']:
-                    res.append(group_id)
+                # it ends with an org_uid
+                org_uid = value.replace(rendered_pattern, '')
+                if org_uid in item.adviceIndex and \
+                   not item.adviceIndex[org_uid]['row_id']:
+                    res.append(org_uid)
         if values and not res:
             # return at least a 'dummy_unexisting_value' because if we return an empty list,
             # it corresponds to nothing selected in MeetingConfig.advicesKeptOnSentToOtherMC

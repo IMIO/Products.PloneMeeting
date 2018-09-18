@@ -517,7 +517,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         cfg = self.tool.getMeetingConfig(self.context)
         cfg_modified = cfg.modified()
         user = api.user.get_current()
-        userGroups = self.tool.getPloneGroupsForUser()
+        userGroups = self.tool.get_plone_groups_for_user()
         # if item is validated, the 'present' action could appear if a meeting
         # is now available for the item to be inserted into
         isPresentable = False
@@ -626,7 +626,7 @@ class MeetingActionsPanelView(BaseActionsPanelView):
         cfg = self.tool.getMeetingConfig(self.context)
         cfg_modified = cfg.modified()
         user = api.user.get_current()
-        userGroups = self.tool.getPloneGroupsForUser()
+        userGroups = self.tool.get_plone_groups_for_user()
         invalidate_meeting_actions_panel_cache = False
         if hasattr(self.context, 'invalidate_meeting_actions_panel_cache'):
             invalidate_meeting_actions_panel_cache = True

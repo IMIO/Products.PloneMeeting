@@ -24,6 +24,7 @@ from AccessControl import ClassSecurityInfo
 from AccessControl.Permission import Permission
 from App.class_init import InitializeClass
 from appy.shared.diff import HtmlDiff
+from collective.contact.plonegroup.utils import get_own_organization
 from collective.excelexport.exportables.dexterityfields import get_exportable_for_fieldname
 from collective.iconifiedcategory.interfaces import IIconifiedInfos
 from DateTime import DateTime
@@ -264,6 +265,15 @@ def cleanMemoize(portal, prefixes=[]):
 
     if 'plone.memoize' in annotations:
         annotations['plone.memoize'].clear()
+
+
+def org_id_to_uid(org_id):
+    '''Return organization UID of organization with given org_id id.'''
+    org = get_own_organization().get(org_id)
+    org_uid = None
+    if org:
+        org_uid = org.UID()
+    return org_uid
 
 
 def createOrUpdatePloneGroup(groupId, groupTitle, groupSuffix):

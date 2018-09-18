@@ -10,6 +10,7 @@
 #
 
 from AccessControl import Unauthorized
+from collective.contact.plonegroup.utils import get_organizations
 from collective.documentviewer.async import queueJob
 from collective.iconifiedcategory.utils import update_all_categorized_elements
 from DateTime import DateTime
@@ -37,7 +38,6 @@ from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import ROOT_FOLDER
 from Products.PloneMeeting.config import TOOL_FOLDER_SEARCHES
-
 from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import addRecurringItemsIfRelevant
 from Products.PloneMeeting.utils import AdviceAfterAddEvent
@@ -210,7 +210,7 @@ def onGroupTransition(mGroup, event):
     mGroup._invalidateCachedVocabularies()
     # invalidate cache for MeetingGroups related methods
     invalidate_cachekey_volatile_for('Products.PloneMeeting.ToolPloneMeeting.getGroupsForUser')
-    invalidate_cachekey_volatile_for('Products.PloneMeeting.ToolPloneMeeting.getPloneGroupsForUser')
+    invalidate_cachekey_volatile_for('Products.PloneMeeting.ToolPloneMeeting.get_plone_groups_for_user')
     invalidate_cachekey_volatile_for('Products.PloneMeeting.ToolPloneMeeting.userIsAmong')
 
 
@@ -230,7 +230,7 @@ def onGroupWillBeRemoved(group, event):
     tool = api.portal.get_tool('portal_plonemeeting')
     groupId = group.getId()
 
-    for mGroup in tool.get_internal_organizations(only_active=False):
+    for mGroup in get_organizations(only_selected=False):
         if groupId in mGroup.getGroupsInCharge():
             raise BeforeDeleteException(translate("can_not_delete_meetinggroup_groupincharge",
                                                   mapping={'group_title': safe_unicode(mGroup.Title())},

@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from collective.contact.core.content.organization import IOrganization
+from collective.contact.core.content.organization import Organization
 from collective.contact.plonegroup.config import ORGANIZATIONS_REGISTRY
 from collective.z3cform.datagridfield import DataGridFieldFactory
 from collective.z3cform.datagridfield import DictRow
@@ -165,6 +166,64 @@ class IPMOrganization(IOrganization):
             raise Invalid(_("You can not select 'No' in field 'Selectable for plonegroup' as this organization "
                             "is currently selected in plonegroup control panel.  Please unselect this organization "
                             "from plonegroup control panel if you want to change this field value."))
+
+
+class PMOrganization(Organization):
+    """ """
+
+    def get_item_advice_states(self, cfg):
+        res = self.item_advice_states
+        if cfg:
+            tmpres = []
+            givenCfgId = cfg.getId()
+            for elt in res:
+                cfgId, state = elt.split('__state__')
+                if cfgId == givenCfgId:
+                    tmpres.append(state)
+            # if nothing redefined for given p_cfg in this organization,
+            # use value defined on the cfg
+            res = tmpres or cfg.getItemAdviceStates()
+        return tuple(res)
+
+    def get_item_advice_edit_states(self, cfg):
+        res = self.item_advice_edit_states
+        if cfg:
+            tmpres = []
+            givenCfgId = cfg.getId()
+            for elt in res:
+                cfgId, state = elt.split('__state__')
+                if cfgId == givenCfgId:
+                    tmpres.append(state)
+            # if nothing redefined for given p_cfg in this organization,
+            # use value defined on the cfg
+            res = tmpres or cfg.getItemAdviceEditStates()
+        return tuple(res)
+
+    def get_item_advice_view_states(self, cfg):
+        res = self.item_advice_view_states
+        if cfg:
+            tmpres = []
+            givenCfgId = cfg.getId()
+            for elt in res:
+                cfgId, state = elt.split('__state__')
+                if cfgId == givenCfgId:
+                    tmpres.append(state)
+            # if nothing redefined for given p_cfg in this organization,
+            # use value defined on the cfg
+            res = tmpres or cfg.getItemAdviceViewStates()
+        return tuple(res)
+
+    def get_keep_access_to_item_when_advice_is_given(self, cfg):
+        """ """
+        res = self.keep_access_to_item_when_advice_is_given
+        if cfg:
+            if not res:
+                res = cfg.getKeepAccessToItemWhenAdviceIsGiven()
+            elif res == '0':
+                res = False
+            else:
+                res = True
+        return res
 
 
 class PMOrganizationSchemaPolicy(DexteritySchemaPolicy):

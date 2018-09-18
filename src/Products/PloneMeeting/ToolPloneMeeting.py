@@ -16,7 +16,9 @@ from collections import OrderedDict
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.config import ORGANIZATIONS_REGISTRY
 from collective.contact.plonegroup.utils import get_organization
+from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_own_organization
+from collective.contact.plonegroup.utils import get_plone_group
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.documentviewer.async import queueJob
 from collective.documentviewer.settings import GlobalSettings
@@ -88,10 +90,8 @@ from Products.PloneMeeting.utils import workday
 from Products.ZCatalog.Catalog import AbstractCatalogBrain
 from ZODB.POSException import ConflictError
 from zope.annotation.interfaces import IAnnotations
-from zope.component import getUtility
 from zope.i18n import translate
 from zope.interface import implements
-from zope.schema.interfaces import IVocabularyFactory
 
 import interfaces
 import OFS.Moniker
@@ -451,49 +451,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def getCustomFields(self, cols):
         return getCustomSchemaFields(schema, self.schema, cols)
 
-    security.declarePublic('get_internal_organizations')
-
-    def get_internal_organizations(self, not_empty_suffix=None, only_active=True, caching=True):
-        '''Gets the organizations from plonegroup-organization.
-           If p_not_empty_suffix is True, we check that organization suffixes passed as argument are not empty.
-           If it is the case, we do not return the organization neither.
-           If p_only_active is True, we also check the organization current review_state.
-           If p_caching is True (by default), the method call will be cached in the REQUEST.
-           WARNING, we can not use ram.cache here because it can not be used when returning
-           persistent objects (single, list, dict, ... of persistent objects), so we need to manage
-           caching manually...'''
-        data = None
-        if caching:
-            key = "tool-get_internal_organizations-%s-%s" % (
-                (not_empty_suffix or ''), str(only_active))
-            cache = IAnnotations(self.REQUEST)
-            data = cache.get(key, None)
-        if data is None:
-            data = []
-            # use the selected_organization_services or organization_services
-            # depending on only_active parameter
-            if only_active:
-                vocab = getUtility(
-                    IVocabularyFactory,
-                    name=u'collective.contact.plonegroup.selected_organization_services')
-            else:
-                vocab = getUtility(
-                    IVocabularyFactory,
-                    name=u'collective.contact.plonegroup.organization_services')
-            for orga in vocab(self):
-                # Check that there is at least one user in the notEmptySuffix
-                # of the Plone group
-                if not_empty_suffix:
-                    ploneGroupId = get_plone_group_id(orga, suffix=not_empty_suffix)
-                    zopeGroup = api.group.get(ploneGroupId)
-                    if len(zopeGroup.getMemberIds()):
-                        data.append(orga)
-                else:
-                    data.append(orga)
-            if caching:
-                cache[key] = data
-        return data
-
     security.declarePublic('getActiveConfigs')
 
     def getActiveConfigs(self):
@@ -513,35 +470,41 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         source_groups = portal.acl_users.source_groups
         return source_groups._principal_groups.byValue(0)
 
-    def getPloneGroupsForUser_cachekey(method, self, userId=None, orga_uid=None):
-        '''cachekey method for self.getPloneGroupsForUser.'''
-        date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting.getPloneGroupsForUser')
+    def get_plone_groups_for_user_cachekey(method, self, userId=None, org_uid=None):
+        '''cachekey method for self.get_plone_groups_for_user.'''
+        date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting.get_plone_groups_for_user')
         return (date,
                 self._users_groups_value(),
                 userId or api.user.get_current(),
-                orga_uid)
+                org_uid)
 
-    security.declarePublic('getPloneGroupsForUser')
+    security.declarePublic('get_plone_groups_for_user')
 
-    @ram.cache(getPloneGroupsForUser_cachekey)
-    def getPloneGroupsForUser(self, userId=None, orga_uid=None):
+    @ram.cache(get_plone_groups_for_user_cachekey)
+    def get_plone_groups_for_user(self, userId=None, org_uid=None):
         """Just return user.getGroups but cached so it is only done once by REQUEST."""
         if userId:
             user = api.user.get(userId)
         else:
             user = api.user.get_current()
         user_groups = user.getGroups()
-        if orga_uid:
-            user_groups = [plone_group for plone_group in user_groups if plone_group.startswith(orga_uid)]
+        if org_uid:
+            user_groups = [plone_group for plone_group in user_groups if plone_group.startswith(org_uid)]
         return user_groups
 
-    def get_orgs_for_user_cachekey(method, self, user_id=None, active=True, suffixes=[], zope=False, omitted_suffixes=[]):
+    def get_orgs_for_user_cachekey(method,
+                                   self,
+                                   user_id=None,
+                                   active=True,
+                                   suffixes=[],
+                                   zope=False,
+                                   omitted_suffixes=[]):
         '''cachekey method for self.get_orgs_for_user.'''
         date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting.get_orgs_for_user')
         return (date,
                 self._users_groups_value(),
                 (user_id or api.user.get_current()),
-                 active, suffixes, zope, omitted_suffixes)
+                active, suffixes, zope, omitted_suffixes)
 
     security.declarePublic('get_orgs_for_user')
 
@@ -556,9 +519,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         res = []
         group_ids = self.get_plone_groups_for_user(user_id)
         if active:
-            orgs = self.get_internal_organizations()
+            orgs = get_organizations()
         else:
-            orgs = self.get_internal_organizations(only_active=False)
+            orgs = get_organizations(only_selected=False)
         for org in orgs:
             for suffix in get_all_suffixes():
                 if suffixes and (suffix not in suffixes):
@@ -590,10 +553,10 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if only_selectable:
             user_orgs = self.get_orgs_for_user(user_id=user_id, suffixes=['creators', ])
             for org in user_orgs:
-                res.append((org.UID(), org.get_title()))
+                res.append((org.UID(), org.get_full_title(first_index=1)))
         else:
-            for org in self.get_internal_organizations():
-                res.append((org.UID(), org.get_title()))
+            for org in get_organizations():
+                res.append((org.UID(), org.get_full_title(first_index=1)))
         return res
 
     def userIsAmong_cachekey(method, self, suffixes, onlyActive=True):
@@ -612,16 +575,16 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            group.  p_suffixes is a list of suffixes.
            If p_onlyActive is True, we will check if the linked organization is active.'''
         if onlyActive:
-            activeOrgsUids = [org.UID() for org in self.get_internal_organizations(only_active=True)]
+            activeOrgUids = [org.UID() for org in get_organizations(only_selected=True)]
         res = False
-        for plone_group_id in self.getPloneGroupsForUser():
+        for plone_group_id in self.get_plone_groups_for_user():
             # check if the groupId ends with a least one of the p_suffixes
             keep_group_id = [suffix for suffix in suffixes if plone_group_id.endswith('_%s' % suffix)]
             if keep_group_id:
                 if onlyActive:
-                    orga = get_organization(plone_group_id)
+                    org = get_organization(plone_group_id)
                     # we could not find the group, for example if suffix is 'powerobservers'
-                    if not orga or orga.UID() not in activeOrgsUids:
+                    if not org or org.UID() not in activeOrgUids:
                         res = True
                         break
                 else:
@@ -913,7 +876,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             groupId = "%s_%s" % (cfg.getId(), POWEROBSERVERS_GROUP_SUFFIX)
         else:
             groupId = "%s_%s" % (cfg.getId(), RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX)
-        if groupId in self.getPloneGroupsForUser():
+        if groupId in self.get_plone_groups_for_user():
             return True
         return False
 
@@ -941,7 +904,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def showPloneMeetingTab_cachekey(method, self, cfg):
         '''cachekey method for self.showPloneMeetingTab.'''
         # we only recompute if user groups changed or self changed
-        return (cfg._p_mtime, self.getPloneGroupsForUser(), cfg)
+        return (cfg._p_mtime, self.get_plone_groups_for_user(), cfg)
 
     @ram.cache(showPloneMeetingTab_cachekey)
     def showPloneMeetingTab(self, cfg):
@@ -1307,7 +1270,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         # Change the proposing group if the item owner does not belong to
         # the defined proposing group, except if p_keepProposingGroup is True
         if not keepProposingGroup:
-            userGroups = self.getGroupsForUser(userId=newOwnerId, suffixes=['creators', ])
+            userGroups = self.get_orgs_for_user(user_id=newOwnerId, suffixes=['creators', ])
             if newItem.getProposingGroup(True) not in userGroups:
                 if userGroups:
                     newItem.setProposingGroup(userGroups[0].getId())
@@ -1467,40 +1430,39 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         logger.info(msg)
         # add a portal_message so admin adding the Plone site knows password
         plone_utils.addPortalMessage(msg, 'warning')
-        for orgaDescr in groups:
+        for orgDescr in groups:
             # Maybe the organization already exists?
             # It could be the case if we are reapplying a configuration
-            orga = getattr(self, orgaDescr.id, None)
-            if not orga:
+            org = getattr(self, orgDescr.id, None)
+            if not org:
                 container = get_own_organization()
-                if orgaDescr.parent_path:
-                    # find parent orga following parent path from container
-                    container = container.restrictedTraverse(orgaDescr.parent_path)
-                orga = api.content.create(
+                if orgDescr.parent_path:
+                    # find parent organization following parent path from container
+                    container = container.restrictedTraverse(orgDescr.parent_path)
+                org = api.content.create(
                     container=container,
                     type='organization',
-                    **orgaDescr.getData())
+                    **orgDescr.getData())
             # Create users
-            for userDescr in orgaDescr.getUsers():
+            for userDescr in orgDescr.getUsers():
                 # if we defined a generated password here above, we use it
                 # either we use the password provided in the applied profile
                 if password:
                     userDescr.password = password
                 self.addUser(userDescr)
             # Add users in the correct Plone groups.
-            orga_uid = orga.UID()
-            for suffix in get_all_suffixes(orga_uid):
-                plone_group_id = get_plone_group_id(orga, suffix)
-                plone_group = api.group.get(plone_group_id)
+            org_uid = org.UID()
+            for suffix in get_all_suffixes(org_uid):
+                plone_group = get_plone_group(org, suffix)
                 group_members = plone_group.getMemberIds()
-                for userDescr in getattr(orgaDescr, suffix):
+                for userDescr in getattr(orgDescr, suffix):
                     if userDescr.id not in group_members:
                         api.group.add_user(group=plone_group, username=userDescr.id)
-            if orgaDescr.active:
-                # add orga to plonegroup organizations
-                orga_registry = api.portal.get_registry_record(ORGANIZATIONS_REGISTRY)
-                orga_registry.append(orga_uid)
-                api.portal.set_registry_record(ORGANIZATIONS_REGISTRY, orga_registry)
+            if orgDescr.active:
+                # add organization to plonegroup organizations
+                org_registry = api.portal.get_registry_record(ORGANIZATIONS_REGISTRY)
+                org_registry.append(org_uid)
+                api.portal.set_registry_record(ORGANIZATIONS_REGISTRY, org_registry)
 
     security.declarePublic('attributeIsUsed')
 
@@ -1780,7 +1742,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
         # we only recompute if cfgs, user groups or params changed
         cfg_infos = [(cfg._p_mtime, cfg.id) for cfg in self.objectValues('MeetingConfig')]
-        return (self.modified(), cfg_infos, self.getPloneGroupsForUser(), config_group, check_access, as_items)
+        return (self.modified(), cfg_infos, self.get_plone_groups_for_user(), config_group, check_access, as_items)
 
     security.declarePublic('getGroupedConfigs')
 

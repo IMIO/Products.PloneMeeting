@@ -10,6 +10,7 @@
 #
 
 from AccessControl import ClassSecurityInfo
+from collective.contact.plonegroup.utils import get_organizations
 from imio.helpers.cache import invalidate_cachekey_volatile_for
 from OFS.ObjectManager import BeforeDeleteException
 from plone import api
@@ -228,10 +229,9 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
         '''Returns a list of groups that will restrict the use of this category for.'''
         res = []
         # Get every Plone group related to an organization
-        tool = api.portal.get_tool('portal_plonemeeting')
-        orgs = tool.get_internal_organizations()
-        for orga in orgs:
-            res.append((orga.UID(), orga.get_title()))
+        orgs = get_organizations()
+        for org in orgs:
+            res.append((org.UID(), org.get_full_title(first_index=1)))
         return DisplayList(tuple(res))
 
     security.declarePublic('listCategoriesOfOtherMCs')

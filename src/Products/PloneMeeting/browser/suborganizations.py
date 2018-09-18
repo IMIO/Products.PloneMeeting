@@ -27,17 +27,17 @@ class PMSubOrganizations(SubOrganizations):
         """ """
         return api.content.get_state(organization) == 'active'
 
-    def may_add_organization(self, orga):
+    def may_add_organization(self, organization):
         """ """
-        return orga.getTypeInfo() in orga.allowedContentTypes()
+        return organization.getTypeInfo() in organization.allowedContentTypes()
 
-    def display_warnings(self, orga):
+    def display_warnings(self, organization):
         """ """
         plonegroup_organizations = api.portal.get_registry_record(ORGANIZATIONS_REGISTRY)
-        orga_uid = orga.UID()
+        org_uid = organization.UID()
         res = []
-        if not orga.selectable_for_plonegroup:
+        if not organization.selectable_for_plonegroup:
             res.append(0)
-        if orga.selectable_for_plonegroup and orga_uid not in plonegroup_organizations:
+        if organization.selectable_for_plonegroup and org_uid not in plonegroup_organizations:
             res.append(1)
         return res

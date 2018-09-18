@@ -1142,7 +1142,7 @@ class ItemsInCopyAdapter(CompoundCriterionBaseAdapter):
     @ram.cache(itemsincopy_cachekey)
     def query_itemsincopy(self):
         '''Queries all items for which the current user is in copyGroups.'''
-        userGroups = self.tool.getPloneGroupsForUser()
+        userGroups = self.tool.get_plone_groups_for_user()
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 # KeywordIndex 'getCopyGroups' use 'OR' by default
                 'getCopyGroups': {'query': userGroups}, }
@@ -1157,7 +1157,7 @@ class BaseItemsToValidateOfHighestHierarchicLevelAdapter(CompoundCriterionBaseAd
         '''Return a list of items that the user can validate regarding his highest hierarchic level.
            So if a user is 'prereviewer' and 'reviewier', the search will only return items
            in state corresponding to his 'reviewer' role.'''
-        userGroups = self.tool.getPloneGroupsForUser()
+        userGroups = self.tool.get_plone_groups_for_user()
         highestReviewerLevel = self.cfg._highestReviewerLevel(userGroups)
         if not highestReviewerLevel:
             # in this case, we do not want to display a result
@@ -1232,7 +1232,7 @@ class BaseItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(CompoundCrit
            take into account lowest levels too.'''
         # search every highest reviewer level for each group of the user
         userMeetingGroups = self.tool.getGroupsForUser()
-        userGroups = self.tool.getPloneGroupsForUser()
+        userGroups = self.tool.get_plone_groups_for_user()
         reviewProcessInfos = []
         for mGroup in userMeetingGroups:
             ploneGroups = []
@@ -1310,7 +1310,7 @@ class BaseItemsToValidateOfMyReviewerGroupsAdapter(CompoundCriterionBaseAdapter)
         '''Return a list of items that the user could validate.  So it returns every items the current
            user is able to validate at any state of the validation process.  So if a user is 'prereviewer'
            and 'reviewer' for a group, the search will return items in both states.'''
-        userGroups = self.tool.getPloneGroupsForUser()
+        userGroups = self.tool.get_plone_groups_for_user()
         reviewProcessInfos = []
         reviewers = reviewersFor(self.cfg.getItemWorkflow())
         for userGroupId in userGroups:
@@ -1777,7 +1777,7 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
         if self.context.meta_type == 'Meeting':
             # if we have a SUFFIXPROFILEPREFIX prefixed group,
             # check using "userIsAmong", this is only done for Meetings
-            if set(self.tool.getPloneGroupsForUser()).intersection(infos['visible_for_groups']):
+            if set(self.tool.get_plone_groups_for_user()).intersection(infos['visible_for_groups']):
                 return True
             # build suffixes to pass to tool.userIsAmong
             suffixes = []
