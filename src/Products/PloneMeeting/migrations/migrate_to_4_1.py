@@ -287,7 +287,7 @@ class Migrate_To_4_1(Migrator):
         for cfg in self.tool.objectValues('MeetingConfig'):
             folder =  cfg.get(TOOL_FOLDER_POD_TEMPLATES)
             allowed_content_types =  folder.getLocallyAllowedTypes()
-            if not 'StyleTemplate' in allowed_content_types:
+            if 'StyleTemplate' not in allowed_content_types:
                 allowed_content_types += ('StyleTemplate',)
                 folder.setLocallyAllowedTypes(allowed_content_types)
                 folder.reindexObject()
