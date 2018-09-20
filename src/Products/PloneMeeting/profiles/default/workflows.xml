@@ -78,6 +78,9 @@
   <type type_id="directory">
      <bound-workflow workflow_id="plonemeeting_onestate_workflow" />
   </type>
+  <type type_id="organization">
+     <bound-workflow workflow_id="plonemeeting_onestate_workflow" />
+  </type>
   <type type_id="annexDecision">
      <bound-workflow workflow_id="" />
   </type>

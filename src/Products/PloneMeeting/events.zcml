@@ -56,21 +56,17 @@
                    zope.container.interfaces.IObjectRemovedEvent"
               handler=".events.onMeetingRemoved" />
 
-  <subscriber for=".interfaces.IMeetingGroup
-                   Products.DCWorkflow.interfaces.IAfterTransitionEvent"
-              handler=".events.onGroupTransition" />
-
-  <subscriber for=".interfaces.IMeetingGroup
+  <subscriber for=".content.organization.IPMOrganization
                    OFS.interfaces.IObjectWillBeRemovedEvent"
-              handler=".events.onGroupWillBeRemoved" />
+              handler=".events.onOrgWillBeRemoved" />
 
   <subscriber for=".interfaces.IMeetingConfig
                    OFS.interfaces.IObjectWillBeRemovedEvent"
               handler=".events.onConfigWillBeRemoved" />
 
-  <subscriber for=".interfaces.IMeetingGroup
+  <subscriber for=".content.organization.IPMOrganization
                    zope.container.interfaces.IObjectRemovedEvent"
-              handler=".events.onGroupRemoved" />
+              handler=".events.onOrgRemoved" />
 
   <subscriber for=".interfaces.IMeetingCategory
                    Products.DCWorkflow.interfaces.IAfterTransitionEvent"

@@ -108,7 +108,7 @@
         <legend>
            <span i18n:translate="documentgenerator_config"></span>
         </legend>
-        <p class="discreet" i18n:translate="documentgenerator_config_descr">These parameters are now managed in the <a i18n:name="docgen_url" i18n:domain="collective.documentgenerator" i18n:translate="" tal:attributes="href string:${portal_url}/@@collective.documentgenerator-controlpanel">Document Generator settings</a>.</p><br />
+        <p i18n:translate="documentgenerator_config_descr">These parameters are now managed in the <a i18n:name="docgen_url" i18n:domain="collective.documentgenerator" i18n:translate="" tal:attributes="href string:${portal_url}/@@collective.documentgenerator-controlpanel">Document Generator settings</a>.</p>
       </fieldset>
 
       <!-- collective.documentviewer configuration -->
@@ -116,14 +116,14 @@
         <legend>
            <span i18n:translate="annexes_preview"></span>
         </legend>
-        <p class="discreet" i18n:translate="annexes_preview_descr"></p><br />
+        <p i18n:translate="annexes_preview_descr"></p><br />
         <tal:auto_convert_enabled condition="context/auto_convert_annexes">
-          <p class="discreet" i18n:translate="annexes_preview_enabled">
+          <p i18n:translate="annexes_preview_enabled">
             <span style='color: green;'>Annexes preview is enabled in the <a i18n:name="documentviewer_url" i18n:domain="collective.documentviewer" i18n:translate="heading_documentviewer_global_settings_form" href="" tal:attributes="href string:${portal_url}/@@global-documentviewer-settings">Global Document Viewer Settings</a>.</span>
           </p>
         </tal:auto_convert_enabled>
         <tal:auto_convert_enabled condition="not: context/auto_convert_annexes">
-          <p class="discreet" i18n:translate="annexes_preview_disabled">
+          <p i18n:translate="annexes_preview_disabled">
             <span style='color: green;'>Annexes preview is disabled in the <a i18n:name="documentviewer_url" i18n:domain="collective.documentviewer" i18n:translate="heading_documentviewer_global_settings_form" href="" tal:attributes="href string:${portal_url}/@@global-documentviewer-settings">Global Document Viewer Settings</a>.</span>
           </p>
         </tal:auto_convert_enabled>

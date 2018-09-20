@@ -36,7 +36,7 @@ from Products.CMFPlone.utils import ToolInit
 from Products.validation import validation
 from Products.validation.validators.BaseValidators import baseValidators
 from Products.validation.validators.BaseValidators import protocols
-from validators import CertifiedSignaturesValidator
+from validators import ATCertifiedSignaturesValidator
 
 import logging
 
@@ -60,7 +60,7 @@ for valid in baseValidators:
         valid.regex_strings = (r'(%s)s?://[^\s\r\n]+' % '|'.join(protocols),)
         valid.compileRegex()
 
-validation.register(CertifiedSignaturesValidator('isValidCertifiedSignatures', title='', description=''))
+validation.register(ATCertifiedSignaturesValidator('isValidCertifiedSignatures', title='', description=''))
 
 
 def initialize(context):

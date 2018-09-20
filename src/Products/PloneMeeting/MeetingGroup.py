@@ -26,12 +26,10 @@ from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from Products.DataGridField import DataGridField
 from Products.DataGridField.Column import Column
 from Products.DataGridField.SelectColumn import SelectColumn
-from Products.PloneMeeting.config import PloneMeetingError
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import WriteRiskyConfig
 from Products.PloneMeeting.utils import computeCertifiedSignatures
 from Products.PloneMeeting.utils import createOrUpdatePloneGroup
-from Products.PloneMeeting.utils import get_all_suffixes
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getFieldContent
 from Products.PloneMeeting.utils import listifySignatures
@@ -315,32 +313,14 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
     security.declarePrivate('at_post_create_script')
 
     def at_post_create_script(self):
-        '''Creates the corresponding Plone groups.
-           by default :
-           - a group for the creators;
-           - a group for the reviewers;
-           - a group for the observers;
-           - a group for the advisers.
-           but there could be other suffixes, check MEETING_GROUP_SUFFIXES.'''
-        # If a group with this id already exists, prevent creation from this
-        # group.
-        for groupSuffix in get_all_suffixes(self.getId()):
-            groupId = self.getPloneGroupId(groupSuffix)
-            ploneGroup = self.portal_groups.getGroupById(groupId)
-            if ploneGroup:
-                raise PloneMeetingError("You can't create this MeetingGroup "
-                                        "because a Plone groupe having id "
-                                        "'%s' already exists." % groupId)
-        self._createOrUpdatePloneGroupForAllSuffixes()
-        self._invalidateCachedVocabularies()
-        self.adapted().onEdit(isCreated=True)  # Call product-specific code
+        ''' '''
+        pass
 
     security.declarePrivate('at_post_edit_script')
 
     def at_post_edit_script(self):
-        self._createOrUpdatePloneGroupForAllSuffixes()
-        self._invalidateCachedVocabularies()
-        self.adapted().onEdit(isCreated=False)
+        """ """
+        pass
 
     def _invalidateCachedVocabularies(self):
         """Clean cache for vocabularies using MeetingGroups."""
@@ -349,11 +329,6 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupsforfacetedfiltervocabulary")
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.groupsinchargevocabulary")
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.askedadvicesvocabulary")
-
-    def _createOrUpdatePloneGroupForAllSuffixes(self):
-        """ """
-        for groupSuffix in get_all_suffixes(self.getId()):
-            self._createOrUpdatePloneGroup(groupSuffix)
 
     def _createOrUpdatePloneGroup(self, groupSuffix):
         '''This will create the PloneGroup that corresponds to me

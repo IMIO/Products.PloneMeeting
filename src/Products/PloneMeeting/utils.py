@@ -392,7 +392,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
     if userInfo and userInfo.getProperty('fullname'):
         userName = safe_unicode(userInfo.getProperty('fullname'))
     # Compute list of MeetingGroups for this user
-    userGroups = ', '.join([g.Title() for g in tool.getGroupsForUser()])
+    userGroups = ', '.join([g.Title() for g in tool.get_orgs_for_user()])
     # Create the message parts
     d = 'PloneMeeting'
     portal = api.portal.get()
@@ -1413,14 +1413,6 @@ def getTransitionToReachState(obj, state):
             res = transition.id
             break
     return res
-
-
-def get_all_suffixes(grp_id):
-    # import EXTRA_ADVICE_SUFFIXES and MEETING_GROUP_SUFFIXES here
-    # as it is monkeypatched by custom profiles
-    from Products.PloneMeeting.config import EXTRA_GROUP_SUFFIXES
-    from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
-    return MEETING_GROUP_SUFFIXES + EXTRA_GROUP_SUFFIXES.get(grp_id, [])
 
 
 def findMeetingAdvicePortalType(context):

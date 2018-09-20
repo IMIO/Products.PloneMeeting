@@ -108,10 +108,10 @@ class AdviceDelaysView(BrowserView):
             adviceId = self.advice['id']
         # MeetingManagers and advisers of the group
         # can access the delay changes history
-        userAdviserGroupIds = [group.getId() for group in self.tool.getGroupsForUser(suffixes=['advisers'])]
+        userAdviserGroupIds = [group.getId() for group in self.tool.get_orgs_for_user(suffixes=['advisers'])]
         if self.tool.isManager(self.context) or \
            adviceId in userAdviserGroupIds or \
-           self.context.getProposingGroup(theObject=True) in self.tool.getGroupsForUser():
+           self.context.getProposingGroup(theObject=True) in self.tool.get_orgs_for_user():
             return True
         else:
             return False
@@ -193,7 +193,7 @@ class AdviceChangeDelayForm(form.EditForm):
         listAvailableDelaysView.cfg = cfg
         # find right advice in MeetingItem.adviceIndex
         currentAdviceData = self.getDataForRowId(data['current_delay_row_id'])
-        listAvailableDelaysView.advice = self.context.adviceIndex[currentAdviceData['group']]
+        listAvailableDelaysView.advice = self.context.adviceIndex[currentAdviceData['org']]
         isAutomatic, linkedRows = cfg._findLinkedRowsFor(data['current_delay_row_id'])
         selectableDelays = listAvailableDelaysView.listSelectableDelays(data['current_delay_row_id'])
         # selectableDelays is a list of tuple containing 3 elements, the first is the row_id
@@ -209,24 +209,24 @@ class AdviceChangeDelayForm(form.EditForm):
                         'gives_auto_advice_on_help_message',
                         'row_id')
         for elt in dataToUpdate:
-            self.context.adviceIndex[currentAdviceData['group']][elt] = newAdviceData[elt]
+            self.context.adviceIndex[currentAdviceData['org']][elt] = newAdviceData[elt]
         # if the advice was already given, we need to update row_id on the given advice object too
-        if not self.context.adviceIndex[currentAdviceData['group']]['type'] == NOT_GIVEN_ADVICE_VALUE:
-            adviceObj = getattr(self.context, self.context.adviceIndex[currentAdviceData['group']]['advice_id'])
+        if not self.context.adviceIndex[currentAdviceData['org']]['type'] == NOT_GIVEN_ADVICE_VALUE:
+            adviceObj = getattr(self.context, self.context.adviceIndex[currentAdviceData['org']]['advice_id'])
             adviceObj.advice_row_id = newAdviceData['row_id']
         # if it is an optional advice, update the MeetingItem.optionalAdvisers
         if not isAutomatic:
             optionalAdvisers = list(self.context.getOptionalAdvisers())
             # remove old value
-            optionalAdvisers.remove('%s__rowid__%s' % (currentAdviceData['group'],
+            optionalAdvisers.remove('%s__rowid__%s' % (currentAdviceData['org'],
                                                        currentAdviceData['row_id']))
             # append new value
-            optionalAdvisers.append('%s__rowid__%s' % (newAdviceData['group'],
+            optionalAdvisers.append('%s__rowid__%s' % (newAdviceData['org'],
                                                        newAdviceData['row_id']))
             self.context.setOptionalAdvisers(tuple(optionalAdvisers))
         else:
             # if it is an automatic advice, set the 'delay_for_automatic_adviser_changed_manually' to True
-            self.context.adviceIndex[currentAdviceData['group']]['delay_for_automatic_adviser_changed_manually'] = True
+            self.context.adviceIndex[currentAdviceData['org']]['delay_for_automatic_adviser_changed_manually'] = True
         self.context.updateLocalRoles()
         # add a line to the item's emergency_change_history
         member = api.user.get_current()
@@ -234,7 +234,7 @@ class AdviceChangeDelayForm(form.EditForm):
                         'actor': member.getId(),
                         'time': DateTime(),
                         'comments': data['comment']}
-        self.context.adviceIndex[currentAdviceData['group']]['delay_changes_history'].append(history_data)
+        self.context.adviceIndex[currentAdviceData['org']]['delay_changes_history'].append(history_data)
         self.request.response.redirect(self.context.absolute_url() + '/#adviceAndAnnexes')
 
     @button.buttonAndHandler(_('Cancel'), name='cancel')

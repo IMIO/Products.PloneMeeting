@@ -9,8 +9,11 @@
 # GNU General Public License (GPL)
 #
 
+from zope.globalrequest import getRequest
 from AccessControl import Unauthorized
+from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organizations
+from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.documentviewer.async import queueJob
 from collective.iconifiedcategory.utils import update_all_categorized_elements
 from DateTime import DateTime
@@ -32,7 +35,6 @@ from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import ITEMTEMPLATESMANAGERS_GROUP_SUFFIX
-from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX
@@ -209,94 +211,96 @@ def onGroupTransition(mGroup, event):
     # invalidate cache of relevant vocabularies
     mGroup._invalidateCachedVocabularies()
     # invalidate cache for MeetingGroups related methods
-    invalidate_cachekey_volatile_for('Products.PloneMeeting.ToolPloneMeeting.getGroupsForUser')
+    invalidate_cachekey_volatile_for('Products.PloneMeeting.ToolPloneMeeting.get_orgs_for_user')
     invalidate_cachekey_volatile_for('Products.PloneMeeting.ToolPloneMeeting.get_plone_groups_for_user')
     invalidate_cachekey_volatile_for('Products.PloneMeeting.ToolPloneMeeting.userIsAmong')
 
 
-def onGroupWillBeRemoved(group, event):
-    '''Checks if the current meetingGroup can be deleted:
+def onOrgWillBeRemoved(current_org, event):
+    '''Checks if the organization can be deleted:
       - it can not be linked to an existing meetingItem;
       - it can not be referenced in an existing MeetingConfig;
       - it can not be used as groupInCharge of another MeetingGroup;
       - the linked ploneGroups must be empty of members.'''
-    # Do lighter checks first...  Check that the meetingGroup is not used
+    # Do lighter checks first...  Check that the organization is not used
     # in a meetingConfig
     # If we are trying to remove the whole Plone Site, bypass this hook.
     # bypass also if we are in the creation process
-    if event.object.meta_type == 'Plone Site' or group._at_creation_flag:
+    if event.object.meta_type == 'Plone Site' or current_org._at_creation_flag:
         return
 
     tool = api.portal.get_tool('portal_plonemeeting')
-    groupId = group.getId()
+    request = getRequest()
+    current_org_uid = current_org.UID()
 
-    for mGroup in get_organizations(only_selected=False):
-        if groupId in mGroup.getGroupsInCharge():
-            raise BeforeDeleteException(translate("can_not_delete_meetinggroup_groupincharge",
-                                                  mapping={'group_title': safe_unicode(mGroup.Title())},
+    for org in get_organizations(only_selected=False):
+        if current_org_uid in org.get_groups_in_charge():
+            raise BeforeDeleteException(translate("can_not_delete_organization_groupincharge",
+                                                  mapping={'org_title': org.get_full_title()},
                                                   domain="plone",
-                                                  context=group.REQUEST))
+                                                  context=request))
 
     for mc in tool.objectValues('MeetingConfig'):
         # The meetingGroup can be referenced in selectableAdvisers/selectableCopyGroups.
-        customAdvisersGroupIds = [customAdviser['group'] for customAdviser in mc.getCustomAdvisers()]
-        if groupId in customAdvisersGroupIds or \
-           groupId in mc.getPowerAdvisersGroups() or \
-           groupId in mc.getSelectableAdvisers():
-            raise BeforeDeleteException(translate("can_not_delete_meetinggroup_meetingconfig",
+        customAdvisersOrgUids = [customAdviser['org'] for customAdviser in mc.getCustomAdvisers()]
+        if current_org_uid in customAdvisersOrgUids or \
+           current_org_uid in mc.getPowerAdvisersGroups() or \
+           current_org_uid in mc.getSelectableAdvisers():
+            raise BeforeDeleteException(translate("can_not_delete_organization_meetingconfig",
                                                   domain="plone",
-                                                  context=group.REQUEST))
-        for groupSuffix in MEETING_GROUP_SUFFIXES:
-            ploneGroupId = group.getPloneGroupId(groupSuffix)
-            if ploneGroupId in mc.getSelectableCopyGroups():
-                raise BeforeDeleteException(translate("can_not_delete_meetinggroup_meetingconfig",
+                                                  context=request))
+        for suffix in get_all_suffixes(current_org_uid):
+            plone_group_id = get_plone_group_id(current_org_uid, suffix)
+            if plone_group_id in mc.getSelectableCopyGroups():
+                raise BeforeDeleteException(translate("can_not_delete_organization_meetingconfig",
                                                       domain="plone",
-                                                      context=group.REQUEST))
+                                                      context=request))
     # Then check that every linked Plone group is empty because we are going to delete them.
     portal = api.portal.get()
-    for suffix in MEETING_GROUP_SUFFIXES:
-        ploneGroupId = group.getPloneGroupId(suffix)
+    for suffix in get_all_suffixes(current_org_uid):
+        plone_group_id = get_plone_group_id(current_org_uid, suffix)
         # using acl_users.source_groups.listAssignedPrincipals will
         # show us 'not found' members
-        groupMembers = portal.acl_users.source_groups.listAssignedPrincipals(ploneGroupId)
+        groupMembers = portal.acl_users.source_groups.listAssignedPrincipals(plone_group_id)
         # groupMembers is something like :
         # [('a_removed_user', '<a_removed_user: not found>'), ('pmCreator1', 'pmCreator1'), ]
         groupsMembersWithoutNotFound = [member for member in groupMembers if 'not found' not in member[1]]
         if groupsMembersWithoutNotFound:
-            raise BeforeDeleteException(translate("can_not_delete_meetinggroup_plonegroup",
+            raise BeforeDeleteException(translate("can_not_delete_organization_plonegroup",
                                                   domain="plone",
-                                                  context=group.REQUEST))
+                                                  context=request))
     # And finally, check that meetingGroup is not linked to an existing item.
     # In the configuration
     for cfg in tool.objectValues('MeetingConfig'):
         for item in (cfg.recurringitems.objectValues('MeetingItem') +
                      cfg.itemtemplates.objectValues('MeetingItem')):
-            if item.getProposingGroup() == groupId or \
-               groupId in item.getAssociatedGroups():
+            if item.getProposingGroup() == current_org_uid or \
+               current_org_uid in item.getAssociatedGroups():
                 raise BeforeDeleteException(
-                    translate("can_not_delete_meetinggroup_config_meetingitem",
+                    translate("can_not_delete_organization_config_meetingitem",
                               domain="plone",
                               mapping={'url': item.absolute_url()},
-                              context=group.REQUEST))
+                              context=request))
     # In the application
     # most of times, the real groupId is stored, but for MeetingItem.copyGroups, we
     # store suffixed elements of the group, so compute suffixed elements for config and compare
     suffixedGroups = set()
-    for groupSuffix in MEETING_GROUP_SUFFIXES:
-        suffixedGroups.add(group.getPloneGroupId(groupSuffix))
+    for suffix in get_all_suffixes():
+        plone_group_id = get_plone_group_id(current_org_uid, suffix)
+        suffixedGroups.add(plone_group_id)
     catalog = api.portal.get_tool('portal_catalog')
     for brain in catalog(meta_type="MeetingItem"):
         obj = brain.getObject()
-        if (obj.getProposingGroup() == groupId) or \
-           (groupId in obj.getAssociatedGroups()) or \
-           (obj.adapted().getGroupInCharge() == groupId) or \
-           (groupId in obj.adviceIndex) or \
+        if (obj.getProposingGroup() == current_org_uid) or \
+           (current_org_uid in obj.getAssociatedGroups()) or \
+           (obj.adapted().getGroupInCharge() == current_org_uid) or \
+           (current_org_uid in obj.adviceIndex) or \
            set(obj.getCopyGroups()).intersection(suffixedGroups):
             # The meetingGroup is linked to an existing item, we can not delete it.
             raise BeforeDeleteException(
-                translate("can_not_delete_meetinggroup_meetingitem",
+                translate("can_not_delete_organization_meetingitem",
                           domain="plone",
-                          context=group.REQUEST))
+                          context=request))
 
 
 def _itemAnnexTypes(cfg):
@@ -419,19 +423,20 @@ def onConfigWillBeRemoved(config, event):
         portal_groups.removeGroup("%s_%s" % (config.getId(), suffix))
 
 
-def onGroupRemoved(group, event):
-    '''Called when a MeetingGroup is removed.'''
+def onOrgRemoved(current_org, event):
+    '''Called when an organization is removed.'''
     # bypass this if we are actually removing the 'Plone Site'
     if event.object.meta_type == 'Plone Site':
         return
 
     # If everything passed correctly, we delete every linked (and empty) Plone groups.
+    current_org_uid = current_org.UID()
     portal_groups = api.portal.get_tool('portal_groups')
-    for suffix in MEETING_GROUP_SUFFIXES:
-        ploneGroupId = group.getPloneGroupId(suffix)
-        pGroup = portal_groups.getGroupById(ploneGroupId)
+    for suffix in get_all_suffixes(current_org_uid):
+        plone_group_id = get_plone_group_id(current_org_uid, suffix)
+        pGroup = portal_groups.getGroupById(plone_group_id)
         if pGroup:
-            portal_groups.removeGroup(ploneGroupId)
+            portal_groups.removeGroup(plone_group_id)
 
     # clean cache for MeetingGroup related vocabularies
     invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")

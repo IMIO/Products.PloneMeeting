@@ -15,6 +15,7 @@ from Acquisition import aq_base
 from collections import OrderedDict
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.config import ORGANIZATIONS_REGISTRY
+from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_own_organization
@@ -80,7 +81,6 @@ from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
 from Products.PloneMeeting.model.adaptations import performModelAdaptations
 from Products.PloneMeeting.profiles import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.profiles import PloneMeetingConfiguration
-from Products.PloneMeeting.utils import get_all_suffixes
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
@@ -523,12 +523,13 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         else:
             orgs = get_organizations(only_selected=False)
         for org in orgs:
-            for suffix in get_all_suffixes():
+            org_uid = org.UID()
+            for suffix in get_all_suffixes(org_uid):
                 if suffixes and (suffix not in suffixes):
                     continue
                 if suffix in omitted_suffixes:
                     continue
-                plone_group_id = get_plone_group_id(org, suffix)
+                plone_group_id = get_plone_group_id(org_uid, suffix)
                 if plone_group_id not in group_ids:
                     continue
                 # If we are here, the user belongs to this group.

@@ -10,12 +10,14 @@ from plone.autoform import directives as form
 from plone.dexterity.schema import DexteritySchemaPolicy
 from plone.supermodel import model
 from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.validators import DXCertifiedSignaturesValidator
 from z3c.form.browser.checkbox import CheckBoxFieldWidget
 from z3c.form.browser.radio import RadioFieldWidget
 from zope import schema
 from zope.interface import Interface
 from zope.interface import Invalid
 from zope.interface import invariant
+from z3c.form import validator
 
 
 class ICertifiedSignaturesRowSchema(Interface):
@@ -45,6 +47,7 @@ class ICertifiedSignaturesRowSchema(Interface):
         description=_("Enter valid from date, use following format : YYYY/MM/DD, "
                       "leave empty so it is always valid."),
         required=False,
+        default=None,
     )
 
     date_to = schema.Date(
@@ -52,6 +55,7 @@ class ICertifiedSignaturesRowSchema(Interface):
         description=_("Enter valid to date, use following format : YYYY/MM/DD, "
                       "leave empty so it is always valid."),
         required=False,
+        default=None,
     )
 
 
@@ -167,9 +171,18 @@ class IPMOrganization(IOrganization):
                             "is currently selected in plonegroup control panel.  Please unselect this organization "
                             "from plonegroup control panel if you want to change this field value."))
 
+validator.WidgetValidatorDiscriminators(
+    DXCertifiedSignaturesValidator,
+    field=IPMOrganization['certified_signatures']
+)
+
 
 class PMOrganization(Organization):
     """ """
+
+    def get_full_title(self, separator=u' / ', first_index=1):
+        """Override to change default first_index from 0 to 1."""
+        return super(PMOrganization, self).get_full_title(separator, first_index)
 
     def get_item_advice_states(self, cfg):
         res = self.item_advice_states

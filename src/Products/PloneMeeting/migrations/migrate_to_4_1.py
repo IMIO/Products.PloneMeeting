@@ -1,12 +1,13 @@
-# -*- coding: utf-8 -*-
-
+# -*- coding: utf-8 -*-from DateTime import DateTime
 from collections import OrderedDict
-from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
 from collective.contact.plonegroup.config import FUNCTIONS_REGISTRY
 from collective.contact.plonegroup.config import ORGANIZATIONS_REGISTRY
 from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_group
 from collective.contact.plonegroup.utils import get_plone_group_id
+from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
+from DateTime import DateTime
+from datetime import date
 from eea.facetednavigation.interfaces import ICriteria
 from persistent.mapping import PersistentMapping
 from plone import api
@@ -278,6 +279,15 @@ class Migrate_To_4_1(Migrator):
         logger.info('Migrating MeetingGroups...')
         enabled_orgs = []
         for mGroup in self.tool.objectValues('MeetingGroup'):
+            cs = mGroup.getCertifiedSignatures()
+            # empty dates must be None, signatureNumber is now signature_number
+            # dates were stored as str, we need datetime now
+            adapted_cs = [
+                {'function': safe_unicode(sign['function']),
+                 'signature_number': sign['signatureNumber'],
+                 'date_from': sign['date_from'] and date.fromtimestamp(int(DateTime(sign['date_from']))) or None,
+                 'date_to': sign['date_to'] and date.fromtimestamp(int(DateTime(sign['date_to']))) or None,
+                 'name': safe_unicode(sign['name'])} for sign in cs]
             data = {'id': mGroup.getId(),
                     'title': mGroup.Title(),
                     'description': mGroup.Description(),
@@ -287,12 +297,14 @@ class Migrate_To_4_1(Migrator):
                     'item_advice_view_states': mGroup.getItemAdviceViewStates(),
                     'keep_access_to_item_when_advice_is_given': mGroup.getKeepAccessToItemWhenAdviceIsGiven(),
                     'as_copy_group_on': mGroup.getAsCopyGroupOn(),
-                    'certified_signatures': mGroup.getCertifiedSignatures(),
+                    'certified_signatures': adapted_cs,
                     'groups_in_charge': mGroup.getGroupsInCharge(),
                     'selectable_for_plonegroup': True, }
             contact = api.content.create(container=own_org, type='organization', **data)
             if mGroup.queryState() == 'active':
                 enabled_orgs.append(contact.UID())
+            # adapt certified_signatures
+            # date
 
         # configure Plonegroup
         suffixes = MEETINGROLES.keys()
@@ -319,6 +331,15 @@ class Migrate_To_4_1(Migrator):
                             continue
                         api.group.add_user(group=new_plone_group, username=member_id)
 
+        own_org = get_own_organization()
+
+        # now that every groups are migrated, we may migrate groups_in_charge
+        # we have old MeetingGroup ids stored, we want organization UIDs
+        for org in own_org.objectValues():
+            if org.groups_in_charge:
+                groups_in_charge = [own_org.get(gic_id).UID() for gic_id in org.groups_in_charge]
+                org.groups_in_charge = groups_in_charge
+
         logger.info('Migrating MeetingConfigs...')
         # adapt MeetingConfigs
         for cfg in self.tool.objectValues('MeetingConfig'):
@@ -329,7 +350,7 @@ class Migrate_To_4_1(Migrator):
                 new_value = v
                 if v.startswith('real_group_id__'):
                     mGroupId = v.replace('real_group_id__', '')
-                    org = get_own_organization().get(mGroupId)
+                    org = own_org.get(mGroupId)
                     new_value = 'real_group_id__{0}'.format(org.UID())
                 adapted_advicesKeptOnSentToOtherMC.append(new_value)
             cfg.setAdvicesKeptOnSentToOtherMC(adapted_advicesKeptOnSentToOtherMC)
@@ -339,29 +360,29 @@ class Migrate_To_4_1(Migrator):
             for v in customAdvisers:
                 new_value = v.copy()
                 mGroupId = new_value.pop('group')
-                org = get_own_organization().get(mGroupId)
-                new_value['orga'] = org.UID()
+                org = own_org.get(mGroupId)
+                new_value['org'] = org.UID()
                 adapted_customAdvisers.append(new_value)
             cfg.setCustomAdvisers(adapted_customAdvisers)
             # groupsHiddenInDashboardFilter
             groupsHiddenInDashboardFilter = cfg.getGroupsHiddenInDashboardFilter()
             adapted_groupsHiddenInDashboardFilter = []
             for v in groupsHiddenInDashboardFilter:
-                org = get_own_organization().get(v)
+                org = own_org.get(v)
                 adapted_groupsHiddenInDashboardFilter.append(org.UID())
             cfg.setGroupsHiddenInDashboardFilter(adapted_groupsHiddenInDashboardFilter)
             # powerAdvisersGroups
             powerAdvisersGroups = cfg.getPowerAdvisersGroups()
             adapted_powerAdvisersGroups = []
             for v in powerAdvisersGroups:
-                org = get_own_organization().get(v)
+                org = own_org.get(v)
                 adapted_powerAdvisersGroups.append(org.UID())
             cfg.setPowerAdvisersGroups(adapted_powerAdvisersGroups)
             # selectableAdvisers
             selectableAdvisers = cfg.getSelectableAdvisers()
             adapted_selectableAdvisers = []
             for v in selectableAdvisers:
-                org = get_own_organization().get(v)
+                org = own_org.get(v)
                 adapted_selectableAdvisers.append(org.UID())
             cfg.setSelectableAdvisers(adapted_selectableAdvisers)
             # selectableCopyGroups
@@ -369,10 +390,13 @@ class Migrate_To_4_1(Migrator):
             adapted_selectableCopyGroups = []
             for v in selectableCopyGroups:
                 mGroupId, suffix = v.rsplit('_', 1)
-                org = get_own_organization().get(mGroupId)
+                org = own_org.get(mGroupId)
                 new_value = get_plone_group_id(org.UID(), suffix)
                 adapted_selectableCopyGroups.append(new_value)
             cfg.setSelectableCopyGroups(adapted_selectableCopyGroups)
+
+        # update TAL conditions
+        self.updateTALConditions(old_word='getGroupsForUser', new_word='get_orgs_for_user')
 
         # adapt MeetingItems
         brains = api.content.find(meta_type='MeetingItem')
@@ -383,11 +407,13 @@ class Migrate_To_4_1(Migrator):
             item = brain.getObject()
             logger.info('Migrating MeetingItem {0}/{1} ({2})'.format(
                 i, len_brains, '/'.join(item.getPhysicalPath())))
+            i = i + 1
             # adviceIndex
-            for mGroupId in item.adviceIndex:
-                org = get_own_organization().get(mGroupId)
+            adviceIndex_copy = item.adviceIndex.copy()
+            for mGroupId in adviceIndex_copy:
+                org = own_org.get(mGroupId)
                 org_uid = org.UID()
-                value = item.adviceIndex[mGroupId].copy()
+                value = adviceIndex_copy[mGroupId].copy()
                 value['id'] = org_uid
                 item.adviceIndex.pop(mGroupId)
                 item.adviceIndex[org_uid] = value
@@ -397,14 +423,15 @@ class Migrate_To_4_1(Migrator):
             adapted_copyGroups = []
             for v in copyGroups:
                 mGroupId, suffix = v.rsplit('_', 1)
-                org = get_own_organization().get(mGroupId)
+                realGroupId = item._realCopyGroupId(mGroupId)
+                org = own_org.get(realGroupId)
                 new_value = get_plone_group_id(org.UID(), suffix)
                 adapted_copyGroups.append(new_value)
             item.setCopyGroups(adapted_copyGroups)
             # groupInCharge
             groupInCharge = item.getGroupInCharge()
             if groupInCharge:
-                org = get_own_organization().get(groupInCharge)
+                org = own_org.get(groupInCharge)
                 item.setGroupInCharge(org.UID())
             else:
                 item.setProposingGroupWithGroupInCharge(u'')
@@ -412,31 +439,35 @@ class Migrate_To_4_1(Migrator):
             optionalAdvisers = item.getOptionalAdvisers()
             adapted_optionalAdvisers = []
             for mGroupId in optionalAdvisers:
-                org = get_own_organization().get(mGroupId)
-                adapted_optionalAdvisers.append(org.UID())
+                realGroupId = mGroupId.split('__rowid__')[0]
+                org = own_org.get(realGroupId)
+                new_value = mGroupId.replace(realGroupId, org.UID())
+                adapted_optionalAdvisers.append(new_value)
             item.setOptionalAdvisers(adapted_optionalAdvisers)
             # proposingGroup
             proposingGroup = item.getProposingGroup()
             if proposingGroup:
-                org = get_own_organization().get(proposingGroup)
+                org = own_org.get(proposingGroup)
                 item.setProposingGroup(org.UID())
             # templateUsingGroups
             templateUsingGroups = item.getTemplateUsingGroups()
             adapted_templateUsingGroups = []
             if templateUsingGroups:
                 for mGroupId in templateUsingGroups:
-                    org = get_own_organization().get(mGroupId)
+                    org = own_org.get(mGroupId)
                     adapted_templateUsingGroups.append(org.UID())
                 item.setTemplateUsingGroups(adapted_templateUsingGroups)
 
             # adapt contained advices
             for advice in item.getAdvices():
-                org = get_own_organization().get(advice.advice_group)
+                org = own_org.get(advice.advice_group)
                 advice.advice_group = org.UID()
 
-            # update item local roles so item and contained elements local roles
-            # are correct
-            item.updateLocalRoles()
+        # update every items local roles when every items have been updated because
+        # linked items (predecessor) may be updated during this process and we have
+        # to make sure their values were already updated
+        # + update local roles will also fix 'delay_when_stopped' on advice with delay
+        self.tool.updateAllLocalRoles(meta_type=('MeetingItem', ))
 
         logger.info('Done.')
 
@@ -514,8 +545,6 @@ class Migrate_To_4_1(Migrator):
         self._adaptForPlonegroup()
         self._selectDescriptionInUsedItemAttributes()
         self._migrateGroupsShownInDashboardFilter()
-        # update local roles to fix 'delay_when_stopped' on advice with delay
-        self.tool.updateAllLocalRoles(meta_type=('MeetingItem', ))
         # too many indexes to update, the rebuild the portal_catalog
         self.refreshDatabase()
 

@@ -152,6 +152,8 @@
            provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
            name="decided-items" />
 
+  <adapter factory=".validators.DXCertifiedSignaturesValidator" />
+
   <!-- IContentDeletable adapter override for PloneMeeting -->
   <adapter for="imio.annex.content.annex.IAnnex"
            factory=".adapters.AnnexContentDeletableAdapter"

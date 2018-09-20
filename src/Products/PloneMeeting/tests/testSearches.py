@@ -433,7 +433,7 @@ class testSearches(PloneMeetingTestCase):
         collection = cfg.searches.searches_items.searchallitemsincopy
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        self.assertEqual(item.getAllCopyGroups(auto_real_group_ids=True),
+        self.assertEqual(item.getAllCopyGroups(auto_real_plone_group_ids=True),
                          ('vendors_reviewers', ))
         self.proposeItem(item)
         self.changeUser('pmReviewer2')

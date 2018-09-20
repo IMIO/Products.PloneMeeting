@@ -9,6 +9,7 @@
 
 from AccessControl import Unauthorized
 from appy.shared.diff import HtmlDiff
+from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.documentviewer.settings import GlobalSettings
 from collective.iconifiedcategory.adapter import CategorizedObjectAdapter
 from collective.iconifiedcategory.adapter import CategorizedObjectInfoAdapter
@@ -891,10 +892,10 @@ class PMWfHistoryAdapter(ImioWfHistoryAdapter):
         if self.context.meta_type == 'MeetingItem':
             if self.cfg.getHideItemHistoryCommentsToUsersOutsideProposingGroup() and \
                not self.tool.isManager(self.context):
-                userMeetingGroupIds = [mGroup.getId() for mGroup in self.tool.getGroupsForUser()]
-                group_managing_item = \
-                    self.context.adapted()._getGroupManagingItem(event['review_state']).getId()
-                if group_managing_item not in userMeetingGroupIds:
+                userOrgUids = [org.UID() for org in self.tool.get_orgs_for_user()]
+                group_managing_item_uid = \
+                    self.context.adapted()._getGroupManagingItem(event['review_state']).UID()
+                if group_managing_item_uid not in userOrgUids:
                     userMayAccessComment = False
         return userMayAccessComment
 
@@ -1106,7 +1107,7 @@ class ItemsOfMyGroupsAdapter(CompoundCriterionBaseAdapter):
     def query_itemsofmygroups(self):
         '''Queries all items of groups of the current user, no matter wich suffix
            of the group the user is in.'''
-        userGroupIds = [mGroup.getId() for mGroup in self.tool.getGroupsForUser(active=False)]
+        userGroupIds = [mGroup.getId() for mGroup in self.tool.get_orgs_for_user(active=False)]
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 'getProposingGroup': {'query': userGroupIds}, }
 
@@ -1231,16 +1232,16 @@ class BaseItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(CompoundCrit
            So get highest hierarchic level of each group of the user and
            take into account lowest levels too.'''
         # search every highest reviewer level for each group of the user
-        userMeetingGroups = self.tool.getGroupsForUser()
-        userGroups = self.tool.get_plone_groups_for_user()
+        userOrgs = self.tool.get_orgs_for_user()
+        userPloneGroups = self.tool.get_plone_groups_for_user()
         reviewProcessInfos = []
-        for mGroup in userMeetingGroups:
+        for org in userOrgs:
             ploneGroups = []
             # find Plone groups of the mGroup the user is in
-            mGroupId = mGroup.getId()
-            for userGroupId in userGroups:
-                if userGroupId.startswith('%s_' % mGroupId):
-                    ploneGroups.append(userGroupId)
+            org_uid = org.UID()
+            for userPloneGroupId in userPloneGroups:
+                if userPloneGroupId.startswith('%s_' % org_uid):
+                    ploneGroups.append(userPloneGroupId)
             # now that we have Plone groups of the mGroup
             # we can get highest hierarchic level and find sub levels
             highestReviewerLevel = self.cfg._highestReviewerLevel(ploneGroups)
@@ -1262,7 +1263,7 @@ class BaseItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(CompoundCrit
                 review_states = [
                     '%s%s' % (prefix_review_state, review_state) for review_state in review_states]
                 reviewProcessInfo = [
-                    '%s__reviewprocess__%s' % (mGroupId, review_state) for review_state in review_states]
+                    '%s__reviewprocess__%s' % (org_uid, review_state) for review_state in review_states]
                 reviewProcessInfos.extend(reviewProcessInfo)
         if not reviewProcessInfos:
             # in this case, we do not want to display a result
@@ -1383,10 +1384,10 @@ class BaseItemsToCorrectAdapter(CompoundCriterionBaseAdapter):
             if review_state in itemWF.states:
                 roles = itemWF.states[review_state].permission_roles[ModifyPortalContent]
                 suffixes = [suffix for suffix, role in MEETINGROLES.items() if role in roles]
-                userGroupIds = [mGroup.getId() for mGroup in self.tool.getGroupsForUser(suffixes=suffixes)]
-                if userGroupIds:
-                    for userGroupId in userGroupIds:
-                        reviewProcessInfos.append('%s__reviewprocess__%s' % (userGroupId, review_state))
+                userOrgIds = [org.UID() for org in self.tool.get_orgs_for_user(suffixes=suffixes)]
+                if userOrgIds:
+                    for userOrgId in userOrgIds:
+                        reviewProcessInfos.append('%s__reviewprocess__%s' % (userOrgId, review_state))
         if not reviewProcessInfos:
             return FIND_NOTHING_QUERY
         # Create query parameters
@@ -1420,7 +1421,7 @@ class ItemsToAdviceAdapter(CompoundCriterionBaseAdapter):
     @ram.cache(itemstoadvice_cachekey)
     def query_itemstoadvice(self):
         '''Queries all items for which the current user must give an advice.'''
-        groups = self.tool.getGroupsForUser(suffixes=['advisers'])
+        groups = self.tool.get_orgs_for_user(suffixes=['advisers'])
         # Consider not_given, asked_again and hidden_during_redaction advices,
         # this search will return 'not delay-aware' and 'delay-aware' advices
         groupIds = [g.getId() + '_advice_not_given' for g in groups] + \
@@ -1448,7 +1449,7 @@ class ItemsToAdviceWithoutDelayAdapter(CompoundCriterionBaseAdapter):
     @ram.cache(itemstoadvicewithoutdelay_cachekey)
     def query_itemstoadvicewithoutdelay(self):
         '''Queries all items for which the current user must give an advice without delay.'''
-        groups = self.tool.getGroupsForUser(suffixes=['advisers'])
+        groups = self.tool.get_orgs_for_user(suffixes=['advisers'])
         # Add a '_advice_not_given' at the end of every group id: we want "not given" advices.
         # this search will only return 'not delay-aware' advices
         groupIds = [g.getId() + '_advice_not_given' for g in groups] + \
@@ -1474,7 +1475,7 @@ class ItemsToAdviceWithDelayAdapter(CompoundCriterionBaseAdapter):
     def query_itemstoadvicewithdelay(self):
         '''Queries all items for which the current user must give an advice with delay.'''
 
-        groups = self.tool.getGroupsForUser(suffixes=['advisers'])
+        groups = self.tool.get_orgs_for_user(suffixes=['advisers'])
         # Add a '_advice_not_given' at the end of every group id: we want "not given" advices.
         # this search will only return 'delay-aware' advices
         groupIds = ['delay__' + g.getId() + '_advice_not_given' for g in groups] + \
@@ -1499,7 +1500,7 @@ class ItemsToAdviceWithExceededDelayAdapter(CompoundCriterionBaseAdapter):
     @ram.cache(itemstoadvicewithexceededdelay_cachekey)
     def query_itemstoadvicewithexceededdelay(self):
         '''Queries all items for which the current user must give an advice with exceeded delay.'''
-        groups = self.tool.getGroupsForUser(suffixes=['advisers'])
+        groups = self.tool.get_orgs_for_user(suffixes=['advisers'])
         # Add a '_delay_exceeded' at the end of every group id: we want "not given" advices.
         # this search will only return 'delay-aware' advices for wich delay is exceeded
         groupIds = ['delay__' + g.getId() + '_advice_delay_exceeded' for g in groups]
@@ -1522,7 +1523,7 @@ class AdvisedItemsAdapter(CompoundCriterionBaseAdapter):
     @ram.cache(adviseditems_cachekey)
     def query_adviseditems(self):
         '''Queries items for which an advice has been given.'''
-        groups = self.tool.getGroupsForUser(suffixes=['advisers'])
+        groups = self.tool.get_orgs_for_user(suffixes=['advisers'])
         # advised items are items that has an advice in a particular review_state
         # just append every available meetingadvice state: we want "given" advices.
         # this search will return every advices
@@ -1557,7 +1558,7 @@ class AdvisedItemsWithDelayAdapter(CompoundCriterionBaseAdapter):
     @ram.cache(adviseditemswithdelay_cachekey)
     def query_adviseditemswithdelay(self):
         '''Queries items for which an advice has been given with delay.'''
-        groups = self.tool.getGroupsForUser(suffixes=['advisers'])
+        groups = self.tool.get_orgs_for_user(suffixes=['advisers'])
         # advised items are items that has an advice in a particular review_state
         # just append every available meetingadvice state: we want "given" advices.
         # this search will only return 'delay-aware' advices
@@ -1689,8 +1690,8 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
         res += self._reader_groups(visible_fors)
         res += self._suffix_proposinggroup(visible_fors)
         if 'adviser_group' in visible_fors:
-            group = self.tool[self.parent.advice_group]
-            res.append(group.getPloneGroupId(suffix='advisers'))
+            plone_group_id = get_plone_group_id(self.parent.advice_group, 'advisers')
+            res.append(plone_group_id)
         return res
 
     def _configgroup_groups(self, visible_fors):
@@ -1710,7 +1711,8 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
             if visible_for.startswith(PROPOSINGGROUPPREFIX):
                 suffix = visible_for.replace(PROPOSINGGROUPPREFIX, '')
                 for group_managing_item in groups_managing_item:
-                    res.append(group_managing_item.getPloneGroupId(suffix))
+                    plone_group_id = get_plone_group_id(group_managing_item.UID(), suffix)
+                    res.append(plone_group_id)
         return res
 
     def _suffix_profile_proposinggroup(self, visible_fors):
@@ -1726,15 +1728,16 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
         res = []
         for visible_for in visible_fors:
             if visible_for == '{0}advices'.format(READERPREFIX):
-                for groupId in self.parent.adviceIndex.keys():
-                    group = self.tool[groupId]
-                    res.append(group.getPloneGroupId(suffix='advisers'))
+                for org_uid in self.parent.adviceIndex:
+                    plone_group_id = get_plone_group_id(org_uid, 'advisers')
+                    res.append(plone_group_id)
             elif visible_for == '{0}copy_groups'.format(READERPREFIX):
-                res = res + list(self.parent.getAllCopyGroups(auto_real_group_ids=True))
+                res = res + list(self.parent.getAllCopyGroups(auto_real_plone_group_ids=True))
             elif visible_for == '{0}groupincharge'.format(READERPREFIX):
-                groupInCharge = self.parent.adapted().getGroupInCharge(True)
+                groupInCharge = self.parent.adapted().getGroupInCharge(theObject=False)
                 if groupInCharge:
-                    res.append(groupInCharge.getPloneGroupId(suffix='observers'))
+                    plone_group_id = get_plone_group_id(groupInCharge, 'observers')
+                    res.append(plone_group_id)
         return res
 
 

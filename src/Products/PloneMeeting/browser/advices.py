@@ -71,7 +71,7 @@ class AdvicesIcons(BrowserView):
            - 'not_given' are in the addable advices;
            - 'hidden_during_redaction' or 'asked_again' are in the editable advices."""
 
-        userAdviserGroupIds = [group.getId() for group in self.tool.getGroupsForUser(suffixes=['advisers'])]
+        userAdviserGroupIds = [group.getId() for group in self.tool.get_orgs_for_user(suffixes=['advisers'])]
         advicesToWarn = {}
 
         def _updateAdvicesToWarn(adviceType):
@@ -139,7 +139,7 @@ class AdvicesIconsInfos(BrowserView):
         self.advicesByType = self.context.getAdvicesByType()
         self.adviceType = adviceType
         self.userAdviserGroupIds = [group.getId() for group in
-                                    self.tool.getGroupsForUser(suffixes=['advisers'])]
+                                    self.tool.get_orgs_for_user(suffixes=['advisers'])]
         return self.index()
 
     def showLinkToInherited(self, adviceIsInherited, adviceHolder):

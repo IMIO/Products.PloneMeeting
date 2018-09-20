@@ -13,6 +13,7 @@ from archetypes.referencebrowserwidget.browser.view import ReferenceBrowserPopup
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.ckeditor.browser.ckeditorfinder import CKFinder
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
+from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.documentgenerator.content.pod_template import IPODTemplate
 from collective.documentgenerator.viewlets.generationlinks import DocumentGeneratorLinksViewlet
 from collective.eeafaceted.batchactions.browser.views import TransitionBatchActionForm
@@ -53,7 +54,6 @@ from Products.PloneMeeting import utils as pm_utils
 from Products.PloneMeeting.config import BARCODE_INSERTED_ATTR_ID
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.interfaces import IMeeting
-from Products.PloneMeeting.utils import get_all_suffixes
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import sendMail
@@ -1197,7 +1197,8 @@ class PMTransitionBatchActionForm(TransitionBatchActionForm):
            and to non MeetingManagers on the meeting_view."""
         tool = api.portal.get_tool('portal_plonemeeting')
         return tool.isManager(self.context) or \
-            (not self.context.meta_type == 'Meeting' and bool(tool.userIsAmong(suffixes=get_all_suffixes(None))))
+            (not self.context.meta_type == 'Meeting' and
+             bool(tool.userIsAmong(suffixes=get_all_suffixes(None))))
 
 
 class PMContentHistoryView(IHContentHistoryView):

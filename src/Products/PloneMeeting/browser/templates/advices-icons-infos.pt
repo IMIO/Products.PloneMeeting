@@ -18,8 +18,7 @@
 
           <tal:comment replace="nothing">List of group names</tal:comment>
           <tal:loop repeat="advice python:advicesByType[adviceType]">
-            <fieldset tal:define="mGroup python: getattr(view.tool, advice['id']);
-                                  memberIsAdviserForGroup python:  advice['id'] in userAdviserGroupIds;
+            <fieldset tal:define="memberIsAdviserForGroup python:  advice['id'] in userAdviserGroupIds;
                                   adviceHolder python: advice.get('adviceHolder', None) or view.context;
                                   adviceHolderIsViewable adviceHolder/isViewable;
                                   obj python: advice.get('advice_id', None) and adviceHolder.get(advice['advice_id'], None);

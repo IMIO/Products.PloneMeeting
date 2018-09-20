@@ -1723,13 +1723,13 @@ class testMeetingItem(PloneMeetingTestCase):
         item._update_after_edit()
         self.assertEquals(item.getAllCopyGroups(),
                           ('developers_reviewers', ))
-        self.assertEquals(item.getAllCopyGroups(auto_real_group_ids=True),
+        self.assertEquals(item.getAllCopyGroups(auto_real_plone_group_ids=True),
                           ('developers_reviewers', ))
         self.tool.vendors.setAsCopyGroupOn("python: item.getProposingGroup() == 'developers' and ['reviewers', ] or []")
         item._update_after_edit()
         self.assertEquals(item.getAllCopyGroups(),
                           ('developers_reviewers', 'auto__vendors_reviewers'))
-        self.assertEquals(item.getAllCopyGroups(auto_real_group_ids=True),
+        self.assertEquals(item.getAllCopyGroups(auto_real_plone_group_ids=True),
                           ('developers_reviewers', 'vendors_reviewers'))
 
     def test_pm_UpdateAdvices(self):

@@ -21,8 +21,8 @@ from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
-from Products.PloneMeeting.indexes import DELAYAWARE_REAL_GROUP_ID_PATTERN
-from Products.PloneMeeting.indexes import REAL_GROUP_ID_PATTERN
+from Products.PloneMeeting.indexes import DELAYAWARE_REAL_ORG_UID_PATTERN
+from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
 from zope.component.hooks import getSite
 from zope.globalrequest import getRequest
 from zope.i18n import translate
@@ -143,8 +143,9 @@ class ItemProposingGroupsVocabulary(object):
     @ram.cache(__call___cachekey)
     def __call__(self, context):
         """ """
-        not_active_orgs = get_organizations(only_selected=False, caching=False)
-        active_orgs = get_organizations(only_selected=False, caching=False)
+        active_orgs = get_organizations(only_selected=True, caching=False)
+        not_active_orgs = [org for org in get_organizations(only_selected=False, caching=False)
+                           if org not in active_orgs]
         res_active = []
         for active_org in active_orgs:
             res_active.append(
@@ -191,8 +192,9 @@ class ItemProposingGroupsForFacetedFilterVocabulary(object):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        not_active_orgs = get_organizations(only_selected=False, caching=False)
-        active_orgs = get_organizations(only_selected=False, caching=False)
+        active_orgs = get_organizations(only_selected=True, caching=False)
+        not_active_orgs = [org for org in get_organizations(only_selected=False, caching=False)
+                           if org not in active_orgs]
         res_active = []
         groupsToHide = cfg.getGroupsHiddenInDashboardFilter()
         res_active = []
@@ -432,18 +434,18 @@ class AskedAdvicesVocabulary(object):
         customAdvisers = self.cfg and self.cfg.getCustomAdvisers() or []
         for customAdviser in customAdvisers:
             if customAdviser['delay']:
-                # build using DELAYAWARE_REAL_GROUP_ID_PATTERN
-                res.append(DELAYAWARE_REAL_GROUP_ID_PATTERN.format(customAdviser['row_id'],
-                                                                   customAdviser['group']))
+                # build using DELAYAWARE_REAL_ORG_UID_PATTERN
+                res.append(DELAYAWARE_REAL_ORG_UID_PATTERN.format(customAdviser['row_id'],
+                                                                  customAdviser['org']))
             else:
-                # build using REAL_GROUP_ID_PATTERN
-                res.append(REAL_GROUP_ID_PATTERN.format(customAdviser['group']))
+                # build using REAL_ORG_UID_PATTERN
+                res.append(REAL_ORG_UID_PATTERN.format(customAdviser['org']))
 
         # classic advisers
         for org in get_organizations(caching=False):
-            formatted = REAL_GROUP_ID_PATTERN.format(org.UID())
+            formatted = REAL_ORG_UID_PATTERN.format(org.UID())
             if formatted not in res:
-                res.append(REAL_GROUP_ID_PATTERN.format(org.UID()))
+                res.append(REAL_ORG_UID_PATTERN.format(org.UID()))
         # remove duplicates, it can be the case when several custom advisers
         # not delay aware are defined for the same group
         return list(set(res))
@@ -489,18 +491,21 @@ class AskedAdvicesVocabulary(object):
         advisers = self._getAdvisers()
         for adviser in advisers:
             termTitle = None
-            if adviser.startswith(REAL_GROUP_ID_PATTERN.format('')):
-                termTitle = getattr(self.tool, adviser.split(REAL_GROUP_ID_PATTERN.format(''))[-1]).getName()
-            elif adviser.startswith(DELAYAWARE_REAL_GROUP_ID_PATTERN.format('')):
-                row_id = adviser.split(DELAYAWARE_REAL_GROUP_ID_PATTERN.format(''))[-1]
+            if adviser.startswith(REAL_ORG_UID_PATTERN.format('')):
+                org_uid = adviser.split(REAL_ORG_UID_PATTERN.format(''))[-1]
+                org = get_organization(org_uid)
+                termTitle = org.get_full_title()
+            elif adviser.startswith(DELAYAWARE_REAL_ORG_UID_PATTERN.format('')):
+                row_id = adviser.split(DELAYAWARE_REAL_ORG_UID_PATTERN.format(''))[-1]
                 delayAwareAdviser = self.cfg._dataForCustomAdviserRowId(row_id)
                 delay = safe_unicode(delayAwareAdviser['delay'])
                 delay_label = safe_unicode(delayAwareAdviser['delay_label'])
-                group_name = safe_unicode(getattr(self.tool, delayAwareAdviser['group']).getName())
+                org = get_organization(delayAwareAdviser['org'])
+                org_title = org.get_full_title()
                 if delay_label:
                     termTitle = translate('advice_delay_with_label',
                                           domain='PloneMeeting',
-                                          mapping={'group_name': group_name,
+                                          mapping={'group_name': org_title,
                                                    'delay': delay,
                                                    'delay_label': delay_label},
                                           default='${group_name} - ${delay} day(s) (${delay_label})',
@@ -508,7 +513,7 @@ class AskedAdvicesVocabulary(object):
                 else:
                     termTitle = translate('advice_delay_without_label',
                                           domain='PloneMeeting',
-                                          mapping={'group_name': group_name,
+                                          mapping={'group_name': org_title,
                                                    'delay': delay},
                                           default='${group_name} - ${delay} day(s)',
                                           context=context.REQUEST).encode('utf-8')
