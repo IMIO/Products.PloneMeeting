@@ -21,7 +21,7 @@ from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
-from Products.PloneMeeting.indexes import DELAYAWARE_REAL_ORG_UID_PATTERN
+from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
 from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
 from zope.component.hooks import getSite
 from zope.globalrequest import getRequest
@@ -434,9 +434,8 @@ class AskedAdvicesVocabulary(object):
         customAdvisers = self.cfg and self.cfg.getCustomAdvisers() or []
         for customAdviser in customAdvisers:
             if customAdviser['delay']:
-                # build using DELAYAWARE_REAL_ORG_UID_PATTERN
-                res.append(DELAYAWARE_REAL_ORG_UID_PATTERN.format(customAdviser['row_id'],
-                                                                  customAdviser['org']))
+                # build using DELAYAWARE_ROW_ID_PATTERN
+                res.append(DELAYAWARE_ROW_ID_PATTERN.format(customAdviser['row_id']))
             else:
                 # build using REAL_ORG_UID_PATTERN
                 res.append(REAL_ORG_UID_PATTERN.format(customAdviser['org']))
@@ -495,8 +494,8 @@ class AskedAdvicesVocabulary(object):
                 org_uid = adviser.split(REAL_ORG_UID_PATTERN.format(''))[-1]
                 org = get_organization(org_uid)
                 termTitle = org.get_full_title()
-            elif adviser.startswith(DELAYAWARE_REAL_ORG_UID_PATTERN.format('')):
-                row_id = adviser.split(DELAYAWARE_REAL_ORG_UID_PATTERN.format(''))[-1]
+            elif adviser.startswith(DELAYAWARE_ROW_ID_PATTERN.format('')):
+                row_id = adviser.split(DELAYAWARE_ROW_ID_PATTERN.format(''))[-1]
                 delayAwareAdviser = self.cfg._dataForCustomAdviserRowId(row_id)
                 delay = safe_unicode(delayAwareAdviser['delay'])
                 delay_label = safe_unicode(delayAwareAdviser['delay_label'])
@@ -505,7 +504,7 @@ class AskedAdvicesVocabulary(object):
                 if delay_label:
                     termTitle = translate('advice_delay_with_label',
                                           domain='PloneMeeting',
-                                          mapping={'group_name': org_title,
+                                          mapping={'org_title': org_title,
                                                    'delay': delay,
                                                    'delay_label': delay_label},
                                           default='${group_name} - ${delay} day(s) (${delay_label})',
@@ -513,7 +512,7 @@ class AskedAdvicesVocabulary(object):
                 else:
                     termTitle = translate('advice_delay_without_label',
                                           domain='PloneMeeting',
-                                          mapping={'group_name': org_title,
+                                          mapping={'org_title': org_title,
                                                    'delay': delay},
                                           default='${group_name} - ${delay} day(s)',
                                           context=context.REQUEST).encode('utf-8')

@@ -22,7 +22,7 @@
 
 from AccessControl import Unauthorized
 from plone import api
-from Products.PloneMeeting.indexes import DELAYAWARE_REAL_ORG_UID_PATTERN
+from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
 from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
 
 import logging
@@ -91,7 +91,7 @@ def lookForAdvisers(group_id):
     for mc in tool.objectValues('MeetingConfig'):
         delayAwareCustomAdvisersRowIds += [customAdviser['row_id'] for customAdviser in mc.getCustomAdvisers()
                                            if (customAdviser['group'] == group_id and customAdviser['delay'])]
-    delay_aware_values = [DELAYAWARE_REAL_ORG_UID_PATTERN.format(delay_aware_group_id)
+    delay_aware_values = [DELAYAWARE_ROW_ID_PATTERN.format(delay_aware_group_id)
                           for delay_aware_group_id in delayAwareCustomAdvisersRowIds]
     real_group_id_value = REAL_ORG_UID_PATTERN.format(group_id)
 

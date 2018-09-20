@@ -24,7 +24,7 @@ from zope.component import getAdapter
 
 
 REAL_ORG_UID_PATTERN = 'real_org_uid__{0}'
-DELAYAWARE_REAL_ORG_UID_PATTERN = 'delay_real_org_uid__{0}'
+DELAYAWARE_ROW_ID_PATTERN = 'delay_row_id__{0}'
 
 
 @indexer(IItem)
@@ -312,11 +312,11 @@ def _to_coded_adviser_index(obj, org_uid, advice_infos):
     for suffix in suffixes:
         if isDelayAware:
             res.append('delay__' + org_uid + suffix)
-            # 'real_org_uid_'
-            real_org_uid = DELAYAWARE_REAL_ORG_UID_PATTERN.format(advice_infos['row_id'])
-            res.append(real_org_uid)
-            # 'real_org_uid_' with suffixed advice_type
-            res.append(real_org_uid + '__' + advice_type)
+            # 'delay_row_id_'
+            delay_row_id = DELAYAWARE_ROW_ID_PATTERN.format(advice_infos['row_id'])
+            res.append(delay_row_id)
+            # 'delay_row_id_' with suffixed advice_type
+            res.append(delay_row_id + '__' + advice_type)
         else:
             res.append(org_uid + suffix)
             # 'real_org_uid_'

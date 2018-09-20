@@ -15,6 +15,8 @@ from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_NEW
 from Products.PloneMeeting.config import MEETINGROLES
+from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
+from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
 from Products.PloneMeeting.migrations import Migrator
 from zope.i18n import translate
 from zope.interface import alsoProvides
@@ -343,6 +345,33 @@ class Migrate_To_4_1(Migrator):
         logger.info('Migrating MeetingConfigs...')
         # adapt MeetingConfigs
         for cfg in self.tool.objectValues('MeetingConfig'):
+            # migrate DashboardCollections using indexAdvisers
+            for brain in api.content.find(context=cfg.searches, portal_type='DashboardCollection'):
+                dc = brain.getObject()
+                query = dc.query
+                found = False
+                adapted_query = []
+                for line in query:
+                    adapted_line = line.copy()
+                    if line['i'] == 'indexAdvisers':
+                        found = True
+                        new_v = []
+                        for old_v in line['v']:
+                            if old_v.startswith('real_group_id__'):
+                                # it is a group_id, turn it to org_uid
+                                prefix, group_id = old_v.split('real_group_id__')
+                                new_v.append(REAL_ORG_UID_PATTERN.format(own_org.get(group_id).UID()))
+                            elif old_v.startswith('delay_real_group_id__'):
+                                # row_id, just change prefix
+                                new_v.append(old_v.replace(
+                                    'delay_real_group_id__',
+                                    DELAYAWARE_ROW_ID_PATTERN.format('')))
+                        adapted_line['v'] = new_v
+                    adapted_query.append(adapted_line)
+                if found:
+                    dc.query = adapted_query
+                    dc._p_changed = True
+
             # advicesKeptOnSentToOtherMC
             advicesKeptOnSentToOtherMC = cfg.getAdvicesKeptOnSentToOtherMC()
             adapted_advicesKeptOnSentToOtherMC = []

@@ -87,7 +87,7 @@ from Products.PloneMeeting.config import TOOL_FOLDER_POD_TEMPLATES
 from Products.PloneMeeting.config import TOOL_FOLDER_RECURRING_ITEMS
 from Products.PloneMeeting.config import TOOL_FOLDER_SEARCHES
 from Products.PloneMeeting.config import WriteRiskyConfig
-from Products.PloneMeeting.indexes import DELAYAWARE_REAL_ORG_UID_PATTERN
+from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
 from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
 from Products.PloneMeeting.interfaces import IMeeting
 from Products.PloneMeeting.interfaces import IMeetingConfig
@@ -3250,7 +3250,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # the rule is in use, check every items if the rule is used
             catalog = api.portal.get_tool('portal_catalog')
             brains = catalog(portal_type=self.getItemTypeName(),
-                             indexAdvisers=[DELAYAWARE_REAL_ORG_UID_PATTERN.format(row_id),
+                             indexAdvisers=[DELAYAWARE_ROW_ID_PATTERN.format(row_id),
                                             REAL_ORG_UID_PATTERN.format(row_id)])
             if brains:
                 item = brains[0].getObject()
@@ -5585,7 +5585,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             return values
 
         res = []
-        rendered_delay_pattern = DELAYAWARE_REAL_ORG_UID_PATTERN.format('')
+        rendered_delay_pattern = DELAYAWARE_ROW_ID_PATTERN.format('')
         rendered_pattern = REAL_ORG_UID_PATTERN.format('')
         for value in values:
             if value.startswith(rendered_delay_pattern):
