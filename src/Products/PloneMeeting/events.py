@@ -912,3 +912,8 @@ def onHeldPositionRemoved(held_pos, event):
             request=held_pos.REQUEST,
             type='error')
         raise Redirect(held_pos.REQUEST.get('HTTP_REFERER'))
+
+
+def onPloneGroupCreated(self):
+    """ """
+    # import ipdb; ipdb.set_trace()

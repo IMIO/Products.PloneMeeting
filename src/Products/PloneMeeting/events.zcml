@@ -131,6 +131,12 @@
                    OFS.interfaces.IObjectWillBeRemovedEvent"
               handler=".events.onHeldPositionRemoved" />
 
+  <!-- collective.contact.plonegroup group created event -->
+  <subscriber
+      for="Products.PluggableAuthService.interfaces.events.IPrincipalCreatedEvent"
+      handler=".events.onPloneGroupCreated"
+      />
+
   <!-- DashboardCollection events -->
   <subscriber for="collective.eeafaceted.collectionwidget.interfaces.IDashboardCollection
                    zope.lifecycleevent.interfaces.IObjectAddedEvent"

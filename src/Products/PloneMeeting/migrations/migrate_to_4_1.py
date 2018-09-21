@@ -280,6 +280,7 @@ class Migrate_To_4_1(Migrator):
 
         logger.info('Migrating MeetingGroups...')
         enabled_orgs = []
+        every_orgs = []
         for mGroup in self.tool.objectValues('MeetingGroup'):
             cs = mGroup.getCertifiedSignatures()
             # empty dates must be None, signatureNumber is now signature_number
@@ -302,11 +303,11 @@ class Migrate_To_4_1(Migrator):
                     'certified_signatures': adapted_cs,
                     'groups_in_charge': mGroup.getGroupsInCharge(),
                     'selectable_for_plonegroup': True, }
-            contact = api.content.create(container=own_org, type='organization', **data)
+            new_org = api.content.create(container=own_org, type='organization', **data)
+            new_org_uid = new_org.UID()
             if mGroup.queryState() == 'active':
-                enabled_orgs.append(contact.UID())
-            # adapt certified_signatures
-            # date
+                enabled_orgs.append(new_org_uid)
+            every_orgs.append(new_org_uid)
 
         # configure Plonegroup
         suffixes = MEETINGROLES.keys()
@@ -314,7 +315,21 @@ class Migrate_To_4_1(Migrator):
             {'fct_id': safe_unicode(suffix),
              'fct_title': translate(suffix, domain='PloneMeeting', context=self.request),
              'fct_orgs': []} for suffix in suffixes]
+        # extra suffixes
+        from Products.PloneMeeting.config import EXTRA_GROUP_SUFFIXES
+        extra_suffixes = EXTRA_GROUP_SUFFIXES.copy()
+        # append extra_suffixes to functions, these suffixes have 'fct_orgs'
+        for extra_suffix, extra_group_ids in extra_suffixes.items():
+            # turn extra_group_ids to extra_org_uids
+            extra_org_uids = [own_org.get(group_id).UID() for group_id in extra_group_ids]
+            functions.append(
+                {'fct_id': safe_unicode(extra_suffix),
+                 'fct_title': translate(extra_suffix, domain='PloneMeeting', context=self.request),
+                 'fct_orgs': extra_org_uids})
         api.portal.set_registry_record(FUNCTIONS_REGISTRY, functions)
+        # first set every organizations so every subgroups are created
+        # then set only enabled orgs
+        api.portal.set_registry_record(ORGANIZATIONS_REGISTRY, every_orgs)
         api.portal.set_registry_record(ORGANIZATIONS_REGISTRY, enabled_orgs)
 
         logger.info('Transfering users to new Plone groups...')
