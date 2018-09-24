@@ -23,6 +23,7 @@
 #
 
 from AccessControl import Unauthorized
+from collective.contact.plonegroup.utils import get_plone_groups
 from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.utils import get_categories
 from collective.iconifiedcategory.utils import get_categorized_elements
@@ -631,33 +632,34 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         clonedItem = item.cloneToOtherMeetingConfig(cfg2Id)
         self.assertEqual([annex.portal_type for annex in get_annexes(clonedItem)], [])
 
-    def test_pm_GetGroupsForUser(self):
-        '''getGroupsForUser check in with Plone subgroups a user is and
-           returns corresponding MeetingGroups.'''
+    def test_pm_get_orgs_for_user(self):
+        '''get_orgs_for_user check in with Plone subgroups a user is and
+           returns corresponding organizations.'''
         self.changeUser('pmManager')
         # pmManager is in every 'developers' Plone groups except 'prereviewers'
         # and in the 'vendors_advisers' Plone group and in the _meetingmanagers groups
-        dev = self.meetingConfig.developers
+        dev = self.own_org.developers
+        dev_uid = dev.UID()
         globalGroups = ['AuthenticatedUsers']
         for cfg in self.tool.objectValues('MeetingConfig'):
             globalGroups.append('%s_meetingmanagers' % cfg.getId())
-        pmManagerGroups = dev.getPloneGroups(idsOnly=True) + ['vendors_advisers', ] + globalGroups
+        pmManagerGroups = get_plone_groups(dev_uid, ids_only=True) + ['vendors_advisers', ] + globalGroups
         pmManagerGroups.remove('developers_prereviewers')
         self.assertTrue(set(self.member.getGroups()) == set(pmManagerGroups))
-        self.assertTrue([mGroup.getId() for mGroup in self.tool.getGroupsForUser()] ==
+        self.assertTrue([mGroup.getId() for mGroup in self.tool.get_orgs_for_user()] ==
                         ['developers', 'vendors'])
         # check the 'suffix' parameter, it will check that user is in a Plone group of that suffix
         # here, 'pmManager' is only in the '_creators' or 'developers'
-        self.assertTrue([mGroup.getId() for mGroup in self.tool.getGroupsForUser(suffixes=['reviewers'])] ==
+        self.assertTrue([mGroup.getId() for mGroup in self.tool.get_orgs_for_user(suffixes=['reviewers'])] ==
                         ['developers'])
         # check the 'omittedSuffixes' parameter, it will not consider Plone group having that suffix
         # here, if we omit the 'advisers' suffix, the 'vendors' MeetingGroup will not be returned
-        self.assertTrue([mGroup.getId() for mGroup in self.tool.getGroupsForUser(omittedSuffixes=('advisers', ))] ==
+        self.assertTrue([mGroup.getId() for mGroup in self.tool.get_orgs_for_user(omitted_suffixes=('advisers', ))] ==
                         ['developers'])
         # we can get MeetingGroup for another user
         pmCreator1 = self.portal.portal_membership.getMemberById('pmCreator1')
         self.assertTrue(pmCreator1.getGroups() == ['AuthenticatedUsers', 'developers_creators'])
-        self.assertTrue([mGroup.getId() for mGroup in self.tool.getGroupsForUser(userId='pmCreator1')] ==
+        self.assertTrue([mGroup.getId() for mGroup in self.tool.get_orgs_for_user(user_id='pmCreator1')] ==
                         ['developers', ])
 
         # the 'active' parameter will return only active MeetingGroups
@@ -665,17 +667,10 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.changeUser('admin')
         self.do(self.tool.vendors, 'deactivate')
         self.changeUser('pmManager')
-        self.assertTrue([mGroup.getId() for mGroup in self.tool.getGroupsForUser(active=True)] ==
+        self.assertTrue([mGroup.getId() for mGroup in self.tool.get_orgs_for_user(active=True)] ==
                         ['developers', ])
-        self.assertTrue([mGroup.getId() for mGroup in self.tool.getGroupsForUser(active=False)] ==
+        self.assertTrue([mGroup.getId() for mGroup in self.tool.get_orgs_for_user(active=False)] ==
                         ['developers', 'vendors', ])
-        self.changeUser('admin')
-        self.do(self.tool.vendors, 'activate')
-        self.changeUser('pmManager')
-        # if we pass a 'zope=True' parameter, it will actually return
-        # Plone groups the user is in, no more MeetingGroups
-        self.assertTrue(set([group.getId() for group in self.tool.getGroupsForUser(zope=True)]) ==
-                        set([group for group in pmManagerGroups if group not in globalGroups]))
 
     def test_pm_UpdateCopyGroups(self):
         """Test the updateAllLocalRoles method that update every items when configuration changed.

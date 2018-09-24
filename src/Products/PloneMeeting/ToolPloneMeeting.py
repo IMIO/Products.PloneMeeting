@@ -14,7 +14,6 @@ from AccessControl import Unauthorized
 from Acquisition import aq_base
 from collections import OrderedDict
 from collective.behavior.talcondition.utils import _evaluateExpression
-from collective.contact.plonegroup.config import ORGANIZATIONS_REGISTRY
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
@@ -84,6 +83,7 @@ from Products.PloneMeeting.profiles import PloneMeetingConfiguration
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
+from Products.PloneMeeting.utils import group_to_org
 from Products.PloneMeeting.utils import monthsIds
 from Products.PloneMeeting.utils import weekdaysIds
 from Products.PloneMeeting.utils import workday
@@ -509,12 +509,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('get_orgs_for_user')
 
     @ram.cache(get_orgs_for_user_cachekey)
-    def get_orgs_for_user(self, user_id=None, active=True, suffixes=[], zope=False, omitted_suffixes=[]):
+    def get_orgs_for_user(self, user_id=None, active=True, suffixes=[], omitted_suffixes=[]):
         '''Gets the organizations p_user_id belongs to. If p_user_id is None, we use the
            authenticated user. If active is True, we select only active
            organizations. If p_suffixes is not empty, we select only orgs having
-           at least one of p_suffixes. If p_zope is False, we return organizations;
-           else, we return Plone groups. If p_omitted_suffixes, we do not consider
+           at least one of p_suffixes. If p_omitted_suffixes, we do not consider
            orgs the user is in using those suffixes.'''
         res = []
         group_ids = self.get_plone_groups_for_user(user_id)
@@ -533,13 +532,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 if plone_group_id not in group_ids:
                     continue
                 # If we are here, the user belongs to this group.
-                if not zope:
-                    # Add the organization
-                    if org not in res:
-                        res.append(org)
-                else:
-                    # Add the Plone group
-                    res.append(api.group.get(plone_group_id))
+                # Add the organization
+                if org not in res:
+                    res.append(org)
         return res
 
     security.declarePublic('get_selectable_orgs')
@@ -626,6 +621,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            data like images or templates that need to be attached to some
            sub-objects of the meeting config will be searched there.'''
         cData = configData.getData()
+        # turn group ids into org uids
+        for field_name in ['selectableCopyGroups', 'selectableAdvisers']:
+            data = cData.get(field_name)
+            data = [group_to_org(suffixed_group_id) for suffixed_group_id in data]
+            cData[field_name] = data
         if cData['id'] in self.objectIds():
             logger.info(
                 'A MeetingConfig with id {0} already exists, passing...'.format(
@@ -1415,11 +1415,37 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         for userDescr in usersOutsideGroups:
             self.addUser(userDescr)
 
-    security.declarePublic('addUsersAndGroups')
+    security.declarePublic('addOrgs')
 
-    def addUsersAndGroups(self, groups):
-        '''Creates organizations (and potentially Plone users in linked Plone groups) in the
-           tool based on p_groups which is a list of OrgaDescriptor instances.'''
+    def addOrgs(self, org_descriptors):
+        '''Creates organizations (a list of OrgaDescriptor instances) in the contact own organization.'''
+        own_org = get_own_organization()
+        orgs = []
+        active_orgs = []
+        for org_descr in org_descriptors:
+            if org_descr.parent_path:
+                # find parent organization following parent path from container
+                container = own_org.restrictedTraverse(org_descr.parent_path)
+            else:
+                container = own_org
+            # Maybe the organization already exists?
+            # It could be the case if we are reapplying a configuration
+            if org_descr.id in container.objectIds():
+                continue
+
+            org = api.content.create(
+                container=container,
+                type='organization',
+                **org_descr.getData())
+            orgs.append(org)
+            if org_descr.active:
+                active_orgs.append(org)
+        return orgs, active_orgs
+
+    security.declarePublic('addUsers')
+
+    def addUsers(self, org_descriptors):
+        '''Creates Plone users and add it to linked Plone groups.'''
         plone_utils = api.portal.get_tool('plone_utils')
         # if we are in dev, we use DEFAULT_USER_PASSWORD, else we will generate a
         # password that is compliant with the current password policy...
@@ -1431,21 +1457,17 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         logger.info(msg)
         # add a portal_message so admin adding the Plone site knows password
         plone_utils.addPortalMessage(msg, 'warning')
-        for orgDescr in groups:
-            # Maybe the organization already exists?
-            # It could be the case if we are reapplying a configuration
-            org = getattr(self, orgDescr.id, None)
-            if not org:
-                container = get_own_organization()
-                if orgDescr.parent_path:
-                    # find parent organization following parent path from container
-                    container = container.restrictedTraverse(orgDescr.parent_path)
-                org = api.content.create(
-                    container=container,
-                    type='organization',
-                    **orgDescr.getData())
+
+        own_org = get_own_organization()
+        for org_descr in org_descriptors:
+            if org_descr.parent_path:
+                # find parent organization following parent path from container
+                container = own_org.restrictedTraverse(org_descr.parent_path)
+            else:
+                container = own_org
+            org = container.get(org_descr.id)
             # Create users
-            for userDescr in orgDescr.getUsers():
+            for userDescr in org_descr.getUsers():
                 # if we defined a generated password here above, we use it
                 # either we use the password provided in the applied profile
                 if password:
@@ -1454,16 +1476,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             # Add users in the correct Plone groups.
             org_uid = org.UID()
             for suffix in get_all_suffixes(org_uid):
-                plone_group = get_plone_group(org, suffix)
+                plone_group = get_plone_group(org_uid, suffix)
                 group_members = plone_group.getMemberIds()
-                for userDescr in getattr(orgDescr, suffix):
+                for userDescr in getattr(org_descr, suffix):
                     if userDescr.id not in group_members:
                         api.group.add_user(group=plone_group, username=userDescr.id)
-            if orgDescr.active:
-                # add organization to plonegroup organizations
-                org_registry = api.portal.get_registry_record(ORGANIZATIONS_REGISTRY)
-                org_registry.append(org_uid)
-                api.portal.set_registry_record(ORGANIZATIONS_REGISTRY, org_registry)
 
     security.declarePublic('attributeIsUsed')
 

@@ -20,6 +20,7 @@
 
 from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
 from Products.PloneMeeting.config import DEFAULT_USER_PASSWORD
+from Products.PloneMeeting.config import EXTRA_GROUP_SUFFIXES
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 
 
@@ -294,7 +295,7 @@ class MeetingUserDescriptor(Descriptor):
         self.active = active
 
 
-class OrgaDescriptor(Descriptor):
+class OrgDescriptor(Descriptor):
     multiSelectFields = ('certified_signatures', 'item_advice_states',
                          'item_advice_edit_states', 'item_advice_view_states',
                          'groups_in_charge')
@@ -304,7 +305,7 @@ class OrgaDescriptor(Descriptor):
 
     def get(klass):
         if not klass.instance:
-            klass.instance = OrgaDescriptor(None, None, None)
+            klass.instance = OrgDescriptor(None, None, None)
         return klass.instance
     get = classmethod(get)
 
@@ -326,6 +327,10 @@ class OrgaDescriptor(Descriptor):
         # Add lists of users (observers, reviewers, etc) ~[UserDescriptor]~
         for suffix in suffixes:
             setattr(self, suffix['fct_id'], [])
+        # add extra suffixes if relevant
+        for extra_suffix in EXTRA_GROUP_SUFFIXES:
+            if id in extra_suffix['fct_orgs']:
+                setattr(self, extra_suffix['fct_id'], [])
         self.active = active
 
     def getUsers(self):
@@ -674,7 +679,7 @@ class PloneMeetingConfiguration(Descriptor):
     multiSelectFields = ('availableOcrLanguages', 'modelAdaptations',
                          'workingDays', 'configGroups')
 
-    def __init__(self, meetingFolderTitle, meetingConfigs, groups):
+    def __init__(self, meetingFolderTitle, meetingConfigs, orgs):
         self.meetingFolderTitle = meetingFolderTitle
         self.functionalAdminEmail = ''
         self.functionalAdminName = ''
@@ -714,8 +719,7 @@ class PloneMeetingConfiguration(Descriptor):
         self.delayUnavailableEndDays = ()
         self.configGroups = ()
         self.meetingConfigs = meetingConfigs  # ~[MeetingConfigDescriptor]~
-        self.groups = groups  # ~[GroupDescriptor]~
+        self.orgs = orgs  # ~[OrgDescriptor]~
         self.usersOutsideGroups = []  # ~[UserDescriptor]~
-        self.suffixes = MEETING_GROUP_SUFFIXES
 
 # ------------------------------------------------------------------------------

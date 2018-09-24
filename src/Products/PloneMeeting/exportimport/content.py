@@ -19,11 +19,17 @@
 # 02110-1301, USA.
 #
 
+from collective.contact.plonegroup.config import FUNCTIONS_REGISTRY
+from collective.contact.plonegroup.config import ORGANIZATIONS_REGISTRY
+from collective.contact.plonegroup.utils import get_own_organization
 from collective.eeafaceted.collectionwidget.utils import _updateDefaultCollectionFor
 from collective.iconifiedcategory import CAT_SEPARATOR
+from copy import deepcopy
 from plone import api
 from Products.CMFPlone.interfaces.constrains import IConstrainTypes
 from Products.PloneMeeting import logger
+from Products.PloneMeeting.config import EXTRA_GROUP_SUFFIXES
+from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 from Products.PloneMeeting.config import PloneMeetingError
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import registerClasses
@@ -31,8 +37,8 @@ from Products.PloneMeeting.Extensions.imports import import_contacts
 from Products.PloneMeeting.model.adaptations import performModelAdaptations
 from Products.PloneMeeting.ToolPloneMeeting import MEETING_CONFIG_ERROR
 from Products.PloneMeeting.utils import updateCollectionCriterion
+from zope.globalrequest import getRequest
 from zope.i18n import translate
-from collective.contact.plonegroup.config import FUNCTIONS_REGISTRY
 
 
 # PloneMeeting-Error related constants -----------------------------------------
@@ -51,7 +57,7 @@ class ToolInitializer:
         # productname default's name space is 'Products'.
         # If a name space is found, then Products namespace is not used
         self.productname = '.' in productname and productname or 'Products.%s' % productname
-        self.request = self.context.REQUEST
+        self.request = getRequest()
         self.site = context.getSite()
         self.tool = self.site.portal_plonemeeting
         # set correct title
@@ -93,20 +99,33 @@ class ToolInitializer:
         # if we already have existing MeetingGroups, we do not add additional ones
         alreadyHaveGroups = bool(self.tool.objectValues('MeetingGroup'))
         if not alreadyHaveGroups:
-            # create plonegroup functions (suffix) before creating groups
-            functions = api.portal.get_registry_record(FUNCTIONS_REGISTRY)
+            # 1) create organizations so we have org UIDS to initialize 'fct_orgs'
+            orgs, active_orgs = self.tool.addOrgs(d.orgs)
+            own_org = get_own_organization()
+            # 2) create plonegroup functions (suffixes) to create Plone groups
+            functions = deepcopy(api.portal.get_registry_record(FUNCTIONS_REGISTRY))
             function_ids = [function['fct_id'] for function in functions]
             # append new functions
-            suffixes = list(d.suffixes)
+            suffixes = MEETING_GROUP_SUFFIXES + EXTRA_GROUP_SUFFIXES
             for suffix in suffixes:
                 if suffix['fct_id'] not in function_ids:
-                    copied_suffix = suffix.copy()
-                    copied_suffix['fct_title'] = translate(copied_suffix['fct_title'],
+                    copied_suffix = {}
+                    copied_suffix['fct_id'] = suffix['fct_id']
+                    copied_suffix['fct_title'] = translate(suffix['fct_title'],
                                                            domain='PloneMeeting',
                                                            context=self.request)
+                    copied_suffix['fct_orgs'] = [
+                        own_org.restrictedTraverse(org_path).UID() for org_path in suffix['fct_orgs']]
                     functions.append(copied_suffix)
             api.portal.set_registry_record(FUNCTIONS_REGISTRY, functions)
-            self.tool.addUsersAndGroups(d.groups)
+            # 3) manage organizations, set every organizations so every Plone groups are crated
+            # then disable orgs that are not active
+            org_uids = [org.UID() for org in orgs]
+            api.portal.set_registry_record(ORGANIZATIONS_REGISTRY, org_uids)
+            active_org_uids = [org.UID() for org in active_orgs]
+            api.portal.set_registry_record(ORGANIZATIONS_REGISTRY, active_org_uids)
+            # 4) finally add users to Plone groups
+            self.tool.addUsers(d.orgs)
         savedMeetingConfigsToCloneTo = {}
 
         created_cfgs = []

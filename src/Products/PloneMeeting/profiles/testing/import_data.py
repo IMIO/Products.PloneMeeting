@@ -19,11 +19,10 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
 
-from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.profiles import AnnexTypeDescriptor
 from Products.PloneMeeting.profiles import CategoryDescriptor
-from Products.PloneMeeting.profiles import GroupDescriptor
+from Products.PloneMeeting.profiles import OrgDescriptor
 from Products.PloneMeeting.profiles import ItemAnnexSubTypeDescriptor
 from Products.PloneMeeting.profiles import ItemAnnexTypeDescriptor
 from Products.PloneMeeting.profiles import ItemTemplateDescriptor
@@ -196,7 +195,7 @@ plonemeeting_assembly_budgetimpacteditors = PloneGroupDescriptor('plonemeeting-a
 budgetimpacteditor.ploneGroups = [plonemeeting_assembly_budgetimpacteditors,
                                   plonemeeting_assembly_powerobservers]
 
-developers = GroupDescriptor('developers', 'Developers', 'Devel')
+developers = OrgDescriptor('developers', 'Developers', 'Devel')
 developers.creators.append(pmCreator1)
 developers.creators.append(pmCreator1b)
 developers.creators.append(pmManager)
@@ -210,7 +209,7 @@ developers.observers.append(pmManager)
 developers.advisers.append(pmAdviser1)
 developers.advisers.append(pmManager)
 
-vendors = GroupDescriptor('vendors', 'Vendors', 'Devil')
+vendors = OrgDescriptor('vendors', 'Vendors', 'Devil')
 vendors.creators.append(pmCreator2)
 vendors.reviewers.append(pmReviewer2)
 vendors.observers.append(pmReviewer2)
@@ -225,7 +224,7 @@ vendors.observers.append(voter1)
 vendors.observers.append(voter2)
 
 # Add a vintage group
-endUsers = GroupDescriptor('endUsers', 'End users', 'EndUsers', active=False)
+endUsers = OrgDescriptor('endUsers', 'End users', 'EndUsers', active=False)
 
 # Add an external user
 cadranel = UserDescriptor('cadranel', [], fullname='M. Benjamin Cadranel')

@@ -22,6 +22,7 @@
 
 from AccessControl.SecurityManagement import getSecurityManager
 from collections import OrderedDict
+from collective.contact.plonegroup.utils import get_own_organization
 from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.utils import get_config_root
 from imio.helpers.cache import cleanRamCacheFor
@@ -110,6 +111,10 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         notify(BeforeTraverseEvent(self.portal, self.request))
         self.tool = self.portal.portal_plonemeeting
         self.wfTool = self.portal.portal_workflow
+        self.own_org = get_own_organization()
+        self.developers_uid = self.own_org.developers.UID()
+        self.vendors_uid = self.own_org.vendors.UID()
+        self.endUsers_uid = self.own_org.endUsers.UID()
         self.pmFolder = os.path.dirname(Products.PloneMeeting.__file__)
         # Create siteadmin user
         self.createUser('siteadmin', ('Member', 'Manager', ))
@@ -260,10 +265,10 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             attrs.update({'id': self._generateId(folder)})
         if objectType == 'MeetingItem':
             if 'proposingGroup' not in attrs.keys():
-                cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.getGroupsForUser')
-                proposingGroup = self.tool.getGroupsForUser(suffixes=['creators'])
+                cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.get_orgs_for_user')
+                proposingGroup = self.tool.get_orgs_for_user(suffixes=['creators'])
                 if len(proposingGroup):
-                    attrs.update({'proposingGroup': proposingGroup[0].id})
+                    attrs.update({'proposingGroup': proposingGroup[0].UID()})
         obj = getattr(folder, folder.invokeFactory(contentType, **attrs))
         if objectType == 'Meeting':
             self.setCurrentMeeting(obj)

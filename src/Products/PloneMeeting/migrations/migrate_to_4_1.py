@@ -2,10 +2,12 @@
 from collections import OrderedDict
 from collective.contact.plonegroup.config import FUNCTIONS_REGISTRY
 from collective.contact.plonegroup.config import ORGANIZATIONS_REGISTRY
+from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_group
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
+from copy import deepcopy
 from DateTime import DateTime
 from datetime import date
 from eea.facetednavigation.interfaces import ICriteria
@@ -14,11 +16,10 @@ from plone import api
 from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_NEW
-from Products.PloneMeeting.config import MEETINGROLES
+from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
 from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
 from Products.PloneMeeting.migrations import Migrator
-from zope.i18n import translate
 from zope.interface import alsoProvides
 
 import logging
@@ -310,23 +311,19 @@ class Migrate_To_4_1(Migrator):
             every_orgs.append(new_org_uid)
 
         # configure Plonegroup
-        suffixes = MEETINGROLES.keys()
-        functions = [
-            {'fct_id': safe_unicode(suffix),
-             'fct_title': translate(suffix, domain='PloneMeeting', context=self.request),
-             'fct_orgs': []} for suffix in suffixes]
+        functions = deepcopy(MEETING_GROUP_SUFFIXES)
         # extra suffixes
         from Products.PloneMeeting.config import EXTRA_GROUP_SUFFIXES
-        extra_suffixes = EXTRA_GROUP_SUFFIXES.copy()
-        # append extra_suffixes to functions, these suffixes have 'fct_orgs'
-        for extra_suffix, extra_group_ids in extra_suffixes.items():
-            # turn extra_group_ids to extra_org_uids
-            extra_org_uids = [own_org.get(group_id).UID() for group_id in extra_group_ids]
-            functions.append(
-                {'fct_id': safe_unicode(extra_suffix),
-                 'fct_title': translate(extra_suffix, domain='PloneMeeting', context=self.request),
-                 'fct_orgs': extra_org_uids})
-        api.portal.set_registry_record(FUNCTIONS_REGISTRY, functions)
+        functions = functions + deepcopy(EXTRA_GROUP_SUFFIXES)
+        # now replace group_id in 'fct_orgs' by corresponding org uid
+        adapted_functions = []
+        for function in functions:
+            adapted_function = {'fct_id': function['fct_id'],
+                                'fct_title': function['fct_title']}
+            adapted_function_orgs = [own_org.get(group_id).UID() for group_id in function['fct_orgs']]
+            adapted_function['fct_orgs'] = adapted_function_orgs
+            adapted_functions.append(adapted_function)
+        api.portal.set_registry_record(FUNCTIONS_REGISTRY, adapted_functions)
         # first set every organizations so every subgroups are created
         # then set only enabled orgs
         api.portal.set_registry_record(ORGANIZATIONS_REGISTRY, every_orgs)
@@ -337,7 +334,7 @@ class Migrate_To_4_1(Migrator):
         for mGroup in self.tool.objectValues('MeetingGroup'):
             org = get_own_organization().get(mGroup.getId())
             org_uid = org.UID()
-            for suffix in suffixes:
+            for suffix in get_all_suffixes(org_uid):
                 ori_plone_group_id = mGroup.getPloneGroupId(suffix)
                 ori_plone_group = api.group.get(ori_plone_group_id)
                 if ori_plone_group and ori_plone_group.getMemberIds():
@@ -390,12 +387,13 @@ class Migrate_To_4_1(Migrator):
             # advicesKeptOnSentToOtherMC
             advicesKeptOnSentToOtherMC = cfg.getAdvicesKeptOnSentToOtherMC()
             adapted_advicesKeptOnSentToOtherMC = []
-            for v in advicesKeptOnSentToOtherMC:
-                new_value = v
-                if v.startswith('real_group_id__'):
-                    mGroupId = v.replace('real_group_id__', '')
-                    org = own_org.get(mGroupId)
-                    new_value = 'real_group_id__{0}'.format(org.UID())
+            for old_v in advicesKeptOnSentToOtherMC:
+                new_value = old_v
+                if old_v.startswith('real_group_id__'):
+                    prefix, group_id = old_v.split('real_group_id__')
+                    new_value = REAL_ORG_UID_PATTERN.format(own_org.get(group_id).UID())
+                else:
+                    new_value = old_v.replace('delay_real_group_id__', DELAYAWARE_ROW_ID_PATTERN.format(''))
                 adapted_advicesKeptOnSentToOtherMC.append(new_value)
             cfg.setAdvicesKeptOnSentToOtherMC(adapted_advicesKeptOnSentToOtherMC)
             # customAdvisers

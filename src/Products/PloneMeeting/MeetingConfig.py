@@ -35,7 +35,6 @@ from plone.portlets.interfaces import IPortletAssignmentMapping
 from plone.portlets.interfaces import IPortletManager
 from Products.Archetypes.atapi import BooleanField
 from Products.Archetypes.atapi import DisplayList
-from Products.Archetypes.atapi import InAndOutWidget
 from Products.Archetypes.atapi import IntegerField
 from Products.Archetypes.atapi import LinesField
 from Products.Archetypes.atapi import MultiSelectionWidget
@@ -616,7 +615,7 @@ schema = Schema((
     ),
     LinesField(
         name='selectablePrivacies',
-        widget=InAndOutWidget(
+        widget=PMInAndOutWidget(
             description="SelectablePrivacies",
             description_msgid="selectable_privacies_descr",
             label='selectableprivacies',
@@ -1112,7 +1111,7 @@ schema = Schema((
     LinesField(
         name='transitionsForPresentingAnItem',
         default=defValues.transitionsForPresentingAnItem,
-        widget=InAndOutWidget(
+        widget=PMInAndOutWidget(
             description="TransitionsForPresentingAnItem",
             description_msgid="transitions_for_presenting_an_item_descr",
             label='Transitionsforpresentinganitem',
@@ -1264,7 +1263,7 @@ schema = Schema((
     ),
     LinesField(
         name='itemsListVisibleFields',
-        widget=InAndOutWidget(
+        widget=PMInAndOutWidget(
             description="ItemsListVisibleFields",
             description_msgid="items_list_visible_fields_descr",
             label='Itemslistvisiblefields',
@@ -1294,7 +1293,7 @@ schema = Schema((
     ),
     LinesField(
         name='toDoListSearches',
-        widget=InAndOutWidget(
+        widget=PMInAndOutWidget(
             description="ToDoListSearches",
             description_msgid="to_do_list_searches",
             label='Todolistsearches',
@@ -2219,7 +2218,7 @@ schema = Schema((
     ),
     LinesField(
         name='usedPollTypes',
-        widget=InAndOutWidget(
+        widget=PMInAndOutWidget(
             description="UsedPollTypes",
             description_msgid="used_poll_types_descr",
             label='Usedpolltypes',
@@ -4185,7 +4184,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 confidential_profiles.append('{0}{1}'.format(READERPREFIX, suffix))
         for suffix in get_all_suffixes():
             # bypass suffixes that do not give a role, like it is the case for groupSuffix 'advisers'
-            if not MEETINGROLES[suffix]:
+            # ignore also extra suffixes that are not giving an extra role
+            if not MEETINGROLES.get(suffix):
                 continue
             confidential_profiles.append('{0}{1}'.format(PROPOSINGGROUPPREFIX, suffix))
 
@@ -4228,7 +4228,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 confidential_profiles.append('{0}{1}'.format(READERPREFIX, suffix))
         for suffix in get_all_suffixes():
             # bypass suffixes that do not give a role, like it is the case for groupSuffix 'advisers'
-            if not MEETINGROLES[suffix]:
+            if not MEETINGROLES.get(suffix):
                 continue
             confidential_profiles.append('{0}{1}'.format(PROPOSINGGROUPPREFIX, suffix))
 
@@ -4261,7 +4261,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                  '{0}{1}'.format(CONFIGGROUPPREFIX, 'restrictedpowerobservers')]
         for suffix in get_all_suffixes():
             # bypass suffixes that do not give a role, like it is the case for groupSuffix 'advisers'
-            if not MEETINGROLES[suffix]:
+            if not MEETINGROLES.get(suffix):
                 continue
             confidential_profiles.append('{0}{1}'.format(SUFFIXPROFILEPREFIX, suffix))
 
@@ -5576,7 +5576,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def getAdvicesKeptOnSentToOtherMC(self, as_org_uids=False, item=None, **kwargs):
         """If p_as_org_uids is True, we return org_uids from what is stored.
            We store values as 'adviser pattern', it can looks like :
-           "real_group_id__org_uid" or "delay_real_group_id__row_id".
+           "real_org_uid__" or "delay_row_id__".
            We double check regarding item.adviceIndex, indeed, a same org_uid can
            be returned by the 2 patterns.
         """

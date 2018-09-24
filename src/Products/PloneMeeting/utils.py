@@ -25,6 +25,7 @@ from AccessControl.Permission import Permission
 from App.class_init import InitializeClass
 from appy.shared.diff import HtmlDiff
 from collective.contact.plonegroup.utils import get_own_organization
+from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.excelexport.exportables.dexterityfields import get_exportable_for_fieldname
 from collective.iconifiedcategory.interfaces import IIconifiedInfos
 from DateTime import DateTime
@@ -1568,6 +1569,20 @@ def plain_render(obj, fieldname):
     request = getRequest()
     exportable = get_exportable_for_fieldname(obj, fieldname, request)
     return exportable.render_value(obj)
+
+
+def group_to_org(group_info):
+    """Returns the corresponding org based value for given group_id based value.
+       'developers', will return 'orguid'.
+       'developers_creators' will return 'orguid_creators'."""
+    own_org = get_own_organization()
+    if '_' in group_info:
+        group_path, suffix = group_info.split('_')
+        org = own_org.restrictedTraverse(group_path)
+        return get_plone_group_id(org.UID(), suffix)
+    else:
+        org = own_org.restrictedTraverse(group_info)
+        return org.UID()
 
 
 class AdvicesUpdatedEvent(ObjectEvent):

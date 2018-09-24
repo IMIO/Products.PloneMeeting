@@ -103,20 +103,26 @@ MEETINGROLES = {'creators': 'MeetingMember',
                 'reviewers': 'MeetingReviewer',
                 'observers': 'MeetingObserverLocal',
                 'advisers': None}
+# base suffixes, this is not intended to be overrided or monkeypatched, use EXTRA_GROUP_SUFFIXES
 MEETING_GROUP_SUFFIXES = [
-    {'fct_title': u'advisers', 'fct_id': u'advisers'},
-    {'fct_title': u'creators', 'fct_id': u'creators'},
-    {'fct_title': u'observers', 'fct_id': u'observers'},
-    {'fct_title': u'prereviewers', 'fct_id': u'prereviewers'},
-    {'fct_title': u'reviewers', 'fct_id': u'reviewers'},
-    ]
+    {'fct_title': u'advisers', 'fct_id': u'advisers', 'fct_orgs': []},
+    {'fct_title': u'creators', 'fct_id': u'creators', 'fct_orgs': []},
+    {'fct_title': u'observers', 'fct_id': u'observers', 'fct_orgs': []},
+    {'fct_title': u'prereviewers', 'fct_id': u'prereviewers', 'fct_orgs': []},
+    {'fct_title': u'reviewers', 'fct_id': u'reviewers', 'fct_orgs': []},
+]
 
-# specific suffixes in case a workflow involving several suffixes is used by some group ids
+# this is made to manage specific suffixes for a particular profile
 # this will be like :
-# {'additional_suffix1': ['my_group_id1', 'my_group_id2', 'my_group_id3'],
-# {'additional_suffix2': ['my_group_id1', 'my_group_id2', 'my_group_id3'],
-# {'additional_suffix3': ['my_group_id3', 'my_group_id4'], }
-EXTRA_GROUP_SUFFIXES = {'additional_suffix': ['brol']}
+# [{'fct_title': u'additional_suffix',
+#   'fct_id': u'additional_suffix',
+#   'fct_orgs': ['path_to_group_id_1', 'path_to_group_id_2']},
+# ]
+EXTRA_GROUP_SUFFIXES = [
+    {'fct_title': u'additional_suffix',
+     'fct_id': u'additional_suffix',
+     'fct_orgs': ['vendors']},
+    ]
 
 # additonal advice types that will be available for MeetingConfig.usedAdviceTypes
 # format is just a tuple containing keys, it will be translated using same key
