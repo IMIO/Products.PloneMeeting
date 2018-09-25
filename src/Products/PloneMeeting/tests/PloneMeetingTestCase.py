@@ -33,6 +33,7 @@ from plone.app.testing import login
 from plone.app.testing import logout
 from plone.app.testing.helpers import setRoles
 from plone.dexterity.utils import createContentInContainer
+from Products.CMFPlone.utils import safe_unicode
 from Products.Five.browser import BrowserView
 from Products.PloneMeeting.config import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.config import TOOL_FOLDER_ANNEX_TYPES
@@ -112,9 +113,11 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         self.tool = self.portal.portal_plonemeeting
         self.wfTool = self.portal.portal_workflow
         self.own_org = get_own_organization()
-        self.developers_uid = self.own_org.developers.UID()
-        self.vendors_uid = self.own_org.vendors.UID()
-        self.endUsers_uid = self.own_org.endUsers.UID()
+        # make organizations easily available thru their id and store uid
+        # for each organization, we will have self.developers and self.developers_uid
+        for org in self.own_org.objectValues():
+            setattr(self, org.getId(), org)
+            setattr(self, '{0}_uid'.format(org.getId()), safe_unicode(org.UID()))
         self.pmFolder = os.path.dirname(Products.PloneMeeting.__file__)
         # Create siteadmin user
         self.createUser('siteadmin', ('Member', 'Manager', ))

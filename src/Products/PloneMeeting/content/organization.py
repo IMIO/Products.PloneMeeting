@@ -3,6 +3,7 @@
 from collective.contact.core.content.organization import IOrganization
 from collective.contact.core.content.organization import Organization
 from collective.contact.plonegroup.config import ORGANIZATIONS_REGISTRY
+from collective.contact.plonegroup.utils import get_organizations
 from collective.z3cform.datagridfield import DataGridFieldFactory
 from collective.z3cform.datagridfield import DictRow
 from plone import api
@@ -184,7 +185,7 @@ class PMOrganization(Organization):
         """Override to change default first_index from 0 to 1."""
         return super(PMOrganization, self).get_full_title(separator, first_index)
 
-    def get_item_advice_states(self, cfg):
+    def get_item_advice_states(self, cfg=None):
         res = self.item_advice_states
         if cfg:
             tmpres = []
@@ -198,7 +199,7 @@ class PMOrganization(Organization):
             res = tmpres or cfg.getItemAdviceStates()
         return tuple(res)
 
-    def get_item_advice_edit_states(self, cfg):
+    def get_item_advice_edit_states(self, cfg=None):
         res = self.item_advice_edit_states
         if cfg:
             tmpres = []
@@ -212,7 +213,7 @@ class PMOrganization(Organization):
             res = tmpres or cfg.getItemAdviceEditStates()
         return tuple(res)
 
-    def get_item_advice_view_states(self, cfg):
+    def get_item_advice_view_states(self, cfg=None):
         res = self.item_advice_view_states
         if cfg:
             tmpres = []
@@ -226,7 +227,7 @@ class PMOrganization(Organization):
             res = tmpres or cfg.getItemAdviceViewStates()
         return tuple(res)
 
-    def get_keep_access_to_item_when_advice_is_given(self, cfg):
+    def get_keep_access_to_item_when_advice_is_given(self, cfg=None):
         """ """
         res = self.keep_access_to_item_when_advice_is_given
         if cfg:
@@ -237,6 +238,28 @@ class PMOrganization(Organization):
             else:
                 res = True
         return res
+
+    def get_order(self, associated_org_uids=[], only_selected=True):
+        '''Returns organization position among every selected organizations.
+           If p_associated_org_uids is given, returns the order of the lowest org position.
+           If p_only_selected is True, only consider selected orgs.'''
+        orgs = get_organizations(only_selected=only_selected)
+        i = orgs.index(self)
+        # if we received associated_org_uids we must consider associated group
+        # that has the lowest position
+        if associated_org_uids:
+            # orgs are sorted so, the first we find, we return it
+            org_uids = [org.UID() for org in orgs]
+            for org_uid in org_uids:
+                if org_uid in associated_org_uids:
+                    # we found the associated org with lowest position, now check
+                    # that the lowest position of this associated group is lower or not
+                    # than the position of the proposing group
+                    associated_org_index = org_uids.index(org_uid)
+                    if associated_org_index < i:
+                        i = associated_org_index
+                    break
+        return i
 
 
 class PMOrganizationSchemaPolicy(DexteritySchemaPolicy):

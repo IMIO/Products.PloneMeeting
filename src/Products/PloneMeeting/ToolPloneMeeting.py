@@ -516,7 +516,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            at least one of p_suffixes. If p_omitted_suffixes, we do not consider
            orgs the user is in using those suffixes.'''
         res = []
-        group_ids = self.get_plone_groups_for_user(user_id)
+        user_plone_group_ids = self.get_plone_groups_for_user(user_id)
         if active:
             orgs = get_organizations()
         else:
@@ -529,7 +529,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 if suffix in omitted_suffixes:
                     continue
                 plone_group_id = get_plone_group_id(org_uid, suffix)
-                if plone_group_id not in group_ids:
+                if plone_group_id not in user_plone_group_ids:
                     continue
                 # If we are here, the user belongs to this group.
                 # Add the organization

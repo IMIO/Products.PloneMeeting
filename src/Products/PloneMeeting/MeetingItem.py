@@ -3350,9 +3350,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # or when a category is restricted to a group a MeetingManager is not member of
             res = self.getCategory(True).getOrder(onlySelectable=False)
         elif insertMethod == 'on_proposing_groups':
-            res = self.getProposingGroup(True).getOrder(onlyActive=False)
+            org = self.getProposingGroup(True)
+            res = org.get_order(only_selected=False)
         elif insertMethod == 'on_all_groups':
-            res = self.getProposingGroup(True).getOrder(self.getAssociatedGroups(), onlyActive=False)
+            org = self.getProposingGroup(True)
+            res = org.get_order(associated_org_uids=self.getAssociatedGroups(), only_selected=False)
         elif insertMethod == 'on_privacy':
             privacy = self.getPrivacy()
             privacies = cfg.getSelectablePrivacies()
@@ -3375,7 +3377,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             groupInCharge = self.adapted().getGroupInCharge(True)
             if not groupInCharge:
                 raise Exception("No valid groupInCharge defined for {0}".format(proposingGroup.getId()))
-            return groupInCharge.getOrder(onlyActive=False)
+            return groupInCharge.get_order(only_selected=False)
         elif insertMethod == 'on_poll_type':
             pollType = self.getPollType()
             factory = queryUtility(IVocabularyFactory,
@@ -5070,9 +5072,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         for suffix in get_all_suffixes(org_uid):
             # if we have a Plone group related to this suffix, apply a local role for it
             plone_group_id = get_plone_group_id(org_uid, suffix)
-            self.manage_addLocalRoles(
-                plone_group_id, (MEETINGROLES[suffix], )
-            )
+            role = MEETINGROLES.get(suffix)
+            if role:
+                self.manage_addLocalRoles(plone_group_id, (role, ))
 
     security.declareProtected(ModifyPortalContent, 'updateLocalRoles')
 

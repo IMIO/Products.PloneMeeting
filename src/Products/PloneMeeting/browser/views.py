@@ -1032,10 +1032,10 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
             advisers_data = []
             # only keep relevant adviser data and keep order also
             for adviser in advisers:
-                for groupId, advice in item.adviceIndex.iteritems():
-                    if adviser in _to_coded_adviser_index(item, groupId, advice):
+                for org_uid, advice in item.adviceIndex.iteritems():
+                    if adviser in _to_coded_adviser_index(item, org_uid, advice):
                         # we must keep this adviser
-                        advisers_data.append(item.getAdviceDataFor(item, groupId))
+                        advisers_data.append(item.getAdviceDataFor(item, org_uid))
             subres['advices'] = advisers_data
             res.append(subres)
         return res
@@ -1051,10 +1051,10 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
             res.append(self.getDGHV(item))
         return res
 
-    def get_all_items_dghv_with_advice(self, brains, adviserIds=[]):
+    def get_all_items_dghv_with_advice(self, brains, adviserUids=[]):
         """
         :param brains: the brains collection representing @Product.PloneMeeting.MeetingItem
-        :param adviserIds : list of adviser Ids to keep. By default it empty. Which means all advisers are kept.
+        :param adviserIds : list of adviser Uids to keep. By default it empty. Which means all advisers are kept.
         :return: an array of dictionary which contains 2 keys.
                  itemView : the documentgenerator helper view of a MeetingItem.
                  advice   : the data from a single advice linked to this MeetingItem as extracted with getAdviceDataFor.
@@ -1066,10 +1066,10 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
         res = []
         for brain in brains:
             item = brain.getObject()
-            if adviserIds:
+            if adviserUids:
                 itemInserted = False
-                for adviserId in adviserIds:
-                    advice = item.getAdviceDataFor(item, adviserId)
+                for adviserUid in adviserUids:
+                    advice = item.getAdviceDataFor(item, adviserUid)
                     if advice:
                         res.append({'itemView': self.getDGHV(item), 'advice': advice})
                         itemInserted = True

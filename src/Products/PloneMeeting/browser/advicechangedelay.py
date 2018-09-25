@@ -101,16 +101,16 @@ class AdviceDelaysView(BrowserView):
             res.append((linkedRow['row_id'], linkedRow['delay'], unicode(linkedRow['delay_label'], 'utf-8')))
         return res
 
-    def _mayAccessDelayChangesHistory(self, adviceId=None):
+    def _mayAccessDelayChangesHistory(self, advice_uid=None):
         '''May current user access delay changes history?
-           By default it is shown to MeetingManagers, advisers of p_adviceId and members of the proposingGroup.'''
-        if not adviceId:
-            adviceId = self.advice['id']
+           By default it is shown to MeetingManagers, advisers of p_advice_uid and members of the proposingGroup.'''
+        if not advice_uid:
+            advice_uid = self.advice['id']
         # MeetingManagers and advisers of the group
         # can access the delay changes history
-        userAdviserGroupIds = [group.getId() for group in self.tool.get_orgs_for_user(suffixes=['advisers'])]
+        userAdviserOrgUids = [org.UID() for org in self.tool.get_orgs_for_user(suffixes=['advisers'])]
         if self.tool.isManager(self.context) or \
-           adviceId in userAdviserGroupIds or \
+           advice_uid in userAdviserOrgUids or \
            self.context.getProposingGroup(theObject=True) in self.tool.get_orgs_for_user():
             return True
         else:
@@ -280,7 +280,7 @@ class AdviceChangeDelayHistoryView(BrowserView):
           Return history of delay changes for an advice.
         '''
         delayChangesView = self.context.restrictedTraverse('@@advice-available-delays')
-        adviceId = self.request.get('advice')
-        if not delayChangesView._mayAccessDelayChangesHistory(adviceId):
+        advice_uid = self.request.get('advice')
+        if not delayChangesView._mayAccessDelayChangesHistory(advice_uid):
             raise Unauthorized
-        return self.context.adviceIndex[adviceId]['delay_changes_history']
+        return self.context.adviceIndex[advice_uid]['delay_changes_history']
