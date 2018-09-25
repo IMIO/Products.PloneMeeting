@@ -160,6 +160,26 @@ class Migrate_To_4_1(Migrator):
                 annex.file.contentType = mimetype
         logger.info('Done.')
 
+    def _fixPODTemplatesMimeType(self):
+        """Mimetype used for POD templates created was 'applicaton/odt',
+           we need it to be 'application/vnd.oasis.opendocument.text' so these templates
+           are updated by the styles template."""
+        logger.info('Fixing POD templates mimetype...')
+        catalog = api.portal.get_tool('portal_catalog')
+        brains = catalog(
+            object_provides='collective.documentgenerator.content.pod_template.IConfigurablePODTemplate')
+        for brain in brains:
+            pod_template = brain.getObject()
+            current_content_type = pod_template.odt_file.contentType
+            filename = pod_template.odt_file.filename
+            extension = os.path.splitext(filename)[1].lower()
+            mimetype = mimetypes.types_map.get(extension)
+            if mimetype and mimetype != current_content_type:
+                logger.info('Fixing mimetype for POD template at {0}, old was {1}, now will be {2}...'.format(
+                    '/'.join(pod_template.getPhysicalPath()), current_content_type, mimetype))
+                pod_template.odt_file.contentType = mimetype
+        logger.info('Done.')
+
     def _fixItemsWorkflowHistoryType(self):
         """A bug in ToolPloneMeeting.pasteItems was changing the workflow_history
            to a simple dict.  Make sure existing items use a PersistentMapping."""
@@ -285,8 +305,8 @@ class Migrate_To_4_1(Migrator):
         """Content type StyleTemplate is now added to meetingConfigs."""
         logger.info("Enabling StyleTemplate ...")
         for cfg in self.tool.objectValues('MeetingConfig'):
-            folder =  cfg.get(TOOL_FOLDER_POD_TEMPLATES)
-            allowed_content_types =  folder.getLocallyAllowedTypes()
+            folder = cfg.get(TOOL_FOLDER_POD_TEMPLATES)
+            allowed_content_types = folder.getLocallyAllowedTypes()
             if 'StyleTemplate' not in allowed_content_types:
                 allowed_content_types += ('StyleTemplate',)
                 folder.setLocallyAllowedTypes(allowed_content_types)
@@ -337,6 +357,7 @@ class Migrate_To_4_1(Migrator):
         self._removeMCPortalTabs()
         self._manageContentsKeptWhenItemSentToOtherMC()
         self._fixAnnexesMimeType()
+        self._fixPODTemplatesMimeType()
         self._fixItemsWorkflowHistoryType()
         self._migrateToDoListSearches()
         self._adaptForContacts()
@@ -364,11 +385,13 @@ def migrate(context):
        11) Remove MeetingConfig tabs from portal_actions portal_tabs;
        12) Migrate MeetingConfig.keepAdvicesOnSentToOtherMC to MeetingConfig.contentsKeptOnSentToOtherMC;
        13) Fix annex mimetype in case there was a problem with old annexes using uncomplete mimetypes_registry;
-       14) Make sure workflow_history stored on items is a PersistentMapping;
-       15) Migrate MeetingConfig.toDoListSearches as it is no more a ReferenceField;
-       16) Adapt application for Contacts;
-       17) Select 'description' in MeetingConfig.usedItemAttributes;
-       18) Migrate MeetingConfig.groupsShownInDashboardFilter to MeetingConfig.groupsHiddenInDashboardFilter.
+       14) Fix POD template mimetype because we need it to be correct for the styles template;
+       15) Make sure workflow_history stored on items is a PersistentMapping;
+       16) Migrate MeetingConfig.toDoListSearches as it is no more a ReferenceField;
+       17) Adapt application for Contacts;
+       18) Select 'description' in MeetingConfig.usedItemAttributes;
+       19) Migrate MeetingConfig.groupsShownInDashboardFilter to MeetingConfig.groupsHiddenInDashboardFilter;
+       20) Configure MeetingConfig podtemplates folder to accept style templates.
     '''
     migrator = Migrate_To_4_1(context)
     migrator.run()

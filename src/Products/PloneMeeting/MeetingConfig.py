@@ -5503,7 +5503,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         f = file(filePath, 'rb')
         odt_file = NamedBlobFile(
             data=f.read(),
-            contentType='applications/odt',
+            contentType='application/vnd.oasis.opendocument.text',
             # pt.odt_file could be relative (../../other_profile/templates/sample.odt)
             filename=safe_unicode(pt.odt_file.split('/')[-1]),
         )
