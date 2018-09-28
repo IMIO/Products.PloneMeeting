@@ -376,19 +376,21 @@ class PloneMeetingTestingHelpers:
         cfg.setItemAdviceEditStates((item_initial_state, ))
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setOptionalAdvisers(('vendors', ))
+        item.setOptionalAdvisers((self.vendors_uid, ))
         item.updateLocalRoles()
         self.changeUser('pmReviewer2')
         advice = createContentInContainer(
             item,
             'meetingadvice',
-            **{'advice_group': self.tool.vendors.getId(),
+            **{'advice_group': self.vendors_uid,
                'advice_type': u'positive',
                'advice_comment': RichTextValue(u'My comment')})
         return item, advice
 
-    def _setUpGroupInCharge(self, item, group='vendors'):
+    def _setUpGroupInCharge(self, item, group=None):
         """As group in charge is an adaptable method, it may be setup differently."""
+        if not group:
+            group = self.vendors_uid
         item.setGroupInCharge(group)
         item.updateLocalRoles()
 

@@ -23,6 +23,8 @@
 #
 
 from AccessControl import Unauthorized
+from collective.contact.plonegroup.utils import get_plone_group
+from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.documentviewer.config import CONVERTABLE_TYPES
 from collective.documentviewer.settings import GlobalSettings
 from collective.iconifiedcategory.event import IconifiedPrintChangedEvent
@@ -167,7 +169,7 @@ class testAnnexes(PloneMeetingTestCase):
         cfg.setItemAdviceStates((item_initial_state, ))
         cfg.setItemAdviceEditStates((item_initial_state, ))
         cfg.setItemAnnexConfidentialVisibleFor(('reader_advices', ))
-        item.setOptionalAdvisers(('developers', ))
+        item.setOptionalAdvisers((self.developers_uid, ))
         item.updateLocalRoles()
 
         self.changeUser('pmAdviser1')
@@ -183,7 +185,7 @@ class testAnnexes(PloneMeetingTestCase):
         cfg.setUseCopies(True)
         cfg.setItemCopyGroupsStates((item_initial_state, ))
         cfg.setItemAnnexConfidentialVisibleFor(('reader_copy_groups', ))
-        item.setCopyGroups(('vendors_reviewers', ))
+        item.setCopyGroups((get_plone_group_id(self.vendors_uid, 'reviewers'), ))
         item.updateLocalRoles()
 
         self.changeUser('pmReviewer2')
@@ -200,7 +202,7 @@ class testAnnexes(PloneMeetingTestCase):
         cfg.setItemGroupInChargeStates(item_initial_state)
 
         # does not fail in no group in charge
-        self.assertFalse(proposingGroup.getGroupsInCharge())
+        self.assertFalse(proposingGroup.groups_in_charge)
         cfg.setItemAnnexConfidentialVisibleFor(('reader_groupincharge', ))
         update_all_categorized_elements(item)
         self._setUpGroupInCharge(item)
@@ -232,7 +234,7 @@ class testAnnexes(PloneMeetingTestCase):
             update_all_categorized_elements(item)
             # get a user from the right 'developers' subgroup but make sure it is not a MeetingManager
             group_suffix = proposingGroupSuffix.replace(PROPOSINGGROUPPREFIX, '')
-            developers_suffixed_group = self.tool.developers.getPloneGroups(suffixes=[group_suffix])[0]
+            developers_suffixed_group = get_plone_group(self.developers_uid, group_suffix)
             userIds = [userId for userId in developers_suffixed_group.getMemberIds()
                        if userId not in self._get_meeting_managers_for(cfg)]
             if not userIds:
@@ -328,13 +330,13 @@ class testAnnexes(PloneMeetingTestCase):
         cfg.setItemAdviceEditStates((item_initial_state, ))
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setOptionalAdvisers(('vendors', ))
+        item.setOptionalAdvisers((self.vendors_uid, ))
         item.updateLocalRoles()
         self.changeUser('pmReviewer2')
         advice = createContentInContainer(
             item,
             'meetingadvice',
-            **{'advice_group': self.tool.vendors.getId(),
+            **{'advice_group': self.vendors_uid,
                'advice_type': u'positive',
                'advice_comment': RichTextValue(u'My comment')})
         annex_config = get_config_root(advice)
@@ -404,7 +406,7 @@ class testAnnexes(PloneMeetingTestCase):
         cfg.setUseCopies(True)
         cfg.setItemCopyGroupsStates((item_initial_state, ))
         cfg.setAdviceAnnexConfidentialVisibleFor(('reader_copy_groups', ))
-        item.setCopyGroups(('vendors_reviewers', ))
+        item.setCopyGroups((get_plone_group_id(self.vendors_uid, 'reviewers'), ))
         item.updateLocalRoles()
 
         self.changeUser('pmReviewer2')
@@ -421,7 +423,7 @@ class testAnnexes(PloneMeetingTestCase):
         cfg.setItemGroupInChargeStates(item_initial_state)
 
         # does not fail in no group in charge
-        self.assertFalse(proposingGroup.getGroupsInCharge())
+        self.assertFalse(proposingGroup.groups_in_charge)
         cfg.setAdviceAnnexConfidentialVisibleFor(('reader_groupincharge', ))
         update_all_categorized_elements(item)
         self._setUpGroupInCharge(item)
@@ -476,7 +478,7 @@ class testAnnexes(PloneMeetingTestCase):
             update_all_categorized_elements(advice)
             # get a user from the right 'developers' subgroup but make sure it is not a MeetingManager
             group_suffix = proposingGroupSuffix.replace(PROPOSINGGROUPPREFIX, '')
-            developers_suffixed_group = self.tool.developers.getPloneGroups(suffixes=[group_suffix])[0]
+            developers_suffixed_group = get_plone_group(self.developers_uid, group_suffix)
             userIds = [userId for userId in developers_suffixed_group.getMemberIds()
                        if userId not in self._get_meeting_managers_for(cfg)]
             if not userIds:
@@ -557,18 +559,18 @@ class testAnnexes(PloneMeetingTestCase):
                            if k.startswith(SUFFIXPROFILEPREFIX)]
         for profileSuffix in profileSuffixes:
             # every users of a Plone subgroup profileSuffix will have access
-            for mGroup in (self.tool.developers, self.tool.vendors):
+            for org in (self.developers, self.vendors):
                 cfg.setMeetingAnnexConfidentialVisibleFor((profileSuffix, ))
                 update_all_categorized_elements(meeting)
                 group_suffix = profileSuffix.replace(SUFFIXPROFILEPREFIX, '')
                 # get a user from the right 'developers/vendors' subgroup
-                suffixed_group = mGroup.getPloneGroups(suffixes=[group_suffix])[0]
+                suffixed_group = get_plone_group(org.UID(), group_suffix)
                 userIds = [userId for userId in suffixed_group.getMemberIds()
                            if userId not in self._get_meeting_managers_for(cfg)]
                 if not userIds:
                     pm_logger.info("Could not test if profile '%s' can access confidential "
                                    "annexes for group '%s' because no users is defined in this profile !"
-                                   % (group_suffix, mGroup.getId()))
+                                   % (group_suffix, org.getId()))
                     continue
                 self.changeUser(userIds[0])
                 if not self.hasPermission(View, meeting):
@@ -598,7 +600,8 @@ class testAnnexes(PloneMeetingTestCase):
         self.changeUser('powerobserver1')
         self.assertFalse(annexConfidential.UID() in get_categorized_elements(item))
         self.assertEqual(annexConfidential.__ac_local_roles__,
-                         {'pmCreator1': ['Owner'], 'developers_creators': ['AnnexReader']})
+                         {'pmCreator1': ['Owner'],
+                          get_plone_group_id(self.developers_uid, 'creators'): ['AnnexReader']})
         # remove confidentiality, only MeetingManagers may change confidentiality
         self.changeUser('pmManager')
         self.request.set('confidential', False)
@@ -616,7 +619,8 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertFalse(annexConfidential.UID() in
                          [elt['UID'] for elt in get_categorized_elements(item)])
         self.assertEqual(annexConfidential.__ac_local_roles__,
-                         {'pmCreator1': ['Owner'], 'developers_creators': ['AnnexReader']})
+                         {'pmCreator1': ['Owner'],
+                          get_plone_group_id(self.developers_uid, 'creators'): ['AnnexReader']})
 
     def test_pm_AnnexesTitleFoundInItemSearchableText(self):
         '''MeetingFiles title is indexed in the item SearchableText.'''
@@ -817,9 +821,11 @@ class testAnnexes(PloneMeetingTestCase):
         item.folder_position_typeaware(position='down', id=annex1.getId())
         self.assertEqual(item.objectValues(), [annex2, annex1, annex3])
         # member of the same group are able to change annexes position
-        self.assertTrue('developers_creators' in self.member.getGroups())
+        self.assertTrue(get_plone_group_id(self.developers_uid, 'creators')
+                        in self.member.getGroups())
         self.changeUser('pmCreator1b')
-        self.assertTrue('developers_creators' in self.member.getGroups())
+        self.assertTrue(get_plone_group_id(self.developers_uid, 'creators')
+                        in self.member.getGroups())
         item.folder_position_typeaware(position='down', id=annex1.getId())
         self.assertEqual(item.objectValues(), [annex2, annex3, annex1])
         # only members able to add annexes are able to change position

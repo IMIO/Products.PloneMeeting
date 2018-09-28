@@ -5199,7 +5199,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         groupInCharge = self.adapted().getGroupInCharge(True)
         if not groupInCharge:
             return
-        observersPloneGroupId = groupInCharge.getPloneGroupId('observers')
+        observersPloneGroupId = get_plone_group_id(groupInCharge.UID(), 'observers')
         self.manage_addLocalRoles(observersPloneGroupId, (READER_USECASES['groupincharge'],))
 
     def _versionateAdvicesOnItemEdit(self):
