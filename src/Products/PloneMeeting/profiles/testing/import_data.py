@@ -119,14 +119,17 @@ meetingAnnex = AnnexTypeDescriptor(
     'meeting-annex', 'Meeting annex(es)', u'itemAnnex.png', relatedTo='meeting')
 
 # Style Template ---------------------------------------------------------------
-stylesTemplate = StyleTemplateDescriptor('styles', 'Styles')
-stylesTemplate.odt_file = 'styles.odt'
+stylesTemplate1 = StyleTemplateDescriptor('styles1', 'Default Styles')
+stylesTemplate1.odt_file = 'styles1.odt'
+
+stylesTemplate2 = StyleTemplateDescriptor('styles2', 'Extra Styles')
+stylesTemplate2.odt_file = 'styles2.odt'
 # Pod templates
 agendaTemplate = PodTemplateDescriptor('agendaTemplate', 'Meeting agenda')
 agendaTemplate.odt_file = 'Agenda.odt'
 agendaTemplate.pod_portal_types = ['MeetingPma']
 agendaTemplate.tal_condition = u''
-agendaTemplate.style_template = ['styles']
+agendaTemplate.style_template = ['styles1']
 
 decisionsTemplate = PodTemplateDescriptor('decisionsTemplate',
                                           'Meeting decisions')
@@ -134,13 +137,13 @@ decisionsTemplate.odt_file = 'Decisions.odt'
 decisionsTemplate.pod_portal_types = ['MeetingPma']
 decisionsTemplate.tal_condition = u'python:here.adapted().isDecided()'
 decisionsTemplate.roles_bypassing_talcondition = set(['Manager'])
-decisionsTemplate.style_template = ['styles']
+decisionsTemplate.style_template = ['styles1']
 
 itemTemplate = PodTemplateDescriptor('itemTemplate', 'Meeting item')
 itemTemplate.odt_file = 'Item.odt'
 itemTemplate.pod_portal_types = ['MeetingItemPma']
 itemTemplate.tal_condition = u''
-itemTemplate.style_template = ['styles']
+itemTemplate.style_template = ['styles2']
 
 dashboardTemplate = PodTemplateDescriptor('dashboardTemplate', 'Dashboard summary', dashboard=True)
 dashboardTemplate.odt_file = 'Dashboard.odt'
@@ -352,7 +355,7 @@ meetingPma.meetingPowerObserversStates = ('frozen', 'published', 'decided', 'clo
 meetingPma.useVotes = True
 meetingPma.meetingUsers = [pmReviewer1_voter, pmManager_observer,
                            cadranel_signer, muser_voter1, muser_voter2]
-meetingPma.styleTemplates = [stylesTemplate]
+meetingPma.styleTemplates = [stylesTemplate1, stylesTemplate2]
 meetingPma.podTemplates = [agendaTemplate, decisionsTemplate, itemTemplate, dashboardTemplate]
 meetingPma.selectableCopyGroups = [developers.getIdSuffixed('reviewers'), vendors.getIdSuffixed('reviewers'), ]
 meetingPma.meetingConfigsToCloneTo = [{'meeting_config': 'plonegov-assembly',

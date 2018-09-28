@@ -5531,8 +5531,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # associate style template with pod template if necessary
         if not data['is_style'] and data['style_template']:
             # we have a list of style templates
-            data['style_template'] = [folder.get(style_template).UID()
-                                      for style_template in data['style_template']]
+            styles_uids = []
+            for style_template in data['style_template']:
+                style_template_obj = folder.get(style_template)
+                if style_template_obj.id in data['style_template']:
+                    styles_uids.append(style_template_obj.UID())
+
+            data['style_template'] = styles_uids
 
         podTemplate = api.content.create(
             type=podType,
