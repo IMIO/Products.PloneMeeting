@@ -15,6 +15,7 @@ from collections import OrderedDict
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
+from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_groups
 from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
 from collective.eeafaceted.collectionwidget.interfaces import IDashboardCollection
@@ -5403,6 +5404,20 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             self.getItemTypeName(configType='MeetingItemTemplate')
         folder.invokeFactory(itemType, **data)
         item = getattr(folder, descr.id)
+        # adapt org related values as we have org id on descriptor and we need to set org UID
+        own_org = get_own_organization()
+        if item.proposingGroup:
+            item.setProposingGroup(own_org.restrictedTraverse(item.proposingGroup.encode('utf-8')).UID())
+        if item.groupInCharge:
+            item.setGroupInCharge(own_org.restrictedTraverse(item.groupInCharge.encode('utf-8')).UID())
+        if item.associatedGroups:
+            item.setAssociatedGroups(
+                [own_org.restrictedTraverse(associated_group.encode('utf-8')).UID()
+                 for associated_group in item.associatedGroups])
+        if item.templateUsingGroups:
+            item.setTemplateUsingGroups(
+                [own_org.restrictedTraverse(template_using_group.encode('utf-8')).UID()
+                 for template_using_group in item.templateUsingGroups])
         # disable _at_rename_after_creation for itemTemplates and recurringItems
         item._at_rename_after_creation = False
         # call processForm passing dummy values so existing values are not touched
