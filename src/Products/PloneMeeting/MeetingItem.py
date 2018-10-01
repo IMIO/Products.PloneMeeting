@@ -2973,7 +2973,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # of function/signatures, so ['function1', 'name1', 'function2', 'name2', 'function3', 'name3', ]
             # this list is ordered by signature number defined on the organization/MeetingConfig
             return item.getProposingGroup(theObject=True).getCertifiedSignatures(
-                computed=True, context=item, from_group_in_charge=from_group_in_charge)
+                computed=True, cfg=cfg, from_group_in_charge=from_group_in_charge)
         else:
             # we use contacts
             signatories = cfg.getHeldPositions(usages=('signer',))

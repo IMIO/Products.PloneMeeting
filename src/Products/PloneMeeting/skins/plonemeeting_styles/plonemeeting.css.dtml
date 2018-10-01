@@ -1738,6 +1738,10 @@ div.highlight.selectable_for_plonegroup_false div span {
    color: red;
 }
 
+/* highlight disabled values in red in faceted filters */
+#faceted-form fieldset.widget-fieldset label[title*="(Désactivé)"] {
+    color: red;
+}
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */

@@ -56,13 +56,21 @@
                    zope.container.interfaces.IObjectRemovedEvent"
               handler=".events.onMeetingRemoved" />
 
-  <subscriber for=".content.organization.IPMOrganization
-                   OFS.interfaces.IObjectWillBeRemovedEvent"
-              handler=".events.onOrgWillBeRemoved" />
-
   <subscriber for=".interfaces.IMeetingConfig
                    OFS.interfaces.IObjectWillBeRemovedEvent"
               handler=".events.onConfigWillBeRemoved" />
+
+  <subscriber for=".content.organization.IPMOrganization
+                   zope.lifecycleevent.interfaces.IObjectAddedEvent"
+              handler=".events.onOrgCreated" />
+
+  <subscriber for=".content.organization.IPMOrganization
+                   zope.lifecycleevent.IObjectModifiedEvent"
+              handler=".events.onOrgModified" />
+
+  <subscriber for=".content.organization.IPMOrganization
+                   OFS.interfaces.IObjectWillBeRemovedEvent"
+              handler=".events.onOrgWillBeRemoved" />
 
   <subscriber for=".content.organization.IPMOrganization
                    zope.container.interfaces.IObjectRemovedEvent"
@@ -131,15 +139,16 @@
                    OFS.interfaces.IObjectWillBeRemovedEvent"
               handler=".events.onHeldPositionRemoved" />
 
-  <!-- collective.contact.plonegroup group created event -->
-  <subscriber
-      for="Products.PluggableAuthService.interfaces.events.IPrincipalCreatedEvent"
-      handler=".events.onPloneGroupCreated"
-      />
-
   <!-- DashboardCollection events -->
   <subscriber for="collective.eeafaceted.collectionwidget.interfaces.IDashboardCollection
                    zope.lifecycleevent.interfaces.IObjectAddedEvent"
               handler=".events.onDashboardCollectionAdded" />
+
+  <subscriber for="plone.registry.interfaces.IRecordModifiedEvent"
+              handler=".events.onRegistyChanged" />
+
+  <!-- collective.contact.plonegroup group created event -->
+  <subscriber for="collective.contact.plonegroup.interfaces.IPlonegroupGroupCreatedEvent"
+              handler=".events.onPlonegroupGroupCreated" />
 
 </configure>

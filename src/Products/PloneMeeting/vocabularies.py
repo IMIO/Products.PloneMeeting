@@ -143,8 +143,8 @@ class ItemProposingGroupsVocabulary(object):
     @ram.cache(__call___cachekey)
     def __call__(self, context):
         """ """
-        active_orgs = get_organizations(only_selected=True, caching=False)
-        not_active_orgs = [org for org in get_organizations(only_selected=False, caching=False)
+        active_orgs = get_organizations(only_selected=True)
+        not_active_orgs = [org for org in get_organizations(only_selected=False)
                            if org not in active_orgs]
         res_active = []
         for active_org in active_orgs:
@@ -192,8 +192,8 @@ class ItemProposingGroupsForFacetedFilterVocabulary(object):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        active_orgs = get_organizations(only_selected=True, caching=False)
-        not_active_orgs = [org for org in get_organizations(only_selected=False, caching=False)
+        active_orgs = get_organizations(only_selected=True)
+        not_active_orgs = [org for org in get_organizations(only_selected=False)
                            if org not in active_orgs]
         res_active = []
         groupsToHide = cfg.getGroupsHiddenInDashboardFilter()
@@ -241,7 +241,7 @@ class GroupsInChargeVocabulary(object):
     @ram.cache(__call___cachekey)
     def __call__(self, context):
         """ """
-        orgs = get_organizations(only_selected=False, caching=False)
+        orgs = get_organizations(only_selected=False)
         res = []
         for org in orgs:
             for group_in_charge_uid in org.groups_in_charge:
@@ -271,7 +271,7 @@ class ItemProposingGroupAcronymsVocabulary(object):
     @ram.cache(__call___cachekey)
     def __call__(self, context):
         """ """
-        orgs = get_organizations(only_selected=False, caching=False)
+        orgs = get_organizations(only_selected=False)
         res = []
         for org in orgs:
             org_uid = org.UID()
@@ -427,12 +427,15 @@ MeetingDatesVocabularyFactory = MeetingDatesVocabulary()
 class AskedAdvicesVocabulary(object):
     implements(IVocabularyFactory)
 
-    def _getAdvisers(self):
+    def _getAdvisers(self, active=True):
         """ """
         res = []
         # customAdvisers
         customAdvisers = self.cfg and self.cfg.getCustomAdvisers() or []
         for customAdviser in customAdvisers:
+            if (active and customAdviser['for_item_created_until']) or \
+               (not active and not customAdviser['for_item_created_until']):
+                continue
             if customAdviser['delay']:
                 # build using DELAYAWARE_ROW_ID_PATTERN
                 res.append(DELAYAWARE_ROW_ID_PATTERN.format(customAdviser['row_id']))
@@ -441,13 +444,16 @@ class AskedAdvicesVocabulary(object):
                 res.append(REAL_ORG_UID_PATTERN.format(customAdviser['org']))
 
         # classic advisers
-        for org in get_organizations(caching=False):
+        orgs = get_organizations(only_selected=True)
+        if not active:
+            orgs = [org for org in get_organizations(only_selected=False)
+                    if org not in orgs]
+        for org in orgs:
             formatted = REAL_ORG_UID_PATTERN.format(org.UID())
             if formatted not in res:
                 res.append(REAL_ORG_UID_PATTERN.format(org.UID()))
-        # remove duplicates, it can be the case when several custom advisers
-        # not delay aware are defined for the same group
-        return list(set(res))
+
+        return res
 
     def __call___cachekey(method, self, context):
         '''cachekey method for self.__call__.'''
@@ -455,6 +461,38 @@ class AskedAdvicesVocabulary(object):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         return date, cfg
+
+    def adviser_term_title(self, adviser):
+        """ """
+        termTitle = None
+        if adviser.startswith(REAL_ORG_UID_PATTERN.format('')):
+            org_uid = adviser.split(REAL_ORG_UID_PATTERN.format(''))[-1]
+            org = get_organization(org_uid)
+            termTitle = org.get_full_title()
+        elif adviser.startswith(DELAYAWARE_ROW_ID_PATTERN.format('')):
+            row_id = adviser.split(DELAYAWARE_ROW_ID_PATTERN.format(''))[-1]
+            delayAwareAdviser = self.cfg._dataForCustomAdviserRowId(row_id)
+            delay = safe_unicode(delayAwareAdviser['delay'])
+            delay_label = safe_unicode(delayAwareAdviser['delay_label'])
+            org_uid = delayAwareAdviser['org']
+            org = get_organization(org_uid)
+            org_title = org.get_full_title()
+            if delay_label:
+                termTitle = translate('advice_delay_with_label',
+                                      domain='PloneMeeting',
+                                      mapping={'org_title': org_title,
+                                               'delay': delay,
+                                               'delay_label': delay_label},
+                                      default='${group_name} - ${delay} day(s) (${delay_label})',
+                                      context=self.request)
+            else:
+                termTitle = translate('advice_delay_without_label',
+                                      domain='PloneMeeting',
+                                      mapping={'org_title': org_title,
+                                               'delay': delay},
+                                      default='${group_name} - ${delay} day(s)',
+                                      context=self.request)
+        return termTitle
 
     @ram.cache(__call___cachekey)
     def __call__(self, context):
@@ -487,42 +525,33 @@ class AskedAdvicesVocabulary(object):
         except:
             return SimpleVocabulary(res)
 
-        advisers = self._getAdvisers()
-        for adviser in advisers:
-            termTitle = None
-            if adviser.startswith(REAL_ORG_UID_PATTERN.format('')):
-                org_uid = adviser.split(REAL_ORG_UID_PATTERN.format(''))[-1]
-                org = get_organization(org_uid)
-                termTitle = org.get_full_title()
-            elif adviser.startswith(DELAYAWARE_ROW_ID_PATTERN.format('')):
-                row_id = adviser.split(DELAYAWARE_ROW_ID_PATTERN.format(''))[-1]
-                delayAwareAdviser = self.cfg._dataForCustomAdviserRowId(row_id)
-                delay = safe_unicode(delayAwareAdviser['delay'])
-                delay_label = safe_unicode(delayAwareAdviser['delay_label'])
-                org = get_organization(delayAwareAdviser['org'])
-                org_title = org.get_full_title()
-                if delay_label:
-                    termTitle = translate('advice_delay_with_label',
-                                          domain='PloneMeeting',
-                                          mapping={'org_title': org_title,
-                                                   'delay': delay,
-                                                   'delay_label': delay_label},
-                                          default='${group_name} - ${delay} day(s) (${delay_label})',
-                                          context=context.REQUEST).encode('utf-8')
-                else:
-                    termTitle = translate('advice_delay_without_label',
-                                          domain='PloneMeeting',
-                                          mapping={'org_title': org_title,
-                                                   'delay': delay},
-                                          default='${group_name} - ${delay} day(s)',
-                                          context=context.REQUEST).encode('utf-8')
-
-            if termTitle:
-                res.append(SimpleTerm(adviser,
-                                      adviser,
-                                      safe_unicode(termTitle))
-                           )
+        self.context = context
+        self.request = context.REQUEST
+        # remove duplicates, it can be the case when several custom advisers
+        # not delay aware are defined for the same group
+        not_active_advisers = self._getAdvisers(active=False)
+        active_advisers = [adv for adv in self._getAdvisers() if adv not in not_active_advisers]
+        for adviser in active_advisers:
+            termTitle = self.adviser_term_title(adviser)
+            res.append(SimpleTerm(adviser,
+                                  adviser,
+                                  safe_unicode(termTitle)))
         res = sorted(res, key=attrgetter('title'))
+
+        res_not_active = []
+        for adviser in not_active_advisers:
+            termTitle = self.adviser_term_title(adviser)
+            termTitle = translate(
+                u'${element_title} (Inactive)',
+                domain='PloneMeeting',
+                mapping={'element_title': termTitle},
+                context=context.REQUEST)
+            res_not_active.append(
+                SimpleTerm(adviser,
+                           adviser,
+                           safe_unicode(termTitle)))
+
+        res = res + sorted(res_not_active, key=attrgetter('title'))
         return SimpleVocabulary(res)
 
 

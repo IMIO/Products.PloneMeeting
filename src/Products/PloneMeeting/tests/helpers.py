@@ -20,6 +20,8 @@
 # 02110-1301, USA.
 #
 
+from collective.contact.plonegroup.config import ORGANIZATIONS_REGISTRY
+from collective.contact.plonegroup.utils import get_plone_group_id
 from DateTime import DateTime
 from plone import api
 from plone.app.textfield.value import RichTextValue
@@ -314,9 +316,10 @@ class PloneMeetingTestingHelpers:
         wf_name = self.wfTool.getWorkflowsFor(obj)[0].getId()
         return self.wfTool[wf_name].initial_state
 
-    def _make_not_found_user(self, user_id='new_test_user', group_id='developers_creators'):
+    def _make_not_found_user(self, user_id='new_test_user'):
         """Add a p_user_id member to the p_group_id group then delete it."""
         currentUser = self.member.getId()
+        group_id = get_plone_group_id(self.developers_uid, 'creators')
         self.changeUser('admin')
         membershipTool = api.portal.get_tool('portal_membership')
         membershipTool.addMember(id=user_id,
@@ -396,3 +399,12 @@ class PloneMeetingTestingHelpers:
     def _tearDownGroupInCharge(self, item):
         """As group in charge is an adaptable method, it may be setup differently."""
         item.setGroupInCharge('')
+
+    def _select_organization(self, org_uid, remove=False):
+        """Select organization in ORGANIZATIONS_REGISTRY."""
+        plonegroup_organizations = list(api.portal.get_registry_record(ORGANIZATIONS_REGISTRY))
+        if remove:
+            plonegroup_organizations.remove(org_uid)
+        else:
+            plonegroup_organizations.append(org_uid)
+        api.portal.set_registry_record(ORGANIZATIONS_REGISTRY, plonegroup_organizations)

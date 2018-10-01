@@ -3,6 +3,7 @@
 from collective.contact.core.content.organization import IOrganization
 from collective.contact.core.content.organization import Organization
 from collective.contact.plonegroup.config import ORGANIZATIONS_REGISTRY
+from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
 from collective.z3cform.datagridfield import DataGridFieldFactory
 from collective.z3cform.datagridfield import DictRow
@@ -11,6 +12,8 @@ from plone.autoform import directives as form
 from plone.dexterity.schema import DexteritySchemaPolicy
 from plone.supermodel import model
 from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.utils import computeCertifiedSignatures
+from Products.PloneMeeting.utils import listifySignatures
 from Products.PloneMeeting.validators import DXCertifiedSignaturesValidator
 from z3c.form.browser.checkbox import CheckBoxFieldWidget
 from z3c.form.browser.radio import RadioFieldWidget
@@ -238,6 +241,36 @@ class PMOrganization(Organization):
             else:
                 res = True
         return res
+
+    def get_certified_signatures(self, computed=False, cfg=None, from_group_in_charge=False, listify=True, **kwargs):
+        '''Overrides field 'certified_signatures' accessor to be able to pass
+           the p_computed parameter that will return computed certified signatures,
+           so signatures really available right now.  If nothing is defined on the organization,
+           use certified signatures defined on the corresponding p_cfg MeetingConfig.
+           If p_from_group_in_charge is True, we get certifiedSignatures from the first defined
+           self.groupsInCharge.'''
+        group_signatures = self.certified_signatures
+        if computed:
+            computedSignatures = cfg.getCertifiedSignatures(computed=True)
+
+            # get certified signatures from first of the defined groupsInCharge
+            groups_in_charge = self.groups_in_charge
+            if from_group_in_charge and groups_in_charge:
+                group_in_charge = get_organization(groups_in_charge)
+                computedSignatures.update(
+                    computeCertifiedSignatures(group_in_charge.getCertifiedSignatures()))
+
+            # if we have certified signatures defined on this MeetingGroup
+            # update MeetingConfig signatures regarding what is defined here
+            if group_signatures:
+                computedSignatures.update(computeCertifiedSignatures(group_signatures))
+            # listify signatures, for backward compatibility, we need a list of pair
+            # of function/name, like ['function1', 'name1', 'function2', 'name2']
+            if listify:
+                group_signatures = listifySignatures(computedSignatures)
+            else:
+                group_signatures = computedSignatures
+        return group_signatures
 
     def get_order(self, associated_org_uids=[], only_selected=True):
         '''Returns organization position among every selected organizations.

@@ -727,7 +727,7 @@ class testViews(PloneMeetingTestCase):
             view.group_users(),
             'M. PMCreator One<br />M. PMCreator One bee<br />M. PMManager')
         # add a 'not foudn' user, will not be displayed
-        self._make_not_found_user(group_id='developers_creators')
+        self._make_not_found_user()
         self.assertEqual(
             view.group_users(),
             'M. PMCreator One<br />M. PMCreator One bee<br />M. PMManager')

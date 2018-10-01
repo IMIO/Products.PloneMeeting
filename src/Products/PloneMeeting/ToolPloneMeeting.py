@@ -495,7 +495,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def get_orgs_for_user_cachekey(method,
                                    self,
                                    user_id=None,
-                                   active=True,
+                                   only_selected=True,
                                    suffixes=[],
                                    zope=False,
                                    omitted_suffixes=[]):
@@ -504,23 +504,20 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         return (date,
                 self._users_groups_value(),
                 (user_id or api.user.get_current()),
-                active, suffixes, zope, omitted_suffixes)
+                only_selected, suffixes, zope, omitted_suffixes)
 
     security.declarePublic('get_orgs_for_user')
 
     @ram.cache(get_orgs_for_user_cachekey)
-    def get_orgs_for_user(self, user_id=None, active=True, suffixes=[], omitted_suffixes=[]):
+    def get_orgs_for_user(self, user_id=None, only_selected=True, suffixes=[], omitted_suffixes=[]):
         '''Gets the organizations p_user_id belongs to. If p_user_id is None, we use the
-           authenticated user. If active is True, we select only active
+           authenticated user. If p_only_selected is True, we consider only selected
            organizations. If p_suffixes is not empty, we select only orgs having
            at least one of p_suffixes. If p_omitted_suffixes, we do not consider
            orgs the user is in using those suffixes.'''
         res = []
         user_plone_group_ids = self.get_plone_groups_for_user(user_id)
-        if active:
-            orgs = get_organizations()
-        else:
-            orgs = get_organizations(only_selected=False)
+        orgs = get_organizations(only_selected=only_selected)
         for org in orgs:
             org_uid = org.UID()
             for suffix in get_all_suffixes(org_uid):
@@ -574,13 +571,14 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             activeOrgUids = [org.UID() for org in get_organizations(only_selected=True)]
         res = False
         for plone_group_id in self.get_plone_groups_for_user():
-            # check if the groupId ends with a least one of the p_suffixes
-            keep_group_id = [suffix for suffix in suffixes if plone_group_id.endswith('_%s' % suffix)]
-            if keep_group_id:
+            # check if the plone_group_id ends with a least one of the p_suffixes
+            has_kept_suffixes = [suffix for suffix in suffixes if plone_group_id.endswith('_%s' % suffix)]
+            if has_kept_suffixes:
                 if onlyActive:
                     org = get_organization(plone_group_id)
-                    # we could not find the group, for example if suffix is 'powerobservers'
-                    if not org or org.UID() not in activeOrgUids:
+                    # if we can not find the org, it means that it is a suffix like 'powerobservers'
+                    # if we find the org, we check that it is among activeOrgUids
+                    if not org or org.UID() in activeOrgUids:
                         res = True
                         break
                 else:

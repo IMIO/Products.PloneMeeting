@@ -14,6 +14,7 @@ from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_plone_group_id
+from collective.contact.plonegroup.utils import get_plone_groups
 from collective.documentviewer.async import queueJob
 from collective.iconifiedcategory.utils import update_all_categorized_elements
 from DateTime import DateTime
@@ -24,6 +25,8 @@ from OFS.ObjectManager import BeforeDeleteException
 from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
 from plone import api
+from plone.registry.interfaces import IRecordModifiedEvent
+from collective.contact.plonegroup.browser.settings import IContactPlonegroupConfig
 from plone.app.textfield import RichText
 from plone.app.textfield.value import RichTextValue
 from Products.CMFCore.WorkflowCore import WorkflowException
@@ -181,39 +184,23 @@ def onMeetingBeforeTransition(meeting, event):
                 raise WorkflowException(msg)
 
 
-def onGroupTransition(mGroup, event):
-    '''Called whenever a transition has been fired on a MeetingGroup.'''
-    if not event.transition or (mGroup != event.object):
-        return
-    transitionId = event.transition.id
+def _invalidateOrgRelatedCachedVocabularies():
+    '''Clean cache for vocabularies using organizations.'''
+    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
+    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary")
+    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupsforfacetedfiltervocabulary")
+    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.groupsinchargevocabulary")
+    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.askedadvicesvocabulary")
 
-    tool = api.portal.get_tool('portal_plonemeeting')
-    if transitionId == 'deactivate':
-        # Remove the group from every meetingConfigs.selectableCopyGroups
-        for mc in tool.objectValues('MeetingConfig'):
-            for ploneGroupId in mGroup.getPloneGroups(idsOnly=True):
-                selectableCopyGroups = list(mc.getSelectableCopyGroups())
-                if ploneGroupId in selectableCopyGroups:
-                    selectableCopyGroups.remove(ploneGroupId)
-                mc.setSelectableCopyGroups(selectableCopyGroups)
-        # Remove the group from every meetingConfigs.selectableAdvisers
-        for mc in tool.objectValues('MeetingConfig'):
-            selectableAdvisers = list(mc.getSelectableAdvisers())
-            if mGroup.getId() in mc.getSelectableAdvisers():
-                selectableAdvisers.remove(mGroup.getId())
-            mc.setSelectableAdvisers(selectableAdvisers)
-        # add a portal_message explaining what has been done to the user
-        plone_utils = api.portal.get_tool('plone_utils')
-        plone_utils.addPortalMessage(
-            _('meetinggroup_removed_from_meetingconfigs_selectablecopygroups_selectableadvisers'),
-            'info')
 
-    # invalidate cache of relevant vocabularies
-    mGroup._invalidateCachedVocabularies()
-    # invalidate cache for MeetingGroups related methods
-    invalidate_cachekey_volatile_for('Products.PloneMeeting.ToolPloneMeeting.get_orgs_for_user')
-    invalidate_cachekey_volatile_for('Products.PloneMeeting.ToolPloneMeeting.get_plone_groups_for_user')
-    invalidate_cachekey_volatile_for('Products.PloneMeeting.ToolPloneMeeting.userIsAmong')
+def onOrgCreated(org, event):
+    ''' '''
+    _invalidateOrgRelatedCachedVocabularies()
+
+
+def onOrgModified(org, event):
+    ''' '''
+    _invalidateOrgRelatedCachedVocabularies()
 
 
 def onOrgWillBeRemoved(current_org, event):
@@ -226,7 +213,7 @@ def onOrgWillBeRemoved(current_org, event):
     # in a meetingConfig
     # If we are trying to remove the whole Plone Site, bypass this hook.
     # bypass also if we are in the creation process
-    if event.object.meta_type == 'Plone Site' or current_org._at_creation_flag:
+    if event.object.meta_type == 'Plone Site':
         return
 
     tool = api.portal.get_tool('portal_plonemeeting')
@@ -234,7 +221,7 @@ def onOrgWillBeRemoved(current_org, event):
     current_org_uid = current_org.UID()
 
     for org in get_organizations(only_selected=False):
-        if current_org_uid in org.get_groups_in_charge():
+        if current_org_uid in org.groups_in_charge:
             raise BeforeDeleteException(translate("can_not_delete_organization_groupincharge",
                                                   mapping={'org_title': org.get_full_title()},
                                                   domain="plone",
@@ -301,6 +288,66 @@ def onOrgWillBeRemoved(current_org, event):
                 translate("can_not_delete_organization_meetingitem",
                           domain="plone",
                           context=request))
+
+
+def onOrgRemoved(current_org, event):
+    '''Called when an organization is removed.'''
+    # bypass this if we are actually removing the 'Plone Site'
+    if event.object.meta_type == 'Plone Site':
+        return
+
+    # If everything passed correctly, we delete every linked (and empty) Plone groups.
+    current_org_uid = current_org.UID()
+    portal_groups = api.portal.get_tool('portal_groups')
+    for suffix in get_all_suffixes(current_org_uid):
+        plone_group_id = get_plone_group_id(current_org_uid, suffix)
+        pGroup = portal_groups.getGroupById(plone_group_id)
+        if pGroup:
+            portal_groups.removeGroup(plone_group_id)
+
+    # clean cache for MeetingGroup related vocabularies
+    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
+    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary")
+    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupsforfacetedfiltervocabulary")
+    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.askedadvicesvocabulary")
+
+
+def onRegistyChanged(event):
+    """
+        Manage our record changes
+    """
+    if IRecordModifiedEvent.providedBy(event) and event.record.interface == IContactPlonegroupConfig:
+        if event.record.fieldName == 'organizations' and event.oldValue:
+            _invalidateOrgRelatedCachedVocabularies()
+            # invalidate cache for organizations related methods
+            invalidate_cachekey_volatile_for('Products.PloneMeeting.ToolPloneMeeting.get_orgs_for_user')
+            invalidate_cachekey_volatile_for('Products.PloneMeeting.ToolPloneMeeting.get_plone_groups_for_user')
+            invalidate_cachekey_volatile_for('Products.PloneMeeting.ToolPloneMeeting.userIsAmong')
+
+            old_set = set(event.oldValue)
+            new_set = set(event.newValue)
+            # we detect unselected organizations
+            unselected_org_uids = list(old_set.difference(new_set))
+            tool = api.portal.get_tool('portal_plonemeeting')
+            for unselected_org_uid in unselected_org_uids:
+                # Remove the org from every meetingConfigs.selectableCopyGroups
+                for mc in tool.objectValues('MeetingConfig'):
+                    selectableCopyGroups = list(mc.getSelectableCopyGroups())
+                    for plone_group_id in get_plone_groups(unselected_org_uid, ids_only=True):
+                        if plone_group_id in selectableCopyGroups:
+                            selectableCopyGroups.remove(plone_group_id)
+                    mc.setSelectableCopyGroups(selectableCopyGroups)
+                # Remove the org from every meetingConfigs.selectableAdvisers
+                for mc in tool.objectValues('MeetingConfig'):
+                    selectableAdvisers = list(mc.getSelectableAdvisers())
+                    if unselected_org_uid in mc.getSelectableAdvisers():
+                        selectableAdvisers.remove(unselected_org_uid)
+                    mc.setSelectableAdvisers(selectableAdvisers)
+                # add a portal_message explaining what has been done to the user
+                plone_utils = api.portal.get_tool('plone_utils')
+                plone_utils.addPortalMessage(
+                    _('organizations_removed_from_meetingconfigs_selectablecopygroups_selectableadvisers'),
+                    'info')
 
 
 def _itemAnnexTypes(cfg):
@@ -421,28 +468,6 @@ def onConfigWillBeRemoved(config, event):
                    BUDGETIMPACTEDITORS_GROUP_SUFFIX,
                    ITEMTEMPLATESMANAGERS_GROUP_SUFFIX):
         portal_groups.removeGroup("%s_%s" % (config.getId(), suffix))
-
-
-def onOrgRemoved(current_org, event):
-    '''Called when an organization is removed.'''
-    # bypass this if we are actually removing the 'Plone Site'
-    if event.object.meta_type == 'Plone Site':
-        return
-
-    # If everything passed correctly, we delete every linked (and empty) Plone groups.
-    current_org_uid = current_org.UID()
-    portal_groups = api.portal.get_tool('portal_groups')
-    for suffix in get_all_suffixes(current_org_uid):
-        plone_group_id = get_plone_group_id(current_org_uid, suffix)
-        pGroup = portal_groups.getGroupById(plone_group_id)
-        if pGroup:
-            portal_groups.removeGroup(plone_group_id)
-
-    # clean cache for MeetingGroup related vocabularies
-    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
-    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary")
-    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupsforfacetedfiltervocabulary")
-    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.askedadvicesvocabulary")
 
 
 def _check_item_pasted_in_cfg(item):
@@ -914,6 +939,7 @@ def onHeldPositionRemoved(held_pos, event):
         raise Redirect(held_pos.REQUEST.get('HTTP_REFERER'))
 
 
-def onPloneGroupCreated(self):
+def onPlonegroupGroupCreated(event):
     """ """
-    # import ipdb; ipdb.set_trace()
+    group = event.object
+    api.group.grant_roles(group=group, roles=['MeetingObserverGlobal'])

@@ -118,11 +118,7 @@ MEETING_GROUP_SUFFIXES = [
 #   'fct_id': u'additional_suffix',
 #   'fct_orgs': ['path_to_group_id_1', 'path_to_group_id_2']},
 # ]
-EXTRA_GROUP_SUFFIXES = [
-    {'fct_title': u'additional_suffix',
-     'fct_id': u'additional_suffix',
-     'fct_orgs': ['vendors']},
-    ]
+EXTRA_GROUP_SUFFIXES = []
 
 # additonal advice types that will be available for MeetingConfig.usedAdviceTypes
 # format is just a tuple containing keys, it will be translated using same key

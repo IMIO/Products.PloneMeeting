@@ -250,9 +250,14 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         elif objectType == 'MeetingItemTemplate':
             contentType = '%s%s' % (objectType, shortName)
             folder = folder or cfg.itemtemplates
-        elif objectType in ('MeetingGroup', 'MeetingConfig'):
+        elif objectType == 'MeetingConfig':
             contentType = objectType
             folder = self.tool
+        elif objectType == 'organization':
+            contentType = objectType
+            folder = self.own_org
+            if 'groups_in_charge' not in attrs:
+                attrs['groups_in_charge'] = []
         elif objectType == 'MeetingCategory':
             contentType = objectType
             if isClassifier:
