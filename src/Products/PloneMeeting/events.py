@@ -312,7 +312,7 @@ def onOrgRemoved(current_org, event):
     invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.askedadvicesvocabulary")
 
 
-def onRegistyChanged(event):
+def onRegistryModified(event):
     """
         Manage our record changes
     """

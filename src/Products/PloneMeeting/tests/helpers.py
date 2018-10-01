@@ -408,3 +408,4 @@ class PloneMeetingTestingHelpers:
         else:
             plonegroup_organizations.append(org_uid)
         api.portal.set_registry_record(ORGANIZATIONS_REGISTRY, plonegroup_organizations)
+        self.cleanMemoize()

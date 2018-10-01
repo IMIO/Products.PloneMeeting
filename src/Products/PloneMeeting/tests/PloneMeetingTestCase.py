@@ -432,6 +432,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                                             'tool-getmeetinggroups-',
                                             'meeting-config-getcategories-',
                                             'meeting-config-gettopics-',
+                                            'plonegroup-utils-get_organizations-'
                                             ])
 
     def _removeConfigObjectsFor(self, meetingConfig, folders=['recurringitems', 'itemtemplates']):

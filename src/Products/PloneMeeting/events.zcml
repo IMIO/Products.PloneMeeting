@@ -145,7 +145,7 @@
               handler=".events.onDashboardCollectionAdded" />
 
   <subscriber for="plone.registry.interfaces.IRecordModifiedEvent"
-              handler=".events.onRegistyChanged" />
+              handler=".events.onRegistryModified" />
 
   <!-- collective.contact.plonegroup group created event -->
   <subscriber for="collective.contact.plonegroup.interfaces.IPlonegroupGroupCreatedEvent"

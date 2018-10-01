@@ -269,7 +269,7 @@ class testOwnOrg(PloneMeetingTestCase):
         org1 = self.create('organization', id='org1', title='Org 1', acronym='O1')
         org2 = self.create('organization', id='org2', title='Org 2', acronym='O2')
         org2_uid = org2.UID()
-        org1.groups_in_charge = (org2_uid,)
+        org1.groups_in_charge = [org2_uid]
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 org2_uid, catch_before_delete_exception=False)
