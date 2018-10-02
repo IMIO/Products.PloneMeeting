@@ -140,7 +140,7 @@ class PloneMeetingTestingHelpers:
         if withItems:
             item1 = self.create('MeetingItem')  # id=o2
             _set_proposing_group(item1, self.vendors)
-            item1.setAssociatedGroups(('developers',))
+            item1.setAssociatedGroups((self.developers_uid,))
             item1.setPrivacy('public')
             item1.setPollType('secret_separated')
             item1.setCategory('research')

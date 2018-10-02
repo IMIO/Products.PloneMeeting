@@ -23,6 +23,7 @@
 #
 
 from AccessControl import Unauthorized
+from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.iconifiedcategory.event import IconifiedPrintChangedEvent
 from collective.iconifiedcategory.event import IconifiedSignedChangedEvent
 from collective.iconifiedcategory.utils import calculate_category_id
@@ -197,7 +198,8 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         self.assertEqual(item.listProposingGroups().keys(), ['developers', 'endUsers', 'vendors'])
         # remove user from vendors
-        self._removePrincipalFromGroup('pmCreator1', 'vendors_creators')
+        self._removePrincipalFromGroup(
+            'pmCreator1', get_plone_group_id(self.vendors_uid, 'creators'))
         self.assertEqual(item.listProposingGroups().keys(), ['developers', 'endUsers'])
 
     def test_pm_ListProposingGroupsKeepConfigSorting(self):

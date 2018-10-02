@@ -216,9 +216,9 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
         usingGroups = cat.getUsingGroups()
         # If we have usingGroups make sure userId is creator for one of it
         if isUsing and usingGroups and not tool.isManager(cat, realManagers=True):
-            proposingGroupIds = tool.getSelectableGroups(userId=userId)
-            keys = [proposingGroupId[0] for proposingGroupId in proposingGroupIds]
-            # Check intersection between self.usingGroups and groups for which
+            selectable_orgs = tool.get_selectable_orgs(user_id=userId)
+            keys = [selectable_org[0] for selectable_org in selectable_orgs]
+            # Check intersection between self.usingGroups and orgs for which
             # the current user is creator
             isUsing = bool(set(usingGroups).intersection(keys))
         return isUsing

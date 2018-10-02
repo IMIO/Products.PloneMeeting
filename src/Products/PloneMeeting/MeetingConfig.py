@@ -3136,7 +3136,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                              domain='PloneMeeting',
                              context=self.REQUEST)
 
-        tool = api.portal.get_tool('portal_plonemeeting')
         previousRow = None
         for customAdviser in value:
             # 'is_linked_to_previous_row' must be '0' or '1'
@@ -3221,24 +3220,23 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             delay = customAdviser['delay']
             delay_left_alert = customAdviser['delay_left_alert']
             if (delay and not delay.isdigit()) or (delay_left_alert and not delay_left_alert.isdigit()):
-                tool = api.portal.get_tool('portal_plonemeeting')
-                group = getattr(tool, customAdviser['org'])
+                org = get_organization(customAdviser['org'])
                 return translate('custom_adviser_wrong_delay_format',
                                  domain='PloneMeeting',
-                                 mapping={'groupName': unicode(group.Title(), 'utf-8'), },
+                                 mapping={'groupName': org.get_full_title(), },
                                  context=self.REQUEST)
             # a delay_left_alert is only coherent if a delay is defined
             if delay_left_alert and not delay:
                 return translate('custom_adviser_no_delay_left_if_no_delay',
                                  domain='PloneMeeting',
-                                 mapping={'groupName': unicode(group.Title(), 'utf-8'), },
+                                 mapping={'groupName': org.get_full_title(), },
                                  context=self.REQUEST)
             # if a delay_left_alert is defined, it must be <= to the defined delay...
             if delay_left_alert and delay:
                 if not int(delay_left_alert) <= int(delay):
                     return translate('custom_adviser_delay_left_must_be_inferior_to_delay',
                                      domain='PloneMeeting',
-                                     mapping={'groupName': unicode(group.Title(), 'utf-8'), },
+                                     mapping={'groupName': org.get_full_title(), },
                                      context=self.REQUEST)
             previousRow = customAdviser
 
@@ -3284,7 +3282,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                     'custom_adviser_can_not_change_row_order_of_used_row_linked_to_previous',
                                     domain='PloneMeeting',
                                     mapping={'item_url': an_item_url,
-                                             'adviser_group': group.getName(), },
+                                             'adviser_group': org.get_full_title(), },
                                     context=self.REQUEST)
                         previousCustomAdviserRowId = customAdviser['row_id']
 
@@ -3296,12 +3294,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         for row_id in removed_row_ids:
             an_item_url = _checkIfConfigIsUsed(row_id)
             if an_item_url:
-                tool = api.portal.get_tool('portal_plonemeeting')
-                group = getattr(tool, self._dataForCustomAdviserRowId(row_id)['org']).getName()
+                org = get_organization(self._dataForCustomAdviserRowId(row_id)['org'])
                 return translate('custom_adviser_can_not_remove_used_row',
                                  domain='PloneMeeting',
                                  mapping={'item_url': an_item_url,
-                                          'adviser_group': group, },
+                                          'adviser_group': org.get_full_title(), },
                                  context=self.REQUEST)
 
         # check that if a row changed, it is not already in use
@@ -3336,14 +3333,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                 # _checkIfConfigIsUsed will return an item absolute_url using this configuration
                                 an_item_url = _checkIfConfigIsUsed(row_id)
                                 if an_item_url:
-                                    tool = api.portal.get_tool('portal_plonemeeting')
-                                    groupName = unicode(getattr(tool, customAdviser['org']).getName(), 'utf-8')
+                                    org = get_organization(customAdviser['org'])
                                     columnName = self.Schema()['customAdvisers'].widget.columns[k].label
                                     return translate(
                                         'custom_adviser_can_not_edit_used_row',
                                         domain='PloneMeeting',
                                         mapping={'item_url': an_item_url,
-                                                 'adviser_group': groupName,
+                                                 'adviser_group': org.get_full_title(),
                                                  'column_name': translate(columnName,
                                                                           domain='datagridfield',
                                                                           context=self.REQUEST),
@@ -3358,16 +3354,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                     for linkedRow in self._findLinkedRowsFor(customAdviser['row_id'])[1]:
                                         an_item_url = _checkIfConfigIsUsed(linkedRow['row_id'])
                                         if an_item_url:
-                                            tool = api.portal.get_tool('portal_plonemeeting')
-                                            group = getattr(tool, customAdviser['org'])
-                                            groupName = safe_unicode(group.getName())
+                                            org = get_organization(customAdviser['org'])
                                             columnName = self.Schema()['customAdvisers'].widget.columns[k].label
                                             return translate(
                                                 'custom_adviser_can_not_change_is_linked_'
                                                 'to_previous_row_isolating_used_rows',
                                                 domain='PloneMeeting',
                                                 mapping={'item_url': an_item_url,
-                                                         'adviser_group': groupName,
+                                                         'adviser_group': org.get_full_title(),
                                                          'column_name': translate(columnName,
                                                                                   domain='datagridfield',
                                                                                   context=self.REQUEST),

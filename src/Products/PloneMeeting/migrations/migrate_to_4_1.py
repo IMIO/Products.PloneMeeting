@@ -231,6 +231,10 @@ class Migrate_To_4_1(Migrator):
             field = cfg.getField('maxShownMeetingItems')
             value = field.get(cfg)
             field.set(cfg, int(value))
+        # old forget, set global_allow to False on Topic
+        topic = self.portal.portal_types.get('Topic')
+        if topic:
+            topic.global_allow = False
         logger.info('Done.')
 
     def _adaptForContacts(self):
@@ -510,6 +514,11 @@ class Migrate_To_4_1(Migrator):
         # to make sure their values were already updated
         # + update local roles will also fix 'delay_when_stopped' on advice with delay
         self.tool.updateAllLocalRoles(meta_type=('MeetingItem', ))
+
+        # remove MeetingGroup object and portal_type
+        m_group_ids = [mGroup.getId() for mGroup in self.tool.objectValues('MeetingGroup')]
+        self.tool.manage_delObjects(ids=m_group_ids)
+        self.portal.portal_types.manage_delObjects(ids=['MeetingGroup'])
 
         logger.info('Done.')
 
