@@ -184,6 +184,10 @@ validator.WidgetValidatorDiscriminators(
 class PMOrganization(Organization):
     """ """
 
+    def get_acronym(self):
+        """ """
+        return self.acronym
+
     def get_full_title(self, separator=u' / ', first_index=1):
         """Override to change default first_index from 0 to 1."""
         return super(PMOrganization, self).get_full_title(separator, first_index)
@@ -256,9 +260,9 @@ class PMOrganization(Organization):
             # get certified signatures from first of the defined groupsInCharge
             groups_in_charge = self.groups_in_charge
             if from_group_in_charge and groups_in_charge:
-                group_in_charge = get_organization(groups_in_charge)
+                group_in_charge = get_organization(groups_in_charge[0])
                 computedSignatures.update(
-                    computeCertifiedSignatures(group_in_charge.getCertifiedSignatures()))
+                    computeCertifiedSignatures(group_in_charge.get_certified_signatures()))
 
             # if we have certified signatures defined on this MeetingGroup
             # update MeetingConfig signatures regarding what is defined here

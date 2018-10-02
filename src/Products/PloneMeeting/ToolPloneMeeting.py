@@ -1270,9 +1270,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         # the defined proposing group, except if p_keepProposingGroup is True
         if not keepProposingGroup:
             userGroups = self.get_orgs_for_user(user_id=newOwnerId, suffixes=['creators', ])
-            if newItem.getProposingGroup(True) not in userGroups:
-                if userGroups:
-                    newItem.setProposingGroup(userGroups[0].getId())
+            if userGroups and newItem.getProposingGroup(True) not in userGroups:
+                newItem.setProposingGroup(userGroups[0].UID())
 
         if newOwnerId != loggedUserId:
             plone_utils = api.portal.get_tool('plone_utils')

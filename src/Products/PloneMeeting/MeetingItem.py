@@ -61,6 +61,7 @@ from Products.CMFCore.utils import _checkPermission
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from Products.CMFPlone.utils import safe_unicode
+from Products.PageTemplates.Expressions import SecureModuleImporter
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import AddAdvice
 from Products.PloneMeeting.config import AUTO_COPY_GROUP_PREFIX
@@ -177,10 +178,10 @@ class MeetingItemWorkflowConditions(object):
 
     def _groupIsNotEmpty(self, suffix):
         '''Is there any user in the group?'''
-        groupId = self.context.getProposingGroup()
-        group = groupId + '_' + suffix
+        group_uid = self.context.getProposingGroup()
+        plone_group_id = get_plone_group_id(group_uid, suffix)
         pg = api.portal.get_tool('portal_groups')
-        if pg.getGroupById(group).getGroupMemberIds():
+        if pg.getGroupById(plone_group_id).getGroupMemberIds():
             return True
 
     security.declarePublic('mayPropose')
@@ -2972,7 +2973,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # get certified signatures computed, this will return a list with pair
             # of function/signatures, so ['function1', 'name1', 'function2', 'name2', 'function3', 'name3', ]
             # this list is ordered by signature number defined on the organization/MeetingConfig
-            return item.getProposingGroup(theObject=True).getCertifiedSignatures(
+            return item.getProposingGroup(theObject=True).get_certified_signatures(
                 computed=True, cfg=cfg, from_group_in_charge=from_group_in_charge)
         else:
             # we use contacts
@@ -3667,15 +3668,22 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            prefixed with AUTO_COPY_GROUP_PREFIX.'''
         # empty stored autoCopyGroups
         self.autoCopyGroups = PersistentList()
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
         for org in get_organizations():
             org_uid = org.UID()
             try:
-                suffixes = _evaluateExpression(self,
-                                               expression=org.as_copy_group_on,
-                                               roles_bypassing_expression=[],
-                                               extra_expr_ctx={'item': self,
-                                                               'isCreated': isCreated},
-                                               empty_expr_is_true=False)
+                suffixes = _evaluateExpression(
+                    self,
+                    expression=org.as_copy_group_on,
+                    roles_bypassing_expression=[],
+                    extra_expr_ctx={
+                        'item': self,
+                        'isCreated': isCreated,
+                        'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
+                        'tool': tool,
+                        'cfg': cfg},
+                    empty_expr_is_true=False)
                 if not suffixes:
                     continue
                 # The expression is supposed to return a list a Plone group suffixes

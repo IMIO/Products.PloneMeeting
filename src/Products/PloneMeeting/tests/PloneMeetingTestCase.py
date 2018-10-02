@@ -258,6 +258,14 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             folder = self.own_org
             if 'groups_in_charge' not in attrs:
                 attrs['groups_in_charge'] = []
+            if 'item_advice_states' not in attrs:
+                attrs['item_advice_states'] = []
+            if 'item_advice_edit_states' not in attrs:
+                attrs['item_advice_edit_states'] = []
+            if 'item_advice_view_states' not in attrs:
+                attrs['item_advice_view_states'] = []
+            if 'certified_signatures' not in attrs:
+                attrs['certified_signatures'] = []
         elif objectType == 'MeetingCategory':
             contentType = objectType
             if isClassifier:
