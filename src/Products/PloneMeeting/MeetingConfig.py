@@ -5376,6 +5376,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         data = descr.getData()
         folder.invokeFactory('MeetingCategory', **data)
         cat = getattr(folder, descr.id)
+        # adapt org related values as we have org id on descriptor and we need to set org UID
+        own_org = get_own_organization()
+        if cat.usingGroups:
+            cat.setUsingGroups([own_org.restrictedTraverse(usingGroup.encode('utf-8')).UID()
+                                for usingGroup in cat.usingGroups])
         if not descr.active:
             self.portal_workflow.doActionFor(cat, 'deactivate')
         # call processForm passing dummy values so existing values are not touched

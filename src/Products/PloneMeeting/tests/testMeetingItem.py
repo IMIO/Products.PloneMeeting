@@ -111,9 +111,9 @@ class testMeetingItem(PloneMeetingTestCase):
         expectedCategories = ['deployment', 'maintenance', 'development', 'events', 'research', 'projects', ]
         expectedClassifiers = ['classifier1', 'classifier2', 'classifier3', ]
         # By default, every categories are selectable
-        self.failUnless([cat.id for cat in cfg.getCategories()] == expectedCategories)
+        self.assertEqual([cat.id for cat in cfg.getCategories()], expectedCategories)
         # And the behaviour is the same for classifiers
-        self.failUnless([cat.id for cat in cfg.getCategories(classifiers=True)] == expectedClassifiers)
+        self.assertEqual([cat.id for cat in cfg.getCategories(classifiers=True)], expectedClassifiers)
         # Deactivate a category and a classifier
         self.changeUser('admin')
         self.wfTool.doActionFor(cfg.categories.deployment, 'deactivate')
@@ -124,8 +124,8 @@ class testMeetingItem(PloneMeetingTestCase):
         self.cleanMemoize()
         self.changeUser('pmCreator1')
         # A deactivated category will not be returned by getCategories no matter an item is given or not
-        self.failUnless([cat.id for cat in cfg.getCategories()] == expectedCategories)
-        self.failUnless([cat.id for cat in cfg.getCategories(classifiers=True)] == expectedClassifiers)
+        self.assertEqual([cat.id for cat in cfg.getCategories()], expectedCategories)
+        self.assertEqual([cat.id for cat in cfg.getCategories(classifiers=True)], expectedClassifiers)
         # Specify that a category is restricted to some groups pmCreator1 is not creator for
         self.changeUser('admin')
         cfg.categories.maintenance.setUsingGroups((self.vendors_uid,))
@@ -136,25 +136,25 @@ class testMeetingItem(PloneMeetingTestCase):
         self.cleanMemoize()
         self.changeUser('pmCreator1')
         # if current user is not creator for one of the usingGroups defined for the category, he can not use it
-        self.failUnless([cat.id for cat in cfg.getCategories()] == expectedCategories)
-        self.failUnless([cat.id for cat in cfg.getCategories(classifiers=True)] == expectedClassifiers)
+        self.assertEqual([cat.id for cat in cfg.getCategories()], expectedCategories)
+        self.assertEqual([cat.id for cat in cfg.getCategories(classifiers=True)], expectedClassifiers)
         # cfg.getCategories can receive a userId
         # pmCreator2 has an extra category called subproducts
         expectedCategories.append('subproducts')
         # here above we restrict the use of 'maintenance' to vendors too...
         expectedCategories.insert(0, 'maintenance')
-        self.failUnless([cat.id for cat in cfg.getCategories(userId='pmCreator2')] == expectedCategories)
+        self.assertEqual([cat.id for cat in cfg.getCategories(userId='pmCreator2')], expectedCategories)
         # change usingGroup for 'subproducts'
         cfg.categories.subproducts.setUsingGroups((self.developers_uid,))
         expectedCategories.remove('subproducts')
         # getCategories has caching in the REQUEST, we need to wipe this out
         self.cleanMemoize()
-        self.failUnless([cat.id for cat in cfg.getCategories(userId='pmCreator2')] == expectedCategories)
+        self.assertEqual([cat.id for cat in cfg.getCategories(userId='pmCreator2')], expectedCategories)
 
         # if useGroupsAsCategories is on, getCategories will return proposingGroups
         self.cleanMemoize()
         cfg.setUseGroupsAsCategories(True)
-        self.failUnless([gr.getId() for gr in cfg.getCategories()] == [self.developers_uid, self.vendors_uid])
+        self.assertEqual([cat.UID() for cat in cfg.getCategories()], [self.developers_uid, self.vendors_uid])
 
     def test_pm_ListProposingGroups(self):
         '''Check MeetingItem.proposingGroup vocabulary.'''
@@ -234,21 +234,26 @@ class testMeetingItem(PloneMeetingTestCase):
         org2_uid = org2.UID()
         org3 = self.create('organization', id='org3', title='Org 3', acronym='O3')
         org3_uid = org3.UID()
+        # only selected org are taken into account as groups_in_charge
+        self._select_organization(org1_uid)
+        self._select_organization(org2_uid)
+        self._select_organization(org3_uid)
         self.developers.groups_in_charge = (org1_uid, )
         self.vendors.groups_in_charge = (org2_uid, )
         # make pmCreator1 creator for vendors
-        self._addPrincipalToGroup('pmCreator1', get_plone_groups(self.vendors_uid, 'creators'))
+        self._addPrincipalToGroup('pmCreator1', get_plone_group_id(self.vendors_uid, 'creators'))
         self.changeUser('pmCreator1')
         item1 = self.create('MeetingItem')
         developers_gic1 = '{0}__groupincharge__{1}'.format(self.developers_uid, org1_uid)
         vendors_gic2 = '{0}__groupincharge__{1}'.format(self.vendors_uid, org2_uid)
+        import ipdb; ipdb.set_trace()
         self.assertEqual(item1.listProposingGroupsWithGroupsInCharge().items(),
                          ((developers_gic1, 'Developers (Org 1)'),
                           (vendors_gic2, 'Vendors (Org 2)')))
         item1.setProposingGroupWithGroupInCharge(developers_gic1)
         # now disable group1
         self.changeUser('siteadmin')
-        self._select_organization(org1_uid)
+        self._select_organization(org1_uid, remove=True)
         self.changeUser('pmCreator1')
         # still available for item as is use it
         self.assertEqual(item1.listProposingGroupsWithGroupsInCharge().items(),
@@ -554,13 +559,13 @@ class testMeetingItem(PloneMeetingTestCase):
             developers_advice = createContentInContainer(
                 item,
                 'meetingadvice',
-                **{'advice_group': self.portal.portal_plonemeeting.developers.getId(),
+                **{'advice_group': self.developers_uid,
                    'advice_type': u'positive',
                    'advice_comment': RichTextValue(u'My comment')})
             vendors_advice = createContentInContainer(
                 item,
                 'meetingadvice',
-                **{'advice_group': self.portal.portal_plonemeeting.vendors.getId(),
+                **{'advice_group': self.vendors_uid,
                    'advice_type': u'negative',
                    'advice_comment': RichTextValue(u'My comment')})
         self.changeUser('pmReviewer1')
@@ -772,7 +777,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfg2 = self.meetingConfig2
         cfg.setContentsKeptOnSentToOtherMC(('advices', 'annexes', ))
-        cfg.setAdvicesKeptOnSentToOtherMC(['delay_real_group_id__unique_id_123'])
+        cfg.setAdvicesKeptOnSentToOtherMC(['delay_row_id__unique_id_123'])
         data = self._setupSendItemToOtherMC(with_advices=True)
         originalItem = data['originalItem']
 
@@ -1601,17 +1606,18 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm_AddAutoCopyGroups(self):
         '''Test the functionnality of automatically adding some copyGroups depending on
-           the TAL expression defined on every MeetingGroup.asCopyGroupOn.'''
+           the TAL expression defined on every organization.as_copy_group_on.'''
         # Use the 'meetingConfig2' where copies are enabled
         self.setMeetingConfig(self.meetingConfig2.getId())
+        cfg = self.meetingConfig
         self.changeUser('pmManager')
         # By default, adding an item does not add any copyGroup
         i1 = self.create('MeetingItem')
         self.failIf(i1.getCopyGroups())
         # If we create an item with copyGroups, the copyGroups are there...
-        i2 = self.create('MeetingItem', copyGroups=self.meetingConfig.getSelectableCopyGroups())
-        self.failUnless(i2.getCopyGroups() == self.meetingConfig.getSelectableCopyGroups())
-        # Now, define on a MeetingGroup of the config that it will returns a particular suffixed group
+        i2 = self.create('MeetingItem', copyGroups=cfg.getSelectableCopyGroups())
+        self.failUnless(i2.getCopyGroups() == cfg.getSelectableCopyGroups())
+        # Now, define on an organization of the config that it will returns a particular suffixed group
         self.changeUser('admin')
         # If an item with proposing group 'vendors' is created, the 'reviewers' and 'advisers' of
         # the developers will be set as copyGroups.  That is what the expression says, but in reality,
@@ -1630,7 +1636,7 @@ class testMeetingItem(PloneMeetingTestCase):
         vendors_reviewers = get_plone_group_id(self.vendors_uid, 'reviewers')
         i4 = self.create('MeetingItem', copyGroups=(developers_reviewers,))
         self.failUnless(i4.getCopyGroups() == (developers_reviewers,))
-        # Now, creating an item that will make the condition on the MeetingGroup
+        # Now, creating an item that will make the condition on the organization
         # True will make it add the relevant copyGroups
         # moreover, check that auto added copyGroups add correctly
         # relevant local roles for copyGroups
@@ -1713,7 +1719,8 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failIf(item2.autoCopyGroups)
 
     def test_pm_AddAutoCopyGroupsWrongExpressionDoesNotBreak(self):
-        '''If the TAL expression defined on a MeetingGroup.asCopyGroupOn is wrong, it does not break.'''
+        '''If the TAL expression defined on a organization.as_copy_group_on is wrong,
+           it does not break.'''
         # Use the 'meetingConfig2' where copies are enabled
         self.setMeetingConfig(self.meetingConfig2.getId())
         self.changeUser('pmManager')
@@ -2830,7 +2837,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(item.listCopyGroups().values(), ['Vendors (Reviewers)'])
         self.assertEqual(item.listCopyGroups(include_auto=True).keys(),
                          ['auto__{0}'.format(vendors_advisers),
-                          'auto__{0}'.foramt(vendors_observers),
+                          'auto__{0}'.format(vendors_observers),
                           vendors_reviewers])
         self.assertEqual(item.listCopyGroups(include_auto=True).values(),
                          ['Vendors (Advisers) [auto]',
@@ -2851,7 +2858,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setAssociatedGroups((self.developers_uid, ))
         # still the complete vocabulary
         self.assertEquals(item.listAssociatedGroups().keys(), [self.developers_uid, self.vendors_uid])
-        # disable developers MeetingGroup in the portal_plonemeeting
+        # disable developers organization
         self.changeUser('admin')
         self._select_organization(self.developers_uid, remove=True)
         self.changeUser('pmManager')
@@ -3031,7 +3038,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEquals(item.listOptionalAdvisers().keys(),
                           ['not_selectable_value_delay_aware_optional_advisers',
                            '{0}__rowid__unique_id_123'.format(self.developers_uid),
-                           '{0à}__rowid__unique_id_456'.format(self.developers_uid),
+                           '{0}__rowid__unique_id_456'.format(self.developers_uid),
                            'not_selectable_value_non_delay_aware_optional_advisers',
                            self.developers_uid,
                            self.vendors_uid])
@@ -3688,7 +3695,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # we can force to get signatures from the MeetingConfig
         self.assertTrue(item.adapted().getCertifiedSignatures(forceUseCertifiedSignaturesOnMeetingConfig=True) ==
                         [u'Function1', u'Name1', u'Function2', u'Name2'])
-        # if no signatures on the MeetingGroup, signatures of the MeetingConfig are used
+        # if no signatures on the organization, signatures of the MeetingConfig are used
         self.developers.certified_signatures = []
         self.assertTrue(item.adapted().getCertifiedSignatures() ==
                         [u'Function1', u'Name1', u'Function2', u'Name2'])

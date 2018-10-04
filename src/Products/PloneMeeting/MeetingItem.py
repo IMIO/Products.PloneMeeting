@@ -17,6 +17,7 @@ from App.class_init import InitializeClass
 from appy.gen import No
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from collective.behavior.talcondition.utils import _evaluateExpression
+from collective.contact.plonegroup.config import ORGANIZATIONS_REGISTRY
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
@@ -2611,34 +2612,34 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def listProposingGroupsWithGroupsInCharge(self):
         '''Like self.listProposingGroups but appends the various possible groups in charge.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
         base_res = self.listProposingGroups()
         res = []
+        active_org_uids = api.portal.get_registry_record(ORGANIZATIONS_REGISTRY)
         for k, v in base_res.items():
             if not k:
                 res.append((k, v))
                 continue
-            mGroup = tool.get(k)
-            groupsInCharge = mGroup.getGroupsInCharge()
+            org = get_organization(k)
+            groupsInCharge = org.groups_in_charge
             if not groupsInCharge:
                 # append a value that will let use a simple proposingGroup without groupInCharge
                 key = '{0}__groupincharge__{1}'.format(k, '')
                 res.append((key, '{0} ()'.format(v)))
-            for groupInChargeId in mGroup.getGroupsInCharge():
-                groupInCharge = tool.get(groupInChargeId)
-                key = '{0}__groupincharge__{1}'.format(k, groupInChargeId)
+            for gic_org_uid in org.groups_in_charge:
+                groupInCharge = get_organization(gic_org_uid)
+                key = '{0}__groupincharge__{1}'.format(k, gic_org_uid)
                 # only take active groups in charge
-                if api.content.get_state(groupInCharge) == 'active':
-                    res.append((key, '{0} ({1})'.format(v, groupInCharge.Title())))
+                if gic_org_uid in active_org_uids:
+                    res.append((key, '{0} ({1})'.format(v, groupInCharge.get_full_title())))
         res = DisplayList(tuple(res))
 
         # make sure current value is still in the vocabulary
         current_value = self.getProposingGroupWithGroupInCharge()
         if current_value and current_value not in res.keys():
-            current_proposingGroupId, current_groupInChargeId = current_value.split('__groupincharge__')
+            current_proposingGroupUid, current_groupInChargeUid = current_value.split('__groupincharge__')
             res.add(current_value,
-                    '{0} ({1})'.format(tool.get(current_proposingGroupId).Title(),
-                                       tool.get(current_groupInChargeId).Title()))
+                    '{0} ({1})'.format(get_organization(current_proposingGroupUid).get_full_title(),
+                                       get_organization(current_groupInChargeUid).get_full_title()))
         return res.sortedByValue()
 
     security.declarePublic('listAssociatedGroups')
@@ -3814,7 +3815,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                           [org_infos[0] for org_infos in resDelayAwareAdvisers]
                 for optionalAdviser in optionalAdvisers:
                     if optionalAdviser not in optionalAdvisersInVocab:
-                        org = get_organization(org_uid)
+                        org = get_organization(optionalAdviser)
                         if '__rowid__' in optionalAdviser:
                             org_uid, row_id = self._decodeDelayAwareId(optionalAdviser)
                             delay = cfg._dataForCustomAdviserRowId(row_id)['delay']
