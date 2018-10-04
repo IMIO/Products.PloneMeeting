@@ -22,6 +22,7 @@
 # 02110-1301, USA.
 #
 
+from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.contact.plonegroup.utils import get_plone_groups
 from OFS.ObjectManager import BeforeDeleteException
@@ -447,6 +448,13 @@ class testOwnOrg(PloneMeetingTestCase):
                           ['Function1', 'Name1',
                            'Function2', 'Name2',
                            'Redefined function3', 'Redefined name3'])
+
+    def test_pm_OwnOrgNotDeletable(self):
+        """The own_org element is not deletable using delete_uid."""
+        self.changeUser('siteadmin')
+        self.assertRaises(
+            Unauthorized,
+            self.portal.restrictedTraverse('@@delete_givenuid'), self.own_org.UID())
 
 
 def test_suite():

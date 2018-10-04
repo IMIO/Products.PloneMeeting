@@ -159,11 +159,12 @@ class PloneMeetingContentActionsViewlet(ContentActionsViewlet):
     '''
 
     def render(self):
-        if self.context.meta_type in ('ATTopic', 'Meeting', 'MeetingItem',  'MeetingCategory',
-                                      'MeetingConfig', 'MeetingGroup', 'MeetingFileType', 'MeetingUser',
-                                      'ToolPloneMeeting',) or \
-           self.context.portal_type in ('ContentCategoryConfiguration', 'ContentCategoryGroup',
-                                        'ConfigurablePODTemplate', 'DashboardPODTemplate') or \
+        if self.context.meta_type in (
+            'ATTopic', 'Meeting', 'MeetingItem',  'MeetingCategory',
+            'MeetingConfig', 'MeetingFileType', 'MeetingUser', 'ToolPloneMeeting',) or \
+           self.context.portal_type in (
+            'ContentCategoryConfiguration', 'ContentCategoryGroup',
+            'ConfigurablePODTemplate', 'DashboardPODTemplate', 'organization') or \
            self.context.portal_type.startswith(('meetingadvice',)) or \
            self.context.portal_type.endswith(('ContentCategory', 'ContentSubcategory',)):
             return ''
@@ -186,6 +187,8 @@ class PMConfigActionsPanelViewlet(ActionsPanelViewlet):
             if 'ContentCategory' in self.context.portal_type:
                 showAddContent = True
                 showActions = True
+            elif self.context.portal_type == 'organization':
+                showAddContent = True
             return self.context.restrictedTraverse("@@actions_panel")(useIcons=False,
                                                                       showTransitions=True,
                                                                       appendTypeNameToTransitionLabel=True,

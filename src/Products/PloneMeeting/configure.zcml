@@ -167,6 +167,9 @@
   <adapter for="Products.PloneMeeting.interfaces.IMeetingItem"
            factory=".adapters.MeetingItemContentDeletableAdapter"
            provides="imio.actionspanel.interfaces.IContentDeletable" />
+  <adapter for="Products.PloneMeeting.content.organization.IPMOrganization"
+           factory=".adapters.OrgContentDeletableAdapter"
+           provides="imio.actionspanel.interfaces.IContentDeletable" />
 
   <!-- Indexes -->
   <adapter name="getRawClassifier" factory=".indexes.getRawClassifier" />

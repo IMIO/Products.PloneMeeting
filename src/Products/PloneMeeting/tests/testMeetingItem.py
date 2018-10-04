@@ -246,7 +246,6 @@ class testMeetingItem(PloneMeetingTestCase):
         item1 = self.create('MeetingItem')
         developers_gic1 = '{0}__groupincharge__{1}'.format(self.developers_uid, org1_uid)
         vendors_gic2 = '{0}__groupincharge__{1}'.format(self.vendors_uid, org2_uid)
-        import ipdb; ipdb.set_trace()
         self.assertEqual(item1.listProposingGroupsWithGroupsInCharge().items(),
                          ((developers_gic1, 'Developers (Org 1)'),
                           (vendors_gic2, 'Vendors (Org 2)')))

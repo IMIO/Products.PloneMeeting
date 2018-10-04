@@ -9,6 +9,7 @@
 
 from AccessControl import Unauthorized
 from appy.shared.diff import HtmlDiff
+from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.documentviewer.settings import GlobalSettings
 from collective.iconifiedcategory.adapter import CategorizedObjectAdapter
@@ -509,6 +510,25 @@ class MeetingContentDeletableAdapter(APContentDeletableAdapter):
         member = api.user.get_current()
         if member.has_role('Manager'):
             return True
+
+
+class OrgContentDeletableAdapter(APContentDeletableAdapter):
+    """
+      Manage the mayDelete for organization.
+      This will remove the 'Remove' button when user is on the 'own_org'.
+    """
+    def __init__(self, context):
+        self.context = context
+
+    def mayDelete(self, **kwargs):
+        '''See docstring in interfaces.py.'''
+        if not super(OrgContentDeletableAdapter, self).mayDelete():
+            return False
+
+        if self.context == get_own_organization():
+            return False
+
+        return True
 
 
 class ItemPrettyLinkAdapter(PrettyLinkAdapter):
