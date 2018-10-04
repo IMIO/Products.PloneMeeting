@@ -111,7 +111,7 @@ def reviewProcessInfo(obj):
     """
     item_state = obj.queryState()
     return '%s__reviewprocess__%s' % (
-        obj.adapted()._getGroupManagingItem(item_state).getId(), item_state)
+        obj.adapted()._getGroupManagingItem(item_state).UID(), item_state)
 
 
 @indexer(IMeetingItem)
