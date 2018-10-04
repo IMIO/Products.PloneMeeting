@@ -164,7 +164,8 @@ class PloneMeetingContentActionsViewlet(ContentActionsViewlet):
             'MeetingConfig', 'MeetingFileType', 'MeetingUser', 'ToolPloneMeeting',) or \
            self.context.portal_type in (
             'ContentCategoryConfiguration', 'ContentCategoryGroup',
-            'ConfigurablePODTemplate', 'DashboardPODTemplate', 'organization') or \
+            'ConfigurablePODTemplate', 'DashboardPODTemplate',
+            'directory', 'organization', 'person', 'held_position') or \
            self.context.portal_type.startswith(('meetingadvice',)) or \
            self.context.portal_type.endswith(('ContentCategory', 'ContentSubcategory',)):
             return ''
@@ -187,7 +188,7 @@ class PMConfigActionsPanelViewlet(ActionsPanelViewlet):
             if 'ContentCategory' in self.context.portal_type:
                 showAddContent = True
                 showActions = True
-            elif self.context.portal_type == 'organization':
+            elif self.context.portal_type in ('organization', 'person', 'directory'):
                 showAddContent = True
             return self.context.restrictedTraverse("@@actions_panel")(useIcons=False,
                                                                       showTransitions=True,
@@ -222,6 +223,8 @@ class PMConfigActionsPanelViewlet(ActionsPanelViewlet):
                                           'ItemAnnexContentSubcategory',
                                           ):
             url = '{0}?pageName=data#annexes_types'.format(cfg_url, )
+        elif self.context.portal_type in ('person', 'held_position'):
+            url = parent.absolute_url()
         elif self.context.portal_type == 'organization' and \
                 self.context.getId() != PLONEGROUP_ORG:
             url = '{0}/contacts/{1}'.format(self.site_url, PLONEGROUP_ORG)
