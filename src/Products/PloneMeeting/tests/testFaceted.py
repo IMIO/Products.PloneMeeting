@@ -639,7 +639,6 @@ class testFaceted(PloneMeetingTestCase):
 
         # not redirected if on an item
         self.request.RESPONSE.status = 200
-        import ipdb; ipdb.set_trace()
         item()
         self.assertEquals(self.request.RESPONSE.status, 200)
 
