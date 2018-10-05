@@ -748,8 +748,6 @@ class ConfigActionsPanelView(ActionsPanelView):
             self.ACCEPTABLE_ACTIONS = ('update_categorized_elements',
                                        'update_and_sort_categorized_elements')
 
-        if self.context.meta_type == 'MeetingGroup':
-            self.SECTIONS_TO_RENDER += ('renderLinkedPloneGroups', )
         if self.context.portal_type == 'organization':
             self.SECTIONS_TO_RENDER += ('renderLinkedPloneGroups', )
 
@@ -780,8 +778,6 @@ class ConfigActionsPanelView(ActionsPanelView):
             return "../?pageName=users#meetingusers"
         if self.context.meta_type == "MeetingConfig":
             return "#MeetingConfig"
-        if self.context.meta_type == "MeetingGroup":
-            return "#MeetingGroup"
         if self.context.portal_type == "organization":
             return "#organization"
 
@@ -801,7 +797,7 @@ class ConfigActionsPanelView(ActionsPanelView):
 
     def renderLinkedPloneGroups(self):
         """
-          Add a link to linked Plone groups for a MeetingGroup.
+          Add a link to linked Plone groups for an organization.
         """
         if self.tool.isManager(self.context, True) and self.context.getId() != PLONEGROUP_ORG:
             return ViewPageTemplateFile("templates/actions_panel_config_linkedplonegroups.pt")(self)
