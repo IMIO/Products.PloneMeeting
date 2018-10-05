@@ -5648,7 +5648,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if filtered:
             tool = api.portal.get_tool('portal_plonemeeting')
             member = api.user.get_current()
-            memberGroups = [group.getId() for group in
+            memberGroups = [org.UID() for org in
                             tool.get_orgs_for_user(user_id=member.getId(), suffixes=['creators'])]
             query['templateUsingGroups'] = ('__nothing_selected__', '__folder_in_itemtemplates__', ) + \
                 tuple(memberGroups)

@@ -20,8 +20,8 @@
 # 02110-1301, USA.
 #
 
-from collective.contact.plonegroup.config import ORGANIZATIONS_REGISTRY
 from collective.contact.plonegroup.utils import get_plone_group_id
+from collective.contact.plonegroup.utils import select_organization
 from DateTime import DateTime
 from plone import api
 from plone.app.textfield.value import RichTextValue
@@ -402,10 +402,5 @@ class PloneMeetingTestingHelpers:
 
     def _select_organization(self, org_uid, remove=False):
         """Select organization in ORGANIZATIONS_REGISTRY."""
-        plonegroup_organizations = list(api.portal.get_registry_record(ORGANIZATIONS_REGISTRY))
-        if remove:
-            plonegroup_organizations.remove(org_uid)
-        else:
-            plonegroup_organizations.append(org_uid)
-        api.portal.set_registry_record(ORGANIZATIONS_REGISTRY, plonegroup_organizations)
+        select_organization(org_uid, remove=remove)
         self.cleanMemoize()

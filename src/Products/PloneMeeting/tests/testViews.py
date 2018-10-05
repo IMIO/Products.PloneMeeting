@@ -61,8 +61,8 @@ class testViews(PloneMeetingTestCase):
         view = pmFolder.restrictedTraverse('@@createitemfromtemplate')
         view()
         # only one itemTemplate available to 'pmCreator1'
-        self.assertTrue(len(cfg.getItemTemplates(filtered=True)) == 1)
-        self.assertTrue(len(view.templatesTree['children']) == 1)
+        self.assertEqual(len(cfg.getItemTemplates(filtered=True)),  1)
+        self.assertEqual(len(view.templatesTree['children']), 1)
         # no sub children
         self.assertFalse(view.templatesTree['children'][0]['children'])
         self.assertFalse(view.displayShowHideAllLinks())
@@ -71,8 +71,8 @@ class testViews(PloneMeetingTestCase):
         pmFolder = self.getMeetingFolder()
         view = pmFolder.restrictedTraverse('@@createitemfromtemplate')
         view()
-        self.assertTrue(len(cfg.getItemTemplates(filtered=True)) == 2)
-        self.assertTrue(len(view.templatesTree['children']) == 2)
+        self.assertEqual(len(cfg.getItemTemplates(filtered=True)), 2)
+        self.assertEqual(len(view.templatesTree['children']), 2)
         # no sub children
         self.assertFalse(view.templatesTree['children'][0]['children'])
         self.assertFalse(view.templatesTree['children'][1]['children'])
@@ -100,8 +100,8 @@ class testViews(PloneMeetingTestCase):
                           '{0}/{1}/edit'.format(pmFolder.absolute_url(),
                                                 itemTemplate.getId))
         # one item created in the user pmFolder
-        self.assertTrue(len(pmFolder.objectValues('MeetingItem')) == 1)
-        self.assertTrue(pmFolder.objectValues('MeetingItem')[0].getId() == itemTemplate.getId)
+        self.assertEqual(len(pmFolder.objectValues('MeetingItem')), 1)
+        self.assertEqual(pmFolder.objectValues('MeetingItem')[0].getId(), itemTemplate.getId)
 
     def test_pm_CreateItemFromTemplate(self):
         '''
@@ -115,16 +115,16 @@ class testViews(PloneMeetingTestCase):
         # the template we will use
         itemTemplates = cfg.getItemTemplates(filtered=True)
         itemTemplate = itemTemplates[0].getObject()
-        self.assertTrue(itemTemplate.portal_type == cfg.getItemTypeName(configType='MeetingItemTemplate'))
+        self.assertEqual(itemTemplate.portal_type, cfg.getItemTypeName(configType='MeetingItemTemplate'))
         itemTemplateUID = itemTemplate.UID()
         # for now, no items in the user folder
-        self.assertTrue(not folder.objectIds('MeetingItem'))
+        self.assertFalse(folder.objectIds('MeetingItem'))
         newItem = itemTemplateView.createItemFromTemplate(itemTemplateUID)
-        self.assertTrue(newItem.portal_type == cfg.getItemTypeName())
+        self.assertEqual(newItem.portal_type, cfg.getItemTypeName())
         # the new item is the itemTemplate clone
-        self.assertTrue(newItem.Title() == itemTemplate.Title())
-        self.assertTrue(newItem.Description() == itemTemplate.Description())
-        self.assertTrue(newItem.getDecision() == itemTemplate.getDecision())
+        self.assertEqual(newItem.Title(), itemTemplate.Title())
+        self.assertEqual(newItem.Description(), itemTemplate.Description())
+        self.assertEqual(newItem.getDecision(), itemTemplate.getDecision())
         # and it has been created in the user folder
         self.assertTrue(newItem.getId() in folder.objectIds())
         # now check that the user can use a 'secret' item template if no proposing group is selected on it
@@ -136,13 +136,13 @@ class testViews(PloneMeetingTestCase):
         # use this template
         self.changeUser('pmCreator1')
         newItem2 = itemTemplateView.createItemFromTemplate(itemTemplateUID)
-        self.assertTrue(newItem2.portal_type == cfg.getItemTypeName())
+        self.assertEqual(newItem2.portal_type, cfg.getItemTypeName())
         # item has been created with a filled proposing group
         # and privacy is still ok
         self.assertTrue(newItem2.getId() in folder.objectIds())
         userGroups = self.tool.get_orgs_for_user(suffixes=['creators'])
-        self.assertTrue(newItem2.getProposingGroup() == userGroups[0].getId())
-        self.assertTrue(newItem2.getPrivacy() == itemTemplate.getPrivacy())
+        self.assertEqual(newItem2.getProposingGroup(), userGroups[0].UID())
+        self.assertEqual(newItem2.getPrivacy(), itemTemplate.getPrivacy())
 
     def test_pm_ItemTemplateDeletedIfFirstEditCancelled(self):
         '''When creating an item from a template, if the user cancel first edition, the item is removed'''
@@ -179,8 +179,8 @@ class testViews(PloneMeetingTestCase):
         view = pmFolder.restrictedTraverse('@@createitemfromtemplate')
         view()
         # one element, and it is an item
-        self.assertTrue(len(view.templatesTree['children']) == 1)
-        self.assertTrue(view.templatesTree['children'][0]['item'].meta_type == 'MeetingItem')
+        self.assertEqual(len(view.templatesTree['children']), 1)
+        self.assertEqual(view.templatesTree['children'][0]['item'].meta_type, 'MeetingItem')
         self.assertFalse(view.displayShowHideAllLinks())
 
         # add an itemTemplate in a subFolder
@@ -192,10 +192,10 @@ class testViews(PloneMeetingTestCase):
         # we have the subfolder and item under it
         self.changeUser('pmCreator1')
         view()
-        self.assertTrue(len(view.templatesTree['children']) == 2)
-        self.assertTrue(view.templatesTree['children'][0]['item'].meta_type == 'MeetingItem')
-        self.assertTrue(view.templatesTree['children'][1]['item'].meta_type == 'ATFolder')
-        self.assertTrue(view.templatesTree['children'][1]['children'][0]['item'].meta_type == 'MeetingItem')
+        self.assertEqual(len(view.templatesTree['children']), 2)
+        self.assertEqual(view.templatesTree['children'][0]['item'].meta_type, 'MeetingItem')
+        self.assertEqual(view.templatesTree['children'][1]['item'].meta_type, 'ATFolder')
+        self.assertEqual(view.templatesTree['children'][1]['children'][0]['item'].meta_type, 'MeetingItem')
         self.assertTrue(view.displayShowHideAllLinks())
 
         # an empty folder is not shown
@@ -204,18 +204,18 @@ class testViews(PloneMeetingTestCase):
         subFolder1 = cfg.itemtemplates.subfolder1
         newItemTemplate = self.create('MeetingItemTemplate', folder=subFolder1)
         # hide it to pmCreator1
-        newItemTemplate.setTemplateUsingGroups(('vendors', ))
+        newItemTemplate.setTemplateUsingGroups((self.vendors_uid, ))
         newItemTemplate.reindexObject()
         self.changeUser('pmCreator1')
         view()
-        self.assertTrue(len(view.templatesTree['children']) == 2)
+        self.assertEqual(len(view.templatesTree['children']), 2)
         # but available to 'pmCreator2'
         self.changeUser('pmCreator2')
         pmFolder = self.getMeetingFolder()
         view = pmFolder.restrictedTraverse('@@createitemfromtemplate')
         view()
-        self.assertTrue(len(view.templatesTree['children']) == 4)
-        self.assertTrue(view.templatesTree['children'][3]['item'].id == 'subfolder1')
+        self.assertEqual(len(view.templatesTree['children']), 4)
+        self.assertEqual(view.templatesTree['children'][3]['item'].id, 'subfolder1')
 
     def test_pm_ItemTemplatesWithSubFoldersContainedInEmptyFolders(self):
         """This test that if a template is in a sub/subFolder and no other template in parent folders,
@@ -314,14 +314,14 @@ class testViews(PloneMeetingTestCase):
         self.changeUser('admin')
         self.meetingConfig.setCustomAdvisers(
             [{'row_id': 'unique_id_123',
-              'group': 'vendors',
+              'org': self.vendors_uid,
               'gives_auto_advice_on': '',
               'for_item_created_from': '2012/01/01',
               'for_item_created_until': '',
               'delay': '5',
               'delay_label': ''},
              {'row_id': 'unique_id_456',
-              'group': 'vendors',
+              'org': self.vendors_uid,
               'gives_auto_advice_on': 'here/getBudgetRelated',
               'for_item_created_from': '2012/01/01',
               'for_item_created_until': '',
@@ -342,33 +342,34 @@ class testViews(PloneMeetingTestCase):
         itemWithNonDelayAwareAdvices._update_after_edit()
 
         # the automatic advice has been added
-        self.assertTrue(itemWithNonDelayAwareAdvices.adviceIndex['vendors']['optional'] is False)
-        itemWithNonDelayAwareAdvices.setOptionalAdvisers(('developers', ))
+        self.assertTrue(itemWithNonDelayAwareAdvices.adviceIndex[self.vendors_uid]['optional'] is False)
+        itemWithNonDelayAwareAdvices.setOptionalAdvisers((self.developers_uid, ))
         itemWithNonDelayAwareAdvices._update_after_edit()
-        self.assertTrue(itemWithNonDelayAwareAdvices.adviceIndex['developers']['optional'] is True)
+        self.assertTrue(itemWithNonDelayAwareAdvices.adviceIndex[self.developers_uid]['optional'] is True)
 
         # one delay-aware advice addable
         itemWithDelayAwareAdvice = self.create('MeetingItem')
-        itemWithDelayAwareAdvice.setOptionalAdvisers(('vendors__rowid__unique_id_123', ))
+        itemWithDelayAwareAdvice.setOptionalAdvisers(
+            ('{0}__rowid__unique_id_123'.format(self.vendors_uid), ))
         itemWithDelayAwareAdvice._update_after_edit()
         self.proposeItem(itemWithDelayAwareAdvice)
-        self.assertTrue(itemWithDelayAwareAdvice.adviceIndex['vendors']['advice_addable'])
+        self.assertTrue(itemWithDelayAwareAdvice.adviceIndex[self.vendors_uid]['advice_addable'])
         # this time the element is returned
         self.assertTrue(len(catalog(**query)) == 1)
         self.assertTrue(catalog(**query)[0].UID == itemWithDelayAwareAdvice.UID())
         # if item3 is no more giveable, the query will not return it anymore
         self.validateItem(itemWithDelayAwareAdvice)
-        self.assertTrue(not itemWithDelayAwareAdvice.adviceIndex['vendors']['advice_addable'])
+        self.assertTrue(not itemWithDelayAwareAdvice.adviceIndex[self.vendors_uid]['advice_addable'])
         self.assertTrue(not catalog(**query))
         # back to proposed, add it
         self.backToState(itemWithDelayAwareAdvice, self._stateMappingFor('proposed'))
         createContentInContainer(itemWithDelayAwareAdvice,
                                  'meetingadvice',
-                                 **{'advice_group': 'vendors',
+                                 **{'advice_group': self.vendors_uid,
                                     'advice_type': u'positive',
                                     'advice_comment': RichTextValue(u'My comment')})
-        self.assertTrue(not itemWithDelayAwareAdvice.adviceIndex['vendors']['advice_addable'])
-        self.assertTrue(itemWithDelayAwareAdvice.adviceIndex['vendors']['advice_editable'])
+        self.assertTrue(not itemWithDelayAwareAdvice.adviceIndex[self.vendors_uid]['advice_addable'])
+        self.assertTrue(itemWithDelayAwareAdvice.adviceIndex[self.vendors_uid]['advice_editable'])
         # an editable item will found by the query
         self.assertTrue(len(catalog(**query)) == 1)
         self.assertTrue(catalog(**query)[0].UID == itemWithDelayAwareAdvice.UID())
@@ -378,12 +379,12 @@ class testViews(PloneMeetingTestCase):
 
         # makes it no more editable
         self.backToState(itemWithDelayAwareAdvice, self._stateMappingFor('itemcreated'))
-        self.assertTrue(not itemWithDelayAwareAdvice.adviceIndex['vendors']['advice_editable'])
+        self.assertTrue(not itemWithDelayAwareAdvice.adviceIndex[self.vendors_uid]['advice_editable'])
         self.assertTrue(not catalog(**query))
 
         # makes it giveable again and timed_out, it should still be found
         self.proposeItem(itemWithDelayAwareAdvice)
-        itemWithDelayAwareAdvice.adviceIndex['vendors']['delay_started_on'] = datetime(2016, 1, 1)
+        itemWithDelayAwareAdvice.adviceIndex[self.vendors_uid]['delay_started_on'] = datetime(2016, 1, 1)
         self.assertTrue(catalog(**query)[0].UID == itemWithDelayAwareAdvice.UID())
         # even if a reindexObject occurs in between, still found
         itemWithDelayAwareAdvice.reindexObject()
@@ -395,10 +396,10 @@ class testViews(PloneMeetingTestCase):
         # try with an not_given timed_out advice as indexAdvisers behaves differently
         # remove meetingadvice, back to not timed_out, updateLocalRoles then proceed
         self.deleteAsManager(itemWithDelayAwareAdvice.meetingadvice.UID())
-        itemWithDelayAwareAdvice.adviceIndex['vendors']['delay_started_on'] = datetime.now()
+        itemWithDelayAwareAdvice.adviceIndex[self.vendors_uid]['delay_started_on'] = datetime.now()
         itemWithDelayAwareAdvice.updateLocalRoles()
         # found for now
-        itemWithDelayAwareAdvice.adviceIndex['vendors']['delay_started_on'] = datetime(2016, 1, 1)
+        itemWithDelayAwareAdvice.adviceIndex[self.vendors_uid]['delay_started_on'] = datetime(2016, 1, 1)
         self.assertTrue(catalog(**query)[0].UID == itemWithDelayAwareAdvice.UID())
         # even if a reindexObject occurs in between, still found
         itemWithDelayAwareAdvice.reindexObject()
@@ -416,21 +417,21 @@ class testViews(PloneMeetingTestCase):
         # create items and ask advice
         self.changeUser('pmCreator1')
         item1 = self.create('MeetingItem')
-        item1.setOptionalAdvisers(('developers', ))
+        item1.setOptionalAdvisers((self.developers_uid, ))
         item1._update_after_edit()
         item2 = self.create('MeetingItem')
-        item2.setOptionalAdvisers(('developers', ))
+        item2.setOptionalAdvisers((self.developers_uid, ))
         self.proposeItem(item2)
-        self.assertTrue('developers_advisers' in item1.__ac_local_roles__)
-        self.assertFalse('developers_advisers' in item2.__ac_local_roles__)
+        self.assertTrue(self.developers_advisers in item1.__ac_local_roles__)
+        self.assertFalse(self.developers_advisers in item2.__ac_local_roles__)
 
         # change configuration, _updateAllAdvices then check again
         self.changeUser('siteadmin')
         cfg.setItemAdviceStates((self._stateMappingFor('proposed'), ))
         cfg.setItemAdviceEditStates((self._stateMappingFor('proposed'), ))
         self.portal.restrictedTraverse('@@update-delay-aware-advices')._updateAllAdvices()
-        self.assertFalse('developers_advisers' in item1.__ac_local_roles__)
-        self.assertTrue('developers_advisers' in item2.__ac_local_roles__)
+        self.assertFalse(self.developers_advisers in item1.__ac_local_roles__)
+        self.assertTrue(self.developers_advisers in item2.__ac_local_roles__)
 
     def test_pm_SendPodTemplateToMailingList(self):
         """Send a Pod template to a mailing list."""
@@ -722,7 +723,7 @@ class testViews(PloneMeetingTestCase):
            'Not found' is left in the group."""
         self.changeUser('pmCreator1')
         view = self.portal.restrictedTraverse('@@display-group-users')
-        view(group_id='developers_creators')
+        view(group_id=self.developers_creators)
         self.assertEqual(
             view.group_users(),
             'M. PMCreator One<br />M. PMCreator One bee<br />M. PMManager')
@@ -1073,15 +1074,15 @@ class testViews(PloneMeetingTestCase):
     def test_pm_get_all_items_dghv_with_advice(self):
         cfg = self.meetingConfig
 
-        def compute_data(item, advisorIds=None):
-            brains = cfg.portal_catalog(meta_type="MeetingItem")
-            result = self.helper.get_all_items_dghv_with_advice(brains, advisorIds)
+        def compute_data(item, advisorUids=None):
+            brains = self.portal.portal_catalog(meta_type="MeetingItem")
+            result = self.helper.get_all_items_dghv_with_advice(brains, advisorUids)
             itemList = [brain.getObject() for brain in brains]
             index = itemList.index(item)
             return result, itemList, index
 
-        def assert_results(item, advisorIds=None, advisorIdsToBeReturned=[], occurenceOfItem=1):
-            result, itemList, index = compute_data(item, advisorIds)
+        def assert_results(item, advisorUids=None, advisorIdsToBeReturned=[], occurenceOfItem=1):
+            result, itemList, index = compute_data(item, advisorUids)
             if occurenceOfItem == 1:
                 self.assertListEqual(itemList, [itemRes['itemView'].real_context for itemRes in result])
             else:
@@ -1102,12 +1103,12 @@ class testViews(PloneMeetingTestCase):
 
         cfg.setCustomAdvisers(
             [{'row_id': 'unique_id_123',
-              'group': 'developers',
+              'org': self.developers_uid,
               'gives_auto_advice_on': '',
               'for_item_created_from': '2016/08/08',
               'delay': '5',
               'delay_label': ''}, ])
-        cfg.setPowerAdvisersGroups(('vendors',))
+        cfg.setPowerAdvisersGroups((self.vendors_uid,))
         cfg.setItemPowerObserversStates(('itemcreated',))
         cfg.setItemAdviceStates(('itemcreated',))
         cfg.setItemAdviceEditStates(('itemcreated',))
@@ -1118,40 +1119,44 @@ class testViews(PloneMeetingTestCase):
         item._update_after_edit()
 
         assert_results(item)
-        assert_results(item, ['vendors'])
-        assert_results(item, ['developers'])
+        assert_results(item, [self.vendors_uid])
+        assert_results(item, [self.developers_uid])
 
-        item.setOptionalAdvisers(('developers__rowid__unique_id_123'))
+        item.setOptionalAdvisers(('{0}__rowid__unique_id_123'.format(self.developers_uid), ))
         item._update_after_edit()
 
         # test with 1 not given advice
-        assert_results(item, advisorIdsToBeReturned=['developers'])
-        assert_results(item, ['vendors'])
-        assert_results(item, ['developers'], ['developers'])
+        assert_results(item, advisorIdsToBeReturned=[self.developers_uid])
+        assert_results(item, [self.vendors_uid])
+        assert_results(item, [self.developers_uid], [self.developers_uid])
 
         # test with 1 given advice
         self.changeUser('pmAdviser1')
         createContentInContainer(item,
                                  'meetingadvice',
-                                 **{'advice_group': 'developers',
+                                 **{'advice_group': self.developers_uid,
                                     'advice_type': u'positive',
                                     'advice_comment': RichTextValue(u'My comment')})
         self.changeUser('pmManager')
-        assert_results(item, advisorIdsToBeReturned=['developers'])
-        assert_results(item, ['vendors'])
-        assert_results(item, ['developers'], ['developers'])
+        assert_results(item, advisorIdsToBeReturned=[self.developers_uid])
+        assert_results(item, [self.vendors_uid])
+        assert_results(item, [self.developers_uid], [self.developers_uid])
 
         self.changeUser('pmReviewer2')
         createContentInContainer(item,
                                  'meetingadvice',
-                                 **{'advice_group': 'vendors',
+                                 **{'advice_group': self.vendors_uid,
                                     'advice_type': u'negative',
                                     'advice_comment': RichTextValue(u'My comment')})
 
         self.changeUser('pmManager')
-        assert_results(item, advisorIdsToBeReturned=['vendors', 'developers'], occurenceOfItem=2)
-        assert_results(item, ['vendors'], ['vendors'])
-        assert_results(item, ['developers'], ['developers'])
+        assert_results(item,
+                       advisorIdsToBeReturned=[self.developers_uid, self.vendors_uid],
+                       occurenceOfItem=2)
+        assert_results(item,
+                       [self.vendors_uid], [self.vendors_uid])
+        assert_results(item,
+                       [self.developers_uid], [self.developers_uid])
 
     def test_pm_goto_object(self):
         """Test the item navigation widget."""
