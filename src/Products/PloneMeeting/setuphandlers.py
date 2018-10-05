@@ -41,7 +41,6 @@ folderViews = ('folder_contents', )
 # NOT returning empty tuple/list like () or [] but empty values like ''
 indexInfos = {
     # MeetingItem-related indexes
-    'getTitle2': ('ZCTextIndex', {}),
     'getCategory': ('FieldIndex', {}),
     'getItemIsSigned': ('FieldIndex', {}),
     'getItemNumber': ('FieldIndex', {}),
@@ -73,19 +72,15 @@ indexInfos = {
     'getDate': ('DateIndex', {}),
     # MeetingUser-related indexes
     'getConfigId': ('FieldIndex', {}),
-    'indexUsages': ('KeywordIndex', {}),
     'getItemNumber': ('FieldIndex', {})}
 # Metadata to create in portal_catalog
-columnInfos = ('getTitle2', 'getDate', 'getProposingGroup', 'getGroupInCharge',
+columnInfos = ('getDate', 'getProposingGroup', 'getGroupInCharge',
                'getPreferredMeeting', 'getPreferredMeetingDate',
                'linkedMeetingDate', 'linkedMeetingUID',
                'getItemIsSigned', 'title_or_id', 'toDiscuss',
                'privacy', 'pollType', 'listType', 'getItemNumber',
                'getCategory', 'getRawClassifier')
 transformsToDisable = ['word_to_html', 'pdf_to_html', 'pdf_to_text']
-# Index "indexUsages" does not use Archetype-generated getter "getUsages"
-# because in this case, both fields MeetingUser.usages and MeetingItem.usages
-# would be indexed. We only want to index MeetingUser.usages.
 
 
 def isNotPloneMeetingProfile(context):

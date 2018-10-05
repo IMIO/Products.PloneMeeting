@@ -399,7 +399,7 @@ class testSearches(PloneMeetingTestCase):
         self.assertEquals(adapter.query,
                           {'getCopyGroups':  {
                             'query': ['AuthenticatedUsers',
-                                      '{0}_creators'.format(self.developers_uid)]},
+                                      self.developers_creators]},
                            'portal_type':  {'query': itemTypeName}})
 
         # now do the query
@@ -408,7 +408,7 @@ class testSearches(PloneMeetingTestCase):
         # create an item and set another proposing group in copy of
         item = self.create('MeetingItem')
         # give a view access to members of vendors, like pmReviewer2
-        item.setCopyGroups(('{0}_reviewers'.format(self.vendors_uid),))
+        item.setCopyGroups((self.vendors_reviewers, ))
         item._update_after_edit()
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemsincopy')
         self.failIf(collection.results())
@@ -438,7 +438,7 @@ class testSearches(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         self.assertEqual(item.getAllCopyGroups(auto_real_plone_group_ids=True),
-                         ('{0}_reviewers'.format(self.vendors_uid), ))
+                         (self.vendors_reviewers, ))
         self.proposeItem(item)
         self.changeUser('pmReviewer2')
         self.failUnless(collection.results())
@@ -556,7 +556,7 @@ class testSearches(PloneMeetingTestCase):
         if 'prereviewers' in reviewers:
             review_states = ('prevalidated',)
         cfg.setItemCopyGroupsStates(review_states)
-        item.setCopyGroups(('{0}_reviewers'.format(self.vendors_uid),))
+        item.setCopyGroups((self.vendors_reviewers, ))
         item._update_after_edit()
         self.changeUser('pmReviewer2')
         # the user can see the item

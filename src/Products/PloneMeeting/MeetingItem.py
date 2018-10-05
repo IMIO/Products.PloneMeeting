@@ -5064,10 +5064,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             # Add the event to item's history
             self.itemHistory.append(event)
 
-    def _getGroupManagingItem(self, review_state):
+    def _getGroupManagingItem(self, review_state, theObject=True):
         '''See doc in interfaces.py.'''
         item = self.getSelf()
-        return item.getProposingGroup(True)
+        return item.getProposingGroup(theObject=theObject)
 
     def _getAllGroupsManagingItem(self):
         '''See doc in interfaces.py.'''

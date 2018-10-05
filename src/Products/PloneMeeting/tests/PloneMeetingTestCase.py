@@ -23,6 +23,7 @@
 from AccessControl.SecurityManagement import getSecurityManager
 from collections import OrderedDict
 from collective.contact.plonegroup.utils import get_own_organization
+from collective.contact.plonegroup.utils import get_plone_groups
 from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.utils import get_config_root
 from imio.helpers.cache import cleanRamCacheFor
@@ -114,10 +115,17 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         self.wfTool = self.portal.portal_workflow
         self.own_org = get_own_organization()
         # make organizations easily available thru their id and store uid
-        # for each organization, we will have self.developers and self.developers_uid
+        # for each organization, we will have self.developers, self.developers_uid
+        # as well as every plone groups : self.vendors_creators, self.developers_reviewers, ...
         for org in self.own_org.objectValues():
             setattr(self, org.getId(), org)
             setattr(self, '{0}_uid'.format(org.getId()), safe_unicode(org.UID()))
+            for plone_group_id in get_plone_groups(org.UID(), ids_only=True):
+                org_uid, suffix = plone_group_id.split('_')
+                setattr(self,
+                        '{0}_{1}'.format(org.getId(), suffix),
+                        plone_group_id)
+
         self.pmFolder = os.path.dirname(Products.PloneMeeting.__file__)
         # Create siteadmin user
         self.createUser('siteadmin', ('Member', 'Manager', ))

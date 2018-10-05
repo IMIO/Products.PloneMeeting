@@ -577,6 +577,8 @@ class Migrate_To_4_1(Migrator):
                            ignore_dependencies=False,
                            dependency_strategy=DEPENDENCY_STRATEGY_NEW)
 
+        self.removeUnusedIndexes(indexes=['getTitle2', 'indexUsages'])
+        self.removeUnusedColumns(columns=['getTitle2', 'getRemoteUrl'])
         # install collective.js.tablednd
         self.upgradeDependencies()
         self.cleanRegistries()

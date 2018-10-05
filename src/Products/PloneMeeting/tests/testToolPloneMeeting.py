@@ -128,30 +128,6 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertTrue(cfg2.getIsDefault())
         self.assertTrue(self.tool.getDefaultMeetingConfig().getId() == cfg2.getId())
 
-    def test_pm_GetMeetingGroup(self):
-        '''Return the meeting group containing the plone group
-           p_ploneGroupId.'''
-        meetingGroup = self.tool.getMeetingGroup('developers_advisers')
-        self.assertEquals(meetingGroup.id, 'developers')
-
-    def test_pm_ChangeMeetingGroupsPosition(self):
-        '''Tests changing MeetingGroup and MeetingConfig order within the tool.
-           This is more coplex than it seems at first glance because groups and
-           configs are mixed together within the tool.'''
-        self.changeUser('admin')
-        existingGroupIds = self.tool.objectIds('MeetingGroup')
-        # Create a new MeetingGroup
-        newGroup = self.create('MeetingGroup', title='NewGroup', acronym='N.G.')
-        newGroupId = newGroup.getId()
-        self.tool.REQUEST['template_id'] = '.'
-        # After creation, the new MeetingGroup is in last position
-        self.assertEquals(self.tool.objectIds('MeetingGroup'),
-                          existingGroupIds + [newGroupId, ])
-        # Move the new MeetingGroup one position up
-        self.tool.folder_position_typeaware(position='up', id=newGroupId, template_id='.')
-        self.assertEquals(self.tool.objectIds('MeetingGroup'),
-                          existingGroupIds[:-1] + [newGroupId, ] + existingGroupIds[-1:])
-
     def test_pm_CloneItem(self):
         '''Clones a given item in parent item folder.'''
         self.changeUser('pmManager')
@@ -275,20 +251,20 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # create an item for vendors
         self.changeUser('pmCreator2')
         item = self.create('MeetingItem')
-        self.assertTrue(item.getProposingGroup() == u'vendors')
+        self.assertTrue(item.getProposingGroup() == self.vendors_uid)
         # validate it
         self.proposeItem(item)
         self.changeUser('pmReviewer2')
         self.validateItem(item)
         # 'pmManager' is not creator for 'vendors'
         self.changeUser('pmManager')
-        self.assertTrue('vendors_creators' not in self.member.getGroups())
+        self.assertTrue(self.vendors_creators not in self.member.getGroups())
         # clone it without keeping the proposingGroup
         clonedItem = item.clone()
-        self.assertTrue(clonedItem.getProposingGroup() == 'developers')
+        self.assertTrue(clonedItem.getProposingGroup() == self.developers_uid)
         # clone it keeping the proposingGroup
         clonedItem = item.clone(keepProposingGroup=True)
-        self.assertTrue(clonedItem.getProposingGroup() == 'vendors')
+        self.assertTrue(clonedItem.getProposingGroup() == self.vendors_uid)
 
     def test_pm_PasteItem(self):
         '''Paste an item (previously copied) in destFolder.'''
@@ -301,13 +277,13 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # Add one annex
         self.addAnnex(item2)
         # Add advices to item2
-        item2.setOptionalAdvisers(('vendors', ))
+        item2.setOptionalAdvisers((self.vendors_uid, ))
         # propose the item so the advice can be given
         self.proposeItem(item2)
         self.changeUser('pmReviewer2')
         createContentInContainer(item2,
                                  'meetingadvice',
-                                 **{'advice_group': u'vendors',
+                                 **{'advice_group': self.vendors_uid,
                                     'advice_type': u'positive',
                                     'advice_comment': RichTextValue(u'My comment')})
         self.changeUser('pmCreator1')
@@ -643,60 +619,65 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         globalGroups = ['AuthenticatedUsers']
         for cfg in self.tool.objectValues('MeetingConfig'):
             globalGroups.append('%s_meetingmanagers' % cfg.getId())
-        pmManagerGroups = get_plone_groups(dev_uid, ids_only=True) + ['vendors_advisers', ] + globalGroups
-        pmManagerGroups.remove('developers_prereviewers')
-        self.assertTrue(set(self.member.getGroups()) == set(pmManagerGroups))
-        self.assertTrue([mGroup.getId() for mGroup in self.tool.get_orgs_for_user()] ==
-                        ['developers', 'vendors'])
+        pmManagerGroups = get_plone_groups(dev_uid, ids_only=True) + [self.vendors_advisers, ] + globalGroups
+        pmManagerGroups.remove(self.developers_prereviewers)
+        self.assertEqual(set(self.member.getGroups()),
+                         set(pmManagerGroups))
+        self.assertEqual(
+            [org.UID() for org in self.tool.get_orgs_for_user()],
+            [self.developers_uid, self.vendors_uid])
         # check the 'suffix' parameter, it will check that user is in a Plone group of that suffix
         # here, 'pmManager' is only in the '_creators' or 'developers'
-        self.assertTrue([mGroup.getId() for mGroup in self.tool.get_orgs_for_user(suffixes=['reviewers'])] ==
-                        ['developers'])
+        self.assertEqual(
+            [org.UID() for org in self.tool.get_orgs_for_user(suffixes=['reviewers'])],
+            [self.developers_uid])
         # check the 'omittedSuffixes' parameter, it will not consider Plone group having that suffix
         # here, if we omit the 'advisers' suffix, the 'vendors' MeetingGroup will not be returned
-        self.assertTrue([mGroup.getId() for mGroup in self.tool.get_orgs_for_user(omitted_suffixes=('advisers', ))] ==
-                        ['developers'])
+        self.assertEqual(
+            [org.UID() for org in self.tool.get_orgs_for_user(omitted_suffixes=('advisers', ))],
+            [self.developers_uid])
         # we can get MeetingGroup for another user
         pmCreator1 = self.portal.portal_membership.getMemberById('pmCreator1')
-        self.assertTrue(pmCreator1.getGroups() == ['AuthenticatedUsers', 'developers_creators'])
-        self.assertTrue([mGroup.getId() for mGroup in self.tool.get_orgs_for_user(user_id='pmCreator1')] ==
-                        ['developers', ])
+        self.assertEqual(sorted(pmCreator1.getGroups()),
+                         sorted(['AuthenticatedUsers', self.developers_creators]))
+        self.assertEqual([org.UID() for org in self.tool.get_orgs_for_user(user_id='pmCreator1')],
+                         [self.developers_uid, ])
 
         # the 'active' parameter will return only active MeetingGroups
-        # so deactivate MeetingGroup 'vendors' and check
+        # so deactivate organization 'vendors' and check
         self.changeUser('admin')
-        self.do(self.tool.vendors, 'deactivate')
+        self._select_organization(self.vendors_uid, remove=True)
         self.changeUser('pmManager')
-        self.assertTrue([mGroup.getId() for mGroup in self.tool.get_orgs_for_user(active=True)] ==
-                        ['developers', ])
-        self.assertTrue([mGroup.getId() for mGroup in self.tool.get_orgs_for_user(active=False)] ==
-                        ['developers', 'vendors', ])
+        self.assertEqual([org.UID() for org in self.tool.get_orgs_for_user(only_selected=True)],
+                         [self.developers_uid, ])
+        self.assertEqual([org.UID() for org in self.tool.get_orgs_for_user(only_selected=False)],
+                         [self.developers_uid, self.vendors_uid, ])
 
     def test_pm_UpdateCopyGroups(self):
         """Test the updateAllLocalRoles method that update every items when configuration changed.
            First set copy groups may view items in state 'itemcreated' then change to 'proposed'."""
-        self.meetingConfig.setSelectableCopyGroups(('developers_reviewers', 'vendors_reviewers'))
+        self.meetingConfig.setSelectableCopyGroups((self.developers_reviewers, self.vendors_reviewers))
         self.meetingConfig.setUseCopies(True)
         self.meetingConfig.setItemCopyGroupsStates(('itemcreated', ))
         # only available to 'Managers'
         self.changeUser('pmCreator1')
         self.assertRaises(Unauthorized, self.tool.updateAllLocalRoles)
         item1 = self.create('MeetingItem')
-        item1.setCopyGroups(('vendors_reviewers',))
+        item1.setCopyGroups((self.vendors_reviewers,))
         item1._update_after_edit()
         item2 = self.create('MeetingItem')
-        item2.setCopyGroups(('vendors_reviewers',))
+        item2.setCopyGroups((self.vendors_reviewers,))
         self.proposeItem(item2)
         # copyGroups roles are set for item1, not for item2
-        self.assertTrue('vendors_reviewers' in item1.__ac_local_roles__)
-        self.assertFalse('vendors_reviewers' in item2.__ac_local_roles__)
+        self.assertTrue(self.vendors_reviewers in item1.__ac_local_roles__)
+        self.assertFalse(self.vendors_reviewers in item2.__ac_local_roles__)
 
         # change configuration, updateAllLocalRoles then check again
         self.changeUser('siteadmin')
         self.meetingConfig.setItemCopyGroupsStates((self._stateMappingFor('proposed'), ))
         self.tool.updateAllLocalRoles()
-        self.assertFalse('vendors_reviewers' in item1.__ac_local_roles__)
-        self.assertTrue('vendors_reviewers' in item2.__ac_local_roles__)
+        self.assertFalse(self.vendors_reviewers in item1.__ac_local_roles__)
+        self.assertTrue(self.vendors_reviewers in item2.__ac_local_roles__)
 
     def test_pm_UpdateBudgetImpactEditors(self):
         """Test the updateBudgetImpactEditors method that update every items when configuration changed.
@@ -841,8 +822,8 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         """This method will check if a user has a group that ends with a list of given suffixes.
            This will return True if at least one suffixed group corresponds."""
         self.changeUser('pmCreator1')
-        self.assertEqual(self.member.getGroups(),
-                         ['AuthenticatedUsers', 'developers_creators'])
+        self.assertEqual(sorted(self.member.getGroups()),
+                         sorted(['AuthenticatedUsers', self.developers_creators]))
         # suffixes parameter must be a list of suffixes
         self.assertFalse(self.tool.userIsAmong('creators'))
         self.assertTrue(self.tool.userIsAmong(['creators']))
@@ -850,15 +831,17 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertTrue(self.tool.userIsAmong(['creators', 'powerobservers']))
         self.assertTrue(self.tool.userIsAmong(['creators', 'unknown_suffix']))
         self.changeUser('pmReviewer1')
-        self.assertEqual(self.member.getGroups(),
-                         ['developers_reviewers', 'developers_observers', 'AuthenticatedUsers'])
+        self.assertEqual(
+            sorted(self.member.getGroups()),
+            sorted(['AuthenticatedUsers', self.developers_reviewers, self.developers_observers]))
         self.assertFalse(self.tool.userIsAmong(['creators']))
         self.assertTrue(self.tool.userIsAmong(['reviewers']))
         self.assertTrue(self.tool.userIsAmong(['observers']))
         self.assertTrue(self.tool.userIsAmong(['reviewers', 'observers']))
         self.changeUser('powerobserver1')
-        self.assertEqual(self.member.getGroups(),
-                         ['AuthenticatedUsers', '{0}_powerobservers'.format(self.meetingConfig.getId())])
+        self.assertEqual(
+            sorted(self.member.getGroups()),
+            sorted(['AuthenticatedUsers', '{0}_powerobservers'.format(self.meetingConfig.getId())]))
         self.assertFalse(self.tool.userIsAmong(['creators']))
         self.assertFalse(self.tool.userIsAmong(['reviewers']))
         self.assertFalse(self.tool.userIsAmong(['creators', 'reviewers']))
@@ -910,36 +893,42 @@ class testToolPloneMeeting(PloneMeetingTestCase):
                 )),
                          error_msg)
 
-    def test_pm_GetPloneGroupsForUser(self):
+    def test_pm_Get_plone_groups_for_user(self):
         """Test that this cached method behaves normally."""
         # works with different users
         self.changeUser('pmCreator1')
         pmcreator1_groups = self.member.getGroups()
-        self.assertEqual(self.tool.getPloneGroupsForUser(), pmcreator1_groups)
+        self.assertEqual(self.tool.get_plone_groups_for_user(), pmcreator1_groups)
         self.changeUser('pmReviewer1')
         pmreviewer1_groups = self.member.getGroups()
-        self.assertEqual(self.tool.getPloneGroupsForUser(), pmreviewer1_groups)
+        self.assertEqual(self.tool.get_plone_groups_for_user(), pmreviewer1_groups)
         self.assertNotEqual(pmcreator1_groups, pmreviewer1_groups)
 
         # is aware of user groups changes
-        self.assertFalse('vendors_creators' in pmreviewer1_groups)
-        self._addPrincipalToGroup('pmReviewer1', 'vendors_creators')
+        self.assertFalse(self.vendors_creators in pmreviewer1_groups)
+        self._addPrincipalToGroup('pmReviewer1', self.vendors_creators)
         pmreviewer1_groups = self.member.getGroups()
-        self.assertTrue('vendors_creators' in self.tool.getPloneGroupsForUser())
-        self.assertEqual(self.tool.getPloneGroupsForUser(), pmreviewer1_groups)
+        self.assertTrue(self.vendors_creators in self.tool.get_plone_groups_for_user())
+        self.assertEqual(self.tool.get_plone_groups_for_user(), pmreviewer1_groups)
 
         # we may pass a userId
-        self.assertEqual(self.tool.getPloneGroupsForUser(userId='pmCreator1'), pmcreator1_groups)
         self.assertEqual(
-            self.tool.getPloneGroupsForUser(userId='pmReviewer1'), self.tool.getPloneGroupsForUser())
+            self.tool.get_plone_groups_for_user(userId='pmCreator1'),
+            pmcreator1_groups)
+        self.assertEqual(
+            self.tool.get_plone_groups_for_user(userId='pmReviewer1'),
+            self.tool.get_plone_groups_for_user())
 
         # works also when using api.env.adopt_user like it is the case
         # in MeetingItem.setHistorizedTakenOverBy
         pmCreator1 = api.user.get('pmCreator1')
         with api.env.adopt_user(user=pmCreator1):
-            self.assertEqual(self.tool.getPloneGroupsForUser(), pmcreator1_groups)
-            self.assertEqual(self.tool.getPloneGroupsForUser(userId='pmCreator1'), pmcreator1_groups)
-            self.assertEqual(self.tool.getPloneGroupsForUser(userId='pmReviewer1'), pmreviewer1_groups)
+            self.assertEqual(self.tool.get_plone_groups_for_user(),
+                             pmcreator1_groups)
+            self.assertEqual(self.tool.get_plone_groups_for_user(userId='pmCreator1'),
+                             pmcreator1_groups)
+            self.assertEqual(self.tool.get_plone_groups_for_user(userId='pmReviewer1'),
+                             pmreviewer1_groups)
 
 
 def test_suite():
