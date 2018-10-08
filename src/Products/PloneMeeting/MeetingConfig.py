@@ -15,7 +15,6 @@ from collections import OrderedDict
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
-from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_groups
 from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
 from collective.eeafaceted.collectionwidget.interfaces import IDashboardCollection
@@ -26,7 +25,6 @@ from eea.facetednavigation.interfaces import ICriteria
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
 from imio.helpers.cache import cleanRamCache
 from imio.helpers.content import validate_fields
-from OFS.Image import File
 from plone import api
 from plone.app.portlets.portlets import navigation
 from plone.memoize import ram
@@ -109,6 +107,7 @@ from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
 from Products.PloneMeeting.utils import getFieldContent
 from Products.PloneMeeting.utils import listifySignatures
+from Products.PloneMeeting.utils import org_id_to_uid
 from Products.PloneMeeting.utils import reviewersFor
 from Products.PloneMeeting.utils import updateAnnexesAccess
 from Products.PloneMeeting.validators import WorkflowInterfacesValidator
@@ -4397,7 +4396,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Registers, into portal_types, specific item and meeting types
            corresponding to this meeting config.'''
         i = -1
-        registeredFactoryTypes = self.portal_factory.getFactoryTypes().keys()
+        portal_factory = api.portal.get_tool('portal_factory')
+        registeredFactoryTypes = portal_factory.getFactoryTypes().keys()
         factoryTypesToRegister = []
         site_properties = api.portal.get_tool('portal_properties').site_properties
         portal_types = api.portal.get_tool('portal_types')
@@ -4434,7 +4434,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # Copy actions from the base portal type
         self._updatePortalTypes()
         # Update the factory tool with the list of types to register
-        portal_factory = api.portal.get_tool('portal_factory')
         portal_factory.manage_setPortalFactoryTypes(
             listOfTypeIds=factoryTypesToRegister + registeredFactoryTypes)
         # Perform workflow adaptations if required
@@ -5377,10 +5376,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         folder.invokeFactory('MeetingCategory', **data)
         cat = getattr(folder, descr.id)
         # adapt org related values as we have org id on descriptor and we need to set org UID
-        own_org = get_own_organization()
         if cat.usingGroups:
-            cat.setUsingGroups([own_org.restrictedTraverse(usingGroup.encode('utf-8')).UID()
-                                for usingGroup in cat.usingGroups])
+            cat.setUsingGroups([org_id_to_uid(usingGroup) for usingGroup in cat.usingGroups])
         if not descr.active:
             self.portal_workflow.doActionFor(cat, 'deactivate')
         # call processForm passing dummy values so existing values are not touched
@@ -5404,18 +5401,17 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         folder.invokeFactory(itemType, **data)
         item = getattr(folder, descr.id)
         # adapt org related values as we have org id on descriptor and we need to set org UID
-        own_org = get_own_organization()
         if item.proposingGroup:
-            item.setProposingGroup(own_org.restrictedTraverse(item.proposingGroup.encode('utf-8')).UID())
+            item.setProposingGroup(org_id_to_uid(item.proposingGroup))
         if item.groupInCharge:
-            item.setGroupInCharge(own_org.restrictedTraverse(item.groupInCharge.encode('utf-8')).UID())
+            item.setGroupInCharge(org_id_to_uid(item.groupInCharge))
         if item.associatedGroups:
             item.setAssociatedGroups(
-                [own_org.restrictedTraverse(associated_group.encode('utf-8')).UID()
+                [org_id_to_uid(associated_group)
                  for associated_group in item.associatedGroups])
         if item.templateUsingGroups:
             item.setTemplateUsingGroups(
-                [own_org.restrictedTraverse(template_using_group.encode('utf-8')).UID()
+                [org_id_to_uid(template_using_group)
                  for template_using_group in item.templateUsingGroups])
         # disable _at_rename_after_creation for itemTemplates and recurringItems
         item._at_rename_after_creation = False
@@ -5542,48 +5538,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             **data)
         self._validate_dx_content(podTemplate)
         return podTemplate
-
-    security.declarePrivate('addMeetingUser')
-
-    def addMeetingUser(self, mud, source):
-        '''Adds a meeting user from a MeetingUserDescriptor instance p_mud.'''
-        folder = getattr(self, TOOL_FOLDER_MEETING_USERS)
-        userInfo = self.portal_membership.getMemberById(mud.id)
-        userTitle = mud.id
-        if userInfo:
-            userTitle = userInfo.getProperty('fullname')
-        if not userTitle:
-            userTitle = mud.id
-        data = mud.getData(title=userTitle)
-        newId = folder.invokeFactory('MeetingUser', **data)
-        meetingUser = getattr(folder, newId)
-        if mud.signatureImage:
-            if isinstance(source, basestring):
-                # The image must be retrieved on disk from a profile
-                imageName = mud.signatureImage
-                signaturePath = '%s/images/%s' % (source, imageName)
-                signatureImageFile = file(signaturePath, 'rb')
-            else:
-                si = mud.signatureImage
-                signatureImageFile = File('dummyId',
-                                          si.name,
-                                          si.content,
-                                          content_type=si.mimeType)
-            meetingUser.setSignatureImage(signatureImageFile)
-            if isinstance(signatureImageFile, file):
-                signatureImageFile.close()
-        meetingUser.at_post_create_script()
-        if not mud.active:
-            self.portal_workflow.doActionFor(meetingUser, 'deactivate')
-        # call processForm passing dummy values so existing values are not touched
-        meetingUser.processForm(values={'dummy': None})
-        return meetingUser
-
-    security.declarePublic('getMeetingUserFromPloneUser')
-
-    def getMeetingUserFromPloneUser(self, userId):
-        '''Returns the Meeting user that corresponds to p_userId.'''
-        return getattr(self.meetingusers.aq_base, userId, None)
 
     security.declarePublic('getAdvicesKeptOnSentToOtherMC')
 

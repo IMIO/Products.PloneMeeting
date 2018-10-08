@@ -1076,7 +1076,7 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
                 if not itemInserted:
                     res.append({'itemView': self.getDGHV(item), 'advice': None})
             else:
-                advices = item.getAdviceDataFor(item)
+                advices = item.getAdviceDataFor(item, ordered=True)
                 if advices:
                     for advice in advices:
                         res.append({'itemView': self.getDGHV(item), 'advice': advices[advice]})

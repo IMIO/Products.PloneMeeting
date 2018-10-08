@@ -207,7 +207,7 @@ def onOrgWillBeRemoved(current_org, event):
     '''Checks if the organization can be deleted:
       - it can not be linked to an existing meetingItem;
       - it can not be referenced in an existing MeetingConfig;
-      - it can not be used as groupInCharge of another MeetingGroup;
+      - it can not be used as groupInCharge of another organization;
       - the linked ploneGroups must be empty of members.'''
     # Do lighter checks first...  Check that the organization is not used
     # in a meetingConfig
@@ -228,7 +228,7 @@ def onOrgWillBeRemoved(current_org, event):
                                                   context=request))
 
     for mc in tool.objectValues('MeetingConfig'):
-        # The meetingGroup can be referenced in selectableAdvisers/selectableCopyGroups.
+        # The organization can be referenced in selectableAdvisers/selectableCopyGroups.
         customAdvisersOrgUids = [customAdviser['org'] for customAdviser in mc.getCustomAdvisers()]
         if current_org_uid in customAdvisersOrgUids or \
            current_org_uid in mc.getPowerAdvisersGroups() or \
@@ -256,7 +256,7 @@ def onOrgWillBeRemoved(current_org, event):
             raise BeforeDeleteException(translate("can_not_delete_organization_plonegroup",
                                                   domain="plone",
                                                   context=request))
-    # And finally, check that meetingGroup is not linked to an existing item.
+    # And finally, check that organization is not linked to an existing item.
     # In the configuration
     for cfg in tool.objectValues('MeetingConfig'):
         for item in (cfg.recurringitems.objectValues('MeetingItem') +
@@ -283,7 +283,7 @@ def onOrgWillBeRemoved(current_org, event):
            (obj.adapted().getGroupInCharge() == current_org_uid) or \
            (current_org_uid in obj.adviceIndex) or \
            set(obj.getCopyGroups()).intersection(suffixedGroups):
-            # The meetingGroup is linked to an existing item, we can not delete it.
+            # The organization is linked to an existing item, we can not delete it.
             raise BeforeDeleteException(
                 translate("can_not_delete_organization_meetingitem",
                           domain="plone",
@@ -305,7 +305,7 @@ def onOrgRemoved(current_org, event):
         if pGroup:
             portal_groups.removeGroup(plone_group_id)
 
-    # clean cache for MeetingGroup related vocabularies
+    # clean cache for organization related vocabularies
     invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
     invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary")
     invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupsforfacetedfiltervocabulary")

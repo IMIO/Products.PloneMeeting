@@ -53,8 +53,6 @@ from Products.Archetypes.atapi import StringWidget
 from Products.Archetypes.atapi import TextAreaWidget
 from Products.Archetypes.atapi import TextField
 from Products.Archetypes.event import ObjectEditedEvent
-from Products.CMFCore.Expression import createExprContext
-from Products.CMFCore.Expression import Expression
 from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import ReviewPortalContent
@@ -143,17 +141,17 @@ logger = logging.getLogger('PloneMeeting')
 ITEM_REF_ERROR = 'There was an error in the TAL expression for defining the ' \
     'format of an item reference. Please check this in your meeting config. ' \
     'Original exception: %s'
-AUTOMATIC_ADVICE_CONDITION_ERROR = 'There was an error in the TAL expression ' \
-    'defining if the advice of the group must be automatically asked. ' \
-    'Please check this in your meeting config. %s'
-ADVICE_AVAILABLE_ON_CONDITION_ERROR = 'There was an error in the TAL expression ' \
-    'defined in the \'Available on\' column of the MeetingConfig.customAdvisers. ' \
-    'Please check this in your meeting config. %s'
-AS_COPYGROUP_CONDITION_ERROR = 'There was an error in the TAL expression ' \
-    'defining if the group must be set as copyGroup for group "%s". ' \
-    'Please check this in your meeting config. %s'
-AS_COPYGROUP_RES_ERROR = 'While setting automatically added copyGroups, the Plone group suffix \'%s\' ' \
-                         'returned by the expression on organization \'%s\' does not exist.'
+AUTOMATIC_ADVICE_CONDITION_ERROR = "There was an error in the TAL expression '{0}'" \
+    "defining if the advice of the group must be automatically asked for '{1}'. " \
+    "Original exception : {2}"
+ADVICE_AVAILABLE_ON_CONDITION_ERROR = "There was an error in the TAL expression " \
+    "'{0} defined in the \'Available on\' column of the MeetingConfig.customAdvisers " \
+    "evaluated on {1}. Original exception : {2}"
+AS_COPYGROUP_CONDITION_ERROR = "There was an error in the TAL expression '{0}'" \
+    "defining if the a group must be set as copyGroup for item at '{1}'. " \
+    "Original exception : {2}"
+AS_COPYGROUP_RES_ERROR = "While setting automatically added copyGroups, the Plone group suffix '{0}' " \
+                         "returned by the expression on organization '{1}' does not exist."
 WRONG_TRANSITION = 'Transition "%s" is inappropriate for adding recurring ' \
     'items.'
 REC_ITEM_ERROR = 'There was an error while trying to generate recurring ' \
@@ -3599,11 +3597,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def getAutomaticAdvisersData(self):
         '''Who are the automatic advisers for this item? We get it by
            evaluating the TAL expression on current MeetingConfig.customAdvisers and checking if
-           corresponding group contains at least one adviser. The method returns a list of organization
-           ids.'''
+           corresponding group contains at least one adviser.
+           The method returns a list of dict containing adviser infos.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        portal = api.portal.get()
         res = []
         for customAdviser in cfg.getCustomAdvisers():
             # check if there is something to evaluate...
@@ -3619,13 +3616,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 continue
 
             # Check that the TAL expression on the group returns True
-            ctx = createExprContext(self.getParentNode(), portal, self)
-            ctx.setGlobal('item', self)
             eRes = False
-            try:
-                eRes = Expression(customAdviser['gives_auto_advice_on'])(ctx)
-            except Exception, e:
-                logger.warning(AUTOMATIC_ADVICE_CONDITION_ERROR % str(e))
+            eRes = _evaluateExpression(
+                self,
+                expression=customAdviser['gives_auto_advice_on'],
+                roles_bypassing_expression=[],
+                extra_expr_ctx={
+                    'item': self,
+                    'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
+                    'tool': tool,
+                    'cfg': cfg},
+                empty_expr_is_true=False,
+                error_pattern=AUTOMATIC_ADVICE_CONDITION_ERROR)
 
             if eRes:
                 res.append({'org_uid': customAdviser['org'],
@@ -3674,34 +3676,31 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(self)
         for org in get_organizations():
             org_uid = org.UID()
-            try:
-                suffixes = _evaluateExpression(
-                    self,
-                    expression=org.as_copy_group_on,
-                    roles_bypassing_expression=[],
-                    extra_expr_ctx={
-                        'item': self,
-                        'isCreated': isCreated,
-                        'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
-                        'tool': tool,
-                        'cfg': cfg},
-                    empty_expr_is_true=False)
-                if not suffixes:
+            suffixes = _evaluateExpression(
+                self,
+                expression=org.as_copy_group_on,
+                roles_bypassing_expression=[],
+                extra_expr_ctx={
+                    'item': self,
+                    'isCreated': isCreated,
+                    'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
+                    'tool': tool,
+                    'cfg': cfg},
+                empty_expr_is_true=False,
+                error_pattern=AS_COPYGROUP_CONDITION_ERROR)
+            if not suffixes:
+                continue
+            # The expression is supposed to return a list a Plone group suffixes
+            # check that the real linked Plone groups are selectable
+            for suffix in suffixes:
+                if suffix not in get_all_suffixes(org_uid):
+                    # If the suffix returned by the expression does not exist
+                    # log it, it is a configuration problem
+                    logger.warning(AS_COPYGROUP_RES_ERROR.format(suffix, org_uid))
                     continue
-                # The expression is supposed to return a list a Plone group suffixes
-                # check that the real linked Plone groups are selectable
-                for suffix in suffixes:
-                    if suffix not in get_all_suffixes(org_uid):
-                        # If the suffix returned by the expression does not exist
-                        # log it, it is a configuration problem
-                        logger.warning(AS_COPYGROUP_RES_ERROR % (suffix,
-                                                                 org_uid))
-                        continue
-                    plone_group_id = get_plone_group_id(org_uid, suffix)
-                    auto_plone_group_id = '{0}{1}'.format(AUTO_COPY_GROUP_PREFIX, plone_group_id)
-                    self.autoCopyGroups.append(auto_plone_group_id)
-            except Exception, e:
-                logger.warning(AS_COPYGROUP_CONDITION_ERROR % (org_uid, str(e)))
+                plone_group_id = get_plone_group_id(org_uid, suffix)
+                auto_plone_group_id = '{0}{1}'.format(AUTO_COPY_GROUP_PREFIX, plone_group_id)
+                self.autoCopyGroups.append(auto_plone_group_id)
 
     def _optionalDelayAwareAdvisers(self):
         '''Returns the 'delay-aware' advisers.
@@ -3710,8 +3709,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         res = []
-        ctx = createExprContext(self.getParentNode(), tool.getParentNode(), self)
-        ctx.setGlobal('item', self)
         for customAdviserConfig in cfg.getCustomAdvisers():
             # first check that the customAdviser is actually optional
             if customAdviserConfig['gives_auto_advice_on']:
@@ -3736,14 +3733,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 continue
 
             # check the 'available_on' TAL expression
-            eRes = False
-            try:
-                if customAdviserConfig['available_on']:
-                    eRes = Expression(customAdviserConfig['available_on'])(ctx)
-                else:
-                    eRes = True
-            except Exception, e:
-                logger.warning(ADVICE_AVAILABLE_ON_CONDITION_ERROR % str(e))
+            eRes = _evaluateExpression(
+                self,
+                expression=customAdviserConfig['available_on'],
+                roles_bypassing_expression=[],
+                extra_expr_ctx={
+                    'item': self,
+                    'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
+                    'tool': tool,
+                    'cfg': cfg},
+                empty_expr_is_true=True,
+                error_pattern=ADVICE_AVAILABLE_ON_CONDITION_ERROR)
+
             if not eRes:
                 continue
 
@@ -4299,7 +4300,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                          item,
                          adviser_uid=None,
                          hide_advices_under_redaction=True,
-                         show_hidden_advice_data_to_group_advisers=True):
+                         show_hidden_advice_data_to_group_advisers=True,
+                         ordered=False):
         '''Returns data info for given p_adviser_uid adviser uid.
            If no p_adviser_uid is given, every advice infos are returned.
            If p_hide_advices_under_redaction is True, we hide relevant informations of
@@ -4307,11 +4309,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            is True, the advisers of the hidden advices will see the data.
            We receive p_item as the current item to be sure that this public
            method can not be called thru the web (impossible to pass an object as parameter),
-           but it is still callable using a Script (Python) or useable in a TAL expression...'''
+           but it is still callable using a Script (Python) or useable in a TAL expression...
+           If sorted=True, return an OrderedDict sorted by adviser name.'''
         if not isinstance(item, MeetingItem) or not item.UID() == self.UID():
             raise Unauthorized
 
-        data = OrderedDict()
+        data = {}
         tool = api.portal.get_tool('portal_plonemeeting')
         adviser_org_uids = [org.UID() for org in tool.get_orgs_for_user(suffixes=['advisers'])]
         for adviceInfo in self.adviceIndex.values():
@@ -4355,6 +4358,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         if adviser_uid:
             data = data.get(adviser_uid, {})
+
+        if ordered and data:
+            # sort by adviser name
+            data_as_list = data.items()
+            data_as_list.sort(key=lambda x: x[1]['name'])
+            data = OrderedDict(data_as_list)
         return data
 
     def getAdviceObj(self, advId):

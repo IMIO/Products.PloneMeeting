@@ -83,7 +83,7 @@ from Products.PloneMeeting.profiles import PloneMeetingConfiguration
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
-from Products.PloneMeeting.utils import group_to_org
+from Products.PloneMeeting.utils import org_id_to_uid
 from Products.PloneMeeting.utils import monthsIds
 from Products.PloneMeeting.utils import weekdaysIds
 from Products.PloneMeeting.utils import workday
@@ -621,7 +621,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         # turn group ids into org uids
         for field_name in ['selectableCopyGroups', 'selectableAdvisers']:
             data = cData.get(field_name)
-            data = [group_to_org(suffixed_group_id) for suffixed_group_id in data]
+            data = [org_id_to_uid(suffixed_group_id) for suffixed_group_id in data]
             cData[field_name] = data
         if cData['id'] in self.objectIds():
             logger.info(

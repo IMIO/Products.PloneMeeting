@@ -273,6 +273,10 @@ class Migrate_To_4_1(Migrator):
             delattr(cfg, 'useUserReplacements')
         logger.info('Done.')
 
+    def _custom_migrate_meeting_group_to_org(self, mGroup, org):
+        """Hook for plugins that need to migrate extra data from MeetingGroup to organization."""
+        pass
+
     def _adaptForPlonegroup(self):
         """Migrate MeetingGroups to contacts and configure plonegroup.
            Migrate also every relations to the organization as we used the id and we use now the uid."""
@@ -284,6 +288,10 @@ class Migrate_To_4_1(Migrator):
             return
 
         logger.info('Migrating MeetingGroups...')
+
+        # call hook for external profiles to migrate their MeetingGroups customizations if necessary
+        self._hook_before_mgroups_to_orgs()
+
         enabled_orgs = []
         every_orgs = []
         for mGroup in self.tool.objectValues('MeetingGroup'):
@@ -518,6 +526,11 @@ class Migrate_To_4_1(Migrator):
         # remove MeetingGroup object and portal_type
         m_group_ids = [mGroup.getId() for mGroup in self.tool.objectValues('MeetingGroup')]
         self.tool.manage_delObjects(ids=m_group_ids)
+        portal_factory = api.portal.get_tool('portal_factory')
+        registeredFactoryTypes = portal_factory.getFactoryTypes().keys()
+        if 'MeetingGroup' in registeredFactoryTypes:
+            registeredFactoryTypes.remove('MeetingGroup')
+            portal_factory.manage_setPortalFactoryTypes(listOfTypeIds=registeredFactoryTypes)
         self.portal.portal_types.manage_delObjects(ids=['MeetingGroup'])
 
         logger.info('Done.')

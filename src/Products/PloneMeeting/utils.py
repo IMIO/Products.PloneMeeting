@@ -268,15 +268,6 @@ def cleanMemoize(portal, prefixes=[]):
         annotations['plone.memoize'].clear()
 
 
-def org_id_to_uid(org_id):
-    '''Return organization UID of organization with given org_id id.'''
-    org = get_own_organization().get(org_id)
-    org_uid = None
-    if org:
-        org_uid = org.UID()
-    return org_uid
-
-
 def createOrUpdatePloneGroup(groupId, groupTitle, groupSuffix):
     '''This will create the PloneGroup that corresponds to me
        and p_groupSuffix, if group already exists, it will just update it's title.'''
@@ -1571,17 +1562,17 @@ def plain_render(obj, fieldname):
     return exportable.render_value(obj)
 
 
-def group_to_org(group_info):
-    """Returns the corresponding org based value for given group_id based value.
+def org_id_to_uid(org_info):
+    """Returns the corresponding org based value for given org_info based value.
        'developers', will return 'orguid'.
        'developers_creators' will return 'orguid_creators'."""
     own_org = get_own_organization()
-    if '_' in group_info:
-        group_path, suffix = group_info.split('_')
-        org = own_org.restrictedTraverse(group_path)
+    if '_' in org_info:
+        org_path, suffix = org_info.split('_')
+        org = own_org.restrictedTraverse(org_path.encode('utf-8'))
         return get_plone_group_id(org.UID(), suffix)
     else:
-        org = own_org.restrictedTraverse(group_info)
+        org = own_org.restrictedTraverse(org_info)
         return org.UID()
 
 

@@ -1623,7 +1623,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # only the 'developers_reviewers' will be set as copyGroups as the 'developers_advisers' are
         # not in the meetingConfig.selectableCopyGroups
         self.developers.as_copy_group_on = "python: item.getProposingGroup() == " \
-            "pm_utils.group_to_org('vendors') and ['reviewers', 'advisers', ] or []"
+            "pm_utils.org_id_to_uid('vendors') and ['reviewers', 'advisers', ] or []"
         self.changeUser('pmManager')
         # Creating an item with the default proposingGroup ('developers') does nothing
         i3 = self.create('MeetingItem')
@@ -1653,7 +1653,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failUnless(READER_USECASES['copy_groups'] in i5.__ac_local_roles__[developers_advisers])
         # addAutoCopyGroups is triggered upon each edit (at_post_edit_script)
         self.vendors.as_copy_group_on = "python: item.getProposingGroup() == " \
-            "pm_utils.group_to_org('vendors') and ['reviewers', ] or []"
+            "pm_utils.org_id_to_uid('vendors') and ['reviewers', ] or []"
         # edit the item, 'vendors_reviewers' should be in the copyGroups of the item
         i5._update_after_edit()
         self.failIf(i5.getCopyGroups())
@@ -1688,7 +1688,7 @@ class testMeetingItem(PloneMeetingTestCase):
            this will allow for example to add a copy group and being able to unselect it after.'''
         self.meetingConfig.setUseCopies(True)
         self.vendors.as_copy_group_on = "python: item.getProposingGroup() == " \
-            "pm_utils.group_to_org('developers') and ['reviewers', ] or []"
+            "pm_utils.org_id_to_uid('developers') and ['reviewers', ] or []"
         self.changeUser('pmManager')
         # create an item with group 'developers', 'vendors' will be copy group
         item = self.create('MeetingItem')
@@ -1705,7 +1705,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # now use the isCreated in the TAL expression so an expression
         # is only True on item creation
         self.vendors.as_copy_group_on = "python: (isCreated and item.getProposingGroup() == " \
-            "pm_utils.group_to_org('developers')) and ['reviewers', ] or []"
+            "pm_utils.org_id_to_uid('developers')) and ['reviewers', ] or []"
         item2 = self.create('MeetingItem')
         self.assertEquals(item2.autoCopyGroups, [auto_vendors_reviewers])
         # now unselect it and call at_post_edit_script again
@@ -1732,7 +1732,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.failIf(item.getCopyGroups())
         # set a correct expression so vendors is set as copy group
         self.vendors.as_copy_group_on = "python: item.getProposingGroup() == " \
-            "pm_utils.group_to_org('developers') and ['reviewers', ] or []"
+            "pm_utils.org_id_to_uid('developers') and ['reviewers', ] or []"
         item._update_after_edit()
         auto_vendors_reviewers = 'auto__{0}'.format(get_plone_group_id(self.vendors_uid, 'reviewers'))
         self.assertEquals(item.autoCopyGroups, [auto_vendors_reviewers])
@@ -1774,7 +1774,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEquals(item.getAllCopyGroups(auto_real_plone_group_ids=True),
                           (developers_reviewers, ))
         self.vendors.as_copy_group_on = "python: item.getProposingGroup() == " \
-            "pm_utils.group_to_org('developers') and ['reviewers', ] or []"
+            "pm_utils.org_id_to_uid('developers') and ['reviewers', ] or []"
         item._update_after_edit()
         auto_vendors_reviewers = 'auto__{0}'.format(get_plone_group_id(self.vendors_uid, 'reviewers'))
         vendors_reviewers = get_plone_group_id(self.vendors_uid, 'reviewers')
@@ -2828,7 +2828,7 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # test with autoCopyGroups and the include_auto=False parameter
         self.vendors.as_copy_group_on = "python: item.getProposingGroup() == " \
-            "pm_utils.group_to_org('developers') and ['observers', 'advisers', ] or []"
+            "pm_utils.org_id_to_uid('developers') and ['observers', 'advisers', ] or []"
         item._update_after_edit()
         self.assertEqual(item.autoCopyGroups, ['auto__{0}'.format(vendors_observers),
                                                'auto__{0}'.format(vendors_advisers)])
