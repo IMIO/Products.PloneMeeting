@@ -456,6 +456,20 @@ class testOwnOrg(PloneMeetingTestCase):
             Unauthorized,
             self.portal.restrictedTraverse('@@delete_givenuid'), self.own_org.UID())
 
+    def test_pm_DeactivateOrganization(self):
+        '''Deactivating an organization will remove every Plone groups from
+           every MeetingConfig.selectableCopyGroups field.'''
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        self.changeUser('admin')
+        # for now, the 'developers_reviewers' is in self.meetingConfig.selectableCopyGroups
+        self.assertTrue(self.developers_reviewers in cfg.getSelectableCopyGroups())
+        self.assertTrue(self.developers_reviewers in cfg2.getSelectableCopyGroups())
+        # when deactivated, it is no more the case...
+        self._select_organization(self.developers_uid, remove=True)
+        self.assertTrue(self.developers_reviewers not in cfg.getSelectableCopyGroups())
+        self.assertTrue(self.developers_reviewers not in cfg2.getSelectableCopyGroups())
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
