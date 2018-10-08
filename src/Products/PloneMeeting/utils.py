@@ -1572,7 +1572,7 @@ def org_id_to_uid(org_info):
         org = own_org.restrictedTraverse(org_path.encode('utf-8'))
         return get_plone_group_id(org.UID(), suffix)
     else:
-        org = own_org.restrictedTraverse(org_info)
+        org = own_org.restrictedTraverse(org_info.encode('utf-8'))
         return org.UID()
 
 
