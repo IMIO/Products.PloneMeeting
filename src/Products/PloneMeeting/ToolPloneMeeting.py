@@ -497,14 +497,13 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                                    user_id=None,
                                    only_selected=True,
                                    suffixes=[],
-                                   zope=False,
                                    omitted_suffixes=[]):
         '''cachekey method for self.get_orgs_for_user.'''
         date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting.get_orgs_for_user')
         return (date,
                 self._users_groups_value(),
                 (user_id or api.user.get_current()),
-                only_selected, suffixes, zope, omitted_suffixes)
+                only_selected, suffixes, omitted_suffixes)
 
     security.declarePublic('get_orgs_for_user')
 

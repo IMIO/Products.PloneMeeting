@@ -16,6 +16,7 @@ from Acquisition import aq_base
 from App.class_init import InitializeClass
 from appy.gen import No
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
+from collections import OrderedDict
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.config import ORGANIZATIONS_REGISTRY
 from collective.contact.plonegroup.utils import get_all_suffixes
@@ -4310,7 +4311,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if not isinstance(item, MeetingItem) or not item.UID() == self.UID():
             raise Unauthorized
 
-        data = {}
+        data = OrderedDict()
         tool = api.portal.get_tool('portal_plonemeeting')
         adviser_org_uids = [org.UID() for org in tool.get_orgs_for_user(suffixes=['advisers'])]
         for adviceInfo in self.adviceIndex.values():
