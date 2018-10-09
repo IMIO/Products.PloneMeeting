@@ -27,6 +27,8 @@ from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from DateTime import DateTime
 from plone import api
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from Products.PloneMeeting.content.source import PMContactSource
+from Products.PloneMeeting.content.source import PMContactSourceBinder
 from z3c.relationfield.relation import RelationValue
 from zExceptions import Redirect
 from zope.component import getUtility
@@ -315,6 +317,24 @@ class testContacts(PloneMeetingTestCase):
         self.assertFalse(item.getItemAbsents())
         self.assertFalse(item.redefinedItemAssemblies())
         self.assertFalse(item.getItemSignatories())
+
+    def test_pm_HeldPositionPositionsSourceDoNotShowOrgsInsidePlonegroup(self):
+        """The source for field held_position.position will display
+           organizations outside own_org including own_org."""
+        # create an organization outside own_org
+        self.changeUser('siteadmin')
+        outside_org = api.content.create(
+            container=self.portal.contacts,
+            type='organization',
+            id='org-outside-own-org',
+            title='Organization outside own org')
+        binder = PMContactSourceBinder()
+        source = binder(self.portal)
+        self.assertTrue(self.own_org.UID() in [term.brain.UID for term in source.search('')])
+        self.assertTrue(outside_org.UID() in [term.brain.UID for term in source.search('')])
+        self.assertFalse(self.developers_uid in [term.brain.UID for term in source.search('')])
+        self.assertFalse(self.vendors_uid in [term.brain.UID for term in source.search('')])
+        self.assertFalse(self.endUsers_uid in [term.brain.UID for term in source.search('')])
 
 
 def test_suite():

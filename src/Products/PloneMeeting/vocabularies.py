@@ -1112,7 +1112,7 @@ class FTWLabelsVocabulary(object):
 FTWLabelsVocabularyFactory = FTWLabelsVocabulary()
 
 
-class PositionUsagesVocabulary(object):
+class HeldPositionUsagesVocabulary(object):
     """ """
     implements(IVocabularyFactory)
 
@@ -1123,10 +1123,10 @@ class PositionUsagesVocabulary(object):
         return SimpleVocabulary(res)
 
 
-PositionUsagesVocabularyFactory = PositionUsagesVocabulary()
+HeldPositionUsagesVocabularyFactory = HeldPositionUsagesVocabulary()
 
 
-class PositionDefaultsVocabulary(object):
+class HeldPositionDefaultsVocabulary(object):
     """ """
     implements(IVocabularyFactory)
 
@@ -1137,7 +1137,7 @@ class PositionDefaultsVocabulary(object):
         return SimpleVocabulary(res)
 
 
-PositionDefaultsVocabularyFactory = PositionDefaultsVocabulary()
+HeldPositionDefaultsVocabularyFactory = HeldPositionDefaultsVocabulary()
 
 
 class SignatureNumberVocabulary(object):

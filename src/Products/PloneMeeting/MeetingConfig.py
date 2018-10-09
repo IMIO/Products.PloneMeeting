@@ -3661,8 +3661,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                              context=self.REQUEST,
                              default='Values defined in the \'itemAdviceEditStates\' field must contains at least '
                                      'every values selected in the \'itemAdvicesStates\' field!')
-        # added a pass to avoid generation problems with AGX...
-        pass
 
     security.declarePrivate('validate_insertingMethodsOnAddItem')
 

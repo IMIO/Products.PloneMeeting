@@ -3707,6 +3707,21 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 auto_plone_group_id = '{0}{1}'.format(AUTO_COPY_GROUP_PREFIX, plone_group_id)
                 self.autoCopyGroups.append(auto_plone_group_id)
 
+    def _evalAdviceAvailableOn(self, custom_adviser, tool, cfg, mayEdit=True):
+        """ """
+        res = _evaluateExpression(
+                self,
+                expression=custom_adviser['available_on'],
+                roles_bypassing_expression=[],
+                extra_expr_ctx={
+                    'item': self,
+                    'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
+                    'tool': tool,
+                    'cfg': cfg},
+                empty_expr_is_true=True,
+                error_pattern=ADVICE_AVAILABLE_ON_CONDITION_ERROR)
+        return res
+
     def _optionalDelayAwareAdvisers(self):
         '''Returns the 'delay-aware' advisers.
            This will return a list of dict where dict contains :
@@ -3738,17 +3753,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 continue
 
             # check the 'available_on' TAL expression
-            eRes = _evaluateExpression(
-                self,
-                expression=customAdviserConfig['available_on'],
-                roles_bypassing_expression=[],
-                extra_expr_ctx={
-                    'item': self,
-                    'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
-                    'tool': tool,
-                    'cfg': cfg},
-                empty_expr_is_true=True,
-                error_pattern=ADVICE_AVAILABLE_ON_CONDITION_ERROR)
+            eRes = self._evalAdviceAvailableOn(customAdviserConfig, tool, cfg)
 
             if not eRes:
                 continue

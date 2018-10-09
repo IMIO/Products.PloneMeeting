@@ -4,15 +4,11 @@ from AccessControl import Unauthorized
 from DateTime import DateTime
 from plone import api
 from plone.z3cform.layout import wrap_form
-from Products.CMFCore.Expression import createExprContext
-from Products.CMFCore.Expression import Expression
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
 from Products.Five.browser import BrowserView
-from Products.PloneMeeting import logger
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
-from Products.PloneMeeting.MeetingItem import ADVICE_AVAILABLE_ON_CONDITION_ERROR
 from z3c.form import button
 from z3c.form import field
 from z3c.form import form
@@ -70,10 +66,6 @@ class AdviceDelaysView(BrowserView):
         res = []
         # evaluate the 'available_on' TAL expression defined on each linkedRows
         availableLinkedRows = []
-        ctx = createExprContext(self.context.getParentNode(), self.portal, self.context)
-        # Check that the TAL expression on the group returns True
-        ctx.setGlobal('item', self.context)
-        ctx.setGlobal('mayEdit', mayEdit)
         # set a special value in the request usable in the TAL expression
         # that just specify that we are managing available delays
         # this way, it is easy to protect a custom adviser by just checking
@@ -81,12 +73,9 @@ class AdviceDelaysView(BrowserView):
         self.request.set('managing_available_delays', True)
         for linkedRow in linkedRows:
             eRes = mayEdit
-            try:
-                if linkedRow['available_on']:
-                    eRes = Expression(linkedRow['available_on'])(ctx)
-            except Exception, e:
-                logger.warning(ADVICE_AVAILABLE_ON_CONDITION_ERROR % str(e))
-                eRes = False
+            if linkedRow['available_on']:
+                eRes = self.context._evalAdviceAvailableOn(
+                    linkedRow['available_on'], self.tool, self.cfg, mayEdit=mayEdit)
             if eRes:
                 availableLinkedRows.append(linkedRow)
         self.request.set('managing_available_delays', False)

@@ -57,10 +57,10 @@
            name="Products.PloneMeeting.vocabularies.itemtemplatesstorableasannexvocabulary" />
 
   <!-- PMHeldPosition vocabularies -->
-  <utility component=".vocabularies.PositionUsagesVocabularyFactory"
-           name="Products.PloneMeeting.vocabularies.pmpositionusagesvocabulary" />
-  <utility component=".vocabularies.PositionDefaultsVocabularyFactory"
-           name="Products.PloneMeeting.vocabularies.pmpositiondefaultsvocabulary" />
+  <utility component=".vocabularies.HeldPositionUsagesVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.pmheldposition_usagesvocabulary" />
+  <utility component=".vocabularies.HeldPositionDefaultsVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.pmheldposition_defaultsvocabulary" />
   <utility component=".vocabularies.SignatureNumberVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.signaturenumbervocabulary" />
 
