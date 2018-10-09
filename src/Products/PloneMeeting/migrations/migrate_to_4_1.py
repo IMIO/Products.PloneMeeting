@@ -20,6 +20,7 @@ from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
 from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
 from Products.PloneMeeting.migrations import Migrator
+from zope.i18n import translate
 from zope.interface import alsoProvides
 
 import logging
@@ -327,11 +328,14 @@ class Migrate_To_4_1(Migrator):
         # extra suffixes
         from Products.PloneMeeting.config import EXTRA_GROUP_SUFFIXES
         functions = functions + deepcopy(EXTRA_GROUP_SUFFIXES)
-        # now replace group_id in 'fct_orgs' by corresponding org uid
+        # now replace group_id in 'fct_orgs' by corresponding org uid and translate fct_title
         adapted_functions = []
         for function in functions:
             adapted_function = {'fct_id': function['fct_id'],
-                                'fct_title': function['fct_title']}
+                                'fct_title': translate(
+                                    function['fct_title'],
+                                    domain='PloneMeeting',
+                                    context=self.request)}
             adapted_function_orgs = [own_org.get(group_id).UID() for group_id in function['fct_orgs']]
             adapted_function['fct_orgs'] = adapted_function_orgs
             adapted_functions.append(adapted_function)

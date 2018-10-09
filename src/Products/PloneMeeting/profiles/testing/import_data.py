@@ -27,7 +27,6 @@ from Products.PloneMeeting.profiles import ItemAnnexSubTypeDescriptor
 from Products.PloneMeeting.profiles import ItemAnnexTypeDescriptor
 from Products.PloneMeeting.profiles import ItemTemplateDescriptor
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
-from Products.PloneMeeting.profiles import MeetingUserDescriptor
 from Products.PloneMeeting.profiles import PloneGroupDescriptor
 from Products.PloneMeeting.profiles import PloneMeetingConfiguration
 from Products.PloneMeeting.profiles import PodTemplateDescriptor
@@ -229,20 +228,6 @@ endUsers = OrgDescriptor('endUsers', 'End users', 'EndUsers', active=False)
 # Add an external user
 cadranel = UserDescriptor('cadranel', [], fullname='M. Benjamin Cadranel')
 
-# Add meeting users (voting purposes)
-pmReviewer1_voter = MeetingUserDescriptor('pmReviewer1')
-pmManager_observer = MeetingUserDescriptor('pmManager',
-                                           duty='Secrétaire de la Chancellerie',
-                                           usages=['assemblyMember'])
-cadranel_signer = MeetingUserDescriptor('cadranel', duty='Secrétaire',
-                                        usages=['assemblyMember', 'signer'],
-                                        signatureImage='SignatureCadranel.jpg',
-                                        signatureIsDefault=True)
-muser_voter1 = MeetingUserDescriptor('voter1', duty='Voter1',
-                                     usages=['assemblyMember', 'voter', ])
-muser_voter2 = MeetingUserDescriptor('voter2', duty='Voter2',
-                                     usages=['assemblyMember', 'voter', ])
-
 # Recurring items
 recItem1 = RecurringItemDescriptor(
     'recItem1',
@@ -343,8 +328,7 @@ meetingPma.itemTemplates = (template1, template2, )
 meetingPma.itemPowerObserversStates = ('itemcreated', 'presented', 'accepted', 'delayed')
 meetingPma.meetingPowerObserversStates = ('frozen', 'published', 'decided', 'closed')
 meetingPma.useVotes = True
-meetingPma.meetingUsers = [pmReviewer1_voter, pmManager_observer,
-                           cadranel_signer, muser_voter1, muser_voter2]
+meetingPma.meetingUsers = []
 meetingPma.podTemplates = [agendaTemplate, decisionsTemplate, itemTemplate, dashboardTemplate]
 meetingPma.selectableCopyGroups = [developers.getIdSuffixed('reviewers'), vendors.getIdSuffixed('reviewers'), ]
 meetingPma.meetingConfigsToCloneTo = [{'meeting_config': 'plonegov-assembly',

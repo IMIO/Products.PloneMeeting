@@ -1572,7 +1572,7 @@ div.grouped-configs {
     height: 6px;
 }
 
-#content span.help-doc:before {
+#content span.help-doc {
    border-bottom: 1px dotted;
    padding-bottom: 2px;
    cursor: pointer;
@@ -1636,7 +1636,7 @@ table.listing tbody tr.even.dragging td {
    color: red;
 }
 
-.pmHelp {
+#content span.pmHelp {
    cursor: help;
 }
 
@@ -1742,6 +1742,12 @@ div.highlight.selectable_for_plonegroup_false div span {
 #faceted-form fieldset.widget-fieldset label[title*="(Désactivé)"] {
     color: red;
 }
+
+/* increase FontAwesome base size when parent is using discreet */
+.discreet .fa, .fas {
+    font-size: 110%;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */

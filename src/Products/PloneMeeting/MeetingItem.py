@@ -2823,10 +2823,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getGroupInCharge')
 
-    def getGroupInCharge(self, theObject=False, **kwargs):
+    def getGroupInCharge(self, theObject=False, fromOrgIfEmpty=False, **kwargs):
         '''See docstring in interfaces.py.'''
         item = self.getSelf()
-        res = item.getField('groupInCharge').get(item, **kwargs)  # = group id
+        res = item.getField('groupInCharge').get(item, **kwargs)  # = org_uid
+        if not res and fromOrgIfEmpty:
+            proposingGroup = item.getProposingGroup(theObject=True)
+            groups_in_charge = proposingGroup.get_groups_in_charge()
+            if groups_in_charge:
+                res = groups_in_charge[0]
         if res and theObject:
             res = get_organization(res)
         return res
@@ -3688,7 +3693,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     'cfg': cfg},
                 empty_expr_is_true=False,
                 error_pattern=AS_COPYGROUP_CONDITION_ERROR)
-            if not suffixes:
+            if not suffixes or not isinstance(suffixes, tuple, list):
                 continue
             # The expression is supposed to return a list a Plone group suffixes
             # check that the real linked Plone groups are selectable
