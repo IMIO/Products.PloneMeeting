@@ -223,7 +223,7 @@ def onOrgWillBeRemoved(current_org, event):
     for org in get_organizations(only_selected=False):
         if current_org_uid in org.groups_in_charge:
             raise BeforeDeleteException(translate("can_not_delete_organization_groupincharge",
-                                                  mapping={'org_title': org.get_full_title()},
+                                                  mapping={'org_url': org.absolute_url()},
                                                   domain="plone",
                                                   context=request))
 
@@ -234,12 +234,14 @@ def onOrgWillBeRemoved(current_org, event):
            current_org_uid in mc.getPowerAdvisersGroups() or \
            current_org_uid in mc.getSelectableAdvisers():
             raise BeforeDeleteException(translate("can_not_delete_organization_meetingconfig",
+                                                  mapping={'cfg_url': mc.absolute_url()},
                                                   domain="plone",
                                                   context=request))
         for suffix in get_all_suffixes(current_org_uid):
             plone_group_id = get_plone_group_id(current_org_uid, suffix)
             if plone_group_id in mc.getSelectableCopyGroups():
                 raise BeforeDeleteException(translate("can_not_delete_organization_meetingconfig",
+                                                      mapping={'cfg_url': mc.absolute_url()},
                                                       domain="plone",
                                                       context=request))
     # Then check that every linked Plone group is empty because we are going to delete them.
@@ -254,6 +256,7 @@ def onOrgWillBeRemoved(current_org, event):
         groupsMembersWithoutNotFound = [member for member in groupMembers if 'not found' not in member[1]]
         if groupsMembersWithoutNotFound:
             raise BeforeDeleteException(translate("can_not_delete_organization_plonegroup",
+                                                  mapping={'plone_group_id': groupsMembersWithoutNotFound[0]},
                                                   domain="plone",
                                                   context=request))
     # And finally, check that organization is not linked to an existing item.
@@ -277,15 +280,16 @@ def onOrgWillBeRemoved(current_org, event):
         suffixedGroups.add(plone_group_id)
     catalog = api.portal.get_tool('portal_catalog')
     for brain in catalog(meta_type="MeetingItem"):
-        obj = brain.getObject()
-        if (obj.getProposingGroup() == current_org_uid) or \
-           (current_org_uid in obj.getAssociatedGroups()) or \
-           (obj.adapted().getGroupInCharge() == current_org_uid) or \
-           (current_org_uid in obj.adviceIndex) or \
-           set(obj.getCopyGroups()).intersection(suffixedGroups):
+        item = brain.getObject()
+        if (item.getProposingGroup() == current_org_uid) or \
+           (current_org_uid in item.getAssociatedGroups()) or \
+           (item.adapted().getGroupInCharge() == current_org_uid) or \
+           (current_org_uid in item.adviceIndex) or \
+           set(item.getCopyGroups()).intersection(suffixedGroups):
             # The organization is linked to an existing item, we can not delete it.
             raise BeforeDeleteException(
                 translate("can_not_delete_organization_meetingitem",
+                          mapping={'item_url': item.absolute_url()},
                           domain="plone",
                           context=request))
 
