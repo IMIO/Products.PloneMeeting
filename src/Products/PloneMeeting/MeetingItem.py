@@ -3693,7 +3693,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     'cfg': cfg},
                 empty_expr_is_true=False,
                 error_pattern=AS_COPYGROUP_CONDITION_ERROR)
-            if not suffixes or not isinstance(suffixes, tuple, list):
+            if not suffixes or not isinstance(suffixes, (tuple, list)):
                 continue
             # The expression is supposed to return a list a Plone group suffixes
             # check that the real linked Plone groups are selectable
@@ -3707,17 +3707,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 auto_plone_group_id = '{0}{1}'.format(AUTO_COPY_GROUP_PREFIX, plone_group_id)
                 self.autoCopyGroups.append(auto_plone_group_id)
 
-    def _evalAdviceAvailableOn(self, custom_adviser, tool, cfg, mayEdit=True):
+    def _evalAdviceAvailableOn(self, available_on_expr, tool, cfg, mayEdit=True):
         """ """
         res = _evaluateExpression(
                 self,
-                expression=custom_adviser['available_on'],
+                expression=available_on_expr,
                 roles_bypassing_expression=[],
                 extra_expr_ctx={
                     'item': self,
                     'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
                     'tool': tool,
-                    'cfg': cfg},
+                    'cfg': cfg,
+                    'mayEdit': mayEdit},
                 empty_expr_is_true=True,
                 error_pattern=ADVICE_AVAILABLE_ON_CONDITION_ERROR)
         return res
@@ -3753,7 +3754,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 continue
 
             # check the 'available_on' TAL expression
-            eRes = self._evalAdviceAvailableOn(customAdviserConfig, tool, cfg)
+            eRes = self._evalAdviceAvailableOn(customAdviserConfig['available_on'], tool, cfg)
 
             if not eRes:
                 continue

@@ -18,7 +18,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   like use of api.env.adopt_user, the value stored there is not always the current user
   Systematically use api.user.get_current to get current user
 - Moved to eea.facetednavigation 10+, rely on collective.eeafaceted.dashboard
-- Integrated collective.contact.core and collective.contact.plonegroup to manage contacts in assemblies and signatories
+- Integrated collective.contact.core and collective.contact.plonegroup to manage contacts in assemblies and signatories,
+  and replaced MeetingGroups stored in portal_plonemeeting by organizations stored in collective.contact.plonegroup
 - Rely on collective.js.tablednd to manage contacts assembly on meeting
 - Meeting.getItems useCatalog=False parameter was replaced by theObjects=True.  Method was refactored to always use a catalog
   query to get items and return objects if useObject=True
@@ -56,6 +57,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   filter or the 'Taken over by' filter
 - Added 'tool' and 'cfg' to the list of variables useable in DashboardPODTemplate tal_condition field like it was already the
   case for ConfigurablePODTemplate
+- Added parameter 'ordered' to MeetingItem.getAdviceDataFor that will return an OrderedDict instead a dict to ensure
+  data is returned respecting organizations order defined in the configuration
 
 4.1b10 (2018-05-22)
 -------------------

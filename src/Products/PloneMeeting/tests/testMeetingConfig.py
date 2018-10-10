@@ -1140,6 +1140,7 @@ class testMeetingConfig(PloneMeetingTestCase):
             self.tool.manage_delObjects([cfgId, ])
         can_not_delete_meetingconfig_meetingconfig = \
             translate('can_not_delete_meetingconfig_meetingconfig',
+                      mapping={'other_config_title': cfg.Title()},
                       domain="plone",
                       context=self.request)
         self.assertEquals(cm.exception.message, can_not_delete_meetingconfig_meetingconfig)

@@ -398,8 +398,7 @@ class testSearches(PloneMeetingTestCase):
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemsincopy')
         self.assertEquals(adapter.query,
                           {'getCopyGroups':  {
-                            'query': ['AuthenticatedUsers',
-                                      self.developers_creators]},
+                            'query': sorted(['AuthenticatedUsers', self.developers_creators])},
                            'portal_type':  {'query': itemTypeName}})
 
         # now do the query

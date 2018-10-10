@@ -64,6 +64,7 @@ class testOwnOrg(PloneMeetingTestCase):
         can_not_delete_organization_meetingconfig = \
             translate('can_not_delete_organization_meetingconfig',
                       domain="plone",
+                      mapping={'cfg_url': cfg.absolute_url()},
                       context=self.request)
         transaction.commit()
         with self.assertRaises(BeforeDeleteException) as cm:
@@ -277,7 +278,7 @@ class testOwnOrg(PloneMeetingTestCase):
         self.assertEquals(cm.exception.message,
                           translate('can_not_delete_organization_groupincharge',
                                     domain='plone',
-                                    mapping={'org_title': org1.get_full_title()},
+                                    mapping={'org_url': org1.absolute_url()},
                                     context=self.portal.REQUEST))
 
     def test_pm_DeactivatedOrgCanNoMoreBeUsed(self):

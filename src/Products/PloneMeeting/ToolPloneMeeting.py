@@ -490,7 +490,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         user_groups = user.getGroups()
         if org_uid:
             user_groups = [plone_group for plone_group in user_groups if plone_group.startswith(org_uid)]
-        return user_groups
+        return sorted(user_groups)
 
     def get_orgs_for_user_cachekey(method,
                                    self,
