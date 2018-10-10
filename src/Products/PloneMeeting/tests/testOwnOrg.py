@@ -28,6 +28,8 @@ from collective.contact.plonegroup.utils import get_plone_groups
 from OFS.ObjectManager import BeforeDeleteException
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from zope.i18n import translate
+from plone import api
+from Products.statusmessages.interfaces import IStatusMessage
 
 import transaction
 
@@ -458,8 +460,8 @@ class testOwnOrg(PloneMeetingTestCase):
             self.portal.restrictedTraverse('@@delete_givenuid'), self.own_org.UID())
 
     def test_pm_DeactivateOrganization(self):
-        '''Deactivating an organization will remove every Plone groups from
-           every MeetingConfig.selectableCopyGroups field.'''
+        """Deactivating an organization will remove every Plone groups from
+           every MeetingConfig.selectableCopyGroups field."""
         cfg = self.meetingConfig
         cfg2 = self.meetingConfig2
         self.changeUser('admin')
@@ -470,6 +472,30 @@ class testOwnOrg(PloneMeetingTestCase):
         self._select_organization(self.developers_uid, remove=True)
         self.assertTrue(self.developers_reviewers not in cfg.getSelectableCopyGroups())
         self.assertTrue(self.developers_reviewers not in cfg2.getSelectableCopyGroups())
+
+    def test_pm_WarnUserWhenAddingNewOrgOutiseOwnOrg(self):
+        """ """
+        # when added in directory or organization ouside own_org, a message is displayed
+        for location in (self.portal.contacts, self.developers):
+            add_view = location.restrictedTraverse('++add++organization')
+            add_view.ti = self.portal.portal_types.organization
+            self.request['PUBLISHED'] = add_view
+            messages = IStatusMessage(self.request).show()
+            self.assertEqual(len(messages), 0)
+            add_view.update()
+            messages = IStatusMessage(self.request).show()
+            self.assertEqual(len(messages), 1)
+            warning_msg = translate(msgid="warning_adding_org_outside_own_org",
+                                    domain='PloneMeeting',
+                                    context=self.request)
+            self.assertEqual(messages[-1].message, warning_msg)
+        # when added in own_org, no warning
+        add_view = self.own_org.restrictedTraverse('++add++organization')
+        add_view.ti = self.portal.portal_types.organization
+        self.request['PUBLISHED'] = add_view
+        add_view.update()
+        messages = IStatusMessage(self.request).show()
+        self.assertEqual(len(messages), 0)
 
 
 def test_suite():

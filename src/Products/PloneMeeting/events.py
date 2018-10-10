@@ -13,6 +13,7 @@ from zope.globalrequest import getRequest
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organizations
+from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.contact.plonegroup.utils import get_plone_groups
 from collective.documentviewer.async import queueJob
@@ -941,6 +942,25 @@ def onHeldPositionRemoved(held_pos, event):
             request=held_pos.REQUEST,
             type='error')
         raise Redirect(held_pos.REQUEST.get('HTTP_REFERER'))
+
+
+def onOrgAddBegun(obj, event):
+    """ """
+    # this event is triggered when adding something to an IDirectory or IOrganization
+    # first make sure that we are adding an organization
+    own_org = get_own_organization()
+    if obj == own_org:
+        return
+
+    added_fti = obj.REQUEST['PUBLISHED'].ti
+    if not added_fti.id == 'organization':
+        return
+
+    # we are adding an organization outside own_org, warn the user
+    api.portal.show_message(
+        message=_("warning_adding_org_outside_own_org"),
+        request=obj.REQUEST,
+        type='warning')
 
 
 def onPlonegroupGroupCreated(event):

@@ -134,7 +134,13 @@
                    imio.annex.interfaces.IAnnexFileChangedEvent"
               handler=".events.onAnnexFileChanged" />
 
-  <!-- collective.contact.core held_position events -->
+  <!-- collective.contact.core events -->
+  <subscriber for="collective.contact.core.content.directory.IDirectory
+                   plone.dexterity.events.AddBegunEvent"
+              handler=".events.onOrgAddBegun" />
+  <subscriber for="Products.PloneMeeting.content.organization.IPMOrganization
+                   plone.dexterity.events.AddBegunEvent"
+              handler=".events.onOrgAddBegun" />
   <subscriber for="Products.PloneMeeting.content.held_position.IPMHeldPosition
                    OFS.interfaces.IObjectWillBeRemovedEvent"
               handler=".events.onHeldPositionRemoved" />
@@ -147,7 +153,7 @@
   <subscriber for="plone.registry.interfaces.IRecordModifiedEvent"
               handler=".events.onRegistryModified" />
 
-  <!-- collective.contact.plonegroup group created event -->
+  <!-- collective.contact.plonegroup Plone group created event -->
   <subscriber for="collective.contact.plonegroup.interfaces.IPlonegroupGroupCreatedEvent"
               handler=".events.onPlonegroupGroupCreated" />
 

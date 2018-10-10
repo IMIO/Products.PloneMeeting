@@ -223,11 +223,9 @@ class PMConfigActionsPanelViewlet(ActionsPanelViewlet):
                                           'ItemAnnexContentSubcategory',
                                           ):
             url = '{0}?pageName=data#annexes_types'.format(cfg_url, )
-        elif self.context.portal_type in ('person', 'held_position'):
+        elif self.context.portal_type in ('person', 'held_position') or \
+                (self.context.portal_type == 'organization' and self.context.getId() != PLONEGROUP_ORG):
             url = parent.absolute_url()
-        elif self.context.portal_type == 'organization' and \
-                self.context.getId() != PLONEGROUP_ORG:
-            url = '{0}/contacts/{1}'.format(self.site_url, PLONEGROUP_ORG)
         else:
             # We are in a subobject from the tool or on the PLONEGROUP_ORG
             url = tool_url
