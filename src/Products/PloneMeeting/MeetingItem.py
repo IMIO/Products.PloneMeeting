@@ -1500,7 +1500,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # hide the decision?
         msg = self._mayNotViewDecisionMsg()
         return msg or self.getField('motivation').get(self, **kwargs)
-    getRawMotivation = getMotivation
+
+    security.declarePublic('getRawMotivation')
+
+    def getRawMotivation(self, **kwargs):
+        '''See self.getMotivation docstring.'''
+        # hide the decision?
+        msg = self._mayNotViewDecisionMsg()
+        return msg or self.getField('motivation').getRaw(self, **kwargs)
 
     security.declarePublic('getDecision')
 
@@ -1511,7 +1518,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # hide the decision?
         msg = self._mayNotViewDecisionMsg()
         return msg or self.getField('decision').get(self, **kwargs)
-    getRawDecision = getDecision
+
+    security.declarePublic('getRawDecision')
+
+    def getRawDecision(self, **kwargs):
+        '''See self.getDecision docstring.'''
+        # hide the decision?
+        msg = self._mayNotViewDecisionMsg()
+        return msg or self.getField('decision').getRaw(self, **kwargs)
 
     security.declarePrivate('validate_category')
 
