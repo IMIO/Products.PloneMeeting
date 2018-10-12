@@ -3785,14 +3785,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                                       'delay': delay,
                                                       'delay_label': delay_label},
                                              default='${org_title} - ${delay} day(s) (${delay_label})',
-                                             context=self.REQUEST).encode('utf-8')
+                                             context=self.REQUEST)
             else:
                 value_to_display = translate('advice_delay_without_label',
                                              domain='PloneMeeting',
                                              mapping={'org_title': group_name,
                                                       'delay': delay},
                                              default='${org_title} - ${delay} day(s)',
-                                             context=self.REQUEST).encode('utf-8')
+                                             context=self.REQUEST)
             return value_to_display
 
         tool = api.portal.get_tool('portal_plonemeeting')
