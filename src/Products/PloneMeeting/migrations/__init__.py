@@ -99,6 +99,16 @@ class Migrator(BaseMigrator):
             self.portal.portal_catalog.reindexIndex(name=idx, REQUEST=None)
         logger.info('Done.')
 
+    def updateTALConditions(self, old_word, new_word):
+        """Update every elements having a tal_condition, replace given old_word by new_word."""
+        for brain in api.content.find(
+                object_provides='collective.behavior.talcondition.interfaces.ITALConditionable'):
+            obj = brain.getObject()
+            tal_condition = obj.tal_condition
+            if tal_condition and old_word in tal_condition:
+                tal_condition = tal_condition.replace(old_word, new_word)
+                obj.tal_condition = tal_condition
+
     def updateHolidays(self):
         '''Update holidays using default holidays.'''
         logger.info('Updating holidays...')

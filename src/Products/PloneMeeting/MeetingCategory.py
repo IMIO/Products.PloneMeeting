@@ -10,6 +10,7 @@
 #
 
 from AccessControl import ClassSecurityInfo
+from collective.contact.plonegroup.utils import get_organizations
 from imio.helpers.cache import invalidate_cachekey_volatile_for
 from OFS.ObjectManager import BeforeDeleteException
 from plone import api
@@ -215,9 +216,9 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
         usingGroups = cat.getUsingGroups()
         # If we have usingGroups make sure userId is creator for one of it
         if isUsing and usingGroups and not tool.isManager(cat, realManagers=True):
-            proposingGroupIds = tool.getSelectableGroups(userId=userId)
-            keys = [proposingGroupId[0] for proposingGroupId in proposingGroupIds]
-            # Check intersection between self.usingGroups and groups for which
+            selectable_orgs = tool.get_selectable_orgs(user_id=userId)
+            keys = [selectable_org[0] for selectable_org in selectable_orgs]
+            # Check intersection between self.usingGroups and orgs for which
             # the current user is creator
             isUsing = bool(set(usingGroups).intersection(keys))
         return isUsing
@@ -225,14 +226,12 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
     security.declarePublic('listUsingGroups')
 
     def listUsingGroups(self):
-        '''Returns a list of groups that will restrict the use of this category
-           for.'''
+        '''Returns a list of groups that will restrict the use of this category for.'''
         res = []
-        # Get every Plone group related to a MeetingGroup
-        tool = api.portal.get_tool('portal_plonemeeting')
-        meetingGroups = tool.getMeetingGroups()
-        for group in meetingGroups:
-            res.append((group.id, group.Title()))
+        # Get every Plone group related to an organization
+        orgs = get_organizations()
+        for org in orgs:
+            res.append((org.UID(), org.get_full_title(first_index=1)))
         return DisplayList(tuple(res))
 
     security.declarePublic('listCategoriesOfOtherMCs')

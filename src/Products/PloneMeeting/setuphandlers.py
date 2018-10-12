@@ -22,6 +22,7 @@ from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_REAPPLY
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG
 from Products.PloneMeeting.config import HAS_ZAMQP
+from Products.PloneMeeting.config import ManageOwnOrganizationFields
 from zope.component import queryUtility
 from zope.i18n import translate
 
@@ -40,7 +41,6 @@ folderViews = ('folder_contents', )
 # NOT returning empty tuple/list like () or [] but empty values like ''
 indexInfos = {
     # MeetingItem-related indexes
-    'getTitle2': ('ZCTextIndex', {}),
     'getCategory': ('FieldIndex', {}),
     'getItemIsSigned': ('FieldIndex', {}),
     'getItemNumber': ('FieldIndex', {}),
@@ -72,19 +72,15 @@ indexInfos = {
     'getDate': ('DateIndex', {}),
     # MeetingUser-related indexes
     'getConfigId': ('FieldIndex', {}),
-    'indexUsages': ('KeywordIndex', {}),
     'getItemNumber': ('FieldIndex', {})}
 # Metadata to create in portal_catalog
-columnInfos = ('getTitle2', 'getDate', 'getProposingGroup', 'getGroupInCharge',
+columnInfos = ('getDate', 'getProposingGroup', 'getGroupInCharge',
                'getPreferredMeeting', 'getPreferredMeetingDate',
                'linkedMeetingDate', 'linkedMeetingUID',
                'getItemIsSigned', 'title_or_id', 'toDiscuss',
                'privacy', 'pollType', 'listType', 'getItemNumber',
                'getCategory', 'getRawClassifier')
 transformsToDisable = ['word_to_html', 'pdf_to_html', 'pdf_to_text']
-# Index "indexUsages" does not use Archetype-generated getter "getUsages"
-# because in this case, both fields MeetingUser.usages and MeetingItem.usages
-# would be indexed. We only want to index MeetingUser.usages.
 
 
 def isNotPloneMeetingProfile(context):
@@ -191,7 +187,7 @@ def postInstall(context):
     pol.setTitle(_(u'PloneMeeting tool policy'))
     pol.setChain('DashboardCollection', ('',))
     pol.setChainForPortalTypes(
-        ('MeetingGroup', 'MeetingConfig', 'MeetingCategory'), ('plonemeeting_activity_workflow',))
+        ('MeetingConfig', 'MeetingCategory'), ('plonemeeting_activity_workflow',))
     # use onestate workflow for Folders contained in the tool/MeetingConfigs
     pol.setChain('Folder', ('plonemeeting_onestate_workflow',))
     pc = getattr(site.portal_plonemeeting, WorkflowPolicyConfig_id)
@@ -339,6 +335,10 @@ def postInstall(context):
         params = {'title': u"Mon organisation",
                   'organization_type': u'default', }
         contacts.invokeFactory('organization', PLONEGROUP_ORG, **params)
+        own_org = contacts[PLONEGROUP_ORG]
+        own_org.manage_permission(
+            ManageOwnOrganizationFields, ('Manager', 'Site Administrator'),
+            acquire=0)
 
     # reorder css
     _reorderCSS(site)

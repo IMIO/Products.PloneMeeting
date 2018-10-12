@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from AccessControl import Unauthorized
+from collective.contact.plonegroup.utils import get_organization
 from imio.prettylink.interfaces import IPrettyLink
 from persistent.list import PersistentList
 from plone import api
@@ -214,30 +215,31 @@ class AdviceGroupVocabulary(object):
 
         # take into account groups for wich user can add an advice
         # while adding an advice, the context is his parent, aka a MeetingItem
-        alterable_advices_groups = []
+        alterable_advice_org_uids = []
         if context.meta_type == 'MeetingItem':
-            alterable_advices_groups = [groupId for groupId, groupTitle in context.getAdvicesGroupsInfosForUser()[0]]
+            alterable_advice_org_uids = [org_uid for org_uid, org_title in context.getAdvicesGroupsInfosForUser()[0]]
         # take into account groups for which user can edit an advice
         elif context.portal_type in advicePortalTypeIds:
-            alterable_advices_groups = [groupId for groupId, groupTitle in context.getAdvicesGroupsInfosForUser()[1]]
+            alterable_advice_org_uids = [org_uid for org_uid, org_title in context.getAdvicesGroupsInfosForUser()[1]]
             # make sure advice_group selected on advice is in the vocabulary
-            if context.advice_group not in alterable_advices_groups:
-                alterable_advices_groups.append(context.advice_group)
+            if context.advice_group not in alterable_advice_org_uids:
+                alterable_advice_org_uids.append(context.advice_group)
 
         # manage case where we have several meetingadvice portal_types
-        # depending on current portal_type, clean up selectable groups
+        # depending on current portal_type, clean up selectable orgs
         itemObj = context.meta_type == 'MeetingItem' and context or context.getParentNode()
         current_portal_type = findMeetingAdvicePortalType(context)
-        alterable_advices_groups = [
-            groupId for groupId in alterable_advices_groups
-            if (itemObj.adapted()._advicePortalTypeForAdviser(groupId) == current_portal_type or
-                (context.portal_type in advicePortalTypeIds and groupId == context.advice_group))]
+        alterable_advice_org_uids = [
+            org_uid for org_uid in alterable_advice_org_uids
+            if (itemObj.adapted()._advicePortalTypeForAdviser(org_uid) == current_portal_type or
+                (context.portal_type in advicePortalTypeIds and org_uid == context.advice_group))]
 
         # create vocabulary
-        for alterable_advices_group in alterable_advices_groups:
-            terms.append(SimpleTerm(alterable_advices_group,
-                                    alterable_advices_group,
-                                    getattr(tool, alterable_advices_group).Title()))
+        for alterable_advice_org_uid in alterable_advice_org_uids:
+            org = get_organization(alterable_advice_org_uid)
+            terms.append(SimpleTerm(alterable_advice_org_uid,
+                                    alterable_advice_org_uid,
+                                    org.get_full_title()))
         return SimpleVocabulary(terms)
 
 

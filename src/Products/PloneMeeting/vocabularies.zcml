@@ -57,12 +57,18 @@
            name="Products.PloneMeeting.vocabularies.itemtemplatesstorableasannexvocabulary" />
 
   <!-- PMHeldPosition vocabularies -->
-  <utility component=".vocabularies.PositionUsagesVocabularyFactory"
-           name="Products.PloneMeeting.vocabularies.pmpositionusagesvocabulary" />
-  <utility component=".vocabularies.PositionDefaultsVocabularyFactory"
-           name="Products.PloneMeeting.vocabularies.pmpositiondefaultsvocabulary" />
+  <utility component=".vocabularies.HeldPositionUsagesVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.pmheldposition_usagesvocabulary" />
+  <utility component=".vocabularies.HeldPositionDefaultsVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.pmheldposition_defaultsvocabulary" />
   <utility component=".vocabularies.SignatureNumberVocabularyFactory"
-           name="Products.PloneMeeting.vocabularies.pmsignaturenumbervocabulary" />
+           name="Products.PloneMeeting.vocabularies.signaturenumbervocabulary" />
+
+  <!-- PMOrganization vocabularies -->
+  <utility component=".vocabularies.ItemAllStatesVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.itemallstates" />
+  <utility component=".vocabularies.KeepAccessToItemWhenAdviceIsGivenVocabularyFactory"
+           name="Products.PloneMeeting.content.organization.keep_access_to_item_when_advice_is_given_vocabulary" />
 
   <!-- Vocabulary used in collectionwidget and inheritating from the imio.dashboard vocabulary -->
   <utility component=".vocabularies.PMConditionAwareCollectionVocabularyFactory"

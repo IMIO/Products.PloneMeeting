@@ -10,8 +10,10 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 4.1b12 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Replaced MeetingGroup (stored in portal_plonemeeting) by collective.contact.core organizations
+ (stored in plonegroup-organization)
+- Added parameter 'ordered' to MeetingItem.getAdviceDataFor that will return an OrderedDict instead a dict to ensure
+  data is returned respecting organizations order defined in the configuration
 
 4.1b11 (2018-09-11)
 -------------------

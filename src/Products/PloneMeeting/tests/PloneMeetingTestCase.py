@@ -22,6 +22,8 @@
 
 from AccessControl.SecurityManagement import getSecurityManager
 from collections import OrderedDict
+from collective.contact.plonegroup.utils import get_own_organization
+from collective.contact.plonegroup.utils import get_plone_groups
 from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.utils import get_config_root
 from imio.helpers.cache import cleanRamCacheFor
@@ -32,6 +34,7 @@ from plone.app.testing import login
 from plone.app.testing import logout
 from plone.app.testing.helpers import setRoles
 from plone.dexterity.utils import createContentInContainer
+from Products.CMFPlone.utils import safe_unicode
 from Products.Five.browser import BrowserView
 from Products.PloneMeeting.config import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.config import TOOL_FOLDER_ANNEX_TYPES
@@ -110,6 +113,19 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         notify(BeforeTraverseEvent(self.portal, self.request))
         self.tool = self.portal.portal_plonemeeting
         self.wfTool = self.portal.portal_workflow
+        self.own_org = get_own_organization()
+        # make organizations easily available thru their id and store uid
+        # for each organization, we will have self.developers, self.developers_uid
+        # as well as every plone groups : self.vendors_creators, self.developers_reviewers, ...
+        for org in self.own_org.objectValues():
+            setattr(self, org.getId(), org)
+            setattr(self, '{0}_uid'.format(org.getId()), safe_unicode(org.UID()))
+            for plone_group_id in get_plone_groups(org.UID(), ids_only=True):
+                org_uid, suffix = plone_group_id.split('_')
+                setattr(self,
+                        '{0}_{1}'.format(org.getId(), suffix),
+                        plone_group_id)
+
         self.pmFolder = os.path.dirname(Products.PloneMeeting.__file__)
         # Create siteadmin user
         self.createUser('siteadmin', ('Member', 'Manager', ))
@@ -242,9 +258,22 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         elif objectType == 'MeetingItemTemplate':
             contentType = '%s%s' % (objectType, shortName)
             folder = folder or cfg.itemtemplates
-        elif objectType in ('MeetingGroup', 'MeetingConfig'):
+        elif objectType == 'MeetingConfig':
             contentType = objectType
             folder = self.tool
+        elif objectType == 'organization':
+            contentType = objectType
+            folder = self.own_org
+            if 'groups_in_charge' not in attrs:
+                attrs['groups_in_charge'] = []
+            if 'item_advice_states' not in attrs:
+                attrs['item_advice_states'] = []
+            if 'item_advice_edit_states' not in attrs:
+                attrs['item_advice_edit_states'] = []
+            if 'item_advice_view_states' not in attrs:
+                attrs['item_advice_view_states'] = []
+            if 'certified_signatures' not in attrs:
+                attrs['certified_signatures'] = []
         elif objectType == 'MeetingCategory':
             contentType = objectType
             if isClassifier:
@@ -260,10 +289,10 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             attrs.update({'id': self._generateId(folder)})
         if objectType == 'MeetingItem':
             if 'proposingGroup' not in attrs.keys():
-                cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.getGroupsForUser')
-                proposingGroup = self.tool.getGroupsForUser(suffixes=['creators'])
+                cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting.get_orgs_for_user')
+                proposingGroup = self.tool.get_orgs_for_user(suffixes=['creators'])
                 if len(proposingGroup):
-                    attrs.update({'proposingGroup': proposingGroup[0].id})
+                    attrs.update({'proposingGroup': proposingGroup[0].UID()})
         obj = getattr(folder, folder.invokeFactory(contentType, **attrs))
         if objectType == 'Meeting':
             self.setCurrentMeeting(obj)
@@ -419,6 +448,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                                             'tool-getmeetinggroups-',
                                             'meeting-config-getcategories-',
                                             'meeting-config-gettopics-',
+                                            'plonegroup-utils-get_organizations-'
                                             ])
 
     def _removeConfigObjectsFor(self, meetingConfig, folders=['recurringitems', 'itemtemplates']):

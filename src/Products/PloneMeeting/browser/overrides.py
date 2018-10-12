@@ -12,6 +12,8 @@ from Acquisition import aq_base
 from archetypes.referencebrowserwidget.browser.view import ReferenceBrowserPopup
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.ckeditor.browser.ckeditorfinder import CKFinder
+from collective.contact.plonegroup.config import PLONEGROUP_ORG
+from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.documentgenerator.content.pod_template import IPODTemplate
 from collective.documentgenerator.viewlets.generationlinks import DocumentGeneratorLinksViewlet
 from collective.eeafaceted.batchactions.browser.views import TransitionBatchActionForm
@@ -52,7 +54,6 @@ from Products.PloneMeeting import utils as pm_utils
 from Products.PloneMeeting.config import BARCODE_INSERTED_ATTR_ID
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.interfaces import IMeeting
-from Products.PloneMeeting.utils import get_all_suffixes
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import sendMail
@@ -158,11 +159,13 @@ class PloneMeetingContentActionsViewlet(ContentActionsViewlet):
     '''
 
     def render(self):
-        if self.context.meta_type in ('ATTopic', 'Meeting', 'MeetingItem',  'MeetingCategory',
-                                      'MeetingConfig', 'MeetingGroup', 'MeetingFileType', 'MeetingUser',
-                                      'ToolPloneMeeting',) or \
-           self.context.portal_type in ('ContentCategoryConfiguration', 'ContentCategoryGroup',
-                                        'ConfigurablePODTemplate', 'DashboardPODTemplate') or \
+        if self.context.meta_type in (
+            'ATTopic', 'Meeting', 'MeetingItem',  'MeetingCategory',
+            'MeetingConfig', 'MeetingFileType', 'MeetingUser', 'ToolPloneMeeting',) or \
+           self.context.portal_type in (
+            'ContentCategoryConfiguration', 'ContentCategoryGroup',
+            'ConfigurablePODTemplate', 'DashboardPODTemplate',
+            'directory', 'organization', 'person', 'held_position') or \
            self.context.portal_type.startswith(('meetingadvice',)) or \
            self.context.portal_type.endswith(('ContentCategory', 'ContentSubcategory',)):
             return ''
@@ -185,6 +188,8 @@ class PMConfigActionsPanelViewlet(ActionsPanelViewlet):
             if 'ContentCategory' in self.context.portal_type:
                 showAddContent = True
                 showActions = True
+            elif self.context.portal_type in ('organization', 'person', 'directory'):
+                showAddContent = True
             return self.context.restrictedTraverse("@@actions_panel")(useIcons=False,
                                                                       showTransitions=True,
                                                                       appendTypeNameToTransitionLabel=True,
@@ -198,6 +203,7 @@ class PMConfigActionsPanelViewlet(ActionsPanelViewlet):
         '''Computes the URL for "back" links in the tool or in a config.'''
         url = ''
         tool = api.portal.get_tool('portal_plonemeeting')
+        tool_url = tool.absolute_url()
         cfg = tool.getMeetingConfig(self.context)
         cfg_url = ''
         if cfg:
@@ -217,10 +223,13 @@ class PMConfigActionsPanelViewlet(ActionsPanelViewlet):
                                           'ItemAnnexContentSubcategory',
                                           ):
             url = '{0}?pageName=data#annexes_types'.format(cfg_url, )
+        elif self.context.portal_type in ('person', 'held_position') or \
+                (self.context.portal_type == 'organization' and self.context.getId() != PLONEGROUP_ORG):
+            url = parent.absolute_url()
         else:
-            # We are in a subobject from the tool.
-            url = tool.absolute_url()
-            url += '#%s' % self.context.meta_type
+            # We are in a subobject from the tool or on the PLONEGROUP_ORG
+            url = tool_url
+            url += '#%s' % self.context.portal_type
         return url
 
 
@@ -512,7 +521,7 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         cfg = self.tool.getMeetingConfig(self.context)
         cfg_modified = cfg.modified()
         user = api.user.get_current()
-        userGroups = self.tool.getPloneGroupsForUser()
+        userGroups = self.tool.get_plone_groups_for_user()
         # if item is validated, the 'present' action could appear if a meeting
         # is now available for the item to be inserted into
         isPresentable = False
@@ -621,7 +630,7 @@ class MeetingActionsPanelView(BaseActionsPanelView):
         cfg = self.tool.getMeetingConfig(self.context)
         cfg_modified = cfg.modified()
         user = api.user.get_current()
-        userGroups = self.tool.getPloneGroupsForUser()
+        userGroups = self.tool.get_plone_groups_for_user()
         invalidate_meeting_actions_panel_cache = False
         if hasattr(self.context, 'invalidate_meeting_actions_panel_cache'):
             invalidate_meeting_actions_panel_cache = True
@@ -737,8 +746,9 @@ class ConfigActionsPanelView(ActionsPanelView):
             self.ACCEPTABLE_ACTIONS = ('update_categorized_elements',
                                        'update_and_sort_categorized_elements')
 
-        if self.context.meta_type == 'MeetingGroup':
+        if self.context.portal_type == 'organization':
             self.SECTIONS_TO_RENDER += ('renderLinkedPloneGroups', )
+
         self.tool = api.portal.get_tool('portal_plonemeeting')
 
     def renderArrows(self):
@@ -766,26 +776,28 @@ class ConfigActionsPanelView(ActionsPanelView):
             return "../?pageName=users#meetingusers"
         if self.context.meta_type == "MeetingConfig":
             return "#MeetingConfig"
-        if self.context.meta_type == "MeetingGroup":
-            return "#MeetingGroup"
+        if self.context.portal_type == "organization":
+            return "#organization"
+
         # most are used on the 'data' fieldset, use this as default
         cfg = self.tool.getMeetingConfig(self.context)
         return "{0}/?pageName=data#{1}".format(cfg.absolute_url(), folderId)
 
     def mayEdit(self):
         """
-          We override mayEdit because for elements of the configuration,
+          We override mayEdit because for MeetingConfig,
           some users have 'Modify portal content' but no field to edit...
           In the case there is no field to edit, do not display the edit action.
         """
         return self.member.has_permission(ModifyPortalContent, self.context) and \
-            self.context.Schema().editableFields(self.context.Schema())
+            (not self.context.portal_type == 'MeetingConfig' or
+             self.context.Schema().editableFields(self.context.Schema()))
 
     def renderLinkedPloneGroups(self):
         """
-          Add a link to linked Plone groups for a MeetingGroup.
+          Add a link to linked Plone groups for an organization.
         """
-        if self.tool.isManager(self.context, True):
+        if self.tool.isManager(self.context, True) and self.context.getId() != PLONEGROUP_ORG:
             return ViewPageTemplateFile("templates/actions_panel_config_linkedplonegroups.pt")(self)
         return ''
 
@@ -1185,7 +1197,8 @@ class PMTransitionBatchActionForm(TransitionBatchActionForm):
            and to non MeetingManagers on the meeting_view."""
         tool = api.portal.get_tool('portal_plonemeeting')
         return tool.isManager(self.context) or \
-            (not self.context.meta_type == 'Meeting' and bool(tool.userIsAmong(suffixes=get_all_suffixes(None))))
+            (not self.context.meta_type == 'Meeting' and
+             bool(tool.userIsAmong(suffixes=get_all_suffixes(None))))
 
 
 class PMContentHistoryView(IHContentHistoryView):

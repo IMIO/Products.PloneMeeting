@@ -2,7 +2,7 @@
 #
 # File: MeetingConfig.py
 #
-# Copyright (c) 2017 by Imio.be
+# Copyright (c) 2017 by Imio.beget
 # Generator: ArchGenXML Version 2.7
 #            http://plone.org/products/archgenxml
 #
@@ -12,6 +12,10 @@
 from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
 from collections import OrderedDict
+from collective.contact.plonegroup.utils import get_all_suffixes
+from collective.contact.plonegroup.utils import get_organization
+from collective.contact.plonegroup.utils import get_organizations
+from collective.contact.plonegroup.utils import get_plone_groups
 from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
 from collective.eeafaceted.collectionwidget.interfaces import IDashboardCollection
 from collective.eeafaceted.collectionwidget.utils import _get_criterion
@@ -21,7 +25,6 @@ from eea.facetednavigation.interfaces import ICriteria
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
 from imio.helpers.cache import cleanRamCache
 from imio.helpers.content import validate_fields
-from OFS.Image import File
 from plone import api
 from plone.app.portlets.portlets import navigation
 from plone.memoize import ram
@@ -31,7 +34,6 @@ from plone.portlets.interfaces import IPortletAssignmentMapping
 from plone.portlets.interfaces import IPortletManager
 from Products.Archetypes.atapi import BooleanField
 from Products.Archetypes.atapi import DisplayList
-from Products.Archetypes.atapi import InAndOutWidget
 from Products.Archetypes.atapi import IntegerField
 from Products.Archetypes.atapi import LinesField
 from Products.Archetypes.atapi import MultiSelectionWidget
@@ -65,7 +67,6 @@ from Products.PloneMeeting.config import DEFAULT_MEETING_COLUMNS
 from Products.PloneMeeting.config import ITEM_ICON_COLORS
 from Products.PloneMeeting.config import ITEMTEMPLATESMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETING_CONFIG
-from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 from Products.PloneMeeting.config import MEETING_STATES_ACCEPTING_ITEMS
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETINGROLES
@@ -84,8 +85,8 @@ from Products.PloneMeeting.config import TOOL_FOLDER_POD_TEMPLATES
 from Products.PloneMeeting.config import TOOL_FOLDER_RECURRING_ITEMS
 from Products.PloneMeeting.config import TOOL_FOLDER_SEARCHES
 from Products.PloneMeeting.config import WriteRiskyConfig
-from Products.PloneMeeting.indexes import DELAYAWARE_REAL_GROUP_ID_PATTERN
-from Products.PloneMeeting.indexes import REAL_GROUP_ID_PATTERN
+from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
+from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
 from Products.PloneMeeting.interfaces import IMeeting
 from Products.PloneMeeting.interfaces import IMeetingConfig
 from Products.PloneMeeting.interfaces import IMeetingItem
@@ -106,6 +107,7 @@ from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
 from Products.PloneMeeting.utils import getFieldContent
 from Products.PloneMeeting.utils import listifySignatures
+from Products.PloneMeeting.utils import org_id_to_uid
 from Products.PloneMeeting.utils import reviewersFor
 from Products.PloneMeeting.utils import updateAnnexesAccess
 from Products.PloneMeeting.validators import WorkflowInterfacesValidator
@@ -613,7 +615,7 @@ schema = Schema((
     ),
     LinesField(
         name='selectablePrivacies',
-        widget=InAndOutWidget(
+        widget=PMInAndOutWidget(
             description="SelectablePrivacies",
             description_msgid="selectable_privacies_descr",
             label='selectableprivacies',
@@ -1109,7 +1111,7 @@ schema = Schema((
     LinesField(
         name='transitionsForPresentingAnItem',
         default=defValues.transitionsForPresentingAnItem,
-        widget=InAndOutWidget(
+        widget=PMInAndOutWidget(
             description="TransitionsForPresentingAnItem",
             description_msgid="transitions_for_presenting_an_item_descr",
             label='Transitionsforpresentinganitem',
@@ -1261,7 +1263,7 @@ schema = Schema((
     ),
     LinesField(
         name='itemsListVisibleFields',
-        widget=InAndOutWidget(
+        widget=PMInAndOutWidget(
             description="ItemsListVisibleFields",
             description_msgid="items_list_visible_fields_descr",
             label='Itemslistvisiblefields',
@@ -1291,7 +1293,7 @@ schema = Schema((
     ),
     LinesField(
         name='toDoListSearches',
-        widget=InAndOutWidget(
+        widget=PMInAndOutWidget(
             description="ToDoListSearches",
             description_msgid="to_do_list_searches",
             label='Todolistsearches',
@@ -1730,9 +1732,9 @@ schema = Schema((
             columns={'row_id':
                         Column("Custom adviser row id",
                                visible=False),
-                     'group':
-                        SelectColumn("Custom adviser group",
-                                     vocabulary="listActiveMeetingGroupsForCustomAdvisers"),
+                     'org':
+                        SelectColumn("Custom adviser organization",
+                                     vocabulary="listActiveOrgsForCustomAdvisers"),
                      'gives_auto_advice_on':
                         Column("Custom adviser gives automatic advice on",
                                col_description="gives_auto_advice_on_col_description"),
@@ -1772,7 +1774,7 @@ schema = Schema((
         default=defValues.customAdvisers,
         allow_oddeven=True,
         write_permission="PloneMeeting: Write risky config",
-        columns=('row_id', 'group', 'gives_auto_advice_on', 'gives_auto_advice_on_help_message',
+        columns=('row_id', 'org', 'gives_auto_advice_on', 'gives_auto_advice_on_help_message',
                  'for_item_created_from', 'for_item_created_until', 'delay', 'delay_left_alert',
                  'delay_label', 'available_on', 'is_linked_to_previous_row'),
         allow_empty_rows=False,
@@ -1790,7 +1792,7 @@ schema = Schema((
         ),
         schemata="advices",
         multiValued=1,
-        vocabulary='listActiveMeetingGroupsForPowerAdvisers',
+        vocabulary='listActiveOrgsForPowerAdvisers',
         default=defValues.powerAdvisersGroups,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
@@ -2216,7 +2218,7 @@ schema = Schema((
     ),
     LinesField(
         name='usedPollTypes',
-        widget=InAndOutWidget(
+        widget=PMInAndOutWidget(
             description="UsedPollTypes",
             description_msgid="used_poll_types_descr",
             label='Usedpolltypes',
@@ -2397,7 +2399,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: tool.getGroupsForUser()",
+                    'tal_condition': "python: tool.get_orgs_for_user()",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Living items, items in the current flow, by default every states but decidedStates
@@ -2416,7 +2418,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: tool.getGroupsForUser()",
+                    'tal_condition': "python: tool.get_orgs_for_user()",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items I take over
@@ -2433,7 +2435,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_reversed': True,
                     'showNumberOfItems': False,
                     'tal_condition': "python: 'takenOverBy' in cfg.getUsedItemAttributes() "
-                                     "and (tool.getGroupsForUser(omittedSuffixes=['observers', ]) or "
+                                     "and (tool.get_orgs_for_user(omittedSuffixes=['observers', ]) or "
                                      "tool.isManager(here))",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
@@ -3010,13 +3012,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def listSelectableAdvisers(self):
         '''List advisers that will be selectable in the MeetingItem.optionalAdvisers field.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
 
         res = []
         # display every groups and mark empty advisers group
-        activeGroups = tool.getMeetingGroups(onlyActive=True)
-        nonEmptyMeetingGroups = tool.getMeetingGroups(notEmptySuffix='advisers',
-                                                      onlyActive=False)
+        activeOrgs = get_organizations(only_selected=True)
+        nonEmptyOrgs = get_organizations(only_selected=False, not_empty_suffix='advisers')
         advisers_msg = translate('advisers',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
@@ -3024,12 +3024,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                                  mapping={'suffix': advisers_msg},
                                                  domain='PloneMeeting',
                                                  context=self.REQUEST)
-        for mGroup in activeGroups:
+        for org in activeOrgs:
             # display if a group is disabled or empty
-            title = safe_unicode(mGroup.getName()) + u' (%s)' % mGroup.getId()
-            if mGroup not in nonEmptyMeetingGroups:
+            title = safe_unicode(org.get_full_title(first_index=1)) + u' (%s)' % org.UID()
+            if org not in nonEmptyOrgs:
                 title = title + ' (%s)' % non_empty_advisers_group_msg
-            res.append((mGroup.getId(), title))
+            res.append((org.UID(), title))
         return DisplayList(res).sortedByValue()
 
     security.declarePrivate('validate_shortName')
@@ -3135,7 +3135,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                              domain='PloneMeeting',
                              context=self.REQUEST)
 
-        tool = api.portal.get_tool('portal_plonemeeting')
         previousRow = None
         for customAdviser in value:
             # 'is_linked_to_previous_row' must be '0' or '1'
@@ -3148,31 +3147,31 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # pass 'template_row_marker'
             if 'orderindex_' in customAdviser and customAdviser['orderindex_'] == 'template_row_marker':
                 continue
-            group = getattr(tool, customAdviser['group'])
+            org = get_organization(customAdviser['org'])
             # a value is required either for the 'delay' or the 'gives_auto_advice_on' column
             if not customAdviser['delay'] and not customAdviser['gives_auto_advice_on']:
                 return translate('custom_adviser_not_enough_columns_filled',
                                  domain='PloneMeeting',
-                                 mapping={'groupName': unicode(group.Title(), 'utf-8'), },
+                                 mapping={'groupName': org.get_full_title(), },
                                  context=self.REQUEST)
 
             # 'is_linked_to_previous_row' is only relevant for delay-aware advices
             if customAdviser['is_linked_to_previous_row'] == '1' and not customAdviser['delay']:
                 return translate('custom_adviser_is_linked_to_previous_row_with_non_delay_aware_adviser',
                                  domain='PloneMeeting',
-                                 mapping={'groupName': unicode(group.Title(), 'utf-8'), },
+                                 mapping={'groupName': org.get_full_title(), },
                                  context=self.REQUEST)
             # 'is_linked_to_previous_row' is only relevant if previous row is also delay-aware
             if customAdviser['is_linked_to_previous_row'] == '1' and not previousRow['delay']:
                 return translate('custom_adviser_is_linked_to_previous_row_with_non_delay_aware_adviser_previous_row',
                                  domain='PloneMeeting',
-                                 mapping={'groupName': unicode(group.Title(), 'utf-8'), },
+                                 mapping={'groupName': org.get_full_title(), },
                                  context=self.REQUEST)
             # 'is_linked_to_previous_row' is only relevant if previous row is of same group
-            if customAdviser['is_linked_to_previous_row'] == '1' and not previousRow['group'] == customAdviser['group']:
+            if customAdviser['is_linked_to_previous_row'] == '1' and not previousRow['org'] == customAdviser['org']:
                 return translate('custom_adviser_can_not_is_linked_to_previous_row_with_other_group',
                                  domain='PloneMeeting',
-                                 mapping={'groupName': unicode(group.Title(), 'utf-8'), },
+                                 mapping={'groupName': org.get_full_title(), },
                                  context=self.REQUEST)
 
             # 'available_on' is only relevant on an optional advice
@@ -3183,7 +3182,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if customAdviser['available_on'] and customAdviser['gives_auto_advice_on']:
                 return translate('custom_adviser_can_not_available_on_and_gives_auto_advice_on',
                                  domain='PloneMeeting',
-                                 mapping={'groupName': unicode(group.Title(), 'utf-8'), },
+                                 mapping={'groupName': org.get_full_title(), },
                                  context=self.REQUEST)
 
             # validate the date in the 'for_item_created_from' and
@@ -3213,31 +3212,30 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             except:
                 return translate('custom_adviser_wrong_date_format',
                                  domain='PloneMeeting',
-                                 mapping={'groupName': unicode(group.Title(), 'utf-8'), },
+                                 mapping={'groupName': org.get_full_title(), },
                                  context=self.REQUEST)
 
             # validate the delays in the 'delay' and 'delay_left_alert' columns
             delay = customAdviser['delay']
             delay_left_alert = customAdviser['delay_left_alert']
             if (delay and not delay.isdigit()) or (delay_left_alert and not delay_left_alert.isdigit()):
-                tool = api.portal.get_tool('portal_plonemeeting')
-                group = getattr(tool, customAdviser['group'])
+                org = get_organization(customAdviser['org'])
                 return translate('custom_adviser_wrong_delay_format',
                                  domain='PloneMeeting',
-                                 mapping={'groupName': unicode(group.Title(), 'utf-8'), },
+                                 mapping={'groupName': org.get_full_title(), },
                                  context=self.REQUEST)
             # a delay_left_alert is only coherent if a delay is defined
             if delay_left_alert and not delay:
                 return translate('custom_adviser_no_delay_left_if_no_delay',
                                  domain='PloneMeeting',
-                                 mapping={'groupName': unicode(group.Title(), 'utf-8'), },
+                                 mapping={'groupName': org.get_full_title(), },
                                  context=self.REQUEST)
             # if a delay_left_alert is defined, it must be <= to the defined delay...
             if delay_left_alert and delay:
                 if not int(delay_left_alert) <= int(delay):
                     return translate('custom_adviser_delay_left_must_be_inferior_to_delay',
                                      domain='PloneMeeting',
-                                     mapping={'groupName': unicode(group.Title(), 'utf-8'), },
+                                     mapping={'groupName': org.get_full_title(), },
                                      context=self.REQUEST)
             previousRow = customAdviser
 
@@ -3248,9 +3246,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # we are setting another field, it is not permitted if
             # the rule is in use, check every items if the rule is used
             catalog = api.portal.get_tool('portal_catalog')
-            brains = catalog(Type=self.getItemTypeName(),
-                             indexAdvisers=[DELAYAWARE_REAL_GROUP_ID_PATTERN.format(row_id),
-                                            REAL_GROUP_ID_PATTERN.format(row_id)])
+            brains = catalog(portal_type=self.getItemTypeName(),
+                             indexAdvisers=[DELAYAWARE_ROW_ID_PATTERN.format(row_id),
+                                            REAL_ORG_UID_PATTERN.format(row_id)])
             if brains:
                 item = brains[0].getObject()
                 return item.absolute_url()
@@ -3283,7 +3281,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                     'custom_adviser_can_not_change_row_order_of_used_row_linked_to_previous',
                                     domain='PloneMeeting',
                                     mapping={'item_url': an_item_url,
-                                             'adviser_group': group.getName(), },
+                                             'adviser_group': org.get_full_title(), },
                                     context=self.REQUEST)
                         previousCustomAdviserRowId = customAdviser['row_id']
 
@@ -3295,12 +3293,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         for row_id in removed_row_ids:
             an_item_url = _checkIfConfigIsUsed(row_id)
             if an_item_url:
-                tool = api.portal.get_tool('portal_plonemeeting')
-                group = getattr(tool, self._dataForCustomAdviserRowId(row_id)['group']).getName()
+                org = get_organization(self._dataForCustomAdviserRowId(row_id)['org'])
                 return translate('custom_adviser_can_not_remove_used_row',
                                  domain='PloneMeeting',
                                  mapping={'item_url': an_item_url,
-                                          'adviser_group': group, },
+                                          'adviser_group': org.get_full_title(), },
                                  context=self.REQUEST)
 
         # check that if a row changed, it is not already in use
@@ -3335,14 +3332,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                 # _checkIfConfigIsUsed will return an item absolute_url using this configuration
                                 an_item_url = _checkIfConfigIsUsed(row_id)
                                 if an_item_url:
-                                    tool = api.portal.get_tool('portal_plonemeeting')
-                                    groupName = unicode(getattr(tool, customAdviser['group']).getName(), 'utf-8')
+                                    org = get_organization(customAdviser['org'])
                                     columnName = self.Schema()['customAdvisers'].widget.columns[k].label
                                     return translate(
                                         'custom_adviser_can_not_edit_used_row',
                                         domain='PloneMeeting',
                                         mapping={'item_url': an_item_url,
-                                                 'adviser_group': groupName,
+                                                 'adviser_group': org.get_full_title(),
                                                  'column_name': translate(columnName,
                                                                           domain='datagridfield',
                                                                           context=self.REQUEST),
@@ -3357,16 +3353,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                     for linkedRow in self._findLinkedRowsFor(customAdviser['row_id'])[1]:
                                         an_item_url = _checkIfConfigIsUsed(linkedRow['row_id'])
                                         if an_item_url:
-                                            tool = api.portal.get_tool('portal_plonemeeting')
-                                            group = getattr(tool, customAdviser['group'])
-                                            groupName = safe_unicode(group.getName())
+                                            org = get_organization(customAdviser['org'])
                                             columnName = self.Schema()['customAdvisers'].widget.columns[k].label
                                             return translate(
                                                 'custom_adviser_can_not_change_is_linked_'
                                                 'to_previous_row_isolating_used_rows',
                                                 domain='PloneMeeting',
                                                 mapping={'item_url': an_item_url,
-                                                         'adviser_group': groupName,
+                                                         'adviser_group': org.get_full_title(),
                                                          'column_name': translate(columnName,
                                                                                   domain='datagridfield',
                                                                                   context=self.REQUEST),
@@ -3667,8 +3661,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                              context=self.REQUEST,
                              default='Values defined in the \'itemAdviceEditStates\' field must contains at least '
                                      'every values selected in the \'itemAdvicesStates\' field!')
-        # added a pass to avoid generation problems with AGX...
-        pass
 
     security.declarePrivate('validate_insertingMethodsOnAddItem')
 
@@ -4078,48 +4070,46 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             res.append((t.id, name))
         return res
 
-    security.declarePrivate('listActiveMeetingGroupsForPowerAdvisers')
+    security.declarePrivate('listActiveOrgsForPowerAdvisers')
 
-    def listActiveMeetingGroupsForPowerAdvisers(self):
+    def listActiveOrgsForPowerAdvisers(self):
         """
           Vocabulary for the powerAdvisersGroups field.
-          It returns every active MeetingGroups.
+          It returns every active organizations.
         """
         res = []
-        tool = api.portal.get_tool('portal_plonemeeting')
-        for mGroup in tool.getMeetingGroups():
-            res.append((mGroup.getId(), mGroup.getName()))
-        # make sure that if a configuration was defined for a group
+        for org in get_organizations():
+            res.append((org.UID(), org.get_full_title(first_index=1)))
+        # make sure that if a configuration was defined for an organization
         # that is now inactive, it is still displayed
         storedPowerAdvisersGroups = self.getPowerAdvisersGroups()
         if storedPowerAdvisersGroups:
-            groupsInVocab = [group[0] for group in res]
+            orgsInVocab = [org[0] for org in res]
             for storedPowerAdvisersGroup in storedPowerAdvisersGroups:
-                if storedPowerAdvisersGroup not in groupsInVocab:
-                    mGroup = getattr(tool, storedPowerAdvisersGroup)
-                    res.append((mGroup.getId(), mGroup.getName()))
+                if storedPowerAdvisersGroup not in orgsInVocab:
+                    org = get_organization(storedPowerAdvisersGroup)
+                    res.append((org.UID(), org.get_full_title(first_index=1)))
         return DisplayList(res).sortedByValue()
 
-    security.declarePrivate('listActiveMeetingGroupsForCustomAdvisers')
+    security.declarePrivate('listActiveOrgsForCustomAdvisers')
 
-    def listActiveMeetingGroupsForCustomAdvisers(self):
+    def listActiveOrgsForCustomAdvisers(self):
         """
           Vocabulary for the customAdvisers.group DatagridField attribute.
-          It returns every active MeetingGroups.
+          It returns every active organizations.
         """
         res = []
-        tool = api.portal.get_tool('portal_plonemeeting')
-        for mGroup in tool.getMeetingGroups():
-            res.append((mGroup.getId(), mGroup.getName()))
-        # make sure that if a configuration was defined for a group
+        for org in get_organizations():
+            res.append((org.UID(), org.get_full_title(first_index=1)))
+        # make sure that if a configuration was defined for an organization
         # that is now inactive, it is still displayed
-        storedCustomAdviserGroups = [customAdviser['group'] for customAdviser in self.getCustomAdvisers()]
+        storedCustomAdviserGroups = [customAdviser['org'] for customAdviser in self.getCustomAdvisers()]
         if storedCustomAdviserGroups:
-            groupsInVocab = [group[0] for group in res]
+            orgsInVocab = [org[0] for org in res]
             for storedCustomAdviserGroup in storedCustomAdviserGroups:
-                if storedCustomAdviserGroup not in groupsInVocab:
-                    mGroup = getattr(tool, storedCustomAdviserGroup)
-                    res.append((mGroup.getId(), mGroup.getName()))
+                if storedCustomAdviserGroup not in orgsInVocab:
+                    org = get_organization(storedCustomAdviserGroup)
+                    res.append((org.UID(), org.get_full_title(first_index=1)))
         return DisplayList(res).sortedByValue()
 
     def listItemFieldsToKeepConfigSortingFor(self):
@@ -4184,9 +4174,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 confidential_profiles.append('{0}{1}'.format(CONFIGGROUPPREFIX, suffix))
             else:
                 confidential_profiles.append('{0}{1}'.format(READERPREFIX, suffix))
-        for suffix in MEETING_GROUP_SUFFIXES:
+        for suffix in get_all_suffixes():
             # bypass suffixes that do not give a role, like it is the case for groupSuffix 'advisers'
-            if not MEETINGROLES[suffix]:
+            # ignore also extra suffixes that are not giving an extra role
+            if not MEETINGROLES.get(suffix):
                 continue
             confidential_profiles.append('{0}{1}'.format(PROPOSINGGROUPPREFIX, suffix))
 
@@ -4227,9 +4218,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                                              suffix))
             else:
                 confidential_profiles.append('{0}{1}'.format(READERPREFIX, suffix))
-        for suffix in MEETING_GROUP_SUFFIXES:
+        for suffix in get_all_suffixes():
             # bypass suffixes that do not give a role, like it is the case for groupSuffix 'advisers'
-            if not MEETINGROLES[suffix]:
+            if not MEETINGROLES.get(suffix):
                 continue
             confidential_profiles.append('{0}{1}'.format(PROPOSINGGROUPPREFIX, suffix))
 
@@ -4260,9 +4251,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''
         confidential_profiles = ['{0}{1}'.format(CONFIGGROUPPREFIX, 'powerobservers'),
                                  '{0}{1}'.format(CONFIGGROUPPREFIX, 'restrictedpowerobservers')]
-        for suffix in MEETING_GROUP_SUFFIXES:
+        for suffix in get_all_suffixes():
             # bypass suffixes that do not give a role, like it is the case for groupSuffix 'advisers'
-            if not MEETINGROLES[suffix]:
+            if not MEETINGROLES.get(suffix):
                 continue
             confidential_profiles.append('{0}{1}'.format(SUFFIXPROFILEPREFIX, suffix))
 
@@ -4403,7 +4394,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Registers, into portal_types, specific item and meeting types
            corresponding to this meeting config.'''
         i = -1
-        registeredFactoryTypes = self.portal_factory.getFactoryTypes().keys()
+        portal_factory = api.portal.get_tool('portal_factory')
+        registeredFactoryTypes = portal_factory.getFactoryTypes().keys()
         factoryTypesToRegister = []
         site_properties = api.portal.get_tool('portal_properties').site_properties
         portal_types = api.portal.get_tool('portal_types')
@@ -4440,7 +4432,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # Copy actions from the base portal type
         self._updatePortalTypes()
         # Update the factory tool with the list of types to register
-        portal_factory = api.portal.get_tool('portal_factory')
         portal_factory.manage_setPortalFactoryTypes(
             listOfTypeIds=factoryTypesToRegister + registeredFactoryTypes)
         # Perform workflow adaptations if required
@@ -4867,7 +4858,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def userIsAReviewer(self):
         '''Is current user a reviewer?  So is current user among groups of reviewers?'''
         tool = api.portal.get_tool('portal_plonemeeting')
-        return bool(tool.getGroupsForUser(suffixes=reviewersFor(self.getItemWorkflow()).keys()))
+        return bool(tool.get_orgs_for_user(suffixes=reviewersFor(self.getItemWorkflow()).keys()))
 
     def _highestReviewerLevel(self, groupIds):
         '''Return highest reviewer level found in given p_groupIds.'''
@@ -5260,8 +5251,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if classifiers:
                 catFolder = self.classifiers
             elif self.getUseGroupsAsCategories():
-                tool = api.portal.get_tool('portal_plonemeeting')
-                data = tool.getMeetingGroups()
+                data = get_organizations()
                 if caching:
                     cache[key] = data
                 return data
@@ -5335,12 +5325,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def listSelectableCopyGroups(self):
         '''Returns a list of groups that can be selected on an item as copy for the item.'''
         res = []
-        tool = api.portal.get_tool('portal_plonemeeting')
-        meetingGroups = tool.getMeetingGroups()
-        for mg in meetingGroups:
-            meetingPloneGroups = mg.getPloneGroups()
-            for ploneGroup in meetingPloneGroups:
-                res.append((ploneGroup.id, ploneGroup.getProperty('title')))
+        orgs = get_organizations()
+        for org in orgs:
+            plone_groups = get_plone_groups(org.UID())
+            for plone_group in plone_groups:
+                res.append((plone_group.id, plone_group.getProperty('title')))
         return DisplayList(tuple(res))
 
     security.declarePublic('getSelf')
@@ -5384,6 +5373,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         data = descr.getData()
         folder.invokeFactory('MeetingCategory', **data)
         cat = getattr(folder, descr.id)
+        # adapt org related values as we have org id on descriptor and we need to set org UID
+        if cat.usingGroups:
+            cat.setUsingGroups([org_id_to_uid(usingGroup) for usingGroup in cat.usingGroups])
         if not descr.active:
             self.portal_workflow.doActionFor(cat, 'deactivate')
         # call processForm passing dummy values so existing values are not touched
@@ -5406,6 +5398,19 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             self.getItemTypeName(configType='MeetingItemTemplate')
         folder.invokeFactory(itemType, **data)
         item = getattr(folder, descr.id)
+        # adapt org related values as we have org id on descriptor and we need to set org UID
+        if item.proposingGroup:
+            item.setProposingGroup(org_id_to_uid(item.proposingGroup))
+        if item.groupInCharge:
+            item.setGroupInCharge(org_id_to_uid(item.groupInCharge))
+        if item.associatedGroups:
+            item.setAssociatedGroups(
+                [org_id_to_uid(associated_group)
+                 for associated_group in item.associatedGroups])
+        if item.templateUsingGroups:
+            item.setTemplateUsingGroups(
+                [org_id_to_uid(template_using_group)
+                 for template_using_group in item.templateUsingGroups])
         # disable _at_rename_after_creation for itemTemplates and recurringItems
         item._at_rename_after_creation = False
         # call processForm passing dummy values so existing values are not touched
@@ -5532,79 +5537,37 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         self._validate_dx_content(podTemplate)
         return podTemplate
 
-    security.declarePrivate('addMeetingUser')
-
-    def addMeetingUser(self, mud, source):
-        '''Adds a meeting user from a MeetingUserDescriptor instance p_mud.'''
-        folder = getattr(self, TOOL_FOLDER_MEETING_USERS)
-        userInfo = self.portal_membership.getMemberById(mud.id)
-        userTitle = mud.id
-        if userInfo:
-            userTitle = userInfo.getProperty('fullname')
-        if not userTitle:
-            userTitle = mud.id
-        data = mud.getData(title=userTitle)
-        newId = folder.invokeFactory('MeetingUser', **data)
-        meetingUser = getattr(folder, newId)
-        if mud.signatureImage:
-            if isinstance(source, basestring):
-                # The image must be retrieved on disk from a profile
-                imageName = mud.signatureImage
-                signaturePath = '%s/images/%s' % (source, imageName)
-                signatureImageFile = file(signaturePath, 'rb')
-            else:
-                si = mud.signatureImage
-                signatureImageFile = File('dummyId',
-                                          si.name,
-                                          si.content,
-                                          content_type=si.mimeType)
-            meetingUser.setSignatureImage(signatureImageFile)
-            if isinstance(signatureImageFile, file):
-                signatureImageFile.close()
-        meetingUser.at_post_create_script()
-        if not mud.active:
-            self.portal_workflow.doActionFor(meetingUser, 'deactivate')
-        # call processForm passing dummy values so existing values are not touched
-        meetingUser.processForm(values={'dummy': None})
-        return meetingUser
-
-    security.declarePublic('getMeetingUserFromPloneUser')
-
-    def getMeetingUserFromPloneUser(self, userId):
-        '''Returns the Meeting user that corresponds to p_userId.'''
-        return getattr(self.meetingusers.aq_base, userId, None)
-
     security.declarePublic('getAdvicesKeptOnSentToOtherMC')
 
-    def getAdvicesKeptOnSentToOtherMC(self, as_group_ids=False, item=None, **kwargs):
-        """If p_as_group_ids is True, we return group_ids from what is stored.
+    def getAdvicesKeptOnSentToOtherMC(self, as_org_uids=False, item=None, **kwargs):
+        """If p_as_org_uids is True, we return org_uids from what is stored.
            We store values as 'adviser pattern', it can looks like :
-           "real_group_id__group_id" or "delay_real_group_id__row_id".
-           We double check regarding item.adviceIndex, indeed, a same group_id can
+           "real_org_uid__" or "delay_row_id__".
+           We double check regarding item.adviceIndex, indeed, a same org_uid can
            be returned by the 2 patterns.
         """
         values = self.getField('advicesKeptOnSentToOtherMC').get(self, **kwargs)
-        if not as_group_ids:
+        if not as_org_uids:
             return values
 
         res = []
-        rendered_delay_pattern = DELAYAWARE_REAL_GROUP_ID_PATTERN.format('')
-        rendered_pattern = REAL_GROUP_ID_PATTERN.format('')
+        rendered_delay_pattern = DELAYAWARE_ROW_ID_PATTERN.format('')
+        rendered_pattern = REAL_ORG_UID_PATTERN.format('')
         for value in values:
             if value.startswith(rendered_delay_pattern):
                 # it ends with a row_id
                 row_id = value.replace(rendered_delay_pattern, '')
                 infos = self._dataForCustomAdviserRowId(row_id)
-                group_id = infos['group']
-                if group_id in item.adviceIndex and \
-                   item.adviceIndex[group_id]['row_id'] == row_id:
-                    res.append(infos['group'])
+                org_uid = infos['org']
+                if org_uid in item.adviceIndex and \
+                   item.adviceIndex[org_uid]['row_id'] == row_id:
+                    res.append(infos['org'])
             else:
-                # it ends with a group id
-                group_id = value.replace(rendered_pattern, '')
-                if group_id in item.adviceIndex and \
-                   not item.adviceIndex[group_id]['row_id']:
-                    res.append(group_id)
+                # it ends with an org_uid
+                org_uid = value.replace(rendered_pattern, '')
+                if org_uid in item.adviceIndex and \
+                   not item.adviceIndex[org_uid]['row_id']:
+                    res.append(org_uid)
         if values and not res:
             # return at least a 'dummy_unexisting_value' because if we return an empty list,
             # it corresponds to nothing selected in MeetingConfig.advicesKeptOnSentToOtherMC
@@ -5637,8 +5600,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if filtered:
             tool = api.portal.get_tool('portal_plonemeeting')
             member = api.user.get_current()
-            memberGroups = [group.getId() for group in
-                            tool.getGroupsForUser(member.getId(), suffixes=['creators'])]
+            memberGroups = [org.UID() for org in
+                            tool.get_orgs_for_user(user_id=member.getId(), suffixes=['creators'])]
             query['templateUsingGroups'] = ('__nothing_selected__', '__folder_in_itemtemplates__', ) + \
                 tuple(memberGroups)
         return query

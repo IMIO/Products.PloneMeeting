@@ -23,6 +23,7 @@
 from collections import OrderedDict
 from collective.contact.core.utils import get_gender_and_number
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
+from collective.contact.plonegroup.utils import get_organizations
 from collective.documentgenerator.helper.archetypes import ATDocumentGenerationHelperView
 from collective.documentgenerator.helper.dexterity import DXDocumentGenerationHelperView
 from collective.eeafaceted.batchactions import _ as _CEBA
@@ -449,21 +450,20 @@ class UpdateDelayAwareAdvicesView(BrowserView):
           Compute the catalog query to execute to get only relevant items to update,
           so items with delay-aware advices still addable/editable.
         '''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        # compute the indexAdvisers index, take every groups, including disabled ones
+        # compute the indexAdvisers index, take every orgs, including disabled ones
         # then constuct every possibles cases, by default there is 2 possible values :
-        # delay__groupId1__advice_not_given, delay__groupId1__advice_under_edit
-        # delay__groupId2__advice_not_given, delay__groupId2__advice_under_edit
+        # delay__orgUid1__advice_not_given, delay__orgUid1__advice_under_edit
+        # delay__orgUid2__advice_not_given, delay__orgUid2__advice_under_edit
         # ...
-        meetingGroups = tool.getMeetingGroups(onlyActive=False)
-        groupIds = [meetingGroup.getId() for meetingGroup in meetingGroups]
+        orgs = get_organizations(only_selected=False)
+        org_uids = [org.UID() for org in orgs]
         indexAdvisers = []
-        for groupId in groupIds:
+        for org_uid in org_uids:
             # advice giveable but not given
-            indexAdvisers.append("delay__%s_advice_not_given" % groupId)
+            indexAdvisers.append("delay__%s_advice_not_given" % org_uid)
             # now advice given and still editable
             for advice_state in ADVICE_STATES_ALIVE:
-                indexAdvisers.append("delay__%s_%s" % (groupId, advice_state))
+                indexAdvisers.append("delay__%s_%s" % (org_uid, advice_state))
         query = {}
         query['indexAdvisers'] = indexAdvisers
         return query
@@ -788,10 +788,10 @@ class BaseDGHV(object):
         if by_parent_org:
             by_suborg_res = OrderedDict()
             for contact, contact_short_title in res.items():
-                orga = contact.get_organization()
-                if orga not in by_suborg_res:
-                    by_suborg_res[orga] = OrderedDict()
-                by_suborg_res[orga][contact] = contact_short_title
+                org = contact.get_organization()
+                if org not in by_suborg_res:
+                    by_suborg_res[org] = OrderedDict()
+                by_suborg_res[org][contact] = contact_short_title
             res = by_suborg_res
         else:
             # get same format for rest of the treatment
@@ -799,34 +799,34 @@ class BaseDGHV(object):
                                OrderedDict(res.items())})
 
         # append presence to end of value
-        for orga, contact_infos in res.items():
+        for org, contact_infos in res.items():
             for contact, contact_value in contact_infos.items():
                 contact_uid = contact.UID()
                 contact_gender = contact.gender or 'M'
                 if contact_uid in attendees:
-                    res[orga][contact] = attendee_value_format.format(
-                        res[orga][contact],
+                    res[org][contact] = attendee_value_format.format(
+                        res[org][contact],
                         attendee_type_format.format(attendee_type_values['attendee'][contact_gender]))
                 elif contact_uid in excused and contact_uid not in replaced:
-                    res[orga][contact] = attendee_value_format.format(
-                        res[orga][contact],
+                    res[org][contact] = attendee_value_format.format(
+                        res[org][contact],
                         attendee_type_format.format(attendee_type_values['excused'][contact_gender]))
                 elif contact_uid in absents and contact_uid not in replaced:
-                    res[orga][contact] = attendee_value_format.format(
-                        res[orga][contact],
+                    res[org][contact] = attendee_value_format.format(
+                        res[org][contact],
                         attendee_type_format.format(attendee_type_values['absent'][contact_gender]))
                 elif contact_uid in lateAttendees:
-                    res[orga][contact] = attendee_value_format.format(
-                        res[orga][contact],
+                    res[org][contact] = attendee_value_format.format(
+                        res[org][contact],
                         attendee_type_format.format(attendee_type_values['late_attendee'][contact_gender]))
                 elif contact_uid in item_absents:
-                    res[orga][contact] = attendee_value_format.format(
-                        res[orga][contact],
+                    res[org][contact] = attendee_value_format.format(
+                        res[org][contact],
                         attendee_type_format.format(attendee_type_values['item_absent'][contact_gender]))
                 elif contact_uid in replaced:
                     if show_replaced_by:
-                        res[orga][contact] = attendee_value_format.format(
-                            res[orga][contact], replaced_by_format[contact_gender].format(
+                        res[org][contact] = attendee_value_format.format(
+                            res[org][contact], replaced_by_format[contact_gender].format(
                                 meeting.displayUserReplacement(
                                     replaced[contact_uid],
                                     include_held_position_label=include_replace_by_held_position_label,
@@ -968,17 +968,17 @@ class BaseDGHV(object):
         for attendee_type, contacts in res.items():
             by_suborg_res = OrderedDict()
             for contact in contacts:
-                # include orga to have same format when using groupByParentOrg or not
-                orga = by_parent_org and contact.get_organization() or \
+                # include organization to have same format when using groupByParentOrg or not
+                org = by_parent_org and contact.get_organization() or \
                     self.portal.contacts.get(PLONEGROUP_ORG)
-                if orga not in by_suborg_res:
-                    by_suborg_res[orga] = []
-                by_suborg_res[orga].append(contact)
+                if org not in by_suborg_res:
+                    by_suborg_res[org] = []
+                by_suborg_res[org].append(contact)
             res[attendee_type] = by_suborg_res
 
         if group_position_type:
             for attendee_type, contact_infos in res.items():
-                for orga, contacts in contact_infos.items():
+                for org, contacts in contact_infos.items():
                     by_pos_type_res = OrderedDict()
                     for contact in contacts:
                         used_contact_position_type = contact.position_type
@@ -990,7 +990,7 @@ class BaseDGHV(object):
                         elif contact.position_type not in by_pos_type_res:
                             by_pos_type_res[used_contact_position_type] = []
                         by_pos_type_res[used_contact_position_type].append(contact)
-                    res[attendee_type][orga] = by_pos_type_res
+                    res[attendee_type][org] = by_pos_type_res
 
         if render_as_html:
             res = _render_as_html(res,
@@ -1032,10 +1032,10 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
             advisers_data = []
             # only keep relevant adviser data and keep order also
             for adviser in advisers:
-                for groupId, advice in item.adviceIndex.iteritems():
-                    if adviser in _to_coded_adviser_index(item, groupId, advice):
+                for org_uid, advice in item.adviceIndex.iteritems():
+                    if adviser in _to_coded_adviser_index(item, org_uid, advice):
                         # we must keep this adviser
-                        advisers_data.append(item.getAdviceDataFor(item, groupId))
+                        advisers_data.append(item.getAdviceDataFor(item, org_uid))
             subres['advices'] = advisers_data
             res.append(subres)
         return res
@@ -1051,10 +1051,10 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
             res.append(self.getDGHV(item))
         return res
 
-    def get_all_items_dghv_with_advice(self, brains, adviserIds=[]):
+    def get_all_items_dghv_with_advice(self, brains, adviserUids=[]):
         """
         :param brains: the brains collection representing @Product.PloneMeeting.MeetingItem
-        :param adviserIds : list of adviser Ids to keep. By default it empty. Which means all advisers are kept.
+        :param adviserIds : list of adviser Uids to keep. By default it empty. Which means all advisers are kept.
         :return: an array of dictionary which contains 2 keys.
                  itemView : the documentgenerator helper view of a MeetingItem.
                  advice   : the data from a single advice linked to this MeetingItem as extracted with getAdviceDataFor.
@@ -1066,17 +1066,17 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
         res = []
         for brain in brains:
             item = brain.getObject()
-            if adviserIds:
+            if adviserUids:
                 itemInserted = False
-                for adviserId in adviserIds:
-                    advice = item.getAdviceDataFor(item, adviserId)
+                for adviserUid in adviserUids:
+                    advice = item.getAdviceDataFor(item, adviserUid)
                     if advice:
                         res.append({'itemView': self.getDGHV(item), 'advice': advice})
                         itemInserted = True
                 if not itemInserted:
                     res.append({'itemView': self.getDGHV(item), 'advice': None})
             else:
-                advices = item.getAdviceDataFor(item)
+                advices = item.getAdviceDataFor(item, ordered=True)
                 if advices:
                     for advice in advices:
                         res.append({'itemView': self.getDGHV(item), 'advice': advices[advice]})

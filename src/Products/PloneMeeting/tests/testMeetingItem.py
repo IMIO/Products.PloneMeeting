@@ -23,6 +23,8 @@
 #
 
 from AccessControl import Unauthorized
+from collective.contact.plonegroup.utils import get_plone_group_id
+from collective.contact.plonegroup.utils import get_plone_groups
 from collective.iconifiedcategory.event import IconifiedPrintChangedEvent
 from collective.iconifiedcategory.event import IconifiedSignedChangedEvent
 from collective.iconifiedcategory.utils import calculate_category_id
@@ -109,9 +111,9 @@ class testMeetingItem(PloneMeetingTestCase):
         expectedCategories = ['deployment', 'maintenance', 'development', 'events', 'research', 'projects', ]
         expectedClassifiers = ['classifier1', 'classifier2', 'classifier3', ]
         # By default, every categories are selectable
-        self.failUnless([cat.id for cat in cfg.getCategories()] == expectedCategories)
+        self.assertEqual([cat.id for cat in cfg.getCategories()], expectedCategories)
         # And the behaviour is the same for classifiers
-        self.failUnless([cat.id for cat in cfg.getCategories(classifiers=True)] == expectedClassifiers)
+        self.assertEqual([cat.id for cat in cfg.getCategories(classifiers=True)], expectedClassifiers)
         # Deactivate a category and a classifier
         self.changeUser('admin')
         self.wfTool.doActionFor(cfg.categories.deployment, 'deactivate')
@@ -122,37 +124,37 @@ class testMeetingItem(PloneMeetingTestCase):
         self.cleanMemoize()
         self.changeUser('pmCreator1')
         # A deactivated category will not be returned by getCategories no matter an item is given or not
-        self.failUnless([cat.id for cat in cfg.getCategories()] == expectedCategories)
-        self.failUnless([cat.id for cat in cfg.getCategories(classifiers=True)] == expectedClassifiers)
+        self.assertEqual([cat.id for cat in cfg.getCategories()], expectedCategories)
+        self.assertEqual([cat.id for cat in cfg.getCategories(classifiers=True)], expectedClassifiers)
         # Specify that a category is restricted to some groups pmCreator1 is not creator for
         self.changeUser('admin')
-        cfg.categories.maintenance.setUsingGroups(('vendors',))
-        cfg.classifiers.classifier1.setUsingGroups(('vendors',))
+        cfg.categories.maintenance.setUsingGroups((self.vendors_uid,))
+        cfg.classifiers.classifier1.setUsingGroups((self.vendors_uid,))
         expectedCategories.remove('maintenance')
         expectedClassifiers.remove('classifier1')
         # getCategories has caching in the REQUEST, we need to wipe this out
         self.cleanMemoize()
         self.changeUser('pmCreator1')
         # if current user is not creator for one of the usingGroups defined for the category, he can not use it
-        self.failUnless([cat.id for cat in cfg.getCategories()] == expectedCategories)
-        self.failUnless([cat.id for cat in cfg.getCategories(classifiers=True)] == expectedClassifiers)
+        self.assertEqual([cat.id for cat in cfg.getCategories()], expectedCategories)
+        self.assertEqual([cat.id for cat in cfg.getCategories(classifiers=True)], expectedClassifiers)
         # cfg.getCategories can receive a userId
         # pmCreator2 has an extra category called subproducts
         expectedCategories.append('subproducts')
         # here above we restrict the use of 'maintenance' to vendors too...
         expectedCategories.insert(0, 'maintenance')
-        self.failUnless([cat.id for cat in cfg.getCategories(userId='pmCreator2')] == expectedCategories)
+        self.assertEqual([cat.id for cat in cfg.getCategories(userId='pmCreator2')], expectedCategories)
         # change usingGroup for 'subproducts'
-        cfg.categories.subproducts.setUsingGroups(('developers',))
+        cfg.categories.subproducts.setUsingGroups((self.developers_uid,))
         expectedCategories.remove('subproducts')
         # getCategories has caching in the REQUEST, we need to wipe this out
         self.cleanMemoize()
-        self.failUnless([cat.id for cat in cfg.getCategories(userId='pmCreator2')] == expectedCategories)
+        self.assertEqual([cat.id for cat in cfg.getCategories(userId='pmCreator2')], expectedCategories)
 
         # if useGroupsAsCategories is on, getCategories will return proposingGroups
         self.cleanMemoize()
         cfg.setUseGroupsAsCategories(True)
-        self.failUnless([gr.getId() for gr in cfg.getCategories()] == ['developers', 'vendors'])
+        self.assertEqual([cat.UID() for cat in cfg.getCategories()], [self.developers_uid, self.vendors_uid])
 
     def test_pm_ListProposingGroups(self):
         '''Check MeetingItem.proposingGroup vocabulary.'''
@@ -164,41 +166,44 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('admin')
         # pmReviser1 is member of developer_reviewers and developers_observers
         # add him to a creator group different from his reviwer group
-        vcGroup = self.portal.portal_groups.getGroupById('vendors_creators')
+        vendors_creators = get_plone_group_id(self.vendors_uid, 'creators')
+        vcGroup = self.portal.portal_groups.getGroupById(vendors_creators)
         vcGroup.addMember('pmReviewer1')
         # create his personnal zone because he is a creator now
         _createHomeFolder(self.portal, 'pmReviewer1')
         self.changeUser('pmReviewer1')
         item = self.create('MeetingItem')
-        self.assertTrue(item.listProposingGroups().keys() == ['vendors', ])
+        self.assertTrue(item.listProposingGroups().keys() == [self.vendors_uid, ])
         # a 'Manager' will be able to select any proposing group
         # no matter he is a creator or not
         self.changeUser('admin')
-        self.assertTrue(item.listProposingGroups().keys() == ['developers', 'vendors', ])
+        self.assertTrue(item.listProposingGroups().keys() == [self.developers_uid, self.vendors_uid, ])
         # if 'developers' was selected on the item, it will be available to 'pmReviewer1'
-        item.setProposingGroup('developers')
+        item.setProposingGroup(self.developers_uid)
         self.changeUser('pmReviewer1')
-        self.assertTrue(item.listProposingGroups().keys() == ['developers', 'vendors', ])
+        self.assertTrue(item.listProposingGroups().keys() == [self.developers_uid, self.vendors_uid, ])
 
     def test_pm_ListProposingGroupsCaching(self):
         '''If a user is added or removed from a _creators group, listProposingGroups
            behaves as expected.'''
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        self.assertEqual(item.listProposingGroups().keys(), ['developers'])
-        self._addPrincipalToGroup('pmCreator1', 'vendors_creators')
-        self.assertEqual(item.listProposingGroups().keys(), ['developers', 'vendors'])
+        self.assertEqual(item.listProposingGroups().keys(), [self.developers_uid])
+        vendors_creators = get_plone_group_id(self.vendors_uid, 'creators')
+        self._addPrincipalToGroup('pmCreator1', vendors_creators)
+        self.assertEqual(item.listProposingGroups().keys(), [self.developers_uid, self.vendors_uid])
         # add user to a disabled group
-        self._addPrincipalToGroup('pmCreator1', 'endUsers_creators')
-        self.assertEqual(item.listProposingGroups().keys(), ['developers', 'vendors'])
+        endUsers_creators = get_plone_group_id(self.endUsers_uid, 'creators')
+        self._addPrincipalToGroup('pmCreator1', endUsers_creators)
+        self.assertEqual(item.listProposingGroups().keys(), [self.developers_uid, self.vendors_uid])
         # enable disabled group
         self.changeUser('siteadmin')
-        self.do(self.tool.endUsers, 'activate')
+        self._select_organization(self.endUsers_uid)
         self.changeUser('pmCreator1')
-        self.assertEqual(item.listProposingGroups().keys(), ['developers', 'endUsers', 'vendors'])
+        self.assertEqual(item.listProposingGroups().keys(), [self.developers_uid, self.endUsers_uid, self.vendors_uid])
         # remove user from vendors
-        self._removePrincipalFromGroup('pmCreator1', 'vendors_creators')
-        self.assertEqual(item.listProposingGroups().keys(), ['developers', 'endUsers'])
+        self._removePrincipalFromGroup('pmCreator1', vendors_creators)
+        self.assertEqual(item.listProposingGroups().keys(), [self.developers_uid, self.endUsers_uid])
 
     def test_pm_ListProposingGroupsKeepConfigSorting(self):
         """If 'proposingGroup' selected in MeetingConfig.itemFieldsToKeepConfigSortingFor,
@@ -206,73 +211,86 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg = self.meetingConfig
         # activate endUsers group
         self.changeUser('siteadmin')
-        self.do(self.tool.endUsers, 'activate')
+        self._select_organization(self.endUsers_uid)
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         self.changeUser('siteadmin')
         # not in itemFieldsToKeepConfigSortingFor for now
         self.assertFalse('proposingGroup' in cfg.getItemFieldsToKeepConfigSortingFor())
-        self.assertEqual(item.listProposingGroups().keys(), ['developers', 'endUsers', 'vendors'])
+        self.assertEqual(item.listProposingGroups().keys(),
+                         [self.developers_uid, self.endUsers_uid, self.vendors_uid])
         cfg.setItemFieldsToKeepConfigSortingFor(('proposingGroup', ))
-        self.assertEqual(item.listProposingGroups().keys(), ['developers', 'vendors', 'endUsers'])
+        self.assertEqual(item.listProposingGroups().keys(),
+                         [self.developers_uid, self.vendors_uid, self.endUsers_uid])
 
     def test_pm_ListProposingGroupsWithGroupsInCharge(self):
         '''Check MeetingItem.proposingGroupWithGroupInCharge vocabulary.
            It will evolve regarding groupInCharge, old value are kept and new values
            take groupsInCharge review_state into account.'''
         self.changeUser('siteadmin')
-        group1 = self.create('MeetingGroup', id='group1', title='Group 1', acronym='G1')
-        self.create('MeetingGroup', id='group2', title='Group 2', acronym='G2')
-        self.create('MeetingGroup', id='group3', title='Group 3', acronym='G3')
-        self.tool.developers.setGroupsInCharge(('group1', ))
-        self.tool.vendors.setGroupsInCharge(('group2', ))
+        org1 = self.create('organization', id='org1', title='Org 1', acronym='O1')
+        org1_uid = org1.UID()
+        org2 = self.create('organization', id='org2', title='Org 2', acronym='O2')
+        org2_uid = org2.UID()
+        org3 = self.create('organization', id='org3', title='Org 3', acronym='O3')
+        org3_uid = org3.UID()
+        # only selected org are taken into account as groups_in_charge
+        self._select_organization(org1_uid)
+        self._select_organization(org2_uid)
+        self._select_organization(org3_uid)
+        self.developers.groups_in_charge = (org1_uid, )
+        self.vendors.groups_in_charge = (org2_uid, )
         # make pmCreator1 creator for vendors
-        self._addPrincipalToGroup('pmCreator1', 'vendors_creators')
+        self._addPrincipalToGroup('pmCreator1', get_plone_group_id(self.vendors_uid, 'creators'))
         self.changeUser('pmCreator1')
         item1 = self.create('MeetingItem')
+        developers_gic1 = '{0}__groupincharge__{1}'.format(self.developers_uid, org1_uid)
+        vendors_gic2 = '{0}__groupincharge__{1}'.format(self.vendors_uid, org2_uid)
         self.assertEqual(item1.listProposingGroupsWithGroupsInCharge().items(),
-                         (('developers__groupincharge__group1', 'Developers (Group 1)'),
-                          ('vendors__groupincharge__group2', 'Vendors (Group 2)')))
-        item1.setProposingGroupWithGroupInCharge('developers__groupincharge__group1')
+                         ((developers_gic1, 'Developers (Org 1)'),
+                          (vendors_gic2, 'Vendors (Org 2)')))
+        item1.setProposingGroupWithGroupInCharge(developers_gic1)
         # now disable group1
         self.changeUser('siteadmin')
-        self.do(group1, 'deactivate')
+        self._select_organization(org1_uid, remove=True)
         self.changeUser('pmCreator1')
         # still available for item as is use it
         self.assertEqual(item1.listProposingGroupsWithGroupsInCharge().items(),
-                         (('developers__groupincharge__group1', 'Developers (Group 1)'),
-                          ('vendors__groupincharge__group2', 'Vendors (Group 2)'),))
+                         ((developers_gic1, 'Developers (Org 1)'),
+                          (vendors_gic2, 'Vendors (Org 2)'),))
         # but not for a new item
         item2 = self.create('MeetingItem')
         self.assertEqual(item2.listProposingGroupsWithGroupsInCharge().items(),
-                         (('vendors__groupincharge__group2', 'Vendors (Group 2)'),))
+                         ((vendors_gic2, 'Vendors (Org 2)'),))
 
         # define another groupInCharge for developers
-        self.tool.developers.setGroupsInCharge(('group1', 'group3'))
+        self.developers.groups_in_charge = (org1_uid, org3_uid)
         # 3 choices are available on item1
+        developers_gic3 = '{0}__groupincharge__{1}'.format(self.developers_uid, org3_uid)
         self.assertEqual(item1.listProposingGroupsWithGroupsInCharge().items(),
-                         (('developers__groupincharge__group1', 'Developers (Group 1)'),
-                          ('developers__groupincharge__group3', 'Developers (Group 3)'),
-                          ('vendors__groupincharge__group2', 'Vendors (Group 2)'),))
+                         ((developers_gic1, 'Developers (Org 1)'),
+                          (developers_gic3, 'Developers (Org 3)'),
+                          (vendors_gic2, 'Vendors (Org 2)'),))
         # but only 2 for item2
         self.assertEqual(item2.listProposingGroupsWithGroupsInCharge().items(),
-                         (('developers__groupincharge__group3', 'Developers (Group 3)'),
-                          ('vendors__groupincharge__group2', 'Vendors (Group 2)'),))
+                         ((developers_gic3, 'Developers (Org 3)'),
+                          (vendors_gic2, 'Vendors (Org 2)'),))
 
         # now if we remove completely group1 from groupsInCharge of developers
         # it still works, this way we may change a groupInCharge from group
         # we set it as groupInCharge of vendors
-        self.tool.developers.setGroupsInCharge(('group3'))
-        self.tool.vendors.setGroupsInCharge(('group1', 'group2', 'group3'))
+        self.developers.groups_in_charge = (org3_uid, )
+        self.vendors.groups_in_charge = (org1_uid, org2_uid, org3_uid)
+        vendors_gic3 = '{0}__groupincharge__{1}'.format(self.vendors_uid, org3_uid)
         self.assertEqual(item1.listProposingGroupsWithGroupsInCharge().items(),
-                         (('developers__groupincharge__group1', 'Developers (Group 1)'),
-                          ('developers__groupincharge__group3', 'Developers (Group 3)'),
-                          ('vendors__groupincharge__group2', 'Vendors (Group 2)'),
-                          ('vendors__groupincharge__group3', 'Vendors (Group 3)'),))
+                         ((developers_gic1, 'Developers (Org 1)'),
+                          (developers_gic3, 'Developers (Org 3)'),
+                          (vendors_gic2, 'Vendors (Org 2)'),
+                          (vendors_gic3, 'Vendors (Org 3)'),))
         self.assertEqual(item2.listProposingGroupsWithGroupsInCharge().items(),
-                         (('developers__groupincharge__group3', 'Developers (Group 3)'),
-                          ('vendors__groupincharge__group2', 'Vendors (Group 2)'),
-                          ('vendors__groupincharge__group3', 'Vendors (Group 3)'),))
+                         ((developers_gic3, 'Developers (Org 3)'),
+                          (vendors_gic2, 'Vendors (Org 2)'),
+                          (vendors_gic3, 'Vendors (Org 3)'),))
 
     def test_pm_SendItemToOtherMC(self):
         '''Test the send an item to another meetingConfig functionnality'''
@@ -332,8 +350,10 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # ok, activate it and send it!
         self.changeUser('admin')
-        cfg.setMeetingConfigsToCloneTo(({'meeting_config': otherMeetingConfigId,
-                                         'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}, ))
+        cfg.setMeetingConfigsToCloneTo(
+            ({'meeting_config': otherMeetingConfigId,
+              'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}, )
+            )
         cfg.at_post_edit_script()
         self.assertTrue(item.showClonableToOtherMeetingConfigs())
         self.changeUser('pmManager')
@@ -525,24 +545,26 @@ class testMeetingItem(PloneMeetingTestCase):
             cfg.setItemAdviceViewStates(['presented', ])
             cfg.setCustomAdvisers(
                 [{'row_id': 'unique_id_123',
-                  'group': 'developers',
+                  'org': self.developers_uid,
                   'gives_auto_advice_on': '',
                   'for_item_created_from': '2012/01/01',
                   'delay': '5'}, ])
             self.changeUser('pmManager')
-            item.setOptionalAdvisers(('vendors', 'developers__rowid__unique_id_123'))
+            item.setOptionalAdvisers(
+                (self.vendors_uid,
+                 '{0}__rowid__unique_id_123'.format(self.developers_uid)))
             item._update_after_edit()
 
             developers_advice = createContentInContainer(
                 item,
                 'meetingadvice',
-                **{'advice_group': self.portal.portal_plonemeeting.developers.getId(),
+                **{'advice_group': self.developers_uid,
                    'advice_type': u'positive',
                    'advice_comment': RichTextValue(u'My comment')})
             vendors_advice = createContentInContainer(
                 item,
                 'meetingadvice',
-                **{'advice_group': self.portal.portal_plonemeeting.vendors.getId(),
+                **{'advice_group': self.vendors_uid,
                    'advice_type': u'negative',
                    'advice_comment': RichTextValue(u'My comment')})
         self.changeUser('pmReviewer1')
@@ -719,7 +741,7 @@ class testMeetingItem(PloneMeetingTestCase):
         originalItem = data['originalItem']
         # original item had 2 advices, one delay aware and one normal
         self.assertTrue(len(originalItem.adviceIndex) == 2)
-        self.assertTrue(originalItem.adviceIndex['developers']['row_id'] == 'unique_id_123')
+        self.assertTrue(originalItem.adviceIndex[self.developers_uid]['row_id'] == 'unique_id_123')
         self.assertTrue(len(originalItem.getGivenAdvices()) == 2)
         # new item does not have any advice left
         newItem = data['newItem']
@@ -735,57 +757,57 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # original item had 2 advices, one delay aware and one normal
         self.assertTrue(len(originalItem.adviceIndex) == 2)
-        self.assertTrue(originalItem.adviceIndex['developers']['row_id'] == 'unique_id_123')
+        self.assertTrue(originalItem.adviceIndex[self.developers_uid]['row_id'] == 'unique_id_123')
         self.assertTrue(len(originalItem.getGivenAdvices()) == 2)
         # advices were kept
         newItem = data['newItem']
         self.assertTrue(len(newItem.adviceIndex) == 2)
-        self.assertTrue(newItem.adviceIndex['developers']['inherited'])
-        self.assertTrue(newItem.adviceIndex['vendors']['inherited'])
+        self.assertTrue(newItem.adviceIndex[self.developers_uid]['inherited'])
+        self.assertTrue(newItem.adviceIndex[self.vendors_uid]['inherited'])
         self.assertTrue(len(newItem.getGivenAdvices()) == 0)
         # after an additional _updateAdvices, infos are still correct
         newItem.updateLocalRoles()
         self.assertEqual(len(newItem.adviceIndex), 2)
-        self.assertTrue(newItem.adviceIndex['developers']['inherited'])
-        self.assertTrue(newItem.adviceIndex['vendors']['inherited'])
+        self.assertTrue(newItem.adviceIndex[self.developers_uid]['inherited'])
+        self.assertTrue(newItem.adviceIndex[self.vendors_uid]['inherited'])
 
     def test_pm_SendItemToOtherMCKeepAdvicesWithKeptAdvices(self):
         '''Test when sending an item to another MeetingConfig and some advices are kept.'''
         cfg = self.meetingConfig
         cfg2 = self.meetingConfig2
         cfg.setContentsKeptOnSentToOtherMC(('advices', 'annexes', ))
-        cfg.setAdvicesKeptOnSentToOtherMC(['delay_real_group_id__unique_id_123'])
+        cfg.setAdvicesKeptOnSentToOtherMC(['delay_row_id__unique_id_123'])
         data = self._setupSendItemToOtherMC(with_advices=True)
         originalItem = data['originalItem']
 
         # original item had 2 advices, one delay aware and one normal
         self.assertTrue(len(originalItem.adviceIndex) == 2)
-        self.assertTrue(originalItem.adviceIndex['developers']['row_id'] == 'unique_id_123')
+        self.assertTrue(originalItem.adviceIndex[self.developers_uid]['row_id'] == 'unique_id_123')
         self.assertTrue(len(originalItem.getGivenAdvices()) == 2)
         # advices were kept
         newItem = data['newItem']
         self.assertTrue(len(newItem.adviceIndex) == 1)
-        self.assertTrue(newItem.adviceIndex['developers']['inherited'])
+        self.assertTrue(newItem.adviceIndex[self.developers_uid]['inherited'])
         self.assertTrue(len(newItem.getGivenAdvices()) == 0)
 
         # after an additional _updateAdvices, infos are still correct
         newItem.updateLocalRoles()
         self.assertEqual(len(newItem.adviceIndex), 1)
-        self.assertTrue(newItem.adviceIndex['developers']['inherited'])
+        self.assertTrue(newItem.adviceIndex[self.developers_uid]['inherited'])
 
         # a specific advice may be asked in addition to inherited ones
         cfg2.setUseAdvices(True)
         cfg2.setItemAdviceStates([self._initial_state(newItem)])
         cfg2.setItemAdviceEditStates([self._initial_state(newItem)])
         cfg2.setItemAdviceViewStates([self._initial_state(newItem)])
-        newItem.setOptionalAdvisers(('vendors', 'developers'))
+        newItem.setOptionalAdvisers((self.vendors_uid, self.developers_uid))
         newItem.updateLocalRoles()
         # 'vendors' advice is asked and giveable but 'developers' is still the inherited one
-        self.assertTrue(newItem.adviceIndex['developers']['inherited'])
-        self.assertFalse(newItem.adviceIndex['developers']['advice_addable'])
-        self.assertFalse(newItem.adviceIndex['developers']['advice_editable'])
-        self.assertFalse(newItem.adviceIndex['vendors']['inherited'])
-        self.assertTrue(newItem.adviceIndex['vendors']['advice_addable'])
+        self.assertTrue(newItem.adviceIndex[self.developers_uid]['inherited'])
+        self.assertFalse(newItem.adviceIndex[self.developers_uid]['advice_addable'])
+        self.assertFalse(newItem.adviceIndex[self.developers_uid]['advice_editable'])
+        self.assertFalse(newItem.adviceIndex[self.vendors_uid]['inherited'])
+        self.assertTrue(newItem.adviceIndex[self.vendors_uid]['advice_addable'])
 
     def test_pm_SendItemToOtherMCKeepAdvicesWithKeptAdvicesRowIdAdviceNotMismatched(self):
         '''Test when sending an item to another MeetingConfig and some advices are kept.
@@ -799,7 +821,7 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # original item had 2 advices, one delay aware and one normal
         self.assertTrue(len(originalItem.adviceIndex) == 2)
-        self.assertTrue(originalItem.adviceIndex['developers']['row_id'] == 'unique_id_123')
+        self.assertTrue(originalItem.adviceIndex[self.developers_uid]['row_id'] == 'unique_id_123')
         self.assertTrue(len(originalItem.getGivenAdvices()) == 2)
         # advices were NOT kept
         newItem = data['newItem']
@@ -1451,25 +1473,31 @@ class testMeetingItem(PloneMeetingTestCase):
            so setCurrentAsPredecessor=True and manualLinkToPredecessor=False.'''
         cfg = self.meetingConfig
         self.changeUser('admin')
-        self.create('MeetingGroup', id='group1',  title='NewGroup1', acronym='N.G.1')
-        self.create('MeetingGroup', id='group2',  title='NewGroup2', acronym='N.G.2')
-        self.create('MeetingGroup', id='poweradvisers',  title='Power advisers', acronym='PA')
-        cfg.setSelectableAdvisers(('vendors', 'group1', 'group2', 'poweradvisers'))
-        self._addPrincipalToGroup('pmAdviser1', 'poweradvisers_advisers')
+        org1 = self.create('organization', id='org1',  title='NewOrg1', acronym='N.O.1')
+        org1_uid = org1.UID()
+        org2 = self.create('organization', id='org2',  title='NewOrg2', acronym='N.O.2')
+        org2_uid = org2.UID()
+        org3 = self.create('organization', id='poweradvisers',  title='Power advisers', acronym='PA')
+        org3_uid = org3.UID()
+        self._select_organization(org1_uid)
+        self._select_organization(org2_uid)
+        self._select_organization(org3_uid)
+        cfg.setSelectableAdvisers((self.vendors_uid, org1_uid, org2_uid, org3_uid))
+        self._addPrincipalToGroup('pmAdviser1', get_plone_group_id(org3_uid, 'advisers'))
         cfg.setCustomAdvisers(
             [{'row_id': 'unique_id_123',
-              'group': 'vendors',
+              'org': self.vendors_uid,
               'gives_auto_advice_on': '',
               'for_item_created_from': '2016/08/08',
               'delay': '5',
               'delay_label': ''},
              {'row_id': 'unique_id_456',
-              'group': 'group2',
+              'org': org2_uid,
               'gives_auto_advice_on': '',
               'for_item_created_from': '2016/08/08',
               'delay': '5',
               'delay_label': ''}, ])
-        cfg.setPowerAdvisersGroups(('poweradvisers', ))
+        cfg.setPowerAdvisersGroups((org3_uid, ))
         cfg.setItemPowerObserversStates(('itemcreated', ))
         cfg.setItemAdviceStates(('itemcreated', ))
         cfg.setItemAdviceEditStates(('itemcreated', ))
@@ -1479,28 +1507,31 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setDecision('<p>Decision</p>')
-        item.setOptionalAdvisers(('vendors', 'developers__rowid__unique_id_123',
-                                  'group2__rowid__unique_id_456', 'group1'))
+        item.setOptionalAdvisers(
+            (self.vendors_uid,
+             '{0}__rowid__unique_id_123'.format(self.developers_uid),
+             '{0}__rowid__unique_id_456'.format(org2_uid),
+             org1_uid))
         item._update_after_edit()
         # give advices
         self.changeUser('pmAdviser1')
         createContentInContainer(item,
                                  'meetingadvice',
-                                 **{'advice_group': 'developers',
+                                 **{'advice_group': self.developers_uid,
                                     'advice_type': u'positive',
                                     'advice_hide_during_redaction': False,
                                     'advice_comment': RichTextValue(u'My comment')})
         self.changeUser('pmReviewer2')
         createContentInContainer(item,
                                  'meetingadvice',
-                                 **{'advice_group': 'vendors',
+                                 **{'advice_group': self.vendors_uid,
                                     'advice_type': u'positive',
                                     'advice_hide_during_redaction': False,
                                     'advice_comment': RichTextValue(u'My comment')})
         self.changeUser('pmAdviser1')
         createContentInContainer(item,
                                  'meetingadvice',
-                                 **{'advice_group': 'poweradvisers',
+                                 **{'advice_group': org3_uid,
                                     'advice_type': u'positive',
                                     'advice_hide_during_redaction': False,
                                     'advice_comment': RichTextValue(u'My comment')})
@@ -1508,13 +1539,13 @@ class testMeetingItem(PloneMeetingTestCase):
         # clone and keep advices
         self.changeUser('pmCreator1')
         clonedItem = item.clone(setCurrentAsPredecessor=True, inheritAdvices=True)
-        self.assertTrue(clonedItem.adviceIsInherited('vendors'))
-        self.assertTrue(clonedItem.adviceIsInherited('developers'))
+        self.assertTrue(clonedItem.adviceIsInherited(self.vendors_uid))
+        self.assertTrue(clonedItem.adviceIsInherited(self.developers_uid))
         # optional and automatic advices that were not given are inherited
         # as well as the power adviser advice
-        self.assertTrue(clonedItem.adviceIsInherited('group1'))
-        self.assertTrue(clonedItem.adviceIsInherited('group2'))
-        self.assertTrue(clonedItem.adviceIsInherited('poweradvisers'))
+        self.assertTrue(clonedItem.adviceIsInherited(org1_uid))
+        self.assertTrue(clonedItem.adviceIsInherited(org2_uid))
+        self.assertTrue(clonedItem.adviceIsInherited(org3_uid))
 
     def test_pm_DuplicatedItemDoesNotKeepDecisionAnnexes(self):
         """When an item is duplicated using the 'duplicate and keep link',
@@ -1574,70 +1605,81 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm_AddAutoCopyGroups(self):
         '''Test the functionnality of automatically adding some copyGroups depending on
-           the TAL expression defined on every MeetingGroup.asCopyGroupOn.'''
+           the TAL expression defined on every organization.as_copy_group_on.'''
         # Use the 'meetingConfig2' where copies are enabled
         self.setMeetingConfig(self.meetingConfig2.getId())
+        cfg = self.meetingConfig
         self.changeUser('pmManager')
         # By default, adding an item does not add any copyGroup
         i1 = self.create('MeetingItem')
         self.failIf(i1.getCopyGroups())
         # If we create an item with copyGroups, the copyGroups are there...
-        i2 = self.create('MeetingItem', copyGroups=self.meetingConfig.getSelectableCopyGroups())
-        self.failUnless(i2.getCopyGroups() == self.meetingConfig.getSelectableCopyGroups())
-        # Now, define on a MeetingGroup of the config that it will returns a particular suffixed group
+        i2 = self.create('MeetingItem', copyGroups=cfg.getSelectableCopyGroups())
+        self.failUnless(i2.getCopyGroups() == cfg.getSelectableCopyGroups())
+        # Now, define on an organization of the config that it will returns a particular suffixed group
         self.changeUser('admin')
         # If an item with proposing group 'vendors' is created, the 'reviewers' and 'advisers' of
         # the developers will be set as copyGroups.  That is what the expression says, but in reality,
         # only the 'developers_reviewers' will be set as copyGroups as the 'developers_advisers' are
         # not in the meetingConfig.selectableCopyGroups
-        self.tool.developers.setAsCopyGroupOn(
-            "python: item.getProposingGroup() == 'vendors' and ['reviewers', 'advisers', ] or []")
+        self.developers.as_copy_group_on = "python: item.getProposingGroup() == " \
+            "pm_utils.org_id_to_uid('vendors') and ['reviewers', 'advisers', ] or []"
         self.changeUser('pmManager')
         # Creating an item with the default proposingGroup ('developers') does nothing
         i3 = self.create('MeetingItem')
         self.failIf(i3.getCopyGroups())
         # Creating an item with the default proposingGroup ('developers') and
         # with some copyGroups does nothing neither
-        i4 = self.create('MeetingItem', copyGroups=('developers_reviewers',))
-        self.failUnless(i4.getCopyGroups() == ('developers_reviewers',))
-        # Now, creating an item that will make the condition on the MeetingGroup
+        developers_advisers = get_plone_group_id(self.developers_uid, 'advisers')
+        developers_reviewers = get_plone_group_id(self.developers_uid, 'reviewers')
+        vendors_reviewers = get_plone_group_id(self.vendors_uid, 'reviewers')
+        i4 = self.create('MeetingItem', copyGroups=(developers_reviewers,))
+        self.failUnless(i4.getCopyGroups() == (developers_reviewers,))
+        # Now, creating an item that will make the condition on the organization
         # True will make it add the relevant copyGroups
         # moreover, check that auto added copyGroups add correctly
         # relevant local roles for copyGroups
         wf_name = self.wfTool.getWorkflowsFor(i4)[0].getId()
         initial_state = self.wfTool[wf_name].initial_state
         self.meetingConfig.setItemCopyGroupsStates((initial_state, ))
-        i5 = self.create('MeetingItem', proposingGroup='vendors')
+        i5 = self.create('MeetingItem', proposingGroup=self.vendors_uid)
         # relevant groups are auto added
         self.failIf(i5.getCopyGroups())
-        self.assertEquals(i5.autoCopyGroups, ['auto__developers_reviewers', 'auto__developers_advisers'])
+        self.assertEquals(i5.autoCopyGroups, ['auto__{0}'.format(developers_reviewers),
+                                              'auto__{0}'.format(developers_advisers)])
         # corresponding local roles are added because copyGroups
         # can access the item when it is in its initial_state
-        self.failUnless(READER_USECASES['copy_groups'] in i5.__ac_local_roles__['developers_reviewers'])
-        self.failUnless(READER_USECASES['copy_groups'] in i5.__ac_local_roles__['developers_advisers'])
+        self.failUnless(READER_USECASES['copy_groups'] in i5.__ac_local_roles__[developers_reviewers])
+        self.failUnless(READER_USECASES['copy_groups'] in i5.__ac_local_roles__[developers_advisers])
         # addAutoCopyGroups is triggered upon each edit (at_post_edit_script)
-        self.tool.vendors.setAsCopyGroupOn(
-            "python: item.getProposingGroup() == 'vendors' and ['reviewers', ] or []")
+        self.vendors.as_copy_group_on = "python: item.getProposingGroup() == " \
+            "pm_utils.org_id_to_uid('vendors') and ['reviewers', ] or []"
         # edit the item, 'vendors_reviewers' should be in the copyGroups of the item
         i5._update_after_edit()
         self.failIf(i5.getCopyGroups())
-        self.assertEquals(i5.autoCopyGroups,
-                          ['auto__developers_reviewers', 'auto__developers_advisers', 'auto__vendors_reviewers'])
-        # when removed from the config, while updating every items, copyGroups are updated correctly
-        self.tool.vendors.setAsCopyGroupOn('')
+        self.assertEquals(
+            i5.autoCopyGroups,
+            ['auto__{0}'.format(developers_reviewers),
+             'auto__{0}'.format(developers_advisers),
+             'auto__{0}'.format(vendors_reviewers)])
+        # when removed from the config, while updating every items,
+        # copyGroups are updated correctly
+        self.vendors.as_copy_group_on = u''
         self.changeUser('siteadmin')
         self.tool.updateAllLocalRoles()
         self.assertEquals(i5.autoCopyGroups,
-                          ['auto__developers_reviewers', 'auto__developers_advisers'])
+                          ['auto__{0}'.format(developers_reviewers),
+                           'auto__{0}'.format(developers_advisers)])
         # check that local_roles are correct
-        self.failIf(READER_USECASES['copy_groups'] in i5.__ac_local_roles__['vendors_reviewers'])
-        self.failUnless(READER_USECASES['copy_groups'] in i5.__ac_local_roles__['developers_reviewers'])
-        self.failUnless(READER_USECASES['copy_groups'] in i5.__ac_local_roles__['developers_advisers'])
+        self.failIf(READER_USECASES['copy_groups'] in i5.__ac_local_roles__[vendors_reviewers])
+        self.failUnless(READER_USECASES['copy_groups'] in i5.__ac_local_roles__[developers_reviewers])
+        self.failUnless(READER_USECASES['copy_groups'] in i5.__ac_local_roles__[developers_advisers])
         # if a wrong TAL expression is used, it does not break anything upon item at_post_edit_script
-        self.tool.vendors.setAsCopyGroupOn("python: item.someUnexistingMethod()")
+        self.vendors.as_copy_group_on = u"python: item.someUnexistingMethod()"
         i5._update_after_edit()
         self.assertEquals(i5.autoCopyGroups,
-                          ['auto__developers_reviewers', 'auto__developers_advisers'])
+                          ['auto__{0}'.format(developers_reviewers),
+                           'auto__{0}'.format(developers_advisers)])
 
     def test_pm_AddAutoCopyGroupsIsCreated(self):
         '''Test the addAutoCopyGroups functionnality when using the parameter 'isCreated'
@@ -1645,35 +1687,39 @@ class testMeetingItem(PloneMeetingTestCase):
            at item creation time (at_post_create_script) and not after (at_post_edit_script),
            this will allow for example to add a copy group and being able to unselect it after.'''
         self.meetingConfig.setUseCopies(True)
-        self.tool.vendors.setAsCopyGroupOn(
-            "python: item.getProposingGroup() == 'developers' and ['reviewers', ] or []")
+        self.vendors.as_copy_group_on = "python: item.getProposingGroup() == " \
+            "pm_utils.org_id_to_uid('developers') and ['reviewers', ] or []"
         self.changeUser('pmManager')
         # create an item with group 'developers', 'vendors' will be copy group
         item = self.create('MeetingItem')
-        self.assertEquals(item.autoCopyGroups, ['auto__vendors_reviewers'])
+        auto_vendors_reviewers = 'auto__{0}'.format(
+            get_plone_group_id(self.vendors_uid, 'reviewers'))
+        self.assertEquals(item.autoCopyGroups,
+                          [auto_vendors_reviewers])
         # now unselect it and call at_post_edit_script again
         item.setCopyGroups(())
         self.failIf(item.getCopyGroups())
         item._update_after_edit()
-        self.assertEquals(item.autoCopyGroups, ['auto__vendors_reviewers'])
+        self.assertEquals(item.autoCopyGroups, [auto_vendors_reviewers])
 
         # now use the isCreated in the TAL expression so an expression
         # is only True on item creation
-        self.tool.vendors.setAsCopyGroupOn(
-            "python: (isCreated and item.getProposingGroup() == 'developers') and ['reviewers', ] or []")
+        self.vendors.as_copy_group_on = "python: (isCreated and item.getProposingGroup() == " \
+            "pm_utils.org_id_to_uid('developers')) and ['reviewers', ] or []"
         item2 = self.create('MeetingItem')
-        self.assertEquals(item2.autoCopyGroups, ['auto__vendors_reviewers'])
+        self.assertEquals(item2.autoCopyGroups, [auto_vendors_reviewers])
         # now unselect it and call at_post_edit_script again
         item2.setCopyGroups(())
         self.failIf(item2.getCopyGroups())
-        self.assertEquals(item2.autoCopyGroups, ['auto__vendors_reviewers'])
+        self.assertEquals(item2.autoCopyGroups, [auto_vendors_reviewers])
         item2._update_after_edit()
         # this time it is now added again as the expression is only True at item creation time
         self.failIf(item2.getCopyGroups())
         self.failIf(item2.autoCopyGroups)
 
     def test_pm_AddAutoCopyGroupsWrongExpressionDoesNotBreak(self):
-        '''If the TAL expression defined on a MeetingGroup.asCopyGroupOn is wrong, it does not break.'''
+        '''If the TAL expression defined on a organization.as_copy_group_on is wrong,
+           it does not break.'''
         # Use the 'meetingConfig2' where copies are enabled
         self.setMeetingConfig(self.meetingConfig2.getId())
         self.changeUser('pmManager')
@@ -1685,95 +1731,105 @@ class testMeetingItem(PloneMeetingTestCase):
         self.meetingConfig.setItemCopyGroupsStates((initial_state, ))
         self.failIf(item.getCopyGroups())
         # set a correct expression so vendors is set as copy group
-        self.tool.vendors.setAsCopyGroupOn("python: item.getProposingGroup() == 'developers' and ['reviewers', ] or []")
+        self.vendors.as_copy_group_on = "python: item.getProposingGroup() == " \
+            "pm_utils.org_id_to_uid('developers') and ['reviewers', ] or []"
         item._update_after_edit()
-        self.assertEquals(item.autoCopyGroups, ['auto__vendors_reviewers'])
+        auto_vendors_reviewers = 'auto__{0}'.format(get_plone_group_id(self.vendors_uid, 'reviewers'))
+        self.assertEquals(item.autoCopyGroups, [auto_vendors_reviewers])
         # with a wrong TAL expression (syntax or content) it does not break
-        self.tool.vendors.setAsCopyGroupOn("python: item.someUnexistingMethod()")
+        self.vendors.as_copy_group_on = "python: item.someUnexistingMethod()"
         item._update_after_edit()
         # no matter the expression is wrong now, when a group is added in copy, it is left
         self.assertFalse(item.getCopyGroups(), item.autoCopyGroups)
-        self.tool.vendors.setAsCopyGroupOn("python: some syntax error")
+        self.vendors.as_copy_group_on = "python: some syntax error"
         item._update_after_edit()
         # no more there
         self.assertFalse(item.getCopyGroups(), item.autoCopyGroups)
         # if it is a right TAL expression but that does not returns usable sufixes, it does not break neither
-        self.tool.vendors.setAsCopyGroupOn("python: item.getId() and True or True")
+        self.vendors.as_copy_group_on = "python: item.getId() and True or True"
         item._update_after_edit()
         self.assertFalse(item.getCopyGroups(), item.autoCopyGroups)
-        self.tool.vendors.setAsCopyGroupOn("python: item.getId() and 'some_wrong_string' or 'some_wrong_string'")
+        self.vendors.as_copy_group_on = "python: item.getId() and 'some_wrong_string' or 'some_wrong_string'"
         item._update_after_edit()
         self.assertFalse(item.getCopyGroups(), item.autoCopyGroups)
-        self.tool.vendors.setAsCopyGroupOn("python: item.getId()")
+        self.vendors.as_copy_group_on = "python: item.getId()"
         item._update_after_edit()
         self.assertFalse(item.getCopyGroups(), item.autoCopyGroups)
-        self.tool.vendors.setAsCopyGroupOn("python: 123")
+        self.vendors.as_copy_group_on = "python: 123"
         item._update_after_edit()
         self.assertFalse(item.getCopyGroups(), item.autoCopyGroups)
 
     def test_pm_GetAllCopyGroups(self):
         '''Test the MeetingItem.getAllCopyGroups method.  It returns every copyGroups (manual and automatic)
-           and may also return real groupId intead of 'auto__' prefixed groupId.'''
+           and may also return real groupId intead of 'auto__' prefixed org_uid.'''
         # useCopies is enabled in cfg2
         self.setMeetingConfig(self.meetingConfig2.getId())
         self.changeUser('pmManager')
         # add a manual copyGroup
         item = self.create('MeetingItem')
-        item.setCopyGroups(('developers_reviewers', ))
+        developers_reviewers = get_plone_group_id(self.developers_uid, 'reviewers')
+        item.setCopyGroups((developers_reviewers, ))
         item._update_after_edit()
-        self.assertEquals(item.getAllCopyGroups(),
-                          ('developers_reviewers', ))
-        self.assertEquals(item.getAllCopyGroups(auto_real_group_ids=True),
-                          ('developers_reviewers', ))
-        self.tool.vendors.setAsCopyGroupOn("python: item.getProposingGroup() == 'developers' and ['reviewers', ] or []")
+        self.assertEquals(item.getAllCopyGroups(), (developers_reviewers, ))
+        self.assertEquals(item.getAllCopyGroups(auto_real_plone_group_ids=True),
+                          (developers_reviewers, ))
+        self.vendors.as_copy_group_on = "python: item.getProposingGroup() == " \
+            "pm_utils.org_id_to_uid('developers') and ['reviewers', ] or []"
         item._update_after_edit()
+        auto_vendors_reviewers = 'auto__{0}'.format(get_plone_group_id(self.vendors_uid, 'reviewers'))
+        vendors_reviewers = get_plone_group_id(self.vendors_uid, 'reviewers')
         self.assertEquals(item.getAllCopyGroups(),
-                          ('developers_reviewers', 'auto__vendors_reviewers'))
-        self.assertEquals(item.getAllCopyGroups(auto_real_group_ids=True),
-                          ('developers_reviewers', 'vendors_reviewers'))
+                          (developers_reviewers, auto_vendors_reviewers))
+        self.assertEquals(item.getAllCopyGroups(auto_real_plone_group_ids=True),
+                          (developers_reviewers, vendors_reviewers))
 
     def test_pm_UpdateAdvices(self):
         '''Test if local roles for adviser groups, are still correct when an item is edited
            Only 'power observers' corresponding local role local should be impacted.
            Test also that using copyGroups given to _advisers groups still work as expected
            with advisers used for advices functionnality.'''
+        cfg = self.meetingConfig
         # to ease test override, consider that we can give advices when the item is created for this test
-        self.meetingConfig.setItemAdviceStates(['itemcreated', self._stateMappingFor('proposed'), 'validated', ])
+        cfg.setItemAdviceStates(
+            ['itemcreated', self._stateMappingFor('proposed'), 'validated', ])
         # activate copyGroups when the item is 'itemcreated' so we can check
         # behaviour between copyGroups and advisers
-        self.meetingConfig.setItemCopyGroupsStates(['itemcreated', ])
+        cfg.setItemCopyGroupsStates(['itemcreated', ])
         self.changeUser('pmManager')
         i1 = self.create('MeetingItem')
         # add developers in optionalAdvisers
-        i1.setOptionalAdvisers('developers')
+        i1.setOptionalAdvisers(self.developers_uid)
         i1.updateLocalRoles()
         for principalId, localRoles in i1.get_local_roles():
             if principalId.endswith('_advisers'):
                 self.failUnless(READER_USECASES['advices'] in localRoles)
         # add copy groups and update all local_roles (copy and adviser)
-        self.meetingConfig.setSelectableCopyGroups(('developers_advisers', 'vendors_advisers'))
+        developers_advisers = get_plone_group_id(self.developers_uid, 'advisers')
+        vendors_advisers = get_plone_group_id(self.vendors_uid, 'advisers')
+        cfg.setSelectableCopyGroups(
+            (developers_advisers, vendors_advisers))
         self.meetingConfig.setUseCopies(True)
-        i1.setCopyGroups(('developers_advisers', 'vendors_advisers'))
+        i1.setCopyGroups((developers_advisers, vendors_advisers))
         i1.updateLocalRoles()
         # first make sure that we still have 'developers_advisers' in local roles
         # because it is specified by copyGroups
-        self.failUnless('developers_advisers' in i1.__ac_local_roles__)
-        self.failUnless('vendors_advisers' in i1.__ac_local_roles__)
+        self.failUnless(developers_advisers in i1.__ac_local_roles__)
+        self.failUnless(vendors_advisers in i1.__ac_local_roles__)
         # related _advisers group have the ('Reader',) local roles
-        self.failUnless(READER_USECASES['copy_groups'] in i1.__ac_local_roles__['developers_advisers'])
-        self.failUnless(READER_USECASES['copy_groups'] in i1.__ac_local_roles__['vendors_advisers'])
+        self.failUnless(READER_USECASES['copy_groups'] in i1.__ac_local_roles__[developers_advisers])
+        self.failUnless(READER_USECASES['copy_groups'] in i1.__ac_local_roles__[vendors_advisers])
         # advisers that have an advice to give have the 'Contributor' role
-        self.failUnless('Contributor' in i1.__ac_local_roles__['developers_advisers'])
+        self.failUnless('Contributor' in i1.__ac_local_roles__[developers_advisers])
         # but not others
-        self.failIf('Contributor' in i1.__ac_local_roles__['vendors_advisers'])
+        self.failIf('Contributor' in i1.__ac_local_roles__[vendors_advisers])
         # now, remove developers in optionalAdvisers
         i1.setOptionalAdvisers(())
         i1.updateLocalRoles()
         # the 'copy groups' corresponding local role is still assigned because of copyGroups...
         for principalId, localRoles in i1.get_local_roles():
-            if principalId == 'developers_advisers':
+            if principalId == developers_advisers:
                 self.failUnless((READER_USECASES['copy_groups'],) == localRoles)
-            if principalId == 'vendors_advisers':
+            if principalId == vendors_advisers:
                 self.failUnless((READER_USECASES['copy_groups'],) == localRoles)
         # if we remove copyGroups, corresponding local roles disappear
         i1.setCopyGroups(())
@@ -1788,9 +1844,13 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm_CopyGroups(self):
         '''Test that if a group is set as copyGroups, the item is Viewable.'''
-        self.meetingConfig.setSelectableCopyGroups(('developers_reviewers', 'vendors_reviewers'))
-        self.meetingConfig.setUseCopies(True)
-        self.meetingConfig.setItemCopyGroupsStates(('validated', ))
+        cfg = self.meetingConfig
+        developers_reviewers = get_plone_group_id(self.developers_uid, 'reviewers')
+        vendors_creators = get_plone_group_id(self.vendors_uid, 'creators')
+        vendors_reviewers = get_plone_group_id(self.vendors_uid, 'reviewers')
+        cfg.setSelectableCopyGroups((developers_reviewers, vendors_reviewers, ))
+        cfg.setUseCopies(True)
+        cfg.setItemCopyGroupsStates(('validated', ))
         self.changeUser('pmManager')
         i1 = self.create('MeetingItem')
         # by default 'pmCreator2' and 'pmReviewer2' can not see the item until it is validated
@@ -1807,12 +1867,13 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmReviewer2')
         self.failIf(self.hasPermission(View, i1))
         self.changeUser('pmManager')
-        i1.setCopyGroups(('vendors_reviewers',))
+        i1.setCopyGroups((vendors_reviewers,))
         i1.processForm()
         # getCopyGroups is a KeywordIndex, test different cases
-        self.assertEquals(len(self.portal.portal_catalog(getCopyGroups='vendors_reviewers')), 1)
-        self.assertEquals(len(self.portal.portal_catalog(getCopyGroups='vendors_creators')), 0)
-        self.assertEquals(len(self.portal.portal_catalog(getCopyGroups=('vendors_creators', 'vendors_reviewers',))), 1)
+        catalog = self.portal.portal_catalog
+        self.assertEquals(len(catalog(getCopyGroups=vendors_reviewers)), 1)
+        self.assertEquals(len(catalog(getCopyGroups=vendors_creators)), 0)
+        self.assertEquals(len(catalog(getCopyGroups=(vendors_creators, vendors_reviewers,))), 1)
         # Vendors reviewers can see the item now
         self.changeUser('pmCreator2')
         self.failIf(self.hasPermission(View, i1))
@@ -1836,7 +1897,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # remove copyGroups
         i1.setCopyGroups(())
         i1.processForm()
-        self.assertEquals(len(self.portal.portal_catalog(getCopyGroups='vendors_reviewers')), 0)
+        self.assertEquals(len(catalog(getCopyGroups=vendors_reviewers)), 0)
         # Vendors can not see the item anymore
         self.changeUser('pmCreator2')
         self.failIf(self.hasPermission(View, i1))
@@ -1865,8 +1926,8 @@ class testMeetingItem(PloneMeetingTestCase):
         '''Helper method for testing powerObservers groups.'''
         self.changeUser('pmManager')
         createdItem = self.create('MeetingItem')
-        createdItem.setProposingGroup('vendors')
-        createdItem.setAssociatedGroups(('developers',))
+        createdItem.setProposingGroup(self.vendors_uid)
+        createdItem.setAssociatedGroups((self.developers_uid,))
         createdItem.setPrivacy('public')
         createdItem.setCategory('research')
         meeting = self._createMeetingWithItems()
@@ -1998,7 +2059,8 @@ class testMeetingItem(PloneMeetingTestCase):
         # and check that 'pmReviewer2' can edit the budgetInfos when the item is in a relevant state (validated)
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setCopyGroups(('vendors_reviewers', ))
+        vendors_reviewers = get_plone_group_id(self.vendors_uid, 'reviewers')
+        item.setCopyGroups((vendors_reviewers, ))
         self.proposeItem(item)
         # for now, 'budgetimpacteditor' can not view/edit the field
         self.changeUser('budgetimpacteditor')
@@ -2023,27 +2085,28 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         proposingGroup = item.getProposingGroup(theObject=True)
-        self.assertFalse(proposingGroup.getGroupsInCharge())
+        self.assertFalse(proposingGroup.groups_in_charge)
         # this does not fail...
         item.updateLocalRoles()
-        self.assertFalse('vendors_observers' in item.__ac_local_roles__)
+        vendors_observers = get_plone_group_id(self.vendors_uid, 'observers')
+        self.assertFalse(vendors_observers in item.__ac_local_roles__)
 
         # define a group in charge
         self._setUpGroupInCharge(item)
-        self.assertTrue(READER_USECASES['groupincharge'] in item.__ac_local_roles__['vendors_observers'])
+        self.assertTrue(READER_USECASES['groupincharge'] in item.__ac_local_roles__[vendors_observers])
 
         # not right state in the configuration
         cfg.setItemGroupInChargeStates(self._stateMappingFor('proposed'),)
         item.updateLocalRoles()
-        self.assertFalse('vendors_observers' in item.__ac_local_roles__)
+        self.assertFalse(vendors_observers in item.__ac_local_roles__)
 
         # right, back to correct configuration
         # check that changing item's state works, back to correct configuration
         cfg.setItemGroupInChargeStates(self._stateMappingFor('itemcreated'),)
         item.updateLocalRoles()
-        self.assertTrue(READER_USECASES['groupincharge'] in item.__ac_local_roles__['vendors_observers'])
+        self.assertTrue(READER_USECASES['groupincharge'] in item.__ac_local_roles__[vendors_observers])
         self.proposeItem(item)
-        self.assertFalse('vendors_observers' in item.__ac_local_roles__)
+        self.assertFalse(vendors_observers in item.__ac_local_roles__)
 
     def test_pm_ItemIsSigned(self):
         '''Test the functionnality around MeetingItem.itemIsSigned field.
@@ -2152,18 +2215,18 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # for now both items are not accessible by 'pmReviewer2'
         self.changeUser('pmReviewer2')
-        self.failIf(self.hasPermission('View', secretItem))
-        self.failIf(self.hasPermission('View', publicItem))
-        self.failIf(self.hasPermission('View', secretHeadingItem))
-        self.failIf(self.hasPermission('View', publicHeadingItem))
+        self.failIf(self.hasPermission(View, secretItem))
+        self.failIf(self.hasPermission(View, publicItem))
+        self.failIf(self.hasPermission(View, secretHeadingItem))
+        self.failIf(self.hasPermission(View, publicHeadingItem))
         # give the 'Reader' role to 'pmReviewer2' so he can access the item
         # this is a bit like a 'itempublished' state
         secretItem.manage_addLocalRoles('pmReviewer2', ('Reader', ))
         secretItem.reindexObjectSecurity()
         secretHeadingItem.manage_addLocalRoles('pmReviewer2', ('Reader', ))
         secretHeadingItem.reindexObjectSecurity()
-        self.assertTrue(self.hasPermission('View', secretItem))
-        self.assertTrue(self.hasPermission('View', secretHeadingItem))
+        self.assertTrue(self.hasPermission(View, secretItem))
+        self.assertTrue(self.hasPermission(View, secretHeadingItem))
         # but not isPrivacyViewable
         self.failIf(secretItem.adapted().isPrivacyViewable())
         self.assertRaises(Unauthorized, secretItem.meetingitem_view)
@@ -2183,15 +2246,16 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertRaises(Unauthorized, secretHeadingAnnex.restrictedTraverse('@@display-file'))
         # set 'copyGroups' for publicItem, 'pmReviewer2' will be able to access it
         # and so it will be privacyViewable
-        publicItem.setCopyGroups('vendors_reviewers')
+        vendors_reviewers = get_plone_group_id(self.vendors_uid, 'reviewers')
+        publicItem.setCopyGroups(vendors_reviewers)
         publicItem._update_after_edit()
-        publicHeadingItem.setCopyGroups('vendors_reviewers')
+        publicHeadingItem.setCopyGroups(vendors_reviewers)
         publicHeadingItem._update_after_edit()
-        self.assertTrue(self.hasPermission('View', publicItem))
+        self.assertTrue(self.hasPermission(View, publicItem))
         self.failUnless(publicItem.adapted().isPrivacyViewable())
         self.assertTrue(publicAnnex.restrictedTraverse('@@download'))
         self.assertTrue(publicAnnex.restrictedTraverse('@@display-file'))
-        self.assertTrue(self.hasPermission('View', publicHeadingItem))
+        self.assertTrue(self.hasPermission(View, publicHeadingItem))
         self.failUnless(publicHeadingItem.adapted().isPrivacyViewable())
         self.assertTrue(publicHeadingAnnex.restrictedTraverse('@@download'))
         self.assertTrue(publicHeadingAnnex.restrictedTraverse('@@display-file'))
@@ -2467,7 +2531,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # the form is callable until the linked meeting is considered 'closed'
         item2.manage_permission(ModifyPortalContent, ['Manager', ])
         self.failIf(self.hasPermission(ModifyPortalContent, item2))
-        self.failUnless(self.hasPermission('View', item2))
+        self.failUnless(self.hasPermission(View, item2))
         item2.restrictedTraverse('@@manage_item_assembly_form').update()
         item2.restrictedTraverse('@@manage_item_signatures_form').update()
         # it works also with lateItems
@@ -2737,38 +2801,47 @@ class testMeetingItem(PloneMeetingTestCase):
           is no more in the vocabulary, it is still in it tough ;-)
         '''
         cfg = self.meetingConfig
+        developers_reviewers = get_plone_group_id(self.developers_uid, 'reviewers')
+        vendors_advisers = get_plone_group_id(self.vendors_uid, 'advisers')
+        vendors_observers = get_plone_group_id(self.vendors_uid, 'observers')
+        vendors_reviewers = get_plone_group_id(self.vendors_uid, 'reviewers')
         cfg.setUseCopies(True)
         self.changeUser('pmManager')
         # create an item to test the vocabulary
         item = self.create('MeetingItem')
-        self.assertEqual(item.listCopyGroups().keys(), ['developers_reviewers', 'vendors_reviewers'])
+        self.assertEqual(item.listCopyGroups().keys(), [developers_reviewers, vendors_reviewers])
         self.assertEqual(item.listCopyGroups().values(), ['Developers (Reviewers)', 'Vendors (Reviewers)'])
         # now select the 'developers_reviewers' as copyGroup for the item
-        item.setCopyGroups(('developers_reviewers', ))
+        item.setCopyGroups((developers_reviewers, ))
         # still the complete vocabulary
-        self.assertEqual(item.listCopyGroups().keys(), ['developers_reviewers', 'vendors_reviewers'])
+        self.assertEqual(item.listCopyGroups().keys(), [developers_reviewers, vendors_reviewers])
         self.assertEqual(item.listCopyGroups().values(), ['Developers (Reviewers)', 'Vendors (Reviewers)'])
         # remove developers_reviewers from selectableCopyGroups in the meetingConfig
-        cfg.setSelectableCopyGroups(('vendors_reviewers', ))
+        cfg.setSelectableCopyGroups((vendors_reviewers, ))
         # still in the vocabulary because selected on the item
-        self.assertEqual(item.listCopyGroups().keys(), ['developers_reviewers', 'vendors_reviewers'])
+        self.assertEqual(item.listCopyGroups().keys(), [developers_reviewers, vendors_reviewers])
         self.assertEqual(item.listCopyGroups().values(), ['Developers (Reviewers)', 'Vendors (Reviewers)'])
         # unselect 'developers_reviewers' on the item, it will not appear anymore in the vocabulary
         item.setCopyGroups(())
-        self.assertEqual(item.listCopyGroups().keys(), ['vendors_reviewers', ])
+        self.assertEqual(item.listCopyGroups().keys(), [vendors_reviewers, ])
         self.assertEqual(item.listCopyGroups().values(), ['Vendors (Reviewers)'])
 
         # test with autoCopyGroups and the include_auto=False parameter
-        self.tool.vendors.setAsCopyGroupOn(
-            "python: item.getProposingGroup() == 'developers' and ['observers', 'advisers', ] or []")
+        self.vendors.as_copy_group_on = "python: item.getProposingGroup() == " \
+            "pm_utils.org_id_to_uid('developers') and ['observers', 'advisers', ] or []"
         item._update_after_edit()
-        self.assertEqual(item.autoCopyGroups, ['auto__vendors_observers', 'auto__vendors_advisers'])
-        self.assertEqual(item.listCopyGroups().keys(), ['vendors_reviewers'])
+        self.assertEqual(item.autoCopyGroups, ['auto__{0}'.format(vendors_observers),
+                                               'auto__{0}'.format(vendors_advisers)])
+        self.assertEqual(item.listCopyGroups().keys(), [vendors_reviewers])
         self.assertEqual(item.listCopyGroups().values(), ['Vendors (Reviewers)'])
         self.assertEqual(item.listCopyGroups(include_auto=True).keys(),
-                         ['auto__vendors_advisers', 'auto__vendors_observers', 'vendors_reviewers'])
+                         ['auto__{0}'.format(vendors_advisers),
+                          'auto__{0}'.format(vendors_observers),
+                          vendors_reviewers])
         self.assertEqual(item.listCopyGroups(include_auto=True).values(),
-                         ['Vendors (Advisers) [auto]', 'Vendors (Observers) [auto]', 'Vendors (Reviewers)'])
+                         ['Vendors (Advisers) [auto]',
+                          'Vendors (Observers) [auto]',
+                          'Vendors (Reviewers)'])
 
     def test_pm_ListAssociatedGroups(self):
         '''
@@ -2779,20 +2852,20 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmManager')
         # create an item to test the vocabulary
         item = self.create('MeetingItem')
-        self.assertEquals(item.listAssociatedGroups().keys(), ['developers', 'vendors'])
+        self.assertEquals(item.listAssociatedGroups().keys(), [self.developers_uid, self.vendors_uid])
         # now select the 'developers' as associatedGroup for the item
-        item.setAssociatedGroups(('developers', ))
+        item.setAssociatedGroups((self.developers_uid, ))
         # still the complete vocabulary
-        self.assertEquals(item.listAssociatedGroups().keys(), ['developers', 'vendors'])
-        # disable developers MeetingGroup in the portal_plonemeeting
+        self.assertEquals(item.listAssociatedGroups().keys(), [self.developers_uid, self.vendors_uid])
+        # disable developers organization
         self.changeUser('admin')
-        self.do(self.tool.developers, 'deactivate')
+        self._select_organization(self.developers_uid, remove=True)
         self.changeUser('pmManager')
         # still in the vocabulary because selected on the item
-        self.assertEquals(item.listAssociatedGroups().keys(), ['developers', 'vendors'])
+        self.assertEquals(item.listAssociatedGroups().keys(), [self.developers_uid, self.vendors_uid])
         # unselect 'developers' on the item, it will not appear anymore in the vocabulary
         item.setAssociatedGroups(())
-        self.assertEquals(item.listAssociatedGroups().keys(), ['vendors', ])
+        self.assertEquals(item.listAssociatedGroups().keys(), [self.vendors_uid, ])
 
     def test_pm_ListCategoriesContainsDisabledStoredValue(self):
         '''
@@ -2875,51 +2948,59 @@ class testMeetingItem(PloneMeetingTestCase):
         # create an item to test the vocabulary
         item = self.create('MeetingItem')
         # relies on MeetingConfig.selectableAdvisers
-        self.assertEquals(cfg.getSelectableAdvisers(), ('developers', 'vendors'))
-        cfg.setSelectableAdvisers(['developers'])
-        self.assertEquals(item.listOptionalAdvisers().keys(), ['developers'])
-        cfg.setSelectableAdvisers(['developers', 'vendors'])
+        self.assertEquals(cfg.getSelectableAdvisers(), (self.developers_uid, self.vendors_uid))
+        cfg.setSelectableAdvisers([self.developers_uid])
+        self.assertEquals(item.listOptionalAdvisers().keys(), [self.developers_uid])
+        cfg.setSelectableAdvisers([self.developers_uid, self.vendors_uid])
         # now select the 'developers' as optionalAdvisers for the item
-        item.setOptionalAdvisers(('developers', ))
+        item.setOptionalAdvisers((self.developers_uid, ))
         # still the complete vocabulary
-        self.assertEquals(item.listOptionalAdvisers().keys(), ['developers', 'vendors'])
+        self.assertEquals(item.listOptionalAdvisers().keys(), [self.developers_uid, self.vendors_uid])
         # if a group is disabled, it is automatically removed from MeetingConfig.selectableAdvisers
         self.changeUser('admin')
-        self.do(self.tool.developers, 'deactivate')
-        self.assertEquals(cfg.getSelectableAdvisers(), ('vendors', ))
+        self._select_organization(self.developers_uid, remove=True)
+        self.assertEquals(cfg.getSelectableAdvisers(), (self.vendors_uid, ))
         self.changeUser('pmManager')
         # still in the vocabulary because selected on the item
-        self.assertEquals(item.listOptionalAdvisers().keys(), ['developers', 'vendors'])
+        self.assertEquals(item.listOptionalAdvisers().keys(), [self.developers_uid, self.vendors_uid])
         # unselect 'developers' on the item, it will not appear anymore in the vocabulary
         item.setOptionalAdvisers(())
-        self.assertEquals(item.listOptionalAdvisers().keys(), ['vendors', ])
+        self.assertEquals(item.listOptionalAdvisers().keys(), [self.vendors_uid, ])
 
         # when using customAdvisers with 'available_on', if value was selected
         # it is correctly displayed by the vocabulary
         customAdvisers = [{'row_id': 'unique_id_123',
-                           'group': 'developers',
+                           'org': self.developers_uid,
                            'gives_auto_advice_on': '',
                            'for_item_created_from': '2012/01/01',
                            'available_on': 'python:False',
                            'is_linked_to_previous_row': '1',
                            'delay': '5'},
                           {'row_id': 'unique_id_456',
-                           'group': 'developers',
+                           'org': self.developers_uid,
                            'gives_auto_advice_on': '',
                            'for_item_created_from': '2012/01/01',
                            'is_linked_to_previous_row': '1',
                            'delay': '10'}]
         cfg.setCustomAdvisers(customAdvisers)
-        self.assertFalse('developers__rowid__unique_id_123' in item.listOptionalAdvisers())
-        self.assertTrue('developers__rowid__unique_id_456' in item.listOptionalAdvisers())
+        self.assertFalse(
+            '{0}__rowid__unique_id_123'.format(self.developers_uid) in item.listOptionalAdvisers())
+        self.assertTrue(
+            '{0}__rowid__unique_id_456'.format(self.developers_uid) in item.listOptionalAdvisers())
         # but if selected, then it appears in the vocabulary, no matter the 'available_on' expression
-        item.setOptionalAdvisers(('developers__rowid__unique_id_123', ))
+        item.setOptionalAdvisers(('{0}__rowid__unique_id_123'.format(self.developers_uid), ))
         item._update_after_edit()
-        self.assertTrue('developers__rowid__unique_id_123' in item.listOptionalAdvisers())
-        self.assertTrue('developers__rowid__unique_id_456' in item.listOptionalAdvisers())
+        self.assertTrue(
+            '{0}__rowid__unique_id_123'.format(self.developers_uid) in item.listOptionalAdvisers())
+        self.assertTrue(
+            '{0}__rowid__unique_id_456'.format(self.developers_uid) in item.listOptionalAdvisers())
         # except if include_selected is False
-        self.assertFalse('developers__rowid__unique_id_123' in item.listOptionalAdvisers(include_selected=False))
-        self.assertTrue('developers__rowid__unique_id_456' in item.listOptionalAdvisers(include_selected=False))
+        self.assertFalse(
+            '{0}__rowid__unique_id_123'.format(self.developers_uid)
+            in item.listOptionalAdvisers(include_selected=False))
+        self.assertTrue(
+            '{0}__rowid__unique_id_456'.format(self.developers_uid)
+            in item.listOptionalAdvisers(include_selected=False))
 
     def test_pm_ListOptionalAdvisersDelayAwareAdvisers(self):
         '''
@@ -2932,21 +3013,21 @@ class testMeetingItem(PloneMeetingTestCase):
         # by default, nothing is defined as delay-aware adviser in the configuration
         cfg = self.meetingConfig
         self.failIf(cfg.getCustomAdvisers())
-        self.assertEquals(item.listOptionalAdvisers().keys(), ['developers', 'vendors'])
+        self.assertEquals(item.listOptionalAdvisers().keys(), [self.developers_uid, self.vendors_uid])
         # now define some delay-aware advisers in MeetingConfig.customAdvisers
         customAdvisers = [{'row_id': 'unique_id_123',
-                           'group': 'developers',
+                           'org': self.developers_uid,
                            'gives_auto_advice_on': '',
                            'for_item_created_from': '2012/01/01',
                            'delay': '5'},
                           {'row_id': 'unique_id_456',
-                           'group': 'developers',
+                           'org': self.developers_uid,
                            'gives_auto_advice_on': '',
                            'for_item_created_from': '2012/01/01',
                            'delay': '10'},
                           # this is not an optional advice configuration
                           {'row_id': 'unique_id_000',
-                           'group': 'developers',
+                           'org': self.developers_uid,
                            'gives_auto_advice_on': 'here/getBudgetRelated',
                            'for_item_created_from': '2012/01/01',
                            'delay': '10'}, ]
@@ -2955,20 +3036,20 @@ class testMeetingItem(PloneMeetingTestCase):
         # at the beginning of 'both' list (delay-aware and non delay-aware advisers)
         self.assertEquals(item.listOptionalAdvisers().keys(),
                           ['not_selectable_value_delay_aware_optional_advisers',
-                           'developers__rowid__unique_id_123',
-                           'developers__rowid__unique_id_456',
+                           '{0}__rowid__unique_id_123'.format(self.developers_uid),
+                           '{0}__rowid__unique_id_456'.format(self.developers_uid),
                            'not_selectable_value_non_delay_aware_optional_advisers',
-                           'developers',
-                           'vendors'])
+                           self.developers_uid,
+                           self.vendors_uid])
         # check that if a 'for_item_created_until' date is passed, it does not appear anymore
         customAdvisers[1]['for_item_created_until'] = '2013/01/01'
         cfg.setCustomAdvisers(customAdvisers)
         self.assertEquals(item.listOptionalAdvisers().keys(),
                           ['not_selectable_value_delay_aware_optional_advisers',
-                           'developers__rowid__unique_id_123',
+                           '{0}__rowid__unique_id_123'.format(self.developers_uid),
                            'not_selectable_value_non_delay_aware_optional_advisers',
-                           'developers',
-                           'vendors'])
+                           self.developers_uid,
+                           self.vendors_uid])
         # check when using 'available_on' in the custom advisers
         # available_on is taken into account by listOptionalAdvisers
         # here, first element is not available because 'available_on' is python:False
@@ -2977,20 +3058,20 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.setCustomAdvisers(customAdvisers)
         self.assertEquals(item.listOptionalAdvisers().keys(),
                           ['not_selectable_value_delay_aware_optional_advisers',
-                           'developers__rowid__unique_id_456',
+                           '{0}__rowid__unique_id_456'.format(self.developers_uid),
                            'not_selectable_value_non_delay_aware_optional_advisers',
-                           'developers',
-                           'vendors'])
+                           self.developers_uid,
+                           self.vendors_uid])
         # a wrong expression will not break the advisers
         # but the customAdviser is simply not taken into account
         customAdvisers[0]['available_on'] = 'python: here.someMissingMethod(some_parameter=False)'
         cfg.setCustomAdvisers(customAdvisers)
         self.assertEquals(item.listOptionalAdvisers().keys(),
                           ['not_selectable_value_delay_aware_optional_advisers',
-                           'developers__rowid__unique_id_456',
+                           '{0}__rowid__unique_id_456'.format(self.developers_uid),
                            'not_selectable_value_non_delay_aware_optional_advisers',
-                           'developers',
-                           'vendors'])
+                           self.developers_uid,
+                           self.vendors_uid])
 
     def test_pm_Validate_optionalAdvisersCanNotSelectSameGroupAdvisers(self):
         '''
@@ -3006,21 +3087,22 @@ class testMeetingItem(PloneMeetingTestCase):
         # create an item to test the vocabulary
         item = self.create('MeetingItem')
         # check with the 'non-delay-aware' and the 'delay-aware' advisers selected
-        optionalAdvisers = ('developers', 'developers__rowid__unique_id_123', )
+        optionalAdvisers = (self.developers_uid, '{0}__rowid__unique_id_123'.format(self.developers_uid), )
         several_select_error_msg = translate('can_not_select_several_optional_advisers_same_group',
                                              domain='PloneMeeting',
                                              context=self.portal.REQUEST)
         self.assertTrue(item.validate_optionalAdvisers(optionalAdvisers), several_select_error_msg)
         # check with 2 'delay-aware' advisers selected
-        optionalAdvisers = ('developers__rowid__unique_id_123', 'developers__rowid__unique_id_456', )
+        optionalAdvisers = ('{0}__rowid__unique_id_123'.format(self.developers_uid),
+                            '{0}__rowid__unique_id_456'.format(self.developers_uid), )
         self.assertTrue(item.validate_optionalAdvisers(optionalAdvisers), several_select_error_msg)
         # now make it pass
-        optionalAdvisers = ('developers', 'vendors', )
+        optionalAdvisers = (self.developers_uid, self.vendors_uid, )
         # validate returns nothing if validation was successful
         self.failIf(item.validate_optionalAdvisers(optionalAdvisers))
-        optionalAdvisers = ('developers__rowid__unique_id_123', 'vendors', )
+        optionalAdvisers = ('{0}__rowid__unique_id_123'.format(self.developers_uid), self.vendors_uid, )
         self.failIf(item.validate_optionalAdvisers(optionalAdvisers))
-        optionalAdvisers = ('developers__rowid__unique_id_123', )
+        optionalAdvisers = ('{0}__rowid__unique_id_123'.format(self.developers_uid), )
         self.failIf(item.validate_optionalAdvisers(optionalAdvisers))
 
     def test_pm_Validate_optionalAdvisersCanNotUnselectAlreadyGivenAdvice(self):
@@ -3035,7 +3117,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # create an item to test the vocabulary
         item = self.create('MeetingItem')
         # check with the 'non-delay-aware' and the 'delay-aware' advisers selected
-        item.setOptionalAdvisers(('developers', ))
+        item.setOptionalAdvisers((self.developers_uid, ))
         item._update_after_edit()
         can_not_unselect_msg = translate('can_not_unselect_already_given_advice',
                                          domain='PloneMeeting',
@@ -3047,7 +3129,7 @@ class testMeetingItem(PloneMeetingTestCase):
         developers_advice = createContentInContainer(
             item,
             'meetingadvice',
-            **{'advice_group': self.portal.portal_plonemeeting.developers.getId(),
+            **{'advice_group': self.developers_uid,
                'advice_type': u'positive',
                'advice_comment': RichTextValue(u'My comment')})
         # now we can not unselect the 'developers' anymore as advice was given
@@ -3058,7 +3140,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.portal.restrictedTraverse('@@delete_givenuid')(developers_advice.UID())
         self.changeUser('admin')
         customAdvisers = [{'row_id': 'unique_id_123',
-                           'group': 'developers',
+                           'org': self.developers_uid,
                            'gives_auto_advice_on': '',
                            'for_item_created_from': '2012/01/01',
                            'for_item_created_until': '',
@@ -3067,7 +3149,7 @@ class testMeetingItem(PloneMeetingTestCase):
                            'delay_label': 'Delay label', }, ]
         self.meetingConfig.setCustomAdvisers(customAdvisers)
         self.changeUser('pmManager')
-        item.setOptionalAdvisers(('developers__rowid__unique_id_123', ))
+        item.setOptionalAdvisers(('{0}__rowid__unique_id_123'.format(self.developers_uid), ))
         # for now as developers advice is not given, we can unselect it
         # validate returns nothing if validation was successful
         self.failIf(item.validate_optionalAdvisers(()))
@@ -3075,7 +3157,7 @@ class testMeetingItem(PloneMeetingTestCase):
         developers_advice = createContentInContainer(
             item,
             'meetingadvice',
-            **{'advice_group': self.portal.portal_plonemeeting.developers.getId(),
+            **{'advice_group': self.developers_uid,
                'advice_type': u'positive',
                'advice_comment': RichTextValue(u'My comment')})
         # now we can not unselect the 'developers' anymore as advice was given
@@ -3087,7 +3169,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.portal.restrictedTraverse('@@delete_givenuid')(developers_advice.UID())
         self.changeUser('admin')
         customAdvisers = [{'row_id': 'unique_id_123',
-                           'group': 'developers',
+                           'org': self.developers_uid,
                            'gives_auto_advice_on': 'item/getBudgetRelated',
                            'for_item_created_from': '2012/01/01',
                            'for_item_created_until': '',
@@ -3102,11 +3184,11 @@ class testMeetingItem(PloneMeetingTestCase):
         # now optionalAdvisers validation pass even if advice of the 'developers' group is given
         createContentInContainer(item,
                                  'meetingadvice',
-                                 **{'advice_group': self.portal.portal_plonemeeting.developers.getId(),
+                                 **{'advice_group': self.developers_uid,
                                     'advice_type': u'positive',
                                     'advice_comment': RichTextValue(u'My comment')})
         # the given advice is not considered as an optional advice
-        self.assertEquals(item.adviceIndex['developers']['optional'], False)
+        self.assertEquals(item.adviceIndex[self.developers_uid]['optional'], False)
         self.failIf(item.validate_optionalAdvisers(()))
 
     def test_pm_Validate_category(self):
@@ -3132,23 +3214,24 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm_Validate_proposingGroup(self):
         '''MeetingItem.proposingGroup is mandatory excepted for item templates.'''
+        cfg = self.meetingConfig
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         proposing_group_required_msg = translate('proposing_group_required',
                                                  domain='PloneMeeting',
                                                  context=self.portal.REQUEST)
         self.assertTrue(item.validate_proposingGroup('') == proposing_group_required_msg)
-        self.failIf(item.validate_proposingGroup('developers'))
+        self.failIf(item.validate_proposingGroup(self.developers_uid))
 
         # if item isDefinedInTool, the proposing group is not required if it is an item template
         # required for a recurring item
-        recurringItem = self.meetingConfig.getRecurringItems()[0]
+        recurringItem = cfg.getRecurringItems()[0]
         self.assertTrue(recurringItem.validate_proposingGroup('') == proposing_group_required_msg)
-        self.failIf(recurringItem.validate_proposingGroup('developers'))
+        self.failIf(recurringItem.validate_proposingGroup(self.developers_uid))
         # not required for an item template
-        itemTemplate = self.meetingConfig.getItemTemplates(as_brains=False)[0]
+        itemTemplate = cfg.getItemTemplates(as_brains=False)[0]
         self.failIf(itemTemplate.validate_proposingGroup(''))
-        self.failIf(itemTemplate.validate_proposingGroup('developers'))
+        self.failIf(itemTemplate.validate_proposingGroup(self.developers_uid))
 
     def test_pm_GetMeetingsAcceptingItems(self):
         """Test the MeetingConfig.getMeetingsAcceptingItems method."""
@@ -3496,7 +3579,7 @@ class testMeetingItem(PloneMeetingTestCase):
                            action='',
                            icon_expr='',
                            condition="python: context.getMeeting().getDate().strftime('%Y/%d/%m') == '2010/10/10'",
-                           permission=('View',),
+                           permission=(View,),
                            visible=True,
                            category='object_buttons')
         # action not available for now
@@ -3540,7 +3623,8 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         # set 'pmReviewer2' as copyGroups
-        item.setCopyGroups(('vendors_reviewers', ))
+        vendors_reviewers = get_plone_group_id(self.vendors_uid, 'reviewers')
+        item.setCopyGroups((vendors_reviewers, ))
         self.proposeItem(item)
         self.validateItem(item)
         # by default, comments are viewable
@@ -3566,6 +3650,7 @@ class testMeetingItem(PloneMeetingTestCase):
     def test_pm_GetCertifiedSignatures(self):
         '''Test the MeetingItem.getCertifiedSignatures method that gets signatures from
            the item proposing group or from the MeetingConfig periodic signatures.'''
+        cfg = self.meetingConfig
         # define signatures for the 'developers' group
         groupCertifiedSignatures = [
             {'signatureNumber': '1',
@@ -3581,7 +3666,7 @@ class testMeetingItem(PloneMeetingTestCase):
              'date_to': '',
              },
         ]
-        self.tool.developers.setCertifiedSignatures(groupCertifiedSignatures)
+        self.developers.certified_signatures = groupCertifiedSignatures
         # define signatures for the MeetingConfig
         certified = [
             {'signatureNumber': '1',
@@ -3597,20 +3682,20 @@ class testMeetingItem(PloneMeetingTestCase):
              'date_to': '',
              },
         ]
-        self.meetingConfig.setCertifiedSignatures(certified)
+        cfg.setCertifiedSignatures(certified)
         # create an item and do some WF transitions so we have history events
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         # item proposing group is "developers"
-        self.assertTrue(item.getProposingGroup() == 'developers')
+        self.assertTrue(item.getProposingGroup() == self.developers_uid)
         # getting certified signatures for item will return signatures defined on proposing group
         self.assertTrue(item.adapted().getCertifiedSignatures() ==
                         ['Group Function1', 'Group Name1', 'Group Function2', 'Group Name2'])
         # we can force to get signatures from the MeetingConfig
         self.assertTrue(item.adapted().getCertifiedSignatures(forceUseCertifiedSignaturesOnMeetingConfig=True) ==
                         [u'Function1', u'Name1', u'Function2', u'Name2'])
-        # if no signatures on the MeetingGroup, signatures of the MeetingConfig are used
-        self.tool.developers.setCertifiedSignatures([])
+        # if no signatures on the organization, signatures of the MeetingConfig are used
+        self.developers.certified_signatures = []
         self.assertTrue(item.adapted().getCertifiedSignatures() ==
                         [u'Function1', u'Name1', u'Function2', u'Name2'])
 
@@ -3645,7 +3730,7 @@ class testMeetingItem(PloneMeetingTestCase):
              'date_to': '',
              },
         ]
-        self.meetingConfig.setCertifiedSignatures(certified)
+        cfg.setCertifiedSignatures(certified)
         self.assertEquals(item.adapted().getCertifiedSignatures(),
                           [u'Function1', u'Name1',
                            u'Function2', u'Name2',
@@ -3674,7 +3759,7 @@ class testMeetingItem(PloneMeetingTestCase):
              'date_to': '',
              }
         ]
-        self.meetingConfig.setCertifiedSignatures(certified)
+        cfg.setCertifiedSignatures(certified)
         self.assertTrue(item.adapted().getCertifiedSignatures() ==
                         [u'Function1', u'Name1', u'Function2', u'Name2'])
 
@@ -3699,7 +3784,7 @@ class testMeetingItem(PloneMeetingTestCase):
              'date_to': '',
              }
         ]
-        self.meetingConfig.setCertifiedSignatures(certified)
+        cfg.setCertifiedSignatures(certified)
         self.assertTrue(item.adapted().getCertifiedSignatures() ==
                         [u'Function2', u'Name2'])
 
@@ -3746,7 +3831,7 @@ class testMeetingItem(PloneMeetingTestCase):
              'date_to': '',
              }
         ]
-        self.meetingConfig.setCertifiedSignatures(certified)
+        cfg.setCertifiedSignatures(certified)
         self.assertTrue(item.adapted().getCertifiedSignatures() ==
                         [u'Function1valid', u'Name1valid', u'Function2', u'Name2'])
 
@@ -3777,7 +3862,7 @@ class testMeetingItem(PloneMeetingTestCase):
              'date_to': '',
              },
         ]
-        self.meetingConfig.setCertifiedSignatures(certified)
+        cfg.setCertifiedSignatures(certified)
         self.assertEquals(item.adapted().getCertifiedSignatures(),
                           [u'Function1valid', u'Name1valid'])
 
@@ -3802,15 +3887,15 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfg.setCertifiedSignatures(certified)
         # set vendors in charge of developers
-        self.tool.developers.setGroupsInCharge(('vendors', ))
+        self.developers.groups_in_charge = (self.vendors_uid, )
         # create an item for developers
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         # item proposing group is "developers"
-        self.assertTrue(item.getProposingGroup() == 'developers')
+        self.assertTrue(item.getProposingGroup() == self.developers_uid)
 
         # nothing defined on groupInCharge, it takes values from MeetingConfig
-        self.assertEqual(self.tool.vendors.getCertifiedSignatures(), ())
+        self.assertEqual(self.vendors.get_certified_signatures(), [])
         self.assertEqual(
             item.getCertifiedSignatures(from_group_in_charge=True),
             ['Function1', 'Name1', 'Function2', 'Name2'])
@@ -3833,7 +3918,7 @@ class testMeetingItem(PloneMeetingTestCase):
              'date_to': '',
              },
         ]
-        self.tool.vendors.setCertifiedSignatures(certified)
+        self.vendors.certified_signatures = certified
         self.assertEqual(
             item.getCertifiedSignatures(from_group_in_charge=True),
             ['GroupInChargeFunction1', 'GroupInChargeName1',
@@ -3851,7 +3936,7 @@ class testMeetingItem(PloneMeetingTestCase):
              'date_to': '',
              },
         ]
-        self.tool.vendors.setCertifiedSignatures(certified)
+        self.vendors.certified_signatures = certified
         self.assertEqual(
             item.getCertifiedSignatures(from_group_in_charge=True),
             ['GroupInChargeFunction1', 'GroupInChargeName1',
@@ -3870,7 +3955,7 @@ class testMeetingItem(PloneMeetingTestCase):
              'date_to': '',
              },
         ]
-        self.tool.developers.setCertifiedSignatures(certified)
+        self.developers.certified_signatures = certified
         self.assertEqual(
             item.getCertifiedSignatures(from_group_in_charge=True),
             ['GroupInChargeFunction1', 'GroupInChargeName1',
@@ -3937,7 +4022,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # title is in the DEFAULT_COPIED_FIELDS
         item.setTitle('Original title')
         # optionalAdvisers is in the EXTRA_COPIED_FIELDS_SAME_MC
-        item.setOptionalAdvisers(('developers', ))
+        item.setOptionalAdvisers((self.developers_uid, ))
         # 'internalNotes' is in the NEUTRAL_FIELDS
         item.setInternalNotes('<p>Internal notes.</p>')
         # every item fields except ones considered as metadata
@@ -3985,7 +4070,8 @@ class testMeetingItem(PloneMeetingTestCase):
         # title is in DEFAULT_COPIED_FIELDS and copyGroups in EXTRA_COPIED_FIELDS_SAME_MC
         self.assertTrue('title' in DEFAULT_COPIED_FIELDS)
         self.assertTrue('copyGroups' in EXTRA_COPIED_FIELDS_SAME_MC)
-        itemTemplate.setCopyGroups(('developers_reviewers',))
+        developers_reviewers = get_plone_group_id(self.developers_uid, 'reviewers')
+        itemTemplate.setCopyGroups((developers_reviewers,))
 
         # create an item from an item template
         self.changeUser('pmCreator1')
@@ -4009,7 +4095,8 @@ class testMeetingItem(PloneMeetingTestCase):
         self.meetingConfig.recurringitems.manage_delObjects(ids=toDelete)
         recItem = recurringItems[0]
         recItem.setTitle('Rec item title')
-        recItem.setCopyGroups(('developers_reviewers',))
+        developers_reviewers = get_plone_group_id(self.developers_uid, 'reviewers')
+        recItem.setCopyGroups((developers_reviewers,))
         recItem.setMeetingTransitionInsertingMe('_init_')
         # check that 'title' and 'copyGroups' field are kept
         # title is in DEFAULT_COPIED_FIELDS and copyGroups in EXTRA_COPIED_FIELDS_SAME_MC
@@ -4037,7 +4124,8 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         item.setTitle('Item to be cloned title')
-        item.setCopyGroups(('developers_reviewers',))
+        developers_reviewers = get_plone_group_id(self.developers_uid, 'reviewers')
+        item.setCopyGroups((developers_reviewers,))
         meeting = self.create('Meeting', date='2015/01/01')
         item.setDecision('<p>My decision</p>', mimetype='text/html')
         cfg2Id = self.meetingConfig2.getId()
@@ -4087,17 +4175,18 @@ class testMeetingItem(PloneMeetingTestCase):
            currently defined in the MeetingConfig.'''
         cfg = self.meetingConfig
         cfg.setUseCopies(True)
-        cfg.setSelectableCopyGroups(('developers_reviewers', 'vendors_reviewers'))
+        developers_reviewers = get_plone_group_id(self.developers_uid, 'reviewers')
+        vendors_reviewers = get_plone_group_id(self.vendors_uid, 'reviewers')
+        cfg.setSelectableCopyGroups((developers_reviewers, vendors_reviewers))
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setCopyGroups(('developers_reviewers', 'vendors_reviewers'))
+        item.setCopyGroups((developers_reviewers, vendors_reviewers))
         item._update_after_edit()
         # change configuration, and do 'developers_reviewers' no more a selectable copyGroup
-        cfg.setSelectableCopyGroups(('vendors_reviewers', ))
+        cfg.setSelectableCopyGroups((vendors_reviewers, ))
         newItem = item.clone()
         # only relevant copyGroups were kept
-        self.assertEquals(newItem.getCopyGroups(),
-                          ('vendors_reviewers', ))
+        self.assertEquals(newItem.getCopyGroups(), (vendors_reviewers, ))
         # if we do not use copyGroups anymore, no copyGroups are kept
         cfg.setUseCopies(False)
         newItem2 = item.clone()
@@ -4107,17 +4196,17 @@ class testMeetingItem(PloneMeetingTestCase):
         '''Make sure field MeetingItem.opitonalAdvisers value correspond to what
            is currently defined in the MeetingConfig.'''
         cfg = self.meetingConfig
-        cfg.setSelectableAdvisers(('developers', 'vendors'))
+        cfg.setSelectableAdvisers((self.developers_uid, self.vendors_uid))
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setOptionalAdvisers(('developers', 'vendors'))
+        item.setOptionalAdvisers((self.developers_uid, self.vendors_uid))
         item._update_after_edit()
         # change configuration, and do 'developers' no more a selectable adviser
-        cfg.setSelectableAdvisers(('vendors', ))
+        cfg.setSelectableAdvisers((self.vendors_uid, ))
         newItem = item.clone()
         # only relevant copyGroups were kept
         self.assertEquals(newItem.getOptionalAdvisers(),
-                          ('vendors', ))
+                          (self.vendors_uid, ))
 
     def test_pm_ToDiscussFieldBehaviourWhenCloned(self):
         '''When cloning an item to the same MeetingConfig, the field 'toDiscuss' is managed manually :
@@ -4725,7 +4814,7 @@ class testMeetingItem(PloneMeetingTestCase):
     def test_pm_GroupIsNotEmpty(self):
         '''Test the groupIsNotEmpty method.'''
         pg = self.portal.portal_groups
-        dcGroup = pg.getGroupById('developers_creators')
+        dcGroup = pg.getGroupById('{0}_creators'.format(self.developers_uid))
         dcMembers = dcGroup.getMemberIds()
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -4800,7 +4889,8 @@ class testMeetingItem(PloneMeetingTestCase):
             u'{0}/@@download'.format(
                 self.portal.portal_url.getRelativeContentURL(annex)))
         # file is correctly downloadable with given download_url
-        download_view = self.portal.unrestrictedTraverse(str(item.categorized_elements.values()[0]['download_url']))
+        download_view = self.portal.unrestrictedTraverse(
+            str(item.categorized_elements.values()[0]['download_url']))
         self.assertEqual(download_view().read(), 'Testing file\n')
 
     def _notAbleToAddSubContent(self, item):
@@ -4812,7 +4902,8 @@ class testMeetingItem(PloneMeetingTestCase):
         # configure so different access are enabled when item is validated
         cfg = self.meetingConfig
         cfg.setUseCopies(True)
-        cfg.setSelectableCopyGroups(('vendors_creators', ))
+        vendors_creators = get_plone_group_id(self.vendors_uid, 'creators')
+        cfg.setSelectableCopyGroups((vendors_creators, ))
         cfg.setUseAdvices(True)
         cfg.setItemCopyGroupsStates(('itemcreated', 'validated', ))
         cfg.setItemAdviceStates(('itemcreated', 'validated', ))
@@ -4826,8 +4917,9 @@ class testMeetingItem(PloneMeetingTestCase):
         file_handler.close()
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem', title='My new title')
-        item.setCopyGroups(('vendors_reviewers', ))
-        item.setOptionalAdvisers(('vendors', ))
+        vendors_reviewers = get_plone_group_id(self.vendors_uid, 'reviewers')
+        item.setCopyGroups((vendors_reviewers, ))
+        item.setOptionalAdvisers((self.vendors_uid, ))
         item._update_after_edit()
         # users able to edit the item or at least one field are able to add images
         self.assertTrue(self.hasPermission('ATContentTypes: Add Image', item))
@@ -4856,7 +4948,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # he can actually give it
         createContentInContainer(item,
                                  'meetingadvice',
-                                 **{'advice_group': 'vendors',
+                                 **{'advice_group': self.vendors_uid,
                                     'advice_type': u'positive',
                                     'advice_comment': RichTextValue(u'My comment')})
         # now he does not have anymore
@@ -4943,7 +5035,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # do not use self.create to be sure that it works correctly with invokeFactory
         itemId = pmFolder.invokeFactory(cfg.getItemTypeName(),
                                         id='item',
-                                        proposingGroup=u'developers',
+                                        proposingGroup=self.developers_uid,
                                         description=text)
         item = getattr(pmFolder, itemId)
         item.processForm()
@@ -5201,19 +5293,20 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg = self.meetingConfig
         self.changeUser('siteadmin')
         # remove 'pmManager' from every 'vendors' groups
-        vendors = self.tool.vendors
-        for ploneGroup in vendors.getPloneGroups():
+        for ploneGroup in get_plone_groups(self.vendors_uid):
             if 'pmManager' in ploneGroup.getGroupMemberIds():
                 ploneGroup.removeMember('pmManager')
         # make copyGroups able to see item when it is validated
         cfg.setItemCopyGroupsStates(('validated', ))
         cfg.setUseCopies(True)
-        cfg.setSelectableCopyGroups(('developers_reviewers', 'vendors_reviewers'))
+        developers_reviewers = get_plone_group_id(self.developers_uid, 'reviewers')
+        vendors_reviewers = get_plone_group_id(self.vendors_uid, 'reviewers')
+        cfg.setSelectableCopyGroups((developers_reviewers, vendors_reviewers))
 
         # create an item
         self.changeUser('pmCreator2')
         item = self.create('MeetingItem')
-        item.setCopyGroups(('developers_reviewers'))
+        item.setCopyGroups((developers_reviewers))
         # if not used, not shown
         self.assertFalse(item.showInternalNotes())
         # enable field internalNotes
@@ -5355,9 +5448,10 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # nevertheless, if powerobserver1 may edit the item, he will see the classes
         # add powerobserver1 to 'developers_creators' then check
-        self._addPrincipalToGroup('powerobserver1', 'developers_creators')
+        developers_creators = get_plone_group_id(self.developers_uid, 'creators')
+        self._addPrincipalToGroup('powerobserver1', developers_creators)
         self.changeUser('powerobserver1')
-        self.assertEqual(item.getProposingGroup(), 'developers')
+        self.assertEqual(item.getProposingGroup(), self.developers_uid)
         self.assertEqual(item.getDecision(), TEXT)
 
         # transforms still works outside the application, content is not influenced
@@ -5643,7 +5737,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfg.setItemReferenceFormat(
             "python: here.getMeeting().getDate().strftime('%Y%m%d') + '/' + "
-            "str(here.getProposingGroup(True).getAcronym()) + '/' + "
+            "str(here.getProposingGroup(True).get_acronym()) + '/' + "
             "str(here.getCategory()) + '/' + "
             "str(here.getClassifier() and here.getClassifier().getId() or '-') + '/' + "
             "('/'.join(here.getOtherMeetingConfigsClonableTo()) or '-') + '/' + "
@@ -5664,7 +5758,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item._update_after_edit()
         self.assertEqual(item.getItemReference(), '20170303/Devel/research/classifier1/-/Title1/1')
         # change proposingGroup
-        item.setProposingGroup('vendors')
+        item.setProposingGroup(self.vendors_uid)
         item._update_after_edit()
         self.assertEqual(item.getItemReference(), '20170303/Devil/research/classifier1/-/Title1/1')
         # change otherMeetingConfigsClonableTo
@@ -5888,14 +5982,14 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         itemWithoutAdvice = self.create('MeetingItem')
         itemWithNotGivenAdvice = self.create('MeetingItem')
-        itemWithNotGivenAdvice.setOptionalAdvisers(('vendors', ))
+        itemWithNotGivenAdvice.setOptionalAdvisers((self.vendors_uid, ))
         itemWithGivenAdvice = self.create('MeetingItem')
-        itemWithGivenAdvice.setOptionalAdvisers(('vendors', ))
+        itemWithGivenAdvice.setOptionalAdvisers((self.vendors_uid, ))
         itemWithGivenAdvice._update_after_edit()
         self.changeUser('pmReviewer2')
         createContentInContainer(itemWithGivenAdvice,
                                  'meetingadvice',
-                                 **{'advice_group': 'vendors',
+                                 **{'advice_group': self.vendors_uid,
                                     'advice_type': u'positive',
                                     'advice_hide_during_redaction': False,
                                     'advice_comment': RichTextValue(u'My comment')})

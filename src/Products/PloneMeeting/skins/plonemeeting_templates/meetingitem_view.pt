@@ -118,7 +118,7 @@
                   </span>
               </div>
               <div id="collapsible-assembly-and-signatures" class="collapsible-content discreet"
-                  tal:attributes="style python: (request.get('showPersons', 'true')=='true') and 'display: block;;' or 'display: none;;'">
+                  tal:attributes="style python: (request.get('showPersons', 'false')=='true') and 'display: block;;' or 'display: none;;'">
                 <div class="collapsible-inner-content">
                 <fieldset tal:condition="python: ('itemAssembly' in usedAttrs or context.getItemAssembly()) and ('assembly' in usedMeetingAttributes or meeting.getAssembly())">
                       <tal:defines define="mayQuickEdit python: context.mayQuickEdit('itemAssembly', bypassWritePermissionCheck=True);
@@ -353,18 +353,10 @@
                       i18n:translate="PloneMeeting_label_pollType"></span>:&nbsp;&nbsp;
                 <span metal:use-macro="python: here.widget('pollType', mode='view')" />
                 <tal:displayPollTypeObservations tal:condition="python: 'pollTypeObservations' in usedAttrs">
-                    <img src="++resource++collective.iconifiedcategory.images/more_infos.png"
-                         id="showPollTypeObservations"
-                         style="cursor: pointer;"
-                         tal:attributes="src string:${portal_url}/++resource++collective.iconifiedcategory.images/more_infos.png"
-                         i18n:attributes="title" title="show_or_hide_pollTypeObservations" />
-                    <script type="text/javascript">
-                        $( "#showPollTypeObservations" ).bind( "click", function(event) {
-                            event.preventDefault();
-                            var dataPollTypeObservations = $('#dataPollTypeObservations');
-                            dataPollTypeObservations.fadeToggle();
-                            });
-                    </script>
+                    <span class="fa fa-question-circle help-doc"
+                       id="showPollTypeObservations"
+                       onclick="toggleDoc('dataPollTypeObservations', toggle_parent_active=false);"
+                       i18n:attributes="title" title="show_or_hide_pollTypeObservations"></span>
                     <fieldset id="dataPollTypeObservations" style="display: none; margin-top: 0;">
                         <legend i18n:translate="PloneMeeting_label_pollTypeObservations">Poll type observations</legend>
                         <span metal:use-macro="python: here.widget('pollTypeObservations', mode='view')" />

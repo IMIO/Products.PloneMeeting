@@ -21,22 +21,22 @@ from zope.schema.vocabulary import SimpleTerm
 from zope.schema.vocabulary import SimpleVocabulary
 
 
-def advice_id_default():
+def advice_uid_default():
     """
       Get the value from the REQUEST as it is passed when calling the
-      form : form?advice_id=advice_id.
+      form : form?advice_uid=advice_uid.
     """
     request = getSite().REQUEST
-    return request.get('advice_id', u'')
+    return request.get('advice_uid', u'')
 
 
 class IAdviceRemoveInheritance(model.Schema):
 
-    directives.mode(advice_id='hidden')
-    advice_id = schema.TextLine(
-        title=_(u"Advice id"),
+    directives.mode(advice_uid='hidden')
+    advice_uid = schema.TextLine(
+        title=_(u"Advice uid"),
         description=_(u""),
-        defaultFactory=advice_id_default,
+        defaultFactory=advice_uid_default,
         required=False)
 
     inherited_advice_action = schema.Choice(
@@ -76,10 +76,10 @@ class AdviceRemoveInheritanceForm(AutoExtensibleForm, form.EditForm):
         # check if may remove inherited advice
         advice_infos = self.context.restrictedTraverse('@@advices-icons-infos')
         # initialize advice_infos
-        advice_data = self.context.getAdviceDataFor(self.context, data['advice_id'])
+        advice_data = self.context.getAdviceDataFor(self.context, data['advice_uid'])
         advice_infos(advice_data['type'])
-        advice_is_inherited = self.context.adviceIsInherited(data['advice_id'])
-        if not advice_infos.mayRemoveInheritedAdvice(advice_is_inherited, data['advice_id']):
+        advice_is_inherited = self.context.adviceIsInherited(data['advice_uid'])
+        if not advice_infos.mayRemoveInheritedAdvice(advice_is_inherited, data['advice_uid']):
             raise Unauthorized
 
         # if 'ask_localy', check if advice_id may be asked locally, if it is not the case
@@ -88,10 +88,10 @@ class AdviceRemoveInheritanceForm(AutoExtensibleForm, form.EditForm):
         if data['inherited_advice_action'] == 'ask_locally':
             if self.context.showOptionalAdvisers():
                 optionalAdvisers = list(self.context.getOptionalAdvisers())
-                if data['advice_id'] in self.context.listOptionalAdvisers().keys():
+                if data['advice_uid'] in self.context.listOptionalAdvisers().keys():
                     optionalAdvisers = list(self.context.getOptionalAdvisers())
-                    if data['advice_id'] not in optionalAdvisers:
-                        optionalAdvisers.append(data['advice_id'])
+                    if data['advice_uid'] not in optionalAdvisers:
+                        optionalAdvisers.append(data['advice_uid'])
                         self.context.setOptionalAdvisers(optionalAdvisers)
                     advice_asked_locally = True
             if not advice_asked_locally:
@@ -101,7 +101,7 @@ class AdviceRemoveInheritanceForm(AutoExtensibleForm, form.EditForm):
                     type='warning')
                 self.request.RESPONSE.redirect(self.context.absolute_url())
                 return
-        del self.context.adviceIndex[data['advice_id']]
+        del self.context.adviceIndex[data['advice_uid']]
         self.context.updateLocalRoles()
         if advice_asked_locally:
             api.portal.show_message(
@@ -120,8 +120,8 @@ class AdviceRemoveInheritanceForm(AutoExtensibleForm, form.EditForm):
         # add logging message to fingerpointing log
         user, ip = get_request_information()
         action = 'advice inheritance removed'
-        extras = 'item={0} advice_id={1}'.format(
-            '/'.join(self.context.getPhysicalPath()), data['advice_id'])
+        extras = 'item={0} advice_uid={1}'.format(
+            '/'.join(self.context.getPhysicalPath()), data['advice_uid'])
         log_info(AUDIT_MESSAGE.format(user, ip, action, extras))
 
         return

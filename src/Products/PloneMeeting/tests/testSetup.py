@@ -27,7 +27,6 @@ from plone.app.testing import login
 from plone.app.testing.interfaces import DEFAULT_LANGUAGE
 from Products.CMFPlone.factory import addPloneSite
 from Products.GenericSetup.context import DirectoryImportContext
-from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_REAPPLY
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.utils import cleanMemoize
@@ -98,12 +97,12 @@ class testSetup(PloneMeetingTestCase):
             if DUMMY_STATE not in meetingBaseWF.states:
                 meetingBaseWF.states.addState(DUMMY_STATE)
             self.assertTrue(DUMMY_STATE in meetingBaseWF.states)
-        # re-apply the workflows step, reinstall the :default profile
+        # re-apply the workflows step from the :default profile
         profile_name = [pn for pn in self._currentSetupProfileNames() if pn.endswith(':default')][0]
         if not profile_name.startswith(u'profile-'):
             profile_name = u'profile-' + profile_name
-        self.portal.portal_setup.runAllImportStepsFromProfile(profile_name,
-                                                              dependency_strategy=DEPENDENCY_STRATEGY_REAPPLY)
+        self.portal.portal_setup.runImportStepFromProfile(
+            profile_name, 'workflow')
         # now make sure WFs are clean
         for cfg in self.tool.objectValues('MeetingConfig'):
             itemBaseWF = wfTool.getWorkflowById(cfg.getItemWorkflow())

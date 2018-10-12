@@ -64,7 +64,7 @@
   </div>
 
    <div class="collapsible-content" id="collapsible-assembly-and-signatures"
-        tal:attributes="style python: (request.get('showPersons', 'true')=='true') and 'display: block;;' or 'display: none;;'">
+        tal:attributes="style python: (request.get('showPersons', 'false')=='true') and 'display: block;;' or 'display: none;;'">
     <div class="collapsible-inner-content">
      <tal:comment replace="nothing">Attendees, excused, absents, replacements, signatories</tal:comment>
      <table id="meeting_users" class="listing discreet" cellspacing="0" cellpadding="0"

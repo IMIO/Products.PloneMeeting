@@ -23,6 +23,7 @@
 #
 
 from AccessControl import Unauthorized
+from collective.contact.plonegroup.utils import get_plone_group_id
 from copy import deepcopy
 from DateTime import DateTime
 from DateTime.DateTime import _findLocalTimeZoneName
@@ -98,8 +99,8 @@ class testMeeting(PloneMeetingTestCase):
         self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
         self.assertEquals([item.getProposingGroup() for item in meeting.getItems(ordered=True)],
-                          ['developers', 'developers', 'developers', 'developers',
-                           'vendors', 'vendors', 'vendors'])
+                          [self.developers_uid, self.developers_uid, self.developers_uid, self.developers_uid,
+                           self.vendors_uid, self.vendors_uid, self.vendors_uid])
         self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
                           [100, 200, 300, 400, 500, 600, 700])
 
@@ -111,8 +112,8 @@ class testMeeting(PloneMeetingTestCase):
         self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
                           [100, 101, 200, 300, 400, 500, 600])
         self.assertEquals([item.getProposingGroup() for item in meeting.getItems(ordered=True)],
-                          ['developers', 'developers', 'developers', 'developers',
-                           'vendors', 'vendors', 'vendors'])
+                          [self.developers_uid, self.developers_uid, self.developers_uid, self.developers_uid,
+                           self.vendors_uid, self.vendors_uid, self.vendors_uid])
         # insert a new item
         newItem1 = self.create('MeetingItem')
         self.presentItem(newItem1)
@@ -120,8 +121,9 @@ class testMeeting(PloneMeetingTestCase):
         self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
                           [100, 101, 200, 300, 400, 500, 600, 700])
         self.assertEquals([item.getProposingGroup() for item in meeting.getItems(ordered=True)],
-                          ['developers', 'developers', 'developers', 'developers', 'developers',
-                           'vendors', 'vendors', 'vendors'])
+                          [self.developers_uid, self.developers_uid, self.developers_uid,
+                           self.developers_uid, self.developers_uid,
+                           self.vendors_uid, self.vendors_uid, self.vendors_uid])
 
         # change 400 to 301 then insert a new item
         # insert a new item
@@ -147,9 +149,9 @@ class testMeeting(PloneMeetingTestCase):
                           [100, 101, 200, 300, 301, 302, 303, 400, 500])
         # item 302 is 'developers' and 303 is 'vendors'
         self.assertEquals(meeting.getItemByNumber(302).getProposingGroup(),
-                          'developers')
+                          self.developers_uid)
         self.assertEquals(meeting.getItemByNumber(303).getProposingGroup(),
-                          'vendors')
+                          self.vendors_uid)
         newItem3 = self.create('MeetingItem')
         self.presentItem(newItem3)
         # has been inserted before in place of item number 303 that is now 304
@@ -191,9 +193,9 @@ class testMeeting(PloneMeetingTestCase):
         item10.setItemNumber(703)
         item10.reindexObject(idxs=['getItemNumber'])
         self.assertEquals([item.getProposingGroup() for item in meeting.getItems(ordered=True)],
-                          ['developers', 'developers', 'developers', 'developers',
-                           'developers', 'developers', 'developers',
-                           'vendors', 'vendors', 'vendors'])
+                          [self.developers_uid, self.developers_uid, self.developers_uid, self.developers_uid,
+                           self.developers_uid, self.developers_uid, self.developers_uid,
+                           self.vendors_uid, self.vendors_uid, self.vendors_uid])
         # insert a new item, it will be inserted between 700 and 701
         newItem4 = self.create('MeetingItem')
         self.presentItem(newItem4)
@@ -204,18 +206,19 @@ class testMeeting(PloneMeetingTestCase):
         # insert an item that will take an integer number and there are subnumbers after
         # insert an item that will place itself on position 300, turn current 300 proposingGroup to 'vendors'
         self.assertEquals(item3.getItemNumber(), 300)
-        item3.setProposingGroup('vendors')
+        item3.setProposingGroup(self.vendors_uid)
         item3.reindexObject()
         newItem5 = self.create('MeetingItem')
-        self.assertEquals(newItem5.getProposingGroup(), 'developers')
+        self.assertEquals(newItem5.getProposingGroup(), self.developers_uid)
         self.presentItem(newItem5)
         self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
                           [100, 200, 300, 400, 500, 600, 700, 800, 801, 802, 803, 804])
         self.assertEquals(newItem5.getItemNumber(), 300)
         self.assertEquals([item.getProposingGroup() for item in meeting.getItems(ordered=True)],
-                          ['developers', 'developers', 'developers', 'vendors',
-                           'developers', 'developers', 'developers', 'developers', 'developers',
-                           'vendors', 'vendors', 'vendors'])
+                          [self.developers_uid, self.developers_uid, self.developers_uid,
+                           self.vendors_uid, self.developers_uid, self.developers_uid,
+                           self.developers_uid, self.developers_uid, self.developers_uid,
+                           self.vendors_uid, self.vendors_uid, self.vendors_uid])
 
     def test_pm_InsertItemOnListTypes(self):
         '''Test inserting an item using the "on_list_type" sorting methods.
@@ -303,19 +306,20 @@ class testMeeting(PloneMeetingTestCase):
         self.assertEquals([item.getListType() for item in orderedItems],
                           ['normal', 'normal', 'normal', 'normal', 'normal', 'normal', 'normal'])
         self.assertEquals([item.getProposingGroup() for item in orderedItems],
-                          ['developers', 'developers', 'developers', 'developers', 'vendors', 'vendors', 'vendors'])
+                          [self.developers_uid, self.developers_uid, self.developers_uid,
+                           self.developers_uid, self.vendors_uid, self.vendors_uid, self.vendors_uid])
         # ok, now insert some late items using different proposingGroups
         lateItem1 = self.create('MeetingItem')
-        lateItem1.setProposingGroup('vendors')
+        lateItem1.setProposingGroup(self.vendors_uid)
         lateItem1.setPreferredMeeting(meeting.UID())
         lateItem2 = self.create('MeetingItem')
-        lateItem2.setProposingGroup('developers')
+        lateItem2.setProposingGroup(self.developers_uid)
         lateItem2.setPreferredMeeting(meeting.UID())
         lateItem3 = self.create('MeetingItem')
-        lateItem3.setProposingGroup('vendors')
+        lateItem3.setProposingGroup(self.vendors_uid)
         lateItem3.setPreferredMeeting(meeting.UID())
         lateItem4 = self.create('MeetingItem')
-        lateItem4.setProposingGroup('developers')
+        lateItem4.setProposingGroup(self.developers_uid)
         lateItem4.setPreferredMeeting(meeting.UID())
         self.freezeMeeting(meeting)
         self.presentItem(lateItem1)
@@ -328,8 +332,9 @@ class testMeeting(PloneMeetingTestCase):
                           ['normal', 'normal', 'normal', 'normal', 'normal', 'normal', 'normal',
                            'late', 'late', 'late', 'late'])
         self.assertEquals([item.getProposingGroup() for item in orderedItems],
-                          ['developers', 'developers', 'developers', 'developers', 'vendors', 'vendors', 'vendors',
-                           'developers', 'developers', 'vendors', 'vendors'])
+                          [self.developers_uid, self.developers_uid, self.developers_uid, self.developers_uid,
+                           self.vendors_uid, self.vendors_uid, self.vendors_uid, self.developers_uid,
+                           self.developers_uid, self.vendors_uid, self.vendors_uid])
 
     def test_pm_InsertItemOnProposingGroupsWithDisabledGroup(self):
         '''Test that inserting an item using the "on_proposing_groups" sorting method
@@ -343,16 +348,16 @@ class testMeeting(PloneMeetingTestCase):
         self.assertEquals([item.getId() for item in orderedItems],
                           ['recItem1', 'recItem2', 'o3', 'o5', 'o2', 'o4', 'o6'])
         # now disable the group used by 3 last items 'o2', 'o4' and 'o6', that is 'vendors'
-        self.assertTrue(orderedItems[-1].getProposingGroup() == u'vendors')
-        self.assertTrue(orderedItems[-2].getProposingGroup() == u'vendors')
-        self.assertTrue(orderedItems[-3].getProposingGroup() == u'vendors')
+        self.assertTrue(orderedItems[-1].getProposingGroup() == self.vendors_uid)
+        self.assertTrue(orderedItems[-2].getProposingGroup() == self.vendors_uid)
+        self.assertTrue(orderedItems[-3].getProposingGroup() == self.vendors_uid)
         # and insert a new item
         self.changeUser('admin')
-        self.do(self.tool.vendors, 'deactivate')
+        self._select_organization(self.vendors_uid, remove=True)
         self.changeUser('pmManager')
         newItem = self.create('MeetingItem')
         # Use the disabled category 'vendors'
-        newItem.setProposingGroup(u'vendors')
+        newItem.setProposingGroup(self.vendors_uid)
         newItem.setDecision('<p>Default decision</p>')
         self.presentItem(newItem)
         # first of all, it works, and the item is inserted at the right position
@@ -415,10 +420,12 @@ class testMeeting(PloneMeetingTestCase):
                           ['recItem1', 'recItem2', 'o2', 'o3', 'o5', 'o4', 'o6'])
         # so 'o2' is inserted in 'developers' items even if it has the 'vendors' proposing group
         self.assertEquals([item.getProposingGroup() for item in orderedItems],
-                          ['developers', 'developers', 'vendors', 'developers', 'developers', 'vendors', 'vendors'])
+                          [self.developers_uid, self.developers_uid, self.vendors_uid,
+                           self.developers_uid, self.developers_uid, self.vendors_uid,
+                           self.vendors_uid])
         # because 'o2' has 'developers' in his associatedGroups
         self.assertEquals([item.getAssociatedGroups() for item in orderedItems],
-                          [(), (), ('developers',), (), (), (), ()])
+                          [(), (), (self.developers_uid,), (), (), (), ()])
 
     def test_pm_InsertItemOnAllGroupsWithDisabledGroup(self):
         '''Sort method tested here is "on_all_groups" but with an associated group and
@@ -429,14 +436,14 @@ class testMeeting(PloneMeetingTestCase):
         meeting = self._createMeetingWithItems()
         self.assertTrue([item.getId() for item in meeting.getItems(ordered=True)] ==
                         ['recItem1', 'recItem2', 'o2', 'o3', 'o5', 'o4', 'o6'])
-        # create an item with 'developers' as associatedGroup but deativate 'developers'...
+        # create an item with 'developers' as associatedGroup but deactivate 'developers'...
         newItem = self.create('MeetingItem')
-        newItem.setProposingGroup('vendors')
+        newItem.setProposingGroup(self.vendors_uid)
         newItem.setDecision('<p>Default decision</p>')
-        newItem.setAssociatedGroups(('developers', ))
+        newItem.setAssociatedGroups((self.developers_uid, ))
         # deactivate the 'developers' group
         self.changeUser('admin')
-        self.do(self.tool.developers, 'deactivate')
+        self._select_organization(self.developers_uid, remove=True)
         self.changeUser('pmManager')
         self.presentItem(newItem)
         # the item is correctly inserted and his associated group is taken into account
@@ -445,17 +452,18 @@ class testMeeting(PloneMeetingTestCase):
                         ['recItem1', 'recItem2', 'o2', 'o3', 'o5', newItem.getId(), 'o4', 'o6'])
         # we can also insert an item using a disabled proposing group
         secondItem = self.create('MeetingItem')
-        secondItem.setProposingGroup('developers')
+        secondItem.setProposingGroup(self.developers_uid)
         secondItem.setDecision('<p>Default decision</p>')
-        secondItem.setAssociatedGroups(('vendors', ))
+        secondItem.setAssociatedGroups((self.vendors_uid, ))
         self.presentItem(secondItem)
         # it will be inserted at the end of 'developers' items
         self.assertTrue([item.getId() for item in meeting.getItems(ordered=True)] ==
-                        ['recItem1', 'recItem2', 'o2', 'o3', 'o5', newItem.getId(), secondItem.getId(), 'o4', 'o6'])
+                        ['recItem1', 'recItem2', 'o2', 'o3', 'o5',
+                         newItem.getId(), secondItem.getId(), 'o4', 'o6'])
 
     def test_pm_InsertItemOnGroupsInCharge(self):
         '''Sort method tested here is "on_groups_in_charge".
-           It takes into account the currently valid MeetingGroup.inChargeGroup that
+           It takes into account the currently valid organization.group_in_charge that
            must be defined on every groups used as proposingGroup for presented items.'''
 
         self.changeUser('siteadmin')
@@ -468,49 +476,54 @@ class testMeeting(PloneMeetingTestCase):
         self.assertEquals(cm.exception.message, "No valid groupInCharge defined for developers")
 
         # configure groups to define groups in charge
-        self.create('MeetingGroup',
-                    id='groupincharge1',
-                    Title='Group in charge 1',
-                    acronym='GIC1')
-        self.create('MeetingGroup',
-                    id='groupincharge2',
-                    Title='Group in charge 2',
-                    acronym='GIC2')
-        self.tool.vendors.setGroupsInCharge(('groupincharge1',))
-        self.tool.developers.setGroupsInCharge(('groupincharge2',))
+        gic1 = self.create(
+            'organization',
+            id='groupincharge1',
+            Title='Group in charge 1',
+            acronym='GIC1')
+        gic1_uid = gic1.UID()
+        gic2 = self.create(
+            'organization',
+            id='groupincharge2',
+            Title='Group in charge 2',
+            acronym='GIC2')
+        gic2_uid = gic2.UID()
+        self.vendors.groups_in_charge = (gic1_uid,)
+        self.developers.groups_in_charge = (gic2_uid,)
 
         # make sure recurring items are correctly configured
         for recurring_item in cfg.recurringitems.objectValues():
-            recurring_item.setProposingGroupWithGroupInCharge('developers__groupincharge__groupincharge2')
+            recurring_item.setProposingGroupWithGroupInCharge(
+                '{0}__groupincharge__{1}'.format(self.developers_uid, gic2_uid))
 
         # no reverse
         meeting = self._createMeetingWithItems()
-        self.assertEquals([(item.getProposingGroup(),
-                           item.getGroupInCharge())
+        self.assertEquals([(item.getProposingGroup(), item.getGroupInCharge())
                            for item in meeting.getItems(ordered=True)],
-                          [('vendors', 'groupincharge1'),
-                           ('vendors', 'groupincharge1'),
-                           ('vendors', 'groupincharge1'),
-                           ('developers', 'groupincharge2'),
-                           ('developers', 'groupincharge2'),
-                           ('developers', 'groupincharge2'),
-                           ('developers', 'groupincharge2')])
-        self.tool.vendors.setGroupsInCharge(('groupincharge2',))
-        self.tool.developers.setGroupsInCharge(('groupincharge1',))
+                          [(self.vendors_uid, gic1_uid),
+                           (self.vendors_uid, gic1_uid),
+                           (self.vendors_uid, gic1_uid),
+                           (self.developers_uid, gic2_uid),
+                           (self.developers_uid, gic2_uid),
+                           (self.developers_uid, gic2_uid),
+                           (self.developers_uid, gic2_uid)])
+        self.vendors.groups_in_charge = (gic2_uid,)
+        self.developers.groups_in_charge = (gic1_uid,)
         # make sure recurring items are correctly configured
         for recurring_item in cfg.recurringitems.objectValues():
-            recurring_item.setProposingGroupWithGroupInCharge('developers__groupincharge__groupincharge1')
+            recurring_item.setProposingGroupWithGroupInCharge(
+                '{0}__groupincharge__{1}'.format(self.developers_uid, gic1_uid))
         meeting2 = self._createMeetingWithItems()
         self.assertEquals([(item.getProposingGroup(),
                            item.getGroupInCharge())
                            for item in meeting2.getItems(ordered=True)],
-                          [('developers', 'groupincharge1'),
-                           ('developers', 'groupincharge1'),
-                           ('developers', 'groupincharge1'),
-                           ('developers', 'groupincharge1'),
-                           ('vendors', 'groupincharge2'),
-                           ('vendors', 'groupincharge2'),
-                           ('vendors', 'groupincharge2')])
+                          [(self.developers_uid, gic1_uid),
+                           (self.developers_uid, gic1_uid),
+                           (self.developers_uid, gic1_uid),
+                           (self.developers_uid, gic1_uid),
+                           (self.vendors_uid, gic2_uid),
+                           (self.vendors_uid, gic2_uid),
+                           (self.vendors_uid, gic2_uid)])
 
         # reverse
         cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_groups_in_charge',
@@ -519,19 +532,19 @@ class testMeeting(PloneMeetingTestCase):
         self.assertEquals([(item.getProposingGroup(),
                            item.getGroupInCharge())
                            for item in meeting3.getItems(ordered=True)],
-                          [('vendors', 'groupincharge2'),
-                           ('vendors', 'groupincharge2'),
-                           ('vendors', 'groupincharge2'),
-                           ('developers', 'groupincharge1'),
-                           ('developers', 'groupincharge1'),
-                           ('developers', 'groupincharge1'),
-                           ('developers', 'groupincharge1')])
+                          [(self.vendors_uid, gic2_uid),
+                           (self.vendors_uid, gic2_uid),
+                           (self.vendors_uid, gic2_uid),
+                           (self.developers_uid, gic1_uid),
+                           (self.developers_uid, gic1_uid),
+                           (self.developers_uid, gic1_uid),
+                           (self.developers_uid, gic1_uid)])
 
         # it follows groupInCharge order in the configuration, change it and test again
-        self.assertEquals(self.tool.objectIds('MeetingGroup'),
+        self.assertEquals(self.own_org.objectIds(),
                           ['developers', 'vendors', 'endUsers', 'groupincharge1', 'groupincharge2'])
-        self.tool.folder_position(position='up', id='groupincharge2')
-        self.assertEquals(self.tool.objectIds('MeetingGroup'),
+        self.own_org.folder_position(position='up', id='groupincharge2')
+        self.assertEquals(self.own_org.objectIds(),
                           ['developers', 'vendors', 'endUsers', 'groupincharge2', 'groupincharge1'])
         cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_groups_in_charge',
                                            'reverse': '0'}, ))
@@ -539,13 +552,13 @@ class testMeeting(PloneMeetingTestCase):
         self.assertEquals([(item.getProposingGroup(),
                            item.getGroupInCharge())
                            for item in meeting4.getItems(ordered=True)],
-                          [('vendors', 'groupincharge2'),
-                           ('vendors', 'groupincharge2'),
-                           ('vendors', 'groupincharge2'),
-                           ('developers', 'groupincharge1'),
-                           ('developers', 'groupincharge1'),
-                           ('developers', 'groupincharge1'),
-                           ('developers', 'groupincharge1')])
+                          [(self.vendors_uid, gic2_uid),
+                           (self.vendors_uid, gic2_uid),
+                           (self.vendors_uid, gic2_uid),
+                           (self.developers_uid, gic1_uid),
+                           (self.developers_uid, gic1_uid),
+                           (self.developers_uid, gic1_uid),
+                           (self.developers_uid, gic1_uid)])
 
     def test_pm_InsertItemOnPrivacyThenProposingGroups(self):
         '''Sort method tested here is "on_privacy" then "on_proposing_groups".'''
@@ -634,10 +647,10 @@ class testMeeting(PloneMeetingTestCase):
                           ['public', 'public', 'public', 'public', 'public', 'secret', 'secret'])
         # we can also insert an item using a disabled proposing group
         self.changeUser('admin')
-        self.do(self.tool.vendors, 'deactivate')
+        self._select_organization(self.vendors_uid, remove=True)
         self.changeUser('pmManager')
         newItem = self.create('MeetingItem')
-        newItem.setProposingGroup('vendors')
+        newItem.setProposingGroup(self.vendors_uid)
         newItem.setDecision('<p>Default decision</p>')
         self.presentItem(newItem)
         # it will be inserted at the end of 'developers' items
@@ -714,7 +727,7 @@ class testMeeting(PloneMeetingTestCase):
         self.do(self.meetingConfig.categories.development, 'deactivate')
         self.changeUser('pmManager')
         newItem = self.create('MeetingItem')
-        newItem.setProposingGroup('vendors')
+        newItem.setProposingGroup(self.vendors_uid)
         newItem.setCategory('development')
         newItem.setDecision('<p>Default decision</p>')
         newItem.setPrivacy('secret')
@@ -739,31 +752,31 @@ class testMeeting(PloneMeetingTestCase):
         self.assertTrue(self.meetingConfig2.getUseGroupsAsCategories() is False)
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=DateTime('2014/01/01'))
-        data = ({'proposingGroup': 'developers',
+        data = ({'proposingGroup': self.developers_uid,
                  'category': 'marketing'},
-                {'proposingGroup': 'vendors',
+                {'proposingGroup': self.vendors_uid,
                  'category': 'development'},
-                {'proposingGroup': 'vendors',
+                {'proposingGroup': self.vendors_uid,
                  'category': 'projects'},
-                {'proposingGroup': 'developers',
+                {'proposingGroup': self.developers_uid,
                  'category': 'projects'},
-                {'proposingGroup': 'developers',
+                {'proposingGroup': self.developers_uid,
                  'category': 'development'},
-                {'proposingGroup': 'vendors',
+                {'proposingGroup': self.vendors_uid,
                  'category': 'deployment'},
-                {'proposingGroup': 'developers',
+                {'proposingGroup': self.developers_uid,
                  'category': 'projects'},
-                {'proposingGroup': 'vendors',
+                {'proposingGroup': self.vendors_uid,
                  'category': 'events'},
-                {'proposingGroup': 'developers',
+                {'proposingGroup': self.developers_uid,
                  'category': 'events'},
-                {'proposingGroup': 'vendors',
+                {'proposingGroup': self.vendors_uid,
                  'category': 'marketing'},
-                {'proposingGroup': 'vendors',
+                {'proposingGroup': self.vendors_uid,
                  'category': 'marketing'},
-                {'proposingGroup': 'vendors',
+                {'proposingGroup': self.vendors_uid,
                  'category': 'projects'},
-                {'proposingGroup': 'developers',
+                {'proposingGroup': self.developers_uid,
                  'category': 'projects'}, )
         for itemData in data:
             item = self.create('MeetingItem', **itemData)
@@ -773,19 +786,19 @@ class testMeeting(PloneMeetingTestCase):
         # items are correctly sorted first by categories, then within a category, by proposing group
         self.assertEquals([(anItem.getCategory(), anItem.getProposingGroup()) for
                            anItem in meeting.getItems(ordered=True)],
-                          [('deployment', 'vendors'),
-                           ('development', 'developers'),
-                           ('development', 'vendors'),
-                           ('events', 'developers'),
-                           ('events', 'vendors'),
-                           ('projects', 'developers'),
-                           ('projects', 'developers'),
-                           ('projects', 'developers'),
-                           ('projects', 'vendors'),
-                           ('projects', 'vendors'),
-                           ('marketing', 'developers'),
-                           ('marketing', 'vendors'),
-                           ('marketing', 'vendors')])
+                          [('deployment', self.vendors_uid),
+                           ('development', self.developers_uid),
+                           ('development', self.vendors_uid),
+                           ('events', self.developers_uid),
+                           ('events', self.vendors_uid),
+                           ('projects', self.developers_uid),
+                           ('projects', self.developers_uid),
+                           ('projects', self.developers_uid),
+                           ('projects', self.vendors_uid),
+                           ('projects', self.vendors_uid),
+                           ('marketing', self.developers_uid),
+                           ('marketing', self.vendors_uid),
+                           ('marketing', self.vendors_uid)])
 
     def test_pm_InsertItemOnToDiscuss(self):
         '''Sort method tested here is "on_to_discuss".'''
@@ -795,23 +808,23 @@ class testMeeting(PloneMeetingTestCase):
         self.meetingConfig.setToDiscussSetOnItemInsert(False)
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=DateTime('2014/01/01'))
-        data = ({'proposingGroup': 'developers',
+        data = ({'proposingGroup': self.developers_uid,
                  'toDiscuss': True},
-                {'proposingGroup': 'developers',
+                {'proposingGroup': self.developers_uid,
                  'toDiscuss': True},
-                {'proposingGroup': 'developers',
+                {'proposingGroup': self.developers_uid,
                  'toDiscuss': False},
-                {'proposingGroup': 'developers',
+                {'proposingGroup': self.developers_uid,
                  'toDiscuss': False},
-                {'proposingGroup': 'developers',
+                {'proposingGroup': self.developers_uid,
                  'toDiscuss': True},
-                {'proposingGroup': 'developers',
+                {'proposingGroup': self.developers_uid,
                  'toDiscuss': False},
-                {'proposingGroup': 'developers',
+                {'proposingGroup': self.developers_uid,
                  'toDiscuss': True},
-                {'proposingGroup': 'developers',
+                {'proposingGroup': self.developers_uid,
                  'toDiscuss': True},
-                {'proposingGroup': 'developers',
+                {'proposingGroup': self.developers_uid,
                  'toDiscuss': False}, )
         for itemData in data:
             item = self.create('MeetingItem', **itemData)
@@ -846,23 +859,23 @@ class testMeeting(PloneMeetingTestCase):
         self.meetingConfig.setToDiscussSetOnItemInsert(False)
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=DateTime('2014/01/01'))
-        data = ({'proposingGroup': 'developers',
+        data = ({'proposingGroup': self.developers_uid,
                  'toDiscuss': True},
-                {'proposingGroup': 'vendors',
+                {'proposingGroup': self.vendors_uid,
                  'toDiscuss': True},
-                {'proposingGroup': 'developers',
+                {'proposingGroup': self.developers_uid,
                  'toDiscuss': False},
-                {'proposingGroup': 'vendors',
+                {'proposingGroup': self.vendors_uid,
                  'toDiscuss': False},
-                {'proposingGroup': 'developers',
+                {'proposingGroup': self.developers_uid,
                  'toDiscuss': True},
-                {'proposingGroup': 'developers',
+                {'proposingGroup': self.developers_uid,
                  'toDiscuss': False},
-                {'proposingGroup': 'developers',
+                {'proposingGroup': self.developers_uid,
                  'toDiscuss': True},
-                {'proposingGroup': 'vendors',
+                {'proposingGroup': self.vendors_uid,
                  'toDiscuss': True},
-                {'proposingGroup': 'vendors',
+                {'proposingGroup': self.vendors_uid,
                  'toDiscuss': False}, )
         for itemData in data:
             item = self.create('MeetingItem', **itemData)
@@ -871,17 +884,17 @@ class testMeeting(PloneMeetingTestCase):
         # items are correctly sorted first toDiscuss/proposingGroup then not toDiscuss/proposingGroup
         self.assertEquals([(anItem.getToDiscuss(), anItem.getProposingGroup()) for
                            anItem in meeting.getItems(ordered=True)],
-                          [(True, 'developers'),
-                           (True, 'developers'),
-                           (True, 'developers'),
-                           (True, 'developers'),
-                           (True, 'developers'),
-                           (True, 'vendors'),
-                           (True, 'vendors'),
-                           (False, 'developers'),
-                           (False, 'developers'),
-                           (False, 'vendors'),
-                           (False, 'vendors')])
+                          [(True, self.developers_uid),
+                           (True, self.developers_uid),
+                           (True, self.developers_uid),
+                           (True, self.developers_uid),
+                           (True, self.developers_uid),
+                           (True, self.vendors_uid),
+                           (True, self.vendors_uid),
+                           (False, self.developers_uid),
+                           (False, self.developers_uid),
+                           (False, self.vendors_uid),
+                           (False, self.vendors_uid)])
 
     def test_pm_InsertItemOnToOtherMCToCloneTo(self):
         '''Sort method tested here is "on_other_mc_to_clone_to".'''
@@ -1788,7 +1801,8 @@ class testMeeting(PloneMeetingTestCase):
         self.assertEquals(len(allItemObjs), 7)
         # if uids are provided, result is filtered
         self.assertEquals(
-            len(meeting.getItems(theObjects=True, uids=[allItemObjs[0].UID(), allItemObjs[1].UID()])),
+            len(meeting.getItems(theObjects=True,
+                                 uids=[allItemObjs[0].UID(), allItemObjs[1].UID()])),
             2)
 
         # as a non MeetingManager, if theObjects=True, uids must be provided
@@ -1797,12 +1811,12 @@ class testMeeting(PloneMeetingTestCase):
         self.assertRaises(Unauthorized, meeting.getItems, theObjects=True, uids=[])
         # if uids of elements that user may not see are passed, asked items are not returned
         # pmCreator1 may only see items of 'vendors' group
-        self.assertEquals(allItemObjs[0].getProposingGroup(), 'developers')
-        self.assertEquals(allItemObjs[2].getProposingGroup(), 'vendors')
+        self.assertEqual(allItemObjs[0].getProposingGroup(), self.developers_uid)
+        self.assertEqual(allItemObjs[2].getProposingGroup(), self.vendors_uid)
         # only item of group 'developers' is returned
-        items = meeting.getItems(theObjects=True, uids=[allItemObjs[0].UID(), allItemObjs[2].UID()])
-        self.assertEquals([item.UID() for item in items],
-                          [allItemObjs[0].UID()])
+        items = meeting.getItems(theObjects=True,
+                                 uids=[allItemObjs[0].UID(), allItemObjs[2].UID()])
+        self.assertEqual([item.UID() for item in items], [allItemObjs[0].UID()])
 
     def test_pm_GetItemByNumber(self):
         '''Test the Meeting.getItemByNumber method.'''
@@ -1848,12 +1862,12 @@ class testMeeting(PloneMeetingTestCase):
         # add an annex as removing an item/annex calls onAnnexRemoved
         self.addAnnex(anItem)
         # add an advice as removing item/advice calls onAdviceRemoved
-        anItem.setOptionalAdvisers(('vendors',))
+        anItem.setOptionalAdvisers((self.vendors_uid,))
         anItem._update_after_edit()
         self.changeUser('pmReviewer2')
         createContentInContainer(anItem,
                                  'meetingadvice',
-                                 **{'advice_group': 'vendors',
+                                 **{'advice_group': self.vendors_uid,
                                     'advice_type': u'positive',
                                     'advice_comment': RichTextValue(u'My comment')})
         self.changeUser('pmManager')
@@ -1874,7 +1888,8 @@ class testMeeting(PloneMeetingTestCase):
         self.changeUser('admin')
         self._removeConfigObjectsFor(self.meetingConfig)
         # make sure 'pmManager' may not see items of 'vendors'
-        self._removePrincipalFromGroup('pmManager', 'vendors_advisers')
+        self._removePrincipalFromGroup(
+            'pmManager', get_plone_group_id(self.vendors_uid, 'advisers'))
 
         # create a meeting and an item, set the meeting as preferredMeeting for the item
         # then when the meeting is removed, the item preferredMeeting is back to 'whatever'
@@ -2409,7 +2424,7 @@ class testMeeting(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         item1 = self.create('MeetingItem')
         item1.setDecision(self.decisionText)
-        item1.setOptionalAdvisers(('vendors', ))
+        item1.setOptionalAdvisers((self.vendors_uid, ))
         item2 = self.create('MeetingItem')
         item2.setDecision(self.decisionText)
         self.changeUser('pmManager')
@@ -2433,7 +2448,7 @@ class testMeeting(PloneMeetingTestCase):
         self.changeUser('pmReviewer2')
         createContentInContainer(item1,
                                  'meetingadvice',
-                                 **{'advice_group': 'vendors',
+                                 **{'advice_group': self.vendors_uid,
                                     'advice_type': u'positive',
                                     'advice_comment': RichTextValue(u'My comment')})
         # references where not updated

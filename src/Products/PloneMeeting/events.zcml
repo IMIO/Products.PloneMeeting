@@ -56,21 +56,25 @@
                    zope.container.interfaces.IObjectRemovedEvent"
               handler=".events.onMeetingRemoved" />
 
-  <subscriber for=".interfaces.IMeetingGroup
-                   Products.DCWorkflow.interfaces.IAfterTransitionEvent"
-              handler=".events.onGroupTransition" />
-
-  <subscriber for=".interfaces.IMeetingGroup
-                   OFS.interfaces.IObjectWillBeRemovedEvent"
-              handler=".events.onGroupWillBeRemoved" />
-
   <subscriber for=".interfaces.IMeetingConfig
                    OFS.interfaces.IObjectWillBeRemovedEvent"
               handler=".events.onConfigWillBeRemoved" />
 
-  <subscriber for=".interfaces.IMeetingGroup
+  <subscriber for=".content.organization.IPMOrganization
+                   zope.lifecycleevent.interfaces.IObjectAddedEvent"
+              handler=".events.onOrgCreated" />
+
+  <subscriber for=".content.organization.IPMOrganization
+                   zope.lifecycleevent.IObjectModifiedEvent"
+              handler=".events.onOrgModified" />
+
+  <subscriber for=".content.organization.IPMOrganization
+                   OFS.interfaces.IObjectWillBeRemovedEvent"
+              handler=".events.onOrgWillBeRemoved" />
+
+  <subscriber for=".content.organization.IPMOrganization
                    zope.container.interfaces.IObjectRemovedEvent"
-              handler=".events.onGroupRemoved" />
+              handler=".events.onOrgRemoved" />
 
   <subscriber for=".interfaces.IMeetingCategory
                    Products.DCWorkflow.interfaces.IAfterTransitionEvent"
@@ -79,9 +83,6 @@
   <subscriber for=".interfaces.IMeetingCategory
                    zope.container.interfaces.IObjectRemovedEvent"
               handler=".events.onCategoryRemoved" />
-
-  <subscriber for="Products.PluggableAuthService.interfaces.events.IGroupDeletedEvent"
-              handler=".events.onPloneGroupDeleted" />
 
   <!-- meetingadvice events -->
   <subscriber for=".content.advice.IMeetingAdvice
@@ -133,7 +134,13 @@
                    imio.annex.interfaces.IAnnexFileChangedEvent"
               handler=".events.onAnnexFileChanged" />
 
-  <!-- collective.contact.core held_position events -->
+  <!-- collective.contact.core events -->
+  <subscriber for="collective.contact.core.content.directory.IDirectory
+                   plone.dexterity.events.AddBegunEvent"
+              handler=".events.onOrgAddBegun" />
+  <subscriber for="Products.PloneMeeting.content.organization.IPMOrganization
+                   plone.dexterity.events.AddBegunEvent"
+              handler=".events.onOrgAddBegun" />
   <subscriber for="Products.PloneMeeting.content.held_position.IPMHeldPosition
                    OFS.interfaces.IObjectWillBeRemovedEvent"
               handler=".events.onHeldPositionRemoved" />
@@ -142,5 +149,12 @@
   <subscriber for="collective.eeafaceted.collectionwidget.interfaces.IDashboardCollection
                    zope.lifecycleevent.interfaces.IObjectAddedEvent"
               handler=".events.onDashboardCollectionAdded" />
+
+  <subscriber for="plone.registry.interfaces.IRecordModifiedEvent"
+              handler=".events.onRegistryModified" />
+
+  <!-- collective.contact.plonegroup Plone group created event -->
+  <subscriber for="collective.contact.plonegroup.interfaces.IPlonegroupGroupCreatedEvent"
+              handler=".events.onPlonegroupGroupCreated" />
 
 </configure>
