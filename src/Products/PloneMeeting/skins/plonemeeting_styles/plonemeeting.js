@@ -38,11 +38,14 @@ function findParent(node, className) {
 }
 
 /* used in configuration to show/hide documentation */
-function toggleDoc(id, toggle_parent_active=true) {
+function toggleDoc(id, toggle_parent_active=true, parent_elem=null) {
   elem = $('#' + id);
   elem.slideToggle(200);
   if (toggle_parent_active) {
-    elem.prev()[0].classList.toggle("active");
+    if (!parent_elem) {
+      parent_elem = elem.prev()[0];
+    }
+    parent_elem.classList.toggle("active");
   }
 }
 

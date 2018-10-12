@@ -119,6 +119,7 @@
 <tal:comment replace="nothing">
   This macro allows to view the content of an ajax-editable field.
 </tal:comment>
+
 <div metal:define-macro="viewField"
      tal:define="hookId python: 'hook_%s' % fieldName;
                  changes changes|python: False;
@@ -153,8 +154,14 @@ document.location.reload(true);
          tal:condition="changes"
          tal:attributes="src string:$portal_url/view.gif; onClick jsView"/>
     </tal:history>
+    <div style="display: inline" class="collapsible discreet active"
+         tal:attributes="id string:${hookId}_toggle;
+                         onclick string:toggleDoc('${hookId}_content', toggle_parent_active=true, parent_elem=${hookId}_toggle);"></div>
   </legend>
-  <div tal:replace="structure python: context.getFieldVersion(fieldName, changes)"></div>
+
+  <div tal:attributes="id string:${hookId}_content">
+   <div tal:replace="structure python: context.getFieldVersion(fieldName, changes)"></div>
+  </div>
  </fieldset>
 </div>
 

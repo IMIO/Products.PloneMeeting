@@ -355,14 +355,8 @@
                 <tal:displayPollTypeObservations tal:condition="python: 'pollTypeObservations' in usedAttrs">
                     <span class="fa fa-question-circle help-doc"
                        id="showPollTypeObservations"
+                       onclick="toggleDoc('dataPollTypeObservations', toggle_parent_active=false);"
                        i18n:attributes="title" title="show_or_hide_pollTypeObservations"></span>
-                    <script type="text/javascript">
-                        $( "#showPollTypeObservations" ).bind( "click", function(event) {
-                            event.preventDefault();
-                            var dataPollTypeObservations = $('#dataPollTypeObservations');
-                            dataPollTypeObservations.fadeToggle();
-                            });
-                    </script>
                     <fieldset id="dataPollTypeObservations" style="display: none; margin-top: 0;">
                         <legend i18n:translate="PloneMeeting_label_pollTypeObservations">Poll type observations</legend>
                         <span metal:use-macro="python: here.widget('pollTypeObservations', mode='view')" />
