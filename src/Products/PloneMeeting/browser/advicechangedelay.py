@@ -4,15 +4,11 @@ from AccessControl import Unauthorized
 from DateTime import DateTime
 from plone import api
 from plone.z3cform.layout import wrap_form
-from Products.CMFCore.Expression import createExprContext
-from Products.CMFCore.Expression import Expression
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
 from Products.Five.browser import BrowserView
-from Products.PloneMeeting import logger
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
-from Products.PloneMeeting.MeetingItem import ADVICE_AVAILABLE_ON_CONDITION_ERROR
 from z3c.form import button
 from z3c.form import field
 from z3c.form import form
@@ -70,10 +66,6 @@ class AdviceDelaysView(BrowserView):
         res = []
         # evaluate the 'available_on' TAL expression defined on each linkedRows
         availableLinkedRows = []
-        ctx = createExprContext(self.context.getParentNode(), self.portal, self.context)
-        # Check that the TAL expression on the group returns True
-        ctx.setGlobal('item', self.context)
-        ctx.setGlobal('mayEdit', mayEdit)
         # set a special value in the request usable in the TAL expression
         # that just specify that we are managing available delays
         # this way, it is easy to protect a custom adviser by just checking
@@ -81,12 +73,9 @@ class AdviceDelaysView(BrowserView):
         self.request.set('managing_available_delays', True)
         for linkedRow in linkedRows:
             eRes = mayEdit
-            try:
-                if linkedRow['available_on']:
-                    eRes = Expression(linkedRow['available_on'])(ctx)
-            except Exception, e:
-                logger.warning(ADVICE_AVAILABLE_ON_CONDITION_ERROR % str(e))
-                eRes = False
+            if linkedRow['available_on']:
+                eRes = self.context._evalAdviceAvailableOn(
+                    linkedRow['available_on'], self.tool, self.cfg, mayEdit=mayEdit)
             if eRes:
                 availableLinkedRows.append(linkedRow)
         self.request.set('managing_available_delays', False)
@@ -101,17 +90,17 @@ class AdviceDelaysView(BrowserView):
             res.append((linkedRow['row_id'], linkedRow['delay'], unicode(linkedRow['delay_label'], 'utf-8')))
         return res
 
-    def _mayAccessDelayChangesHistory(self, adviceId=None):
+    def _mayAccessDelayChangesHistory(self, advice_uid=None):
         '''May current user access delay changes history?
-           By default it is shown to MeetingManagers, advisers of p_adviceId and members of the proposingGroup.'''
-        if not adviceId:
-            adviceId = self.advice['id']
+           By default it is shown to MeetingManagers, advisers of p_advice_uid and members of the proposingGroup.'''
+        if not advice_uid:
+            advice_uid = self.advice['id']
         # MeetingManagers and advisers of the group
         # can access the delay changes history
-        userAdviserGroupIds = [group.getId() for group in self.tool.getGroupsForUser(suffixes=['advisers'])]
+        userAdviserOrgUids = [org.UID() for org in self.tool.get_orgs_for_user(suffixes=['advisers'])]
         if self.tool.isManager(self.context) or \
-           adviceId in userAdviserGroupIds or \
-           self.context.getProposingGroup(theObject=True) in self.tool.getGroupsForUser():
+           advice_uid in userAdviserOrgUids or \
+           self.context.getProposingGroup(theObject=True) in self.tool.get_orgs_for_user():
             return True
         else:
             return False
@@ -193,7 +182,7 @@ class AdviceChangeDelayForm(form.EditForm):
         listAvailableDelaysView.cfg = cfg
         # find right advice in MeetingItem.adviceIndex
         currentAdviceData = self.getDataForRowId(data['current_delay_row_id'])
-        listAvailableDelaysView.advice = self.context.adviceIndex[currentAdviceData['group']]
+        listAvailableDelaysView.advice = self.context.adviceIndex[currentAdviceData['org']]
         isAutomatic, linkedRows = cfg._findLinkedRowsFor(data['current_delay_row_id'])
         selectableDelays = listAvailableDelaysView.listSelectableDelays(data['current_delay_row_id'])
         # selectableDelays is a list of tuple containing 3 elements, the first is the row_id
@@ -209,24 +198,24 @@ class AdviceChangeDelayForm(form.EditForm):
                         'gives_auto_advice_on_help_message',
                         'row_id')
         for elt in dataToUpdate:
-            self.context.adviceIndex[currentAdviceData['group']][elt] = newAdviceData[elt]
+            self.context.adviceIndex[currentAdviceData['org']][elt] = newAdviceData[elt]
         # if the advice was already given, we need to update row_id on the given advice object too
-        if not self.context.adviceIndex[currentAdviceData['group']]['type'] == NOT_GIVEN_ADVICE_VALUE:
-            adviceObj = getattr(self.context, self.context.adviceIndex[currentAdviceData['group']]['advice_id'])
+        if not self.context.adviceIndex[currentAdviceData['org']]['type'] == NOT_GIVEN_ADVICE_VALUE:
+            adviceObj = getattr(self.context, self.context.adviceIndex[currentAdviceData['org']]['advice_id'])
             adviceObj.advice_row_id = newAdviceData['row_id']
         # if it is an optional advice, update the MeetingItem.optionalAdvisers
         if not isAutomatic:
             optionalAdvisers = list(self.context.getOptionalAdvisers())
             # remove old value
-            optionalAdvisers.remove('%s__rowid__%s' % (currentAdviceData['group'],
+            optionalAdvisers.remove('%s__rowid__%s' % (currentAdviceData['org'],
                                                        currentAdviceData['row_id']))
             # append new value
-            optionalAdvisers.append('%s__rowid__%s' % (newAdviceData['group'],
+            optionalAdvisers.append('%s__rowid__%s' % (newAdviceData['org'],
                                                        newAdviceData['row_id']))
             self.context.setOptionalAdvisers(tuple(optionalAdvisers))
         else:
             # if it is an automatic advice, set the 'delay_for_automatic_adviser_changed_manually' to True
-            self.context.adviceIndex[currentAdviceData['group']]['delay_for_automatic_adviser_changed_manually'] = True
+            self.context.adviceIndex[currentAdviceData['org']]['delay_for_automatic_adviser_changed_manually'] = True
         self.context.updateLocalRoles()
         # add a line to the item's emergency_change_history
         member = api.user.get_current()
@@ -234,7 +223,7 @@ class AdviceChangeDelayForm(form.EditForm):
                         'actor': member.getId(),
                         'time': DateTime(),
                         'comments': data['comment']}
-        self.context.adviceIndex[currentAdviceData['group']]['delay_changes_history'].append(history_data)
+        self.context.adviceIndex[currentAdviceData['org']]['delay_changes_history'].append(history_data)
         self.request.response.redirect(self.context.absolute_url() + '/#adviceAndAnnexes')
 
     @button.buttonAndHandler(_('Cancel'), name='cancel')
@@ -280,7 +269,7 @@ class AdviceChangeDelayHistoryView(BrowserView):
           Return history of delay changes for an advice.
         '''
         delayChangesView = self.context.restrictedTraverse('@@advice-available-delays')
-        adviceId = self.request.get('advice')
-        if not delayChangesView._mayAccessDelayChangesHistory(adviceId):
+        advice_uid = self.request.get('advice')
+        if not delayChangesView._mayAccessDelayChangesHistory(advice_uid):
             raise Unauthorized
-        return self.context.adviceIndex[adviceId]['delay_changes_history']
+        return self.context.adviceIndex[advice_uid]['delay_changes_history']

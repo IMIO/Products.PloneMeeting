@@ -1,5 +1,7 @@
 # encoding: utf-8
 
+from collective.contact.plonegroup.utils import get_organization
+from collective.contact.plonegroup.utils import get_organizations
 from collective.documentgenerator.content.vocabulary import ExistingPODTemplateFactory
 from collective.documentgenerator.content.vocabulary import PortalTypesVocabularyFactory
 from collective.documentgenerator.content.vocabulary import StyleTemplatesVocabularyFactory
@@ -20,8 +22,8 @@ from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
-from Products.PloneMeeting.indexes import DELAYAWARE_REAL_GROUP_ID_PATTERN
-from Products.PloneMeeting.indexes import REAL_GROUP_ID_PATTERN
+from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
+from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
 from zope.component.hooks import getSite
 from zope.globalrequest import getRequest
 from zope.i18n import translate
@@ -142,29 +144,29 @@ class ItemProposingGroupsVocabulary(object):
     @ram.cache(__call___cachekey)
     def __call__(self, context):
         """ """
-        tool = api.portal.get_tool('portal_plonemeeting')
-        groups = tool.getMeetingGroups(onlyActive=False, caching=False)
-        activeGroups = [group for group in groups if group.queryState() == 'active']
-        notActiveGroups = [group for group in groups if not group.queryState() == 'active']
+        active_orgs = get_organizations(only_selected=True)
+        not_active_orgs = [org for org in get_organizations(only_selected=False)
+                           if org not in active_orgs]
         res_active = []
-        for group in activeGroups:
+        for active_org in active_orgs:
             res_active.append(
-                SimpleTerm(group.getId(),
-                           group.getId(),
-                           safe_unicode(group.Title())
+                SimpleTerm(active_org.UID(),
+                           active_org.UID(),
+                           safe_unicode(active_org.get_full_title(first_index=1))
                            )
             )
         res = sorted(res_active, key=attrgetter('title'))
 
         res_not_active = []
         request = getattr(context, 'REQUEST', getRequest())
-        for group in notActiveGroups:
+        for not_active_org in not_active_orgs:
             res_not_active.append(
-                SimpleTerm(group.getId(),
-                           group.getId(),
+                SimpleTerm(not_active_org.UID(),
+                           not_active_org.UID(),
                            translate('${element_title} (Inactive)',
                                      domain='PloneMeeting',
-                                     mapping={'element_title': safe_unicode(group.Title())},
+                                     mapping={'element_title': safe_unicode(
+                                        not_active_org.get_full_title(first_index=1))},
                                      context=request)
                            )
             )
@@ -180,7 +182,8 @@ class ItemProposingGroupsForFacetedFilterVocabulary(object):
 
     def __call___cachekey(method, self, context):
         '''cachekey method for self.__call__.'''
-        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.proposinggroupsforfacetedfiltervocabulary')
+        date = get_cachekey_volatile(
+            'Products.PloneMeeting.vocabularies.proposinggroupsforfacetedfiltervocabulary')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         return date, cfg
@@ -190,32 +193,34 @@ class ItemProposingGroupsForFacetedFilterVocabulary(object):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        groups = tool.getMeetingGroups(onlyActive=False, caching=False)
-        activeGroups = [group for group in groups if group.queryState() == 'active']
-        notActiveGroups = [group for group in groups if not group.queryState() == 'active']
+        active_orgs = get_organizations(only_selected=True)
+        not_active_orgs = [org for org in get_organizations(only_selected=False)
+                           if org not in active_orgs]
+        res_active = []
         groupsToHide = cfg.getGroupsHiddenInDashboardFilter()
         res_active = []
-        for group in activeGroups:
-            group_id = group.getId()
-            if not groupsToHide or group_id not in groupsToHide:
+        for active_org in active_orgs:
+            org_uid = active_org.UID()
+            if not groupsToHide or org_uid not in groupsToHide:
                 res_active.append(
-                    SimpleTerm(group_id,
-                               group_id,
-                               safe_unicode(group.Title())
+                    SimpleTerm(org_uid,
+                               org_uid,
+                               safe_unicode(active_org.get_full_title(first_index=1))
                                )
                 )
         res = sorted(res_active, key=attrgetter('title'))
 
         res_not_active = []
-        for group in notActiveGroups:
-            group_id = group.getId()
-            if not groupsToHide or group_id not in groupsToHide:
+        for not_active_org in not_active_orgs:
+            org_uid = not_active_org.UID()
+            if not groupsToHide or org_uid not in groupsToHide:
                 res_not_active.append(
-                    SimpleTerm(group_id,
-                               group_id,
+                    SimpleTerm(org_uid,
+                               org_uid,
                                translate('${element_title} (Inactive)',
                                          domain='PloneMeeting',
-                                         mapping={'element_title': safe_unicode(group.Title())},
+                                         mapping={'element_title': safe_unicode(
+                                            not_active_org.get_full_title(first_index=1))},
                                          context=context.REQUEST)
                                )
                 )
@@ -237,18 +242,17 @@ class GroupsInChargeVocabulary(object):
     @ram.cache(__call___cachekey)
     def __call__(self, context):
         """ """
-        tool = api.portal.get_tool('portal_plonemeeting')
-        groups = tool.getMeetingGroups(onlyActive=False, caching=False)
+        orgs = get_organizations(only_selected=False)
         res = []
-        for group in groups:
-            for group_in_charge_id in group.getGroupsInCharge():
+        for org in orgs:
+            for group_in_charge_uid in org.groups_in_charge:
                 # manage duplicates
-                group_in_charge = tool.get(group_in_charge_id)
+                group_in_charge = get_organization(group_in_charge_uid)
                 if group_in_charge and group_in_charge not in res:
                     res.append(group_in_charge)
-        res = [SimpleTerm(gic.getId(),
-                          gic.getId(),
-                          safe_unicode(gic.Title()))
+        res = [SimpleTerm(gic.UID(),
+                          gic.UID(),
+                          safe_unicode(gic.get_full_title(first_index=1)))
                for gic in res]
         res = sorted(res, key=attrgetter('title'))
         return SimpleVocabulary(res)
@@ -268,13 +272,13 @@ class ItemProposingGroupAcronymsVocabulary(object):
     @ram.cache(__call___cachekey)
     def __call__(self, context):
         """ """
-        tool = api.portal.get_tool('portal_plonemeeting')
-        groups = tool.getMeetingGroups(onlyActive=False, caching=False)
+        orgs = get_organizations(only_selected=False)
         res = []
-        for group in groups:
-            res.append(SimpleTerm(group.getId(),
-                                  group.getId(),
-                                  safe_unicode(group.getAcronym())
+        for org in orgs:
+            org_uid = org.UID()
+            res.append(SimpleTerm(org_uid,
+                                  org_uid,
+                                  safe_unicode(org.acronym)
                                   )
                        )
         res = sorted(res, key=attrgetter('title'))
@@ -424,28 +428,33 @@ MeetingDatesVocabularyFactory = MeetingDatesVocabulary()
 class AskedAdvicesVocabulary(object):
     implements(IVocabularyFactory)
 
-    def _getAdvisers(self):
+    def _getAdvisers(self, active=True):
         """ """
         res = []
         # customAdvisers
         customAdvisers = self.cfg and self.cfg.getCustomAdvisers() or []
         for customAdviser in customAdvisers:
+            if (active and customAdviser['for_item_created_until']) or \
+               (not active and not customAdviser['for_item_created_until']):
+                continue
             if customAdviser['delay']:
-                # build using DELAYAWARE_REAL_GROUP_ID_PATTERN
-                res.append(DELAYAWARE_REAL_GROUP_ID_PATTERN.format(customAdviser['row_id'],
-                                                                   customAdviser['group']))
+                # build using DELAYAWARE_ROW_ID_PATTERN
+                res.append(DELAYAWARE_ROW_ID_PATTERN.format(customAdviser['row_id']))
             else:
-                # build using REAL_GROUP_ID_PATTERN
-                res.append(REAL_GROUP_ID_PATTERN.format(customAdviser['group']))
+                # build using REAL_ORG_UID_PATTERN
+                res.append(REAL_ORG_UID_PATTERN.format(customAdviser['org']))
 
         # classic advisers
-        for mGroup in self.tool.getMeetingGroups(caching=False):
-            formatted = REAL_GROUP_ID_PATTERN.format(mGroup.getId())
+        orgs = get_organizations(only_selected=True)
+        if not active:
+            orgs = [org for org in get_organizations(only_selected=False)
+                    if org not in orgs]
+        for org in orgs:
+            formatted = REAL_ORG_UID_PATTERN.format(org.UID())
             if formatted not in res:
-                res.append(REAL_GROUP_ID_PATTERN.format(mGroup.getId()))
-        # remove duplicates, it can be the case when several custom advisers
-        # not delay aware are defined for the same group
-        return list(set(res))
+                res.append(REAL_ORG_UID_PATTERN.format(org.UID()))
+
+        return res
 
     def __call___cachekey(method, self, context):
         '''cachekey method for self.__call__.'''
@@ -453,6 +462,38 @@ class AskedAdvicesVocabulary(object):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         return date, cfg
+
+    def adviser_term_title(self, adviser):
+        """ """
+        termTitle = None
+        if adviser.startswith(REAL_ORG_UID_PATTERN.format('')):
+            org_uid = adviser.split(REAL_ORG_UID_PATTERN.format(''))[-1]
+            org = get_organization(org_uid)
+            termTitle = org.get_full_title()
+        elif adviser.startswith(DELAYAWARE_ROW_ID_PATTERN.format('')):
+            row_id = adviser.split(DELAYAWARE_ROW_ID_PATTERN.format(''))[-1]
+            delayAwareAdviser = self.cfg._dataForCustomAdviserRowId(row_id)
+            delay = safe_unicode(delayAwareAdviser['delay'])
+            delay_label = safe_unicode(delayAwareAdviser['delay_label'])
+            org_uid = delayAwareAdviser['org']
+            org = get_organization(org_uid)
+            org_title = org.get_full_title()
+            if delay_label:
+                termTitle = translate('advice_delay_with_label',
+                                      domain='PloneMeeting',
+                                      mapping={'org_title': org_title,
+                                               'delay': delay,
+                                               'delay_label': delay_label},
+                                      default='${group_name} - ${delay} day(s) (${delay_label})',
+                                      context=self.request)
+            else:
+                termTitle = translate('advice_delay_without_label',
+                                      domain='PloneMeeting',
+                                      mapping={'org_title': org_title,
+                                               'delay': delay},
+                                      default='${group_name} - ${delay} day(s)',
+                                      context=self.request)
+        return termTitle
 
     @ram.cache(__call___cachekey)
     def __call__(self, context):
@@ -485,39 +526,33 @@ class AskedAdvicesVocabulary(object):
         except:
             return SimpleVocabulary(res)
 
-        advisers = self._getAdvisers()
-        for adviser in advisers:
-            termTitle = None
-            if adviser.startswith(REAL_GROUP_ID_PATTERN.format('')):
-                termTitle = getattr(self.tool, adviser.split(REAL_GROUP_ID_PATTERN.format(''))[-1]).getName()
-            elif adviser.startswith(DELAYAWARE_REAL_GROUP_ID_PATTERN.format('')):
-                row_id = adviser.split(DELAYAWARE_REAL_GROUP_ID_PATTERN.format(''))[-1]
-                delayAwareAdviser = self.cfg._dataForCustomAdviserRowId(row_id)
-                delay = safe_unicode(delayAwareAdviser['delay'])
-                delay_label = safe_unicode(delayAwareAdviser['delay_label'])
-                group_name = safe_unicode(getattr(self.tool, delayAwareAdviser['group']).getName())
-                if delay_label:
-                    termTitle = translate('advice_delay_with_label',
-                                          domain='PloneMeeting',
-                                          mapping={'group_name': group_name,
-                                                   'delay': delay,
-                                                   'delay_label': delay_label},
-                                          default='${group_name} - ${delay} day(s) (${delay_label})',
-                                          context=context.REQUEST).encode('utf-8')
-                else:
-                    termTitle = translate('advice_delay_without_label',
-                                          domain='PloneMeeting',
-                                          mapping={'group_name': group_name,
-                                                   'delay': delay},
-                                          default='${group_name} - ${delay} day(s)',
-                                          context=context.REQUEST).encode('utf-8')
-
-            if termTitle:
-                res.append(SimpleTerm(adviser,
-                                      adviser,
-                                      safe_unicode(termTitle))
-                           )
+        self.context = context
+        self.request = context.REQUEST
+        # remove duplicates, it can be the case when several custom advisers
+        # not delay aware are defined for the same group
+        not_active_advisers = self._getAdvisers(active=False)
+        active_advisers = [adv for adv in self._getAdvisers() if adv not in not_active_advisers]
+        for adviser in active_advisers:
+            termTitle = self.adviser_term_title(adviser)
+            res.append(SimpleTerm(adviser,
+                                  adviser,
+                                  safe_unicode(termTitle)))
         res = sorted(res, key=attrgetter('title'))
+
+        res_not_active = []
+        for adviser in not_active_advisers:
+            termTitle = self.adviser_term_title(adviser)
+            termTitle = translate(
+                u'${element_title} (Inactive)',
+                domain='PloneMeeting',
+                mapping={'element_title': termTitle},
+                context=context.REQUEST)
+            res_not_active.append(
+                SimpleTerm(adviser,
+                           adviser,
+                           safe_unicode(termTitle)))
+
+        res = res + sorted(res_not_active, key=attrgetter('title'))
         return SimpleVocabulary(res)
 
 
@@ -1094,7 +1129,7 @@ class FTWLabelsVocabulary(object):
 FTWLabelsVocabularyFactory = FTWLabelsVocabulary()
 
 
-class PositionUsagesVocabulary(object):
+class HeldPositionUsagesVocabulary(object):
     """ """
     implements(IVocabularyFactory)
 
@@ -1105,10 +1140,10 @@ class PositionUsagesVocabulary(object):
         return SimpleVocabulary(res)
 
 
-PositionUsagesVocabularyFactory = PositionUsagesVocabulary()
+HeldPositionUsagesVocabularyFactory = HeldPositionUsagesVocabulary()
 
 
-class PositionDefaultsVocabulary(object):
+class HeldPositionDefaultsVocabulary(object):
     """ """
     implements(IVocabularyFactory)
 
@@ -1119,7 +1154,7 @@ class PositionDefaultsVocabulary(object):
         return SimpleVocabulary(res)
 
 
-PositionDefaultsVocabularyFactory = PositionDefaultsVocabulary()
+HeldPositionDefaultsVocabularyFactory = HeldPositionDefaultsVocabulary()
 
 
 class SignatureNumberVocabulary(object):
@@ -1129,10 +1164,60 @@ class SignatureNumberVocabulary(object):
     def __call__(self, context):
         res = []
         for signature_number in range(1, 11):
-            res.append(
-                SimpleTerm(str(signature_number), str(signature_number), str(signature_number)))
+            sign_num_str = str(signature_number)
+            res.append(SimpleTerm(sign_num_str, sign_num_str, sign_num_str))
         return SimpleVocabulary(res)
 
 
 SignatureNumberVocabularyFactory = SignatureNumberVocabulary()
+
+
+class ItemAllStatesVocabulary(object):
+    """ """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        tool = api.portal.get_tool('portal_plonemeeting')
+        res = []
+        for cfg in tool.getActiveConfigs():
+            cfgItemStates = cfg.listStates('Item')
+            cfgId = cfg.getId()
+            u_cfg_title = safe_unicode(cfg.Title(include_config_group=True))
+            # cfgItemStates is a list of tuple, ready to move to a DisplayList
+            for key, value in cfgItemStates:
+                # build a strong id
+                term_key = u"{0}__state__{1}".format(cfgId, key)
+                term_value = u"{0} - {1}".format(u_cfg_title, value)
+                res.append(
+                    SimpleTerm(term_key, term_key, term_value))
+
+        return SimpleVocabulary(res)
+
+ItemAllStatesVocabularyFactory = ItemAllStatesVocabulary()
+
+
+class KeepAccessToItemWhenAdviceIsGivenVocabulary(object):
+    """ """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        res = []
+        res.append(
+            SimpleTerm('', '', translate(
+                'use_meetingconfig_value',
+                domain='PloneMeeting',
+                context=context.REQUEST)))
+        res.append(
+            SimpleTerm('0', '0', translate(
+                'boolean_value_false',
+                domain='PloneMeeting',
+                context=context.REQUEST)))
+        res.append(
+            SimpleTerm('1', '1', translate(
+                'boolean_value_true',
+                domain='PloneMeeting',
+                context=context.REQUEST)))
+        return SimpleVocabulary(res)
+
+KeepAccessToItemWhenAdviceIsGivenVocabularyFactory = KeepAccessToItemWhenAdviceIsGivenVocabulary()
 

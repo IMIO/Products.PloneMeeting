@@ -23,6 +23,7 @@
 #
 
 from AccessControl import Unauthorized
+from collective.contact.plonegroup.utils import get_organization
 from imio.actionspanel.interfaces import IContentDeletable
 from imio.history.browser.views import IHVersionPreviewView
 from plone import api
@@ -71,14 +72,14 @@ class AdvicesIcons(BrowserView):
            - 'not_given' are in the addable advices;
            - 'hidden_during_redaction' or 'asked_again' are in the editable advices."""
 
-        userAdviserGroupIds = [group.getId() for group in self.tool.getGroupsForUser(suffixes=['advisers'])]
+        userAdviserOrgUids = [org.UID() for org in self.tool.get_orgs_for_user(suffixes=['advisers'])]
         advicesToWarn = {}
 
         def _updateAdvicesToWarn(adviceType):
             smaller_delay = 999
             # if we did not found an advice to warn for current user, maybe there is an advice
             # with delay to be given by another group, we show it too
-            for groupId, adviceInfo in self.context.adviceIndex.items():
+            for org_uid, adviceInfo in self.context.adviceIndex.items():
                 # find smaller delay
                 if (adviceInfo['type'] == adviceType or
                     (adviceType == 'hidden_during_redaction' and
@@ -87,7 +88,7 @@ class AdvicesIcons(BrowserView):
                      adviceInfo['hidden_during_redaction'] and not adviceInfo['advice_editable'])) and \
                    adviceInfo['delay'] and \
                    adviceInfo['delay_infos']['left_delay'] < smaller_delay:
-                    if groupId in userAdviserGroupIds:
+                    if org_uid in userAdviserOrgUids:
                         # determinate delay_icon to use
                         advicesToWarn[adviceType] = adviceInfo, delay_icon(True, adviceInfo)
                     # check if we already have a adviceToWarn, if user was adviser
@@ -138,15 +139,15 @@ class AdvicesIconsInfos(BrowserView):
         self.advisableGroups = self.context.getAdvicesGroupsInfosForUser()
         self.advicesByType = self.context.getAdvicesByType()
         self.adviceType = adviceType
-        self.userAdviserGroupIds = [group.getId() for group in
-                                    self.tool.getGroupsForUser(suffixes=['advisers'])]
+        self.userAdviserOrgUids = [org.UID() for org in
+                                   self.tool.get_orgs_for_user(suffixes=['advisers'])]
         return self.index()
 
     def showLinkToInherited(self, adviceIsInherited, adviceHolder):
         """ """
         return bool(adviceIsInherited and self.context._appendLinkedItem(adviceHolder, only_viewable=True))
 
-    def mayRemoveInheritedAdvice(self, adviceIsInherited, advice_id):
+    def mayRemoveInheritedAdvice(self, adviceIsInherited, advice_uid):
         """To remove an inherited advice, must be :
            - MeetingManager;
            - or adviser for p_advice_id group and current item in a itemAdviceEditStates review_state."""
@@ -155,9 +156,10 @@ class AdvicesIconsInfos(BrowserView):
             if self.tool.isManager(self.context) and self.context.mayQuickEdit('optionalAdvisers'):
                 res = True
             else:
+                org = get_organization(advice_uid)
                 if self.cfg.getInheritedAdviceRemoveableByAdviser() and \
-                   advice_id in self.userAdviserGroupIds and \
-                   self.context.queryState() in self.tool.get(advice_id).getItemAdviceEditStates(cfg=self.cfg):
+                   advice_uid in self.userAdviserOrgUids and \
+                   self.context.queryState() in org.get_item_advice_edit_states(cfg=self.cfg):
                     return True
         return res
 

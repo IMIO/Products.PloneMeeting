@@ -26,13 +26,10 @@ from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from Products.DataGridField import DataGridField
 from Products.DataGridField.Column import Column
 from Products.DataGridField.SelectColumn import SelectColumn
-from Products.PloneMeeting.config import PloneMeetingError
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import WriteRiskyConfig
-from Products.PloneMeeting.profiles import GroupDescriptor
 from Products.PloneMeeting.utils import computeCertifiedSignatures
 from Products.PloneMeeting.utils import createOrUpdatePloneGroup
-from Products.PloneMeeting.utils import get_all_suffixes
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getFieldContent
 from Products.PloneMeeting.utils import listifySignatures
@@ -45,8 +42,6 @@ import interfaces
 __author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
 <g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""
 __docformat__ = 'plaintext'
-
-defValues = GroupDescriptor.get()
 
 schema = Schema((
 
@@ -62,7 +57,6 @@ schema = Schema((
     ),
     LinesField(
         name='itemAdviceStates',
-        default=defValues.itemAdviceStates,
         widget=MultiSelectionWidget(
             description="ItemAdviceStates",
             description_msgid="group_item_advice_states_descr",
@@ -77,7 +71,6 @@ schema = Schema((
     ),
     LinesField(
         name='itemAdviceEditStates',
-        default=defValues.itemAdviceEditStates,
         widget=MultiSelectionWidget(
             description="ItemAdviceEditStates",
             description_msgid="group_item_advice_edit_states_descr",
@@ -92,7 +85,6 @@ schema = Schema((
     ),
     LinesField(
         name='itemAdviceViewStates',
-        default=defValues.itemAdviceViewStates,
         widget=MultiSelectionWidget(
             description="ItemAdviceViewStates",
             description_msgid="group_item_advice_view_states_descr",
@@ -117,12 +109,10 @@ schema = Schema((
         ),
         enforceVocabulary=True,
         vocabulary='listKeepAccessToItemWhenAdviceIsGiven',
-        default=defValues.keepAccessToItemWhenAdviceIsGiven,
         write_permission="PloneMeeting: Write risky config",
     ),
     StringField(
         name='asCopyGroupOn',
-        default=defValues.asCopyGroupOn,
         widget=StringField._properties['widget'](
             size=100,
             description="AsCopyGroupOn",
@@ -161,7 +151,6 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         validators=('isValidCertifiedSignatures',),
-        default=defValues.certifiedSignatures,
         allow_oddeven=True,
         write_permission="PloneMeeting: Write harmless config",
         columns=('signatureNumber', 'name', 'function', 'date_from', 'date_to'),
@@ -169,7 +158,6 @@ schema = Schema((
     ),
     LinesField(
         name='groupsInCharge',
-        default=defValues.groupsInCharge,
         widget=MultiSelectionWidget(
             description="GroupsInCharge",
             description_msgid="groups_in_charge_descr",
@@ -297,33 +285,6 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
            p_suffix.'''
         return '%s_%s' % (self.id, suffix)
 
-    def getPloneGroups(self, idsOnly=False, acl=False, suffixes=[]):
-        '''Returns the list of Plone groups tied to this MeetingGroup. If
-           p_acl is True, it returns True PAS groups. Else, it returns Plone
-           wrappers from portal_groups.
-           If some p_suffixes are defined, only these Plone groups are returned.'''
-        res = []
-        for suffix in get_all_suffixes(self.getId()):
-            if suffixes and suffix not in suffixes:
-                continue
-            groupId = self.getPloneGroupId(suffix)
-            if idsOnly:
-                res.append(groupId)
-            else:
-                if acl:
-                    group = self.acl_users.getGroupByName(groupId)
-                else:
-                    group = self.portal_groups.getGroupById(groupId)
-                res.append(group)
-        return res
-
-    def userPloneGroups(self, suffixes=[]):
-        """Return the Plone groups linked to this MeetingGroup
-           the currently connected user is in."""
-        ploneGroups = self.getPloneGroups(idsOnly=True, suffixes=suffixes)
-        tool = api.portal.get_tool('portal_plonemeeting')
-        return list(set(ploneGroups).intersection(set(tool.getPloneGroupsForUser())))
-
     def getOrder(self, associatedGroupIds=None, onlyActive=True):
         '''At what position am I among all the active groups ? If
            p_associatedGroupIds is not None or empty, this method must return
@@ -352,32 +313,14 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
     security.declarePrivate('at_post_create_script')
 
     def at_post_create_script(self):
-        '''Creates the corresponding Plone groups.
-           by default :
-           - a group for the creators;
-           - a group for the reviewers;
-           - a group for the observers;
-           - a group for the advisers.
-           but there could be other suffixes, check MEETING_GROUP_SUFFIXES.'''
-        # If a group with this id already exists, prevent creation from this
-        # group.
-        for groupSuffix in get_all_suffixes(self.getId()):
-            groupId = self.getPloneGroupId(groupSuffix)
-            ploneGroup = self.portal_groups.getGroupById(groupId)
-            if ploneGroup:
-                raise PloneMeetingError("You can't create this MeetingGroup "
-                                        "because a Plone groupe having id "
-                                        "'%s' already exists." % groupId)
-        self._createOrUpdatePloneGroupForAllSuffixes()
-        self._invalidateCachedVocabularies()
-        self.adapted().onEdit(isCreated=True)  # Call product-specific code
+        ''' '''
+        pass
 
     security.declarePrivate('at_post_edit_script')
 
     def at_post_edit_script(self):
-        self._createOrUpdatePloneGroupForAllSuffixes()
-        self._invalidateCachedVocabularies()
-        self.adapted().onEdit(isCreated=False)
+        """ """
+        pass
 
     def _invalidateCachedVocabularies(self):
         """Clean cache for vocabularies using MeetingGroups."""
@@ -386,11 +329,6 @@ class MeetingGroup(BaseContent, BrowserDefaultMixin):
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupsforfacetedfiltervocabulary")
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.groupsinchargevocabulary")
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.askedadvicesvocabulary")
-
-    def _createOrUpdatePloneGroupForAllSuffixes(self):
-        """ """
-        for groupSuffix in get_all_suffixes(self.getId()):
-            self._createOrUpdatePloneGroup(groupSuffix)
 
     def _createOrUpdatePloneGroup(self, groupSuffix):
         '''This will create the PloneGroup that corresponds to me

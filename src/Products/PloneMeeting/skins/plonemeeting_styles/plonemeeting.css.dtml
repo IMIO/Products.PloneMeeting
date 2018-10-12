@@ -1479,13 +1479,6 @@ div.customAdviceMessage {
     margin-bottom: 0.5em;
 }
 
-.tooltip.pb-ajax {
-    padding: 1em;
-    width: 500px;
-    box-shadow: 0px 0px 5px 5px rgba(0,0,0,0.2);
-    /* when displaying group users, force font-weight to normal or it is displayed bold */
-    font-weight: normal;
-}
 span.no_users {
     font-style: italic;
 }
@@ -1580,9 +1573,10 @@ div.grouped-configs {
     height: 6px;
 }
 
-#content span.help-doc:before {
+#content span.help-doc {
    border-bottom: 1px dotted;
    padding-bottom: 2px;
+   cursor: pointer;
 }
 
 /* meeting_users table on meeting_edit */
@@ -1643,7 +1637,7 @@ table.listing tbody tr.even.dragging td {
    color: red;
 }
 
-.pmHelp {
+#content span.pmHelp {
    cursor: help;
 }
 
@@ -1722,6 +1716,39 @@ div.collapsible {
     font-family: "Font Awesome 5 Free";
     content: "\f146";
 }
+
+/* hide app_parameters for plonegroup root organization */
+body:not([class*='subsection-plonegroup-organization-']).template-view div:not([class^='tooltip']) fieldset#form-groups-app_parameters,
+body:not([class*='subsection-plonegroup-organization-']).template-edit a#fieldsetlegend-app_parameters {
+   display: none;
+}
+
+div.organization_level:not([class*='organization_level_0']),
+div.config_sub_categories {
+    margin-left: 1.5em;
+    margin-top: 0.5em;
+}
+div[class*='organization_level_']:not([class*='organization_level_0']) table,
+div.config_sub_categories table {
+   border-left: 5px solid grey;
+}
+
+/* highlight organizations not selectable in plonegroup */
+div.highlight.selectable_for_plonegroup_false label,
+div.highlight.selectable_for_plonegroup_false div span {
+   color: red;
+}
+
+/* highlight disabled values in red in faceted filters */
+#faceted-form fieldset.widget-fieldset label[title*="(Désactivé)"] {
+    color: red;
+}
+
+/* increase FontAwesome base size when parent is using discreet */
+.discreet .fa, .fas {
+    font-size: 110%;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */

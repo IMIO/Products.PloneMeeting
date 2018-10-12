@@ -11,6 +11,7 @@
   <include package="Products.PasswordStrength" />
   <include package="collective.ckeditor"/>
   <include package="collective.contact.core"/>
+  <include package="collective.contact.plonegroup"/>
   <include package="collective.documentviewer"/>
   <include package="collective.datagridcolumns"/>
   <include package="collective.eeafaceted.collectionwidget"/>
@@ -52,6 +53,8 @@
               title="PloneMeeting: Add annex"/>
   <permission id="PloneMeeting.AddAnnexDecision"
               title="PloneMeeting: Add annexDecision"/>
+  <permission id="PloneMeeting.manage_internal_organization_fields"
+              title="PloneMeeting: Manage internal organization fields"/>
 
   <adapter for=".interfaces.IMeetingItem"
            factory=".MeetingItem.MeetingItemWorkflowConditions"
@@ -148,6 +151,8 @@
            provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
            name="decided-items" />
 
+  <adapter factory=".validators.DXCertifiedSignaturesValidator" />
+
   <!-- IContentDeletable adapter override for PloneMeeting -->
   <adapter for="imio.annex.content.annex.IAnnex"
            factory=".adapters.AnnexContentDeletableAdapter"
@@ -160,6 +165,9 @@
            provides="imio.actionspanel.interfaces.IContentDeletable" />
   <adapter for="Products.PloneMeeting.interfaces.IMeetingItem"
            factory=".adapters.MeetingItemContentDeletableAdapter"
+           provides="imio.actionspanel.interfaces.IContentDeletable" />
+  <adapter for="Products.PloneMeeting.content.organization.IPMOrganization"
+           factory=".adapters.OrgContentDeletableAdapter"
            provides="imio.actionspanel.interfaces.IContentDeletable" />
 
   <!-- Indexes -->
@@ -305,6 +313,9 @@
     <implements interface="Products.PloneMeeting.interfaces.IConfigElement" />
   </class>
   <class class="collective.iconifiedcategory.content.subcategory.Subcategory">
+    <implements interface="Products.PloneMeeting.interfaces.IConfigElement" />
+  </class>
+  <class class="collective.contact.core.content.organization.Organization">
     <implements interface="Products.PloneMeeting.interfaces.IConfigElement" />
   </class>
 

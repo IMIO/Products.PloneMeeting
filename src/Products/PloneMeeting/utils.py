@@ -24,6 +24,8 @@ from AccessControl import ClassSecurityInfo
 from AccessControl.Permission import Permission
 from App.class_init import InitializeClass
 from appy.shared.diff import HtmlDiff
+from collective.contact.plonegroup.utils import get_own_organization
+from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.excelexport.exportables.dexterityfields import get_exportable_for_fieldname
 from collective.iconifiedcategory.interfaces import IIconifiedInfos
 from DateTime import DateTime
@@ -382,7 +384,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
     if userInfo and userInfo.getProperty('fullname'):
         userName = safe_unicode(userInfo.getProperty('fullname'))
     # Compute list of MeetingGroups for this user
-    userGroups = ', '.join([g.Title() for g in tool.getGroupsForUser()])
+    userGroups = ', '.join([g.Title() for g in tool.get_orgs_for_user()])
     # Create the message parts
     d = 'PloneMeeting'
     portal = api.portal.get()
@@ -1405,14 +1407,6 @@ def getTransitionToReachState(obj, state):
     return res
 
 
-def get_all_suffixes(grp_id):
-    # import EXTRA_ADVICE_SUFFIXES and MEETING_GROUP_SUFFIXES here
-    # as it is monkeypatched by custom profiles
-    from Products.PloneMeeting.config import EXTRA_GROUP_SUFFIXES
-    from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
-    return MEETING_GROUP_SUFFIXES + EXTRA_GROUP_SUFFIXES.get(grp_id, [])
-
-
 def findMeetingAdvicePortalType(context):
     """ """
     tool = api.portal.get_tool('portal_plonemeeting')
@@ -1566,6 +1560,20 @@ def plain_render(obj, fieldname):
     request = getRequest()
     exportable = get_exportable_for_fieldname(obj, fieldname, request)
     return exportable.render_value(obj)
+
+
+def org_id_to_uid(org_info):
+    """Returns the corresponding org based value for given org_info based value.
+       'developers', will return 'orguid'.
+       'developers_creators' will return 'orguid_creators'."""
+    own_org = get_own_organization()
+    if '_' in org_info:
+        org_path, suffix = org_info.split('_')
+        org = own_org.restrictedTraverse(org_path.encode('utf-8'))
+        return get_plone_group_id(org.UID(), suffix)
+    else:
+        org = own_org.restrictedTraverse(org_info.encode('utf-8'))
+        return org.UID()
 
 
 class AdvicesUpdatedEvent(ObjectEvent):

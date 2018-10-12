@@ -22,6 +22,8 @@
 # 02110-1301, USA.
 #
 
+from collective.contact.plonegroup.utils import get_organizations
+from collective.contact.plonegroup.utils import get_plone_groups
 from DateTime import DateTime
 from plone import api
 from PloneMeetingTestCase import pm_logger
@@ -301,7 +303,7 @@ class testPerformances(PloneMeetingTestCase):
         for item in meeting.getItems():
             item.getItemNumber(relativeTo='meetingConfig')
 
-    def _setupForMeetingGroups(self, number_of_groups):
+    def _setupForOrgs(self, number_of_orgs):
         self.changeUser('admin')
         cfg = self.meetingConfig
         cfg2 = self.meetingConfig2
@@ -311,8 +313,10 @@ class testPerformances(PloneMeetingTestCase):
         cfg.setSelectableAdvisers(())
         cfg2.setSelectableCopyGroups(())
         cfg2.setSelectableAdvisers(())
-        for mGroup in self.tool.objectValues('MeetingGroup'):
-            for ploneGroup in mGroup.getPloneGroups():
+        orgs = get_organizations(only_selected=True)
+        for org in orgs:
+            self._select_organization(org.UID(), remove=True)
+            for ploneGroup in get_plone_groups(org.UID()):
                 for memberId in ploneGroup.getGroupMemberIds():
                     ploneGroup.removeMember(memberId)
         # remove items defined in the tool
@@ -320,84 +324,41 @@ class testPerformances(PloneMeetingTestCase):
         self._removeConfigObjectsFor(cfg2)
 
         # remove groups
-        ids_to_remove = []
-        for group in self.tool.objectValues('MeetingGroup'):
-            ids_to_remove.append(group.getId())
-        self.tool.manage_delObjects(ids=ids_to_remove)
+        ids_to_remove = self.own_org.objectIds()
+        self.own_org.manage_delObjects(ids=ids_to_remove)
         # create groups
-        for i in range(number_of_groups):
-            groupId = self.tool.invokeFactory('MeetingGroup', id=i, title='Group %d' % i)
-            group = getattr(self.tool, groupId)
-            group._at_creation_flag = False
-            group.at_post_create_script()
+        for i in range(number_of_orgs):
+            org = self.create('organization', id=i, title='Org %d' % i)
+            self._select_organization(org.UID())
 
-    def test_pm_GetMeetingGroupsCaching(self):
-        '''Test ToolPloneMeeting.getMeetingGroups caching.'''
-        # first test with 10 groups
-        self._setupForMeetingGroups(10)
-        pm_logger.info('getMeetingGroups called 1 time with %d activated groups.' % 10)
-        # first call, even when asking caching, it is not as never computed but it is cached
-        pm_logger.info('No caching.')
-        self._getMeetingGroupsOnTool(times=1, caching=True)
-        # second time, cached
-        pm_logger.info('Caching.')
-        self._getMeetingGroupsOnTool(times=1, caching=True)
-        # remove cache
-        self.cleanMemoize()
-        pm_logger.info('getMeetingGroups called 100 times with %d activated groups.' % 10)
-        pm_logger.info('No caching.')
-        self._getMeetingGroupsOnTool(times=100, caching=False)
-        # second time, cached
-        pm_logger.info('Caching.')
-        self._getMeetingGroupsOnTool(times=100, caching=True)
-        # remove cache
-        self.cleanMemoize()
-
-        # test with 100 groups
-        self._setupForMeetingGroups(100)
-        pm_logger.info('getMeetingGroups called 1 time with %d activated groups.' % 100)
-        # first call, even when asking caching, it is not as never computed but it is cached
-        pm_logger.info('No caching.')
-        self._getMeetingGroupsOnTool(times=1, caching=True)
-        # second time, cached
-        pm_logger.info('Caching.')
-        self._getMeetingGroupsOnTool(times=1, caching=True)
-        # remove cache
-        self.cleanMemoize()
-        pm_logger.info('getMeetingGroups called 100 times with %d activated groups.' % 100)
-        pm_logger.info('No caching.')
-        self._getMeetingGroupsOnTool(times=100, caching=False)
-        # second time, cached
-        pm_logger.info('Caching.')
-        self._getMeetingGroupsOnTool(times=100, caching=True)
-        # remove cache
-        self.cleanMemoize()
-
-        # test with 250 groups
-        self._setupForMeetingGroups(250)
-        pm_logger.info('getMeetingGroups called 1 time with %d activated groups.' % 250)
-        # first call, even when asking caching, it is not as never computed but it is cached
-        pm_logger.info('No caching.')
-        self._getMeetingGroupsOnTool(times=1, caching=True)
-        # second time, cached
-        pm_logger.info('Caching.')
-        self._getMeetingGroupsOnTool(times=1, caching=True)
-        # remove cache
-        self.cleanMemoize()
-        pm_logger.info('getMeetingGroups called 100 times with %d activated groups.' % 250)
-        pm_logger.info('No caching.')
-        self._getMeetingGroupsOnTool(times=100, caching=False)
-        # second time, cached
-        pm_logger.info('Caching.')
-        self._getMeetingGroupsOnTool(times=100, caching=True)
-        # remove cache
-        self.cleanMemoize()
+    def test_pm_get_organizations_caching(self):
+        '''Test collective.contact.plonegroup.utils.get_organizations caching.'''
+        for n in [10, 100, 250]:
+            # first test with 10 orgs
+            self._setupForOrgs(n)
+            pm_logger.info('get_organizations called 1 time with %d activated orgs.' % n)
+            # first call, even when asking caching, it is not as never computed but it is cached
+            pm_logger.info('No caching.')
+            self._get_organizations(times=1, caching=True)
+            # second time, cached
+            pm_logger.info('Caching.')
+            self._get_organizations(times=1, caching=True)
+            # remove cache
+            self.cleanMemoize()
+            pm_logger.info('get_organizations called 100 times with %d activated orgs.' % n)
+            pm_logger.info('No caching.')
+            self._get_organizations(times=100, caching=False)
+            # second time, cached
+            pm_logger.info('Caching.')
+            self._get_organizations(times=100, caching=True)
+            # remove cache
+            self.cleanMemoize()
 
     @timecall
-    def _getMeetingGroupsOnTool(self, times=1, caching=True):
+    def _get_organizations(self, times=1, caching=True):
         ''' '''
         for time in range(times):
-            self.tool.getMeetingGroups(notEmptySuffix='advisers', caching=caching)
+            get_organizations(not_empty_suffix='advisers', caching=caching)
 
     def test_pm_GetMeetingConfig(self):
         '''Test ToolPloneMeeting.getMeetingConfig method performances.

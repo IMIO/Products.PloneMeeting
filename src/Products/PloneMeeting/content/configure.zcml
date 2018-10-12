@@ -12,20 +12,18 @@
     <utility
       provides="zope.schema.interfaces.IVocabularyFactory"
       factory=".advice.AdviceGroupVocabulary"
-      name="Products.PloneMeeting.content.advice.advice_group_vocabulary"
-    />
+      name="Products.PloneMeeting.content.advice.advice_group_vocabulary" />
     <utility
       provides="zope.schema.interfaces.IVocabularyFactory"
       factory=".advice.AdviceTypeVocabulary"
-      name="Products.PloneMeeting.content.advice.advice_type_vocabulary"
-    />
+      name="Products.PloneMeeting.content.advice.advice_type_vocabulary" />
 
     <!-- Schema policies -->
     <utility factory=".advice.MeetingAdviceSchemaPolicy"
-             name="schema_policy_meetingadvice"
-    />
+             name="schema_policy_meetingadvice" />
     <utility factory=".held_position.PMHeldPositionSchemaPolicy"
-             name="schema_policy_pm_held_position"
-    />
+             name="schema_policy_pm_held_position" />
+    <utility factory=".organization.PMOrganizationSchemaPolicy"
+             name="schema_policy_pm_organization" />
 
 </configure>

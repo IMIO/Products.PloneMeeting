@@ -584,8 +584,8 @@ class testWFAdaptations(PloneMeetingTestCase):
             return
 
         waiting_advices_proposed_state = '{0}_waiting_advices'.format(self._stateMappingFor('proposed'))
-        self.tool.vendors.setItemAdviceStates(
-            ("{0}__state__{1}".format(cfg.getId(), waiting_advices_proposed_state),))
+        self.vendors.item_advice_states = ("{0}__state__{1}".format(
+            cfg.getId(), waiting_advices_proposed_state),)
 
         waiting_advices_removed_error = translate('wa_removed_waiting_advices_error',
                                                   domain='PloneMeeting',
@@ -595,7 +595,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         performWorkflowAdaptations(cfg, logger=pm_logger)
 
         item = self.create('MeetingItem')
-        item.setOptionalAdvisers(('vendors', ))
+        item.setOptionalAdvisers((self.vendors_uid, ))
         self.proposeItem(item)
         proposedState = item.queryState()
         self._setItemToWaitingAdvices(item,
@@ -905,10 +905,10 @@ class testWFAdaptations(PloneMeetingTestCase):
         # even if 'pmReviewerLevel2' is not in the _prereviewers group
         self.changeUser('pmReviewerLevel1')
         self.failUnless('prevalidate' in self.transitions(i1))
-        self.assertTrue('developers_prereviewers' in self.member.getGroups())
+        self.assertTrue(self.developers_prereviewers in self.member.getGroups())
         self.changeUser('pmReviewerLevel2')
         self.failUnless('prevalidate' in self.transitions(i1))
-        self.assertTrue('developers_prereviewers' not in self.member.getGroups())
+        self.assertTrue(self.developers_prereviewers not in self.member.getGroups())
         self.do(i1, 'prevalidate')
         self.do(i1, 'validate')
 
@@ -1910,7 +1910,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         # but another user that may see the item but not edit it may not see the decision
         cfg.setUseCopies(True)
         cfg.setItemCopyGroupsStates((item.queryState(), ))
-        item.setCopyGroups(('vendors_reviewers', ))
+        item.setCopyGroups((self.vendors_reviewers, ))
         item.updateLocalRoles()
         self.changeUser('pmReviewer2')
         self.assertTrue(self.hasPermission(View, item))
@@ -1980,14 +1980,14 @@ class testWFAdaptations(PloneMeetingTestCase):
                                    context=self.request),
                          advice_required_to_ask_advices)
         # ask an advice so transition is available
-        item.setOptionalAdvisers(('vendors', ))
+        item.setOptionalAdvisers((self.vendors_uid, ))
         item._update_after_edit()
         # still not available because no advice may be asked in state waiting_state_name
-        self.assertFalse(waiting_state_name in self.tool.vendors.getItemAdviceStates())
+        self.assertFalse(waiting_state_name in self.vendors.item_advice_states)
         self.assertFalse(waiting_transition_name in self.transitions(item))
 
         # do things work
-        self.tool.vendors.setItemAdviceStates(("{0}__state__{1}".format(cfg.getId(), waiting_state_name), ))
+        self.vendors.item_advice_states = ("{0}__state__{1}".format(cfg.getId(), waiting_state_name), )
         self.assertTrue(waiting_transition_name in self.transitions(item))
         self._setItemToWaitingAdvices(item, waiting_transition_name)
         self.assertEqual(item.queryState(), waiting_state_name)
@@ -2034,7 +2034,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         cfg.at_post_edit_script()
         waiting_advices_state = '{0}__or__prevalidated_waiting_advices'.format(
             self._stateMappingFor('proposed_first_level'))
-        self.tool.vendors.setItemAdviceStates(("{0}__state__{1}".format(cfg.getId(), waiting_advices_state), ))
+        self.vendors.item_advice_states = ("{0}__state__{1}".format(cfg.getId(), waiting_advices_state), )
 
         # by default it is linked to the 'proposed' state
         itemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
@@ -2057,7 +2057,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         # right, create an item and set it to 'proposed__or__prevalidated_waiting_advices'
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setOptionalAdvisers(('vendors', ))
+        item.setOptionalAdvisers((self.vendors_uid, ))
         item._update_after_edit()
         self._afterItemCreatedWaitingAdviceWithPrevalidation(item)
         self.proposeItem(item, first_level=True)
@@ -2118,12 +2118,12 @@ class testWFAdaptations(PloneMeetingTestCase):
         cfg.at_post_edit_script()
         waiting_advices_itemcreated_state = 'itemcreated_waiting_advices'
         waiting_advices_proposed_state = '{0}_waiting_advices'.format(self._stateMappingFor('proposed'))
-        self.tool.vendors.setItemAdviceStates(
-            ("{0}__state__{1}".format(cfg.getId(), waiting_advices_itemcreated_state),
-             "{0}__state__{1}".format(cfg.getId(), waiting_advices_proposed_state),))
+        self.vendors.item_advice_states = (
+            "{0}__state__{1}".format(cfg.getId(), waiting_advices_itemcreated_state),
+            "{0}__state__{1}".format(cfg.getId(), waiting_advices_proposed_state),)
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setOptionalAdvisers(('vendors', ))
+        item.setOptionalAdvisers((self.vendors_uid, ))
         item._update_after_edit()
         # from 'itemcreated'
         self.do(item, 'wait_advices_from_itemcreated')
@@ -2172,12 +2172,12 @@ class testWFAdaptations(PloneMeetingTestCase):
              'remove_modify_access': False},)
         cfg.setWorkflowAdaptations('waiting_advices')
         cfg.at_post_edit_script()
-        self.tool.vendors.setItemAdviceStates(("{0}__state__{1}".format(cfg.getId(),
-                                                                        'itemcreated_waiting_advices'), ))
+        self.vendors.item_advice_states = ("{0}__state__{1}".format(
+            cfg.getId(), 'itemcreated_waiting_advices'), )
 
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setOptionalAdvisers(('vendors', ))
+        item.setOptionalAdvisers((self.vendors_uid, ))
         item._update_after_edit()
         # from 'itemcreated'
         self._setItemToWaitingAdvices(item, 'wait_advices_from_itemcreated')
@@ -2281,25 +2281,31 @@ class testWFAdaptations(PloneMeetingTestCase):
             return
 
         self.changeUser('admin')
-        self.create('MeetingGroup', id='group1',  title='NewGroup1', acronym='N.G.1')
-        self.create('MeetingGroup', id='group2',  title='NewGroup2', acronym='N.G.2')
-        self.create('MeetingGroup', id='poweradvisers',  title='Power advisers', acronym='PA')
-        cfg.setSelectableAdvisers(('vendors', 'group1', 'group2', 'poweradvisers'))
-        self._addPrincipalToGroup('pmAdviser1', 'poweradvisers_advisers')
+        org1 = self.create('organization', id='org1',  title='NewOrg1', acronym='N.O.1')
+        org1_uid = org1.UID()
+        org2 = self.create('organization', id='org2',  title='NewOrg2', acronym='N.O.2')
+        org2_uid = org2.UID()
+        org3 = self.create('organization', id='poweradvisers',  title='Power advisers', acronym='PA')
+        org3_uid = org3.UID()
+        self._select_organization(org1_uid)
+        self._select_organization(org2_uid)
+        self._select_organization(org3_uid)
+        cfg.setSelectableAdvisers((self.vendors_uid, org1_uid, org2_uid, org3_uid))
+        self._addPrincipalToGroup('pmAdviser1', '{0}_advisers'.format(org3_uid))
         cfg.setCustomAdvisers(
             [{'row_id': 'unique_id_123',
-              'group': 'vendors',
+              'org': self.vendors_uid,
               'gives_auto_advice_on': '',
               'for_item_created_from': '2016/08/08',
               'delay': '5',
               'delay_label': ''},
              {'row_id': 'unique_id_456',
-              'group': 'group2',
+              'org': org2_uid,
               'gives_auto_advice_on': '',
               'for_item_created_from': '2016/08/08',
               'delay': '5',
               'delay_label': ''}, ])
-        cfg.setPowerAdvisersGroups(('poweradvisers', ))
+        cfg.setPowerAdvisersGroups((org3_uid, ))
         cfg.setItemPowerObserversStates(('itemcreated', ))
         cfg.setItemAdviceStates(('itemcreated', ))
         cfg.setItemAdviceEditStates(('itemcreated', ))
@@ -2312,28 +2318,30 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setDecision('<p>Decision</p>')
-        item.setOptionalAdvisers(('vendors', 'developers__rowid__unique_id_123',
-                                  'group2__rowid__unique_id_456', 'group1'))
+        item.setOptionalAdvisers((self.vendors_uid,
+                                  '{0}__rowid__unique_id_123'.format(self.developers_uid),
+                                  '{0}__rowid__unique_id_456'.format(org2_uid),
+                                  org1_uid))
         item._update_after_edit()
         # give advices
         self.changeUser('pmAdviser1')
         createContentInContainer(item,
                                  'meetingadvice',
-                                 **{'advice_group': 'developers',
+                                 **{'advice_group': self.developers_uid,
                                     'advice_type': u'positive',
                                     'advice_hide_during_redaction': False,
                                     'advice_comment': RichTextValue(u'My comment')})
         self.changeUser('pmReviewer2')
         createContentInContainer(item,
                                  'meetingadvice',
-                                 **{'advice_group': 'vendors',
+                                 **{'advice_group': self.vendors_uid,
                                     'advice_type': u'positive',
                                     'advice_hide_during_redaction': False,
                                     'advice_comment': RichTextValue(u'My comment')})
         self.changeUser('pmAdviser1')
         createContentInContainer(item,
                                  'meetingadvice',
-                                 **{'advice_group': 'poweradvisers',
+                                 **{'advice_group': org3_uid,
                                     'advice_type': u'positive',
                                     'advice_hide_during_redaction': False,
                                     'advice_comment': RichTextValue(u'My comment')})
@@ -2348,13 +2356,13 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertEqual(clonedItem.getPredecessor(), item)
         self.assertEqual(clonedItem.queryState(), 'validated')
         # optional and automatic given advices were inherited
-        self.assertTrue(clonedItem.adviceIsInherited('vendors'))
-        self.assertTrue(clonedItem.adviceIsInherited('developers'))
+        self.assertTrue(clonedItem.adviceIsInherited(self.vendors_uid))
+        self.assertTrue(clonedItem.adviceIsInherited(self.developers_uid))
         # optional and automatic advices that were not given are inherited
         # as well as the power adviser advice
-        self.assertTrue(clonedItem.adviceIsInherited('group1'))
-        self.assertTrue(clonedItem.adviceIsInherited('group2'))
-        self.assertTrue(clonedItem.adviceIsInherited('poweradvisers'))
+        self.assertTrue(clonedItem.adviceIsInherited(org1_uid))
+        self.assertTrue(clonedItem.adviceIsInherited(org2_uid))
+        self.assertTrue(clonedItem.adviceIsInherited(org3_uid))
 
     def test_pm_WFA_postpone_next_meeting_advices_inherited(self):
         '''When an item is set to 'postponed_next_meeting', cloned item inherits from every advices.'''

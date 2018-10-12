@@ -24,6 +24,7 @@
 
 from AccessControl import Unauthorized
 from collections import OrderedDict
+from collective.contact.plonegroup.utils import get_organization
 from collective.eeafaceted.collectionwidget.utils import _get_criterion
 from collective.iconifiedcategory.utils import get_category_object
 from DateTime import DateTime
@@ -83,7 +84,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # the validate method returns a translated message if the validation failed
         # wrong date format, should be YYYY/MM/DD
         customAdvisers = [{'row_id': 'unique_id_123',
-                           'group': 'vendors',
+                           'org': self.vendors_uid,
                            # empty
                            'gives_auto_advice_on': '',
                            'for_item_created_from': '2012/01/01',
@@ -95,10 +96,10 @@ class testMeetingConfig(PloneMeetingTestCase):
                            'delay_label': '',
                            'available_on': '',
                            'is_linked_to_previous_row': '0', }, ]
-        groupName = getattr(self.tool, customAdvisers[0]['group']).Title()
+        org = get_organization(customAdvisers[0]['org'])
         empty_columns_msg = translate('custom_adviser_not_enough_columns_filled',
                                       domain='PloneMeeting',
-                                      mapping={'groupName': groupName},
+                                      mapping={'groupName': org.get_full_title()},
                                       context=self.portal.REQUEST)
         self.assertTrue(cfg.validate_customAdvisers(customAdvisers) == empty_columns_msg)
         # if the 'delay' column is filled, it validates
@@ -118,7 +119,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # DataGridField, this row is not saved
         # append something that should not validate
         customAdvisers.append({'row_id': '',
-                               'group': 'vendors',
+                               'org': self.vendors_uid,
                                # empty
                                'gives_auto_advice_on': '',
                                'for_item_created_from': '',
@@ -144,7 +145,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # the validate method returns a translated message if the validation failed
         # wrong date format, should be YYYY/MM/DD
         customAdvisers = [{'row_id': 'unique_id_123',
-                           'group': 'vendors',
+                           'org': self.vendors_uid,
                            'gives_auto_advice_on': '',
                            # wrong date format, should have been '2012/12/31'
                            'for_item_created_from': '2012/31/12',
@@ -155,10 +156,10 @@ class testMeetingConfig(PloneMeetingTestCase):
                            'delay_label': '',
                            'available_on': '',
                            'is_linked_to_previous_row': '0', }, ]
-        groupName = getattr(self.tool, customAdvisers[0]['group']).Title()
+        org = get_organization(customAdvisers[0]['org'])
         wrong_date_msg = translate('custom_adviser_wrong_date_format',
                                    domain='PloneMeeting',
-                                   mapping={'groupName': groupName},
+                                   mapping={'groupName': org.get_full_title()},
                                    context=self.portal.REQUEST)
         self.assertTrue(cfg.validate_customAdvisers(customAdvisers) == wrong_date_msg)
         # not a date, wrong format (YYYY/MM/DD) or extra blank are not valid dates
@@ -207,7 +208,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # the validate method returns a translated message if the validation failed
         # wrong format, should be empty or a digit
         customAdvisers = [{'row_id': 'unique_id_123',
-                           'group': 'vendors',
+                           'org': self.vendors_uid,
                            'gives_auto_advice_on': 'python:True',
                            'for_item_created_from': '2012/01/01',
                            'for_item_created_until': '',
@@ -218,10 +219,10 @@ class testMeetingConfig(PloneMeetingTestCase):
                            'delay_label': '',
                            'available_on': '',
                            'is_linked_to_previous_row': '0', }, ]
-        groupName = getattr(self.tool, customAdvisers[0]['group']).getName()
+        org = get_organization(customAdvisers[0]['org'])
         wrong_delay_msg = translate('custom_adviser_wrong_delay_format',
                                     domain='PloneMeeting',
-                                    mapping={'groupName': groupName},
+                                    mapping={'groupName': org.get_full_title()},
                                     context=self.portal.REQUEST)
         self.assertTrue(cfg.validate_customAdvisers(customAdvisers) == wrong_delay_msg)
         # if wrong syntax, it fails
@@ -241,7 +242,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # 'delay' must be higher or equals 'delay_left_alert'
         delay_higher_msg = translate('custom_adviser_delay_left_must_be_inferior_to_delay',
                                      domain='PloneMeeting',
-                                     mapping={'groupName': groupName},
+                                     mapping={'groupName': org.get_full_title()},
                                      context=self.portal.REQUEST)
         customAdvisers[0]['delay_left_alert'] = '12'
         self.assertTrue(cfg.validate_customAdvisers(customAdvisers) == delay_higher_msg)
@@ -253,7 +254,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # if 'delay_alert_left' is defined, 'delay' must be as well
         delay_required_msg = translate('custom_adviser_no_delay_left_if_no_delay',
                                        domain='PloneMeeting',
-                                       mapping={'groupName': groupName},
+                                       mapping={'groupName': org.get_full_title()},
                                        context=self.portal.REQUEST)
         customAdvisers[0]['delay'] = ''
         self.assertTrue(cfg.validate_customAdvisers(customAdvisers) == delay_required_msg)
@@ -269,7 +270,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.changeUser('admin')
         cfg = self.meetingConfig
         originalCustomAdvisers = {'row_id': 'unique_id_123',
-                                  'group': 'developers',
+                                  'org': self.developers_uid,
                                   'gives_auto_advice_on': 'item/getBudgetRelated',
                                   'for_item_created_from': '2012/01/01',
                                   'for_item_created_until': '',
@@ -283,7 +284,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.failIf(cfg.validate_customAdvisers([originalCustomAdvisers, ]))
         # change everything including logical data
         changedCustomAdvisers = {'row_id': 'unique_id_123',
-                                 'group': 'vendors',
+                                 'org': self.vendors_uid,
                                  'gives_auto_advice_on': 'not:item/getBudgetRelated',
                                  'for_item_created_from': '2013/01/01',
                                  'for_item_created_until': '2025/01/01',
@@ -303,13 +304,13 @@ class testMeetingConfig(PloneMeetingTestCase):
         item.setBudgetRelated(True)
         item._update_after_edit()
         # the automatic advice has been asked
-        self.assertEquals(item.adviceIndex['developers']['row_id'], 'unique_id_123')
+        self.assertEquals(item.adviceIndex[self.developers_uid]['row_id'], 'unique_id_123')
         # current config is still valid
         self.failIf(cfg.validate_customAdvisers([originalCustomAdvisers, ]))
         # now we can not change a logical field, aka
         # 'group', 'gives_auto_advice_on', 'for_item_created_from' and 'delay'
         logical_fields_wrong_values_mapping = {
-            'group': 'vendors',
+            'org': self.vendors_uid,
             'gives_auto_advice_on': 'not:item/getBudgetRelated',
             'for_item_created_from': '2000/01/01',
             'delay': '55', }
@@ -358,7 +359,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # even if the 'for_item_created_until' is now past
         customAdvisersCreatedUntilSetAndPast = \
             {'row_id': 'unique_id_123',
-             'group': 'vendors',
+             'org': self.vendors_uid,
              'gives_auto_advice_on': 'not:item/getBudgetRelated',
              'for_item_created_from': '2013/01/01',
              'for_item_created_until': '2013/01/15',
@@ -379,7 +380,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # the validate method returns a translated message if the validation failed
         # wrong date format, should be YYYY/MM/DD
         customAdvisers = [{'row_id': 'unique_id_123',
-                           'group': 'vendors',
+                           'org': self.vendors_uid,
                            # empty
                            'gives_auto_advice_on': 'python: item.getBudgetRelated()',
                            'for_item_created_from': '2012/01/01',
@@ -390,10 +391,10 @@ class testMeetingConfig(PloneMeetingTestCase):
                            'delay_label': '',
                            'available_on': 'python: item.getItemIsSigned()',
                            'is_linked_to_previous_row': '0', }, ]
-        groupName = getattr(self.tool, customAdvisers[0]['group']).Title()
+        org = get_organization(customAdvisers[0]['org'])
         available_on_msg = translate('custom_adviser_can_not_available_on_and_gives_auto_advice_on',
                                      domain='PloneMeeting',
-                                     mapping={'groupName': groupName},
+                                     mapping={'groupName': org.get_full_title()},
                                      context=self.portal.REQUEST)
         self.assertTrue(cfg.validate_customAdvisers(customAdvisers) == available_on_msg)
         # available_on can be filled if nothing is defined in the 'gives_auto_advice_on'
@@ -405,7 +406,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         cfg.setCustomAdvisers(customAdvisers)
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setOptionalAdvisers(('vendors__rowid__unique_id_123', ))
+        item.setOptionalAdvisers(('{0}__rowid__unique_id_123'.format(self.vendors_uid), ))
         item._update_after_edit()
         customAdvisers[0]['available_on'] = ''
         self.failIf(cfg.validate_customAdvisers(customAdvisers))
@@ -421,7 +422,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         cfg = self.meetingConfig
         # the validate method returns a translated message if the validation failed
         customAdvisers = [{'row_id': 'unique_id_123',
-                           'group': 'vendors',
+                           'org': self.vendors_uid,
                            'gives_auto_advice_on': 'python:True',
                            'for_item_created_from': '2012/12/31',
                            'for_item_created_until': '',
@@ -431,14 +432,14 @@ class testMeetingConfig(PloneMeetingTestCase):
                            'delay_label': '',
                            'available_on': '',
                            'is_linked_to_previous_row': '0', }, ]
-        groupName = getattr(self.tool, customAdvisers[0]['group']).Title()
+        org = get_organization(customAdvisers[0]['org'])
 
         # check that 'is_linked_to_previous_row'
         # can not be set on the first row
         first_row_msg = translate(
             'custom_adviser_first_row_can_not_be_linked_to_previous',
             domain='PloneMeeting',
-            mapping={'groupName': groupName},
+            mapping={'groupName': org.get_full_title()},
             context=self.portal.REQUEST)
         customAdvisers[0]['is_linked_to_previous_row'] = '1'
         self.assertEquals(cfg.validate_customAdvisers(customAdvisers),
@@ -448,7 +449,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # check that 'is_linked_to_previous_row'
         # can only be set on a delay-aware row
         customAdvisers.append({'row_id': 'unique_id_456',
-                               'group': 'vendors',
+                               'org': self.vendors_uid,
                                'gives_auto_advice_on': 'python:True',
                                'for_item_created_from': '2012/12/31',
                                'for_item_created_until': '',
@@ -464,7 +465,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         row_not_delay_aware_msg = translate(
             'custom_adviser_is_linked_to_previous_row_with_non_delay_aware_adviser',
             domain='PloneMeeting',
-            mapping={'groupName': groupName},
+            mapping={'groupName': org.get_full_title()},
             context=self.portal.REQUEST)
         self.assertEquals(cfg.validate_customAdvisers(customAdvisers),
                           row_not_delay_aware_msg)
@@ -477,7 +478,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         previous_row_not_delay_aware_msg = translate(
             'custom_adviser_is_linked_to_previous_row_with_non_delay_aware_adviser_previous_row',
             domain='PloneMeeting',
-            mapping={'groupName': groupName},
+            mapping={'groupName': org.get_full_title()},
             context=self.portal.REQUEST)
         self.assertEquals(cfg.validate_customAdvisers(customAdvisers),
                           previous_row_not_delay_aware_msg)
@@ -485,12 +486,12 @@ class testMeetingConfig(PloneMeetingTestCase):
         # check that if previous row use another group, it does not validate
         # make first row a delay-aware advice, then change group
         customAdvisers[0]['delay'] = '10'
-        customAdvisers[0]['group'] = 'developers'
-        self.assertTrue(not customAdvisers[0]['group'] == customAdvisers[1]['group'])
+        customAdvisers[0]['org'] = self.developers_uid
+        self.assertTrue(not customAdvisers[0]['org'] == customAdvisers[1]['org'])
         previous_row_not_same_group_msg = translate(
             'custom_adviser_can_not_is_linked_to_previous_row_with_other_group',
             domain='PloneMeeting',
-            mapping={'groupName': groupName},
+            mapping={'groupName': org.get_full_title()},
             context=self.portal.REQUEST)
         self.assertEquals(cfg.validate_customAdvisers(customAdvisers),
                           previous_row_not_same_group_msg)
@@ -498,7 +499,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # check that 'is_linked_to_previous_row' value can be changed
         # while NOT already in use by created items
         customAdvisers = [{'row_id': 'unique_id_123',
-                           'group': 'vendors',
+                           'org': self.vendors_uid,
                            'gives_auto_advice_on': '',
                            'for_item_created_from': '2012/12/31',
                            'for_item_created_until': '',
@@ -509,7 +510,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                            'available_on': '',
                            'is_linked_to_previous_row': '0', },
                           {'row_id': 'unique_id_456',
-                           'group': 'vendors',
+                           'org': self.vendors_uid,
                            'gives_auto_advice_on': '',
                            'for_item_created_from': '2012/12/31',
                            'for_item_created_until': '',
@@ -520,7 +521,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                            'available_on': '',
                            'is_linked_to_previous_row': '1'},
                           {'row_id': 'unique_id_789',
-                           'group': 'vendors',
+                           'org': self.vendors_uid,
                            'gives_auto_advice_on': '',
                            'for_item_created_from': '2012/12/31',
                            'for_item_created_until': '',
@@ -550,7 +551,7 @@ class testMeetingConfig(PloneMeetingTestCase):
            This validates the 'is_linked_to_previous_row' row when it is in use.'''
         cfg = self.meetingConfig
         customAdvisers = [{'row_id': 'unique_id_123',
-                           'group': 'vendors',
+                           'org': self.vendors_uid,
                            'gives_auto_advice_on': '',
                            'for_item_created_from': '2012/12/31',
                            'for_item_created_until': '',
@@ -561,7 +562,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                            'available_on': '',
                            'is_linked_to_previous_row': '0', },
                           {'row_id': 'unique_id_456',
-                           'group': 'vendors',
+                           'org': self.vendors_uid,
                            'gives_auto_advice_on': '',
                            'for_item_created_from': '2012/12/31',
                            'for_item_created_until': '',
@@ -572,7 +573,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                            'available_on': '',
                            'is_linked_to_previous_row': '1'},
                           {'row_id': 'unique_id_789',
-                           'group': 'vendors',
+                           'org': self.vendors_uid,
                            'gives_auto_advice_on': '',
                            'for_item_created_from': '2012/12/31',
                            'for_item_created_until': '',
@@ -583,7 +584,7 @@ class testMeetingConfig(PloneMeetingTestCase):
                            'available_on': '',
                            'is_linked_to_previous_row': '1'},
                           {'row_id': 'unique_id_1011',
-                           'group': 'vendors',
+                           'org': self.vendors_uid,
                            'gives_auto_advice_on': '',
                            'for_item_created_from': '2012/12/31',
                            'for_item_created_until': '',
@@ -599,7 +600,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         # create an item and ask advice relative to second row, row_id 'unique_id_456'
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setOptionalAdvisers(('vendors__rowid__unique_id_456', ))
+        item.setOptionalAdvisers(('{0}__rowid__unique_id_456'.format(self.vendors_uid), ))
         # 'is_linked_to_previous_row' can be changed if the row is used as optional adviser
         customAdvisers[1]['is_linked_to_previous_row'] = '0'
         self.failIf(cfg.validate_customAdvisers(cfg.getCustomAdvisers()))
@@ -618,7 +619,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         cfg.setCustomAdvisers(customAdvisers)
         item._update_after_edit()
         # advice linked to second row is asked
-        self.assertTrue(item.adviceIndex['vendors']['row_id'] == customAdvisers[2]['row_id'])
+        self.assertTrue(item.adviceIndex[self.vendors_uid]['row_id'] == customAdvisers[2]['row_id'])
         # current config still does validate correctly
         self.failIf(cfg.validate_customAdvisers(cfg.getCustomAdvisers()))
 
@@ -626,11 +627,12 @@ class testMeetingConfig(PloneMeetingTestCase):
         # "break" the chain of linked elements, it is not permitted if
         # one of the element of the chain is in use
         customAdvisers[1]['is_linked_to_previous_row'] = '0'
-        isolated_row_msg = translate('custom_adviser_can_not_change_is_linked_to_previous_row_isolating_used_rows',
-                                     domain='PloneMeeting',
-                                     mapping={'item_url': item.absolute_url(),
-                                              'adviser_group': 'Vendors'},
-                                     context=self.portal.REQUEST)
+        isolated_row_msg = translate(
+            'custom_adviser_can_not_change_is_linked_to_previous_row_isolating_used_rows',
+            domain='PloneMeeting',
+            mapping={'item_url': item.absolute_url(),
+                     'adviser_group': 'Vendors'},
+            context=self.portal.REQUEST)
         # we need to invalidate ram.cache of _findLinkedRowsFor
         cfg.setModificationDate(DateTime())
         self.assertEquals(cfg.validate_customAdvisers(customAdvisers),
@@ -1138,6 +1140,7 @@ class testMeetingConfig(PloneMeetingTestCase):
             self.tool.manage_delObjects([cfgId, ])
         can_not_delete_meetingconfig_meetingconfig = \
             translate('can_not_delete_meetingconfig_meetingconfig',
+                      mapping={'other_config_title': cfg.Title()},
                       domain="plone",
                       context=self.request)
         self.assertEquals(cm.exception.message, can_not_delete_meetingconfig_meetingconfig)

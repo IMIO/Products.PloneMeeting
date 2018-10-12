@@ -24,6 +24,7 @@
 
 from AccessControl import Unauthorized
 from DateTime import DateTime
+from collective.contact.plonegroup.utils import get_organizations
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from zope.component import queryUtility
@@ -292,29 +293,31 @@ class testFaceted(PloneMeetingTestCase):
         self.assertEquals(len(vocab2(pmFolder)), 3)
         self.assertEquals(len(vocab3(pmFolder)), 3)
 
-        # if we add/remove/edit a group, then the cache is cleaned
-        # add a group
-        newGroup = self.create('MeetingGroup', title='NewGroup', acronym='N.G.')
-        newGroupId = newGroup.getId()
+        # if we add/remove/edit an organozation, then the cache is cleaned
+        # add an organization
+        new_org = self.create('organization', title='NewOrg', acronym='N.O.')
+        new_org_uid = new_org.UID()
+        self._select_organization(new_org_uid)
         # cache was cleaned
         self.assertEquals(len(vocab1(pmFolder)), 4)
         self.assertEquals(len(vocab2(pmFolder)), 4)
         self.assertEquals(len(vocab3(pmFolder)), 4)
 
         # edit a group
-        self.assertEquals(vocab1(pmFolder).by_token[newGroupId].title, newGroup.Title())
-        self.assertEquals(vocab2(pmFolder).by_token[newGroupId].title, newGroup.getAcronym())
-        self.assertEquals(vocab3(pmFolder).by_token[newGroupId].title, newGroup.Title())
-        newGroup.setTitle(u'Modified title')
-        newGroup.setAcronym(u'Modified acronym')
-        newGroup.at_post_edit_script()
+        self.assertEquals(vocab1(pmFolder).by_token[new_org_uid].title, new_org.Title())
+        self.assertEquals(vocab2(pmFolder).by_token[new_org_uid].title, new_org.acronym)
+        self.assertEquals(vocab3(pmFolder).by_token[new_org_uid].title, new_org.Title())
+        new_org.title = u'Modified title'
+        new_org.acronym = u'Modified acronym'
+        notify(ObjectModifiedEvent(new_org))
         # cache was cleaned
-        self.assertEquals(vocab1(pmFolder).by_token[newGroupId].title, newGroup.Title())
-        self.assertEquals(vocab2(pmFolder).by_token[newGroupId].title, newGroup.getAcronym())
-        self.assertEquals(vocab3(pmFolder).by_token[newGroupId].title, newGroup.Title())
+        self.assertEquals(vocab1(pmFolder).by_token[new_org_uid].title, new_org.Title())
+        self.assertEquals(vocab2(pmFolder).by_token[new_org_uid].title, new_org.acronym)
+        self.assertEquals(vocab3(pmFolder).by_token[new_org_uid].title, new_org.Title())
 
-        # remove a group
-        self.portal.restrictedTraverse('@@delete_givenuid')(newGroup.UID())
+        # remove an organization (unselect it first)
+        self._select_organization(new_org_uid, remove=True)
+        self.portal.restrictedTraverse('@@delete_givenuid')(new_org_uid)
         # cache was cleaned
         self.assertEquals(len(vocab1(pmFolder)), 3)
         self.assertEquals(len(vocab2(pmFolder)), 3)
@@ -330,7 +333,7 @@ class testFaceted(PloneMeetingTestCase):
         self.assertEquals(
             [term.title for term in vocab3(pmFolder)],
             [u'Developers', u'Vendors', u'End users (Inactive)'])
-        self.do(self.tool.endUsers, 'activate')
+        self._select_organization(self.endUsers_uid)
         self.assertEquals(
             [term.title for term in vocab1(pmFolder)],
             [u'Developers', u'End users', u'Vendors'])
@@ -356,14 +359,14 @@ class testFaceted(PloneMeetingTestCase):
             [term.title for term in vocab(pmFolder)],
             [u'Developers', u'Vendors', u'End users (Inactive)'])
         # now define values in MeetingConfig.groupsHiddenInDashboardFilter
-        cfg.setGroupsHiddenInDashboardFilter(('vendors', ))
+        cfg.setGroupsHiddenInDashboardFilter((self.vendors_uid, ))
         cfg.at_post_edit_script()
         self.assertEquals(
             [term.title for term in vocab(pmFolder)],
             [u'Developers', u'End users (Inactive)'])
 
-        # activate "End users"
-        self.do(self.tool.endUsers, 'activate')
+        # select "End users"
+        self._select_organization(self.endUsers_uid)
         self.assertEquals(
             [term.title for term in vocab(pmFolder)],
             [u'Developers', u'End users'])
@@ -372,36 +375,38 @@ class testFaceted(PloneMeetingTestCase):
         '''Test the "Products.PloneMeeting.vocabularies.groupsinchargevocabulary"
            vocabulary, especially because it is cached.'''
         self.changeUser('siteadmin')
-        vendors = self.tool.vendors
-        developers = self.tool.developers
-        self.create('MeetingGroup', id='group1', title='Group 1', acronym='G1')
-        self.create('MeetingGroup', id='group2', title='Group 2', acronym='G2')
-        self.create('MeetingGroup', id='group3', title='Group 3', acronym='G3')
+        org1 = self.create('organization', id='org1', title='Org 1', acronym='Org1')
+        org1uid = org1.UID()
+        org2 = self.create('organization', id='org2', title='Org 2', acronym='Org2')
+        org2uid = org2.UID()
+        org3 = self.create('organization', id='org3', title='Org 3', acronym='Org3')
+        org3uid = org3.UID()
         vocab = queryUtility(IVocabularyFactory, "Products.PloneMeeting.vocabularies.groupsinchargevocabulary")
 
         # for now, no group in charge
         self.assertEqual(len(vocab(self.portal)), 0)
-        # define some group in charge, vocabulary is invalidated when a group is modified
-        vendors.setGroupsInCharge(('group1',))
-        vendors.at_post_edit_script()
-        developers.setGroupsInCharge(('group2',))
-        developers.at_post_edit_script()
-        self.assertEqual([term.title for term in vocab(self.portal)], ['Group 1', 'Group 2'])
+        # define some group in charge, vocabulary is invalidated when an org is modified
+        self.vendors.groups_in_charge = (org1uid,)
+        notify(ObjectModifiedEvent(self.vendors))
+        self.developers.groups_in_charge = (org2uid,)
+        notify(ObjectModifiedEvent(self.developers))
+        self.assertEqual([term.title for term in vocab(self.portal)], ['Org 1', 'Org 2'])
 
-        # create an new group with a groupInCharge directly
-        self.create('MeetingGroup', id='group4', title='Group 4',
-                    acronym='G4', groupsInCharge=('group3',))
-        self.assertEqual([term.title for term in vocab(self.portal)], ['Group 1', 'Group 2', 'Group 3'])
+        # create an new org with a groupInCharge directly
+        org4 = self.create('organization', id='org4', title='Org 4',
+                           acronym='Org4', groups_in_charge=(org3uid,))
+        org4_uid = org4.UID()
+        self.assertEqual([term.title for term in vocab(self.portal)], ['Org 1', 'Org 2', 'Org 3'])
 
         # change a group in charge
-        vendors.setGroupsInCharge(('group4',))
-        vendors.at_post_edit_script()
-        self.assertEqual([term.title for term in vocab(self.portal)], ['Group 2', 'Group 3', 'Group 4'])
+        self.vendors.groups_in_charge = (org4_uid,)
+        notify(ObjectModifiedEvent(self.vendors))
+        self.assertEqual([term.title for term in vocab(self.portal)], ['Org 2', 'Org 3', 'Org 4'])
 
         # unselect a group in charge
-        vendors.setGroupsInCharge(())
-        vendors.at_post_edit_script()
-        self.assertEqual([term.title for term in vocab(self.portal)], ['Group 2', 'Group 3'])
+        self.vendors.groups_in_charge = ()
+        notify(ObjectModifiedEvent(self.vendors))
+        self.assertEqual([term.title for term in vocab(self.portal)], ['Org 2', 'Org 3'])
 
     def test_pm_CreatorsVocabulary(self):
         '''Test the "Products.PloneMeeting.vocabularies.creatorsvocabulary"
@@ -454,25 +459,25 @@ class testFaceted(PloneMeetingTestCase):
         self.changeUser('siteadmin')
         cfg = self.meetingConfig
         customAdvisers = [{'row_id': 'unique_id_000',
-                           'group': 'developers',
+                           'org': self.developers_uid,
                            'gives_auto_advice_on': '',
                            'for_item_created_from': '2012/01/01',
                            'delay': '2',
                            'delay_label': ''},
                           {'row_id': 'unique_id_123',
-                           'group': 'vendors',
+                           'org': self.vendors_uid,
                            'gives_auto_advice_on': '',
                            'for_item_created_from': '2012/01/01',
                            'delay': '5',
                            'delay_label': ''},
                           {'row_id': 'unique_id_456',
-                           'group': 'vendors',
+                           'org': self.vendors_uid,
                            'gives_auto_advice_on': '',
                            'for_item_created_from': '2012/01/01',
                            'delay': '10',
                            'delay_label': ''},
                           {'row_id': 'unique_id_789',
-                           'group': 'vendors',
+                           'org': self.vendors_uid,
                            'gives_auto_advice_on': '',
                            'for_item_created_from': '2012/01/01',
                            'delay': '20',
@@ -483,53 +488,60 @@ class testFaceted(PloneMeetingTestCase):
         # we have 4 delay-aware advisers and 2 adviser groups selectable as optional
         delayAdvisers = [adviser for adviser in cfg.getCustomAdvisers() if adviser['delay']]
         self.assertEquals(len(delayAdvisers), 4)
-        self.assertEquals(len(self.tool.getMeetingGroups(notEmptySuffix='advisers')), 2)
-        # once get, it is cached
-        self.assertEquals(len(vocab(pmFolder)), 6)
+        self.assertEquals(len(get_organizations(not_empty_suffix='advisers')), 2)
+        # once get, it is cached, it include not selected values
+        self.assertEquals(len(vocab(pmFolder)), 7)
 
-        # if we add/remove/edit a group, then the cache is cleaned
-        # add a group
-        newGroup = self.create('MeetingGroup', title='NewGroup', acronym='N.G.')
-        newGroupId = newGroup.getId()
+        # if we add/remove/edit an organization, then the cache is cleaned
+        # add an organization
+        new_org = self.create('organization', title='New organization', acronym='N.G.')
+        new_org_uid = new_org.UID()
+        # cache was cleaned
+        self.assertEquals(len(vocab(pmFolder)), 8)
+        # edit an organization
+        new_org_term_id = 'real_org_uid__{0}'.format(new_org_uid)
+        self.assertEquals(vocab(pmFolder).by_token[new_org_term_id].title,
+                          'New organization (Inactive)')
+        new_org.title = u'Modified title'
+        notify(ObjectModifiedEvent(new_org))
+        # cache was cleaned
+        self.assertEquals(vocab(pmFolder).by_token[new_org_term_id].title,
+                          'Modified title (Inactive)')
+        # select the organization, cache is cleaned
+        self._select_organization(new_org_uid)
+        self.assertEquals(vocab(pmFolder).by_token[new_org_term_id].title,
+                          'Modified title')
+        # remove an organization
+        # first need to unselect it
+        self._select_organization(new_org_uid, remove=True)
+        self.portal.restrictedTraverse('@@delete_givenuid')(new_org_uid)
         # cache was cleaned
         self.assertEquals(len(vocab(pmFolder)), 7)
-        # edit a group
-        self.assertEquals(vocab(pmFolder).by_token['real_group_id__{0}'.format(newGroupId)].title,
-                          newGroup.Title())
-        newGroup.setTitle(u'Modified title')
-        newGroup.at_post_edit_script()
-        # cache was cleaned
-        self.assertEquals(vocab(pmFolder).by_token['real_group_id__{0}'.format(newGroupId)].title,
-                          newGroup.Title())
-        # remove a group
-        self.portal.restrictedTraverse('@@delete_givenuid')(newGroup.UID())
-        # cache was cleaned
-        self.assertEquals(len(vocab(pmFolder)), 6)
 
         # if we add/remove/edit a customAdviser, then the cache is cleaned
         # add a customAdviser
         customAdvisers.append({'row_id': 'unique_id_999',
-                               'group': 'vendors',
+                               'org': self.vendors_uid,
                                'gives_auto_advice_on': '',
                                'for_item_created_from': '2012/01/01',
                                'delay': '11',
                                'delay_label': 'New delay'})
         cfg.setCustomAdvisers(customAdvisers)
         cfg.at_post_edit_script()
-        self.assertEquals(len(vocab(pmFolder)), 7)
-        self.assertTrue('delay_real_group_id__unique_id_999' in vocab(pmFolder).by_token)
+        self.assertEquals(len(vocab(pmFolder)), 8)
+        self.assertTrue('delay_row_id__unique_id_999' in vocab(pmFolder).by_token)
         # delay is displayed in customAdviser title
-        self.assertTrue('11 day(s)' in vocab(pmFolder).by_token['delay_real_group_id__unique_id_999'].title)
+        self.assertTrue('11 day(s)' in vocab(pmFolder).by_token['delay_row_id__unique_id_999'].title)
         # edit a customAdviser
         customAdvisers[-1]['delay'] = '12'
         cfg.setCustomAdvisers(customAdvisers)
         cfg.at_post_edit_script()
-        self.assertTrue('12 day(s)' in vocab(pmFolder).by_token['delay_real_group_id__unique_id_999'].title)
+        self.assertTrue('12 day(s)' in vocab(pmFolder).by_token['delay_row_id__unique_id_999'].title)
         # remove a customAdviser
         customAdvisers = customAdvisers[:-1]
         cfg.setCustomAdvisers(customAdvisers)
         cfg.at_post_edit_script()
-        self.assertEquals(len(vocab(pmFolder)), 6)
+        self.assertEquals(len(vocab(pmFolder)), 7)
 
     def test_pm_AskedAdvicesVocabulariesMCAware(self):
         '''Test the "Products.PloneMeeting.vocabularies.askedadvicesvocabulary"
@@ -538,32 +550,32 @@ class testFaceted(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfg2 = self.meetingConfig2
         customAdvisers = [{'row_id': 'unique_id_000',
-                           'group': 'developers',
+                           'org': self.developers_uid,
                            'gives_auto_advice_on': '',
                            'for_item_created_from': '2012/01/01',
                            'delay': '2',
                            'delay_label': ''},
                           {'row_id': 'unique_id_123',
-                           'group': 'vendors',
+                           'org': self.vendors_uid,
                            'gives_auto_advice_on': '',
                            'for_item_created_from': '2012/01/01',
                            'delay': '5',
                            'delay_label': ''},
                           {'row_id': 'unique_id_456',
-                           'group': 'vendors',
+                           'org': self.vendors_uid,
                            'gives_auto_advice_on': '',
                            'for_item_created_from': '2012/01/01',
                            'delay': '10',
                            'delay_label': ''},
                           {'row_id': 'unique_id_789',
-                           'group': 'vendors',
+                           'org': self.vendors_uid,
                            'gives_auto_advice_on': '',
                            'for_item_created_from': '2012/01/01',
                            'delay': '20',
                            'delay_label': ''}]
         cfg.setCustomAdvisers(customAdvisers)
         customAdvisers = [{'row_id': 'unique_id_999',
-                           'group': 'developers',
+                           'org': self.developers_uid,
                            'gives_auto_advice_on': '',
                            'for_item_created_from': '2012/01/01',
                            'delay': '20',

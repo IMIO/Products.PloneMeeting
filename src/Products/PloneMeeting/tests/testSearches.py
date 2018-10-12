@@ -69,23 +69,23 @@ class testSearches(PloneMeetingTestCase):
         self.changeUser('pmManager')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemsofmygroups')
         self.assertEqual(adapter.query,
-                         {'getProposingGroup': {'query': ['developers', 'vendors']},
+                         {'getProposingGroup': {'query': [self.developers_uid, self.vendors_uid]},
                           'portal_type':  {'query': itemTypeName}})
 
         # pmCreator1 is member of 'developers'
         self.changeUser('pmCreator1')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemsofmygroups')
         self.assertEqual(adapter.query,
-                         {'getProposingGroup': {'query': ['developers']},
+                         {'getProposingGroup': {'query': [self.developers_uid]},
                           'portal_type':  {'query': itemTypeName}})
 
         # a deactivated group is still listed
         self.changeUser('siteadmin')
-        self.do(self.tool.developers, 'deactivate')
+        self._select_organization(self.developers_uid, remove=True)
         self.changeUser('pmManager')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemsofmygroups')
         self.assertEqual(adapter.query,
-                         {'getProposingGroup': {'query': ['developers', 'vendors']},
+                         {'getProposingGroup': {'query': [self.developers_uid, self.vendors_uid]},
                           'portal_type':  {'query': itemTypeName}})
 
     def test_pm_SearchItemsToAdviceAdapter(self):
@@ -96,7 +96,7 @@ class testSearches(PloneMeetingTestCase):
         cfg.setUsedAdviceTypes(cfg.getUsedAdviceTypes() + ('asked_again', ))
         cfg.setCustomAdvisers(
             [{'row_id': 'unique_id_123',
-              'group': 'vendors',
+              'org': self.vendors_uid,
               'delay': '5', }, ])
         itemTypeName = cfg.getItemTypeName()
 
@@ -114,12 +114,12 @@ class testSearches(PloneMeetingTestCase):
         self.assertEquals(
             adapter.query,
             {'indexAdvisers': {
-                'query': ['developers_advice_not_given',
-                          'delay__developers_advice_not_given',
-                          'developers_advice_asked_again',
-                          'delay__developers_advice_asked_again',
-                          'developers_advice_hidden_during_redaction',
-                          'delay__developers_advice_hidden_during_redaction']},
+                'query': ['{0}_advice_not_given'.format(self.developers_uid),
+                          'delay__{0}_advice_not_given'.format(self.developers_uid),
+                          '{0}_advice_asked_again'.format(self.developers_uid),
+                          'delay__{0}_advice_asked_again'.format(self.developers_uid),
+                          '{0}_advice_hidden_during_redaction'.format(self.developers_uid),
+                          'delay__{0}_advice_hidden_during_redaction'.format(self.developers_uid)]},
                 'portal_type': {'query': itemTypeName}})
 
         # now do the query
@@ -133,7 +133,8 @@ class testSearches(PloneMeetingTestCase):
         # create an item to advice
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        item.setOptionalAdvisers(('developers', 'vendors__rowid__unique_id_123'))
+        item.setOptionalAdvisers(
+            (self.developers_uid, '{0}__rowid__unique_id_123'.format(self.vendors_uid)))
         # as the item is "itemcreated", advices are not givable
         self.changeUser('pmAdviser1')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstoadvice')
@@ -153,7 +154,7 @@ class testSearches(PloneMeetingTestCase):
         # so pmAdviser1 gives his advice
         createContentInContainer(item,
                                  'meetingadvice',
-                                 **{'advice_group': self.tool.developers.getId(),
+                                 **{'advice_group': self.developers_uid,
                                     'advice_type': u'positive',
                                     'advice_comment': RichTextValue(u'My comment')})
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstoadvice')
@@ -167,7 +168,7 @@ class testSearches(PloneMeetingTestCase):
         # so pmReviewer2 gives his advice
         advice = createContentInContainer(item,
                                           'meetingadvice',
-                                          **{'advice_group': self.tool.vendors.getId(),
+                                          **{'advice_group': self.vendors_uid,
                                              'advice_type': u'negative',
                                              'advice_comment': RichTextValue(u'My comment')})
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstoadvice')
@@ -209,7 +210,7 @@ class testSearches(PloneMeetingTestCase):
                            'portal_type': {'query': itemTypeName}})
         # as adviser, query is correct
         self.changeUser('pmAdviser1')
-        groupIds = []
+        indexAdvisers = []
         adviceStates = []
         for portal_type in self.tool.getAdvicePortalTypes():
             adviceWF = self.wfTool.getWorkflowsFor(portal_type.id)[0]
@@ -217,12 +218,12 @@ class testSearches(PloneMeetingTestCase):
         # remove duplicates
         adviceStates = tuple(set(adviceStates))
         for adviceState in adviceStates:
-            groupIds.append('developers_%s' % adviceState)
-            groupIds.append('delay__developers_%s' % adviceState)
+            indexAdvisers.append('{0}_{1}'.format(self.developers_uid, adviceState))
+            indexAdvisers.append('delay__{0}_{1}'.format(self.developers_uid, adviceState))
 
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_adviseditems')
         self.assertEquals(adapter.query,
-                          {'indexAdvisers': {'query': groupIds},
+                          {'indexAdvisers': {'query': indexAdvisers},
                            'portal_type': {'query': itemTypeName}})
 
         # now do the query
@@ -237,13 +238,13 @@ class testSearches(PloneMeetingTestCase):
         # create an item to advice
         self.changeUser('pmCreator1')
         item1 = self.create('MeetingItem')
-        item1.setOptionalAdvisers(('developers',))
+        item1.setOptionalAdvisers((self.developers_uid,))
         self.proposeItem(item1)
         # give an advice
         self.changeUser('pmAdviser1')
         advice = createContentInContainer(item1,
                                           'meetingadvice',
-                                          **{'advice_group': self.tool.developers.getId(),
+                                          **{'advice_group': self.developers_uid,
                                              'advice_type': u'positive',
                                              'advice_comment': RichTextValue(u'My comment')})
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_adviseditems')
@@ -260,12 +261,12 @@ class testSearches(PloneMeetingTestCase):
         # it will be returned for pmManager but not for pmAdviser1
         self.changeUser('pmCreator1')
         item2 = self.create('MeetingItem')
-        item2.setOptionalAdvisers(('vendors',))
+        item2.setOptionalAdvisers((self.vendors_uid,))
         self.proposeItem(item2)
         self.changeUser('pmManager')
         createContentInContainer(item2,
                                  'meetingadvice',
-                                 **{'advice_group': self.tool.vendors.getId(),
+                                 **{'advice_group': self.vendors_uid,
                                     'advice_type': u'positive',
                                     'advice_comment': RichTextValue(u'My comment')})
         # pmManager will see 2 items and pmAdviser1, just one, none for a non adviser
@@ -316,7 +317,8 @@ class testSearches(PloneMeetingTestCase):
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_adviseditemswithdelay')
         self.assertEquals(adapter.query,
                           {'indexAdvisers':  {'query':
-                           ['delay__developers_%s' % adviceState for adviceState in adviceStates]},
+                           ['delay__{0}_{1}'.format(
+                            self.developers_uid, adviceState) for adviceState in adviceStates]},
                            'portal_type':  {'query': itemTypeName}})
 
         # now do the query
@@ -331,13 +333,13 @@ class testSearches(PloneMeetingTestCase):
         # create an item to advice
         self.changeUser('pmCreator1')
         item1 = self.create('MeetingItem')
-        item1.setOptionalAdvisers(('developers',))
+        item1.setOptionalAdvisers((self.developers_uid,))
         self.proposeItem(item1)
         # give a non delay-aware advice
         self.changeUser('pmAdviser1')
         createContentInContainer(item1,
                                  'meetingadvice',
-                                 **{'advice_group': self.tool.developers.getId(),
+                                 **{'advice_group': self.developers_uid,
                                     'advice_type': u'positive',
                                     'advice_comment': RichTextValue(u'My comment')})
         # non delay-aware advices are not found
@@ -346,7 +348,7 @@ class testSearches(PloneMeetingTestCase):
         # now create a second item and ask a delay-aware advice
         self.changeUser('admin')
         originalCustomAdvisers = {'row_id': 'unique_id_123',
-                                  'group': 'developers',
+                                  'org': self.developers_uid,
                                   'gives_auto_advice_on': '',
                                   'for_item_created_from': '2012/01/01',
                                   'for_item_created_until': '',
@@ -357,12 +359,12 @@ class testSearches(PloneMeetingTestCase):
         cfg.setCustomAdvisers([originalCustomAdvisers, ])
         self.changeUser('pmCreator1')
         item2 = self.create('MeetingItem')
-        item2.setOptionalAdvisers(('developers__rowid__unique_id_123',))
+        item2.setOptionalAdvisers(('{0}__rowid__unique_id_123'.format(self.developers_uid),))
         self.proposeItem(item2)
         self.changeUser('pmAdviser1')
         createContentInContainer(item2,
                                  'meetingadvice',
-                                 **{'advice_group': self.portal.portal_plonemeeting.developers.getId(),
+                                 **{'advice_group': self.developers_uid,
                                     'advice_type': u'positive',
                                     'advice_comment': RichTextValue(u'My comment')})
         # pmManager will see 2 items and pmAdviser1, just one, none for a non adviser
@@ -395,7 +397,8 @@ class testSearches(PloneMeetingTestCase):
         self.changeUser('pmCreator1')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemsincopy')
         self.assertEquals(adapter.query,
-                          {'getCopyGroups':  {'query': ['AuthenticatedUsers', 'developers_creators']},
+                          {'getCopyGroups':  {
+                            'query': sorted(['AuthenticatedUsers', self.developers_creators])},
                            'portal_type':  {'query': itemTypeName}})
 
         # now do the query
@@ -404,7 +407,7 @@ class testSearches(PloneMeetingTestCase):
         # create an item and set another proposing group in copy of
         item = self.create('MeetingItem')
         # give a view access to members of vendors, like pmReviewer2
-        item.setCopyGroups(('vendors_reviewers',))
+        item.setCopyGroups((self.vendors_reviewers, ))
         item._update_after_edit()
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemsincopy')
         self.failIf(collection.results())
@@ -427,14 +430,14 @@ class testSearches(PloneMeetingTestCase):
         cfg.setItemCopyGroupsStates((self._stateMappingFor('proposed'), 'validated', ))
         # configure an auto copyGroup, vendors_reviewers will be set
         # as auto copyGroup for every items
-        self.tool.vendors.setAsCopyGroupOn("python: ['reviewers']")
+        self.vendors.as_copy_group_on = u"python: ['reviewers']"
 
         # this adapter is used by the "searchallitemsincopy"
         collection = cfg.searches.searches_items.searchallitemsincopy
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
-        self.assertEqual(item.getAllCopyGroups(auto_real_group_ids=True),
-                         ('vendors_reviewers', ))
+        self.assertEqual(item.getAllCopyGroups(auto_real_plone_group_ids=True),
+                         (self.vendors_reviewers, ))
         self.proposeItem(item)
         self.changeUser('pmReviewer2')
         self.failUnless(collection.results())
@@ -478,7 +481,8 @@ class testSearches(PloneMeetingTestCase):
 
     def _searchItemsToValidateOfHighestHierarchicLevelReviewerInfo(self, cfg):
         """ """
-        return ['developers__reviewprocess__{0}'.format(self._stateMappingFor('proposed'))]
+        return ['{0}__reviewprocess__{1}'.format(self.developers_uid,
+                                                 self._stateMappingFor('proposed'))]
 
     def test_pm_SearchItemsToValidateOfHighestHierarchicLevel(self):
         '''Test the searchItemsToValidateOfHighestHierarchicLevel method.
@@ -551,7 +555,7 @@ class testSearches(PloneMeetingTestCase):
         if 'prereviewers' in reviewers:
             review_states = ('prevalidated',)
         cfg.setItemCopyGroupsStates(review_states)
-        item.setCopyGroups(('vendors_reviewers',))
+        item.setCopyGroups((self.vendors_reviewers, ))
         item._update_after_edit()
         self.changeUser('pmReviewer2')
         # the user can see the item
@@ -600,14 +604,17 @@ class testSearches(PloneMeetingTestCase):
         for grp in self.member.getGroups():
             for reviewer_suffix, reviewer_states in reviewers.items():
                 if grp.endswith('_' + reviewer_suffix):
-                    if reviewer_suffix == 'reviewers' and 'pre_validation' in cfg.listWorkflowAdaptations():
+                    if reviewer_suffix == 'reviewers' and \
+                       'pre_validation' in cfg.listWorkflowAdaptations():
                         res.extend(['prevalidated'])
                     else:
                         res.extend(reviewer_states)
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstovalidateofmyreviewergroups')
         self.assertEquals(adapter.query,
                           {'portal_type': {'query': itemTypeName},
-                           'reviewProcessInfo': {'query': ['developers__reviewprocess__%s' % st for st in res]}})
+                           'reviewProcessInfo': {
+                            'query': ['{0}__reviewprocess__{1}'.format(self.developers_uid, st)
+                                      for st in res]}})
 
         # now do the query
         # this adapter is not used by default, but is intended to be used with
@@ -663,7 +670,8 @@ class testSearches(PloneMeetingTestCase):
         """ """
         reviewers = reviewersFor(cfg.getItemWorkflow())
         reviewer_states = reviewers[cfg._highestReviewerLevel(self.member.getGroups())]
-        return ['developers__reviewprocess__%s' % reviewer_state for reviewer_state in reviewer_states]
+        return ['{0}__reviewprocess__{1}'.format(self.developers_uid, reviewer_state)
+                for reviewer_state in reviewer_states]
 
     def test_pm_SearchItemsToValidateOfEveryReviewerLevelsAndLowerLevels(self):
         '''Test the searchItemsToValidateOfEveryReviewerLevelsAndLowerLevels method.
@@ -762,17 +770,20 @@ class testSearches(PloneMeetingTestCase):
 
         self.assertEquals(adapter.query, {
                           'portal_type': {'query': itemTypeName},
-                          'reviewProcessInfo': {'query': ['developers__reviewprocess__returned_to_proposing_group']}})
+                          'reviewProcessInfo': {
+                            'query': [
+                                '{0}__reviewprocess__returned_to_proposing_group'.format(
+                                    self.developers_uid)]}})
 
         # it returns only items the current user is able to correct
         # create an item for developers and one for vendors and 'return' it to proposingGroup
         self.create('Meeting', date=DateTime())
         developersItem = self.create('MeetingItem')
-        self.assertEquals(developersItem.getProposingGroup(), 'developers')
+        self.assertEquals(developersItem.getProposingGroup(), self.developers_uid)
         self.presentItem(developersItem)
         self.changeUser('pmCreator2')
         vendorsItem = self.create('MeetingItem')
-        self.assertEquals(vendorsItem.getProposingGroup(), 'vendors')
+        self.assertEquals(vendorsItem.getProposingGroup(), self.vendors_uid)
         self.changeUser('pmManager')
         self.presentItem(vendorsItem)
         collection = cfg.searches.searches_items.searchitemstocorrect
@@ -835,18 +846,18 @@ class testSearches(PloneMeetingTestCase):
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstocorrecttovalidateofhighesthierarchiclevel')
         self.assertEquals(adapter.query, {
             'reviewProcessInfo':
-            {'query': ['developers__reviewprocess__returned_to_proposing_group_proposed']},
+            {'query': ['{0}__reviewprocess__returned_to_proposing_group_proposed'.format(self.developers_uid)]},
             'portal_type': {'query': itemTypeName}})
 
         # it returns only items the current user is able to correct
         # create an item for developers and one for vendors and 'return' it to proposingGroup
         self.create('Meeting', date=DateTime())
         developersItem = self.create('MeetingItem')
-        self.assertEquals(developersItem.getProposingGroup(), 'developers')
+        self.assertEquals(developersItem.getProposingGroup(), self.developers_uid)
         self.presentItem(developersItem)
         self.changeUser('pmCreator2')
         vendorsItem = self.create('MeetingItem')
-        self.assertEquals(vendorsItem.getProposingGroup(), 'vendors')
+        self.assertEquals(vendorsItem.getProposingGroup(), self.vendors_uid)
         self.changeUser('pmManager')
         self.presentItem(vendorsItem)
         collection = cfg.searches.searches_items.searchitemstocorrecttovalidate
@@ -930,17 +941,17 @@ class testSearches(PloneMeetingTestCase):
         self.assertEquals(adapter.query, {
             'portal_type': {'query': itemTypeName},
             'reviewProcessInfo':
-            {'query': ['developers__reviewprocess__returned_to_proposing_group_prevalidated',
-                       'developers__reviewprocess__returned_to_proposing_group_proposed']}})
+            {'query': ['{0}__reviewprocess__returned_to_proposing_group_prevalidated'.format(self.developers_uid),
+                       '{0}__reviewprocess__returned_to_proposing_group_proposed'.format(self.developers_uid)]}})
 
         # it returns only items the current user is able to correct
         # create an item for developers and one for vendors and 'return' it to proposingGroup
         self.create('Meeting', date=DateTime())
         developersItem = self.create('MeetingItem')
-        self.assertEquals(developersItem.getProposingGroup(), 'developers')
+        self.assertEquals(developersItem.getProposingGroup(), self.developers_uid)
         self.changeUser('pmCreator2')
         vendorsItem = self.create('MeetingItem')
-        self.assertEquals(vendorsItem.getProposingGroup(), 'vendors')
+        self.assertEquals(vendorsItem.getProposingGroup(), self.vendors_uid)
         self.changeUser('admin')
         # presenting item :
         for tr in ('propose', 'prevalidate', 'validate', 'present'):

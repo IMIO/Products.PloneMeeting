@@ -1,19 +1,36 @@
-# -*- coding: utf-8 -*-
-
+# -*- coding: utf-8 -*-from DateTime import DateTime
 import logging
 import mimetypes
 import os
 from collections import OrderedDict
-
 from Products.PloneMeeting.migrations import Migrator
 from Products.PloneMeeting.config import TOOL_FOLDER_POD_TEMPLATES
-
 from Products.CMFPlone.utils import base_hasattr
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_NEW
+from collective.contact.plonegroup.config import FUNCTIONS_REGISTRY
+from collective.contact.plonegroup.config import ORGANIZATIONS_REGISTRY
+from collective.contact.plonegroup.utils import get_all_suffixes
+from collective.contact.plonegroup.utils import get_own_organization
+from collective.contact.plonegroup.utils import get_plone_group
+from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
+from copy import deepcopy
+from DateTime import DateTime
+from datetime import date
 from eea.facetednavigation.interfaces import ICriteria
 from persistent.mapping import PersistentMapping
 from plone import api
+from Products.CMFPlone.utils import base_hasattr
+from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_NEW
+from Products.PloneMeeting.migrations import Migrator
+from Products.CMFPlone.utils import base_hasattr
+from Products.CMFPlone.utils import safe_unicode
+from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_NEW
+from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
+from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
+from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
+from Products.PloneMeeting.migrations import Migrator
+from zope.i18n import translate
 from zope.interface import alsoProvides
 
 logger = logging.getLogger('PloneMeeting')
@@ -240,6 +257,10 @@ class Migrate_To_4_1(Migrator):
             field = cfg.getField('maxShownMeetingItems')
             value = field.get(cfg)
             field.set(cfg, int(value))
+        # old forget, set global_allow to False on Topic
+        topic = self.portal.portal_types.get('Topic')
+        if topic:
+            topic.global_allow = False
         logger.info('Done.')
 
     def _adaptForContacts(self):
@@ -267,6 +288,8 @@ class Migrate_To_4_1(Migrator):
                 break
             delattr(item, 'itemAbsents')
             delattr(item, 'itemSignatories')
+            delattr(item, 'answerers')
+            delattr(item, 'questioners')
 
         logger.info('Adapting meeting configs...')
         for cfg in self.tool.objectValues('MeetingConfig'):
@@ -274,6 +297,271 @@ class Migrate_To_4_1(Migrator):
                 # already migrated
                 break
             delattr(cfg, 'useUserReplacements')
+        logger.info('Done.')
+
+    def _custom_migrate_meeting_group_to_org(self, mGroup, org):
+        """Hook for plugins that need to migrate extra data from MeetingGroup to organization."""
+        pass
+
+    def _adaptForPlonegroup(self):
+        """Migrate MeetingGroups to contacts and configure plonegroup.
+           Migrate also every relations to the organization as we used the id and we use now the uid."""
+        logger.info('Adapting application for plonegroup...')
+        own_org = get_own_organization()
+        if own_org.objectValues():
+            # already migrated
+            logger.info('Done.')
+            return
+
+        logger.info('Migrating MeetingGroups...')
+
+        # call hook for external profiles to migrate their MeetingGroups customizations if necessary
+        self._hook_before_mgroups_to_orgs()
+
+        enabled_orgs = []
+        every_orgs = []
+        for mGroup in self.tool.objectValues('MeetingGroup'):
+            cs = mGroup.getCertifiedSignatures()
+            # empty dates must be None, signatureNumber is now signature_number
+            # dates were stored as str, we need datetime now
+            adapted_cs = [
+                {'function': safe_unicode(sign['function']),
+                 'signature_number': sign['signatureNumber'],
+                 'date_from': sign['date_from'] and date.fromtimestamp(int(DateTime(sign['date_from']))) or None,
+                 'date_to': sign['date_to'] and date.fromtimestamp(int(DateTime(sign['date_to']))) or None,
+                 'name': safe_unicode(sign['name'])} for sign in cs]
+            data = {'id': mGroup.getId(),
+                    'title': mGroup.Title(),
+                    'description': mGroup.Description(),
+                    'acronym': mGroup.getAcronym(),
+                    'item_advice_states': mGroup.getItemAdviceStates(),
+                    'item_advice_edit_states': mGroup.getItemAdviceEditStates(),
+                    'item_advice_view_states': mGroup.getItemAdviceViewStates(),
+                    'keep_access_to_item_when_advice_is_given': mGroup.getKeepAccessToItemWhenAdviceIsGiven(),
+                    'as_copy_group_on': mGroup.getAsCopyGroupOn(),
+                    'certified_signatures': adapted_cs,
+                    'groups_in_charge': mGroup.getGroupsInCharge(),
+                    'selectable_for_plonegroup': True, }
+            new_org = api.content.create(container=own_org, type='organization', **data)
+            new_org_uid = new_org.UID()
+            if mGroup.queryState() == 'active':
+                enabled_orgs.append(new_org_uid)
+            every_orgs.append(new_org_uid)
+
+        # configure Plonegroup
+        functions = deepcopy(MEETING_GROUP_SUFFIXES)
+        # extra suffixes
+        from Products.PloneMeeting.config import EXTRA_GROUP_SUFFIXES
+        functions = functions + deepcopy(EXTRA_GROUP_SUFFIXES)
+        # now replace group_id in 'fct_orgs' by corresponding org uid and translate fct_title
+        adapted_functions = []
+        for function in functions:
+            adapted_function = {'fct_id': function['fct_id'],
+                                'fct_title': translate(
+                                    function['fct_title'],
+                                    domain='PloneMeeting',
+                                    context=self.request)}
+            adapted_function_orgs = [own_org.get(group_id).UID() for group_id in function['fct_orgs']]
+            adapted_function['fct_orgs'] = adapted_function_orgs
+            adapted_functions.append(adapted_function)
+        api.portal.set_registry_record(FUNCTIONS_REGISTRY, adapted_functions)
+        # first set every organizations so every subgroups are created
+        # then set only enabled orgs
+        api.portal.set_registry_record(ORGANIZATIONS_REGISTRY, every_orgs)
+        api.portal.set_registry_record(ORGANIZATIONS_REGISTRY, enabled_orgs)
+
+        logger.info('Transfering users to new Plone groups...')
+        # transfer users to new Plone groups
+        for mGroup in self.tool.objectValues('MeetingGroup'):
+            org = get_own_organization().get(mGroup.getId())
+            org_uid = org.UID()
+            for suffix in get_all_suffixes(org_uid):
+                ori_plone_group_id = mGroup.getPloneGroupId(suffix)
+                ori_plone_group = api.group.get(ori_plone_group_id)
+                if ori_plone_group and ori_plone_group.getMemberIds():
+                    new_plone_group = get_plone_group(org_uid, suffix)
+                    for member_id in ori_plone_group.getMemberIds():
+                        # manage no more existing users
+                        if not api.user.get(member_id):
+                            continue
+                        api.group.add_user(group=new_plone_group, username=member_id)
+
+        own_org = get_own_organization()
+
+        # now that every groups are migrated, we may migrate groups_in_charge
+        # we have old MeetingGroup ids stored, we want organization UIDs
+        for org in own_org.objectValues():
+            if org.groups_in_charge:
+                groups_in_charge = [own_org.get(gic_id).UID() for gic_id in org.groups_in_charge]
+                org.groups_in_charge = groups_in_charge
+
+        logger.info('Migrating MeetingConfigs...')
+        # adapt MeetingConfigs
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            # migrate DashboardCollections using indexAdvisers
+            for brain in api.content.find(context=cfg.searches, portal_type='DashboardCollection'):
+                dc = brain.getObject()
+                query = dc.query
+                found = False
+                adapted_query = []
+                for line in query:
+                    adapted_line = line.copy()
+                    if line['i'] == 'indexAdvisers':
+                        found = True
+                        new_v = []
+                        for old_v in line['v']:
+                            if old_v.startswith('real_group_id__'):
+                                # it is a group_id, turn it to org_uid
+                                prefix, group_id = old_v.split('real_group_id__')
+                                new_v.append(REAL_ORG_UID_PATTERN.format(own_org.get(group_id).UID()))
+                            elif old_v.startswith('delay_real_group_id__'):
+                                # row_id, just change prefix
+                                new_v.append(old_v.replace(
+                                    'delay_real_group_id__',
+                                    DELAYAWARE_ROW_ID_PATTERN.format('')))
+                        adapted_line['v'] = new_v
+                    adapted_query.append(adapted_line)
+                if found:
+                    dc.query = adapted_query
+                    dc._p_changed = True
+
+            # advicesKeptOnSentToOtherMC
+            advicesKeptOnSentToOtherMC = cfg.getAdvicesKeptOnSentToOtherMC()
+            adapted_advicesKeptOnSentToOtherMC = []
+            for old_v in advicesKeptOnSentToOtherMC:
+                new_value = old_v
+                if old_v.startswith('real_group_id__'):
+                    prefix, group_id = old_v.split('real_group_id__')
+                    new_value = REAL_ORG_UID_PATTERN.format(own_org.get(group_id).UID())
+                else:
+                    new_value = old_v.replace('delay_real_group_id__', DELAYAWARE_ROW_ID_PATTERN.format(''))
+                adapted_advicesKeptOnSentToOtherMC.append(new_value)
+            cfg.setAdvicesKeptOnSentToOtherMC(adapted_advicesKeptOnSentToOtherMC)
+            # customAdvisers
+            customAdvisers = cfg.getCustomAdvisers()
+            adapted_customAdvisers = []
+            for v in customAdvisers:
+                new_value = v.copy()
+                mGroupId = new_value.pop('group')
+                org = own_org.get(mGroupId)
+                new_value['org'] = org.UID()
+                adapted_customAdvisers.append(new_value)
+            cfg.setCustomAdvisers(adapted_customAdvisers)
+            # groupsHiddenInDashboardFilter
+            groupsHiddenInDashboardFilter = cfg.getGroupsHiddenInDashboardFilter()
+            adapted_groupsHiddenInDashboardFilter = []
+            for v in groupsHiddenInDashboardFilter:
+                org = own_org.get(v)
+                adapted_groupsHiddenInDashboardFilter.append(org.UID())
+            cfg.setGroupsHiddenInDashboardFilter(adapted_groupsHiddenInDashboardFilter)
+            # powerAdvisersGroups
+            powerAdvisersGroups = cfg.getPowerAdvisersGroups()
+            adapted_powerAdvisersGroups = []
+            for v in powerAdvisersGroups:
+                org = own_org.get(v)
+                adapted_powerAdvisersGroups.append(org.UID())
+            cfg.setPowerAdvisersGroups(adapted_powerAdvisersGroups)
+            # selectableAdvisers
+            selectableAdvisers = cfg.getSelectableAdvisers()
+            adapted_selectableAdvisers = []
+            for v in selectableAdvisers:
+                org = own_org.get(v)
+                adapted_selectableAdvisers.append(org.UID())
+            cfg.setSelectableAdvisers(adapted_selectableAdvisers)
+            # selectableCopyGroups
+            selectableCopyGroups = cfg.getSelectableCopyGroups()
+            adapted_selectableCopyGroups = []
+            for v in selectableCopyGroups:
+                mGroupId, suffix = v.rsplit('_', 1)
+                org = own_org.get(mGroupId)
+                new_value = get_plone_group_id(org.UID(), suffix)
+                adapted_selectableCopyGroups.append(new_value)
+            cfg.setSelectableCopyGroups(adapted_selectableCopyGroups)
+
+        # update TAL conditions
+        self.updateTALConditions(old_word='getGroupsForUser', new_word='get_orgs_for_user')
+
+        # adapt MeetingItems
+        brains = api.content.find(meta_type='MeetingItem')
+        len_brains = len(brains)
+        logger.info('Migrating {0} MeetingItems...'.format(len_brains))
+        i = 1
+        for brain in api.content.find(meta_type='MeetingItem'):
+            item = brain.getObject()
+            logger.info('Migrating MeetingItem {0}/{1} ({2})'.format(
+                i, len_brains, '/'.join(item.getPhysicalPath())))
+            i = i + 1
+            # adviceIndex
+            adviceIndex_copy = item.adviceIndex.copy()
+            for mGroupId in adviceIndex_copy:
+                org = own_org.get(mGroupId)
+                org_uid = org.UID()
+                value = adviceIndex_copy[mGroupId].copy()
+                value['id'] = org_uid
+                item.adviceIndex.pop(mGroupId)
+                item.adviceIndex[org_uid] = value
+                item.adviceIndex._p_changed = True
+            # copyGroups (autoCopyGroups are updated automatically)
+            copyGroups = item.getCopyGroups()
+            adapted_copyGroups = []
+            for v in copyGroups:
+                mGroupId, suffix = v.rsplit('_', 1)
+                realGroupId = item._realCopyGroupId(mGroupId)
+                org = own_org.get(realGroupId)
+                new_value = get_plone_group_id(org.UID(), suffix)
+                adapted_copyGroups.append(new_value)
+            item.setCopyGroups(adapted_copyGroups)
+            # groupInCharge
+            groupInCharge = item.getGroupInCharge()
+            if groupInCharge:
+                org = own_org.get(groupInCharge)
+                item.setGroupInCharge(org.UID())
+            else:
+                item.setProposingGroupWithGroupInCharge(u'')
+            # optionalAdvisers
+            optionalAdvisers = item.getOptionalAdvisers()
+            adapted_optionalAdvisers = []
+            for mGroupId in optionalAdvisers:
+                realGroupId = mGroupId.split('__rowid__')[0]
+                org = own_org.get(realGroupId)
+                new_value = mGroupId.replace(realGroupId, org.UID())
+                adapted_optionalAdvisers.append(new_value)
+            item.setOptionalAdvisers(adapted_optionalAdvisers)
+            # proposingGroup
+            proposingGroup = item.getProposingGroup()
+            if proposingGroup:
+                org = own_org.get(proposingGroup)
+                item.setProposingGroup(org.UID())
+            # templateUsingGroups
+            templateUsingGroups = item.getTemplateUsingGroups()
+            adapted_templateUsingGroups = []
+            if templateUsingGroups:
+                for mGroupId in templateUsingGroups:
+                    org = own_org.get(mGroupId)
+                    adapted_templateUsingGroups.append(org.UID())
+                item.setTemplateUsingGroups(adapted_templateUsingGroups)
+
+            # adapt contained advices
+            for advice in item.getAdvices():
+                org = own_org.get(advice.advice_group)
+                advice.advice_group = org.UID()
+
+        # update every items local roles when every items have been updated because
+        # linked items (predecessor) may be updated during this process and we have
+        # to make sure their values were already updated
+        # + update local roles will also fix 'delay_when_stopped' on advice with delay
+        self.tool.updateAllLocalRoles(meta_type=('MeetingItem', ))
+
+        # remove MeetingGroup object and portal_type
+        m_group_ids = [mGroup.getId() for mGroup in self.tool.objectValues('MeetingGroup')]
+        self.tool.manage_delObjects(ids=m_group_ids)
+        portal_factory = api.portal.get_tool('portal_factory')
+        registeredFactoryTypes = portal_factory.getFactoryTypes().keys()
+        if 'MeetingGroup' in registeredFactoryTypes:
+            registeredFactoryTypes.remove('MeetingGroup')
+            portal_factory.manage_setPortalFactoryTypes(listOfTypeIds=registeredFactoryTypes)
+        self.portal.portal_types.manage_delObjects(ids=['MeetingGroup'])
+
         logger.info('Done.')
 
     def _selectDescriptionInUsedItemAttributes(self):
@@ -343,11 +631,11 @@ class Migrate_To_4_1(Migrator):
                            ignore_dependencies=False,
                            dependency_strategy=DEPENDENCY_STRATEGY_NEW)
 
+        self.removeUnusedColumns(columns=['getTitle2', 'getRemoteUrl'])
         # install collective.js.tablednd
         self.upgradeDependencies()
         self.cleanRegistries()
         self.updateHolidays()
-        self.reindexIndexes(idxs=['linkedMeetingUID', 'getConfigId', 'indexAdvisers'])
 
         # migration steps
         self._updateFacetedFilters()
@@ -361,11 +649,14 @@ class Migrate_To_4_1(Migrator):
         self._fixItemsWorkflowHistoryType()
         self._migrateToDoListSearches()
         self._adaptForContacts()
+        self._adaptForPlonegroup()
         self._selectDescriptionInUsedItemAttributes()
         self._migrateGroupsShownInDashboardFilter()
         self._enableStyleTemplates()
         # update local roles to fix 'delay_when_stopped' on advice with delay
         self.tool.updateAllLocalRoles(meta_type=('MeetingItem', ))
+        # too many indexes to update, the rebuild the portal_catalog
+        self.refreshDatabase()
 
 
 # The migration function -------------------------------------------------------

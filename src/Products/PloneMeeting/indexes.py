@@ -23,8 +23,8 @@ from Products.PluginIndexes.common.UnIndex import _marker
 from zope.component import getAdapter
 
 
-REAL_GROUP_ID_PATTERN = 'real_group_id__{0}'
-DELAYAWARE_REAL_GROUP_ID_PATTERN = 'delay_real_group_id__{0}'
+REAL_ORG_UID_PATTERN = 'real_org_uid__{0}'
+DELAYAWARE_ROW_ID_PATTERN = 'delay_row_id__{0}'
 
 
 @indexer(IItem)
@@ -100,7 +100,7 @@ def getCopyGroups(obj):
     """
       Compute getCopyGroups to take auto copyGroups into account.
     """
-    return obj.getAllCopyGroups(auto_real_group_ids=True)
+    return obj.getAllCopyGroups(auto_real_plone_group_ids=True)
 
 
 @indexer(IMeetingItem)
@@ -111,7 +111,7 @@ def reviewProcessInfo(obj):
     """
     item_state = obj.queryState()
     return '%s__reviewprocess__%s' % (
-        obj.adapted()._getGroupManagingItem(item_state).getId(), item_state)
+        obj.adapted()._getGroupManagingItem(item_state, theObject=False), item_state)
 
 
 @indexer(IMeetingItem)
@@ -255,7 +255,7 @@ def templateUsingGroups(obj):
       Index used to build the item templates tree.
       If not attribute 'templateUsingGroups' (so not a MeetingItem)
       or a MeetingItem with no selected templateUsingGroups.
-      In the query, we will query '__nothing_selected__' + groups the current
+      In the query, we will query '__nothing_selected__' + organizations the current
       user is creator for.
     """
     if obj.meta_type == 'MeetingItem':
@@ -266,9 +266,9 @@ def templateUsingGroups(obj):
     return _marker
 
 
-def _to_coded_adviser_index(obj, groupId, advice_infos):
+def _to_coded_adviser_index(obj, org_uid, advice_infos):
     """Build an 'index' version of the adviser state so it is searchable and so on."""
-    def _computeSuffixFor(groupId, advice_infos, advice_type):
+    def _computeSuffixFor(org_uid, advice_infos, advice_type):
         '''
           Compute the suffix that will be appended depending on advice state.
         '''
@@ -277,11 +277,11 @@ def _to_coded_adviser_index(obj, groupId, advice_infos):
         if advice_type in (NOT_GIVEN_ADVICE_VALUE,
                            'asked_again',
                            HIDDEN_DURING_REDACTION_ADVICE_VALUE):
-            if obj._adviceDelayIsTimedOut(groupId):
+            if obj._adviceDelayIsTimedOut(org_uid):
                 # delay is exceeded, advice was not given
                 suffixes.append('_advice_delay_exceeded')
             else:
-                # does the relevant group may add the advice in current item state?
+                # does the relevant organization may add the advice in current item state?
                 if advice_infos['advice_addable']:
                     suffixes.append('_advice_not_given')
                 elif advice_infos['advice_editable']:
@@ -306,24 +306,24 @@ def _to_coded_adviser_index(obj, groupId, advice_infos):
     # compute suffixes
     # we compute the 'advice_type' to take into account 'hidden_during_redaction'
     advice_type = obj._shownAdviceTypeFor(advice_infos)
-    suffixes = _computeSuffixFor(groupId, advice_infos, advice_type)
-    # we also index the 'real_group_id_' so we can query who we asked
+    suffixes = _computeSuffixFor(org_uid, advice_infos, advice_type)
+    # we also index the 'real_org_uid_' so we can query who we asked
     # advice to, without passing the advice state
     for suffix in suffixes:
         if isDelayAware:
-            res.append('delay__' + groupId + suffix)
-            # 'real_group_id_'
-            real_group_id = DELAYAWARE_REAL_GROUP_ID_PATTERN.format(advice_infos['row_id'])
-            res.append(real_group_id)
-            # 'real_group_id_' with suffixed advice_type
-            res.append(real_group_id + '__' + advice_type)
+            res.append('delay__' + org_uid + suffix)
+            # 'delay_row_id_'
+            delay_row_id = DELAYAWARE_ROW_ID_PATTERN.format(advice_infos['row_id'])
+            res.append(delay_row_id)
+            # 'delay_row_id_' with suffixed advice_type
+            res.append(delay_row_id + '__' + advice_type)
         else:
-            res.append(groupId + suffix)
-            # 'real_group_id_'
-            real_group_id = REAL_GROUP_ID_PATTERN.format(groupId)
-            res.append(real_group_id)
-            # 'real_group_id_' with suffixed advice_type
-            res.append(real_group_id + '__' + advice_type)
+            res.append(org_uid + suffix)
+            # 'real_org_uid_'
+            real_org_uid = REAL_ORG_UID_PATTERN.format(org_uid)
+            res.append(real_org_uid)
+            # 'real_org_uid_' with suffixed advice_type
+            res.append(real_org_uid + '__' + advice_type)
     # advice_type
     if advice_type not in res:
         res.append(advice_type)
@@ -335,10 +335,10 @@ def indexAdvisers(obj):
     """
       Build the index specifying advices to give.
       Values are different if it is a delay-aware or not advice :
-      Delay-aware advice is like "delay__developers_advice_not_given":
+      Delay-aware advice is like "delay__[developers_UID]_advice_not_given":
       - delay__ specifies that it is a delay-aware advice;
-      - developers is the name of the group the advice is asked to;
-      Non delay-aware advice is like "developers_advice_not_given".
+      - [developers_UID] is the UID of the organization the advice is asked to;
+      Non delay-aware advice is like "[developers_UID]_advice_not_given".
       In both cases (delay-aware or not), we have a suffix :
         - '_advice_not_giveable' for advice not given and not giveable;
         - '_advice_not_given' for advice not given/asked again but giveable;
@@ -349,18 +349,18 @@ def indexAdvisers(obj):
         return _marker
 
     res = []
-    for groupId, advice_infos in obj.adviceIndex.iteritems():
+    for org_uid, advice_infos in obj.adviceIndex.iteritems():
         adviceHolder = obj
         # use original advice data if advice is inherited
-        if obj.adviceIsInherited(groupId):
-            advice_infos = obj.getInheritedAdviceInfo(groupId)
+        if obj.adviceIsInherited(org_uid):
+            advice_infos = obj.getInheritedAdviceInfo(org_uid)
             # when an advice is inherited from an already inherited advice,
             # when pasting new item, the predecessor is still not set so no adviceHolder
             # is available, in this case, we continue as item will be reindexed after
             if not advice_infos:
                 continue
             adviceHolder = advice_infos['adviceHolder']
-        res += _to_coded_adviser_index(adviceHolder, groupId, advice_infos)
+        res += _to_coded_adviser_index(adviceHolder, org_uid, advice_infos)
     # remove double entry, it could be the case for the 'advice_type' alone
     res = list(set(res))
     res.sort()

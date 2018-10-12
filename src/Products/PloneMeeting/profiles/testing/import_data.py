@@ -22,12 +22,11 @@
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.profiles import AnnexTypeDescriptor
 from Products.PloneMeeting.profiles import CategoryDescriptor
-from Products.PloneMeeting.profiles import GroupDescriptor
+from Products.PloneMeeting.profiles import OrgDescriptor
 from Products.PloneMeeting.profiles import ItemAnnexSubTypeDescriptor
 from Products.PloneMeeting.profiles import ItemAnnexTypeDescriptor
 from Products.PloneMeeting.profiles import ItemTemplateDescriptor
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
-from Products.PloneMeeting.profiles import MeetingUserDescriptor
 from Products.PloneMeeting.profiles import PloneGroupDescriptor
 from Products.PloneMeeting.profiles import PloneMeetingConfiguration
 from Products.PloneMeeting.profiles import PodTemplateDescriptor
@@ -205,7 +204,7 @@ plonemeeting_assembly_budgetimpacteditors = PloneGroupDescriptor('plonemeeting-a
 budgetimpacteditor.ploneGroups = [plonemeeting_assembly_budgetimpacteditors,
                                   plonemeeting_assembly_powerobservers]
 
-developers = GroupDescriptor('developers', 'Developers', 'Devel')
+developers = OrgDescriptor('developers', 'Developers', 'Devel')
 developers.creators.append(pmCreator1)
 developers.creators.append(pmCreator1b)
 developers.creators.append(pmManager)
@@ -219,7 +218,7 @@ developers.observers.append(pmManager)
 developers.advisers.append(pmAdviser1)
 developers.advisers.append(pmManager)
 
-vendors = GroupDescriptor('vendors', 'Vendors', 'Devil')
+vendors = OrgDescriptor('vendors', 'Vendors', 'Devil')
 vendors.creators.append(pmCreator2)
 vendors.reviewers.append(pmReviewer2)
 vendors.observers.append(pmReviewer2)
@@ -234,24 +233,10 @@ vendors.observers.append(voter1)
 vendors.observers.append(voter2)
 
 # Add a vintage group
-endUsers = GroupDescriptor('endUsers', 'End users', 'EndUsers', active=False)
+endUsers = OrgDescriptor('endUsers', 'End users', 'EndUsers', active=False)
 
 # Add an external user
 cadranel = UserDescriptor('cadranel', [], fullname='M. Benjamin Cadranel')
-
-# Add meeting users (voting purposes)
-pmReviewer1_voter = MeetingUserDescriptor('pmReviewer1')
-pmManager_observer = MeetingUserDescriptor('pmManager',
-                                           duty='Secrétaire de la Chancellerie',
-                                           usages=['assemblyMember'])
-cadranel_signer = MeetingUserDescriptor('cadranel', duty='Secrétaire',
-                                        usages=['assemblyMember', 'signer'],
-                                        signatureImage='SignatureCadranel.jpg',
-                                        signatureIsDefault=True)
-muser_voter1 = MeetingUserDescriptor('voter1', duty='Voter1',
-                                     usages=['assemblyMember', 'voter', ])
-muser_voter2 = MeetingUserDescriptor('voter2', duty='Voter2',
-                                     usages=['assemblyMember', 'voter', ])
 
 # Recurring items
 recItem1 = RecurringItemDescriptor(
@@ -353,8 +338,7 @@ meetingPma.itemTemplates = (template1, template2, )
 meetingPma.itemPowerObserversStates = ('itemcreated', 'presented', 'accepted', 'delayed')
 meetingPma.meetingPowerObserversStates = ('frozen', 'published', 'decided', 'closed')
 meetingPma.useVotes = True
-meetingPma.meetingUsers = [pmReviewer1_voter, pmManager_observer,
-                           cadranel_signer, muser_voter1, muser_voter2]
+meetingPma.meetingUsers = []
 meetingPma.styleTemplates = [stylesTemplate1, stylesTemplate2]
 meetingPma.podTemplates = [agendaTemplate, decisionsTemplate, itemTemplate, dashboardTemplate]
 meetingPma.selectableCopyGroups = [developers.getIdSuffixed('reviewers'), vendors.getIdSuffixed('reviewers'), ]

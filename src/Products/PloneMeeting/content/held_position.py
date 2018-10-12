@@ -11,6 +11,8 @@ from Products.PloneMeeting.utils import plain_render
 from z3c.form.browser.checkbox import CheckBoxFieldWidget
 from zope.globalrequest import getRequest
 from zope.i18n import translate
+from collective.contact.core.schema import ContactChoice
+from Products.PloneMeeting.content.source import PMContactSourceBinder
 
 import zope.schema
 
@@ -18,11 +20,19 @@ import zope.schema
 class IPMHeldPosition(IHeldPosition):
     """ """
 
+    # override position to use a select list restricted to orgs out of PLONEGROUP_ORG
+    form.order_before(position='label')
+    position = ContactChoice(
+        title=_("Organization/Position"),
+        source=PMContactSourceBinder(),
+        required=True,
+    )
+
     form.widget('usages', CheckBoxFieldWidget, multiple='multiple')
     usages = zope.schema.List(
         title=_("Usages"),
         value_type=zope.schema.Choice(
-            vocabulary="Products.PloneMeeting.vocabularies.pmpositionusagesvocabulary"),
+            vocabulary="Products.PloneMeeting.vocabularies.pmheldposition_usagesvocabulary"),
         required=False,
     )
 
@@ -30,14 +40,14 @@ class IPMHeldPosition(IHeldPosition):
     defaults = zope.schema.List(
         title=_("Defaults"),
         value_type=zope.schema.Choice(
-            vocabulary="Products.PloneMeeting.vocabularies.pmpositiondefaultsvocabulary"),
+            vocabulary="Products.PloneMeeting.vocabularies.pmheldposition_defaultsvocabulary"),
         required=False,
     )
 
     signature_number = zope.schema.Choice(
         title=_("Signature number"),
         description=_("If this contact is a default signer, select signature number"),
-        vocabulary="Products.PloneMeeting.vocabularies.pmsignaturenumbervocabulary",
+        vocabulary="Products.PloneMeeting.vocabularies.signaturenumbervocabulary",
         required=False,
     )
 

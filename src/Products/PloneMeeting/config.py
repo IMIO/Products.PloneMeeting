@@ -54,11 +54,13 @@ AddAnnex = 'PloneMeeting: Add annex'
 AddAnnexDecision = 'PloneMeeting: Add annexDecision'
 AddItem = 'PloneMeeting: Add MeetingItem'
 AddMeeting = 'PloneMeeting: Add Meeting'
+ManageOwnOrganizationFields = 'PloneMeeting: Manage internal organization fields'
 setDefaultRoles(ReadDecision, ('Manager',))
 setDefaultRoles(WriteDecision, ('Manager',))
 setDefaultRoles(AddAnnex, ('Manager',))
 setDefaultRoles(AddAnnexDecision, ('Manager',))
 setDefaultRoles(WriteMarginalNotes, ('Manager',))
+setDefaultRoles(ManageOwnOrganizationFields, ())
 
 # Permissions
 DEFAULT_ADD_CONTENT_PERMISSION = "Add portal content"
@@ -101,14 +103,22 @@ MEETINGROLES = {'creators': 'MeetingMember',
                 'reviewers': 'MeetingReviewer',
                 'observers': 'MeetingObserverLocal',
                 'advisers': None}
-MEETING_GROUP_SUFFIXES = MEETINGROLES.keys()
+# base suffixes, this is not intended to be overrided or monkeypatched, use EXTRA_GROUP_SUFFIXES
+MEETING_GROUP_SUFFIXES = [
+    {'fct_title': u'advisers', 'fct_id': u'advisers', 'fct_orgs': []},
+    {'fct_title': u'creators', 'fct_id': u'creators', 'fct_orgs': []},
+    {'fct_title': u'observers', 'fct_id': u'observers', 'fct_orgs': []},
+    {'fct_title': u'prereviewers', 'fct_id': u'prereviewers', 'fct_orgs': []},
+    {'fct_title': u'reviewers', 'fct_id': u'reviewers', 'fct_orgs': []},
+]
 
-# specific suffixes in case a workflow involving several suffixes is used by some group ids
+# this is made to manage specific suffixes for a particular profile
 # this will be like :
-# {'my_group_id': ['additional_suffix1', 'additional_suffix2'],
-# {'my_group_id2': ['additional_suffix1', 'additional_suffix2'],
-# {'my_group_id3': ['other_additional_suffix1', 'other_additional_suffix2'], }
-EXTRA_GROUP_SUFFIXES = {}
+# [{'fct_title': u'additional_suffix',
+#   'fct_id': u'additional_suffix',
+#   'fct_orgs': ['path_to_group_id_1', 'path_to_group_id_2']},
+# ]
+EXTRA_GROUP_SUFFIXES = []
 
 # additonal advice types that will be available for MeetingConfig.usedAdviceTypes
 # format is just a tuple containing keys, it will be translated using same key

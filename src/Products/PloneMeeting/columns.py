@@ -1,4 +1,5 @@
 # encoding: utf-8
+from collective.contact.plonegroup.browser.tables import OrgaPrettyLinkWithAdditionalInfosColumn
 from collective.eeafaceted.z3ctable.columns import AbbrColumn
 from collective.eeafaceted.z3ctable.columns import ActionsColumn
 from collective.eeafaceted.z3ctable.columns import BaseColumn
@@ -300,3 +301,9 @@ class ReviewStateTitle(I18nColumn):
         wfTool = api.portal.get_tool('portal_workflow')
         wf = wfTool.getWorkflowsFor(obj)[0]
         return wf.states.get(item.review_state).title
+
+
+class PMOrgaPrettyLinkWithAdditionalInfosColumn(OrgaPrettyLinkWithAdditionalInfosColumn):
+    """ """
+    ai_highlighted_fields = ['selectable_for_plonegroup']
+    ai_generate_css_class_fields = ['selectable_for_plonegroup']

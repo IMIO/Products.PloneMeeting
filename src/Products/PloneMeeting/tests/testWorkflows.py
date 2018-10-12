@@ -28,6 +28,8 @@ from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.cache import cleanRamCacheFor
 from OFS.ObjectManager import BeforeDeleteException
 from Products.CMFCore.permissions import AddPortalContent
+from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFCore.permissions import View
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import AddAnnexDecision
@@ -313,46 +315,46 @@ class testWorkflows(PloneMeetingTestCase):
         # pmCreator1 goes from group "developers" to group "vendors" (still as
         # creator)
         self.changeUser('admin')
-        g = self.portal.portal_groups.getGroupById('developers_creators')
+        g = self.portal.portal_groups.getGroupById(self.developers_creators)
         g.removeMember('pmCreator1')
-        g = self.portal.portal_groups.getGroupById('vendors_creators')
+        g = self.portal.portal_groups.getGroupById(self.vendors_creators)
         g.addMember('pmCreator1')
         self.changeUser('pmReviewer1')
-        self.failUnless(self.hasPermission('Modify portal content', item1))
+        self.failUnless(self.hasPermission(ModifyPortalContent, item1))
         for userId in ('pmCreator1', 'pmCreator2', 'pmReviewer2'):
             # pmCreator1 is creator/owner but can't see the item anymore.
             self.changeUser(userId)
-            self.failIf(self.hasPermission('View', (item1, annex1)))
+            self.failIf(self.hasPermission(View, (item1, annex1)))
         for userId in ('pmCreator1b', 'pmReviewer1', 'pmManager'):
             self.changeUser(userId)
-            self.failUnless(self.hasPermission('View', (item1, annex1)))
+            self.failUnless(self.hasPermission(View, (item1, annex1)))
         # pmReviewer1 validates the item
         self.changeUser('pmReviewer1')
         self.do(item1, 'validate')
         self.changeUser('pmManager')
-        self.failUnless(self.hasPermission('View', item1))
-        self.failUnless(self.hasPermission('Modify portal content', item1))
+        self.failUnless(self.hasPermission(View, item1))
+        self.failUnless(self.hasPermission(ModifyPortalContent, item1))
         annex2 = self.addAnnex(item1)
         # Change proposing group for item1 (vendors)
-        item1.setProposingGroup('vendors')
+        item1.setProposingGroup(self.vendors_uid)
         item1._update_after_edit()
         for userId in ('pmCreator1', 'pmReviewer2'):
             self.changeUser(userId)
-            self.failUnless(self.hasPermission('View', (item1, annex1, annex2)))
+            self.failUnless(self.hasPermission(View, (item1, annex1, annex2)))
         for userId in ('pmCreator1b', 'pmReviewer1'):
             self.changeUser(userId)
-            self.failIf(self.hasPermission('View', (item1, annex1)))
+            self.failIf(self.hasPermission(View, (item1, annex1)))
         # pmCreator2 is added in group "developers" (create): it is both in
         # groups "developers" and "vendors".
         self.changeUser('pmCreator2')
-        self.failIf(self.hasPermission('View', (item2, annexItem2)))
+        self.failIf(self.hasPermission(View, (item2, annexItem2)))
         self.changeUser('admin')
-        g = self.portal.portal_groups.getGroupById('developers_creators')
+        g = self.portal.portal_groups.getGroupById(self.developers_creators)
         g.addMember('pmCreator2')
         self.changeUser('pmCreator2')
         # Prevent Zope to cache the result of self.hasPermission
         del self.portal.REQUEST.__annotations__
-        self.failUnless(self.hasPermission('View', (item2, annexItem2)))
+        self.failUnless(self.hasPermission(View, (item2, annexItem2)))
         # pmCreator2 creates an item as developer
         item3 = self.create('MeetingItem', title='A given item')
         annexItem3 = self.addAnnex(item3)
@@ -362,7 +364,7 @@ class testWorkflows(PloneMeetingTestCase):
         self.changeUser('pmCreator2')
         self.do(item3, 'propose')
         self.changeUser('pmReviewer1')
-        self.failUnless(self.hasPermission('View', (item3, annexItem3)))
+        self.failUnless(self.hasPermission(View, (item3, annexItem3)))
 
     def _setupRecurringItems(self):
         '''Setup some recurring items.'''
@@ -372,27 +374,27 @@ class testWorkflows(PloneMeetingTestCase):
         self._removeConfigObjectsFor(self.meetingConfig, folders=['recurringitems', ])
         # add 3 recurring items added on '_init_'
         self.create('MeetingItemRecurring', title='Rec item 1a',
-                    proposingGroup='vendors',
+                    proposingGroup=self.vendors_uid,
                     meetingTransitionInsertingMe='_init_')
         self.create('MeetingItemRecurring', title='Rec item 1b',
-                    proposingGroup='vendors',
+                    proposingGroup=self.vendors_uid,
                     meetingTransitionInsertingMe='_init_')
         self.create('MeetingItemRecurring', title='Rec item 1c',
-                    proposingGroup='vendors',
+                    proposingGroup=self.vendors_uid,
                     meetingTransitionInsertingMe='_init_')
         # this one produce an error as backTo* transitions can not
         # be selected for recurring items
         self.create('MeetingItemRecurring', title='Rec item 2',
-                    proposingGroup='developers',
+                    proposingGroup=self.developers_uid,
                     meetingTransitionInsertingMe='backToCreated')
         self.create('MeetingItemRecurring', title='Rec item 3',
-                    proposingGroup='developers',
+                    proposingGroup=self.developers_uid,
                     meetingTransitionInsertingMe='publish')
         self.create('MeetingItemRecurring', title='Rec item 4',
-                    proposingGroup='developers',
+                    proposingGroup=self.developers_uid,
                     meetingTransitionInsertingMe='freeze')
         self.create('MeetingItemRecurring', title='Rec item 5',
-                    proposingGroup='developers',
+                    proposingGroup=self.developers_uid,
                     meetingTransitionInsertingMe='decide')
 
     def test_pm_RecurringItems(self):
@@ -484,10 +486,10 @@ class testWorkflows(PloneMeetingTestCase):
         # just one recurring item added for 'developers'
         self.changeUser('admin')
         self.create('MeetingItemRecurring', title='Rec item developers',
-                    proposingGroup='developers',
+                    proposingGroup=self.developers_uid,
                     meetingTransitionInsertingMe='_init_')
         self.createUser('pmManagerRestricted', ('MeetingManager', ))
-        self._addPrincipalToGroup('pmManagerRestricted', 'developers_creators')
+        self._addPrincipalToGroup('pmManagerRestricted', self.developers_creators)
         self.changeUser('pmManagerRestricted')
         # first check that current 'pmManager' may not 'propose'
         # an item created with proposing group 'vendors'
@@ -502,7 +504,7 @@ class testWorkflows(PloneMeetingTestCase):
         # now, create a meeting, the item is correctly added no matter MeetingManager could not validate it
         meeting = self.create('Meeting', date=DateTime('2013/01/01'))
         self.assertTrue(len(meeting.getItems()) == 1)
-        self.assertTrue(meeting.getItems()[0].getProposingGroup() == 'developers')
+        self.assertTrue(meeting.getItems()[0].getProposingGroup() == self.developers_uid)
 
     def test_pm_RecurringItemsRespectSortingMethodOnAddItemPrivacy(self):
         '''Tests the recurring items system when items are inserted
@@ -543,19 +545,6 @@ class testWorkflows(PloneMeetingTestCase):
         self.meetingConfig.setTransitionsForPresentingAnItem(transitionsForPresentingAnItemWithoutPresent)
         meeting2 = self.create('Meeting', date='2009/12/11 09:00:00')
         self.failIf(len(meeting2.getItems()) != 0)
-
-    def test_pm_DeactivateMeetingGroup(self):
-        '''Deactivating a MeetingGroup will remove every Plone groups from
-           every MeetingConfig.selectableCopyGroups field.'''
-        self.changeUser('admin')
-        developers = self.tool.developers
-        # for now, the 'developers_reviewers' is in self.meetingConfig.selectableCopyGroups
-        self.assertTrue('developers_reviewers' in self.meetingConfig.getSelectableCopyGroups())
-        self.assertTrue('developers_reviewers' in self.meetingConfig2.getSelectableCopyGroups())
-        # when deactivated, it is no more the case...
-        self.do(developers, 'deactivate')
-        self.assertTrue('developers_reviewers' not in self.meetingConfig.getSelectableCopyGroups())
-        self.assertTrue('developers_reviewers' not in self.meetingConfig2.getSelectableCopyGroups())
 
     def test_pm_MeetingTransitionTriggerLinkedItemsTransitions(self):
         '''Test the MeetingConfig.onMeetingTransitionItemTransitionToTrigger parameter :

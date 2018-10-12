@@ -29,9 +29,6 @@
   <type type_id="MeetingFileType">
      <bound-workflow workflow_id="plonemeeting_activity_workflow" />
   </type>
-  <type type_id="MeetingGroup">
-     <bound-workflow workflow_id="plonemeeting_activity_workflow" />
-  </type>
   <type type_id="MeetingItem">
      <bound-workflow workflow_id="meetingitem_workflow" />
   </type>
@@ -76,6 +73,9 @@
      <bound-workflow workflow_id="plonemeeting_onestate_workflow" />
   </type>
   <type type_id="directory">
+     <bound-workflow workflow_id="plonemeeting_onestate_workflow" />
+  </type>
+  <type type_id="organization">
      <bound-workflow workflow_id="plonemeeting_onestate_workflow" />
   </type>
   <type type_id="annexDecision">
