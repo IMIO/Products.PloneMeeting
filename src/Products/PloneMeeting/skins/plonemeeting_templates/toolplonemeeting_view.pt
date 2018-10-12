@@ -87,16 +87,16 @@
          <h4>
            <img style="vertical-align: baseline;"
                 tal:attributes="src string:${portal_url}/manage.png;" />
-           <a>Manage internal organizations</a>
+           <a i18n:translate="">Manage internal organizations</a>
          </h4>
          <ul>
            <li>
-             <a href="../contacts/plonegroup-organization" i18n:translate="">
+             <a href="../contacts/plonegroup-organization" i18n:translate="organizations_add">
               Create new, change existing organizations parameters, ...
              </a>
            </li>
            <li>
-             <a href="../@@contact-plonegroup-settings" i18n:translate="">
+             <a href="../@@contact-plonegroup-settings" i18n:translate="organizations_plonegroup">
               Manage organizations order, enable or disable organizations, ...
              </a>
            </li>
