@@ -5025,6 +5025,9 @@ class testMeetingItem(PloneMeetingTestCase):
     def test_pm_ItemExternalImagesStoredLocally(self):
         """External images are stored locally."""
         cfg = self.meetingConfig
+        if 'creator_initiated_decisions' in cfg.listWorkflowAdaptations():
+            cfg.setWorkflowAdaptations(('creator_initiated_decisions', ))
+            performWorkflowAdaptations(cfg, logger=pm_logger)
         self.changeUser('pmCreator1')
         # creation time
         text = '<p>Working external image <img src="http://www.imio.be/contact.png"/>.</p>'
@@ -5044,38 +5047,38 @@ class testMeetingItem(PloneMeetingTestCase):
             item.getRawDescription(),
             '<p>Working external image <img src="resolveuid/{0}">.</p>'.format(img.UID()))
 
-        # test using the quickedit
-        text = '<p>Working external image <img src="http://www.imio.be/mascotte-presentation.jpg"/>.</p>'
-        setFieldFromAjax(item, 'description', text)
+        # test using the quickedit, test with field 'decision' where getRaw was overrided
+        decision = '<p>Working external image <img src="http://www.imio.be/mascotte-presentation.jpg"/>.</p>'
+        setFieldFromAjax(item, 'decision', decision)
         self.assertTrue('mascotte-presentation.jpg' in item.objectIds())
         img2 = item.get('mascotte-presentation.jpg')
         # external image link was updated
         self.assertEqual(
-            item.getRawDescription(),
+            item.getRawDecision(),
             '<p>Working external image <img src="resolveuid/{0}">.</p>'.format(img2.UID()))
 
         # test using at_post_edit_script, aka full edit form
-        text = '<p>Working external image <img src="http://www.imio.be/spw.png"/>.</p>'
-        item.setDescription(text)
+        decision = '<p>Working external image <img src="http://www.imio.be/spw.png"/>.</p>'
+        item.setDecision(decision)
         item._update_after_edit()
         self.assertTrue('spw.png' in item.objectIds())
         img3 = item.get('spw.png')
         # external image link was updated
         self.assertEqual(
-            item.getRawDescription(),
+            item.getRawDecision(),
             '<p>Working external image <img src="resolveuid/{0}">.</p>'.format(img3.UID()))
 
         # link to unknown external image, like during copy/paste of content
         # that has a link to an unexisting image or so
-        text = '<p>Not working external image <img src="http://www.imio.be/unknown_image.png">.</p>'
-        item.setDescription(text)
+        decision = '<p>Not working external image <img src="http://www.imio.be/unknown_image.png">.</p>'
+        item.setDecision(decision)
         item._update_after_edit()
         self.assertTrue('spw.png' in item.objectIds())
         # nothing was done
         self.assertEqual(
             sorted(item.objectIds()),
             ['contact.png', 'mascotte-presentation.jpg', 'spw.png'])
-        self.assertEqual(item.getRawDescription(), text)
+        self.assertEqual(item.getRawDecision(), decision)
 
     def test_pm_ItemInternalImagesStoredLocallyWhenItemDuplicated(self):
         """When an item is duplicated, images that were stored in original item
