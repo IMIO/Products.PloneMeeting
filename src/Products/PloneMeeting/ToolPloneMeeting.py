@@ -619,10 +619,19 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            sub-objects of the meeting config will be searched there.'''
         cData = configData.getData()
         # turn group ids into org uids
-        for field_name in ['selectableCopyGroups', 'selectableAdvisers']:
+        for field_name in ['selectableCopyGroups', 'selectableAdvisers', 'powerAdvisersGroups']:
             data = cData.get(field_name)
             data = [org_id_to_uid(suffixed_group_id) for suffixed_group_id in data]
             cData[field_name] = data
+        # manage customAdvisers, turn 'org' value from org id to uid
+        ca = cData.get('customAdvisers')
+        adapted_ca = []
+        for v in ca:
+            new_value = v.copy()
+            new_value['org'] = org_id_to_uid(new_value['org'])
+            adapted_ca.append(new_value)
+        cData['customAdvisers'] = adapted_ca
+        # return if already exists
         if cData['id'] in self.objectIds():
             logger.info(
                 'A MeetingConfig with id {0} already exists, passing...'.format(
@@ -677,14 +686,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             cfg.addAnnexType(descr, source)
         for descr in configData.podTemplates:
             cfg.addPodTemplate(descr, source)
-        for mud in configData.meetingUsers:
-            mu = cfg.addMeetingUser(mud, source)
-            # Plone bug - index "usages" is not correctly initialized.
-            oldUsages = mu.getUsages()
-            mu.setUsages(())
-            mu.reindexObject()
-            mu.setUsages(oldUsages)
-            mu.reindexObject()
         # manage MeetingManagers
         groupsTool = api.portal.get_tool('portal_groups')
         for userId in configData.meetingManagers:

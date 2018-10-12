@@ -254,7 +254,7 @@ def onOrgWillBeRemoved(current_org, event):
         groupMembers = portal.acl_users.source_groups.listAssignedPrincipals(plone_group_id)
         # groupMembers is something like :
         # [('a_removed_user', '<a_removed_user: not found>'), ('pmCreator1', 'pmCreator1'), ]
-        groupsMembersWithoutNotFound = [member for member in groupMembers if 'not found' not in member[1]]
+        groupsMembersWithoutNotFound = [member for member, info in groupMembers if 'not found' not in info]
         if groupsMembersWithoutNotFound:
             raise BeforeDeleteException(translate("can_not_delete_organization_plonegroup",
                                                   mapping={'plone_group_id': groupsMembersWithoutNotFound[0]},

@@ -28,7 +28,6 @@ from collective.contact.plonegroup.utils import get_plone_groups
 from OFS.ObjectManager import BeforeDeleteException
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from zope.i18n import translate
-from plone import api
 from Products.statusmessages.interfaces import IStatusMessage
 
 import transaction
@@ -117,6 +116,7 @@ class testOwnOrg(PloneMeetingTestCase):
                 self.developers_uid, catch_before_delete_exception=False)
         can_not_delete_organization_plonegroup = \
             translate('can_not_delete_organization_plonegroup',
+                      mapping={'plone_group_id': 'pmAdviser1'},
                       domain="plone",
                       context=self.request)
         self.assertEquals(cm.exception.message, can_not_delete_organization_plonegroup)
@@ -139,6 +139,7 @@ class testOwnOrg(PloneMeetingTestCase):
         self.assertNotEquals(cm.exception.message, can_not_delete_organization_plonegroup)
         can_not_delete_organization_meetingitem = \
             translate('can_not_delete_organization_meetingitem',
+                      mapping={'item_url': item.absolute_url()},
                       domain="plone",
                       context=self.request)
         self.assertEquals(cm.exception.message, can_not_delete_organization_meetingitem)
@@ -239,6 +240,11 @@ class testOwnOrg(PloneMeetingTestCase):
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 self.vendors_uid, catch_before_delete_exception=False)
 
+        can_not_delete_organization_plonegroup = \
+            translate('can_not_delete_organization_plonegroup',
+                      mapping={'plone_group_id': 'pmManager'},
+                      domain="plone",
+                      context=self.request)
         self.assertEquals(cm.exception.message, can_not_delete_organization_plonegroup)
         # so remove them...
         for ploneGroup in get_plone_groups(self.vendors_uid):

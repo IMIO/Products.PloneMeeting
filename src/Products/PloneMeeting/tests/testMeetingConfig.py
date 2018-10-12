@@ -33,6 +33,7 @@ from OFS.ObjectManager import BeforeDeleteException
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFPlone import PloneMessageFactory
 from Products.CMFPlone.CatalogTool import getIcon
+from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from Products.PloneMeeting.config import DEFAULT_ITEM_COLUMNS
@@ -1140,7 +1141,7 @@ class testMeetingConfig(PloneMeetingTestCase):
             self.tool.manage_delObjects([cfgId, ])
         can_not_delete_meetingconfig_meetingconfig = \
             translate('can_not_delete_meetingconfig_meetingconfig',
-                      mapping={'other_config_title': cfg.Title()},
+                      mapping={'other_config_title': cfg2.Title()},
                       domain="plone",
                       context=self.request)
         self.assertEquals(cm.exception.message, can_not_delete_meetingconfig_meetingconfig)
@@ -1154,6 +1155,7 @@ class testMeetingConfig(PloneMeetingTestCase):
             self.tool.manage_delObjects([cfg2Id, ])
         can_not_delete_meetingconfig_annex_types = \
             translate('can_not_delete_meetingconfig_annex_types',
+                      mapping={'other_config_title': safe_unicode(cfg.Title())},
                       domain="plone",
                       context=self.request)
         self.assertEquals(cm.exception.message, can_not_delete_meetingconfig_annex_types)
