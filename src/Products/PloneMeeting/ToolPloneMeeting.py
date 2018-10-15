@@ -36,6 +36,7 @@ from datetime import datetime
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import invalidate_cachekey_volatile_for
+from imio.helpers.content import validate_fields
 from imio.helpers.security import generate_password
 from imio.helpers.security import is_develop_environment
 from imio.prettylink.interfaces import IPrettyLink
@@ -43,6 +44,7 @@ from OFS import CopySupport
 from persistent.mapping import PersistentMapping
 from plone import api
 from plone.memoize import ram
+from plone.namedfile.file import NamedImage
 from Products.Archetypes.atapi import BooleanField
 from Products.Archetypes.atapi import DisplayList
 from Products.Archetypes.atapi import LinesField
@@ -83,15 +85,18 @@ from Products.PloneMeeting.profiles import PloneMeetingConfiguration
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
-from Products.PloneMeeting.utils import org_id_to_uid
 from Products.PloneMeeting.utils import monthsIds
+from Products.PloneMeeting.utils import org_id_to_uid
 from Products.PloneMeeting.utils import weekdaysIds
 from Products.PloneMeeting.utils import workday
 from Products.ZCatalog.Catalog import AbstractCatalogBrain
+from z3c.relationfield.relation import RelationValue
 from ZODB.POSException import ConflictError
 from zope.annotation.interfaces import IAnnotations
+from zope.component import getUtility
 from zope.i18n import translate
 from zope.interface import implements
+from zope.intid.interfaces import IIntIds
 
 import interfaces
 import OFS.Moniker
@@ -1478,6 +1483,38 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 for userDescr in getattr(org_descr, suffix):
                     if userDescr.id not in group_members:
                         api.group.add_user(group=plone_group, username=userDescr.id)
+
+    security.declarePublic('addPersonsAndHeldPositions')
+
+    def addPersonsAndHeldPositions(self, person_descriptors, source):
+        '''Creates persons and eventual held_positions.'''
+        own_org = get_own_organization()
+        container = own_org.aq_inner.aq_parent
+        intids = getUtility(IIntIds)
+        for person_descr in person_descriptors:
+            # create the person
+            person = api.content.create(
+                container=container,
+                type='person',
+                **person_descr.getData())
+            # person.photo is the name of the photo to use stored in /images
+            if person.photo:
+                photo_path = '%s/images/%s' % (source, person.photo)
+                f = open(photo_path, 'r')
+                photo_file = NamedImage(f.read(), filename=person.photo)
+                f.close()
+                person.photo = photo_file
+                validate_fields(person, raise_on_errors=True)
+            for held_pos_descr in person_descr.held_positions:
+                # get the position
+                data = held_pos_descr.getData()
+                org = container.restrictedTraverse(data['position'])
+                data['position'] = RelationValue(intids.getId(org))
+                held_position = api.content.create(
+                    container=person,
+                    type='held_position',
+                    **data)
+                validate_fields(held_position, raise_on_errors=True)
 
     security.declarePublic('attributeIsUsed')
 

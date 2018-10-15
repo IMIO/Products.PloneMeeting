@@ -18,6 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
 
+from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
 from Products.PloneMeeting.config import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.config import EXTRA_GROUP_SUFFIXES
@@ -266,8 +267,7 @@ class PloneGroupDescriptor(Descriptor):
 
 
 class UserDescriptor(Descriptor):
-    '''Useful for creating test users, so PloneMeeting may directly be tested
-       after a profile has been imported.'''
+    '''Plone user descriptor, useful to create Plone users in tests.'''
     def __init__(self, id, globalRoles, email='user AT plonemeeting.org',
                  password=DEFAULT_USER_PASSWORD, fullname=None):
         self.id = id
@@ -278,21 +278,68 @@ class UserDescriptor(Descriptor):
         self.ploneGroups = []  # ~[PloneGroupDescriptor]~
 
 
-class MeetingUserDescriptor(Descriptor):
-    multiSelectFields = ['usages']
-    excludedFields = ['active', 'signatureImage']
+class PersonDescriptor(Descriptor):
 
-    def __init__(self, id, gender='m', duty='', replacementDuty='',
-                 usages=['voter'], signatureImage=None,
-                 signatureIsDefault=False, active=True):
+    excludedFields = ['held_positions']
+
+    def __init__(self, id, lastname, firstname,
+                 gender=u'M', person_title=u'Monsieur', held_positions=[]):
         self.id = id
         self.gender = gender
-        self.setBilingual('duty', duty)
-        self.setBilingual('replacementDuty', replacementDuty)
+        self.lastname = lastname
+        self.firstname = firstname
+        self.person_title = person_title
+        self.held_positions = held_positions
+        self.photo = None
+        self.website = None
+        self.city = None
+        self.fax = None
+        self.country = None
+        self.region = None
+        self.additional_address_details = None
+        self.number = None
+        self.use_parent_address = False
+        self.phone = None
+        self.street = None
+        self.im_handle = None
+        self.cell_phone = None
+        self.email = None
+        self.zip_code = None
+        self.email = None
+
+
+class HeldPositionDescriptor(Descriptor):
+
+    multiSelectFields = ('usages', 'defaults', )
+
+    def __init__(self, id, label, usages=['assemblyMember'], defaults=['present'],
+                 signature_number=None, position=PLONEGROUP_ORG, position_type='default'):
+        self.id = id
+        self.label = label
+        # path to position, default to my organization
+        self.position = position
         self.usages = usages
-        self.signatureImage = signatureImage
-        self.signatureIsDefault = signatureIsDefault
-        self.active = active
+        self.defaults = defaults
+        self.signature_number = signature_number
+        self.position_type = position_type
+        self.start_date = None
+        self.end_date = None
+        self.photo = None
+        self.website = None
+        self.city = None
+        self.fax = None
+        self.country = None
+        self.region = None
+        self.additional_address_details = None
+        self.number = None
+        self.use_parent_address = False
+        self.phone = None
+        self.street = None
+        self.im_handle = None
+        self.cell_phone = None
+        self.email = None
+        self.zip_code = None
+        self.email = None
 
 
 class OrgDescriptor(Descriptor):
@@ -372,7 +419,7 @@ class MeetingConfigDescriptor(Descriptor):
                          'enableAdviceConfidentiality', 'adviceConfidentialityDefault', 'adviceConfidentialFor',
                          'hideNotViewableLinkedItemsTo', 'inheritedAdviceRemoveableByAdviser',
                          'hideHistoryTo', 'orderedContacts')
-    excludedFields = ['maxDaysDecisions', 'meetingAppDefaultView', 'addContacts']
+    excludedFields = ['maxDaysDecisions', 'meetingAppDefaultView', 'addContactsCSV']
 
     # The 'instance' static attribute stores an instance used for assigning
     # default values to a meeting config being created through-the-web.
@@ -654,7 +701,8 @@ class MeetingConfigDescriptor(Descriptor):
         self.voteCondition = 'True'
 
         # Contacts parameters -----------------------------------------------------
-        self.addContacts = False
+        # bulk import of contacts using CSV related files
+        self.addContactsCSV = False
         self.orderedContacts = []
 
         # Doc parameters -------------------------------------------------------
@@ -720,6 +768,7 @@ class PloneMeetingConfiguration(Descriptor):
         self.configGroups = ()
         self.meetingConfigs = meetingConfigs  # ~[MeetingConfigDescriptor]~
         self.orgs = orgs  # ~[OrgDescriptor]~
+        self.persons = []  # ~[PersonDescriptor]~
         self.usersOutsideGroups = []  # ~[UserDescriptor]~
 
 # ------------------------------------------------------------------------------

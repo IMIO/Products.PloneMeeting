@@ -124,8 +124,10 @@ class ToolInitializer:
             api.portal.set_registry_record(ORGANIZATIONS_REGISTRY, org_uids)
             active_org_uids = [org.UID() for org in active_orgs]
             api.portal.set_registry_record(ORGANIZATIONS_REGISTRY, active_org_uids)
-            # 4) finally add users to Plone groups
+            # 4) add users to Plone groups
             self.tool.addUsers(d.orgs)
+            # 5) now that organizations are created, we add persons and held_positions
+            self.tool.addPersonsAndHeldPositions(d.persons, source=self.profilePath)
         savedMeetingConfigsToCloneTo = {}
 
         created_cfgs = []
@@ -212,7 +214,7 @@ class ToolInitializer:
             if error:
                 raise PloneMeetingError(MEETING_CONFIG_ERROR % (cfg.getId(), error))
 
-        if data.addContacts:
+        if data.addContactsCSV:
             # add contacts using the CSV import
             output = import_contacts(self.site, dochange=True, path=self.profilePath)
             logger.info(output)

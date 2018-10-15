@@ -22,11 +22,13 @@
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.profiles import AnnexTypeDescriptor
 from Products.PloneMeeting.profiles import CategoryDescriptor
-from Products.PloneMeeting.profiles import OrgDescriptor
 from Products.PloneMeeting.profiles import ItemAnnexSubTypeDescriptor
 from Products.PloneMeeting.profiles import ItemAnnexTypeDescriptor
 from Products.PloneMeeting.profiles import ItemTemplateDescriptor
+from Products.PloneMeeting.profiles import HeldPositionDescriptor
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
+from Products.PloneMeeting.profiles import OrgDescriptor
+from Products.PloneMeeting.profiles import PersonDescriptor
 from Products.PloneMeeting.profiles import PloneGroupDescriptor
 from Products.PloneMeeting.profiles import PloneMeetingConfiguration
 from Products.PloneMeeting.profiles import PodTemplateDescriptor
@@ -333,7 +335,7 @@ meetingPma.podTemplates = [agendaTemplate, decisionsTemplate, itemTemplate, dash
 meetingPma.selectableCopyGroups = [developers.getIdSuffixed('reviewers'), vendors.getIdSuffixed('reviewers'), ]
 meetingPma.meetingConfigsToCloneTo = [{'meeting_config': 'plonegov-assembly',
                                        'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}, ]
-meetingPma.addContacts = True
+meetingPma.addContactsCSV = False
 
 # Plonegov-assembly
 meetingPga = MeetingConfigDescriptor(
@@ -403,11 +405,25 @@ meetingPga.useCopies = True
 meetingPga.selectableCopyGroups = [developers.getIdSuffixed('reviewers'), vendors.getIdSuffixed('reviewers'), ]
 meetingPga.itemCopyGroupsStates = ['validated', 'itempublished', 'itemfrozen', 'accepted', 'delayed', ]
 
+# Define held positions to use on persons
+held_pos1 = HeldPositionDescriptor('held_pos1', u'Assembly member 1', signature_number='1')
+held_pos2 = HeldPositionDescriptor('held_pos2', u'Assembly member 2')
+held_pos3 = HeldPositionDescriptor('held_pos3', u'Assembly member 3')
+held_pos4 = HeldPositionDescriptor('held_pos4', u'Assembly member 4', signature_number='2')
+
+# Add persons
+person1 = PersonDescriptor('person1', u'Person1LastName', u'Person1FirstName', held_positions=[held_pos1])
+person1.photo = u'person1.png'
+person2 = PersonDescriptor('person2', u'Person2LastName', u'Person2FirstName', held_positions=[held_pos2])
+person3 = PersonDescriptor('person3', u'Person3LastName', u'Person3FirstName', held_positions=[held_pos3])
+person4 = PersonDescriptor('person4', u'Person4LastName', u'Person4FirstName', held_positions=[held_pos4])
+
 # The whole configuration object -----------------------------------------------
 data = PloneMeetingConfiguration('My meetings', (meetingPma, meetingPga),
                                  (developers, vendors, endUsers))
 # necessary for testSetup.test_pm_ToolAttributesAreOnlySetOnFirstImportData
 data.restrictUsers = False
+data.persons = [person1, person2, person3, person4]
 data.usersOutsideGroups = [cadranel, voter1, voter2, powerobserver1, powerobserver2,
                            restrictedpowerobserver1, restrictedpowerobserver2,
                            budgetimpacteditor]
