@@ -1576,27 +1576,6 @@ def org_id_to_uid(org_info):
         return org.UID()
 
 
-def find_binary(path):
-    """If a binary (odt, icon, photo, ...) is not found in current profile,
-       try to get it from Products.PloneMeeting.profiles.testing."""
-    try:
-        f = file(path, 'rb')
-    except IOError:
-        import Products.PloneMeeting
-        # get binary folder, last part of path (templates, images, ...)
-        splitted_path = path.split('/')
-        file_folder, filename = splitted_path[-2], splitted_path[-1]
-        pm_path = os.path.join(
-            os.path.dirname(Products.PloneMeeting.__file__),
-            'profiles/testing',
-            file_folder,
-            filename)
-        f = file(pm_path, 'rb')
-    data = f.read()
-    f.close()
-    return data
-
-
 class AdvicesUpdatedEvent(ObjectEvent):
     implements(IAdvicesUpdatedEvent)
 

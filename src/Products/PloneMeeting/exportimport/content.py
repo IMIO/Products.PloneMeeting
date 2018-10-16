@@ -21,24 +21,47 @@
 
 from collective.contact.plonegroup.config import FUNCTIONS_REGISTRY
 from collective.contact.plonegroup.config import ORGANIZATIONS_REGISTRY
+from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_own_organization
+from collective.contact.plonegroup.utils import get_plone_group
 from collective.eeafaceted.collectionwidget.utils import _updateDefaultCollectionFor
 from collective.iconifiedcategory import CAT_SEPARATOR
 from copy import deepcopy
+from imio.helpers.content import validate_fields
+from imio.helpers.security import generate_password
+from imio.helpers.security import is_develop_environment
 from plone import api
+from plone.namedfile.file import NamedBlobFile
+from plone.namedfile.file import NamedBlobImage
+from plone.namedfile.file import NamedImage
 from Products.CMFPlone.interfaces.constrains import IConstrainTypes
+from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting import logger
 from Products.PloneMeeting.config import EXTRA_GROUP_SUFFIXES
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
+from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import PloneMeetingError
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import registerClasses
+from Products.PloneMeeting.config import TOOL_FOLDER_ANNEX_TYPES
+from Products.PloneMeeting.config import TOOL_FOLDER_CATEGORIES
+from Products.PloneMeeting.config import TOOL_FOLDER_CLASSIFIERS
+from Products.PloneMeeting.config import TOOL_FOLDER_ITEM_TEMPLATES
+from Products.PloneMeeting.config import TOOL_FOLDER_POD_TEMPLATES
+from Products.PloneMeeting.config import TOOL_FOLDER_RECURRING_ITEMS
 from Products.PloneMeeting.Extensions.imports import import_contacts
 from Products.PloneMeeting.model.adaptations import performModelAdaptations
+from Products.PloneMeeting.profiles import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.ToolPloneMeeting import MEETING_CONFIG_ERROR
+from Products.PloneMeeting.utils import org_id_to_uid
 from Products.PloneMeeting.utils import updateCollectionCriterion
+from z3c.relationfield.relation import RelationValue
+from zope.component import getUtility
 from zope.globalrequest import getRequest
 from zope.i18n import translate
+from zope.intid.interfaces import IIntIds
+
+import os
 
 
 # PloneMeeting-Error related constants -----------------------------------------
@@ -58,8 +81,8 @@ class ToolInitializer:
         # If a name space is found, then Products namespace is not used
         self.productname = '.' in productname and productname or 'Products.%s' % productname
         self.request = getRequest()
-        self.site = context.getSite()
-        self.tool = self.site.portal_plonemeeting
+        self.portal = context.getSite()
+        self.tool = self.portal.portal_plonemeeting
         # set correct title
         self.tool.setTitle(translate('pm_configuration',
                            domain='PloneMeeting',
@@ -89,8 +112,8 @@ class ToolInitializer:
         return data
 
     def run(self):
-        d = self.profileData
-        if not d:
+        self.data = self.profileData
+        if not self.data:
             return self.noDataMessage
         performModelAdaptations(self.tool)
         # Register classes again, after model adaptations have been performed
@@ -100,7 +123,7 @@ class ToolInitializer:
         alreadyHaveGroups = bool(self.tool.objectValues('MeetingGroup'))
         if not alreadyHaveGroups:
             # 1) create organizations so we have org UIDS to initialize 'fct_orgs'
-            orgs, active_orgs = self.tool.addOrgs(d.orgs)
+            orgs, active_orgs = self.addOrgs(self.data.orgs)
             own_org = get_own_organization()
             # 2) create plonegroup functions (suffixes) to create Plone groups
             functions = deepcopy(api.portal.get_registry_record(FUNCTIONS_REGISTRY))
@@ -125,13 +148,13 @@ class ToolInitializer:
             active_org_uids = [org.UID() for org in active_orgs]
             api.portal.set_registry_record(ORGANIZATIONS_REGISTRY, active_org_uids)
             # 4) add users to Plone groups
-            self.tool.addUsers(d.orgs)
+            self.addUsers(self.data.orgs)
             # 5) now that organizations are created, we add persons and held_positions
-            self.tool.addPersonsAndHeldPositions(d.persons, source=self.profilePath)
+            self.addPersonsAndHeldPositions(self.data.persons, source=self.profilePath)
         savedMeetingConfigsToCloneTo = {}
 
         created_cfgs = []
-        for mConfig in d.meetingConfigs:
+        for mConfig in self.data.meetingConfigs:
             # XXX we need to defer the management of the 'meetingConfigsToCloneTo'
             # defined on the mConfig after the creation of every mConfigs because
             # if we defined in mConfig1.meetingConfigsToCloneTo the mConfig2 id,
@@ -139,7 +162,7 @@ class ToolInitializer:
             # so save defined values, removed them from mConfig and manage that after
             savedMeetingConfigsToCloneTo[mConfig.id] = mConfig.meetingConfigsToCloneTo
             mConfig.meetingConfigsToCloneTo = []
-            cfg = self.tool.createMeetingConfig(mConfig, source=self.profilePath)
+            cfg = self.createMeetingConfig(mConfig, source=self.profilePath)
             if cfg:
                 created_cfgs.append(cfg)
                 self._finishConfigFor(cfg, data=mConfig)
@@ -155,22 +178,23 @@ class ToolInitializer:
             # initialize the attribute on the meetingConfig and call _updateCloneToOtherMCActions
             cfg = getattr(self.tool, mConfigId)
             # validate the MeetingConfig.meetingConfigsToCloneTo data that we are about to set
-            error = cfg.validate_meetingConfigsToCloneTo(savedMeetingConfigsToCloneTo[mConfigId])
+            # first replace cfg1 and cfg2 by corresponding cfg id
+            adapted_cfgsToCloneTo = deepcopy(savedMeetingConfigsToCloneTo[mConfigId])
+            for cfgToCloneTo in adapted_cfgsToCloneTo:
+                cfgToCloneTo['meeting_config'] = self.cfg_num_to_id(cfgToCloneTo['meeting_config'])
+            error = cfg.validate_meetingConfigsToCloneTo(adapted_cfgsToCloneTo)
             if error:
                 raise PloneMeetingError(MEETING_CONFIG_ERROR % (cfg.getId(), error))
-            cfg.setMeetingConfigsToCloneTo(savedMeetingConfigsToCloneTo[mConfigId])
+            cfg.setMeetingConfigsToCloneTo(adapted_cfgsToCloneTo)
             cfg._updateCloneToOtherMCActions()
         # finally, create the current user (admin) member area
-        self.site.portal_membership.createMemberArea()
+        self.portal.portal_membership.createMemberArea()
         # at the end, add users outside PloneMeeting groups because
         # they could have to be added in groups created by the MeetingConfig
         if not alreadyHaveGroups:
-            self.tool.addUsersOutsideGroups(d.usersOutsideGroups)
-        # finally update MeetingUsers created if each MeetingConfig because
-        # title rely on Plone user that is often created in the usersOutsideGroups
-        for created_cfg in created_cfgs:
-            for mUser in created_cfg.meetingusers.objectValues('MeetingUser'):
-                mUser.at_post_edit_script()
+            # adapt userDescr.ploneGroups to turn cfg_num into cfg_id
+            self.addUsersOutsideGroups(self.data.usersOutsideGroups)
+
         return self.successMessage
 
     def _finishConfigFor(self, cfg, data):
@@ -216,21 +240,21 @@ class ToolInitializer:
 
         if data.addContactsCSV:
             # add contacts using the CSV import
-            output = import_contacts(self.site, dochange=True, path=self.profilePath)
+            output = import_contacts(self.portal, dochange=True, path=self.profilePath)
             logger.info(output)
             cfg.setOrderedContacts(cfg.listSelectableContacts().keys())
 
     def _manageOtherMCCorrespondences(self, cfg):
         def _convert_to_real_other_mc_correspondences(annex_type):
             """ """
-            tool = api.portal.get_tool('portal_plonemeeting')
             real_other_mc_correspondences = []
             # we have a content_category id prefixed with cfg id
             # like meeting-config-test_-_annexes_types_-_item_annexes_-_annex
             # but we need the UID of the corresponding annexType
             for other_mc_correspondence in annex_type.other_mc_correspondences:
                 steps = other_mc_correspondence.split(CAT_SEPARATOR)
-                other_cfg = tool.get(steps[0])
+                cfg_id = self.cfg_num_to_id(steps[0])
+                other_cfg = self.tool.get(cfg_id)
                 corresponding_annex_type = other_cfg
                 for step in steps[1:]:
                     corresponding_annex_type = corresponding_annex_type[step]
@@ -246,6 +270,415 @@ class ToolInitializer:
                         _convert_to_real_other_mc_correspondences(annex_type)
                         for subType in annex_type.objectValues():
                             _convert_to_real_other_mc_correspondences(subType)
+
+    def createMeetingConfig(self, configData, source):
+        '''Creates a new meeting configuration from p_configData which is a
+           MeetingConfigDescriptor instance. p_source is a string that
+           corresponds to the absolute path of a profile; additional (binary)
+           data like images or templates that need to be attached to some
+           sub-objects of the meeting config will be searched there.'''
+        cData = configData.getData()
+        # turn group ids into org uids
+        for field_name in ['selectableCopyGroups', 'selectableAdvisers', 'powerAdvisersGroups']:
+            data = cData.get(field_name)
+            data = [org_id_to_uid(suffixed_group_id) for suffixed_group_id in data]
+            cData[field_name] = data
+        # manage customAdvisers, turn 'org' value from org id to uid
+        ca = cData.get('customAdvisers')
+        adapted_ca = []
+        for v in ca:
+            new_value = v.copy()
+            new_value['org'] = org_id_to_uid(new_value['org'])
+            adapted_ca.append(new_value)
+        cData['customAdvisers'] = adapted_ca
+        # return if already exists
+        if cData['id'] in self.tool.objectIds():
+            logger.info(
+                'A MeetingConfig with id {0} already exists, passing...'.format(
+                    cData['id']))
+            return
+        self.tool.invokeFactory('MeetingConfig', **cData)
+        cfgId = configData.id
+        cfg = getattr(self.tool, cfgId)
+        cfg._at_creation_flag = True
+        # TextArea fields are not set properly.
+        for field in cfg.Schema().fields():
+            fieldName = field.getName()
+            widgetName = field.widget.getName()
+            if (widgetName == 'TextAreaWidget') and fieldName in cData:
+                field.set(cfg, cData[fieldName], mimetype='text/html')
+        # call processForm passing dummy values so existing values are not touched
+        cfg.processForm(values={'dummy': None})
+
+        # Validates meeting config (validation seems not to be triggered
+        # automatically when an object is created from code).
+        errors = []
+        for field in cfg.Schema().fields():
+            error = field.validate(cfg.getField(field.getName()).get(cfg), cfg)
+            if error:
+                errors.append("'%s': %s" % (field.getName(), error))
+        if errors:
+            raise PloneMeetingError(MEETING_CONFIG_ERROR % (cfg.getId(), '\n'.join(errors)))
+
+        if not configData.active:
+            self.portal.portal_wokflow.doActionFor(cfg, 'deactivate')
+        # Adds the sub-objects within the config: categories, classifiers,...
+        for descr in configData.categories:
+            self.addCategory(cfg, descr, False)
+        for descr in configData.classifiers:
+            self.addCategory(cfg, descr, True)
+        for descr in configData.recurringItems:
+            self.addItemToConfig(cfg, descr)
+        for descr in configData.itemTemplates:
+            self.addItemToConfig(cfg, descr, isRecurring=False)
+        # configure ContentCategoryGroups before adding annex_types
+        # this will enable confidentiality, to_sign/signed, ... if necessary
+        for category_group_id, attrs in configData.category_group_activated_attrs.items():
+            category_group = cfg.annexes_types.get(category_group_id)
+            for attr in attrs:
+                if not hasattr(category_group, attr):
+                    raise PloneMeetingError(
+                        'Attribute {0} does not exist on {1} of {2}'.format(
+                            attr, category_group_id, cfgId))
+                setattr(category_group, attr, True)
+        for descr in configData.annexTypes:
+            self.addAnnexType(cfg, descr, source)
+        for descr in configData.podTemplates:
+            self.addPodTemplate(cfg, descr, source)
+        # manage MeetingManagers
+        groupsTool = self.portal.portal_groups
+        for userId in configData.meetingManagers:
+            groupsTool.addPrincipalToGroup(userId, '{0}_{1}'.format(cfg.getId(),
+                                                                    MEETINGMANAGERS_GROUP_SUFFIX))
+        # manage annex confidentiality, enable it on relevant CategoryGroup
+        if configData.itemAnnexConfidentialVisibleFor:
+            cfg.annexes_types.item_annexes.confidentiality_activated = True
+            cfg.annexes_types.item_decision_annexes.confidentiality_activated = True
+        if configData.adviceAnnexConfidentialVisibleFor:
+            cfg.annexes_types.advice_annexes.confidentiality_activated = True
+        if configData.meetingAnnexConfidentialVisibleFor:
+            cfg.annexes_types.meeting_annexes.confidentiality_activated = True
+        return cfg
+
+    def addCategory(self, cfg, descr, classifier=False):
+        '''Creates a category or a classifier (depending on p_classifier) from
+           p_descr, a CategoryDescriptor instance.'''
+        if classifier:
+            folder = getattr(cfg, TOOL_FOLDER_CLASSIFIERS)
+        else:
+            folder = getattr(cfg, TOOL_FOLDER_CATEGORIES)
+        data = descr.getData()
+        folder.invokeFactory('MeetingCategory', **data)
+        cat = getattr(folder, descr.id)
+        # adapt org related values as we have org id on descriptor and we need to set org UID
+        if cat.usingGroups:
+            cat.setUsingGroups([org_id_to_uid(usingGroup) for usingGroup in cat.usingGroups])
+        if not descr.active:
+            self.portal.portal_workflow.doActionFor(cat, 'deactivate')
+        # call processForm passing dummy values so existing values are not touched
+        cat.processForm(values={'dummy': None})
+        return cat
+
+    def addItemToConfig(self, cfg, descr, isRecurring=True):
+        '''Adds a recurring item or item template
+           from a RecurringItemDescriptor or a ItemTemplateDescriptor
+           depending on p_isRecurring.'''
+        if isRecurring:
+            folder = getattr(cfg, TOOL_FOLDER_RECURRING_ITEMS)
+        else:
+            folder = getattr(cfg, TOOL_FOLDER_ITEM_TEMPLATES)
+        data = descr.__dict__
+        itemType = isRecurring and \
+            cfg.getItemTypeName(configType='MeetingItemRecurring') or \
+            cfg.getItemTypeName(configType='MeetingItemTemplate')
+        folder.invokeFactory(itemType, **data)
+        item = getattr(folder, descr.id)
+        # adapt org related values as we have org id on descriptor and we need to set org UID
+        if item.proposingGroup:
+            item.setProposingGroup(org_id_to_uid(item.proposingGroup))
+        if item.groupInCharge:
+            item.setGroupInCharge(org_id_to_uid(item.groupInCharge))
+        if item.associatedGroups:
+            item.setAssociatedGroups(
+                [org_id_to_uid(associated_group)
+                 for associated_group in item.associatedGroups])
+        if item.templateUsingGroups:
+            item.setTemplateUsingGroups(
+                [org_id_to_uid(template_using_group)
+                 for template_using_group in item.templateUsingGroups])
+        # disable _at_rename_after_creation for itemTemplates and recurringItems
+        item._at_rename_after_creation = False
+        # call processForm passing dummy values so existing values are not touched
+        item.processForm(values={'dummy': None})
+        return item
+
+    def addAnnexType(self, cfg, at, source):
+        '''Adds an annex type from a AnnexTypeDescriptor p_at.'''
+        folder = getattr(cfg, TOOL_FOLDER_ANNEX_TYPES)
+        # create (ItemAnnex)ContentCategory in right subfolder (ContentCategoryGroup)
+        portal_type = 'ContentCategory'
+        sub_portal_type = 'ContentSubcategory'
+        if at.relatedTo == 'item':
+            portal_type = 'ItemAnnexContentCategory'
+            sub_portal_type = 'ItemAnnexContentSubcategory'
+            categoryGroupId = 'item_annexes'
+        elif at.relatedTo == 'item_decision':
+            portal_type = 'ItemAnnexContentCategory'
+            sub_portal_type = 'ItemAnnexContentSubcategory'
+            categoryGroupId = 'item_decision_annexes'
+        elif at.relatedTo == 'advice':
+            categoryGroupId = 'advice_annexes'
+        elif at.relatedTo == 'meeting':
+            categoryGroupId = 'meeting_annexes'
+
+        # The image must be retrieved on disk from a profile
+        iconPath = '%s/images/%s' % (source, at.icon)
+        data = self.find_binary(iconPath)
+        contentCategoryFile = NamedBlobImage(data, filename=at.icon)
+        annexType = api.content.create(
+            id=at.id,
+            type=portal_type,
+            title=at.title,
+            predefined_title=at.predefined_title,
+            icon=contentCategoryFile,
+            container=getattr(folder, categoryGroupId),
+            to_print=at.to_print,
+            confidential=at.confidential,
+            to_sign=at.to_sign,
+            signed=at.signed,
+            enabled=at.enabled,
+            description=at.description,
+        )
+        # store an empty set in other_mc_correspondences for validation
+        # then store intermediate value that will be reworked at the end
+        # of the MeetingConfig instanciation
+        if portal_type == 'ItemAnnexContentCategory':
+            annexType.other_mc_correspondences = set()
+        validate_fields(annexType, raise_on_errors=True)
+        if portal_type == 'ItemAnnexContentCategory':
+            annexType.other_mc_correspondences = at.other_mc_correspondences
+            annexType.only_for_meeting_managers = at.only_for_meeting_managers
+
+        for subType in at.subTypes:
+            annexSubType = api.content.create(
+                id=subType.id,
+                type=sub_portal_type,
+                title=subType.title,
+                predefined_title=subType.predefined_title,
+                container=annexType,
+                to_print=subType.to_print,
+                confidential=subType.confidential,
+                to_sign=at.to_sign,
+                signed=at.signed,
+                enabled=subType.enabled,
+                description=at.description,
+            )
+            if sub_portal_type == 'ItemAnnexContentSubcategory':
+                annexSubType.other_mc_correspondences = set()
+            validate_fields(annexSubType, raise_on_errors=True)
+            if sub_portal_type == 'ItemAnnexContentSubcategory':
+                annexSubType.other_mc_correspondences = subType.other_mc_correspondences
+                annexType.only_for_meeting_managers = at.only_for_meeting_managers
+
+        return annexType
+
+    def addPodTemplate(self, cfg, pt, source):
+        '''Adds a POD template from p_pt (a PodTemplateDescriptor instance).'''
+        folder = getattr(cfg, TOOL_FOLDER_POD_TEMPLATES)
+        # The template must be retrieved on disk from a profile
+        filePath = '%s/templates/%s' % (source, pt.odt_file)
+        data = self.find_binary(filePath)
+        odt_file = NamedBlobFile(
+            data=data,
+            contentType='applications/odt',
+            # pt.odt_file could be relative (../../other_profile/templates/sample.odt)
+            filename=safe_unicode(pt.odt_file.split('/')[-1]),
+        )
+        data = pt.getData(odt_file=odt_file)
+        # turn the pod_portal_types from MeetingItem to MeetingItemShortname
+        adapted_pod_portal_types = []
+        for pod_portal_type in data['pod_portal_types']:
+            if pod_portal_type.startswith('Meeting'):
+                pod_portal_type = pod_portal_type + cfg.shortName
+            adapted_pod_portal_types.append(pod_portal_type)
+        data['pod_portal_types'] = adapted_pod_portal_types
+        podType = data['dashboard'] and 'DashboardPODTemplate' or 'ConfigurablePODTemplate'
+
+        if podType == 'DashboardPODTemplate':
+            # manage dashboard_collections from dashboard_collection_ids
+            # we have ids and we need UIDs
+            res = []
+            for coll_id in data['dashboard_collections_ids']:
+                if coll_id in cfg.searches.searches_items.objectIds():
+                    collection = getattr(cfg.searches.searches_items, coll_id)
+                elif coll_id in cfg.searches.searches_meetings.objectIds():
+                    collection = getattr(cfg.searches.searches_meetings, coll_id)
+                else:
+                    collection = getattr(cfg.searches.searches_decisions, coll_id)
+                res.append(collection.UID())
+            data['dashboard_collections'] = res
+
+        podTemplate = api.content.create(
+            type=podType,
+            container=folder,
+            **data)
+        validate_fields(podTemplate, raise_on_errors=True)
+        return podTemplate
+
+    def addUsersOutsideGroups(self, usersOutsideGroups):
+        '''Create users that are outside any PloneMeeting group (like WebDAV
+           users or users that are in groups created by MeetingConfigs).'''
+        for userDescr in usersOutsideGroups:
+            self.addUser(userDescr)
+
+    def addOrgs(self, org_descriptors):
+        '''Creates organizations (a list of OrgaDescriptor instances) in the contact own organization.'''
+        own_org = get_own_organization()
+        orgs = []
+        active_orgs = []
+        for org_descr in org_descriptors:
+            if org_descr.parent_path:
+                # find parent organization following parent path from container
+                container = own_org.restrictedTraverse(org_descr.parent_path)
+            else:
+                container = own_org
+            # Maybe the organization already exists?
+            # It could be the case if we are reapplying a configuration
+            if org_descr.id in container.objectIds():
+                continue
+
+            org = api.content.create(
+                container=container,
+                type='organization',
+                **org_descr.getData())
+            orgs.append(org)
+            if org_descr.active:
+                active_orgs.append(org)
+        return orgs, active_orgs
+
+    def addUsers(self, org_descriptors):
+        '''Creates Plone users and add it to linked Plone groups.'''
+        plone_utils = self.portal.plone_utils
+        # if we are in dev, we use DEFAULT_USER_PASSWORD, else we will generate a
+        # password that is compliant with the current password policy...
+        if is_develop_environment():
+            password = DEFAULT_USER_PASSWORD
+        else:
+            password = generate_password()
+        msg = "The password used for added users is %s" % (password or DEFAULT_USER_PASSWORD)
+        logger.info(msg)
+        # add a portal_message so admin adding the Plone site knows password
+        plone_utils.addPortalMessage(msg, 'warning')
+
+        own_org = get_own_organization()
+        for org_descr in org_descriptors:
+            if org_descr.parent_path:
+                # find parent organization following parent path from container
+                container = own_org.restrictedTraverse(org_descr.parent_path)
+            else:
+                container = own_org
+            org = container.get(org_descr.id)
+            # Create users
+            for userDescr in org_descr.getUsers():
+                # if we defined a generated password here above, we use it
+                # either we use the password provided in the applied profile
+                if password:
+                    userDescr.password = password
+                self.addUser(userDescr)
+            # Add users in the correct Plone groups.
+            org_uid = org.UID()
+            for suffix in get_all_suffixes(org_uid):
+                plone_group = get_plone_group(org_uid, suffix)
+                group_members = plone_group.getMemberIds()
+                for userDescr in getattr(org_descr, suffix):
+                    if userDescr.id not in group_members:
+                        api.group.add_user(group=plone_group, username=userDescr.id)
+
+    def addUser(self, userData):
+        '''Adds a new Plone user from p_userData which is a UserDescriptor
+           instance if it does not already exist.'''
+        usersDb = self.portal.acl_users.source_users
+        if usersDb.getUserById(userData.id) or userData.id == 'admin':
+            return  # Already exists.
+        self.portal.portal_registration.addMember(
+            userData.id, userData.password,
+            ['Member'] + userData.globalRoles,
+            properties={'username': userData.id,
+                        'email': userData.email,
+                        'fullname': userData.fullname or ''})
+        # Add the user to some Plone groups
+        groupsTool = self.portal.portal_groups
+        for groupDescr in userData.ploneGroups:
+            # Create the group if it does not exist, turn cfg_num into cfg_id
+            # We have something like cfg1_powerobservers
+            group_data = groupDescr.getData()
+            if group_data['id'].startswith('cfg'):
+                cfg_id = self.cfg_num_to_id(group_data['id'][0:4])
+                group_data['id'] = cfg_id + group_data['id'][4:]
+            if group_data['title'].startswith('cfg'):
+                cfg_id = self.cfg_num_to_id(group_data['title'][0:4])
+                group_data['title'] = cfg_id + group_data['title'][4:]
+            if not groupsTool.getGroupById(group_data['id']):
+                groupsTool.addGroup(group_data['id'], title=group_data['title'])
+                if groupDescr.roles:
+                    groupsTool.setRolesForGroup(group_data['id'],
+                                                groupDescr.roles)
+            groupsTool.addPrincipalToGroup(userData.id, group_data['id'])
+
+    def addPersonsAndHeldPositions(self, person_descriptors, source):
+        '''Creates persons and eventual held_positions.'''
+        own_org = get_own_organization()
+        container = own_org.aq_inner.aq_parent
+        intids = getUtility(IIntIds)
+        for person_descr in person_descriptors:
+            # create the person
+            person = api.content.create(
+                container=container,
+                type='person',
+                **person_descr.getData())
+            # person.photo is the name of the photo to use stored in /images
+            if person.photo:
+                photo_path = '%s/images/%s' % (source, person.photo)
+                data = self.find_binary(photo_path)
+                photo_file = NamedImage(data, filename=person.photo)
+                person.photo = photo_file
+                validate_fields(person, raise_on_errors=True)
+            for held_pos_descr in person_descr.held_positions:
+                # get the position
+                data = held_pos_descr.getData()
+                org = container.restrictedTraverse(data['position'])
+                data['position'] = RelationValue(intids.getId(org))
+                held_position = api.content.create(
+                    container=person,
+                    type='held_position',
+                    **data)
+                validate_fields(held_position, raise_on_errors=True)
+
+    def cfg_num_to_id(self, cfg_num):
+        """ """
+        num = int(cfg_num[3:]) - 1
+        cfg_descr = self.data.meetingConfigs[num]
+        return cfg_descr.id
+
+    def find_binary(self, path):
+        """If a binary (odt, icon, photo, ...) is not found in current profile,
+           try to get it from Products.PloneMeeting.profiles.testing."""
+        try:
+            f = file(path, 'rb')
+        except IOError:
+            import Products.PloneMeeting
+            # get binary folder, last part of path (templates, images, ...)
+            splitted_path = path.split('/')
+            file_folder, filename = splitted_path[-2], splitted_path[-1]
+            pm_path = os.path.join(
+                os.path.dirname(Products.PloneMeeting.__file__),
+                'profiles/testing',
+                file_folder,
+                filename)
+            f = file(pm_path, 'rb')
+        data = f.read()
+        f.close()
+        return data
 
 
 def isTestOrArchiveProfile(context):

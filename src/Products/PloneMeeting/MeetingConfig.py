@@ -24,12 +24,9 @@ from DateTime import DateTime
 from eea.facetednavigation.interfaces import ICriteria
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
 from imio.helpers.cache import cleanRamCache
-from imio.helpers.content import validate_fields
 from plone import api
 from plone.app.portlets.portlets import navigation
 from plone.memoize import ram
-from plone.namedfile.file import NamedBlobFile
-from plone.namedfile.file import NamedBlobImage
 from plone.portlets.interfaces import IPortletAssignmentMapping
 from plone.portlets.interfaces import IPortletManager
 from Products.Archetypes.atapi import BooleanField
@@ -71,7 +68,6 @@ from Products.PloneMeeting.config import MEETING_STATES_ACCEPTING_ITEMS
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETINGROLES
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
-from Products.PloneMeeting.config import PloneMeetingError
 from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import READER_USECASES
@@ -101,14 +97,12 @@ from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
 from Products.PloneMeeting.utils import computeCertifiedSignatures
 from Products.PloneMeeting.utils import createOrUpdatePloneGroup
-from Products.PloneMeeting.utils import find_binary
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
 from Products.PloneMeeting.utils import getFieldContent
 from Products.PloneMeeting.utils import listifySignatures
-from Products.PloneMeeting.utils import org_id_to_uid
 from Products.PloneMeeting.utils import reviewersFor
 from Products.PloneMeeting.utils import updateAnnexesAccess
 from Products.PloneMeeting.validators import WorkflowInterfacesValidator
@@ -135,10 +129,8 @@ defValues = MeetingConfigDescriptor.get()
 # that are defined in a unique place: the MeetingConfigDescriptor class, used
 # for importing profiles.
 logger = logging.getLogger('PloneMeeting')
+
 DUPLICATE_SHORT_NAME = 'Short name "%s" is already used by another meeting configuration. Please choose another one.'
-
-ADDED_TYPE_ERROR = 'A validation error occurred while instantiating "%s" with id "%s". %s'
-
 CONFIGGROUPPREFIX = 'configgroup_'
 PROPOSINGGROUPPREFIX = 'suffix_proposing_group_'
 READERPREFIX = 'reader_'
@@ -3420,11 +3412,19 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # first check that we did not defined to rows for the same meetingConfig
         meetingConfigs = [v['meeting_config'] for v in values
                           if not v.get('orderindex_', None) == 'template_row_marker']
+        tool = api.portal.get_tool('portal_plonemeeting')
         for meetingConfig in meetingConfigs:
             if meetingConfigs.count(meetingConfig) > 1:
                 return translate('can_not_define_two_rows_for_same_meeting_config',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
+            # while importing data, defined meeting_config could not exist...
+            if meetingConfig not in tool.objectIds('MeetingConfig'):
+                return translate('unknown_meeting_config_id',
+                                 mapping={'meeting_config_id': meetingConfig},
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+
         for mctct in values:
             # do not consider 'template_row_marker'
             if mctct.get('orderindex_', None) == 'template_row_marker':
@@ -5362,180 +5362,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         ''' Returns True if we are currently using contacts.'''
         return bool('attendees' in self.getUsedMeetingAttributes())
 
-    security.declarePrivate('addCategory')
-
-    def addCategory(self, descr, classifier=False):
-        '''Creates a category or a classifier (depending on p_classifier) from
-           p_descr, a CategoryDescriptor instance.'''
-        if classifier:
-            folder = getattr(self, TOOL_FOLDER_CLASSIFIERS)
-        else:
-            folder = getattr(self, TOOL_FOLDER_CATEGORIES)
-        data = descr.getData()
-        folder.invokeFactory('MeetingCategory', **data)
-        cat = getattr(folder, descr.id)
-        # adapt org related values as we have org id on descriptor and we need to set org UID
-        if cat.usingGroups:
-            cat.setUsingGroups([org_id_to_uid(usingGroup) for usingGroup in cat.usingGroups])
-        if not descr.active:
-            self.portal_workflow.doActionFor(cat, 'deactivate')
-        # call processForm passing dummy values so existing values are not touched
-        cat.processForm(values={'dummy': None})
-        return cat
-
-    security.declarePrivate('addItemToConfig')
-
-    def addItemToConfig(self, descr, isRecurring=True):
-        '''Adds a recurring item or item template
-           from a RecurringItemDescriptor or a ItemTemplateDescriptor
-           depending on p_isRecurring.'''
-        if isRecurring:
-            folder = getattr(self, TOOL_FOLDER_RECURRING_ITEMS)
-        else:
-            folder = getattr(self, TOOL_FOLDER_ITEM_TEMPLATES)
-        data = descr.__dict__
-        itemType = isRecurring and \
-            self.getItemTypeName(configType='MeetingItemRecurring') or \
-            self.getItemTypeName(configType='MeetingItemTemplate')
-        folder.invokeFactory(itemType, **data)
-        item = getattr(folder, descr.id)
-        # adapt org related values as we have org id on descriptor and we need to set org UID
-        if item.proposingGroup:
-            item.setProposingGroup(org_id_to_uid(item.proposingGroup))
-        if item.groupInCharge:
-            item.setGroupInCharge(org_id_to_uid(item.groupInCharge))
-        if item.associatedGroups:
-            item.setAssociatedGroups(
-                [org_id_to_uid(associated_group)
-                 for associated_group in item.associatedGroups])
-        if item.templateUsingGroups:
-            item.setTemplateUsingGroups(
-                [org_id_to_uid(template_using_group)
-                 for template_using_group in item.templateUsingGroups])
-        # disable _at_rename_after_creation for itemTemplates and recurringItems
-        item._at_rename_after_creation = False
-        # call processForm passing dummy values so existing values are not touched
-        item.processForm(values={'dummy': None})
-        return item
-
-    def _validate_dx_content(self, obj):
-        errors = validate_fields(obj)
-        if errors:
-            raise PloneMeetingError(
-                ADDED_TYPE_ERROR % (obj.portal_type,
-                                    obj.id,
-                                    '\n'.join([repr(error) for error in errors])))
-
-    security.declarePrivate('addAnnexType')
-
-    def addAnnexType(self, at, source):
-        '''Adds an annex type from a AnnexTypeDescriptor p_at.'''
-        folder = getattr(self, TOOL_FOLDER_ANNEX_TYPES)
-        # create (ItemAnnex)ContentCategory in right subfolder (ContentCategoryGroup)
-        portal_type = 'ContentCategory'
-        sub_portal_type = 'ContentSubcategory'
-        if at.relatedTo == 'item':
-            portal_type = 'ItemAnnexContentCategory'
-            sub_portal_type = 'ItemAnnexContentSubcategory'
-            categoryGroupId = 'item_annexes'
-        elif at.relatedTo == 'item_decision':
-            portal_type = 'ItemAnnexContentCategory'
-            sub_portal_type = 'ItemAnnexContentSubcategory'
-            categoryGroupId = 'item_decision_annexes'
-        elif at.relatedTo == 'advice':
-            categoryGroupId = 'advice_annexes'
-        elif at.relatedTo == 'meeting':
-            categoryGroupId = 'meeting_annexes'
-
-        # The image must be retrieved on disk from a profile
-        iconPath = '%s/images/%s' % (source, at.icon)
-        data = find_binary(iconPath)
-        contentCategoryFile = NamedBlobImage(data, filename=at.icon)
-        annexType = api.content.create(
-            id=at.id,
-            type=portal_type,
-            title=at.title,
-            predefined_title=at.predefined_title,
-            icon=contentCategoryFile,
-            container=getattr(folder, categoryGroupId),
-            to_print=at.to_print,
-            confidential=at.confidential,
-            to_sign=at.to_sign,
-            signed=at.signed,
-            enabled=at.enabled,
-            description=at.description,
-        )
-        # store an empty set in other_mc_correspondences for validation
-        # then store intermediate value that will be reworked at the end
-        # of the MeetingConfig instanciation
-        if portal_type == 'ItemAnnexContentCategory':
-            annexType.other_mc_correspondences = set()
-        self._validate_dx_content(annexType)
-        if portal_type == 'ItemAnnexContentCategory':
-            annexType.other_mc_correspondences = at.other_mc_correspondences
-            annexType.only_for_meeting_managers = at.only_for_meeting_managers
-
-        for subType in at.subTypes:
-            annexSubType = api.content.create(
-                id=subType.id,
-                type=sub_portal_type,
-                title=subType.title,
-                predefined_title=subType.predefined_title,
-                container=annexType,
-                to_print=subType.to_print,
-                confidential=subType.confidential,
-                to_sign=at.to_sign,
-                signed=at.signed,
-                enabled=subType.enabled,
-                description=at.description,
-            )
-            if sub_portal_type == 'ItemAnnexContentSubcategory':
-                annexSubType.other_mc_correspondences = set()
-            self._validate_dx_content(annexSubType)
-            if sub_portal_type == 'ItemAnnexContentSubcategory':
-                annexSubType.other_mc_correspondences = subType.other_mc_correspondences
-                annexType.only_for_meeting_managers = at.only_for_meeting_managers
-
-        return annexType
-
-    security.declarePrivate('addPodTemplate')
-
-    def addPodTemplate(self, pt, source):
-        '''Adds a POD template from p_pt (a PodTemplateDescriptor instance).'''
-        folder = getattr(self, TOOL_FOLDER_POD_TEMPLATES)
-        # The template must be retrieved on disk from a profile
-        filePath = '%s/templates/%s' % (source, pt.odt_file)
-        data = find_binary(filePath)
-        odt_file = NamedBlobFile(
-            data=data,
-            contentType='applications/odt',
-            # pt.odt_file could be relative (../../other_profile/templates/sample.odt)
-            filename=safe_unicode(pt.odt_file.split('/')[-1]),
-        )
-        data = pt.getData(odt_file=odt_file)
-        podType = data['dashboard'] and 'DashboardPODTemplate' or 'ConfigurablePODTemplate'
-
-        if podType == 'DashboardPODTemplate':
-            # manage dashboard_collections from dashboard_collection_ids
-            # we have ids and we need UIDs
-            res = []
-            for coll_id in data['dashboard_collections_ids']:
-                if coll_id in self.searches.searches_items.objectIds():
-                    collection = getattr(self.searches.searches_items, coll_id)
-                elif coll_id in self.searches.searches_meetings.objectIds():
-                    collection = getattr(self.searches.searches_meetings, coll_id)
-                else:
-                    collection = getattr(self.searches.searches_decisions, coll_id)
-                res.append(collection.UID())
-            data['dashboard_collections'] = res
-
-        podTemplate = api.content.create(
-            type=podType,
-            container=folder,
-            **data)
-        self._validate_dx_content(podTemplate)
-        return podTemplate
-
     security.declarePublic('getAdvicesKeptOnSentToOtherMC')
 
     def getAdvicesKeptOnSentToOtherMC(self, as_org_uids=False, item=None, **kwargs):
@@ -5626,54 +5452,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 for brain in brains:
                     res.append(brain.getObject())
         return res
-
-    security.declarePrivate('createUser')
-
-    def createUser(self, userId):
-        '''Creates, in folder self.meetingusers, a new MeetingUser instance.'''
-        self.meetingusers.invokeFactory('MeetingUser', id=userId)
-        meetingUser = getattr(self.meetingusers, userId)
-        meetingUser.at_post_create_script()
-        return meetingUser
-
-    security.declarePublic('gotoPreferences')
-
-    def gotoPreferences(self):
-        '''Redirects the logged user to is preferences = the view of its
-           MeetingUser instance. If this instance does not exist, it is
-           created.'''
-        userId = self.portal_membership.getAuthenticatedMember().getId()
-        if not hasattr(self.meetingusers.aq_base, userId):
-            self.createUser(userId)
-        meetingUser = getattr(self.meetingusers, userId)
-        return self.REQUEST.RESPONSE.redirect(meetingUser.absolute_url())
-
-    security.declarePublic('addUser')
-
-    def addUser(self):
-        '''Creates a new MeetingUser instance from a userid which is (or should
-           be) in the request.'''
-        rq = self.REQUEST
-        userId = rq.get('userid', None)
-        d = 'PloneMeeting'
-        msg = None
-        if not userId:
-            msg = translate('meeting_user_id_required', domain=d, context=self.REQUEST)
-        elif not self.acl_users.getUser(userId):
-            msg = translate('meeting_user_no_plone_user', domain=d, context=self.REQUEST)
-        elif hasattr(self.meetingusers.aq_base, userId):
-            msg = translate('meeting_user_plone_user_already_used',
-                            domain=d,
-                            context=self.REQUEST)
-        if msg:
-            self.plone_utils.addPortalMessage(msg)
-            rq.RESPONSE.redirect(self.absolute_url() + '?pageName=users')
-        else:
-            # Create the user with the right ID and redirect the logged user to
-            # the edit_view.
-            self.createUser(userId)
-            editUrl = getattr(self.meetingusers, userId).absolute_url() + '/edit'
-            rq.RESPONSE.redirect(editUrl)
 
     def getUserParam_cachekey(method, self, param, request, userId=None, caching=True):
         '''cachekey method for self.getUserParam.'''
