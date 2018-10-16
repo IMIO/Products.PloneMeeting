@@ -101,6 +101,7 @@ from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
 from Products.PloneMeeting.utils import computeCertifiedSignatures
 from Products.PloneMeeting.utils import createOrUpdatePloneGroup
+from Products.PloneMeeting.utils import find_binary
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import getCustomAdapter
@@ -5448,9 +5449,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
         # The image must be retrieved on disk from a profile
         iconPath = '%s/images/%s' % (source, at.icon)
-        f = open(iconPath, 'r')
-        contentCategoryFile = NamedBlobImage(f.read(), filename=at.icon)
-        f.close()
+        data = find_binary(iconPath)
+        contentCategoryFile = NamedBlobImage(data, filename=at.icon)
         annexType = api.content.create(
             id=at.id,
             type=portal_type,
@@ -5505,14 +5505,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         folder = getattr(self, TOOL_FOLDER_POD_TEMPLATES)
         # The template must be retrieved on disk from a profile
         filePath = '%s/templates/%s' % (source, pt.odt_file)
-        f = file(filePath, 'rb')
+        data = find_binary(filePath)
         odt_file = NamedBlobFile(
-            data=f.read(),
+            data=data,
             contentType='applications/odt',
             # pt.odt_file could be relative (../../other_profile/templates/sample.odt)
             filename=safe_unicode(pt.odt_file.split('/')[-1]),
         )
-        f.close()
         data = pt.getData(odt_file=odt_file)
         podType = data['dashboard'] and 'DashboardPODTemplate' or 'ConfigurablePODTemplate'
 

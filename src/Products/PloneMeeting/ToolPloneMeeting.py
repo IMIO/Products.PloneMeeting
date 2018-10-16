@@ -82,6 +82,7 @@ from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
 from Products.PloneMeeting.model.adaptations import performModelAdaptations
 from Products.PloneMeeting.profiles import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.profiles import PloneMeetingConfiguration
+from Products.PloneMeeting.utils import find_binary
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
@@ -1500,9 +1501,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             # person.photo is the name of the photo to use stored in /images
             if person.photo:
                 photo_path = '%s/images/%s' % (source, person.photo)
-                f = open(photo_path, 'r')
-                photo_file = NamedImage(f.read(), filename=person.photo)
-                f.close()
+                data = find_binary(photo_path)
+                photo_file = NamedImage(data, filename=person.photo)
                 person.photo = photo_file
                 validate_fields(person, raise_on_errors=True)
             for held_pos_descr in person_descr.held_positions:
