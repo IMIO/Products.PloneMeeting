@@ -1748,8 +1748,8 @@ div.highlight.selectable_for_plonegroup_false div span {
     font-size: 110%;
 }
 
-h2.meeting-available-items,
-h2.meeting-presented-items,
+h2.available-items,
+h2.presented-items,
 h2.pm-inserting-methods-helper-msg {
    display: inline;
 }

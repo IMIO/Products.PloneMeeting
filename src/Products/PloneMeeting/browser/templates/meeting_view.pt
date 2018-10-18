@@ -38,11 +38,9 @@
   <br />
 
   <tal:availableItems condition="view/showAvailableItems">
-    <h2 class="collapsible active"
+    <h2 class="collapsible active available-items"
          onclick="toggleDoc('collapsible-available-items', toggle_parent_active=true, parent_elem=this)">
-      <span class="meeting-available-items" class="collapsible-content">
-        <span i18n:translate='available_items'>Available items</span>
-      </span>
+      <span i18n:translate='available_items'>Available items</span>
     </h2>
     <iframe src="@@meeting_available_items_view"
             id="collapsible-available-items"
@@ -56,18 +54,14 @@
   </tal:availableItems>
 
   <div class="clear"></div>
-  <h2 class="collapsible active"
+  <h2 class="collapsible active presented-items"
        onclick="toggleDoc('faceted-form', toggle_parent_active=true, parent_elem=this)">
-    <span class="meeting-presented-items">
-      <span i18n:translate="presented_items">Presented items</span> (<span class="meeting_number_of_items" tal:content="context/numberOfItems"/>)
-    </span>
+    <span i18n:translate="presented_items">Presented items</span> (<span class="meeting_number_of_items" tal:content="context/numberOfItems"/>)
   </h2>
-  <h2 class="pm-inserting-methods-helper-msg">
-    <span class="fa fa-question-circle help-doc pmAction tooltipster-inserting-methods-helper-msg"
-          tal:condition="python: view.tool.isManager(context)"
-          tal:attributes="data-base_url string:${context/absolute_url}">
-    </span>
-  </h2>
+  <span class="fa fa-question-circle help-doc pmAction tooltipster-inserting-methods-helper-msg"
+        tal:condition="python: view.tool.isManager(context)"
+        tal:attributes="data-base_url string:${context/absolute_url}">
+  </span>
 
   <!-- Folder contents -->
   <div class="faceted-form faceted-presented-items collapsible-content" metal:define-macro="widgets" id="faceted-form"
