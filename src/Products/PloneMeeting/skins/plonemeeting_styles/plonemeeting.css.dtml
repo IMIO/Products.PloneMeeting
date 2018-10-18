@@ -1690,13 +1690,13 @@ p#download_vcard {
     max-height: inherit;
 }
 
-div.collapsible {
+.collapsible {
     background-color: transparent;
     cursor: pointer;
     border: none;
     text-align: left;
     outline: none;
-    display: block;
+    display: inline;
 }
 
 .active, .collapsible:hover {
@@ -1746,6 +1746,12 @@ div.highlight.selectable_for_plonegroup_false div span {
 /* increase FontAwesome base size when parent is using discreet */
 .discreet .fa, .fas {
     font-size: 110%;
+}
+
+h2.meeting-available-items,
+h2.meeting-presented-items,
+h2.pm-inserting-methods-helper-msg {
+   display: inline;
 }
 
 /* </dtml-with> */
