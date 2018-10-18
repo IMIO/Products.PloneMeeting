@@ -119,12 +119,12 @@ class ToolInitializer:
         # Register classes again, after model adaptations have been performed
         # (see comment in __init__.py)
         registerClasses()
-        # if we already have existing MeetingGroups, we do not add additional ones
-        alreadyHaveGroups = bool(self.tool.objectValues('MeetingGroup'))
+        # if we already have existing organizations, we do not add additional ones
+        own_org = get_own_organization()
+        alreadyHaveGroups = bool(own_org.objectValues())
         if not alreadyHaveGroups:
             # 1) create organizations so we have org UIDS to initialize 'fct_orgs'
             orgs, active_orgs = self.addOrgs(self.data.orgs)
-            own_org = get_own_organization()
             # 2) create plonegroup functions (suffixes) to create Plone groups
             functions = deepcopy(api.portal.get_registry_record(FUNCTIONS_REGISTRY))
             function_ids = [function['fct_id'] for function in functions]

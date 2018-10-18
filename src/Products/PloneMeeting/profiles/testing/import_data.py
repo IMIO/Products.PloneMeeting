@@ -60,14 +60,14 @@ overheadAnalysisSubtype = ItemAnnexSubTypeDescriptor(
     'overhead-analysis-sub-annex',
     'Overhead analysis sub annex',
     other_mc_correspondences=(
-        'cfg1_-_annexes_types_-_item_annexes_-_budget-analysis', ))
+        'cfg2_-_annexes_types_-_item_annexes_-_budget-analysis', ))
 
 overheadAnalysis = ItemAnnexTypeDescriptor(
     'overhead-analysis', 'Administrative overhead analysis',
     u'overheadAnalysis.png',
     subTypes=[overheadAnalysisSubtype],
     other_mc_correspondences=(
-        'cfg1_-_annexes_types_-_item_annexes_-_budget-analysis_-_budget-analysis-sub-annex', ))
+        'cfg2_-_annexes_types_-_item_annexes_-_budget-analysis_-_budget-analysis-sub-annex', ))
 
 financialAnalysisSubAnnex = ItemAnnexSubTypeDescriptor(
     'financial-analysis-sub-annex',
@@ -92,12 +92,12 @@ budgetAnalysisCfg1Subtype = ItemAnnexSubTypeDescriptor(
     'budget-analysis-sub-annex',
     'Budget analysis sub annex',
     other_mc_correspondences=(
-        'cfg1_-_annexes_types_-_item_annexes_-_budget-analysis_-_budget-analysis-sub-annex', ))
+        'cfg2_-_annexes_types_-_item_annexes_-_budget-analysis_-_budget-analysis-sub-annex', ))
 
 budgetAnalysisCfg1 = ItemAnnexTypeDescriptor(
     'budget-analysis', 'Budget analysis', u'budgetAnalysis.png',
     subTypes=[budgetAnalysisCfg1Subtype],
-    other_mc_correspondences=('cfg1_-_annexes_types_-_item_annexes_-_budget-analysis', ))
+    other_mc_correspondences=('cfg2_-_annexes_types_-_item_annexes_-_budget-analysis', ))
 
 itemAnnex = ItemAnnexTypeDescriptor(
     'item-annex', 'Other annex(es)', u'itemAnnex.png')
