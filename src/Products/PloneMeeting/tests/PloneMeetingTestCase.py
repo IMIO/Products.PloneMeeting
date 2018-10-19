@@ -22,6 +22,7 @@
 
 from AccessControl.SecurityManagement import getSecurityManager
 from collections import OrderedDict
+from collective.contact.plonegroup.config import ORGANIZATIONS_REGISTRY
 from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_groups
 from collective.iconifiedcategory.utils import calculate_category_id
@@ -450,6 +451,20 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                                             'meeting-config-gettopics-',
                                             'plonegroup-utils-get_organizations-'
                                             ])
+
+    def _removeOrganizations(self):
+        """Delete every organizations found in own_org."""
+        # remove every users from linked Plone groups so organizations are removable
+        for org in self.own_org.objectValues():
+            plone_groups = get_plone_groups(org.UID())
+            for plone_group in plone_groups:
+                for member_id in plone_group.getMemberIds():
+                    self.portal.portal_groups.removePrincipalFromGroup(member_id, plone_group.id)
+        # unselect every organizations from plonegroup
+        api.portal.set_registry_record(ORGANIZATIONS_REGISTRY, [])
+        ids_to_remove = self.own_org.objectIds()
+        self.own_org.manage_delObjects(ids=ids_to_remove)
+        self.cleanMemoize()
 
     def _removeConfigObjectsFor(self, meetingConfig, folders=['recurringitems', 'itemtemplates']):
         """

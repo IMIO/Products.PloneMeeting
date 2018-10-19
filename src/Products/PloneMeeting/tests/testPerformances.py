@@ -324,8 +324,7 @@ class testPerformances(PloneMeetingTestCase):
         self._removeConfigObjectsFor(cfg2)
 
         # remove groups
-        ids_to_remove = self.own_org.objectIds()
-        self.own_org.manage_delObjects(ids=ids_to_remove)
+        self._removeOrganizations()
         # create groups
         for i in range(number_of_orgs):
             org = self.create('organization', id=i, title='Org %d' % i)

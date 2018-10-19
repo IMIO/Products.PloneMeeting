@@ -656,9 +656,14 @@ class ToolInitializer:
 
     def cfg_num_to_id(self, cfg_num):
         """ """
-        num = int(cfg_num[3:]) - 1
-        cfg_descr = self.data.meetingConfigs[num]
-        return cfg_descr.id
+        # make sure we have something like cfg1, cfg2, ...
+        # if not, then cfg_num is the cfg_id
+        if cfg_num.startswith('cfg'):
+            num = int(cfg_num[3:]) - 1
+            cfg_descr = self.data.meetingConfigs[num]
+            return cfg_descr.id
+        else:
+            return cfg_num
 
     def find_binary(self, path):
         """If a binary (odt, icon, photo, ...) is not found in current profile,

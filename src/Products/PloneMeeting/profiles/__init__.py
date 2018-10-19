@@ -548,8 +548,6 @@ class MeetingConfigDescriptor(Descriptor):
 
         # POD templates --------------------------------------------------------
         self.podTemplates = []
-        # MeetingUsers --------------------------------------------------------
-        self.meetingUsers = []  # ~[MeetingUserDescriptor]~
 
         # Workflow- and security-related parameters ----------------------------
         self.itemWorkflow = 'meetingitem_workflow'
