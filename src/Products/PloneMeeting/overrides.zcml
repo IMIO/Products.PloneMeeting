@@ -224,7 +224,7 @@
     <utility component=".vocabularies.PMStyleTemplatesVocabularyFactory"
              name="collective.documentgenerator.StyleTemplates" />
     <utility component=".vocabularies.PMDashboardCollectionsVocabularyFactory"
-             name="imio.dashboard.collectionsvocabulary" />
+             name="collective.eeafaceted.dashboard.dashboardcollectionsvocabulary" />
     <utility provides="zope.schema.interfaces.IVocabularyFactory"
              name="collective.iconifiedcategory.categories"
              factory=".vocabularies.PMCategoryVocabulary" />
