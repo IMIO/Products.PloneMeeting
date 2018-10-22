@@ -183,6 +183,9 @@ class Migrate_To_4_1(Migrator):
             object_provides='collective.documentgenerator.content.pod_template.IConfigurablePODTemplate')
         for brain in brains:
             pod_template = brain.getObject()
+            # bypass PodTemplate having a pod_template_to_use
+            if pod_template.pod_template_to_use:
+                continue
             current_content_type = pod_template.odt_file.contentType
             filename = pod_template.odt_file.filename
             extension = os.path.splitext(filename)[1].lower()
