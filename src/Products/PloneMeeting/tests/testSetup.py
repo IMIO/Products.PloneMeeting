@@ -24,8 +24,6 @@
 
 from plone import api
 from plone.app.testing import login
-from plone.app.testing.interfaces import DEFAULT_LANGUAGE
-from Products.CMFPlone.factory import addPloneSite
 from Products.GenericSetup.context import DirectoryImportContext
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
@@ -43,22 +41,37 @@ class testSetup(PloneMeetingTestCase):
                          not info['id'].endswith(tuple(excluded))]
         return profile_names
 
+    def _deleteItemAndMeetings(self):
+        """Find and delete items and meetings without using portal_catalog."""
+        meetings = []
+        items = []
+        for user_folder in self.portal.Members.objectValues():
+            mymeetings = user_folder.get('mymeetings')
+            if mymeetings:
+                for cfg_folder in mymeetings.objectValues():
+                    meetings = meetings + list(cfg_folder.objectValues('Meeting'))
+                    items = items + list(cfg_folder.objectValues('MeetingItem'))
+        # delete items first because deleting a meeting delete included items...
+        for obj in items + meetings:
+            parent = obj.aq_inner.aq_parent
+            parent.manage_delObjects(ids=[obj.getId()])
+
     def test_pm_InstallAvailableProfiles(self):
         """This is made for subpackages to test that defined profiles
            containing an import_data works as expected."""
         login(self.app, 'admin')
         # get current package name based on testing layer
         profile_names = self._currentSetupProfileNames(excluded=(':default', ':testing'))
-        i = 1
         for profile_name in profile_names:
             pm_logger.info("Applying import_data of profile '%s'" % profile_name)
-            addPloneSite(
-                self.app,
-                str(i),
-                title='Site title',
-                setup_content=False,
-                default_language=DEFAULT_LANGUAGE,
-                extension_ids=('plonetheme.sunburst:default', profile_name, ))
+            # delete existing organizations and MeetingConfigs
+            for cfg in self.tool.objectValues('MeetingConfig'):
+                self._deleteItemAndMeetings()
+                self._removeConfigObjectsFor(cfg)
+                self.tool.manage_delObjects(ids=cfg.getId())
+            self._removeOrganizations()
+
+            self.portal.portal_setup.runAllImportStepsFromProfile(u'profile-' + profile_name)
             # check that configured Pod templates are correctly rendered
             # there should be no message of type
             tool = api.portal.get_tool('portal_plonemeeting')
@@ -75,7 +88,6 @@ class testSetup(PloneMeetingTestCase):
             # clean memoize between each site because the same REQUEST especially
             # is used for every sites and this can lead to problems...
             cleanMemoize(self.portal)
-            i = i + 1
 
     def test_pm_WorkflowsRemovedOnReinstall(self):
         '''This will test that remove=True is used in the workflows.xml, indeed
@@ -125,7 +137,9 @@ class testSetup(PloneMeetingTestCase):
                          if profile['id'] == profile_name][0]
         path = profile_infos['path']
         import_context = DirectoryImportContext(self.portal.portal_setup, path)
-        self.assertTrue('data.restrictUsers = False' in import_context.readDataFile('import_data.py'))
+        import imp
+        import_data = imp.load_source('', import_context._profile_path + '/import_data.py')
+        self.assertFalse(import_data.data.restrictUsers)
         self.portal.portal_setup.runAllImportStepsFromProfile(u'profile-' + profile_name)
         # restrictUsers is still True
         self.assertTrue(self.tool.restrictUsers)

@@ -17,8 +17,6 @@ from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
-from collective.contact.plonegroup.utils import get_own_organization
-from collective.contact.plonegroup.utils import get_plone_group
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.documentviewer.async import queueJob
 from collective.documentviewer.settings import GlobalSettings
@@ -36,8 +34,6 @@ from datetime import datetime
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import invalidate_cachekey_volatile_for
-from imio.helpers.security import generate_password
-from imio.helpers.security import is_develop_environment
 from imio.prettylink.interfaces import IPrettyLink
 from OFS import CopySupport
 from persistent.mapping import PersistentMapping
@@ -78,13 +74,12 @@ from Products.PloneMeeting.config import RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import ROOT_FOLDER
 from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
 from Products.PloneMeeting.model.adaptations import performModelAdaptations
-from Products.PloneMeeting.profiles import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.profiles import PloneMeetingConfiguration
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
-from Products.PloneMeeting.utils import org_id_to_uid
 from Products.PloneMeeting.utils import monthsIds
+from Products.PloneMeeting.utils import org_id_to_uid
 from Products.PloneMeeting.utils import weekdaysIds
 from Products.PloneMeeting.utils import workday
 from Products.ZCatalog.Catalog import AbstractCatalogBrain
@@ -608,100 +603,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         if not hasattr(root_folder, meetingConfigId):
             self.createMeetingConfigFolder(meetingConfigId, userId)
         return getattr(root_folder, meetingConfigId)
-
-    security.declarePublic('createMeetingConfig')
-
-    def createMeetingConfig(self, configData, source):
-        '''Creates a new meeting configuration from p_configData which is a
-           MeetingConfigDescriptor instance. p_source is a string that
-           corresponds to the absolute path of a profile; additional (binary)
-           data like images or templates that need to be attached to some
-           sub-objects of the meeting config will be searched there.'''
-        cData = configData.getData()
-        # turn group ids into org uids
-        for field_name in ['selectableCopyGroups', 'selectableAdvisers']:
-            data = cData.get(field_name)
-            data = [org_id_to_uid(suffixed_group_id) for suffixed_group_id in data]
-            cData[field_name] = data
-        if cData['id'] in self.objectIds():
-            logger.info(
-                'A MeetingConfig with id {0} already exists, passing...'.format(
-                    cData['id']))
-            return
-        self.invokeFactory('MeetingConfig', **cData)
-        cfgId = configData.id
-        cfg = getattr(self, cfgId)
-        cfg._at_creation_flag = True
-        # TextArea fields are not set properly.
-        for field in cfg.Schema().fields():
-            fieldName = field.getName()
-            widgetName = field.widget.getName()
-            if (widgetName == 'TextAreaWidget') and fieldName in cData:
-                field.set(cfg, cData[fieldName], mimetype='text/html')
-        # call processForm passing dummy values so existing values are not touched
-        cfg.processForm(values={'dummy': None})
-
-        # Validates meeting config (validation seems not to be triggered
-        # automatically when an object is created from code).
-        errors = []
-        for field in cfg.Schema().fields():
-            error = field.validate(cfg.getField(field.getName()).get(cfg), cfg)
-            if error:
-                errors.append("'%s': %s" % (field.getName(), error))
-        if errors:
-            raise PloneMeetingError(MEETING_CONFIG_ERROR % (cfg.getId(), '\n'.join(errors)))
-
-        if not configData.active:
-            wfTool = api.portal.get_tool('portal_workflow')
-            wfTool.doActionFor(cfg, 'deactivate')
-        # Adds the sub-objects within the config: categories, classifiers,...
-        for descr in configData.categories:
-            cfg.addCategory(descr, False)
-        for descr in configData.classifiers:
-            cfg.addCategory(descr, True)
-        for descr in configData.recurringItems:
-            cfg.addItemToConfig(descr)
-        for descr in configData.itemTemplates:
-            cfg.addItemToConfig(descr, isRecurring=False)
-        # configure ContentCategoryGroups before adding annex_types
-        # this will enable confidentiality, to_sign/signed, ... if necessary
-        for category_group_id, attrs in configData.category_group_activated_attrs.items():
-            category_group = cfg.annexes_types.get(category_group_id)
-            for attr in attrs:
-                if not hasattr(category_group, attr):
-                    raise PloneMeetingError(
-                        'Attribute {0} does not exist on {1} of {2}'.format(
-                            attr, category_group_id, cfgId))
-                setattr(category_group, attr, True)
-        for descr in configData.annexTypes:
-            cfg.addAnnexType(descr, source)
-        # first create style templates so it exist before being used by a pod template
-        for descr in configData.styleTemplates:
-            cfg.addPodTemplate(descr, source)
-        for descr in configData.podTemplates:
-            cfg.addPodTemplate(descr, source)
-        for mud in configData.meetingUsers:
-            mu = cfg.addMeetingUser(mud, source)
-            # Plone bug - index "usages" is not correctly initialized.
-            oldUsages = mu.getUsages()
-            mu.setUsages(())
-            mu.reindexObject()
-            mu.setUsages(oldUsages)
-            mu.reindexObject()
-        # manage MeetingManagers
-        groupsTool = api.portal.get_tool('portal_groups')
-        for userId in configData.meetingManagers:
-            groupsTool.addPrincipalToGroup(userId, '{0}_{1}'.format(cfg.getId(),
-                                                                    MEETINGMANAGERS_GROUP_SUFFIX))
-        # manage annex confidentiality, enable it on relevant CategoryGroup
-        if configData.itemAnnexConfidentialVisibleFor:
-            cfg.annexes_types.item_annexes.confidentiality_activated = True
-            cfg.annexes_types.item_decision_annexes.confidentiality_activated = True
-        if configData.adviceAnnexConfidentialVisibleFor:
-            cfg.annexes_types.advice_annexes.confidentiality_activated = True
-        if configData.meetingAnnexConfidentialVisibleFor:
-            cfg.annexes_types.meeting_annexes.confidentiality_activated = True
-        return cfg
 
     security.declarePublic('createMeetingConfigFolder')
 
@@ -1361,31 +1262,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         pass
 
-    security.declarePublic('addUser')
-
-    def addUser(self, userData):
-        '''Adds a new Plone user from p_userData which is a UserDescriptor
-           instance if it does not already exist.'''
-        usersDb = self.acl_users.source_users
-        if usersDb.getUserById(userData.id) or userData.id == 'admin':
-            return  # Already exists.
-        self.portal_registration.addMember(
-            userData.id, userData.password,
-            ['Member'] + userData.globalRoles,
-            properties={'username': userData.id,
-                        'email': userData.email,
-                        'fullname': userData.fullname or ''})
-        # Add the user to some Plone groups
-        groupsTool = self.portal_groups
-        for groupDescr in userData.ploneGroups:
-            # Create the group if it does not exist
-            if not groupsTool.getGroupById(groupDescr.id):
-                groupsTool.addGroup(groupDescr.id, title=groupDescr.title)
-                if groupDescr.roles:
-                    groupsTool.setRolesForGroup(groupDescr.id,
-                                                groupDescr.roles)
-            groupsTool.addPrincipalToGroup(userData.id, groupDescr.id)
-
     security.declarePublic('getMailRecipient')
 
     def getMailRecipient(self, userIdOrInfo, enc='utf-8'):
@@ -1405,81 +1281,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         name = fullname.decode(enc)
         res = name + u' <%s>' % userInfo.getProperty('email').decode(enc)
         return safe_unicode(res)
-
-    security.declarePublic('addUsersOutsideGroups')
-
-    def addUsersOutsideGroups(self, usersOutsideGroups):
-        '''Create users that are outside any PloneMeeting group (like WebDAV
-           users or users that are in groups created by MeetingConfigs).'''
-        for userDescr in usersOutsideGroups:
-            self.addUser(userDescr)
-
-    security.declarePublic('addOrgs')
-
-    def addOrgs(self, org_descriptors):
-        '''Creates organizations (a list of OrgaDescriptor instances) in the contact own organization.'''
-        own_org = get_own_organization()
-        orgs = []
-        active_orgs = []
-        for org_descr in org_descriptors:
-            if org_descr.parent_path:
-                # find parent organization following parent path from container
-                container = own_org.restrictedTraverse(org_descr.parent_path)
-            else:
-                container = own_org
-            # Maybe the organization already exists?
-            # It could be the case if we are reapplying a configuration
-            if org_descr.id in container.objectIds():
-                continue
-
-            org = api.content.create(
-                container=container,
-                type='organization',
-                **org_descr.getData())
-            orgs.append(org)
-            if org_descr.active:
-                active_orgs.append(org)
-        return orgs, active_orgs
-
-    security.declarePublic('addUsers')
-
-    def addUsers(self, org_descriptors):
-        '''Creates Plone users and add it to linked Plone groups.'''
-        plone_utils = api.portal.get_tool('plone_utils')
-        # if we are in dev, we use DEFAULT_USER_PASSWORD, else we will generate a
-        # password that is compliant with the current password policy...
-        if is_develop_environment():
-            password = DEFAULT_USER_PASSWORD
-        else:
-            password = generate_password()
-        msg = "The password used for added users is %s" % (password or DEFAULT_USER_PASSWORD)
-        logger.info(msg)
-        # add a portal_message so admin adding the Plone site knows password
-        plone_utils.addPortalMessage(msg, 'warning')
-
-        own_org = get_own_organization()
-        for org_descr in org_descriptors:
-            if org_descr.parent_path:
-                # find parent organization following parent path from container
-                container = own_org.restrictedTraverse(org_descr.parent_path)
-            else:
-                container = own_org
-            org = container.get(org_descr.id)
-            # Create users
-            for userDescr in org_descr.getUsers():
-                # if we defined a generated password here above, we use it
-                # either we use the password provided in the applied profile
-                if password:
-                    userDescr.password = password
-                self.addUser(userDescr)
-            # Add users in the correct Plone groups.
-            org_uid = org.UID()
-            for suffix in get_all_suffixes(org_uid):
-                plone_group = get_plone_group(org_uid, suffix)
-                group_members = plone_group.getMemberIds()
-                for userDescr in getattr(org_descr, suffix):
-                    if userDescr.id not in group_members:
-                        api.group.add_user(group=plone_group, username=userDescr.id)
 
     security.declarePublic('attributeIsUsed')
 

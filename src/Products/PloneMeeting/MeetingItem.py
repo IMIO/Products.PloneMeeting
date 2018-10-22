@@ -4377,13 +4377,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             data = OrderedDict(data_as_list)
         return data
 
-    def getAdviceObj(self, advId):
+    def getAdviceObj(self, adv_uid):
         """Return the advice object for given p_advId.
            If advice object does not exist, None is returned."""
         adviceObj = None
-        if advId in self.adviceIndex and \
-           self.adviceIndex[advId].get('advice_id', None):
-            adviceObj = getattr(self, self.adviceIndex[advId]['advice_id'])
+        if adv_uid in self.adviceIndex and \
+           self.adviceIndex[adv_uid].get('advice_id', None):
+            adviceObj = getattr(self, self.adviceIndex[adv_uid]['advice_id'])
         return adviceObj
 
     def _grantPermissionToRole(self, permission, role_to_give, obj):

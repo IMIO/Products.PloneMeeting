@@ -22,11 +22,13 @@
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.profiles import AnnexTypeDescriptor
 from Products.PloneMeeting.profiles import CategoryDescriptor
-from Products.PloneMeeting.profiles import OrgDescriptor
 from Products.PloneMeeting.profiles import ItemAnnexSubTypeDescriptor
 from Products.PloneMeeting.profiles import ItemAnnexTypeDescriptor
 from Products.PloneMeeting.profiles import ItemTemplateDescriptor
+from Products.PloneMeeting.profiles import HeldPositionDescriptor
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
+from Products.PloneMeeting.profiles import OrgDescriptor
+from Products.PloneMeeting.profiles import PersonDescriptor
 from Products.PloneMeeting.profiles import PloneGroupDescriptor
 from Products.PloneMeeting.profiles import PloneMeetingConfiguration
 from Products.PloneMeeting.profiles import PodTemplateDescriptor
@@ -59,14 +61,14 @@ overheadAnalysisSubtype = ItemAnnexSubTypeDescriptor(
     'overhead-analysis-sub-annex',
     'Overhead analysis sub annex',
     other_mc_correspondences=(
-        'plonegov-assembly_-_annexes_types_-_item_annexes_-_budget-analysis', ))
+        'cfg2_-_annexes_types_-_item_annexes_-_budget-analysis', ))
 
 overheadAnalysis = ItemAnnexTypeDescriptor(
     'overhead-analysis', 'Administrative overhead analysis',
     u'overheadAnalysis.png',
     subTypes=[overheadAnalysisSubtype],
     other_mc_correspondences=(
-        'plonegov-assembly_-_annexes_types_-_item_annexes_-_budget-analysis_-_budget-analysis-sub-annex', ))
+        'cfg2_-_annexes_types_-_item_annexes_-_budget-analysis_-_budget-analysis-sub-annex', ))
 
 financialAnalysisSubAnnex = ItemAnnexSubTypeDescriptor(
     'financial-analysis-sub-annex',
@@ -91,12 +93,12 @@ budgetAnalysisCfg1Subtype = ItemAnnexSubTypeDescriptor(
     'budget-analysis-sub-annex',
     'Budget analysis sub annex',
     other_mc_correspondences=(
-        'plonegov-assembly_-_annexes_types_-_item_annexes_-_budget-analysis_-_budget-analysis-sub-annex', ))
+        'cfg2_-_annexes_types_-_item_annexes_-_budget-analysis_-_budget-analysis-sub-annex', ))
 
 budgetAnalysisCfg1 = ItemAnnexTypeDescriptor(
     'budget-analysis', 'Budget analysis', u'budgetAnalysis.png',
     subTypes=[budgetAnalysisCfg1Subtype],
-    other_mc_correspondences=('plonegov-assembly_-_annexes_types_-_item_annexes_-_budget-analysis', ))
+    other_mc_correspondences=('cfg2_-_annexes_types_-_item_annexes_-_budget-analysis', ))
 
 itemAnnex = ItemAnnexTypeDescriptor(
     'item-annex', 'Other annex(es)', u'itemAnnex.png')
@@ -126,21 +128,21 @@ stylesTemplate2.odt_file = 'styles2.odt'
 # Pod templates
 agendaTemplate = PodTemplateDescriptor('agendaTemplate', 'Meeting agenda')
 agendaTemplate.odt_file = 'Agenda.odt'
-agendaTemplate.pod_portal_types = ['MeetingPma']
+agendaTemplate.pod_portal_types = ['Meeting']
 agendaTemplate.tal_condition = u''
 agendaTemplate.style_template = ['styles1']
 
 decisionsTemplate = PodTemplateDescriptor('decisionsTemplate',
                                           'Meeting decisions')
 decisionsTemplate.odt_file = 'Decisions.odt'
-decisionsTemplate.pod_portal_types = ['MeetingPma']
+decisionsTemplate.pod_portal_types = ['Meeting']
 decisionsTemplate.tal_condition = u'python:here.adapted().isDecided()'
 decisionsTemplate.roles_bypassing_talcondition = set(['Manager'])
 decisionsTemplate.style_template = ['styles1']
 
 itemTemplate = PodTemplateDescriptor('itemTemplate', 'Meeting item')
 itemTemplate.odt_file = 'Item.odt'
-itemTemplate.pod_portal_types = ['MeetingItemPma']
+itemTemplate.pod_portal_types = ['MeetingItem']
 itemTemplate.tal_condition = u''
 itemTemplate.style_template = ['styles2']
 
@@ -169,10 +171,8 @@ powerobserver1 = UserDescriptor('powerobserver1',
                                 email="powerobserver1@plonemeeting.org",
                                 fullname='M. Power Observer1')
 # powerobserver1 is 'power observer' because in the meetingPma '_powerobservers' group
-plonemeeting_assembly_powerobservers = PloneGroupDescriptor('plonemeeting-assembly_powerobservers',
-                                                            'plonemeeting-assembly_powerobservers',
-                                                            [])
-powerobserver1.ploneGroups = [plonemeeting_assembly_powerobservers, ]
+cfg1_powerobservers = PloneGroupDescriptor('cfg1_powerobservers', 'cfg1_powerobservers', [])
+powerobserver1.ploneGroups = [cfg1_powerobservers, ]
 powerobserver2 = UserDescriptor('powerobserver2',
                                 [],
                                 email="powerobserver2@plonemeeting.org",
@@ -181,28 +181,26 @@ restrictedpowerobserver1 = UserDescriptor('restrictedpowerobserver1',
                                           [],
                                           email="restrictedpowerobserver1@plonemeeting.org",
                                           fullname='M. Restricted Power Observer 1')
-plonemeeting_assembly_restrictedpowerobservers = PloneGroupDescriptor('plonemeeting-assembly_restrictedpowerobservers',
-                                                                      'plonemeeting-assembly_restrictedpowerobservers',
-                                                                      [])
-restrictedpowerobserver1.ploneGroups = [plonemeeting_assembly_restrictedpowerobservers, ]
+cfg1_restrictedpowerobservers = PloneGroupDescriptor('cfg1_restrictedpowerobservers',
+                                                     'cfg1_restrictedpowerobservers',
+                                                     [])
+restrictedpowerobserver1.ploneGroups = [cfg1_restrictedpowerobservers, ]
 restrictedpowerobserver2 = UserDescriptor('restrictedpowerobserver2',
                                           [],
                                           email="restrictedpowerobserver2@plonemeeting.org",
                                           fullname='M. Restricted Power Observer 2')
-plonegov_assembly_restrictedpowerobservers = PloneGroupDescriptor('plonegov-assembly_restrictedpowerobservers',
-                                                                  'plonegov-assembly_restrictedpowerobservers',
-                                                                  [])
-restrictedpowerobserver2.ploneGroups = [plonegov_assembly_restrictedpowerobservers, ]
+cfg2_restrictedpowerobservers = PloneGroupDescriptor('cfg2_restrictedpowerobservers',
+                                                     'cfg2_restrictedpowerobservers',
+                                                     [])
+restrictedpowerobserver2.ploneGroups = [cfg2_restrictedpowerobservers, ]
 # budget impact editors
 budgetimpacteditor = UserDescriptor('budgetimpacteditor',
                                     [],
                                     email="budgetimpacteditor@plonemeeting.org",
                                     fullname='M. Budget Impact Editor')
-plonemeeting_assembly_budgetimpacteditors = PloneGroupDescriptor('plonemeeting-assembly_budgetimpacteditors',
-                                                                 'plonemeeting-assembly_budgetimpacteditors',
-                                                                 [])
-budgetimpacteditor.ploneGroups = [plonemeeting_assembly_budgetimpacteditors,
-                                  plonemeeting_assembly_powerobservers]
+cfg1_budgetimpacteditors = PloneGroupDescriptor('cfg1_budgetimpacteditors', 'cfg1_budgetimpacteditors', [])
+budgetimpacteditor.ploneGroups = [cfg1_budgetimpacteditors,
+                                  cfg1_powerobservers]
 
 developers = OrgDescriptor('developers', 'Developers', 'Devel')
 developers.creators.append(pmCreator1)
@@ -342,9 +340,9 @@ meetingPma.meetingUsers = []
 meetingPma.styleTemplates = [stylesTemplate1, stylesTemplate2]
 meetingPma.podTemplates = [agendaTemplate, decisionsTemplate, itemTemplate, dashboardTemplate]
 meetingPma.selectableCopyGroups = [developers.getIdSuffixed('reviewers'), vendors.getIdSuffixed('reviewers'), ]
-meetingPma.meetingConfigsToCloneTo = [{'meeting_config': 'plonegov-assembly',
+meetingPma.meetingConfigsToCloneTo = [{'meeting_config': 'cfg2',
                                        'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}, ]
-meetingPma.addContacts = True
+meetingPma.addContactsCSV = False
 
 # Plonegov-assembly
 meetingPga = MeetingConfigDescriptor(
@@ -414,11 +412,25 @@ meetingPga.useCopies = True
 meetingPga.selectableCopyGroups = [developers.getIdSuffixed('reviewers'), vendors.getIdSuffixed('reviewers'), ]
 meetingPga.itemCopyGroupsStates = ['validated', 'itempublished', 'itemfrozen', 'accepted', 'delayed', ]
 
+# Define held positions to use on persons
+held_pos1 = HeldPositionDescriptor('held_pos1', u'Assembly member 1', signature_number='1')
+held_pos2 = HeldPositionDescriptor('held_pos2', u'Assembly member 2')
+held_pos3 = HeldPositionDescriptor('held_pos3', u'Assembly member 3')
+held_pos4 = HeldPositionDescriptor('held_pos4', u'Assembly member 4', signature_number='2')
+
+# Add persons
+person1 = PersonDescriptor('person1', u'Person1LastName', u'Person1FirstName', held_positions=[held_pos1])
+person1.photo = u'person1.png'
+person2 = PersonDescriptor('person2', u'Person2LastName', u'Person2FirstName', held_positions=[held_pos2])
+person3 = PersonDescriptor('person3', u'Person3LastName', u'Person3FirstName', held_positions=[held_pos3])
+person4 = PersonDescriptor('person4', u'Person4LastName', u'Person4FirstName', held_positions=[held_pos4])
+
 # The whole configuration object -----------------------------------------------
 data = PloneMeetingConfiguration('My meetings', (meetingPma, meetingPga),
                                  (developers, vendors, endUsers))
 # necessary for testSetup.test_pm_ToolAttributesAreOnlySetOnFirstImportData
 data.restrictUsers = False
+data.persons = [person1, person2, person3, person4]
 data.usersOutsideGroups = [cadranel, voter1, voter2, powerobserver1, powerobserver2,
                            restrictedpowerobserver1, restrictedpowerobserver2,
                            budgetimpacteditor]

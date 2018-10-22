@@ -140,8 +140,13 @@ document.location.reload(true);
 
  <fieldset>
   <legend>
-    <span tal:condition="lang" class="pmLanguage" tal:content="lang"></span>
-    <span tal:replace="python: field.widget.Label(context)"></span>
+    <div style="display: inline"
+         class="collapsible active"
+         tal:attributes="id string:${hookId}_toggle;
+                         onclick string:toggleDoc('${hookId}_content', toggle_parent_active=true, parent_elem=${hookId}_toggle);">
+      <span tal:condition="lang" class="pmLanguage" tal:content="lang"></span>
+      <span tal:replace="python: field.widget.Label(context)"></span>
+    </div>
     <img style="cursor:pointer" tal:condition="mayEdit"
          tal:attributes="src string:$portal_url/edit.png;
                          onClick jsEdit;
@@ -154,9 +159,6 @@ document.location.reload(true);
          tal:condition="changes"
          tal:attributes="src string:$portal_url/view.gif; onClick jsView"/>
     </tal:history>
-    <div style="display: inline" class="collapsible discreet active"
-         tal:attributes="id string:${hookId}_toggle;
-                         onclick string:toggleDoc('${hookId}_content', toggle_parent_active=true, parent_elem=${hookId}_toggle);"></div>
   </legend>
 
   <div tal:attributes="id string:${hookId}_content">

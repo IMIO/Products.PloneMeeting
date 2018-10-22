@@ -194,7 +194,7 @@ class testAdvices(PloneMeetingTestCase):
         # we can use the values from the vocabulary
         vocab = form.widgets.get('advice_group').terms.terms
         self.failUnless(self.vendors_uid in vocab)
-        self.failUnless(len(vocab) == 1)
+        self.assertEqual(len(vocab), 1)
         # give the advice, select a valid 'advice_group' and save
         form.request.set('form.widgets.advice_group', self.vendors_uid)
         # the 3 fields 'advice_group', 'advice_type' and 'advice_comment' are handled correctly
@@ -206,7 +206,7 @@ class testAdvices(PloneMeetingTestCase):
                         'advice_observations' in data and
                         'advice_hide_during_redaction' in data)
         # we receive the 6 fields
-        self.assertTrue(len(data) == len(form.fields))
+        self.assertEqual(len(data), len(form.fields))
         form.request.form['advice_group'] = self.vendors_uid
         form.request.form['advice_type'] = u'positive'
         form.request.form['advice_comment'] = RichTextValue(u'My comment')
@@ -914,7 +914,7 @@ class testAdvices(PloneMeetingTestCase):
         # the automatic advice is asked
         self.assertTrue(self.vendors_uid in item.adviceIndex)
         self.assertTrue(not item.adviceIndex[self.vendors_uid]['optional'])
-        self.assertTrue(item.getAutomaticAdvisersData()[0]['org_uid'] == self.vendors_uid)
+        self.assertEqual(item.getAutomaticAdvisersData()[0]['org_uid'], self.vendors_uid)
         # now give the advice
         self.proposeItem(item)
         self.changeUser('pmReviewer2')
@@ -1266,7 +1266,7 @@ class testAdvices(PloneMeetingTestCase):
         item.setOptionalAdvisers((self.vendors_uid, ))
         item.at_post_create_script()
         self.proposeItem(item)
-        self.assertTrue(item.queryState() == self._stateMappingFor('proposed'))
+        self.assertEqual(item.queryState(), self._stateMappingFor('proposed'))
         # the advice is giveable by the vendors
         self.changeUser('pmReviewer2')
         self.assertTrue(self.vendors_uid in [key for key, value in item.getAdvicesGroupsInfosForUser()[0]])
@@ -1392,7 +1392,7 @@ class testAdvices(PloneMeetingTestCase):
         # meetingadvice.advice_group vocabulary
         factory = queryUtility(IVocabularyFactory, u'Products.PloneMeeting.content.advice.advice_group_vocabulary')
         vocab = factory(item)
-        self.assertTrue(len(vocab) == 1)
+        self.assertEqual(len(vocab), 1)
         self.assertTrue(self.vendors_uid in vocab)
         self.assertTrue(self.developers_uid not in vocab)
 
@@ -1430,23 +1430,23 @@ class testAdvices(PloneMeetingTestCase):
             delay_started_on = delay_started_on - timedelta(1)
         item.adviceIndex[self.vendors_uid]['delay_started_on'] = delay_started_on
         item.updateLocalRoles()
-        self.assertTrue(item.adviceIndex[self.vendors_uid]['delay_started_on'].weekday() == 0)
+        self.assertEqual(item.adviceIndex[self.vendors_uid]['delay_started_on'].weekday(), 0)
         # for now, weekends are days 5 and 6, so saturday and sunday
-        self.assertTrue(self.tool.getNonWorkingDayNumbers() == [5, 6])
+        self.assertEqual(self.tool.getNonWorkingDayNumbers(), [5, 6])
         # limit_date should be in 9 days, 7 days of delay + 2 days of weekends
         limit_date_9_days = item._doClearDayFrom(item.adviceIndex[self.vendors_uid]['delay_started_on'] + timedelta(9))
-        self.assertTrue(item.adviceIndex[self.vendors_uid]['delay_infos']['limit_date'] == limit_date_9_days)
-        self.assertTrue(item.adviceIndex[self.vendors_uid]['delay_infos']['delay_status'] == 'still_time')
+        self.assertEqual(item.adviceIndex[self.vendors_uid]['delay_infos']['limit_date'], limit_date_9_days)
+        self.assertEqual(item.adviceIndex[self.vendors_uid]['delay_infos']['delay_status'], 'still_time')
         # now set weekends to only 'sunday'
         self.tool.setWorkingDays(('mon', 'tue', 'wed', 'thu', 'fri', 'sat', ))
         # the method is ram.cached, check that it is correct when changed
         self.tool.setModificationDate(DateTime())
-        self.assertTrue(self.tool.getNonWorkingDayNumbers() == [6, ])
+        self.assertEqual(self.tool.getNonWorkingDayNumbers(), [6, ])
         item.updateLocalRoles()
         # this will decrease delay of one day
-        self.assertTrue(limit_date_9_days - timedelta(1) ==
-                        item.adviceIndex[self.vendors_uid]['delay_infos']['limit_date'])
-        self.assertTrue(item.adviceIndex[self.vendors_uid]['delay_infos']['delay_status'] == 'still_time')
+        self.assertEqual(limit_date_9_days - timedelta(1),
+                         item.adviceIndex[self.vendors_uid]['delay_infos']['limit_date'])
+        self.assertEqual(item.adviceIndex[self.vendors_uid]['delay_infos']['delay_status'], 'still_time')
 
         # now add 2 holidays, one passed date and one date that will change delay
         # a date next day after the 'delay_started_on'
@@ -1457,20 +1457,20 @@ class testAdvices(PloneMeetingTestCase):
         # the method getHolidaysAs_datetime is ram.cached, check that it is correct when changed
         self.tool.setModificationDate(DateTime())
         year, month, day = holiday_changing_delay.split('/')
-        self.assertTrue(self.tool.getHolidaysAs_datetime() == [datetime(2012, 5, 6),
+        self.assertEqual(self.tool.getHolidaysAs_datetime(), [datetime(2012, 5, 6),
                                                                datetime(int(year), int(month), int(day)), ])
         # this should increase delay of one day, so as original limit_date_9_days
         item.updateLocalRoles()
-        self.assertTrue(limit_date_9_days == item.adviceIndex[self.vendors_uid]['delay_infos']['limit_date'])
-        self.assertTrue(item.adviceIndex[self.vendors_uid]['delay_infos']['delay_status'] == 'still_time')
+        self.assertEqual(limit_date_9_days, item.adviceIndex[self.vendors_uid]['delay_infos']['limit_date'])
+        self.assertEqual(item.adviceIndex[self.vendors_uid]['delay_infos']['delay_status'], 'still_time')
 
         # now add one unavailable day for end of delay
         # for now, limit_date ends day number 2, so wednesday
-        self.assertTrue(item.adviceIndex[self.vendors_uid]['delay_infos']['limit_date'].weekday() == 2)
+        self.assertEqual(item.adviceIndex[self.vendors_uid]['delay_infos']['limit_date'].weekday(), 2)
         self.tool.setDelayUnavailableEndDays(('wed', ))
         # the method getUnavailableWeekDaysNumbers is ram.cached, check that it is correct when changed
         self.tool.setModificationDate(DateTime())
-        self.assertTrue(self.tool.getUnavailableWeekDaysNumbers() == [2, ])
+        self.assertEqual(self.tool.getUnavailableWeekDaysNumbers(), [2, ])
         item.updateLocalRoles()
         # this increase limit_date of one day, aka next available day
         self.assertEqual(limit_date_9_days + timedelta(1),
@@ -1491,13 +1491,13 @@ class testAdvices(PloneMeetingTestCase):
         item.adviceIndex[self.vendors_uid]['delay_started_on'] = datetime.now() - timedelta(7)
         item.updateLocalRoles()
         # we are the last day
-        self.assertTrue(item.adviceIndex[self.vendors_uid]['delay_infos']['limit_date'].day == datetime.now().day)
-        self.assertTrue(item.adviceIndex[self.vendors_uid]['delay_infos']['delay_status'] == 'still_time')
+        self.assertEqual(item.adviceIndex[self.vendors_uid]['delay_infos']['limit_date'].day, datetime.now().day)
+        self.assertEqual(item.adviceIndex[self.vendors_uid]['delay_infos']['delay_status'], 'still_time')
         # one day more and it is not giveable anymore...
         item.adviceIndex[self.vendors_uid]['delay_started_on'] = datetime.now() - timedelta(8)
         item.updateLocalRoles()
         self.assertTrue(item.adviceIndex[self.vendors_uid]['delay_infos']['limit_date'] < datetime.now())
-        self.assertTrue(item.adviceIndex[self.vendors_uid]['delay_infos']['delay_status'] == 'timed_out')
+        self.assertEqual(item.adviceIndex[self.vendors_uid]['delay_infos']['delay_status'], 'timed_out')
 
     def test_pm_ComputeDelaysAsCalendarDays(self):
         '''
@@ -1516,15 +1516,15 @@ class testAdvices(PloneMeetingTestCase):
         self.tool.setHolidays([])
         # every days are working days
         self.tool.setWorkingDays(('mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun', ))
-        self.assertTrue(self.tool.getNonWorkingDayNumbers() == [])
+        self.assertEqual(self.tool.getNonWorkingDayNumbers(), [])
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         item.setOptionalAdvisers(('{0}__rowid__unique_id_123'.format(self.vendors_uid), ))
         item._update_after_edit()
         self.proposeItem(item)
         # now test that limit_date is just now + delay of 10 days
-        self.assertTrue(item.adviceIndex[self.vendors_uid]['delay_infos']['limit_date'] ==
-                        item._doClearDayFrom(item.adviceIndex[self.vendors_uid]['delay_started_on'] + timedelta(10)))
+        self.assertEqual(item.adviceIndex[self.vendors_uid]['delay_infos']['limit_date'],
+                         item._doClearDayFrom(item.adviceIndex[self.vendors_uid]['delay_started_on'] + timedelta(10)))
 
     def test_pm_AvailableDelaysView(self):
         '''Test the view '@@advice-available-delays' that shows
@@ -1744,9 +1744,9 @@ class testAdvices(PloneMeetingTestCase):
         item.setOptionalAdvisers(('{0}__rowid__unique_id_123'.format(self.vendors_uid), ))
         item._update_after_edit()
         # for now, delay is 5 days and 'row_id' is unique_id_123
-        self.assertTrue(item.adviceIndex[self.vendors_uid]['row_id'] == 'unique_id_123')
-        self.assertTrue(item.adviceIndex[self.vendors_uid]['delay'] == '5')
-        self.assertTrue(item.adviceIndex[self.vendors_uid]['optional'] is True)
+        self.assertEqual(item.adviceIndex[self.vendors_uid]['row_id'], 'unique_id_123')
+        self.assertEqual(item.adviceIndex[self.vendors_uid]['delay'], '5')
+        self.assertTrue(item.adviceIndex[self.vendors_uid]['optional'])
         form = item.restrictedTraverse('@@advice_delay_change_form').form_instance
         form.request['form.widgets.current_delay_row_id'] = u'unique_id_123'
 
@@ -1763,11 +1763,11 @@ class testAdvices(PloneMeetingTestCase):
         # now apply with comment
         form.request['form.widgets.comment'] = u'My comment'
         form.handleSaveAdviceDelay(form, '')
-        self.assertTrue(item.adviceIndex[self.vendors_uid]['row_id'] == 'unique_id_789')
-        self.assertTrue(item.adviceIndex[self.vendors_uid]['delay'] == '20')
+        self.assertEqual(item.adviceIndex[self.vendors_uid]['row_id'], 'unique_id_789')
+        self.assertEqual(item.adviceIndex[self.vendors_uid]['delay'], '20')
         # a special key save the fact that we saved delay of an automatic adviser
         # this should be 'False' for now as we changed an optional adviser delay
-        self.assertTrue(item.adviceIndex[self.vendors_uid]['delay_for_automatic_adviser_changed_manually'] is False)
+        self.assertFalse(item.adviceIndex[self.vendors_uid]['delay_for_automatic_adviser_changed_manually'])
 
         # it works also for automatic advices but only MeetingManagers may change it
         # makes it an automatic advice
@@ -1777,17 +1777,17 @@ class testAdvices(PloneMeetingTestCase):
         cfg.processForm({'dummy': ''})
         item.setOptionalAdvisers(())
         item._update_after_edit()
-        self.assertTrue(item.adviceIndex[self.vendors_uid]['row_id'] == 'unique_id_123')
-        self.assertTrue(item.adviceIndex[self.vendors_uid]['delay'] == '5')
-        self.assertTrue(item.adviceIndex[self.vendors_uid]['optional'] is False)
+        self.assertEqual(item.adviceIndex[self.vendors_uid]['row_id'], 'unique_id_123')
+        self.assertEqual(item.adviceIndex[self.vendors_uid]['delay'], '5')
+        self.assertFalse(item.adviceIndex[self.vendors_uid]['optional'])
         # if a normal user tries to change an automatic advice delay, it will raises Unauthorized
         self.assertRaises(Unauthorized, form.handleSaveAdviceDelay, form, '')
         # now as MeetingManager it works
         self.changeUser('pmManager')
         form.handleSaveAdviceDelay(form, '')
-        self.assertTrue(item.adviceIndex[self.vendors_uid]['row_id'] == 'unique_id_789')
-        self.assertTrue(item.adviceIndex[self.vendors_uid]['delay'] == '20')
-        self.assertTrue(item.adviceIndex[self.vendors_uid]['delay_for_automatic_adviser_changed_manually'] is True)
+        self.assertEqual(item.adviceIndex[self.vendors_uid]['row_id'], 'unique_id_789')
+        self.assertEqual(item.adviceIndex[self.vendors_uid]['delay'], '20')
+        self.assertTrue(item.adviceIndex[self.vendors_uid]['delay_for_automatic_adviser_changed_manually'])
 
     def test_pm_ConfigAdviceStates(self):
         '''
@@ -1797,7 +1797,7 @@ class testAdvices(PloneMeetingTestCase):
         '''
         adviceWF = self.wfTool.getWorkflowsFor('meetingadvice')
         # we have only one workflow for 'meetingadvice'
-        self.assertTrue(len(adviceWF) == 1)
+        self.assertEqual(len(adviceWF), 1)
         adviceWF = adviceWF[0]
         everyStates = adviceWF.states.keys()
         statesOfConfig = ADVICE_STATES_ALIVE + ADVICE_STATES_ENDED
@@ -1836,7 +1836,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertFalse(item.adviceIndex[self.vendors_uid]['isConfidential'])
         # so we have one confidential advice and one that is not confidential
         # but MeetingManagers may see both
-        self.assertTrue(len(item.getAdvicesByType()[NOT_GIVEN_ADVICE_VALUE]) == 2)
+        self.assertEqual(len(item.getAdvicesByType()[NOT_GIVEN_ADVICE_VALUE]), 2)
         # propose the item so power observers can see it
         self.proposeItem(item)
 
@@ -1844,8 +1844,8 @@ class testAdvices(PloneMeetingTestCase):
         self.changeUser('powerobserver1')
         # only the not confidential advice is visible
         advicesByType = item.getAdvicesByType()
-        self.assertTrue(len(advicesByType[NOT_GIVEN_ADVICE_VALUE]) == 1)
-        self.assertTrue(advicesByType[NOT_GIVEN_ADVICE_VALUE][0]['id'] == self.vendors_uid)
+        self.assertEqual(len(advicesByType[NOT_GIVEN_ADVICE_VALUE]), 1)
+        self.assertEqual(advicesByType[NOT_GIVEN_ADVICE_VALUE][0]['id'], self.vendors_uid)
 
         # now give the advice so we check that trying to access a confidential
         # advice will raise Unauthorized
@@ -2009,7 +2009,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue('asked_again' in vocab)
         pr = self.portal.portal_repository
         # version 0 was saved
-        self.assertTrue(pr.getHistoryMetadata(advice)._available == [0])
+        self.assertEqual(pr.getHistoryMetadata(advice)._available, [0])
         # we may also revert to previous version
         self.assertFalse(item.adapted().mayAskAdviceAgain(advice))
         self.assertTrue(item.adapted().mayBackToPreviousAdvice(advice))
@@ -2020,7 +2020,7 @@ class testAdvices(PloneMeetingTestCase):
         changeView()
         # when going back to previous version, a new version is done
         self.assertEquals(pr.getHistoryMetadata(advice)._available, [0, 1])
-        self.assertTrue(advice.advice_type == 'negative')
+        self.assertEqual(advice.advice_type, 'negative')
         # advice was automatically shown
         self.assertFalse(advice.advice_hide_during_redaction)
         # ok, ask_again and send it again to 'pmReviewer2', he will be able to edit it
@@ -2029,7 +2029,7 @@ class testAdvices(PloneMeetingTestCase):
         changeView()
         # this time a new version has been saved
         self.assertEquals(pr.getHistoryMetadata(advice)._available, [0, 1, 2])
-        self.assertTrue(advice.advice_type == 'asked_again')
+        self.assertEqual(advice.advice_type, 'asked_again')
         self.proposeItem(item)
         self.changeUser('pmReviewer2')
         self.assertTrue(self.hasPermission(ModifyPortalContent, advice))
@@ -2752,7 +2752,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertRaises(Unauthorized, item.getAdviceDataFor, '')
         self.assertRaises(Unauthorized, item.getAdviceDataFor, item2)
         # but works if right parameters are passed
-        self.assertTrue(item.getAdviceDataFor(item) == {})
+        self.assertEqual(item.getAdviceDataFor(item), {})
 
     def test_pm_GetAdviceDataForAdviceHiddenDuringRedaction(self):
         '''Test the getAdviceDataFor method p_hide_advices_under_redaction parameter.'''
