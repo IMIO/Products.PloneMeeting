@@ -141,10 +141,18 @@ decisionsTemplate.roles_bypassing_talcondition = set(['Manager'])
 decisionsTemplate.style_template = ['styles1']
 
 itemTemplate = PodTemplateDescriptor('itemTemplate', 'Meeting item')
+itemTemplate.odt_file = 'all_item.odt'
 itemTemplate.odt_file = 'Item.odt'
 itemTemplate.pod_portal_types = ['MeetingItem']
 itemTemplate.tal_condition = u''
 itemTemplate.style_template = ['styles2']
+
+allItemTemplate = PodTemplateDescriptor('allItemTemplate', 'All Meeting item')
+allItemTemplate.odt_file = 'all_item.odt'
+allItemTemplate.pod_portal_types = ['MeetingPma']
+allItemTemplate.tal_condition = u''
+allItemTemplate.merge_templates = [{'pod_context_name': u'item', 'do_rendering': False, 'template': 'itemTemplate'}]
+
 
 dashboardTemplate = PodTemplateDescriptor('dashboardTemplate', 'Dashboard summary', dashboard=True)
 dashboardTemplate.odt_file = 'Dashboard.odt'
@@ -338,7 +346,7 @@ meetingPma.meetingPowerObserversStates = ('frozen', 'published', 'decided', 'clo
 meetingPma.useVotes = True
 meetingPma.meetingUsers = []
 meetingPma.styleTemplates = [stylesTemplate1, stylesTemplate2]
-meetingPma.podTemplates = [agendaTemplate, decisionsTemplate, itemTemplate, dashboardTemplate]
+meetingPma.podTemplates = [agendaTemplate, decisionsTemplate, itemTemplate, dashboardTemplate, allItemTemplate]
 meetingPma.selectableCopyGroups = [developers.getIdSuffixed('reviewers'), vendors.getIdSuffixed('reviewers'), ]
 meetingPma.meetingConfigsToCloneTo = [{'meeting_config': 'cfg2',
                                        'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}, ]

@@ -3,6 +3,7 @@
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
 from collective.documentgenerator.content.vocabulary import ExistingPODTemplateFactory
+from collective.documentgenerator.content.vocabulary import MergeTemplatesVocabularyFactory
 from collective.documentgenerator.content.vocabulary import PortalTypesVocabularyFactory
 from collective.documentgenerator.content.vocabulary import StyleTemplatesVocabularyFactory
 from collective.eeafaceted.collectionwidget.content.dashboardcollection import IDashboardCollection
@@ -1220,3 +1221,26 @@ class KeepAccessToItemWhenAdviceIsGivenVocabulary(object):
         return SimpleVocabulary(res)
 
 KeepAccessToItemWhenAdviceIsGivenVocabularyFactory = KeepAccessToItemWhenAdviceIsGivenVocabulary()
+
+
+class PMMergeTemplatesVocabulary(MergeTemplatesVocabularyFactory):
+    """Override pod_template.merge_templates vocabulary to display the MeetingConfig title."""
+    implements(IVocabularyFactory)
+
+    def _portal_types(self):
+        return ['ConfigurablePODTemplate']
+
+    def _render_term_title(self, brain):
+        obj = brain.getObject()
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(obj)
+        term_title = safe_unicode('{0} ({1})'.format(obj.Title(), cfg.Title()))
+        if obj.enabled is False:
+            term_title = translate(
+                msgid='${element_title} (Inactive)',
+                domain='PloneMeeting',
+                mapping={'element_title': term_title},
+                context=obj.REQUEST)
+        return term_title
+
+PMMergeTemplatesVocabularyFactory = PMMergeTemplatesVocabulary()

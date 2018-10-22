@@ -251,7 +251,8 @@ class PodTemplateDescriptor(StyleTemplateDescriptor):
                          'dashboard_collections_ids',
                          'context_variables',
                          'style_template',
-                         'roles_bypassing_talcondition')
+                         'roles_bypassing_talcondition',
+                         'merge_templates')
 
     def __init__(self, id, title, description='', enabled=True, dashboard=False):
         super(PodTemplateDescriptor, self).__init__(id, title, description, enabled)
@@ -267,7 +268,8 @@ class PodTemplateDescriptor(StyleTemplateDescriptor):
         self.roles_bypassing_talcondition = set()
         self.store_as_annex = None
         self.store_as_annex_title_expr = u''
-        self.is_style=False
+        self.is_style = False
+        self.merge_templates = []
 
 
 class PloneGroupDescriptor(Descriptor):

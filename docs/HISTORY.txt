@@ -17,6 +17,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Make testing import_data reusable by subplugins
 - Make RichText fields fieldsets and available/presented items sections hideable by user
 - Added possibility to use collective.documentgenerator's styleTemplate
+- Added possibility to use collective.documentgenerator's merge_templates so it is possible to print for example
+ 'Every deliberations' using a pod_template that rely on same pod_template than the one used to print single 'Deliberation'
 
 4.1b11 (2018-09-11)
 -------------------

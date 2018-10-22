@@ -525,6 +525,8 @@ class ToolInitializer:
                         collection = getattr(cfg.searches.searches_decisions, coll_id)
                     res.append(collection.UID())
                 data['dashboard_collections'] = res
+            for sub_template in data['merge_templates']:
+                sub_template['template'] = folder.get(sub_template['template']).UID()
 
         # associate style template with pod template if necessary
         if not data['is_style'] and data['style_template']:
