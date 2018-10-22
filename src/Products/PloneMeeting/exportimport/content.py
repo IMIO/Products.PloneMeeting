@@ -343,6 +343,9 @@ class ToolInitializer:
                 setattr(category_group, attr, True)
         for descr in configData.annexTypes:
             self.addAnnexType(cfg, descr, source)
+        # first create style templates so it exist before being used by a pod template
+        for descr in configData.styleTemplates:
+            self.addPodTemplate(cfg, descr, source)
         for descr in configData.podTemplates:
             self.addPodTemplate(cfg, descr, source)
         # manage MeetingManagers
@@ -490,33 +493,49 @@ class ToolInitializer:
         data = self.find_binary(filePath)
         odt_file = NamedBlobFile(
             data=data,
-            contentType='applications/odt',
+            contentType='application/vnd.oasis.opendocument.text',
             # pt.odt_file could be relative (../../other_profile/templates/sample.odt)
             filename=safe_unicode(pt.odt_file.split('/')[-1]),
         )
         data = pt.getData(odt_file=odt_file)
-        # turn the pod_portal_types from MeetingItem to MeetingItemShortname
-        adapted_pod_portal_types = []
-        for pod_portal_type in data['pod_portal_types']:
-            if pod_portal_type.startswith('Meeting'):
-                pod_portal_type = pod_portal_type + cfg.shortName
-            adapted_pod_portal_types.append(pod_portal_type)
-        data['pod_portal_types'] = adapted_pod_portal_types
-        podType = data['dashboard'] and 'DashboardPODTemplate' or 'ConfigurablePODTemplate'
 
-        if podType == 'DashboardPODTemplate':
-            # manage dashboard_collections from dashboard_collection_ids
-            # we have ids and we need UIDs
-            res = []
-            for coll_id in data['dashboard_collections_ids']:
-                if coll_id in cfg.searches.searches_items.objectIds():
-                    collection = getattr(cfg.searches.searches_items, coll_id)
-                elif coll_id in cfg.searches.searches_meetings.objectIds():
-                    collection = getattr(cfg.searches.searches_meetings, coll_id)
-                else:
-                    collection = getattr(cfg.searches.searches_decisions, coll_id)
-                res.append(collection.UID())
-            data['dashboard_collections'] = res
+        if data['is_style']:
+            podType = 'StyleTemplate'
+        else:
+            podType = data['dashboard'] and 'DashboardPODTemplate' or 'ConfigurablePODTemplate'
+
+            # turn the pod_portal_types from MeetingItem to MeetingItemShortname
+            adapted_pod_portal_types = []
+            for pod_portal_type in data['pod_portal_types']:
+                if pod_portal_type.startswith('Meeting'):
+                    pod_portal_type = pod_portal_type + cfg.shortName
+                adapted_pod_portal_types.append(pod_portal_type)
+            data['pod_portal_types'] = adapted_pod_portal_types
+
+            if podType == 'DashboardPODTemplate':
+                # manage dashboard_collections from dashboard_collection_ids
+                # we have ids and we need UIDs
+                res = []
+                for coll_id in data['dashboard_collections_ids']:
+                    if coll_id in cfg.searches.searches_items.objectIds():
+                        collection = getattr(cfg.searches.searches_items, coll_id)
+                    elif coll_id in cfg.searches.searches_meetings.objectIds():
+                        collection = getattr(cfg.searches.searches_meetings, coll_id)
+                    else:
+                        collection = getattr(cfg.searches.searches_decisions, coll_id)
+                    res.append(collection.UID())
+                data['dashboard_collections'] = res
+
+        # associate style template with pod template if necessary
+        if not data['is_style'] and data['style_template']:
+            # we have a list of style templates
+            styles_uids = []
+            for style_template in data['style_template']:
+                style_template_obj = folder.get(style_template)
+                if style_template_obj.id in data['style_template']:
+                    styles_uids.append(style_template_obj.UID())
+
+            data['style_template'] = styles_uids
 
         podTemplate = api.content.create(
             type=podType,
