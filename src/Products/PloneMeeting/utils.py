@@ -1117,24 +1117,36 @@ def meetingTriggerTransitionOnLinkedItems(meeting, transitionId):
                     pass
 
 
-def computeCertifiedSignatures(signatures, from_cfg=False):
+def computeCertifiedSignatures(signatures):
 
     computedSignatures = {}
     now = datetime.now()
     validSignatureNumber = 0
     for signature in signatures:
-        # first check if we still did not found a valid signature for this signatureNumber
         # MeetingConfig use signatureNumber and organization use signature_number...
-        signature_number = int(signature.get('signature_number', signature.get('signatureNumber')))
+        if signature.get('signature_number'):
+            signature_number = int(signature.get('signature_number'))
+            from_cfg = False
+        else:
+            signature_number = int(signature.get('signatureNumber'))
+            from_cfg = True
+
+        # first check if we still did not found a valid signature for this signatureNumber
         if signature_number == validSignatureNumber:
             continue
         # walk thru every signatures and select available one
         # the first found active signature is kept
         if from_cfg:
             # if we have a date_from, we append hours 0h01 to take entire day into account
-            date_from = signature['date_from'] and DateTime('{} 0:00:00'.format(signature['date_from'])) or None
+            date_from = signature['date_from'] or None
+            if date_from:
+                year, month, day = date_from.split('/')
+                date_from = datetime(int(year), int(month), int(day), 0, 0) or None
             # if we have a date_to, we append hours 23h59 to take entire day into account
-            date_to = signature['date_to'] and DateTime('{} 23:59:59'.format(signature['date_to'])) or None
+            date_to = signature['date_to'] or None
+            if date_to:
+                year, month, day = date_to.split('/')
+                date_to = datetime(int(year), int(month), int(day), 23, 59) or None
         else:
             date_from = signature['date_from']
             date_from = date_from and datetime(date_from.year, date_from.month, date_from.day, 0, 0) or None
