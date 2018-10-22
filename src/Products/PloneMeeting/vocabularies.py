@@ -4,6 +4,7 @@ from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
 from collective.documentgenerator.content.vocabulary import ExistingPODTemplateFactory
 from collective.documentgenerator.content.vocabulary import PortalTypesVocabularyFactory
+from collective.documentgenerator.content.vocabulary import StyleTemplatesVocabularyFactory
 from collective.eeafaceted.collectionwidget.content.dashboardcollection import IDashboardCollection
 from collective.eeafaceted.dashboard.vocabulary import DashboardCollectionsVocabulary
 from collective.iconifiedcategory.vocabularies import CategoryTitleVocabulary
@@ -1019,6 +1020,22 @@ class PMExistingPODTemplate(ExistingPODTemplateFactory):
 
 
 PMExistingPODTemplateFactory = PMExistingPODTemplate()
+
+
+class PMStyleTemplatesVocabulary(StyleTemplatesVocabularyFactory):
+    """
+    Override to display the MeetingConfig title in the term title as
+    style templates are useable cross MetingConfigs.
+    """
+    implements(IVocabularyFactory)
+
+    def _renderTermTitle(self, brain):
+        obj = brain.getObject()
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(obj)
+        return '{0} ({1})'.format(brain.Title, cfg.Title())
+
+PMStyleTemplatesVocabularyFactory = PMStyleTemplatesVocabulary()
 
 
 class PMDashboardCollectionsVocabulary(DashboardCollectionsVocabulary):

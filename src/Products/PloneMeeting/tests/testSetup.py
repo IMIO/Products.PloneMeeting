@@ -84,7 +84,7 @@ class testSetup(PloneMeetingTestCase):
                 self.assertEquals(messages.keys(),
                                   ['error', 'no_obj_found',
                                    'no_pod_portal_types', 'not_enabled',
-                                   'dashboard_templates_not_managed', 'clean'])
+                                   'dashboard_templates_not_managed', 'style_templates_not_managed', 'clean'])
             # clean memoize between each site because the same REQUEST especially
             # is used for every sites and this can lead to problems...
             cleanMemoize(self.portal)

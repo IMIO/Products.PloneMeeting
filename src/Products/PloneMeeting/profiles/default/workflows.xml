@@ -35,15 +35,15 @@
   <type type_id="MeetingUser">
      <bound-workflow workflow_id="plonemeeting_activity_workflow" />
   </type>
-  <type type_id="PodTemplate">
-     <bound-workflow workflow_id="plonemeeting_activity_workflow" />
-  </type>
 <!-- ##code-section workflowbindings -->
   <type type_id="ConfigurablePODTemplate">
    <bound-workflow workflow_id="" />
   </type>
   <type type_id="DashboardPODTemplate">
    <bound-workflow workflow_id="" />
+  </type>
+  <type type_id="StyleTemplate">
+     <bound-workflow workflow_id="" />
   </type>
   <type type_id="MeetingFile">
    <bound-workflow workflow_id="" />

@@ -16,6 +16,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   data is returned respecting organizations order defined in the configuration
 - Make testing import_data reusable by subplugins
 - Make RichText fields fieldsets and available/presented items sections hideable by user
+- Added possibility to use collective.documentgenerator's styleTemplate
 
 4.1b11 (2018-09-11)
 -------------------

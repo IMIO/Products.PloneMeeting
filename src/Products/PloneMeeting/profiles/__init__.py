@@ -23,6 +23,7 @@ from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
 from Products.PloneMeeting.config import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.config import EXTRA_GROUP_SUFFIXES
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
+import copy
 
 
 class Descriptor(object):
@@ -36,7 +37,9 @@ class Descriptor(object):
            Archetypes object. Any element in p_kw will replace the value
            from p_self.'''
         res = {}
-        for k, v in self.__dict__.iteritems():
+        # make sure self.__dict__ is not modified
+        data = copy.deepcopy(self.__dict__)
+        for k, v in data.iteritems():
             if k in self.excludedFields:
                 continue
             if k in kw:
@@ -48,7 +51,7 @@ class Descriptor(object):
                     res[k] = v
         # Add elements from kw that do not correspond to a field on self
         for k, v in kw.iteritems():
-            if k not in self.__dict__:
+            if k not in data:
                 res[k] = v
         return res
 
@@ -229,7 +232,20 @@ class ItemAnnexSubTypeDescriptor(AnnexSubTypeDescriptor):
         self.only_for_meeting_managers = only_for_meeting_managers
 
 
-class PodTemplateDescriptor(Descriptor):
+class StyleTemplateDescriptor(Descriptor):
+
+    def __init__(self, id, title, description='', enabled=True):
+        self.id = id
+        self.title = title
+        self.description = description
+        self.enabled = enabled
+        # Filename of the POD template to use. This file must be present in the
+        # "templates" folder of a profile.
+        self.odt_file = None
+        self.is_style = True
+
+
+class PodTemplateDescriptor(StyleTemplateDescriptor):
     multiSelectFields = ('pod_formats',
                          'pod_portal_types',
                          'dashboard_collections_ids',
@@ -238,25 +254,20 @@ class PodTemplateDescriptor(Descriptor):
                          'roles_bypassing_talcondition')
 
     def __init__(self, id, title, description='', enabled=True, dashboard=False):
-        self.id = id
-        self.title = title
-        self.description = description
-        # Filename of the POD template to use. This file must be present in the
-        # "templates" folder of a profile.
-        self.odt_file = None
+        super(PodTemplateDescriptor, self).__init__(id, title, description, enabled)
         self.pod_formats = ['odt', ]
         self.pod_portal_types = []
         # ids of DashboardCollections to restrict the DashboardPODTemplate to
         self.dashboard_collections_ids = []
         self.tal_condition = u''
         self.mailing_lists = u''
-        self.enabled = enabled
         self.dashboard = dashboard
         self.context_variables = []
         self.style_template = []
         self.roles_bypassing_talcondition = set()
         self.store_as_annex = None
         self.store_as_annex_title_expr = u''
+        self.is_style=False
 
 
 class PloneGroupDescriptor(Descriptor):
@@ -546,6 +557,8 @@ class MeetingConfigDescriptor(Descriptor):
         # will be clonable to
         self.meetingConfigsToCloneTo = []
 
+        # Style templates
+        self.styleTemplates = []
         # POD templates --------------------------------------------------------
         self.podTemplates = []
 

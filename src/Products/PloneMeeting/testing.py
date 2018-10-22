@@ -28,7 +28,7 @@ PM_Z2 = z2.IntegrationTesting(bases=(z2.STARTUP, PM_ZCML),
 PM_TESTING_PROFILE = PloneWithPackageLayer(
     zcml_filename="testing.zcml",
     zcml_package=Products.PloneMeeting,
-    additional_z2_products=('imio.dashboard',
+    additional_z2_products=('collective.eeafaceted.collectionwidget',
                             'Products.PloneMeeting',
                             'Products.CMFPlacefulWorkflow',
                             'Products.PasswordStrength'),

@@ -185,14 +185,6 @@
             layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
             permission="zope2.View"
             />
-        <adapter
-           for="zope.interface.Interface
-                zope.publisher.interfaces.browser.IBrowserRequest
-                collective.eeafaceted.z3ctable.interfaces.IFacetedTable"
-           factory="Products.PloneMeeting.columns.PMActionsColumn"
-           provides="collective.eeafaceted.z3ctable.interfaces.IFacetedColumn"
-           name="actions"
-        />
     </configure>
 
     <configure package="collective.eeafaceted.z3ctable">
@@ -210,6 +202,14 @@
            factory="Products.PloneMeeting.columns.ItemCheckBoxColumn"
            provides="collective.eeafaceted.z3ctable.interfaces.IFacetedColumn"
            name="select_row" />
+        <adapter
+           for="zope.interface.Interface
+                zope.publisher.interfaces.browser.IBrowserRequest
+                collective.eeafaceted.z3ctable.interfaces.IFacetedTable"
+           factory="Products.PloneMeeting.columns.PMActionsColumn"
+           provides="collective.eeafaceted.z3ctable.interfaces.IFacetedColumn"
+           name="actions"
+        />
     </configure>
 
     <adapter for="eea.facetednavigation.interfaces.IFacetedNavigable"
@@ -221,6 +221,8 @@
              name="collective.documentgenerator.ExistingPODTemplate" />
     <utility component=".vocabularies.PMPortalTypesVocabularyFactory"
              name="collective.documentgenerator.PortalTypes" />
+    <utility component=".vocabularies.PMStyleTemplatesVocabularyFactory"
+             name="collective.documentgenerator.StyleTemplates" />
     <utility component=".vocabularies.PMDashboardCollectionsVocabularyFactory"
              name="imio.dashboard.collectionsvocabulary" />
     <utility provides="zope.schema.interfaces.IVocabularyFactory"
