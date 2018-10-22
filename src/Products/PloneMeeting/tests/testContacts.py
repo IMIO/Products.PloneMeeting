@@ -27,6 +27,8 @@ from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.contact.plonegroup.utils import get_plone_groups
 from DateTime import DateTime
+from datetime import date
+from imio.helpers.content import validate_fields
 from OFS.ObjectManager import BeforeDeleteException
 from plone import api
 from Products.PloneMeeting.content.source import PMContactSourceBinder
@@ -674,54 +676,57 @@ class testContacts(PloneMeetingTestCase):
 
         # redefine one signature
         group_certified = [
-            {'signatureNumber': '2',
-             'name': 'Redefined name2',
-             'function': 'Redefined function2',
-             'date_from': '',
-             'date_to': ''},
+            {'signature_number': '2',
+             'name': u'Redefined name2',
+             'function': u'Redefined function2',
+             'date_from': None,
+             'date_to': None},
             ]
         # it validates
         self.vendors.certified_signatures = group_certified
+        self.assertFalse(validate_fields(self.vendors))
         self.assertEquals(self.vendors.get_certified_signatures(computed=True, cfg=cfg),
                           ['Function1', 'Name1', 'Redefined function2', 'Redefined name2'])
 
         # redefine every signatures
         group_certified = [
-            {'signatureNumber': '1',
-             'name': 'Redefined name1',
-             'function': 'Redefined function1',
-             'date_from': '',
-             'date_to': ''},
-            {'signatureNumber': '2',
-             'name': 'Redefined name2',
-             'function': 'Redefined function2',
-             'date_from': '',
-             'date_to': ''},
+            {'signature_number': '1',
+             'name': u'Redefined name1',
+             'function': u'Redefined function1',
+             'date_from': None,
+             'date_to': None},
+            {'signature_number': '2',
+             'name': u'Redefined name2',
+             'function': u'Redefined function2',
+             'date_from': None,
+             'date_to': None},
             ]
         self.vendors.certified_signatures = group_certified
+        self.assertFalse(validate_fields(self.vendors))
         self.assertEquals(self.vendors.get_certified_signatures(computed=True, cfg=cfg),
                           ['Redefined function1', 'Redefined name1',
                            'Redefined function2', 'Redefined name2'])
 
         # redefine a third signature
         group_certified = [
-            {'signatureNumber': '1',
-             'name': 'Redefined name1',
-             'function': 'Redefined function1',
-             'date_from': '',
-             'date_to': ''},
-            {'signatureNumber': '2',
-             'name': 'Redefined name2',
-             'function': 'Redefined function2',
-             'date_from': '',
-             'date_to': ''},
-            {'signatureNumber': '3',
-             'name': 'Redefined name3',
-             'function': 'Redefined function3',
-             'date_from': '',
-             'date_to': ''},
+            {'signature_number': '1',
+             'name': u'Redefined name1',
+             'function': u'Redefined function1',
+             'date_from': None,
+             'date_to': None},
+            {'signature_number': '2',
+             'name': u'Redefined name2',
+             'function': u'Redefined function2',
+             'date_from': None,
+             'date_to': None},
+            {'signature_number': '3',
+             'name': u'Redefined name3',
+             'function': u'Redefined function3',
+             'date_from': None,
+             'date_to': None},
             ]
         self.vendors.certified_signatures = group_certified
+        self.assertFalse(validate_fields(self.vendors))
         self.assertEquals(self.vendors.get_certified_signatures(computed=True, cfg=cfg),
                           ['Redefined function1', 'Redefined name1',
                            'Redefined function2', 'Redefined name2',
@@ -729,18 +734,19 @@ class testContacts(PloneMeetingTestCase):
 
         # redefine a third signature but not the second
         group_certified = [
-            {'signatureNumber': '1',
-             'name': 'Redefined name1',
-             'function': 'Redefined function1',
-             'date_from': '',
-             'date_to': ''},
-            {'signatureNumber': '3',
-             'name': 'Redefined name3',
-             'function': 'Redefined function3',
-             'date_from': '',
-             'date_to': ''},
+            {'signature_number': '1',
+             'name': u'Redefined name1',
+             'function': u'Redefined function1',
+             'date_from': None,
+             'date_to': None},
+            {'signature_number': '3',
+             'name': u'Redefined name3',
+             'function': u'Redefined function3',
+             'date_from': None,
+             'date_to': None},
             ]
         self.vendors.certified_signatures = group_certified
+        self.assertFalse(validate_fields(self.vendors))
         self.assertEquals(self.vendors.get_certified_signatures(computed=True, cfg=cfg),
                           ['Redefined function1', 'Redefined name1',
                            'Function2', 'Name2',
@@ -749,18 +755,19 @@ class testContacts(PloneMeetingTestCase):
         # period validity is taken into account
         # redefine a third signature but not the second
         group_certified = [
-            {'signatureNumber': '1',
-             'name': 'Redefined name1',
-             'function': 'Redefined function1',
-             'date_from': '2015/01/01',
-             'date_to': '2015/05/05'},
-            {'signatureNumber': '3',
-             'name': 'Redefined name3',
-             'function': 'Redefined function3',
-             'date_from': '',
-             'date_to': ''},
+            {'signature_number': '1',
+             'name': u'Redefined name1',
+             'function': u'Redefined function1',
+             'date_from': date(2015, 1, 1),
+             'date_to': date(2015, 5, 5)},
+            {'signature_number': '3',
+             'name': u'Redefined name3',
+             'function': u'Redefined function3',
+             'date_from': None,
+             'date_to': None},
             ]
         self.vendors.certified_signatures = group_certified
+        self.assertFalse(validate_fields(self.vendors))
         self.assertEquals(self.vendors.get_certified_signatures(computed=True, cfg=cfg),
                           ['Function1', 'Name1',
                            'Function2', 'Name2',

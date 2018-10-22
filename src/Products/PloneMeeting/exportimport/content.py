@@ -572,6 +572,7 @@ class ToolInitializer:
                 container=container,
                 type='organization',
                 **org_descr.getData())
+            validate_fields(org, raise_on_errors=True)
             orgs.append(org)
             if org_descr.active:
                 active_orgs.append(org)

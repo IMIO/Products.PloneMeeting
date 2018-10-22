@@ -369,8 +369,8 @@ class OrgDescriptor(Descriptor):
         return klass.instance
     get = classmethod(get)
 
-    def __init__(self, id, title, acronym, description='',
-                 active=True, as_copy_group_on='', groups_in_charge=[],
+    def __init__(self, id, title, acronym, description=u'',
+                 active=True, as_copy_group_on=u'', groups_in_charge=[],
                  suffixes=MEETING_GROUP_SUFFIXES):
         self.id = id
         self.setBilingual('title', title)

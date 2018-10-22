@@ -149,7 +149,7 @@ itemTemplate.style_template = ['styles2']
 
 allItemTemplate = PodTemplateDescriptor('allItemTemplate', 'All Meeting item')
 allItemTemplate.odt_file = 'all_item.odt'
-allItemTemplate.pod_portal_types = ['MeetingPma']
+allItemTemplate.pod_portal_types = ['Meeting']
 allItemTemplate.tal_condition = u''
 allItemTemplate.merge_templates = [{'pod_context_name': u'item', 'do_rendering': False, 'template': 'itemTemplate'}]
 
@@ -210,7 +210,7 @@ cfg1_budgetimpacteditors = PloneGroupDescriptor('cfg1_budgetimpacteditors', 'cfg
 budgetimpacteditor.ploneGroups = [cfg1_budgetimpacteditors,
                                   cfg1_powerobservers]
 
-developers = OrgDescriptor('developers', 'Developers', 'Devel')
+developers = OrgDescriptor('developers', 'Developers', u'Devel')
 developers.creators.append(pmCreator1)
 developers.creators.append(pmCreator1b)
 developers.creators.append(pmManager)
@@ -224,7 +224,7 @@ developers.observers.append(pmManager)
 developers.advisers.append(pmAdviser1)
 developers.advisers.append(pmManager)
 
-vendors = OrgDescriptor('vendors', 'Vendors', 'Devil')
+vendors = OrgDescriptor('vendors', 'Vendors', u'Devil')
 vendors.creators.append(pmCreator2)
 vendors.reviewers.append(pmReviewer2)
 vendors.observers.append(pmReviewer2)
@@ -239,7 +239,7 @@ vendors.observers.append(voter1)
 vendors.observers.append(voter2)
 
 # Add a vintage group
-endUsers = OrgDescriptor('endUsers', 'End users', 'EndUsers', active=False)
+endUsers = OrgDescriptor('endUsers', 'End users', u'EndUsers', active=False)
 
 # Add an external user
 cadranel = UserDescriptor('cadranel', [], fullname='M. Benjamin Cadranel')

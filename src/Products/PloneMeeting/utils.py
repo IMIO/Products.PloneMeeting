@@ -29,6 +29,7 @@ from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.excelexport.exportables.dexterityfields import get_exportable_for_fieldname
 from collective.iconifiedcategory.interfaces import IIconifiedInfos
 from DateTime import DateTime
+from datetime import datetime
 from datetime import timedelta
 from email import Encoders
 from email.MIMEBase import MIMEBase
@@ -1116,25 +1117,33 @@ def meetingTriggerTransitionOnLinkedItems(meeting, transitionId):
                     pass
 
 
-def computeCertifiedSignatures(signatures):
+def computeCertifiedSignatures(signatures, from_cfg=False):
 
     computedSignatures = {}
-    now = DateTime()
+    now = datetime.now()
     validSignatureNumber = 0
     for signature in signatures:
         # first check if we still did not found a valid signature for this signatureNumber
-        if signature['signatureNumber'] == validSignatureNumber:
+        # MeetingConfig use signatureNumber and organization use signature_number...
+        signature_number = int(signature.get('signature_number', signature.get('signatureNumber')))
+        if signature_number == validSignatureNumber:
             continue
         # walk thru every signatures and select available one
         # the first found active signature is kept
-        # if we have a date_from, we append hours 0h01 to take entire day into account
-        date_from = signature['date_from'] and DateTime('{} 0:00:00'.format(signature['date_from'])) or None
-        # if we have a date_to, we append hours 23h59 to take entire day into account
-        date_to = signature['date_to'] and DateTime('{} 23:59:59'.format(signature['date_to'])) or None
+        if from_cfg:
+            # if we have a date_from, we append hours 0h01 to take entire day into account
+            date_from = signature['date_from'] and DateTime('{} 0:00:00'.format(signature['date_from'])) or None
+            # if we have a date_to, we append hours 23h59 to take entire day into account
+            date_to = signature['date_to'] and DateTime('{} 23:59:59'.format(signature['date_to'])) or None
+        else:
+            date_from = signature['date_from']
+            date_from = date_from and datetime(date_from.year, date_from.month, date_from.day, 0, 0) or None
+            date_to = signature['date_to']
+            date_to = date_to and datetime(date_to.year, date_to.month, date_to.day, 23, 59) or None
         # if dates are defined and not current, continue
         if (date_from and date_to) and not _in_between(date_from, date_to, now):
             continue
-        validSignatureNumber = signature['signatureNumber']
+        validSignatureNumber = signature_number
         computedSignatures[validSignatureNumber] = {}
         computedSignatures[validSignatureNumber]['function'] = signature['function']
         computedSignatures[validSignatureNumber]['name'] = signature['name']

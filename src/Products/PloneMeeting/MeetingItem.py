@@ -2972,24 +2972,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if forceUseCertifiedSignaturesOnMeetingConfig:
             return cfg.getCertifiedSignatures(computed=True, listified=True)
 
-        # if we do not use contacts, compute certified signatures calling
-        # it on the organization (that will call the MeetingConfig if nothing defined on it)
-        if not cfg.isUsingContacts():
-            # get certified signatures computed, this will return a list with pair
-            # of function/signatures, so ['function1', 'name1', 'function2', 'name2', 'function3', 'name3', ]
-            # this list is ordered by signature number defined on the organization/MeetingConfig
-            return item.getProposingGroup(theObject=True).get_certified_signatures(
-                computed=True, cfg=cfg, from_group_in_charge=from_group_in_charge)
-        else:
-            # we use contacts
-            signatories = cfg.getHeldPositions(usages=('signer',))
-            res = []
-            for signatory in signatories:
-                if signatory.getSignatureIsDefault():
-                    particule = signatory.getGender() == 'm' and 'Le' or 'La'
-                    res.append("%s %s" % (particule, signatory.getDuty()))
-                    res.append("%s" % signatory.Title())
-            return '\n'.join(res)
+        # get certified signatures computed, this will return a list with pair
+        # of function/signatures, so ['function1', 'name1', 'function2', 'name2', 'function3', 'name3', ]
+        # this list is ordered by signature number defined on the organization/MeetingConfig
+        return item.getProposingGroup(theObject=True).get_certified_signatures(
+            computed=True, cfg=cfg, from_group_in_charge=from_group_in_charge)
 
     security.declarePublic('redefinedItemAssemblies')
 
