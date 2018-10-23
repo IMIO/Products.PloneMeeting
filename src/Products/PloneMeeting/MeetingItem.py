@@ -3345,10 +3345,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res = self.getCategory(True).getOrder(onlySelectable=False)
         elif insertMethod == 'on_proposing_groups':
             org = self.getProposingGroup(True)
-            res = org.get_order(only_selected=False)
+            res = org.get_order()
         elif insertMethod == 'on_all_groups':
             org = self.getProposingGroup(True)
-            res = org.get_order(associated_org_uids=self.getAssociatedGroups(), only_selected=False)
+            res = org.get_order(associated_org_uids=self.getAssociatedGroups())
         elif insertMethod == 'on_privacy':
             privacy = self.getPrivacy()
             privacies = cfg.getSelectablePrivacies()
@@ -3371,7 +3371,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             groupInCharge = self.adapted().getGroupInCharge(True)
             if not groupInCharge:
                 raise Exception("No valid groupInCharge defined for {0}".format(proposingGroup.getId()))
-            return groupInCharge.get_order(only_selected=False)
+            return groupInCharge.get_order()
         elif insertMethod == 'on_poll_type':
             pollType = self.getPollType()
             factory = queryUtility(IVocabularyFactory,

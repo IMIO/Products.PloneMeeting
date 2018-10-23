@@ -288,12 +288,19 @@ class PMOrganization(Organization):
                 group_signatures = computedSignatures
         return group_signatures
 
-    def get_order(self, associated_org_uids=[], only_selected=True):
+    def get_order(self, associated_org_uids=[]):
         '''Returns organization position among every selected organizations.
            If p_associated_org_uids is given, returns the order of the lowest org position.
-           If p_only_selected is True, only consider selected orgs.'''
-        orgs = get_organizations(only_selected=only_selected)
-        i = orgs.index(self)
+           Only consider selecte orgs as it how order is defined.'''
+        def _get_index(orgs, org):
+            """Return position of org among orgs, return 0 if org not found (not selected)."""
+            try:
+                index = orgs.index(org)
+            except ValueError:
+                index = -1
+            return index
+        orgs = get_organizations(only_selected=True)
+        i = _get_index(orgs, self)
         # if we received associated_org_uids we must consider associated group
         # that has the lowest position
         if associated_org_uids:
@@ -304,7 +311,7 @@ class PMOrganization(Organization):
                     # we found the associated org with lowest position, now check
                     # that the lowest position of this associated group is lower or not
                     # than the position of the proposing group
-                    associated_org_index = org_uids.index(org_uid)
+                    associated_org_index = _get_index(org_uids, org_uid)
                     if associated_org_index < i:
                         i = associated_org_index
                     break

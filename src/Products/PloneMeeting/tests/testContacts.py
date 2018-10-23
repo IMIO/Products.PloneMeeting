@@ -57,7 +57,8 @@ class testContacts(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfg.setUsedMeetingAttributes(('attendees', 'excused', 'absents', 'signatories', ))
         # select orderedContacts
-        cfg.setOrderedContacts(cfg.listSelectableContacts().keys())
+        ordered_contacts = cfg.getField('orderedContacts').Vocabulary(cfg).keys()
+        cfg.setOrderedContacts(ordered_contacts)
 
     def test_pm_OrderedContacts(self):
         ''' '''
@@ -657,12 +658,14 @@ class testContacts(PloneMeetingTestCase):
             {'signatureNumber': '1',
              'name': 'Name1',
              'function': 'Function1',
+             'held_position': '_none_',
              'date_from': '',
              'date_to': '',
              },
             {'signatureNumber': '2',
              'name': 'Name2',
              'function': 'Function2',
+             'held_position': '_none_',
              'date_from': '',
              'date_to': '',
              },
@@ -679,6 +682,7 @@ class testContacts(PloneMeetingTestCase):
             {'signature_number': '2',
              'name': u'Redefined name2',
              'function': u'Redefined function2',
+             'held_position': None,
              'date_from': None,
              'date_to': None},
             ]
@@ -693,11 +697,13 @@ class testContacts(PloneMeetingTestCase):
             {'signature_number': '1',
              'name': u'Redefined name1',
              'function': u'Redefined function1',
+             'held_position': None,
              'date_from': None,
              'date_to': None},
             {'signature_number': '2',
              'name': u'Redefined name2',
              'function': u'Redefined function2',
+             'held_position': None,
              'date_from': None,
              'date_to': None},
             ]
@@ -712,16 +718,19 @@ class testContacts(PloneMeetingTestCase):
             {'signature_number': '1',
              'name': u'Redefined name1',
              'function': u'Redefined function1',
+             'held_position': None,
              'date_from': None,
              'date_to': None},
             {'signature_number': '2',
              'name': u'Redefined name2',
              'function': u'Redefined function2',
+             'held_position': None,
              'date_from': None,
              'date_to': None},
             {'signature_number': '3',
              'name': u'Redefined name3',
              'function': u'Redefined function3',
+             'held_position': None,
              'date_from': None,
              'date_to': None},
             ]
@@ -737,11 +746,13 @@ class testContacts(PloneMeetingTestCase):
             {'signature_number': '1',
              'name': u'Redefined name1',
              'function': u'Redefined function1',
+             'held_position': None,
              'date_from': None,
              'date_to': None},
             {'signature_number': '3',
              'name': u'Redefined name3',
              'function': u'Redefined function3',
+             'held_position': None,
              'date_from': None,
              'date_to': None},
             ]
@@ -758,11 +769,13 @@ class testContacts(PloneMeetingTestCase):
             {'signature_number': '1',
              'name': u'Redefined name1',
              'function': u'Redefined function1',
+             'held_position': None,
              'date_from': date(2015, 1, 1),
              'date_to': date(2015, 5, 5)},
             {'signature_number': '3',
              'name': u'Redefined name3',
              'function': u'Redefined function3',
+             'held_position': None,
              'date_from': None,
              'date_to': None},
             ]
