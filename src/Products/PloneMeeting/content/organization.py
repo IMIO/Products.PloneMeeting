@@ -293,11 +293,12 @@ class PMOrganization(Organization):
            If p_associated_org_uids is given, returns the order of the lowest org position.
            Only consider selecte orgs as it how order is defined.'''
         def _get_index(orgs, org):
-            """Return position of org among orgs, return 0 if org not found (not selected)."""
+            """Return position of org among orgs, return 0 if org not found (not selected),
+               it it like if it was using the first organization."""
             try:
                 index = orgs.index(org)
             except ValueError:
-                index = -1
+                index = 0
             return index
         orgs = get_organizations(only_selected=True)
         i = _get_index(orgs, self)

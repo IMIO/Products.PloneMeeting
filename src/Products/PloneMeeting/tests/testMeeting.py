@@ -356,13 +356,17 @@ class testMeeting(PloneMeetingTestCase):
         self._select_organization(self.vendors_uid, remove=True)
         self.changeUser('pmManager')
         newItem = self.create('MeetingItem')
-        # Use the disabled category 'vendors'
+        # Use the disabled organization 'vendors'
         newItem.setProposingGroup(self.vendors_uid)
         newItem.setDecision('<p>Default decision</p>')
         self.presentItem(newItem)
-        # first of all, it works, and the item is inserted at the right position
+        # first of all, it works, and the item is inserted in the meeting,
+        # here at the end because index is 0 for every items
         self.assertEquals([item.getId() for item in meeting.getItems(ordered=True)],
-                          ['recItem1', 'recItem2', 'o3', 'o5', 'o2', 'o4', 'o6', 'o7', ])
+                          ['recItem1', 'recItem2', 'o3', 'o5', 'o2', 'o4', 'o6', newItem.getId()])
+        self.assertEquals([item.getProposingGroup(True).id for item in meeting.getItems(ordered=True)],
+                          ['developers', 'developers', 'developers', 'developers',
+                           'vendors', 'vendors', 'vendors', 'vendors'])
 
     def test_pm_InsertItemCategories(self):
         '''Sort method tested here is "on_categories".'''
@@ -441,21 +445,23 @@ class testMeeting(PloneMeetingTestCase):
         newItem.setProposingGroup(self.vendors_uid)
         newItem.setDecision('<p>Default decision</p>')
         newItem.setAssociatedGroups((self.endUsers_uid, ))
+        newItemId = newItem.getId()
         self.changeUser('pmManager')
         self.presentItem(newItem)
         # the item is inserted but his associated group is not taken into account
         self.assertEqual([item.getId() for item in meeting.getItems(ordered=True)],
-                         ['recItem1', 'recItem2', 'o2', 'o3', 'o5', 'o4', 'o6', newItem.getId()])
+                         ['recItem1', 'recItem2', 'o2', 'o3', 'o5', 'o4', 'o6', newItemId])
         # we can also insert an item using a disabled proposing group
         secondItem = self.create('MeetingItem')
         secondItem.setProposingGroup(self.endUsers_uid)
         secondItem.setDecision('<p>Default decision</p>')
         secondItem.setAssociatedGroups((self.vendors_uid, ))
+        secondItemId = secondItem.getId()
         self.presentItem(secondItem)
         # it will be inserted at the beginning as a disabled organization gets -1 as index
-        self.assertEqual([item.getId() for item in meeting.getItems(ordered=True)],
-                         [secondItem.getId(), 'recItem1', 'recItem2', 'o2', 'o3',
-                          'o5', 'o4', 'o6', newItem.getId()])
+        self.assertEqual(
+            [item.getId() for item in meeting.getItems(ordered=True)],
+            ['recItem1', 'recItem2', 'o2', 'o3', 'o5', secondItemId, 'o4', 'o6', newItemId])
 
     def test_pm_InsertItemOnGroupsInCharge(self):
         '''Sort method tested here is "on_groups_in_charge".
@@ -668,11 +674,15 @@ class testMeeting(PloneMeetingTestCase):
         newItem.setProposingGroup(self.vendors_uid)
         newItem.setDecision('<p>Default decision</p>')
         self.presentItem(newItem)
-        # it will be inserted at the end of 'developers' items
+        # the item is inserted but at the beginning of the meeting
         self.assertEqual([item.getId() for item in meeting.getItems(ordered=True)],
                          ['recItem1', 'recItem2', 'o3', 'o2', 'o6', 'o7', 'o5', 'o4'])
+        self.assertEqual([item.getProposingGroup(True).id for item in meeting.getItems(ordered=True)],
+                         ['developers', 'developers', 'developers', 'vendors', 'vendors', 'vendors',
+                          'developers', 'vendors'])
         self.assertEqual([item.getPrivacy() for item in meeting.getItems(ordered=True)],
-                         ['public', 'public', 'public', 'public', 'public', 'public', 'secret', 'secret'])
+                         ['public', 'public', 'public', 'public', 'public', 'public',
+                          'secret', 'secret'])
 
     def test_pm_InsertItemOnPrivacyThenCategories(self):
         '''Sort method tested here is "on_privacy_then_categories".'''
