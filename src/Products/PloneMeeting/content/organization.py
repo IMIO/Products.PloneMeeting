@@ -37,13 +37,21 @@ class ICertifiedSignaturesRowSchema(Interface):
     name = schema.TextLine(
         title=_(u'Certified signatures signatory name'),
         description=_("Name of the signatory (for example 'Mister John Doe')."),
-        required=True,
+        required=False,
     )
 
     function = schema.TextLine(
-        title=_(u'Certified signatures signatory function'),
+        title=_(u"Certified signatures signatory function"),
         description=_("Function of the signatory (for example 'Mayor')."),
-        required=True,
+        required=False,
+    )
+
+    held_position = schema.Choice(
+        title=_("Certified signatures held position"),
+        description=_("Select a held position if necessary, 'Name', 'Function' and other data of this "
+                      "held position will be used if you leave 'Name' and 'Function' columns empty."),
+        vocabulary='Products.PloneMeeting.vocabularies.selectableheldpositionsvocabulary',
+        required=False,
     )
 
     date_from = schema.Date(

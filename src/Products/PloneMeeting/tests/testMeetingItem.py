@@ -3656,12 +3656,14 @@ class testMeetingItem(PloneMeetingTestCase):
             {'signatureNumber': '1',
              'name': 'Group Name1',
              'function': 'Group Function1',
+             'held_position': None,
              'date_from': '',
              'date_to': '',
              },
             {'signatureNumber': '2',
              'name': 'Group Name2',
              'function': 'Group Function2',
+             'held_position': None,
              'date_from': '',
              'date_to': '',
              },
@@ -3672,12 +3674,14 @@ class testMeetingItem(PloneMeetingTestCase):
             {'signatureNumber': '1',
              'name': 'Name1',
              'function': 'Function1',
+             'held_position': '_none_',
              'date_from': '',
              'date_to': '',
              },
             {'signatureNumber': '2',
              'name': 'Name2',
              'function': 'Function2',
+             'held_position': '_none_',
              'date_from': '',
              'date_to': '',
              },
@@ -3708,24 +3712,28 @@ class testMeetingItem(PloneMeetingTestCase):
             {'signatureNumber': '1',
              'name': 'Name1',
              'function': 'Function1',
+             'held_position': '_none_',
              'date_from': '',
              'date_to': '',
              },
             {'signatureNumber': '2',
              'name': 'Name2',
              'function': 'Function2',
+             'held_position': '_none_',
              'date_from': '',
              'date_to': '',
              },
             {'signatureNumber': '3',
              'name': 'Name3',
              'function': 'Function3',
+             'held_position': '_none_',
              'date_from': '',
              'date_to': '',
              },
             {'signatureNumber': '4',
              'name': 'Name4',
              'function': 'Function4',
+             'held_position': '_none_',
              'date_from': '',
              'date_to': '',
              },
@@ -3743,18 +3751,21 @@ class testMeetingItem(PloneMeetingTestCase):
             {'signatureNumber': '1',
              'name': 'Name1passed',
              'function': 'Function1passed',
+             'held_position': '_none_',
              'date_from': '2014/01/01',
              'date_to': '2014/12/31',
              },
             {'signatureNumber': '1',
              'name': 'Name1',
              'function': 'Function1',
+             'held_position': '_none_',
              'date_from': '',
              'date_to': '',
              },
             {'signatureNumber': '2',
              'name': 'Name2',
              'function': 'Function2',
+             'held_position': '_none_',
              'date_from': '',
              'date_to': '',
              }
@@ -3768,18 +3779,21 @@ class testMeetingItem(PloneMeetingTestCase):
             {'signatureNumber': '1',
              'name': 'Name1passed',
              'function': 'Function1passed',
+             'held_position': '_none_',
              'date_from': '2014/01/01',
              'date_to': '2014/12/31',
              },
             {'signatureNumber': '1',
              'name': 'Name1passed',
              'function': 'Function1passed',
+             'held_position': '_none_',
              'date_from': '2015/01/01',
              'date_to': '2015/01/15',
              },
             {'signatureNumber': '2',
              'name': 'Name2',
              'function': 'Function2',
+             'held_position': '_none_',
              'date_from': '',
              'date_to': '',
              }
@@ -3797,36 +3811,42 @@ class testMeetingItem(PloneMeetingTestCase):
             {'signatureNumber': '1',
              'name': 'Name1passed',
              'function': 'Function1passed',
+             'held_position': '_none_',
              'date_from': '2014/01/01',
              'date_to': '2014/12/31',
              },
             {'signatureNumber': '1',
              'name': 'Name1valid',
              'function': 'Function1valid',
+             'held_position': '_none_',
              'date_from': (now - 10).strftime('%Y/%m/%d'),
              'date_to': (now + 10).strftime('%Y/%m/%d'),
              },
             {'signatureNumber': '1',
              'name': 'Name1AlwaysValid',
              'function': 'Function1AlwaysValid',
+             'held_position': '_none_',
              'date_from': '',
              'date_to': '',
              },
             {'signatureNumber': '2',
              'name': 'Name2past',
              'function': 'Function2past',
+             'held_position': '_none_',
              'date_from': '2013/01/05',
              'date_to': '2013/01/09',
              },
             {'signatureNumber': '2',
              'name': 'Name2past',
              'function': 'Function2past',
+             'held_position': '_none_',
              'date_from': '2014/01/01',
              'date_to': '2015/01/15',
              },
             {'signatureNumber': '2',
              'name': 'Name2',
              'function': 'Function2',
+             'held_position': '_none_',
              'date_from': '',
              'date_to': '',
              }
@@ -3840,24 +3860,28 @@ class testMeetingItem(PloneMeetingTestCase):
             {'signatureNumber': '1',
              'name': 'Name1past',
              'function': 'Function1past',
+             'held_position': '_none_',
              'date_from': '2014/01/01',
              'date_to': '2014/12/31',
              },
             {'signatureNumber': '1',
              'name': 'Name1past',
              'function': 'Function1past',
+             'held_position': '_none_',
              'date_from': (now - 5).strftime('%Y/%m/%d'),
              'date_to': (now - 5).strftime('%Y/%m/%d'),
              },
             {'signatureNumber': '1',
              'name': 'Name1valid',
              'function': 'Function1valid',
+             'held_position': '_none_',
              'date_from': now.strftime('%Y/%m/%d'),
              'date_to': now.strftime('%Y/%m/%d'),
              },
             {'signatureNumber': '1',
              'name': 'Name1AlwaysValid',
              'function': 'Function1AlwaysValid',
+             'held_position': '_none_',
              'date_from': '',
              'date_to': '',
              },
@@ -3874,12 +3898,14 @@ class testMeetingItem(PloneMeetingTestCase):
             {'signatureNumber': '1',
              'name': 'Name1',
              'function': 'Function1',
+             'held_position': '_none_',
              'date_from': '',
              'date_to': '',
              },
             {'signatureNumber': '2',
              'name': 'Name2',
              'function': 'Function2',
+             'held_position': '_none_',
              'date_from': '',
              'date_to': '',
              },
@@ -3904,21 +3930,23 @@ class testMeetingItem(PloneMeetingTestCase):
             ['Function1', 'Name1', 'Function2', 'Name2'])
 
         # define values on groupInCharge
-        certified = [
+        group_certified = [
             {'signatureNumber': '1',
              'name': 'GroupInChargeName1',
              'function': 'GroupInChargeFunction1',
+             'held_position': None,
              'date_from': '',
              'date_to': '',
              },
             {'signatureNumber': '2',
              'name': 'GroupInChargeName2',
              'function': 'GroupInChargeFunction2',
+             'held_position': None,
              'date_from': '',
              'date_to': '',
              },
         ]
-        self.vendors.certified_signatures = certified
+        self.vendors.certified_signatures = group_certified
         self.assertEqual(
             item.getCertifiedSignatures(from_group_in_charge=True),
             ['GroupInChargeFunction1', 'GroupInChargeName1',
@@ -3928,15 +3956,16 @@ class testMeetingItem(PloneMeetingTestCase):
             ['Function1', 'Name1', 'Function2', 'Name2'])
 
         # define partial values on groupInCharge
-        certified = [
+        group_certified = [
             {'signatureNumber': '1',
              'name': 'GroupInChargeName1',
              'function': 'GroupInChargeFunction1',
+             'held_position': None,
              'date_from': '',
              'date_to': '',
              },
         ]
-        self.vendors.certified_signatures = certified
+        self.vendors.certified_signatures = group_certified
         self.assertEqual(
             item.getCertifiedSignatures(from_group_in_charge=True),
             ['GroupInChargeFunction1', 'GroupInChargeName1',
@@ -3947,15 +3976,16 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # locally defined values overrides values from groupInCharge
         # define signature 2 for developers
-        certified = [
+        group_certified = [
             {'signatureNumber': '2',
              'name': 'DevName2',
              'function': 'DevFunction2',
+             'held_position': None,
              'date_from': '',
              'date_to': '',
              },
         ]
-        self.developers.certified_signatures = certified
+        self.developers.certified_signatures = group_certified
         self.assertEqual(
             item.getCertifiedSignatures(from_group_in_charge=True),
             ['GroupInChargeFunction1', 'GroupInChargeName1',
@@ -3963,6 +3993,46 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(
             item.getCertifiedSignatures(from_group_in_charge=False),
             ['Function1', 'Name1', 'DevFunction2', 'DevName2'])
+
+    def test_pm_GetCertifiedSignaturesWithHeldPosition(self):
+        '''Test the MeetingItem.getCertifiedSignatures method when using held_position.'''
+        # define signatures for the MeetingConfig
+        held_pos1 = self.portal.contacts.person1.held_pos1
+        held_pos2 = self.portal.contacts.person2.held_pos2
+        certified = [
+            {'signatureNumber': '1',
+             'name': '',
+             'function': 'Function1',
+             'held_position': held_pos1.UID(),
+             'date_from': '',
+             'date_to': '',
+             },
+            {'signatureNumber': '2',
+             'name': 'Name2',
+             'function': '',
+             'held_position': held_pos2.UID(),
+             'date_from': '',
+             'date_to': '',
+             },
+        ]
+        cfg = self.meetingConfig
+        cfg.setCertifiedSignatures(certified)
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+
+        # 'Name' and 'Function' are taken from contact if not defined (overrided)
+        self.assertEqual(
+            item.getCertifiedSignatures(),
+            ['Function1', u'Person1FirstName Person1LastName', u'Assembly member 2', 'Name2'])
+        # held position are available when listify=False
+        self.assertEqual(
+            item.getCertifiedSignatures(listify=False),
+            {'1': {'function': 'Function1',
+                   'held_position': held_pos1,
+                   'name': u'Person1FirstName Person1LastName'},
+             '2': {'function': u'Assembly member 2',
+                   'held_position': held_pos2,
+                   'name': 'Name2'}})
 
     def test_pm_ItemCreatedOnlyUsingTemplate(self):
         '''If MeetingConfig.itemCreatedOnlyUsingTemplate is True, a user can only

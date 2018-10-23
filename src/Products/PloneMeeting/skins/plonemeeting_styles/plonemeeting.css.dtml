@@ -1756,6 +1756,14 @@ h2.pm-inserting-methods-helper-msg {
    display: inline;
 }
 
+/* avoid select input to take to much place when editing certified signatures datagridfield */
+div#formfield-form-widgets-certified_signatures th {
+   width: 17%;   
+}
+div#formfield-form-widgets-certified_signatures td select.select-widget {
+   width: 100%;   
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */

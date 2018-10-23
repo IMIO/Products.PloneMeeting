@@ -2964,19 +2964,20 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getCertifiedSignatures(self,
                                forceUseCertifiedSignaturesOnMeetingConfig=False,
-                               from_group_in_charge=False):
+                               from_group_in_charge=False,
+                               listify=True):
         '''See docstring in interfaces.py.'''
         item = self.getSelf()
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(item)
         if forceUseCertifiedSignaturesOnMeetingConfig:
-            return cfg.getCertifiedSignatures(computed=True, listified=True)
+            return cfg.getCertifiedSignatures(computed=True, listify=listify)
 
         # get certified signatures computed, this will return a list with pair
         # of function/signatures, so ['function1', 'name1', 'function2', 'name2', 'function3', 'name3', ]
         # this list is ordered by signature number defined on the organization/MeetingConfig
         return item.getProposingGroup(theObject=True).get_certified_signatures(
-            computed=True, cfg=cfg, from_group_in_charge=from_group_in_charge)
+            computed=True, cfg=cfg, from_group_in_charge=from_group_in_charge, listify=listify)
 
     security.declarePublic('redefinedItemAssemblies')
 

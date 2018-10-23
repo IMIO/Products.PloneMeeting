@@ -324,11 +324,13 @@ class Migrate_To_4_1(Migrator):
             # empty dates must be None, signatureNumber is now signature_number
             # dates were stored as str, we need datetime now
             adapted_cs = [
-                {'function': safe_unicode(sign['function']),
-                 'signature_number': sign['signatureNumber'],
+                {'signature_number': sign['signatureNumber'],
+                 'name': safe_unicode(sign['name']),
+                 'function': safe_unicode(sign['function']),
+                 'held_position': None,
                  'date_from': sign['date_from'] and date.fromtimestamp(int(DateTime(sign['date_from']))) or None,
-                 'date_to': sign['date_to'] and date.fromtimestamp(int(DateTime(sign['date_to']))) or None,
-                 'name': safe_unicode(sign['name'])} for sign in cs]
+                 'date_to': sign['date_to'] and date.fromtimestamp(int(DateTime(sign['date_to']))) or None}
+                for sign in cs]
             data = {'id': mGroup.getId(),
                     'title': mGroup.Title(),
                     'description': mGroup.Description(),
@@ -436,6 +438,14 @@ class Migrate_To_4_1(Migrator):
                     new_value = old_v.replace('delay_real_group_id__', DELAYAWARE_ROW_ID_PATTERN.format(''))
                 adapted_advicesKeptOnSentToOtherMC.append(new_value)
             cfg.setAdvicesKeptOnSentToOtherMC(adapted_advicesKeptOnSentToOtherMC)
+            # certifiedSignatures
+            certifiedSignatures = cfg.getCertifiedSignatures()
+            adapted_certifiedSignatures = []
+            for v in certifiedSignatures:
+                new_value = v.copy()
+                new_value['held_position'] = '_none_'
+                adapted_certifiedSignatures.append(new_value)
+            cfg.setCertifiedSignatures(adapted_certifiedSignatures)
             # customAdvisers
             customAdvisers = cfg.getCustomAdvisers()
             adapted_customAdvisers = []

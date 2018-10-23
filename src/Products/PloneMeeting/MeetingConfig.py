@@ -107,6 +107,7 @@ from Products.PloneMeeting.utils import reviewersFor
 from Products.PloneMeeting.utils import updateAnnexesAccess
 from Products.PloneMeeting.validators import WorkflowInterfacesValidator
 from Products.PloneMeeting.widgets import PMInAndOutWidget
+from z3c.form.i18n import MessageFactory as _z3c_form
 from zope.annotation import IAnnotations
 from zope.component import getMultiAdapter
 from zope.component import getUtility
@@ -203,23 +204,34 @@ schema = Schema((
             description="CertifiedSignatures",
             description_msgid="certified_signatures_descr",
             columns={'signatureNumber':
-                        SelectColumn("Certified signatures signature number",
-                                     vocabulary="listSignatureNumbers",
-                                     col_description="Select the signature number, keep signatures ordered by number."),
+                        SelectColumn(
+                            _("Certified signatures signature number"),
+                            vocabulary="listSignatureNumbers",
+                            col_description=_("Select the signature number, keep signatures ordered by number."), ),
                      'name':
-                        Column("Certified signatures signatory name",
-                               col_description="Name of the signatory (for example 'Mister John Doe')."),
+                        Column(_("Certified signatures signatory name"),
+                               col_description=_("Name of the signatory (for example 'Mister John Doe')."), ),
                      'function':
-                        Column("Certified signatures signatory function",
-                               col_description="Function of the signatory (for example 'Mayor')."),
+                        Column(_("Certified signatures signatory function"),
+                               col_description=_("Function of the signatory (for example 'Mayor')."), ),
+                     'held_position':
+                        SelectColumn(
+                            _("Certified signatures held position"),
+                            vocabulary="listSelectableContacts",
+                            col_description=_(
+                                "Select a held position if necessary, 'Name', 'Function' "
+                                "and other data of this held position will be used if you leave 'Name' and "
+                                "'Function' columns empty."), ),
                      'date_from':
-                        Column("Certified signatures valid from (included)",
-                               col_description="Enter valid from date, use following format : YYYY/MM/DD, "
-                                               "leave empty so it is always valid."),
+                        Column(_("Certified signatures valid from (included)"),
+                               col_description=_(
+                                "Enter valid from date, use following format : YYYY/MM/DD, "
+                                "leave empty so it is always valid."), ),
                      'date_to':
-                        Column("Certified signatures valid to (included)",
-                               col_description="Enter valid to date, use following format : YYYY/MM/DD, "
-                                               "leave empty so it is always valid."), },
+                        Column(_("Certified signatures valid to (included)"),
+                               col_description=_(
+                                "Enter valid to date, use following format : YYYY/MM/DD, "
+                                "leave empty so it is always valid."), ), },
             label='Certifiedsignatures',
             label_msgid='PloneMeeting_label_certifiedSignatures',
             i18n_domain='PloneMeeting',
@@ -229,7 +241,7 @@ schema = Schema((
         default=defValues.certifiedSignatures,
         allow_oddeven=True,
         write_permission="PloneMeeting: Write harmless config",
-        columns=('signatureNumber', 'name', 'function', 'date_from', 'date_to'),
+        columns=('signatureNumber', 'name', 'function', 'held_position', 'date_from', 'date_to'),
         allow_empty_rows=False,
     ),
     LinesField(
@@ -244,7 +256,7 @@ schema = Schema((
         ),
         schemata="assembly_and_signatures",
         multiValued=1,
-        vocabulary='listSelectableContacts',
+        vocabulary_factory='Products.PloneMeeting.vocabularies.selectableheldpositionsvocabulary',
         default=defValues.orderedContacts,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write harmless config",
@@ -2887,20 +2899,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('listSelectableContacts')
 
     def listSelectableContacts(self):
-
         """ """
-        catalog = api.portal.get_tool('portal_catalog')
-        brains = catalog(portal_type='held_position', sort_on='sortable_title')
-        res = []
-        for brain in brains:
-            held_position = brain.getObject()
-            if held_position.usages and 'assemblyMember' in held_position.usages:
-                res.append(
-                    (held_position.UID(),
-                     held_position.get_short_title(
-                        include_usages=True,
-                        include_defaults=True,
-                        include_signature_number=True)))
+        vocab_factory = getUtility(
+            IVocabularyFactory,
+            "Products.PloneMeeting.vocabularies.selectableheldpositionsvocabulary")
+        vocab = vocab_factory(self)
+        res = [(term.value, term.title) for term in vocab._terms]
+        res.insert(0, ('_none_', _z3c_form('No value')))
         return DisplayList(res)
 
     security.declarePrivate('listConfigGroups')
@@ -5179,14 +5184,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getCertifiedSignatures')
 
-    def getCertifiedSignatures(self, computed=False, listified=False, **kwargs):
+    def getCertifiedSignatures(self, computed=False, listify=False, **kwargs):
         '''Overrides field 'certifiedSignatures' accessor to be able to pass
            the p_computed parameter that will return computed certified signatures,
            so signatures really available right now.'''
         signatures = self.getField('certifiedSignatures').get(self, **kwargs)
         if computed:
             signatures = computeCertifiedSignatures(signatures)
-            if listified:
+            if listify:
                 signatures = listifySignatures(signatures)
         return signatures
 

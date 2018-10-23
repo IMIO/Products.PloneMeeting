@@ -1244,3 +1244,27 @@ class PMMergeTemplatesVocabulary(MergeTemplatesVocabularyFactory):
         return term_title
 
 PMMergeTemplatesVocabularyFactory = PMMergeTemplatesVocabulary()
+
+
+class SelectableHeldPositionsVocabulary(object):
+    """ """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        catalog = api.portal.get_tool('portal_catalog')
+        brains = catalog(portal_type='held_position', sort_on='sortable_title')
+        res = []
+        for brain in brains:
+            held_position = brain.getObject()
+            if held_position.usages and 'assemblyMember' in held_position.usages:
+                res.append(
+                    SimpleTerm(
+                        brain.UID,
+                        brain.UID,
+                        held_position.get_short_title(
+                            include_usages=True,
+                            include_defaults=True,
+                            include_signature_number=True)))
+        return SimpleVocabulary(res)
+
+SelectableHeldPositionsVocabularyFactory = SelectableHeldPositionsVocabulary()

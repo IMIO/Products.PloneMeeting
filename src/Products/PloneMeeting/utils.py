@@ -45,6 +45,7 @@ from imio.history.interfaces import IImioHistory
 from imio.history.utils import getLastAction
 from plone import api
 from plone.app.textfield import RichText
+from plone.app.uuid.utils import uuidToObject
 from plone.autoform.interfaces import WRITE_PERMISSIONS_KEY
 from plone.dexterity.interfaces import IDexterityContent
 from Products.Archetypes.event import ObjectEditedEvent
@@ -1121,14 +1122,14 @@ def computeCertifiedSignatures(signatures):
 
     computedSignatures = {}
     now = datetime.now()
-    validSignatureNumber = 0
+    validSignatureNumber = None
     for signature in signatures:
         # MeetingConfig use signatureNumber and organization use signature_number...
         if signature.get('signature_number'):
-            signature_number = int(signature.get('signature_number'))
+            signature_number = signature.get('signature_number')
             from_cfg = False
         else:
-            signature_number = int(signature.get('signatureNumber'))
+            signature_number = signature.get('signatureNumber')
             from_cfg = True
 
         # first check if we still did not found a valid signature for this signatureNumber
@@ -1157,8 +1158,26 @@ def computeCertifiedSignatures(signatures):
             continue
         validSignatureNumber = signature_number
         computedSignatures[validSignatureNumber] = {}
-        computedSignatures[validSignatureNumber]['function'] = signature['function']
-        computedSignatures[validSignatureNumber]['name'] = signature['name']
+        # manage held_position, if we have a held_position, we use it for 'name' and 'function'
+        # although this can be overrided if something defined in 'name' or 'function' columns
+        held_position = None
+        # held_position
+        if signature['held_position']is not None and signature['held_position'] != '_none_':
+            held_position = uuidToObject(signature['held_position'])
+        computedSignatures[validSignatureNumber]['held_position'] = held_position
+        # name
+        if held_position and not signature['name']:
+            computedSignatures[validSignatureNumber]['name'] = \
+                held_position.get_person_title(include_person_title=False)
+        else:
+            computedSignatures[validSignatureNumber]['name'] = signature['name']
+        # function
+        if held_position and not signature['function']:
+            computedSignatures[validSignatureNumber]['function'] = \
+                held_position.label
+        else:
+            computedSignatures[validSignatureNumber]['function'] = signature['function']
+
     return computedSignatures
 
 
