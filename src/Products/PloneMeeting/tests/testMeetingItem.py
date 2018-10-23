@@ -1664,7 +1664,7 @@ class testMeetingItem(PloneMeetingTestCase):
              'auto__{0}'.format(vendors_reviewers)])
         # when removed from the config, while updating every items,
         # copyGroups are updated correctly
-        self.vendors.as_copy_group_on = u''
+        self.vendors.as_copy_group_on = None
         self.changeUser('siteadmin')
         self.tool.updateAllLocalRoles()
         self.assertEquals(i5.autoCopyGroups,

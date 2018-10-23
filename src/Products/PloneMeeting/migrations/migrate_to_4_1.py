@@ -561,7 +561,7 @@ class Migrate_To_4_1(Migrator):
         # + update local roles will also fix 'delay_when_stopped' on advice with delay
         self.tool.updateAllLocalRoles(meta_type=('MeetingItem', ))
 
-        # remove MeetingGroup object and portal_type
+        # remove MeetingGroup objects and portal_type
         m_group_ids = [mGroup.getId() for mGroup in self.tool.objectValues('MeetingGroup')]
         self.tool.manage_delObjects(ids=m_group_ids)
         portal_factory = api.portal.get_tool('portal_factory')
