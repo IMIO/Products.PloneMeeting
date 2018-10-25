@@ -105,6 +105,12 @@ class IByeByeAttendee(IBaseAttendee):
         required=False,
         constraint=validate_apply_until_item_number,)
 
+    not_present_type = schema.Choice(
+        title=_(u"Not present type"),
+        description=_(u""),
+        vocabulary=u"Products.PloneMeeting.vocabularies.not_present_type_vocabulary",
+        required=True)
+
 
 class ByeByeAttendeeForm(BaseAttendeeForm):
     """ """
@@ -112,6 +118,9 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
     label = _(u'person_byebye')
     schema = IByeByeAttendee
     fields = field.Fields(IByeByeAttendee)
+
+    NOT_PRESENT_MAPPING = {'absent': 'itemAbsents',
+                           'excused': 'itemExcused'}
 
     def _doApply(self):
         """ """
@@ -125,13 +134,30 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
             meeting=self.meeting)
 
         # return a portal_message if trying to byebye an attendee that is
-        # a signatory, either defined on the meeting or redefined on the item
+        # a signatory redefined on the item
         # user will first have to select another signatory on meeting or item
+        # return a portal_message if trying to set absent and item that is
+        # already excused (and the other way round)
+        error = False
         for item_to_update in items_to_update:
             if self.person_uid in item_to_update.getItemSignatories(real=True):
                 plone_utils.addPortalMessage(
-                    _("Can not set absent a person selected as signatory on an item!"),
+                    _("Can not set ${not_present_type} a person selected as signatory on an item!",
+                      mapping={'not_present_type': _('item_not_present_type_{0}'.format(self.not_present_type))}),
                     type='warning')
+                error = True
+            if self.not_present_type == 'absent' and self.person_uid in item_to_update.getItemExcused():
+                plone_utils.addPortalMessage(
+                    _("Can not set excused a person selected as absent on an item!"),
+                    type='warning')
+                error = True
+            if self.not_present_type == 'excused' and self.person_uid in item_to_update.getItemAbsents():
+                plone_utils.addPortalMessage(
+                    _("Can not set absent a person selected as excused on an item!"),
+                    type='warning')
+                error = True
+
+            if error:
                 if item_to_update != self.context:
                     plone_utils.addPortalMessage(
                         _("Please check item at ${item_url}.",
@@ -140,14 +166,18 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
                 self._finished = True
                 return
 
-        # apply itemAbsents
+        # apply itemAbsents/itemExcused
+        meeting_not_present_attr = getattr(
+            self.meeting, self.NOT_PRESENT_MAPPING[self.not_present_type])
         for item_to_update in items_to_update:
             item_to_update_uid = item_to_update.UID()
-            item_absents = self.meeting.itemAbsents.get(item_to_update_uid, [])
-            if self.person_uid not in item_absents:
-                item_absents.append(self.person_uid)
-                self.meeting.itemAbsents[item_to_update_uid] = item_absents
-        plone_utils.addPortalMessage(_("Attendee has been set absent."))
+            item_not_present = meeting_not_present_attr.get(item_to_update_uid, [])
+            if self.person_uid not in item_not_present:
+                item_not_present.append(self.person_uid)
+                meeting_not_present_attr[item_to_update_uid] = item_not_present
+        plone_utils.addPortalMessage(
+            _("Attendee has been set ${not_present_type}.",
+              mapping={'not_present_type': _('item_not_present_type_{0}'.format(self.not_present_type))}))
         self._finished = True
 
 
@@ -172,22 +202,30 @@ class WelcomeAttendeeForm(BaseAttendeeForm):
     schema = IWelcomeAttendee
     fields = field.Fields(IWelcomeAttendee)
 
+    def _get_meeting_absent_attr(self):
+        """ """
+        if self.person_uid in self.context.getItemAbsents():
+            return self.meeting.itemAbsents
+        else:
+            return self.meeting.itemExcused
+
     def _doApply(self):
         """ """
         if not self.mayChangeAttendees():
             raise Unauthorized
 
-        # apply itemAbsents
+        # check where is person_uid, itemAbsents or itemExcused
+        meeting_absent_attr = self._get_meeting_absent_attr()
         items_to_update = _itemsToUpdate(
             from_item_number=self.context.getItemNumber(relativeTo='meeting'),
             until_item_number=self.apply_until_item_number,
             meeting=self.meeting)
         for item_to_update in items_to_update:
             item_to_update_uid = item_to_update.UID()
-            item_absents = self.meeting.itemAbsents.get(item_to_update_uid, [])
+            item_absents = meeting_absent_attr.get(item_to_update_uid, [])
             if self.person_uid in item_absents:
                 item_absents.remove(self.person_uid)
-                self.meeting.itemAbsents[item_to_update_uid] = item_absents
+                meeting_absent_attr[item_to_update_uid] = item_absents
 
         plone_utils = api.portal.get_tool('plone_utils')
         plone_utils.addPortalMessage(_("Attendee has been set back present."))
@@ -217,7 +255,7 @@ class IRedefinedSignatory(IBaseAttendee):
 class RedefinedSignatoryForm(BaseAttendeeForm):
     """ """
 
-    label = _(u'redefine_signatory')
+    label = _(u'Define this attendee as signatory for this item')
     schema = IRedefinedSignatory
     fields = field.Fields(IRedefinedSignatory)
 
@@ -262,7 +300,7 @@ class IRemoveRedefinedSignatory(IBaseAttendee):
 
     apply_until_item_number = schema.TextLine(
         title=_(u"Apply until item number"),
-        description=_(u"If you specify a number, this attendee will be not be "
+        description=_(u"If you specify a number, this attendee will no longer be "
                       u"considered item signatory from current item to entered item number. "
                       u"Leave empty to only apply for current item."),
         required=False,
@@ -272,7 +310,7 @@ class IRemoveRedefinedSignatory(IBaseAttendee):
 class RemoveRedefinedSignatoryForm(BaseAttendeeForm):
     """ """
 
-    label = _(u'remove_redefined_signatory')
+    label = _(u'Remove attendee from signatory defined for this item')
     schema = IRemoveRedefinedSignatory
     fields = field.Fields(IRemoveRedefinedSignatory)
 

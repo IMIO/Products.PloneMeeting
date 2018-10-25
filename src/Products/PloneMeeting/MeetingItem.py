@@ -1616,18 +1616,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if self.attributeIsUsed('classifier') and not value:
             return translate('category_required', domain='PloneMeeting', context=self.REQUEST)
 
-    security.declarePrivate('validate_itemSignatories')
-
-    def validate_itemSignatories(self, value):
-        '''Checks that the selected signatories are not among itemAbsents.'''
-        if self.attributeIsUsed('itemAbsents'):
-            absents = self.REQUEST.get('itemAbsents', [])
-            for signatory in value:
-                if signatory and signatory in absents:
-                    return translate('signatories_absents_mismatch',
-                                     domain='PloneMeeting',
-                                     context=self.REQUEST)
-
     def classifierStartupDirectory(self):
         '''Returns the startup_directory for the classifier referencebrowserwidget.'''
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -2998,6 +2986,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # when using contacts
         if self.getItemAbsents(theObjects=True):
             res.append('itemAbsents')
+        if self.getItemExcused(theObjects=True):
+            res.append('itemExcused')
         return res
 
     security.declarePublic('getItemAssembly')
@@ -3057,6 +3047,22 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         else:
             item_absents = tuple(meeting_item_absents)
         return item_absents
+
+    security.declarePublic('getItemExcused')
+
+    def getItemExcused(self, theObjects=False, **kwargs):
+        '''Gets the excused for this item.
+           Excused for an item are stored in the Meeting.itemExcused dict.'''
+        res = []
+        if not self.hasMeeting():
+            return res
+        meeting = self.getMeeting()
+        meeting_item_excused = meeting.getItemExcused().get(self.UID(), [])
+        if theObjects:
+            item_excused = meeting._getContacts(uids=meeting_item_excused, theObjects=theObjects)
+        else:
+            item_excused = tuple(meeting_item_excused)
+        return item_excused
 
     security.declarePublic('getItemSignatories')
 
@@ -5892,8 +5898,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         meeting = self.getMeeting()
         attendees = meeting.getAttendees(theObjects=False)
         itemAbsents = self.getItemAbsents()
+        itemExcused = self.getItemExcused()
         attendees = [attendee for attendee in attendees
-                     if attendee not in itemAbsents]
+                     if attendee not in itemAbsents + itemExcused]
         # get really present attendees now
         attendees = meeting._getContacts(uids=attendees, theObjects=theObjects)
         return attendees
@@ -6250,7 +6257,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return True
 
     def _mayChangeAttendees(self):
-        """Check that user may quickEdit itemAbsents."""
+        """Check that user may quickEdit itemAbsents/itemExcused."""
         tool = api.portal.get_tool('portal_plonemeeting')
         return tool.isManager(self) and self._checkMayQuickEdit()
 

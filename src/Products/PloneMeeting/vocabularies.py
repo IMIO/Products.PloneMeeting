@@ -19,6 +19,7 @@ from operator import attrgetter
 from plone import api
 from plone.memoize import ram
 from Products.CMFPlone.utils import safe_unicode
+from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
@@ -1156,6 +1157,24 @@ class HeldPositionDefaultsVocabulary(object):
 
 
 HeldPositionDefaultsVocabularyFactory = HeldPositionDefaultsVocabulary()
+
+
+class ItemNotPresentTypeVocabulary(object):
+    """ """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+        res = []
+        usedMeetingAttributes = cfg.getUsedMeetingAttributes()
+        if 'absents' in usedMeetingAttributes:
+            res.append(SimpleTerm('absent', 'absent', _(u"item_not_present_type_absent")))
+        if 'excused' in usedMeetingAttributes:
+            res.append(SimpleTerm('excused', 'excused', _(u"item_not_present_type_excused")))
+        return SimpleVocabulary(res)
+
+ItemNotPresentTypeVocabularyFactory = ItemNotPresentTypeVocabulary()
 
 
 class SignatureNumberVocabulary(object):

@@ -133,9 +133,9 @@ jQuery(document).ready(function($) {
                        data_parameters=[],
                        options={trigger: 'click'});
     // item absents on meeting_view
-    tooltipster_helper(selector='.tooltipster-meeting-item-absents',
-                       view_name='@@display-meeting-item-absents',
-                       data_parameters=['absent_uid']);
+    tooltipster_helper(selector='.tooltipster-meeting-item-not-present',
+                       view_name='@@display-meeting-item-not-present',
+                       data_parameters=['not_present_uid', 'not_present_type']);
     // item signatories on meeting_view
     tooltipster_helper(selector='.tooltipster-meeting-item-signatories',
                        view_name='@@display-meeting-item-signatories',

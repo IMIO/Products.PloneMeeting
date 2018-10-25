@@ -82,6 +82,7 @@ from zope.event import notify
 from zope.i18n import translate
 from zope.interface import implements
 
+import copy
 import interfaces
 import itertools
 import logging
@@ -1024,21 +1025,31 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         return {replaced_uid: self.orderedContacts[replaced_uid]['replacement']
                 for replaced_uid in replaced_uids}
 
-    security.declarePublic('getItemAbsents')
-
-    def getItemAbsents(self, by_absents=False):
-        '''Return itemAbsents, by default the itemAbsents dict has the item UID as key and list of
-           absents as values but if 'p_by_absents' is True, the informations are returned with absent
-           as key and list of items as value.'''
-        if by_absents:
+    def _get_item_not_present(self, attr, by_persons=False):
+        '''Return item not present (itemAbsents, itemExcused) by default the attr dict has the item UID
+           as key and list of not_present as values but if 'p_by_persons' is True, the informations
+           are returned with not_present held position as key and list of items as value.'''
+        if by_persons:
             # values are now keys, concatenate a list of lists and remove duplicates
-            keys = tuple(set(list(itertools.chain.from_iterable(self.itemAbsents.values()))))
+            keys = tuple(set(list(itertools.chain.from_iterable(attr.values()))))
             data = {}
             for key in keys:
-                data[key] = [k for k, v in self.itemAbsents.items() if key in v]
+                data[key] = [k for k, v in attr.items() if key in v]
         else:
-            data = self.itemAbsents.data
+            data = copy.deepcopy(attr.data)
         return data
+
+    security.declarePublic('getItemAbsents')
+
+    def getItemAbsents(self, by_persons=False):
+        ''' '''
+        return self._get_item_not_present(self.itemAbsents, by_persons=by_persons)
+
+    security.declarePublic('getItemExcused')
+
+    def getItemExcused(self, by_persons=False):
+        ''' '''
+        return self._get_item_not_present(self.itemExcused, by_persons=by_persons)
 
     security.declarePublic('getItemSignatories')
 
@@ -1349,9 +1360,11 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             # so we pass
             pass
 
-        # remove item UID from self.itemAbsents and self.itemSignatories
+        # remove item UID from self.itemAbsents/self.itemExcused and self.itemSignatories
         item_uid = item.UID()
         if item_uid in self.itemAbsents:
+            del self.itemAbsents[item_uid]
+        if item_uid in self.itemExcused:
             del self.itemAbsents[item_uid]
         if item_uid in self.itemSignatories:
             del self.itemSignatories[item_uid]
@@ -1596,6 +1609,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         ''' '''
         # place to store item absents
         self.itemAbsents = PersistentMapping()
+        # place to store item excused
+        self.itemExcused = PersistentMapping()
         # place to store item signatories
         self.itemSignatories = PersistentMapping()
         # place to store attendees when using contacts

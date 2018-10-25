@@ -23,6 +23,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   This way 'Name' and 'Function' are taken from the contact.  Moreover, when calling MeetingItem.getCertifiedSignatures
   with listify=False, a dict is returned (key is signature number and value is data) including the held position object
   so it is possible to use other data from the held position (like scanned signature for example)
+- Added possibility to manage excused by item like it is the case for absents by item
 
 4.1b11 (2018-09-11)
 -------------------

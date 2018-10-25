@@ -19,10 +19,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 # 02110-1301, USA.
 #
-import copy
 from collections import OrderedDict
-
-import Products
 from collective.contact.core.utils import get_gender_and_number
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.contact.plonegroup.utils import get_organizations
@@ -1181,8 +1178,7 @@ class CheckPodTemplatesView(BrowserView):
                 view()
                 try:
                     view()
-                    view._generate_doc(pod_template,
-                                          output_format='odt')
+                    view._generate_doc(pod_template, output_format='odt')
                     messages['clean'].append((pod_template, obj))
                 except Exception, exc:
                     messages['error'].append((pod_template, obj, ('Error', exc.message)))
@@ -1368,8 +1364,8 @@ class DisplayMeetingConfigsOfConfigGroup(BrowserView):
         return res
 
 
-class DisplayMeetingItemAbsents(BrowserView):
-    """This view will display the items a given attendee was defined as absent for."""
+class DisplayMeetingItemNotPresent(BrowserView):
+    """This view will display the items a given attendee was defined as not present for (absent/excused)."""
 
     def __init__(self, context, request):
         self.context = context
@@ -1377,15 +1373,19 @@ class DisplayMeetingItemAbsents(BrowserView):
         # this view is called on meeting or item
         self.meeting = IMeeting.providedBy(self.context) and self.context or self.context.getMeeting()
 
-    def __call__(self, absent_uid):
+    def __call__(self, not_present_uid, not_present_type):
         """ """
         self.tool = api.portal.get_tool('portal_plonemeeting')
-        self.absent_uid = absent_uid
+        self.not_present_uid = not_present_uid
+        self.not_present_type = not_present_type
         return self.index()
 
-    def getItemsForAbsent(self):
-        """Returns the list of items the absent_uid is absent for."""
-        item_uids = self.meeting.getItemAbsents(by_absents=True).get(self.absent_uid, [])
+    def getItemsForNotPresent(self):
+        """Returns the list of items the not_present_uid is absent for."""
+        if self.not_present_type == 'absent':
+            item_uids = self.meeting.getItemAbsents(by_persons=True).get(self.not_present_uid, [])
+        else:
+            item_uids = self.meeting.getItemExcused(by_persons=True).get(self.not_present_uid, [])
         catalog = api.portal.get_tool('portal_catalog')
         brains = catalog(UID=item_uids, sort_on='getItemNumber')
         objs = [brain.getObject() for brain in brains]

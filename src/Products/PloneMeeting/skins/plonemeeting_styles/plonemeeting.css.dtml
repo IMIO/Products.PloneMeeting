@@ -434,7 +434,7 @@ td.td_cell_advices div.categorized-elements {
 }
 
 div#content.advice_infos_tooltipster,
-div#content.meeting_item_absents_tooltipster,
+div#content.meeting_item_not_present_tooltipster,
 div#content.inherited_advice_item_tooltipster {
     width: 700px;
 }
@@ -1623,7 +1623,8 @@ table.listing tbody tr.even.dragging td {
     content: "\f5b7";
     font-size: 120%;
 }
-#content span.people-signatory-replacer:before {
+#content span.people-signatory-replacer:before,
+#content span.people-not-present:before {
     content: "\f00c";
     font-size: 120%;
     color: red;

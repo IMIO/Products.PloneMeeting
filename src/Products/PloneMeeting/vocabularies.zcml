@@ -57,6 +57,8 @@
            name="Products.PloneMeeting.vocabularies.itemtemplatesstorableasannexvocabulary" />
   <utility component=".vocabularies.SelectableHeldPositionsVocabularyFactory"
            name="Products.PloneMeeting.vocabularies.selectableheldpositionsvocabulary" />
+  <utility component=".vocabularies.ItemNotPresentTypeVocabularyFactory"
+           name="Products.PloneMeeting.vocabularies.not_present_type_vocabulary" />
 
   <!-- PMHeldPosition vocabularies -->
   <utility component=".vocabularies.HeldPositionUsagesVocabularyFactory"

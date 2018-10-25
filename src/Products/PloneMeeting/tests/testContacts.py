@@ -134,8 +134,8 @@ class testContacts(PloneMeetingTestCase):
         api.content.delete(hp)
         self.assertFalse(person.get_held_positions())
 
-    def test_pm_ItemAbsents(self):
-        '''Item absents management, byebye and welcome item attendees.'''
+    def test_pm_ItemAbsentsAndExcused(self):
+        '''Item absents management (itemAbsents, itemExcused), byebye and welcome item attendees.'''
         cfg = self.meetingConfig
         # remove recurring items
         self._removeConfigObjectsFor(cfg)
@@ -154,37 +154,117 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(meeting_attendees, item1.getAttendees())
         self.assertEqual(meeting_attendees, item2.getAttendees())
         self.assertFalse(meeting.getItemAbsents())
-        self.assertFalse(meeting.getItemAbsents(by_absents=True))
+        self.assertFalse(meeting.getItemAbsents(by_persons=True))
+        self.assertFalse(meeting.getItemExcused())
+        self.assertFalse(meeting.getItemExcused(by_persons=True))
 
         # byebye person on item1 and item2
-        person = self.portal.contacts.get('person1')
-        hp = person.get_held_positions()[0]
-        hp_uid = hp.UID()
+        person1 = self.portal.contacts.get('person1')
+        hp1 = person1.get_held_positions()[0]
+        hp1_uid = hp1.UID()
+        person2 = self.portal.contacts.get('person2')
+        hp2 = person2.get_held_positions()[0]
+        hp2_uid = hp2.UID()
         byebye_form = item1.restrictedTraverse('@@item_byebye_attendee_form').form_instance
         byebye_form.meeting = meeting
-        byebye_form.person_uid = hp_uid
+        byebye_form.person_uid = hp1_uid
+        byebye_form.not_present_type = 'absent'
         byebye_form.apply_until_item_number = 200
         self.assertFalse(item1.getItemAbsents())
         self.assertFalse(item2.getItemAbsents())
+        # set hp1 absent
         byebye_form._doApply()
-        self.assertEqual(item1.getItemAbsents(), (hp_uid, ))
-        self.assertEqual(item2.getItemAbsents(), (hp_uid, ))
+        self.assertEqual(item1.getItemAbsents(), (hp1_uid, ))
+        self.assertEqual(item2.getItemAbsents(), (hp1_uid, ))
         self.assertEqual(
             sorted(meeting.getItemAbsents().keys()),
             sorted([item1_uid, item2_uid]))
-        self.assertEqual(meeting.getItemAbsents(by_absents=True).keys(), [hp_uid])
+        self.assertEqual(meeting.getItemAbsents(by_persons=True).keys(), [hp1_uid])
         self.assertEqual(
-            sorted(meeting.getItemAbsents(by_absents=True)[hp_uid]),
+            sorted(meeting.getItemAbsents(by_persons=True)[hp1_uid]),
             sorted([item1_uid, item2_uid]))
+        # set hp2 excused
+        byebye_form.person_uid = hp2_uid
+        byebye_form.not_present_type = 'excused'
+        byebye_form.apply_until_item_number = 100
+        byebye_form._doApply()
+        # absent
+        self.assertEqual(item1.getItemAbsents(), (hp1_uid, ))
+        self.assertEqual(item2.getItemAbsents(), (hp1_uid, ))
+        self.assertEqual(
+            sorted(meeting.getItemAbsents().keys()),
+            sorted([item1_uid, item2_uid]))
+        self.assertEqual(meeting.getItemAbsents(by_persons=True).keys(), [hp1_uid])
+        self.assertEqual(
+            sorted(meeting.getItemAbsents(by_persons=True)[hp1_uid]),
+            sorted([item1_uid, item2_uid]))
+        # excused
+        self.assertEqual(item1.getItemExcused(), (hp2_uid, ))
+        self.assertEqual(item2.getItemExcused(), ())
+        self.assertEqual(
+            sorted(meeting.getItemExcused().keys()),
+            sorted([item1_uid]))
+        self.assertEqual(meeting.getItemExcused(by_persons=True).keys(), [hp2_uid])
+        self.assertEqual(
+            sorted(meeting.getItemExcused(by_persons=True)[hp2_uid]),
+            sorted([item1_uid]))
 
-        # welcome person on item2
+        # welcome hp1 on item2
         welcome_form = item2.restrictedTraverse('@@item_welcome_attendee_form').form_instance
         welcome_form.meeting = meeting
-        welcome_form.person_uid = hp_uid
+        welcome_form.person_uid = hp1_uid
         welcome_form.apply_until_item_number = u''
         welcome_form._doApply()
-        self.assertEqual(item1.getItemAbsents(), (hp_uid, ))
+        self.assertEqual(item1.getItemAbsents(), (hp1_uid, ))
         self.assertFalse(item2.getItemAbsents())
+        # welcome hp2 on item1
+        welcome_form = item1.restrictedTraverse('@@item_welcome_attendee_form').form_instance
+        welcome_form.meeting = meeting
+        welcome_form.person_uid = hp2_uid
+        welcome_form.apply_until_item_number = u''
+        welcome_form._doApply()
+        self.assertFalse(item1.getItemExcused())
+        self.assertFalse(item2.getItemExcused())
+
+    def test_pm_CanNotSetItemAbsentAndExcusedSamePerson(self):
+        """ """
+        cfg = self.meetingConfig
+        # remove recurring items
+        self._removeConfigObjectsFor(cfg)
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime())
+        meeting_attendees = meeting.getAttendees()
+        self.assertTrue(meeting_attendees)
+        item1 = self.create('MeetingItem')
+        item2 = self.create('MeetingItem')
+        item1_uid = item1.UID()
+        item2_uid = item2.UID()
+        self.presentItem(item1)
+        self.presentItem(item2)
+        # set hp1 absent for item1 and item2
+        # then set hp1 excused for item2
+        person1 = self.portal.contacts.get('person1')
+        hp1 = person1.get_held_positions()[0]
+        hp1_uid = hp1.UID()
+        # set hp1 absent for item1 and item2
+        byebye_form = item1.restrictedTraverse('@@item_byebye_attendee_form').form_instance
+        byebye_form.meeting = meeting
+        byebye_form.person_uid = hp1_uid
+        byebye_form.not_present_type = 'absent'
+        byebye_form.apply_until_item_number = 200
+        byebye_form._doApply()
+        self.assertEqual(
+            sorted(meeting.getItemAbsents(by_persons=True)[hp1_uid]),
+            sorted([item1_uid, item2_uid]))
+        # then set hp1 excused for item2
+        # nothing is done
+        byebye_form = item2.restrictedTraverse('@@item_byebye_attendee_form').form_instance
+        byebye_form.meeting = meeting
+        byebye_form.person_uid = hp1_uid
+        byebye_form.not_present_type = 'excused'
+        byebye_form.apply_until_item_number = ''
+        byebye_form._doApply()
+        self.assertFalse(meeting.getItemExcused(by_persons=True))
 
     def test_pm_ItemSignatories(self):
         '''Item signatories management, define item signatory and remove item signatory.'''
@@ -312,7 +392,7 @@ class testContacts(PloneMeetingTestCase):
         absent_hp = absent.get_held_positions()[0]
         absent_hp_uid = absent_hp.UID()
         meeting.itemAbsents[item.UID()] = [absent_hp_uid]
-        self.assertTrue(absent_hp_uid in meeting.getItemAbsents(by_absents=True))
+        self.assertTrue(absent_hp_uid in meeting.getItemAbsents(by_persons=True))
 
         # redefine signatories on item
         signer = self.portal.contacts.get('person2')
@@ -323,7 +403,7 @@ class testContacts(PloneMeetingTestCase):
 
         # remove item from meeting, everything is reinitialized
         self.backToState(item, 'validated')
-        self.assertFalse(absent_hp_uid in meeting.getItemAbsents(by_absents=True))
+        self.assertFalse(absent_hp_uid in meeting.getItemAbsents(by_persons=True))
         self.assertFalse(signer_hp_uid in item.getItemSignatories())
         self.assertFalse(item.getItemAbsents())
         self.assertFalse(item.redefinedItemAssemblies())

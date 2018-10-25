@@ -263,7 +263,8 @@ class Migrate_To_4_1(Migrator):
         logger.info('Done.')
 
     def _adaptForContacts(self):
-        """Add new attributes 'orderedContacts' and 'itemAbsents' to existing meetings.
+        """Add new attributes 'orderedContacts' and 'itemAbsents/itemExcused'
+           to existing meetings.
            Remove attribute 'itemAbsents' from existing items."""
         logger.info('Adapting application for contacts...')
         catalog = api.portal.get_tool('portal_catalog')
@@ -276,6 +277,7 @@ class Migrate_To_4_1(Migrator):
                 break
             meeting.orderedContacts = OrderedDict()
             meeting.itemAbsents = PersistentMapping()
+            meeting.itemExcused = PersistentMapping()
             meeting.itemSignatories = PersistentMapping()
 
         logger.info('Adapting items...')
@@ -373,6 +375,7 @@ class Migrate_To_4_1(Migrator):
 
         logger.info('Transfering users to new Plone groups...')
         # transfer users to new Plone groups
+        portal_groups = api.portal.get_tool('portal_groups')
         for mGroup in self.tool.objectValues('MeetingGroup'):
             org = get_own_organization().get(mGroup.getId())
             org_uid = org.UID()
@@ -386,6 +389,8 @@ class Migrate_To_4_1(Migrator):
                         if not api.user.get(member_id):
                             continue
                         api.group.add_user(group=new_plone_group, username=member_id)
+                # remove original Plone group
+                portal_groups.removeGroup(ori_plone_group_id)
 
         own_org = get_own_organization()
 
@@ -489,6 +494,7 @@ class Migrate_To_4_1(Migrator):
 
         # update TAL conditions
         self.updateTALConditions(old_word='getGroupsForUser', new_word='get_orgs_for_user')
+        self.updateTALConditions(old_word='omittedSuffixes', new_word='omitted_suffixes')
 
         # adapt MeetingItems
         brains = api.content.find(meta_type='MeetingItem')

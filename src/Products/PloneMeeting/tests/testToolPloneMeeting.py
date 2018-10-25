@@ -631,19 +631,19 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertEqual(
             [org.UID() for org in self.tool.get_orgs_for_user(suffixes=['reviewers'])],
             [self.developers_uid])
-        # check the 'omittedSuffixes' parameter, it will not consider Plone group having that suffix
-        # here, if we omit the 'advisers' suffix, the 'vendors' MeetingGroup will not be returned
+        # check the 'omitted_suffixes' parameter, it will not consider Plone group having that suffix
+        # here, if we omit the 'advisers' suffix, the 'vendors' organization will not be returned
         self.assertEqual(
             [org.UID() for org in self.tool.get_orgs_for_user(omitted_suffixes=('advisers', ))],
             [self.developers_uid])
-        # we can get MeetingGroup for another user
+        # we can get organization for another user
         pmCreator1 = self.portal.portal_membership.getMemberById('pmCreator1')
         self.assertEqual(sorted(pmCreator1.getGroups()),
                          sorted(['AuthenticatedUsers', self.developers_creators]))
         self.assertEqual([org.UID() for org in self.tool.get_orgs_for_user(user_id='pmCreator1')],
                          [self.developers_uid, ])
 
-        # the 'active' parameter will return only active MeetingGroups
+        # the 'active' parameter will return only active orgs
         # so deactivate organization 'vendors' and check
         self.changeUser('admin')
         self._select_organization(self.vendors_uid, remove=True)
