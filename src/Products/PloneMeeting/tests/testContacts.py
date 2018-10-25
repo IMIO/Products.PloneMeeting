@@ -360,6 +360,7 @@ class testContacts(PloneMeetingTestCase):
         byebye_form = item1.restrictedTraverse('@@item_byebye_attendee_form').form_instance
         byebye_form.meeting = meeting
         byebye_form.person_uid = hp_uid
+        byebye_form.not_present_type = 'absent'
         byebye_form.apply_until_item_number = 200
         self.assertFalse(item1.getItemAbsents())
         self.assertFalse(item2.getItemAbsents())
