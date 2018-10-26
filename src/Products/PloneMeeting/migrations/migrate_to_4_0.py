@@ -1483,6 +1483,9 @@ class Migrate_To_4_0(Migrator):
             # recook CSS and JS
             self.cleanRegistries()
 
+        if step == 5:
+            self.updateHolidays()
+
 
 # The migration function -------------------------------------------------------
 def migrate(context):
@@ -1592,4 +1595,12 @@ def migrate_step4(context):
     migrator = Migrate_To_4_0(context)
     migrator.run(step=4)
     migrator.finish()
+# ------------------------------------------------------------------------------
+
+
+def migrate_step5_holidays(context):
+    migrator = Migrate_To_4_0(context)
+    migrator.run(step=5)
+    migrator.finish()
+
 # ------------------------------------------------------------------------------
