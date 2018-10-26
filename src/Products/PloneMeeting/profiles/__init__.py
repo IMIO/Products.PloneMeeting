@@ -752,20 +752,7 @@ class PloneMeetingConfiguration(Descriptor):
         self.modelAdaptations = []
         self.enableUserPreferences = False
         self.workingDays = ('mon', 'tue', 'wed', 'thu', 'fri')
-        self.holidays = [{'date': '2017/01/01', },  # 2017
-                         {'date': '2017/04/17', },
-                         {'date': '2017/05/01', },
-                         {'date': '2017/05/25', },
-                         {'date': '2017/06/05', },
-                         {'date': '2017/07/21', },
-                         {'date': '2017/08/15', },
-                         {'date': '2017/09/27', },
-                         {'date': '2017/11/01', },
-                         {'date': '2017/11/11', },
-                         {'date': '2017/11/15', },
-                         {'date': '2017/12/25', },
-
-                         {'date': '2018/01/01', },  # 2018
+        self.holidays = [{'date': '2018/01/01', },  # 2018
                          {'date': '2018/04/02', },
                          {'date': '2018/05/01', },
                          {'date': '2018/05/10', },
@@ -776,7 +763,21 @@ class PloneMeetingConfiguration(Descriptor):
                          {'date': '2018/11/01', },
                          {'date': '2018/11/11', },
                          {'date': '2018/11/15', },
-                         {'date': '2018/12/25', }]
+                         {'date': '2018/12/25', },
+
+                         {'date': '2019/01/01', },  # 2019
+                         {'date': '2019/04/22', },
+                         {'date': '2019/05/01', },
+                         {'date': '2019/05/30', },
+                         {'date': '2019/06/10', },
+                         {'date': '2019/07/21', },
+                         {'date': '2019/08/15', },
+                         {'date': '2019/09/27', },
+                         {'date': '2019/11/01', },
+                         {'date': '2019/11/11', },
+                         {'date': '2019/11/15', },
+                         {'date': '2019/12/25', },
+                         ]
         self.delayUnavailableEndDays = ()
         self.configGroups = ()
         self.meetingConfigs = meetingConfigs  # ~[MeetingConfigDescriptor]~
