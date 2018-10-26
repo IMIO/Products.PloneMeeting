@@ -64,7 +64,7 @@
       title="PloneMeeting 4.0 (Update Holidays)"
       description="For application that was already migrated to v4.0 Step 1 to Step 3"
       source="4.0"
-      destination="4.0"
+      destination="4.0.1"
       handler="Products.PloneMeeting.migrations.migrate_to_4_0.migrate_step5_holidays"
       profile="Products.PloneMeeting:default" />
 
