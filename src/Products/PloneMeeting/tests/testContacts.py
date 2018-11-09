@@ -379,36 +379,53 @@ class testContacts(PloneMeetingTestCase):
 
     def test_pm_ItemContactsWhenItemRemovedFromMeeting(self):
         '''When an item is removed from a meeting, redefined informations
-           regarding item absents and signatories are reinitialized.'''
+           regarding item absents/excused and signatories are reinitialized.'''
         cfg = self.meetingConfig
         # remove recurring items
         self._removeConfigObjectsFor(cfg)
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=DateTime())
-        item = self.create('MeetingItem')
-        self.presentItem(item)
+        item_with_absent = self.create('MeetingItem')
+        self.presentItem(item_with_absent)
+        item_with_excused = self.create('MeetingItem')
+        self.presentItem(item_with_excused)
 
         # add an item absent
         absent = self.portal.contacts.get('person1')
         absent_hp = absent.get_held_positions()[0]
         absent_hp_uid = absent_hp.UID()
-        meeting.itemAbsents[item.UID()] = [absent_hp_uid]
+        meeting.itemAbsents[item_with_absent.UID()] = [absent_hp_uid]
         self.assertTrue(absent_hp_uid in meeting.getItemAbsents(by_persons=True))
+
+        # add an item excused
+        excused = self.portal.contacts.get('person1')
+        excused_hp = excused.get_held_positions()[0]
+        excused_hp_uid = excused_hp.UID()
+        meeting.itemExcused[item_with_excused.UID()] = [excused_hp_uid]
+        self.assertTrue(excused_hp_uid in meeting.getItemExcused(by_persons=True))
 
         # redefine signatories on item
         signer = self.portal.contacts.get('person2')
         signer_hp = signer.get_held_positions()[0]
         signer_hp_uid = signer_hp.UID()
-        meeting.itemSignatories[item.UID()] = {'1': signer_hp_uid}
-        self.assertTrue(signer_hp_uid in item.getItemSignatories())
+        meeting.itemSignatories[item_with_absent.UID()] = {'1': signer_hp_uid}
+        self.assertTrue(signer_hp_uid in item_with_absent.getItemSignatories())
 
-        # remove item from meeting, everything is reinitialized
-        self.backToState(item, 'validated')
+        # remove items from meeting, everything is reinitialized
+        # absent
+        self.backToState(item_with_absent, 'validated')
         self.assertFalse(absent_hp_uid in meeting.getItemAbsents(by_persons=True))
-        self.assertFalse(signer_hp_uid in item.getItemSignatories())
-        self.assertFalse(item.getItemAbsents())
-        self.assertFalse(item.redefinedItemAssemblies())
-        self.assertFalse(item.getItemSignatories())
+        self.assertFalse(signer_hp_uid in item_with_absent.getItemSignatories())
+        self.assertFalse(item_with_absent.getItemAbsents())
+        self.assertFalse(item_with_absent.redefinedItemAssemblies())
+        self.assertFalse(item_with_absent.getItemSignatories())
+        # excused
+        self.backToState(item_with_excused, 'validated')
+        self.assertFalse(excused_hp_uid in meeting.getItemExcused(by_persons=True))
+        self.assertFalse(signer_hp_uid in item_with_excused.getItemSignatories())
+        self.assertFalse(item_with_excused.getItemExcused())
+        self.assertFalse(item_with_excused.redefinedItemAssemblies())
+        self.assertFalse(item_with_excused.getItemSignatories())
 
     def test_pm_HeldPositionPositionsSourceDoNotShowOrgsInsidePlonegroup(self):
         """The source for field held_position.position will display

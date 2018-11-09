@@ -579,15 +579,19 @@ class Migrate_To_4_1(Migrator):
 
         logger.info('Done.')
 
-    def _selectDescriptionInUsedItemAttributes(self):
+    def _updateUsedItemAttributes(self):
         """Now that 'MeetingItem.description' is an optional field, we need to
-           select it on existing MeetingConfigs."""
-        logger.info('Selecting "description" in every MeetingConfig.usedItemAttributes...')
+           select it on existing MeetingConfigs.
+           Remove 'MeetingItem.itemAssembly' from selected values as it is no more an
+           optional field and is used if 'Meeting.assembly' is used."""
+        logger.info('Updating every MeetingConfig.usedItemAttributes...')
         for cfg in self.tool.objectValues('MeetingConfig'):
             usedItemAttrs = list(cfg.getUsedItemAttributes())
             if 'description' not in usedItemAttrs:
                 usedItemAttrs.insert(0, 'description')
-                cfg.setUsedItemAttributes(usedItemAttrs)
+            if 'itemAssembly' in usedItemAttrs:
+                usedItemAttrs.remove('itemAssembly')
+            cfg.setUsedItemAttributes(usedItemAttrs)
         logger.info('Done.')
 
     def _migrateGroupsShownInDashboardFilter(self):
@@ -666,7 +670,7 @@ class Migrate_To_4_1(Migrator):
         self._migrateToDoListSearches()
         self._adaptForContacts()
         self._adaptForPlonegroup()
-        self._selectDescriptionInUsedItemAttributes()
+        self._updateUsedItemAttributes()
         self._migrateGroupsShownInDashboardFilter()
         self._enableStyleTemplates()
         # too many indexes to update, the rebuild the portal_catalog
@@ -694,7 +698,7 @@ def migrate(context):
        15) Make sure workflow_history stored on items is a PersistentMapping;
        16) Migrate MeetingConfig.toDoListSearches as it is no more a ReferenceField;
        17) Adapt application for Contacts;
-       18) Select 'description' in MeetingConfig.usedItemAttributes;
+       18) Update MeetingConfig.usedItemAttributes, select 'description' and unselect 'itemAssembly';
        19) Migrate MeetingConfig.groupsShownInDashboardFilter to MeetingConfig.groupsHiddenInDashboardFilter;
        20) Configure MeetingConfig podtemplates folder to accept style templates.
     '''

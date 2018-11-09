@@ -9,7 +9,6 @@ from collective.eeafaceted.z3ctable.columns import ColorColumn
 from collective.eeafaceted.z3ctable.columns import I18nColumn
 from collective.eeafaceted.z3ctable.columns import PrettyLinkColumn
 from collective.eeafaceted.z3ctable.columns import VocabularyColumn
-from DateTime import DateTime
 from imio.annex.columns import ActionsColumn as AnnexActionsColumn
 from imio.prettylink.interfaces import IPrettyLink
 from plone import api
@@ -200,7 +199,8 @@ class ItemLinkedMeetingColumn(BaseColumn):
     def renderCell(self, item):
         """ """
         value = self.getValue(item)
-        if not value or value == DateTime('1950/01/01'):
+        # use strftime as it ignores timezone
+        if not value or value.strftime('%Y%m%d') == '19500101':
             return u'-'
         else:
             catalog = api.portal.get_tool('uid_catalog')

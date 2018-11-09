@@ -3378,6 +3378,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if (('excused' in newValue) or ('absents' in newValue)) and \
            ('attendees' not in newValue):
             return translate('attendees_required', domain=pm, context=self.REQUEST)
+        # Prevent use of "assemblyExcused" or "assemblyAbsents" without "assembly"
+        if (('assemblyExcused' in newValue) or ('assemblyAbsents' in newValue)) and \
+           ('assembly' not in newValue):
+            return translate('assembly_required', domain=pm, context=self.REQUEST)
+
         # Prevent combined use of "assembly" and "attendees"
         if ('assembly' in newValue) and ('attendees' in newValue):
             return translate('no_assembly_and_attendees', domain=pm, context=self.REQUEST)

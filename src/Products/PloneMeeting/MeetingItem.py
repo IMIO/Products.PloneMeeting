@@ -1138,11 +1138,9 @@ schema = Schema((
     TextField(
         name='itemAssembly',
         allowable_content_types=('text/plain',),
-        optional=True,
         widget=TextAreaWidget(
-            condition="python: here.getItemAssembly(real=True) or (here.attributeIsUsed('itemAssembly') and "
-            "here.portal_plonemeeting.isManager(here) and here.hasMeeting() and "
-            "here.getMeeting().attributeIsUsed('assembly'))",
+            condition="python: here.getItemAssembly(real=True) or (here.portal_plonemeeting.isManager(here) and "
+            "here.hasMeeting() and here.getMeeting().attributeIsUsed('assembly'))",
             description="ItemAssemblyDescrMethod",
             description_msgid="item_assembly_descr",
             label_method="getLabelItemAssembly",
@@ -1178,6 +1176,21 @@ schema = Schema((
             description_msgid="item_assembly_absents_descr",
             label='Itemassemblyabsents',
             label_msgid='PloneMeeting_label_itemAssemblyAbsents',
+            i18n_domain='PloneMeeting',
+        ),
+        default_output_type="text/x-html-safe",
+        default_content_type="text/plain",
+    ),
+    TextField(
+        name='itemAssemblyGuests',
+        allowable_content_types=('text/plain',),
+        widget=TextAreaWidget(
+            condition="python: here.getItemAssemblyGuests(real=True) or (here.portal_plonemeeting.isManager(here) and "
+            "here.hasMeeting() and here.getMeeting().attributeIsUsed('assemblyGuests'))",
+            description="ItemAssemblyGuestsDescrMethod",
+            description_msgid="item_assembly_guests_descr",
+            label='Itemassemblyguests',
+            label_msgid='PloneMeeting_label_itemAssemblyGuests',
             i18n_domain='PloneMeeting',
         ),
         default_output_type="text/x-html-safe",
@@ -2939,7 +2952,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if real:
             return res
         if not res and self.hasMeeting():
-            res = self.getMeeting().getSignatures()
+            res = self.getMeeting().getSignatures(**kwargs)
         return res
 
     security.declarePublic('hasItemSignatures')
@@ -2972,7 +2985,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def redefinedItemAssemblies(self):
         '''
           Helper method that returns list of redefined assembly attributes if assembly of item has been redefined,
-          this is used on the item view.  Depending on used item attributes (assembly, excused, absents),
+          this is used on the item view.  Depending on used item attributes (assembly, excused, absents, guests),
           if one of relevant attribute has been redefined, it will return True.
         '''
         res = []
@@ -2983,6 +2996,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res.append('assemblyExcused')
         if self.getItemAssemblyAbsents(real=True):
             res.append('assemblyAbsents')
+        if self.getItemAssemblyGuests(real=True):
+            res.append('assemblyGuests')
         # when using contacts
         if self.getItemAbsents(theObjects=True):
             res.append('itemAbsents')
@@ -3006,7 +3021,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getItemAssemblyExcused(self, real=False, **kwargs):
         '''Returns the assembly excused for this item.
-           If no assembly excused is defined, meeting assembly excused are returned.'''
+           If no excused are defined for item, meeting assembly excused are returned.'''
         res = self.getField('itemAssemblyExcused').get(self, **kwargs)
         if real:
             return res
@@ -3018,12 +3033,24 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def getItemAssemblyAbsents(self, real=False, **kwargs):
         '''Returns the assembly absents for this item.
-           If no assembly absents is defined, meeting assembly absents are returned.'''
+           If no absents are defined for item, meeting assembly absents are returned.'''
         res = self.getField('itemAssemblyAbsents').get(self, **kwargs)
         if real:
             return res
         if not res and self.hasMeeting():
             res = self.getMeeting().getAssemblyAbsents(**kwargs)
+        return res
+
+    security.declarePublic('getItemAssemblyGuests')
+
+    def getItemAssemblyGuests(self, real=False, **kwargs):
+        '''Returns the assembly guests for this item.
+           If no guests are defined for item, meeting assembly guests are returned.'''
+        res = self.getField('itemAssemblyGuests').get(self, **kwargs)
+        if real:
+            return res
+        if not res and self.hasMeeting():
+            res = self.getMeeting().getAssemblyGuests(**kwargs)
         return res
 
     security.declarePublic('displayStrikedItemAssembly')
@@ -6341,6 +6368,30 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                        context=self.REQUEST).encode(enc),
              self.getMeeting().getAssemblyAbsents() or '-')
         return value + collapsibleMeetingAssemblyAbsents
+
+    security.declareProtected(ModifyPortalContent, 'ItemAssemblyGuestsDescrMethod')
+
+    def ItemAssemblyGuestsDescrMethod(self):
+        '''Special handling of itemAssemblyGuests field description where we display
+          the linked Meeting.assemblyGuests value so it is easily overridable.'''
+        portal_properties = api.portal.get_tool('portal_properties')
+        enc = portal_properties.site_properties.getProperty(
+            'default_charset')
+        value = translate(self.Schema()['itemAssemblyGuests'].widget.description_msgid,
+                          domain='PloneMeeting',
+                          context=self.REQUEST).encode(enc) + '<br/>'
+        collapsibleMeetingAssemblyGuests = \
+            """<div class="collapsible"
+ onclick="toggleDoc('collapsible-item-assembly-guests');">&nbsp;%s</div>
+<div id="collapsible-item-assembly-guests" class="collapsible-content" style="display: none;">
+<div class="collapsible-inner-content">
+%s
+</div>
+</div>""" % (translate('assembly_guests_defined_on_meeting',
+                       domain='PloneMeeting',
+                       context=self.REQUEST).encode(enc),
+             self.getMeeting().getAssemblyGuests() or '-')
+        return value + collapsibleMeetingAssemblyGuests
 
     security.declareProtected(ModifyPortalContent, 'ItemSignaturesDescrMethod')
 

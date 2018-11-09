@@ -88,6 +88,18 @@ def item_absents_default():
     return safe_unicode(itemAssemblyAbsents)
 
 
+def item_guests_default():
+    """
+      Returns the itemAssemblyGuests of the item.
+      As from zope.schema._bootstrapinterfaces import
+      IContextAwareDefaultFactory does not seem to work,
+      we have to get current context manually...
+    """
+    context = getSite().REQUEST['PUBLISHED'].context
+    itemAssemblyGuests = context.getItemAssemblyGuests(mimetype='text/plain')
+    return safe_unicode(itemAssemblyGuests)
+
+
 def validate_apply_until_item_number(value):
     '''This method does validate the 'apply_until_item_number' field.
        It will check that given number is a number among existing item numbers
@@ -132,6 +144,16 @@ class IManageItemAssembly(interface.Interface):
                       u"remove the entire value."),
         defaultFactory=item_absents_default,
         required=False,)
+    item_guests = schema.Text(
+        title=_(u"Item guests to apply"),
+        description=_(u"Enter the item guests to be applied. "
+                      u"By default, the value of the field is what is defined on the meeting. "
+                      u"If you do not change this value, nothing will be applied on the item. "
+                      u"If you already edited this field before and you want to fallback to meeting value, "
+                      u"remove the entire value."),
+        defaultFactory=item_guests_default,
+        required=False,)
+
     apply_until_item_number = schema.TextLine(
         title=_(u"Apply until item number"),
         description=_(u"If you specify a number, the values entered here above will be applied from current "
@@ -179,7 +201,12 @@ class DisplayAssemblyFromMeetingProvider(ContentProviderBase):
             return 'display_meeting_assembly_legend'
 
     def render(self):
-        return self.template()
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        if 'assembly' in cfg.getUsedMeetingAttributes():
+            return self.template()
+        else:
+            return ''
 
 
 class DisplayExcusedFromMeetingProvider(ContentProviderBase):
@@ -306,6 +333,7 @@ class ManageItemAssemblyForm(form.Form):
         self.item_assembly = data.get('item_assembly')
         self.item_excused = data.get('item_excused')
         self.item_absents = data.get('item_absents')
+        self.item_guests = data.get('item_guests')
         # we receive '5' or '5.2' but we want 500 or 502
         self.apply_until_item_number = \
             _itemNumber_to_storedItemNumber(
@@ -334,15 +362,23 @@ class ManageItemAssemblyForm(form.Form):
         tool = getToolByName(self.context, 'portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
         usedMeetingAttributes = cfg.getUsedMeetingAttributes()
+        self.fields['item_assembly'].mode = 'hidden'
         self.fields['item_excused'].mode = 'hidden'
         self.fields['item_absents'].mode = 'hidden'
+        self.fields['item_guests'].mode = 'hidden'
         changeItemAssemblyTitleAndDescr = False
+        # this firm is also used to edit only 'guests' hen using attendees
+        if 'assembly' in usedMeetingAttributes:
+            self.fields['item_assembly'].mode = 'input'
         if 'assemblyExcused' in usedMeetingAttributes:
             changeItemAssemblyTitleAndDescr = True
             self.fields['item_excused'].mode = 'input'
         if 'assemblyAbsents' in usedMeetingAttributes:
             changeItemAssemblyTitleAndDescr = True
             self.fields['item_absents'].mode = 'input'
+        if 'assemblyGuests' in usedMeetingAttributes:
+            changeItemAssemblyTitleAndDescr = True
+            self.fields['item_guests'].mode = 'input'
         if changeItemAssemblyTitleAndDescr:
             self.fields['item_assembly'].field.title = \
                 _('Item attendees to apply')
@@ -377,6 +413,7 @@ class ManageItemAssemblyForm(form.Form):
         item_assembly_def = item_assembly_default()
         item_excused_def = item_excused_default()
         item_absents_def = item_absents_default()
+        item_guests_def = item_guests_default()
         items_to_update = _itemsToUpdate(
             from_item_number=self.context.getItemNumber(relativeTo='meeting'),
             until_item_number=self.apply_until_item_number,
@@ -389,6 +426,8 @@ class ManageItemAssemblyForm(form.Form):
                 itemToUpdate.setItemAssemblyExcused(self.item_excused)
             if self.item_absents != item_absents_def:
                 itemToUpdate.setItemAssemblyAbsents(self.item_absents)
+            if self.item_guests != item_guests_def:
+                itemToUpdate.setItemAssemblyGuests(self.item_guests)
 
         plone_utils = getToolByName(self.context, 'plone_utils')
         plone_utils.addPortalMessage(_("Item assemblies have been updated."))

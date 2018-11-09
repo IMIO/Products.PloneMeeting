@@ -431,7 +431,7 @@ schema = Schema((
         name='assembly',
         allowable_content_types="text/plain",
         widget=TextAreaWidget(
-            condition="python: here.attributeIsUsed('assembly') or here.getAssembly()",
+            condition="here/showAssemblyFields",
             label_msgid="meeting_assembly",
             description="MeetingAssembly",
             description_msgid="assembly_meeting_descr",
@@ -449,7 +449,7 @@ schema = Schema((
         allowable_content_types="text/plain",
         optional=True,
         widget=TextAreaWidget(
-            condition="python: here.attributeIsUsed('assemblyExcused') or here.getAssemblyExcused()",
+            condition="here/showAssemblyFields",
             description="MeetingAssemblyExcused",
             description_msgid="assembly_excused_meeting_descr",
             label='Assemblyexcused',
@@ -464,7 +464,7 @@ schema = Schema((
         allowable_content_types="text/plain",
         optional=True,
         widget=TextAreaWidget(
-            condition="python: here.attributeIsUsed('assemblyAbsents') or here.getAssemblyAbsents()",
+            condition="here/showAssemblyFields",
             description="MeetingAssemblyAbsents",
             description_msgid="assembly_absents_meeting_descr",
             label='Assemblyabsents',
@@ -1365,7 +1365,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         if item_uid in self.itemAbsents:
             del self.itemAbsents[item_uid]
         if item_uid in self.itemExcused:
-            del self.itemAbsents[item_uid]
+            del self.itemExcused[item_uid]
         if item_uid in self.itemSignatories:
             del self.itemSignatories[item_uid]
 
@@ -1873,6 +1873,18 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             if member.has_role('Manager'):
                 item.REQUEST.set('items_to_remove', item.getItems())
         OrderedBaseFolder.manage_beforeDelete(self, item, container)
+
+    security.declarePublic('showAttendeesFields')
+
+    def showAttendeesFields(self):
+        '''Display attendee related fields in view/edit?'''
+        return (self.attributeIsUsed('attendees') or self.getAttendees()) and not self.getAssembly()
+
+    security.declarePublic('showAssemblyField')
+
+    def showAssemblyFields(self):
+        '''Display assembly related fields in view/edit?'''
+        return (self.attributeIsUsed('assembly') or self.getAssembly()) and not self.getAttendees()
 
     security.declarePublic('showVotes')
 

@@ -154,12 +154,9 @@
         <metal:field use-macro="python:here.widget('assembly', mode='edit')"/>
         <metal:field use-macro="python:here.widget('assemblyExcused', mode='edit')"/>
         <metal:field use-macro="python:here.widget('assemblyAbsents', mode='edit')"/>
-        <metal:field use-macro="python:here.widget('assemblyGuests', mode='edit')"/>
-        <metal:field use-macro="python:here.widget('assemblyProxies', mode='edit')"/>
-        <metal:field use-macro="python:here.widget('assemblyStaves', mode='edit')"/>
-        
+
         <tal:comment replace="nothing">User table: attendees, lateAttendees, absents, signatories, replacements</tal:comment>
-        <tal:users condition="python: 'attendees' in usedAttrs">
+        <tal:users condition="context/showAttendeesFields">
 
         <table id="meeting_users" name="meeting_users" class="listing" i18n:domain="PloneMeeting"
                tal:define="allUsers python: context.getAllUsedHeldPositions(include_new=True);
@@ -295,6 +292,10 @@
             });
         </script>
         </tal:users>
+
+        <metal:field use-macro="python:here.widget('assemblyGuests', mode='edit')"/>
+        <metal:field use-macro="python:here.widget('assemblyProxies', mode='edit')"/>
+        <metal:field use-macro="python:here.widget('assemblyStaves', mode='edit')"/>
 
         <metal:field use-macro="python:here.widget('signatures', mode='edit')"/>
 
