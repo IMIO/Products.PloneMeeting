@@ -45,7 +45,7 @@ from Products.PloneMeeting.testing import PM_TESTING_PROFILE_FUNCTIONAL
 from Products.PloneMeeting.tests.helpers import PloneMeetingTestingHelpers
 from Products.PloneMeeting.utils import cleanMemoize
 from Products.PloneMeeting.utils import reviewersFor
-from Products.PloneTestCase.setup import _createHomeFolder
+from plone.app.testing.bbb import _createMemberarea
 from z3c.form.testing import TestRequest as z3c_form_TestRequest
 from zope.component import getMultiAdapter
 from zope.event import notify
@@ -128,18 +128,8 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
                         plone_group_id)
 
         self.pmFolder = os.path.dirname(Products.PloneMeeting.__file__)
-        # Create siteadmin user
-        self.createUser('siteadmin', ('Member', 'Manager', ))
         # Import the test profile
         self.changeUser('admin')
-        # Create some member areas
-        for userId in ('pmManager',
-                       'pmCreator1',
-                       'pmCreator1b',
-                       'pmCreator2',
-                       'siteadmin',
-                       'powerobserver1'):
-            _createHomeFolder(self.portal, userId)
         # Disable notifications mechanism. This way, the test suite may be
         # executed even on production sites that contain many real users.
         for cfg in self.tool.objectValues('MeetingConfig'):
@@ -170,7 +160,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         setRoles(self.portal, username, roles)
         for group in groups:
             self._addPrincipalToGroup(username, group)
-        _createHomeFolder(self.portal, username)
+        _createMemberarea(self.portal, username)
         return newUser
 
     def setMeetingConfig(self, meetingConfigId):

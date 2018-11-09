@@ -11,10 +11,25 @@ from plone.app.robotframework.testing import REMOTE_LIBRARY_BUNDLE_FIXTURE
 from plone.app.testing import FunctionalTesting
 from plone.app.testing import IntegrationTesting
 from plone.app.testing import PloneWithPackageLayer
+from plone.app.testing.bbb import _createMemberarea
 from plone.testing import z2
 from plone.testing import zca
 
 import Products.PloneMeeting
+
+
+class PMLayer(PloneWithPackageLayer):
+
+    def setUpPloneSite(self, portal):
+        super(PMLayer, self).setUpPloneSite(portal)
+        # Create some member areas
+        for userId in ('pmManager',
+                       'pmCreator1',
+                       'pmCreator1b',
+                       'pmCreator2',
+                       'siteadmin',
+                       'powerobserver1'):
+            _createMemberarea(portal, userId)
 
 
 PM_ZCML = zca.ZCMLSandbox(filename="testing.zcml",
@@ -25,7 +40,7 @@ PM_Z2 = z2.IntegrationTesting(bases=(z2.STARTUP, PM_ZCML),
                               name='PM_Z2')
 
 
-PM_TESTING_PROFILE = PloneWithPackageLayer(
+PM_TESTING_PROFILE = PMLayer(
     zcml_filename="testing.zcml",
     zcml_package=Products.PloneMeeting,
     additional_z2_products=('collective.eeafaceted.collectionwidget',

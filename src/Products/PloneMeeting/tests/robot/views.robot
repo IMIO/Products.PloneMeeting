@@ -12,7 +12,8 @@ Suite Teardown  Close all browsers
 
 # Test that after login, a user is redirected to the defaut MeetingConfig home page
 Test Moved to default MeetingConfig home page after connection
-    Log in  pmManager  meeting
+    Log in  pmManager  Meeting_12
+    Wait until element is visible  css=.table_faceted_no_results
 
 *** Keywords ***
 Suite Setup

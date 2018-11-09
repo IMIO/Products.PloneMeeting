@@ -159,6 +159,7 @@ dashboardTemplate.odt_file = 'Dashboard.odt'
 dashboardTemplate.tal_condition = u'python: context.absolute_url().endswith("/searches_items")'
 
 # Test users and groups
+siteadmin = UserDescriptor('siteadmin', ['Manager'], email="siteadmin@plonemeeting.org", fullname='Site administrator')
 pmManager = UserDescriptor('pmManager', [], email="pmmanager@plonemeeting.org", fullname='M. PMManager')
 pmCreator1 = UserDescriptor('pmCreator1', [], email="pmcreator1@plonemeeting.org", fullname='M. PMCreator One')
 pmCreator1b = UserDescriptor('pmCreator1b', [], email="pmcreator1b@plonemeeting.org", fullname='M. PMCreator One bee')
@@ -439,7 +440,8 @@ data = PloneMeetingConfiguration('My meetings', (meetingPma, meetingPga),
 # necessary for testSetup.test_pm_ToolAttributesAreOnlySetOnFirstImportData
 data.restrictUsers = False
 data.persons = [person1, person2, person3, person4]
-data.usersOutsideGroups = [cadranel, voter1, voter2, powerobserver1, powerobserver2,
+data.usersOutsideGroups = [siteadmin, cadranel, voter1, voter2,
+                           powerobserver1, powerobserver2,
                            restrictedpowerobserver1, restrictedpowerobserver2,
                            budgetimpacteditor]
 # ------------------------------------------------------------------------------
