@@ -29,6 +29,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Added Meeting.itemGuests field making it possible to define guests for a specific item.  It is also possible to define
   guests for several items using the assembly management popup.  Adapted meeting and item views so it is possible to use
   contacts based attendees and assembly based extra fields (proxies, guests, ...) together
+- MeetingItem.itemAssembly is no longer an optional field and is thus no more selectable in MeetingConfig.usedItemAttributes,
+  it is enabled if optional field Meeting.assembly is selected in MeetingConfig.usedMeetingAttributes
 
 4.1b11 (2018-09-11)
 -------------------
