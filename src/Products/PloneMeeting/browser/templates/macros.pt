@@ -232,7 +232,6 @@ document.location.reload(true);
 <metal:takenOverBy define-macro="takenOverBy" i18n:domain="PloneMeeting"
                     tal:define="mayEdit python: ajaxEdit==False and False or meetingItem.adapted().mayTakeOver();
                                 memberId member/getId;
-                                isManager python: tool.isManager(meetingItem);
                                 takenOverBy meetingItem/getTakenOverBy;
                                 takenOverByCurrentUser python: takenOverBy == memberId;">
   <span id="marker_toggle_takenoverby_UID#"
@@ -436,8 +435,7 @@ document.location.reload(true);
                    global showRefresh python: False;
                    error request/error | python:'';
                    secret context/getVotesAreSecret;
-                   isManager python: tool.isManager(context);
-                   mayEditItem python: member.has_permission('Modify portal content', context);"
+                   isManager python: tool.isManager(context);"
        id="meeting_users" class="listing" cellspacing="0" cellpadding="0">
   <tal:comment replace="nothing">Column headers</tal:comment>
   <thead>
@@ -625,6 +623,11 @@ document.location.reload(true);
      <td align="center" tal:condition="python: showVotes and secret">-
      </td>
     </tal:attendee>
+  </tr>
+  <tr tal:condition="not:allUsers">
+   <td colspan="9">
+     <span class="discreet no-attendees" i18n:translate="">Nothing to display.</span>
+   </td>
   </tr>
   <tr tal:condition="showVotes">
     <th colspan="7" tal:define="maySwitchVotes context/maySwitchVotes">

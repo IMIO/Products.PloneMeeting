@@ -940,9 +940,11 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
     def getDefaultAttendees(self):
         '''The default attendees are the active held_positions
            with 'present' in defaults.'''
-        used_held_positions = self.getAllUsedHeldPositions(include_new=True)
-        res = [held_pos.UID() for held_pos in used_held_positions
-               if held_pos.defaults and 'present' in held_pos.defaults]
+        res = []
+        if self.checkCreationFlag():
+            used_held_positions = self.getAllUsedHeldPositions(include_new=True)
+            res = [held_pos.UID() for held_pos in used_held_positions
+                   if held_pos.defaults and 'present' in held_pos.defaults]
         return res
 
     security.declarePublic('getDefaultSignatories')
@@ -950,9 +952,11 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
     def getDefaultSignatories(self):
         '''The default signatiries are the active held_positions
            with a defined signature_number.'''
-        used_held_positions = self.getAllUsedHeldPositions(include_new=True)
-        res = [held_pos for held_pos in used_held_positions
-               if held_pos.defaults and 'present' in held_pos.defaults and held_pos.signature_number]
+        res = []
+        if self.checkCreationFlag():
+            used_held_positions = self.getAllUsedHeldPositions(include_new=True)
+            res = [held_pos for held_pos in used_held_positions
+                   if held_pos.defaults and 'present' in held_pos.defaults and held_pos.signature_number]
         return {signer.UID(): signer.signature_number for signer in res}
 
     @mutually_exclusive_parameters('contact_type', 'uids')

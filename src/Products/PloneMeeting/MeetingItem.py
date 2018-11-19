@@ -3237,6 +3237,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             permission=field.write_permission,
             expression=self.Schema()[fieldName].widget.condition)
 
+    def mayQuickEditItemAssembly(self):
+        """Show edit icon if itemAssembly or itemAssemblyGuests field editable."""
+        meeting = self.getMeeting()
+        return (meeting.attributeIsUsed('assembly') and
+                self.mayQuickEdit('itemAssembly', bypassWritePermissionCheck=True)) or \
+            (meeting.attributeIsUsed('assemblyGuests') and
+             self.mayQuickEdit('itemAssemblyGuests', bypassWritePermissionCheck=True))
+
     security.declareProtected(ModifyPortalContent, 'transformRichTextField')
 
     def transformRichTextField(self, fieldName, richContent):

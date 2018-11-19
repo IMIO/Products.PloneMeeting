@@ -138,6 +138,11 @@
              </td>
            </tal:defines>
          </tr>
+         <tr tal:condition="not:allUsers">
+          <td colspan="9">
+            <span class="discreet no-attendees">Nothing to display.</span>
+          </td>
+         </tr>
          </tbody>
        </tal:defines>
      </table>

@@ -253,6 +253,11 @@ body.cke_editable table,
    margin-bottom: 0em !important;
 }
 
+/* margin-top when inline-editing */
+div[id^='hook_'] > img {
+   margin-top: 0.5em;
+}
+
 #content table.no-style-table.advices {
     margin-bottom: 0;
 }
@@ -396,7 +401,10 @@ div.pm_search_no_result_info {
 }
 .portletCell { padding: 0.1em 0.5em 0.2em 1em; font-weight: normal; font-style: italic; }
 .portletSelected { font-weight: bold; }
-.field {margin: 0 1em 0.5em 0; }
+/* avoid title input too large */
+.field input[type="text"][name$=".title"], input#title {
+    width: 99%;
+}
 #portal-column-one .visualPadding { padding: 2em 0 1em 1em; }
 #portal-languageselector { float:right; margin: 0; font-size: 95%; }
 #portal-footer {margin: 1em 0 0.5em 0; padding: 0; }

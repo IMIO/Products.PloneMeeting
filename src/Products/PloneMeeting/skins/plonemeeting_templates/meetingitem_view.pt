@@ -100,12 +100,12 @@
             </div>
 
             <tal:comment replace="nothing">Assembly and signatures</tal:comment>
-            <tal:assembly_and_signatures
-              condition="nocall:meeting"
-              define="redefinedItemAssemblies python: context.redefinedItemAssemblies();
-                      redefinedItemSignatures python: context.getItemSignatures(real=True) or context.getItemSignatories(real=True);
-                      mayQuickEditItemAssembly python: ('assembly' in usedMeetingAttrs and context.mayQuickEdit('itemAssembly', bypassWritePermissionCheck=True)) or ('assemblyGuests' in usedMeetingAttrs and context.mayQuickEdit('itemAssemblyGuests', bypassWritePermissionCheck=True));
-                      mayQuickEditItemSignatures python: 'signatures' in usedMeetingAttrs and context.mayQuickEdit('itemSignatures', bypassWritePermissionCheck=True);">
+            <tal:assembly_and_signatures condition="nocall:meeting">
+              <tal:defines
+                define="redefinedItemAssemblies python: context.redefinedItemAssemblies();
+                        redefinedItemSignatures python: context.getItemSignatures(real=True) or context.getItemSignatories(real=True);
+                        mayQuickEditItemAssembly context/mayQuickEditItemAssembly;
+                        mayQuickEditItemSignatures python: 'signatures' in usedMeetingAttrs and context.mayQuickEdit('itemSignatures', bypassWritePermissionCheck=True);">
               <div
                   onclick="togglePersonsCookie();;toggleDoc('collapsible-assembly-and-signatures');"
                   tal:attributes="class python: (request.get('showPersons', 'true')=='true') and 'collapsible discreet active' or 'collapsible discreet'">
@@ -190,6 +190,7 @@
                   </tal:item_signatures>
                 </div>
               </div>
+              </tal:defines>
             </tal:assembly_and_signatures>
 
             <tal:comment replace="nothing">Item keywords</tal:comment>

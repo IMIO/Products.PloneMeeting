@@ -348,8 +348,7 @@ class ManageItemAssemblyForm(form.Form):
     def update(self):
         """ """
         # raise Unauthorized if current user can not manage itemAssembly
-        if not self.context.mayQuickEdit('itemAssembly',
-                                         bypassWritePermissionCheck=True):
+        if not self.context.mayQuickEditItemAssembly():
             raise Unauthorized
 
         super(ManageItemAssemblyForm, self).update()
@@ -405,8 +404,7 @@ class ManageItemAssemblyForm(form.Form):
         # we check mayQuickEdit with bypassWritePermissionCheck=True
         # so MeetingManagers are able to edit these infos on decided items
         # until the linked meeting is closed
-        if not self.context.mayQuickEdit('itemAssembly',
-                                         bypassWritePermissionCheck=True):
+        if not self.context.mayQuickEditItemAssembly():
             raise Unauthorized
 
         # only update if default proposed value was changed
