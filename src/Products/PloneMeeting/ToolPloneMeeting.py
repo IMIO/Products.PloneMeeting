@@ -458,6 +458,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 res.append(meetingConfig)
         return res
 
+    def _users_groups_value_cachekey(method, self):
+        """ """
+        return str(self.REQUEST._debug)
+
+    @ram.cache(_users_groups_value_cachekey)
     def _users_groups_value(self):
         """Return the byValue representation of the _principal_groups BTree
            to check if it changed, meaning that users/groups associations changed."""

@@ -518,8 +518,10 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         """We need to changeUser so getGroups is updated."""
         self.portal.portal_groups.addPrincipalToGroup(principal_id, group_id)
         self.changeUser(self.member.getId())
+        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
 
     def _removePrincipalFromGroup(self, principal_id, group_id):
         """We need to changeUser so getGroups is updated."""
         self.portal.portal_groups.removePrincipalFromGroup(principal_id, group_id)
         self.changeUser(self.member.getId())
+        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting._users_groups_value')

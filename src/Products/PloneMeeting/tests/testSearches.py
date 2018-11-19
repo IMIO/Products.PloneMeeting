@@ -23,9 +23,8 @@
 #
 
 from collective.compoundcriterion.interfaces import ICompoundCriterionFilter
-from collective.eeafaceted.collectionwidget.widgets.widget import CollectionWidget
+from collective.eeafaceted.collectionwidget.utils import getCollectionLinkCriterion
 from DateTime import DateTime
-from eea.facetednavigation.interfaces import ICriteria
 from imio.helpers.cache import cleanRamCacheFor
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
@@ -46,10 +45,7 @@ class testSearches(PloneMeetingTestCase):
         # selected meetingAppDefaultView is 'searchallitems'
         cfg = self.meetingConfig
         searchallitems = cfg.searches.searches_items.searchallitems
-        for criterion in ICriteria(cfg.searches).values():
-            if criterion.widget == CollectionWidget.widget_type:
-                collectionCriterion = criterion
-                break
+        collectionCriterion = getCollectionLinkCriterion(cfg.searches)
         self.assertEquals(collectionCriterion.default, searchallitems.UID())
 
     def test_pm_SearchItemsOfMyGroups(self):

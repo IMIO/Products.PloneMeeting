@@ -199,8 +199,7 @@ class ItemLinkedMeetingColumn(BaseColumn):
     def renderCell(self, item):
         """ """
         value = self.getValue(item)
-        # use strftime as it ignores timezone
-        if not value or value.strftime('%Y%m%d') == '19500101':
+        if not value or value.year() == 1950:
             return u'-'
         else:
             catalog = api.portal.get_tool('uid_catalog')
