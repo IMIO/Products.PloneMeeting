@@ -60,7 +60,7 @@ setDefaultRoles(WriteDecision, ('Manager',))
 setDefaultRoles(AddAnnex, ('Manager',))
 setDefaultRoles(AddAnnexDecision, ('Manager',))
 setDefaultRoles(WriteMarginalNotes, ('Manager',))
-setDefaultRoles(ManageOwnOrganizationFields, ())
+setDefaultRoles(ManageOwnOrganizationFields, ('Manager',))
 
 # Permissions
 DEFAULT_ADD_CONTENT_PERMISSION = "Add portal content"

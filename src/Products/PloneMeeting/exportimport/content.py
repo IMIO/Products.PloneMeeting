@@ -31,6 +31,7 @@ from imio.helpers.content import validate_fields
 from imio.helpers.security import generate_password
 from imio.helpers.security import is_develop_environment
 from plone import api
+from plone.app.uuid.utils import uuidToObject
 from plone.namedfile.file import NamedBlobFile
 from plone.namedfile.file import NamedBlobImage
 from plone.namedfile.file import NamedImage
@@ -122,9 +123,11 @@ class ToolInitializer:
         # if we already have existing organizations, we do not add additional ones
         own_org = get_own_organization()
         alreadyHaveGroups = bool(own_org.objectValues())
+        savedMeetingConfigsToCloneTo = {}
+        savedOrgsAdviceStates = {}
         if not alreadyHaveGroups:
             # 1) create organizations so we have org UIDS to initialize 'fct_orgs'
-            orgs, active_orgs = self.addOrgs(self.data.orgs)
+            orgs, active_orgs, savedOrgsAdviceStates = self.addOrgs(self.data.orgs)
             # 2) create plonegroup functions (suffixes) to create Plone groups
             functions = deepcopy(api.portal.get_registry_record(FUNCTIONS_REGISTRY))
             function_ids = [function['fct_id'] for function in functions]
@@ -151,7 +154,6 @@ class ToolInitializer:
             self.addUsers(self.data.orgs)
             # 5) now that organizations are created, we add persons and held_positions
             self.addPersonsAndHeldPositions(self.data.persons, source=self.profilePath)
-        savedMeetingConfigsToCloneTo = {}
 
         created_cfgs = []
         for mConfig in self.data.meetingConfigs:
@@ -172,6 +174,7 @@ class ToolInitializer:
             self._manageOtherMCCorrespondences(created_cfg)
 
         # now that every meetingConfigs have been created, we can manage the meetingConfigsToCloneTo
+        # and orgs advice states related fields
         for mConfigId in savedMeetingConfigsToCloneTo:
             if not savedMeetingConfigsToCloneTo[mConfigId]:
                 continue
@@ -187,6 +190,11 @@ class ToolInitializer:
                 raise PloneMeetingError(MEETING_CONFIG_ERROR % (cfg.getId(), error))
             cfg.setMeetingConfigsToCloneTo(adapted_cfgsToCloneTo)
             cfg._updateCloneToOtherMCActions()
+        for org_uid, values in savedOrgsAdviceStates.items():
+            org = uuidToObject(org_uid)
+            org.item_advice_states = values['item_advice_states']
+            org.item_advice_edit_states = values['item_advice_edit_states']
+            org.item_advice_view_states = values['item_advice_view_states']
         # finally, create the current user (admin) member area
         self.portal.portal_membership.createMemberArea()
         # at the end, add users outside PloneMeeting groups because
@@ -557,6 +565,7 @@ class ToolInitializer:
         own_org = get_own_organization()
         orgs = []
         active_orgs = []
+        savedOrgsAdviceStates = {}
         for org_descr in org_descriptors:
             if org_descr.parent_path:
                 # find parent organization following parent path from container
@@ -568,15 +577,31 @@ class ToolInitializer:
             if org_descr.id in container.objectIds():
                 continue
 
+            # save informations about item advice states
+            data = org_descr.getData()
+            if data['item_advice_states'] or \
+               data['item_advice_edit_states'] or \
+               data['item_advice_view_states']:
+                # org is not created and we needs its uid...
+                savedOrgsAdviceStates['dummy'] = {'item_advice_states': data['item_advice_states'],
+                                                  'item_advice_edit_states': data['item_advice_edit_states'],
+                                                  'item_advice_view_states': data['item_advice_view_states']}
+                data['item_advice_states'] = []
+                data['item_advice_edit_states'] = []
+                data['item_advice_view_states'] = []
             org = api.content.create(
                 container=container,
                 type='organization',
-                **org_descr.getData())
+                **data)
+            # finalize savedOrgsAdviceStates, store org uid instead 'dummy'
+            if 'dummy' in savedOrgsAdviceStates:
+                savedOrgsAdviceStates[org.UID()] = savedOrgsAdviceStates['dummy'].copy()
+                del savedOrgsAdviceStates['dummy']
             validate_fields(org, raise_on_errors=True)
             orgs.append(org)
             if org_descr.active:
                 active_orgs.append(org)
-        return orgs, active_orgs
+        return orgs, active_orgs, savedOrgsAdviceStates
 
     def addUsers(self, org_descriptors):
         '''Creates Plone users and add it to linked Plone groups.'''
