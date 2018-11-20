@@ -8,7 +8,8 @@
     <ul class="fewMeetings">
         <li tal:condition="python: nbOfMeetings <= maxShownMeetings"
             tal:repeat="brain brains">
-            <div tal:define="meeting brain/getObject" tal:attributes="class python: meeting.absolute_url() in view.request.getURL() and 'portletSelected' or ''">
+            <div tal:define="meeting brain/getObject;
+                             meeting_url meeting/absolute_url" tal:attributes="class python: meeting_url[meeting_url.index('Members'):] in view.request.getURL() and 'portletSelected' or ''">
                <tal:meetingPrettyLink replace="structure python: meeting.getPrettyLink(prefixed=False)" />
             </div>
         </li>
