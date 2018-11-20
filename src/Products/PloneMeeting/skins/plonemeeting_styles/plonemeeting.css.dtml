@@ -1705,7 +1705,6 @@ p#download_vcard {
     border: none;
     text-align: left;
     outline: none;
-    display: inline;
 }
 
 .active, .collapsible:hover {
