@@ -309,7 +309,7 @@ class Migrate_To_4_1(Migrator):
            Migrate also every relations to the organization as we used the id and we use now the uid."""
         logger.info('Adapting application for plonegroup...')
         own_org = get_own_organization()
-        if own_org.objectValues():
+        if own_org.objectValues() and False:
             # already migrated
             logger.info('Done.')
             return
@@ -492,10 +492,6 @@ class Migrate_To_4_1(Migrator):
                 adapted_selectableCopyGroups.append(new_value)
             cfg.setSelectableCopyGroups(adapted_selectableCopyGroups)
 
-        # update TAL conditions
-        self.updateTALConditions(old_word='getGroupsForUser', new_word='get_orgs_for_user')
-        self.updateTALConditions(old_word='omittedSuffixes', new_word='omitted_suffixes')
-
         # adapt MeetingItems
         brains = api.content.find(meta_type='MeetingItem')
         len_brains = len(brains)
@@ -670,6 +666,11 @@ class Migrate_To_4_1(Migrator):
         self._migrateToDoListSearches()
         self._adaptForContacts()
         self._adaptForPlonegroup()
+        # update TAL conditions
+        self.updateTALConditions(old_word='getPloneGroupsForUser', new_word='get_plone_groups_for_user')
+        self.updateTALConditions(old_word='getGroupsForUser', new_word='get_orgs_for_user')
+        self.updateTALConditions(old_word='omittedSuffixes', new_word='omitted_suffixes')
+
         self._updateUsedItemAttributes()
         self._migrateGroupsShownInDashboardFilter()
         self._enableStyleTemplates()

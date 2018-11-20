@@ -1134,6 +1134,12 @@ def query_meeting_config_modified_cachekey(method, self):
     return self.cfg.modified()
 
 
+def query_user_groups_or_config_modified_cachekey(method, self):
+    '''cachekey method for caching as long as global users/groups
+       associations did not change and config did not changed.'''
+    return api.user.get_current().getId(), self.tool._users_groups_value(), self.cfg.modified()
+
+
 class ItemsOfMyGroupsAdapter(CompoundCriterionBaseAdapter):
 
     @property
