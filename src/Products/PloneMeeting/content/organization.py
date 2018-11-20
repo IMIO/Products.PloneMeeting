@@ -3,6 +3,7 @@
 from collective.contact.core.content.organization import IOrganization
 from collective.contact.core.content.organization import Organization
 from collective.contact.plonegroup.config import ORGANIZATIONS_REGISTRY
+from collective.contact.plonegroup.interfaces import IPloneGroupContact
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
 from collective.z3cform.datagridfield import DataGridFieldFactory
@@ -178,7 +179,10 @@ class IPMOrganization(IOrganization):
     @invariant
     def validate_selectable_for_plonegroup(data):
         plonegroup_organizations = api.portal.get_registry_record(ORGANIZATIONS_REGISTRY)
-        if not data.selectable_for_plonegroup and data.__context__.UID() in plonegroup_organizations:
+        # data.__context__ is None when creating new organization
+        if data.__context__ and \
+           not data.selectable_for_plonegroup and \
+           data.__context__.UID() in plonegroup_organizations:
             raise Invalid(_("You can not select 'No' in field 'Selectable for plonegroup' as this organization "
                             "is currently selected in plonegroup control panel.  Please unselect this organization "
                             "from plonegroup control panel if you want to change this field value."))
@@ -200,8 +204,10 @@ class PMOrganization(Organization):
         """Accessor so it can called in a TAL expression."""
         return self.groups_in_charge
 
-    def get_full_title(self, separator=u' / ', first_index=1):
-        """Override to change default first_index from 0 to 1."""
+    def get_full_title(self, separator=u' / ', first_index=0):
+        """Override to change default first_index from 0 to 1 for IPloneGroupContact."""
+        if IPloneGroupContact.providedBy(self):
+            first_index = 1
         return super(PMOrganization, self).get_full_title(separator, first_index)
 
     def get_item_advice_states(self, cfg=None):
