@@ -405,6 +405,10 @@ div.pm_search_no_result_info {
 .field input[type="text"][name$=".title"], input#title {
     width: 99%;
 }
+/* add right margin when field displayed in table so table cells are not sticked togheter */
+table td div.field {
+   margin-right: 1em;
+}
 #portal-column-one .visualPadding { padding: 2em 0 1em 1em; }
 #portal-languageselector { float:right; margin: 0; font-size: 95%; }
 #portal-footer {margin: 1em 0 0.5em 0; padding: 0; }
