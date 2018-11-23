@@ -360,11 +360,12 @@ class PMFacetedContainerView(FacetedDashboardView):
     def __init__(self, context, request):
         """Hide the green bar on the faceted if not in the configuration."""
         super(PMFacetedContainerView, self).__init__(context, request)
-        if 'portal_plonemeeting' not in self.context.absolute_url() and \
-           not IMeeting.providedBy(self.context):
-            self.request.set('disable_border', 1)
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
+        # disable border for faceted dashboards of PM except on Meeting
+        if 'portal_plonemeeting' not in self.context.absolute_url() and \
+           not IMeeting.providedBy(self.context) and self.cfg:
+            self.request.set('disable_border', 1)
 
     def getPloneMeetingFolder(self):
         '''Returns the current PM folder.'''
@@ -373,6 +374,10 @@ class PMFacetedContainerView(FacetedDashboardView):
     @property
     def _criteriaHolder(self):
         '''Override method coming from FacetedRenderer as we know that criteria are stored on the meetingFolder.'''
+        # faceted out of application
+        if self.cfg is None:
+            return self.context
+
         # return corresponding folder in the configuration
         if self.context.getId().endswith('searches_items'):
             return self.cfg.searches.searches_items
@@ -386,7 +391,6 @@ class PMFacetedContainerView(FacetedDashboardView):
     def __call__(self):
         """Make sure a user, even a Manager that is not the Zope Manager is redirected
            to it's own pmFolder if it is on the pmFolder of another user."""
-
         res = super(PMFacetedContainerView, self).__call__()
 
         if self.request.RESPONSE.status == 302 and \
