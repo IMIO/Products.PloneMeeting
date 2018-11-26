@@ -7,33 +7,49 @@
 <dl class="portlet portletWidgetCollection"
     tal:define="tool python: view.tool;
                 cfg python: view.cfg;
-                meetingFolder view/getPloneMeetingFolder;
-                portal_url view/portal_url;">
+                ">
 
     <dt class="portletHeader">
-        <span tal:content="cfg/Title">MeetingConfig title</span>
-        <div class="portletPloneMeetingHeaderIcons">
-            <a style="display: inline;"
-               class="fa fa-home"
-               href="#"
-               tal:attributes="href meetingFolder/searches_items/absolute_url;
-                               title cfg/getName">
-            </a>
-            <a style="display: inline;"
-               class="fa fa-cog"
-               tal:condition="python: tool.isManager(view.context)"
-               href="#"
-               title="pm_configuration" i18n:attributes="title"
-               tal:attributes="href cfg/absolute_url">
-            </a>
-            <a style="display: inline;"
-               class="fa fa-user"
-               tal:condition="tool/getEnableUserPreferences"
-               href="#"
-               title="user_preferences" i18n:attributes="title"
-               tal:attributes="href string:${cfg/absolute_url}/gotoPreferences;">
-            </a>
-        </div>
+        <tal:cfg condition="view/cfg">
+            <tal:defines define="meetingFolder view/getPloneMeetingFolder;
+                                 portal_url view/portal_url;">
+                <span tal:content="cfg/Title">MeetingConfig title</span>
+                <div class="portletPloneMeetingHeaderIcons">
+                    <a style="display: inline;"
+                       class="fa fa-home"
+                       href="#"
+                       tal:attributes="href meetingFolder/searches_items/absolute_url;
+                                       title cfg/getName">
+                    </a>
+                    <a style="display: inline;"
+                       class="fa fa-cog"
+                       tal:condition="python: tool.isManager(view.context)"
+                       href="#"
+                       title="pm_configuration" i18n:attributes="title"
+                       tal:attributes="href cfg/absolute_url">
+                    </a>
+                    <a style="display: inline;"
+                       class="fa fa-user"
+                       tal:condition="tool/getEnableUserPreferences"
+                       href="#"
+                       title="user_preferences" i18n:attributes="title"
+                       tal:attributes="href string:${cfg/absolute_url}/gotoPreferences;">
+                    </a>
+                </div>
+            </tal:defines>
+        </tal:cfg>
+        <tal:not_cfg condition="not:view/cfg">
+            <span class="portletTopLeft"></span>
+            <a href="#"
+               class="tile"
+               tal:attributes="href python: view._criteriaHolder.absolute_url()"
+               i18n:domain="eea"
+               i18n:translate=""
+               tal:content="view/getPortletTitle">
+               Collections</a>
+            <span class="portletTopRight"></span>
+        </tal:not_cfg>
+
     </dt>
 
     <dd class="portletItem odd">
