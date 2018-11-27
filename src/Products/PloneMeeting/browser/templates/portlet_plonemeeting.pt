@@ -6,11 +6,10 @@
 
 <dl class="portlet portletWidgetCollection"
     tal:define="tool python: view.tool;
-                cfg python: view.cfg;
-                ">
+                cfg nocall:view/cfg">
 
     <dt class="portletHeader">
-        <tal:cfg condition="view/cfg">
+        <tal:cfg condition="nocall:cfg">
             <tal:defines define="meetingFolder view/getPloneMeetingFolder;
                                  portal_url view/portal_url;">
                 <span tal:content="cfg/Title">MeetingConfig title</span>
@@ -38,7 +37,8 @@
                 </div>
             </tal:defines>
         </tal:cfg>
-        <tal:not_cfg condition="not:view/cfg">
+
+        <tal:not_cfg condition="not:nocall:cfg">
             <span class="portletTopLeft"></span>
             <a href="#"
                class="tile"
@@ -52,9 +52,16 @@
 
     </dt>
 
-    <dd class="portletItem odd">
+    <dd class="portletItem last">
       <div class="widget-portlet">
         <tal:block replace="structure view/widget_render" />
+
+        <a class="portlet_pm_own_org_link"
+           tal:condition="not:nocall:cfg"
+           tal:define="own_org view/get_own_org"
+           tal:attributes="href string:${own_org/absolute_url}"
+           i18n:translate="">To own organization</a>
+
       </div>
     </dd>
 </dl>

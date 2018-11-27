@@ -18,7 +18,6 @@ from collective.documentgenerator.content.pod_template import IPODTemplate
 from collective.documentgenerator.viewlets.generationlinks import DocumentGeneratorLinksViewlet
 from collective.eeafaceted.batchactions.browser.views import TransitionBatchActionForm
 from collective.eeafaceted.collectionwidget.browser.views import FacetedDashboardView
-from collective.eeafaceted.collectionwidget.browser.views import RenderCategoryView
 from collective.eeafaceted.dashboard.browser.overrides import DashboardDocumentGenerationView
 from collective.eeafaceted.dashboard.browser.overrides import DashboardDocumentGeneratorLinksViewlet
 from collective.eeafaceted.dashboard.browser.views import RenderTermPortletView
@@ -34,6 +33,8 @@ from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.actionspanel.browser.viewlets import ActionsPanelViewlet
 from imio.actionspanel.browser.views import ActionsPanelView
 from imio.annex import utils as imio_annex_utils
+from imio.dashboard.browser.overrides import IDRenderCategoryView
+from imio.dashboard.interfaces import IContactsDashboard
 from imio.history.browser.views import IHContentHistoryView
 from imio.history.browser.views import IHDocumentBylineViewlet
 from imio.prettylink.interfaces import IPrettyLink
@@ -167,7 +168,8 @@ class PloneMeetingContentActionsViewlet(ContentActionsViewlet):
             'ConfigurablePODTemplate', 'DashboardPODTemplate',
             'directory', 'organization', 'person', 'held_position') or \
            self.context.portal_type.startswith(('meetingadvice',)) or \
-           self.context.portal_type.endswith(('ContentCategory', 'ContentSubcategory',)):
+           self.context.portal_type.endswith(('ContentCategory', 'ContentSubcategory',)) or \
+           IContactsDashboard.providedBy(self.context):
             return ''
         return self.index()
 
@@ -190,6 +192,7 @@ class PMConfigActionsPanelViewlet(ActionsPanelViewlet):
                 showActions = True
             elif self.context.portal_type in ('organization', 'person', 'directory'):
                 showAddContent = True
+                showActions = False
             return self.context.restrictedTraverse("@@actions_panel")(useIcons=False,
                                                                       showTransitions=True,
                                                                       appendTypeNameToTransitionLabel=True,
@@ -419,25 +422,28 @@ class PMRenderTermView(RenderTermPortletView):
         return adapted.getLink()
 
 
-class PMRenderCategoryView(RenderCategoryView):
+class PMRenderCategoryView(IDRenderCategoryView):
     '''
       Override the way a category is rendered in the portlet based on the
       faceted collection widget so we can manage some usecases where icons
       are displayed to add items or meetings.
     '''
+    # do not display "add contacts" icons on dashboard displayed in contacts
+    manage_add_contact_actions = False
+
+    def _get_category_template(self):
+        category_template = super(PMRenderCategoryView, self)._get_category_template()
+        if not category_template:
+            if self.context.getId() == 'searches_items':
+                return ViewPageTemplateFile("templates/category_meetingitems.pt")
+            if self.context.getId() == 'searches_meetings':
+                return ViewPageTemplateFile("templates/category_meetings.pt")
 
     def __call__(self, widget):
-        self.widget = widget
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
-
-        if self.context.getId() == 'searches_items':
-            return ViewPageTemplateFile("templates/category_meetingitems.pt")(self)
-        if self.context.getId() == 'searches_meetings':
-            self.member = api.user.get_current()
-            return ViewPageTemplateFile("templates/category_meetings.pt")(self)
-        else:
-            return self.index()
+        self.member = api.user.get_current()
+        return super(PMRenderCategoryView, self).__call__(widget)
 
     def templateItems(self):
         '''Check if there are item templates defined or not.'''

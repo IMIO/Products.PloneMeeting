@@ -10,6 +10,7 @@ from collective.eeafaceted.z3ctable.columns import I18nColumn
 from collective.eeafaceted.z3ctable.columns import PrettyLinkColumn
 from collective.eeafaceted.z3ctable.columns import VocabularyColumn
 from imio.annex.columns import ActionsColumn as AnnexActionsColumn
+from imio.dashboard.interfaces import IContactsDashboard
 from imio.prettylink.interfaces import IPrettyLink
 from plone import api
 from Products.CMFCore.permissions import ModifyPortalContent
@@ -186,6 +187,9 @@ class PMActionsColumn(ActionsColumn):
         else:
             self.params['showArrows'] = False
             self.params['lastItemUID'] = 0
+        # dashboard displaying contacts
+        if IContactsDashboard.providedBy(self.context):
+            self.params['showActions'] = False
         return super(ActionsColumn, self).renderCell(item)
 
 

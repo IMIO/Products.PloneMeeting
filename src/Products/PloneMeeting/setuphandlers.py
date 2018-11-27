@@ -11,6 +11,8 @@
 
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.messagesviewlet.utils import add_message
+from eea.facetednavigation.interfaces import ICriteria
+from imio.dashboard.setuphandlers import add_orgs_searches
 from imio.helpers.catalog import addOrUpdateColumns
 from imio.helpers.catalog import addOrUpdateIndexes
 from plone import api
@@ -339,6 +341,18 @@ def postInstall(context):
         own_org.manage_permission(
             ManageOwnOrganizationFields, ('Manager', 'Site Administrator'),
             acquire=0)
+        # contacts dashboards
+        add_orgs_searches(site, add_contact_lists_collections=False)
+        # post-configuration, show the "In/out plonegroup organization" filter
+        orgs_searches_folder = contacts.get('orgs-searches')
+        orgs_searches_folder_criteria = ICriteria(orgs_searches_folder)
+        own_org_criterion = orgs_searches_folder_criteria.get('c5')
+        own_org_criterion.section = 'default'
+        own_org_criterion.position = 'center'
+        own_org_criterion.hidden = False
+        # redefine position, need to specify every criteria
+        positions = {'top': ['c0', 'c1', 'c4', 'c6', 'c13', 'c14'], 'center': ['c2', 'c3', 'c5']}
+        orgs_searches_folder_criteria.position(**positions)
 
     # reorder css
     _reorderCSS(site)

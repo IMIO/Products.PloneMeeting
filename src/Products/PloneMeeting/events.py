@@ -948,6 +948,11 @@ def onOrgAddBegun(obj, event):
     """ """
     # this event is triggered when adding something to an IDirectory or IOrganization
     # first make sure that we are adding an organization
+
+    # bypass if using the add-contact form
+    if '@@add-contact' in obj.REQUEST.getURL():
+        return
+
     own_org = get_own_organization()
     if obj == own_org:
         return

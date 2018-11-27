@@ -1774,6 +1774,10 @@ div#formfield-form-widgets-certified_signatures td select.select-widget {
    width: 100%;   
 }
 
+a.portlet_pm_own_org_link {
+   margin-top: 1em;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */

@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 from Products.Five import BrowserView
 from Products.PloneMeeting.interfaces import IRedirect
 from zope.component.hooks import getSite
