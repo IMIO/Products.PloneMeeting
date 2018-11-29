@@ -15,6 +15,7 @@ from App.class_init import InitializeClass
 from appy.gen import No
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from collections import OrderedDict
+from collective.eeafaceted.dashboard.utils import enableFacetedDashboardFor
 from DateTime import DateTime
 from DateTime.DateTime import _findLocalTimeZoneName
 from imio.helpers.cache import cleanRamCacheFor
@@ -1625,8 +1626,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         # Update contact-related info (attendees, signatories, replacements...)
         self.updateContacts()
         tool = api.portal.get_tool('portal_plonemeeting')
-        meetingConfig = tool.getMeetingConfig(self)
-        self.setMeetingConfigVersion(meetingConfig.getConfigVersion())
+        cfg = tool.getMeetingConfig(self)
+        self.setMeetingConfigVersion(cfg.getConfigVersion())
         addRecurringItemsIfRelevant(self, '_init_')
         # Apply potential transformations to richtext fields
         transformAllRichTextFields(self)
@@ -1634,10 +1635,9 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         forceHTMLContentTypeForEmptyRichFields(self)
         self.updateLocalRoles()
         # activate the faceted navigation
-        tool = api.portal.get_tool('portal_plonemeeting')
-        tool._enableFacetedDashboardFor(self,
-                                        xmlpath=os.path.dirname(__file__) +
-                                        '/faceted_conf/default_dashboard_widgets.xml')
+        enableFacetedDashboardFor(self,
+                                  xmlpath=os.path.dirname(__file__) +
+                                  '/faceted_conf/default_dashboard_widgets.xml')
         self.setLayout('meeting_view')
         # update every items itemReference if needed
         self.updateItemReferences(check_needed=True)

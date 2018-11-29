@@ -4,6 +4,7 @@ from Acquisition import aq_base
 from collective.documentgenerator.config import set_oo_port
 from collective.documentgenerator.config import set_uno_path
 from collective.eeafaceted.collectionwidget.utils import _updateDefaultCollectionFor
+from collective.eeafaceted.dashboard.utils import enableFacetedDashboardFor
 from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.utils import update_all_categorized_elements
 from DateTime import DateTime
@@ -360,9 +361,9 @@ class Migrate_To_4_0(Migrator):
         brains = self.portal.portal_catalog(meta_type='Meeting')
         for brain in brains:
             meeting = brain.getObject()
-            self.tool._enableFacetedDashboardFor(meeting,
-                                                 xmlpath=os.path.dirname(__file__) +
-                                                 '/../faceted_conf/default_dashboard_widgets.xml')
+            enableFacetedDashboardFor(meeting,
+                                      xmlpath=os.path.dirname(__file__) +
+                                      '/../faceted_conf/default_dashboard_widgets.xml')
             meeting.setLayout('meeting_view')
 
         logger.info('Done.')
@@ -432,8 +433,7 @@ class Migrate_To_4_0(Migrator):
             # update item templates portal_type
             brainTemplates = self.portal.portal_catalog(
                 meta_type='MeetingItem',
-                path={'query': '/'.join(cfg.getPhysicalPath()) + '/itemtemplates'}
-                )
+                path={'query': '/'.join(cfg.getPhysicalPath()) + '/itemtemplates'})
             itemTemplateType = cfg.getItemTypeName(configType='MeetingItemTemplate')
             for brainTemplate in brainTemplates:
                 itemTemplate = brainTemplate.getObject()

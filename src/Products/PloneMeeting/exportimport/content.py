@@ -496,16 +496,26 @@ class ToolInitializer:
     def addPodTemplate(self, cfg, pt, source):
         '''Adds a POD template from p_pt (a PodTemplateDescriptor instance).'''
         folder = getattr(cfg, TOOL_FOLDER_POD_TEMPLATES)
-        # The template must be retrieved on disk from a profile
-        filePath = '%s/templates/%s' % (source, pt.odt_file)
-        data = self.find_binary(filePath)
-        odt_file = NamedBlobFile(
-            data=data,
-            contentType='application/vnd.oasis.opendocument.text',
-            # pt.odt_file could be relative (../../other_profile/templates/sample.odt)
-            filename=safe_unicode(pt.odt_file.split('/')[-1]),
-        )
-        data = pt.getData(odt_file=odt_file)
+        # The template must be retrieved on disk from a profile or use another pod_template
+        odt_file = None
+        pod_template_to_use = None
+        if pt.odt_file:
+            filePath = '%s/templates/%s' % (source, pt.odt_file)
+            data = self.find_binary(filePath)
+            odt_file = NamedBlobFile(
+                data=data,
+                contentType='application/vnd.oasis.opendocument.text',
+                # pt.odt_file could be relative (../../other_profile/templates/sample.odt)
+                filename=safe_unicode(pt.odt_file.split('/')[-1]),
+            )
+        elif pt.pod_template_to_use['cfg_id']:
+            pod_template_to_use_cfg = self.tool.get(pt.pod_template_to_use['cfg_id'])
+            pod_template = pod_template_to_use_cfg.podtemplates.get(pt.pod_template_to_use['template_id'])
+            pod_template_to_use = pod_template.UID()
+        else:
+            raise PloneMeetingError(
+                'A PodTemplateDescriptor must have a defined odt_file or pod_template_to_use!')
+        data = pt.getData(odt_file=odt_file, pod_template_to_use=pod_template_to_use)
 
         if data['is_style']:
             podType = 'StyleTemplate'

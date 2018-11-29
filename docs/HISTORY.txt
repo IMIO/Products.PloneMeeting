@@ -33,6 +33,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   it is enabled if optional field Meeting.assembly is selected in MeetingConfig.usedMeetingAttributes
 - Added accurate caching for CompoundCriterionAdapters so it is evaluated only when users/groups associations changed
 - CachedCollectionVocabulary was moved from imio.dashboard to collective.eeafaceted.collectionwidget
+- Manage is_reusable and pod_template_to_use on PodTemplateDescriptor
 
 4.1b11 (2018-09-11)
 -------------------

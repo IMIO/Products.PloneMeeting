@@ -1016,9 +1016,9 @@ class PMExistingPODTemplate(ExistingPODTemplateFactory):
         template = brain.getObject()
         cfg = template.aq_inner.aq_parent.aq_parent
         return u'{} 🡒 {} 🡒 {}'.format(
-            safe_unicode(cfg.Title()),
-            safe_unicode(brain.Title),
-            safe_unicode(brain.getObject().odt_file.filename))
+            safe_unicode(cfg.Title(include_config_group=True)),
+            safe_unicode(template.Title()),
+            safe_unicode(template.odt_file.filename))
 
 
 PMExistingPODTemplateFactory = PMExistingPODTemplate()

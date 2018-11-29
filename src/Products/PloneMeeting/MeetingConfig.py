@@ -19,6 +19,7 @@ from collective.contact.plonegroup.utils import get_plone_groups
 from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
 from collective.eeafaceted.collectionwidget.interfaces import IDashboardCollection
 from collective.eeafaceted.collectionwidget.utils import _get_criterion
+from collective.eeafaceted.dashboard.utils import enableFacetedDashboardFor
 from collective.iconifiedcategory.utils import get_category_object
 from DateTime import DateTime
 from eea.facetednavigation.interfaces import ICriteria
@@ -225,13 +226,13 @@ schema = Schema((
                      'date_from':
                         Column(_("Certified signatures valid from (included)"),
                                col_description=_(
-                                "Enter valid from date, use following format : YYYY/MM/DD, "
-                                "leave empty so it is always valid."), ),
+                                   "Enter valid from date, use following format : YYYY/MM/DD, "
+                                   "leave empty so it is always valid."), ),
                      'date_to':
                         Column(_("Certified signatures valid to (included)"),
                                col_description=_(
-                                "Enter valid to date, use following format : YYYY/MM/DD, "
-                                "leave empty so it is always valid."), ), },
+                                   "Enter valid to date, use following format : YYYY/MM/DD, "
+                                   "leave empty so it is always valid."), ), },
             label='Certifiedsignatures',
             label_msgid='PloneMeeting_label_certifiedSignatures',
             i18n_domain='PloneMeeting',
@@ -4741,7 +4742,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''
           Create necessary subfolders for the MeetingConfig.
         '''
-        tool = api.portal.get_tool('portal_plonemeeting')
         default_language = api.portal.get_tool('portal_languages').getDefaultLanguage()
         for folderId, folderInfo in self.subFoldersInfo.iteritems():
             folderTitle = folderInfo[0][0]
@@ -4756,9 +4756,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             folder = getattr(self, folderId)
 
             if folderId == TOOL_FOLDER_SEARCHES:
-                tool._enableFacetedDashboardFor(folder,
-                                                xmlpath=os.path.dirname(__file__) +
-                                                '/faceted_conf/default_dashboard_widgets.xml')
+                enableFacetedDashboardFor(folder,
+                                          xmlpath=os.path.dirname(__file__) +
+                                          '/faceted_conf/default_dashboard_widgets.xml')
 
             # special case for folder 'itemtemplates' for which we want
             # to display the 'navigation' portlet and use the 'folder_contents' layout
@@ -4815,19 +4815,19 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     constrain.setImmediatelyAddableTypes(allowedTypes)
 
                 if subFolderId == 'searches_items':
-                    tool._enableFacetedDashboardFor(subFolder,
-                                                    xmlpath=os.path.dirname(__file__) +
-                                                    '/faceted_conf/default_dashboard_items_widgets.xml')
+                    enableFacetedDashboardFor(subFolder,
+                                              xmlpath=os.path.dirname(__file__) +
+                                              '/faceted_conf/default_dashboard_items_widgets.xml')
                     # synch value between self.maxShownListings and the 'resultsperpage' widget
                     self.setMaxShownListings(self.getField('maxShownListings').get(self))
                 elif subFolderId == 'searches_meetings':
-                    tool._enableFacetedDashboardFor(subFolder,
-                                                    xmlpath=os.path.dirname(__file__) +
-                                                    '/faceted_conf/default_dashboard_meetings_widgets.xml')
+                    enableFacetedDashboardFor(subFolder,
+                                              xmlpath=os.path.dirname(__file__) +
+                                              '/faceted_conf/default_dashboard_meetings_widgets.xml')
                 elif subFolderId == 'searches_decisions':
-                    tool._enableFacetedDashboardFor(subFolder,
-                                                    xmlpath=os.path.dirname(__file__) +
-                                                    '/faceted_conf/default_dashboard_meetings_widgets.xml')
+                    enableFacetedDashboardFor(subFolder,
+                                              xmlpath=os.path.dirname(__file__) +
+                                              '/faceted_conf/default_dashboard_meetings_widgets.xml')
                 subFolder.setTitle(translate(subFolderTitle,
                                              domain="PloneMeeting",
                                              context=self.REQUEST,
@@ -5596,7 +5596,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
            - we will copy the facetednav annotation from the MeetingConfig.searches and
              MeetingConfig.searches_* folders to the corresponding folders in p_folder;
            - we will update the default for the collection widget."""
-        tool = api.portal.get_tool('portal_plonemeeting')
         folders = []
         # synchronize only one folder
         if folder:
@@ -5615,9 +5614,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
         for folder in folders:
             logger.info("Synchronizing searches with folder at '{0}'".format('/'.join(folder.getPhysicalPath())))
-            tool._enableFacetedDashboardFor(folder,
-                                            xmlpath=os.path.dirname(__file__) +
-                                            '/faceted_conf/default_dashboard_widgets.xml')
+            enableFacetedDashboardFor(folder,
+                                      xmlpath=os.path.dirname(__file__) +
+                                      '/faceted_conf/default_dashboard_widgets.xml')
 
             # subFolders to create
             subFolderInfos = [(cfgFolder.getId(), cfgFolder.Title()) for cfgFolder in
@@ -5632,9 +5631,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                      id=subFolderId,
                                      **{'title': subFolderTitle})
                 subFolderObj = getattr(folder, subFolderId)
-                tool._enableFacetedDashboardFor(subFolderObj,
-                                                xmlpath=os.path.dirname(__file__) +
-                                                '/faceted_conf/default_dashboard_widgets.xml')
+                enableFacetedDashboardFor(subFolderObj,
+                                          xmlpath=os.path.dirname(__file__) +
+                                          '/faceted_conf/default_dashboard_widgets.xml')
                 alsoProvides(subFolderObj, IBatchActionsMarker)
                 subFolderObj.reindexObject()
 
@@ -5651,7 +5650,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # he is able to add a meetingitem to a 'decided' meeting.
         # except if we specifically restricted given p_review_states.
         if review_states == ('created', 'frozen') and tool.isManager(self):
-            review_states += MEETING_STATES_ACCEPTING_ITEMS
+            review_states += tuple(MEETING_STATES_ACCEPTING_ITEMS)
 
         query = {'portal_type': self.getMeetingTypeName(),
                  'review_state': review_states,

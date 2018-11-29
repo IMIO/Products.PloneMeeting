@@ -129,7 +129,6 @@ stylesTemplate2.odt_file = 'styles2.odt'
 agendaTemplate = PodTemplateDescriptor('agendaTemplate', 'Meeting agenda')
 agendaTemplate.odt_file = 'Agenda.odt'
 agendaTemplate.pod_portal_types = ['Meeting']
-agendaTemplate.tal_condition = u''
 agendaTemplate.style_template = ['styles1']
 
 decisionsTemplate = PodTemplateDescriptor('decisionsTemplate',
@@ -141,16 +140,14 @@ decisionsTemplate.roles_bypassing_talcondition = set(['Manager'])
 decisionsTemplate.style_template = ['styles1']
 
 itemTemplate = PodTemplateDescriptor('itemTemplate', 'Meeting item')
-itemTemplate.odt_file = 'all_item.odt'
+itemTemplate.is_reusable = True
 itemTemplate.odt_file = 'Item.odt'
 itemTemplate.pod_portal_types = ['MeetingItem']
-itemTemplate.tal_condition = u''
 itemTemplate.style_template = ['styles2']
 
 allItemTemplate = PodTemplateDescriptor('allItemTemplate', 'All Meeting item')
 allItemTemplate.odt_file = 'all_item.odt'
 allItemTemplate.pod_portal_types = ['Meeting']
-allItemTemplate.tal_condition = u''
 allItemTemplate.merge_templates = [{'pod_context_name': u'item', 'do_rendering': False, 'template': 'itemTemplate'}]
 
 
@@ -420,6 +417,13 @@ meetingPga.itemPositiveDecidedStates = ['accepted', 'confirmed']
 meetingPga.useCopies = True
 meetingPga.selectableCopyGroups = [developers.getIdSuffixed('reviewers'), vendors.getIdSuffixed('reviewers'), ]
 meetingPga.itemCopyGroupsStates = ['validated', 'itempublished', 'itemfrozen', 'accepted', 'delayed', ]
+# reuse itemTemplate from meetingPma
+pgaItemTemplate = PodTemplateDescriptor('itemTemplate', 'Meeting item')
+pgaItemTemplate.pod_template_to_use = {'cfg_id': meetingPma.id, 'template_id': itemTemplate.id}
+pgaItemTemplate.pod_portal_types = ['MeetingItem']
+pgaItemTemplate.style_template = ['styles2']
+meetingPga.styleTemplates = [stylesTemplate1, stylesTemplate2]
+meetingPga.podTemplates = [pgaItemTemplate]
 
 # Define held positions to use on persons
 held_pos1 = HeldPositionDescriptor('held_pos1', u'Assembly member 1', signature_number='1')

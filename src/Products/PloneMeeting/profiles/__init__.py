@@ -270,6 +270,8 @@ class PodTemplateDescriptor(StyleTemplateDescriptor):
         self.store_as_annex_title_expr = u''
         self.is_style = False
         self.merge_templates = []
+        self.is_reusable = False
+        self.pod_template_to_use = {'cfg_id': None, 'template_id': None}
 
 
 class PloneGroupDescriptor(Descriptor):

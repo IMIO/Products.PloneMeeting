@@ -25,6 +25,7 @@ from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import CKEDITOR_MENUSTYLES_CUSTOMIZED_MSG
 from Products.PloneMeeting.config import HAS_ZAMQP
 from Products.PloneMeeting.config import ManageOwnOrganizationFields
+from Products.PloneMeeting.utils import cleanMemoize
 from zope.component import queryUtility
 from zope.i18n import translate
 
@@ -350,9 +351,12 @@ def postInstall(context):
         own_org_criterion.section = 'default'
         own_org_criterion.position = 'center'
         own_org_criterion.hidden = False
+        own_org_criterion.default = u'collective.contact.plonegroup.interfaces.IPloneGroupContact'
         # redefine position, need to specify every criteria
         positions = {'top': ['c0', 'c1', 'c4', 'c6', 'c13', 'c14'], 'center': ['c2', 'c3', 'c5']}
         orgs_searches_folder_criteria.position(**positions)
+        # clean get_organizations caching
+        cleanMemoize(site, prefixes=['plonegroup-utils-get_organizations-'])
 
     # reorder css
     _reorderCSS(site)

@@ -79,7 +79,6 @@ from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getCustomSchemaFields
 from Products.PloneMeeting.utils import monthsIds
-from Products.PloneMeeting.utils import org_id_to_uid
 from Products.PloneMeeting.utils import weekdaysIds
 from Products.PloneMeeting.utils import workday
 from Products.ZCatalog.Catalog import AbstractCatalogBrain
@@ -1496,12 +1495,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                (event['time'] != eventToDelete):
                 history.append(event)
         obj.workflow_history[workflow_name] = tuple(history)
-
-    def _enableFacetedDashboardFor(self, obj, xmlpath=None):
-        """ """
-        self.REQUEST.set('enablingFacetedDashboard', True)
-        enableFacetedDashboardFor(obj, xmlpath)
-        self.REQUEST.set('enablingFacetedDashboard', False)
 
     def getAvailableMailingLists(self, obj, template_uid):
         '''Gets the names of the (currently active) mailing lists defined for
