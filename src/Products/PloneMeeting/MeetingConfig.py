@@ -5772,7 +5772,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # he is able to add a meetingitem to a 'decided' meeting.
         # except if we specifically restricted given p_review_states.
         if review_states == ('created', 'frozen') and tool.isManager(self):
-            review_states += MEETING_STATES_ACCEPTING_ITEMS
+            review_states += tuple(MEETING_STATES_ACCEPTING_ITEMS)
 
         query = {'portal_type': self.getMeetingTypeName(),
                  'review_state': review_states,
