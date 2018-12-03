@@ -168,7 +168,7 @@ class ItemProposingGroupsVocabulary(object):
                            translate('${element_title} (Inactive)',
                                      domain='PloneMeeting',
                                      mapping={'element_title': safe_unicode(
-                                        not_active_org.get_full_title(first_index=1))},
+                                            not_active_org.get_full_title(first_index=1))},
                                      context=request)
                            )
             )
@@ -222,7 +222,7 @@ class ItemProposingGroupsForFacetedFilterVocabulary(object):
                                translate('${element_title} (Inactive)',
                                          domain='PloneMeeting',
                                          mapping={'element_title': safe_unicode(
-                                            not_active_org.get_full_title(first_index=1))},
+                                                not_active_org.get_full_title(first_index=1))},
                                          context=context.REQUEST)
                                )
                 )
@@ -1138,7 +1138,7 @@ class HeldPositionUsagesVocabulary(object):
     def __call__(self, context):
         res = []
         res.append(
-            SimpleTerm('assemblyMember', 'assemblyMember', 'assemblyMember'))
+            SimpleTerm('assemblyMember', 'assemblyMember', _('assemblyMember')))
         return SimpleVocabulary(res)
 
 
@@ -1152,7 +1152,7 @@ class HeldPositionDefaultsVocabulary(object):
     def __call__(self, context):
         res = []
         res.append(
-            SimpleTerm('present', 'present', 'present'))
+            SimpleTerm('present', 'present', _('present')))
         return SimpleVocabulary(res)
 
 

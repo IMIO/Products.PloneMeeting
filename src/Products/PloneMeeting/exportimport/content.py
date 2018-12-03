@@ -514,6 +514,10 @@ class ToolInitializer:
             )
         elif pt.pod_template_to_use['cfg_id']:
             pod_template_to_use_cfg = self.tool.get(pt.pod_template_to_use['cfg_id'])
+            if not pod_template_to_use_cfg:
+                logger.info('Cfg with id {0} not found when adding Pod template {1}, template was not added'.format(
+                    pt.pod_template_to_use['cfg_id'], pt.pod_template_to_use['template_id']))
+                return
             pod_template = pod_template_to_use_cfg.podtemplates.get(pt.pod_template_to_use['template_id'])
             if not pod_template:
                 logger.info('Pod template with id {0} not found in cfg with id {1}, template was not added'.format(

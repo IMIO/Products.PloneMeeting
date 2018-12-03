@@ -907,36 +907,36 @@ class BaseDGHV(object):
             return u'<br />'.join(res)
 
         grouped_attendee_type_patterns = {
-             'attendee': {'MS': u'<strong><u>Présent&nbsp;:</u></strong>',
-                          'MP': u'<strong><u>Présents&nbsp;:</u></strong>',
-                          'FS': u'<strong><u>Présente&nbsp;:</u></strong>',
-                          'FP': u'<strong><u>Présentes&nbsp;:</u></strong>',
-                          '*':  u'<strong><u>Présents&nbsp;:</u></strong>'},
-             'excused': {'MS': u'<strong><u>Excusé&nbsp;:</u></strong>',
-                         'MP': u'<strong><u>Excusés&nbsp;:</u></strong>',
-                         'FS': u'<strong><u>Excusée&nbsp;:</u></strong>',
-                         'FP': u'<strong><u>Excusées&nbsp;:</u></strong>',
-                         '*':  u'<strong><u>Excusés&nbsp;:</u></strong>'},
-             'absent': {'MS': u'<strong><u>Absent&nbsp;:</u></strong>',
-                        'MP': u'<strong><u>Absents&nbsp;:</u></strong>',
-                        'FS': u'<strong><u>Absente&nbsp;:</u></strong>',
-                        'FP': u'<strong><u>Absentes&nbsp;:</u></strong>',
-                        '*':  u'<strong><u>Absents&nbsp;:</u></strong>'},
-             'replaced': {'MS': u'<strong><u>Remplacé&nbsp;:</u></strong>',
-                          'MP': u'<strong><u>Remplacés&nbsp;:</u></strong>',
-                          'FS': u'<strong><u>Remplacée&nbsp;:</u></strong>',
-                          'FP': u'<strong><u>Remplacées&nbsp;:</u></strong>',
-                          '*':  u'<strong><u>Remplacés&nbsp;:</u></strong>'},
-             'late_attendee': {'MS': u'<strong><u>Présent en retard&nbsp;:</u></strong>',
-                               'MP': u'<strong><u>Présents en retard&nbsp;:</u></strong>',
-                               'FS': u'<strong><u>Présente en retard&nbsp;:</u></strong>',
-                               'FP': u'<strong><u>Présentes en retard&nbsp;:</u></strong>',
-                               '*':  u'<strong><u>Présents en retard&nbsp;:</u></strong>'},
-             'item_absent': {'MS': u'<strong><u>Absent pour ce point&nbsp;:</u></strong>',
-                             'MP': u'<strong><u>Absents pour ce point&nbsp;:</u></strong>',
-                             'FS': u'<strong><u>Absente pour ce point&nbsp;:</u></strong>',
-                             'FP': u'<strong><u>Absentes pour ce point&nbsp;:</u></strong>',
-                             '*':  u'<strong><u>Absents pour ce point&nbsp;:</u></strong>'},
+            'attendee': {'MS': u'<strong><u>Présent&nbsp;:</u></strong>',
+                         'MP': u'<strong><u>Présents&nbsp;:</u></strong>',
+                         'FS': u'<strong><u>Présente&nbsp;:</u></strong>',
+                         'FP': u'<strong><u>Présentes&nbsp;:</u></strong>',
+                         '*': u'<strong><u>Présents&nbsp;:</u></strong>'},
+            'excused': {'MS': u'<strong><u>Excusé&nbsp;:</u></strong>',
+                        'MP': u'<strong><u>Excusés&nbsp;:</u></strong>',
+                        'FS': u'<strong><u>Excusée&nbsp;:</u></strong>',
+                        'FP': u'<strong><u>Excusées&nbsp;:</u></strong>',
+                        '*': u'<strong><u>Excusés&nbsp;:</u></strong>'},
+            'absent': {'MS': u'<strong><u>Absent&nbsp;:</u></strong>',
+                       'MP': u'<strong><u>Absents&nbsp;:</u></strong>',
+                       'FS': u'<strong><u>Absente&nbsp;:</u></strong>',
+                       'FP': u'<strong><u>Absentes&nbsp;:</u></strong>',
+                       '*': u'<strong><u>Absents&nbsp;:</u></strong>'},
+            'replaced': {'MS': u'<strong><u>Remplacé&nbsp;:</u></strong>',
+                         'MP': u'<strong><u>Remplacés&nbsp;:</u></strong>',
+                         'FS': u'<strong><u>Remplacée&nbsp;:</u></strong>',
+                         'FP': u'<strong><u>Remplacées&nbsp;:</u></strong>',
+                         '*': u'<strong><u>Remplacés&nbsp;:</u></strong>'},
+            'late_attendee': {'MS': u'<strong><u>Présent en retard&nbsp;:</u></strong>',
+                              'MP': u'<strong><u>Présents en retard&nbsp;:</u></strong>',
+                              'FS': u'<strong><u>Présente en retard&nbsp;:</u></strong>',
+                              'FP': u'<strong><u>Présentes en retard&nbsp;:</u></strong>',
+                              '*': u'<strong><u>Présents en retard&nbsp;:</u></strong>'},
+            'item_absent': {'MS': u'<strong><u>Absent pour ce point&nbsp;:</u></strong>',
+                            'MP': u'<strong><u>Absents pour ce point&nbsp;:</u></strong>',
+                            'FS': u'<strong><u>Absente pour ce point&nbsp;:</u></strong>',
+                            'FP': u'<strong><u>Absentes pour ce point&nbsp;:</u></strong>',
+                            '*': u'<strong><u>Absents pour ce point&nbsp;:</u></strong>'},
         }
         grouped_attendee_type_patterns.update(custom_grouped_attendee_type_patterns)
 
@@ -1352,11 +1352,11 @@ class DisplayMeetingConfigsOfConfigGroup(BrowserView):
         grouped_configs = tool.getGroupedConfigs(config_group=self.config_group)
         res = []
         for config_info in grouped_configs.values()[0]:
-            cfg = getattr(tool, config_info['id'])
+            cfg_id = config_info['id']
+            cfg = getattr(tool, cfg_id)
             res.append(
                 {'config': cfg,
-                 'url': tool.getPloneMeetingFolder(
-                    cfg.getId()).absolute_url() + '/searches_items'})
+                 'url': tool.getPloneMeetingFolder(cfg_id).absolute_url() + '/searches_items'})
         # make sure 'content-type' header of response is correct because during
         # faceted initialization, 'content-type' is turned to 'text/xml' and it
         # breaks to tooltipster displaying the result in the tooltip...

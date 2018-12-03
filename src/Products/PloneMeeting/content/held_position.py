@@ -1,18 +1,18 @@
 # -*- coding: utf-8 -*-
 
-from collective.contact.core import _
 from collective.contact.core.content.held_position import HeldPosition
 from collective.contact.core.content.held_position import IHeldPosition
+from collective.contact.core.schema import ContactChoice
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.excelexport.exportables.dexterityfields import get_exportable_for_fieldname
 from plone.autoform import directives as form
 from plone.dexterity.schema import DexteritySchemaPolicy
+from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.content.source import PMContactSourceBinder
 from Products.PloneMeeting.utils import plain_render
 from z3c.form.browser.checkbox import CheckBoxFieldWidget
 from zope.globalrequest import getRequest
 from zope.i18n import translate
-from collective.contact.core.schema import ContactChoice
-from Products.PloneMeeting.content.source import PMContactSourceBinder
 
 import zope.schema
 
@@ -52,7 +52,7 @@ class IPMHeldPosition(IHeldPosition):
     )
 
     position_type = zope.schema.Choice(
-        title=_("Type"),
+        title=_("Position type"),
         vocabulary="PositionTypes",
         )
 

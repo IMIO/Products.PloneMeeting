@@ -22,12 +22,32 @@
 # 02110-1301, USA.
 #
 
+from collective.eeafaceted.collectionwidget.utils import _updateDefaultCollectionFor
 from plone import api
 from plone.app.testing import login
 from Products.GenericSetup.context import DirectoryImportContext
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.utils import cleanMemoize
+from Products.PloneMeeting.exportimport.content import ToolInitializer
+import random
+
+old__getProfileData = ToolInitializer.getProfileData
+
+def getProfileData(self):
+    """Patch getProfileData so we are sure we have only one
+       MeetingConfig created with same id, this is necessary
+       to test successive MC creations because it fails when creating
+       successively"""
+    data = old__getProfileData(self)
+    for mc in data.meetingConfigs:
+        # shuffle MC id
+        mc_id = list(mc.id)
+        random.shuffle(mc_id)
+        mc.id = ''.join(mc_id)
+        # remove parameters using former MC id
+        mc.meetingConfigsToCloneTo = []
+    return data
 
 
 class testSetup(PloneMeetingTestCase):
@@ -59,6 +79,8 @@ class testSetup(PloneMeetingTestCase):
     def test_pm_InstallAvailableProfiles(self):
         """This is made for subpackages to test that defined profiles
            containing an import_data works as expected."""
+        ToolInitializer.getProfileData = getProfileData
+
         login(self.app, 'admin')
 
         api.portal.set_registry_record(
@@ -101,6 +123,7 @@ class testSetup(PloneMeetingTestCase):
             # clean memoize between each site because the same REQUEST especially
             # is used for every sites and this can lead to problems...
             cleanMemoize(self.portal)
+        ToolInitializer.getProfileData = old__getProfileData
 
     def test_pm_WorkflowsRemovedOnReinstall(self):
         '''This will test that remove=True is used in the workflows.xml, indeed
