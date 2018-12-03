@@ -289,7 +289,11 @@ class ToolInitializer:
         # turn group ids into org uids
         for field_name in ['selectableCopyGroups', 'selectableAdvisers', 'powerAdvisersGroups']:
             data = cData.get(field_name)
-            data = [org_id_to_uid(suffixed_group_id) for suffixed_group_id in data]
+            try:
+                data = [org_id_to_uid(suffixed_group_id) for suffixed_group_id in data]
+            except KeyError:
+                logger.info('Error while turning group ids to org uids for field_name {0}'.format(field_name))
+                data = []
             cData[field_name] = data
         # manage customAdvisers, turn 'org' value from org id to uid
         ca = cData.get('customAdvisers')
@@ -511,6 +515,10 @@ class ToolInitializer:
         elif pt.pod_template_to_use['cfg_id']:
             pod_template_to_use_cfg = self.tool.get(pt.pod_template_to_use['cfg_id'])
             pod_template = pod_template_to_use_cfg.podtemplates.get(pt.pod_template_to_use['template_id'])
+            if not pod_template:
+                logger.info('Pod template with id {0} not found in cfg with id {1}, template was not added'.format(
+                    pt.pod_template_to_use['template_id'], pt.pod_template_to_use['cfg_id']))
+                return
             pod_template_to_use = pod_template.UID()
         else:
             raise PloneMeetingError(

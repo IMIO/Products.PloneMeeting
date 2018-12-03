@@ -783,7 +783,7 @@ class testContacts(PloneMeetingTestCase):
              'held_position': None,
              'date_from': None,
              'date_to': None},
-            ]
+        ]
         # it validates
         self.vendors.certified_signatures = group_certified
         self.assertFalse(validate_fields(self.vendors))
@@ -804,7 +804,7 @@ class testContacts(PloneMeetingTestCase):
              'held_position': None,
              'date_from': None,
              'date_to': None},
-            ]
+        ]
         self.vendors.certified_signatures = group_certified
         self.assertFalse(validate_fields(self.vendors))
         self.assertEquals(self.vendors.get_certified_signatures(computed=True, cfg=cfg),
@@ -831,7 +831,7 @@ class testContacts(PloneMeetingTestCase):
              'held_position': None,
              'date_from': None,
              'date_to': None},
-            ]
+        ]
         self.vendors.certified_signatures = group_certified
         self.assertFalse(validate_fields(self.vendors))
         self.assertEquals(self.vendors.get_certified_signatures(computed=True, cfg=cfg),
@@ -853,7 +853,7 @@ class testContacts(PloneMeetingTestCase):
              'held_position': None,
              'date_from': None,
              'date_to': None},
-            ]
+        ]
         self.vendors.certified_signatures = group_certified
         self.assertFalse(validate_fields(self.vendors))
         self.assertEquals(self.vendors.get_certified_signatures(computed=True, cfg=cfg),
@@ -876,7 +876,7 @@ class testContacts(PloneMeetingTestCase):
              'held_position': None,
              'date_from': None,
              'date_to': None},
-            ]
+        ]
         self.vendors.certified_signatures = group_certified
         self.assertFalse(validate_fields(self.vendors))
         self.assertEquals(self.vendors.get_certified_signatures(computed=True, cfg=cfg),
