@@ -2765,13 +2765,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         for cat in cfg.getCategories():
-            res.append((cat.id, safe_unicode(cat.getName())))
+            res.append((cat.id, safe_unicode(cat.Title())))
 
         # make sure current category is listed here
         storedKeys = [elt[0] for elt in res]
         current_cat = self.getCategory(theObject=True)
         if current_cat and not current_cat.getId() in storedKeys:
-            res.append((current_cat.getId(), safe_unicode(current_cat.getName())))
+            res.append((current_cat.getId(), safe_unicode(current_cat.Title())))
 
         if 'category' not in cfg.getItemFieldsToKeepConfigSortingFor():
             # natural sort, reverse tuple so we have value/key instead key/value
@@ -3739,17 +3739,17 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def _evalAdviceAvailableOn(self, available_on_expr, tool, cfg, mayEdit=True):
         """ """
         res = _evaluateExpression(
-                self,
-                expression=available_on_expr,
-                roles_bypassing_expression=[],
-                extra_expr_ctx={
-                    'item': self,
-                    'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
-                    'tool': tool,
-                    'cfg': cfg,
-                    'mayEdit': mayEdit},
-                empty_expr_is_true=True,
-                error_pattern=ADVICE_AVAILABLE_ON_CONDITION_ERROR)
+            self,
+            expression=available_on_expr,
+            roles_bypassing_expression=[],
+            extra_expr_ctx={
+                'item': self,
+                'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
+                'tool': tool,
+                'cfg': cfg,
+                'mayEdit': mayEdit},
+            empty_expr_is_true=True,
+            error_pattern=ADVICE_AVAILABLE_ON_CONDITION_ERROR)
         return res
 
     def _optionalDelayAwareAdvisers(self):

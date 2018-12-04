@@ -116,12 +116,6 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
 
     schema = MeetingCategory_schema
 
-    security.declarePublic('getName')
-
-    def getName(self, force=None):
-        '''Returns the possibly translated title.'''
-        return getFieldContent(self, 'title', force)
-
     def isClassifier(self):
         '''Return True if current category is a classifier,
            False if it is a normal category.'''
