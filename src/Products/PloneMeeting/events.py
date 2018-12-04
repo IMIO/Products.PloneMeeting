@@ -957,8 +957,10 @@ def onOrgAddBegun(obj, event):
     if obj == own_org:
         return
 
-    added_fti = obj.REQUEST['PUBLISHED'].ti
-    if not added_fti.id == 'organization':
+    added_fti = getattr(obj.REQUEST['PUBLISHED'], 'ti', None)
+    if not added_fti:
+        added_fti = getattr(obj.REQUEST['PUBLISHED'].context, 'ti', None)
+    if not added_fti or not added_fti.id == 'organization':
         return
 
     # we are adding an organization outside own_org, warn the user

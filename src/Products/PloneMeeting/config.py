@@ -60,7 +60,8 @@ setDefaultRoles(WriteDecision, ('Manager',))
 setDefaultRoles(AddAnnex, ('Manager',))
 setDefaultRoles(AddAnnexDecision, ('Manager',))
 setDefaultRoles(WriteMarginalNotes, ('Manager',))
-setDefaultRoles(ManageOwnOrganizationFields, ('Manager',))
+# given to nobody by default, is only given on /contact/plonegroup-organization level
+setDefaultRoles(ManageOwnOrganizationFields, ())
 
 # Permissions
 DEFAULT_ADD_CONTENT_PERMISSION = "Add portal content"

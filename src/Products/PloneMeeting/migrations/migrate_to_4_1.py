@@ -309,7 +309,7 @@ class Migrate_To_4_1(Migrator):
            Migrate also every relations to the organization as we used the id and we use now the uid."""
         logger.info('Adapting application for plonegroup...')
         own_org = get_own_organization()
-        if own_org.objectValues() and False:
+        if own_org.objectValues():
             # already migrated
             logger.info('Done.')
             return

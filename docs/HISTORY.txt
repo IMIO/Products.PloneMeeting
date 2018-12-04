@@ -10,8 +10,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 4.1b13 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Display 'Add contacts' actions on the portlet displayed in /contacts dashboards.
 
 4.1b12 (2018-12-04)
 -------------------

@@ -161,7 +161,7 @@ class PloneMeetingContentActionsViewlet(ContentActionsViewlet):
 
     def render(self):
         if self.context.meta_type in (
-            'ATTopic', 'Meeting', 'MeetingItem',  'MeetingCategory',
+            'ATTopic', 'Meeting', 'MeetingItem', 'MeetingCategory',
             'MeetingConfig', 'MeetingFileType', 'MeetingUser', 'ToolPloneMeeting',) or \
            self.context.portal_type in (
             'ContentCategoryConfiguration', 'ContentCategoryGroup',
@@ -429,7 +429,7 @@ class PMRenderCategoryView(IDRenderCategoryView):
       are displayed to add items or meetings.
     '''
     # do not display "add contacts" icons on dashboard displayed in contacts
-    manage_add_contact_actions = False
+    manage_add_contact_actions = True
 
     def _get_category_template(self):
         category_template = super(PMRenderCategoryView, self)._get_category_template()
@@ -438,6 +438,7 @@ class PMRenderCategoryView(IDRenderCategoryView):
                 return ViewPageTemplateFile("templates/category_meetingitems.pt")
             if self.context.getId() == 'searches_meetings':
                 return ViewPageTemplateFile("templates/category_meetings.pt")
+        return category_template
 
     def __call__(self, widget):
         self.tool = api.portal.get_tool('portal_plonemeeting')
@@ -873,7 +874,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
             'item_decision_annexes': [cfg.getItemTypeName()],
             'advice_annexes': tool.getAdvicePortalTypes(as_ids=True),
             'meeting_annexes': [cfg.getMeetingTypeName()],
-            }
+        }
         return mapping
 
     def storePodTemplateAsAnnex(self,
