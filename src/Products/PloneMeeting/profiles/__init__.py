@@ -588,7 +588,7 @@ class MeetingConfigDescriptor(Descriptor):
         # button will show a confirmation popup. In this popup, the user will
         # also be able to enter the workflow comment.
         self.transitionsToConfirm = []
-        self.transitionsForPresentingAnItem = []
+        self.transitionsForPresentingAnItem = ['propose', 'validate', 'present']
         self.onTransitionFieldTransforms = []
         self.onMeetingTransitionItemTransitionToTrigger = []
         self.meetingPresentItemWhenNoCurrentMeetingStates = []
