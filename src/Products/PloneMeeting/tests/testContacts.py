@@ -658,7 +658,7 @@ class testContacts(PloneMeetingTestCase):
         self.assertEquals(cm.exception.message,
                           translate('can_not_delete_organization_meetingcategory',
                                     domain='plone',
-                                    mapping={'url': cfg.categories.subproducts.absolute_url()},
+                                    mapping={'url': cat.absolute_url()},
                                     context=self.portal.REQUEST))
         cat.setUsingGroups([])
 
@@ -726,28 +726,29 @@ class testContacts(PloneMeetingTestCase):
           Check that when an organiztion is unselected (deactivated), it is no more useable in any
           functionnality of the application...
         """
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
         # delete the 'vendors' group so we are sure that methods and conditions
         # we need to remove every items using the 'vendors' group before being able to remove it...
         self.changeUser('admin')
-        # make sure self.meetingConfig2 does not interact...
-        self._removeConfigObjectsFor(self.meetingConfig2)
-        self.meetingConfig.itemtemplates.manage_delObjects(['template2', ])
+        # make sure cfg2 does not interact...
+        self._removeConfigObjectsFor(cfg2)
+        cfg.itemtemplates.manage_delObjects(['template2', ])
         # and remove 'vendors_reviewers' from every MeetingConfig.selectableCopyGroups
         # and 'vendors' from every MeetingConfig.selectableAdvisers
         dev_reviewers = get_plone_group_id(self.developers_uid, 'reviewers')
-        self.meetingConfig.setSelectableCopyGroups(
-            (dev_reviewers, ))
-        self.meetingConfig.setSelectableAdvisers((self.developers_uid, ))
-        self.meetingConfig2.setSelectableCopyGroups(
-            (dev_reviewers, ))
-        self.meetingConfig2.setSelectableAdvisers(
-            (self.developers_uid, ))
+        cfg.setSelectableCopyGroups((dev_reviewers, ))
+        cfg2.setSelectableAdvisers((self.developers_uid, ))
+        cfg2.setSelectableCopyGroups((dev_reviewers, ))
+        cfg2.setSelectableAdvisers((self.developers_uid, ))
         # and remove users from vendors Plone groups
         for ploneGroup in get_plone_groups(self.vendors_uid):
             for memberId in ploneGroup.getGroupMemberIds():
                 ploneGroup.removeMember(memberId)
         # unselect it
         self._select_organization(self.vendors_uid, remove=True)
+        # remove it from subproducts category usingGroups
+        cfg2.categories.subproducts.setUsingGroups(())
         # now we can delete it...
         self.portal.restrictedTraverse('@@delete_givenuid')(
             self.vendors_uid, catch_before_delete_exception=False)

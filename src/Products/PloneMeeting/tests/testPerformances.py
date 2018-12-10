@@ -320,8 +320,8 @@ class testPerformances(PloneMeetingTestCase):
                 for memberId in ploneGroup.getGroupMemberIds():
                     ploneGroup.removeMember(memberId)
         # remove items defined in the tool
-        self._removeConfigObjectsFor(cfg)
-        self._removeConfigObjectsFor(cfg2)
+        self._removeConfigObjectsFor(cfg, folders=['recurringitems', 'itemtemplates', 'categories'])
+        self._removeConfigObjectsFor(cfg2, folders=['recurringitems', 'itemtemplates', 'categories'])
 
         # remove groups
         self._removeOrganizations()

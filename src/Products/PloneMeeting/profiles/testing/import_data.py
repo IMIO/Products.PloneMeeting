@@ -176,13 +176,14 @@ powerobserver1 = UserDescriptor('powerobserver1',
                                 [],
                                 email="powerobserver1@plonemeeting.org",
                                 fullname='M. Power Observer1')
-# powerobserver1 is 'power observer' because in the meetingPma '_powerobservers' group
 cfg1_powerobservers = PloneGroupDescriptor('cfg1_powerobservers', 'cfg1_powerobservers', [])
 powerobserver1.ploneGroups = [cfg1_powerobservers, ]
 powerobserver2 = UserDescriptor('powerobserver2',
                                 [],
                                 email="powerobserver2@plonemeeting.org",
                                 fullname='M. Power Observer2')
+cfg2_powerobservers = PloneGroupDescriptor('cfg2_powerobservers', 'cfg2_powerobservers', [])
+powerobserver2.ploneGroups = [cfg2_powerobservers, ]
 restrictedpowerobserver1 = UserDescriptor('restrictedpowerobserver1',
                                           [],
                                           email="restrictedpowerobserver1@plonemeeting.org",

@@ -352,8 +352,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('admin')
         cfg.setMeetingConfigsToCloneTo(
             ({'meeting_config': otherMeetingConfigId,
-              'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}, )
-            )
+              'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL}, ))
         cfg.at_post_edit_script()
         self.assertTrue(item.showClonableToOtherMeetingConfigs())
         self.changeUser('pmManager')
@@ -616,8 +615,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # As annexes are references from the item, check that these are not
         self.assertEqual(
             (newItem, ),
-            tuple(newItem.getParentNode().objectValues('MeetingItem'))
-            )
+            tuple(newItem.getParentNode().objectValues('MeetingItem')))
         # Especially test that use content_category is correct on the duplicated annexes
         for v in get_categorized_elements(newItem):
             self.assertTrue(cfg2Id in v['icon_url'])
@@ -1473,11 +1471,20 @@ class testMeetingItem(PloneMeetingTestCase):
            so setCurrentAsPredecessor=True and manualLinkToPredecessor=False.'''
         cfg = self.meetingConfig
         self.changeUser('admin')
-        org1 = self.create('organization', id='org1',  title='NewOrg1', acronym='N.O.1')
+        org1 = self.create('organization',
+                           id='org1',
+                           title='NewOrg1',
+                           acronym='N.O.1')
         org1_uid = org1.UID()
-        org2 = self.create('organization', id='org2',  title='NewOrg2', acronym='N.O.2')
+        org2 = self.create('organization',
+                           id='org2',
+                           title='NewOrg2',
+                           acronym='N.O.2')
         org2_uid = org2.UID()
-        org3 = self.create('organization', id='poweradvisers',  title='Power advisers', acronym='PA')
+        org3 = self.create('organization',
+                           id='poweradvisers',
+                           title='Power advisers',
+                           acronym='PA')
         org3_uid = org3.UID()
         self._select_organization(org1_uid)
         self._select_organization(org2_uid)
@@ -1908,12 +1915,6 @@ class testMeetingItem(PloneMeetingTestCase):
         '''Test the management of MeetingConfig linked 'powerobservers' Plone group.'''
         # specify that powerObservers will be able to see the items of self.meetingConfig
         # when the item is in some state.  For example here, a 'presented' item is not viewable
-        # Add 'powerobserver1' user to the self.meetingConfig corresponding 'powerobservers' group
-        self._addPrincipalToGroup('powerobserver1',
-                                  '%s_%s' % (self.meetingConfig.getId(), POWEROBSERVERS_GROUP_SUFFIX))
-        # Add 'powerobserver2' user to the self.meetingConfig2 corresponding 'powerobservers' group
-        self._addPrincipalToGroup('powerobserver2',
-                                  '%s_%s' % (self.meetingConfig2.getId(), POWEROBSERVERS_GROUP_SUFFIX))
         # launch check for self.meetingConfig where 'powerobserver1'
         # can see in some states but never for 'powerobserver2'
         self._checkPowerObserversGroupFor('powerobserver1', 'powerobserver2')

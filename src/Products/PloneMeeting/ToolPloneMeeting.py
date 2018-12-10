@@ -453,9 +453,12 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         res = []
         for cfg in self.objectValues('MeetingConfig'):
             isManager = self.isManager(cfg)
+            isPowerObserver = self.isPowerObserverForCfg(cfg)
+            isRestrictedPowerObserver = self.isPowerObserverForCfg(cfg, isRestricted=True)
             if api.content.get_state(cfg) == 'active' and \
                self.checkMayView(cfg) and \
-               (isManager or (check_using_groups and self.get_orgs_for_user(using_groups=cfg.getUsingGroups()))):
+               (isManager or isPowerObserver or isRestrictedPowerObserver or
+                    (check_using_groups and self.get_orgs_for_user(using_groups=cfg.getUsingGroups()))):
                 res.append(cfg)
         return res
 
