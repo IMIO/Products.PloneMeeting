@@ -286,13 +286,13 @@ class ToolInitializer:
            data like images or templates that need to be attached to some
            sub-objects of the meeting config will be searched there.'''
         cData = configData.getData()
-        # turn group ids into org uids
-        for field_name in ['selectableCopyGroups', 'selectableAdvisers', 'powerAdvisersGroups']:
+        # turn org ids into org uids
+        for field_name in ['selectableCopyGroups', 'selectableAdvisers', 'powerAdvisersGroups', 'usingGroups']:
             data = cData.get(field_name)
             try:
                 data = [org_id_to_uid(suffixed_group_id) for suffixed_group_id in data]
             except KeyError:
-                logger.info('Error while turning group ids to org uids for field_name {0}'.format(field_name))
+                logger.info('Error while turning org ids to org uids for field_name {0}'.format(field_name))
                 data = []
             cData[field_name] = data
         # manage customAdvisers, turn 'org' value from org id to uid

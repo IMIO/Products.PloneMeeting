@@ -342,7 +342,6 @@ meetingPma.itemTemplates = (template1, template2, )
 meetingPma.itemPowerObserversStates = ('itemcreated', 'presented', 'accepted', 'delayed')
 meetingPma.meetingPowerObserversStates = ('frozen', 'published', 'decided', 'closed')
 meetingPma.useVotes = True
-meetingPma.meetingUsers = []
 meetingPma.styleTemplates = [stylesTemplate1, stylesTemplate2]
 meetingPma.podTemplates = [agendaTemplate, decisionsTemplate, itemTemplate, dashboardTemplate, allItemTemplate]
 meetingPma.selectableCopyGroups = [developers.getIdSuffixed('reviewers'), vendors.getIdSuffixed('reviewers'), ]

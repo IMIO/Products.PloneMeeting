@@ -10,14 +10,14 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 4.1b14 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Added parameter MeetingConfig.usingGroups that adds the possibility to restrict access to the MeetingConfig
+  to the selected groups
 
 4.1b13 (2018-12-04)
 -------------------
 
-- Display 'Add contacts' actions on the portlet displayed in /contacts dashboards.
-- Removed MeetingCategory.getName, one step further to separating real MeetingCategory and proposingGroup.
+- Display 'Add contacts' actions on the portlet displayed in /contacts dashboards
+- Removed MeetingCategory.getName, one step further to separating real MeetingCategory and proposingGroup
 
 4.1b12 (2018-12-04)
 -------------------

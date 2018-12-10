@@ -875,7 +875,7 @@ The parameter "cFolder" is the folder containing categories.</tal:comment>
         tal:attributes="class python: not isActive and classOddEven+' state-inactive' or classOddEven"
         class="#">
     <td>
-        <h5><a tal:attributes="href obj/absolute_url" tal:content="obj/getName"></a></h5>
+        <h5><a tal:attributes="href obj/absolute_url" tal:content="obj/Title"></a></h5>
         <div class="discreet" tal:define="descr obj/Description" tal:condition="descr" tal:content="descr"></div>
         <tal:additionalInformations
             define="context python: obj;

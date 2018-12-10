@@ -1732,6 +1732,7 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
     def __init__(self, context, request, brain):
         super(PMCategorizedObjectAdapter, self).__init__(context, request, brain)
         self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
 
     def _use_isPrivacyViewable_cachekey(method, self):
         '''cachekey method for self._use_isPrivacyViewable.'''
@@ -1740,8 +1741,7 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
     @ram.cache(_use_isPrivacyViewable_cachekey)
     def _use_isPrivacyViewable(self):
         """ """
-        cfg = self.tool.getMeetingConfig(self.context)
-        if cfg.getRestrictAccessToSecretItems():
+        if self.cfg.getRestrictAccessToSecretItems():
             return True
         return False
 
@@ -1772,7 +1772,7 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
             for group in infos['visible_for_groups']:
                 if group.startswith(SUFFIXPROFILEPREFIX):
                     suffixes.append(group.replace(SUFFIXPROFILEPREFIX, ''))
-            if suffixes and self.tool.userIsAmong(suffixes):
+            if suffixes and self.tool.userIsAmong(suffixes, cfg=self.cfg):
                 return True
             return False
 

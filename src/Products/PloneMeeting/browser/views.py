@@ -256,6 +256,7 @@ class ItemToDiscussView(BrowserView):
         self.request = request
         self.portal_url = api.portal.get().absolute_url()
         self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
 
     def mayEdit(self):
         """ """
@@ -267,7 +268,7 @@ class ItemToDiscussView(BrowserView):
     @memoize_contextless
     def userIsReviewer(self):
         """ """
-        return self.tool.userIsAmong(['reviewers'])
+        return self.tool.userIsAmong(['reviewers'], cfg=self.cfg)
 
     @memoize_contextless
     def useToggleDiscuss(self):

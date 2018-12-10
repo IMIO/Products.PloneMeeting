@@ -203,7 +203,6 @@ TOOL_FOLDER_RECURRING_ITEMS = "recurringitems"
 TOOL_FOLDER_ITEM_TEMPLATES = "itemtemplates"
 TOOL_FOLDER_ANNEX_TYPES = 'annexes_types'
 TOOL_FOLDER_POD_TEMPLATES = 'podtemplates'
-TOOL_FOLDER_MEETING_USERS = 'meetingusers'
 
 ITEM_NO_PREFERRED_MEETING_VALUE = "whatever"
 

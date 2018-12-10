@@ -11,6 +11,9 @@
     <object name="print" meta_type="CMF Action">
       <property name="visible">False</property>
     </object>
+   <object name="togglePersons" meta_type="CMF Action" remove="true">
+   </object>
+
   </object>
 
   <!-- Hide Plone actions "site map" and "accessibility" -->
@@ -103,8 +106,6 @@
    </object>
    <!-- Remove some object actions -->
    <object name="iconifiedcategory" meta_type="CMF Action" remove="true">
-   </object>
-   <object name="togglePersons" meta_type="CMF Action" remove="true">
    </object>
   </object>
 

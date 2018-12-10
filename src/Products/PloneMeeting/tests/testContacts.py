@@ -465,7 +465,7 @@ class testContacts(PloneMeetingTestCase):
         self.changeUser('admin')
 
         # 1) fails because used in the configuration, in
-        # selectableCopyGroups, selectableAdvisers, customAdvisers or powerAdvisersGroups
+        # selectableCopyGroups, selectableAdvisers, customAdvisers, powerAdvisersGroups or usingGroups
         self.failIf(cfg.getCustomAdvisers())
         self.failIf(cfg.getPowerAdvisersGroups())
         self.failIf(cfg.getSelectableAdvisers())
@@ -517,6 +517,16 @@ class testContacts(PloneMeetingTestCase):
         self.assertEquals(cm.exception.message, can_not_delete_organization_meetingconfig)
         # so remove powerAdvisersGroups
         cfg.setPowerAdvisersGroups([])
+
+        # define usingGroups, the exception is also raised
+        cfg.setUsingGroups([self.developers_uid, ])
+        transaction.commit()
+        with self.assertRaises(BeforeDeleteException) as cm:
+            self.portal.restrictedTraverse('@@delete_givenuid')(
+                self.developers_uid, catch_before_delete_exception=False)
+        self.assertEquals(cm.exception.message, can_not_delete_organization_meetingconfig)
+        # so remove usingGroups
+        cfg.setUsingGroups([])
 
         # 2) fails because the corresponding Plone groups are not empty
         transaction.commit()
@@ -639,7 +649,20 @@ class testContacts(PloneMeetingTestCase):
         # the group is actually removed
         self.failIf(self.developers in self.own_org)
 
-        # 4) removing a used group in the configuration fails too
+        # 4) fails when used in a MeetingCategory.usingGroups
+        cat = cfg2.categories.subproducts
+        self.assertTrue(self.vendors_uid in cat.getUsingGroups())
+        with self.assertRaises(BeforeDeleteException) as cm:
+            self.portal.restrictedTraverse('@@delete_givenuid')(
+                self.vendors_uid, catch_before_delete_exception=False)
+        self.assertEquals(cm.exception.message,
+                          translate('can_not_delete_organization_meetingcategory',
+                                    domain='plone',
+                                    mapping={'url': cfg.categories.subproducts.absolute_url()},
+                                    context=self.portal.REQUEST))
+        cat.setUsingGroups([])
+
+        # 5) removing a used group in the configuration fails too
         # remove item because it uses 'vendors'
         item.aq_inner.aq_parent.manage_delObjects([item.getId(), ])
         self.assertEquals(cfg.itemtemplates.template2.getProposingGroup(), self.vendors_uid)
@@ -660,7 +683,7 @@ class testContacts(PloneMeetingTestCase):
             for memberId in ploneGroup.getGroupMemberIds():
                 ploneGroup.removeMember(memberId)
 
-        # 5) then fails because used by an item present in the configuration
+        # 6) then fails because used by an item present in the configuration
         transaction.commit()
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(

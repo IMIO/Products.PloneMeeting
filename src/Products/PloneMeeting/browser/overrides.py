@@ -162,7 +162,7 @@ class PloneMeetingContentActionsViewlet(ContentActionsViewlet):
     def render(self):
         if self.context.meta_type in (
             'ATTopic', 'Meeting', 'MeetingItem', 'MeetingCategory',
-            'MeetingConfig', 'MeetingFileType', 'MeetingUser', 'ToolPloneMeeting',) or \
+            'MeetingConfig', 'MeetingFileType', 'ToolPloneMeeting',) or \
            self.context.portal_type in (
             'ContentCategoryConfiguration', 'ContentCategoryGroup',
             'ConfigurablePODTemplate', 'DashboardPODTemplate',
@@ -179,7 +179,6 @@ class PMConfigActionsPanelViewlet(ActionsPanelViewlet):
 
     backPages = {'categories': 'data',
                  'classifiers': 'data',
-                 'meetingusers': 'users',
                  'podtemplates': 'doc', }
 
     def renderViewlet(self):
@@ -783,8 +782,6 @@ class ConfigActionsPanelView(ActionsPanelView):
             return "../../?pageName=gui#searches"
         if folderId == 'podtemplates':
             return "../?pageName=doc#podtemplates"
-        if folderId == 'meetingusers':
-            return "../?pageName=users#meetingusers"
         if self.context.meta_type == "MeetingConfig":
             return "#MeetingConfig"
         if self.context.portal_type == "organization":
@@ -1207,9 +1204,10 @@ class PMTransitionBatchActionForm(TransitionBatchActionForm):
            This is essentially done to hide this to (restricted)powerobservers
            and to non MeetingManagers on the meeting_view."""
         tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
         return tool.isManager(self.context) or \
             (not self.context.meta_type == 'Meeting' and
-             bool(tool.userIsAmong(suffixes=get_all_suffixes(None))))
+             bool(tool.userIsAmong(suffixes=get_all_suffixes(None), cfg=cfg)))
 
 
 class PMContentHistoryView(IHContentHistoryView):

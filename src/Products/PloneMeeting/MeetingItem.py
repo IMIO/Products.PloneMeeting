@@ -2592,8 +2592,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # can select any available organizations
         isManager = tool.isManager(self, realManagers=True)
         # show every groups for Managers or when isDefinedInTool
-        res = tool.get_selectable_orgs(only_selectable=not bool(isDefinedInTool or isManager))
-        res = DisplayList(tuple(res))
+        only_selectable = not bool(isDefinedInTool or isManager)
+        orgs = tool.get_selectable_orgs(cfg, only_selectable=only_selectable)
+        res = DisplayList(tuple([(org.UID(), org.get_full_title(first_index=1)) for org in orgs]))
         # make sure current selected proposingGroup is listed here
         proposingGroup = self.getProposingGroup()
         if proposingGroup and proposingGroup not in res.keys():
@@ -3511,9 +3512,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # same address is used for several users (case of "group" address)
         sent_mail_addresses = []
         for memberId in plone_group.getMemberIds():
-            if event_id not in cfg.getUserParam('mailItemEvents',
-                                                request=self.REQUEST,
-                                                userId=memberId):
+            if event_id not in cfg.getMailItemEvents():
                 continue
             # Send a mail to this user
             recipient = tool.getMailRecipient(memberId)
@@ -4510,9 +4509,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 advice_obj = self.getAdviceObj(advice['id'])
                 if advice_obj and (advice_obj.Creator() != userId):
                     # Send a mail to the guy that gave the advice.
-                    if 'adviceInvalidated' in cfg.getUserParam('mailItemEvents',
-                                                               request=self.REQUEST,
-                                                               userId=advice_obj.Creator()):
+                    if 'adviceInvalidated' in cfg.getMailItemEvents():
                         recipient = tool.getMailRecipient(advice_obj.Creator())
                         if recipient:
                             sendMail([recipient], self, 'adviceInvalidated')
@@ -5424,7 +5421,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(self)
         if not cfg.getEnableItemDuplication() or \
            self.isDefinedInTool() or \
-           not tool.userIsAmong(['creators']) or \
+           not tool.userIsAmong(['creators'], cfg=cfg) or \
            not self.adapted().isPrivacyViewable():
             return False
         return True

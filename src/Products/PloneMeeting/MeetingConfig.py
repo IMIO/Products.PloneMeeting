@@ -77,7 +77,6 @@ from Products.PloneMeeting.config import TOOL_FOLDER_ANNEX_TYPES
 from Products.PloneMeeting.config import TOOL_FOLDER_CATEGORIES
 from Products.PloneMeeting.config import TOOL_FOLDER_CLASSIFIERS
 from Products.PloneMeeting.config import TOOL_FOLDER_ITEM_TEMPLATES
-from Products.PloneMeeting.config import TOOL_FOLDER_MEETING_USERS
 from Products.PloneMeeting.config import TOOL_FOLDER_POD_TEMPLATES
 from Products.PloneMeeting.config import TOOL_FOLDER_RECURRING_ITEMS
 from Products.PloneMeeting.config import TOOL_FOLDER_SEARCHES
@@ -1730,6 +1729,32 @@ schema = Schema((
         schemata="advices",
         write_permission="PloneMeeting: Write risky config",
     ),
+    BooleanField(
+        name='itemWithGivenAdviceIsNotDeletable',
+        default=defValues.itemWithGivenAdviceIsNotDeletable,
+        widget=BooleanField._properties['widget'](
+            description="ItemWithGivenAdviceIsNotDeletable",
+            description_msgid="item_with_given_advice_is_not_deletable_descr",
+            label='Itemwithgivenadviceisnotdeletable',
+            label_msgid='PloneMeeting_label_itemWithGivenAdviceIsNotDeletable',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    BooleanField(
+        name='inheritedAdviceRemoveableByAdviser',
+        default=defValues.inheritedAdviceRemoveableByAdviser,
+        widget=BooleanField._properties['widget'](
+            description="InheritedAdviceRemoveableByAdviser",
+            description_msgid="inherited_advice_removeable_by_adviser_descr",
+            label='Inheritedadviceremoveablebyadviser',
+            label_msgid='PloneMeeting_label_inheritedAdviceRemoveableByAdviser',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        write_permission="PloneMeeting: Write risky config",
+    ),
     DataGridField(
         name='customAdvisers',
         widget=DataGridField._properties['widget'](
@@ -1982,6 +2007,23 @@ schema = Schema((
         schemata="advices",
         write_permission="PloneMeeting: Write risky config",
     ),
+    LinesField(
+        name='hideNotViewableLinkedItemsTo',
+        widget=MultiSelectionWidget(
+            description="HideNotViewableLinkedItemsTo",
+            description_msgid="hide_not_viewable_linked_items_to_descr",
+            format="checkbox",
+            label='Hidenotviewablelinkeditemsto',
+            label_msgid='PloneMeeting_label_hideNotViewableLinkedItemsTo',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        multiValued=1,
+        vocabulary='listPowerObserversTypes',
+        default=defValues.hideNotViewableLinkedItemsTo,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
     BooleanField(
         name='restrictAccessToSecretItems',
         default=defValues.restrictAccessToSecretItems,
@@ -1990,19 +2032,6 @@ schema = Schema((
             description_msgid="restrict_access_to_secret_items_descr",
             label='Restrictaccesstosecretitems',
             label_msgid='PloneMeeting_label_restrictAccessToSecretItems',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="advices",
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    BooleanField(
-        name='itemWithGivenAdviceIsNotDeletable',
-        default=defValues.itemWithGivenAdviceIsNotDeletable,
-        widget=BooleanField._properties['widget'](
-            description="ItemWithGivenAdviceIsNotDeletable",
-            description_msgid="item_with_given_advice_is_not_deletable_descr",
-            label='Itemwithgivenadviceisnotdeletable',
-            label_msgid='PloneMeeting_label_itemWithGivenAdviceIsNotDeletable',
             i18n_domain='PloneMeeting',
         ),
         schemata="advices",
@@ -2116,36 +2145,22 @@ schema = Schema((
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
-        name='hideNotViewableLinkedItemsTo',
+        name='usingGroups',
         widget=MultiSelectionWidget(
-            description="HideNotViewableLinkedItemsTo",
-            description_msgid="hide_not_viewable_linked_items_to_descr",
+            description="usingGroups",
+            description_msgid="config_using_groups_descr",
             format="checkbox",
-            label='Hidenotviewablelinkeditemsto',
-            label_msgid='PloneMeeting_label_hideNotViewableLinkedItemsTo',
+            label='Usinggroups',
+            label_msgid='PloneMeeting_label_configUsingGroups',
             i18n_domain='PloneMeeting',
         ),
         schemata="advices",
         multiValued=1,
-        vocabulary='listPowerObserversTypes',
-        default=defValues.hideNotViewableLinkedItemsTo,
+        vocabulary_factory='collective.contact.plonegroup.selected_organization_services',
+        default=defValues.usingGroups,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
-    BooleanField(
-        name='inheritedAdviceRemoveableByAdviser',
-        default=defValues.inheritedAdviceRemoveableByAdviser,
-        widget=BooleanField._properties['widget'](
-            description="InheritedAdviceRemoveableByAdviser",
-            description_msgid="inherited_advice_removeable_by_adviser_descr",
-            label='Inheritedadviceremoveablebyadviser',
-            label_msgid='PloneMeeting_label_inheritedAdviceRemoveableByAdviser',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="advices",
-        write_permission="PloneMeeting: Write risky config",
-    ),
-
     BooleanField(
         name='useVotes',
         default=defValues.useVotes,
@@ -2337,10 +2352,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                     ('ConfigurablePODTemplate', 'DashboardPODTemplate', 'StyleTemplate'),
                                     ()
                                     ),
-        TOOL_FOLDER_MEETING_USERS: (('Meeting users', 'Folder'),
-                                    ('MeetingUser', ),
-                                    ()
-                                    )
     }
 
     metaTypes = ('MeetingItem', 'MeetingItemTemplate', 'MeetingItemRecurring', 'Meeting')
@@ -2389,7 +2400,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: tool.userIsAmong(['creators'])",
+                    'tal_condition': "python: tool.userIsAmong(['creators'], cfg=cfg)",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items of my groups
@@ -2493,7 +2504,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': True,
-                    'tal_condition': "python: tool.userIsAmong(['prereviewers']) and "
+                    'tal_condition': "python: tool.userIsAmong(['prereviewers'], cfg=cfg) and "
                                      "'pre_validation' in cfg.getWorkflowAdaptations()",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
@@ -2542,7 +2553,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': True,
-                    'tal_condition': "python: cfg.getUseAdvices() and tool.userIsAmong(['advisers'])",
+                    'tal_condition': "python: cfg.getUseAdvices() and tool.userIsAmong(['advisers'], cfg=cfg)",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items to advice without delay
@@ -2558,7 +2569,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': True,
-                    'tal_condition': "python: cfg.getUseAdvices() and tool.userIsAmong(['advisers'])",
+                    'tal_condition': "python: cfg.getUseAdvices() and tool.userIsAmong(['advisers'], cfg=cfg)",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items to advice with delay
@@ -2574,7 +2585,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': True,
-                    'tal_condition': "python: cfg.getUseAdvices() and tool.userIsAmong(['advisers'])",
+                    'tal_condition': "python: cfg.getUseAdvices() and tool.userIsAmong(['advisers'], cfg=cfg)",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items to advice with exceeded delay
@@ -2590,7 +2601,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: cfg.getUseAdvices() and tool.userIsAmong(['advisers'])",
+                    'tal_condition': "python: cfg.getUseAdvices() and tool.userIsAmong(['advisers'], cfg=cfg)",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Every advised items
@@ -2606,7 +2617,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: cfg.getUseAdvices() and tool.userIsAmong(['advisers'])",
+                    'tal_condition': "python: cfg.getUseAdvices() and tool.userIsAmong(['advisers'], cfg=cfg)",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Advised items with delay
@@ -2622,7 +2633,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: cfg.getUseAdvices() and tool.userIsAmong(['advisers'])",
+                    'tal_condition': "python: cfg.getUseAdvices() and tool.userIsAmong(['advisers'], cfg=cfg)",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items to correct
@@ -2638,7 +2649,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': True,
-                    'tal_condition': "python: tool.userIsAmong(['creators']) and "
+                    'tal_condition': "python: tool.userIsAmong(['creators'], cfg=cfg) and "
                                      "('return_to_proposing_group' in cfg.getWorkflowAdaptations() or "
                                      "'return_to_proposing_group_with_all_validations' "
                                      "in cfg.getWorkflowAdaptations() or "
@@ -2679,7 +2690,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': True,
-                    'tal_condition': "python: tool.userIsAmong(['creators']) and "
+                    'tal_condition': "python: tool.userIsAmong(['creators'], cfg=cfg) and "
                                      "('return_to_proposing_group_with_all_validations' "
                                      "in cfg.getWorkflowAdaptations())",
                     'roles_bypassing_talcondition': ['Manager', ]
@@ -2852,6 +2863,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             criteria.edit(criterion.__name__, **{'default': value})
         self.getField('maxShownListings').set(self, value, **kwargs)
 
+    security.declarePublic('getUsingGroups')
+
+    def getUsingGroups(self, theObjects=False, **kwargs):
+        '''Overrides the field 'usingGroups' acessor to manage theObjects.'''
+        res = self.getField('usingGroups').get(self, **kwargs)
+        if theObjects:
+            res = get_organizations(kept_org_uids=res)
+        return res
+
     security.declarePublic('getMaxShownListings')
 
     def getMaxShownListings(self, **kwargs):
@@ -2883,7 +2903,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             def getKey(item):
                 return res.index(item.UID())
             res = sorted(searches, key=getKey)
-
         return res
 
     security.declarePrivate('listToDoListSearches')
@@ -5366,7 +5385,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def getCustomFields(self, cols):
         return getCustomSchemaFields(schema, self.schema, cols)
 
-    security.declarePublic('isUsingMeetingUsers')
+    security.declarePublic('isUsingContacts')
 
     def isUsingContacts(self):
         ''' Returns True if we are currently using contacts.'''
@@ -5462,31 +5481,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 for brain in brains:
                     res.append(brain.getObject())
         return res
-
-    def getUserParam_cachekey(method, self, param, request, userId=None, caching=True):
-        '''cachekey method for self.getUserParam.'''
-        return (param, str(request._debug), userId)
-
-    security.declarePublic('getUserParam')
-
-    @ram.cache(getUserParam_cachekey)
-    def getUserParam(self, param, request, userId=None, caching=True):
-        '''Gets the value of the user-specific p_param, for p_userId if given,
-           for the currently logged user if not. If user preferences are not
-           enabled or if no MeetingUser instance is defined for the currently
-           logged user, this method returns the MeetingConfig-wide value.
-           If p_caching is True, the result will be cached.'''
-        obj = self
-        methodName = 'get%s%s' % (param[0].upper(), param[1:])
-        tool = api.portal.get_tool('portal_plonemeeting')
-        if tool.getEnableUserPreferences():
-            if not userId:
-                user = self.portal_membership.getAuthenticatedMember()
-            else:
-                user = self.portal_membership.getMemberById(userId)
-            if hasattr(self.meetingusers.aq_base, user.id):
-                obj = getattr(self.meetingusers, user.id)
-        return getattr(obj, methodName)()
 
     security.declarePublic('updateAnnexConfidentiality')
 

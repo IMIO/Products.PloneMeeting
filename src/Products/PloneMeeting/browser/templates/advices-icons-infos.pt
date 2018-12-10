@@ -10,7 +10,7 @@
                  userAdviserOrgUids view/userAdviserOrgUids;">
   <tal:defines define="cfg python: view.cfg;
                        displayedAddIcon python: False;
-                       adviceStyle python: cfg.getUserParam('adviceStyle', context.REQUEST);
+                       adviceStyle python: cfg.getAdviceStyle();
                        pm_utils context/@@pm_utils;
                        displayAdviceConfidentiality python: cfg.getEnableAdviceConfidentiality() and view.tool.isManager(context);
                        isRealManager python: view.tool.isManager(context, realManagers=True);

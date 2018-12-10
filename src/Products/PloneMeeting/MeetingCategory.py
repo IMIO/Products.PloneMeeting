@@ -27,7 +27,6 @@ from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import WriteRiskyConfig
 from Products.PloneMeeting.utils import getCustomAdapter
-from Products.PloneMeeting.utils import getFieldContent
 from zope.i18n import translate
 from zope.interface import implements
 
@@ -65,7 +64,7 @@ schema = Schema((
         ),
         enforceVocabulary=True,
         multiValued=1,
-        vocabulary='listUsingGroups',
+        vocabulary_factory='collective.contact.plonegroup.selected_organization_services',
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
@@ -210,23 +209,13 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
         usingGroups = cat.getUsingGroups()
         # If we have usingGroups make sure userId is creator for one of it
         if isUsing and usingGroups and not tool.isManager(cat, realManagers=True):
-            selectable_orgs = tool.get_selectable_orgs(user_id=userId)
-            keys = [selectable_org[0] for selectable_org in selectable_orgs]
+            cfg = tool.getMeetingConfig(cat)
+            selectable_orgs = tool.get_selectable_orgs(cfg, user_id=userId)
+            keys = [selectable_org.UID() for selectable_org in selectable_orgs]
             # Check intersection between self.usingGroups and orgs for which
             # the current user is creator
             isUsing = bool(set(usingGroups).intersection(keys))
         return isUsing
-
-    security.declarePublic('listUsingGroups')
-
-    def listUsingGroups(self):
-        '''Returns a list of groups that will restrict the use of this category for.'''
-        res = []
-        # Get every Plone group related to an organization
-        orgs = get_organizations()
-        for org in orgs:
-            res.append((org.UID(), org.get_full_title(first_index=1)))
-        return DisplayList(tuple(res))
 
     security.declarePublic('listCategoriesOfOtherMCs')
 

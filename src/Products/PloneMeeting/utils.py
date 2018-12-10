@@ -472,8 +472,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         body = safe_unicode(body)
     adminFromAddress = _getEmailAddress(
         portal.getProperty('email_from_name'),
-        safe_unicode(portal.getProperty('email_from_address'))
-        )
+        safe_unicode(portal.getProperty('email_from_address')))
     fromAddress = adminFromAddress
     if tool.getFunctionalAdminEmail():
         fromAddress = _getEmailAddress(tool.getFunctionalAdminName(),
@@ -560,8 +559,8 @@ def sendMailIfRelevant(obj, event, permissionOrRole, isRole=False,
         if not adap.includeMailRecipient(event, userId):
             continue
         # Has the user unsubscribed to this event in his preferences ?
-        itemEvents = cfg.getUserParam('mailItemEvents', request=obj.REQUEST, userId=userId)
-        meetingEvents = cfg.getUserParam('mailMeetingEvents', request=obj.REQUEST, userId=userId)
+        itemEvents = cfg.getMailItemEvents()
+        meetingEvents = cfg.getMailMeetingEvents()
         if (event not in itemEvents) and (event not in meetingEvents):
             continue
         # After all, we will add this guy to the list of recipients.

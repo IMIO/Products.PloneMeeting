@@ -20,7 +20,6 @@ from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.documentviewer.async import queueJob
 from collective.documentviewer.settings import GlobalSettings
-from collective.eeafaceted.dashboard.utils import enableFacetedDashboardFor
 from collective.iconifiedcategory.behaviors.iconifiedcategorization import IconifiedCategorization
 from collective.iconifiedcategory.interfaces import IIconifiedPreview
 from collective.iconifiedcategory.utils import calculate_category_id
@@ -289,7 +288,7 @@ schema = Schema((
                 'label':
                     Column("Config group label",
                            col_description="Enter the label that will be displayed in the application."),
-                     },
+            },
             label='Configgroups',
             label_msgid='PloneMeeting_label_configGroups',
             i18n_domain='PloneMeeting',
@@ -447,14 +446,17 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getActiveConfigs')
 
-    def getActiveConfigs(self):
-        '''Gets the active meeting configurations.'''
+    def getActiveConfigs(self, check_using_groups=True):
+        '''Gets the active meeting configurations.
+           If check_using_groups is True, we check that current
+           user is member of one of the cfg using_groups.'''
         res = []
-        wfTool = self.portal_workflow
-        for meetingConfig in self.objectValues('MeetingConfig'):
-            if wfTool.getInfoFor(meetingConfig, 'review_state') == 'active' and \
-               self.checkMayView(meetingConfig):
-                res.append(meetingConfig)
+        for cfg in self.objectValues('MeetingConfig'):
+            isManager = self.isManager(cfg)
+            if api.content.get_state(cfg) == 'active' and \
+               self.checkMayView(cfg) and \
+               (isManager or (check_using_groups and self.get_orgs_for_user(using_groups=cfg.getUsingGroups()))):
+                res.append(cfg)
         return res
 
     def _users_groups_value_cachekey(method, self):
@@ -482,10 +484,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     @ram.cache(get_plone_groups_for_user_cachekey)
     def get_plone_groups_for_user(self, userId=None, org_uid=None):
         """Just return user.getGroups but cached so it is only done once by REQUEST."""
-        if userId:
-            user = api.user.get(userId)
-        else:
-            user = api.user.get_current()
+        user = userId and api.user.get(userId) or api.user.get_current()
         user_groups = user.getGroups()
         if org_uid:
             user_groups = [plone_group for plone_group in user_groups if plone_group.startswith(org_uid)]
@@ -496,18 +495,19 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                                    user_id=None,
                                    only_selected=True,
                                    suffixes=[],
-                                   omitted_suffixes=[]):
+                                   omitted_suffixes=[],
+                                   using_groups=[]):
         '''cachekey method for self.get_orgs_for_user.'''
         date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting.get_orgs_for_user')
         return (date,
                 self._users_groups_value(),
                 (user_id or api.user.get_current()),
-                only_selected, suffixes, omitted_suffixes)
+                only_selected, suffixes, omitted_suffixes, using_groups)
 
     security.declarePublic('get_orgs_for_user')
 
     @ram.cache(get_orgs_for_user_cachekey)
-    def get_orgs_for_user(self, user_id=None, only_selected=True, suffixes=[], omitted_suffixes=[]):
+    def get_orgs_for_user(self, user_id=None, only_selected=True, suffixes=[], omitted_suffixes=[], using_groups=[]):
         '''Gets the organizations p_user_id belongs to. If p_user_id is None, we use the
            authenticated user. If p_only_selected is True, we consider only selected
            organizations. If p_suffixes is not empty, we select only orgs having
@@ -515,7 +515,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            orgs the user is in using those suffixes.'''
         res = []
         user_plone_group_ids = self.get_plone_groups_for_user(user_id)
-        orgs = get_organizations(only_selected=only_selected)
+        orgs = get_organizations(only_selected=only_selected, kept_org_uids=using_groups)
         for org in orgs:
             org_uid = org.UID()
             for suffix in get_all_suffixes(org_uid):
@@ -534,7 +534,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('get_selectable_orgs')
 
-    def get_selectable_orgs(self, only_selectable=True, user_id=None):
+    def get_selectable_orgs(self, cfg, only_selectable=True, user_id=None):
         """
           Returns the selectable organizations for given p_user_id or currently connected user.
           If p_only_selectable is True, we will only return orgs for which current user is creator.
@@ -542,44 +542,41 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         """
         res = []
         if only_selectable:
-            user_orgs = self.get_orgs_for_user(user_id=user_id, suffixes=['creators', ])
-            for org in user_orgs:
-                res.append((org.UID(), org.get_full_title(first_index=1)))
+            using_groups = cfg.getUsingGroups()
+            res = self.get_orgs_for_user(
+                user_id=user_id, suffixes=['creators', ], using_groups=using_groups)
         else:
-            for org in get_organizations():
-                res.append((org.UID(), org.get_full_title(first_index=1)))
+            res = cfg.getUsingGroups(theObjects=True)
         return res
 
-    def userIsAmong_cachekey(method, self, suffixes, onlyActive=True):
+    def userIsAmong_cachekey(method, self, suffixes, cfg=None):
         '''cachekey method for self.userIsAmong.'''
         date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting.userIsAmong')
         return (date,
                 self._users_groups_value(),
                 api.user.get_current(),
-                suffixes, onlyActive)
+                suffixes,
+                cfg and cfg.getId())
 
     security.declarePublic('userIsAmong')
 
     @ram.cache(userIsAmong_cachekey)
-    def userIsAmong(self, suffixes, onlyActive=True):
+    def userIsAmong(self, suffixes, cfg=None):
         '''Check if the currently logged user is in at least one of p_suffixes-related Plone
            group.  p_suffixes is a list of suffixes.
-           If p_onlyActive is True, we will check if the linked organization is active.'''
-        if onlyActive:
-            activeOrgUids = [org.UID() for org in get_organizations(only_selected=True)]
+           If cfg, we filter on cfg.usingGroups.'''
+        using_groups = cfg and cfg.getUsingGroups() or []
+        activeOrgUids = [org.UID() for org in get_organizations(
+            only_selected=True, kept_org_uids=using_groups)]
         res = False
         for plone_group_id in self.get_plone_groups_for_user():
             # check if the plone_group_id ends with a least one of the p_suffixes
             has_kept_suffixes = [suffix for suffix in suffixes if plone_group_id.endswith('_%s' % suffix)]
             if has_kept_suffixes:
-                if onlyActive:
-                    org = get_organization(plone_group_id)
-                    # if we can not find the org, it means that it is a suffix like 'powerobservers'
-                    # if we find the org, we check that it is among activeOrgUids
-                    if not org or org.UID() in activeOrgUids:
-                        res = True
-                        break
-                else:
+                org = get_organization(plone_group_id)
+                # if we can not find the org, it means that it is a suffix like 'powerobservers'
+                # if we find the org, we check that it is among activeOrgUids
+                if not org or org.UID() in activeOrgUids:
                     res = True
                     break
         return res

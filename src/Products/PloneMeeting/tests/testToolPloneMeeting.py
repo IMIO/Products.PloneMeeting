@@ -406,6 +406,16 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.changeUser('restrictedpowerobserver2')
         self.assertEquals(self.tool.showPloneMeetingTab(cfg2), False)
 
+    def test_pm_ShowPloneMeetingTabCfgUsingGroups(self):
+        '''Test shown tab when MeetingConfig.usingGroups is used.'''
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        cfg2.setUsingGroups([self.vendors_uid])
+        self.changeUser('pmCreator1')
+        self.assertFalse(self.vendors in self.tool.get_orgs_for_user())
+        self.assertEquals(self.tool.showPloneMeetingTab(cfg), True)
+        self.assertEquals(self.tool.showPloneMeetingTab(cfg2), False)
+
     def test_pm_SetupProcessForCreationFlag(self):
         '''Test that every elements created by the setup process
            are correctly initialized regarding the _at_creation_flag.
@@ -848,6 +858,19 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertTrue(self.tool.userIsAmong(['powerobservers']))
         self.assertTrue(self.tool.userIsAmong(['creators', 'powerobservers']))
 
+    def test_pm_UserIsAmongCfgUsingGroups(self):
+        """If parameter cfg is passed to userIsAmong, it will take into account
+           the MeetingConfig.usingGroups parameter."""
+        # configure usingGroups
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        cfg2.setUsingGroups([self.vendors_uid])
+        self.changeUser('pmCreator1')
+        self.assertFalse(self.vendors_creators in self.member.getGroups())
+        self.assertTrue(self.tool.userIsAmong(['creators']))
+        self.assertTrue(self.tool.userIsAmong(['creators'], cfg=cfg))
+        self.assertFalse(self.tool.userIsAmong(['creators'], cfg=cfg2))
+
     def test_pm_Validate_configGroups(self):
         """Test ToolPloneMeeting.validate_configGroups, a value used by a MeetingConfig
            can not be removed."""
@@ -865,19 +888,19 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertIsNone(self.tool.validate_configGroups(()))
         self.assertIsNone(self.tool.validate_configGroups((
             {'label': '', 'orderindex_': 'template_row_marker', 'row_id': ''},
-            )))
+        )))
         self.assertIsNone(self.tool.validate_configGroups((
-                {'label': 'ConfigGroup1', 'row_id': 'unique_id_1'},
-                {'label': 'ConfigGroup2', 'row_id': 'unique_id_2'},
-                {'label': 'ConfigGroup3', 'row_id': 'unique_id_3'},
-            )))
+            {'label': 'ConfigGroup1', 'row_id': 'unique_id_1'},
+            {'label': 'ConfigGroup2', 'row_id': 'unique_id_2'},
+            {'label': 'ConfigGroup3', 'row_id': 'unique_id_3'},
+        )))
         self.assertIsNone(self.tool.validate_configGroups((
-                {'label': 'ConfigGroup2', 'row_id': 'unique_id_2'},
-                {'label': 'ConfigGroup3', 'row_id': 'unique_id_3'},
-            )))
+            {'label': 'ConfigGroup2', 'row_id': 'unique_id_2'},
+            {'label': 'ConfigGroup3', 'row_id': 'unique_id_3'},
+        )))
         self.assertIsNone(self.tool.validate_configGroups((
-                {'label': 'ConfigGroup2', 'row_id': 'unique_id_2'},
-            )))
+            {'label': 'ConfigGroup2', 'row_id': 'unique_id_2'},
+        )))
 
         # but fails if removing used value
         cfg.setConfigGroup('unique_id_2')
@@ -888,10 +911,9 @@ class testToolPloneMeeting(PloneMeetingTestCase):
                      'cfg_title': safe_unicode(cfg.Title()), },
             context=self.request)
         self.assertEqual(self.tool.validate_configGroups((
-                {'label': 'ConfigGroup1', 'row_id': 'unique_id_1'},
-                {'label': 'ConfigGroup3', 'row_id': 'unique_id_3'},
-                )),
-                         error_msg)
+            {'label': 'ConfigGroup1', 'row_id': 'unique_id_1'},
+            {'label': 'ConfigGroup3', 'row_id': 'unique_id_3'},
+        )), error_msg)
 
     def test_pm__users_groups_value(self):
         """Test that this cached method behaves normally."""
@@ -940,7 +962,22 @@ class testToolPloneMeeting(PloneMeetingTestCase):
             self.assertEqual(self.tool.get_plone_groups_for_user(userId='pmReviewer1'),
                              sorted(pmreviewer1_groups))
 
-
+    def test_pm_Get_selectable_orgs(self):
+        """Returns selectable organizations depending on :
+           - MeetingConfig.usingGroups;
+           - user is creator for if only_selectable=True."""
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig
+        self.changeUser('pmCreator1')
+        self.assertEqual(self.tool.get_selectable_orgs(cfg), [self.developers])
+        self.assertEqual(self.tool.get_selectable_orgs(cfg2), [self.developers])
+        self.assertEqual(self.tool.get_selectable_orgs(cfg, only_selectable=False),
+                         [self.developers, self.vendors])
+        # do not return more than MeetingConfig.usingGroups
+        cfg2.setUsingGroups([self.vendors_uid])
+        self.assertEqual(self.tool.get_selectable_orgs(cfg2), [])
+        self.assertEqual(self.tool.get_selectable_orgs(cfg2, only_selectable=False),
+                         [self.vendors])
 def test_suite():
     from unittest import TestSuite, makeSuite
     suite = TestSuite()

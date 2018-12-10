@@ -432,7 +432,7 @@ class MeetingConfigDescriptor(Descriptor):
                          'usedVoteValues', 'insertingMethodsOnAddItem', 'itemAnnexConfidentialVisibleFor',
                          'adviceAnnexConfidentialVisibleFor', 'meetingAnnexConfidentialVisibleFor',
                          'enableAdviceConfidentiality', 'adviceConfidentialityDefault', 'adviceConfidentialFor',
-                         'hideNotViewableLinkedItemsTo', 'inheritedAdviceRemoveableByAdviser',
+                         'hideNotViewableLinkedItemsTo', 'inheritedAdviceRemoveableByAdviser', 'usingGroups',
                          'hideHistoryTo', 'orderedContacts')
     excludedFields = ['maxDaysDecisions', 'meetingAppDefaultView', 'addContactsCSV']
 
@@ -557,6 +557,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.adviceConfidentialFor = ()
         self.hideNotViewableLinkedItemsTo = ()
         self.inheritedAdviceRemoveableByAdviser = False
+        self.usingGroups = []
         # List of other meetingConfigs, item of this meetingConfig
         # will be clonable to
         self.meetingConfigsToCloneTo = []

@@ -298,6 +298,8 @@ class Migrate_To_4_1(Migrator):
                 # already migrated
                 break
             delattr(cfg, 'useUserReplacements')
+            # remove the meetingusers folder and contained MeetingUsers
+            cfg.manage_delObjects(ids=['meetingusers'])
         logger.info('Done.')
 
     def _custom_migrate_meeting_group_to_org(self, mGroup, org):
@@ -431,6 +433,18 @@ class Migrate_To_4_1(Migrator):
                     dc.query = adapted_query
                     dc._p_changed = True
 
+            # migrate MeetingCategories using usingGroups
+            categories = cfg.categories.objectValues('MeetingCategory')
+            classifiers = cfg.classifiers.objectValues('MeetingCategory')
+            for cat in tuple(categories) + tuple(classifiers):
+                usingGroups = cat.getUsingGroups()
+                if usingGroups:
+                    adapted_usingGroups = []
+                    for mGroupId in usingGroups:
+                        org = own_org.get(mGroupId)
+                        adapted_usingGroups.append(org.UID())
+                    cat.setUsingGroups(adapted_usingGroups)
+
             # advicesKeptOnSentToOtherMC
             advicesKeptOnSentToOtherMC = cfg.getAdvicesKeptOnSentToOtherMC()
             adapted_advicesKeptOnSentToOtherMC = []
@@ -545,8 +559,8 @@ class Migrate_To_4_1(Migrator):
                 item.setProposingGroup(org.UID())
             # templateUsingGroups
             templateUsingGroups = item.getTemplateUsingGroups()
-            adapted_templateUsingGroups = []
             if templateUsingGroups:
+                adapted_templateUsingGroups = []
                 for mGroupId in templateUsingGroups:
                     org = own_org.get(mGroupId)
                     adapted_templateUsingGroups.append(org.UID())

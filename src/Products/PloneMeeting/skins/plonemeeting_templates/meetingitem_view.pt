@@ -417,7 +417,6 @@
                 style="display: none;"
                 tal:define="defaultDisplay python: context.getBudgetRelated() and 'block' or 'none';"
                 tal:attributes="style string:display:${defaultDisplay};">
-              <br />
               <metal:f use-macro="context/@@pm-macros/viewContentField"/>
           </div>
         </tal:displayBudgetInfos>

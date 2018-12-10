@@ -206,8 +206,9 @@ def onOrgModified(org, event):
 
 def onOrgWillBeRemoved(current_org, event):
     '''Checks if the organization can be deleted:
-      - it can not be linked to an existing meetingItem;
+      - it can not be linked to an existing MeetingItem;
       - it can not be referenced in an existing MeetingConfig;
+      - it can not be used in an existing MeetingCategory.usingGroups;
       - it can not be used as groupInCharge of another organization;
       - the linked ploneGroups must be empty of members.'''
     # Do lighter checks first...  Check that the organization is not used
@@ -233,7 +234,8 @@ def onOrgWillBeRemoved(current_org, event):
         customAdvisersOrgUids = [customAdviser['org'] for customAdviser in mc.getCustomAdvisers()]
         if current_org_uid in customAdvisersOrgUids or \
            current_org_uid in mc.getPowerAdvisersGroups() or \
-           current_org_uid in mc.getSelectableAdvisers():
+           current_org_uid in mc.getSelectableAdvisers() or \
+           current_org_uid in mc.getUsingGroups():
             raise BeforeDeleteException(translate("can_not_delete_organization_meetingconfig",
                                                   mapping={'cfg_url': mc.absolute_url()},
                                                   domain="plone",
@@ -245,6 +247,15 @@ def onOrgWillBeRemoved(current_org, event):
                                                       mapping={'cfg_url': mc.absolute_url()},
                                                       domain="plone",
                                                       context=request))
+        categories = mc.categories.objectValues('MeetingCategory')
+        classifiers = mc.classifiers.objectValues('MeetingCategory')
+        for cat in tuple(categories) + tuple(classifiers):
+            if current_org_uid in cat.getUsingGroups():
+                raise BeforeDeleteException(translate("can_not_delete_organization_meetingcategory",
+                                                      mapping={'url': cat.absolute_url()},
+                                                      domain="plone",
+                                                      context=request))
+
     # Then check that every linked Plone group is empty because we are going to delete them.
     portal = api.portal.get()
     for suffix in get_all_suffixes(current_org_uid):

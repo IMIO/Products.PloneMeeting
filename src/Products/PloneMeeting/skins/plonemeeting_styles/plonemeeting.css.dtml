@@ -1692,6 +1692,7 @@ p#download_vcard {
     /*max-height: 0;*/
     overflow: hidden;
     transition: max-height 0.2s ease-out;
+    margin-bottom: 0.5em;
 }
 .collapsible-inner-content {
     margin: 0.2em;

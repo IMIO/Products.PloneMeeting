@@ -428,7 +428,7 @@
                   <h5>
                     <a tal:attributes="href cat/absolute_url;
                                        class python: not isActive and 'state-inactive' or ''"
-                       tal:content="cat/Title">Category title</a>
+                       tal:content="cat/Title">Annex category title</a>
                   </h5>
                   <div class="discreet" tal:define="descr cat/Description" tal:condition="descr" tal:content="descr">Category description</div>
                   <tal:additionalInformations
@@ -941,6 +941,17 @@
           <td tal:define="field python:here.getField('adviceStyle')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
+          <td tal:define="field python:here.getField('defaultAdviceHiddenDuringRedaction')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td tal:define="field python:here.getField('transitionsReinitializingDelays')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+        </tr>
+        <tr valign="top">
+          <td tal:define="field python:here.getField('historizeItemDataWhenAdviceIsGiven')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
           <td tal:define="field python:here.getField('keepAccessToItemWhenAdviceIsGiven')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
@@ -948,16 +959,14 @@
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
         </tr>
-        <tr valign="top">
-          <td tal:define="field python:here.getField('defaultAdviceHiddenDuringRedaction')">
+        <tr>
+          <td tal:define="field python:here.getField('itemWithGivenAdviceIsNotDeletable')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td tal:define="field python:here.getField('transitionsReinitializingDelays')">
+          <td tal:define="field python:here.getField('inheritedAdviceRemoveableByAdviser')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td tal:define="field python:here.getField('historizeItemDataWhenAdviceIsGiven')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
+          <td></td>
         </tr>
         <tr valign="top">
           <td colspan="3">
@@ -1033,7 +1042,7 @@
           <td tal:define="field python:here.getField('restrictAccessToSecretItems')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td tal:define="field python:here.getField('itemWithGivenAdviceIsNotDeletable')">
+          <td tal:define="field python:here.getField('hideNotViewableLinkedItemsTo')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <td></td>
@@ -1070,13 +1079,13 @@
           </td>
         </tr>
         <tr>
-          <td tal:define="field python:here.getField('hideNotViewableLinkedItemsTo')">
+          <td tal:define="field python:here.getField('usingGroups')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td tal:define="field python:here.getField('inheritedAdviceRemoveableByAdviser')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
+          <td>
           </td>
-          <td></td>
+          <td>
+          </td>
         </tr>
       </table>
     </tal:advices>
