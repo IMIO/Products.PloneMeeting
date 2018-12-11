@@ -49,42 +49,40 @@
     <tal:mainConfig condition="python: pageName=='default'">
       <table width="100%" class="discreet">
         <tr valign="top">
-          <td tal:define="field python:here.getField('configGroup')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
-          <td tal:define="field python:here.getField('budgetDefault')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
-          <td tal:define="field python:here.getField('defaultMeetingItemMotivation')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
-          <td width="25%" tal:define="field python:here.getField('places')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
-        </tr>
-        <tr valign="top">
-          <td tal:define="field python:here.getField('folderTitle')">
+          <td width="25%" tal:define="field python:here.getField('folderTitle')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <!-- I cannot use the standard macro for displaying this field because the
                widget condition prevents the widget from being displayed. -->
-          <td tal:define="field python:here.getField('shortName')">
+          <td width="25%" tal:define="field python:here.getField('shortName')">
             <b i18n:translate="PloneMeeting_label_shortName"></b>:
             <span tal:content="context/getShortName"/>
           </td>
-          <td tal:define="field python:here.getField('isDefault')">
+          <td width="25%" tal:define="field python:here.getField('isDefault')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td tal:define="field python:here.getField('itemIconColor')">
+          <td width="25%" tal:define="field python:here.getField('itemIconColor')">
             <span metal:use-macro="here/widgets/field/macros/view" />
-            <img style="position: absolute; margin-top: -20px;" src="#" tal:attributes="src string:${portal_url}/${here/getItemIconColorName}" />
+            <img style="position: absolute; margin-top: -20px;"
+                 tal:attributes="src string:${portal_url}/${here/getItemIconColorName}" />
           </td>
         </tr>
         <tr valign="top">
+          <td tal:define="field python:here.getField('configGroup')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td tal:define="field python:here.getField('places')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
           <td tal:define="field python:here.getField('lastMeetingNumber')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <td tal:define="field python:here.getField('yearlyInitMeetingNumber')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+        </tr>
+        <tr valign="top">
+          <td tal:define="field python:here.getField('budgetDefault')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <td tal:define="field python:here.getField('configVersion')">
@@ -92,6 +90,8 @@
           </td>
           <td tal:define="field python:here.getField('itemCreatedOnlyUsingTemplate')">
             <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td>
           </td>
         </tr>
       </table>

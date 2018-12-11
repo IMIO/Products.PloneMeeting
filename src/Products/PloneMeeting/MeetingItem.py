@@ -968,7 +968,6 @@ schema = Schema((
         read_permission="PloneMeeting: Read decision",
         searchable=True,
         allowable_content_types=('text/html',),
-        default_method="getDefaultMotivation",
         default_output_type="text/x-html-safe",
         optional=True,
         write_permission="PloneMeeting: Write decision",
@@ -1684,14 +1683,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         return cfg.getBudgetDefault()
-
-    security.declarePublic('getDefaultMotivation')
-
-    def getDefaultMotivation(self):
-        '''Returns the default item motivation content from the MeetingConfig.'''
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self)
-        return cfg.getDefaultMeetingItemMotivation()
 
     security.declarePublic('showObservations')
 

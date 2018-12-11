@@ -463,7 +463,6 @@ class MeetingConfigDescriptor(Descriptor):
         # text widget that should contain one place per line.
         self.places = ''
         self.budgetDefault = ''
-        self.defaultMeetingItemMotivation = ''
         self.folderTitle = folderTitle
         self.shortName = ''  # Will be used for deducing content types specific
         # to this MeetingConfig (item, meeting)
