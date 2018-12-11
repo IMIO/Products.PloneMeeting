@@ -630,6 +630,14 @@ class Migrate_To_4_1(Migrator):
                 folder.reindexObject()
         logger.info('Done.')
 
+    def _cleanMeetingConfigs(self):
+        """Clean MeetingConfigs, remove attribute 'defaultMeetingItemMotivation'."""
+        logger.info('Cleaning MeetingConfigs...')
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            if hasattr(cfg, 'defaultMeetingItemMotivation'):
+                delattr(cfg, 'defaultMeetingItemMotivation')
+        logger.info('Done.')
+
     def run(self, step=None):
         logger.info('Migrating to PloneMeeting 4.1...')
 
@@ -688,6 +696,7 @@ class Migrate_To_4_1(Migrator):
         self._updateUsedItemAttributes()
         self._migrateGroupsShownInDashboardFilter()
         self._enableStyleTemplates()
+        self._cleanMeetingConfigs()
         # too many indexes to update, the rebuild the portal_catalog
         self.refreshDatabase()
 
@@ -715,7 +724,8 @@ def migrate(context):
        17) Adapt application for Contacts;
        18) Update MeetingConfig.usedItemAttributes, select 'description' and unselect 'itemAssembly';
        19) Migrate MeetingConfig.groupsShownInDashboardFilter to MeetingConfig.groupsHiddenInDashboardFilter;
-       20) Configure MeetingConfig podtemplates folder to accept style templates.
+       20) Configure MeetingConfig podtemplates folder to accept style templates;
+       21) Clean MeetingConfigs from removed attributes.
     '''
     migrator = Migrate_To_4_1(context)
     migrator.run()
