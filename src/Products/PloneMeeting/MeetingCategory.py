@@ -10,7 +10,6 @@
 #
 
 from AccessControl import ClassSecurityInfo
-from collective.contact.plonegroup.utils import get_organizations
 from imio.helpers.cache import invalidate_cachekey_volatile_for
 from OFS.ObjectManager import BeforeDeleteException
 from plone import api

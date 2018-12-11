@@ -73,9 +73,8 @@ indexInfos = {
     'hasAnnexesToSign': ('KeywordIndex', {}),
     # Meeting-related indexes
     'getDate': ('DateIndex', {}),
-    # MeetingUser-related indexes
-    'getConfigId': ('FieldIndex', {}),
-    'getItemNumber': ('FieldIndex', {})}
+    # Indexes used by every portal_types
+    'getConfigId': ('FieldIndex', {}), }
 # Metadata to create in portal_catalog
 columnInfos = ('getDate', 'getProposingGroup', 'getGroupInCharge',
                'getPreferredMeeting', 'getPreferredMeetingDate',

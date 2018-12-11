@@ -1254,7 +1254,6 @@ td[class^="meeting_item_listType_"] div.item_listType.Editable {
 
 .item_attribute_label,
 .meeting_attribute_label {
-    font-style: italic;
     font-weight: bold !important;
     color: &dtml-discreetColor;;
 }
@@ -1695,7 +1694,6 @@ p#download_vcard {
     margin-bottom: 0.5em;
 }
 .collapsible-inner-content {
-    margin: 0.2em;
     padding: 0.3em;
     background-color: &dtml-evenRowBackgroundColor;;
     border:1px solid &dtml-tableHeaderBackgroundColor;;
@@ -1721,7 +1719,6 @@ p#download_vcard {
     content: "\f0fe";
     color: grey;
     font-weight: bold;
-    margin-left: 2px;
 }
 
 .active:before {
@@ -1778,6 +1775,11 @@ div#formfield-form-widgets-certified_signatures td select.select-widget {
 a.portlet_pm_own_org_link {
    margin-top: 1em;
    font-weight: bold;
+}
+
+/* add some margin under fieldsets displayed in base_edit forms */
+body.template-base_edit #content fieldset {
+   margin-bottom: 0.5em;
 }
 
 /* </dtml-with> */

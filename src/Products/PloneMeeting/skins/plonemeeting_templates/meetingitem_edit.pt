@@ -111,7 +111,6 @@
         </tal:scriptForOtherMeetingConfigsClonableToSpecificFields>
     </div>
     <div style='clear: both'></div>
-    <br />
 
     <tal:comment replace="nothing">Budget-related information</tal:comment>
     <fieldset tal:condition="python: 'budgetInfos' in usedAttrs">
@@ -161,6 +160,7 @@
     <metal:field use-macro="python:here.widget('itemAssemblyAbsents', mode='edit')"/>
     <metal:field use-macro="python:here.widget('itemAssemblyGuests', mode='edit')"/>
     <metal:field use-macro="python:here.widget('itemSignatures', mode='edit')"/>
+    <metal:field use-macro="python:here.widget('textCheckList', mode='edit')"/>
 
 </metal:widgets>
 </metal:base_body>

@@ -215,7 +215,7 @@ DEFAULT_COPIED_FIELDS = ['title', 'description', 'detailedDescription', 'motivat
 EXTRA_COPIED_FIELDS_SAME_MC = ['associatedGroups', 'copyGroups', 'classifier', 'category',
                                'optionalAdvisers', 'otherMeetingConfigsClonableTo',
                                'otherMeetingConfigsClonableToPrivacy', 'oralQuestion',
-                               'toDiscuss', 'privacy', 'pollType']
+                               'toDiscuss', 'privacy', 'pollType', 'textCheckList']
 
 # to differenciate items of different meeting configs,
 # use a different icon color (MeetingConfig.itemIconColor)

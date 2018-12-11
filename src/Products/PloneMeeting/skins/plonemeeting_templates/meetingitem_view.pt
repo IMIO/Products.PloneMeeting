@@ -458,6 +458,21 @@
         </tr>
     </table>
 
+    <tal:textCheckList condition="python: 'textCheckList' in usedAttrs">
+      <div id="textCheckList" class="collapsible discreet" onclick="toggleDoc('collapsible-text-checklist');">
+        <span class="item_attribute_label" i18n:translate="PloneMeeting_label_textCheckList">
+            Text check list
+        </span>
+      </div>
+      <div id="collapsible-text-checklist" class="collapsible-content discreet" style="display: none;"
+           tal:define="textCheckList context/getTextCheckList">
+        <div class="collapsible-inner-content">
+          <span tal:condition="textCheckList" tal:replace="structure context/getTextCheckList">Text check list</span>
+          <span tal:condition="not:textCheckList" class="discreet" i18n:translate="">Nothing to display.</span>
+        </div>
+      </div>
+    </tal:textCheckList>
+
     <tal:comment replace="nothing">In and out moves</tal:comment>
     <tal:field define="fieldName python: 'inAndOutMoves'; ajaxEdit python:True">
        <metal:f use-macro="context/@@pm-macros/viewContentField"/>

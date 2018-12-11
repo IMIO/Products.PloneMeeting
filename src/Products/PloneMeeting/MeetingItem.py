@@ -1412,6 +1412,22 @@ schema = Schema((
         ),
         optional=True,
     ),
+    TextField(
+        name='textCheckList',
+        allowable_content_types=('text/plain',),
+        widget=TextAreaWidget(
+            condition="python: here.showMeetingManagerReservedField('textCheckList')",
+            description="Enter elements that are necessary for this kind of item",
+            description_msgid="text_check_list_descr",
+            label='TextCheckList',
+            label_msgid='PloneMeeting_label_textCheckList',
+            i18n_domain='PloneMeeting',
+        ),
+        optional=True,
+        write_permission="PloneMeeting: Write item MeetingManager reserved fields",
+        default_output_type="text/x-html-safe",
+        default_content_type="text/plain",
+    ),
 
 ),
 )
@@ -1740,7 +1756,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''When must field named p_name be shown?'''
         tool = api.portal.get_tool('portal_plonemeeting')
         isMgr = tool.isManager(self)
-        res = not self.isTemporary() and isMgr and self.attributeIsUsed(name)
+        res = isMgr and self.attributeIsUsed(name)
         return res
 
     security.declarePublic('showToDiscuss')
