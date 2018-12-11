@@ -59,21 +59,21 @@ class testSearches(PloneMeetingTestCase):
         self.changeUser('siteadmin')
         self.assertEqual(adapter.query,
                          {'getProposingGroup': {'query': []},
-                          'portal_type':  {'query': itemTypeName}})
+                          'portal_type': {'query': itemTypeName}})
 
         # pmManager is member of 'developers' and 'vendors'
         self.changeUser('pmManager')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemsofmygroups')
         self.assertEqual(adapter.query,
                          {'getProposingGroup': {'query': [self.developers_uid, self.vendors_uid]},
-                          'portal_type':  {'query': itemTypeName}})
+                          'portal_type': {'query': itemTypeName}})
 
         # pmCreator1 is member of 'developers'
         self.changeUser('pmCreator1')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemsofmygroups')
         self.assertEqual(adapter.query,
                          {'getProposingGroup': {'query': [self.developers_uid]},
-                          'portal_type':  {'query': itemTypeName}})
+                          'portal_type': {'query': itemTypeName}})
 
         # a deactivated group is still listed
         self.changeUser('siteadmin')
@@ -82,7 +82,7 @@ class testSearches(PloneMeetingTestCase):
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemsofmygroups')
         self.assertEqual(adapter.query,
                          {'getProposingGroup': {'query': [self.developers_uid, self.vendors_uid]},
-                          'portal_type':  {'query': itemTypeName}})
+                          'portal_type': {'query': itemTypeName}})
 
     def test_pm_SearchItemsToAdviceAdapter(self):
         '''Test the 'search-items-to-advice' adapter that should return a list of items
@@ -102,8 +102,8 @@ class testSearches(PloneMeetingTestCase):
                              name='items-to-advice')
         # admin is not adviser
         self.assertEquals(adapter.query,
-                          {'indexAdvisers':  {'query': []},
-                           'portal_type':  {'query': itemTypeName}})
+                          {'indexAdvisers': {'query': []},
+                           'portal_type': {'query': itemTypeName}})
         # as adviser, query is correct
         self.changeUser('pmAdviser1')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstoadvice')
@@ -301,7 +301,7 @@ class testSearches(PloneMeetingTestCase):
         # admin is not adviser
         self.assertEquals(adapter.query,
                           {'indexAdvisers': {'query': []},
-                           'portal_type':  {'query': itemTypeName}})
+                           'portal_type': {'query': itemTypeName}})
         # as adviser, query is correct
         self.changeUser('pmAdviser1')
         adviceStates = []
@@ -312,10 +312,10 @@ class testSearches(PloneMeetingTestCase):
         adviceStates = tuple(set(adviceStates))
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_adviseditemswithdelay')
         self.assertEquals(adapter.query,
-                          {'indexAdvisers':  {'query':
+                          {'indexAdvisers': {'query':
                            ['delay__{0}_{1}'.format(
                             self.developers_uid, adviceState) for adviceState in adviceStates]},
-                           'portal_type':  {'query': itemTypeName}})
+                           'portal_type': {'query': itemTypeName}})
 
         # now do the query
         # this adapter is used by the "searchalladviseditemswithdelay"
@@ -388,14 +388,14 @@ class testSearches(PloneMeetingTestCase):
         # admin does not belong to any group
         self.assertEquals(adapter.query,
                           {'getCopyGroups': {'query': []},
-                           'portal_type':  {'query': itemTypeName}})
+                           'portal_type': {'query': itemTypeName}})
         # as creator, query is correct
         self.changeUser('pmCreator1')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemsincopy')
         self.assertEquals(adapter.query,
-                          {'getCopyGroups':  {
-                            'query': sorted(['AuthenticatedUsers', self.developers_creators])},
-                           'portal_type':  {'query': itemTypeName}})
+                          {'getCopyGroups': {
+                           'query': sorted(['AuthenticatedUsers', self.developers_creators])},
+                           'portal_type': {'query': itemTypeName}})
 
         # now do the query
         # this adapter is used by the "searchallitemsincopy"
@@ -609,8 +609,8 @@ class testSearches(PloneMeetingTestCase):
         self.assertEquals(adapter.query,
                           {'portal_type': {'query': itemTypeName},
                            'reviewProcessInfo': {
-                            'query': ['{0}__reviewprocess__{1}'.format(self.developers_uid, st)
-                                      for st in res]}})
+                           'query': ['{0}__reviewprocess__{1}'.format(self.developers_uid, st)
+                                     for st in res]}})
 
         # now do the query
         # this adapter is not used by default, but is intended to be used with
@@ -764,12 +764,11 @@ class testSearches(PloneMeetingTestCase):
         self.changeUser('pmManager')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstocorrect')
 
-        self.assertEquals(adapter.query, {
-                          'portal_type': {'query': itemTypeName},
-                          'reviewProcessInfo': {
-                            'query': [
-                                '{0}__reviewprocess__returned_to_proposing_group'.format(
-                                    self.developers_uid)]}})
+        self.assertEquals(
+            adapter.query,
+            {'portal_type': {'query': itemTypeName},
+             'reviewProcessInfo': {
+             'query': ['{0}__reviewprocess__returned_to_proposing_group'.format(self.developers_uid)]}})
 
         # it returns only items the current user is able to correct
         # create an item for developers and one for vendors and 'return' it to proposingGroup
