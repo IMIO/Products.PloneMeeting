@@ -26,6 +26,7 @@ from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
 from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
+from Products.PloneMeeting.interfaces import IMeetingConfig
 from zope.component.hooks import getSite
 from zope.globalrequest import getRequest
 from zope.i18n import translate
@@ -1273,6 +1274,10 @@ class SelectableHeldPositionsVocabulary(object):
         catalog = api.portal.get_tool('portal_catalog')
         brains = catalog(portal_type='held_position', sort_on='sortable_title')
         res = []
+        highlight = False
+        # highlight person_label in title when displayed in the MeetingConfig view
+        if IMeetingConfig.providedBy(context) and 'base_edit' not in context.REQUEST.getURL():
+            highlight = True
         for brain in brains:
             held_position = brain.getObject()
             if held_position.usages and 'assemblyMember' in held_position.usages:
@@ -1283,7 +1288,8 @@ class SelectableHeldPositionsVocabulary(object):
                         held_position.get_short_title(
                             include_usages=True,
                             include_defaults=True,
-                            include_signature_number=True)))
+                            include_signature_number=True,
+                            highlight=highlight)))
         return SimpleVocabulary(res)
 
 SelectableHeldPositionsVocabularyFactory = SelectableHeldPositionsVocabulary()

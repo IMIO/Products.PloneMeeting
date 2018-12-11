@@ -14,6 +14,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   to the selected groups
 - Added field MeetingItem.textCheckList useable on item templates so Managers can define what is necessary for
   the item to be considered "complete"
+- Highlight person_label and held_position_label when displaying contacts on the MeetingConfig view
 
 4.1b13 (2018-12-04)
 -------------------

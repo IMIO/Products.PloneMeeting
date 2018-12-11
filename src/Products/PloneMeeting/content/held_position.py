@@ -54,7 +54,7 @@ class IPMHeldPosition(IHeldPosition):
     position_type = zope.schema.Choice(
         title=_("Position type"),
         vocabulary="PositionTypes",
-        )
+    )
 
 
 class PMHeldPosition(HeldPosition):
@@ -64,13 +64,15 @@ class PMHeldPosition(HeldPosition):
                         include_usages=False,
                         include_defaults=False,
                         include_signature_number=False,
-                        include_sub_organizations=True):
+                        include_sub_organizations=True,
+                        highlight=False):
         """Returns short name for held position :
            - the label if defined on held_position object or position title;
            - if position is in a sub organization, we display also sub-organization titles;
            - the person title.
            If p_include_usages and/or p_include_defaults is True, it is appendended
            at the end of the returned value.
+           If highlight is True, we will display person_label and held_position_label in bold.
            """
         sub_organizations_label = u''
         # display sub-organizations title if any
@@ -88,6 +90,9 @@ class PMHeldPosition(HeldPosition):
             'No label defined on held position',
             context=getRequest(),
             default='No label defined on held position')
+        if highlight:
+            person_label = u'<b>{0}</b>'.format(person_label)
+            held_position_label = u'<b>{0}</b>'.format(held_position_label)
         res = ''
         if sub_organizations:
             sub_organizations_label = u"{0}".format(u"🡒".join(
@@ -96,11 +101,17 @@ class PMHeldPosition(HeldPosition):
         else:
             res = u"{0}, {1}".format(person_label, held_position_label)
         if include_usages:
-            res = res + u" ({0}: {1})".format(_("Usages"), plain_render(self, 'usages') or '-')
+            res = res + u" ({0}: {1})".format(
+                translate("Usages", domain="PloneMeeting", context=self.REQUEST),
+                plain_render(self, 'usages') or '-')
         if include_defaults:
-            res = res + u" ({0}: {1})".format(_("Defaults"), plain_render(self, 'defaults') or '-')
+            res = res + u" ({0}: {1})".format(
+                translate("Defaults", domain="PloneMeeting", context=self.REQUEST),
+                plain_render(self, 'defaults') or '-')
         if include_defaults:
-            res = res + u" ({0}: {1})".format(_("Signature number"), plain_render(self, 'signature_number') or '-')
+            res = res + u" ({0}: {1})".format(
+                translate("Signature number", domain="PloneMeeting", context=self.REQUEST),
+                plain_render(self, 'signature_number') or '-')
         return res
 
     def get_position_usages(self):
