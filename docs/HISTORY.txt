@@ -18,6 +18,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Removed useless field MeetingConfig.defaultMeetingItemMotivation, use an item template instead to manage it,
   moreover, not very relevant as item motivation changes from item purpose to item purpose
 - Reordered MeetingConfig default fields (fields appearing in first tab)
+- Removed PMInAndOutWidget and replace it by an override of at_utils.translate for MeetingConfig.  Values are
+  displayed one by line instead on one line separated by commas
 
 4.1b13 (2018-12-04)
 -------------------

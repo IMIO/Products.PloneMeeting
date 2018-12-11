@@ -826,6 +826,14 @@
         permission="zope2.View"
         />
 
+    <!-- override the @@at_utils view for MeetingConfig -->
+    <browser:page
+        for="Products.PloneMeeting.interfaces.IMeetingConfig"
+        name="at_utils"
+        class=".overrides.MCUtils"
+        allowed_interface="Products.Archetypes.interfaces.utils.IUtils"
+        permission="zope2.View" />
+
     <configure package="collective.iconifiedcategory">
         <browser:page
             for="OFS.interfaces.IItem"

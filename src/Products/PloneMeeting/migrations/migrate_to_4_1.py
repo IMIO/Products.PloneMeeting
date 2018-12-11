@@ -214,7 +214,7 @@ class Migrate_To_4_1(Migrator):
 
     def _migrateToDoListSearches(self):
         """Field MeetingConfig.toDoListSearches was a reference field,
-           we moved it to an InAndOutWidget because new DashboardCollection
+           we moved it to a LinesField because new DashboardCollection
            are not referenceable by default."""
         logger.info('Migrating to do searches...')
         reference_catalog = api.portal.get_tool('reference_catalog')

@@ -32,6 +32,7 @@ from plone.portlets.interfaces import IPortletAssignmentMapping
 from plone.portlets.interfaces import IPortletManager
 from Products.Archetypes.atapi import BooleanField
 from Products.Archetypes.atapi import DisplayList
+from Products.Archetypes.atapi import InAndOutWidget
 from Products.Archetypes.atapi import IntegerField
 from Products.Archetypes.atapi import LinesField
 from Products.Archetypes.atapi import MultiSelectionWidget
@@ -106,7 +107,6 @@ from Products.PloneMeeting.utils import listifySignatures
 from Products.PloneMeeting.utils import reviewersFor
 from Products.PloneMeeting.utils import updateAnnexesAccess
 from Products.PloneMeeting.validators import WorkflowInterfacesValidator
-from Products.PloneMeeting.widgets import PMInAndOutWidget
 from z3c.form.i18n import MessageFactory as _z3c_form
 from zope.annotation import IAnnotations
 from zope.component import getMultiAdapter
@@ -375,7 +375,7 @@ schema = Schema((
     ),
     LinesField(
         name='orderedContacts',
-        widget=PMInAndOutWidget(
+        widget=InAndOutWidget(
             description="OrderedContacts",
             description_msgid="ordered_contacts_descr",
             label='Orderedcontacts',
@@ -605,7 +605,7 @@ schema = Schema((
     ),
     LinesField(
         name='selectablePrivacies',
-        widget=PMInAndOutWidget(
+        widget=InAndOutWidget(
             description="SelectablePrivacies",
             description_msgid="selectable_privacies_descr",
             label='selectableprivacies',
@@ -1101,7 +1101,7 @@ schema = Schema((
     LinesField(
         name='transitionsForPresentingAnItem',
         default=defValues.transitionsForPresentingAnItem,
-        widget=PMInAndOutWidget(
+        widget=InAndOutWidget(
             description="TransitionsForPresentingAnItem",
             description_msgid="transitions_for_presenting_an_item_descr",
             label='Transitionsforpresentinganitem',
@@ -1253,7 +1253,7 @@ schema = Schema((
     ),
     LinesField(
         name='itemsListVisibleFields',
-        widget=PMInAndOutWidget(
+        widget=InAndOutWidget(
             description="ItemsListVisibleFields",
             description_msgid="items_list_visible_fields_descr",
             label='Itemslistvisiblefields',
@@ -1283,7 +1283,7 @@ schema = Schema((
     ),
     LinesField(
         name='toDoListSearches',
-        widget=PMInAndOutWidget(
+        widget=InAndOutWidget(
             description="ToDoListSearches",
             description_msgid="to_do_list_searches",
             label='Todolistsearches',
@@ -2224,7 +2224,7 @@ schema = Schema((
     ),
     LinesField(
         name='usedPollTypes',
-        widget=PMInAndOutWidget(
+        widget=InAndOutWidget(
             description="UsedPollTypes",
             description_msgid="used_poll_types_descr",
             label='Usedpolltypes',
