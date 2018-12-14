@@ -369,20 +369,20 @@ class PloneMeetingRedirectToAppView(BrowserView):
         '''
           Add a specific portal_message if we have no active meetingConfig to redirect the connected member to.
         '''
-        defaultMeetingConfig = self.tool.getDefaultMeetingConfig()
-        member = api.user.get_current()
-        if not defaultMeetingConfig and member.has_role('Manager'):
-            plone_utils = api.portal.get_tool('plone_utils')
-            plone_utils.addPortalMessage(
-                translate('Please specify a default meeting config upon active existing '
-                          'meeting configs to be automaatically redirected to it.',
-                          domain='PloneMeeting',
-                          context=self.request), type='warning')
-        # redirect the user to the default meeting config if possible
-        if defaultMeetingConfig:
-            pmFolder = self.tool.getPloneMeetingFolder(defaultMeetingConfig.getId())
-            return self.request.RESPONSE.redirect(pmFolder.absolute_url() + "/searches_items")
-
+        if not api.user.is_anonymous():
+            defaultMeetingConfig = self.tool.getDefaultMeetingConfig()
+            member = api.user.get_current()
+            if not defaultMeetingConfig and member.has_role('Manager'):
+                plone_utils = api.portal.get_tool('plone_utils')
+                plone_utils.addPortalMessage(
+                    translate('Please specify a default meeting config upon active existing '
+                              'meeting configs to be automaatically redirected to it.',
+                              domain='PloneMeeting',
+                              context=self.request), type='warning')
+            # redirect the user to the default meeting config if possible
+            if defaultMeetingConfig:
+                pmFolder = self.tool.getPloneMeetingFolder(defaultMeetingConfig.getId())
+                return self.request.RESPONSE.redirect(pmFolder.absolute_url() + "/searches_items")
         return self.index()
 
 
