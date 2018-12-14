@@ -37,22 +37,29 @@ class Migrate_To_4_1(Migrator):
 
     def _updateFacetedFilters(self):
         """Add new faceted filters :
+           For item :
            - 'Has annexes to sign?';
            - 'Labels'.
+           For meeting :
+           - 'Date'.
            Update vocabulary used for :
            - Creator;
            - Taken over by."""
         logger.info("Updating faceted filters for every MeetingConfigs...")
 
-        xmlpath = os.path.join(
+        xmlpath_items = os.path.join(
             os.path.dirname(__file__),
             '../faceted_conf/upgrade_step_add_item_widgets.xml')
 
+        xmlpath_meetings = os.path.join(
+            os.path.dirname(__file__),
+            '../faceted_conf/upgrade_step_add_meeting_widgets.xml')
+
         for cfg in self.tool.objectValues('MeetingConfig'):
             obj = cfg.searches.searches_items
-            # add new faceted filters
+            # add new faceted filters for searches_items
             obj.unrestrictedTraverse('@@faceted_exportimport').import_xml(
-                import_file=open(xmlpath))
+                import_file=open(xmlpath_items))
             # update vocabulary for relevant filters
             criteria = ICriteria(obj)
             criteria.edit(
@@ -63,6 +70,11 @@ class Migrate_To_4_1(Migrator):
                 'c12', **{
                     'vocabulary':
                         'Products.PloneMeeting.vocabularies.creatorsforfacetedfiltervocabulary'})
+            obj = cfg.searches.searches_meetings
+            obj = cfg.searches.searches_decisions
+            # add new faceted filters for searches_meetings/searches_items
+            obj.unrestrictedTraverse('@@faceted_exportimport').import_xml(
+                import_file=open(xmlpath_meetings))
         logger.info('Done.')
 
     def _addItemTemplatesManagersGroup(self):
