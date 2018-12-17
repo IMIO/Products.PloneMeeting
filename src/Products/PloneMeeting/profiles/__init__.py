@@ -434,7 +434,7 @@ class MeetingConfigDescriptor(Descriptor):
                          'enableAdviceConfidentiality', 'adviceConfidentialityDefault', 'adviceConfidentialFor',
                          'hideNotViewableLinkedItemsTo', 'inheritedAdviceRemoveableByAdviser', 'usingGroups',
                          'hideHistoryTo', 'orderedContacts')
-    excludedFields = ['maxDaysDecisions', 'meetingAppDefaultView', 'addContactsCSV']
+    excludedFields = ['maxDaysDecisions', 'meetingAppDefaultView', 'addContactsCSV', 'disabled_collections']
 
     # The 'instance' static attribute stores an instance used for assigning
     # default values to a meeting config being created through-the-web.
@@ -651,6 +651,8 @@ class MeetingConfigDescriptor(Descriptor):
         self.maxShownListings = 20
         self.maxShownAvailableItems = 20
         self.maxShownMeetingItems = 40
+        # list of collection ids to disable
+        self.disabled_collections = []  # ['searches_items/searchallitems', 'searches_meetings/searchallmeetings']
 
         # Mail-related parameters -----------------------------------------------
         # Mail mode can be: activated, deactivated, test.

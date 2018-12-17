@@ -21,6 +21,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Removed PMInAndOutWidget and replace it by an override of at_utils.translate for MeetingConfig.  Values are
   displayed one by line instead on one line separated by commas
 - Add 'Date' date range filter on faceted dashboards displaying meetings
+- Added possibility to pass a list of disabled_collections to MeetingConfigDescriptor while importing data
 
 4.1b13 (2018-12-04)
 -------------------

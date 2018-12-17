@@ -5345,7 +5345,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             plone_groups = get_plone_groups(org.UID())
             for plone_group in plone_groups:
                 res.append((plone_group.id, plone_group.getProperty('title')))
-        return DisplayList(tuple(res))
+        return DisplayList(tuple(res)).sortedByValue()
 
     security.declarePublic('getSelf')
 

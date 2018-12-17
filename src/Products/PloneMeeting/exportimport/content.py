@@ -252,6 +252,16 @@ class ToolInitializer:
             logger.info(output)
             cfg.setOrderedContacts(cfg.listSelectableContacts().keys())
 
+        # disable relevant dashboard collections
+        for collection_path in data.disabled_collections:
+            try:
+                collection = cfg.searches.restrictedTraverse(collection_path)
+            except AttributeError:
+                logger.warning('While disabling collections, no collection found at {0}, ...'.format(
+                    collection_path))
+            collection.enabled = False
+            collection.reindexObject(idxs=['enabled'])
+
     def _manageOtherMCCorrespondences(self, cfg):
         def _convert_to_real_other_mc_correspondences(annex_type):
             """ """
@@ -290,9 +300,10 @@ class ToolInitializer:
         for field_name in ['selectableCopyGroups', 'selectableAdvisers', 'powerAdvisersGroups', 'usingGroups']:
             data = cData.get(field_name)
             try:
-                data = [org_id_to_uid(suffixed_group_id) for suffixed_group_id in data]
+                data = [org_id_to_uid(suffixed_group_id) for suffixed_group_id in data
+                        if org_id_to_uid(suffixed_group_id, raise_on_error=False)]
             except KeyError:
-                logger.info('Error while turning org ids to org uids for field_name {0}'.format(field_name))
+                logger.warning('Error while turning org ids to org uids for field_name {0}'.format(field_name))
                 data = []
             cData[field_name] = data
         # manage customAdvisers, turn 'org' value from org id to uid
@@ -515,12 +526,12 @@ class ToolInitializer:
         elif pt.pod_template_to_use['cfg_id']:
             pod_template_to_use_cfg = self.tool.get(pt.pod_template_to_use['cfg_id'])
             if not pod_template_to_use_cfg:
-                logger.info('Cfg with id {0} not found when adding Pod template {1}, template was not added'.format(
+                logger.warning('Cfg with id {0} not found when adding Pod template {1}, template was not added'.format(
                     pt.pod_template_to_use['cfg_id'], pt.pod_template_to_use['template_id']))
                 return
             pod_template = pod_template_to_use_cfg.podtemplates.get(pt.pod_template_to_use['template_id'])
             if not pod_template:
-                logger.info('Pod template with id {0} not found in cfg with id {1}, template was not added'.format(
+                logger.warning('Pod template with id {0} not found in cfg with id {1}, template was not added'.format(
                     pt.pod_template_to_use['template_id'], pt.pod_template_to_use['cfg_id']))
                 return
             pod_template_to_use = pod_template.UID()

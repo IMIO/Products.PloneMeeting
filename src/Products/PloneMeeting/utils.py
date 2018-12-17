@@ -1601,18 +1601,24 @@ def plain_render(obj, fieldname):
     return exportable.render_value(obj)
 
 
-def org_id_to_uid(org_info):
+def org_id_to_uid(org_info, raise_on_error=True):
     """Returns the corresponding org based value for given org_info based value.
        'developers', will return 'orguid'.
        'developers_creators' will return 'orguid_creators'."""
     own_org = get_own_organization()
-    if '_' in org_info:
-        org_path, suffix = org_info.split('_')
-        org = own_org.restrictedTraverse(org_path.encode('utf-8'))
-        return get_plone_group_id(org.UID(), suffix)
-    else:
-        org = own_org.restrictedTraverse(org_info.encode('utf-8'))
-        return org.UID()
+    try:
+        if '_' in org_info:
+            org_path, suffix = org_info.split('_')
+            org = own_org.restrictedTraverse(org_path.encode('utf-8'))
+            return get_plone_group_id(org.UID(), suffix)
+        else:
+            org = own_org.restrictedTraverse(org_info.encode('utf-8'))
+            return org.UID()
+    except Exception, exc:
+        if raise_on_error:
+            raise(exc)
+        else:
+            return None
 
 
 class AdvicesUpdatedEvent(ObjectEvent):
