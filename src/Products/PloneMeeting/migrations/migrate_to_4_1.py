@@ -13,6 +13,7 @@ from datetime import date
 from eea.facetednavigation.interfaces import ICriteria
 from persistent.mapping import PersistentMapping
 from plone import api
+from plone.app.querystring.queryparser import parseFormquery
 from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_NEW
@@ -21,6 +22,7 @@ from Products.PloneMeeting.config import TOOL_FOLDER_POD_TEMPLATES
 from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
 from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
 from Products.PloneMeeting.migrations import Migrator
+from Products.PloneMeeting.utils import updateCollectionCriterion
 from zope.i18n import translate
 from zope.interface import alsoProvides
 
@@ -650,6 +652,23 @@ class Migrate_To_4_1(Migrator):
                 delattr(cfg, 'defaultMeetingItemMotivation')
         logger.info('Done.')
 
+    def _fixMeetingCollectionsQuery(self):
+        """The review_state value must be a list, not a tuple."""
+        logger.info('Fixing meetings related collections query...')
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            collections = tuple(cfg.searches.searches_meetings.objectValues()) + \
+                tuple(cfg.searches.searches_decisions.objectValues())
+            for collection in collections:
+                query = list(collection.query)
+                for criterion in query:
+                    # make sure 'review_state' value is a list
+                    if criterion['i'] == 'review_state' and not isinstance(criterion['v'], list):
+                        updateCollectionCriterion(collection, 'review_state', list(criterion['v']))
+                    # make sure 'getDate' value is an unicode, not an integer
+                    if criterion['i'] == 'getDate' and isinstance(criterion['v'], int):
+                        updateCollectionCriterion(collection, 'getDate', unicode(criterion['v']))
+        logger.info('Done.')
+
     def run(self, step=None):
         logger.info('Migrating to PloneMeeting 4.1...')
 
@@ -709,7 +728,8 @@ class Migrate_To_4_1(Migrator):
         self._migrateGroupsShownInDashboardFilter()
         self._enableStyleTemplates()
         self._cleanMeetingConfigs()
-        # too many indexes to update, the rebuild the portal_catalog
+        self._fixMeetingCollectionsQuery()
+        # too many indexes to update, rebuild the portal_catalog
         self.refreshDatabase()
 
 
@@ -737,7 +757,8 @@ def migrate(context):
        18) Update MeetingConfig.usedItemAttributes, select 'description' and unselect 'itemAssembly';
        19) Migrate MeetingConfig.groupsShownInDashboardFilter to MeetingConfig.groupsHiddenInDashboardFilter;
        20) Configure MeetingConfig podtemplates folder to accept style templates;
-       21) Clean MeetingConfigs from removed attributes.
+       21) Clean MeetingConfigs from removed attributes;
+       22) Fix meeting related DashboardCollections query.
     '''
     migrator = Migrate_To_4_1(context)
     migrator.run()

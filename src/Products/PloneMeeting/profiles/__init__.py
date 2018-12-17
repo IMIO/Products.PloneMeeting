@@ -609,11 +609,11 @@ class MeetingConfigDescriptor(Descriptor):
         # topic), only meetings having one of the stated listed in
         # meetingTopicStates will be shown.
         # this will be applied on the 'searchallmeetings' Collection
-        self.meetingTopicStates = ('created', 'published', 'frozen')
+        self.meetingTopicStates = ['created', 'published', 'frozen']
         # In the "decisions" portlet, the "all decisions" portlet will only show
         # meetings having one of the states listed in decisionTopicStates.
         # this will be applied on the 'searchalldecisions' Collection
-        self.decisionTopicStates = ('decided', 'closed', 'archived')
+        self.decisionTopicStates = ['decided', 'closed', 'archived']
         # Maximum number of meetings or decisions shown in the meeting and
         # decision portlets. If overflow, a combo box is shown instead of a
         # list of links.

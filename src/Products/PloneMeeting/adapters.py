@@ -1131,7 +1131,7 @@ def query_user_groups_cachekey(method, self):
 
 def query_meeting_config_modified_cachekey(method, self):
     '''cachekey method for caching as long as MeetingConfig not modified.'''
-    return self.cfg.modified()
+    return self.cfg and self.cfg.modified() or None
 
 
 def query_user_groups_or_config_modified_cachekey(method, self):
@@ -1577,6 +1577,8 @@ class DecidedItemsAdapter(CompoundCriterionBaseAdapter):
     @ram.cache(query_meeting_config_modified_cachekey)
     def query_decideditems(self):
         '''Queries decided items.'''
+        if not self.cfg:
+            return {}
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 'review_state': {'query': self.cfg.getItemDecidedStates()}, }
 

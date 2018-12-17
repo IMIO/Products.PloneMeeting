@@ -211,19 +211,19 @@ class ToolInitializer:
         # apply the meetingTopicStates to the 'searchallmeetings' DashboardCollection
         updateCollectionCriterion(cfg.searches.searches_meetings.searchallmeetings,
                                   'review_state',
-                                  data.meetingTopicStates)
+                                  list(data.meetingTopicStates))
         # apply the maxDaysDecisions to the 'searchlastdecisions' DashboardCollection
         updateCollectionCriterion(cfg.searches.searches_decisions.searchlastdecisions,
                                   'getDate',
-                                  data.maxDaysDecisions)
+                                  unicode(data.maxDaysDecisions))
         # apply the decisionTopicStates to the 'searchlastdecisions'
         # and 'searchalldecision' DashboardCollections
         updateCollectionCriterion(cfg.searches.searches_decisions.searchlastdecisions,
                                   'review_state',
-                                  data.decisionTopicStates)
+                                  list(data.decisionTopicStates))
         updateCollectionCriterion(cfg.searches.searches_decisions.searchalldecisions,
                                   'review_state',
-                                  data.decisionTopicStates)
+                                  list(data.decisionTopicStates))
         # select correct default view
         meetingAppDefaultView = data.meetingAppDefaultView
         if meetingAppDefaultView in cfg.searches.searches_items.objectIds():

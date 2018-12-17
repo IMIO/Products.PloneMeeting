@@ -26,6 +26,7 @@ from collective.compoundcriterion.interfaces import ICompoundCriterionFilter
 from collective.eeafaceted.collectionwidget.utils import getCollectionLinkCriterion
 from DateTime import DateTime
 from imio.helpers.cache import cleanRamCacheFor
+from plone import api
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 from Products.CMFCore.permissions import ModifyPortalContent
@@ -1004,6 +1005,15 @@ class testSearches(PloneMeetingTestCase):
         self.failUnless(len(res) == 1)
         self.failUnless(res[0].UID == vendorsItem.UID())
 
+    def test_pm_SearchesAreEditable(self):
+        """This will ensure created DashboardCollections are editable.
+           It could not be the case when using a wrong query."""
+        self.changeUser('siteadmin')
+        cfg = self.meetingConfig
+        brains = api.content.find(context=cfg.searches, portal_type='DashboardCollection')
+        for brain in brains:
+            collection = brain.getObject()
+            self.assertTrue(collection.restrictedTraverse('edit')())
 
 def test_suite():
     from unittest import TestSuite, makeSuite

@@ -248,7 +248,7 @@ class GroupsInChargeVocabulary(object):
         orgs = get_organizations(only_selected=False)
         res = []
         for org in orgs:
-            for group_in_charge_uid in org.groups_in_charge:
+            for group_in_charge_uid in (org.groups_in_charge or []):
                 # manage duplicates
                 group_in_charge = get_organization(group_in_charge_uid)
                 if group_in_charge and group_in_charge not in res:
