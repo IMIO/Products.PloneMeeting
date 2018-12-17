@@ -892,5 +892,27 @@
             layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer "/>
     </configure>
 
+    <!-- Override @@usergroup-userprefs -->
+    <configure package="plone.app.controlpanel">
+        <browser:page
+            name="usergroup-userprefs"
+            for="Products.CMFPlone.interfaces.IPloneSiteRoot"
+            class="Products.PloneMeeting.browser.overrides.PMUsersOverviewControlPanel"
+            permission="plone.app.controlpanel.UsersAndGroups"
+            template="usergroups_usersoverview.pt"
+            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer" />
+    </configure>
+
+    <!-- Override @@usergroup-groupprefs -->
+    <configure package="plone.app.controlpanel">
+        <browser:page
+            name="usergroup-groupprefs"
+            for="Products.CMFPlone.interfaces.IPloneSiteRoot"
+            class="Products.PloneMeeting.browser.overrides.PMGroupsOverviewControlPanel"
+            permission="plone.app.controlpanel.UsersAndGroups"
+            template="usergroups_groupsoverview.pt"
+            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer" />
+    </configure>
+
 </configure>
 

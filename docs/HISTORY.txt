@@ -22,6 +22,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   displayed one by line instead on one line separated by commas
 - Add 'Date' date range filter on faceted dashboards displaying meetings
 - Added possibility to pass a list of disabled_collections to MeetingConfigDescriptor while importing data
+- Hide every selectable roles in users/groups controlpanel overviews as it can lead to misbehavior,
+  every roles are given to usersthru groups
 
 4.1b13 (2018-12-04)
 -------------------

@@ -42,6 +42,9 @@ from plone import api
 from plone import namedfile
 from plone.app.content.browser.foldercontents import FolderContentsView
 from plone.app.controlpanel.overview import OverviewControlPanel
+from plone.app.controlpanel.usergroups import UsersGroupsControlPanelView
+from plone.app.controlpanel.usergroups import GroupsOverviewControlPanel
+from plone.app.controlpanel.usergroups import UsersOverviewControlPanel
 from plone.app.layout.viewlets.common import ContentActionsViewlet
 from plone.app.layout.viewlets.common import GlobalSectionsViewlet
 from plone.memoize import ram
@@ -1334,3 +1337,27 @@ class MCUtils(Utils):
                 value = '- ' + '<br />- '.join(nvalues)
         # XXX end changes by Products.PloneMeeting
         return value
+
+
+class PMBaseOverviewControlPanel(UsersGroupsControlPanelView):
+    """Override to filter result and remove every selectable roles."""
+
+    @property
+    def portal_roles(self):
+        return ['MeetingObserverGlobal']
+
+    def doSearch(self, searchString):
+        results = super(PMBaseOverviewControlPanel, self).doSearch(searchString)
+        adapted_results = []
+        for item in results:
+            adapted_item = item.copy()
+            adapted_item['roles']['MeetingObserverGlobal']['canAssign'] = False
+            adapted_results.append(adapted_item)
+        return adapted_results
+
+
+class PMUsersOverviewControlPanel(PMBaseOverviewControlPanel, UsersOverviewControlPanel):
+    """See PMBaseOverviewControlPanel docstring."""
+
+class PMGroupsOverviewControlPanel(PMBaseOverviewControlPanel, GroupsOverviewControlPanel):
+    """See PMBaseOverviewControlPanel docstring."""

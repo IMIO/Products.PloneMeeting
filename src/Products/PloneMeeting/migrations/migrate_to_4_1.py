@@ -668,6 +668,16 @@ class Migrate_To_4_1(Migrator):
                         updateCollectionCriterion(collection, 'getDate', unicode(criterion['v']))
         logger.info('Done.')
 
+    def _removeUsersGlobalRoles(self):
+        """Users should not have any global roles other than 'Member' and 'Authenticated',
+           every other roles are given thru groups."""
+        logger.info('Removing useless global roles for every users...')
+        for member in api.user.get_users():
+            roles = member.getRoles()
+            useless_roles = [role for role in roles if role not in ['Member', 'Authenticated']]
+            api.user.revoke_roles(user=member, roles=useless_roles)
+        logger.info('Done.')
+
     def run(self, step=None):
         logger.info('Migrating to PloneMeeting 4.1...')
 
@@ -728,6 +738,7 @@ class Migrate_To_4_1(Migrator):
         self._enableStyleTemplates()
         self._cleanMeetingConfigs()
         self._fixMeetingCollectionsQuery()
+        self._removeUsersGlobalRoles()
         # too many indexes to update, rebuild the portal_catalog
         self.refreshDatabase()
 
@@ -757,7 +768,8 @@ def migrate(context):
        19) Migrate MeetingConfig.groupsShownInDashboardFilter to MeetingConfig.groupsHiddenInDashboardFilter;
        20) Configure MeetingConfig podtemplates folder to accept style templates;
        21) Clean MeetingConfigs from removed attributes;
-       22) Fix meeting related DashboardCollections query.
+       22) Fix meeting related DashboardCollections query;
+       23) Remove global roles for every users, roles are only given thru groups.
     '''
     migrator = Migrate_To_4_1(context)
     migrator.run()
