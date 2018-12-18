@@ -157,7 +157,7 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
                     annexes += u"<span class='discreet'>{0}&nbsp;:&nbsp;</span>".format(decision_term)
                     annexes += obj.restrictedTraverse('categorized-childs')(portal_type='annexDecision')
         elif obj.meta_type == 'Meeting':
-            visibleColumns = cfg.getItemColumns()
+            visibleColumns = cfg.getMeetingColumns()
             staticInfos = obj.restrictedTraverse('@@static-infos')(visibleColumns=visibleColumns)
             annexes += obj.restrictedTraverse('categorized-childs')(portal_type='annex', show_nothing=False)
         if annexes:

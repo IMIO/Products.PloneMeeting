@@ -119,10 +119,11 @@ class ItemMoreInfosView(BrowserView):
         return None
 
 
-class ItemStaticInfosView(BrowserView):
+class BaseStaticInfosView(BrowserView):
     """
-      This manage the view displaying static infos about an item in the PrettyLink column
+      Base class managing static infos displayed in the PrettyLink column
     """
+
     def __init__(self, context, request):
         self.context = context
         self.request = request
@@ -130,34 +131,29 @@ class ItemStaticInfosView(BrowserView):
     def __call__(self, visibleColumns):
         """ """
         self.visibleColumns = visibleColumns
-        return super(ItemStaticInfosView, self).__call__()
+        return super(BaseStaticInfosView, self).__call__()
 
+    def static_infos_field_names(self):
+        """Field names displayed as static infos.
+           These are selected values starting with 'static_'."""
+        field_names = [field_name.replace('static_', '') for field_name in self.visibleColumns
+                       if field_name.startswith('static_')]
+        return field_names
+
+
+class ItemStaticInfosView(BaseStaticInfosView):
+    """
+      Static infos on MeetingItem.
+    """
     @property
     def active_labels(self):
         return ILabeling(self.context).active_labels()
 
 
-class MeetingStaticInfosView(BrowserView):
+class MeetingStaticInfosView(BaseStaticInfosView):
     """
-      This manage the view displaying static infos about a meeting in the PrettyLink column
+      Static infos on Meeting.
     """
-    def __init__(self, context, request):
-        self.context = context
-        self.request = request
-
-    def static_infos_field_names(self):
-        """Field names displayed as static infos.
-           These are selected MeetingConfig.meetingColums field names
-           starting with 'static_'."""
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(self.context)
-        return [field_name.replace('static_', '') for field_name in cfg.getMeetingColumns()
-                if field_name.startswith('static_')]
-
-    def __call__(self, visibleColumns):
-        """ """
-        self.visibleColumns = visibleColumns
-        return super(MeetingStaticInfosView, self).__call__()
 
 
 class ItemIsSignedView(BrowserView):
