@@ -678,6 +678,23 @@ class Migrate_To_4_1(Migrator):
             api.user.revoke_roles(user=member, roles=useless_roles)
         logger.info('Done.')
 
+    def _updateItemColumnsKeys(self):
+        """Some keys changed for static infos related fields in MeetingConfig.itemColumns,
+           MeetingConfig.availableItemsListVisibleColumns and MeetingConfig.itemsListVisibleColumns."""
+        logger.info('Updating MeetingConfig.itemColumns, MeetingConfig.availableItemsListVisibleColumns '
+                    'and MeetingConfig.itemsListVisibleColumns...')
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            for field_name in ('itemColumns', 'availableItemsListVisibleColumns', 'itemsListVisibleColumns'):
+                field = cfg.getField(field_name)
+                keys = field.get(cfg)
+                adapted_keys = []
+                for k in keys:
+                    if k in ['labels', 'item_reference', 'budget_infos']:
+                        k = 'static_{0}'.format(k)
+                    adapted_keys.append(k)
+                field.set(cfg, adapted_keys)
+        logger.info('Done.')
+
     def run(self, step=None):
         logger.info('Migrating to PloneMeeting 4.1...')
 
@@ -739,6 +756,7 @@ class Migrate_To_4_1(Migrator):
         self._cleanMeetingConfigs()
         self._fixMeetingCollectionsQuery()
         self._removeUsersGlobalRoles()
+        self._updateItemColumnsKeys()
         # too many indexes to update, rebuild the portal_catalog
         self.refreshDatabase()
 
@@ -769,7 +787,8 @@ def migrate(context):
        20) Configure MeetingConfig podtemplates folder to accept style templates;
        21) Clean MeetingConfigs from removed attributes;
        22) Fix meeting related DashboardCollections query;
-       23) Remove global roles for every users, roles are only given thru groups.
+       23) Remove global roles for every users, roles are only given thru groups;
+       24) Update keys stored in MeetingConfig related to static infos displayed in dashboards.
     '''
     migrator = Migrate_To_4_1(context)
     migrator.run()

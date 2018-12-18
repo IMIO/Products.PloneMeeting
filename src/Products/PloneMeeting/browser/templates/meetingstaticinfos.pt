@@ -1,0 +1,6 @@
+<tal:loop repeat="field_name view/static_infos_field_names">
+  <span tal:define="field python: context.getField(field_name);
+                    mode string:view;">
+    <span metal:use-macro="context/widgets/field/macros/view" />
+  </span>
+</tal:loop>

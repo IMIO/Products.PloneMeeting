@@ -3889,12 +3889,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Lists all the attributes that can be used as columns for displaying
            information about an item.'''
         d = 'collective.eeafaceted.z3ctable'
+        # keys beginning with static_ are taken into account by the @@static-infos view
         res = [
-            ("labels",
+            ("static_labels",
                 translate("labels_column", domain=d, context=self.REQUEST)),
-            ("item_reference",
+            ("static_item_reference",
                 translate("item_reference_column", domain=d, context=self.REQUEST)),
-            ("budget_infos",
+            ("static_budget_infos",
                 translate("budget_infos_column", domain=d, context=self.REQUEST)),
             ("Creator",
                 translate('header_Creator', domain=d, context=self.REQUEST)),
@@ -3931,7 +3932,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             ("actions",
                 translate("header_actions", domain=d, context=self.REQUEST)),
         ]
+        res = res + self._extraItemRelatedColumns()
         return res
+
+    def _extraItemRelatedColumns(self):
+        """ """
+        return []
 
     security.declarePrivate('listAvailableItemsListVisibleColumns')
 
@@ -3991,13 +3997,22 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def listMeetingColumns(self):
         d = 'collective.eeafaceted.z3ctable'
+        # keys beginning with static_ are taken into account by the @@static-infos view
         res = [
+            ("static_startDate", translate('startDate_column', domain=d, context=self.REQUEST)),
+            ("static_endDate", translate('endDate_column', domain=d, context=self.REQUEST)),
+            ("static_place", translate('place_column', domain=d, context=self.REQUEST)),
             ("Creator", translate('header_Creator', domain=d, context=self.REQUEST)),
             ("CreationDate", translate('header_CreationDate', domain=d, context=self.REQUEST)),
             ("review_state", translate('header_review_state', domain=d, context=self.REQUEST)),
             ("actions", translate("header_actions", domain=d, context=self.REQUEST)),
         ]
+        res = res + self._extraMeetingRelatedColumns()
         return DisplayList(tuple(res))
+
+    def _extraMeetingRelatedColumns(self):
+        """ """
+        return []
 
     security.declarePrivate('listVotesEncoders')
 

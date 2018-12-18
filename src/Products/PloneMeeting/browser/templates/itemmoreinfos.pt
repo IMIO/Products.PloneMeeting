@@ -1,7 +1,6 @@
 <div name="pmDescription"
       i18n:domain="PloneMeeting"
       class="pmMoreInfo"
-      tal:condition="view/showMoreInfos"
       tal:define="mode string:view;">
     <tal:loop repeat="visibleFieldInfos python: view.getItemsListVisibleFields().items()">
         <span tal:define="visibleFieldName python: visibleFieldInfos[0];

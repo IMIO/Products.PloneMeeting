@@ -127,8 +127,8 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
         annexes = staticInfos = moreInfos = ''
 
         tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
         if obj.meta_type == 'MeetingItem':
-            cfg = tool.getMeetingConfig(self.context)
             isPrivacyViewable = obj.adapted().isPrivacyViewable()
             prettyLinker.isViewable = isPrivacyViewable
             # display annexes and infos if item and item isPrivacyViewable
@@ -144,8 +144,9 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
                         visibleColumns = cfg.getItemsListVisibleColumns()
                 else:
                     visibleColumns = cfg.getItemColumns()
-                staticInfos = obj.restrictedTraverse('@@item-static-infos')(visibleColumns=visibleColumns)
-                moreInfos = obj.restrictedTraverse('@@item-more-infos')(visibleColumns=visibleColumns)
+                staticInfos = obj.restrictedTraverse('@@static-infos')(visibleColumns=visibleColumns)
+                if self.showMoreInfos:
+                    moreInfos = obj.restrictedTraverse('@@item-more-infos')(visibleColumns=visibleColumns)
 
                 # display annexes
                 annexes += obj.restrictedTraverse('categorized-childs')(portal_type='annex', show_nothing=False)
@@ -156,12 +157,19 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
                     annexes += u"<span class='discreet'>{0}&nbsp;:&nbsp;</span>".format(decision_term)
                     annexes += obj.restrictedTraverse('categorized-childs')(portal_type='annexDecision')
         elif obj.meta_type == 'Meeting':
+            visibleColumns = cfg.getItemColumns()
+            staticInfos = obj.restrictedTraverse('@@static-infos')(visibleColumns=visibleColumns)
             annexes += obj.restrictedTraverse('categorized-childs')(portal_type='annex', show_nothing=False)
         if annexes:
             annexes = u"<div class='dashboard_annexes'>{0}</div>".format(annexes)
 
         pretty_link = prettyLinker.getLink()
         return pretty_link + staticInfos + moreInfos + annexes
+
+    @property
+    def showMoreInfos(self):
+        """ """
+        return self.request.cookies.get('pmShowDescriptions', 'false') == 'true' and True or False
 
     def getCSSClasses(self, item):
         """Apply a particular class on the table row depending on the item's privacy

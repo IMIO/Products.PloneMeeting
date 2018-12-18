@@ -25,6 +25,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Hide every selectable roles in users/groups controlpanel overviews as it can lead to misbehavior,
   every roles are given to usersthru groups
 - Display a warning in log if ToolPloneMeeting.userIsAmong 'suffixes' parameter is not a tuple/list
+- Added possibility to display static infos on dashboards listing meetings like it is the case for dashboards
+  listing items
 
 4.1b13 (2018-12-04)
 -------------------

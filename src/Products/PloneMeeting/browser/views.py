@@ -118,11 +118,6 @@ class ItemMoreInfosView(BrowserView):
            by default and is made to be overrided by subproduct."""
         return None
 
-    @memoize_contextless
-    def showMoreInfos(self):
-        """ """
-        return self.request.cookies.get('pmShowDescriptions', 'false') == 'true' and True or False
-
 
 class ItemStaticInfosView(BrowserView):
     """
@@ -140,6 +135,29 @@ class ItemStaticInfosView(BrowserView):
     @property
     def active_labels(self):
         return ILabeling(self.context).active_labels()
+
+
+class MeetingStaticInfosView(BrowserView):
+    """
+      This manage the view displaying static infos about a meeting in the PrettyLink column
+    """
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+
+    def static_infos_field_names(self):
+        """Field names displayed as static infos.
+           These are selected MeetingConfig.meetingColums field names
+           starting with 'static_'."""
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        return [field_name.replace('static_', '') for field_name in cfg.getMeetingColumns()
+                if field_name.startswith('static_')]
+
+    def __call__(self, visibleColumns):
+        """ """
+        self.visibleColumns = visibleColumns
+        return super(MeetingStaticInfosView, self).__call__()
 
 
 class ItemIsSignedView(BrowserView):
