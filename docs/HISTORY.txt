@@ -24,6 +24,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Added possibility to pass a list of disabled_collections to MeetingConfigDescriptor while importing data
 - Hide every selectable roles in users/groups controlpanel overviews as it can lead to misbehavior,
   every roles are given to usersthru groups
+- Display a warning in log if ToolPloneMeeting.userIsAmong 'suffixes' parameter is not a tuple/list
 
 4.1b13 (2018-12-04)
 -------------------

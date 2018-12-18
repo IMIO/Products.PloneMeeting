@@ -1126,18 +1126,18 @@ def query_request_cachekey(method, self):
 def query_user_groups_cachekey(method, self):
     '''cachekey method for caching as long as global users/groups
        associations did not change.'''
-    return api.user.get_current().getId(), self.tool._users_groups_value()
+    return self.modified(), api.user.get_current().getId(), self.tool._users_groups_value()
 
 
 def query_meeting_config_modified_cachekey(method, self):
     '''cachekey method for caching as long as MeetingConfig not modified.'''
-    return self.cfg and self.cfg.modified() or None
+    return self.modified(), self.cfg and self.cfg.modified() or None
 
 
 def query_user_groups_or_config_modified_cachekey(method, self):
     '''cachekey method for caching as long as global users/groups
        associations did not change and config did not changed.'''
-    return api.user.get_current().getId(), self.tool._users_groups_value(), self.cfg.modified()
+    return self.modified(), api.user.get_current().getId(), self.tool._users_groups_value(), self.cfg.modified()
 
 
 class ItemsOfMyGroupsAdapter(CompoundCriterionBaseAdapter):
