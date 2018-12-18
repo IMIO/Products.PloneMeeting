@@ -3948,7 +3948,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                                              domain='collective.eeafaceted.z3ctable',
                                                              context=self.REQUEST)))
         # remove item_reference and review_state
-        res = [v for v in res if v[0] not in ('item_reference', 'review_state', 'review_state_title')]
+        res = [v for v in res if v[0] not in ('static_item_reference', 'review_state', 'review_state_title')]
         return DisplayList(tuple(res))
 
     security.declarePrivate('listItemsListVisibleColumns')

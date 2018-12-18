@@ -848,9 +848,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             visibleCols = cfg.getAvailableItemsListVisibleColumns()
         else:
             visibleCols = cfg.getItemsListVisibleColumns()
-        itemsListVisibleColumns = [
-            col for col in visibleCols
-            if col not in ('labels', 'item_reference', 'budget_infos')]
+        itemsListVisibleColumns = [col for col in visibleCols if not col.startswith('static_')]
         itemsListVisibleColumns.insert(0, u'pretty_link')
         if not displaying_available_items(self):
             itemsListVisibleColumns.insert(0, u'getItemNumber')
