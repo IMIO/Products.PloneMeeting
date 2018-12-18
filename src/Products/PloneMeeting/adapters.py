@@ -1147,6 +1147,8 @@ class ItemsOfMyGroupsAdapter(CompoundCriterionBaseAdapter):
     def query_itemsofmygroups(self):
         '''Queries all items of groups of the current user, no matter wich suffix
            of the group the user is in.'''
+        if not self.cfg:
+            return {}
         userOrgUids = [org.UID() for org in self.tool.get_orgs_for_user(only_selected=False)]
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 'getProposingGroup': {'query': userOrgUids}, }
@@ -1179,6 +1181,8 @@ class ItemsInCopyAdapter(CompoundCriterionBaseAdapter):
     @ram.cache(query_user_groups_cachekey)
     def query_itemsincopy(self):
         '''Queries all items for which the current user is in copyGroups.'''
+        if not self.cfg:
+            return {}
         userPloneGroups = self.tool.get_plone_groups_for_user()
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 # KeywordIndex 'getCopyGroups' use 'OR' by default
@@ -1194,6 +1198,8 @@ class BaseItemsToValidateOfHighestHierarchicLevelAdapter(CompoundCriterionBaseAd
         '''Return a list of items that the user can validate regarding his highest hierarchic level.
            So if a user is 'prereviewer' and 'reviewier', the search will only return items
            in state corresponding to his 'reviewer' role.'''
+        if not self.cfg:
+            return {}
         userPloneGroupIds = self.tool.get_plone_groups_for_user()
         highestReviewerLevel = self.cfg._highestReviewerLevel(userPloneGroupIds)
         if not highestReviewerLevel:
@@ -1330,6 +1336,8 @@ class BaseItemsToValidateOfMyReviewerGroupsAdapter(CompoundCriterionBaseAdapter)
         '''Return a list of items that the user could validate.  So it returns every items the current
            user is able to validate at any state of the validation process.  So if a user is 'prereviewer'
            and 'reviewer' for a group, the search will return items in both states.'''
+        if not self.cfg:
+            return {}
         userPloneGroups = self.tool.get_plone_groups_for_user()
         reviewProcessInfos = []
         reviewers = reviewersFor(self.cfg.getItemWorkflow())
@@ -1385,7 +1393,8 @@ class ItemsToCorrectToValidateOfMyReviewerGroupsAdapter(BaseItemsToValidateOfMyR
 class BaseItemsToCorrectAdapter(CompoundCriterionBaseAdapter):
 
     def _query(self, review_states):
-
+        if not self.cfg:
+            return {}
         # for every review_states check what roles are able to edit
         # so we will get groups suffixes linked to these roles and find relevant groups
         wfTool = api.portal.get_tool('portal_workflow')
@@ -1424,6 +1433,8 @@ class ItemsToAdviceAdapter(CompoundCriterionBaseAdapter):
     @ram.cache(query_user_groups_cachekey)
     def query_itemstoadvice(self):
         '''Queries all items for which the current user must give an advice.'''
+        if not self.cfg:
+            return {}
         orgs = self.tool.get_orgs_for_user(suffixes=['advisers'])
         # Consider not_given, asked_again and hidden_during_redaction advices,
         # this search will return 'not delay-aware' and 'delay-aware' advices
@@ -1451,6 +1462,8 @@ class ItemsToAdviceWithoutDelayAdapter(CompoundCriterionBaseAdapter):
     @ram.cache(query_user_groups_cachekey)
     def query_itemstoadvicewithoutdelay(self):
         '''Queries all items for which the current user must give an advice without delay.'''
+        if not self.cfg:
+            return {}
         orgs = self.tool.get_orgs_for_user(suffixes=['advisers'])
         # Add a '_advice_not_given' at the end of every group id: we want "not given" advices.
         # this search will only return 'not delay-aware' advices
@@ -1473,6 +1486,8 @@ class ItemsToAdviceWithDelayAdapter(CompoundCriterionBaseAdapter):
     @ram.cache(query_user_groups_cachekey)
     def query_itemstoadvicewithdelay(self):
         '''Queries all items for which the current user must give an advice with delay.'''
+        if not self.cfg:
+            return {}
         orgs = self.tool.get_orgs_for_user(suffixes=['advisers'])
         # Add a '_advice_not_given' at the end of every group id: we want "not given" advices.
         # this search will only return 'delay-aware' advices
@@ -1496,6 +1511,8 @@ class ItemsToAdviceWithExceededDelayAdapter(CompoundCriterionBaseAdapter):
     @ram.cache(query_user_groups_cachekey)
     def query_itemstoadvicewithexceededdelay(self):
         '''Queries all items for which the current user must give an advice with exceeded delay.'''
+        if not self.cfg:
+            return {}
         orgs = self.tool.get_orgs_for_user(suffixes=['advisers'])
         # Add a '_delay_exceeded' at the end of every group id: we want "not given" advices.
         # this search will only return 'delay-aware' advices for wich delay is exceeded
@@ -1515,6 +1532,8 @@ class AdvisedItemsAdapter(CompoundCriterionBaseAdapter):
     @ram.cache(query_user_groups_cachekey)
     def query_adviseditems(self):
         '''Queries items for which an advice has been given.'''
+        if not self.cfg:
+            return {}
         orgs = self.tool.get_orgs_for_user(suffixes=['advisers'])
         # advised items are items that has an advice in a particular review_state
         # just append every available meetingadvice state: we want "given" advices.
@@ -1547,6 +1566,8 @@ class AdvisedItemsWithDelayAdapter(CompoundCriterionBaseAdapter):
     @ram.cache(query_user_groups_cachekey)
     def query_adviseditemswithdelay(self):
         '''Queries items for which an advice has been given with delay.'''
+        if not self.cfg:
+            return {}
         orgs = self.tool.get_orgs_for_user(suffixes=['advisers'])
         # advised items are items that has an advice in a particular review_state
         # just append every available meetingadvice state: we want "given" advices.

@@ -1005,7 +1005,7 @@ class testSearches(PloneMeetingTestCase):
         self.failUnless(len(res) == 1)
         self.failUnless(res[0].UID == vendorsItem.UID())
 
-    def test_pm_SearchesAreEditable(self):
+    def test_pm_DashboardCollectionsAreEditable(self):
         """This will ensure created DashboardCollections are editable.
            It could not be the case when using a wrong query."""
         self.changeUser('siteadmin')
