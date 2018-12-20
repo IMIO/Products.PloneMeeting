@@ -14,6 +14,7 @@ from plone.app.testing import PloneWithPackageLayer
 from plone.app.testing.bbb import _createMemberarea
 from plone.testing import z2
 from plone.testing import zca
+from zope.globalrequest.local import setLocal
 
 import Products.PloneMeeting
 
@@ -21,6 +22,7 @@ import Products.PloneMeeting
 class PMLayer(PloneWithPackageLayer):
 
     def setUpPloneSite(self, portal):
+        setLocal('request', portal.REQUEST)
         super(PMLayer, self).setUpPloneSite(portal)
         # Create some member areas
         for userId in ('pmManager',
