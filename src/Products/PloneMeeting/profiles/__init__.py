@@ -26,6 +26,19 @@ from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 import copy
 
 
+def patch_pod_templates(templates, new_path, cfg1_id=None):
+    """
+      Patch pod templates while using PodTemplateDescriptor from other profile.
+      Parameter new_path is most likely like :
+      ../../other_profile_id/templates/
+    """
+    for template in templates:
+        if template.odt_file:
+            template.odt_file = "{0}/{1}".format(new_path, template.odt_file)
+        if template.pod_template_to_use:
+            template.pod_template_to_use['cfg_id'] = cfg1_id
+
+
 class Descriptor(object):
     '''This abstract class represents Python data that will be used for
        initializing an Archetypes object.'''

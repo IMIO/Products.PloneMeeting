@@ -751,6 +751,8 @@ class ToolInitializer:
         try:
             f = file(path, 'rb')
         except IOError:
+            logger.warn(
+                'Could not get binary at "{0}", trying to get it from the testing profile...'.format(path))
             import Products.PloneMeeting
             # get binary folder, last part of path (templates, images, ...)
             splitted_path = path.split('/')
