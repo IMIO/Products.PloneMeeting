@@ -149,7 +149,7 @@ class GoToMeetingImgSelectBoxView(BaseImgSelectBoxView):
         # reinitialize REQUEST URL because sometimes it is None...
         for obj in res:
             if not obj.REQUEST.get('URL'):
-                obj.REQUEST.set('URL', self.request['URL'])
+                obj.REQUEST.__dict__ = self.request.__dict__
         return res
 
     def selectable_value_id(self, selectable_value):
