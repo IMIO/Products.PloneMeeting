@@ -145,7 +145,12 @@ class GoToMeetingImgSelectBoxView(BaseImgSelectBoxView):
 
     def getSelectableValues(self):
         """ """
-        return [brain.getObject() for brain in self.brains]
+        res = [brain.getObject() for brain in self.brains]
+        # reinitialize REQUEST URL because sometimes it is None...
+        for obj in res:
+            if not obj.REQUEST.get('URL'):
+                obj.REQUEST.set('URL', self.request['URL'])
+        return res
 
     def selectable_value_id(self, selectable_value):
         """ """
