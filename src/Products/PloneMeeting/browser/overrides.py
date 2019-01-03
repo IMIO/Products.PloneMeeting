@@ -1270,7 +1270,7 @@ class PMCatalogNavigationTabs(CatalogNavigationTabs):
         return tabs
 
 
-class MCUtils(Utils):
+class PMUtils(Utils):
     """Override the at_utils.translate method to return values on several lines,
        instead separated by ', '.
        XXX we had to override entire method but just changed some lines at the end, check the XXX."""

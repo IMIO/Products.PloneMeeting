@@ -10,8 +10,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 4.1b15 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Append '/view' to link to meeting in select box to avoid actionspanel not being rendered
 
 4.1b14 (2018-12-18)
 -------------------

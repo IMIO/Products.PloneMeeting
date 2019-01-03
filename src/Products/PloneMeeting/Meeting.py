@@ -757,7 +757,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                       short=True,
                       showContentIcon=False,
                       isViewable=True,
-                      notViewableHelpMessage=None):
+                      notViewableHelpMessage=None,
+                      appendToUrl=''):
         """Return the IPrettyLink version of the title."""
         adapted = IPrettyLink(self)
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -769,6 +770,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         if notViewableHelpMessage is not None:
             adapted.notViewableHelpMessage = notViewableHelpMessage
         adapted.showContentIcon = showContentIcon
+        adapted.appendToUrl = appendToUrl
         return adapted.getLink()
 
     security.declarePublic('getRawQuery')

@@ -184,7 +184,7 @@
             />
     </configure>
 
-    <configure package="imio.dashboard">
+    <configure package="collective.eeafaceted.dashboard">
         <browser:page
             for="OFS.interfaces.IItem"
             name="render_collection_widget_term_portlet"

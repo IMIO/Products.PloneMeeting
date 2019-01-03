@@ -839,7 +839,7 @@
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingConfig"
         name="at_utils"
-        class=".overrides.MCUtils"
+        class=".overrides.PMUtils"
         allowed_interface="Products.Archetypes.interfaces.utils.IUtils"
         permission="zope2.View" />
 
