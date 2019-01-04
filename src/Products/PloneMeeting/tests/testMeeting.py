@@ -1808,40 +1808,32 @@ class testMeeting(PloneMeetingTestCase):
         self.assertTrue(len(meeting.getItems(listTypes=['late'], theObjects=False)) == 0)
 
     def test_pm_GetItemsWithTheObjectsTrue(self):
-        '''Test that Meeting.getItems method may not be used to get not accessible items.
-           When using getItems(theObjects=True) as we use directly the getField method
-           that gets linked items without checking permission, we reimplemented that, make
-           sure a user could not access items he may not...
-           If p_uids is not given to Meeting.getItems, only MeetingManagers may call that,
-           for other users, the p_uids are checked.'''
+        '''User only receives items he may see.'''
         # create a meeting with items then try to get unreachable items
         cfg = self.meetingConfig
         cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'at_the_end',
                                            'reverse': '0'}, ))
 
-        # as MeetingManager, if theObjects=True, uids may not be provided, it returns every items
         self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
-        allItemObjs = meeting.getItems(theObjects=True, uids=[], ordered=True)
-        self.assertEquals(len(allItemObjs), 7)
+        allItemObjs = meeting.getItems(uids=[], theObjects=True, ordered=True)
+        self.assertEqual(len(allItemObjs), 7)
         # if uids are provided, result is filtered
-        self.assertEquals(
+        self.assertEqual(
             len(meeting.getItems(theObjects=True,
                                  uids=[allItemObjs[0].UID(), allItemObjs[1].UID()])),
             2)
 
-        # as a non MeetingManager, if theObjects=True, uids must be provided
+        # only viewable items are returned
         self.changeUser('pmCreator1')
         cleanRamCacheFor('Products.PloneMeeting.Meeting.getItems')
-        self.assertRaises(Unauthorized, meeting.getItems, theObjects=True, uids=[])
+        allItemObjs = meeting.getItems(uids=[], theObjects=True, ordered=True)
+        self.assertEqual(len(allItemObjs), 4)
         # if uids of elements that user may not see are passed, asked items are not returned
-        # pmCreator1 may only see items of 'vendors' group
-        self.assertEqual(allItemObjs[0].getProposingGroup(), self.developers_uid)
-        self.assertEqual(allItemObjs[2].getProposingGroup(), self.vendors_uid)
-        # only item of group 'developers' is returned
-        items = meeting.getItems(theObjects=True,
-                                 uids=[allItemObjs[0].UID(), allItemObjs[2].UID()])
-        self.assertEqual([item.UID() for item in items], [allItemObjs[0].UID()])
+        # pmCreator1 may only see items of 'developers' group
+        self.assertEqual(
+            [item.getProposingGroup() for item in allItemObjs],
+            [self.developers_uid, self.developers_uid, self.developers_uid, self.developers_uid])
 
     def test_pm_GetItemByNumber(self):
         '''Test the Meeting.getItemByNumber method.'''

@@ -17,6 +17,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   env variable
 - Fixed link to object in emails sent by the Zope clock server that were wrong because no REQUEST is available,
   we use the PUBLIC_URL env variable in this case to have the correct URL to the object
+- Removed raise Unauthorized from Meeting.getItems when theObjects=True and current user is not (Meeting)Manager
+  as now items are get using a catalog query that will always return only items the user may access
 
 4.1b14 (2018-12-18)
 -------------------

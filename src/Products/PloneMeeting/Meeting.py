@@ -1174,14 +1174,13 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                  theObjects=True,
                  additional_catalog_query={},
                  unrestricted=False,
-                 force_linked_items_query=True,
-                 **kwargs):
+                 force_linked_items_query=True):
         '''Overrides the Meeting.items accessor.
            Items can be filtered depending on :
            - list of given p_uids;
            - given p_listTypes;
            - returned ordered (by getItemNumber) if p_ordered is True;
-           - if p_theObjects is True, MeetingItems are returned, else, brains are returned;
+           - if p_theObjects is True, MeetingItem objects are returned, else, brains are returned;
            - if p_unrestricted is True it will return every items, not checking permission;
            - if p_force_linked_items_query is True, it will call self.getRawQuery with
              same parameter and force use of query showing linked items, not displaying
@@ -1214,10 +1213,6 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             res = catalog(**query)
 
         if theObjects:
-            # if not filtering on uids, accessing the 'items' directly is only available to (Meeting)Managers
-            tool = api.portal.get_tool('portal_plonemeeting')
-            if not uids and not unrestricted and not tool.isManager(self):
-                raise Unauthorized
             res = [brain._unrestrictedGetObject() for brain in res]
         return res
 
