@@ -695,6 +695,43 @@ class Migrate_To_4_1(Migrator):
                 field.set(cfg, adapted_keys)
         logger.info('Done.')
 
+    def _adaptInternalImagesLinkToUseResolveUID(self):
+        """We make sure we use resolveuid in src to internal images."""
+        logger.info('Adapting link to internal images to use resolveuid...')
+        # base our work on found images
+        brains = self.portal.portal_catalog(portal_type='Image')
+        i = 1
+        total = len(brains)
+        number_of_migrated_links = 0
+        for brain in brains:
+            logger.info('Migrating links to image {0}/{1} ({2})...'.format(
+                i,
+                total,
+                brain.getPath()))
+            i = i + 1
+            image = brain.getObject()
+            container = image.aq_inner.aq_parent
+            # make sure image is added to meeting/item
+            if container.meta_type not in ('Meeting', 'MeetingItem'):
+                continue
+            # use env var public-url if available
+            public_url = os.getenv('PUBLIC_URL', None)
+            if public_url:
+                portal_url = self.portal.portal_url
+                image_url = os.path.join(public_url, portal_url.getRelativeContentURL(image))
+            else:
+                image_url = image.absolute_url()
+            image_UID = image.UID()
+            for field in container.Schema().filterFields(default_content_type='text/html'):
+                content = field.getRaw(container)
+                if content.find(image_url) != -1:
+                    content = content.replace(image_url, 'resolveuid/{0}'.format(image_UID))
+                    logger.info('Replaced image link in field {0}'.format(field.getName()))
+                    number_of_migrated_links = number_of_migrated_links + 1
+                    field.set(container, content)
+        logger.info('Adapted {0} links.'.format(number_of_migrated_links))
+        logger.info('Done.')
+
     def run(self, step=None):
         logger.info('Migrating to PloneMeeting 4.1...')
 
@@ -757,6 +794,7 @@ class Migrate_To_4_1(Migrator):
         self._fixMeetingCollectionsQuery()
         self._removeUsersGlobalRoles()
         self._updateItemColumnsKeys()
+        self._adaptInternalImagesLinkToUseResolveUID()
         # too many indexes to update, rebuild the portal_catalog
         self.refreshDatabase()
 
@@ -788,7 +826,8 @@ def migrate(context):
        21) Clean MeetingConfigs from removed attributes;
        22) Fix meeting related DashboardCollections query;
        23) Remove global roles for every users, roles are only given thru groups;
-       24) Update keys stored in MeetingConfig related to static infos displayed in dashboards.
+       24) Update keys stored in MeetingConfig related to static infos displayed in dashboards;
+       25) Adapt link to images to be sure to use resolveuid.
     '''
     migrator = Migrate_To_4_1(context)
     migrator.run()
