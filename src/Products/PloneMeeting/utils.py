@@ -369,6 +369,18 @@ def _sendMail(obj, body, recipients, fromAddress, subject, format,
         raise EmailError(SENDMAIL_ERROR % str(e))
 
 
+def get_public_url(obj):
+    """Returns the public URL of an element, especially when no REQUEST
+       is available."""
+    public_url = os.getenv('PUBLIC_URL', None)
+    if public_url:
+        portal_url = api.portal.get_tool('portal_url')
+        url = os.path.join(public_url, portal_url.getRelativeContentURL(obj))
+    else:
+        url = obj.absolute_url()
+    return url
+
+
 def sendMail(recipients, obj, event, attachments=None, mapping={}):
     '''Sends a mail related to p_event that occurred on p_obj to
        p_recipients. If p_recipients is None, the mail is sent to
@@ -390,7 +402,7 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
     # Create the message parts
     d = 'PloneMeeting'
     portal = api.portal.get()
-    portalUrl = portal.absolute_url()
+    portalUrl = get_public_url(portal)
     if mapping:
         # we need every mappings to be unicode
         for elt in mapping:
@@ -401,10 +413,9 @@ def sendMail(recipients, obj, event, attachments=None, mapping={}):
         translationMapping = {}
     translationMapping.update({
         'portalUrl': portalUrl, 'portalTitle': safe_unicode(portal.Title()),
-        'objectTitle': safe_unicode(obj.Title()), 'objectUrl': obj.absolute_url(),
+        'objectTitle': safe_unicode(obj.Title()), 'objectUrl': get_public_url(obj),
         'meetingTitle': '', 'meetingLongTitle': '', 'itemTitle': '', 'user': userName,
-        'objectDavUrl': obj.absolute_url_path(), 'groups': userGroups,
-        'meetingConfigTitle': safe_unicode(cfg.Title()),
+        'groups': userGroups, 'meetingConfigTitle': safe_unicode(cfg.Title()),
     })
     if obj.meta_type == 'Meeting':
         translationMapping['meetingTitle'] = safe_unicode(obj.Title())

@@ -10,7 +10,13 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 4.1b15 (unreleased)
 -------------------
 
-- Append '/view' to link to meeting in select box to avoid actionspanel not being rendered
+- Fixed bug where actions panel do not appear at the bottom of a meeting sometimes.  This was due to wrong
+  link to meeting containing Plone site id because obj obtained via brain.getObject does not always have a
+  correct REQUEST
+- Added method utils.get_public_url that returns the url of an object taking into account the PUBLIC_URL
+  env variable
+- Fixed link to object in emails sent by the Zope clock server that were wrong because no REQUEST is available,
+  we use the PUBLIC_URL env variable in this case to have the correct URL to the object
 
 4.1b14 (2018-12-18)
 -------------------

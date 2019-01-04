@@ -21,6 +21,7 @@ from Products.PloneMeeting.config import TOOL_FOLDER_POD_TEMPLATES
 from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
 from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
 from Products.PloneMeeting.migrations import Migrator
+from Products.PloneMeeting.utils import get_public_url
 from Products.PloneMeeting.utils import updateCollectionCriterion
 from zope.i18n import translate
 from zope.interface import alsoProvides
@@ -714,13 +715,8 @@ class Migrate_To_4_1(Migrator):
             # make sure image is added to meeting/item
             if container.meta_type not in ('Meeting', 'MeetingItem'):
                 continue
-            # use env var public-url if available
-            public_url = os.getenv('PUBLIC_URL', None)
-            if public_url:
-                portal_url = self.portal.portal_url
-                image_url = os.path.join(public_url, portal_url.getRelativeContentURL(image))
-            else:
-                image_url = image.absolute_url()
+            # get image url taking env var PUBLIC_URL into account
+            image_url = get_public_url(image)
             image_UID = image.UID()
             for field in container.Schema().filterFields(default_content_type='text/html'):
                 content = field.getRaw(container)
