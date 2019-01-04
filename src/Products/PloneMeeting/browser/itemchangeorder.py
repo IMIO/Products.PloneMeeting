@@ -171,9 +171,7 @@ class ChangeItemOrderView(BrowserView):
                 self.context.setItemNumber(moveNumber)
                 self.context.reindexObject(idxs=['getItemNumber'])
                 # get items again now that context number was updated
-                # we do another query to Meeting.getItems than previous one
-                # because it use memoize
-                items = meeting.getItems(ordered=True, **{'dummy': True})
+                items = meeting.getItems(ordered=True)
                 oldIndexIsInteger = _is_integer(oldIndex)
                 oldIndexHasSubnumbers = meeting.getItemByNumber(oldIndex + 1)
                 if moveNumber < oldIndex:

@@ -10,7 +10,6 @@
 #
 
 from AccessControl import ClassSecurityInfo
-from AccessControl import Unauthorized
 from App.class_init import InitializeClass
 from appy.gen import No
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
