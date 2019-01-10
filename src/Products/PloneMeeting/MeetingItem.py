@@ -514,6 +514,13 @@ class MeetingItemWorkflowActions(object):
         if not meeting:
             # find meetings accepting items in the future
             meeting = self.context.getMeetingToInsertIntoWhenNoCurrentMeetingObject()
+        # insert the item into the meeting
+        self._insertItem(meeting)
+        # We may have to send a mail.
+        self.context.sendMailIfRelevant('itemPresented', 'Owner', isRole=True)
+
+    def _insertItem(self, meeting):
+        """ """
         self.context.REQUEST.set('currentlyInsertedItem', self.context)
         meeting.insertItem(self.context, forceNormal=self._forceInsertNormal())
         # If the meeting is already frozen and this item is a "late" item,
@@ -521,8 +528,6 @@ class MeetingItemWorkflowActions(object):
         before_frozen_states = meeting.getStatesBefore('frozen')
         if before_frozen_states and meeting.queryState() not in before_frozen_states:
             self._freezePresentedItem()
-        # We may have to send a mail.
-        self.context.sendMailIfRelevant('itemPresented', 'Owner', isRole=True)
 
     def _freezePresentedItem(self):
         """Freeze presented item, this is done to be easy to override in case
