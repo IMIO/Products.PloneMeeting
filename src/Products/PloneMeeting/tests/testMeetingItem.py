@@ -37,6 +37,7 @@ from DateTime import DateTime
 from imio.actionspanel.interfaces import IContentDeletable
 from imio.helpers.cache import cleanRamCacheFor
 from imio.history.interfaces import IImioHistory
+from imio.history.utils import getLastWFAction
 from imio.prettylink.interfaces import IPrettyLink
 from os import path
 from persistent.mapping import PersistentMapping
@@ -76,7 +77,6 @@ from Products.PloneMeeting.tests.testUtils import ASSEMBLY_CORRECT_VALUE
 from Products.PloneMeeting.tests.testUtils import ASSEMBLY_WRONG_VALUE
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import getFieldVersion
-from Products.PloneMeeting.utils import getLastEvent
 from Products.PloneMeeting.utils import getTransitionToReachState
 from Products.PloneMeeting.utils import ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR
 from Products.PloneMeeting.utils import setFieldFromAjax
@@ -4862,7 +4862,7 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setOtherMeetingConfigsClonableTo((cfg2Id,))
         newItem = item.cloneToOtherMeetingConfig(cfg2Id)
         clonedActionId = cfg2._getCloneToOtherMCActionTitle(cfg2.Title())
-        self.assertEquals(getLastEvent(item)['action'], clonedActionId)
+        self.assertEquals(getLastWFAction(item)['action'], clonedActionId)
         self.assertEquals(item.downOrUpWorkflowAgain(), 'down')
 
         # it will be 'up' if proposed again
@@ -4873,7 +4873,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # insert non WF-related event
         self.deleteAsManager(newItem.UID())
         item.cloneToOtherMeetingConfig(cfg2Id)
-        self.assertEquals(getLastEvent(item)['action'], clonedActionId)
+        self.assertEquals(getLastWFAction(item)['action'], clonedActionId)
         self.assertEquals(item.downOrUpWorkflowAgain(), 'up')
 
         # no more when item is validated and +

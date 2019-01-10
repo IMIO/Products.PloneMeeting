@@ -332,54 +332,6 @@ document.location.reload(true);
   </tal:notMayEdit>
 </metal:budgetInfos>
 
-
-<tal:comment replace="nothing">
-  This macro manage the completeness informations of an item, MeetingItem.completeness
-</tal:comment>
-<metal:itemCompleteness define-macro="itemCompleteness">
-
-    <tal:defines define="mayQuickEdit python: context.mayQuickEdit('completeness');
-                         currentCompleteness context/getCompleteness;
-                         lastCompletenessEvent python: context.getLastEvent(currentCompleteness);">
-        <span class="#"
-              tal:attributes="onClick python:'toggleMenu(\'item_completeness\')';
-                              class python: mayQuickEdit and ('item_%s Editable' % currentCompleteness) or ('item_%s' % currentCompleteness)"
-              tal:content="python: context.displayValue(context.listCompleteness(), currentCompleteness)">Completeness</span>
-        <tal:completenessAuthor condition="python: currentCompleteness != 'completeness_not_yet_evaluated' and lastCompletenessEvent">
-        <span class="discreet">(<span i18n:domain="plone"
-               i18n:translate="label_by_author">
-              by
-              <span tal:content="python: context.portal_membership.getMemberInfo(lastCompletenessEvent['actor'])['fullname']"
-                    i18n:name="author">Roland Barthes</span>
-        </span> — <span tal:content="python: context.toLocalizedTime(lastCompletenessEvent['time'])" />)</span>
-        </tal:completenessAuthor>
-        <div id="pm_menu_item_completeness"
-             name="pm_menu_item_completeness"
-             class="pmDropdown"
-             tal:condition="mayQuickEdit">
-            <div style="clear: left;" tal:repeat="completeness python: context.listCompleteness().items()">
-                <tal:block tal:condition="python: completeness[0] != currentCompleteness">
-                    <img style="float: left; padding-right: 0.3em;"
-                         src="blue_arrow.gif"
-                         tal:attributes="src string:${portal_url}/blue_arrow.gif"/>
-                    <a href="#"
-                       tal:attributes="href python: '%s/@@change-item-completeness?new_completeness_value=%s' % (context.absolute_url(),
-                                                                                        completeness[0]);
-                                       class python: 'item_%s' % completeness[0]"
-                       tal:content="python: completeness[1]">Completness</a>
-                </tal:block>
-            </div>
-            <div style="text-align: right;" onclick="javascript:toggleMenu('item_completeness')">
-                <img style="bottom: -13px; position: absolute; right: -13px; cursor: pointer;"
-                     src="pb_close_small.png"
-                     tal:attributes="src string:${portal_url}/pb_close_small.png"/>
-            </div>
-        </div>
-    </tal:defines>
-
-</metal:itemCompleteness>
-
-
 <tal:comment replace="nothing">
   This macro displays the previous advice_type of an advice that is 'asked_again'.
 </tal:comment>

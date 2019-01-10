@@ -24,6 +24,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   or relevant values of the MeetingConfig have changed)
 - Extended informations displayed in the @@display-inserting-methods-helper-msg to display every relevant informations
   depending on selected inserting methods including ordered groups and ordered categories
+- Moved utils.getLastEvent to imio.history.utils.getLastWFACtion
 
 4.1b14 (2018-12-18)
 -------------------

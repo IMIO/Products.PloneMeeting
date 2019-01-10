@@ -2,6 +2,7 @@
 
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_organization
+from imio.history.utils import getLastWFAction
 from imio.prettylink.interfaces import IPrettyLink
 from persistent.list import PersistentList
 from plone import api
@@ -12,7 +13,6 @@ from plone.directives import form
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IMeetingContent
 from Products.PloneMeeting.utils import findMeetingAdvicePortalType
-from Products.PloneMeeting.utils import getLastEvent
 from Products.PloneMeeting.utils import isModifiedSinceLastVersion
 from Products.PloneMeeting.utils import main_item_data
 from Products.PloneMeeting.utils import version_object
@@ -173,7 +173,7 @@ class MeetingAdvice(Container):
            This manages case when advice is edited after it is given, for example
            when a MeetingManager corrects a typo, the advice_given_on date will be
            the 'giveAdvice' date.'''
-        lastEvent = getLastEvent(self, 'giveAdvice')
+        lastEvent = getLastWFAction(self, 'giveAdvice')
         modified = self.modified()
         if not lastEvent:
             return modified

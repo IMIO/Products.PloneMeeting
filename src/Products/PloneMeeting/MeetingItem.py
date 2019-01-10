@@ -27,6 +27,7 @@ from copy import deepcopy
 from DateTime import DateTime
 from datetime import datetime
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
+from imio.history.utils import getLastWFAction
 from imio.prettylink.interfaces import IPrettyLink
 from natsort import realsorted
 from OFS.ObjectManager import BeforeDeleteException
@@ -104,7 +105,6 @@ from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getFieldContent
 from Products.PloneMeeting.utils import getFieldVersion
-from Products.PloneMeeting.utils import getLastEvent
 from Products.PloneMeeting.utils import getWorkflowAdapter
 from Products.PloneMeeting.utils import hasHistory
 from Products.PloneMeeting.utils import ItemDuplicatedEvent
@@ -6031,7 +6031,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             backTransitionIds = [tr for tr in itemWF.transitions if tr.startswith('back')]
             transitionIds = [tr for tr in itemWF.transitions if not tr.startswith('back')]
             # get the last event that is a real workflow transition event
-            lastEvent = getLastEvent(self, transition=backTransitionIds+transitionIds)
+            lastEvent = getLastWFAction(self, transition=backTransitionIds+transitionIds)
             if lastEvent and lastEvent['action']:
                 if lastEvent['action'].startswith('back'):
                     res = "down"

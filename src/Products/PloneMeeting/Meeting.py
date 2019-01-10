@@ -68,7 +68,6 @@ from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getDateFromDelta
 from Products.PloneMeeting.utils import getFieldVersion
-from Products.PloneMeeting.utils import getLastEvent
 from Products.PloneMeeting.utils import getStatesBefore
 from Products.PloneMeeting.utils import getWorkflowAdapter
 from Products.PloneMeeting.utils import hasHistory
@@ -1828,12 +1827,6 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         '''In what state am I ?'''
         wfTool = api.portal.get_tool('portal_workflow')
         return wfTool.getInfoFor(self, 'review_state')
-
-    security.declarePublic('getLastEvent')
-
-    def getLastEvent(self, transition=None):
-        '''Check doc in called function in utils.py.'''
-        return getLastEvent(self, transition=transition)
 
     security.declarePublic('getSelf')
 

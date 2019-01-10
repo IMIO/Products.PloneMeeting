@@ -29,6 +29,7 @@ from DateTime import DateTime
 from datetime import datetime
 from datetime import timedelta
 from imio.helpers.cache import cleanRamCacheFor
+from imio.history.utils import getLastWFAction
 from os import path
 from plone import api
 from plone.app.textfield.value import RichTextValue
@@ -46,7 +47,6 @@ from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.indexes import indexAdvisers
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
-from Products.PloneMeeting.utils import getLastEvent
 from Products.PloneMeeting.utils import isModifiedSinceLastVersion
 from Products.statusmessages.interfaces import IStatusMessage
 from zope.component import queryUtility
@@ -519,7 +519,7 @@ class testAdvices(PloneMeetingTestCase):
                  'real_org_uid__{0}__not_given'.format(self.developers_uid),
                  '{0}_advice_not_giveable'.format(self.developers_uid),
                  'not_given'])
-            )
+        )
         self.proposeItem(item)
         item.reindexObject()
         self.changeUser('pmAdviser1')
@@ -561,7 +561,7 @@ class testAdvices(PloneMeetingTestCase):
                  '{0}_advice_under_edit'.format(self.developers_uid),
                  'not_given',
                  'positive'])
-            )
+        )
         brains = self.portal.portal_catalog(indexAdvisers='{0}_advice_under_edit'.format(self.developers_uid))
         self.assertEquals(len(brains), 1)
         self.assertEquals(brains[0].UID, itemUID)
@@ -582,7 +582,7 @@ class testAdvices(PloneMeetingTestCase):
                  'not_given',
                  'real_org_uid__{0}'.format(self.developers_uid),
                  'real_org_uid__{0}__hidden_during_redaction'.format(self.developers_uid)])
-            )
+        )
         brains = self.portal.portal_catalog(
             indexAdvisers='real_org_uid__{0}__hidden_during_redaction'.format(self.developers_uid))
         self.assertEquals(len(brains), 1)
@@ -601,7 +601,7 @@ class testAdvices(PloneMeetingTestCase):
                  'not_given',
                  'real_org_uid__{0}'.format(self.developers_uid),
                  'real_org_uid__{0}__considered_not_given_hidden_during_redaction'.format(self.developers_uid)])
-            )
+        )
         brains = self.portal.portal_catalog(
             indexAdvisers='real_org_uid__{0}__considered_not_given_hidden_during_redaction'.format(
                 self.developers_uid))
@@ -627,7 +627,7 @@ class testAdvices(PloneMeetingTestCase):
                  '{0}_advice_not_given'.format(self.developers_uid),
                  'not_given',
                  'positive'])
-            )
+        )
         # the index in the portal_catalog is updated too
         brains = self.portal.portal_catalog(
             indexAdvisers='delay__{0}_advice_under_edit'.format(self.vendors_uid))
@@ -663,7 +663,7 @@ class testAdvices(PloneMeetingTestCase):
                  'not_given',
                  'real_org_uid__{0}'.format(self.developers_uid),
                  'real_org_uid__{0}__not_given'.format(self.developers_uid)])
-            )
+        )
         # put it back to a state where it is editable
         self.proposeItem(item)
         self.assertEquals(
@@ -678,7 +678,7 @@ class testAdvices(PloneMeetingTestCase):
                  'not_given',
                  'real_org_uid__{0}'.format(self.developers_uid),
                  'real_org_uid__{0}__not_given'.format(self.developers_uid)])
-            )
+        )
 
         # delete the advice as Manager as it was historized
         self.changeUser('siteadmin')
@@ -694,7 +694,7 @@ class testAdvices(PloneMeetingTestCase):
                  'real_org_uid__{0}__not_given'.format(self.developers_uid),
                  '{0}_advice_not_given'.format(self.developers_uid),
                  'not_given'])
-            )
+        )
         # the index in the portal_catalog is updated too
         brains = self.portal.portal_catalog(
             indexAdvisers='delay__{0}_advice_not_given'.format(self.vendors_uid))
@@ -717,7 +717,7 @@ class testAdvices(PloneMeetingTestCase):
                  'real_org_uid__{0}__not_given'.format(self.developers_uid),
                  '{0}_advice_not_given'.format(self.developers_uid),
                  'not_given'])
-            )
+        )
 
     def test_pm_IndexAdvisersCombinedIndex(self):
         '''Test the indexAdvisers 'combined idnex' functionnality that makes it possible
@@ -974,7 +974,7 @@ class testAdvices(PloneMeetingTestCase):
                   'delay': '',
                   'delay_left_alert': '',
                   'delay_label': ''}])
-            )
+        )
         # define one condition for wich the date is > than current item CreationDate
         futureDate = DateTime() + 1
         cfg.setCustomAdvisers(
@@ -1457,8 +1457,8 @@ class testAdvices(PloneMeetingTestCase):
         # the method getHolidaysAs_datetime is ram.cached, check that it is correct when changed
         self.tool.setModificationDate(DateTime())
         year, month, day = holiday_changing_delay.split('/')
-        self.assertEqual(self.tool.getHolidaysAs_datetime(), [datetime(2012, 5, 6),
-                                                               datetime(int(year), int(month), int(day)), ])
+        self.assertEqual(self.tool.getHolidaysAs_datetime(),
+                         [datetime(2012, 5, 6), datetime(int(year), int(month), int(day)), ])
         # this should increase delay of one day, so as original limit_date_9_days
         item.updateLocalRoles()
         self.assertEqual(limit_date_9_days, item.adviceIndex[self.vendors_uid]['delay_infos']['limit_date'])
@@ -2254,16 +2254,16 @@ class testAdvices(PloneMeetingTestCase):
         advice_modified = advice.modified()
         self.assertEqual(advice.get_advice_given_on(), advice_modified)
         # propose item so transition 'giveAdvice' is triggered
-        self.assertFalse(getLastEvent(advice, 'giveAdvice'))
+        self.assertFalse(getLastWFAction(advice, 'giveAdvice'))
         self.proposeItem(item)
-        self.assertTrue(getLastEvent(advice, 'giveAdvice'))
+        self.assertTrue(getLastWFAction(advice, 'giveAdvice'))
         # still using the modified date
         self.assertEqual(advice.get_advice_given_on(), advice_modified)
         # if advice is modified when it is given, then the date it was given
         # (giveAdvice was triggered) will be used
         advice.notifyModified()
         self.assertNotEqual(advice.modified(), advice_modified)
-        self.assertEqual(advice.get_advice_given_on(), getLastEvent(advice, 'giveAdvice')['time'])
+        self.assertEqual(advice.get_advice_given_on(), getLastWFAction(advice, 'giveAdvice')['time'])
 
     def test_pm_AdviceHistorizedIfGivenAndItemChanged(self):
         """When an advice is given, if it was not historized and an item richText field

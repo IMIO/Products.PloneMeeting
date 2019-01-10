@@ -866,14 +866,6 @@ def getFieldVersion(obj, name, changes):
 
 
 # ------------------------------------------------------------------------------
-def getLastEvent(obj, transition='last'):
-    '''Shortcut to get last p_transition workflow_history event.'''
-    adapter = getAdapter(obj, IImioHistory, 'workflow')
-    last_event = getLastAction(adapter, action=transition)
-    return last_event
-
-
-# ------------------------------------------------------------------------------
 # History-related functions
 # ------------------------------------------------------------------------------
 def rememberPreviousData(obj, name=None):
