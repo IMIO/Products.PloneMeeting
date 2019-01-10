@@ -25,7 +25,9 @@
 from OFS.ObjectManager import BeforeDeleteException
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
+from zope.event import notify
 from zope.i18n import translate
+from zope.lifecycleevent import ObjectModifiedEvent
 
 
 class testMeetingCategory(PloneMeetingTestCase):
@@ -134,6 +136,28 @@ class testMeetingCategory(PloneMeetingTestCase):
                   'meeting-config-dummy.category_name')
         self.failIf(aCatInMC.validate_categoryMappingsWhenCloningToOtherMC(values))
 
+    def test_pm_CategoryContainerModifiedOnAnyAction(self):
+        """The MeetingCategory container (categories/classifiers) is modified
+           upon any category changes (add/edit/transition/remove)."""
+        self.changeUser('siteadmin')
+        cfg = self.meetingConfig
+        categories_modified = cfg.categories.modified()
+        # add a new category
+        cat = self.create('MeetingCategory', id="cat", title="Category")
+        categories_modified_add = cfg.categories.modified()
+        self.assertNotEqual(categories_modified, categories_modified_add)
+        # edit a category
+        notify(ObjectModifiedEvent(cat))
+        categories_modified_modify = cfg.categories.modified()
+        self.assertNotEqual(categories_modified_add, categories_modified_modify)
+        # disable a category
+        self.do(cat, 'deactivate')
+        categories_modified_transition = cfg.categories.modified()
+        self.assertNotEqual(categories_modified_modify, categories_modified_transition)
+        # delete a category
+        self.deleteAsManager(cat.UID())
+        categories_modified_delete = cfg.categories.modified()
+        self.assertNotEqual(categories_modified_transition, categories_modified_delete)
 
 def test_suite():
     from unittest import TestSuite, makeSuite

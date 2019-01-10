@@ -1076,7 +1076,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         cfg2.setMeetingConfigsToCloneTo(
             ({'meeting_config': cfgId,
               'trigger_workflow_transitions_until': '__nothing__'},)
-            )
+        )
 
         # a user can not delete the MeetingConfig
         self.changeUser('pmManager')
@@ -1346,7 +1346,7 @@ class testMeetingConfig(PloneMeetingTestCase):
             _get_criterion(
                 cfg.searches,
                 ResultsPerPageWidget.widget_type)
-            )
+        )
         # filter on searches_items is synchronized
         criterion = _get_criterion(cfg.searches.searches_items, ResultsPerPageWidget.widget_type)
         # sync from cfg to faceted widget
@@ -1407,6 +1407,15 @@ class testMeetingConfig(PloneMeetingTestCase):
         for suffix in MC_GROUP_SUFFIXES:
             ploneGroup = self.portal.portal_groups.getGroupById('{0}_{1}'.format(cfgId, suffix))
             self.assertFalse(ploneGroup.getProperty('title').startswith('ConfigGroup1'))
+
+    def test_pm_ConfigFolderModifiedOnConfigFolderReorder(self):
+        """When a subfolder of the MeetingConfig is reordered,
+           the folder modification date is updated."""
+        self.changeUser('siteadmin')
+        cfg = self.meetingConfig
+        categories_modified = cfg.categories.modified()
+        cfg.categories.folder_position(position='up', id='development')
+        self.assertNotEqual(categories_modified, cfg.categories.modified())
 
 
 def test_suite():

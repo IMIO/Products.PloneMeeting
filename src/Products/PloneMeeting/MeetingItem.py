@@ -18,7 +18,7 @@ from appy.gen import No
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from collections import OrderedDict
 from collective.behavior.talcondition.utils import _evaluateExpression
-from collective.contact.plonegroup.config import ORGANIZATIONS_REGISTRY
+from collective.contact.plonegroup.config import get_registry_organizations
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
@@ -2622,7 +2622,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Like self.listProposingGroups but appends the various possible groups in charge.'''
         base_res = self.listProposingGroups()
         res = []
-        active_org_uids = api.portal.get_registry_record(ORGANIZATIONS_REGISTRY)
+        active_org_uids = get_registry_organizations()
         for k, v in base_res.items():
             if not k:
                 res.append((k, v))
@@ -3272,19 +3272,19 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return {'displayDefaultComplementaryMessage': True,
                 'customAdviceMessage': None}
 
-    security.declarePublic('getInsertOrder')
-
-    def getInsertOrder(self, insertMethods):
-        '''When inserting an item into a meeting, depending on the sort method
-           chosen in the meeting config we must insert the item at a given
-           position that depends on the "insert order", ie the order of the
-           category or proposing group specified for this meeting.
-           In p_insertMethods, we receive a list of insertMethod to apply successively
-           when inserting the item.  So we use an algorithm that compute what we call
-           an 'orderLevel' so we are sure that each order level is large enough to
-           contains every sub insertMethod given in p_insertMethods.'''
+    def _getInsertOrder(self, cfg):
+        '''When inserting an item into a meeting, several "methods" are
+           available (follow category order, proposing group order, all groups order,
+           at the end, etc). If you want to implement your own "method", you may want
+           to propose an alternative behaviour here, by returning an "order",
+           or "weight" (as an integer value) that you assign to the current item.
+           According to this "order", the item will be inserted at the right place.
+           This method receives the p_cfg.
+        '''
         res = None
         item = self.getSelf()
+
+        insertMethods = cfg.getInsertingMethodsOnAddItem()
         # we need to compute len of relevant levels
         # we take largest level +1 and we make a list with powes of this largest level
         # so if we have 2 insertingMethods and largest level is 9, we will have
@@ -3318,7 +3318,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         if res is None:
             raise PloneMeetingError(INSERT_ITEM_ERROR)
-        return res * 100
+        res = res * 100
+        return res
 
     def _findOneLevelFor_cachekey(method, self, insertMethod):
         '''cachekey method for self._findOneLevelFor.'''

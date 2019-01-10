@@ -77,12 +77,20 @@
               handler=".events.onOrgRemoved" />
 
   <subscriber for=".interfaces.IMeetingCategory
+                   zope.lifecycleevent.IObjectModifiedEvent"
+              handler=".events.onCategoryModified" />
+
+  <subscriber for=".interfaces.IMeetingCategory
                    Products.DCWorkflow.interfaces.IAfterTransitionEvent"
               handler=".events.onCategoryTransition" />
 
   <subscriber for=".interfaces.IMeetingCategory
                    zope.container.interfaces.IObjectRemovedEvent"
               handler=".events.onCategoryRemoved" />
+
+  <subscriber for="Products.ATContentTypes.interfaces.IATBTreeFolder
+                   Products.CMFPlone.interfaces.IReorderedEvent"
+              handler=".events.onConfigFolderReordered" />
 
   <!-- meetingadvice events -->
   <subscriber for=".content.advice.IMeetingAdvice

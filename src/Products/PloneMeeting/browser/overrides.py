@@ -765,16 +765,6 @@ class ConfigActionsPanelView(ActionsPanelView):
 
         self.tool = api.portal.get_tool('portal_plonemeeting')
 
-    def renderArrows(self):
-        """ """
-        # objectIds is used for moving elements, we actually only want
-        # to move elements of same portal_type
-        # exception for Pod templates where we have ConfigurablePodTemplate
-        # and DashboardTemplate objects
-        if not self.parent.getId() == 'podtemplates':
-            self.arrowsPortalTypeAware = True
-        return super(ConfigActionsPanelView, self).renderArrows()
-
     def _returnTo(self, ):
         """What URL should I return to after moving the element and page is refreshed."""
         # return to the right fieldset the element we are moving is used on

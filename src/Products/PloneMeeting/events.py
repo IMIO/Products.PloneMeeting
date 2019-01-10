@@ -9,8 +9,8 @@
 # GNU General Public License (GPL)
 #
 
-from zope.globalrequest import getRequest
 from AccessControl import Unauthorized
+from collective.contact.plonegroup.browser.settings import IContactPlonegroupConfig
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_own_organization
@@ -18,7 +18,6 @@ from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.contact.plonegroup.utils import get_plone_groups
 from collective.documentviewer.async import queueJob
 from collective.iconifiedcategory.utils import update_all_categorized_elements
-from DateTime import DateTime
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.cache import invalidate_cachekey_volatile_for
 from imio.helpers.xhtml import storeImagesLocally
@@ -26,10 +25,9 @@ from OFS.ObjectManager import BeforeDeleteException
 from persistent.list import PersistentList
 from persistent.mapping import PersistentMapping
 from plone import api
-from plone.registry.interfaces import IRecordModifiedEvent
-from collective.contact.plonegroup.browser.settings import IContactPlonegroupConfig
 from plone.app.textfield import RichText
 from plone.app.textfield.value import RichTextValue
+from plone.registry.interfaces import IRecordModifiedEvent
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import PMMessageFactory as _
@@ -55,6 +53,7 @@ from Products.PloneMeeting.utils import meetingTriggerTransitionOnLinkedItems
 from Products.PloneMeeting.utils import sendMailIfRelevant
 from zExceptions import Redirect
 from zope.event import notify
+from zope.globalrequest import getRequest
 from zope.i18n import translate
 from zope.lifecycleevent import IObjectRemovedEvent
 
@@ -99,7 +98,7 @@ def do(action, event):
         meetingTriggerTransitionOnLinkedItems(event.object, event.transition.id)
 
     # update modification date upon state change
-    event.object.setModificationDate(DateTime())
+    event.object.notifyModified()
 
 
 def onItemTransition(item, event):
@@ -546,9 +545,12 @@ def onItemModified(item, event):
     '''Called when an item is modified so we can invalidate caching on linked meeting.'''
     meeting = item.getMeeting()
     if meeting:
+        # invalidate meeting actions panel
         meeting.invalidate_meeting_actions_panel_cache = True
         # update item references if necessary
         meeting.updateItemReferences(startNumber=item.getItemNumber(), check_needed=True)
+        # invalidate Meeting.getItemInsertOrder caching
+        meeting._invalidate_insert_order_cache_for(item)
 
     # reactivate rename_after_creation as long as item is in it's initial_state
     # if not currently creating an element.  Indeed adding an image to an item
@@ -726,7 +728,7 @@ def onAnnexAdded(annex, event):
             parent.sendMailIfRelevant('annexAdded', 'MeetingManager', isRole=True)
 
         # update modificationDate, it is used for caching and co
-        parent.setModificationDate(DateTime())
+        parent.notifyModified()
         # just reindex the entire object
         parent.reindexObject()
 
@@ -743,7 +745,7 @@ def onAnnexModified(annex, event):
     '''When an annex is modified, update parent's modification date.'''
     parent = annex.aq_inner.aq_parent
     # update modificationDate, it is used for caching and co
-    parent.setModificationDate(DateTime())
+    parent.notifyModified()
     # just reindex the entire object
     parent.reindexObject()
 
@@ -779,7 +781,7 @@ def onAnnexRemoved(annex, event):
             parent.updateLocalRoles(invalidate=True)
 
     # update modification date and SearchableText
-    parent.setModificationDate(DateTime())
+    parent.notifyModified()
     # just reindex the entire object
     parent.reindexObject()
 
@@ -890,6 +892,16 @@ def onMeetingRemoved(meeting, event):
     invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
 
 
+def onCategoryModified(category, event):
+    '''Called whenever a MeetingCategory was added or modified.'''
+
+    # invalidate cache of relevant vocabularies
+    category._invalidateCachedVocabularies()
+
+    # set modification date on container
+    category.aq_parent.notifyModified()
+
+
 def onCategoryTransition(category, event):
     '''Called whenever a transition has been fired on a MeetingCategory.'''
     if not event.transition or (category != event.object):
@@ -897,6 +909,9 @@ def onCategoryTransition(category, event):
 
     # invalidate cache of relevant vocabularies
     category._invalidateCachedVocabularies()
+
+    # set modification date on container
+    category.aq_parent.notifyModified()
 
 
 def onCategoryRemoved(category, event):
@@ -907,6 +922,15 @@ def onCategoryRemoved(category, event):
 
     # clean cache for "Products.PloneMeeting.vocabularies.categoriesvocabulary"
     invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.categoriesvocabulary")
+
+    # set modification date on container
+    category.aq_parent.notifyModified()
+
+
+def onConfigFolderReordered(folder, event):
+    '''When a subfolder of a MeetingConfig is reordered we update container modified.'''
+    if folder.aq_parent.portal_type == 'MeetingConfig':
+        folder.notifyModified()
 
 
 def onDashboardCollectionAdded(collection, event):

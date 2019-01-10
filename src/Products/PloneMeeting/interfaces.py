@@ -310,22 +310,6 @@ class IMeetingItemDocumentation:
            within Archetypes methods at_post_create_script and
            at_post_edit_script. You do not need to reindex the item. The
            default PloneMeeting implementation for this method does nothing.'''
-    def getInsertOrder(insertMethod, meeting, late):
-        '''When inserting an item into a meeting, several "methods" are
-           available, built in PloneMeeting (follow category order, proposing
-           group order, all groups order, at the end, etc). If you want to
-           implement your own "method", you may want to propose an alternative
-           behaviour here, by returning an "order", or "weight" (as an integer
-           value) that you assign to the current item. According to this
-           "order", the item will be inserted at the right place. This method
-           receives:
-           - the p_insertMethod as specified in the meeting config, which
-             may not be useful if you choose to implement your own one;
-           - p_meeting is the meeting into which we are inserting the item;
-           - the boolean p_late value, which indicates if the item is being
-             inserted among "normal" (p_late=False) or "late" (p_late=True)
-             items on the meeting.
-        '''
     def mayCloneToOtherMeetingConfig(destMeetingConfigId):
         '''Check that we can clone the item to p_destMeetingConfigId.
            Checks are ordered from light to heavy as this could be called
@@ -555,7 +539,15 @@ class IMeetingDocumentation:
     def showRemoveSelectedItemsAction():
         '''Return True/False if the 'Remove selected items' action must be displayed
            on the meeting view displaying presented items.'''
-
+    def _check_insert_order_cache(cfg):
+        '''This method is made to check if Meeting caching of items insert order
+           is still valid.  Returns True if cache was invalidated, False otherwise.'''
+    def _init_insert_order_cache(cfg):
+        '''Initialize Meeting items insert order cache.'''
+    def _insert_order_cache_cfg_attrs(cfg):
+        '''Returns the field names of the MeetingConfig to take into account for
+           Meeting items insert order caching.  If one of these fields value changed
+           the cache would be invalidated.'''
 
 class IMeetingWorkflowConditions(Interface):
     '''Conditions that may be defined in the workflow associated with a meeting

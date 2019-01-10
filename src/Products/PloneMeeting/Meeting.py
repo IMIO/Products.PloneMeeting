@@ -14,7 +14,9 @@ from App.class_init import InitializeClass
 from appy.gen import No
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from collections import OrderedDict
+from collective.contact.plonegroup.config import get_registry_organizations
 from collective.eeafaceted.dashboard.utils import enableFacetedDashboardFor
+from copy import deepcopy
 from DateTime import DateTime
 from DateTime.DateTime import _findLocalTimeZoneName
 from imio.helpers.cache import cleanRamCacheFor
@@ -43,6 +45,7 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import ReviewPortalContent
 from Products.CMFCore.utils import _checkPermission
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
+from Products.CMFPlone.utils import base_hasattr
 from Products.PloneMeeting.browser.itemchangeorder import _compute_value_to_add
 from Products.PloneMeeting.browser.itemchangeorder import _is_integer
 from Products.PloneMeeting.browser.itemchangeorder import _to_integer
@@ -1249,6 +1252,59 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         """
         return getStatesBefore(self, review_state)
 
+    def _check_insert_order_cache(self, cfg):
+        '''See doc in interfaces.py.'''
+        meeting = self.getSelf()
+        invalidate = False
+        invalidate = not base_hasattr(meeting, '_insert_order_cache') or \
+            meeting._insert_order_cache['categories_modified'] != cfg.categories.modified() or \
+            meeting._insert_order_cache['plonegroup_orgs'] != get_registry_organizations()
+
+        # check cfg attrs
+        if not invalidate:
+            for key in meeting._insert_order_cache.keys():
+                if key.startswith('cfg_'):
+                    if meeting._insert_order_cache[key] != getattr(cfg, key[4:]):
+                        invalidate = True
+                        break
+        if invalidate:
+            meeting.adapted()._init_insert_order_cache(cfg)
+        return invalidate
+
+    def _insert_order_cache_cfg_attrs(self, cfg):
+        '''See doc in interfaces.py.'''
+        return ['insertingMethodsOnAddItem', 'listTypes', 'selectablePrivacies', 'usedPollTypes']
+
+    def _init_insert_order_cache(self, cfg):
+        '''See doc in interfaces.py.'''
+        meeting = self.getSelf()
+        meeting._insert_order_cache = PersistentMapping()
+        for cfg_attr in meeting.adapted()._insert_order_cache_cfg_attrs(cfg):
+            key = 'cfg_{0}'.format(cfg_attr)
+            value = deepcopy(getattr(cfg, cfg_attr))
+            meeting._insert_order_cache[key] = value
+        meeting._insert_order_cache['categories_modified'] = cfg.categories.modified()
+        meeting._insert_order_cache['plonegroup_orgs'] = get_registry_organizations()
+        meeting._insert_order_cache['items'] = PersistentMapping()
+
+    def _invalidate_insert_order_cache_for(self, item):
+        '''Invalidate cache for given p_item.'''
+        item_uid = item.UID()
+        if base_hasattr(self, '_insert_order_cache') and \
+           self._insert_order_cache['items'].get(item_uid, None) is not None:
+            del self._insert_order_cache['items'][item_uid]
+
+    def getItemInsertOrder(self, item, cfg, check_cache=True):
+        '''Get p_item insertOrder taking cache into account.'''
+        # check if cache still valid, will be invalidated if not
+        if check_cache:
+            self.adapted()._check_insert_order_cache(cfg)
+        insert_order = self._insert_order_cache['items'].get(item.UID(), None)
+        if insert_order is None:
+            insert_order = item.adapted()._getInsertOrder(cfg)
+            self._insert_order_cache['items'][item.UID()] = insert_order
+        return insert_order
+
     security.declareProtected("Modify portal content", 'insertItem')
 
     def insertItem(self, item, forceNormal=False):
@@ -1284,13 +1340,14 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             # item whose category/group immediately follows p_item's category/
             # group (or at the end if inexistent). Note that the MeetingManager,
             # in subsequent manipulations, may completely change items order.
-            itemOrder = item.adapted().getInsertOrder(insertMethods)
+            self.adapted()._check_insert_order_cache(cfg)
+            itemOrder = self.getItemInsertOrder(item, cfg, check_cache=False)
             higherItemFound = False
             insertIndex = 0  # That's where I will insert the item
             insertIndexIsSubnumber = False
             for anItem in items:
-                itemNumber = anItem.getItemNumber()
                 if higherItemFound:
+                    itemNumber = anItem.getItemNumber()
                     # Ok I already know where to insert the item. I just
                     # continue to visit the next items in order to increment their number.
                     # we inserted an integer numer, we need to add '1' to every next items
@@ -1302,17 +1359,20 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                         # we inserted a subnumber, we need to update subnumber of same integer
                         anItem.setItemNumber(itemNumber + 1)
                         anItem.reindexObject(idxs=['getItemNumber', ])
-                elif anItem.adapted().getInsertOrder(insertMethods) > itemOrder:
+                elif self.getItemInsertOrder(anItem, cfg, check_cache=False) > itemOrder:
                     higherItemFound = True
+                    itemNumber = anItem.getItemNumber()
                     insertIndex = itemNumber
                     # we will only update next items of same subnumber?
                     insertIndexIsSubnumber = not _is_integer(itemNumber)
                     anItem.setItemNumber(itemNumber + _compute_value_to_add(itemNumber))
                     anItem.reindexObject(idxs=['getItemNumber', ])
+
             if higherItemFound:
                 item.setItemNumber(insertIndex)
             else:
                 insertAtTheEnd = True
+
         if insertMethods[0]['insertingMethod'] == 'at_the_end' or insertAtTheEnd:
             # insert it as next integer number
             if items:
@@ -1367,6 +1427,9 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             del self.itemExcused[item_uid]
         if item_uid in self.itemSignatories:
             del self.itemSignatories[item_uid]
+
+        # remove item UID from _insert_order_cache
+        self._invalidate_insert_order_cache_for(item)
 
         # make sure item assembly/signatures related fields are emptied
         item.setItemAssembly('')
