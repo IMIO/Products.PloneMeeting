@@ -22,6 +22,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Optimized insertion of items in a meeting by caching the item insert_order value, this way this time consuming
   operation is done only one time or if cache is invalidated (it is the case by default if groups order, categories
   or relevant values of the MeetingConfig have changed)
+- Extended informations displayed in the @@display-inserting-methods-helper-msg to display every relevant informations
+  depending on selected inserting methods including ordered groups and ordered categories
 
 4.1b14 (2018-12-18)
 -------------------

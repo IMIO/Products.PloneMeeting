@@ -295,6 +295,34 @@ HIDE_DECISION_UNDER_WRITING_MSG = \
 DUPLICATE_EVENT_ACTION = 'Duplicate'
 DUPLICATE_AND_KEEP_LINK_EVENT_ACTION = 'Duplicate and keep link'
 
+# There are various ways to insert items into meetings
+# each time we have the name of the inserting method and the name
+# of the field managing values to compute it if any
+ITEM_INSERT_METHODS = OrderedDict((
+    # at the end of meetings;
+    ('at_the_end', None),
+    # depending on the item's listType, by default 'normal' or 'late';
+    ('on_list_type', 'field_listTypes'),
+    # according to category order;
+    ('on_categories', 'category'),
+    # according to proposing group order;
+    ('on_proposing_groups', 'organization'),
+    # according to all groups (among proposing group AND
+    # associated groups). Similar to the previous sort method, with this
+    # difference: the group taken into consideration is the group among all
+    # groups that comes first in the order.
+    ('on_all_groups', 'organization'),
+    # according to the groupInCharge of the proposingGroup used for the item
+    ('on_groups_in_charge', 'organization'),
+    # according to the item privacy;
+    ('on_privacy', 'field_selectablePrivacies'),
+    # according to the item toDiscuss;
+    ('on_to_discuss', None),
+    # according to items that need to be sent to another meeting config;
+    ('on_other_mc_to_clone_to', 'field_meetingConfigsToCloneTo'),
+    # according to poll type;
+    ('on_poll_type', 'field_usedPollTypes'),
+))
 
 def registerClasses():
     '''ArchGenXML generated code does not register Archetype classes at the

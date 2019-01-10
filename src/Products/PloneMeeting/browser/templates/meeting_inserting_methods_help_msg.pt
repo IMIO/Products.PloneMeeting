@@ -11,8 +11,26 @@
     <span metal:use-macro="context/widgets/field/macros/view" />
   </tal:field>
 
-  <tal:field condition="view/showSelectablePrivaciesField" define="field python:cfg.getField('selectablePrivacies')">
-    <span metal:use-macro="context/widgets/field/macros/view" />
-  </tal:field>
+  <tal:fields repeat="field_name view/fieldsToDisplay">
+    <tal:field define="field python:cfg.getField(field_name)">
+      <span metal:use-macro="cfg/widgets/field/macros/view" />
+    </tal:field>
+  </tal:fields>
+
+  <tal:orgs tal:define="orgs view/orderedOrgs"
+            tal:condition="orgs">
+    <h5 i18n:translate="">Ordered groups</h5>
+    <ul tal:repeat="org orgs">
+      <li tal:content="org/Title"></li>
+    </ul>
+  </tal:orgs>
+
+  <tal:categories tal:define="categories view/orderedCategories"
+                  tal:condition="categories">
+    <h5 i18n:translate="">Ordered categories</h5>
+    <ul tal:repeat="category categories">
+      <li tal:content="category/Title"></li>
+    </ul>
+  </tal:categories>
 
 </div>

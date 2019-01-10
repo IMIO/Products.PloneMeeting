@@ -46,6 +46,7 @@ from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.indexes import _to_coded_adviser_index
 from Products.PloneMeeting.interfaces import IMeeting
+from Products.PloneMeeting.config import ITEM_INSERT_METHODS
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
 from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
 from Products.PloneMeeting.utils import get_annexes
@@ -346,16 +347,40 @@ class MeetingInsertingMethodsHelpMsgView(BrowserView):
         self.portal_url = api.portal.get().absolute_url()
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
+        self.inserting_methods_fields_mapping = ITEM_INSERT_METHODS.copy()
+        self.inserting_methods_fields_mapping.update(self.extra_inserting_methods_fields_mapping)
 
-    def showSelectablePrivaciesField(self):
-        """In case we use the 'on_privacy' inserting method, it relies on the
-           order of selectablePrivacies and we will show the information."""
-        inserting_methods = [
-            method['insertingMethod']
-            for method in self.cfg.getInsertingMethodsOnAddItem()]
-        if 'on_privacy' in inserting_methods:
-            return True
-        return False
+    @property
+    def extra_inserting_methods_fields_mapping(self):
+        """Provides extra mappings between inserting method and
+           relevant MeetingConfig field name."""
+        return {}
+
+    def fieldsToDisplay(self):
+        """Depending on used inserting methods, display relevant fields."""
+        res = []
+        for method in self.cfg.getInsertingMethodsOnAddItem():
+            if self.inserting_methods_fields_mapping[method['insertingMethod']] and \
+               self.inserting_methods_fields_mapping[method['insertingMethod']].startswith('field_'):
+                res.append(self.inserting_methods_fields_mapping[method['insertingMethod']][6:])
+        return res
+
+    def orderedOrgs(self):
+        orgs = []
+        orgs_inserting_methods = [
+            inserting_method for inserting_method in self.inserting_methods_fields_mapping
+            if self.inserting_methods_fields_mapping[inserting_method] == 'organization']
+        if orgs_inserting_methods:
+            orgs = get_organizations(only_selected=True)
+        return orgs
+
+    def orderedCategories(self):
+        categories_inserting_methods = [
+            inserting_method for inserting_method in self.inserting_methods_fields_mapping
+            if self.inserting_methods_fields_mapping[inserting_method] == 'category']
+        if categories_inserting_methods:
+            categories = self.cfg.getCategories()
+        return categories
 
 
 class MeetingUpdateItemReferences(BrowserView):

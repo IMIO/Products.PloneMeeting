@@ -64,6 +64,7 @@ from Products.PloneMeeting.config import DEFAULT_ITEM_COLUMNS
 from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
 from Products.PloneMeeting.config import DEFAULT_MEETING_COLUMNS
 from Products.PloneMeeting.config import ITEM_ICON_COLORS
+from Products.PloneMeeting.config import ITEM_INSERT_METHODS
 from Products.PloneMeeting.config import ITEMTEMPLATESMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETING_CONFIG
 from Products.PloneMeeting.config import MEETING_STATES_ACCEPTING_ITEMS
@@ -5306,32 +5307,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''Return a list of available inserting methods when
            adding a item to a meeting'''
         res = []
-        # There are various ways to insert items into meetings
-        ITEM_INSERT_METHODS = (
-            # at the end of meetings;
-            'at_the_end',
-            # depending on the item's listType, by default 'normal' or 'late';
-            'on_list_type',
-            # according to category order;
-            'on_categories',
-            # according to proposing group order;
-            'on_proposing_groups',
-            # according to all groups (among proposing group AND
-            # associated groups). Similar to the previous sort method, with this
-            # difference: the group taken into consideration is the group among all
-            # groups that comes first in the order.
-            'on_all_groups',
-            # according to the groupInCharge of the proposingGroup used for the item
-            'on_groups_in_charge',
-            # according to the item privacy;
-            'on_privacy',
-            # according to the item toDiscuss;
-            'on_to_discuss',
-            # according to items that need to be sent to another meeting config;
-            'on_other_mc_to_clone_to',
-            # according to poll type;
-            'on_poll_type',
-        )
         for itemInsertMethod in ITEM_INSERT_METHODS:
             res.append((itemInsertMethod,
                         translate(itemInsertMethod,
