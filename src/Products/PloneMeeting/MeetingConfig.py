@@ -21,6 +21,7 @@ from collective.eeafaceted.collectionwidget.interfaces import IDashboardCollecti
 from collective.eeafaceted.collectionwidget.utils import _get_criterion
 from collective.eeafaceted.dashboard.utils import enableFacetedDashboardFor
 from collective.iconifiedcategory.utils import get_category_object
+from copy import deepcopy
 from DateTime import DateTime
 from eea.facetednavigation.interfaces import ICriteria
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
@@ -5632,6 +5633,18 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             query['getDate'] = {'query': DateTime(), 'range': 'min'}
 
         return catalog.unrestrictedSearchResults(**query)
+
+    def update_cfgs(self, field_name, cfg_ids=[], reload=False):
+        """Update other MeetingConfigs p_field_name base on self field_name value."""
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfgs = [cfg for cfg in tool.objectValues('MeetingConfig')
+                if cfg != self and (not cfg_ids or cfg.getId() in cfg_ids)]
+        value = self.getField(field_name).get(self)
+        value = deepcopy(value)
+        for cfg in cfgs:
+            cfg.getField(field_name).set(cfg, value)
+            if reload:
+                cfg.at_post_edit_script()
 
 
 registerType(MeetingConfig, PROJECTNAME)

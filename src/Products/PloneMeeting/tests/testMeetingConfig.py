@@ -1417,6 +1417,60 @@ class testMeetingConfig(PloneMeetingTestCase):
         cfg.categories.folder_position(position='up', id='development')
         self.assertNotEqual(categories_modified, cfg.categories.modified())
 
+    def test_pm_update_cfgs(self):
+        """ """
+        self.changeUser('siteadmin')
+        cfg = self.meetingConfig
+        cfg2 = self.meetingConfig2
+        cfg3 = self.create('MeetingConfig')
+
+        # test with normal value
+        self.assertEqual(cfg2.getPlaces(), '')
+        self.assertEqual(cfg3.getPlaces(), '')
+        places = 'Place1\r\nPlace2\r\nPlace3\r\n'
+        cfg.setPlaces(places)
+        cfg.update_cfgs(field_name='places')
+        self.assertEqual(cfg2.getPlaces(), places)
+        self.assertEqual(cfg3.getPlaces(), places)
+
+        # test with dict and cfg_ids parameter
+        cfg_value = ({'meeting_config': cfg2.getId(), 'trigger_workflow_transitions_until': '__nothing__'},)
+        self.assertEqual(cfg.meetingConfigsToCloneTo, cfg_value)
+        self.assertEqual(cfg2.meetingConfigsToCloneTo, ())
+        self.assertEqual(cfg3.meetingConfigsToCloneTo, ())
+        cfg.update_cfgs(field_name='meetingConfigsToCloneTo', cfg_ids=[cfg3.getId()])
+        self.assertEqual(cfg.meetingConfigsToCloneTo, cfg_value)
+        self.assertEqual(cfg2.meetingConfigsToCloneTo, ())
+        self.assertEqual(cfg.meetingConfigsToCloneTo, cfg_value)
+        # dict are copy
+        cfg.meetingConfigsToCloneTo[0]['meeting_config'] = 'dummy'
+        self.assertEqual(cfg.meetingConfigsToCloneTo[0]['meeting_config'], 'dummy')
+        self.assertEqual(cfg3.meetingConfigsToCloneTo[0]['meeting_config'], cfg2.getId())
+        cfg.meetingConfigsToCloneTo[0]['meeting_config'] = cfg2.getId()
+
+        # if reload=True, at_post_edit_script is called
+        # useful to reapply WFAdaptations for example
+        # enable 'mark_not_applicable' WFAdaptation that adds the
+        # 'marked_not_applicable' state to the item WF
+        self.assertEqual(cfg.getWorkflowAdaptations(), ())
+        self.assertEqual(cfg2.getWorkflowAdaptations(), ())
+        self.assertEqual(cfg3.getWorkflowAdaptations(), ())
+        cfg_item_type_name = cfg.getItemTypeName()
+        cfg2_item_type_name = cfg2.getItemTypeName()
+        cfg3_item_type_name = cfg3.getItemTypeName()
+        self.assertFalse('marked_not_applicable' in self.wfTool.getWorkflowsFor(cfg_item_type_name)[0].states)
+        self.assertFalse('marked_not_applicable' in self.wfTool.getWorkflowsFor(cfg2_item_type_name)[0].states)
+        self.assertFalse('marked_not_applicable' in self.wfTool.getWorkflowsFor(cfg3_item_type_name)[0].states)
+        cfg3.setWorkflowAdaptations(('mark_not_applicable', ))
+        cfg3.at_post_edit_script()
+        cfg3.update_cfgs(field_name='workflowAdaptations', reload=False)
+        self.assertFalse('marked_not_applicable' in self.wfTool.getWorkflowsFor(cfg_item_type_name)[0].states)
+        self.assertFalse('marked_not_applicable' in self.wfTool.getWorkflowsFor(cfg2_item_type_name)[0].states)
+        self.assertTrue('marked_not_applicable' in self.wfTool.getWorkflowsFor(cfg3_item_type_name)[0].states)
+        cfg3.update_cfgs(field_name='workflowAdaptations', reload=True)
+        self.assertTrue('marked_not_applicable' in self.wfTool.getWorkflowsFor(cfg_item_type_name)[0].states)
+        self.assertTrue('marked_not_applicable' in self.wfTool.getWorkflowsFor(cfg2_item_type_name)[0].states)
+        self.assertTrue('marked_not_applicable' in self.wfTool.getWorkflowsFor(cfg3_item_type_name)[0].states)
 
 def test_suite():
     from unittest import TestSuite, makeSuite
