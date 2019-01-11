@@ -1421,7 +1421,11 @@ class testMeetingConfig(PloneMeetingTestCase):
         """ """
         self.changeUser('siteadmin')
         cfg = self.meetingConfig
+        cfg.setWorkflowAdaptations(())
+        cfg.at_post_edit_script()
         cfg2 = self.meetingConfig2
+        cfg2.setWorkflowAdaptations(())
+        cfg2.at_post_edit_script()
         cfg3 = self.create('MeetingConfig')
 
         # test with normal value
