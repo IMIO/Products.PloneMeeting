@@ -995,7 +995,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         for field in cfg.Schema().editableFields(cfg):
             self.assertTrue(field.write_permission == WriteHarmlessConfig)
 
-    def test_pm_MeetingConfigGroupsCreatedCorrectly(self):
+    def test_pm_LinkedGroupsCreatedCorrectly(self):
         '''When a meetingConfig is created, some groups are created and configured,
            make sure it is done correctly...'''
         cfg = self.meetingConfig
@@ -1381,14 +1381,15 @@ class testMeetingConfig(PloneMeetingTestCase):
         '''When cfg is in a configGroup, the title of created Plone groups is prepended with configGroup title.'''
         self.tool.setConfigGroups(
             (
-                {'label': 'ConfigGroup1', 'row_id': 'unique_id_1'},
-                {'label': 'ConfigGroup2', 'row_id': 'unique_id_2'},
-                {'label': 'ConfigGroup3', 'row_id': 'unique_id_3'},
+                {'label': 'ConfigGroup1', 'row_id': 'unique_id_1', 'full_label': 'Config Group 1'},
+                {'label': 'ConfigGroup2', 'row_id': 'unique_id_2', 'full_label': 'Config Group 2'},
+                {'label': 'ConfigGroup3', 'row_id': 'unique_id_3', 'full_label': 'Config Group 3'},
             )
         )
         cfg = self.meetingConfig
         cfgId = cfg.getId()
         self.assertEqual(cfg.getConfigGroup(), '')
+        self.assertEqual(cfg.getConfigGroup(full=True), {})
         for suffix in MC_GROUP_SUFFIXES:
             ploneGroup = self.portal.portal_groups.getGroupById('{0}_{1}'.format(cfgId, suffix))
             self.assertFalse(ploneGroup.getProperty('title').startswith('ConfigGroup1'))
@@ -1396,6 +1397,8 @@ class testMeetingConfig(PloneMeetingTestCase):
         # use a configGroup and check
         cfg.setConfigGroup('unique_id_1')
         cfg.at_post_edit_script()
+        self.assertEqual(cfg.getConfigGroup(full=True),
+                         {'label': 'ConfigGroup1', 'row_id': 'unique_id_1', 'full_label': 'Config Group 1'})
         # now linked Plone groups contain the configGroup title
         for suffix in MC_GROUP_SUFFIXES:
             ploneGroup = self.portal.portal_groups.getGroupById('{0}_{1}'.format(cfgId, suffix))
@@ -1475,6 +1478,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertTrue('marked_not_applicable' in self.wfTool.getWorkflowsFor(cfg_item_type_name)[0].states)
         self.assertTrue('marked_not_applicable' in self.wfTool.getWorkflowsFor(cfg2_item_type_name)[0].states)
         self.assertTrue('marked_not_applicable' in self.wfTool.getWorkflowsFor(cfg3_item_type_name)[0].states)
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

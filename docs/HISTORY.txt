@@ -14,6 +14,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   useful to access getLastWFAction for example
 - Added column 'full_label' to DataGridField ToolPloneMeeting.configGroups so it is possible to enter a full
   label that will be useable when necessary, for example in generated POD documents
+- Override MeetingConfig.getConfigGroup to manage parameter 'full', if True, it will return the
+  config group full informations including 'row_id', 'label' and 'full_label'
 
 4.1b15 (2019-01-14)
 -------------------

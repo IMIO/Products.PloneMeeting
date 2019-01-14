@@ -2879,7 +2879,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('getToDoListSearches')
 
     def getToDoListSearches(self, theObjects=False, **kwargs):
-        '''Overrides the field 'toDoListSearches' acessor to manage theObjects.'''
+        '''Overrides the field 'toDoListSearches' accessor to manage theObjects.'''
         res = self.getField('toDoListSearches').get(self, **kwargs)
         if theObjects:
             catalog = api.portal.get_tool('portal_catalog')
@@ -2914,6 +2914,20 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         res = [(term.value, term.title) for term in vocab._terms]
         res.insert(0, ('_none_', _z3c_form('No value')))
         return DisplayList(res)
+
+    security.declarePublic('getConfigGroup')
+
+    def getConfigGroup(self, full=False, **kwargs):
+        '''Overrides the field 'configGroup' accessor to manage p_full parameter
+           that will return full informations about the configGroup from the tool.'''
+        res = self.getField('configGroup').get(self, **kwargs)
+        if full:
+            tool = api.portal.get_tool('portal_plonemeeting')
+            configGroups = tool.getConfigGroups()
+            res = [configGroup for configGroup in configGroups
+                   if configGroup['row_id'] == self.getConfigGroup()]
+            res = res and res[0] or {}
+        return res
 
     security.declarePrivate('listConfigGroups')
 

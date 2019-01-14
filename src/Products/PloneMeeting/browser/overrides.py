@@ -126,7 +126,7 @@ class PMGlobalSectionsViewlet(GlobalSectionsViewlet):
                 # grouped configs
                 elif 'data-config_group' in action:
                     cfg_ids = [cfg['id'] for cfg in
-                               grouped_configs[(action['data-config_group'], action['name'])]]
+                               grouped_configs[(action['data-config_group'], action['name'], action['data-config_full_label'])]]
                     for cfg_id in cfg_ids:
                         # select groupedConfig tab in the application and when on the MC in the configuration
                         if "/mymeetings/%s" % cfg_id in path or "/portal_plonemeeting/%s" % cfg_id in path:
@@ -1256,7 +1256,8 @@ class PMCatalogNavigationTabs(CatalogNavigationTabs):
                     'id': 'mc_config_group_{0}'.format(config_group[0]),
                     'url': portal_url + '/#',
                     'description': '',
-                    'data-config_group': config_group[0]}
+                    'data-config_group': config_group[0],
+                    'data-config_full_label': config_group[2]}
                 mc_tabs.append(data)
         # insert MC related tabs after first tab (index_html) but before other extra tabs
         tabs = [tabs[0]] + mc_tabs + tabs[1:]
