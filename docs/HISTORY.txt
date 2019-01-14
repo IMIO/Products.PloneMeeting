@@ -12,6 +12,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 
 - Make imio.history.utils available in POD templates under name imio_history_utils,
   useful to access getLastWFAction for example
+- Added column 'full_label' to DataGridField ToolPloneMeeting.configGroups so it is possible to enter a full
+  label that will be useable when necessary, for example in generated POD documents
 
 4.1b15 (2019-01-14)
 -------------------

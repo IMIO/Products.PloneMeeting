@@ -288,13 +288,17 @@ schema = Schema((
                 'label':
                     Column("Config group label",
                            col_description="Enter the label that will be displayed in the application."),
+                'full_label':
+                    Column("Config group full label",
+                           col_description="Enter the full label that will be useable if "
+                           "necessary like in produced documents."),
             },
             label='Configgroups',
             label_msgid='PloneMeeting_label_configGroups',
             i18n_domain='PloneMeeting',
         ),
         default=defValues.configGroups,
-        columns=('row_id', 'label'),
+        columns=('row_id', 'label', 'full_label'),
         allow_empty_rows=False,
     ),
 
@@ -1579,7 +1583,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                  'label': translate('_no_config_group_',
                                     domain='PloneMeeting',
                                     context=self.REQUEST,
-                                    default='Not grouped meeting configurations')}, )
+                                    default='Not grouped meeting configurations'),
+                 'full_label': u''}, )
             for configGroup in configGroups:
                 if config_group and configGroup['row_id'] != config_group:
                     continue
@@ -1590,7 +1595,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     if cfg.getConfigGroup() == configGroup['row_id']:
                         res.append({'id': cfg.getId(),
                                     'title': cfg.Title()})
-                data[(configGroup['row_id'], configGroup['label'])] = res
+                data[(configGroup['row_id'], configGroup['label'], configGroup['full_label'])] = res
 
         if as_items:
             return data.items()
