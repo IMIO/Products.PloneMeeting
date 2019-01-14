@@ -41,8 +41,6 @@ from imio.helpers.xhtml import markEmptyTags
 from imio.helpers.xhtml import removeBlanks
 from imio.helpers.xhtml import storeImagesLocally
 from imio.helpers.xhtml import xhtmlContentIsEmpty
-from imio.history.interfaces import IImioHistory
-from imio.history.utils import getLastAction
 from plone import api
 from plone.app.textfield import RichText
 from plone.app.uuid.utils import uuidToObject

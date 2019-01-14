@@ -10,8 +10,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 4.1b16 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Make imio.history.utils available in POD templates under name imio_history_utils,
+  useful to access getLastWFAction for example
 
 4.1b15 (2019-01-14)
 -------------------

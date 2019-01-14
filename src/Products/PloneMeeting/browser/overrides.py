@@ -33,6 +33,7 @@ from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.actionspanel.browser.viewlets import ActionsPanelViewlet
 from imio.actionspanel.browser.views import ActionsPanelView
 from imio.annex import utils as imio_annex_utils
+from imio.history import utils as imio_history_utils
 from imio.dashboard.browser.overrides import IDRenderCategoryView
 from imio.dashboard.interfaces import IContactsDashboard
 from imio.history.browser.views import IHContentHistoryView
@@ -825,6 +826,8 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
             'collective_iconifiedcategory_utils': collective_iconifiedcategory_utils,
             # imio.annex utils
             'imio_annex_utils': imio_annex_utils,
+            # imio.history utils
+            'imio_history_utils': imio_history_utils,
             # make methods defined in utils available
             'utils': pm_utils
         }
