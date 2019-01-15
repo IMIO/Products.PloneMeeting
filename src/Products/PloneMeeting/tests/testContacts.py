@@ -377,6 +377,45 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(item1.getItemAbsents(), (hp_uid, ))
         self.assertFalse(item2.getItemAbsents())
 
+    def test_pm_ItemInAndOutAttendees(self):
+        '''Returns information for an item about attendees that entered/left
+           the meeting before/after current item.'''
+        cfg = self.meetingConfig
+        # remove recurring items
+        self._removeConfigObjectsFor(cfg)
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime())
+        meeting_attendees = meeting.getAttendees()
+        self.assertTrue(meeting_attendees)
+        item1 = self.create('MeetingItem')
+        item1_uid = item1.UID()
+        item2 = self.create('MeetingItem')
+        item2_uid = item2.UID()
+        item3 = self.create('MeetingItem')
+        item3_uid = item3.UID()
+        self.presentItem(item1)
+        self.presentItem(item2)
+        self.presentItem(item3)
+        self.assertEqual(meeting.getItems(ordered=True), [item1, item2, item3])
+        meeting.itemAbsents[item1_uid] = [meeting_attendees[0]]
+        meeting.itemExcused[item2_uid] = [meeting_attendees[0], meeting_attendees[1]]
+        meeting.itemAbsents[item3_uid] = [meeting_attendees[1], meeting_attendees[2]]
+        self.assertEqual(item1.getInAndOutAttendees(theObjects=False),
+                         {'left_after': (meeting_attendees[1],),
+                          'entered_after': (),
+                          'left_before': (meeting_attendees[0],),
+                          'entered_before': ()})
+        self.assertEqual(item2.getInAndOutAttendees(theObjects=False),
+                         {'left_after': (meeting_attendees[2],),
+                          'entered_after': (meeting_attendees[0],),
+                          'left_before': (meeting_attendees[1],),
+                          'entered_before': ()})
+        self.assertEqual(item3.getInAndOutAttendees(theObjects=False),
+                         {'left_after': (),
+                          'entered_after': (),
+                          'left_before': (meeting_attendees[2],),
+                          'entered_before': (meeting_attendees[0],)})
+
     def test_pm_ItemContactsWhenItemRemovedFromMeeting(self):
         '''When an item is removed from a meeting, redefined informations
            regarding item absents/excused and signatories are reinitialized.'''

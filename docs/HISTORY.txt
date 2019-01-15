@@ -16,6 +16,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   label that will be useable when necessary, for example in generated POD documents
 - Override MeetingConfig.getConfigGroup to manage parameter 'full', if True, it will return the
   config group full informations including 'row_id', 'label' and 'full_label'
+- Added method print_in_and_out available in POD templates to ease printing of in/out moved of attendees.
+  It is based on MeetingItem.getItemInAndOutAttendees that return informations about in/out moves as
+  'left_before', 'entered_before', 'left_after' and 'entered_after'
 
 4.1b15 (2019-01-14)
 -------------------

@@ -1149,6 +1149,44 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
         else:
             return noMeetingMarker
 
+    def print_in_and_out_attendees(
+            self,
+            in_and_out_types=[],
+            patterns={'left_before': u'{0} quitte la séance avant la discussion du point.',
+                      'entered_before': u'{0} rentre en séance avant la discussion du point.',
+                      'left_after': u'{0} quitte la séance après la discussion du point.',
+                      'entered_after': u'{0} entre en séance après la discussion du point.'},
+            include_person_title=True,
+            render_as_html=True,
+            html_pattern=u'<p>{0}</p>'):
+        """Print in an out moves depending on the previous/next item.
+           If p_in_and_out_types is given, only given types are considered among
+           'left_before', 'entered_before', 'left_after' and 'entered_after'.
+           p_patterns rendering informations may be overrided.
+           If person_full_title is True, include full_title in sentence, aka include 'Mister' prefix.
+           If p_render_as_html is True, informations is returned with value as HTML, else,
+           we return a list of sentences.
+           p_html_pattern is the way HTML is rendered when p_render_as_html is True."""
+        in_and_out = self.context.getInAndOutAttendees()
+        res_pattern = {in_and_out_type: [] for in_and_out_type in in_and_out.keys()
+                       if (not in_and_out_types or in_and_out_type in in_and_out_types)}
+        person_res = res_pattern.copy()
+        for in_and_out_type, held_positions in in_and_out.items():
+            for held_position in held_positions:
+                person_res[in_and_out_type].append(
+                    held_position.get_person().get_full_title(
+                        include_person_title=include_person_title))
+        if render_as_html:
+            html_res = res_pattern.copy()
+            for in_and_out_type, person_titles in person_res.items():
+                html_res[in_and_out_type] = '\n'.join(
+                    [html_pattern.format(patterns[in_and_out_type].format(person_title))
+                     for person_title in person_titles])
+            res = html_res
+        else:
+            res = person_res.copy()
+        return res
+
 
 class AdviceDocumentGenerationHelperView(DXDocumentGenerationHelperView, BaseDGHV):
     """ """

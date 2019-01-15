@@ -3135,6 +3135,43 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         return signatories
 
+    def getInAndOutAttendees(self, theObjects=True):
+        """Returns a dict with informations about assembly moves :
+           - who left at the beginning of the item;
+           - who entered at the beginning of the item;
+           - who left at the end of the item;
+           - who entered at the end of the item."""
+        res = {'left_before': (),
+               'entered_before': (),
+               'left_after': (),
+               'entered_after': ()}
+        meeting = self.getMeeting()
+        if meeting:
+            items = meeting.getItems(ordered=True, unrestricted=True)
+            item_index = items.index(self)
+            item_attendees = self.getAttendees(theObjects=theObjects)
+            previous = None
+            if item_index:
+                previous = items[item_index - 1]
+                previous_attendees = previous.getAttendees(theObjects=theObjects)
+                left_before = tuple(set(previous_attendees).difference(set(item_attendees)))
+                entered_before = tuple(set(item_attendees).difference(set(previous_attendees)))
+                res['left_before'] = left_before
+                res['entered_before'] = entered_before
+            else:
+                # self is first item, get absents
+                res['left_before'] = self.getItemAbsents(theObjects=theObjects) + \
+                    self.getItemExcused(theObjects=theObjects)
+            next = None
+            if self != items[-1]:
+                next = items[item_index + 1]
+                next_attendees = next.getAttendees(theObjects=theObjects)
+                left_after = tuple(set(item_attendees).difference(set(next_attendees)))
+                entered_after = tuple(set(next_attendees).difference(set(item_attendees)))
+                res['left_after'] = left_after
+                res['entered_after'] = entered_after
+        return res
+
     security.declarePublic('mustShowItemReference')
 
     def mustShowItemReference(self):
@@ -5337,9 +5374,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''If this item is within a meeting, this method returns the itemNumber of
            a sibling item that may be accessed by the current user. p_whichItem
            can be:
-           - 'previous' (the previous item within the meeting)
-           - 'next' (the next item item within the meeting)
-           - 'first' (the first item of the meeting)
+           - 'previous' (the previous item within the meeting);
+           - 'next' (the next item item within the meeting);
+           - 'first' (the first item of the meeting);
            - 'last' (the last item of the meeting).
            If there is no sibling (or if it has no sense to ask for this
            sibling), the method returns None.
