@@ -72,7 +72,7 @@ class BaseAttendeeForm(form.Form):
         self.apply_until_item_number = \
             _itemNumber_to_storedItemNumber(
                 data.get('apply_until_item_number') or u'0'
-                )
+            )
         self.meeting = self.context.getMeeting()
         self._doApply()
 

@@ -788,24 +788,31 @@ class BaseDGHV(object):
                         by_attendee_type=False,
                         by_parent_org=False,
                         render_as_html=True,
+                        show_replaced_by=True,
+                        include_replace_by_held_position_label=True,
                         attendee_value_format=u"{0}, {1}",
                         attendee_type_format=u"<strong>{0}</strong>",
+                        by_parent_org_first_format=None,
+                        by_parent_org_format=u"<br /><strong><u>{0}</u></strong>",
                         custom_attendee_type_values={},
                         custom_grouped_attendee_type_patterns={},
-                        show_replaced_by=True,
                         replaced_by_format={'M': u'<strong>remplacé par {0}</strong>',
-                                            'F': u'<strong>remplacée par {0}</strong>'},
-                        include_replace_by_held_position_label=True):
+                                            'F': u'<strong>remplacée par {0}</strong>'}):
         """ """
 
         def _render_as_html(tree, by_parent_org=False):
             """ """
             res = []
+            first = True
             for org, contact_infos in tree.items():
                 if by_parent_org:
-                    res.append(u"<strong><u>{0}</u></strong>".format(org.title))
+                    render_format = by_parent_org_format
+                    if first and by_parent_org_first_format is not None:
+                        render_format = by_parent_org_first_format
+                    res.append(render_format.format(org.title))
                 for contact_value in contact_infos.values():
                     res.append(contact_value)
+                first = False
             return u'<br />'.join(res)
 
         attendee_type_values = {'attendee': {'M': u'présent', 'F': u'présente'},
