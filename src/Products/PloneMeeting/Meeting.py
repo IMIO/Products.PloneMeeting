@@ -1382,21 +1382,30 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
 
         # Add the item at the end of the items list
         items.append(item)
+        self._finalize_item_insert(items, items_to_update=[item])
+
+    def _finalize_item_insert(self, items, items_to_update=[]):
+        """ """
         self.setItems(items)
         # invalidate RAMCache for MeetingItem.getMeeting
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeeting')
         # reindex getItemNumber when item is in the meeting or getItemNumber returns None
         # and reindex linkedMeeting indexes that is used by updateItemReferences using getItems
-        item.reindexObject(idxs=['getItemNumber',
-                                 'listType',
-                                 'linkedMeetingUID',
-                                 'linkedMeetingDate'])
+        lowest_item_number = 0
+        for item in items_to_update:
+            itemNumber = item.getRawItemNumber()
+            if not lowest_item_number or itemNumber < lowest_item_number:
+                lowest_item_number = itemNumber
+            item.reindexObject(idxs=['getItemNumber',
+                                     'listType',
+                                     'linkedMeetingUID',
+                                     'linkedMeetingDate'])
         # meeting is considered modified, do this before updateItemReferences
         self.notifyModified()
 
         # update itemReference after 'getItemNumber' has been reindexed of item and
         # items with a higher itemNumber
-        self.updateItemReferences(startNumber=item.getItemNumber())
+        self.updateItemReferences(startNumber=lowest_item_number)
 
     security.declareProtected("Modify portal content", 'removeItem')
 

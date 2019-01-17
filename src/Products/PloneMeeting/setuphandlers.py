@@ -333,7 +333,7 @@ def postInstall(context):
                   }
         site.invokeFactory('directory', 'contacts', **params)
         contacts = site['contacts']
-        # Organisations creation (in directory)
+        # Organizations creation (in directory)
         params = {'title': u"Mon organisation",
                   'organization_type': u'default', }
         contacts.invokeFactory('organization', PLONEGROUP_ORG, **params)
