@@ -9,7 +9,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 
 4.1b16 (unreleased)
 -------------------
-
+- Moved to Plone 4.3.18
 - Make imio.history.utils available in POD templates under name imio_history_utils,
   useful to access getLastWFAction for example
 - Added column 'full_label' to DataGridField ToolPloneMeeting.configGroups so it is possible to enter a full
@@ -24,7 +24,6 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 
 4.1b15 (2019-01-14)
 -------------------
-
 - Fixed bug where actions panel do not appear at the bottom of a meeting sometimes.  This was due to wrong
   link to meeting containing Plone site id because obj obtained via brain.getObject does not always have a
   correct REQUEST
@@ -45,7 +44,6 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 
 4.1b14 (2018-12-18)
 -------------------
-
 - Added parameter MeetingConfig.usingGroups that adds the possibility to restrict access to the MeetingConfig
   to the selected groups
 - Added field MeetingItem.textCheckList useable on item templates so Managers can define what is necessary for
@@ -66,13 +64,11 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 
 4.1b13 (2018-12-04)
 -------------------
-
 - Display 'Add contacts' actions on the portlet displayed in /contacts dashboards
 - Removed MeetingCategory.getName, one step further to separating real MeetingCategory and proposingGroup
 
 4.1b12 (2018-12-04)
 -------------------
-
 - Replaced MeetingGroup (stored in portal_plonemeeting) by collective.contact.core organizations
  (stored in plonegroup-organization)
 - Added parameter 'ordered' to MeetingItem.getAdviceDataFor that will return an OrderedDict instead a dict to ensure
@@ -100,7 +96,6 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 
 4.1b11 (2018-09-11)
 -------------------
-
 - Adapted code to new behavior of collective.eeafaceted.collectionwidget where the redirection to the default collection
   is done by the facetenavigation_view and no more by the widget.default method
 - Use source_groups._principal_groups.byValue(0) instead source_groups._principal_groups._p_mtime to check if users/groups
@@ -169,7 +164,6 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 
 4.1b9 (2018-05-09)
 ------------------
-
 - Make user groups related cache longer than for a REQUEST.  We use the source_groups._principal_groups._p_mtime
   to check if users groups were adapted to invalidate cache.  Now methods getPloneGroupsForUser, getGroupsForUser,
   userIsAmong, isManager and isPowerObserverForCfg are cached as long as some user groups configuration was not changed
@@ -178,7 +172,6 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 
 4.1b8 (2018-05-04)
 ------------------
-
 - When an annex is modified, update parent's (item, meeting or advice) modification date, as it was already
   the case when a new annex is added or when it is deleted
 - Added adaptable method MeetingItem.showObservations used in the widget condition of field MeetingItem.observations
@@ -215,7 +208,6 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 
 4.1b7 (2018-03-19)
 ------------------
-
 - Refactored meetingitem_view to use @@display-annexes to display annexes and decision annexes.  Only display
   the 'More infos' link when relevant, so when no annexes are defined because the 'More infos' link already
   appear in the existing annexes popup
@@ -240,7 +232,6 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 
 4.1b6 (2018-03-07)
 ------------------
-
 - Override vocabulary 'collective.documentgenerator.ExistingPODTemplate' to include MeetingConfig title in term
 - Adapted ToolPloneMeeting.getGroupedConfigs so it does not return MeetingConfig objects because the method
   is ram.cached and returning objects leads to problems where objects lose acquisition
@@ -249,7 +240,6 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 
 4.1b5 (2018-02-23)
 ------------------
-
 - In the workflow_state viewlet, translate the review_state title and not the review_state id so we may
   have different translations for same state id in different workflows
 - Added dashboard column 'review_state_title' that displays the translated review_state 'Title' instead
@@ -273,7 +263,6 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 
 4.1b4 (2018-01-31)
 ------------------
-
 - Simplified SearchableText indexer by use of utils.get_annexes as annexes title is indexed
 - Added 'Labels' on items, this rely on the integration of ftw.labels
 - Added method MeetingItem._getGroupManagingItem that returns the group that is managing the item at a given review_state.
@@ -289,7 +278,6 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 
 4.1b3 (2018-01-23)
 ------------------
-
 - Versions of appy and Products.PloneMeeting displayed in control panel are taken from distribution (setup.py),
   no more from portal_setup
 - Fixed ConfigurablePODTemplate.store_as_annex to handle storing annex on any element accepting annex
@@ -311,7 +299,6 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 
 4.1b2 (2017-12-07)
 ------------------
-
 - State 'refused' is no more by default in the item workflow, it is now a WFAdaptation 'refused'
   that is enabled by default but that can be disabled in case state 'refused' is not used
 - Batch action to change state (TransitionBatchActionForm) is now only available to users having
