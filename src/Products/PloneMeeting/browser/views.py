@@ -33,6 +33,7 @@ from ftw.labels.interfaces import ILabeling
 from imio.helpers.xhtml import addClassToContent
 from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
 from imio.helpers.xhtml import imagesToPath
+from imio.history.utils import getLastWFAction
 from plone import api
 from plone.memoize.view import memoize
 from plone.memoize.view import memoize_contextless
@@ -390,6 +391,37 @@ class MeetingUpdateItemReferences(BrowserView):
         """ """
         self.context.updateItemReferences()
         msg = _('References of contained items have been updated.')
+        api.portal.show_message(msg, request=self.request)
+        return self.request.RESPONSE.redirect(self.context.absolute_url())
+
+
+class MeetingReorderItems(BrowserView):
+    """Reorder items on the meeting depending on itemInsertOrder."""
+
+    def _recompute_items_order(self):
+        """Get every items and order it by getItemInsertOrder."""
+        items = self.context.getItems(ordered=True)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
+        # sort items by insertOrder then by date it was presented
+        # so items with same insert order will be sorted by WF transition present time
+        items = sorted([
+            (self.context.getItemInsertOrder(item, cfg), getLastWFAction(item, 'present')['time'], item)
+            for item in items]
+        )
+        # get items
+        items = [item[2] for item in items]
+        # set items itemNumber
+        itemNumber = 100
+        for item in items:
+            item.setItemNumber(itemNumber)
+            itemNumber = itemNumber + 100
+        self.context._finalize_item_insert(items, items_to_update=items)
+
+    def index(self):
+        """ """
+        self._recompute_items_order()
+        msg = _('Items have been reordered.')
         api.portal.show_message(msg, request=self.request)
         return self.request.RESPONSE.redirect(self.context.absolute_url())
 
