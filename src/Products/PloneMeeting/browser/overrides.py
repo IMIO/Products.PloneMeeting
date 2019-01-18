@@ -33,9 +33,9 @@ from eea.facetednavigation.interfaces import IFacetedNavigable
 from imio.actionspanel.browser.viewlets import ActionsPanelViewlet
 from imio.actionspanel.browser.views import ActionsPanelView
 from imio.annex import utils as imio_annex_utils
-from imio.history import utils as imio_history_utils
 from imio.dashboard.browser.overrides import IDRenderCategoryView
 from imio.dashboard.interfaces import IContactsDashboard
+from imio.history import utils as imio_history_utils
 from imio.history.browser.views import IHContentHistoryView
 from imio.history.browser.views import IHDocumentBylineViewlet
 from imio.prettylink.interfaces import IPrettyLink
@@ -43,8 +43,8 @@ from plone import api
 from plone import namedfile
 from plone.app.content.browser.foldercontents import FolderContentsView
 from plone.app.controlpanel.overview import OverviewControlPanel
-from plone.app.controlpanel.usergroups import UsersGroupsControlPanelView
 from plone.app.controlpanel.usergroups import GroupsOverviewControlPanel
+from plone.app.controlpanel.usergroups import UsersGroupsControlPanelView
 from plone.app.controlpanel.usergroups import UsersOverviewControlPanel
 from plone.app.layout.viewlets.common import ContentActionsViewlet
 from plone.app.layout.viewlets.common import GlobalSectionsViewlet
@@ -53,6 +53,7 @@ from plone.memoize.instance import memoize
 from plone.memoize.view import memoize_contextless
 from Products.Archetypes.browser.utils import Utils
 from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFCore.utils import _checkPermission
 from Products.CMFPlone.browser.navigation import CatalogNavigationTabs
 from Products.CMFPlone.utils import safe_unicode
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
@@ -1204,9 +1205,10 @@ class PMTransitionBatchActionForm(TransitionBatchActionForm):
            and to non MeetingManagers on the meeting_view."""
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
-        return tool.isManager(self.context) or \
-            (not self.context.meta_type == 'Meeting' and
-             bool(tool.userIsAmong(suffixes=get_all_suffixes(None), cfg=cfg)))
+        return (self.context.meta_type == 'Meeting' and
+                _checkPermission(ModifyPortalContent, self.context)) or \
+               (not self.context.meta_type == 'Meeting' and
+                bool(tool.userIsAmong(suffixes=get_all_suffixes(None), cfg=cfg)))
 
 
 class PMContentHistoryView(IHContentHistoryView):

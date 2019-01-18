@@ -215,23 +215,21 @@
 
     <browser:view
       for="Products.PloneMeeting.interfaces.IMeeting"
-      name="recompute-items-order"
-      class=".views.MeetingRecomputeItemOrder"
+      name="reorder-items"
+      class=".views.MeetingReorderItems"
       permission="cmf.ModifyPortalContent" />
 
     <browser:view
       for="Products.PloneMeeting.interfaces.IMeeting"
       name="present-several-items"
       class=".views.PresentSeveralItemsView"
-      permission="zope2.View"
-      />
+      permission="zope2.View" />
 
     <browser:view
       for="Products.PloneMeeting.interfaces.IMeeting"
       name="remove-several-items"
       class=".views.RemoveSeveralItemsView"
-      permission="zope2.View"
-      />
+      permission="zope2.View" />
 
     <!-- IMEETING BATCH ACTIONS -->
     <browser:page

@@ -395,8 +395,8 @@ class MeetingUpdateItemReferences(BrowserView):
         return self.request.RESPONSE.redirect(self.context.absolute_url())
 
 
-class MeetingRecomputeItemOrder(BrowserView):
-    """Recompute order of items on the meeting."""
+class MeetingReorderItems(BrowserView):
+    """Reorder items on the meeting depending on itemInsertOrder."""
 
     def _recompute_items_order(self):
         """Get every items and order it by getItemInsertOrder."""
@@ -416,13 +416,12 @@ class MeetingRecomputeItemOrder(BrowserView):
         for item in items:
             item.setItemNumber(itemNumber)
             itemNumber = itemNumber + 100
-        import ipdb; ipdb.set_trace()
         self.context._finalize_item_insert(items, items_to_update=items)
 
     def index(self):
         """ """
         self._recompute_items_order()
-        msg = _('Order of contained items has been recomputed.')
+        msg = _('Items have been reordered.')
         api.portal.show_message(msg, request=self.request)
         return self.request.RESPONSE.redirect(self.context.absolute_url())
 

@@ -61,7 +61,7 @@ class testViews(PloneMeetingTestCase):
         view = pmFolder.restrictedTraverse('@@createitemfromtemplate')
         view()
         # only one itemTemplate available to 'pmCreator1'
-        self.assertEqual(len(cfg.getItemTemplates(filtered=True)),  1)
+        self.assertEqual(len(cfg.getItemTemplates(filtered=True)), 1)
         self.assertEqual(len(view.templatesTree['children']), 1)
         # no sub children
         self.assertFalse(view.templatesTree['children'][0]['children'])
@@ -716,6 +716,78 @@ class testViews(PloneMeetingTestCase):
         self.assertRaises(Unauthorized,
                           meeting.restrictedTraverse,
                           '@@update-item-references')
+
+    def test_pm_MeetingReorderItems(self):
+        """Test call to @@reorder-items from the meeting that will reorder
+           items based on configured MeetingConfig.insertingMethodsOnAddItem."""
+        cfg = self.meetingConfig
+        # setup
+        # remove recurring items in self.meetingConfig
+        self.changeUser('siteadmin')
+        self._removeConfigObjectsFor(cfg)
+        cfg.setUseGroupsAsCategories(False)
+        cfg.setInsertingMethodsOnAddItem((
+            {'insertingMethod': 'on_list_type',
+             'reverse': '0'},
+            {'insertingMethod': 'on_categories',
+             'reverse': '0'},
+            {'insertingMethod': 'on_proposing_groups',
+             'reverse': '0'},)
+        )
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2019/01/18'))
+        item1 = self.create('MeetingItem', proposingGroup=self.developers_uid, category='development')
+        item2 = self.create('MeetingItem', proposingGroup=self.developers_uid, category='development')
+        item3 = self.create('MeetingItem', proposingGroup=self.developers_uid, category='development')
+        item4 = self.create('MeetingItem', proposingGroup=self.vendors_uid, category='development')
+        item5 = self.create('MeetingItem', proposingGroup=self.developers_uid, category='research')
+        item6 = self.create('MeetingItem', proposingGroup=self.vendors_uid, category='research')
+        item7 = self.create('MeetingItem', proposingGroup=self.developers_uid, category='events')
+        item8 = self.create('MeetingItem', proposingGroup=self.vendors_uid, category='events')
+        right_ordered_items = [item1, item2, item3, item4, item5, item6, item7, item8]
+        for item in right_ordered_items:
+            self.presentItem(item)
+        # present 2 late items
+        self.freezeMeeting(meeting)
+        meeting_uid = meeting.UID()
+        item9 = self.create('MeetingItem', proposingGroup=self.developers_uid,
+                            category='development', preferredMeeting=meeting_uid)
+        item10 = self.create('MeetingItem', proposingGroup=self.vendors_uid,
+                             category='events', preferredMeeting=meeting_uid)
+        self.presentItem(item9)
+        self.presentItem(item10)
+        right_ordered_items.append(item9)
+        right_ordered_items.append(item10)
+        right_item_references = [
+            'Ref. 20190118/1', 'Ref. 20190118/2', 'Ref. 20190118/3', 'Ref. 20190118/4', 'Ref. 20190118/5',
+            'Ref. 20190118/6', 'Ref. 20190118/7', 'Ref. 20190118/8', 'Ref. 20190118/9', 'Ref. 20190118/10']
+        self.assertEqual(right_ordered_items,
+                         [item1, item2, item3, item4, item5, item6, item7, item8, item9, item10])
+        self.assertEqual(meeting.getItems(ordered=True), right_ordered_items)
+        self.assertEqual([item.getItemReference() for item in right_ordered_items], right_item_references)
+
+        # change some items order using the @@change-item-order
+        view = item1.restrictedTraverse('@@change-item-order')
+        view('number', '6')
+        view = item2.restrictedTraverse('@@change-item-order')
+        view('number', '4')
+        view = item7.restrictedTraverse('@@change-item-order')
+        view('number', '1')
+        view = item8.restrictedTraverse('@@change-item-order')
+        view('number', '2')
+        view = item10.restrictedTraverse('@@change-item-order')
+        view('number', '7')
+        mixed_items = meeting.getItems(ordered=True)
+        self.assertEqual(mixed_items,
+                         [item7, item8, item3, item4, item5, item2, item10, item6, item1, item9])
+        # references are correct
+        self.assertEqual([item.getItemReference() for item in mixed_items], right_item_references)
+        # reorder items
+        view = meeting.restrictedTraverse('@@reorder-items')
+        view()
+        # order and references are correct
+        self.assertEqual(meeting.getItems(ordered=True), right_ordered_items)
+        self.assertEqual([item.getItemReference() for item in right_ordered_items], right_item_references)
 
     def test_pm_DisplayGroupUsersView(self):
         """This view returns member of a group but not 'Not found' ones,
