@@ -1845,9 +1845,10 @@ class IconifiedCategoryGroupAdapter(object):
            (self.context.portal_type in ('annex', 'annexDecision') and parent.meta_type == 'MeetingItem'):
             isItemDecisionAnnex = False
             if self.context.meta_type == 'MeetingItem':
-
                 # it is possible to force to use the item_decision_annexes group
-                if self.request.get('force_use_item_decision_annexes_group', False):
+                # or when using quickupload, the typeupload contains the type of element to add
+                if self.request.get('force_use_item_decision_annexes_group', False) or \
+                   self.request.get('typeupload', None) == 'annexDecision':
                     return cfg.annexes_types.item_decision_annexes
 
                 # we are adding a new annex, get annex portal_type from form_instance
