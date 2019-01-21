@@ -1,7 +1,7 @@
 <html metal:use-macro="here/main_template/macros/master"
       i18n:domain="PloneMeeting">
   <body>
-    <div metal:fill-slot="main">
+  <div metal:fill-slot="main">
       <tal:header replace="structure context/@@header" />
 
       <tal:back_to_item condition="python: context.portal_type.startswith('meetingadvice')">
@@ -19,7 +19,16 @@
                    title="#"
                    tal:attributes="src string:${view/portal_url}/new.png;
                                    title string:add_annex" />
-              </a>
+            </a>
+            <a href="@@quick_upload?typeupload=annex"
+               class="link-overlay-pm-annex"
+               tal:condition="view/showAddAnnex">
+              <img i18n:attributes="title"
+                   title="#"
+                   tal:attributes="src string:${view/portal_url}/new_multiple.png;
+                                   title string:add_several_annex" />
+            </a>
+
         </legend>
 
         <div class="content" tal:content="structure python: view.table_render(portal_type='annex')"></div>
@@ -41,7 +50,15 @@
                    title="#"
                    tal:attributes="src string:${view/portal_url}/new.png;
                                    title string:add_decision_annex" />
-              </a>
+            </a>
+            <a href="@@quick_upload?typeupload=annexDecision"
+               class="link-overlay-pm-annex"
+               tal:condition="view/showAddAnnexDecision">
+              <img i18n:attributes="title"
+                   title="#"
+                   tal:attributes="src string:${view/portal_url}/new_multiple.png;
+                                   title string:add_several_decision_annex" />
+            </a>
         </legend>
 
         <div class="content" tal:content="structure python: view.table_render(portal_type='annexDecision')"></div>
@@ -57,6 +74,6 @@
           editAnnex();
         });
       </script>
-    </div>
+  </div>
   </body>
 </html>
