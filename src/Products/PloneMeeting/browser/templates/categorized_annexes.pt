@@ -26,7 +26,7 @@
               <img i18n:attributes="title"
                    title="#"
                    tal:attributes="src string:${view/portal_url}/new_multiple.png;
-                                   title string:add_several_annex" />
+                                   title string:add_several_annexes" />
             </a>
 
         </legend>
@@ -57,7 +57,7 @@
               <img i18n:attributes="title"
                    title="#"
                    tal:attributes="src string:${view/portal_url}/new_multiple.png;
-                                   title string:add_several_decision_annex" />
+                                   title string:add_several_decision_annexes" />
             </a>
         </legend>
 

@@ -450,6 +450,7 @@ def _configureQuickupload(site):
     qu_props.fill_titles = True
     qu_props.object_unique_id = True
     qu_props.id_as_title = False
+    qu_props.sim_upload_limit = 1
     logger.info('Done.')
 
 
