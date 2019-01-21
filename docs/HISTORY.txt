@@ -21,6 +21,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   'left_before', 'entered_before', 'left_after' and 'entered_after'
 - Added possibility to recompute the whole meeting items number based on inserting methods using
   the @@reorder-items view
+- Use collective.quickupload to be able to upload several annexes at the same time
 
 4.1b15 (2019-01-14)
 -------------------
