@@ -449,7 +449,7 @@ def _configureQuickupload(site):
     qu_props = site.portal_properties.quickupload_properties
     qu_props.fill_titles = True
     qu_props.object_unique_id = True
-    qu_props.id_as_title = True
+    qu_props.id_as_title = False
     logger.info('Done.')
 
 
