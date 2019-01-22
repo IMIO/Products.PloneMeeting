@@ -1010,6 +1010,85 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(len(api.content.find(context=self.portal.contacts, portal_type='person')), 18)
         self.assertEqual(len(api.content.find(context=self.portal.contacts, portal_type='held_position')), 18)
 
+    def test_pm_Gender_and_number_from_position_type(self):
+        """Return gender/number values depending on used position type."""
+        self.changeUser('siteadmin')
+        self.portal.contacts.position_types = [
+            {'token': u'default', 'name': u'D\xe9faut'},
+            {'token': u'admin', 'name': u'Administrateur|Administrateurs|Administratrice|Administratrices'},
+            {'token': u'alderman', 'name': u'\xc9chevin|\xc9chevins|\xc9chevine|\xc9chevines'}]
+        person = self.portal.contacts.get('person1')
+        hp = person.get_held_positions()[0]
+        hp.position_type = u'default'
+        self.assertEqual(
+            hp.gender_and_number_from_position_type(),
+            {'FP': u'D\xe9faut',
+             'FS': u'D\xe9faut',
+             'MP': u'D\xe9faut',
+             'MS': u'D\xe9faut'})
+        hp.position_type = u'admin'
+        self.assertEqual(
+            hp.gender_and_number_from_position_type(),
+            {'FP': u'Administratrices',
+             'FS': u'Administratrice',
+             'MP': u'Administrateurs',
+             'MS': u'Administrateur'})
+        import ipdb; ipdb.set_trace()
+        hp.position_type = u'alderman'
+        self.assertEqual(
+            hp.gender_and_number_from_position_type(),
+            {'FP': u'Default',
+             'FS': u'Default',
+             'MP': u'Default',
+             'MS': u'Default'})
+        hp.position_type = u''
+        self.assertEqual(
+            hp.gender_and_number_from_position_type(),
+            {'FP': u'',
+             'FS': u'',
+             'MP': u'',
+             'MS': u''})
+
+    def test_pm_Get_prefix_for_gender_and_number(self):
+        """Add relevant prefix before position_type depending
+           on gender/number and taking into account first letter (vowel/consonant)."""
+        self.changeUser('siteadmin')
+        self.portal.contacts.position_types = [
+            {'token': u'default', 'name': u'D\xe9faut'},
+            {'token': u'admin', 'name': u'Administrateur|Administrateurs|Administratrice|Administratrices'},
+            {'token': u'alderman', 'name': u'\xc9chevin|\xc9chevins|\xc9chevine|\xc9chevines'}]
+        person = self.portal.contacts.get('person1')
+        hp = person.get_held_positions()[0]
+        hp.position_type = u'default'
+        self.assertEqual(
+            hp.gender_and_number_from_position_type(),
+            {'FP': u'Default',
+             'FS': u'Default',
+             'MP': u'Default',
+             'MS': u'Default'})
+        hp.position_type = u'admin'
+        self.assertEqual(
+            hp.gender_and_number_from_position_type(),
+            {'FP': u'Administratrices',
+             'FS': u'Administratrice',
+             'MP': u'Administrateurs',
+             'MS': u'Administrateur'})
+        import ipdb; ipdb.set_trace()
+        hp.position_type = u'alderman'
+        self.assertEqual(
+            hp.gender_and_number_from_position_type(),
+            {'FP': u'Default',
+             'FS': u'Default',
+             'MP': u'Default',
+             'MS': u'Default'})
+        hp.position_type = u''
+        self.assertEqual(
+            hp.gender_and_number_from_position_type(),
+            {'FP': u'',
+             'FS': u'',
+             'MP': u'',
+             'MS': u''})
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

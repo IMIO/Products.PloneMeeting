@@ -7,6 +7,7 @@ from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.excelexport.exportables.dexterityfields import get_exportable_for_fieldname
 from plone.autoform import directives as form
 from plone.dexterity.schema import DexteritySchemaPolicy
+from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.content.source import PMContactSourceBinder
 from Products.PloneMeeting.utils import plain_render
@@ -14,6 +15,7 @@ from z3c.form.browser.checkbox import CheckBoxFieldWidget
 from zope.globalrequest import getRequest
 from zope.i18n import translate
 
+import unidecode
 import zope.schema
 
 
@@ -145,6 +147,33 @@ class PMHeldPosition(HeldPosition):
                    'FP': values[0]}
         return res
 
+    def get_prefix_for_gender_and_number(self, value=None, include_value=False):
+        """Get prefix to use depending on given value."""
+        value_starting_vowel = {'MS': u'L\'',
+                                'MP': u'Les',
+                                'FS': u'L\'',
+                                'FP': u'Les'}
+        value_starting_consonant = {'MS': u'Le',
+                                    'MP': u'Les',
+                                    'FS': u'La',
+                                    'FP': u'Les'}
+
+        if not value:
+            value = self.label
+        # startswith vowel or consonant?
+        first_letter = safe_unicode(value[0])
+        # turn "é" to "e"
+        first_letter = unidecode.unidecode(first_letter)
+        if first_letter.lower() in ['a', 'e', 'i', 'o', 'u']:
+            mappings = value_starting_vowel
+        else:
+            mappings = value_starting_consonant
+        values = {k: v for k, v in self.gender_and_number_from_position_type().items()
+                  if v == value}
+        res = values and mappings.get(values.keys()[0], '') or ''
+        if include_value:
+            res = res + value
+        return res
 
 class PMHeldPositionSchemaPolicy(DexteritySchemaPolicy):
     """ """
