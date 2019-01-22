@@ -7,6 +7,7 @@ from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_group
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
+from collective.iconifiedcategory.utils import sort_categorized_elements
 from copy import deepcopy
 from DateTime import DateTime
 from datetime import date
@@ -728,6 +729,24 @@ class Migrate_To_4_1(Migrator):
         logger.info('Adapted {0} links.'.format(number_of_migrated_links))
         logger.info('Done.')
 
+    def _reorderAnnexes(self):
+        """Annexes are now naturally sorted on their title, update every elements
+           that may contain annexes (meeting, item, advice)."""
+        brains = self.portal.portal_catalog(
+            object_provides='Products.PloneMeeting.interfaces.IMeetingContent')
+        i = 1
+        total = len(brains)
+        for brain in brains:
+            logger.info('Reordering annexes for item {0}/{1} ({2})...'.format(
+                i,
+                total,
+                brain.getPath()))
+            i = i + 1
+            obj = brain.getObject()
+            if base_hasattr(obj, 'categorized_elements'):
+                sort_categorized_elements(obj)
+        logger.info('Done.')
+
     def run(self, step=None):
         logger.info('Migrating to PloneMeeting 4.1...')
 
@@ -791,6 +810,7 @@ class Migrate_To_4_1(Migrator):
         self._removeUsersGlobalRoles()
         self._updateItemColumnsKeys()
         self._adaptInternalImagesLinkToUseResolveUID()
+        self._reorderAnnexes()
         # too many indexes to update, rebuild the portal_catalog
         self.refreshDatabase()
 
@@ -823,7 +843,8 @@ def migrate(context):
        22) Fix meeting related DashboardCollections query;
        23) Remove global roles for every users, roles are only given thru groups;
        24) Update keys stored in MeetingConfig related to static infos displayed in dashboards;
-       25) Adapt link to images to be sure to use resolveuid.
+       25) Adapt link to images to be sure to use resolveuid;
+       26) Reorder annexes to use natural sorting.
     '''
     migrator = Migrate_To_4_1(context)
     migrator.run()
