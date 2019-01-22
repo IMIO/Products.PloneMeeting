@@ -3997,9 +3997,18 @@ class testMeetingItem(PloneMeetingTestCase):
 
     def test_pm_GetCertifiedSignaturesWithHeldPosition(self):
         '''Test the MeetingItem.getCertifiedSignatures method when using held_position.'''
+        self.changeUser('siteadmin')
+        self.portal.contacts.position_types = [
+            {'token': u'default', 'name': u'D\xe9faut'},
+            {'token': u'admin', 'name': u'Administrateur|Administrateurs|Administratrice|Administratrices'}]
+
         # define signatures for the MeetingConfig
         held_pos1 = self.portal.contacts.person1.held_pos1
+        held_pos1.label = u'Administrateur'
+        held_pos1.position_type = u'admin'
         held_pos2 = self.portal.contacts.person2.held_pos2
+        held_pos2.label = u'Administratrice'
+        held_pos2.position_type = u'admin'
         certified = [
             {'signatureNumber': '1',
              'name': '',
@@ -4024,14 +4033,14 @@ class testMeetingItem(PloneMeetingTestCase):
         # 'Name' and 'Function' are taken from contact if not defined (overrided)
         self.assertEqual(
             item.getCertifiedSignatures(),
-            ['Function1', u'Person1FirstName Person1LastName', u'Assembly member 2', 'Name2'])
+            ['Function1', u'Person1FirstName Person1LastName', u"L'Administratrice", 'Name2'])
         # held position are available when listify=False
         self.assertEqual(
             item.getCertifiedSignatures(listify=False),
             {'1': {'function': 'Function1',
                    'held_position': held_pos1,
                    'name': u'Person1FirstName Person1LastName'},
-             '2': {'function': u'Assembly member 2',
+             '2': {'function': u"L'Administratrice",
                    'held_position': held_pos2,
                    'name': 'Name2'}})
 
