@@ -515,7 +515,8 @@ class ToolInitializer:
         odt_file = None
         pod_template_to_use = None
         if pt.odt_file:
-            filePath = '%s/templates/%s' % (source, pt.odt_file)
+            # pt.odt_file may be a full path or a relative path
+            filePath = pt.odt_file.startswith('/') and pt.odt_file or '%s/templates/%s' % (source, pt.odt_file)
             data = self.find_binary(filePath)
             odt_file = NamedBlobFile(
                 data=data,
