@@ -22,6 +22,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Added possibility to recompute the whole meeting items number based on inserting methods using
   the @@reorder-items view
 - Use collective.quickupload to be able to upload several annexes at the same time
+- MeetingConfig.custom_validate_workflowAdaptations now receives values, added and removed as parameters
 
 4.1b15 (2019-01-14)
 -------------------
