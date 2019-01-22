@@ -657,7 +657,7 @@ class IMeetingCategoryCustom(IMeetingCategory):
 # Interfaces used for customizing the behaviour of meeting configs -------------
 # See docstring of previous classes for understanding this section.
 class IMeetingConfigDocumentation:
-    def custom_validate_workflowAdaptations():
+    def custom_validate_workflowAdaptations(values, added, removed):
         '''This is called by MeetingConfig.validate_workflowAdaptations and let
            a plugin that added his own workflowAdaptations validates it.'''
     def onEdit(isCreated):
