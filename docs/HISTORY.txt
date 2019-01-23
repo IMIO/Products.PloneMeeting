@@ -84,6 +84,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   (not_given, asked_again or hidden_during_redaction)
 - Make sure we use getRaw() for MeetingItem.getRawMotivation and MeetingItem.getRawDecision or transforms are applied and
   we lose (for example) resolveuid links
+- MeetingConfig.custom_validate_workflowAdaptations now receives values, added and removed as parameters
 
 4.0 (2017-08-04)
 ----------------

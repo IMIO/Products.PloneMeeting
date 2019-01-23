@@ -3408,9 +3408,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
 
-        return self.adapted().custom_validate_workflowAdaptations()
+        return self.adapted().custom_validate_workflowAdaptations(values, added, removed)
 
-    def custom_validate_workflowAdaptations(self):
+    def custom_validate_workflowAdaptations(self, values, added, removed):
         '''See doc in interfaces.py.'''
         pass
 
