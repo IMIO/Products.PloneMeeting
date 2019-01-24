@@ -20,6 +20,7 @@
 # 02110-1301, USA.
 #
 
+from collections import OrderedDict
 from collective.eeafaceted.batchactions.browser.viewlets import BatchActionsViewlet
 from plone import api
 from plone.app.layout.viewlets import ViewletBase
@@ -73,3 +74,41 @@ class PMMeetingBatchActionsViewlet(BatchActionsViewlet):
         if displaying_available_items(self.context):
             return False
         return True
+
+
+class HeldPositionBackRefs(ViewletBase):
+    """Display elements using held_position."""
+
+    def available(self):
+        """ """
+        return True
+
+    def using_configs(self):
+        """ """
+        tool = api.portal.get_tool('portal_plonemeeting')
+        hp_uid = self.context.UID()
+        res = []
+        for cfg in tool.objectValues('MeetingConfig'):
+            if hp_uid in cfg.getOrderedContacts():
+                res.append(cfg)
+        return cfg
+
+    def using_meetings(self):
+        """ """
+        tool = api.portal.get_tool('portal_plonemeeting')
+        catalog = api.portal.get_tool('portal_catalog')
+        hp_uid = self.context.UID()
+        res = OrderedDict()
+        for cfg in tool.objectValues('MeetingConfig'):
+            meeting_type_name = cfg.getMeetingTypeName()
+            brains = catalog(portal_type=meeting_type_name)
+            for brain in brains:
+                meeting = brain.getObject()
+                orderedContacts = getattr(meeting, 'orderedContacts', {})
+                if hp_uid in orderedContacts:
+                    if cfg not in res:
+                        res[cfg] = []
+                    res[cfg].append(meeting)
+        return res
+
+    index = ViewPageTemplateFile("templates/viewlet_held_position_back_refs.pt")

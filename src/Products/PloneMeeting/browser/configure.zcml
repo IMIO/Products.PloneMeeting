@@ -10,29 +10,31 @@
         manager="plone.app.layout.viewlets.interfaces.IBelowContentTitle"
         class=".viewlets.WorkflowState"
         for="Products.PloneMeeting.interfaces.IMeeting"
-        permission="zope2.View"
-        />
+        permission="zope2.View" />
     <browser:viewlet
         name="plone.belowcontenttitle.workflowstate"
         manager="plone.app.layout.viewlets.interfaces.IBelowContentTitle"
         class=".viewlets.WorkflowState"
         for="Products.PloneMeeting.interfaces.IMeetingItem"
-        permission="zope2.View"
-        />
+        permission="zope2.View" />
     <browser:viewlet
         name="plone.belowcontenttitle.workflowstate"
         manager="plone.app.layout.viewlets.interfaces.IBelowContentTitle"
         class="Products.PloneMeeting.browser.viewlets.WorkflowState"
         for="Products.PloneMeeting.content.advice.IMeetingAdvice"
         permission="zope2.View" />
-
     <browser:viewlet
         for="Products.PloneMeeting.interfaces.IMeeting"
         name="force-insert-normal"
         manager="collective.eeafaceted.z3ctable.interfaces.IBottomAboveNavManager"
         class=".viewlets.ForceInsertNormal"
-        permission="zope2.View"
-        />
+        permission="zope2.View" />
+    <browser:viewlet
+        name="held_position_back_references"
+        manager="plone.app.layout.viewlets.interfaces.IBelowContentBody"
+        class=".viewlets.HeldPositionBackRefs"
+        for="Products.PloneMeeting.content.held_position.IPMHeldPosition"
+        permission="zope2.View" />
 
     <!-- Change some Plone viewlets from viewlet container -->
     <browser:viewlet
@@ -130,7 +132,7 @@
         permission="zope2.View"/>
     <browser:viewlet
         name="plonemeeting.actionspanel"
-        for="collective.contact.core.interfaces.IHeldPosition"
+        for="Products.PloneMeeting.content.held_position.IPMHeldPosition"
         manager="plone.app.layout.viewlets.interfaces.IBelowContentBody"
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         class="Products.PloneMeeting.browser.overrides.PMConfigActionsPanelViewlet"

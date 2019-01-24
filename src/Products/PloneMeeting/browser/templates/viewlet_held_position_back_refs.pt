@@ -1,0 +1,4 @@
+<div id="held_position_back_refs" i18n:domain="PloneMeeting">
+  <span tal:content="view/using_configs" />
+  <span tal:content="python: view.using_meetings().items()" />
+</div>

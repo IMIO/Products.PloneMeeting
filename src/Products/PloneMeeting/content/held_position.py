@@ -30,6 +30,12 @@ class IPMHeldPosition(IHeldPosition):
         required=True,
     )
 
+    form.order_before(position_type='start_date')
+    position_type = zope.schema.Choice(
+        title=_("Position type"),
+        vocabulary="PositionTypes",
+    )
+
     form.widget('usages', CheckBoxFieldWidget, multiple='multiple')
     usages = zope.schema.List(
         title=_("Usages"),
@@ -53,14 +59,21 @@ class IPMHeldPosition(IHeldPosition):
         required=False,
     )
 
-    position_type = zope.schema.Choice(
-        title=_("Position type"),
-        vocabulary="PositionTypes",
-    )
-
 
 class PMHeldPosition(HeldPosition):
     """Override HeldPosition to add some fields and methods."""
+
+    def get_label(self):
+        """Override get_label to use position_type if label is empty."""
+        value = self.label
+        if not value:
+            values = self.gender_and_number_from_position_type()
+            gender = self.get_person().gender
+            if gender == 'M':
+                value = values['MS']
+            else:
+                value = values['FS']
+        return value
 
     def get_short_title(self,
                         include_usages=False,
@@ -74,8 +87,7 @@ class PMHeldPosition(HeldPosition):
            - the person title.
            If p_include_usages and/or p_include_defaults is True, it is appendended
            at the end of the returned value.
-           If highlight is True, we will display person_label and held_position_label in bold.
-           """
+           If highlight is True, we will display person_label and held_position_label in bold."""
         sub_organizations_label = u''
         # display sub-organizations title if any
         organization = self.get_organization()
@@ -88,8 +100,9 @@ class PMHeldPosition(HeldPosition):
                 sub_organizations.append(organization)
                 organization = organization.aq_parent
         person_label = self.get_person_title()
-        held_position_label = self.label or translate(
+        held_position_label = self.get_label() or translate(
             'No label defined on held position',
+            domain='collective.contact.core',
             context=getRequest(),
             default='No label defined on held position')
         if highlight:
@@ -159,7 +172,7 @@ class PMHeldPosition(HeldPosition):
                                     'FP': u'Les'}
 
         if not value:
-            value = self.label
+            value = self.get_label()
         # startswith vowel or consonant?
         first_letter = safe_unicode(value[0])
         # turn "é" to "e"

@@ -748,6 +748,8 @@ class PloneMeetingConfiguration(Descriptor):
     # through a profile.
     instance = None
 
+    excludedFields = ['directory_position_types']
+
     def get(klass):
         if not klass.instance:
             klass.instance = PloneMeetingConfiguration('My meetings', [], [])
@@ -801,5 +803,6 @@ class PloneMeetingConfiguration(Descriptor):
         self.orgs = orgs  # ~[OrgDescriptor]~
         self.persons = []  # ~[PersonDescriptor]~
         self.usersOutsideGroups = []  # ~[UserDescriptor]~
+        self.directory_position_types = []
 
 # ------------------------------------------------------------------------------

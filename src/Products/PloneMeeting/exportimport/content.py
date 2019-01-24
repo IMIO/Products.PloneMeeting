@@ -92,12 +92,15 @@ class ToolInitializer:
         # Initialize the tool if we have data
         if not self.profileData:
             return
-        # initialize the tool only if it was not already done before
-        # by another profile, it is the case if some MeetingConfigs or MeetingGroups exist
-        if not self.tool.objectIds('MeetingConfig') and \
-           not self.tool.objectIds('MeetingGroup'):
+        # initialize the tool and configure the contacts directory
+        # only if it was not already done before
+        # by another profile, it is the case if some MeetingConfigs exist
+        if not self.tool.objectIds('MeetingConfig'):
             for k, v in self.profileData.getData().iteritems():
                 exec 'self.tool.set%s%s(v)' % (k[0].upper(), k[1:])
+            # contacts directory
+            if self.profileData.directory_position_types:
+                self.portal.contact.position_types = self.profileData.directory_position_types
 
     def getProfileData(self):
         '''Loads, from the current profile, the data to import into the tool:
