@@ -517,7 +517,10 @@ class AskedAdvicesVocabulary(object):
                 referer = referer.replace('/edit', '')
                 referer = referer.replace('?pageName=gui', '')
                 referer = referer.split('?_authenticator=')[0]
-                context = portal.unrestrictedTraverse(referer)
+                try:
+                    context = portal.unrestrictedTraverse(referer)
+                except KeyError:
+                    return SimpleVocabulary(res)
                 if not hasattr(context, 'portal_type') or \
                         not (context.portal_type == 'DashboardCollection' or context.portal_type.startswith('Meeting')):
                     return SimpleVocabulary(res)

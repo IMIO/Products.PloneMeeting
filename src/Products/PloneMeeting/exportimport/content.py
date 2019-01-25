@@ -100,7 +100,7 @@ class ToolInitializer:
                 exec 'self.tool.set%s%s(v)' % (k[0].upper(), k[1:])
             # contacts directory
             if self.profileData.directory_position_types:
-                self.portal.contact.position_types = self.profileData.directory_position_types
+                self.portal.contacts.position_types = self.profileData.directory_position_types
 
     def getProfileData(self):
         '''Loads, from the current profile, the data to import into the tool:
@@ -253,7 +253,8 @@ class ToolInitializer:
             # add contacts using the CSV import
             output = import_contacts(self.portal, dochange=True, path=self.profilePath)
             logger.info(output)
-            cfg.setOrderedContacts(cfg.listSelectableContacts().keys())
+            selectableOrderedContacts = cfg.getField('orderedContacts').Vocabulary(cfg).keys()
+            cfg.setOrderedContacts(selectableOrderedContacts)
 
         # disable relevant dashboard collections
         for collection_path in data.disabled_collections:
