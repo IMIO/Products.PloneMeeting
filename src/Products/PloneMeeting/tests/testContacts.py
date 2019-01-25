@@ -1072,6 +1072,15 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(hp.get_prefix_for_gender_and_number(), u"Le")
         hp.label = u'Directrice'
         self.assertEqual(hp.get_prefix_for_gender_and_number(), u"La")
+        # when no label defined, label is taken from selected position_type
+        hp.label = u''
+        hp.position_type = u'admin'
+        self.assertEqual(hp.get_prefix_for_gender_and_number(), u"L'")
+        hp.position_type = u'director'
+        person.gender = u'M'
+        self.assertEqual(hp.get_prefix_for_gender_and_number(), u"Le")
+        person.gender = u'F'
+        self.assertEqual(hp.get_prefix_for_gender_and_number(), u"La")
 
 
 def test_suite():
