@@ -1,4 +1,14 @@
 <div id="held_position_back_refs" i18n:domain="PloneMeeting">
-  <span tal:content="view/using_configs" />
-  <span tal:content="python: view.using_meetings().items()" />
+  <h3><span i18n:translate="">Used by following contents</span> :</h3>
+  <h5><span i18n:translate="">Filled in the "Ordered contacts" for meeting configurations</span> :</h5>
+  <ul tal:repeat="cfg view/using_configs">
+    <li><a tal:attributes="href string:${cfg/absolute_url}/?pageName=assembly_and_signatures;" tal:content="python: cfg.Title(include_config_group=True)">Meeting config title</a></li>
+  </ul>
+  <h5><span i18n:translate="">Used in the assembly for meetings</span> :</h5>
+  <ul tal:repeat="infos python: view.using_meetings().items()">
+    <li><h5 tal:content="python: infos[0].Title(include_config_group=True)">Meeting config title</h5></li>
+    <ul tal:repeat="meeting python: infos[1]">
+     <li><a tal:attributes="href meeting/absolute_url;" tal:content="meeting/Title">Meeting title</a></li>
+    </ul>
+  </ul>
 </div>
