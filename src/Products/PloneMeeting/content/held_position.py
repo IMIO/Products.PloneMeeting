@@ -33,6 +33,10 @@ class IPMHeldPosition(IHeldPosition):
     form.order_before(position_type='start_date')
     position_type = zope.schema.Choice(
         title=_("Position type"),
+        description=_("Select a position type, correct label will be taken from this list "
+                      "depending on person gender and context. If you need to add new position types, "
+                      "it is defined on the directory at the root of contacts configuration "
+                      "(element <a href='../../edit' target='_blank'>\"edit contacts\"</a>)."),
         vocabulary="PositionTypes",
     )
 
