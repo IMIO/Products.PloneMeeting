@@ -7,6 +7,7 @@ from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.excelexport.exportables.dexterityfields import get_exportable_for_fieldname
 from plone.autoform import directives as form
 from plone.dexterity.schema import DexteritySchemaPolicy
+from plone.supermodel import model
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.content.source import PMContactSourceBinder
@@ -23,7 +24,6 @@ class IPMHeldPosition(IHeldPosition):
     """ """
 
     # override position to use a select list restricted to orgs out of PLONEGROUP_ORG
-    form.order_before(position='label')
     position = ContactChoice(
         title=_("Organization/Position"),
         source=PMContactSourceBinder(),
@@ -38,6 +38,7 @@ class IPMHeldPosition(IHeldPosition):
                       "it is defined on the directory at the root of contacts configuration "
                       "(element <a href='../../edit' target='_blank'>\"edit contacts\"</a>)."),
         vocabulary="PositionTypes",
+        required=True,
     )
 
     form.widget('usages', CheckBoxFieldWidget, multiple='multiple')
@@ -62,6 +63,11 @@ class IPMHeldPosition(IHeldPosition):
         vocabulary="Products.PloneMeeting.vocabularies.signaturenumbervocabulary",
         required=False,
     )
+
+    model.fieldset('held_position_app_parameters',
+                   label=_(u"Application parameters"),
+                   fields=['label', 'position_type', 'start_date', 'end_date',
+                           'usages', 'defaults', 'signature_number'])
 
 
 class PMHeldPosition(HeldPosition):
