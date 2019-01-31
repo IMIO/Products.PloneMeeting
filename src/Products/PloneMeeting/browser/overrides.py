@@ -1208,8 +1208,8 @@ class PMTransitionBatchActionForm(TransitionBatchActionForm):
         return (self.context.meta_type == 'Meeting' and
                 _checkPermission(ModifyPortalContent, self.context)) or \
                (not self.context.meta_type == 'Meeting' and
-                tool.isManager(self.context) or
-                bool(tool.userIsAmong(suffixes=get_all_suffixes(None), cfg=cfg)))
+                (tool.isManager(self.context) or
+                 bool(tool.userIsAmong(suffixes=get_all_suffixes(None), cfg=cfg))))
 
 
 class PMContentHistoryView(IHContentHistoryView):
