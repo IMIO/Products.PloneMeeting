@@ -26,6 +26,7 @@ from collective.iconifiedcategory import utils as collective_iconifiedcategory_u
 from collective.iconifiedcategory.browser.actionview import ConfidentialChangeView
 from collective.iconifiedcategory.browser.tabview import CategorizedTabView
 from collective.iconifiedcategory.browser.views import CategorizedChildInfosView
+from collective.iconifiedcategory.browser.views import CategorizedChildView
 from collective.iconifiedcategory.interfaces import ICategorizedConfidential
 from collective.iconifiedcategory.interfaces import ICategorizedPrint
 from collective.iconifiedcategory.interfaces import ICategorizedSigned
@@ -471,14 +472,6 @@ class BaseActionsPanelView(ActionsPanelView):
                                   'faceted.disable', 'faceted.enable',
                                   'faceted.search.disable', 'faceted.search.enable')
         self.tool = api.portal.get_tool('portal_plonemeeting')
-
-    def mayEdit(self):
-        """
-          We override mayEdit to avoid the icon to be displayed for MeetingFiles.
-        """
-        return self.member.has_permission(ModifyPortalContent, self.context) and \
-            self.useIcons and not \
-            self.context.meta_type == 'MeetingFile'
 
     @memoize_contextless
     def _transitionsToConfirm(self):
@@ -1145,6 +1138,31 @@ class PMCKFinder(CKFinder):
         self.allowaddfolder = False
         self.showsearchbox = False
         self.openuploadwidgetdefault = True
+
+
+class PMCategorizedChildView(CategorizedChildView):
+    """Add caching."""
+
+    def __call___cachekey(method, self, portal_type=None, show_nothing=False):
+        '''cachekey method for self.__call__.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        # URL to the annex_type can change if server URL changed
+        server_url = self.request.get('SERVER_URL', None)
+        # an annex container's modification date is updated upon
+        # any change on annex (added, removed, edited, attribute changed)
+        context_modified = self.context.modified()
+        return (self.context.UID(),
+                context_modified,
+                server_url,
+                tool.get_plone_groups_for_user(),
+                portal_type,
+                show_nothing)
+
+    @ram.cache(__call___cachekey)
+    def __call__(self, portal_type=None, show_nothing=False):
+        """Override to change show_nothing=False instead show_nothing=True and to add caching."""
+        from DateTime import DateTime
+        return str(DateTime()) + super(PMCategorizedChildView, self).__call__(portal_type, show_nothing)
 
 
 class PMCategorizedChildInfosView(CategorizedChildInfosView):

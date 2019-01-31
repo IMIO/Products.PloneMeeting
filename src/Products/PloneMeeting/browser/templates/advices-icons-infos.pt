@@ -234,7 +234,7 @@
                     align="right"
                     class="advice_annexes">
                     <tal:defines condition="adviceHolderIsViewable">
-                        <tal:annexes replace="structure python: obj.restrictedTraverse('categorized-childs')(show_nothing=False)" />
+                        <tal:annexes replace="structure python: obj.restrictedTraverse('categorized-childs')()" />
                     </tal:defines>
                 </td>
               </tr>

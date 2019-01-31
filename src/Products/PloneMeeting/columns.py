@@ -149,17 +149,18 @@ class PMPrettyLinkColumn(PrettyLinkColumn):
                     moreInfos = obj.restrictedTraverse('@@item-more-infos')(visibleColumns=visibleColumns)
 
                 # display annexes
-                annexes += obj.restrictedTraverse('categorized-childs')(portal_type='annex', show_nothing=False)
+                annexes += obj.restrictedTraverse('categorized-childs')(portal_type='annex')
                 if tool.hasAnnexes(obj, portal_type='annexDecision'):
                     decision_term = translate("AnnexesDecisionShort",
                                               domain='PloneMeeting',
                                               context=obj.REQUEST)
                     annexes += u"<span class='discreet'>{0}&nbsp;:&nbsp;</span>".format(decision_term)
-                    annexes += obj.restrictedTraverse('categorized-childs')(portal_type='annexDecision')
+                    annexes += obj.restrictedTraverse('categorized-childs')(
+                        portal_type='annexDecision')
         elif obj.meta_type == 'Meeting':
             visibleColumns = cfg.getMeetingColumns()
             staticInfos = obj.restrictedTraverse('@@static-infos')(visibleColumns=visibleColumns)
-            annexes += obj.restrictedTraverse('categorized-childs')(portal_type='annex', show_nothing=False)
+            annexes += obj.restrictedTraverse('categorized-childs')(portal_type='annex')
         if annexes:
             annexes = u"<div class='dashboard_annexes'>{0}</div>".format(annexes)
 

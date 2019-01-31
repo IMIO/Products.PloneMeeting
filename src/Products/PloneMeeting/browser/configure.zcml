@@ -851,7 +851,15 @@
 
     <configure package="collective.iconifiedcategory">
         <browser:page
-            for="OFS.interfaces.IItem"
+            for="Products.PloneMeeting.interfaces.IMeetingContent"
+            name="categorized-childs"
+            permission="zope2.View"
+            class="Products.PloneMeeting.browser.overrides.PMCategorizedChildView"
+            layer="collective.iconifiedcategory.interfaces.ICollectiveIconifiedCategoryLayer"
+            template="browser/templates/categorized-childs.pt"
+          />
+        <browser:page
+            for="Products.PloneMeeting.interfaces.IMeetingContent"
             name="categorized-childs-infos"
             permission="zope2.View"
             class="Products.PloneMeeting.browser.overrides.PMCategorizedChildInfosView"
