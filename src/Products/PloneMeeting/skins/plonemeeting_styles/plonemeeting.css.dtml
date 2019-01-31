@@ -294,7 +294,10 @@ div.pm_search_no_result_info {
 
 /* Colors on states */
 .state-active, .label-state-inactive {color: green !important;}
-.state-inactive, .state-inactive a, .label-state-inactive {
+.state-inactive,
+.state-inactive a,
+.label-state-inactive,
+.state-deactivated {
     color: red !important;
 }
 .state-created, .label-state-created,
