@@ -24,6 +24,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Use collective.quickupload to be able to upload several annexes at the same time
 - MeetingConfig.custom_validate_workflowAdaptations now receives values, added and removed as parameters
 - Annexes are now sorted alphabetically using natural sorting 
+- On held_position, display where it is used (MeetingConfig.orderedContacts, Meeting.orderedContacts) to ease management of duplicates.
 
 4.1b15 (2019-01-14)
 -------------------
