@@ -942,6 +942,18 @@ def onDashboardCollectionAdded(collection, event):
         cfg.updateCollectionColumns()
 
 
+def is_held_pos_uid_used_by(held_pos_uid, obj):
+    """ """
+    if obj.meta_type == 'MeetingConfig':
+        if held_pos_uid in obj.getOrderedContacts():
+            return True
+    if obj.meta_type == 'Meeting':
+        orderedContacts = getattr(obj, 'orderedContacts', {})
+        if held_pos_uid in orderedContacts:
+            return True
+    return False
+
+
 def onHeldPositionRemoved(held_pos, event):
     '''Do not delete a held_position that have been used on a meeting or
        is selected in a MeetingConfig.orderedContacts.'''
@@ -950,7 +962,7 @@ def onHeldPositionRemoved(held_pos, event):
     tool = api.portal.get_tool('portal_plonemeeting')
     using_obj = None
     for cfg in tool.objectValues('MeetingConfig'):
-        if held_pos_uid in cfg.getOrderedContacts():
+        if is_held_pos_uid_used_by(held_pos_uid, cfg):
             using_obj = cfg
             break
     # check meetings
@@ -959,8 +971,7 @@ def onHeldPositionRemoved(held_pos, event):
         brains = catalog(meta_type='Meeting')
         for brain in brains:
             meeting = brain.getObject()
-            orderedContacts = getattr(meeting, 'orderedContacts', {})
-            if held_pos_uid in orderedContacts:
+            if is_held_pos_uid_used_by(held_pos_uid, meeting):
                 using_obj = meeting
                 break
 

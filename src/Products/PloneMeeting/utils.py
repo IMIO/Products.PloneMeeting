@@ -1162,7 +1162,7 @@ def computeCertifiedSignatures(signatures):
         # although this can be overrided if something defined in 'name' or 'function' columns
         held_position = None
         # held_position
-        if signature['held_position']is not None and signature['held_position'] != '_none_':
+        if signature['held_position'] is not None and signature['held_position'] != '_none_':
             held_position = uuidToObject(signature['held_position'])
         computedSignatures[validSignatureNumber]['held_position'] = held_position
         # name
@@ -1174,7 +1174,7 @@ def computeCertifiedSignatures(signatures):
         # function
         if held_position and not signature['function']:
             computedSignatures[validSignatureNumber]['function'] = \
-                held_position.label
+                held_position.get_prefix_for_gender_and_number(include_value=True)
         else:
             computedSignatures[validSignatureNumber]['function'] = signature['function']
 

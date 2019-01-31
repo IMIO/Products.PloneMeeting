@@ -7,6 +7,7 @@ from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.excelexport.exportables.dexterityfields import get_exportable_for_fieldname
 from plone.autoform import directives as form
 from plone.dexterity.schema import DexteritySchemaPolicy
+from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.content.source import PMContactSourceBinder
 from Products.PloneMeeting.utils import plain_render
@@ -14,6 +15,7 @@ from z3c.form.browser.checkbox import CheckBoxFieldWidget
 from zope.globalrequest import getRequest
 from zope.i18n import translate
 
+import unidecode
 import zope.schema
 
 
@@ -26,6 +28,16 @@ class IPMHeldPosition(IHeldPosition):
         title=_("Organization/Position"),
         source=PMContactSourceBinder(),
         required=True,
+    )
+
+    form.order_before(position_type='start_date')
+    position_type = zope.schema.Choice(
+        title=_("Position type"),
+        description=_("Select a position type, correct label will be taken from this list "
+                      "depending on person gender and context. If you need to add new position types, "
+                      "it is defined on the directory at the root of contacts configuration "
+                      "(element <a href='../../edit' target='_blank'>\"edit contacts\"</a>)."),
+        vocabulary="PositionTypes",
     )
 
     form.widget('usages', CheckBoxFieldWidget, multiple='multiple')
@@ -51,14 +63,21 @@ class IPMHeldPosition(IHeldPosition):
         required=False,
     )
 
-    position_type = zope.schema.Choice(
-        title=_("Position type"),
-        vocabulary="PositionTypes",
-    )
-
 
 class PMHeldPosition(HeldPosition):
     """Override HeldPosition to add some fields and methods."""
+
+    def get_label(self):
+        """Override get_label to use position_type if label is empty."""
+        value = self.label
+        if not value:
+            values = self.gender_and_number_from_position_type()
+            gender = self.get_person().gender
+            if gender == 'M':
+                value = values['MS']
+            else:
+                value = values['FS']
+        return value
 
     def get_short_title(self,
                         include_usages=False,
@@ -72,8 +91,7 @@ class PMHeldPosition(HeldPosition):
            - the person title.
            If p_include_usages and/or p_include_defaults is True, it is appendended
            at the end of the returned value.
-           If highlight is True, we will display person_label and held_position_label in bold.
-           """
+           If highlight is True, we will display person_label and held_position_label in bold."""
         sub_organizations_label = u''
         # display sub-organizations title if any
         organization = self.get_organization()
@@ -86,8 +104,9 @@ class PMHeldPosition(HeldPosition):
                 sub_organizations.append(organization)
                 organization = organization.aq_parent
         person_label = self.get_person_title()
-        held_position_label = self.label or translate(
+        held_position_label = self.get_label() or translate(
             'No label defined on held position',
+            domain='collective.contact.core',
             context=getRequest(),
             default='No label defined on held position')
         if highlight:
@@ -145,6 +164,33 @@ class PMHeldPosition(HeldPosition):
                    'FP': values[0]}
         return res
 
+    def get_prefix_for_gender_and_number(self, value=None, include_value=False):
+        """Get prefix to use depending on given value."""
+        value_starting_vowel = {'MS': u'L\'',
+                                'MP': u'Les',
+                                'FS': u'L\'',
+                                'FP': u'Les'}
+        value_starting_consonant = {'MS': u'Le',
+                                    'MP': u'Les',
+                                    'FS': u'La',
+                                    'FP': u'Les'}
+
+        if not value:
+            value = self.get_label()
+        # startswith vowel or consonant?
+        first_letter = safe_unicode(value[0])
+        # turn "é" to "e"
+        first_letter = unidecode.unidecode(first_letter)
+        if first_letter.lower() in ['a', 'e', 'i', 'o', 'u']:
+            mappings = value_starting_vowel
+        else:
+            mappings = value_starting_consonant
+        values = {k: v for k, v in self.gender_and_number_from_position_type().items()
+                  if v == value}
+        res = values and mappings.get(values.keys()[0], '') or ''
+        if include_value:
+            res = res + value
+        return res
 
 class PMHeldPositionSchemaPolicy(DexteritySchemaPolicy):
     """ """

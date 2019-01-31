@@ -354,7 +354,7 @@ def import_contacts(self, dochange='', ownorg='', only='ORGS|PERS|HP', path=''):
     lines = []
     if 'HP' in only:
         lines = system.read_csv(os.path.join(path, 'heldpositions.csv'), strip_chars=' ', strict=True)
-    # ID;ID person;ID org;ID fct;Intitulé fct;Début fct;Fin fct;Adr par;Rue;Numéro;Comp adr;
+    # ID;ID person;ID org;ID fct;Intitulé fct;position_type;Début fct;Fin fct;Adr par;Rue;Numéro;Comp adr;
     # CP;Localité;Tél;Gsm;Fax;Courriel;Site;Région;Pays;UID
     if lines:
         data = lines.pop(0)
@@ -368,7 +368,7 @@ def import_contacts(self, dochange='', ownorg='', only='ORGS|PERS|HP', path=''):
         if len(data) != lendata:
             return "!! HP: problem line %d, invalid column number %d <> %d: %s" % (i, lendata, len(data),
                                                                                    ['%s' % cell for cell in data])
-        id, pid, oid, title, uid = data[0], data[1], data[2], data[4], data[23]
+        id, pid, oid, position_type, title, uid = data[0], data[1], data[2], data[3], data[4], data[23]
         errors = []
         try:
             start = data[5] or None
@@ -428,7 +428,8 @@ def import_contacts(self, dochange='', ownorg='', only='ORGS|PERS|HP', path=''):
             continue
         if action == 'create':
             if doit:
-                real_id = new_id = idnormalizer.normalize(safe_encode('%s-%s' % (safe_unicode(title), org.title)))
+                real_id = new_id = idnormalizer.normalize(safe_encode('%s-%s' % (
+                    safe_unicode(title) or safe_unicode(position_type), org.title)))
                 count = 0
                 while real_id in pers:
                     count += 1
@@ -436,6 +437,7 @@ def import_contacts(self, dochange='', ownorg='', only='ORGS|PERS|HP', path=''):
 
                 obj = api.content.create(container=pers, type='held_position', id=real_id,
                                          position=RelationValue(intids.getId(org)),
+                                         position_type=position_type,
                                          label=safe_unicode(title), start_date=start, end_date=end,
                                          street=safe_unicode(data[8]), number=safe_unicode(data[9]),
                                          additional_address_details=safe_unicode(data[10]),

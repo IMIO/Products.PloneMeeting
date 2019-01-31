@@ -92,12 +92,15 @@ class ToolInitializer:
         # Initialize the tool if we have data
         if not self.profileData:
             return
-        # initialize the tool only if it was not already done before
-        # by another profile, it is the case if some MeetingConfigs or MeetingGroups exist
-        if not self.tool.objectIds('MeetingConfig') and \
-           not self.tool.objectIds('MeetingGroup'):
+        # initialize the tool and configure the contacts directory
+        # only if it was not already done before
+        # by another profile, it is the case if some MeetingConfigs exist
+        if not self.tool.objectIds('MeetingConfig'):
             for k, v in self.profileData.getData().iteritems():
                 exec 'self.tool.set%s%s(v)' % (k[0].upper(), k[1:])
+            # contacts directory
+            if self.profileData.directory_position_types:
+                self.portal.contacts.position_types = self.profileData.directory_position_types
 
     def getProfileData(self):
         '''Loads, from the current profile, the data to import into the tool:
@@ -250,7 +253,8 @@ class ToolInitializer:
             # add contacts using the CSV import
             output = import_contacts(self.portal, dochange=True, path=self.profilePath)
             logger.info(output)
-            cfg.setOrderedContacts(cfg.listSelectableContacts().keys())
+            selectableOrderedContacts = cfg.getField('orderedContacts').Vocabulary(cfg).keys()
+            cfg.setOrderedContacts(selectableOrderedContacts)
 
         # disable relevant dashboard collections
         for collection_path in data.disabled_collections:
