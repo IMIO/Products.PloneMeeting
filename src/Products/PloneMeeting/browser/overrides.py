@@ -1161,8 +1161,7 @@ class PMCategorizedChildView(CategorizedChildView):
     @ram.cache(__call___cachekey)
     def __call__(self, portal_type=None, show_nothing=False):
         """Override to change show_nothing=False instead show_nothing=True and to add caching."""
-        from DateTime import DateTime
-        return str(DateTime()) + super(PMCategorizedChildView, self).__call__(portal_type, show_nothing)
+        return super(PMCategorizedChildView, self).__call__(portal_type, show_nothing)
 
 
 class PMCategorizedChildInfosView(CategorizedChildInfosView):

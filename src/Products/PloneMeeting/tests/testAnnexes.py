@@ -1224,6 +1224,27 @@ class testAnnexes(PloneMeetingTestCase):
         annex = self.addAnnex(meeting)
         _check_parent_modified(meeting, parent_modified, annex)
 
+    def test_pm_AnnexesCategorizedChildsCaching(self):
+        """The icon displayed in various place with number of annexes is cached."""
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        # cache is invalidated upon any change on annex create/delete/edit/change attr
+        # add an annex and remove it to check that the view caching was invalidated
+        view = item.restrictedTraverse('@@categorized-childs')
+        no_annex_rendered = view()
+        annex1 = self.addAnnex(item)
+        one_annex_rendered = view()
+        self.assertNotEqual(no_annex_rendered, one_annex_rendered)
+        annex2 = self.addAnnex(item)
+        two_annex_rendered = view()
+        self.assertNotEqual(one_annex_rendered, two_annex_rendered)
+        self.deleteAsManager(annex1.UID())
+        one_annex_left_rendered = view()
+        self.assertEqual(one_annex_left_rendered, one_annex_rendered)
+        self.deleteAsManager(annex2.UID())
+        no_annex_left_rendered = view()
+        self.assertEqual(no_annex_left_rendered, no_annex_rendered)
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
