@@ -1770,6 +1770,12 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
 
     def can_view(self):
 
+        # is the context a MeetingItem and privacy viewable?
+        if self.context.meta_type == 'MeetingItem' and \
+           self._use_isPrivacyViewable() and \
+           not self.context.adapted().isPrivacyViewable():
+            return False
+
         # bypass if not confidential
         infos = self.context.categorized_elements[self.brain.UID]
         if not infos['confidential']:
@@ -1778,12 +1784,6 @@ class PMCategorizedObjectAdapter(CategorizedObjectAdapter):
         # bypass for MeetingManagers
         if self.tool.isManager(self.context):
             return True
-
-        # is the context a MeetingItem and privacy viewable?
-        if self.context.meta_type == 'MeetingItem' and \
-           self._use_isPrivacyViewable() and \
-           not self.context.adapted().isPrivacyViewable():
-            return False
 
         # Meeting
         if self.context.meta_type == 'Meeting':

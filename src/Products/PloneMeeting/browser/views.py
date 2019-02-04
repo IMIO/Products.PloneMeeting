@@ -254,9 +254,9 @@ class ItemNumberView(BrowserView):
         self.request = request
         self.portal_url = api.portal.get().absolute_url()
 
-    def mayChangeOrder(self):
-        """ """
-        return self.context.getMeeting().wfConditions().mayChangeItemsOrder()
+    def __call__(self, mayChangeItemsOrder):
+        self.mayChangeItemsOrder = mayChangeItemsOrder
+        return super(ItemNumberView, self).__call__()
 
     def is_integer(self, number):
         """ """

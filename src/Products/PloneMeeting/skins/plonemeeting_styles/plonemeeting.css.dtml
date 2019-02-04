@@ -850,6 +850,7 @@ acronym a {
 /* TH of the table listing items are stylable th by th */
 /* using 1% limit the width as much as possible... */
 table.listing th.th_header_actions,
+table.listing th.th_header_draggable,
 table.listing th.th_header_itemIsSigned,
 table.listing th.th_header_toDiscuss,
 table.listing th.th_header_getItemIsSigned,
@@ -1248,7 +1249,11 @@ div.item_listType.Editable {
 td[class^="meeting_item_listType_"] div.item_listType.Editable {
     width: 100%;
     height: 100%;
+}
+td[class^="meeting_item_listType_"] div.item_listType_container {
     border-right: 1px dotted;
+    border-bottom: 1px dotted;
+    display: inline-block;
 }
 
 .advice_change_delay.Editable {
@@ -1596,7 +1601,8 @@ div.grouped-configs {
 table#meeting_users td {
    padding: 0.5em;
 }
-table#meeting_users td.draggable {
+table#meeting_users td.draggable,
+table#faceted_table td.draggable {
    cursor: ns-resize;
 }
 table#meeting_users select[id$="_replacement"] {

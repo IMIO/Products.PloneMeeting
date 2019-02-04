@@ -14,6 +14,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   to a 'app_parameters' fieldset so it is displayed on the view by the 'additional-fields' macro
 - Added caching on annexes categorized childs view (the icon with count of annexes initializing the tooltipster) and adapted
   code so it is called the same way everywhere and thus the cache is correctly shared everywhere it is displayed
+- Removed arrows to sort items on meeting so actions_panel is the same as displayed in dashboards of items and the cache
+  can be shared.  Arrows to sort items on meeting are repalced by drag and drop feature
 
 4.1b16 (2019-01-31)
 -------------------

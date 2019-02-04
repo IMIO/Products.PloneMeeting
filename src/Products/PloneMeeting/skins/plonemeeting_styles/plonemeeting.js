@@ -726,3 +726,47 @@ $(document).ready(function () {
         this.disabled = true;
     });
 });
+
+function initializeItemsDND(){
+$('table.faceted-table-results').tableDnD({
+  onDrop: function(table, row) {
+    row_index = row.rowIndex;
+    // id is like row_200
+    row_item_number = parseInt(table.rows[row.rowIndex].cells[2].dataset.item_number);
+    // find if moving up or down
+    move_type = 'up';
+    if (table.tBodies[0].rows.length > row_index) {
+         // we have a next row, compare with it
+         next_row_item_number = parseInt(table.rows[row.rowIndex + 1].cells[2].dataset.item_number);
+         if (row_item_number < next_row_item_number) {
+             move_type = 'down';
+         }
+    } else {move_type = 'down';}
+    
+    // now that we know the move, we can determinate number to use
+    if (move_type == 'down') {
+      new_value = parseInt(table.rows[row.rowIndex - 1].cells[2].dataset.item_number);
+    } else {
+      new_value = parseInt(table.rows[row.rowIndex + 1].cells[2].dataset.item_number);
+    }
+    base_url = row.cells[3].children.item('a').href;
+    $.ajax({
+      url: base_url + "/@@change-item-order",
+      dataType: 'html',
+      data: {moveType:'number',
+             wishedNumber:parseFloat(new_value)/100},
+      cache: false,
+      success: function(data) {
+        Faceted.URLHandler.hash_changed();
+      },
+      error: function(jqXHR, textStatus, errorThrown) {
+        /*console.log(textStatus);*/
+        window.location.href = window.location.href;
+        }
+      });
+   },
+   dragHandle: ".draggable",
+   onDragClass: "dragindicator dragging",
+
+});
+}

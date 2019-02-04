@@ -1,4 +1,4 @@
-<tal:defines define="mayChangeOrder view/mayChangeOrder;
+<tal:defines define="mayChangeOrder view/mayChangeItemsOrder;
                      itemNumber python: context.getItemNumber(for_display=True);"
              i18n:domain="PloneMeeting">
   <table class="no-style-table" cellspacing="0" cellpadding="0"
@@ -19,7 +19,7 @@
            style="visibility: hidden;"
            title="move_item_to_given_position" i18n:attributes="title" name="moveImageButton"
            tal:attributes="id string:moveAction_${itemNumber};
-                           src string: ${view/portal_url}/arrowSeveral.png;
+                           src string: ${view/portal_url}/reorder.png;
                            onClick string:moveItem(baseUrl='${context/absolute_url}', moveType='number', $('input#value_moveAction_${itemNumber}'));"/>
       </td>
     </tr>

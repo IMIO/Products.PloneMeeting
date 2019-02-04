@@ -188,14 +188,6 @@ class PMActionsColumn(ActionsColumn):
     """A column displaying available actions of the listed item."""
 
     def renderCell(self, item):
-        # activate arrows while displaying meeting presented items
-        if self.context.meta_type == 'Meeting' and not displaying_available_items(self.context):
-            self.params['showArrows'] = True
-            self.params['lastItemUID'] = self.context.getItems(
-                ordered=True, theObjects=False, unrestricted=True)[-1].UID
-        else:
-            self.params['showArrows'] = False
-            self.params['lastItemUID'] = 0
         # dashboard displaying contacts
         if IContactsDashboard.providedBy(self.context):
             self.params['showActions'] = False
@@ -242,10 +234,10 @@ class ItemListTypeColumn(VocabularyColumn, ColorColumn):
         if _checkPermission(ModifyPortalContent, self.context):
             obj = self._getObject(item)
             renderedChangeListTypeView = obj.restrictedTraverse('@@item-listtype').index()
-            return u'<div title="{0}" style="display: inline-block;">{1}</div>'.format(term_value,
-                                                                                       renderedChangeListTypeView)
+            return u'<div title="{0}" class="item_listType_container">{1}</div>'.format(
+                term_value, renderedChangeListTypeView)
         else:
-            return u'<div title="{0}" style="display: inline-block;"></div>'.format(term_value)
+            return u'<div title="{0}" class="item_listType_container"></div>'.format(term_value)
 
 
 class ItemNumberColumn(BrowserViewCallColumn):
@@ -253,6 +245,40 @@ class ItemNumberColumn(BrowserViewCallColumn):
       Display the itemNumber column, used on meetings.
     """
     view_name = 'item-number'
+    header_js = u'<script type="text/javascript">initializeItemsDND();</script>'
+
+    @property
+    def cssClasses(self):
+        """ """
+        cssClasses = super(ItemNumberColumn, self).cssClasses
+        if self.mayChangeItemsOrder(self.context):
+            cssClasses['th'] = 'th_header_draggable'
+            cssClasses['td'] = 'draggable'
+        return cssClasses
+
+    def mayChangeItemsOrder(self, meeting):
+        """ """
+        _mayChangeItemsOrder = getattr(self.table, '_mayChangeItemsOrder', None)
+        if _mayChangeItemsOrder is None:
+            self.table._mayChangeItemsOrder = meeting.wfConditions().mayChangeItemsOrder()
+        return self.table._mayChangeItemsOrder
+
+    def renderHeadCell(self):
+        """ """
+        cell = super(ItemNumberColumn, self).renderHeadCell()
+        if self.mayChangeItemsOrder(self.context):
+            cell = u'</th><th class="th_header_getItemNumber">' + cell
+        return cell
+
+    def renderCell(self, item):
+        """ """
+        mayChangeItemsOrder = self.mayChangeItemsOrder(self.context)
+        self.params = {'mayChangeItemsOrder': mayChangeItemsOrder}
+        cell = super(ItemNumberColumn, self).renderCell(item)
+        if mayChangeItemsOrder:
+            cell = u"⣿</td><td td_cell_getItemNumber data-item_number='{0}'>".format(
+                item.getItemNumber) + cell
+        return cell
 
 
 class ItemCheckBoxColumn(CheckBoxColumn):

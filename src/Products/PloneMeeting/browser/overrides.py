@@ -63,7 +63,6 @@ from Products.PloneMeeting.config import BARCODE_INSERTED_ATTR_ID
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.interfaces import IMeeting
 from Products.PloneMeeting.utils import get_annexes
-from Products.PloneMeeting.utils import getCurrentMeetingObject
 from Products.PloneMeeting.utils import sendMail
 from zope.annotation import IAnnotations
 from zope.i18n import translate
@@ -495,7 +494,6 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         super(MeetingItemActionsPanelView, self).__init__(context, request)
         self.SECTIONS_TO_RENDER = ('renderEdit',
                                    'renderTransitions',
-                                   'renderArrows',
                                    'renderOwnDelete',
                                    'renderActions',
                                    'renderHistory', )
@@ -519,19 +517,17 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
            - item is modified (modified is also triggered when review_state changed);
            - something changed around advices;
            - cfg changed;
-           - different item or user;
+           - different item;
            - user groups changed;
            - if item query_state is 'validated', check also if it is presentable;
-           - we receive some kwargs when we want to 'showArrows';
            - finally, invalidate if annotations changed.'''
         meetingModified = ''
         meeting = self.context.getMeeting()
         if meeting:
-            meetingModified = self.context.getMeeting().modified()
+            meetingModified = meeting.modified()
         annotations = IAnnotations(self.context)
         cfg = self.tool.getMeetingConfig(self.context)
         cfg_modified = cfg.modified()
-        user = api.user.get_current()
         userGroups = self.tool.get_plone_groups_for_user()
         # if item is validated, the 'present' action could appear if a meeting
         # is now available for the item to be inserted into
@@ -539,8 +535,8 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
         if self.context.queryState() == 'validated':
             isPresentable = self.context.wfConditions().mayPresent()
 
-        return (self.context, self.context.modified(), self.context.adviceIndex, cfg_modified,
-                user.getId(), userGroups, annotations,
+        return (self.context.UID(), self.context.modified(), self.context.adviceIndex, cfg_modified,
+                userGroups, annotations,
                 meetingModified, useIcons, showTransitions, appendTypeNameToTransitionLabel, showEdit,
                 showOwnDelete, showActions, showAddContent, showHistory, showHistoryLastEventHasComments,
                 showArrows, isPresentable, kwargs)
@@ -578,32 +574,12 @@ class MeetingItemActionsPanelView(BaseActionsPanelView):
                      showArrows=showArrows,
                      **kwargs)
 
-    def renderArrows(self):
-        """
-        """
-        if self.context.isDefinedInTool():
-            config_actions_panel = self.context.restrictedTraverse('@@config_actions_panel')
-            config_actions_panel()
-            return config_actions_panel.renderArrows()
-        if self.showArrows and self.mayChangeOrder():
-            self.lastItemUID = self.kwargs['lastItemUID']
-            return ViewPageTemplateFile("templates/actions_panel_item_arrows.pt")(self)
-        return ''
-
     def showHistoryForContext(self):
         """
           History on items is shown if item isPrivacyViewable without condition.
         """
         res = super(MeetingItemActionsPanelView, self).showHistoryForContext()
         return res and bool(self.context.adapted().isPrivacyViewable())
-
-    @memoize_contextless
-    def mayChangeOrder(self):
-        """
-          Check if current user can change elements order in case arrows are shown.
-        """
-        meeting = getCurrentMeetingObject(self.context)
-        return meeting.wfConditions().mayChangeItemsOrder()
 
 
 class MeetingActionsPanelView(BaseActionsPanelView):
@@ -640,14 +616,13 @@ class MeetingActionsPanelView(BaseActionsPanelView):
            - user groups changed.'''
         cfg = self.tool.getMeetingConfig(self.context)
         cfg_modified = cfg.modified()
-        user = api.user.get_current()
         userGroups = self.tool.get_plone_groups_for_user()
         invalidate_meeting_actions_panel_cache = False
         if hasattr(self.context, 'invalidate_meeting_actions_panel_cache'):
             invalidate_meeting_actions_panel_cache = True
             delattr(self.context, 'invalidate_meeting_actions_panel_cache')
-        return (self.context, self.context.modified(), self.context.getRawItems(), cfg_modified,
-                user.getId(), userGroups, invalidate_meeting_actions_panel_cache,
+        return (self.context.UID(), self.context.modified(), self.context.getRawItems(), cfg_modified,
+                userGroups, invalidate_meeting_actions_panel_cache,
                 useIcons, showTransitions, appendTypeNameToTransitionLabel, showEdit,
                 showOwnDelete, showActions, showAddContent, showHistory, showHistoryLastEventHasComments,
                 showArrows, kwargs)
