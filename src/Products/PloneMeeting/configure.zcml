@@ -27,6 +27,7 @@
   <include package="imio.pm.ws"/>
   <include package="imio.dashboard"/>
   <include zcml:condition="installed imio.zamqp.pm" package="imio.zamqp.pm" />
+  <include package="plone.app.caching" />
   <include package="plone.app.contenttypes" />
   <include package="plone.app.dexterity" />
   <include package="plone.directives.form" file="meta.zcml" />
