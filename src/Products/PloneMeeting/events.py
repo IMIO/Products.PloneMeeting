@@ -331,7 +331,7 @@ def onRegistryModified(event):
     """
         Manage our record changes
     """
-    if IRecordModifiedEvent.providedBy(event) and event.record.interface == IContactPlonegroupConfig:
+    if IRecordModifiedEvent.providedBy(event):  # and event.record.interface == IContactPlonegroupConfig:
         if event.record.fieldName == 'organizations' and event.oldValue:
             _invalidateOrgRelatedCachedVocabularies()
             # invalidate cache for organizations related methods

@@ -359,6 +359,9 @@ def postInstall(context):
         # clean get_organizations caching
         cleanMemoize(site, prefixes=['plonegroup-utils-get_organizations-'])
 
+    # enable plone.app.caching
+    api.portal.set_registry_record('plone.caching.interfaces.ICacheSettings.enabled', True)
+
     # reorder css
     _reorderCSS(site)
 

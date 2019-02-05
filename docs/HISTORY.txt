@@ -16,6 +16,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   code so it is called the same way everywhere and thus the cache is correctly shared everywhere it is displayed
 - Removed arrows to sort items on meeting so actions_panel is the same as displayed in dashboards of items and the cache
   can be shared.  Arrows to sort items on meeting are repalced by drag and drop feature
+- Enable plone.app.caching to be able to cache annex content_category icon
 
 4.1b16 (2019-01-31)
 -------------------
