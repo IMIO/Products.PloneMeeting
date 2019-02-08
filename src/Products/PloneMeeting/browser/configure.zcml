@@ -48,28 +48,12 @@
     <configure package="imio.actionspanel">
         <browser:viewlet
             name="plonemeeting.actionspanel"
-            for="Products.PloneMeeting.interfaces.IMeetingItem"
+            for="Products.PloneMeeting.interfaces.IMeetingContent"
             manager="plone.app.layout.viewlets.interfaces.IBelowContentBody"
             layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-            class="imio.actionspanel.browser.viewlets.ActionsPanelViewlet"
+            class="Products.PloneMeeting.browser.overrides.PMContentActionsPanelViewlet"
             template="browser/actions_panel_viewlet.pt"
             permission="zope2.View"/>
-        <browser:viewlet
-            name="plonemeeting.actionspanel"
-            for="Products.PloneMeeting.interfaces.IMeeting"
-            manager="plone.app.layout.viewlets.interfaces.IBelowContentBody"
-            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-            class="imio.actionspanel.browser.viewlets.ActionsPanelViewlet"
-            template="browser/actions_panel_viewlet.pt"
-            permission="zope2.View"/>
-        <browser:viewlet
-            name="plonemeeting.actionspanel"
-            for="Products.PloneMeeting.content.advice.IMeetingAdvice"
-            manager="plone.app.layout.viewlets.interfaces.IBelowContentBody"
-            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-            class="imio.actionspanel.browser.viewlets.ActionsPanelViewlet"
-            template="browser/actions_panel_viewlet.pt"
-            permission="zope2.View" />
     </configure>
 
     <!-- Annexes table view -->
@@ -418,6 +402,11 @@
         allowed_attributes="toggle"
         class=".views_unrestricted.ItemSign"
         for="Products.PloneMeeting.interfaces.IMeeting"
+        permission="zope2.View" />
+    <browser:page
+        name="async_render_search_term"
+        class=".async.AsyncRenderSearchTerm"
+        for="*"
         permission="zope2.View" />
 
     <!-- the plonemeeting_redirect_to_app_view.pt that redirect the connected user to the default meetingConfig just after connection -->
@@ -935,6 +924,17 @@
             permission="plone.app.controlpanel.UsersAndGroups"
             template="usergroups_groupsoverview.pt"
             layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer" />
+    </configure>
+
+    <configure package="collective.eeafaceted.dashboard">
+        <browser:page
+            for="OFS.interfaces.IItem"
+            name="render_collection_widget_term_portlet"
+            class="Products.PloneMeeting.browser.overrides.PMRenderTermView"
+            template="browser/templates/term.pt"
+            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+            permission="zope2.View"
+            />
     </configure>
 
 </configure>

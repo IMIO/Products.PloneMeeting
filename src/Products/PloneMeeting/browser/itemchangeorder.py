@@ -163,13 +163,10 @@ class ChangeItemOrderView(BrowserView):
                     otherNumber = self.context.getSiblingItem('next')
                 otherItem = meeting.getItemByNumber(otherNumber)
                 self.context.setItemNumber(otherItem.getItemNumber())
-                self.context.reindexObject(idxs=['getItemNumber'])
                 otherItem.setItemNumber(oldIndex)
-                otherItem.reindexObject(idxs=['getItemNumber'])
             else:
                 # Move the item to an absolute position
                 self.context.setItemNumber(moveNumber)
-                self.context.reindexObject(idxs=['getItemNumber'])
                 # get items again now that context number was updated
                 items = meeting.getItems(ordered=True)
                 oldIndexIsInteger = _is_integer(oldIndex)
@@ -197,59 +194,47 @@ class ChangeItemOrderView(BrowserView):
                             # moving 4 to 2
                             if (oldIndexIsInteger and moveNumberIsInteger):
                                 item.setItemNumber(itemNumber + 100)
-                                item.reindexObject(idxs=['getItemNumber'])
                             # moving 4.1 to 2
                             elif (not oldIndexIsInteger and moveNumberIsInteger):
                                 item.setItemNumber(itemNumber + _compute_value_to_add(itemNumber))
-                                item.reindexObject(idxs=['getItemNumber'])
                             # moving 4 to 2.1
                             elif (oldIndexIsInteger and not moveNumberIsInteger):
                                 item.setItemNumber(itemNumber + _compute_value_to_add(itemNumber))
-                                item.reindexObject(idxs=['getItemNumber'])
                             elif (not oldIndexIsInteger and not moveNumberIsInteger):
                                 # moving 3.1 to 2.2
                                 item.setItemNumber(itemNumber + 1)
-                                item.reindexObject(idxs=['getItemNumber'])
                         # other items
                         else:
                             # moving 4 to 2
                             if (oldIndexIsInteger and moveNumberIsInteger) and \
                                (itemNumber < oldIndex and itemNumber > moveNumber):
                                 item.setItemNumber(itemNumber + 100)
-                                item.reindexObject(idxs=['getItemNumber'])
                             # moving 4.1 to 2
                             elif (not oldIndexIsInteger and moveNumberIsInteger) and itemNumber > moveNumber:
                                 # subnumbers of oldIndex (4.2, 4.3, ...) must be decreased of 0.1
                                 if _use_same_integer(itemNumber, oldIndex) and itemNumber > oldIndex:
                                     item.setItemNumber(itemNumber + 100 - _compute_value_to_add(itemNumber))
-                                    item.reindexObject(idxs=['getItemNumber'])
                                 else:
                                     item.setItemNumber(itemNumber + 100)
-                                    item.reindexObject(idxs=['getItemNumber'])
                             # moving 4 to 2.1
                             elif (oldIndexIsInteger and not moveNumberIsInteger):
                                 # moving master, decrease old subnumbers if > oldIndex
                                 if _use_same_integer(itemNumber, oldIndex):
                                     item.setItemNumber(itemNumber - _compute_value_to_add(itemNumber))
-                                    item.reindexObject(idxs=['getItemNumber'])
                                 # increase subnumbers > moveNumber
                                 if _use_same_integer(itemNumber, moveNumber) and itemNumber > moveNumber:
                                     item.setItemNumber(itemNumber + _compute_value_to_add(itemNumber))
-                                    item.reindexObject(idxs=['getItemNumber'])
                                 # decrease every number > oldIndex if oldIndex was not a master number
                                 elif not oldIndexHasSubnumbers and itemNumber > oldIndex:
                                     item.setItemNumber(itemNumber - 100)
-                                    item.reindexObject(idxs=['getItemNumber'])
                             elif (not oldIndexIsInteger and not moveNumberIsInteger):
                                 # moving 3.1 to 2.2
                                 # decrease oldIndex subnumbers of 0.1 (3.2 to 3.1, 3.3 to 3.2)
                                 if _use_same_integer(itemNumber, oldIndex) and itemNumber > oldIndex:
                                     item.setItemNumber(itemNumber - 1)
-                                    item.reindexObject(idxs=['getItemNumber'])
                                 # increase moveNumber subnumber of 0.1 (2.2 to 2.3, 2.3 to 2.4)
                                 elif _use_same_integer(itemNumber, moveNumber) and itemNumber > moveNumber:
                                     item.setItemNumber(itemNumber + 1)
-                                    item.reindexObject(idxs=['getItemNumber'])
                 else:
                     # We moved the item down
                     for item in items:
@@ -265,7 +250,6 @@ class ChangeItemOrderView(BrowserView):
                             elif (oldIndexIsInteger and not moveNumberIsInteger):
                                 if not oldIndexHasSubnumbers:
                                     item.setItemNumber(moveNumber - 100)
-                                    item.reindexObject(idxs=['getItemNumber'])
                             elif (not oldIndexIsInteger and not moveNumberIsInteger):
                                 # moving 2.1 to 3.2
                                 # (not oldIndexIsInteger and not moveNumberIsInteger)
@@ -274,59 +258,47 @@ class ChangeItemOrderView(BrowserView):
                             # moving 2 to 4
                             if (oldIndexIsInteger and moveNumberIsInteger):
                                 item.setItemNumber(itemNumber - _compute_value_to_add(itemNumber))
-                                item.reindexObject(idxs=['getItemNumber'])
                             # moving 2.1 to 4
                             elif (not oldIndexIsInteger and moveNumberIsInteger):
                                 item.setItemNumber(itemNumber + _compute_value_to_add(itemNumber))
-                                item.reindexObject(idxs=['getItemNumber'])
                             # moving 2 to 4.2
                             elif (oldIndexIsInteger and not moveNumberIsInteger):
                                 item.setItemNumber(itemNumber - 100 + _compute_value_to_add(itemNumber))
-                                item.reindexObject(idxs=['getItemNumber'])
                             elif (not oldIndexIsInteger and not moveNumberIsInteger):
                                 # moving 2.1 to 3.2
                                 # (not oldIndexIsInteger and not moveNumberIsInteger)
                                 item.setItemNumber(itemNumber + _compute_value_to_add(itemNumber))
-                                item.reindexObject(idxs=['getItemNumber'])
                         else:
                             # moving 2 to 4
                             if (oldIndexIsInteger and moveNumberIsInteger) and \
                                (itemNumber > oldIndex and itemNumber < moveNumber):
                                 item.setItemNumber(itemNumber - 100)
-                                item.reindexObject(idxs=['getItemNumber'])
                             # moving 2.1 to 4
                             elif (not oldIndexIsInteger and moveNumberIsInteger) and itemNumber > oldIndex:
                                 # decrease elements having same subnumber as oldIndex
                                 if (_use_same_integer(itemNumber, oldIndex)):
                                     item.setItemNumber(itemNumber - _compute_value_to_add(itemNumber))
-                                    item.reindexObject(idxs=['getItemNumber'])
                                 elif itemNumber > moveNumber:
                                     item.setItemNumber(itemNumber + 100)
-                                    item.reindexObject(idxs=['getItemNumber'])
                             # moving 2 to 4.2
                             elif (oldIndexIsInteger and not moveNumberIsInteger) and itemNumber > oldIndex:
                                 # decrease from 1 but add + 0.1 to subnumbers > moveNumber
                                 if (_use_same_integer(itemNumber, moveNumber)) and itemNumber > moveNumber:
                                     item.setItemNumber(itemNumber - 100 + _compute_value_to_add(itemNumber))
-                                    item.reindexObject(idxs=['getItemNumber'])
                                 # decrease subnumbers of master we moved
                                 elif (_use_same_integer(itemNumber, oldIndex)):
                                     item.setItemNumber(itemNumber - _compute_value_to_add(itemNumber))
-                                    item.reindexObject(idxs=['getItemNumber'])
                                 elif not oldIndexHasSubnumbers:
                                     item.setItemNumber(itemNumber - 100)
-                                    item.reindexObject(idxs=['getItemNumber'])
                             elif (not oldIndexIsInteger and not moveNumberIsInteger):
                                 # moving 2.1 to 3.2
                                 # (not oldIndexIsInteger and not moveNumberIsInteger)
                                 # decrease subnumbers of oldIndex integer that were >
                                 if (_use_same_integer(itemNumber, oldIndex)) and itemNumber > oldIndex:
                                     item.setItemNumber(itemNumber - _compute_value_to_add(itemNumber))
-                                    item.reindexObject(idxs=['getItemNumber'])
                                 # increase subnumbers of moveIndex integer that are >
                                 if (_use_same_integer(itemNumber, moveNumber)) and itemNumber > moveNumber:
                                     item.setItemNumber(itemNumber + _compute_value_to_add(itemNumber))
-                                    item.reindexObject(idxs=['getItemNumber'])
 
         # when items order on meeting changed, it is considered modified,
         # do this before updateItemReferences

@@ -491,6 +491,8 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     @ram.cache(get_plone_groups_for_user_cachekey)
     def get_plone_groups_for_user(self, userId=None, org_uid=None):
         """Just return user.getGroups but cached so it is only done once by REQUEST."""
+        if api.user.is_anonymous():
+            return []
         user = userId and api.user.get(userId) or api.user.get_current()
         user_groups = user.getGroups()
         if org_uid:

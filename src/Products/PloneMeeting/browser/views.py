@@ -601,6 +601,7 @@ class PortletTodoUpdateView(BrowserView):
 
         for portlet in renderer.portletsToShow():
             if portlet['name'] == 'portlet_todo':
+                self.request.set('load_portlet_todo', True)
                 return portlet['renderer'].render()
 
         return ''

@@ -76,17 +76,17 @@
                    zope.container.interfaces.IObjectRemovedEvent"
               handler=".events.onOrgRemoved" />
 
-  <subscriber for=".interfaces.IMeetingCategory
+  <subscriber for=".interfaces.IConfigElement
                    zope.lifecycleevent.IObjectModifiedEvent"
-              handler=".events.onCategoryModified" />
+              handler=".events.onConfigContentModified" />
 
-  <subscriber for=".interfaces.IMeetingCategory
+  <subscriber for=".interfaces.IConfigElement
                    Products.DCWorkflow.interfaces.IAfterTransitionEvent"
-              handler=".events.onCategoryTransition" />
+              handler=".events.onConfigContentTransition" />
 
-  <subscriber for=".interfaces.IMeetingCategory
+  <subscriber for=".interfaces.IConfigElement
                    zope.container.interfaces.IObjectRemovedEvent"
-              handler=".events.onCategoryRemoved" />
+              handler=".events.onConfigContentRemoved" />
 
   <subscriber for="Products.ATContentTypes.interfaces.IATBTreeFolder
                    Products.CMFPlone.interfaces.IReorderedEvent"
