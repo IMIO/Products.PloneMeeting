@@ -705,13 +705,12 @@ $(document).ready(function () {
 
 function updatePortletTodo() {
   var url = $('base').attr('href') + '/@@portlet-todo-update';
-  $.get(url, async=false, function (data) {
-      var tag = $('dl.portlet.portletTodo');
-      if (tag.length) {
+  var tag = $('dl.portlet.portletTodo');
+  if (tag.length) {
+    $.get(url, async=false, function (data) {
         tag[0].parentNode.innerHTML = data;
-      }
-      
-  });
+      });
+  }
 }
 
 // called on each faceted table change to update the portlet_todo
@@ -751,9 +750,9 @@ function update_search_term(tag){
       success: function(data) {
         $(tag).html(data);
         $(tag).find("script").each(function(i) {
-                    eval($(this).text());
-                });
-        createPloneMeetingSelectBox()
+          eval($(this).text());
+        });
+        createPloneMeetingSelectBox();
       },
       error: function(jqXHR, textStatus, errorThrown) {
         /*console.log(textStatus);*/
