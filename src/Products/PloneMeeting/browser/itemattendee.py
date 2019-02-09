@@ -8,6 +8,7 @@ from Products.PloneMeeting.browser.itemassembly import validate_apply_until_item
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IRedirect
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
+from Products.PloneMeeting.utils import notifyModifiedAndReindex
 from z3c.form import button
 from z3c.form import field
 from z3c.form import form
@@ -175,6 +176,8 @@ class ByeByeAttendeeForm(BaseAttendeeForm):
             if self.person_uid not in item_not_present:
                 item_not_present.append(self.person_uid)
                 meeting_not_present_attr[item_to_update_uid] = item_not_present
+                notifyModifiedAndReindex(item_to_update)
+        notifyModifiedAndReindex(self.meeting)
         plone_utils.addPortalMessage(
             _("Attendee has been set ${not_present_type}.",
               mapping={'not_present_type': _('item_not_present_type_{0}'.format(self.not_present_type))}))
@@ -226,7 +229,8 @@ class WelcomeAttendeeForm(BaseAttendeeForm):
             if self.person_uid in item_absents:
                 item_absents.remove(self.person_uid)
                 meeting_absent_attr[item_to_update_uid] = item_absents
-
+                notifyModifiedAndReindex(item_to_update)
+        notifyModifiedAndReindex(self.meeting)
         plone_utils = api.portal.get_tool('plone_utils')
         plone_utils.addPortalMessage(_("Attendee has been set back present."))
         self._finished = True
@@ -289,6 +293,8 @@ class RedefinedSignatoryForm(BaseAttendeeForm):
             if self.person_uid not in item_signatories.values():
                 item_signatories[self.signature_number] = self.person_uid
                 self.meeting.itemSignatories[item_to_update_uid] = item_signatories
+                notifyModifiedAndReindex(item_to_update)
+        notifyModifiedAndReindex(self.meeting)
         plone_utils.addPortalMessage(_("Attendee has been set signatory."))
         self._finished = True
 
@@ -337,7 +343,9 @@ class RemoveRedefinedSignatoryForm(BaseAttendeeForm):
                     self.meeting.itemSignatories[item_to_update_uid] = item_signatories
                 else:
                     del self.meeting.itemSignatories[item_to_update_uid]
-            plone_utils.addPortalMessage(_("Attendee is no more defined as item signatory."))
+                notifyModifiedAndReindex(item_to_update)
+        notifyModifiedAndReindex(self.meeting)
+        plone_utils.addPortalMessage(_("Attendee is no more defined as item signatory."))
         self._finished = True
 
 

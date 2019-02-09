@@ -28,6 +28,7 @@ from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.interfaces import IRedirect
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
+from Products.PloneMeeting.utils import notifyModifiedAndReindex
 from Products.PloneMeeting.utils import validate_item_assembly_value
 from z3c.form import button
 from z3c.form import field
@@ -338,7 +339,8 @@ class ManageItemAssemblyForm(form.Form):
         self.apply_until_item_number = \
             _itemNumber_to_storedItemNumber(
                 data.get('apply_until_item_number') or u'0'
-                )
+            )
+        self.meeting = self.context.getMeeting()
         self._doApplyItemAssembly()
 
     @button.buttonAndHandler(_('Cancel'), name='cancel')
@@ -415,7 +417,7 @@ class ManageItemAssemblyForm(form.Form):
         items_to_update = _itemsToUpdate(
             from_item_number=self.context.getItemNumber(relativeTo='meeting'),
             until_item_number=self.apply_until_item_number,
-            meeting=self.context.getMeeting())
+            meeting=self.meeting)
         for itemToUpdate in items_to_update:
             # only update if we changed default value
             if self.item_assembly != item_assembly_def:
@@ -426,6 +428,7 @@ class ManageItemAssemblyForm(form.Form):
                 itemToUpdate.setItemAssemblyAbsents(self.item_absents)
             if self.item_guests != item_guests_def:
                 itemToUpdate.setItemAssemblyGuests(self.item_guests)
+            notifyModifiedAndReindex(itemToUpdate)
 
         plone_utils = getToolByName(self.context, 'plone_utils')
         plone_utils.addPortalMessage(_("Item assemblies have been updated."))

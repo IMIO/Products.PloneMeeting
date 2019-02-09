@@ -992,14 +992,18 @@ def setFieldFromAjax(obj, fieldName, newValue):
     if previousData:
         addDataChange(obj, previousData)
     # Update the last modification date
-    obj.notifyModified()
-    obj.reindexObject(idxs=['modified', 'ModificationDate', 'Date', ])
+    notifyModifiedAndReindex(obj, extra_idxs=['Date'])
     # Apply XHTML transforms when relevant
     transformAllRichTextFields(obj, onlyField=fieldName)
     obj.reindexObject()
     # notify that object was edited so unlocking event is called
     notify(ObjectEditedEvent(obj))
 
+
+def notifyModifiedAndReindex(obj, extra_idxs=[]):
+    """ """
+    obj.notifyModified()
+    obj.reindexObject(idxs=['modified', 'ModificationDate'])
 
 # ------------------------------------------------------------------------------
 def transformAllRichTextFields(obj, onlyField=None):
