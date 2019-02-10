@@ -43,7 +43,7 @@ function findParent(node, className) {
 }
 
 /* used in configuration to show/hide documentation */
-function toggleDoc(id, toggle_parent_active=true, parent_elem=null) {
+function toggleDoc(id, toggle_parent_active=true, parent_elem=null, load_view=null) {
   elem = $('#' + id);
   elem.slideToggle(200);
   if (toggle_parent_active) {
@@ -51,6 +51,27 @@ function toggleDoc(id, toggle_parent_active=true, parent_elem=null) {
       parent_elem = elem.prev()[0];
     }
     parent_elem.classList.toggle("active");
+  }
+
+  inner_content_tag = $('div.collapsible-inner-content', elem)[0];
+  if (load_view && !inner_content_tag.dataset.loaded) {
+    // load content in the collapsible-inner-content div
+    var url = $("link[rel='canonical']").attr('href') + '/' + load_view;
+    $.ajax({
+      url: url,
+      dataType: 'html',
+      data: {},
+      cache: false,
+      async: false,
+      success: function(data) {
+        inner_content_tag.innerHTML = data;
+        inner_content_tag.dataset.loaded = true;
+      },
+      error: function(jqXHR, textStatus, errorThrown) {
+        /*console.log(textStatus);*/
+        window.location.href = window.location.href;
+        }
+    });
   }
 }
 
@@ -754,25 +775,24 @@ $(document).ready(function () {
 
 function update_search_term(tag){
   var url = $("link[rel='canonical']").attr('href') + '/@@async_render_search_term';
-    $.ajax({
-      url: url,
-      dataType: 'html',
-      data: {collection_uid: tag.dataset.collection_uid},
-      cache: false,
-      async: false,
-      success: function(data) {
-        $(tag).html(data);
-        $(tag).find("script").each(function(i) {
-          eval($(this).text());
-        });
-        createPloneMeetingSelectBox();
-      },
-      error: function(jqXHR, textStatus, errorThrown) {
-        /*console.log(textStatus);*/
-        window.location.href = window.location.href;
-        }
+  $.ajax({
+    url: url,
+    dataType: 'html',
+    data: {collection_uid: tag.dataset.collection_uid},
+    cache: false,
+    async: false,
+    success: function(data) {
+      $(tag).html(data);
+      $(tag).find("script").each(function(i) {
+        eval($(this).text());
       });
-  
+      createPloneMeetingSelectBox();
+    },
+    error: function(jqXHR, textStatus, errorThrown) {
+      /*console.log(textStatus);*/
+      window.location.href = window.location.href;
+      }
+  });
 }
 
 $(document).ready(function () {

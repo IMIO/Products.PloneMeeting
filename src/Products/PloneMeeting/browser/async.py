@@ -288,7 +288,7 @@ class AsyncRenderSearchTerm(BrowserView):
                 meeting_uid,
                 collection_uid)
 
-    #@ram.cache(__call___cachekey)
+    @ram.cache(__call___cachekey)
     def __call__(self):
         """ """
         collection_uid = self.request.get('collection_uid')
@@ -298,3 +298,13 @@ class AsyncRenderSearchTerm(BrowserView):
         self.brains = collection.results(batch=False, brains=True)
         rendered_term = ViewPageTemplateFile("templates/term_searchmeetings.pt")(self)
         return rendered_term
+
+
+class AsyncLoadLinkedItems(BrowserView):
+    """ """
+
+    def __call__(self):
+        """ """
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
+        return self.index()

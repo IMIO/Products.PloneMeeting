@@ -1704,6 +1704,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         self.setLayout('meeting_view')
         # update every items itemReference if needed
         self.updateItemReferences(check_needed=True)
+        # invalidate last meeting modified
+        invalidate_cachekey_volatile_for('Products.PloneMeeting.Meeting.modified')
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=True)
         self.reindexObject()
@@ -1743,6 +1745,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         self.adapted().onEdit(isCreated=False)
         # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
+        # invalidate last meeting modified
+        invalidate_cachekey_volatile_for('Products.PloneMeeting.Meeting.modified')
 
     def updateLocalRoles(self, **kwargs):
         """Update various local roles."""

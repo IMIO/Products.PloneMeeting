@@ -214,7 +214,7 @@
                                  linkedItems python: context.getManuallyLinkedItems(only_viewable=True);
                                  showManuallyLinkedItems python: 'manuallyLinkedItems' in usedAttrs or linkedItems;
                                  class_to_use python: (predecessors or linkedItems) and 'item_attribute_label highlightValue' or 'item_attribute_label';">
-                <div id="linkedItems" class="collapsible discreet" onclick="toggleDoc('collapsible-linked-items');">
+                <div id="linkedItems" class="collapsible discreet" onclick="toggleDoc('collapsible-linked-items', toggle_parent_active=true, parent_elem=null, load_view='@@load_linked_items');">
                   <span tal:condition="showManuallyLinkedItems"
                         class="item_attribute_label"
                         tal:attributes="class class_to_use"
@@ -230,25 +230,7 @@
                 </div>
                 <div id="collapsible-linked-items" class="collapsible-content discreet" style="display: none;">
                   <div class="collapsible-inner-content">
-                    <span class="item_attribute_label" i18n:translate="auto_linked_items">Automatically linked items</span>:&nbsp;&nbsp;
-                    <ul class="item-predecessors"
-                        tal:condition="predecessors">
-                        <li tal:repeat="predecessor predecessors">
-                            <tal:predecessor replace="structure python: context.displayLinkedItem(predecessor)" />
-                        </li>
-                    </ul>
-                    <span tal:condition="not: predecessors">-</span>
-                    <tal:manuallyLinkedItems condition="showManuallyLinkedItems">
-                          <p></p>
-                          <span class="item_attribute_label" i18n:translate="PloneMeeting_label_manuallyLinkedItems">Manually linked items</span>:&nbsp;&nbsp;
-                          <ul class="item-linkeditems"
-                              tal:condition="linkedItems">
-                              <li tal:repeat="item linkedItems">
-                                  <tal:linkedItem replace="structure python: context.displayLinkedItem(item)" />
-                              </li>
-                          </ul>
-                          <span tal:condition="not: linkedItems">-</span>
-                    </tal:manuallyLinkedItems>
+                     <img tal:attributes="src string:${portal_url}/spinner_small.gif" />
                   </div>
                 </div>
             </tal:defines>
