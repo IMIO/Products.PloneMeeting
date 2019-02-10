@@ -106,9 +106,9 @@
                         redefinedItemSignatures python: context.getItemSignatures(real=True) or context.getItemSignatories(real=True);
                         mayQuickEditItemAssembly context/mayQuickEditItemAssembly;
                         mayQuickEditItemSignatures python: 'signatures' in usedMeetingAttrs and context.mayQuickEdit('itemSignatures', bypassWritePermissionCheck=True);">
-              <div
+              <div id="assembly-and-signatures"
                   onclick="togglePersonsCookie();;toggleDoc('collapsible-assembly-and-signatures');"
-                  tal:attributes="class python: (request.get('showPersons', 'true')=='true') and 'collapsible discreet active' or 'collapsible discreet'">
+                  class="collapsible discreet">
                   <span class="meeting_attribute_label" i18n:translate="redefinable_assembly_and_signatures">
                       <span i18n:name="assembly" tal:define="class_to_use python: redefinedItemAssemblies and 'highlightValue' or ''"
                             tal:attributes="class class_to_use"
@@ -129,8 +129,7 @@
                       <span i18n:name="signatures_edit" tal:condition="not:mayQuickEditItemSignatures" />
                   </span>
               </div>
-              <div id="collapsible-assembly-and-signatures" class="collapsible-content discreet"
-                  tal:attributes="style python: (request.get('showPersons', 'false')=='true') and 'display: block;;' or 'display: none;;'">
+              <div id="collapsible-assembly-and-signatures" class="collapsible-content discreet" style="display: none;">
                 <div class="collapsible-inner-content">
                   <tal:item_assembly tal:condition="python: ('assembly' in usedMeetingAttrs or meeting.getAssembly()) and not meeting.getAttendees()">
                       <tal:defines define="mayQuickEdit python: context.mayQuickEdit('itemAssembly', bypassWritePermissionCheck=True);
@@ -191,6 +190,9 @@
                 </div>
               </div>
               </tal:defines>
+              <script>
+                initializePersonsCookie();
+              </script>
             </tal:assembly_and_signatures>
 
             <tal:comment replace="nothing">Item keywords</tal:comment>

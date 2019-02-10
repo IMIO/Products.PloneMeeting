@@ -121,6 +121,19 @@ function setDescriptionsVisiblity(mustShow) {
   }
 }
 
+// Function that initialize CSS classes on assembly_and_signatures
+function initializePersonsCookie() {
+  show = readCookie('showPersons');
+  if (!show) show = 'true';
+  label_tag = $('div#assembly-and-signatures')[0];
+  tag = $('div#collapsible-assembly-and-signatures')[0];
+  if (show == 'true') {
+    label_tag.classList.add('active');
+    tag.style.display = 'block';
+  }
+}
+
+
 // Function that toggles the persons visibility
 function togglePersonsCookie() {
   show = readCookie('showPersons');
