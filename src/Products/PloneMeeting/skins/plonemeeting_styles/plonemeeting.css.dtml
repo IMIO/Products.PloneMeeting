@@ -69,58 +69,47 @@ td[class^='meeting_item_listType_'] > div {
 }
 
 /* PloneMeeting implementation of a selection box whose elements are icons + texts */
-#content .ploneMeetingSelectContainer p {
+dl.portlet .ploneMeetingSelectContainer p {
     margin-right: 1em;
 }
-div.ploneMeetingSelectContainer.annex_type_img_select_box {
-    float: left;
-}
-div.ploneMeetingSelectContainer.annex_type_img_select_box div.ploneMeetingSelectDropdownIcon {
-    min-width: 250px;
-}
 /* make sure if both select boxes are displayed, first is displayed above second */
-div#go_to_meeting_img_select_box_searchallmeetings {
+dl.portlet div#go_to_meeting_img_select_box_searchallmeetings {
     z-index: 2;
 }
 
-div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchallmeetings div.ploneMeetingSelectDropdownIcon,
-div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchlastdecisions div.ploneMeetingSelectDropdownIcon {
+dl.portlet div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchallmeetings div.ploneMeetingSelectDropdownIcon,
+dl.portlet div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchlastdecisions div.ploneMeetingSelectDropdownIcon {
     width: 80%;
     min-width: 150px;
 }
-div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchallmeetings div.ploneMeetingSelectBox,
-div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchlastdecisions div.ploneMeetingSelectBox {
+dl.portlet div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchallmeetings div.ploneMeetingSelectBox,
+dl.portlet div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchlastdecisions div.ploneMeetingSelectBox {
     width: 80%;
     min-width: 150px;
     padding-right: 9px;
 }
-div.ploneMeetingSelectContainer span[id^='idButtonText_'] {
-    padding-left: 5px;
-}
-
-div.ploneMeetingSelectContainer span#idButtonText_go_to_meeting_img_select_box_searchallmeetings,
-div.ploneMeetingSelectContainer span#idButtonText_go_to_meeting_img_select_box_searchlastdecisions {
+dl.portlet div.ploneMeetingSelectContainer span#idButtonText_go_to_meeting_img_select_box_searchallmeetings,
+dl.portlet div.ploneMeetingSelectContainer span#idButtonText_go_to_meeting_img_select_box_searchlastdecisions {
     display: inline-block;
 }
 /* add some top padding for --- choose --- */
-div.ploneMeetingSelectContainer span#idButtonText_go_to_meeting_img_select_box_searchallmeetings span.select_choice {
+dl.portlet div.ploneMeetingSelectContainer span#idButtonText_go_to_meeting_img_select_box_searchallmeetings span.select_choice {
     display: block;
     padding-top: 2px;
 }
 
 /* cancel additional padding given by faceted to the meeting list */
-div.faceted-tagscloud-collection-widget div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchallmeetings a.pretty_link,
-div.faceted-tagscloud-collection-widget div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchlastdecisions a.pretty_link {
+dl.portlet div.faceted-tagscloud-collection-widget div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchallmeetings a.pretty_link,
+dl.portlet div.faceted-tagscloud-collection-widget div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchlastdecisions a.pretty_link {
     margin-left: 0em;
 }
 
-div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchallmeetings p,
-div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchlastdecisions p {
+dl.portlet div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchallmeetings p,
+dl.portlet div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchlastdecisions p {
     margin-bottom: 0em;
-    width: 104%;
 }
 
-.ploneMeetingSelectButton {
+dl.portlet .ploneMeetingSelectButton {
     cursor: pointer;
     border: 1px solid &dtml-globalBorderColor;;
     background-color: white;
@@ -135,12 +124,12 @@ div.ploneMeetingSelectContainer.go_to_meeting_img_select_box_searchlastdecisions
     border-style: outset;
 }
 /* selected element */
-.ploneMeetingSelectButton span.ploneMeetingRef,
-p.ploneMeetingSelectItem.selected {
+dl.portlet .ploneMeetingSelectButton span.ploneMeetingRef,
+dl.portlet p.ploneMeetingSelectItem.selected {
     font-weight: bold;
 }
 
-.ploneMeetingSelectBox {
+dl.portlet div.ploneMeetingSelectBox {
     cursor: pointer;
     border-width: 1px;
     border-color: &dtml-globalBorderColor;;
@@ -153,49 +142,40 @@ p.ploneMeetingSelectItem.selected {
     height: auto;
     overflow: auto;
     text-align: left;
-    width: auto;
+    width: 95%;
     z-index: 1;
     overflow: hidden;
 }
 
-div.ploneMeetingSelectContainer.annex_type_img_select_box div#annex_type_img_select_box {
-    min-width: 274px;
-}
-
-.ploneMeetingSelectItem {
+dl.portlet p.ploneMeetingSelectItem {
     margin: 0px 1px 0px 1px;
     width: 99%; /* If 100% a horizontal scrollbar is displayed */
     vertical-align: top !important;
     min-height: 18px;
+    padding-left: 5px;
 }
-.ploneMeetingSelectItem a {
+dl.portlet p.ploneMeetingSelectItem a {
     min-height: 18px;
     padding-top: 3px;
 }
-.ploneMeetingSelectItem:hover a {
+dl.portlet p.ploneMeetingSelectItem:hover a {
     background-color: &dtml-globalBackgroundColor;;
 }
-.ploneMeetingSelectItem:hover a span {
+dl.portlet p.ploneMeetingSelectItem:hover a span {
     color: white;
 }
-#content p.ploneMeetingSelectItem {
-    margin-bottom: 0em;
-}
-/* add some padding before a annex sub type */
-#content p.ploneMeetingSelectItem.subtype img {
-    margin-left: 15px;
-}
 
-.ploneMeetingSelectImage {
+dl.portlet .ploneMeetingSelectImage {
     max-height: 16px;
     max-width: 16px;
     vertical-align: top;
 }
-.ploneMeetingSelectDropdownIcon {
+dl.portlet .ploneMeetingSelectDropdownIcon {
     height: 16px;
     background-image: url(&dtml-portal_url;/drop_down.png);
     background-repeat: no-repeat;
     background-position: right;
+    padding-left: 5px;
 }
 
 /* show table using border="0" or border:none */
@@ -715,6 +695,9 @@ p.indent-firstline {text-indent: 40px;}
     padding-left: 1em;
     padding-top: 0.2em;
     padding-bottom: 0.2em;
+}
+.portletTodo div.loading {
+   text-align: center;
 }
 #portal-columns dl.portletTodo a {
     display: inline;

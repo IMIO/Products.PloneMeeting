@@ -759,7 +759,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                       showContentIcon=False,
                       isViewable=True,
                       notViewableHelpMessage=None,
-                      appendToUrl=''):
+                      appendToUrl='',
+                      link_pattern=None):
         """Return the IPrettyLink version of the title."""
         adapted = IPrettyLink(self)
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -772,6 +773,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             adapted.notViewableHelpMessage = notViewableHelpMessage
         adapted.showContentIcon = showContentIcon
         adapted.appendToUrl = appendToUrl
+        if link_pattern:
+            adapted.link_pattern = link_pattern
         return adapted.getLink()
 
     security.declarePublic('getRawQuery')
@@ -1352,12 +1355,10 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                     # we inserted an integer numer, we need to add '1' to every next items
                     if not insertIndexIsSubnumber:
                         anItem.setItemNumber(itemNumber + 100)
-                        anItem.reindexObject(idxs=['getItemNumber', ])
                     elif (insertIndexIsSubnumber and _use_same_integer(itemNumber, insertIndex) and
                           itemNumber > insertIndex):
                         # we inserted a subnumber, we need to update subnumber of same integer
                         anItem.setItemNumber(itemNumber + 1)
-                        anItem.reindexObject(idxs=['getItemNumber', ])
                 elif self.getItemInsertOrder(anItem, cfg, check_cache=False) > itemOrder:
                     higherItemFound = True
                     itemNumber = anItem.getItemNumber()
@@ -1365,7 +1366,6 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                     # we will only update next items of same subnumber?
                     insertIndexIsSubnumber = not _is_integer(itemNumber)
                     anItem.setItemNumber(itemNumber + _compute_value_to_add(itemNumber))
-                    anItem.reindexObject(idxs=['getItemNumber', ])
 
             if higherItemFound:
                 item.setItemNumber(insertIndex)
@@ -1455,10 +1455,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             if anItemNumber > itemNumber:
                 if not itemNumberIsSubnumber:
                     anItem.setItemNumber(anItem.getItemNumber() - 100)
-                    anItem.reindexObject(idxs=['getItemNumber', ])
                 elif itemNumberIsSubnumber and _use_same_integer(itemNumber, anItemNumber):
                     anItem.setItemNumber(anItem.getItemNumber() - _compute_value_to_add(anItemNumber))
-                    anItem.reindexObject(idxs=['getItemNumber', ])
         # invalidate RAMCache for MeetingItem.getMeeting
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeeting')
 
@@ -1706,6 +1704,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         self.setLayout('meeting_view')
         # update every items itemReference if needed
         self.updateItemReferences(check_needed=True)
+        # invalidate last meeting modified
+        invalidate_cachekey_volatile_for('Products.PloneMeeting.Meeting.modified')
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=True)
         self.reindexObject()
@@ -1745,6 +1745,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         self.adapted().onEdit(isCreated=False)
         # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
         invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
+        # invalidate last meeting modified
+        invalidate_cachekey_volatile_for('Products.PloneMeeting.Meeting.modified')
 
     def updateLocalRoles(self, **kwargs):
         """Update various local roles."""

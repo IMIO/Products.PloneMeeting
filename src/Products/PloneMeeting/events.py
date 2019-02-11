@@ -10,7 +10,6 @@
 #
 
 from AccessControl import Unauthorized
-from collective.contact.plonegroup.browser.settings import IContactPlonegroupConfig
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_own_organization
@@ -153,6 +152,10 @@ def onMeetingTransition(meeting, event):
        (event.old_state.id not in beforeFrozenStates and
             event.new_state.id in beforeFrozenStates):
         meeting.updateItemReferences()
+
+    # invalidate last meeting modified
+    invalidate_cachekey_volatile_for('Products.PloneMeeting.Meeting.modified')
+
     # notify a MeetingAfterTransitionEvent for subplugins so we are sure
     # that it is called after PloneMeeting meeting transition
     notify(MeetingAfterTransitionEvent(
@@ -892,39 +895,51 @@ def onMeetingRemoved(meeting, event):
     invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
 
 
-def onCategoryModified(category, event):
-    '''Called whenever a MeetingCategory was added or modified.'''
+def onConfigContentModified(config_content, event):
+    '''Called whenever an element in the MeetingConfig was added or modified.'''
 
     # invalidate cache of relevant vocabularies
-    category._invalidateCachedVocabularies()
+    if hasattr(config_content, '_invalidateCachedVocabularies'):
+        config_content._invalidateCachedVocabularies()
 
-    # set modification date on container
-    category.aq_parent.notifyModified()
+    # set modification date on container and MeetingConfig
+    container = config_content.aq_parent
+    container.notifyModified()
+    meeting_config = container.aq_parent
+    meeting_config.notifyModified()
 
 
-def onCategoryTransition(category, event):
-    '''Called whenever a transition has been fired on a MeetingCategory.'''
-    if not event.transition or (category != event.object):
+def onConfigContentTransition(config_content, event):
+    '''Called whenever a transition has been fired on an element of the MeetingConfig.'''
+    if not event.transition or (config_content != event.object):
         return
 
     # invalidate cache of relevant vocabularies
-    category._invalidateCachedVocabularies()
+    if hasattr(config_content, '_invalidateCachedVocabularies'):
+        config_content._invalidateCachedVocabularies()
 
-    # set modification date on container
-    category.aq_parent.notifyModified()
+    # set modification date on container and MeetingConfig
+    container = config_content.aq_parent
+    container.notifyModified()
+    meeting_config = container.aq_parent
+    meeting_config.notifyModified()
 
 
-def onCategoryRemoved(category, event):
-    '''Called when a MeetingCategory is removed.'''
+def onConfigContentRemoved(config_content, event):
+    '''Called when an element of the MeetingConfig is removed.'''
     # bypass this if we are actually removing the 'Plone Site'
-    if event.object.meta_type == 'Plone Site':
+    if config_content.meta_type == 'Plone Site':
         return
 
-    # clean cache for "Products.PloneMeeting.vocabularies.categoriesvocabulary"
-    invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.categoriesvocabulary")
+    # invalidate cache of relevant vocabularies
+    if hasattr(config_content, '_invalidateCachedVocabularies'):
+        config_content._invalidateCachedVocabularies()
 
-    # set modification date on container
-    category.aq_parent.notifyModified()
+    # set modification date on container and MeetingConfig
+    container = config_content.aq_parent
+    container.notifyModified()
+    meeting_config = container.aq_parent
+    meeting_config.notifyModified()
 
 
 def onConfigFolderReordered(folder, event):

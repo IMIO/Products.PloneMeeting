@@ -202,6 +202,8 @@ class testColumns(PloneMeetingTestCase):
         self.assertTrue(u"<a class='pretty_link state-created' " in column.renderCell(item_brain))
         # linked but not viewable
         self.changeUser('powerobserver1')
+        # column have use_caching=True
+        column = ItemLinkedMeetingColumn(meetingFolder, self.portal.REQUEST, faceted_table)
         self.assertTrue(u"<div class='pretty_link state-created' " in column.renderCell(item_brain))
 
 

@@ -55,16 +55,15 @@
   </tal:date>
   </div>
 
-  <div
+  <div id="assembly-and-signatures"
       onclick="togglePersonsCookie();;toggleDoc('collapsible-assembly-and-signatures');"
-      tal:attributes="class python: (request.get('showPersons', 'true')=='true') and 'collapsible discreet active' or 'collapsible discreet'">
+      class="collapsible discreet">
    <span class="meeting_attribute_label" i18n:translate="assembly_and_signatures">
      Meeting assembly and signatures
    </span>
   </div>
 
-   <div class="collapsible-content" id="collapsible-assembly-and-signatures"
-        tal:attributes="style python: (request.get('showPersons', 'false')=='true') and 'display: block;;' or 'display: none;;'">
+  <div id="collapsible-assembly-and-signatures" class="collapsible-content" style="display: none;">
     <div class="collapsible-inner-content">
      <tal:comment replace="nothing">Attendees, excused, absents, replacements, signatories</tal:comment>
      <table id="meeting_users" class="listing discreet" cellspacing="0" cellpadding="0"
@@ -197,6 +196,10 @@ field before and the 'attendees' now, if the field is not empty, we display it</
      </tal:assembly_common_fields>
     </div>
    </div>
+   <script>
+     initializePersonsCookie();
+   </script>
+
 
   <div class="discreet">
   <tal:comment replace="nothing">Pre-meeting info</tal:comment>

@@ -107,9 +107,9 @@
                         redefinedItemSignatures python: context.getItemSignatures(real=True) or context.getItemSignatories(real=True);
                         mayQuickEditItemAssembly context/mayQuickEditItemAssembly;
                         mayQuickEditItemSignatures python: 'signatures' in usedMeetingAttrs and context.mayQuickEdit('itemSignatures', bypassWritePermissionCheck=True);">
-              <div
+              <div id="assembly-and-signatures"
                   onclick="togglePersonsCookie();;toggleDoc('collapsible-assembly-and-signatures');"
-                  tal:attributes="class python: (request.get('showPersons', 'true')=='true') and 'collapsible discreet active' or 'collapsible discreet'">
+                  class="collapsible discreet">
                   <span class="meeting_attribute_label" i18n:translate="redefinable_assembly_and_signatures">
                       <span i18n:name="assembly" tal:define="class_to_use python: redefinedItemAssemblies and 'highlightValue' or ''"
                             tal:attributes="class class_to_use"
@@ -130,8 +130,7 @@
                       <span i18n:name="signatures_edit" tal:condition="not:mayQuickEditItemSignatures" />
                   </span>
               </div>
-              <div id="collapsible-assembly-and-signatures" class="collapsible-content discreet"
-                  tal:attributes="style python: (request.get('showPersons', 'false')=='true') and 'display: block;;' or 'display: none;;'">
+              <div id="collapsible-assembly-and-signatures" class="collapsible-content discreet" style="display: none;">
                 <div class="collapsible-inner-content">
                   <tal:item_assembly tal:condition="python: ('assembly' in usedMeetingAttrs or meeting.getAssembly()) and not meeting.getAttendees()">
                       <tal:defines define="mayQuickEdit python: context.mayQuickEdit('itemAssembly', bypassWritePermissionCheck=True);
@@ -192,6 +191,9 @@
                 </div>
               </div>
               </tal:defines>
+              <script>
+                initializePersonsCookie();
+              </script>
             </tal:assembly_and_signatures>
 
             <tal:comment replace="nothing">Item keywords</tal:comment>
@@ -213,7 +215,7 @@
                                  linkedItems python: context.getManuallyLinkedItems(only_viewable=True);
                                  showManuallyLinkedItems python: 'manuallyLinkedItems' in usedAttrs or linkedItems;
                                  class_to_use python: (predecessors or linkedItems) and 'item_attribute_label highlightValue' or 'item_attribute_label';">
-                <div id="linkedItems" class="collapsible discreet" onclick="toggleDoc('collapsible-linked-items');">
+                <div id="linkedItems" class="collapsible discreet" onclick="toggleDoc('collapsible-linked-items', toggle_parent_active=true, parent_elem=null, load_view='@@load_linked_items');">
                   <span tal:condition="showManuallyLinkedItems"
                         class="item_attribute_label"
                         tal:attributes="class class_to_use"
@@ -229,25 +231,7 @@
                 </div>
                 <div id="collapsible-linked-items" class="collapsible-content discreet" style="display: none;">
                   <div class="collapsible-inner-content">
-                    <span class="item_attribute_label" i18n:translate="auto_linked_items">Automatically linked items</span>:&nbsp;&nbsp;
-                    <ul class="item-predecessors"
-                        tal:condition="predecessors">
-                        <li tal:repeat="predecessor predecessors">
-                            <tal:predecessor replace="structure python: context.displayLinkedItem(predecessor)" />
-                        </li>
-                    </ul>
-                    <span tal:condition="not: predecessors">-</span>
-                    <tal:manuallyLinkedItems condition="showManuallyLinkedItems">
-                          <p></p>
-                          <span class="item_attribute_label" i18n:translate="PloneMeeting_label_manuallyLinkedItems">Manually linked items</span>:&nbsp;&nbsp;
-                          <ul class="item-linkeditems"
-                              tal:condition="linkedItems">
-                              <li tal:repeat="item linkedItems">
-                                  <tal:linkedItem replace="structure python: context.displayLinkedItem(item)" />
-                              </li>
-                          </ul>
-                          <span tal:condition="not: linkedItems">-</span>
-                    </tal:manuallyLinkedItems>
+                     <img tal:attributes="src string:${portal_url}/spinner_small.gif" />
                   </div>
                 </div>
             </tal:defines>

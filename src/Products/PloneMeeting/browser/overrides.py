@@ -39,7 +39,6 @@ from imio.dashboard.interfaces import IContactsDashboard
 from imio.history import utils as imio_history_utils
 from imio.history.browser.views import IHContentHistoryView
 from imio.history.browser.views import IHDocumentBylineViewlet
-from imio.prettylink.interfaces import IPrettyLink
 from plone import api
 from plone import namedfile
 from plone.app.content.browser.foldercontents import FolderContentsView
@@ -180,6 +179,12 @@ class PloneMeetingContentActionsViewlet(ContentActionsViewlet):
            IContactsDashboard.providedBy(self.context):
             return ''
         return self.index()
+
+
+class PMContentActionsPanelViewlet(ActionsPanelViewlet):
+    """Render actionspanel viewlet async for application content."""
+
+    async = True
 
 
 class PMConfigActionsPanelViewlet(ActionsPanelViewlet):
@@ -417,16 +422,10 @@ class PMRenderTermView(RenderTermPortletView):
         rendered_term = super(PMRenderTermView, self).__call__(term, category, widget)
         # display the searchallmeetings as a selection list
         if self.context.getId() in ['searchallmeetings', 'searchlastdecisions']:
-            self.tool = api.portal.get_tool('portal_plonemeeting')
-            self.cfg = self.tool.getMeetingConfig(self.context)
-            self.brains = self.context.results(batch=False, brains=True)
-            rendered_term = ViewPageTemplateFile("templates/term_searchmeetings.pt")(self)
+            rendered_term = "<div id='async_search_term_{0}' data-collection_uid='{0}'>" \
+                "<img src='{1}/spinner_small.gif' /></div>".format(
+                    self.context.UID(), api.portal.get().absolute_url())
         return rendered_term
-
-    def getMeetingPrettyLink(self, brain):
-        """ """
-        adapted = IPrettyLink(brain.getObject())
-        return adapted.getLink()
 
 
 class PMRenderCategoryView(IDRenderCategoryView):

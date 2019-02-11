@@ -1,10 +1,13 @@
 # -*- coding: utf-8 -*-
 
 from AccessControl import Unauthorized
+from imio.helpers.cache import get_cachekey_volatile
 from plone import api
+from plone.memoize import ram
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
 from Products.Five import BrowserView
+from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.PloneMeeting.config import WriteBudgetInfos
 from zope.i18n import translate
 
@@ -259,3 +262,49 @@ class BudgetRelated(BrowserView):
             self.request.RESPONSE.status = 500
             return
         return html
+
+
+class AsyncRenderSearchTerm(BrowserView):
+    """ """
+
+    def __call___cachekey(method, self):
+        '''cachekey method for self.__call__.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        userGroups = tool.get_plone_groups_for_user()
+        cfg = tool.getMeetingConfig(self.context)
+        cfg_modified = cfg.modified()
+        # URL to the annex_type can change if server URL changed
+        server_url = self.request.get('SERVER_URL', None)
+        # cache until a meeting is modified
+        date = get_cachekey_volatile('Products.PloneMeeting.Meeting.modified')
+        # return meeting.UID if we are on a meeting or None if not
+        # as portlet is highlighting the meeting we are on
+        meeting_uid = self.context.meta_type == 'Meeting' and self.context.UID() or None
+        collection_uid = self.request.get('collection_uid')
+        return (userGroups,
+                cfg_modified,
+                server_url,
+                date,
+                meeting_uid,
+                collection_uid)
+
+    @ram.cache(__call___cachekey)
+    def __call__(self):
+        """ """
+        collection_uid = self.request.get('collection_uid')
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
+        collection = api.content.find(UID=collection_uid)[0].getObject()
+        self.brains = collection.results(batch=False, brains=True)
+        rendered_term = ViewPageTemplateFile("templates/term_searchmeetings.pt")(self)
+        return rendered_term
+
+
+class AsyncLoadLinkedItems(BrowserView):
+    """ """
+
+    def __call__(self):
+        """ """
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(self.context)
+        return self.index()

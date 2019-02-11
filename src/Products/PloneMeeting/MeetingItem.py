@@ -2031,6 +2031,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             raise Unauthorized
         self.getField('itemIsSigned').set(self, value, **kwargs)
 
+    security.declareProtected(ModifyPortalContent, 'setItemNumber')
+
+    def setItemNumber(self, value, **kwargs):
+        '''Overrides the field 'itemNumber' mutator to
+           notifyModified and reindex relevant indexes.'''
+        current_item_number = self.getField('itemNumber').get(self, **kwargs)
+        if not value == current_item_number:
+            self.getField('itemNumber').set(self, value, **kwargs)
+            self.reindexObject(idxs=['getItemNumber'])
+
     security.declareProtected(ModifyPortalContent, 'setManuallyLinkedItems')
 
     def setManuallyLinkedItems(self, value, **kwargs):

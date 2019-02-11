@@ -182,7 +182,7 @@ class IMeetingBatchActionsMarker(IBatchActionsMarker):
     """Marker interfaces to register batch actions for Meetings."""
 
 
-class IToolPloneMeeting(IConfigElement):
+class IToolPloneMeeting(Interface):
     """Marker interface for .ToolPloneMeeting.ToolPloneMeeting
     """
 

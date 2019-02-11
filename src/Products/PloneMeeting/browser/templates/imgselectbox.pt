@@ -1,4 +1,4 @@
-<tal:init_js replace='structure string:<script language="JavaScript">
+<tal:init_js replace='structure string:<script>
     var imgSelectBox = new Object();
     imgSelectBox["button"] = "idButton_${view/select_box_name}";
     imgSelectBox["box"] = "${view/select_box_name}";

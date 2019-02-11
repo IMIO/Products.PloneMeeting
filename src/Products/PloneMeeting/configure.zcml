@@ -320,10 +320,21 @@
   <class class="collective.contact.core.content.organization.Organization">
     <implements interface="Products.PloneMeeting.interfaces.IConfigElement" />
   </class>
+  <class class="collective.documentgenerator.content.pod_template.ConfigurablePODTemplate">
+    <implements interface="Products.PloneMeeting.interfaces.IConfigElement" />
+  </class>
 
   <!-- to be removed after migration to 4 -->
   <adapter for="OFS.interfaces.IItem"
            factory=".adapters.AnnexableAdapter"
            provides=".interfaces.IAnnexable" />
+
+  <!-- ETag components -->
+  <adapter factory=".etags.UserGroups"
+           name="usergroups" />
+  <adapter factory=".etags.MeetingModified"
+           name="meetingmodified" />
+  <adapter factory=".etags.ConfigModified"
+           name="configmodified" />
 
 </configure>

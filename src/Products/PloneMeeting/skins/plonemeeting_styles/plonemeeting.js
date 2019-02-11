@@ -1,5 +1,10 @@
 // Dropdown for selecting an annex type
 var ploneMeetingSelectBoxes = new Object();
+
+function createPloneMeetingSelectBox(name, imgSelectBox) {
+  ploneMeetingSelectBoxes[name] = imgSelectBox;
+}
+
 function displayPloneMeetingSelectBox(selectName) {
   var box = document.getElementById(ploneMeetingSelectBoxes[selectName].box);
   var button = document.getElementById(ploneMeetingSelectBoxes[selectName].button);
@@ -38,7 +43,7 @@ function findParent(node, className) {
 }
 
 /* used in configuration to show/hide documentation */
-function toggleDoc(id, toggle_parent_active=true, parent_elem=null) {
+function toggleDoc(id, toggle_parent_active=true, parent_elem=null, load_view=null) {
   elem = $('#' + id);
   elem.slideToggle(200);
   if (toggle_parent_active) {
@@ -46,6 +51,27 @@ function toggleDoc(id, toggle_parent_active=true, parent_elem=null) {
       parent_elem = elem.prev()[0];
     }
     parent_elem.classList.toggle("active");
+  }
+
+  inner_content_tag = $('div.collapsible-inner-content', elem)[0];
+  if (load_view && !inner_content_tag.dataset.loaded) {
+    // load content in the collapsible-inner-content div
+    var url = $("link[rel='canonical']").attr('href') + '/' + load_view;
+    $.ajax({
+      url: url,
+      dataType: 'html',
+      data: {},
+      cache: false,
+      async: true,
+      success: function(data) {
+        inner_content_tag.innerHTML = data;
+        inner_content_tag.dataset.loaded = true;
+      },
+      error: function(jqXHR, textStatus, errorThrown) {
+        /*console.log(textStatus);*/
+        window.location.href = window.location.href;
+        }
+    });
   }
 }
 
@@ -115,6 +141,19 @@ function setDescriptionsVisiblity(mustShow) {
     createCookie('pmShowDescriptions', 'false');
   }
 }
+
+// Function that initialize CSS classes on assembly_and_signatures
+function initializePersonsCookie() {
+  show = readCookie('showPersons');
+  if (!show) show = 'true';
+  label_tag = $('div#assembly-and-signatures')[0];
+  tag = $('div#collapsible-assembly-and-signatures')[0];
+  if (show == 'true') {
+    label_tag.classList.add('active');
+    tag.style.display = 'block';
+  }
+}
+
 
 // Function that toggles the persons visibility
 function togglePersonsCookie() {
@@ -654,7 +693,7 @@ function updateNumberOfItems(infos) {
     url: document.baseURI + '/numberOfItems',
     dataType: 'html',
     cache: false,
-    async: false});
+    async: true});
   if (response.status == 200) {
     parent.$('.meeting_number_of_items').each(function() {
         this.innerHTML = response.responseText;
@@ -698,17 +737,23 @@ $(document).ready(function () {
 });
 
 
+function updatePortletTodo() {
+  var url = $('base').attr('href') + '/@@portlet-todo-update';
+  var tag = $('dl.portlet.portletTodo');
+  if (tag.length) {
+    $.get(url, async=false, function (data) {
+        tag[0].parentNode.innerHTML = data;
+      });
+  }
+}
+
 // called on each faceted table change to update the portlet_todo
 $(document).ready(function () {
-  var url = $('base').attr('href') + '/@@portlet-todo-update';
+  if (!has_faceted()) {
+    updatePortletTodo();
+  }
   $(Faceted.Events).bind(Faceted.Events.AJAX_QUERY_SUCCESS, function() {
-      $.get(url, function (data) {
-          tag = $('dl.portlet.portletTodo');
-          if (tag.length) {
-            tag[0].parentNode.innerHTML = data;
-          }
-          
-      });
+    updatePortletTodo();
   });
 });
 
@@ -725,6 +770,35 @@ $(document).ready(function () {
     $("input[value^='not_selectable_value_'").each(function() {
         this.disabled = true;
     });
+});
+
+
+function update_search_term(tag){
+  var url = $("link[rel='canonical']").attr('href') + '/@@async_render_search_term';
+  $.ajax({
+    url: url,
+    dataType: 'html',
+    data: {collection_uid: tag.dataset.collection_uid},
+    cache: false,
+    async: true,
+    success: function(data) {
+      $(tag).html(data);
+      $(tag).find("script").each(function(i) {
+        eval($(this).text());
+      });
+      createPloneMeetingSelectBox();
+    },
+    error: function(jqXHR, textStatus, errorThrown) {
+      /*console.log(textStatus);*/
+      window.location.href = window.location.href;
+      }
+  });
+}
+
+$(document).ready(function () {
+  $('div[id^="async_search_term_"]').each(function() {
+    update_search_term(this);
+  });
 });
 
 function initializeItemsDND(){
