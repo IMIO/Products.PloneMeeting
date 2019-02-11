@@ -49,6 +49,7 @@ from Products.PloneMeeting.utils import applyOnTransitionFieldTransform
 from Products.PloneMeeting.utils import ItemAfterTransitionEvent
 from Products.PloneMeeting.utils import MeetingAfterTransitionEvent
 from Products.PloneMeeting.utils import meetingTriggerTransitionOnLinkedItems
+from Products.PloneMeeting.utils import notifyModifiedAndReindex
 from Products.PloneMeeting.utils import sendMailIfRelevant
 from zExceptions import Redirect
 from zope.event import notify
@@ -902,12 +903,11 @@ def onConfigContentModified(config_content, event):
     if hasattr(config_content, '_invalidateCachedVocabularies'):
         config_content._invalidateCachedVocabularies()
 
-    # set modification date on container and MeetingConfig
+    # set modification date on every containers
     container = config_content.aq_parent
-    container.notifyModified()
-    meeting_config = container.aq_parent
-    meeting_config.notifyModified()
-
+    while container.portal_type not in ('ToolPloneMeeting', 'Plone Site'):
+        notifyModifiedAndReindex(container)
+        container = container.aq_parent
 
 def onConfigContentTransition(config_content, event):
     '''Called whenever a transition has been fired on an element of the MeetingConfig.'''
@@ -918,11 +918,11 @@ def onConfigContentTransition(config_content, event):
     if hasattr(config_content, '_invalidateCachedVocabularies'):
         config_content._invalidateCachedVocabularies()
 
-    # set modification date on container and MeetingConfig
+    # set modification date on every containers
     container = config_content.aq_parent
-    container.notifyModified()
-    meeting_config = container.aq_parent
-    meeting_config.notifyModified()
+    while container.portal_type not in ('ToolPloneMeeting', 'Plone Site'):
+        notifyModifiedAndReindex(container)
+        container = container.aq_parent
 
 
 def onConfigContentRemoved(config_content, event):
@@ -935,17 +935,17 @@ def onConfigContentRemoved(config_content, event):
     if hasattr(config_content, '_invalidateCachedVocabularies'):
         config_content._invalidateCachedVocabularies()
 
-    # set modification date on container and MeetingConfig
+    # set modification date on every containers
     container = config_content.aq_parent
-    container.notifyModified()
-    meeting_config = container.aq_parent
-    meeting_config.notifyModified()
+    while container.portal_type not in ('ToolPloneMeeting', 'Plone Site'):
+        notifyModifiedAndReindex(container)
+        container = container.aq_parent
 
 
 def onConfigFolderReordered(folder, event):
     '''When a subfolder of a MeetingConfig is reordered we update container modified.'''
     if folder.aq_parent.portal_type == 'MeetingConfig':
-        folder.notifyModified()
+        notifyModifiedAndReindex(folder)
 
 
 def onDashboardCollectionAdded(collection, event):

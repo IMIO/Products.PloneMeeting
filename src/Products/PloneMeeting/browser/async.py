@@ -164,7 +164,7 @@ class TakenOverBy(BrowserView):
                                       context=self.request)
 
         html = self.IMG_TEMPLATE % (css_class, title, name, taken_over_by)
-        self.context.reindexObject(idxs=['getTakenOverBy', ])
+        self.context._update_after_edit()
         return html
 
 

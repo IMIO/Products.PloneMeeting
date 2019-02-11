@@ -109,6 +109,7 @@ class testPortlets(PloneMeetingTestCase):
         cleanRamCacheFor('Products.PloneMeeting.adapters.compute_criteria')
         self.assertTrue(searchAllItemsUID in self.portlet_pm_renderer.render())
         # and viewable in portlet_todo
+        self.request.set('load_portlet_todo', True)
         self.assertTrue(searchAllItemsUID in self.portlet_todo_renderer.render())
 
         # set 'python: fromPortletTodo' as condition for a search, it will be displayed
