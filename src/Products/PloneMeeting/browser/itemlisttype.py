@@ -25,7 +25,13 @@ class ItemListTypeView(BrowserView):
         '''Returns a list of listTypes the current user can set the item to.'''
         if not self.context.adapted().mayChangeListType():
             return []
-        return self.vocab
+        list_type = self.context.getListType()
+        return [term for term in self.vocab if term.value != list_type]
+
+    def force_faceted(self):
+        """ """
+        on_meeting = self.context.wfConditions()._publishedObjectIsMeeting()
+        return on_meeting and 'true' or 'false'
 
     def currentListTypeTitle(self):
         """ """

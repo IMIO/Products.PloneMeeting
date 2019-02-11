@@ -601,9 +601,9 @@ function moveItem(baseUrl, moveType, tag) {
 }
 
 // ajax call managing a call to a given p_view_name and reload taking faceted into account
-function callViewAndReload(baseUrl, view_name, tag, params) {
+function callViewAndReload(baseUrl, view_name, tag, params, force_faceted=false) {
   redirect = '0';
-  if (!$('#faceted-form').has(tag).length) {
+  if (!force_faceted && !$('#faceted-form').has(tag).length) {
     redirect = '1';
   }
   $.ajax({

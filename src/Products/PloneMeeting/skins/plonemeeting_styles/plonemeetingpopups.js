@@ -126,7 +126,8 @@ jQuery(document).ready(function($) {
     groupedConfigs();
     advicesInfos();
     adviceAddEdit();
-
+    listTypeChange();
+    
     // inserting methods infos on meeting_view
     tooltipster_helper(selector='.tooltipster-inserting-methods-helper-msg',
                        view_name='@@display-inserting-methods-helper-msg',
@@ -151,6 +152,7 @@ function initializeDashboard(){
     adviceAddEdit();
     contentHistory();
     pmCommonOverlays();
+    listTypeChange();
 }
 
 function initializeAdvicePopup(){
@@ -214,6 +216,14 @@ function editAnnex(){
             }
         }
   });
+}
+
+function listTypeChange() {
+    // listtype change on meeting_view
+    tooltipster_helper(selector='.tooltipster-item-listtype-change',
+                       view_name='@@item-listtype',
+                       data_parameters=[],
+                       options={trigger: 'click', position: 'right'});
 }
 
 function inheritedItemInfos() {

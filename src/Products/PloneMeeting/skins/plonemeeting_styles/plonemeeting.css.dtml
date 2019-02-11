@@ -1194,7 +1194,6 @@ table.listing tr[class][class] td.meeting_item_listType_late {
 a[class^="link-overlay-pm item_completeness_"],
 a.item_no_emergency,
 a[class^="link-overlay-pm item_emergency_"],
-a[class^="item_listType_"],
 a.template_send_mailing_list {
     padding-right: 50px;
     float: left;

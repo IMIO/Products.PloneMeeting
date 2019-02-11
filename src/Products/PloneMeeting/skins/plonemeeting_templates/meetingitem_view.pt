@@ -25,7 +25,8 @@
                                   usedAttrs meetingConfig/getUsedItemAttributes;
                                   usedMeetingAttrs meetingConfig/getUsedMeetingAttributes;
                                   bilingual python: 'secondLanguage' in tool.getModelAdaptations();
-                                  portal context/plone_portal_state/portal;">
+                                  portal context/plone_portal_state/portal;
+                                  context_url context/absolute_url">
 
     <script language="javascript"
             tal:content="python: 'ploneEditor = \'%s\';' % (member.getProperty('wysiwyg_editor') or here.portal_properties.site_properties.default_editor)">
@@ -307,8 +308,12 @@
 
             <tal:comment replace="nothing">List type</tal:comment>
             <div class="discreet" tal:condition="nocall:meeting">
-                <span tal:attributes="class string:item_attribute_label item_listType_${context/getListType}">
-                    <tal:itemListType replace="structure here/@@item-listtype/index" />
+                <span data-base_url="#"
+                   style="display: inline;"
+                   tal:define="edit_css_classes python: context.mayQuickEdit('listType') and 'tooltipster-item-listtype-change item_listType Editable pmAction' or ''"
+                   tal:attributes="data-base_url string:${context_url};
+                                   class string:${edit_css_classes} item_attribute_label item_listType_${context/getListType}">
+                    <span metal:use-macro="python: here.widget('listType', mode='view')" />
                 </span>
             </div>
 
@@ -505,7 +510,7 @@
     <tal:comment replace="nothing">Fields that appear only if the item is defined in a configuration</tal:comment>
     <tal:itemInConfig condition="context/isDefinedInTool">
 
-      <tal:templateUsingGroups condition="python: 'itemtemplates' in context.absolute_url()">
+      <tal:templateUsingGroups condition="python: 'itemtemplates' in context_url">
         <div class="discreet">
          <span class="item_attribute_label" i18n:translate="PloneMeeting_label_templateUsingGroups">Template using groups</span>:&nbsp;&nbsp;
          <span metal:use-macro="python: here.widget('templateUsingGroups', mode='view')" />

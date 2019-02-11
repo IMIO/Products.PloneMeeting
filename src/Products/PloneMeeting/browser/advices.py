@@ -27,6 +27,7 @@ from collective.contact.plonegroup.utils import get_organization
 from imio.actionspanel.interfaces import IContentDeletable
 from imio.history.browser.views import IHVersionPreviewView
 from plone import api
+from plone.memoize import ram
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
 from Products.Five import BrowserView
@@ -55,6 +56,21 @@ class AdvicesIcons(BrowserView):
     """
       Advices displayed as icons.
     """
+
+    def __call___cachekey(method, self):
+        '''cachekey method for self.__call__.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        # URL to the advice_type can change if server URL changed
+        server_url = self.request.get('SERVER_URL', None)
+        # an advice container's modification date is updated upon
+        # any change on advice (added, removed, edited, attribute changed)
+        context_modified = self.context.modified()
+        return (self.context.UID(),
+                context_modified,
+                server_url,
+                tool.get_plone_groups_for_user())
+
+    @ram.cache(__call___cachekey)
     def __call__(self):
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)

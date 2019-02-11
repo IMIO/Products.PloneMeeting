@@ -200,16 +200,26 @@ class ItemLinkedMeetingColumn(BaseColumn):
     """
     meeting_uid_attr = 'linkedMeetingUID'
     attrName = 'linkedMeetingDate'
+    use_caching = True
 
     def renderCell(self, item):
         """ """
         value = self.getValue(item)
+        if self.use_caching:
+            res = self._get_cached_result(value)
+            if res:
+                return res
+
         if not value or value.year() == 1950:
-            return u'-'
+            res = u'-'
         else:
             catalog = api.portal.get_tool('uid_catalog')
             meeting = catalog(UID=getattr(item, self.meeting_uid_attr))[0].getObject()
-            return meeting.getPrettyLink()
+            res = meeting.getPrettyLink()
+
+        if self.use_caching:
+            self._store_cached_result(value, res)
+        return res
 
 
 class ItemPreferredMeetingColumn(ItemLinkedMeetingColumn):
@@ -233,9 +243,10 @@ class ItemListTypeColumn(VocabularyColumn, ColorColumn):
         # display the menu to change listType if current user may edit the meeting
         if _checkPermission(ModifyPortalContent, self.context):
             obj = self._getObject(item)
-            renderedChangeListTypeView = obj.restrictedTraverse('@@item-listtype').index()
-            return u'<div title="{0}" class="item_listType_container">{1}</div>'.format(
-                term_value, renderedChangeListTypeView)
+            return u'<div title="{0}" class="item_listType_container">' \
+                u'<div class="item_listType Editable pmAction tooltipster-item-listtype-change" ' \
+                u'data-base_url="{1}"></div></div>'.format(
+                    term_value, obj.absolute_url())
         else:
             return u'<div title="{0}" class="item_listType_container"></div>'.format(term_value)
 

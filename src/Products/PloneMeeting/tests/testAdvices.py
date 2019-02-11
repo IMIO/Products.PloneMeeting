@@ -3158,6 +3158,47 @@ class testAdvices(PloneMeetingTestCase):
         item1, item2, vendors_advice, developers_advice = self._setupInheritedAdvice()
         self.assertEqual(indexAdvisers(item1)(), indexAdvisers(item2)())
 
+    def test_pm_ItemModifiedWhenAdviceChanged(self):
+        """When an advice is added/modified/removed/attribute changed,
+           the item modification date is updated."""
+        cfg = self.meetingConfig
+        cfg.setItemAdviceStates((self._stateMappingFor('proposed'), ))
+        cfg.setItemAdviceEditStates((self._stateMappingFor('proposed'), ))
+        cfg.setItemAdviceViewStates((self._stateMappingFor('proposed'),
+                                     self._stateMappingFor('validated'), ))
+        cfg.setEnableAdviceConfidentiality(True)
+        cfg.setAdviceConfidentialityDefault(True)
+
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.setOptionalAdvisers((self.vendors_uid, ))
+        item._update_after_edit()
+        self.proposeItem(item)
+        # add advice for 'vendors'
+        self.changeUser('pmReviewer2')
+        item_modified_no_advice = item.modified()
+        advice = createContentInContainer(item,
+                                          'meetingadvice',
+                                          **{'advice_group': self.vendors_uid,
+                                             'advice_type': u'positive',
+                                             'advice_comment': RichTextValue(u'My comment')})
+        item_modified_advice_new = item.modified()
+        self.assertNotEqual(item_modified_no_advice, item_modified_advice_new)
+        # edit advice
+        notify(ObjectModifiedEvent(advice))
+        item_modified_advice_modified = item.modified()
+        self.assertNotEqual(item_modified_advice_new, item_modified_advice_modified)
+        # remove advice
+        self.deleteAsManager(advice.UID())
+        item_modified_advice_deleted = item.modified()
+        self.assertNotEqual(item_modified_advice_modified, item_modified_advice_deleted)
+        # toggle confidentiality
+        self.changeUser('pmManager')
+        item.restrictedTraverse('@@toggle_advice_is_confidential').toggle(
+            UID='%s__%s' % (item.UID(), advice.advice_group))
+        item_modified_advice_confidential = item.modified()
+        self.assertNotEqual(item_modified_advice_deleted, item_modified_advice_confidential)
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
