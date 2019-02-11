@@ -687,18 +687,19 @@ function synchronizeMeetingFaceteds(infos) {
 $(document).on('ap_delete_givenuid', updateNumberOfItems);
 
 // update the number of items displayed on the meeting_view when items have been presented/removed of the meeting
-function updateNumberOfItems(infos) {
+function updateNumberOfItems() {
   // get numberOfItems using an ajax call
   response = $.ajax({
     url: document.baseURI + '/numberOfItems',
     dataType: 'html',
     cache: false,
-    async: true});
-  if (response.status == 200) {
-    parent.$('.meeting_number_of_items').each(function() {
-        this.innerHTML = response.responseText;
+    async: true,
+    success: function(data) {
+      parent.$('.meeting_number_of_items').each(function() {
+        this.innerHTML = data;
       });
-  }
+    },
+  });
 }
 
 // when clicking on the input#forceInsertNormal, update the 'pmForceInsertNormal' cookie

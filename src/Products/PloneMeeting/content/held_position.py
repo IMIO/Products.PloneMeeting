@@ -157,7 +157,7 @@ class PMHeldPosition(HeldPosition):
     def gender_and_number_from_position_type(self):
         """Split the position_type and generates a dict with gender and number possibilities."""
         value = get_exportable_for_fieldname(self, 'position_type', getRequest()).render_value(self)
-        values = value.split('|')
+        values = value and value.split('|') or ['', '', '', '']
         if len(values) > 1:
             res = {'MS': values[0],
                    'MP': values[1],

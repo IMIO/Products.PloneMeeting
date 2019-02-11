@@ -1885,9 +1885,9 @@ class IconifiedCategoryGroupAdapter(object):
         if self.context.meta_type == 'Meeting' or parent.meta_type == 'Meeting':
             return cfg.annexes_types.meeting_annexes
 
-    def get_every_categories(self):
-        categories = get_categories(self.context)
+    def get_every_categories(self, only_enabled=True):
+        categories = get_categories(self.context, only_enabled=only_enabled)
         self.request['force_use_item_decision_annexes_group'] = True
-        categories = categories + get_categories(self.context)
+        categories = categories + get_categories(self.context, only_enabled=only_enabled)
         self.request['force_use_item_decision_annexes_group'] = False
         return categories

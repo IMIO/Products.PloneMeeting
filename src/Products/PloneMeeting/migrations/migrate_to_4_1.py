@@ -7,7 +7,7 @@ from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_group
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
-from collective.iconifiedcategory.utils import sort_categorized_elements
+from collective.iconifiedcategory.utils import update_all_categorized_elements
 from copy import deepcopy
 from DateTime import DateTime
 from datetime import date
@@ -744,7 +744,7 @@ class Migrate_To_4_1(Migrator):
             i = i + 1
             obj = brain.getObject()
             if base_hasattr(obj, 'categorized_elements'):
-                sort_categorized_elements(obj)
+                update_all_categorized_elements(obj)
         logger.info('Done.')
 
     def run(self, step=None):
@@ -812,7 +812,7 @@ class Migrate_To_4_1(Migrator):
         self._adaptInternalImagesLinkToUseResolveUID()
         self._reorderAnnexes()
         # too many indexes to update, rebuild the portal_catalog
-        self.refreshDatabase()
+        self.refreshDatabase(catalogsToRebuild=[])
 
 
 # The migration function -------------------------------------------------------
