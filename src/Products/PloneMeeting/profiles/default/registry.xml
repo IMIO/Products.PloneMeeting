@@ -103,12 +103,6 @@
     </record>
     <record name="plone.app.caching.strongCaching.etags">
         <value purge="True">
-            <element>userid</element>
-            <element>gzip</element>
-            <element>locked</element>
-            <element>resourceRegistries</element>
-            <element>configmodified</element>
-            <element>meetingmodified</element>
         </value>
     </record>
     <record name="plone.app.caching.strongCaching.lastModified">
@@ -121,15 +115,41 @@
         <value>True</value>
     </record>
 
-  <!-- plone.resource-->
-  <record name="plone.app.caching.strongCaching.plone.resource.etags">
+  <!-- plone.content.file -->
+  <record name="plone.app.caching.strongCaching.plone.content.file.etags">
       <field ref="plone.app.caching.strongCaching.etags" />
-      <value purge="True"></value>
+      <value purge="True">
+        <element>userid</element>
+        <element>gzip</element>
+        <element>locked</element>
+        <element>resourceRegistries</element>
+        <element>configmodified</element>
+        <element>meetingmodified</element>
+      </value>
   </record>
-  <!-- plone.stableResource-->
-  <record name="plone.app.caching.strongCaching.plone.stableResource.maxage">
+  <!-- plone.content.folderView -->
+  <record name="plone.app.caching.strongCaching.plone.content.folderView.etags">
       <field ref="plone.app.caching.strongCaching.etags" />
-      <value purge="True"></value>
+      <value purge="True">
+        <element>userid</element>
+        <element>gzip</element>
+        <element>locked</element>
+        <element>resourceRegistries</element>
+        <element>configmodified</element>
+        <element>meetingmodified</element>
+      </value>
+  </record>
+  <!-- plone.content.itemView -->
+  <record name="plone.app.caching.strongCaching.plone.content.itemView.etags">
+      <field ref="plone.app.caching.strongCaching.etags" />
+      <value purge="True">
+        <element>userid</element>
+        <element>gzip</element>
+        <element>locked</element>
+        <element>resourceRegistries</element>
+        <element>configmodified</element>
+        <element>meetingmodified</element>
+      </value>
   </record>
 
 </registry>
