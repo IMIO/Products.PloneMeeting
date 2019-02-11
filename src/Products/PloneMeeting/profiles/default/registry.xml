@@ -78,4 +78,58 @@
        <value key="group" i18n:domain="plone" i18n:translate="">Metadata</value>
     </records>
 
+    <!-- plone.app.caching -->
+    <record name="plone.caching.interfaces.ICacheSettings.operationMapping">
+      <value purge="False">
+        <element key="plone.resource">plone.app.caching.strongCaching</element>
+        <element key="plone.stableResource">plone.app.caching.strongCaching</element>
+        <element key="plone.content.itemView">plone.app.caching.strongCaching</element>
+        <element key="plone.content.feed">plone.app.caching.strongCaching</element>
+        <element key="plone.content.folderView">plone.app.caching.strongCaching</element>
+        <element key="plone.content.file">plone.app.caching.strongCaching</element>
+      </value>
+    </record>
+
+    <!-- plone.app.caching templateRulesetMapping -->
+    <record name="plone.app.caching.interfaces.IPloneCacheSettings.templateRulesetMapping">
+        <value purge="False">
+          <element key="categorized-annexes">plone.content.folderView</element>
+        </value>
+    </record>
+
+    <!-- plone.app.caching strongCaching -->
+    <record name="plone.app.caching.strongCaching.anonOnly">
+        <value>False</value>
+    </record>
+    <record name="plone.app.caching.strongCaching.etags">
+        <value purge="True">
+            <element>userid</element>
+            <element>gzip</element>
+            <element>locked</element>
+            <element>resourceRegistries</element>
+            <element>configmodified</element>
+            <element>meetingmodified</element>
+        </value>
+    </record>
+    <record name="plone.app.caching.strongCaching.lastModified">
+        <value>True</value>
+    </record>
+    <record name="plone.app.caching.strongCaching.maxage">
+        <value>604800</value>
+    </record>
+    <record name="plone.app.caching.strongCaching.ramCache">
+        <value>True</value>
+    </record>
+
+  <!-- plone.resource-->
+  <record name="plone.app.caching.strongCaching.plone.resource.etags">
+      <field ref="plone.app.caching.strongCaching.etags" />
+      <value purge="True"></value>
+  </record>
+  <!-- plone.stableResource-->
+  <record name="plone.app.caching.strongCaching.plone.stableResource.maxage">
+      <field ref="plone.app.caching.strongCaching.etags" />
+      <value purge="True"></value>
+  </record>
+
 </registry>

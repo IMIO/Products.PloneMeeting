@@ -31,9 +31,9 @@ class UserGroups(object):
         return '_'.join(tool.get_plone_groups_for_user())
 
 
-class LinkedObjsModified(object):
-    """The ``linkedelementsmodified`` etag component, returning the modified
-       date of every linked elements including MeetingConfig
+class MeetingModified(object):
+    """The ``meetingmodified`` etag component, returning the modified
+       date of linked meeting for MeetingItem
     """
 
     implements(IETagValue)
@@ -45,12 +45,31 @@ class LinkedObjsModified(object):
 
     def __call__(self):
         context = getContext(self.published)
-        brefs = context.getBRefs()
-        brefs_key = '_'.join(['{0}_{1}'.format(bref.UID(), int(bref.modified())) for bref in brefs])
-        # add MeetingConfig modified if any
+        res = ''
+        if context.meta_type == 'MeetingItem':
+            meeting = context.getMeeting()
+            if meeting:
+                res = str(int(meeting.modified()))
+        return res
+
+
+class ConfigModified(object):
+    """The ``configmodified`` etag component, returning the modified
+       date of linked MeetingConfig
+    """
+
+    implements(IETagValue)
+    adapts(Interface, Interface)
+
+    def __init__(self, published, request):
+        self.published = published
+        self.request = request
+
+    def __call__(self):
+        context = getContext(self.published)
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        cfg_key = ''
+        res = ''
         if cfg:
-            cfg_key = '{0}_{1}'.format(cfg.UID(), int(cfg.modified()))
-        return brefs_key + cfg_key
+            res = str(int(cfg.modified()))
+        return res

@@ -62,7 +62,7 @@ function toggleDoc(id, toggle_parent_active=true, parent_elem=null, load_view=nu
       dataType: 'html',
       data: {},
       cache: false,
-      async: false,
+      async: true,
       success: function(data) {
         inner_content_tag.innerHTML = data;
         inner_content_tag.dataset.loaded = true;
@@ -693,7 +693,7 @@ function updateNumberOfItems(infos) {
     url: document.baseURI + '/numberOfItems',
     dataType: 'html',
     cache: false,
-    async: false});
+    async: true});
   if (response.status == 200) {
     parent.$('.meeting_number_of_items').each(function() {
         this.innerHTML = response.responseText;
@@ -780,7 +780,7 @@ function update_search_term(tag){
     dataType: 'html',
     data: {collection_uid: tag.dataset.collection_uid},
     cache: false,
-    async: false,
+    async: true,
     success: function(data) {
       $(tag).html(data);
       $(tag).find("script").each(function(i) {

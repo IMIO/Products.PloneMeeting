@@ -152,7 +152,7 @@ dl.portlet p.ploneMeetingSelectItem {
     width: 99%; /* If 100% a horizontal scrollbar is displayed */
     vertical-align: top !important;
     min-height: 18px;
-    padding-left: 10px;
+    padding-left: 5px;
 }
 dl.portlet p.ploneMeetingSelectItem a {
     min-height: 18px;
@@ -175,7 +175,7 @@ dl.portlet .ploneMeetingSelectDropdownIcon {
     background-image: url(&dtml-portal_url;/drop_down.png);
     background-repeat: no-repeat;
     background-position: right;
-    padding-left: 10px;
+    padding-left: 5px;
 }
 
 /* show table using border="0" or border:none */

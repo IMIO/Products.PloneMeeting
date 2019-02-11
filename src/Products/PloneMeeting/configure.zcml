@@ -330,7 +330,11 @@
            provides=".interfaces.IAnnexable" />
 
   <!-- ETag components -->
-  <adapter factory=".etags.UserGroups" name="usergroups" />
-  <adapter factory=".etags.LinkedObjsModified" name="linkedobjsmodified" />
+  <adapter factory=".etags.UserGroups"
+           name="usergroups" />
+  <adapter factory=".etags.MeetingModified"
+           name="meetingmodified" />
+  <adapter factory=".etags.ConfigModified"
+           name="configmodified" />
 
 </configure>
