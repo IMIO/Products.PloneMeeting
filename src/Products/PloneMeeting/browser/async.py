@@ -294,8 +294,8 @@ class AsyncRenderSearchTerm(BrowserView):
         collection_uid = self.request.get('collection_uid')
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
-        collection = api.content.find(UID=collection_uid)[0].getObject()
-        self.brains = collection.results(batch=False, brains=True)
+        self.collection = api.content.find(UID=collection_uid)[0].getObject()
+        self.brains = self.collection.results(batch=False, brains=True)
         rendered_term = ViewPageTemplateFile("templates/term_searchmeetings.pt")(self)
         return rendered_term
 
