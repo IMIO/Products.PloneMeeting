@@ -45,7 +45,7 @@ class ContextModified(object):
 
     def __call__(self):
         context = getContext(self.published)
-        return str(max(int(context.modifie()), context._p_mtime))
+        return str(max(int(context.modified()), context._p_mtime))
 
 
 class MeetingModified(object):

@@ -64,7 +64,8 @@ class AdvicesIcons(BrowserView):
         server_url = self.request.get('SERVER_URL', None)
         # an advice container's modification date is updated upon
         # any change on advice (added, removed, edited, attribute changed)
-        context_modified = self.context.modified()
+        # adviceIndex can also be updated by another item from which context inherits
+        context_modified = max(int(self.context.modified()), self.context._p_mtime)
         return (self.context.UID(),
                 context_modified,
                 server_url,
