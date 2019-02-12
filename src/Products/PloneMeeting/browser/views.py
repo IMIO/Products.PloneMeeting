@@ -817,9 +817,8 @@ class BaseDGHV(object):
         contacts = meeting.getAllUsedHeldPositions()
         excused = meeting.getExcused()
         absents = meeting.getAbsents()
-        lateAttendees = meeting.getLateAttendees()
         replaced = meeting.getReplacements()
-        return meeting, attendees, item_absents, contacts, excused, absents, lateAttendees, replaced
+        return meeting, attendees, item_absents, contacts, excused, absents, replaced
 
     def print_attendees(self,
                         by_attendee_type=False,
@@ -861,7 +860,7 @@ class BaseDGHV(object):
         attendee_type_values.update(custom_attendee_type_values)
 
         # initial values
-        meeting, attendees, item_absents, contacts, excused, absents, lateAttendees, replaced = self._get_attendees()
+        meeting, attendees, item_absents, contacts, excused, absents, replaced = self._get_attendees()
 
         res = OrderedDict()
         for contact in contacts:
@@ -898,10 +897,6 @@ class BaseDGHV(object):
                     res[org][contact] = attendee_value_format.format(
                         res[org][contact],
                         attendee_type_format.format(attendee_type_values['absent'][contact_gender]))
-                elif contact_uid in lateAttendees:
-                    res[org][contact] = attendee_value_format.format(
-                        res[org][contact],
-                        attendee_type_format.format(attendee_type_values['late_attendee'][contact_gender]))
                 elif contact_uid in item_absents:
                     res[org][contact] = attendee_value_format.format(
                         res[org][contact],
@@ -1025,7 +1020,7 @@ class BaseDGHV(object):
         grouped_attendee_type_patterns.update(custom_grouped_attendee_type_patterns)
 
         # initial values
-        meeting, attendees, item_absents, contacts, excused, absents, lateAttendees, replaced = self._get_attendees()
+        meeting, attendees, item_absents, contacts, excused, absents, replaced = self._get_attendees()
 
         res = OrderedDict({key: [] for key in grouped_attendee_type_patterns.keys()})
         striked_contact_uids = []
@@ -1035,7 +1030,6 @@ class BaseDGHV(object):
                 contact_uid in attendees and 'attendee' or \
                 contact_uid in excused and 'excused' or \
                 contact_uid in absents and 'absent' or \
-                contact_uid in lateAttendees and 'late_attendee' or \
                 contact_uid in replaced and 'replaced'
             if (contact_attendee_type == 'attendee' or contact_attendee_type in striked_attendee_types) and \
                     'attendee' in included_attendee_types:

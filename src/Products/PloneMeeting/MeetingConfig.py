@@ -2982,7 +2982,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def listUsedMeetingAttributes(self):
         optional_fields = self.listAttributes(Meeting.schema, optionalOnly=True, as_display_list=False)
-        contact_fields = ['attendees', 'excused', 'absents', 'lateAttendees', 'signatories', 'replacements']
+        contact_fields = ['attendees', 'excused', 'absents', 'signatories', 'replacements']
         contact_fields.reverse()
         index = [name for name, value in optional_fields].index('place')
         for contact_field in contact_fields:

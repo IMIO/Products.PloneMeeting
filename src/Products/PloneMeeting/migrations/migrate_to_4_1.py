@@ -294,6 +294,12 @@ class Migrate_To_4_1(Migrator):
             meeting.itemAbsents = PersistentMapping()
             meeting.itemExcused = PersistentMapping()
             meeting.itemSignatories = PersistentMapping()
+            # remove old informations about MeetingUsers
+            delattr(meeting, 'attendees')
+            delattr(meeting, 'lateAttendees')
+            delattr(meeting, 'absents')
+            delattr(meeting, 'excused')
+            delattr(meeting, 'signatories')
 
         logger.info('Adapting items...')
         brains = catalog(meta_type=['MeetingItem'])
@@ -604,14 +610,15 @@ class Migrate_To_4_1(Migrator):
 
         logger.info('Done.')
 
-    def _updateUsedItemAttributes(self):
+    def _updateUsedAttributes(self):
         """Now that 'MeetingItem.description' is an optional field, we need to
            select it on existing MeetingConfigs.
            Remove 'MeetingItem.itemAssembly' from selected values as it is no more an
            optional field and is used if 'Meeting.assembly' is used.
            Remove also fields removed from MeetingItem schema."""
-        logger.info('Updating every MeetingConfig.usedItemAttributes...')
+        logger.info('Updating every MeetingConfig.usedItemAttributes/MeetingConfig.usedMeetingAttributes...')
         for cfg in self.tool.objectValues('MeetingConfig'):
+            # MeetingItem
             usedItemAttrs = list(cfg.getUsedItemAttributes())
             if 'description' not in usedItemAttrs:
                 usedItemAttrs.insert(0, 'description')
@@ -621,13 +628,28 @@ class Migrate_To_4_1(Migrator):
                 usedItemAttrs.remove('questioners')
             if 'answerers' in usedItemAttrs:
                 usedItemAttrs.remove('answerers')
+            if 'lateAttendees' in usedItemAttrs:
+                usedItemAttrs.remove('lateAttendees')
             cfg.setUsedItemAttributes(usedItemAttrs)
+            # Meeting
+            usedMeetingAttrs = list(cfg.getUsedMeetingAttributes())
+            if 'attendees' in usedMeetingAttrs:
+                usedMeetingAttrs.remove('attendees')
+            if 'excused' in usedMeetingAttrs:
+                usedMeetingAttrs.remove('excused')
+            if 'absents' in usedMeetingAttrs:
+                usedMeetingAttrs.remove('absents')
+            if 'lateAttendees' in usedMeetingAttrs:
+                usedMeetingAttrs.remove('lateAttendees')
+            cfg.setUsedMeetingAttributes(usedMeetingAttrs)
         logger.info('Done.')
 
-    def _updateHistorizedItemAttributes(self):
-        """Some fields were removed from MeetingItem schema."""
-        logger.info('Updating every MeetingConfig.historizedItemAttributes...')
+    def _updateHistorizedAttributes(self):
+        """Some fields were removed from MeetingItem/Meeting schema."""
+        logger.info(
+            'Updating every MeetingConfig.historizedItemAttributes/MeetingConfig.historizedMeetingAttributes...')
         for cfg in self.tool.objectValues('MeetingConfig'):
+            # MeetingItem
             histItemAttrs = list(cfg.getHistorizedItemAttributes())
             if 'questioners' in histItemAttrs:
                 histItemAttrs.remove('questioners')
@@ -638,6 +660,17 @@ class Migrate_To_4_1(Migrator):
             if 'itemAbsents' in histItemAttrs:
                 histItemAttrs.remove('itemAbsents')
             cfg.setHistorizedItemAttributes(histItemAttrs)
+            # Meeting
+            histMeetingAttrs = list(cfg.getHistorizedMeetingAttributes())
+            if 'attendees' in histMeetingAttrs:
+                histMeetingAttrs.remove('attendees')
+            if 'excused' in histMeetingAttrs:
+                histMeetingAttrs.remove('excused')
+            if 'absents' in histMeetingAttrs:
+                histMeetingAttrs.remove('absents')
+            if 'lateAttendees' in histMeetingAttrs:
+                histMeetingAttrs.remove('itemAbsents')
+            cfg.setHistorizedMeetingAttributes(histMeetingAttrs)
         logger.info('Done.')
 
     def _migrateGroupsShownInDashboardFilter(self):

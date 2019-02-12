@@ -73,7 +73,6 @@
                             excused context/getExcused;
                             absents context/getAbsents;
                             signers context/getSignatories;
-                            lateAttendees context/getLateAttendees;
                             useUserReplacements python: 'replacements' in usedAttrs;
                             userReplacements context/getUserReplacements;
                             showExcused python: 'excused' in usedAttrs or excused;

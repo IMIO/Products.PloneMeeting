@@ -1005,12 +1005,6 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         '''See docstring in previous method.'''
         return self._getContacts('absent', theObjects=theObjects)
 
-    security.declarePublic('getLateAttendees')
-
-    def getLateAttendees(self, theObjects=False):
-        '''See docstring in previous method.'''
-        return self._getContacts('lateAttendee', theObjects=theObjects)
-
     security.declarePublic('getSignatories')
 
     def getSignatories(self, theObjects=False, by_signature_number=False):
@@ -1620,7 +1614,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             if attendee_uid not in self.orderedContacts:
                 self.orderedContacts[attendee_uid] = \
                     {'attendee': False, 'excused': False, 'absent': False,
-                     'lateAttendee': False, 'signer': False, 'signature_number': None,
+                     'signer': False, 'signature_number': None,
                      'replacement': None}
             self.orderedContacts[attendee_uid][attendee_type] = True
 
@@ -1644,7 +1638,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         if not cfg.isUsingContacts():
             return
 
-        # manage attendees, excused, absents, lateAttendees
+        # manage attendees, excused, absents
         meeting_attendees = self.REQUEST.get('meeting_attendees', [])
         # remove leading muser_ and return a list of tuples, position_uid, attendee_type
         attendees = OrderedDict()

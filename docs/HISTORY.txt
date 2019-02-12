@@ -17,6 +17,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Removed arrows to sort items on meeting so actions_panel is the same as displayed in dashboards of items and the cache
   can be shared.  Arrows to sort items on meeting are replaced by drag and drop feature
 - Enable plone.app.caching to be able to cache annex content_category icon, adapted code so it works with full page caching
+- Removed management of lateAttendees, if we have late attendees, we have to select user as present for meeting then set him
+  as absent or excused from first item to item he joigned the meeting
 
 4.1b16 (2019-01-31)
 -------------------
