@@ -332,6 +332,8 @@
   <!-- ETag components -->
   <adapter factory=".etags.UserGroups"
            name="usergroups" />
+  <adapter factory=".etags.ContextModified"
+           name="contextmodified" />
   <adapter factory=".etags.MeetingModified"
            name="meetingmodified" />
   <adapter factory=".etags.ConfigModified"

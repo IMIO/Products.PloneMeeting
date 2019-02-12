@@ -413,8 +413,10 @@ table td div.field {
     padding-right: 0.25em;
 }
 
+/* display advices vertically in dashboards */
 td.td_cell_advices div.categorized-elements {
     padding-bottom: 0.25em;
+    width: 100%;
 }
 
 #content td.advice_annexes {
@@ -1072,11 +1074,6 @@ div.discreet.advice_additional_infos {
 span.advices_of_type {
     font-size: 90%;
     vertical-align: sub;
-}
-
-/* display advices horizontally on the item view */
-body.template-meetingitem_view td#itemAdvicesCell div.contentActionsAX > dl {
-    display: inline-block;
 }
 
 #vote-abstain {

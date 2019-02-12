@@ -35,6 +35,7 @@ from imio.helpers.xhtml import CLASS_TO_LAST_CHILDREN_NUMBER_OF_CHARS_DEFAULT
 from imio.helpers.xhtml import imagesToPath
 from imio.history.utils import getLastWFAction
 from plone import api
+from plone.app.caching.operations.utils import getContext
 from plone.memoize.view import memoize
 from plone.memoize.view import memoize_contextless
 from Products.CMFCore.permissions import ModifyPortalContent
@@ -591,13 +592,16 @@ class PortletTodoUpdateView(BrowserView):
         from plone.portlets.interfaces import IPortletManager
         from plone.portlets.interfaces import IPortletManagerRenderer
 
+        # self.context is sometimes a view, like when editing a Collection
+        context = getContext(self.context)
+
         manager = getUtility(IPortletManager,
                              name='plone.leftcolumn',
-                             context=self.context)
+                             context=context)
         # we use IPortletManagerRenderer so parameters
         # batch_size and title_length are taken into account
         renderer = queryMultiAdapter(
-            (self.context, self.request, self, manager), IPortletManagerRenderer)
+            (context, self.request, self, manager), IPortletManagerRenderer)
 
         for portlet in renderer.portletsToShow():
             if portlet['name'] == 'portlet_todo':

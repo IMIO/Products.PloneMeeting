@@ -31,6 +31,23 @@ class UserGroups(object):
         return '_'.join(tool.get_plone_groups_for_user())
 
 
+class ContextModified(object):
+    """The ``contextmodified`` etag component, returning the most recent
+       between modified date or _p_mtime of context
+    """
+
+    implements(IETagValue)
+    adapts(Interface, Interface)
+
+    def __init__(self, published, request):
+        self.published = published
+        self.request = request
+
+    def __call__(self):
+        context = getContext(self.published)
+        return str(max(int(context.modifie()), context._p_mtime))
+
+
 class MeetingModified(object):
     """The ``meetingmodified`` etag component, returning the modified
        date of linked meeting for MeetingItem

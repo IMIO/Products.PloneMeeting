@@ -1,21 +1,217 @@
 <?xml version="1.0"?>
 <object name="portal_css" meta_type="Stylesheets Registry">
- <!-- EXAMPLE DEFINITION
- <stylesheet title=""
-             cacheable="True"
-             compression="safe"
-             cookable="True"
-             enabled="1"
-             expression=""
-             id="myfancystyle.css"
-             media="all"
-             rel="stylesheet"
-             rendering="import"/>
- -->
 
- <!-- ##code-section cssregistry.xml -->
- <stylesheet title="PloneMeeting CSS styles" cacheable="True" compression="safe"
-             cookable="True" enabled="1" media="all" rel="stylesheet"
-             rendering="import" expression="" id="plonemeeting.css"/>
+<stylesheet id="++resource++jquery.css" insert-after="" />
+
+<stylesheet id="++resource++jquery.select2uislider.css" insert-after="++resource++jquery.css" />
+
+<stylesheet id="reset.css" insert-after="++resource++jquery.select2uislider.css" />
+
+<stylesheet id="member.css" insert-after="reset.css" />
+
+<stylesheet id="base.css" insert-after="member.css" />
+
+<stylesheet id="public.css" insert-after="base.css" />
+
+<stylesheet id="collective.js.jqueryui.custom.min.css" insert-after="public.css" />
+
+<stylesheet id="columns.css" insert-after="collective.js.jqueryui.custom.min.css" />
+
+<stylesheet id="authoring.css" insert-after="columns.css" />
+
+<stylesheet id="portlets.css" insert-after="authoring.css" />
+
+<stylesheet id="controlpanel.css" insert-after="portlets.css" />
+
+<stylesheet id="deprecated.css" insert-after="controlpanel.css" />
+
+<stylesheet id="navtree.css" insert-after="deprecated.css" />
+
+<stylesheet id="invisibles.css" insert-after="navtree.css" />
+
+<stylesheet id="forms.css" insert-after="invisibles.css" />
+
+<stylesheet id="++resource++plone.app.discussion.stylesheets/discussion.css" insert-after="forms.css" />
+
+<stylesheet id="++resource++tinymce.stylesheets/tinymce.css" insert-after="++resource++plone.app.discussion.stylesheets/discussion.css" />
+
+<stylesheet id="print.css" insert-after="++resource++tinymce.stylesheets/tinymce.css" />
+
+<stylesheet id="mobile.css" insert-after="print.css" />
+
+<stylesheet id="RTL.css" insert-after="mobile.css" />
+
+<stylesheet id="++resource++plone.app.jquerytools.overlays.css" insert-after="RTL.css" />
+
+<stylesheet id="++resource++plone.app.jquerytools.dateinput.css" insert-after="++resource++plone.app.jquerytools.overlays.css" />
+
+<stylesheet id="++resource++quickupload_static/uploadify.css" insert-after="++resource++plone.app.jquerytools.dateinput.css" />
+
+<stylesheet id="++resource++quickupload_static/fileuploader.css" insert-after="++resource++quickupload_static/uploadify.css" />
+
+<stylesheet id="IEFixes.css" insert-after="++resource++quickupload_static/fileuploader.css" conditionalcomment="IE" />
+
+<stylesheet id="++resource++collective.iconifieddocumentactions.static/iconified_document_actions.css" insert-after="IEFixes.css" />
+
+<stylesheet id="++resource++imio.actionspanel/actionspanel.css" insert-after="++resource++collective.iconifieddocumentactions.static/iconified_document_actions.css" />
+
+<stylesheet id="++resource++imio.history/imiohistory.css" insert-after="++resource++imio.actionspanel/actionspanel.css" />
+
+<stylesheet id="++resource++collective.z3cform.datagridfield/datagridfield.css" insert-after="++resource++imio.history/imiohistory.css" />
+
+<stylesheet id="++resource++plone.formwidget.datetime/styles.css" insert-after="++resource++collective.z3cform.datagridfield/datagridfield.css" />
+
+<stylesheet id="++resource++collective.messagesviewlet/messagesviewlet.css" insert-after="++resource++plone.formwidget.datetime/styles.css" />
+
+<stylesheet id="++resource++select2-widget/select2-widget.css" insert-after="++resource++collective.messagesviewlet/messagesviewlet.css" />
+
+<stylesheet id="++resource++plone.formwidget.contenttree/contenttree.css" insert-after="++resource++select2-widget/select2-widget.css" />
+
+<stylesheet id="++resource++collective.fontawesome/css/font-awesome.min.css" insert-after="++resource++plone.formwidget.contenttree/contenttree.css" />
+
+<stylesheet id="++resource++plone.formwidget.autocomplete/jquery.autocomplete.css" insert-after="++resource++collective.fontawesome/css/font-awesome.min.css" />
+
+<stylesheet id="++resource++collective.js.tooltipster/tooltipster.bundle.min.css" insert-after="++resource++plone.formwidget.autocomplete/jquery.autocomplete.css" />
+
+<stylesheet id="++resource++collective.js.fancytree.theme-lion/ui.fancytree.css" insert-after="++resource++collective.js.tooltipster/tooltipster.bundle.min.css" />
+
+<stylesheet id="++resource++imio.annex.quickupload/quickupload.css" insert-after="++resource++collective.js.fancytree.theme-lion/ui.fancytree.css" />
+
+<stylesheet id="++resource++collective.js.fancytree.theme-vista/ui.fancytree.css" insert-after="++resource++imio.annex.quickupload/quickupload.css" />
+
+<stylesheet id="collective-iconifiedcategory.css" insert-after="++resource++collective.js.fancytree.theme-vista/ui.fancytree.css" />
+
+<stylesheet id="++resource++collective.iconifiedcategory/iconifiedcategory.css" insert-after="collective-iconifiedcategory.css" />
+
+<stylesheet id="imioapps_ckeditor_moonolisa.css" insert-after="++resource++collective.iconifiedcategory/iconifiedcategory.css" />
+
+<stylesheet id="++resource++collective.eeafaceted.batchactions/batch_actions.css" insert-after="imioapps_ckeditor_moonolisa.css" />
+
+<stylesheet id="++resource++select2/select2.css" insert-after="++resource++collective.eeafaceted.batchactions/batch_actions.css" />
+
+<stylesheet id="++resource++ftw.labels/ftw-labels.css" insert-after="++resource++select2/select2.css" />
+
+<stylesheet id="++resource++ftw.labels/select2.css" insert-after="++resource++ftw.labels/ftw-labels.css" />
+
+<stylesheet id="++resource++collective.js.tooltipster/tooltipster-sideTip-light.min.css" insert-after="++resource++ftw.labels/select2.css" />
+
+<stylesheet id="++resource++collective.js.tooltipster/tooltipster-sideTip-noir.min.css" insert-after="++resource++collective.js.tooltipster/tooltipster-sideTip-light.min.css" />
+
+<stylesheet id="++resource++collective.js.tooltipster/tooltipster-sideTip-punk.min.css" insert-after="++resource++collective.js.tooltipster/tooltipster-sideTip-noir.min.css" />
+
+<stylesheet id="++resource++collective.js.tooltipster/tooltipster-sideTip-shadow.min.css" insert-after="++resource++collective.js.tooltipster/tooltipster-sideTip-punk.min.css" />
+
+<stylesheet id="++resource++collective.documentgenerator.css/documentgenerator.css" insert-after="++resource++collective.js.tooltipster/tooltipster-sideTip-shadow.min.css" />
+
+<stylesheet id="style.css" insert-after="++resource++collective.documentgenerator.css/documentgenerator.css" />
+
+<stylesheet id="++resource++eea.faceted-navigation.css" insert-after="style.css" />
+
+<stylesheet id="++resource++collective.eeafaceted.collectionwidget.view.css" insert-after="++resource++eea.faceted-navigation.css" />
+
+<stylesheet id="++resource++eea.facetednavigation.widgets.text.view.css" insert-after="++resource++collective.eeafaceted.collectionwidget.view.css" />
+
+<stylesheet id="++resource++eea.facetednavigation.widgets.tal.view.css" insert-after="++resource++eea.facetednavigation.widgets.text.view.css" />
+
+<stylesheet id="++resource++eea.facetednavigation.widgets.tagscloud.view.css" insert-after="++resource++eea.facetednavigation.widgets.tal.view.css" />
+
+<stylesheet id="++resource++eea.facetednavigation.widgets.sorting.view.css" insert-after="++resource++eea.facetednavigation.widgets.tagscloud.view.css" />
+
+<stylesheet id="++resource++eea.facetednavigation.widgets.select.view.css" insert-after="++resource++eea.facetednavigation.widgets.sorting.view.css" />
+
+<stylesheet id="++resource++eea.facetednavigation.widgets.resultsperpage.view.css" insert-after="++resource++eea.facetednavigation.widgets.select.view.css" />
+
+<stylesheet id="++resource++eea.facetednavigation.widgets.resultsfilter.view.css" insert-after="++resource++eea.facetednavigation.widgets.resultsperpage.view.css" />
+
+<stylesheet id="++resource++eea.facetednavigation.widgets.range.view.css" insert-after="++resource++eea.facetednavigation.widgets.resultsfilter.view.css" />
+
+<stylesheet id="++resource++eea.facetednavigation.widgets.radio.view.css" insert-after="++resource++eea.facetednavigation.widgets.range.view.css" />
+
+<stylesheet id="++resource++eea.facetednavigation.widgets.portlet.view.css" insert-after="++resource++eea.facetednavigation.widgets.radio.view.css" />
+
+<stylesheet id="++resource++eea.facetednavigation.widgets.path.view.css" insert-after="++resource++eea.facetednavigation.widgets.portlet.view.css" />
+
+<stylesheet id="++resource++eea.facetednavigation.widgets.etag.view.css" insert-after="++resource++eea.facetednavigation.widgets.path.view.css" />
+
+<stylesheet id="++resource++eea.facetednavigation.widgets.debug.view.css" insert-after="++resource++eea.facetednavigation.widgets.etag.view.css" />
+
+<stylesheet id="++resource++eea.facetednavigation.widgets.daterange.view.css" insert-after="++resource++eea.facetednavigation.widgets.debug.view.css" />
+
+<stylesheet id="++resource++eea.facetednavigation.widgets.date.view.css" insert-after="++resource++eea.facetednavigation.widgets.daterange.view.css" />
+
+<stylesheet id="++resource++eea.facetednavigation.widgets.criteria.view.css" insert-after="++resource++eea.facetednavigation.widgets.date.view.css" />
+
+<stylesheet id="++resource++eea.facetednavigation.widgets.checkbox.view.css" insert-after="++resource++eea.facetednavigation.widgets.criteria.view.css" />
+
+<stylesheet id="++resource++eea.facetednavigation.widgets.autocomplete.view.css" insert-after="++resource++eea.facetednavigation.widgets.checkbox.view.css" />
+
+<stylesheet id="++resource++eea.facetednavigation.widgets.alphabets.view.css" insert-after="++resource++eea.facetednavigation.widgets.autocomplete.view.css" />
+
+<stylesheet id="++resource++eea.faceted-navigation-edit.css" insert-after="++resource++eea.facetednavigation.widgets.alphabets.view.css" />
+
+<stylesheet id="++resource++collective.eeafaceted.collectionwidget.edit.css" insert-after="++resource++eea.faceted-navigation-edit.css" />
+
+<stylesheet id="++resource++eea.facetednavigation.widgets.text.edit.css" insert-after="++resource++collective.eeafaceted.collectionwidget.edit.css" />
+
+<stylesheet id="++resource++eea.facetednavigation.widgets.tal.edit.css" insert-after="++resource++eea.facetednavigation.widgets.text.edit.css" />
+
+<stylesheet id="++resource++eea.facetednavigation.widgets.tagscloud.edit.css" insert-after="++resource++eea.facetednavigation.widgets.tal.edit.css" />
+
+<stylesheet id="++resource++eea.facetednavigation.widgets.sorting.edit.css" insert-after="++resource++eea.facetednavigation.widgets.tagscloud.edit.css" />
+
+<stylesheet id="++resource++eea.facetednavigation.widgets.select.edit.css" insert-after="++resource++eea.facetednavigation.widgets.sorting.edit.css" />
+
+<stylesheet id="++resource++eea.facetednavigation.widgets.resultsperpage.edit.css" insert-after="++resource++eea.facetednavigation.widgets.select.edit.css" />
+
+<stylesheet id="++resource++eea.facetednavigation.widgets.resultsfilter.edit.css" insert-after="++resource++eea.facetednavigation.widgets.resultsperpage.edit.css" />
+
+<stylesheet id="++resource++eea.facetednavigation.widgets.range.edit.css" insert-after="++resource++eea.facetednavigation.widgets.resultsfilter.edit.css" />
+
+<stylesheet id="++resource++eea.facetednavigation.widgets.radio.edit.css" insert-after="++resource++eea.facetednavigation.widgets.range.edit.css" />
+
+<stylesheet id="++resource++eea.facetednavigation.widgets.portlet.edit.css" insert-after="++resource++eea.facetednavigation.widgets.radio.edit.css" />
+
+<stylesheet id="++resource++eea.facetednavigation.widgets.path.edit.css" insert-after="++resource++eea.facetednavigation.widgets.portlet.edit.css" />
+
+<stylesheet id="++resource++eea.facetednavigation.widgets.etag.edit.css" insert-after="++resource++eea.facetednavigation.widgets.path.edit.css" />
+
+<stylesheet id="++resource++eea.facetednavigation.widgets.debug.edit.css" insert-after="++resource++eea.facetednavigation.widgets.etag.edit.css" />
+
+<stylesheet id="++resource++eea.facetednavigation.widgets.daterange.edit.css" insert-after="++resource++eea.facetednavigation.widgets.debug.edit.css" />
+
+<stylesheet id="++resource++eea.facetednavigation.widgets.date.edit.css" insert-after="++resource++eea.facetednavigation.widgets.daterange.edit.css" />
+
+<stylesheet id="++resource++eea.facetednavigation.widgets.criteria.edit.css" insert-after="++resource++eea.facetednavigation.widgets.date.edit.css" />
+
+<stylesheet id="++resource++eea.facetednavigation.widgets.checkbox.edit.css" insert-after="++resource++eea.facetednavigation.widgets.criteria.edit.css" />
+
+<stylesheet id="++resource++eea.facetednavigation.widgets.autocomplete.edit.css" insert-after="++resource++eea.facetednavigation.widgets.checkbox.edit.css" />
+
+<stylesheet id="++resource++eea.facetednavigation.widgets.alphabets.edit.css" insert-after="++resource++eea.facetednavigation.widgets.autocomplete.edit.css" />
+
+<stylesheet id="++resource++plone.formwidget.querystring.querywidget.css" insert-after="++resource++eea.facetednavigation.widgets.alphabets.edit.css" />
+
+<stylesheet id="++resource++collective.eeafaceted.collectionwidget/collective.eeafaceted.collectionwidget.css" insert-after="++resource++plone.formwidget.querystring.querywidget.css" />
+
+<stylesheet id="++resource++collective.contact.plonegroup/plonegroup.css" insert-after="++resource++collective.eeafaceted.collectionwidget/collective.eeafaceted.collectionwidget.css" />
+
+<stylesheet id="++resource++collective.eeafaceted.dashboard/collective.eeafaceted.dashboard.css" insert-after="++resource++collective.contact.plonegroup/plonegroup.css" />
+
+<stylesheet title="PloneMeeting CSS styles" cacheable="True" compression="safe"
+            cookable="True" enabled="1" media="all" rel="stylesheet"
+            rendering="import" expression="" id="plonemeeting.css"
+            insert-after="++resource++collective.eeafaceted.dashboard/collective.eeafaceted.dashboard.css"/>
+
+<stylesheet id="meetingcommunes.css" insert-after="plonemeeting.css"/>
+
+<stylesheet id="imioapps.css" insert-after="meetingcommunes.css" />
+
+<stylesheet id="plonemeetingskin.css" insert-after="imioapps.css" />
+
+<stylesheet id="imioapps_IEFixes.css" insert-after="plonemeetingskin.css" />
+
+<stylesheet id="ploneCustom.css" insert-after="imioapps_IEFixes.css" />
+
+
  <!-- ##/code-section cssregistry.xml -->
 </object>

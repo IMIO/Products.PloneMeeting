@@ -1,23 +1,281 @@
 <?xml version="1.0"?>
-<object name="portal_javascripts" meta_type="JavaScripts Registry">
- <!-- EXAMPLE DEFINITION
- <javascript cacheable="True"
-             compression="safe"
-             cookable="True"
-             enabled="True"
-             expression=""
-             id="myfancyscript.js"
-             inline="False"/>
- -->
+<object name="portal_javascripts" meta_type="JavaScripts Registry" purge="True">
+<javascript id="++resource++plone.app.jquery.js" insert-after="" />
 
- <!-- ##code-section jsregistry.xml -->
+<javascript id="collective.js.jqueryui.custom.min.js" insert-after="++resource++plone.app.jquery.js" />
+
+<javascript id="++resource++collective.js.fancytree/jquery.fancytree.min.js" insert-after="collective.js.jqueryui.custom.min.js" />
+
+<javascript id="jquery-integration.js" insert-after="++resource++collective.js.fancytree/jquery.fancytree.min.js" />
+
+<javascript id="event-registration.js" insert-after="jquery-integration.js" />
+
+<javascript id="register_function.js" insert-after="event-registration.js" />
+
+<javascript id="plone_javascript_variables.js" insert-after="register_function.js" />
+
+<javascript id="++resource++plone.app.jquerytools.js" insert-after="plone_javascript_variables.js" />
+
+<javascript id="++resource++plone.app.jquerytools.form.js" insert-after="++resource++plone.app.jquerytools.js" />
+
+<javascript id="++resource++plone.app.jquerytools.overlayhelpers.js" insert-after="++resource++plone.app.jquerytools.form.js" />
+
+<javascript id="++resource++plone.app.jquerytools.dateinput.js" insert-after="++resource++plone.app.jquerytools.overlayhelpers.js" />
+
+<javascript id="++resource++plone.app.jquerytools.rangeinput.js" insert-after="++resource++plone.app.jquerytools.dateinput.js" />
+
+<javascript id="++resource++plone.app.jquerytools.validator.js" insert-after="++resource++plone.app.jquerytools.rangeinput.js" />
+
+<javascript id="++resource++plone.app.jquerytools.plugins.js" insert-after="++resource++plone.app.jquerytools.validator.js" />
+
+<javascript id="++resource++plone.app.jquerytools.tooltip.js" insert-after="++resource++plone.app.jquerytools.plugins.js" />
+
+<javascript id="++resource++plone.app.jquerytools.tooltip.plugins.js" insert-after="++resource++plone.app.jquerytools.tooltip.js" />
+
+<javascript id="nodeutilities.js" insert-after="++resource++plone.app.jquerytools.tooltip.plugins.js" />
+
+<javascript id="cookie_functions.js" insert-after="nodeutilities.js" />
+
+<javascript id="modernizr.js" insert-after="cookie_functions.js" />
+
+<javascript id="livesearch.js" insert-after="modernizr.js" />
+
+<javascript id="++resource++search.js" insert-after="livesearch.js" />
+
+<javascript id="fullscreenmode.js" insert-after="++resource++search.js" />
+
+<javascript id="select_all.js" insert-after="fullscreenmode.js" />
+
+<javascript id="dragdropreorder.js" insert-after="select_all.js" />
+
+<javascript id="mark_special_links.js" insert-after="dragdropreorder.js" />
+
+<javascript id="collapsiblesections.js" insert-after="mark_special_links.js" />
+
+<javascript id="form_tabbing.js" insert-after="collapsiblesections.js" />
+
+<javascript id="popupforms.js" insert-after="form_tabbing.js" />
+
+<javascript id="jquery.highlightsearchterms.js" insert-after="popupforms.js" />
+
+<javascript id="first_input_focus.js" insert-after="jquery.highlightsearchterms.js" />
+
+<javascript id="accessibility.js" insert-after="first_input_focus.js" />
+
+<javascript id="styleswitcher.js" insert-after="accessibility.js" />
+
+<javascript id="toc.js" insert-after="styleswitcher.js" />
+
+<javascript id="collapsibleformfields.js" insert-after="toc.js" />
+
+<javascript id="++resource++plone.app.discussion.javascripts/comments.js" insert-after="collapsibleformfields.js" />
+
+<javascript id="dropdown.js" insert-after="++resource++plone.app.discussion.javascripts/comments.js" />
+
+<javascript id="inline_validation.js" insert-after="dropdown.js" />
+
+<javascript id="kss-bbb.js" insert-after="inline_validation.js" />
+
+<javascript id="table_sorter.js" insert-after="kss-bbb.js" />
+
+<javascript id="calendar_formfield.js" insert-after="table_sorter.js" />
+
+<javascript id="formUnload.js" insert-after="calendar_formfield.js" />
+
+<javascript id="++resource++plonefinder_static/init_imagewidget.js" insert-after="formUnload.js" />
+
+<javascript id="++resource++plonefinder_static/imagewidget.js" insert-after="++resource++plonefinder_static/init_imagewidget.js" />
+
+<javascript id="formsubmithelpers.js" insert-after="++resource++plonefinder_static/imagewidget.js" />
+
+<javascript id="unlockOnFormUnload.js" insert-after="formsubmithelpers.js" />
+
+<javascript id="jquery.tinymce.js" insert-after="unlockOnFormUnload.js" />
+
+<javascript id="tiny_mce_gzip.js" insert-after="jquery.tinymce.js" />
+
+<javascript id="++resource++collective.z3cform.datagridfield/datagridfield.js" insert-after="tiny_mce_gzip.js" />
+
+<javascript id="++resource++jquery.cookie.js" insert-after="++resource++collective.z3cform.datagridfield/datagridfield.js" />
+
+<javascript id="++resource++jquery.ajaxfileupload.js" insert-after="++resource++jquery.cookie.js" />
+
+<javascript id="++resource++jquery.bbq.js" insert-after="++resource++jquery.ajaxfileupload.js" />
+
+<javascript id="++resource++jquery.jstree.js" insert-after="++resource++jquery.bbq.js" />
+
+<javascript id="++resource++jquery.select2uislider.js" insert-after="++resource++jquery.jstree.js" />
+
+<javascript id="++resource++jquery.tagcloud.js" insert-after="++resource++jquery.select2uislider.js" />
+
+<javascript id="++resource++select2/select2.min.js" insert-after="++resource++jquery.tagcloud.js" />
+
+<javascript id="++resource++collective.eeafaceted.z3ctable/collective.eeafaceted.z3ctable.js" insert-after="++resource++select2/select2.min.js" />
+
+<javascript id="++resource++imio.actionspanel/actionspanel.js" insert-after="++resource++collective.eeafaceted.z3ctable/collective.eeafaceted.z3ctable.js" />
+
+<javascript id="actions_panel_javascript_variables.js" insert-after="++resource++imio.actionspanel/actionspanel.js" />
+
+<javascript id="++resource++quickupload_static/swfobject.js" insert-after="actions_panel_javascript_variables.js" />
+
+<javascript id="++resource++quickupload_static/jquery.uploadify.js" insert-after="++resource++quickupload_static/swfobject.js" />
+
+<javascript id="++resource++quickupload_static/fileuploader.js" insert-after="++resource++quickupload_static/jquery.uploadify.js" />
+
+<javascript id="++resource++quickupload_static/helpers.js" insert-after="++resource++quickupload_static/fileuploader.js" />
+
+<javascript id="ckeditor_vars.js" insert-after="++resource++quickupload_static/helpers.js" />
+
+<javascript id="++resource++ckeditor/ckeditor.js" insert-after="ckeditor_vars.js" />
+
+<javascript id="++resource++ckeditor_for_plone/ckeditor_plone.js" insert-after="++resource++ckeditor/ckeditor.js" />
+
+<javascript id="++resource++collective.js.iframeresizer/iframeResizer.min.js" insert-after="++resource++ckeditor_for_plone/ckeditor_plone.js" />
+
+<javascript id="++resource++collective.js.iframeresizer/iframeResizer.contentWindow.min.js" insert-after="++resource++collective.js.iframeresizer/iframeResizer.min.js" />
+
+<javascript id="++resource++collective.js.iframeresizer/ie8.polyfils.min.js" insert-after="++resource++collective.js.iframeresizer/iframeResizer.contentWindow.min.js" />
+
+<javascript id="++resource++select2-widget/select2-widget.js" insert-after="++resource++collective.js.iframeresizer/ie8.polyfils.min.js" />
+
+<javascript id="++resource++plone.formwidget.autocomplete/jquery.autocomplete.min.js" insert-after="++resource++select2-widget/select2-widget.js" />
+
+<javascript id="++resource++plone.formwidget.autocomplete/formwidget-autocomplete.js" insert-after="++resource++plone.formwidget.autocomplete/jquery.autocomplete.min.js" />
+
+<javascript id="++resource++plone.formwidget.contenttree/contenttree.js" insert-after="++resource++plone.formwidget.autocomplete/formwidget-autocomplete.js" />
+
+<javascript id="++resource++collective.iconifiedcategory/iconifiedcategory.js" insert-after="++resource++plone.formwidget.contenttree/contenttree.js" />
+
+<javascript id="++resource++imio.annex.quickupload/helpers.js" insert-after="++resource++collective.iconifiedcategory/iconifiedcategory.js" />
+
+<javascript id="++resource++collective.eeafaceted.batchactions/batch_actions.js" insert-after="++resource++imio.annex.quickupload/helpers.js" />
+
+<javascript id="++resource++ftw.labels/ftw-labels.js" insert-after="++resource++collective.eeafaceted.batchactions/batch_actions.js" />
+
+<javascript id="++resource++ftw.labels/select2.min.js" insert-after="++resource++ftw.labels/ftw-labels.js" />
+
+<javascript id="++resource++imio.helpers/helpers.js" insert-after="++resource++ftw.labels/select2.min.js" />
+
+<javascript id="++resource++collective.js.tooltipster/tooltipster.bundle.min.js" insert-after="++resource++imio.helpers/helpers.js" />
+
+<javascript id="++resource++collective.js.tooltipster/tooltipster_helper.js" insert-after="++resource++collective.js.tooltipster/tooltipster.bundle.min.js" />
+
+<javascript id="++resource++eea.faceted-navigation.js" insert-after="++resource++collective.js.tooltipster/tooltipster_helper.js" />
+
+<javascript id="++resource++eea.facetednavigation.widgets.text.view.js" insert-after="++resource++eea.faceted-navigation.js" />
+
+<javascript id="++resource++faceted.select2.view.js" insert-after="++resource++eea.facetednavigation.widgets.text.view.js" />
+
+<javascript id="++resource++eea.facetednavigation.widgets.tal.view.js" insert-after="++resource++faceted.select2.view.js" />
+
+<javascript id="++resource++eea.facetednavigation.widgets.tagscloud.view.js" insert-after="++resource++eea.facetednavigation.widgets.tal.view.js" />
+
+<javascript id="++resource++eea.facetednavigation.widgets.sorting.view.js" insert-after="++resource++eea.facetednavigation.widgets.tagscloud.view.js" />
+
+<javascript id="++resource++eea.facetednavigation.widgets.select.view.js" insert-after="++resource++eea.facetednavigation.widgets.sorting.view.js" />
+
+<javascript id="++resource++eea.facetednavigation.widgets.resultsperpage.view.js" insert-after="++resource++eea.facetednavigation.widgets.select.view.js" />
+
+<javascript id="++resource++eea.facetednavigation.widgets.resultsfilter.view.js" insert-after="++resource++eea.facetednavigation.widgets.resultsperpage.view.js" />
+
+<javascript id="++resource++eea.facetednavigation.widgets.range.view.js" insert-after="++resource++eea.facetednavigation.widgets.resultsfilter.view.js" />
+
+<javascript id="++resource++eea.facetednavigation.widgets.radio.view.js" insert-after="++resource++eea.facetednavigation.widgets.range.view.js" />
+
+<javascript id="++resource++eea.facetednavigation.widgets.portlet.view.js" insert-after="++resource++eea.facetednavigation.widgets.radio.view.js" />
+
+<javascript id="++resource++eea.facetednavigation.widgets.path.view.js" insert-after="++resource++eea.facetednavigation.widgets.portlet.view.js" />
+
+<javascript id="++resource++eea.facetednavigation.widgets.path.tree.js" insert-after="++resource++eea.facetednavigation.widgets.path.view.js" />
+
+<javascript id="++resource++eea.facetednavigation.widgets.etag.view.js" insert-after="++resource++eea.facetednavigation.widgets.path.tree.js" />
+
+<javascript id="++resource++eea.facetednavigation.widgets.debug.view.js" insert-after="++resource++eea.facetednavigation.widgets.etag.view.js" />
+
+<javascript id="++resource++eea.facetednavigation.widgets.daterange.view.js" insert-after="++resource++eea.facetednavigation.widgets.debug.view.js" />
+
+<javascript id="++resource++eea.facetednavigation.widgets.date.view.js" insert-after="++resource++eea.facetednavigation.widgets.daterange.view.js" />
+
+<javascript id="++resource++eea.facetednavigation.widgets.criteria.view.js" insert-after="++resource++eea.facetednavigation.widgets.date.view.js" />
+
+<javascript id="++resource++eea.facetednavigation.widgets.checkbox.view.js" insert-after="++resource++eea.facetednavigation.widgets.criteria.view.js" />
+
+<javascript id="++resource++eea.facetednavigation.widgets.autocomplete.view.js" insert-after="++resource++eea.facetednavigation.widgets.checkbox.view.js" />
+
+<javascript id="++resource++eea.facetednavigation.widgets.alphabets.view.js" insert-after="++resource++eea.facetednavigation.widgets.autocomplete.view.js" />
+
+<javascript id="++resource++eea.faceted-navigation-independent.js" insert-after="++resource++eea.facetednavigation.widgets.alphabets.view.js" />
+
+<javascript id="++resource++eea.faceted-navigation-expand.js" insert-after="++resource++eea.faceted-navigation-independent.js" />
+
+<javascript id="++resource++collective.eeafaceted.collectionwidget.widgets.view.js" insert-after="++resource++eea.faceted-navigation-expand.js" />
+
+<javascript id="++resource++eea.faceted-navigation-edit.js" insert-after="++resource++collective.eeafaceted.collectionwidget.widgets.view.js" />
+
+<javascript id="++resource++eea.facetednavigation.widgets.text.edit.js" insert-after="++resource++eea.faceted-navigation-edit.js" />
+
+<javascript id="++resource++eea.facetednavigation.widgets.tal.edit.js" insert-after="++resource++eea.facetednavigation.widgets.text.edit.js" />
+
+<javascript id="++resource++eea.facetednavigation.widgets.tagscloud.edit.js" insert-after="++resource++eea.facetednavigation.widgets.tal.edit.js" />
+
+<javascript id="++resource++eea.facetednavigation.widgets.sorting.edit.js" insert-after="++resource++eea.facetednavigation.widgets.tagscloud.edit.js" />
+
+<javascript id="++resource++eea.facetednavigation.widgets.select.edit.js" insert-after="++resource++eea.facetednavigation.widgets.sorting.edit.js" />
+
+<javascript id="++resource++eea.facetednavigation.widgets.resultsperpage.edit.js" insert-after="++resource++eea.facetednavigation.widgets.select.edit.js" />
+
+<javascript id="++resource++eea.facetednavigation.widgets.resultsfilter.edit.js" insert-after="++resource++eea.facetednavigation.widgets.resultsperpage.edit.js" />
+
+<javascript id="++resource++eea.facetednavigation.widgets.range.edit.js" insert-after="++resource++eea.facetednavigation.widgets.resultsfilter.edit.js" />
+
+<javascript id="++resource++eea.facetednavigation.widgets.radio.edit.js" insert-after="++resource++eea.facetednavigation.widgets.range.edit.js" />
+
+<javascript id="++resource++eea.facetednavigation.widgets.portlet.edit.js" insert-after="++resource++eea.facetednavigation.widgets.radio.edit.js" />
+
+<javascript id="++resource++eea.facetednavigation.widgets.path.edit.js" insert-after="++resource++eea.facetednavigation.widgets.portlet.edit.js" />
+
+<javascript id="++resource++eea.facetednavigation.widgets.etag.edit.js" insert-after="++resource++eea.facetednavigation.widgets.path.edit.js" />
+
+<javascript id="++resource++eea.facetednavigation.widgets.debug.edit.js" insert-after="++resource++eea.facetednavigation.widgets.etag.edit.js" />
+
+<javascript id="++resource++eea.facetednavigation.widgets.daterange.edit.js" insert-after="++resource++eea.facetednavigation.widgets.debug.edit.js" />
+
+<javascript id="++resource++eea.facetednavigation.widgets.date.edit.js" insert-after="++resource++eea.facetednavigation.widgets.daterange.edit.js" />
+
+<javascript id="++resource++eea.facetednavigation.widgets.criteria.edit.js" insert-after="++resource++eea.facetednavigation.widgets.date.edit.js" />
+
+<javascript id="++resource++eea.facetednavigation.widgets.checkbox.edit.js" insert-after="++resource++eea.facetednavigation.widgets.criteria.edit.js" />
+
+<javascript id="++resource++eea.facetednavigation.widgets.autocomplete.edit.js" insert-after="++resource++eea.facetednavigation.widgets.checkbox.edit.js" />
+
+<javascript id="++resource++eea.facetednavigation.widgets.alphabets.edit.js" insert-after="++resource++eea.facetednavigation.widgets.autocomplete.edit.js" />
+
+<javascript id="++resource++collective.eeafaceted.collectionwidget.widgets.edit.js" insert-after="++resource++eea.facetednavigation.widgets.alphabets.edit.js" />
+
+<javascript id="++resource++plone.formwidget.querystring.querywidget.js" insert-after="++resource++collective.eeafaceted.collectionwidget.widgets.edit.js" />
+
+<javascript id="collective_eeafaceted_z3ctable_js_variables.js" insert-after="++resource++plone.formwidget.querystring.querywidget.js" />
+
+<javascript id="++resource++collective.eeafaceted.dashboard/collective.eeafaceted.dashboard.js" insert-after="collective_eeafaceted_z3ctable_js_variables.js" />
+
+<javascript id="++resource++plone.formwidget.masterselect/masterselect.js" insert-after="++resource++collective.eeafaceted.dashboard/collective.eeafaceted.dashboard.js" />
+
+<javascript id="++resource++collective.contact.core/forms.js" insert-after="++resource++plone.formwidget.masterselect/masterselect.js" />
+
+<javascript id="++resource++collective.js.tablednd/jquery.tablednd.js" insert-after="++resource++collective.contact.core/forms.js" />
+
+<javascript id="++resource++collective.contact.plonegroup/plonegroup.js" insert-after="++resource++collective.js.tablednd/jquery.tablednd.js" />
+
+<javascript id="++resource++imio.dashboard/imio.dashboard.js" insert-after="++resource++collective.contact.plonegroup/plonegroup.js" />
+
  <javascript cacheable="True"
              compression="safe"
              cookable="False"
              enabled="True"
              expression=""
              inline="False"
-             id="plonemeeting.js"/>
+             id="plonemeeting.js"
+             insert-after="++resource++imio.dashboard/imio.dashboard.js" />
 
  <javascript cacheable="True"
              compression="safe"
@@ -25,12 +283,9 @@
              enabled="True"
              expression=""
              id="plonemeetingpopups.js"
-             inline="False"/>
+             inline="False"
+             insert-after="plonemeeting.js"/>
 
- <javascript remove="True" id="plonemeetingnasties.js" />
-
- <javascript id="plonemeeting_javascript_variables.js" />
-
- <!-- ##/code-section jsregistry.xml -->
+<javascript id="plonemeeting_javascript_variables.js" insert-after="plonemeetingpopups.js" />
 
 </object>

@@ -608,7 +608,8 @@ class Migrate_To_4_1(Migrator):
         """Now that 'MeetingItem.description' is an optional field, we need to
            select it on existing MeetingConfigs.
            Remove 'MeetingItem.itemAssembly' from selected values as it is no more an
-           optional field and is used if 'Meeting.assembly' is used."""
+           optional field and is used if 'Meeting.assembly' is used.
+           Remove also fields removed from MeetingItem schema."""
         logger.info('Updating every MeetingConfig.usedItemAttributes...')
         for cfg in self.tool.objectValues('MeetingConfig'):
             usedItemAttrs = list(cfg.getUsedItemAttributes())
@@ -616,7 +617,27 @@ class Migrate_To_4_1(Migrator):
                 usedItemAttrs.insert(0, 'description')
             if 'itemAssembly' in usedItemAttrs:
                 usedItemAttrs.remove('itemAssembly')
+            if 'questioners' in usedItemAttrs:
+                usedItemAttrs.remove('questioners')
+            if 'answerers' in usedItemAttrs:
+                usedItemAttrs.remove('answerers')
             cfg.setUsedItemAttributes(usedItemAttrs)
+        logger.info('Done.')
+
+    def _updateHistorizedItemAttributes(self):
+        """Some fields were removed from MeetingItem schema."""
+        logger.info('Updating every MeetingConfig.historizedItemAttributes...')
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            histItemAttrs = list(cfg.getHistorizedItemAttributes())
+            if 'questioners' in histItemAttrs:
+                histItemAttrs.remove('questioners')
+            if 'answerers' in histItemAttrs:
+                histItemAttrs.remove('answerers')
+            if 'itemSignatories' in histItemAttrs:
+                histItemAttrs.remove('itemSignatories')
+            if 'itemAbsents' in histItemAttrs:
+                histItemAttrs.remove('itemAbsents')
+            cfg.setHistorizedItemAttributes(histItemAttrs)
         logger.info('Done.')
 
     def _migrateGroupsShownInDashboardFilter(self):
@@ -742,7 +763,10 @@ class Migrate_To_4_1(Migrator):
                 total,
                 brain.getPath()))
             i = i + 1
-            obj = brain.getObject()
+            try:
+                obj = brain.getObject()
+            except AttributeError:
+                continue
             if base_hasattr(obj, 'categorized_elements'):
                 update_all_categorized_elements(obj)
         logger.info('Done.')
@@ -803,6 +827,7 @@ class Migrate_To_4_1(Migrator):
         self.updateTALConditions(old_word='omittedSuffixes', new_word='omitted_suffixes')
 
         self._updateUsedItemAttributes()
+        self._updateHistorizedItemAttributes()
         self._migrateGroupsShownInDashboardFilter()
         self._enableStyleTemplates()
         self._cleanMeetingConfigs()
@@ -812,7 +837,7 @@ class Migrate_To_4_1(Migrator):
         self._adaptInternalImagesLinkToUseResolveUID()
         self._reorderAnnexes()
         # too many indexes to update, rebuild the portal_catalog
-        self.refreshDatabase(catalogsToRebuild=[])
+        self.refreshDatabase()
 
 
 # The migration function -------------------------------------------------------

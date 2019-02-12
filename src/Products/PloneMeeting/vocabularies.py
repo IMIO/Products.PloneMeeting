@@ -15,6 +15,7 @@ from eea.facetednavigation.interfaces import IFacetedNavigable
 from ftw.labels.interfaces import ILabelJar
 from imio.annex.content.annex import IAnnex
 from imio.helpers.cache import get_cachekey_volatile
+from natsort import realsorted
 from operator import attrgetter
 from plone import api
 from plone.memoize import ram
@@ -104,7 +105,7 @@ class ItemCategoriesVocabulary(object):
                            safe_unicode(category.Title())
                            )
             )
-        res = sorted(res_active, key=attrgetter('title'))
+        res = realsorted(res_active, key=attrgetter('title'))
 
         res_not_active = []
         for category in notActiveCategories:
@@ -158,7 +159,7 @@ class ItemProposingGroupsVocabulary(object):
                            safe_unicode(active_org.get_full_title(first_index=1))
                            )
             )
-        res = sorted(res_active, key=attrgetter('title'))
+        res = realsorted(res_active, key=attrgetter('title'))
 
         res_not_active = []
         request = getattr(context, 'REQUEST', getRequest())
@@ -173,7 +174,7 @@ class ItemProposingGroupsVocabulary(object):
                                      context=request)
                            )
             )
-        res = res + sorted(res_not_active, key=attrgetter('title'))
+        res = res + realsorted(res_not_active, key=attrgetter('title'))
         return SimpleVocabulary(res)
 
 
@@ -211,7 +212,7 @@ class ItemProposingGroupsForFacetedFilterVocabulary(object):
                                safe_unicode(active_org.get_full_title(first_index=1))
                                )
                 )
-        res = sorted(res_active, key=attrgetter('title'))
+        res = realsorted(res_active, key=attrgetter('title'))
 
         res_not_active = []
         for not_active_org in not_active_orgs:
@@ -227,7 +228,7 @@ class ItemProposingGroupsForFacetedFilterVocabulary(object):
                                          context=context.REQUEST)
                                )
                 )
-        res = res + sorted(res_not_active, key=attrgetter('title'))
+        res = res + realsorted(res_not_active, key=attrgetter('title'))
         return SimpleVocabulary(res)
 
 
@@ -257,7 +258,7 @@ class GroupsInChargeVocabulary(object):
                           gic.UID(),
                           safe_unicode(gic.get_full_title(first_index=1)))
                for gic in res]
-        res = sorted(res, key=attrgetter('title'))
+        res = realsorted(res, key=attrgetter('title'))
         return SimpleVocabulary(res)
 
 
@@ -284,7 +285,7 @@ class ItemProposingGroupAcronymsVocabulary(object):
                                   safe_unicode(org.acronym)
                                   )
                        )
-        res = sorted(res, key=attrgetter('title'))
+        res = realsorted(res, key=attrgetter('title'))
         return SimpleVocabulary(res)
 
 
@@ -349,7 +350,7 @@ class CreatorsVocabulary(object):
                                   creator,
                                   safe_unicode(value))
                        )
-        res = sorted(res, key=attrgetter('title'))
+        res = realsorted(res, key=attrgetter('title'))
         return SimpleVocabulary(res)
 
 
@@ -385,7 +386,7 @@ class CreatorsForFacetedFilterVocabulary(object):
                                   creator,
                                   safe_unicode(value))
                        )
-        res = sorted(res, key=attrgetter('title'))
+        res = realsorted(res, key=attrgetter('title'))
         return SimpleVocabulary(res)
 
 
@@ -454,9 +455,10 @@ class AskedAdvicesVocabulary(object):
                     if org not in orgs]
         for org in orgs:
             formatted = REAL_ORG_UID_PATTERN.format(org.UID())
-            if formatted not in res:
-                res.append(REAL_ORG_UID_PATTERN.format(org.UID()))
+            res.append(formatted)
 
+        # remove duplicates
+        res = list(set(res))
         return res
 
     def __call___cachekey(method, self, context):
@@ -543,7 +545,7 @@ class AskedAdvicesVocabulary(object):
             res.append(SimpleTerm(adviser,
                                   adviser,
                                   safe_unicode(termTitle)))
-        res = sorted(res, key=attrgetter('title'))
+        res = realsorted(res, key=attrgetter('title'))
 
         res_not_active = []
         for adviser in not_active_advisers:
@@ -558,7 +560,7 @@ class AskedAdvicesVocabulary(object):
                            adviser,
                            safe_unicode(termTitle)))
 
-        res = res + sorted(res_not_active, key=attrgetter('title'))
+        res = res + realsorted(res_not_active, key=attrgetter('title'))
         return SimpleVocabulary(res)
 
 
