@@ -850,6 +850,9 @@ def onItemEditCancelled(item, event):
 
 def onItemRemoved(item, event):
     ''' '''
+    # bypass this if we are actually removing the 'Plone Site'
+    if event.object.meta_type == 'Plone Site':
+        return
     # An item has ben modified
     invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified')
 
@@ -935,7 +938,7 @@ def onConfigContentTransition(config_content, event):
 def onConfigContentRemoved(config_content, event):
     '''Called when an element of the MeetingConfig is removed.'''
     # bypass this if we are actually removing the 'Plone Site'
-    if config_content.meta_type == 'Plone Site':
+    if event.object.meta_type == 'Plone Site':
         return
 
     # invalidate cache of relevant vocabularies
