@@ -235,11 +235,11 @@ class Migrate_To_4_1(Migrator):
            we moved it to a LinesField because new DashboardCollection
            are not referenceable by default."""
         logger.info('Migrating to do searches...')
-        reference_catalog = api.portal.get_tool('reference_catalog')
         for cfg in self.tool.objectValues('MeetingConfig'):
-            reference_uids = [ref.targetUID for ref in reference_catalog.getReferences(cfg, 'ToDoSearches')]
+            # get references from at_references so order is kept
+            reference_uids = [ref.targetUID for ref in cfg.at_references.objectValues()
+                              if ref.relationship == 'ToDoSearches']
             if reference_uids:
-                # need to migrate
                 cfg.deleteReferences('ToDoSearches')
                 cfg.setToDoListSearches(reference_uids)
         logger.info('Done.')
@@ -593,7 +593,7 @@ class Migrate_To_4_1(Migrator):
         i = 1
         for brain in api.content.find(meta_type='MeetingItem'):
             item = brain.getObject()
-            logger.info('Migrating MeetingItem {0}/{1} ({2})'.format(
+            logger.info('Migrating MeetingItem contacts {0}/{1} ({2})'.format(
                 i, len_brains, '/'.join(item.getPhysicalPath())))
             i = i + 1
             # adviceIndex
