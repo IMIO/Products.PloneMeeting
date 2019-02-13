@@ -1,16 +1,19 @@
+# -*- coding: utf-8 -*-
+
 from collective.behavior.talcondition.interfaces import ITALConditionable
 from collective.behavior.talcondition.utils import evaluateExpressionFor
 from collective.eeafaceted.collectionwidget.utils import _get_criterion
 from collective.eeafaceted.collectionwidget.utils import getCollectionLinkCriterion
 from collective.eeafaceted.dashboard.browser.facetedcollectionportlet import Renderer as FacetedRenderer
 from eea.facetednavigation.widgets.sorting.widget import Widget as SortingWidget
+from imio.helpers.cache import get_cachekey_volatile
 from plone import api
 from plone.app.portlets.portlets import base
+from plone.memoize import ram
 from plone.memoize.view import memoize
 from plone.portlets.interfaces import IPortletDataProvider
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from zope import schema
-from zope.component import getMultiAdapter
 from zope.formlib import form
 from zope.i18nmessageid import MessageFactory
 from zope.interface import implements
@@ -59,8 +62,7 @@ class Renderer(base.Renderer, FacetedRenderer):
     def __init__(self, *args):
         base.Renderer.__init__(self, *args)
 
-        portal_state = getMultiAdapter((self.context, self.request), name=u'plone_portal_state')
-        self.portal = portal_state.portal()
+        self.portal = api.portal.get()
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
 
@@ -72,6 +74,22 @@ class Renderer(base.Renderer, FacetedRenderer):
         available = FacetedRenderer(self.context, self.request, self.view, self.manager, self.data).available
         return available and self.showTodoPortlet(self.context)
 
+    def render_cachekey(method, self):
+        '''cachekey method for self.__call__.'''
+        userGroups = self.tool.get_plone_groups_for_user()
+        cfg_modified = self.cfg.modified()
+        # URL to the annex_type can change if server URL changed
+        server_url = self.request.get('SERVER_URL', None)
+        # cache until an item is modified
+        date = get_cachekey_volatile('Products.PloneMeeting.MeetingItem.modified')
+        load_portlet_todo = self.request.get('load_portlet_todo', False)
+        return (userGroups,
+                cfg_modified,
+                server_url,
+                date,
+                load_portlet_todo)
+
+    @ram.cache(render_cachekey)
     def render(self):
         return self._template()
 

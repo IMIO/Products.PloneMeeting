@@ -136,6 +136,8 @@ def onItemTransition(item, event):
         event.transition, event.status, event.kwargs))
     # just reindex the entire object
     item.reindexObject()
+    # An item has ben modified
+    invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified')
 
 
 def onMeetingTransition(meeting, event):
@@ -543,6 +545,8 @@ def onItemAdded(item, event):
     item.completeness_changes_history = PersistentList()
     # Add a place to store takenOverBy by review_state user id
     item.takenOverByInfos = PersistentMapping()
+    # An item has ben modified
+    invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified')
 
 
 def onItemModified(item, event):
@@ -574,6 +578,8 @@ def onItemModified(item, event):
                 item._at_creation_flag = True
                 item._renameAfterCreation(check_auto_id=False)
                 item._at_creation_flag = False
+    # An item has ben modified
+    invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified')
 
 
 def storeImagesLocallyDexterity(advice):
@@ -843,9 +849,9 @@ def onItemEditCancelled(item, event):
 
 
 def onItemRemoved(item, event):
-    '''When an item is removed, we check that every contained advices were not inherited
-       by other items for which removed item is the predecessor.'''
-    pass
+    ''' '''
+    # An item has ben modified
+    invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified')
 
 
 def onMeetingAdded(meeting, event):
@@ -894,6 +900,7 @@ def onMeetingRemoved(meeting, event):
         item_to_reindex.reindexObject(idxs=['getPreferredMeeting', 'getPreferredMeetingDate'])
     # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
     invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.meetingdatesvocabulary")
+    invalidate_cachekey_volatile_for('Products.PloneMeeting.Meeting.modified')
 
 
 def onConfigContentModified(config_content, event):
