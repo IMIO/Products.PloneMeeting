@@ -136,7 +136,7 @@ class ManageItemSignaturesForm(form.Form):
         self.apply_until_item_number = \
             _itemNumber_to_storedItemNumber(
                 data.get('apply_until_item_number') or u'0'
-                )
+            )
         self._doApplyItemSignatures()
 
     @button.buttonAndHandler(_('Cancel'), name='cancel')
@@ -148,7 +148,7 @@ class ManageItemSignaturesForm(form.Form):
         # we check mayQuickEdit with bypassWritePermissionCheck=True
         # so MeetingManagers are able to edit these infos on decided items
         # until the linked meeting is closed
-        if not self.context.mayQuickEdit('itemAssembly',
+        if not self.context.mayQuickEdit('itemSignatures',
                                          bypassWritePermissionCheck=True):
             raise Unauthorized
 
@@ -171,7 +171,7 @@ class ManageItemSignaturesForm(form.Form):
           The method actually do the job, set the itemSignatures
           on self.context and following items if defined
         """
-        if not self.context.mayQuickEdit('itemAssembly',
+        if not self.context.mayQuickEdit('itemSignatures',
                                          bypassWritePermissionCheck=True):
             raise Unauthorized
 

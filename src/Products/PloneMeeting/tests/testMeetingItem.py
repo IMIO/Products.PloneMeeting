@@ -2373,13 +2373,6 @@ class testMeetingItem(PloneMeetingTestCase):
         '''
         cfg = self.meetingConfig
         self.changeUser('admin')
-        # make sure 'itemAssembly' and 'itemSignatures' are not in usedItemAttributes
-        usedItemAttributes = list(cfg.getUsedItemAttributes())
-        if 'itemAssembly' in usedItemAttributes:
-            usedItemAttributes.remove('itemAssembly')
-        if 'itemSignatures' in usedItemAttributes:
-            usedItemAttributes.remove('itemSignatures')
-        cfg.setUsedItemAttributes(tuple(usedItemAttributes))
         # make items inserted in a meeting inserted in this order
         cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'at_the_end',
                                            'reverse': '0'}, ))
@@ -2402,19 +2395,21 @@ class testMeetingItem(PloneMeetingTestCase):
         formAssembly = item.restrictedTraverse('@@manage_item_assembly_form').form_instance
         formSignatures = item.restrictedTraverse('@@manage_item_signatures_form').form_instance
         # for now, the itemAssembly/itemSignatures fields are not used, so it raises Unauthorized
-        self.assertFalse('itemAssembly' in cfg.getUsedItemAttributes())
-        self.assertFalse('itemSignatures' in cfg.getUsedItemAttributes())
+        self.assertFalse('assembly' in cfg.getUsedMeetingAttributes())
+        self.assertFalse('signatures' in cfg.getUsedMeetingAttributes())
         self.assertRaises(Unauthorized, formAssembly.update)
         self.assertRaises(Unauthorized, formSignatures.update)
-        # so use this field
-        cfg.setUsedItemAttributes(cfg.getUsedItemAttributes() +
-                                  ('itemAssembly', 'itemAssemblyAbsents',
-                                   'itemAssemblyExcused', 'itemSignatures', ))
-        cfg.setUsedMeetingAttributes(cfg.getUsedMeetingAttributes() +
-                                     ('assembly', 'assemblyAbsents',
-                                      'assemblyExcused', 'signatures', ))
-        # MeetingItem.attributeIsUsed is RAMCached
-        cleanRamCacheFor('Products.PloneMeeting.MeetingItem.attributeIsUsed')
+        # so use these fields, test when one activated and not the other
+        # and the other way round then activate both and continue
+        cfg.setUsedMeetingAttributes(('signatures', ))
+        # only itemSignatures
+        self.assertIsNone(formSignatures.update())
+        self.assertRaises(Unauthorized, formAssembly.update)
+        # only itemAssembly
+        cfg.setUsedMeetingAttributes(('assembly', ))
+        self.assertIsNone(formAssembly.update())
+        self.assertRaises(Unauthorized, formSignatures.update)
+        cfg.setUsedMeetingAttributes(('assembly', 'signatures'))
         # current user must be at least MeetingManager to use this
         self.changeUser('pmCreator1')
         self.assertRaises(Unauthorized, formAssembly.update)

@@ -23,6 +23,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   - use tooltipster for MeetingItem.listType.
 - Removed management of lateAttendees, if we have late attendees, we have to select user as present for meeting then set him
   as absent or excused from first item to item he joigned the meeting
+- Fixed bug in manage_item_signatures_form if field 'assembly' was not used.  Free text field 'signatures' may be used together
+  with contact field attendees and in this case, it was failing (Unauthorized)
 
 4.1b16 (2019-01-31)
 -------------------
