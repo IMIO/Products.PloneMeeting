@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from collective.contact.core import _ as _ccc
 from collective.contact.core.content.held_position import HeldPosition
 from collective.contact.core.content.held_position import IHeldPosition
 from collective.contact.core.schema import ContactChoice
@@ -25,7 +26,7 @@ class IPMHeldPosition(IHeldPosition):
 
     # override position to use a select list restricted to orgs out of PLONEGROUP_ORG
     position = ContactChoice(
-        title=_("Organization/Position"),
+        title=_ccc("Organization/Position"),
         source=PMContactSourceBinder(),
         required=True,
     )
@@ -66,7 +67,7 @@ class IPMHeldPosition(IHeldPosition):
 
     model.fieldset('held_position_app_parameters',
                    label=_(u"Application parameters"),
-                   fields=['label', 'position_type', 'start_date', 'end_date',
+                   fields=['position', 'label', 'position_type', 'start_date', 'end_date',
                            'usages', 'defaults', 'signature_number'])
 
 

@@ -1760,7 +1760,7 @@ div#formfield-form-widgets-certified_signatures td select.select-widget {
    width: 100%;   
 }
 
-a.portlet_pm_own_org_link {
+a.portlet_pm_dashboard_link {
    margin-top: 1em;
    font-weight: bold;
 }

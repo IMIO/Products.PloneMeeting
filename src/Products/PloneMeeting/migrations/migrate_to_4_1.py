@@ -26,6 +26,9 @@ from Products.PloneMeeting.utils import get_public_url
 from Products.PloneMeeting.utils import updateCollectionCriterion
 from zope.i18n import translate
 from zope.interface import alsoProvides
+from z3c.relationfield.relation import RelationValue
+from zope.intid.interfaces import IIntIds
+from zope.component import getUtility
 
 import logging
 import mimetypes
@@ -282,45 +285,101 @@ class Migrate_To_4_1(Migrator):
            to existing meetings.
            Remove attribute 'itemAbsents' from existing items."""
         logger.info('Adapting application for contacts...')
+        contacts = self.portal.contacts
+        own_org = get_own_organization()
         catalog = api.portal.get_tool('portal_catalog')
-        brains = catalog(meta_type=['Meeting'])
-        logger.info('Adapting meetings...')
-        for brain in brains:
-            meeting = brain.getObject()
-            if hasattr(meeting, 'orderedContacts'):
-                # already migrated
-                break
-            meeting.orderedContacts = OrderedDict()
-            meeting.itemAbsents = PersistentMapping()
-            meeting.itemExcused = PersistentMapping()
-            meeting.itemSignatories = PersistentMapping()
-            # remove old informations about MeetingUsers
-            delattr(meeting, 'attendees')
-            delattr(meeting, 'lateAttendees')
-            delattr(meeting, 'absents')
-            delattr(meeting, 'excused')
-            delattr(meeting, 'signatories')
-
-        logger.info('Adapting items...')
-        brains = catalog(meta_type=['MeetingItem'])
-        for brain in brains:
-            item = brain.getObject()
-            if not hasattr(item, 'itemAbsents'):
-                # already migrated
-                break
-            delattr(item, 'itemAbsents')
-            delattr(item, 'itemSignatories')
-            delattr(item, 'answerers')
-            delattr(item, 'questioners')
-
-        logger.info('Adapting meeting configs...')
+        intids = getUtility(IIntIds)
         for cfg in self.tool.objectValues('MeetingConfig'):
+            logger.info('Migrating config {0}...'.format(cfg.getId()))
             if not hasattr(cfg, 'useUserReplacements'):
                 # already migrated
                 break
             delattr(cfg, 'useUserReplacements')
-            # remove the meetingusers folder and contained MeetingUsers
+            # first migrate MeetingUsers
+            logger.info('Migrating MeetingUsers...')
+            mu_hp_mappings = {}
+            for mu in cfg.meetingusers.objectValues('MeetingUser'):
+                person_data = {
+                    'id': mu.getId(),
+                    'lastname': mu.title,
+                    'gender': mu.getGender().upper()}
+                hp_data = {
+                    'id': mu.getId() + '_hp1',
+                    'position': RelationValue(intids.getId(own_org)),
+                    'label': unicode(mu.getDuty(), 'utf-8'),
+                    'usages': [usage for usage in mu.getUsages() if usage in ['assemblyMember', 'asker']],
+                    'signature_number': 'signer' in mu.getUsages() and '1' or None}
+                person = api.content.create(container=contacts, type='person', **person_data)
+                hp = api.content.create(container=person, type='held_position', **hp_data)
+                mu_hp_mappings[mu.getId()] = hp.UID()
+
+            # migrate Meetings
+            brains = catalog(portal_type=cfg.getMeetingTypeName())
+            logger.info('Adapting meetings...')
+            for brain in brains:
+                meeting = brain.getObject()
+                if hasattr(meeting, 'orderedContacts'):
+                    # already migrated
+                    break
+                meeting.orderedContacts = OrderedDict()
+                meeting.itemAbsents = PersistentMapping()
+                meeting.itemExcused = PersistentMapping()
+                meeting.itemSignatories = PersistentMapping()
+                # migrate MeetingUsers related fields
+                if not meeting.getAssembly():
+                    # build attendees and signatories passed to Meeting._doUpdateContacts
+                    # attendees OrderedDict([('uid1', 'attendee'), ('uid2', 'attendee'), ('uid3', 'absent')])
+                    # signatories {'uid1': '1'}
+                    attendees = OrderedDict()
+                    signatories = {}
+                    for attendee_id in meeting.attendees:
+                        hp_uid = mu_hp_mappings[attendee_id]
+                        attendees[hp_uid] = 'attendee'
+                    for absent_id in meeting.absents:
+                        hp_uid = mu_hp_mappings[absent_id]
+                        attendees[hp_uid] = 'absent'
+                    for excused_id in meeting.excused:
+                        hp_uid = mu_hp_mappings[excused_id]
+                        attendees[hp_uid] = 'excused'
+                    if not meeting.getSignatures():
+                        signature_number = 1
+                        for signatory_id in meeting.signatories:
+                            hp_uid = mu_hp_mappings[signatory_id]
+                            signatories[hp_uid] = str(signature_number)
+                            signature_number += 1
+                    meeting._doUpdateContacts(attendees=attendees, signatories=signatories)
+
+                # remove old informations about MeetingUsers
+                delattr(meeting, 'attendees')
+                delattr(meeting, 'lateAttendees')
+                delattr(meeting, 'absents')
+                delattr(meeting, 'excused')
+                delattr(meeting, 'signatories')
+
+            # migrate MeetingItems
+            logger.info('Adapting items...')
+            brains = catalog(portal_type=cfg.getItemTypeName())
+            for brain in brains:
+                item = brain.getObject()
+                if not hasattr(item, 'itemAbsents'):
+                    # already migrated
+                    break
+                # migrate MeetingUsers related fields
+                itemInitiators = item.getItemInitiator()
+                if itemInitiators:
+                    item.setItemInitiator([mu_hp_mappings[itemInitiator] for itemInitiator in itemInitiators])
+                delattr(item, 'itemAbsents')
+                delattr(item, 'itemSignatories')
+                delattr(item, 'answerers')
+                delattr(item, 'questioners')
+
+            # set orderedContacts then remove the meetingusers folder and contained MeetingUsers
+            orderedContacts = [
+                mu_hp_mappings[mu.id] for mu in cfg.meetingusers.objectValues('MeetingUser')
+                if mu.queryState() == 'active']
+            cfg.setOrderedContacts(orderedContacts)
             cfg.manage_delObjects(ids=['meetingusers'])
+
         logger.info('Done.')
 
     def _custom_migrate_meeting_group_to_org(self, mGroup, org):
@@ -633,12 +692,6 @@ class Migrate_To_4_1(Migrator):
             cfg.setUsedItemAttributes(usedItemAttrs)
             # Meeting
             usedMeetingAttrs = list(cfg.getUsedMeetingAttributes())
-            if 'attendees' in usedMeetingAttrs:
-                usedMeetingAttrs.remove('attendees')
-            if 'excused' in usedMeetingAttrs:
-                usedMeetingAttrs.remove('excused')
-            if 'absents' in usedMeetingAttrs:
-                usedMeetingAttrs.remove('absents')
             if 'lateAttendees' in usedMeetingAttrs:
                 usedMeetingAttrs.remove('lateAttendees')
             cfg.setUsedMeetingAttributes(usedMeetingAttrs)
@@ -859,8 +912,8 @@ class Migrate_To_4_1(Migrator):
         self.updateTALConditions(old_word='getGroupsForUser', new_word='get_orgs_for_user')
         self.updateTALConditions(old_word='omittedSuffixes', new_word='omitted_suffixes')
 
-        self._updateUsedItemAttributes()
-        self._updateHistorizedItemAttributes()
+        self._updateUsedAttributes()
+        self._updateHistorizedAttributes()
         self._migrateGroupsShownInDashboardFilter()
         self._enableStyleTemplates()
         self._cleanMeetingConfigs()

@@ -142,6 +142,10 @@
                    imio.annex.interfaces.IAnnexFileChangedEvent"
               handler=".events.onAnnexFileChanged" />
 
+  <subscriber for=".interfaces.IConfigElement
+                   collective.iconifiedcategory.interfaces.ICategorizedElementsUpdatedEvent"
+              handler=".events.onCategorizedElementsUpdatedEvent" /> 
+
   <!-- collective.contact.core events -->
   <subscriber for="collective.contact.core.content.directory.IDirectory
                    plone.dexterity.events.AddBegunEvent"

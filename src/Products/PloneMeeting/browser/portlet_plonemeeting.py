@@ -3,7 +3,6 @@
 from collective.contact.plonegroup.utils import get_own_organization
 from collective.eeafaceted.dashboard.browser.facetedcollectionportlet import Renderer as FacetedRenderer
 from eea.facetednavigation.interfaces import IFacetedNavigable
-from imio.dashboard.interfaces import IContactsDashboard
 from plone.app.portlets.portlets import base
 from plone.portlets.interfaces import IPortletDataProvider
 from Products.CMFCore.utils import getToolByName
@@ -40,9 +39,9 @@ class Renderer(base.Renderer, FacetedRenderer):
 
     def __init__(self, *args):
         base.Renderer.__init__(self, *args)
-        portal = getToolByName(self.context, 'portal_url').getPortalObject()
-        self.portal_url = portal.absolute_url()
-        self.tool = getToolByName(portal, 'portal_plonemeeting')
+        self.portal = getToolByName(self.context, 'portal_url').getPortalObject()
+        self.portal_url = self.portal.absolute_url()
+        self.tool = getToolByName(self.portal, 'portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
 
     @property
@@ -68,10 +67,6 @@ class Renderer(base.Renderer, FacetedRenderer):
         '''Returns the current PM folder.'''
         if self.cfg:
             return self.tool.getPloneMeetingFolder(self.cfg.getId())
-
-    def display_link_to_own_org(self):
-        ''' '''
-        return IContactsDashboard.providedBy(self.context)
 
     def get_own_org(self):
         ''' '''

@@ -417,19 +417,6 @@ schema = Schema((
         optional=True,
     ),
     TextField(
-        name='signatures',
-        allowable_content_types=('text/plain',),
-        optional=True,
-        widget=TextAreaWidget(
-            condition="python: here.attributeIsUsed('signatures') or here.getSignatures()",
-            label_msgid="meeting_signatures",
-            label='Signatures',
-            i18n_domain='PloneMeeting',
-        ),
-        default_content_type='text/plain',
-        default_method="getDefaultSignatures",
-    ),
-    TextField(
         name='assembly',
         allowable_content_types="text/plain",
         widget=TextAreaWidget(
@@ -515,6 +502,19 @@ schema = Schema((
         default_output_type="text/html",
         default_method="getDefaultAssemblyStaves",
         default_content_type="text/plain",
+    ),
+    TextField(
+        name='signatures',
+        allowable_content_types=('text/plain',),
+        optional=True,
+        widget=TextAreaWidget(
+            condition="python: here.attributeIsUsed('signatures') or here.getSignatures()",
+            label_msgid="meeting_signatures",
+            label='Signatures',
+            i18n_domain='PloneMeeting',
+        ),
+        default_content_type='text/plain',
+        default_method="getDefaultSignatures",
     ),
     StringField(
         name='place',

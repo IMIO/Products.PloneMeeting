@@ -21,6 +21,7 @@ from eea.facetednavigation.interfaces import IFacetedNavigable
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
 from eea.facetednavigation.widgets.storage import Criterion
 from imio.actionspanel.adapters import ContentDeletableAdapter as APContentDeletableAdapter
+from imio.annex.adapters import AnnexPrettyLinkAdapter
 from imio.helpers.xhtml import xhtmlContentIsEmpty
 from imio.history.adapters import BaseImioHistoryAdapter
 from imio.history.adapters import ImioWfHistoryAdapter
@@ -880,6 +881,27 @@ class MeetingPrettyLinkAdapter(PrettyLinkAdapter):
                                   domain="PloneMeeting",
                                   context=self.request)))
         return res
+
+
+class PMAnnexPrettyLinkAdapter(AnnexPrettyLinkAdapter):
+    """
+      Override to take into account PloneMeeting use cases...
+    """
+
+    def getLink_cachekey(method, self):
+        '''cachekey method for self.getLink.'''
+        res = super(PMAnnexPrettyLinkAdapter, self).getLink_cachekey(self)
+        # check also MeetingConfig modified as updating categorized elements
+        # from the ContentCategory will update MeetingConfig.modified
+        tool = api.portal.get_tool('portal_plonemeeting')
+        # maximize cache on calling getMeetingConfig from parent
+        cfg = tool.getMeetingConfig(self.context.aq_parent)
+        return res + (cfg.modified(), )
+
+    @ram.cache(getLink_cachekey)
+    def getLink(self):
+        """Necessary to be able to override the cachekey."""
+        return self._getLink()
 
 
 class PMWfHistoryAdapter(ImioWfHistoryAdapter):

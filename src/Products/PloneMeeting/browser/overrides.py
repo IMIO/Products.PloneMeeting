@@ -1120,13 +1120,16 @@ class PMCategorizedChildView(CategorizedChildView):
     def __call___cachekey(method, self, portal_type=None, show_nothing=False):
         '''cachekey method for self.__call__.'''
         tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self.context)
         # URL to the annex_type can change if server URL changed
         server_url = self.request.get('SERVER_URL', None)
         # an annex container's modification date is updated upon
         # any change on annex (added, removed, edited, attribute changed)
         context_modified = self.context.modified()
+        cfg_modified = cfg.modified()
         return (self.context.UID(),
                 context_modified,
+                cfg_modified,
                 server_url,
                 tool.get_plone_groups_for_user(),
                 portal_type,

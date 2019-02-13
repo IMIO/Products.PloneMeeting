@@ -1035,3 +1035,13 @@ def onPlonegroupGroupCreated(event):
     """ """
     group = event.object
     api.group.grant_roles(group=group, roles=['MeetingObserverGlobal'])
+
+
+def onCategorizedElementsUpdatedEvent(content_category, event):
+    """When elements using a ContentCategory are updated,
+       notifyModified the MeetingConfig so cache is invalidated."""
+    # set modification date on every containers
+    container = content_category.aq_parent
+    while container.portal_type not in ('ToolPloneMeeting', 'Plone Site'):
+        notifyModifiedAndReindex(container)
+        container = container.aq_parent

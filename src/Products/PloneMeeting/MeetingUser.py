@@ -289,6 +289,11 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
         '''See doc in interfaces.py.'''
         pass
 
+    def queryState(self):
+        '''In what state am I ?'''
+        wfTool = api.portal.get_tool('portal_workflow')
+        return wfTool.getInfoFor(self, 'review_state')
+
     security.declarePublic('config')
 
     def config(self):

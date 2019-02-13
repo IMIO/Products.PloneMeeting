@@ -3,6 +3,7 @@
 from collective.contact.core.content.organization import IOrganization
 from collective.contact.core.content.organization import Organization
 from collective.contact.plonegroup.config import ORGANIZATIONS_REGISTRY
+from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.contact.plonegroup.interfaces import IPloneGroupContact
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
@@ -205,8 +206,10 @@ class PMOrganization(Organization):
         return self.groups_in_charge
 
     def get_full_title(self, separator=u' / ', first_index=0):
-        """Override to change default first_index from 0 to 1 for IPloneGroupContact."""
-        if IPloneGroupContact.providedBy(self):
+        """Override to change default first_index from 0 to 1 for IPloneGroupContact,
+           so we do not display the 'My organization' level for elements displayed in the
+           'My organization' organization."""
+        if self.id != PLONEGROUP_ORG and IPloneGroupContact.providedBy(self):
             first_index = 1
         return super(PMOrganization, self).get_full_title(separator, first_index)
 
