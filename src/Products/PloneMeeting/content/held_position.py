@@ -4,6 +4,7 @@ from collective.contact.core import _ as _ccc
 from collective.contact.core.content.held_position import HeldPosition
 from collective.contact.core.content.held_position import IHeldPosition
 from collective.contact.core.schema import ContactChoice
+from collective.contact.core.utils import get_gender_and_number
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.excelexport.exportables.dexterityfields import get_exportable_for_fieldname
 from plone.autoform import directives as form
@@ -194,9 +195,9 @@ class PMHeldPosition(HeldPosition):
             mappings = value_starting_consonant
         values = {k: v for k, v in self.gender_and_number_from_position_type().items()
                   if v == value}
-        res = values and mappings.get(values.keys()[0], '') or ''
+        res = values and mappings.get(get_gender_and_number([self.get_person()]), '') or ''
         if include_value:
-            res = res + value
+            res = u'{0} {1}'.format(res, value)
         return res
 
 class PMHeldPositionSchemaPolicy(DexteritySchemaPolicy):
