@@ -1052,7 +1052,8 @@ class Criteria(eeaCriteria):
         # return really stored widgets when necessary
         if 'portal_plonemeeting' in context.absolute_url() or \
            req.get('enablingFacetedDashboard', False) or \
-           (req.get('PARENTS', [])[0] == api.portal.get_tool('portal_setup')):  # migrating
+           (req.get('SERVER_URL') == 'http://foo' or
+                req.get('PARENTS', [])[0] == api.portal.get_tool('portal_setup')):  # migrating
             super(Criteria, self).__init__(context)
             return self.context, self.criteria
         try:
