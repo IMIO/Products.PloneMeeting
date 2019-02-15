@@ -208,17 +208,6 @@ function openDialog(dialogId) {
   greyed.style.display = "block";
 }
 
-function closeDialog(dialogId) {
-  // Close the dialog window
-  var dialog = document.getElementById(dialogId);
-  dialog.style.display = "none";
-  // Hide the greyed zone
-  var greyed = document.getElementById('hsGrey');
-  greyed.style.display = "none";
-  // Empty the global variable dialogData
-  dialogData = null;
-}
-
 // Function allowing to remove an event from an object's history
 function deleteEvent(objectUid, eventTime) {
   var f = document.getElementById("deleteForm");
@@ -360,45 +349,6 @@ function refreshVotes(itemUrl) {
 function switchVotes(itemUrl, secret) {
   var params = {'action': 'SwitchVotes', 'secret': secret};
   askAjaxChunk('meeting_users_', 'POST', itemUrl, '@@pm-macros', 'itemPeople', params);
-}
-
-// Welcome a user in a meeting at some point.
-function welcomeUser(itemUrl, userId, action){
-  if (confirm(are_you_sure)) {
-    var params = {'action': 'WelcomePerson', 'userId': userId, 'actionType': action};
-    askAjaxChunk('meeting_users_', 'POST', itemUrl, '@@pm-macros', 'itemPeople', params);
-  }
-}
-
-function confirmByebyeUser(itemUrl, userId, actionType, byeType){
-  dialogData = {'action': 'ByebyePerson', 'itemUrl': itemUrl,
-                'userId': userId, 'actionType': actionType, 'byeType':byeType};
-  if (actionType == "delete") {
-    if (confirm(are_you_sure)) {
-      delete dialogData.itemUrl;
-      askAjaxChunk('meeting_users_', 'POST', itemUrl, '@@pm-macros', 'itemPeople', dialogData);
-    }
-  }
-  else openDialog('confirmByebyeUser');
-}
-
-// Note that a user lefts a meeting after some point.
-function byebyeUser(widget) {
-  itemUrl = dialogData.itemUrl;
-  delete dialogData.itemUrl;
-  // Does the user leave after this item, or does he leave only while this item is discussed?
-  leavesAfter = document.getElementById('leaves_after');
-  if (leavesAfter.checked) byeType = 'leaves_after';
-  else byeType = 'leaves_now';
-  dialogData.byeType = byeType;
-  askAjaxChunk('meeting_users_', 'POST', itemUrl, '@@pm-macros', 'itemPeople', dialogData);
-  closeDialog('confirmByebyeUser');
-}
-
-function setHiddenButton(userId, visibility, prefix='byebye_') {
-  var button = document.getElementById(prefix + userId);
-  if (!button) return;
-  button.style.visibility = visibility;
 }
 
 function askObjectHistory(hookId, objectUrl, maxPerPage, startNumber) {

@@ -63,6 +63,7 @@ from zope.i18n import translate
 from zope.intid.interfaces import IIntIds
 
 import os
+import transaction
 
 
 # PloneMeeting-Error related constants -----------------------------------------
@@ -206,6 +207,8 @@ class ToolInitializer:
             # adapt userDescr.ploneGroups to turn cfg_num into cfg_id
             self.addUsersOutsideGroups(self.data.usersOutsideGroups)
 
+        # commit before continuing so elements like scales on annex types are correctly saved
+        transaction.commit()
         return self.successMessage
 
     def _finishConfigFor(self, cfg, data):
