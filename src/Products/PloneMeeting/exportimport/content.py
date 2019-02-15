@@ -250,11 +250,21 @@ class ToolInitializer:
                 raise PloneMeetingError(MEETING_CONFIG_ERROR % (cfg.getId(), error))
 
         if data.addContactsCSV:
-            # add contacts using the CSV import
             output = import_contacts(self.portal, dochange=True, path=self.profilePath)
             logger.info(output)
             selectableOrderedContacts = cfg.getField('orderedContacts').Vocabulary(cfg).keys()
             cfg.setOrderedContacts(selectableOrderedContacts)
+
+        if data.orderedContacts:
+            # turn hp path to uid
+            hp_uids = []
+            for hp_path in data.orderedContacts:
+                try:
+                    hp_uid = self.portal.contacts.restrictedTraverse(hp_path).UID()
+                    hp_uids.append(hp_uid)
+                except KeyError:
+                    logger.warning('While computing orderedContacts, could not get contact at {0}'.format(hp_path))
+            cfg.setOrderedContacts(hp_uids)
 
         # disable relevant dashboard collections
         for collection_path in data.disabled_collections:

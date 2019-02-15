@@ -128,7 +128,6 @@ function setDescriptionsVisiblity(mustShow) {
       // reload the faceted
       Faceted.URLHandler.hash_changed();
   }
-
   // show/hide the infos and update the cookie
   if (mustShow) {
     $pmMoreInfos.hide().fadeIn("fast");
@@ -145,7 +144,7 @@ function setDescriptionsVisiblity(mustShow) {
 // Function that initialize CSS classes on assembly_and_signatures
 function initializePersonsCookie() {
   show = readCookie('showPersons');
-  if (!show) show = 'true';
+  if (!show) show = 'false';
   label_tag = $('div#assembly-and-signatures')[0];
   tag = $('div#collapsible-assembly-and-signatures')[0];
   if (show == 'true') {
