@@ -79,6 +79,10 @@
     </records>
 
     <!-- plone.app.caching -->
+    <record name="plone.app.caching.interfaces.IPloneCacheSettings.enableCompression">
+        <value>True</value>
+    </record>
+
     <record name="plone.caching.interfaces.ICacheSettings.operationMapping">
       <value purge="False">
         <element key="plone.resource">plone.app.caching.strongCaching</element>

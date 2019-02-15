@@ -175,13 +175,13 @@ class PMHeldPosition(HeldPosition):
     def get_prefix_for_gender_and_number(self, value=None, include_value=False):
         """Get prefix to use depending on given value."""
         value_starting_vowel = {'MS': u'L\'',
-                                'MP': u'Les',
+                                'MP': u'Les ',
                                 'FS': u'L\'',
-                                'FP': u'Les'}
-        value_starting_consonant = {'MS': u'Le',
-                                    'MP': u'Les',
-                                    'FS': u'La',
-                                    'FP': u'Les'}
+                                'FP': u'Les '}
+        value_starting_consonant = {'MS': u'Le ',
+                                    'MP': u'Les ',
+                                    'FS': u'La ',
+                                    'FP': u'Les '}
 
         if not value:
             value = self.get_label()
@@ -197,7 +197,7 @@ class PMHeldPosition(HeldPosition):
                   if v == value}
         res = values and mappings.get(get_gender_and_number([self.get_person()]), '') or ''
         if include_value:
-            res = u'{0} {1}'.format(res, value)
+            res = u'{0}{1}'.format(res, value)
         return res
 
 class PMHeldPositionSchemaPolicy(DexteritySchemaPolicy):
