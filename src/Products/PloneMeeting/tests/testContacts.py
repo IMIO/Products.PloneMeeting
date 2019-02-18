@@ -40,6 +40,7 @@ from zExceptions import Redirect
 from zope.component import getUtility
 from zope.i18n import translate
 from zope.intid.interfaces import IIntIds
+from collective.contact.plonegroup.utils import get_own_organization
 
 import os
 import Products.PloneMeeting
@@ -998,17 +999,22 @@ class testContacts(PloneMeetingTestCase):
         self.assertEqual(len(api.content.find(context=self.portal.contacts, portal_type='person')), 4)
         self.assertEqual(len(api.content.find(context=self.portal.contacts, portal_type='held_position')), 4)
         path = os.path.join(os.path.dirname(Products.PloneMeeting.__file__), 'profiles/testing')
-        output = import_contacts(self.portal, dochange=True, path=path)
+        output = import_contacts(self.portal, path=path)
         self.assertEqual(output, 'You must be a zope manager to run this script')
         self.changeUser('siteadmin')
-        output = import_contacts(self.portal, dochange=True, path=path)
+        output = import_contacts(self.portal, path=path)
         self.assertEqual(output, 'You must be a zope manager to run this script')
         # import contacts as Zope admin
         self.changeUser('admin')
-        import_contacts(self.portal, dochange=True, path=path)
-        # we imported 14 persons/held_positions
-        self.assertEqual(len(api.content.find(context=self.portal.contacts, portal_type='person')), 18)
-        self.assertEqual(len(api.content.find(context=self.portal.contacts, portal_type='held_position')), 18)
+        import_contacts(self.portal, path=path)
+        # we imported 15 persons/held_positions
+        self.assertEqual(len(api.content.find(context=self.portal.contacts, portal_type='person')), 19)
+        self.assertEqual(len(api.content.find(context=self.portal.contacts, portal_type='held_position')), 19)
+        # hp of agent-interne is correctly linked to plonegroup-organization
+        own_org = get_own_organization()
+        agent_interne_hp = self.portal.contacts.get('agent-interne').objectValues()[0]
+        self.assertEqual(agent_interne_hp.portal_type, 'held_position')
+        self.assertEqual(agent_interne_hp.get_organization(), own_org)
 
     def test_pm_Gender_and_number_from_position_type(self):
         """Return gender/number values depending on used position type."""

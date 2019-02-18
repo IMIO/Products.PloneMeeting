@@ -44,7 +44,7 @@ def get_organizations(self, obj=False):
     return '\n'.join(['%s;%s' % (t[0], t[1]) for t in terms])
 
 
-def import_contacts(self, dochange='', ownorg='', only='ORGS|PERS|HP', path=''):
+def import_contacts(self, dochange=True, ownorg=True, only='ORGS|PERS|HP', path=''):
     """
         Import contacts from several files in 'Extensions'
         * organizations.csv:    ID;ID Parent;Intitulé;Description;Type;Adr par;Rue;Numéro;Comp adr;

@@ -253,7 +253,7 @@ class ToolInitializer:
                 raise PloneMeetingError(MEETING_CONFIG_ERROR % (cfg.getId(), error))
 
         if data.addContactsCSV:
-            output = import_contacts(self.portal, dochange=True, path=self.profilePath)
+            output = import_contacts(self.portal, path=self.profilePath)
             logger.info(output)
             selectableOrderedContacts = cfg.getField('orderedContacts').Vocabulary(cfg).keys()
             cfg.setOrderedContacts(selectableOrderedContacts)

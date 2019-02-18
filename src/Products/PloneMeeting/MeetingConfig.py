@@ -387,8 +387,25 @@ schema = Schema((
         ),
         schemata="assembly_and_signatures",
         multiValued=1,
-        vocabulary_factory='Products.PloneMeeting.vocabularies.selectableheldpositionsvocabulary',
+        vocabulary_factory='Products.PloneMeeting.vocabularies.selectableassemblymembersvocabulary',
         default=defValues.orderedContacts,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write harmless config",
+    ),
+    LinesField(
+        name='orderedItemInitiators',
+        widget=InAndOutWidget(
+            description="OrderedItemInitiators",
+            description_msgid="ordered_item_initiators_descr",
+            label='Orderediteminitiators',
+            label_msgid='PloneMeeting_label_orderedItemInitiators',
+            i18n_domain='PloneMeeting',
+            size='20',
+        ),
+        schemata="assembly_and_signatures",
+        multiValued=1,
+        vocabulary_factory='Products.PloneMeeting.vocabularies.selectableiteminitiatorsvocabulary',
+        default=defValues.orderedItemInitiators,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write harmless config",
     ),
@@ -2857,6 +2874,24 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         res = self.getField('usingGroups').get(self, **kwargs)
         if theObjects:
             res = get_organizations(kept_org_uids=res)
+        return res
+
+    security.declarePublic('getOrderedItemInitiators')
+
+    def getOrderedItemInitiators(self, theObjects=False, **kwargs):
+        '''Overrides the field 'orderedItemInitiators' acessor to manage theObjects.'''
+        res = self.getField('orderedItemInitiators').get(self, **kwargs)
+        if theObjects:
+            # query held_positions
+            catalog = api.portal.get_tool('portal_catalog')
+            brains = catalog(UID=res)
+
+            # make sure we have correct order because query was not sorted
+            # we need to sort found brains according to uids
+            def getKey(item):
+                return res.index(item.UID)
+            brains = sorted(brains, key=getKey)
+            res = [brain.getObject() for brain in brains]
         return res
 
     security.declarePublic('getMaxShownListings')

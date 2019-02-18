@@ -227,7 +227,10 @@
         </h4>
         <table width="100%" class="discreet">
           <tr valign="top">
-            <td tal:define="field python:here.getField('orderedContacts')">
+            <td width="50%" tal:define="field python:here.getField('orderedContacts')">
+              <span metal:use-macro="here/widgets/field/macros/view" />
+            </td>
+            <td width="50%" tal:define="field python:here.getField('orderedItemInitiators')">
               <span metal:use-macro="here/widgets/field/macros/view" />
             </td>
           </tr>

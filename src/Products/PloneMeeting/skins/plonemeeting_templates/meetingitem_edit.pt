@@ -61,6 +61,9 @@
       </tr>
     </table>
 
+    <metal:field use-macro="python:here.widget('oralQuestion', mode='edit')"/>
+    <metal:field use-macro="python:here.widget('itemInitiator', mode='edit')"/>
+
     <metal:field use-macro="python:here.widget('preferredMeeting', mode='edit')"/>
     <metal:field use-macro="python:here.widget('sendToAuthority', mode='edit')"/>
     <metal:field use-macro="python:here.widget('isAcceptableOutOfMeeting', mode='edit')"/>
@@ -120,9 +123,6 @@
             <metal:field use-macro="python:here.widget('budgetInfos', mode='edit')"/>
         </div>
     </fieldset>
-
-    <metal:field use-macro="python:here.widget('oralQuestion', mode='edit')"/>
-    <metal:field use-macro="python:here.widget('itemInitiator', mode='edit')"/>
 
     <tal:field define="fieldName python: 'motivation'">
       <metal:f use-macro="context/@@pm-macros/editContentField"/>

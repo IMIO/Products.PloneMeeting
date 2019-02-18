@@ -448,7 +448,7 @@ class MeetingConfigDescriptor(Descriptor):
                          'hideNotViewableLinkedItemsTo', 'inheritedAdviceRemoveableByAdviser', 'usingGroups',
                          'hideHistoryTo')
     excludedFields = ['maxDaysDecisions', 'meetingAppDefaultView',
-                      'addContactsCSV', 'orderedContacts', 'disabled_collections']
+                      'addContactsCSV', 'orderedContacts', 'orderedItemInitiators', 'disabled_collections']
 
     # The 'instance' static attribute stores an instance used for assigning
     # default values to a meeting config being created through-the-web.
@@ -735,6 +735,7 @@ class MeetingConfigDescriptor(Descriptor):
         # bulk import of contacts using CSV related files
         self.addContactsCSV = False
         self.orderedContacts = []
+        self.orderedItemInitiators = []
 
         # Doc parameters -------------------------------------------------------
         self.meetingItemTemplateToStoreAsAnnex = ''

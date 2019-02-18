@@ -1145,6 +1145,8 @@ class HeldPositionUsagesVocabulary(object):
         res = []
         res.append(
             SimpleTerm('assemblyMember', 'assemblyMember', _('assemblyMember')))
+        res.append(
+            SimpleTerm('asker', 'asker', _('asker')))
         return SimpleVocabulary(res)
 
 
@@ -1271,30 +1273,77 @@ class PMMergeTemplatesVocabulary(MergeTemplatesVocabularyFactory):
 PMMergeTemplatesVocabularyFactory = PMMergeTemplatesVocabulary()
 
 
-class SelectableHeldPositionsVocabulary(object):
+class BaseHeldPositionsVocabulary(object):
     """ """
     implements(IVocabularyFactory)
 
-    def __call__(self, context):
+    def __call__(self, context, usage=None, uids=[], highlight_missing=False):
         catalog = api.portal.get_tool('portal_catalog')
-        brains = catalog(portal_type='held_position', sort_on='sortable_title')
+        query = {'portal_type': 'held_position',
+                 'sort_on': 'sortable_title'}
+        if uids:
+            query['UID'] = uids
+        brains = catalog(**query)
         res = []
         highlight = False
+        pattern = u"{0}"
         # highlight person_label in title when displayed in the MeetingConfig view
         if IMeetingConfig.providedBy(context) and 'base_edit' not in context.REQUEST.getURL():
             highlight = True
+            if highlight_missing:
+                pattern = u"<span class='highlight-red'>{0}</span>"
         for brain in brains:
             held_position = brain.getObject()
-            if held_position.usages and 'assemblyMember' in held_position.usages:
+            if held_position.usages and (not usage or usage in held_position.usages):
                 res.append(
                     SimpleTerm(
                         brain.UID,
                         brain.UID,
-                        held_position.get_short_title(
-                            include_usages=True,
-                            include_defaults=True,
-                            include_signature_number=True,
-                            highlight=highlight)))
+                        pattern.format(
+                            held_position.get_short_title(
+                                include_usages=True,
+                                include_defaults=True,
+                                include_signature_number=True,
+                                highlight=highlight))))
         return SimpleVocabulary(res)
 
+
+class SelectableHeldPositionsVocabulary(BaseHeldPositionsVocabulary):
+    """ """
+    def __call__(self, context, usage=None, uids=[]):
+        res = super(SelectableHeldPositionsVocabulary, self).__call__(context, usage=None)
+        return res
+
 SelectableHeldPositionsVocabularyFactory = SelectableHeldPositionsVocabulary()
+
+
+class SelectableAssemblyMembersVocabulary(BaseHeldPositionsVocabulary):
+    """ """
+    def __call__(self, context, usage=None, uids=[]):
+        res = super(SelectableAssemblyMembersVocabulary, self).__call__(context, usage='assemblyMember')
+        return res
+
+SelectableAssemblyMembersVocabularyFactory = SelectableAssemblyMembersVocabulary()
+
+
+class SelectableItemInitiatorsVocabulary(BaseHeldPositionsVocabulary):
+    """ """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        res = super(SelectableItemInitiatorsVocabulary, self).__call__(context, usage='asker')
+        if IMeetingConfig.providedBy(context):
+            stored_terms = context.getOrderedItemInitiators()
+        else:
+            # MeetingItem
+            stored_terms = context.getItemInitiator()
+        # add missing terms
+        missing_term_uids = [uid for uid in stored_terms if uid not in res]
+        res = res._terms
+        if missing_term_uids:
+            missing_terms = super(SelectableItemInitiatorsVocabulary, self).__call__(
+                context, usage=None, uids=missing_term_uids, highlight_missing=True)
+            res += missing_terms._terms
+        return SimpleVocabulary(res)
+
+SelectableItemInitiatorsVocabularyFactory = SelectableItemInitiatorsVocabulary()

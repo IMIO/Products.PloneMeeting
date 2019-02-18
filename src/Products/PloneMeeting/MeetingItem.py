@@ -1019,7 +1019,7 @@ schema = Schema((
     LinesField(
         name='itemInitiator',
         widget=MultiSelectionWidget(
-            condition="python: here.attributeIsUsed('itemInitiator') and here.portal_plonemeeting.isManager(here)",
+            condition="python: here.attributeIsUsed('itemInitiator')",
             description="ItemInitiator",
             description_msgid="item_initiator_descr",
             format="checkbox",
@@ -3968,20 +3968,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         res = []
-        # for u in cfg.getHeldPositions(usages=['asker', ]):
-        #     value = ''
-        #     gender = u.getGender()
-        #     if gender:
-        #         value = "%s " % translate('gender_%s_extended' % gender,
-        #                                   domain='PloneMeeting',
-        #                                   default='',
-        #                                   context=self.REQUEST)
-        #     value = value + unicode(u.Title(), 'utf-8')
-        #     duty = unicode(u.getDuty(), 'utf-8')
-        #     if duty:
-        #         value = value + ", %s" % duty
-        #     res.append((u.id, value))
-        return DisplayList(res).sortedByValue()
+        # missing terms
+        catalog = api.portal.get_tool('portal_catalog')
+        stored_terms = self.getItemInitiator()
+        missing_term_uids = [uid for uid in stored_terms if uid not in cfg.getOrderedItemInitiators()]
+        missing_terms = [brain.getObject() for brain in catalog(UID=missing_term_uids)]
+        for hp in cfg.getOrderedItemInitiators(theObjects=True) + missing_terms:
+            res.append((hp.UID(), hp.get_short_title()))
+        return DisplayList(res)
 
     security.declarePublic('getItemInitiator')
 
