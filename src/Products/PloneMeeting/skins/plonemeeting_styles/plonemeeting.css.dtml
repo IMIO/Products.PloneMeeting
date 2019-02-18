@@ -698,7 +698,8 @@ p.indent-firstline {text-indent: 40px;}
     padding-top: 0.2em;
     padding-bottom: 0.2em;
 }
-.portletTodo div.loading {
+.portletTodo div.loading,
+.portletWidgetCollection div.loading {
    text-align: center;
 }
 #portal-columns dl.portletTodo a {

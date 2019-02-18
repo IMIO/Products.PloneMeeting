@@ -732,7 +732,7 @@ function update_search_term(tag){
     cache: false,
     async: true,
     success: function(data) {
-      $(tag).html(data);
+      $(tag).replaceWith(data);
       $(tag).find("script").each(function(i) {
         eval($(this).text());
       });

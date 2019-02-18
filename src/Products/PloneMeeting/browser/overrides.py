@@ -422,7 +422,7 @@ class PMRenderTermView(RenderTermPortletView):
         rendered_term = super(PMRenderTermView, self).__call__(term, category, widget)
         # display the searchallmeetings as a selection list
         if self.context.getId() in ['searchallmeetings', 'searchlastdecisions']:
-            rendered_term = "<div id='async_search_term_{0}' data-collection_uid='{0}'>" \
+            rendered_term = "<div id='async_search_term_{0}' class='loading' data-collection_uid='{0}'>" \
                 "<img src='{1}/spinner_small.gif' /></div>".format(
                     self.context.UID(), api.portal.get().absolute_url())
         return rendered_term
