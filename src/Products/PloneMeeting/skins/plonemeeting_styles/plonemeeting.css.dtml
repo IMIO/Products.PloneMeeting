@@ -1715,9 +1715,10 @@ p#download_vcard {
     content: "\f146";
 }
 
-/* hide app_parameters for plonegroup root organization */
-body:not([class*='subsection-plonegroup-organization-']).template-view div:not([class^='tooltip']) fieldset#form-groups-app_parameters,
-body:not([class*='subsection-plonegroup-organization-']).template-edit a#fieldsetlegend-app_parameters {
+/* hide app_parameters for plonegroup root organization, hide for every organizations in tooltip */
+body[class*='subsection-plonegroup-organization icons-on'] a#fieldsetlegend-app_parameters,
+body[class*='subsection-plonegroup-organization icons-on'] fieldset#form-groups-app_parameters,
+body[class*='subsection-orgs-searches icons-on'] div.tooltip fieldset#form-groups-app_parameters {
    display: none;
 }
 

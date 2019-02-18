@@ -57,6 +57,8 @@
               title="PloneMeeting: Add annexDecision"/>
   <permission id="PloneMeeting.manage_internal_organization_fields"
               title="PloneMeeting: Manage internal organization fields"/>
+  <permission id="PloneMeeting.write_userid_field"
+              title="PloneMeeting: Write userid field"/>
 
   <adapter for=".interfaces.IMeetingItem"
            factory=".MeetingItem.MeetingItemWorkflowConditions"

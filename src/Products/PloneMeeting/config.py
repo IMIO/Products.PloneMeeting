@@ -55,6 +55,7 @@ AddAnnexDecision = 'PloneMeeting: Add annexDecision'
 AddItem = 'PloneMeeting: Add MeetingItem'
 AddMeeting = 'PloneMeeting: Add Meeting'
 ManageOwnOrganizationFields = 'PloneMeeting: Manage internal organization fields'
+WriteUseridField = 'PloneMeeting: Write userid field'
 setDefaultRoles(ReadDecision, ('Manager',))
 setDefaultRoles(WriteDecision, ('Manager',))
 setDefaultRoles(AddAnnex, ('Manager',))
@@ -62,6 +63,7 @@ setDefaultRoles(AddAnnexDecision, ('Manager',))
 setDefaultRoles(WriteMarginalNotes, ('Manager',))
 # given to nobody by default, is only given on /contact/plonegroup-organization level
 setDefaultRoles(ManageOwnOrganizationFields, ())
+setDefaultRoles(WriteUseridField, ('Manager', ))
 
 # Permissions
 DEFAULT_ADD_CONTENT_PERMISSION = "Add portal content"
