@@ -124,12 +124,13 @@
       <field ref="plone.app.caching.strongCaching.etags" />
       <value purge="True">
         <element>userid</element>
+        <element>usergroups</element>
         <element>gzip</element>
         <element>locked</element>
         <element>resourceRegistries</element>
         <element>contextmodified</element>
         <element>configmodified</element>
-        <element>meetingmodified</element>
+        <element>linkedmeetingmodified</element>
       </value>
   </record>
   <!-- plone.content.folderView -->
@@ -137,12 +138,13 @@
       <field ref="plone.app.caching.strongCaching.etags" />
       <value purge="True">
         <element>userid</element>
+        <element>usergroups</element>
         <element>gzip</element>
         <element>locked</element>
         <element>resourceRegistries</element>
         <element>contextmodified</element>
         <element>configmodified</element>
-        <element>meetingmodified</element>
+        <element>linkedmeetingmodified</element>
       </value>
   </record>
   <!-- plone.content.itemView -->
@@ -150,12 +152,13 @@
       <field ref="plone.app.caching.strongCaching.etags" />
       <value purge="True">
         <element>userid</element>
+        <element>usergroups</element>
         <element>gzip</element>
         <element>locked</element>
         <element>resourceRegistries</element>
         <element>contextmodified</element>
         <element>configmodified</element>
-        <element>meetingmodified</element>
+        <element>linkedmeetingmodified</element>
       </value>
   </record>
 

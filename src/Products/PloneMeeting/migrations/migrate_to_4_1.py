@@ -7,7 +7,6 @@ from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_group
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
-from collective.iconifiedcategory.utils import update_all_categorized_elements
 from copy import deepcopy
 from DateTime import DateTime
 from datetime import date
@@ -373,6 +372,7 @@ class Migrate_To_4_1(Migrator):
                 delattr(item, 'itemSignatories')
                 delattr(item, 'answerers')
                 delattr(item, 'questioners')
+                item.votes = PersistentMapping()
 
             # set orderedContacts then remove the meetingusers folder and contained MeetingUsers
             orderedContacts = [
@@ -830,27 +830,6 @@ class Migrate_To_4_1(Migrator):
         logger.info('Adapted {0} links.'.format(number_of_migrated_links))
         logger.info('Done.')
 
-    def _reorderAnnexes(self):
-        """Annexes are now naturally sorted on their title, update every elements
-           that may contain annexes (meeting, item, advice)."""
-        brains = self.portal.portal_catalog(
-            object_provides='Products.PloneMeeting.interfaces.IMeetingContent')
-        i = 1
-        total = len(brains)
-        for brain in brains:
-            logger.info('Reordering annexes for item {0}/{1} ({2})...'.format(
-                i,
-                total,
-                brain.getPath()))
-            i = i + 1
-            try:
-                obj = brain.getObject()
-            except AttributeError:
-                continue
-            if base_hasattr(obj, 'categorized_elements'):
-                update_all_categorized_elements(obj)
-        logger.info('Done.')
-
     def _migrateContactPersonsKlass(self):
         """klass used by 'person' portal_type changed, this is only relevant for
            users using beta versions..."""
@@ -925,7 +904,6 @@ class Migrate_To_4_1(Migrator):
         self._removeUsersGlobalRoles()
         self._updateItemColumnsKeys()
         self._adaptInternalImagesLinkToUseResolveUID()
-        self._reorderAnnexes()
         self._migrateContactPersonsKlass()
         self.removeUnusedPortalTypes(portal_types=['MeetingUser', 'MeetingFile', 'MeetingFileType', 'MeetingGroup'])
         # too many indexes to update, rebuild the portal_catalog
@@ -961,7 +939,8 @@ def migrate(context):
        23) Remove global roles for every users, roles are only given thru groups;
        24) Update keys stored in MeetingConfig related to static infos displayed in dashboards;
        25) Adapt link to images to be sure to use resolveuid;
-       26) Reorder annexes to use natural sorting.
+       26) Migrate contact person klass to use PMPerson for users of beta versions...;
+       27) Removed no more used portal_types.
     '''
     migrator = Migrate_To_4_1(context)
     migrator.run()

@@ -318,8 +318,8 @@
            name="usergroups" />
   <adapter factory=".etags.ContextModified"
            name="contextmodified" />
-  <adapter factory=".etags.MeetingModified"
-           name="meetingmodified" />
+  <adapter factory=".etags.LinkedMeetingModified"
+           name="linkedmeetingmodified" />
   <adapter factory=".etags.ConfigModified"
            name="configmodified" />
 

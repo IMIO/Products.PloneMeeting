@@ -48,8 +48,8 @@ class ContextModified(object):
         return str(max(int(context.modified()), context._p_mtime))
 
 
-class MeetingModified(object):
-    """The ``meetingmodified`` etag component, returning the modified
+class LinkedMeetingModified(object):
+    """The ``linkedmeetingmodified`` etag component, returning the modified
        date of linked meeting for MeetingItem
     """
 
