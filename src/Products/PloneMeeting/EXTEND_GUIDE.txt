@@ -10,7 +10,6 @@ Meeting:                meeting
 MeetingCategory:        category
 ToolPloneMeeting':      tool
 MeetingGroup:           group
-PodTemplate:            pod
 MeetingUser:            muser
 
 >>> from Products.PloneMeeting.Meeting import Meeting

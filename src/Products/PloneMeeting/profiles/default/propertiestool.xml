@@ -34,7 +34,6 @@
    <element value="MeetingUser"/>
    <element value="organization"/>
    <element value="person"/>
-   <element value="PODTemplate"/>
    <element value="position"/>
    <element value="StyleTemplate"/>
    <element value="SubTemplate"/>

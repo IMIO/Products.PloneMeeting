@@ -123,11 +123,6 @@ class IMeetingGroup(IConfigElement):
     """
 
 
-class IPodTemplate(Interface):
-    """Marker interface for .PodTemplate.PodTemplate
-    """
-
-
 class IMeetingUser(IConfigElement):
     """Marker interface for .MeetingUser.MeetingUser
     """
@@ -150,14 +145,6 @@ class IMeetingItemDocumentation:
            the predecessors.  The dict will contains the 'title' to display,
            the 'url' to link to, the 'tagtitle' that will be used as title for the
            link HTML tag and a 'class' defining a css class name'''
-    def getSpecificDocumentContext():
-        '''When a document is generated from an item, the POD template that is
-           used (see http://appyframework.org/pod.html) receives some variables
-           in its context (the item, the currently logged user, etc). If you
-           want to give more elements in the context, you can override this
-           method, that must return a dict whose keys will correspond to
-           variables that you can use in the POD template, and whose values
-           will be the values of those variables.'''
     def getSpecificMailContext(event, translationMapping):
         '''When a given p_event occurs on this meeting item, PloneMeeting will
            send mail. For defining the mail subject and body, PloneMeeting will
@@ -587,17 +574,6 @@ class IMeetingGroupCustom(IMeetingGroup):
     '''If you want to propose your own implementations of IMeetingGroup methods,
        you must define an adapter that adapts IMeetingGroup to
        IMeetingGroupCustom.'''
-
-
-# Interfaces used for customizing the behaviour of pod templates ---------------
-# See docstring of previous classes for understanding this section.
-class IPodTemplateDocumentation:
-    def onEdit(isCreated):
-        '''Called when an object p_isCreated or edited.'''
-
-
-class IPodTemplateCustom(IPodTemplate):
-    pass
 
 
 # Interfaces used for customizing the behaviour of the PloneMeeting tool -------

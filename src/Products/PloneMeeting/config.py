@@ -75,7 +75,6 @@ ADD_CONTENT_PERMISSIONS = {
     'MeetingCategory': 'PloneMeeting: Manage configuration',
     'MeetingConfig': 'PloneMeeting: Manage configuration',
     'MeetingGroup': 'PloneMeeting: Manage configuration',
-    'PodTemplate': 'PloneMeeting: Manage configuration',
     'MeetingUser': 'PloneMeeting: Add MeetingUser',
 }
 

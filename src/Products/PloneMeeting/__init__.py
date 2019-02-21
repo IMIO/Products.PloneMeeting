@@ -67,7 +67,6 @@ def initialize(context):
     """initialize product (called by zope)"""
 
     from Products.PloneMeeting import monkey
-    import PodTemplate
     import MeetingItem
     import Meeting
     import ToolPloneMeeting

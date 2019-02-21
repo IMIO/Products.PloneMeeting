@@ -3190,12 +3190,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if item.hasMeeting() and (item.getMeeting().queryState() != 'created'):
             return True
 
-    security.declarePublic('getSpecificDocumentContext')
-
-    def getSpecificDocumentContext(self):
-        '''See doc in interfaces.py.'''
-        return {}
-
     security.declarePublic('getSpecificMailContext')
 
     def getSpecificMailContext(self, event, translationMapping):

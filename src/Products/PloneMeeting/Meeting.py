@@ -1861,12 +1861,6 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         meeting = self.getSelf()
         return meeting.queryState() in ('decided', 'closed', 'archived', 'decisions_published', )
 
-    security.declarePublic('getSpecificDocumentContext')
-
-    def getSpecificDocumentContext(self):
-        '''See doc in interfaces.py.'''
-        return {}
-
     security.declarePublic('getSpecificMailContext')
 
     def getSpecificMailContext(self, event, translationMapping):

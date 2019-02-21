@@ -258,7 +258,6 @@
   <five:deprecatedManageAddDelete class=".MeetingGroup.MeetingGroup" />
   <five:deprecatedManageAddDelete class=".MeetingConfig.MeetingConfig" />
   <five:deprecatedManageAddDelete class=".MeetingUser.MeetingUser" />
-  <five:deprecatedManageAddDelete class=".PodTemplate.PodTemplate" />
   <five:deprecatedManageAddDelete class=".ToolPloneMeeting.ToolPloneMeeting" />
 
   <include file="profiles.zcml" />
