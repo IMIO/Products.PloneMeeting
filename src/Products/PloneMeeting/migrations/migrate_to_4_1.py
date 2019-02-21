@@ -661,13 +661,6 @@ class Migrate_To_4_1(Migrator):
         # remove MeetingGroup objects and portal_type
         m_group_ids = [mGroup.getId() for mGroup in self.tool.objectValues('MeetingGroup')]
         self.tool.manage_delObjects(ids=m_group_ids)
-        portal_factory = api.portal.get_tool('portal_factory')
-        registeredFactoryTypes = portal_factory.getFactoryTypes().keys()
-        if 'MeetingGroup' in registeredFactoryTypes:
-            registeredFactoryTypes.remove('MeetingGroup')
-            portal_factory.manage_setPortalFactoryTypes(listOfTypeIds=registeredFactoryTypes)
-        self.portal.portal_types.manage_delObjects(ids=['MeetingGroup'])
-
         logger.info('Done.')
 
     def _updateUsedAttributes(self):
@@ -934,6 +927,7 @@ class Migrate_To_4_1(Migrator):
         self._adaptInternalImagesLinkToUseResolveUID()
         self._reorderAnnexes()
         self._migrateContactPersonsKlass()
+        self.removeUnusedPortalTypes(portal_types=['MeetingUser', 'MeetingFile', 'MeetingFileType', 'MeetingGroup'])
         # too many indexes to update, rebuild the portal_catalog
         self.refreshDatabase()
 

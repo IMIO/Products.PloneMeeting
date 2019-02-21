@@ -26,9 +26,6 @@
   <type type_id="MeetingConfig">
      <bound-workflow workflow_id="plonemeeting_activity_workflow" />
   </type>
-  <type type_id="MeetingFileType">
-     <bound-workflow workflow_id="plonemeeting_activity_workflow" />
-  </type>
   <type type_id="MeetingItem">
      <bound-workflow workflow_id="meetingitem_workflow" />
   </type>
@@ -44,9 +41,6 @@
   </type>
   <type type_id="StyleTemplate">
      <bound-workflow workflow_id="" />
-  </type>
-  <type type_id="MeetingFile">
-   <bound-workflow workflow_id="" />
   </type>
   <type type_id="meetingadvice">
    <bound-workflow workflow_id="meetingadvice_workflow" />

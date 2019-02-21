@@ -79,85 +79,6 @@ class IPloneMeetingLayer(ICollectiveEeafacetedCollectionwidgetLayer):
     pass
 
 
-class IAnnexable(Interface):
-    """
-      Adapter interface that manage elements than contains annexes.
-    """
-
-    def addAnnex(context):
-        """
-          Create an annex (MeetingFile) with given parameters and adds it to this item.
-        """
-
-    def isValidAnnexId(context, idCandidate):
-        """
-          May p_idCandidate be used for a new annex that will be linked to this item?
-        """
-
-    def getAnnexesToPrint(context, relatedTo='item'):
-        """
-          Creates a list of annexes to print for document generation
-          The result is a list containing dicts where first key is the annex title
-          and second key is a tuple of path where to find relevant images to print :
-          [
-           {'title': 'My annex title',
-            'UID': 'annex_UID',
-            'number_of_images': 2,
-            'images': [{'image_number': 1,
-                        'image_path': '/path/to/image1.png',},
-                       {'image_number': 2,
-                        'image_path': '/path/to/image2.png',},
-                      ]},
-           {'title': 'My annex2 title',
-            'UID': 'annex2_UID',
-            'number_of_images': 1,
-            'images': [{'image_number': 1,
-                        'image_path': '/path/to/image21.png',},
-                      ]},
-          ]
-          Returned annexes depend on the p_relatedTo value.
-        """
-
-    def updateAnnexIndex(context, annex=None, removeAnnex=False):
-        """
-          This method updates self.annexIndex (see doc in
-          MeetingItem.__init__). If p_annex is None, this method recomputes the
-          whole annexIndex. If p_annex is not None:
-          - if p_remove is False, info about the newly created p_annex is added
-            to self.annexIndex;
-          - if p_remove is True, info about the deleted p_annex is removed from
-            self.annexIndex.
-        """
-
-    def getAnnexes(context, relatedTo=None):
-        """
-          Returns contained annexes respecting order (container is ordered).
-          It returns annexes depending on p_relatedTo.  If p_relatedTo is None,
-          every annexes are returned, no matter the relatedTo.
-        """
-
-    def getLastInsertedAnnex(context):
-        """
-          Gets the last inserted annex on this item, regardless relatedTo.
-        """
-
-    def getAnnexesByType(context, relatedTo, makeSubLists=True,
-                         typesIds=[], realAnnexes=False):
-        """
-          Returns an annexInfo dict (or real annex objects if p_realAnnexes is
-          True) for every annex linked to me:
-          - p_relatedTo will filter annexes depending on MeetingFileType.relatedTo value.
-          - if p_makeSubLists is True, the result (a list) contains a
-            subList containing all annexes of a given type; if False,
-            the result is a single list containing all requested annexes,
-            sorted by annex type.
-          If p_typesIds in not empty, only annexes of types having ids
-          listed in this param will be returned.
-          In all cases, within each annex type annexes are sorted by
-          creation date (more recent last).
-        """
-
-
 class IConfigElement(Interface):
     """Base marker interface for every config related elements
     """
@@ -194,16 +115,6 @@ class IMeetingCategory(IConfigElement):
 
 class IMeetingConfig(IConfigElement):
     """Marker interface for .MeetingConfig.MeetingConfig
-    """
-
-
-class IMeetingFileType(IConfigElement):
-    """Marker interface for .MeetingFileType.MeetingFileType
-    """
-
-
-class IMeetingFile(Interface):
-    """Marker interface for .MeetingFile.MeetingFile
     """
 
 
@@ -662,35 +573,6 @@ class IMeetingConfigDocumentation:
 
 
 class IMeetingConfigCustom(IMeetingConfig):
-    pass
-
-
-# Interfaces used for customizing the behaviour of meeting files ---------------
-# See docstring of previous classes for understanding this section.
-class IMeetingFileDocumentation:
-    def onEdit(isCreated):
-        '''Called when an object p_isCreated or edited.'''
-
-
-class IMeetingFileCustom(IMeetingFile):
-    pass
-
-
-# Interfaces used for customizing the behaviour of meeting file types ----------
-# See docstring of previous classes for understanding this section.
-class IMeetingFileTypeDocumentation:
-    def onEdit(isCreated):
-        '''Called when an object p_isCreated or edited.'''
-    def isSelectable(row_id=None):
-        '''When adding an annex to an item, the user may choose a file type for
-           this annex, among all file types defined in the corresponding meeting
-           config for which this method isSelectable returns True. The
-           default implementation of isSelectable returns True if the workflow
-           state is "active" for the meeting file type.  If a p_row_id is given,
-           it will check if the corresponding subType having p_row_id 'isActive'.'''
-
-
-class IMeetingFileTypeCustom(IMeetingFileType):
     pass
 
 

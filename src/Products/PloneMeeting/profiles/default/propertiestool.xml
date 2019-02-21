@@ -27,8 +27,6 @@
    <element value="Meeting"/>
    <element value="MeetingCategory"/>
    <element value="MeetingConfig"/>
-   <element value="MeetingFile"/>
-   <element value="MeetingFileType"/>
    <element value="MeetingGroup"/>
    <element value="MeetingItem"/>
    <element value="MeetingItemTemplate"/>

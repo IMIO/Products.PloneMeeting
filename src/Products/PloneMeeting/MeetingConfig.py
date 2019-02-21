@@ -5270,47 +5270,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 signatures = listifySignatures(signatures)
         return signatures
 
-    def getFileTypes_cachekey(method, self, relatedTo='*', typesIds=[], onlySelectable=True, includeSubTypes=True):
-        '''cachekey method for self.getFileTypes.'''
-        # check last object modified and last time container was modified (element added or removed)
-        # compare also with a list of elements review_state and if elements order was changed
-        mfts = self.meetingfiletypes.objectValues()
-        if not mfts:
-            return 0
-        return (mfts,
-                int(max([mft.modified() for mft in mfts])),
-                [mft.workflow_history.values()[0][-1]['review_state'] for mft in mfts],
-                self.meetingfiletypes._tree._p_mtime, relatedTo, typesIds, onlySelectable, includeSubTypes)
-
-    security.declarePublic('getFileTypes')
-
-    @ram.cache(getFileTypes_cachekey)
-    def getFileTypes(self, relatedTo='*', typesIds=[], onlySelectable=True, includeSubTypes=True):
-        '''Gets the relatedTo-related meeting file types. If
-           p_typesIds is not empty, it returns only file types whose ids are
-           in this param.  If p_onlySelectable is True, it will check if MeetingFileType.isSelectable().
-           If p_includeSubTypes is True, MeetingFileType.subTypes are
-           also returned and considered as normal MeetingFileTypes.'''
-        res = []
-        for mft in self.meetingfiletypes.objectValues('MeetingFileType'):
-            if not relatedTo == '*' and not mft.getRelatedTo() == relatedTo:
-                continue
-            isSelectable = True
-            if onlySelectable:
-                isSelectable = bool(mft.isSelectable())
-            if isSelectable and (not typesIds or (typesIds and (mft.id in typesIds))):
-                data = mft._dataFor()
-                res.append(data)
-                # manage subTypes if necessary
-                if includeSubTypes:
-                    for subType in mft.getSubTypes():
-                        if not mft.isSelectable(row_id=subType['row_id']):
-                            continue
-                        data = mft._dataFor(row_id=subType['row_id'])
-                        res.append(data)
-                pass
-        return res
-
     security.declarePublic('getCategories')
 
     def getCategories(self, classifiers=False, onlySelectable=True, userId=None, caching=True):

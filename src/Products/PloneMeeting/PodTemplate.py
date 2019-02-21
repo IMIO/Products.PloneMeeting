@@ -25,7 +25,6 @@ from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from Products.PageTemplates.Expressions import getEngine
 from Products.PloneMeeting.config import *
 from Products.PloneMeeting.config import PloneMeetingError
-from Products.PloneMeeting.interfaces import IAnnexable
 from Products.PloneMeeting.utils import clonePermissions
 from Products.PloneMeeting.utils import getCustomAdapter
 from Products.PloneMeeting.utils import getFieldContent

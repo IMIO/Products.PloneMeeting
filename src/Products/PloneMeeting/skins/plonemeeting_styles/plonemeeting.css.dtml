@@ -979,25 +979,6 @@ body[class*="itemtemplates"].template-manage-portlets a.link-parent {
 #datagridwidget-table-customAdvisers .datagridwidget-column-11 {
     width: 10%;
 }
-/* make column displayed for MeetingFileType.subTypes equals
-   except 2 last columns that will be tighter
-   ...-column-1 is a hidden column (row_id) */
-#datagridwidget-table-subTypes .datagridwidget-column-2,
-#datagridwidget-table-subTypes .datagridwidget-column-3,
-#datagridwidget-table-subTypes .datagridwidget-column-4,
-div[id^="archetypes-fieldname-subTypes-"] TH {
-    width: 25%;
-}
-#datagridwidget-table-subTypes .datagridwidget-column-5 {
-    width: 15%;
-}
-#datagridwidget-table-subTypes .datagridwidget-column-6 {
-    width: 10%;
-}
-/* center the 'Active?' label of the MeetingFileType.subTypes DataGridField */
-#datagridwidget-table-subTypes .datagridwidget-column-6 span {
-    text-align: center;
-}
 
 /* display DX datagrid column in grey */
 .datagridwidget-table-view {

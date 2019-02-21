@@ -623,7 +623,7 @@ class testAnnexes(PloneMeetingTestCase):
                           get_plone_group_id(self.developers_uid, 'creators'): ['AnnexReader']})
 
     def test_pm_AnnexesTitleFoundInItemSearchableText(self):
-        '''MeetingFiles title is indexed in the item SearchableText.'''
+        '''Annexes title is indexed in the item SearchableText.'''
         ANNEX_TITLE = "SpecialAnnexTitle"
         ITEM_TITLE = "SpecialItemTitle"
         ITEM_DESCRIPTION = "Item description text"

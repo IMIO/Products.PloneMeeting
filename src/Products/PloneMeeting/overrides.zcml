@@ -101,20 +101,6 @@
             permission="zope2.View" />
 
         <browser:page
-            for="Products.PloneMeeting.interfaces.IMeetingFile"
-            name="actions_panel"
-            class="Products.PloneMeeting.browser.overrides.BaseActionsPanelView"
-            template="browser/actions_panel.pt"
-            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-            permission="zope2.View" />
-        <browser:page
-            for="Products.PloneMeeting.interfaces.IMeetingFileType"
-            name="config_actions_panel"
-            class="Products.PloneMeeting.browser.overrides.ConfigActionsPanelView"
-            template="browser/actions_panel.pt"
-            layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
-            permission="zope2.View" />
-        <browser:page
             for="Products.PloneMeeting.interfaces.IConfigElement"
             name="actions_panel"
             class="Products.PloneMeeting.browser.overrides.ConfigActionsPanelView"

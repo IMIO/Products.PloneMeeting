@@ -8,8 +8,6 @@ How to extend PloneMeeting content_type schema?
 MeetingItem:            item
 Meeting:                meeting
 MeetingCategory:        category
-MeetingFile:            file
-MeetingFileType':       filetype
 ToolPloneMeeting':      tool
 MeetingGroup:           group
 PodTemplate:            pod

@@ -1078,7 +1078,6 @@ additions = {
 
     # Additional fields for other types
     "MeetingCategory": (cf('title'), cf('description', type='text')),
-    "MeetingFileType": (cf('title'), cf('predefinedTitle')),
     "PodTemplate": (cf('title'), cf('description', type='text')),
     "MeetingGroup": (cf('title'), cf('description', type='text')),
     "MeetingConfig": (cf('title'),),

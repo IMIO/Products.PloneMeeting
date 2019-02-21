@@ -77,8 +77,6 @@ from Products.PloneMeeting.interfaces import IMeetingAfterTransitionEvent
 from Products.PloneMeeting.interfaces import IMeetingCategoryCustom
 from Products.PloneMeeting.interfaces import IMeetingConfigCustom
 from Products.PloneMeeting.interfaces import IMeetingCustom
-from Products.PloneMeeting.interfaces import IMeetingFileCustom
-from Products.PloneMeeting.interfaces import IMeetingFileTypeCustom
 from Products.PloneMeeting.interfaces import IMeetingGroupCustom
 from Products.PloneMeeting.interfaces import IMeetingItemCustom
 from Products.PloneMeeting.interfaces import IMeetingLocalRolesUpdatedEvent
@@ -128,8 +126,6 @@ adaptables = {
     # following content types; only a Custom adapter.
     'MeetingCategory': {'method': None, 'interface': IMeetingCategoryCustom},
     'MeetingConfig': {'method': None, 'interface': IMeetingConfigCustom},
-    'MeetingFile': {'method': None, 'interface': IMeetingFileCustom},
-    'MeetingFileType': {'method': None, 'interface': IMeetingFileTypeCustom},
     'MeetingGroup': {'method': None, 'interface': IMeetingGroupCustom},
     'ToolPloneMeeting': {'method': None, 'interface': IToolPloneMeetingCustom},
     'MeetingUser': {'method': None, 'interface': IMeetingUserCustom},
@@ -596,8 +592,8 @@ def addRecurringItemsIfRelevant(meeting, transition):
 # I wanted to put permission "ReviewPortalContent" among defaultPermissions,
 # but if I do this, it generates an error when calling "manage_permission" in
 # method "clonePermissions" (see below). I've noticed that in several
-# PloneMeeting standard workflows (meeting_workflow, meetingitem_workflow,
-# meetingfile_workflow, etc), although this permission is declared as a
+# PloneMeeting standard workflows (meeting_workflow, meetingitem_workflow, etc),
+# although this permission is declared as a
 # managed permission, when you go in the ZMI to consult the actual
 # permissions that are set on objects governed by those workflows, the
 # permission "Review portal content" does not appear in the list at all.
@@ -788,7 +784,7 @@ InitializeClass(FakeMeetingUser)
 
 
 # ------------------------------------------------------------------------------
-mainTypes = ('MeetingItem', 'Meeting', 'MeetingFile')
+mainTypes = ('MeetingItem', 'Meeting')
 
 
 def getFieldContent(obj, name, force=None, sep='-', **kwargs):

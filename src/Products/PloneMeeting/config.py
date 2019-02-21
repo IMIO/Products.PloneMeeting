@@ -268,9 +268,6 @@ DELAY_UNAVAILABLE_WEEKDAY_NUMBER = 5
 # Define the weekday mnemonics to match the date.weekday function
 PY_DATETIME_WEEKDAYS = ('mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun')
 
-# warn about MeetingFile size if file size bigger than
-MAX_FILE_SIZE_WARNING = 5000000
-
 # default user password used when sample users are added to a PloneMeeting during install
 DEFAULT_USER_PASSWORD = 'Meeting_12'
 

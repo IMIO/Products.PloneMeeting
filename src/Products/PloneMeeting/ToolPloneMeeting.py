@@ -324,7 +324,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     schema["id"].widget.visible = False
     schema["title"].widget.visible = False
 
-    ploneMeetingTypes = ('MeetingItem', 'MeetingFile')
     ocrLanguages = ('eng', 'fra', 'deu', 'ita', 'nld', 'por', 'spa', 'vie')
 
     # tool should not appear in portal_catalog
@@ -640,7 +639,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         # constrain types
         mc_folder.setConstrainTypesMode(1)
         allowedTypes = [cfg.getItemTypeName(),
-                        cfg.getMeetingTypeName()] + ['File', 'Folder', 'MeetingFile']
+                        cfg.getMeetingTypeName()] + ['File', 'Folder']
         mc_folder.setLocallyAllowedTypes(allowedTypes)
         mc_folder.setImmediatelyAddableTypes([])
         # Define permissions on this folder. Some remarks:

@@ -26,42 +26,6 @@
       for="Products.CMFPlone.interfaces.IPloneSiteRoot" />
 
   <genericsetup:upgradeStep
-      title="Go to PloneMeeting 4.0 (All in one)"
-      description=""
-      source="3.3"
-      destination="4.0"
-      handler="Products.PloneMeeting.migrations.migrate_to_4_0.migrate"
-      profile="Products.PloneMeeting:default" />
-  <genericsetup:upgradeStep
-      title="Go to PloneMeeting 4.0 (Step 1)"
-      description=""
-      source="3.3"
-      destination="4.0b1"
-      handler="Products.PloneMeeting.migrations.migrate_to_4_0.migrate_step1"
-      profile="Products.PloneMeeting:default" />
-  <genericsetup:upgradeStep
-      title="Go to PloneMeeting 4.0 (Step 2)"
-      description=""
-      source="4.0b1"
-      destination="4.0b2"
-      handler="Products.PloneMeeting.migrations.migrate_to_4_0.migrate_step2"
-      profile="Products.PloneMeeting:default" />
-  <genericsetup:upgradeStep
-      title="Go to PloneMeeting 4.0 (Step 3)"
-      description=""
-      source="4.0b2"
-      destination="4.0"
-      handler="Products.PloneMeeting.migrations.migrate_to_4_0.migrate_step3"
-      profile="Products.PloneMeeting:default" />
-  <genericsetup:upgradeStep
-      title="Go to PloneMeeting 4.0 (Step 4)"
-      description="For application that was already migrated to v4.0 Step 1 to Step 3"
-      source="4.0"
-      destination="4.0"
-      handler="Products.PloneMeeting.migrations.migrate_to_4_0.migrate_step4"
-      profile="Products.PloneMeeting:default" />
-
-  <genericsetup:upgradeStep
       title="Go to PloneMeeting 4.1"
       description=""
       source="4.0"

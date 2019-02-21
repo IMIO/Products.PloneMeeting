@@ -73,8 +73,6 @@ def initialize(context):
     import ToolPloneMeeting
     import MeetingCategory
     import MeetingConfig
-    import MeetingFileType
-    import MeetingFile
     import MeetingGroup
     import MeetingUser
 
