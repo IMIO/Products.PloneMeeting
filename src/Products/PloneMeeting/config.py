@@ -75,13 +75,11 @@ ADD_CONTENT_PERMISSIONS = {
     'MeetingCategory': 'PloneMeeting: Manage configuration',
     'MeetingConfig': 'PloneMeeting: Manage configuration',
     'MeetingGroup': 'PloneMeeting: Manage configuration',
-    'MeetingUser': 'PloneMeeting: Add MeetingUser',
 }
 
 setDefaultRoles(AddItem, ('Manager', 'Editor', ))
 setDefaultRoles(AddMeeting, ('Manager', ))
 setDefaultRoles('PloneMeeting: Manage configuration', ('Manager', ))
-setDefaultRoles('PloneMeeting: Add MeetingUser', ('Manager', ))
 
 product_globals = globals()
 

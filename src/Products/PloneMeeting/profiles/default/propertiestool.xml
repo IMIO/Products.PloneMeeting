@@ -31,7 +31,6 @@
    <element value="MeetingItem"/>
    <element value="MeetingItemTemplate"/>
    <element value="MeetingItemRecurring"/>
-   <element value="MeetingUser"/>
    <element value="organization"/>
    <element value="person"/>
    <element value="position"/>

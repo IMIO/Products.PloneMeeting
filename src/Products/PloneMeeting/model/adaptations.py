@@ -1080,9 +1080,6 @@ additions = {
     "MeetingCategory": (cf('title'), cf('description', type='text')),
     "MeetingGroup": (cf('title'), cf('description', type='text')),
     "MeetingConfig": (cf('title'),),
-    "MeetingUser":
-    (cf('duty', condition="python: here.isManager(here)"),
-     cf('replacementDuty', condition="python: here.isManager(here)")),
 }
 
 

@@ -4381,16 +4381,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # exec 'condition = %s' % self.getVoteCondition()
         return True
 
-    security.declarePrivate('listDefaultSignatories')
-
-    def listDefaultSignatories(self):
-        '''Lists the available signatories.'''
-        # Get every meeting user and check if signer is in their usages
-        if self.isTemporary():
-            return None
-        res = ((u.id, u.Title()) for u in self.getMeetingUsers(usages=('signer',)))
-        return DisplayList(res)
-
     security.declarePublic('deadlinesAreEnabled')
 
     def deadlinesAreEnabled(self):

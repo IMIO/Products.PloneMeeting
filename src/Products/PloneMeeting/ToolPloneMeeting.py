@@ -336,8 +336,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     def at_post_create_script(self):
         self.adapted().onEdit(isCreated=True)
-        # give the "PloneMeeting: Add MeetingUser" permission to MeetingObserverGlobal role
-        self.manage_permission(ADD_CONTENT_PERMISSIONS['MeetingUser'], ('Manager', 'MeetingObserverGlobal'))
 
     security.declareProtected(ModifyPortalContent, 'setConfigGroups')
 

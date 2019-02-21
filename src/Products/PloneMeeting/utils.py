@@ -20,9 +20,7 @@
 # 02110-1301, USA.
 #
 
-from AccessControl import ClassSecurityInfo
 from AccessControl.Permission import Permission
-from App.class_init import InitializeClass
 from appy.shared.diff import HtmlDiff
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.utils import get_own_organization
@@ -80,7 +78,6 @@ from Products.PloneMeeting.interfaces import IMeetingCustom
 from Products.PloneMeeting.interfaces import IMeetingGroupCustom
 from Products.PloneMeeting.interfaces import IMeetingItemCustom
 from Products.PloneMeeting.interfaces import IMeetingLocalRolesUpdatedEvent
-from Products.PloneMeeting.interfaces import IMeetingUserCustom
 from Products.PloneMeeting.interfaces import IToolPloneMeetingCustom
 from zope.annotation import IAnnotations
 from zope.component import getAdapter
@@ -128,7 +125,6 @@ adaptables = {
     'MeetingConfig': {'method': None, 'interface': IMeetingConfigCustom},
     'MeetingGroup': {'method': None, 'interface': IMeetingGroupCustom},
     'ToolPloneMeeting': {'method': None, 'interface': IToolPloneMeetingCustom},
-    'MeetingUser': {'method': None, 'interface': IMeetingUserCustom},
 }
 
 
@@ -720,70 +716,7 @@ def getDateFromDelta(aDate, delta):
     days, hour = delta.split('.')
     return DateTime('%s %s' % ((aDate + int(days)).strftime('%Y/%m/%d'), hour))
 
-# ------------------------------------------------------------------------------
 
-
-class FakeMeetingUser:
-    '''Used as a replacement for a MeetingUser, ie:
-       * when the real MeetingUser has been deleted,
-       * when we need to get replacement-related info concatenated from several
-         MeetingUser instances.
-    '''
-
-    security = ClassSecurityInfo()
-
-    def __init__(self, id, user=None, replacement=None):
-        self.id = id
-        if not user:
-            return
-        bilingual = user.getField('duty2')
-        # MeetingUser instance p_user is replaced by a p_replacement user.
-        self.title = user.Title()
-        if bilingual:
-            self.title2 = user.getTitle2()
-        self.duty = replacement.getReplacementDuty()
-        if bilingual:
-            self.duty2 = replacement.getReplacementDuty2()
-        # If this person replaces another one, self.duty above is the duty of
-        # the person as replacement for the other one. We keep its original
-        # duty in self.originalDuty below.
-        self.originalDuty = user.getDuty()
-        if bilingual:
-            self.originalDuty2 = user.getDuty2()
-
-    security.declarePublic('getId')
-
-    def getId(self):
-        return self.id
-
-    security.declarePublic('Title')
-
-    def Title(self):
-        return getattr(self, 'title', '')
-
-    security.declarePublic('getDuty')
-
-    def getDuty(self, original=False):
-        if not original:
-            return getattr(self, 'duty', '')
-        return getattr(self, 'originalDuty', '')
-
-    security.declarePublic('getBilingual')
-
-    def getBilingual(self, name, force=1, sep='-'):
-        '''Gets the bilingual content of field named p_name (mimics
-           MeetingUser.getBilingual).'''
-        if force == 1:
-            return getattr(self, name, '')
-        elif force == 2:
-            return getattr(self, name + '2', '')
-        elif force == 'all':
-            return '%s%s%s' % (getattr(self, name, ''), sep,
-                               getattr(self, name + '2', ''))
-InitializeClass(FakeMeetingUser)
-
-
-# ------------------------------------------------------------------------------
 mainTypes = ('MeetingItem', 'Meeting')
 
 

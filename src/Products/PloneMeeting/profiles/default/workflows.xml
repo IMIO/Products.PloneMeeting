@@ -29,9 +29,6 @@
   <type type_id="MeetingItem">
      <bound-workflow workflow_id="meetingitem_workflow" />
   </type>
-  <type type_id="MeetingUser">
-     <bound-workflow workflow_id="plonemeeting_activity_workflow" />
-  </type>
 <!-- ##code-section workflowbindings -->
   <type type_id="ConfigurablePODTemplate">
    <bound-workflow workflow_id="" />

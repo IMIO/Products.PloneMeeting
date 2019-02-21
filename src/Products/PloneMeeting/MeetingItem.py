@@ -3958,7 +3958,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('listItemInitiators')
 
     def listItemInitiators(self):
-        '''Returns the active MeetingUsers having usage "asker".'''
+        ''' '''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         res = []
@@ -3970,20 +3970,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         for hp in cfg.getOrderedItemInitiators(theObjects=True) + missing_terms:
             res.append((hp.UID(), hp.get_short_title()))
         return DisplayList(res)
-
-    security.declarePublic('getItemInitiator')
-
-    def getItemInitiator(self, theObject=False, **kwargs):
-        '''Returns the itemInitiator id or the MeetingUser object if p_theObject is True.'''
-        res = self.getField('itemInitiator').get(self, **kwargs)
-        if res and theObject:
-            tool = api.portal.get_tool('portal_plonemeeting')
-            mc = tool.getMeetingConfig(self)
-            users = []
-            for user_id in res:
-                users.append(getattr(mc.meetingusers, user_id))
-            res = users
-        return res
 
     security.declarePrivate('getAdvices')
 

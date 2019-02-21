@@ -591,29 +591,3 @@ class IToolPloneMeetingCustom(IToolPloneMeeting):
     '''If you want to propose your own implementations of tool methods,
        you must define an adapter that adapts IToolPloneMeeting to
        IToolPloneMeetingCustom.'''
-
-
-# Interfaces used for customizing the behaviour of meeting users ---------------
-# See docstring of previous classes for understanding this section.
-class IMeetingUserDocumentation:
-    def mayConsultVote(loggedUser, item):
-        '''May the currently logged user (p_loggedUser) see the vote from this
-           meeting user on p_item?
-
-           The default implementation returns True if the logged user is the
-           voter, a Manager or a MeetingManager or if the meeting was decided
-           (result of meeting.isDecided()).'''
-    def mayEditVote(loggedUser, item):
-        '''May the currently logged user (p_loggedUser) edit the vote from this
-           meeting user on p_item?
-
-           The default implementation returns True if the meeting has not been
-           decided yet (result of meeting.isDecided()), and if the logged user
-           is the voter himself (provided voters encode votes according to the
-           meeting configuration) or if the logged user is a meeting manager
-           (provided meeting managers encode votes according to the meeting
-           configuration) or if the logged user is a Manager.'''
-
-
-class IMeetingUserCustom(IMeetingUser):
-    pass

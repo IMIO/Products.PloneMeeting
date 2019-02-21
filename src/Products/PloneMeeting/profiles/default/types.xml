@@ -11,8 +11,6 @@
          meta_type="Factory-based Type Information with dynamic views"/>
  <object name="MeetingConfig"
          meta_type="Factory-based Type Information with dynamic views"/>
- <object name="MeetingUser"
-         meta_type="Factory-based Type Information with dynamic views"/>
  <object name="Plone Site"
          meta_type="Factory-based Type Information with dynamic views"/>
  <object name="meetingadvice" meta_type="Dexterity FTI"/>
