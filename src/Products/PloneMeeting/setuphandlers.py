@@ -174,7 +174,7 @@ def postInstall(context):
 
     # Make "Unauthorized" exceptions appear in the error log.
     site.error_log.setProperties(
-        25, copy_to_zlog=1, ignored_exceptions=('NotFound', 'Redirect'))
+        25, copy_to_zlog=1, ignored_exceptions=('NotFound', 'Redirect', 'Intercepted'))
 
     # Set a specific workflow policy for all objects created in the tool
     ppw = site.portal_placeful_workflow
