@@ -52,6 +52,7 @@ from Products.PloneMeeting.config import ITEM_INSERT_METHODS
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
 from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
 from Products.PloneMeeting.utils import get_annexes
+from Products.PloneMeeting.utils import get_person_from_userid
 from Products.PloneMeeting.utils import signatureNotAlone
 from Products.PloneMeeting.utils import toHTMLStrikedContent
 from zope.i18n import translate
@@ -689,6 +690,29 @@ class BaseDGHV(object):
         historyView = self.context.restrictedTraverse('historyview')()
         historyViewRendered = lxml.html.fromstring(historyView)
         return lxml.html.tostring(historyViewRendered.get_element_by_id('content-core'), method='xml')
+
+    def get_contact_infos(self, position_type, userid=None):
+        """Return informations for given userid, if not given, we take current element creator,
+           this is useful to manage signature on advice.
+           Given position_type will be used to get correct held_position related to signature."""
+        infos = {'person': None,
+                 'person_title': None,
+                 'person_fullname': None,
+                 'held_position': None,
+                 'held_position_label': None,
+                 'held_position_prefixed_label': None,
+                 }
+        person = get_person_from_userid(userid or self.context.Creator())
+        if person:
+            infos['person'] = person
+            infos['person_title'] = person.get_title()
+            infos['person_fullname'] = person.get_title(include_person_title=False)
+            hp = person.get_held_position_by_type(position_type)
+            if hp:
+                infos['held_position'] = hp
+                infos['held_position_label'] = hp.get_label()
+                infos['held_position_prefixed_label'] = hp.get_prefix_for_gender_and_number(include_value=True)
+        return infos
 
     def printAdvicesInfos(self,
                           item,

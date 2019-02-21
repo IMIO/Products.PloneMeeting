@@ -14,6 +14,7 @@ from datetime import date
 from eea.facetednavigation.interfaces import ICriteria
 from persistent.mapping import PersistentMapping
 from plone import api
+from plone.app.contenttypes.migration.dxmigration import migrate_base_class_to_new_class
 from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_NEW
@@ -24,11 +25,11 @@ from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
 from Products.PloneMeeting.migrations import Migrator
 from Products.PloneMeeting.utils import get_public_url
 from Products.PloneMeeting.utils import updateCollectionCriterion
+from z3c.relationfield.relation import RelationValue
+from zope.component import getUtility
 from zope.i18n import translate
 from zope.interface import alsoProvides
-from z3c.relationfield.relation import RelationValue
 from zope.intid.interfaces import IIntIds
-from zope.component import getUtility
 
 import logging
 import mimetypes
@@ -857,6 +858,16 @@ class Migrate_To_4_1(Migrator):
                 update_all_categorized_elements(obj)
         logger.info('Done.')
 
+    def _migrateContactPersonsKlass(self):
+        """klass used by 'person' portal_type changed, this is only relevant for
+           users using beta versions..."""
+        for brain in self.catalog(portal_type='person'):
+            person = brain.getObject()
+            migrate_base_class_to_new_class(
+                person,
+                old_class_name='collective.contact.core.content.person.Person',
+                new_class_name='Products.PloneMeeting.content.person.PMPerson')
+
     def run(self, step=None):
         logger.info('Migrating to PloneMeeting 4.1...')
 
@@ -922,6 +933,7 @@ class Migrate_To_4_1(Migrator):
         self._updateItemColumnsKeys()
         self._adaptInternalImagesLinkToUseResolveUID()
         self._reorderAnnexes()
+        self._migrateContactPersonsKlass()
         # too many indexes to update, rebuild the portal_catalog
         self.refreshDatabase()
 

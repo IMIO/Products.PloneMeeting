@@ -25,5 +25,7 @@
              name="schema_policy_pm_held_position" />
     <utility factory=".organization.PMOrganizationSchemaPolicy"
              name="schema_policy_pm_organization" />
+    <utility factory=".person.PMPersonSchemaPolicy"
+             name="schema_policy_pm_person" />
 
 </configure>
