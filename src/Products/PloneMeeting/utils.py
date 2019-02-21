@@ -1626,6 +1626,19 @@ def org_id_to_uid(org_info, raise_on_error=True):
             return None
 
 
+def get_person_from_userid(userid, only_active=True):
+    """Return the person having given p_userid."""
+    catalog = api.portal.get_tool('portal_catalog')
+    query = {'portal_type': 'person'}
+    if only_active:
+        query['review_state'] = 'active'
+    brains = catalog(**query)
+    for brain in brains:
+        person = brain.getObject()
+        if person.userid == userid:
+            return person
+
+
 class AdvicesUpdatedEvent(ObjectEvent):
     implements(IAdvicesUpdatedEvent)
 

@@ -26,6 +26,9 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Fixed bug in manage_item_signatures_form if field 'assembly' was not used.  Free text field 'signatures' may be used together
   with contact field attendees and in this case, it was failing (Unauthorized)
 - Migrate MeetingItem.itemInitiator to contacts
+- Added possibility to link a Plone user to a contacts person (using field person.userid).
+  Added method get_contact_infos to the document generation helper view so for example when an advice creator is linked to a person,
+  we may use a particular held_position to render signatory infos
 
 4.1b16 (2019-01-31)
 -------------------
