@@ -24,6 +24,7 @@ from AccessControl import ClassSecurityInfo
 from AccessControl.Permission import Permission
 from App.class_init import InitializeClass
 from appy.shared.diff import HtmlDiff
+from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.excelexport.exportables.dexterityfields import get_exportable_for_fieldname
@@ -1080,16 +1081,23 @@ def applyOnTransitionFieldTransform(obj, transitionId):
         if transform['transition'] == transitionId and \
            transform['field_name'].split('.')[0] == obj.meta_type and \
            tal_expr:
-            from Products.CMFCore.Expression import Expression, createExprContext
-            portal = api.portal.get()
-            ctx = createExprContext(obj.getParentNode(), portal, obj)
             try:
-                res = Expression(tal_expr)(ctx)
+                res = _evaluateExpression(
+                    obj,
+                    expression=tal_expr,
+                    roles_bypassing_expression=[],
+                    extra_expr_ctx={
+                        'item': obj,
+                        'tool': tool,
+                        'cfg': cfg},
+                    empty_expr_is_true=False,
+                    raise_on_error=True)
             except Exception, e:
                 plone_utils = api.portal.get_tool('plone_utils')
-                plone_utils.addPortalMessage(PloneMeetingError(ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR %
-                                                               (transform['field_name'].split('.')[1], str(e))),
-                                             type='warning')
+                plone_utils.addPortalMessage(
+                    PloneMeetingError(ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR %
+                                      (transform['field_name'].split('.')[1], str(e))),
+                    type='warning')
                 return
             field = obj.getField(transform['field_name'].split('.')[1])
             field.set(obj, res, mimetype='text/html')

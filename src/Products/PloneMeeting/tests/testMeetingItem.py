@@ -3284,6 +3284,7 @@ class testMeetingItem(PloneMeetingTestCase):
            rich text field depending on what is defined in MeetingConfig.onTransitionFieldTransforms.
            This is used for example to adapt the text of the decision when an item is delayed or refused.
            '''
+        cfg = self.meetingConfig
         self.changeUser('pmManager')
         meeting = self._createMeetingWithItems()
         self.decideMeeting(meeting)
@@ -3296,7 +3297,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(item1.getDecision() == originalDecision)
         # configure onTransitionFieldTransforms and delay another item
         delayedItemDecision = '<p>This item has been delayed.</p>'
-        self.meetingConfig.setOnTransitionFieldTransforms(
+        cfg.setOnTransitionFieldTransforms(
             ({'transition': 'delay',
               'field_name': 'MeetingItem.decision',
               'tal_expression': 'string:%s' % delayedItemDecision},))
@@ -3312,7 +3313,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(duplicatedItem.getDecision() == originalDecision)
         # this work also when triggering any other item or meeting transition with every rich fields
         item3 = meeting.getItems()[2]
-        self.meetingConfig.setOnTransitionFieldTransforms(
+        cfg.setOnTransitionFieldTransforms(
             ({'transition': 'accept',
               'field_name': 'MeetingItem.description',
               'tal_expression': 'string:<p>My new description.</p>'},))
@@ -3321,7 +3322,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(item3.Description() == '<p>My new description.</p>')
         # if ever an error occurs with the TAL expression, the transition
         # is made but the rich text is not changed and a portal_message is displayed
-        self.meetingConfig.setOnTransitionFieldTransforms(
+        cfg.setOnTransitionFieldTransforms(
             ({'transition': 'accept',
               'field_name': 'MeetingItem.decision',
               'tal_expression': 'some_wrong_tal_expression'},))
