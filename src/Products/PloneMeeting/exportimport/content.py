@@ -24,7 +24,6 @@ from collective.contact.plonegroup.config import ORGANIZATIONS_REGISTRY
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_group
-from collective.eeafaceted.collectionwidget.utils import _updateDefaultCollectionFor
 from collective.iconifiedcategory import CAT_SEPARATOR
 from copy import deepcopy
 from imio.helpers.content import validate_fields
@@ -233,11 +232,7 @@ class ToolInitializer:
         # select correct default view
         meetingAppDefaultView = data.meetingAppDefaultView
         if meetingAppDefaultView in cfg.searches.searches_items.objectIds():
-            default_uid = getattr(cfg.searches.searches_items,
-                                  meetingAppDefaultView).UID()
-            # update the criterion default value in searches and searches_items folders
-            _updateDefaultCollectionFor(cfg.searches, default_uid)
-            _updateDefaultCollectionFor(cfg.searches.searches_items, default_uid)
+            cfg._set_default_faceted_search(meetingAppDefaultView)
         else:
             error = 'meetingAppDefaultView : No DashboardCollection with id %s' % meetingAppDefaultView
             raise PloneMeetingError(MEETING_CONFIG_ERROR % (cfg.getId(), error))

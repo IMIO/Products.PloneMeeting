@@ -35,6 +35,7 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Display the entire advice content in the tooltipster, now that advice content is loaded asynchronously (on hover), so we have
   access to entire Comment/Observations fields content, this avoids missing informations and problems while cropping advice content
 - When mailing lists are wrongly defined on a POD template, do not crash the POD templates viewlet, display a clear message in the mailing list dropdown
+- When creating a MeetingConfig TTW, define 'searchmyitems' as default faceted collection so it is directly useable
 
 4.1b16 (2019-01-31)
 -------------------

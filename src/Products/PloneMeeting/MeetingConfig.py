@@ -19,6 +19,7 @@ from collective.contact.plonegroup.utils import get_plone_groups
 from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
 from collective.eeafaceted.collectionwidget.interfaces import IDashboardCollection
 from collective.eeafaceted.collectionwidget.utils import _get_criterion
+from collective.eeafaceted.collectionwidget.utils import _updateDefaultCollectionFor
 from collective.eeafaceted.dashboard.utils import enableFacetedDashboardFor
 from collective.iconifiedcategory.utils import get_category_object
 from copy import deepcopy
@@ -4758,6 +4759,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         # Create the corresponding group that will contain item templates Managers
         self.createItemTemplateManagersGroup()
 
+    def _set_default_faceted_search(self, collection_id='searchmyitems'):
+        """ """
+        collection = getattr(self.searches.searches_items, collection_id,
+                             self.searches.searches_items.objectValues()[0])
+        default_uid = collection.UID()
+        # update the criterion default value in searches and searches_items folders
+        _updateDefaultCollectionFor(self.searches, default_uid)
+        _updateDefaultCollectionFor(self.searches.searches_items, default_uid)
+
     security.declarePrivate('at_post_create_script')
 
     def at_post_create_script(self):
@@ -4772,6 +4782,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         self.manage_addProperty(MEETING_CONFIG, self.id, 'string')
         # Create the collections related to this meeting config
         self.createSearches(self._searchesInfo())
+        # define default search for faceted
+        self._set_default_faceted_search()
         # Update customViewFields defined on DashboardCollections
         self.updateCollectionColumns()
         # Sort the item tags if needed
