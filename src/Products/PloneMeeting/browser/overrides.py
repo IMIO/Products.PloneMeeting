@@ -248,7 +248,7 @@ class PMConfigActionsPanelViewlet(ActionsPanelViewlet):
         return url
 
 
-class BaseGeneratorLinksViewlet():
+class BaseGeneratorLinksViewlet(object):
     """ """
 
     def getAvailableMailingLists(self, template_uid):

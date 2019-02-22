@@ -1513,19 +1513,26 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         mailing_lists = pod_template.mailing_lists and pod_template.mailing_lists.strip()
         if not mailing_lists:
             return res
-        for line in mailing_lists.split('\n'):
-            name, expression, userIds = line.split(';')
-            member = api.user.get_current()
-            cfg = self.getMeetingConfig(obj)
-            data = {'obj': obj,
-                    'member': member,
-                    'tool': self,
-                    'cfg': cfg}
-            if not expression or _evaluateExpression(obj,
-                                                     expression,
-                                                     roles_bypassing_expression=[],
-                                                     extra_expr_ctx=data):
-                res.append(name.strip())
+        try:
+            for line in mailing_lists.split('\n'):
+                name, expression, userIds = line.split(';')
+                member = api.user.get_current()
+                cfg = self.getMeetingConfig(obj)
+                data = {'obj': obj,
+                        'member': member,
+                        'tool': self,
+                        'cfg': cfg}
+                if not expression or _evaluateExpression(obj,
+                                                         expression,
+                                                         roles_bypassing_expression=[],
+                                                         extra_expr_ctx=data,
+                                                         raise_on_error=True):
+                    res.append(name.strip())
+        except Exception, exc:
+            res.append(translate('Mailing lists are not correctly defined, original error is \"${error}\"',
+                                 domain='PloneMeeting',
+                                 mapping={'error': str(exc)},
+                                 context=self.REQUEST))
         return res
 
     def showHolidaysWarning(self, context):
