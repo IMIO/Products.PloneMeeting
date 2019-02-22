@@ -840,6 +840,13 @@ class Migrate_To_4_1(Migrator):
                 old_class_name='collective.contact.core.content.person.Person',
                 new_class_name='Products.PloneMeeting.content.person.PMPerson')
 
+    def _disableVotes(self):
+        """Disable the votes functionnality that is broken since we use contacts."""
+        logger.info('Disabling votes for every MeetingConfigs...')
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            cfg.setUseVotes(False)
+        logger.info('Done.')
+
     def run(self, step=None):
         logger.info('Migrating to PloneMeeting 4.1...')
 
@@ -905,6 +912,7 @@ class Migrate_To_4_1(Migrator):
         self._updateItemColumnsKeys()
         self._adaptInternalImagesLinkToUseResolveUID()
         self._migrateContactPersonsKlass()
+        self._disableVotes()
         self.removeUnusedPortalTypes(portal_types=['MeetingUser', 'MeetingFile', 'MeetingFileType', 'MeetingGroup'])
         # too many indexes to update, rebuild the portal_catalog
         self.refreshDatabase()
@@ -940,7 +948,8 @@ def migrate(context):
        24) Update keys stored in MeetingConfig related to static infos displayed in dashboards;
        25) Adapt link to images to be sure to use resolveuid;
        26) Migrate contact person klass to use PMPerson for users of beta versions...;
-       27) Removed no more used portal_types.
+       27) Disable votes functionnality;
+       28) Removed no more used portal_types.
     '''
     migrator = Migrate_To_4_1(context)
     migrator.run()
