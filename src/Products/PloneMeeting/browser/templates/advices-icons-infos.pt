@@ -194,8 +194,8 @@
               </tr>
               <tr tal:condition="python: adviceType != 'not_given'">
                 <td colspan="6"
-                    tal:define="needToCrop python: advice['comment'] and len(advice['comment']) > 400;
-                                comment python: needToCrop and pm_utils.cropHTML(advice['comment'], 400) or advice['comment']">
+                    tal:define="comment python: obj.advice_comment and obj.advice_comment.output;
+                                observations python: obj.advice_observations and obj.advice_observations.output;">
                     <img tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_${advice/type}.png;
                                          title string:${advice/type};"
                          i18n:attributes="title" title=""/>
@@ -210,14 +210,17 @@
                       </tal:defines>
                     </tal:previousAdviceType>
 
-                    <i tal:condition="comment"
-                       tal:content="structure comment"></i>
-                    <p class="discreet"
-                       tal:condition="not: comment"
-                       i18n:translate="">No complementary comment has been given on this advice.</p>
-                    <p class="discreet"
-                       tal:condition="python: needToCrop and adviceHolderIsViewable"
-                       i18n:translate="">This is an extract of the comment, access full comment if necessary...</p>
+                    <fieldset class="advice_comment">
+                         <legend i18n:translate="">Advice official comment</legend>
+                         <tal:comment tal:replace="structure comment" />
+                    </fieldset>
+
+                    <fieldset class="advice_observations">
+                         <legend i18n:translate="">Advice observations</legend>
+                         <tal:observations tal:replace="structure observations" />
+                    </fieldset>
+                    <br />
+
                 </td>
               </tr>
               <tr tal:condition="python: adviceType != 'not_given'">

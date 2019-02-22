@@ -32,6 +32,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
 - Use _evaluateExpression from collective.behavior.talcondition everywhere to evaluate TAL expressions
 - Disabled the 'Votes' functionnality and relative tab on the MeetingConfig.  'Poll type' related MeetingConfigs fields
   (usedPollTypes, defaultPollType) are moved at the bottom of the 'Data' tab
+- Display the entire advice content in the tooltipster, now that advice content is loaded asynchronously (on hover), so we have
+  access to entire Comment/Observations fields content, this avoids missing informations and problems while cropping advice content
 
 4.1b16 (2019-01-31)
 -------------------
