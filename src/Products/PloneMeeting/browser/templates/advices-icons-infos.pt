@@ -29,105 +29,111 @@
                                   displayDefaultComplementaryMessage customMessageInfos/displayDefaultComplementaryMessage;
                                   customAdviceMessage customMessageInfos/customAdviceMessage;">
                 <legend>
-                     <span tal:condition="advice/delay">
-                        <tal:defines define="class_if_not_given string:advice_delay advice_delay_${advice/delay_infos/delay_status};">
-                          <img src="advice_with_delay_big.png"
-                               tal:define="delay_icon python: view.delay_icon(memberIsAdviserForGroup, advice)"
-                               tal:attributes="src string:${view/portal_url}/${delay_icon};"/>
-                          <span class="advice_delay"
-                                tal:content="advice/delay_infos/left_delay"
-                                tal:attributes="class python: context._advice_is_given(advice['id']) and 'advice_delay' or class_if_not_given" />
-                        </tal:defines>
-                     </span>
-                     <tal:not_asked_advice_icon condition="advice/not_asked">
-                         <img src="advice_not_asked.png"
-                              title="This advice was given as personal initiative"
-                              style="cursor: help;"
+                  <div style="display: inline"
+                       class="collapsible active"
+                       tal:attributes="id string:comment_toggle_${advice/id};
+                                       onclick string:toggleDoc('comment_content_${advice/id}', toggle_parent_active=true, parent_elem=comment_toggle_${advice/id});">
+                  </div>
+                  <span tal:condition="advice/delay">
+                     <tal:defines define="class_if_not_given string:advice_delay advice_delay_${advice/delay_infos/delay_status};">
+                       <img src="advice_with_delay_big.png"
+                            tal:define="delay_icon python: view.delay_icon(memberIsAdviserForGroup, advice)"
+                            tal:attributes="src string:${view/portal_url}/${delay_icon};"/>
+                       <span class="advice_delay"
+                             tal:content="advice/delay_infos/left_delay"
+                             tal:attributes="class python: context._advice_is_given(advice['id']) and 'advice_delay' or class_if_not_given" />
+                     </tal:defines>
+                  </span>
+                  <tal:not_asked_advice_icon condition="advice/not_asked">
+                      <img src="advice_not_asked.png"
+                           title="This advice was given as personal initiative"
+                           style="cursor: help;"
+                           i18n:attributes="title"
+                           tal:attributes="src string:${view/portal_url}/advice_not_asked.png"/>
+                  </tal:not_asked_advice_icon>
+                  <tal:inherited_advice condition="python: view.showLinkToInherited(adviceIsInherited, adviceHolder)">
+                      <acronym>
+                         <a class="tooltipster-inherited-advice deactivated"
+                            title="Advice inherited from another item"
+                            i18n:domain="PloneMeeting"
+                            i18n:attributes="title"
+                            style="display: inline-block; padding: 0"
+                            href="#"
+                            onclick="event.preventDefault();"
+                            tal:attributes="data-advice_id string:${advice/id};
+                                            data-base_url string:${item_url}">
+                          <img src="advice_inherited.png" tal:attributes="src string:${view/portal_url}/advice_inherited.png"/>
+                         </a>
+                      </acronym>
+                      <acronym tal:condition="python: view.mayRemoveInheritedAdvice(adviceIsInherited, advice['id'])">
+                         <a title="Remove advice inheritance"
+                            class="link-overlay-pm"
+                            i18n:domain="PloneMeeting"
+                            i18n:attributes="title"
+                            style="display: inline-block; padding: 0; cursor: pointer;"
+                            href="#"
+                            tal:attributes="href string:${item_url}/@@advice-remove-inheritance?advice_id=${advice/id}">
+                          <img src="advice_inherited_remove.png" tal:attributes="src string:${view/portal_url}/advice_inherited_remove.png"/>
+                         </a>
+                      </acronym>
+                  </tal:inherited_advice>
+                  <div class="advice_popup_label">
+                  <span tal:condition="advice/optional">(</span><b tal:content="structure advice/name"></b>
+                       <tal:showDelayLabel condition="python: advice['delay'] and advice['delay_label']">
+                            - <b tal:content="advice/delay_label"></b>
+                       </tal:showDelayLabel><span tal:condition="advice/optional">)</span>
+                  </div>
+                  <div class="advice_popup_actions">
+                     &nbsp;&nbsp;
+                     <acronym>
+                        <a class="tooltipster-group-users deactivated"
+                           title="View users of the group"
+                           i18n:domain="PloneMeeting"
+                           i18n:attributes="title"
+                           style="display: inline-block; padding: 0"
+                           href="#"
+                           onclick="event.preventDefault();"
+                           tal:attributes="data-group_id string:${advice/id}_advisers;
+                                           data-base_url string:${view/portal_url}">
+                         <img src="group_users.png" tal:attributes="src string:${view/portal_url}/group_users.png"/>
+                        </a>
+                     </acronym>
+                     <span tal:attributes="title python: context.getAdviceHelpMessageFor(**advice)" class="fa fa-question-circle help-doc pmHelp" />
+                     <tal:confidentiality condition="displayAdviceConfidentiality" replace="structure python: context.restrictedTraverse('@@advice-confidentiality')(advice)" />
+                     <acronym tal:condition="python: obj and context.adapted().mayAskAdviceAgain(obj)">
+                        <img tal:condition="python: not advice['type'] == 'asked_again'"
+                             class="askAdviceAgainEditable"
+                             i18n:attributes="title"
+                             title="to_advice_asked_again"
+                             tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_asked_again.png;
+                                       onClick string:javascript:callViewAndReload(base_url='${obj_absolute_url}', view_name='@@change-advice-asked-again', this);;"/></acronym>
+                     <acronym tal:condition="python: obj and context.adapted().mayBackToPreviousAdvice(obj)">
+                         <img tal:condition="python: advice['type'] == 'asked_again'"
+                              class="askAdviceAgainEditable"
                               i18n:attributes="title"
-                              tal:attributes="src string:${view/portal_url}/advice_not_asked.png"/>
-                     </tal:not_asked_advice_icon>
-                     <tal:inherited_advice condition="python: view.showLinkToInherited(adviceIsInherited, adviceHolder)">
-                         <acronym>
-                            <a class="tooltipster-inherited-advice deactivated"
-                               title="Advice inherited from another item"
-                               i18n:domain="PloneMeeting"
-                               i18n:attributes="title"
-                               style="display: inline-block; padding: 0"
-                               href="#"
-                               onclick="event.preventDefault();"
-                               tal:attributes="data-advice_id string:${advice/id};
-                                               data-base_url string:${item_url}">
-                             <img src="advice_inherited.png" tal:attributes="src string:${view/portal_url}/advice_inherited.png"/>
-                            </a>
-                         </acronym>
-                         <acronym tal:condition="python: view.mayRemoveInheritedAdvice(adviceIsInherited, advice['id'])">
-                            <a title="Remove advice inheritance"
-                               class="link-overlay-pm"
-                               i18n:domain="PloneMeeting"
-                               i18n:attributes="title"
-                               style="display: inline-block; padding: 0; cursor: pointer;"
-                               href="#"
-                               tal:attributes="href string:${item_url}/@@advice-remove-inheritance?advice_id=${advice/id}">
-                             <img src="advice_inherited_remove.png" tal:attributes="src string:${view/portal_url}/advice_inherited_remove.png"/>
-                            </a>
-                         </acronym>
-                     </tal:inherited_advice>
-                     <div class="advice_popup_label">
-                     <span tal:condition="advice/optional">(</span><b tal:content="structure advice/name"></b>
-                          <tal:showDelayLabel condition="python: advice['delay'] and advice['delay_label']">
-                               - <b tal:content="advice/delay_label"></b>
-                          </tal:showDelayLabel><span tal:condition="advice/optional">)</span>
-                     </div>
-                     <div class="advice_popup_actions">
-                        &nbsp;&nbsp;
-                        <acronym>
-                           <a class="tooltipster-group-users deactivated"
-                              title="View users of the group"
-                              i18n:domain="PloneMeeting"
-                              i18n:attributes="title"
-                              style="display: inline-block; padding: 0"
-                              href="#"
-                              onclick="event.preventDefault();"
-                              tal:attributes="data-group_id string:${advice/id}_advisers;
-                                              data-base_url string:${view/portal_url}">
-                            <img src="group_users.png" tal:attributes="src string:${view/portal_url}/group_users.png"/>
-                           </a>
-                        </acronym>
-                        <span tal:attributes="title python: context.getAdviceHelpMessageFor(**advice)" class="fa fa-question-circle help-doc pmHelp" />
-                        <tal:confidentiality condition="displayAdviceConfidentiality" replace="structure python: context.restrictedTraverse('@@advice-confidentiality')(advice)" />
-                        <acronym tal:condition="python: obj and context.adapted().mayAskAdviceAgain(obj)">
-                           <img tal:condition="python: not advice['type'] == 'asked_again'"
-                                class="askAdviceAgainEditable"
-                                i18n:attributes="title"
-                                title="to_advice_asked_again"
-                                tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_asked_again.png;
-                                          onClick string:javascript:callViewAndReload(base_url='${obj_absolute_url}', view_name='@@change-advice-asked-again', this);;"/></acronym>
-                        <acronym tal:condition="python: obj and context.adapted().mayBackToPreviousAdvice(obj)">
-                            <img tal:condition="python: advice['type'] == 'asked_again'"
-                                 class="askAdviceAgainEditable"
-                                 i18n:attributes="title"
-                                 title="to_previous_given_advice"
-                                 tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_asked_again_back_to_previous.png;
-                                                 onClick string:javascript:callViewAndReload(base_url='${obj_absolute_url}', view_name='@@change-advice-asked-again', this);;"/></acronym>
-                        <tal:advice-change-delay-condition condition="python: advice['delay'] and not advice['inherited']">
-                            <tal:advice-change-delay
-                                define="dummy python: context.REQUEST.set('advice_change_delay_advice', advice);
-                                        dummy python: context.REQUEST.set('advice_change_delay_cfg', cfg);"
-                                replace="structure context/@@advice-available-delays/index" />
-                        </tal:advice-change-delay-condition>
-                        <acronym tal:condition="python: adviceHolderIsViewable and advice.get('advice_id', None)">
-                           <a class="overlay-history"
-                              title="History"
-                              i18n:domain="plone"
-                              i18n:attributes="title"
-                              href="@@historyview"
-                              tal:attributes="href string:${obj_absolute_url}/@@historyview">
-                               <img src="++resource++imio.actionspanel/history.gif"
-                                    tal:attributes="src string:${view/portal_url}/++resource++imio.actionspanel/history.gif"/>
-                           </a>
-                        </acronym>
-                     </div>
+                              title="to_previous_given_advice"
+                              tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_asked_again_back_to_previous.png;
+                                              onClick string:javascript:callViewAndReload(base_url='${obj_absolute_url}', view_name='@@change-advice-asked-again', this);;"/></acronym>
+                     <tal:advice-change-delay-condition condition="python: advice['delay'] and not advice['inherited']">
+                         <tal:advice-change-delay
+                             define="dummy python: context.REQUEST.set('advice_change_delay_advice', advice);
+                                     dummy python: context.REQUEST.set('advice_change_delay_cfg', cfg);"
+                             replace="structure context/@@advice-available-delays/index" />
+                     </tal:advice-change-delay-condition>
+                     <acronym tal:condition="python: adviceHolderIsViewable and advice.get('advice_id', None)">
+                        <a class="overlay-history"
+                           title="History"
+                           i18n:domain="plone"
+                           i18n:attributes="title"
+                           href="@@historyview"
+                           tal:attributes="href string:${obj_absolute_url}/@@historyview">
+                            <img src="++resource++imio.actionspanel/history.gif"
+                                 tal:attributes="src string:${view/portal_url}/++resource++imio.actionspanel/history.gif"/>
+                        </a>
+                     </acronym>
+                  </div>
                 </legend>
+                <div tal:attributes="id string:comment_content_${advice/id}">
 
             <tal:notHiddenUnderRedactionOrManagable condition="python: memberIsAdviserForGroup or mayEdit or not adviceType in ('hidden_during_redaction', 'considered_not_given_hidden_during_redaction')">
 
@@ -368,6 +374,7 @@
                <span> - <span i18n:translate="">Limit date <span i18n:name="advice_limit_date" tal:content="advice/delay_infos/limit_date_localized">2013/05/08</span></span></span>
               </tal:delayinfos>
             </div>
+                </div>
             </fieldset>
           </tal:loop>
 
