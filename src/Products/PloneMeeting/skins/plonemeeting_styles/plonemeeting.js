@@ -1,3 +1,14 @@
+// Function that shows a popup that asks the user if he really wants to delete
+function confirmReinitializeDelay(base_url, advice_uid, tag, msgName){
+    if (!msgName) {
+        msgName = 'reinit_delay_confirm_message';
+    }
+    var msg = window.eval(msgName);
+    if (confirm(msg)) {
+        callViewAndReload(base_url, view_name='@@advice-reinit-delay', tag, params={'advice_uid': advice_uid});
+    }
+}
+
 // Dropdown for selecting an annex type
 var ploneMeetingSelectBoxes = new Object();
 
@@ -591,7 +602,7 @@ function moveItem(baseUrl, moveType, tag) {
 // ajax call managing a call to a given p_view_name and reload taking faceted into account
 function callViewAndReload(baseUrl, view_name, tag, params, force_faceted=false) {
   redirect = '0';
-  if (!force_faceted && !$('#faceted-form').has(tag).length) {
+  if (!force_faceted && !has_faceted()) {
     redirect = '1';
   }
   $.ajax({

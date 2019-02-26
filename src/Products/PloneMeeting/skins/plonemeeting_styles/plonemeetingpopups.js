@@ -70,7 +70,7 @@ function contentHistory() {
 
 // common overlays
 // the content history popup
-function pmCommonOverlays(selector_prefix='') {
+function pmCommonOverlays(selector_prefix='div.advice_change_delay_infos ') {
     jQuery(function($){
         // Every common overelays, must stay at the bottom of every defined overlays!!!
         // Or it is taken before others because selector matches
@@ -162,6 +162,7 @@ function initializeAdvicePopup(){
     advicePreview();
     inheritedItemInfos();
     usersGroupInfos();
+    adviceChangeDelay();
     contentHistory();
     // overlay for remove inherited advice
     pmCommonOverlays(selector_prefix='div.advice_infos_tooltipster ');
@@ -236,6 +237,14 @@ function usersGroupInfos() {
     tooltipster_helper(selector='.tooltipster-group-users',
                        view_name='@@display-group-users',
                        data_parameters=['group_id']);
+}
+
+function adviceChangeDelay() {
+    tooltipster_helper(selector='.tooltipster-advice-change-delay',
+                       view_name='@@advice-available-delays',
+                       data_parameters=['advice_uid'],
+                       options={trigger: 'click',
+                       functionReady_callback: pmCommonOverlays});
 }
 
 function advicesInfos() {

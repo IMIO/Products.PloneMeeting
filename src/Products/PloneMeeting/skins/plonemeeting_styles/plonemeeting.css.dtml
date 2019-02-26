@@ -1753,6 +1753,10 @@ body.template-base_edit #content fieldset {
    margin-bottom: 0.5em;
 }
 
+#content ul.change_delay_actions {
+   list-style: none;
+   margin-left: 0em;
+}
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */

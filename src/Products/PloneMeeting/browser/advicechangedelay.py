@@ -27,9 +27,9 @@ class AdviceDelaysView(BrowserView):
         self.request = request
         self.portal = api.portal.get()
         self.portal_url = self.portal.absolute_url()
-        self.advice = self.request.get('advice_change_delay_advice')
+        self.advice = self.context.adviceIndex[self.request.get('advice_uid')]
         self.tool = api.portal.get_tool('portal_plonemeeting')
-        self.cfg = self.request.get('advice_change_delay_cfg')
+        self.cfg = self.tool.getMeetingConfig(self.context)
 
     def listSelectableDelays(self, row_id):
         '''Returns a list of delays the current user can change the given p_row_id advice delay to.'''
@@ -104,6 +104,13 @@ class AdviceDelaysView(BrowserView):
             return True
         else:
             return False
+
+    def _mayReinitializeDelay(self, advice_uid=None):
+        '''May current user reinitialize delau for given advice_uid?
+           By default it is available if current user may edit the item.'''
+        if not advice_uid:
+            advice_uid = self.advice['id']
+        return _checkPermission(ModifyPortalContent, self.context)
 
 
 def current_delay_row_id_default():
@@ -269,7 +276,27 @@ class AdviceChangeDelayHistoryView(BrowserView):
           Return history of delay changes for an advice.
         '''
         delayChangesView = self.context.restrictedTraverse('@@advice-available-delays')
-        advice_uid = self.request.get('advice')
+        advice_uid = self.request.get('advice_uid')
         if not delayChangesView._mayAccessDelayChangesHistory(advice_uid):
             raise Unauthorized
         return self.context.adviceIndex[advice_uid]['delay_changes_history']
+
+
+class AdviceReinitializeDelayView(BrowserView):
+    '''Reinitialize delay of given advice_uid.'''
+    def __init__(self, context, request):
+        super(BrowserView, self).__init__(context, request)
+        self.context = context
+        self.request = request
+
+    def __call__(self):
+        '''
+        '''
+        delayChangesView = self.context.restrictedTraverse('@@advice-available-delays')
+        advice_uid = self.request.get('advice_uid')
+        if not delayChangesView._mayReinitializeDelay(advice_uid):
+            raise Unauthorized
+        adviceInfos = self.context.adviceIndex[advice_uid]
+        adviceInfos['delay_started_on'] = None
+        adviceInfos['delay_stopped_on'] = None
+        self.context.updateLocalRoles()

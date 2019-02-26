@@ -115,10 +115,18 @@
                               tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_asked_again_back_to_previous.png;
                                               onClick string:javascript:callViewAndReload(base_url='${obj_absolute_url}', view_name='@@change-advice-asked-again', this);;"/></acronym>
                      <tal:advice-change-delay-condition condition="python: advice['delay'] and not advice['inherited']">
-                         <tal:advice-change-delay
-                             define="dummy python: context.REQUEST.set('advice_change_delay_advice', advice);
-                                     dummy python: context.REQUEST.set('advice_change_delay_cfg', cfg);"
-                             replace="structure context/@@advice-available-delays/index" />
+                      <acronym title="Change delay for advice"
+                            i18n:domain="PloneMeeting"
+                            i18n:attributes="title">
+                         <a class="tooltipster-advice-change-delay deactivated"
+                            style="display: inline-block; padding: 0; cursor: pointer;"
+                            href="#"
+                            onclick="event.preventDefault();"
+                            tal:attributes="data-advice_uid string:${advice/id};
+                                            data-base_url string:${item_url}">
+                          <img src="advice_with_delay.png" tal:attributes="src string:${view/portal_url}/advice_with_delay.png"/>
+                         </a>
+                      </acronym>
                      </tal:advice-change-delay-condition>
                      <acronym tal:condition="python: adviceHolderIsViewable and advice.get('advice_id', None)">
                         <a class="overlay-history"
