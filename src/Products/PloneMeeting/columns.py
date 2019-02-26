@@ -210,7 +210,7 @@ class ItemLinkedMeetingColumn(BaseColumn):
             if res:
                 return res
 
-        if not value or value.year() == 1950:
+        if not value or value.year() <= 1950:
             res = u'-'
         else:
             catalog = api.portal.get_tool('uid_catalog')
