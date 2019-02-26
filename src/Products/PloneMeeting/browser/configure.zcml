@@ -475,6 +475,14 @@
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View" />
 
+    <!-- the view that reinitialize an advice delay -->
+    <browser:view
+        for="Products.PloneMeeting.interfaces.IMeetingItem"
+        name="advice-reinit-delay"
+        class=".advicechangedelay.AdviceReinitializeDelayView"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        permission="zope2.View" />
+
     <!-- the view that show MeetingItem.emergency on the meetingitem_view -->
     <browser:page
         for="Products.PloneMeeting.interfaces.IMeetingItem"

@@ -36,6 +36,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   access to entire Comment/Observations fields content, this avoids missing informations and problems while cropping advice content
 - When mailing lists are wrongly defined on a POD template, do not crash the POD templates viewlet, display a clear message in the mailing list dropdown
 - When creating a MeetingConfig TTW, define 'searchmyitems' as default faceted collection so it is directly useable
+- Added possibility to easily reinitialize an advice delay if user is able to edit the item.  The 'Reinitialize delay' action is located on the advice
+  popup behind the 'Change delay for advice' grey clock icon
 
 4.1b16 (2019-01-31)
 -------------------

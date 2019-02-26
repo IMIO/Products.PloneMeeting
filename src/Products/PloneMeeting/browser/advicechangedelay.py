@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from AccessControl import Unauthorized
+from copy import deepcopy
 from DateTime import DateTime
 from plone import api
 from plone.z3cform.layout import wrap_form
@@ -27,9 +28,12 @@ class AdviceDelaysView(BrowserView):
         self.request = request
         self.portal = api.portal.get()
         self.portal_url = self.portal.absolute_url()
-        self.advice = self.request.get('advice_change_delay_advice')
+        self.advice = None
+        advice_uid = self.request.get('advice', None)
+        if advice_uid:
+            self.advice = self.context.adviceIndex[advice_uid]
         self.tool = api.portal.get_tool('portal_plonemeeting')
-        self.cfg = self.request.get('advice_change_delay_cfg')
+        self.cfg = self.tool.getMeetingConfig(self.context)
 
     def listSelectableDelays(self, row_id):
         '''Returns a list of delays the current user can change the given p_row_id advice delay to.'''
@@ -90,11 +94,10 @@ class AdviceDelaysView(BrowserView):
             res.append((linkedRow['row_id'], linkedRow['delay'], unicode(linkedRow['delay_label'], 'utf-8')))
         return res
 
-    def _mayAccessDelayChangesHistory(self, advice_uid=None):
+    def _mayAccessDelayChangesHistory(self):
         '''May current user access delay changes history?
            By default it is shown to MeetingManagers, advisers of p_advice_uid and members of the proposingGroup.'''
-        if not advice_uid:
-            advice_uid = self.advice['id']
+        advice_uid = self.advice['id']
         # MeetingManagers and advisers of the group
         # can access the delay changes history
         userAdviserOrgUids = [org.UID() for org in self.tool.get_orgs_for_user(suffixes=['advisers'])]
@@ -104,6 +107,13 @@ class AdviceDelaysView(BrowserView):
             return True
         else:
             return False
+
+    def _mayReinitializeDelay(self, advice_uid=None):
+        '''May current user reinitialize delau for given advice_uid?
+           By default it is available if current user may edit the item.'''
+        if not advice_uid:
+            advice_uid = self.advice['id']
+        return _checkPermission(ModifyPortalContent, self.context)
 
 
 def current_delay_row_id_default():
@@ -178,6 +188,7 @@ class AdviceChangeDelayForm(form.EditForm):
         # if not available, just raise Unauthorized
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
+        newAdviceData = self.getDataForRowId(data['new_delay_row_id'])
         listAvailableDelaysView = self.context.restrictedTraverse('@@advice-available-delays')
         listAvailableDelaysView.cfg = cfg
         # find right advice in MeetingItem.adviceIndex
@@ -191,7 +202,6 @@ class AdviceChangeDelayForm(form.EditForm):
             raise Unauthorized
         # update the advice with new delay and relevant data
 
-        newAdviceData = self.getDataForRowId(data['new_delay_row_id'])
         # just keep relevant infos
         dataToUpdate = ('delay',
                         'delay_label',
@@ -217,7 +227,7 @@ class AdviceChangeDelayForm(form.EditForm):
             # if it is an automatic advice, set the 'delay_for_automatic_adviser_changed_manually' to True
             self.context.adviceIndex[currentAdviceData['org']]['delay_for_automatic_adviser_changed_manually'] = True
         self.context.updateLocalRoles()
-        # add a line to the item's emergency_change_history
+        # add a line to the item's adviceIndex advice delay_changes_history
         member = api.user.get_current()
         history_data = {'action': (currentAdviceData['delay'], newAdviceData['delay']),
                         'actor': member.getId(),
@@ -270,6 +280,36 @@ class AdviceChangeDelayHistoryView(BrowserView):
         '''
         delayChangesView = self.context.restrictedTraverse('@@advice-available-delays')
         advice_uid = self.request.get('advice')
-        if not delayChangesView._mayAccessDelayChangesHistory(advice_uid):
+        if not delayChangesView._mayAccessDelayChangesHistory():
             raise Unauthorized
-        return self.context.adviceIndex[advice_uid]['delay_changes_history']
+        return deepcopy(self.context.adviceIndex[advice_uid])
+
+
+class AdviceReinitializeDelayView(BrowserView):
+    '''Reinitialize delay of given advice_uid.'''
+    def __init__(self, context, request):
+        super(BrowserView, self).__init__(context, request)
+        self.context = context
+        self.request = request
+
+    def __call__(self):
+        '''
+        '''
+        delayChangesView = self.context.restrictedTraverse('@@advice-available-delays')
+        advice_uid = self.request.get('advice')
+        if not delayChangesView._mayReinitializeDelay(advice_uid):
+            raise Unauthorized
+        adviceInfos = self.context.adviceIndex[advice_uid]
+        adviceInfos['delay_started_on'] = None
+        adviceInfos['delay_stopped_on'] = None
+        # add a line to the item's adviceIndex advice delay_changes_history
+        member = api.user.get_current()
+        history_data = {'action': 'Reinitiatlize delay',
+                        'actor': member.getId(),
+                        'time': DateTime(),
+                        'comments': None}
+        adviceInfos['delay_changes_history'].append(history_data)
+        # update local roles that will update adviceIndex
+        self.context.updateLocalRoles()
+        api.portal.show_message(_('Advice delay have been reinitialized for advice "${advice}"',
+                                  mapping={'advice': adviceInfos['name']}), request=self.request)
