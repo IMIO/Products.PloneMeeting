@@ -1,5 +1,5 @@
-<div id="content" i18n:domain="PloneMeeting" class="advice_change_delay_infos"
-     tal:define="selectableDelays python: view.advice['delay'] and view.listSelectableDelays(view.advice['row_id']) or [];
+<tal:defines i18n:domain="PloneMeeting"
+     define="selectableDelays python: view.advice['delay'] and view.listSelectableDelays(view.advice['row_id']) or [];
                  menuId string:advice_change_delay_row_id_${view/advice/row_id}_${view/context/UID};
                  portal_url context/@@plone_portal_state/portal_url;
                  mayAccessDelayChangesHistory view/_mayAccessDelayChangesHistory;
@@ -19,8 +19,8 @@
         </li>
         <li tal:condition="mayReinitializeDelay">
           <a href="#"
-             tal:attributes="onClick string:javascript:event.preventDefault();;confirmReinitializeDelay(base_url='${context/absolute_url}', advice_uid='${view/advice/id}', this);;"
-             style="cursor:pointer; display: inline-block;">
+             tal:attributes="onClick string:javascript:event.preventDefault();;confirmReinitializeDelay(base_url='${context/absolute_url}', advice='${view/advice/id}', this);;"
+             style="cursor:pointer;">
             <img src="advice_reinit_delay.gif"
                  tal:attributes="src string:${portal_url}/advice_reinit_delay.png"/>&nbsp;<span i18n:translate="">Reinitiatlize delay</span>
           </a><br />
@@ -30,13 +30,12 @@
                title="History of delay changes"
                i18n:domain="PloneMeeting"
                i18n:attributes="title"
-               style="display: inline-block;"
                href="@@advice-delay-changes-history"
-               tal:attributes="href string:${view/context/absolute_url}/@@advice-delay-changes-history?advice_uid=${view/advice/id}">
+               tal:attributes="href string:${view/context/absolute_url}/@@advice-delay-changes-history?advice=${view/advice/id}">
                 <img src="++resource++imio.actionspanel/history.gif"
                      tal:attributes="src string:${portal_url}/++resource++imio.actionspanel/history.gif"/>&nbsp;<span i18n:translate="">History of delay changes</span>
             </a><br />
         </li>
     </ul>
 
-</div>
+</tal:defines>

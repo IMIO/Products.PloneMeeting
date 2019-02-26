@@ -115,14 +115,14 @@
                               tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_asked_again_back_to_previous.png;
                                               onClick string:javascript:callViewAndReload(base_url='${obj_absolute_url}', view_name='@@change-advice-asked-again', this);;"/></acronym>
                      <tal:advice-change-delay-condition condition="python: advice['delay'] and not advice['inherited']">
-                      <acronym title="Change delay for advice"
+                      <acronym title="Change delay"
                             i18n:domain="PloneMeeting"
                             i18n:attributes="title">
                          <a class="tooltipster-advice-change-delay deactivated"
                             style="display: inline-block; padding: 0; cursor: pointer;"
                             href="#"
                             onclick="event.preventDefault();"
-                            tal:attributes="data-advice_uid string:${advice/id};
+                            tal:attributes="data-advice string:${advice/id};
                                             data-base_url string:${item_url}">
                           <img src="advice_with_delay.png" tal:attributes="src string:${view/portal_url}/advice_with_delay.png"/>
                          </a>

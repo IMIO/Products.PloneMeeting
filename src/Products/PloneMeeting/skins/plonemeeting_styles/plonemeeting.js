@@ -1,11 +1,11 @@
 // Function that shows a popup that asks the user if he really wants to delete
-function confirmReinitializeDelay(base_url, advice_uid, tag, msgName){
+function confirmReinitializeDelay(base_url, advice, tag, msgName){
     if (!msgName) {
         msgName = 'reinit_delay_confirm_message';
     }
     var msg = window.eval(msgName);
     if (confirm(msg)) {
-        callViewAndReload(base_url, view_name='@@advice-reinit-delay', tag, params={'advice_uid': advice_uid});
+        callViewAndReload(base_url, view_name='@@advice-reinit-delay', tag, params={'advice': advice});
     }
 }
 

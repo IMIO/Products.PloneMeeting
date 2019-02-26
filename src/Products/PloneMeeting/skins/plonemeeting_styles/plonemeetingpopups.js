@@ -70,7 +70,7 @@ function contentHistory() {
 
 // common overlays
 // the content history popup
-function pmCommonOverlays(selector_prefix='div.advice_change_delay_infos ') {
+function pmCommonOverlays(selector_prefix='') {
     jQuery(function($){
         // Every common overelays, must stay at the bottom of every defined overlays!!!
         // Or it is taken before others because selector matches
@@ -242,9 +242,8 @@ function usersGroupInfos() {
 function adviceChangeDelay() {
     tooltipster_helper(selector='.tooltipster-advice-change-delay',
                        view_name='@@advice-available-delays',
-                       data_parameters=['advice_uid'],
-                       options={trigger: 'click',
-                       functionReady_callback: pmCommonOverlays});
+                       data_parameters=['advice'],
+                       options={functionReady_callback: pmCommonOverlays});
 }
 
 function advicesInfos() {

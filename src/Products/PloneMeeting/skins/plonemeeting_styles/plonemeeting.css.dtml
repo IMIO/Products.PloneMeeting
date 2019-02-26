@@ -1753,9 +1753,12 @@ body.template-base_edit #content fieldset {
    margin-bottom: 0.5em;
 }
 
-#content ul.change_delay_actions {
+ul.change_delay_actions {
    list-style: none;
    margin-left: 0em;
+}
+ul.change_delay_actions li a span {
+   display: inline-block;
 }
 /* </dtml-with> */
 

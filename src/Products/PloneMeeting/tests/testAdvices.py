@@ -1789,6 +1789,59 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEqual(item.adviceIndex[self.vendors_uid]['delay'], '20')
         self.assertTrue(item.adviceIndex[self.vendors_uid]['delay_for_automatic_adviser_changed_manually'])
 
+    def test_pm_ReinitAdviceDelayView(self):
+        '''Test the view '@@advice-reinit-delay' that reinitialize the advice delay to 0.'''
+        cfg = self.meetingConfig
+        # make advice addable and editable when item is 'itemcreated'
+        cfg.setItemAdviceStates((self._stateMappingFor('itemcreated'), ))
+        cfg.setItemAdviceEditStates((self._stateMappingFor('itemcreated'), ))
+        cfg.setItemAdviceViewStates((self._stateMappingFor('itemcreated'), ))
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        customAdvisers = [{'row_id': 'unique_id_123',
+                           'org': self.vendors_uid,
+                           'gives_auto_advice_on': '',
+                           'for_item_created_from': '2012/01/01',
+                           'for_item_created_until': '',
+                           'delay': '5',
+                           'delay_label': '',
+                           'available_on': '',
+                           'is_linked_to_previous_row': '0'},
+                          {'row_id': 'unique_id_456',
+                           'org': self.vendors_uid,
+                           'gives_auto_advice_on': '',
+                           'for_item_created_from': '2012/01/01',
+                           'for_item_created_until': '',
+                           'delay': '10',
+                           'delay_label': '',
+                           'available_on': '',
+                           'is_linked_to_previous_row': '1'},
+                          {'row_id': 'unique_id_789',
+                           'org': self.vendors_uid,
+                           'gives_auto_advice_on': '',
+                           'for_item_created_from': '2012/01/01',
+                           'for_item_created_until': '',
+                           'delay': '20',
+                           'delay_label': '',
+                           'available_on': '',
+                           'is_linked_to_previous_row': '1'}, ]
+        cfg.setCustomAdvisers(customAdvisers)
+        # select delay of 5 days
+        item.setOptionalAdvisers(('{0}__rowid__unique_id_123'.format(self.vendors_uid), ))
+        item._update_after_edit()
+        # delay was started
+        original_delay_started_on = item.getAdviceDataFor(item, self.vendors_uid)['delay_started_on']
+        self.assertIsInstance(original_delay_started_on, datetime)
+        # must be able to edit item to reinit delay
+        self.proposeItem(item)
+        self.request.set('advice', self.vendors_uid)
+        view = item.restrictedTraverse('@@advice-reinit-delay')
+        self.assertRaises(Unauthorized, view)
+        self.changeUser('pmReviewer1')
+        view()
+        new_delay_started_on = item.getAdviceDataFor(item, self.vendors_uid)['delay_started_on']
+        self.assertNotEqual(original_delay_started_on, new_delay_started_on)
+
     def test_pm_ConfigAdviceStates(self):
         '''
           This test that states defined in config.py in two constants
