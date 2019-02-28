@@ -25,7 +25,7 @@ from collective.eeafaceted.batchactions.browser.viewlets import BatchActionsView
 from plone import api
 from plone.app.layout.viewlets import ViewletBase
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
-from Products.PloneMeeting.events import is_held_pos_uid_used_by
+from Products.PloneMeeting.events import _is_held_pos_uid_used_by
 from Products.PloneMeeting.utils import displaying_available_items
 from zope.component import getMultiAdapter
 
@@ -90,7 +90,7 @@ class HeldPositionBackRefs(ViewletBase):
         hp_uid = self.context.UID()
         res = []
         for cfg in tool.objectValues('MeetingConfig'):
-            if is_held_pos_uid_used_by(hp_uid, cfg):
+            if _is_held_pos_uid_used_by(hp_uid, cfg):
                 res.append(cfg)
         return res
 
@@ -105,7 +105,7 @@ class HeldPositionBackRefs(ViewletBase):
             brains = catalog(portal_type=meeting_type_name, sort_on='getDate')
             for brain in brains:
                 meeting = brain.getObject()
-                if is_held_pos_uid_used_by(hp_uid, meeting):
+                if _is_held_pos_uid_used_by(hp_uid, meeting):
                     if cfg not in res:
                         res[cfg] = []
                     res[cfg].append(meeting)

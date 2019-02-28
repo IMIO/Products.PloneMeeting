@@ -2868,9 +2868,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             criterion = _get_criterion(
                 self.searches.searches_items,
                 ResultsPerPageWidget.widget_type)
-            criteria = ICriteria(self.searches.searches_items)
-            # need to use ICriteria.edit to make change persistent
-            criteria.edit(criterion.__name__, **{'default': value})
+            # avoid updating if not changed as it notifyModified MeetingConfig
+            if str(criterion.default) != str(value):
+                criteria = ICriteria(self.searches.searches_items)
+                # need to use ICriteria.edit to make change persistent
+                criteria.edit(criterion.__name__, **{'default': value})
         self.getField('maxShownListings').set(self, value, **kwargs)
 
     security.declarePublic('getUsingGroups')

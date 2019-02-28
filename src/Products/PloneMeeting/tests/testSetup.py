@@ -22,7 +22,6 @@
 # 02110-1301, USA.
 #
 
-from collective.eeafaceted.collectionwidget.utils import _updateDefaultCollectionFor
 from plone import api
 from plone.app.testing import login
 from Products.GenericSetup.context import DirectoryImportContext

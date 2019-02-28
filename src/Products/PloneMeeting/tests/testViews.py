@@ -1336,13 +1336,13 @@ class testViews(PloneMeetingTestCase):
         self.assertTrue(config_modified in browser.headers['etag'])
         self.assertTrue(tool_modified in browser.headers['etag'])
         self.assertTrue(context_modified in browser.headers['etag'])
-        self.assertEqual(LinkedMeetingModified(item, self.request)(), '0')
-        self.assertTrue(browser.headers['etag'].endswith('|0"'))
+        self.assertEqual(LinkedMeetingModified(item, self.request)(), 'lm_0')
+        self.assertTrue(browser.headers['etag'].endswith('|lm_0"'))
         # item in meeting
         self.request['PUBLISHED'] = presented_item
         context_modified = ContextModified(presented_item, self.request)()
         linked_meeting_modified = LinkedMeetingModified(presented_item, self.request)()
-        self.assertNotEqual(linked_meeting_modified, '0')
+        self.assertNotEqual(linked_meeting_modified, 'lm_0')
         browser.open(presented_item.absolute_url())
         self.assertTrue(config_modified in browser.headers['etag'])
         self.assertTrue(tool_modified in browser.headers['etag'])

@@ -25,7 +25,9 @@
 from AccessControl import Unauthorized
 from collections import OrderedDict
 from collective.contact.plonegroup.utils import get_organization
+from collective.eeafaceted.collectionwidget.utils import getCollectionLinkCriterion
 from collective.eeafaceted.collectionwidget.utils import _get_criterion
+from collective.eeafaceted.collectionwidget.utils import _updateDefaultCollectionFor
 from collective.iconifiedcategory.utils import get_category_object
 from DateTime import DateTime
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
@@ -1479,6 +1481,18 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertTrue('marked_not_applicable' in self.wfTool.getWorkflowsFor(cfg2_item_type_name)[0].states)
         self.assertTrue('marked_not_applicable' in self.wfTool.getWorkflowsFor(cfg3_item_type_name)[0].states)
 
+    def test_pm_ConfigModifiedWhenFacetedChanged(self):
+        """When faceted settings are changed (changed default collection in collectionwidget),
+           MeetingConfig is modified (so cache is invalidated)."""
+        cfg = self.meetingConfig
+        self.changeUser('siteadmin')
+        # change default collection, change from searchallitems to searchmyitems
+        searches_items = cfg.searches.searches_items
+        self.assertEqual(getCollectionLinkCriterion(searches_items).default, searches_items.searchallitems.UID())
+        # _updateDefaultCollectionFor will trigger the event
+        original_cfg_modified = cfg.modified()
+        _updateDefaultCollectionFor(searches_items, searches_items.searchmyitems.UID())
+        self.assertNotEqual(original_cfg_modified, cfg.modified())
 
 def test_suite():
     from unittest import TestSuite, makeSuite

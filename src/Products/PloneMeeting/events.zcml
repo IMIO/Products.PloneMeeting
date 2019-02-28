@@ -169,4 +169,9 @@
   <subscriber for="collective.contact.plonegroup.interfaces.IPlonegroupGroupCreatedEvent"
               handler=".events.onPlonegroupGroupCreated" />
 
+  <!-- eea.facetednavigation settings changed event -->
+  <subscriber for="eea.facetednavigation.interfaces.IFacetedNavigable
+                   eea.facetednavigation.interfaces.IFacetedGlobalSettingsChangedEvent"
+   handler=".events.onFacetedGlobalSettingsChanged" />
+
 </configure>

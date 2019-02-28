@@ -906,6 +906,15 @@ def onMeetingRemoved(meeting, event):
     invalidate_cachekey_volatile_for('Products.PloneMeeting.Meeting.modified')
 
 
+def _notifyMeetingConfigModified(child):
+    """A child of a MeetingConfig notifyModified it's MeetingConfig chain of containers."""
+    # set modification date on every containers
+    container = child.aq_parent
+    while container.portal_type not in ('ToolPloneMeeting', 'Plone Site'):
+        notifyModifiedAndReindex(container)
+        container = container.aq_parent
+
+
 def onConfigContentModified(config_content, event):
     '''Called whenever an element in the MeetingConfig was added or modified.'''
 
@@ -914,10 +923,7 @@ def onConfigContentModified(config_content, event):
         config_content._invalidateCachedVocabularies()
 
     # set modification date on every containers
-    container = config_content.aq_parent
-    while container.portal_type not in ('ToolPloneMeeting', 'Plone Site'):
-        notifyModifiedAndReindex(container)
-        container = container.aq_parent
+    _notifyMeetingConfigModified(config_content)
 
 def onConfigContentTransition(config_content, event):
     '''Called whenever a transition has been fired on an element of the MeetingConfig.'''
@@ -929,10 +935,7 @@ def onConfigContentTransition(config_content, event):
         config_content._invalidateCachedVocabularies()
 
     # set modification date on every containers
-    container = config_content.aq_parent
-    while container.portal_type not in ('ToolPloneMeeting', 'Plone Site'):
-        notifyModifiedAndReindex(container)
-        container = container.aq_parent
+    _notifyMeetingConfigModified(config_content)
 
 
 def onConfigContentRemoved(config_content, event):
@@ -946,10 +949,7 @@ def onConfigContentRemoved(config_content, event):
         config_content._invalidateCachedVocabularies()
 
     # set modification date on every containers
-    container = config_content.aq_parent
-    while container.portal_type not in ('ToolPloneMeeting', 'Plone Site'):
-        notifyModifiedAndReindex(container)
-        container = container.aq_parent
+    _notifyMeetingConfigModified(config_content)
 
 
 def onConfigFolderReordered(folder, event):
@@ -967,7 +967,7 @@ def onDashboardCollectionAdded(collection, event):
         cfg.updateCollectionColumns()
 
 
-def is_held_pos_uid_used_by(held_pos_uid, obj):
+def _is_held_pos_uid_used_by(held_pos_uid, obj):
     """ """
     if obj.meta_type == 'MeetingConfig':
         if held_pos_uid in obj.getOrderedContacts():
@@ -987,7 +987,7 @@ def onHeldPositionRemoved(held_pos, event):
     tool = api.portal.get_tool('portal_plonemeeting')
     using_obj = None
     for cfg in tool.objectValues('MeetingConfig'):
-        if is_held_pos_uid_used_by(held_pos_uid, cfg):
+        if _is_held_pos_uid_used_by(held_pos_uid, cfg):
             using_obj = cfg
             break
     # check meetings
@@ -996,7 +996,7 @@ def onHeldPositionRemoved(held_pos, event):
         brains = catalog(meta_type='Meeting')
         for brain in brains:
             meeting = brain.getObject()
-            if is_held_pos_uid_used_by(held_pos_uid, meeting):
+            if _is_held_pos_uid_used_by(held_pos_uid, meeting):
                 using_obj = meeting
                 break
 
@@ -1051,7 +1051,10 @@ def onCategorizedElementsUpdatedEvent(content_category, event):
     """When elements using a ContentCategory are updated,
        notifyModified the MeetingConfig so cache is invalidated."""
     # set modification date on every containers
-    container = content_category.aq_parent
-    while container.portal_type not in ('ToolPloneMeeting', 'Plone Site'):
-        notifyModifiedAndReindex(container)
-        container = container.aq_parent
+    _notifyMeetingConfigModified(content_category)
+
+
+def onFacetedGlobalSettingsChanged(folder, event):
+    """ """
+    # set modification date on every containers
+    _notifyMeetingConfigModified(folder)
