@@ -35,9 +35,11 @@ from plone import api
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.interfaces import IDexterityContent
 from plone.dexterity.utils import createContentInContainer
+from plone.testing.z2 import Browser
 from Products.CMFCore.permissions import ManagePortal
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
+from Products.PloneMeeting.tests.PloneMeetingTestCase import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
 from Products.PloneMeeting.utils import get_annexes
@@ -698,7 +700,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.meetingConfig.setItemCopyGroupsStates(('itemcreated', ))
         # only available to 'Managers'
         self.changeUser('pmCreator1')
-        self.assertRaises(Unauthorized, self.tool.updateAllLocalRoles)
+        self.assertRaises(Unauthorized, self.tool.restrictedTraverse, 'updateAllLocalRoles')
         item1 = self.create('MeetingItem')
         item1.setCopyGroups((self.vendors_reviewers,))
         item1._update_after_edit()
@@ -712,7 +714,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # change configuration, updateAllLocalRoles then check again
         self.changeUser('siteadmin')
         self.meetingConfig.setItemCopyGroupsStates((self._stateMappingFor('proposed'), ))
-        self.tool.updateAllLocalRoles()
+        self.tool.restrictedTraverse('updateAllLocalRoles')()
         self.assertFalse(self.vendors_reviewers in item1.__ac_local_roles__)
         self.assertTrue(self.vendors_reviewers in item2.__ac_local_roles__)
 
@@ -723,7 +725,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         cfg.setItemBudgetInfosStates(('itemcreated', ))
         # only available to 'Managers'
         self.changeUser('pmCreator1')
-        self.assertRaises(Unauthorized, self.tool.updateAllLocalRoles)
+        self.assertRaises(Unauthorized, self.tool.restrictedTraverse, 'updateAllLocalRoles')
         item1 = self.create('MeetingItem')
         item1._update_after_edit()
         item2 = self.create('MeetingItem')
@@ -749,7 +751,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         cfg.setMeetingRestrictedPowerObserversStates(('closed', ))
         # only available to 'Managers'
         self.changeUser('pmManager')
-        self.assertRaises(Unauthorized, self.tool.updateAllLocalRoles)
+        self.assertRaises(Unauthorized, self.tool.restrictedTraverse, 'updateAllLocalRoles')
         item1 = self.create('MeetingItem')
         item1._update_after_edit()
         item2 = self.create('MeetingItem')
@@ -1005,6 +1007,28 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertEqual(self.tool.get_selectable_orgs(cfg2), [])
         self.assertEqual(self.tool.get_selectable_orgs(cfg2, only_selectable=False),
                          [self.vendors])
+
+    def test_pm_InvalidateAllCache(self):
+        """ """
+        # only available to Managers
+        self.changeUser('pmManager')
+        self.assertRaises(Unauthorized, self.tool.restrictedTraverse, 'invalidateAllCache')
+        self.changeUser('siteadmin')
+        pmFolder = self.getMeetingFolder()
+        browser = Browser(self.app)
+        browser.addHeader('Authorization', 'Basic %s:%s' % ('siteadmin', DEFAULT_USER_PASSWORD,))
+        browser.open(self.portal.absolute_url())
+        browser.open(pmFolder.absolute_url() + '/searches_items')
+        tool_original_modified = self.tool.modified()
+        self.assertTrue(str(int(tool_original_modified)) in browser.headers['etag'])
+        self.tool.invalidateAllCache()
+        transaction.commit()
+        tool_new_modified = self.tool.modified()
+        self.assertNotEqual(tool_original_modified, tool_new_modified)
+        browser.open(pmFolder.absolute_url() + '/searches_items')
+        self.assertTrue(str(int(tool_new_modified)) in browser.headers['etag'])
+
+
 def test_suite():
     from unittest import TestSuite, makeSuite
     suite = TestSuite()

@@ -31,6 +31,7 @@ from collective.iconifiedcategory.utils import update_all_categorized_elements
 from DateTime import DateTime
 from datetime import datetime
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
+from imio.helpers.cache import cleanRamCache
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import invalidate_cachekey_volatile_for
 from imio.prettylink.interfaces import IPrettyLink
@@ -1425,7 +1426,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             res = res[:res.find('-')]
         return res
 
-    security.declarePublic('convertAnnexes')
+    security.declareProtected(ModifyPortalContent, 'convertAnnexes')
 
     def convertAnnexes(self):
         '''Convert all annexes using collective.documentviewer.'''
@@ -1447,7 +1448,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                     (to_be_printed_activated and cfg.getAnnexToPrintMode() == 'enabled_for_printing')) and \
                    not IIconifiedPreview(annex).converted:
                     queueJob(annex)
-        self.plone_utils.addPortalMessage('Done.')
+        api.portal.show_message('Done.', request=self.REQUEST)
         return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 
     def auto_convert_annexes(self):
@@ -1460,17 +1461,19 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         '''Does given p_context contains annexes of type p_portal_type?'''
         return bool(get_categorized_elements(context, portal_type=portal_type))
 
-    security.declarePublic('updateAllLocalRoles')
+    security.declareProtected(ModifyPortalContent, 'updateAllLocalRoles')
 
-    def updateAllLocalRoles(self, meta_type=('Meeting', 'MeetingItem')):
+    def updateAllLocalRoles(self, meta_type=('Meeting', 'MeetingItem'), portal_type=()):
         '''Update local_roles on Meeting and MeetingItem,
            this is used to reflect configuration changes regarding access.'''
-        if not self.isManager(self, realManagers=True):
-            raise Unauthorized
-
         startTime = time.time()
         catalog = api.portal.get_tool('portal_catalog')
-        brains = catalog(meta_type=meta_type)
+        query = {}
+        if meta_type:
+            query['meta_type'] = meta_type
+        if portal_type:
+            query['portal_type'] = portal_type
+        brains = catalog(**query)
         numberOfBrains = len(brains)
         i = 1
         for brain in brains:
@@ -1486,7 +1489,17 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         seconds = time.time() - startTime
         logger.info('updateAllLocalRoles finished in %.2f seconds(s) (about %d minute(s)), that is %d by second.' %
                     (seconds, round(float(seconds) / 60.0), numberOfBrains / seconds))
-        self.plone_utils.addPortalMessage('Done.')
+        api.portal.show_message('Done.', request=self.REQUEST)
+        return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
+
+    security.declareProtected(ModifyPortalContent, 'invalidateAllCache')
+
+    def invalidateAllCache(self):
+        """Invalidate RAM cache and just notifyModified so etag toolmodified invalidate all brower cache."""
+        cleanRamCache()
+        self.notifyModified()
+        logger.info('All cache was invalidated.')
+        api.portal.show_message('Done.', request=self.REQUEST)
         return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 
     security.declarePublic('deleteHistoryEvent')

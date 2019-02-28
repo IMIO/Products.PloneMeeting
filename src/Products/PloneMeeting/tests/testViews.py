@@ -33,18 +33,26 @@ from plone import api
 from plone.app.testing import logout
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
+from plone.testing.z2 import Browser
 from Products import PloneMeeting as products_plonemeeting
 from Products.CMFCore.ActionInformation import Action
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.Five import zcml
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
+from Products.PloneMeeting.etags import ContextModified
+from Products.PloneMeeting.etags import ConfigModified
+from Products.PloneMeeting.etags import LinkedMeetingModified
+from Products.PloneMeeting.etags import ToolModified
+from Products.PloneMeeting.tests.PloneMeetingTestCase import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.utils import get_annexes
 from Products.statusmessages.interfaces import IStatusMessage
 from zope.component import getAdapter
 from zope.component import getMultiAdapter
 from zope.i18n import translate
+
+import transaction
 
 
 SAMPLE_ERROR_MESSAGE = u'This is the error message!'
@@ -1296,6 +1304,57 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(view('1', 'previous'), secretItem1.absolute_url())
         self.assertEqual(view('1', 'first'), secretItem1.absolute_url())
         self.assertEqual(view('5', 'last'), secretItem3.absolute_url())
+
+    def test_pm_ETags(self):
+        """Test that correct ETags are used for :
+           - dashboard (Folder);
+           - items (MeetingItem);
+           - meetings (Meeting)."""
+        cfg = self.meetingConfig
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        meeting = self.create('Meeting', date=DateTime('2019/02/28'))
+        presented_item = self.create('MeetingItem')
+        self.presentItem(presented_item)
+        transaction.commit()
+        browser = Browser(self.app)
+        browser.addHeader('Authorization', 'Basic %s:%s' % ('pmManager', DEFAULT_USER_PASSWORD,))
+        browser.open(self.portal.absolute_url())
+
+        # dashboards
+        config_modified = ConfigModified(cfg, self.request)()
+        tool_modified = ToolModified(self.tool, self.request)()
+        pmFolder = self.getMeetingFolder()
+        self.request['PUBLISHED'] = pmFolder
+        browser.open(pmFolder.absolute_url() + '/searches_items')
+        self.assertTrue(config_modified in browser.headers['etag'])
+        self.assertTrue(tool_modified in browser.headers['etag'])
+        # item
+        self.request['PUBLISHED'] = item
+        context_modified = ContextModified(item, self.request)()
+        browser.open(item.absolute_url())
+        self.assertTrue(config_modified in browser.headers['etag'])
+        self.assertTrue(tool_modified in browser.headers['etag'])
+        self.assertTrue(context_modified in browser.headers['etag'])
+        self.assertEqual(LinkedMeetingModified(item, self.request)(), '0')
+        self.assertTrue(browser.headers['etag'].endswith('|0"'))
+        # item in meeting
+        self.request['PUBLISHED'] = presented_item
+        context_modified = ContextModified(presented_item, self.request)()
+        linked_meeting_modified = LinkedMeetingModified(presented_item, self.request)()
+        self.assertNotEqual(linked_meeting_modified, '0')
+        browser.open(presented_item.absolute_url())
+        self.assertTrue(config_modified in browser.headers['etag'])
+        self.assertTrue(tool_modified in browser.headers['etag'])
+        self.assertTrue(context_modified in browser.headers['etag'])
+        self.assertTrue(linked_meeting_modified in browser.headers['etag'])
+        # meeting
+        self.request['PUBLISHED'] = meeting
+        context_modified = ContextModified(meeting, self.request)()
+        browser.open(meeting.absolute_url())
+        self.assertTrue(config_modified in browser.headers['etag'])
+        self.assertTrue(tool_modified in browser.headers['etag'])
+        self.assertTrue(context_modified in browser.headers['etag'])
 
 
 def test_suite():

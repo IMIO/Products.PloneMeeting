@@ -130,6 +130,7 @@
         <element>resourceRegistries</element>
         <element>contextmodified</element>
         <element>configmodified</element>
+        <element>toolmodified</element>
         <element>linkedmeetingmodified</element>
       </value>
   </record>
@@ -144,6 +145,7 @@
         <element>resourceRegistries</element>
         <element>contextmodified</element>
         <element>configmodified</element>
+        <element>toolmodified</element>
         <element>linkedmeetingmodified</element>
       </value>
   </record>
@@ -158,6 +160,7 @@
         <element>resourceRegistries</element>
         <element>contextmodified</element>
         <element>configmodified</element>
+        <element>toolmodified</element>
         <element>linkedmeetingmodified</element>
       </value>
   </record>

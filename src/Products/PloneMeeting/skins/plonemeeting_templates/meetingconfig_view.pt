@@ -121,7 +121,7 @@
       </p>
       <table class="configActions">
         <tr valign="top">
-          <td width=33%>
+          <td width=25%>
             <form name="updateAnnexConfidentialityForm" action="updateAnnexConfidentiality">
             <input class="context"
                    type="submit" name="updateAnnexConfidentiality"
@@ -133,7 +133,7 @@
                 Warning: the action 'Initialize existing annexes confidentiality' will initialize every existing annex confidentiality to what is defined as default value in this meeting configuration (check the 'Advices and access' tab).
             </p>
           </td>
-          <td width=33%>
+          <td width=25%>
             <form name="updateAdviceConfidentialityForm" action="updateAdviceConfidentiality">
             <input class="context"
                    type="submit"
@@ -146,7 +146,7 @@
                 Warning: the action 'Initialize existing advices confidentiality' will initialize every existing advice confidentiality to what is defined as default value in this meeting configuration (check the 'Advices and access' tab).
             </p>
           </td>
-          <td width=34%>
+          <td width=25%>
             <form name="checkPodTemplatesForm" action="checkPodTemplates">
             <input class="context"
                    type="submit" name="checkPodTemplates"
@@ -156,6 +156,19 @@
             </form>
             <p class="discreet" style="color: red;" i18n:translate="pm_check_pod_templates_warning">
                 Warning: the action 'Check Pod templates' will check that every Pod templates defined in the configuration are working correctly.
+            </p>
+          </td>
+          <td width=25%>
+            <form name="updateAllLocalRolesForm" action="updateAllLocalRoles"
+                  tal:attributes="action string:${context/portal_plonemeeting/absolute_url}/updateAllLocalRoles">
+            <input type="hidden" tal:attributes="value context/getMeetingTypeName" name="portal_type:list" />
+            <input type="hidden" tal:attributes="value context/getItemTypeName" name="portal_type:list" />
+            <input class="context" type="submit" name="updateAllLocalRoles"
+                   onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {document.forms.updateAllLocalRolesForm.submit();}"
+                   value="mc_update_all_local_roles" i18n:attributes="value"/>&nbsp;&nbsp;
+            </form>
+            <p class="discreet" style="color: red;" i18n:translate="mc_update_all_local_roles_warning">
+                Warning: this will update every items and meetings of this configuration, it is only relevant if the field of the configuration that you changed specifies that you need to use this action.  If you only made little changes like adding or removing a state in a field, as an administrator, it is possible to update items and meetings from the dashboards.  To do this, select elements that need to be updated and use the \"Update from configuration\" batch action.
             </p>
           </td>
         </tr>

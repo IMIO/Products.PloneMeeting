@@ -5489,8 +5489,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         portal_types += tool.getAdvicePortalTypes(as_ids=True)
         self._updateAnnexConfidentiality(portal_types=portal_types)
 
-        plone_utils = api.portal.get_tool('plone_utils')
-        plone_utils.addPortalMessage('Done.')
+        api.portal.show_message('Done.', request=self.REQUEST)
         return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 
     def _updateAnnexConfidentiality(self,
@@ -5560,7 +5559,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             i = i + 1
             for advice in item.adviceIndex.itervalues():
                 advice['isConfidential'] = adviceConfidentialityDefault
-        self.plone_utils.addPortalMessage('Done.')
+        api.portal.show_message('Done.', request=self.REQUEST)
         return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
 
     def checkPodTemplates(self):

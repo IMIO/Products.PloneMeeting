@@ -322,5 +322,7 @@
            name="linkedmeetingmodified" />
   <adapter factory=".etags.ConfigModified"
            name="configmodified" />
+  <adapter factory=".etags.ToolModified"
+           name="toolmodified" />
 
 </configure>

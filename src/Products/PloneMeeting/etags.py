@@ -28,7 +28,7 @@ class UserGroups(object):
 
     def __call__(self):
         tool = api.portal.get_tool('portal_plonemeeting')
-        return '_'.join(tool.get_plone_groups_for_user())
+        return 'ug_' + '_'.join(tool.get_plone_groups_for_user())
 
 
 class ContextModified(object):
@@ -45,7 +45,7 @@ class ContextModified(object):
 
     def __call__(self):
         context = getContext(self.published)
-        return str(max(int(context.modified()), context._p_mtime))
+        return 'cm_' + str(max(int(context.modified()), context._p_mtime))
 
 
 class LinkedMeetingModified(object):
@@ -62,11 +62,11 @@ class LinkedMeetingModified(object):
 
     def __call__(self):
         context = getContext(self.published)
-        res = ''
+        res = 'lm_0'
         if context.meta_type == 'MeetingItem':
             meeting = context.getMeeting()
             if meeting:
-                res = str(int(meeting.modified()))
+                res = 'lm_' + str(int(meeting.modified()))
         return res
 
 
@@ -86,7 +86,24 @@ class ConfigModified(object):
         context = getContext(self.published)
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        res = ''
+        res = 'cfgm_0'
         if cfg:
-            res = str(int(cfg.modified()))
+            res = 'cfgm_' + str(int(cfg.modified()))
         return res
+
+
+class ToolModified(object):
+    """The ``toolmodified`` etag component, returning the modified
+       date of portal_plonemeeting
+    """
+
+    implements(IETagValue)
+    adapts(Interface, Interface)
+
+    def __init__(self, published, request):
+        self.published = published
+        self.request = request
+
+    def __call__(self):
+        tool = api.portal.get_tool('portal_plonemeeting')
+        return 'toolm_' + str(int(tool.modified()))
