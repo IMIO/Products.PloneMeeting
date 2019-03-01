@@ -320,6 +320,8 @@ ITEM_INSERT_METHODS = OrderedDict((
     ('on_poll_type', 'field_usedPollTypes'),
 ))
 
+ITEM_TRANSITION_WHEN_RETURNED_FROM_PROPOSING_GROUP_AFTER_CORRECTION = 'accept'
+
 def registerClasses():
     '''ArchGenXML generated code does not register Archetype classes at the
        right moment since model adaptations have been implemented. This method

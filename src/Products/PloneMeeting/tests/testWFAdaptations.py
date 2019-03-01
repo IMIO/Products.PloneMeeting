@@ -23,6 +23,7 @@
 #
 
 from DateTime.DateTime import DateTime
+from plone import api
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 from Products.CMFCore.permissions import DeleteObjects
@@ -52,7 +53,8 @@ class testWFAdaptations(PloneMeetingTestCase):
         '''Test what are the available wfAdaptations.
            This way, if we add a wfAdaptations, the test will 'break' until it is adapted...'''
         self.assertEquals(sorted(self.meetingConfig.listWorkflowAdaptations().keys()),
-                          ['accepted_out_of_meeting',
+                          ['decide_item_when_back_to_meeting_from_returned_to_proposing_group',
+                           'accepted_out_of_meeting',
                            'accepted_out_of_meeting_and_duplicated',
                            'accepted_out_of_meeting_emergency',
                            'accepted_out_of_meeting_emergency_and_duplicated',
@@ -1917,6 +1919,44 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertFalse(self.hasPermission(ModifyPortalContent, item))
         self.assertEquals(item.getMotivation(), HIDE_DECISION_UNDER_WRITING_MSG)
         self.assertEquals(item.getDecision(), HIDE_DECISION_UNDER_WRITING_MSG)
+
+    def test_pm_WFA_decide_item_when_back_to_meeting_from_returned_to_proposing_group(self):
+        cfg = self.meetingConfig
+        if 'decide_item_when_back_to_meeting_from_returned_to_proposing_group' not in cfg.listWorkflowAdaptations():
+            return
+
+        self.changeUser('admin')
+        self._removeConfigObjectsFor(cfg)
+        self.changeUser('pmManager')
+        cfg.setWorkflowAdaptations(
+            ('return_to_proposing_group', 'decide_item_when_back_to_meeting_from_returned_to_proposing_group'))
+        performWorkflowAdaptations(cfg, logger=pm_logger)
+
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2016/01/01 12:00'))
+        item = self.create('MeetingItem')
+        item.setDecision('<p>Decision adapted by pmManager</p>')
+        self.presentItem(item)
+        self.decideMeeting(meeting)
+
+        self.do(item, 'return_to_proposing_group')
+
+        self.changeUser('pmCreator1')
+
+        self.do(item, 'backTo_itemfrozen_from_returned_to_proposing_group')
+
+        # Ensure the item is not simply frozen at this point
+        # and ITEM_TRANSITION_WHEN_RETURNED_FROM_PROPOSING_GROUP_AFTER_CORRECTION was applied automatically
+        from Products.PloneMeeting.config import ITEM_TRANSITION_WHEN_RETURNED_FROM_PROPOSING_GROUP_AFTER_CORRECTION
+        wfTool = api.portal.get_tool('portal_workflow')
+        itemWorkflow = wfTool.getWorkflowsFor(self.meetingConfig.getItemTypeName())[0]
+
+        self.assertTrue(ITEM_TRANSITION_WHEN_RETURNED_FROM_PROPOSING_GROUP_AFTER_CORRECTION in itemWorkflow.transitions,
+                        "%s not in item workflow" % ITEM_TRANSITION_WHEN_RETURNED_FROM_PROPOSING_GROUP_AFTER_CORRECTION)
+
+        transition = itemWorkflow.transitions[ITEM_TRANSITION_WHEN_RETURNED_FROM_PROPOSING_GROUP_AFTER_CORRECTION]
+
+        self.assertEquals(transition.new_state_id, item.queryState())
 
     def test_pm_WFA_waiting_advices(self):
         '''Test the workflowAdaptation 'waiting_advices'.'''

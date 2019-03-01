@@ -665,9 +665,17 @@ class MeetingItemWorkflowActions(object):
         # if an item was returned to proposing group for corrections and that
         # this proposing group sends the item back to the meeting managers, we
         # send an email to warn the MeetingManagers if relevant
-        if stateChange.old_state.id == "returned_to_proposing_group":
+        if stateChange.old_state.id.startswith("returned_to_proposing_group"):
             # We may have to send a mail.
             self.context.sendMailIfRelevant('returnedToMeetingManagers', 'MeetingManager', isRole=True)
+
+        if 'decide_item_when_back_to_meeting_from_returned_to_proposing_group' in self.cfg.getWorkflowAdaptations() \
+                and stateChange.transition.getId() == 'backTo_itemfrozen_from_returned_to_proposing_group' \
+                and self.context.getMeeting().queryState() == 'decided':
+            with api.env.adopt_roles(roles=['Manager']):
+                wTool = api.portal.get_tool('portal_workflow')
+                from config import ITEM_TRANSITION_WHEN_RETURNED_FROM_PROPOSING_GROUP_AFTER_CORRECTION
+                wTool.doActionFor(self.context, ITEM_TRANSITION_WHEN_RETURNED_FROM_PROPOSING_GROUP_AFTER_CORRECTION)
 
     security.declarePrivate('doConfirm')
 
