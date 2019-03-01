@@ -53,14 +53,14 @@ class testWFAdaptations(PloneMeetingTestCase):
         '''Test what are the available wfAdaptations.
            This way, if we add a wfAdaptations, the test will 'break' until it is adapted...'''
         self.assertEquals(sorted(self.meetingConfig.listWorkflowAdaptations().keys()),
-                          ['decide_item_when_back_to_meeting_from_returned_to_proposing_group',
-                           'accepted_out_of_meeting',
+                          ['accepted_out_of_meeting',
                            'accepted_out_of_meeting_and_duplicated',
                            'accepted_out_of_meeting_emergency',
                            'accepted_out_of_meeting_emergency_and_duplicated',
                            'archiving',
                            'creator_edits_unless_closed',
                            'creator_initiated_decisions',
+                           'decide_item_when_back_to_meeting_from_returned_to_proposing_group',
                            'everyone_reads_all',
                            'hide_decisions_when_under_writing',
                            'items_come_validated',
@@ -2321,11 +2321,11 @@ class testWFAdaptations(PloneMeetingTestCase):
             return
 
         self.changeUser('admin')
-        org1 = self.create('organization', id='org1',  title='NewOrg1', acronym='N.O.1')
+        org1 = self.create('organization', id='org1', title='NewOrg1', acronym='N.O.1')
         org1_uid = org1.UID()
-        org2 = self.create('organization', id='org2',  title='NewOrg2', acronym='N.O.2')
+        org2 = self.create('organization', id='org2', title='NewOrg2', acronym='N.O.2')
         org2_uid = org2.UID()
-        org3 = self.create('organization', id='poweradvisers',  title='Power advisers', acronym='PA')
+        org3 = self.create('organization', id='poweradvisers', title='Power advisers', acronym='PA')
         org3_uid = org3.UID()
         self._select_organization(org1_uid)
         self._select_organization(org2_uid)
