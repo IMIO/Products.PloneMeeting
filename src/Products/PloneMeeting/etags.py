@@ -7,6 +7,7 @@
 # GNU General Public License (GPL)
 #
 
+from collective.messagesviewlet.utils import get_all_messages
 from plone import api
 from plone.app.caching.interfaces import IETagValue
 from plone.app.caching.operations.utils import getContext
@@ -107,3 +108,20 @@ class ToolModified(object):
     def __call__(self):
         tool = api.portal.get_tool('portal_plonemeeting')
         return 'toolm_' + str(int(tool.modified()))
+
+
+class MessagesViewlet(object):
+    """The ``messagesviewlet`` etag component, returning the modified
+       date of every messages from collective.messagesviewlet to display.
+    """
+
+    implements(IETagValue)
+    adapts(Interface, Interface)
+
+    def __init__(self, published, request):
+        self.published = published
+        self.request = request
+
+    def __call__(self):
+        messages = get_all_messages(self.published)
+        return 'msgviewlet_' + '_'.join([str(int(msg.modified())) for msg in messages])

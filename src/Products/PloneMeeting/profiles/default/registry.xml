@@ -131,7 +131,6 @@
         <element>contextmodified</element>
         <element>configmodified</element>
         <element>toolmodified</element>
-        <element>linkedmeetingmodified</element>
       </value>
   </record>
   <!-- plone.content.folderView -->
@@ -147,6 +146,7 @@
         <element>configmodified</element>
         <element>toolmodified</element>
         <element>linkedmeetingmodified</element>
+        <element>messagesviewlet</element>
       </value>
   </record>
   <!-- plone.content.itemView -->
@@ -161,7 +161,7 @@
         <element>contextmodified</element>
         <element>configmodified</element>
         <element>toolmodified</element>
-        <element>linkedmeetingmodified</element>
+        <element>messagesviewlet</element>
       </value>
   </record>
 
