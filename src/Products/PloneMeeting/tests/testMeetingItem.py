@@ -1064,13 +1064,13 @@ class testMeetingItem(PloneMeetingTestCase):
         now = DateTime()
         # create 2 meetings in cfg2
         self.setMeetingConfig(cfg2Id)
-        frozenMeeting = self.create('Meeting', date=now+5)
+        frozenMeeting = self.create('Meeting', date=now + 5)
         # must contains at least an item to be frozen
         dummyItem = self.create('MeetingItem')
         self.presentItem(dummyItem)
         self.freezeMeeting(frozenMeeting)
         self.assertEquals(frozenMeeting.queryState(), 'frozen')
-        createdMeeting = self.create('Meeting', date=now+10)
+        createdMeeting = self.create('Meeting', date=now + 10)
         # create the meeting in cfg
         self.setMeetingConfig(cfgId)
         meeting = self.create('Meeting', date=now)
@@ -1098,7 +1098,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # meeting, it is presented into it
         self.deleteAsManager(sentItem.UID())
         # before frozenMeeting
-        createdMeeting.setDate(now+1)
+        createdMeeting.setDate(now + 1)
         createdMeeting.reindexObject(idxs=['getDate'])
         self.backToState(item, 'itemfrozen')
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
@@ -1108,7 +1108,7 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # only presented in a meeting in the future
         self.deleteAsManager(sentItem.UID())
-        createdMeeting.setDate(now-1)
+        createdMeeting.setDate(now - 1)
         createdMeeting.reindexObject(idxs=['getDate'])
         self.backToState(item, 'itemfrozen')
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
@@ -1118,9 +1118,9 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # if not available meeting in the future, it is left 'validated'
         self.deleteAsManager(sentItem.UID())
-        createdMeeting.setDate(now-1)
+        createdMeeting.setDate(now - 1)
         createdMeeting.reindexObject(idxs=['getDate'])
-        frozenMeeting.setDate(now-1)
+        frozenMeeting.setDate(now - 1)
         frozenMeeting.reindexObject(idxs=['getDate'])
         self.backToState(item, 'itemfrozen')
         cleanRamCacheFor('Products.PloneMeeting.MeetingConfig.getMeetingsAcceptingItems')
@@ -1175,10 +1175,10 @@ class testMeetingItem(PloneMeetingTestCase):
         now = DateTime()
         # create 2 meetings in cfg2
         self.setMeetingConfig(cfg2Id)
-        createdMeeting = self.create('Meeting', date=now+10)
+        createdMeeting = self.create('Meeting', date=now + 10)
         # createdMeeting will only be viewable by Managers
         createdMeeting.manage_permission(View, ['Manager', ])
-        frozenMeeting = self.create('Meeting', date=now+5)
+        frozenMeeting = self.create('Meeting', date=now + 5)
         self.freezeMeeting(frozenMeeting)
         self.setMeetingConfig(cfgId)
 
@@ -2687,7 +2687,7 @@ class testMeetingItem(PloneMeetingTestCase):
             self.assertEquals(item.getItemNumber(relativeTo='meetingConfig'), 1200)
             # for the late item
             self.assertEquals(lateItem.getItemNumber(relativeTo='meeting'), 600)
-            self.assertEquals(lateItem.getItemNumber(relativeTo='meetingConfig'), (600+700))
+            self.assertEquals(lateItem.getItemNumber(relativeTo='meetingConfig'), (600 + 700))
         # now set firstItemNumber for meeting_before
         self.changeUser('pmManager')
         self.closeMeeting(meeting_before)
@@ -2701,7 +2701,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(item.getItemNumber(relativeTo='meetingConfig') == 1200)
         # for lateItem
         self.assertTrue(lateItem.getItemNumber(relativeTo='meeting') == 600)
-        self.assertTrue(lateItem.getItemNumber(relativeTo='meetingConfig') == (600+700))
+        self.assertTrue(lateItem.getItemNumber(relativeTo='meetingConfig') == (600 + 700))
         # and set firstItemNumber for meeting
         self.assertTrue(meeting.getFirstItemNumber() == -1)
         self.closeMeeting(meeting)
@@ -2714,7 +2714,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(item.getItemNumber(relativeTo='meetingConfig') == 1200)
         # for lateItem
         self.assertTrue(lateItem.getItemNumber(relativeTo='meeting') == 600)
-        self.assertTrue(lateItem.getItemNumber(relativeTo='meetingConfig') == (600+700))
+        self.assertTrue(lateItem.getItemNumber(relativeTo='meetingConfig') == (600 + 700))
         # if we remove one item, other items number is correct
         # remove normal item number 3 and check others
         self.changeUser('admin')
@@ -5338,8 +5338,8 @@ class testMeetingItem(PloneMeetingTestCase):
         item.setOtherMeetingConfigsClonableToEmergency(())
         item.setOtherMeetingConfigsClonableTo((cfg2Id, ))
         self.meetingConfig = cfg2
-        createdMeeting = self.create('Meeting', date=now+10)
-        frozenMeeting = self.create('Meeting', date=now+5)
+        createdMeeting = self.create('Meeting', date=now + 10)
+        frozenMeeting = self.create('Meeting', date=now + 5)
         self.freezeMeeting(frozenMeeting)
         self.assertEquals(
             item.displayOtherMeetingConfigsClonableTo(),

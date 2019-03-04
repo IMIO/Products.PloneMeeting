@@ -925,6 +925,7 @@ def onConfigContentModified(config_content, event):
     # set modification date on every containers
     _notifyMeetingConfigModified(config_content)
 
+
 def onConfigContentTransition(config_content, event):
     '''Called whenever a transition has been fired on an element of the MeetingConfig.'''
     if not event.transition or (config_content != event.object):

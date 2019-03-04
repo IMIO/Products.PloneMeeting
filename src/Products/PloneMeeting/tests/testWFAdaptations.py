@@ -2533,7 +2533,7 @@ class testWFAdaptations(PloneMeetingTestCase):
         '''Tests while 'reviewers_take_back_validated_item' wfAdaptation is active.'''
         # first create a meeting, we will check the MeetingReviewer may not present the item
         self.changeUser('pmManager')
-        self.create('Meeting', date=DateTime()+1)
+        self.create('Meeting', date=DateTime() + 1)
         # validate an item, the MeetingReviewer will be able to take it back
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')

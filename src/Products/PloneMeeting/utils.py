@@ -752,7 +752,7 @@ def getFieldContent(obj, name, force=None, sep='-', **kwargs):
         if userLanguage == firstLanguage:
             return field.get(obj)
         else:
-            return obj.getField(field.getName()+'2').get(obj, **kwargs)
+            return obj.getField(field.getName() + '2').get(obj, **kwargs)
 
 
 def getFieldVersion(obj, name, changes):
@@ -910,7 +910,6 @@ def getHistoryTexts(obj, event):
     return res
 
 
-# ------------------------------------------------------------------------------
 def setFieldFromAjax(obj, fieldName, newValue):
     '''Sets on p_obj the content of a field whose name is p_fieldName and whose
        new value is p_fieldValue. This method is called by Ajax pages.'''
@@ -935,7 +934,7 @@ def notifyModifiedAndReindex(obj, extra_idxs=[]):
     obj.notifyModified()
     obj.reindexObject(idxs=['modified', 'ModificationDate'])
 
-# ------------------------------------------------------------------------------
+
 def transformAllRichTextFields(obj, onlyField=None):
     '''Potentially, all richtext fields defined on an item (description,
        decision, etc) or a meeting (observations, ...) may be transformed via the method
@@ -1198,7 +1197,7 @@ def isModifiedSinceLastVersion(obj):
     modified = True
     if history_metadata and history_metadata._available:
         # date it was versionned
-        timestamp = history_metadata._full[history_metadata.nextVersionId-1]['metadata']['sys_metadata']['timestamp']
+        timestamp = history_metadata._full[history_metadata.nextVersionId - 1]['metadata']['sys_metadata']['timestamp']
         # we do not use _retrieve because it does a transaction savepoint and it
         # breaks collective.zamqp...  So we use timestamp
         # advice.modified will be older than timestamp as it is managed in see content.advice.versionate_if_relevant
@@ -1292,7 +1291,7 @@ def workday(start_date, days=0, holidays=[], weekends=[], unavailable_weekdays=[
         # day number.  For example, we do not want the new_date to be on saterday,
         # so day number 5 (as beginning by 0), in this case, we add 1 to days and we relaunch
         # the workday search
-        new_date = workday(start_date, days+1, holidays, weekends, unavailable_weekdays)
+        new_date = workday(start_date, days + 1, holidays, weekends, unavailable_weekdays)
 
     return new_date
 

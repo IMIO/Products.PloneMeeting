@@ -33,6 +33,7 @@ import random
 
 old__getProfileData = ToolInitializer.getProfileData
 
+
 def getProfileData(self):
     """Patch getProfileData so we are sure we have only one
        MeetingConfig created with same id, this is necessary

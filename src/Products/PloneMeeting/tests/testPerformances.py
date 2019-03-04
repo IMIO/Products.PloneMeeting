@@ -150,11 +150,11 @@ class testPerformances(PloneMeetingTestCase):
         # update items starting from 100th item
         pm_logger.info(
             'Updating item references for %d items presented in a meeting starting from item number %s.' % (250, 100))
-        self._updateItemReferences(meeting, startNumber=100*100)
+        self._updateItemReferences(meeting, startNumber=100 * 100)
         # update items starting from 200th item
         pm_logger.info(
             'Updating item references for %d items presented in a meeting starting from item number %s.' % (250, 200))
-        self._updateItemReferences(meeting, startNumber=200*100)
+        self._updateItemReferences(meeting, startNumber=200 * 100)
 
     @timecall
     def _updateItemReferences(self, meeting, startNumber=0):
@@ -269,7 +269,7 @@ class testPerformances(PloneMeetingTestCase):
         number_of_items = 10
         pm_logger.info('Adding %d meetings with %d items in each' % (number_of_meetings, number_of_items))
         for i in range(number_of_meetings):
-            pm_logger.info('Creating meeting %d of %s' % (i+1, number_of_meetings))
+            pm_logger.info('Creating meeting %d of %s' % (i + 1, number_of_meetings))
             meeting = self.create('Meeting', date='2007/12/%d 09:00:00' % (i + 1))
             meetings.append(meeting)
             for j in range(number_of_items):
@@ -282,7 +282,7 @@ class testPerformances(PloneMeetingTestCase):
         # test with the last created meeting
         self._computeItemNumbersForMeeting(meeting)
         # now close meeting at half of existing meetings
-        meetingAtHalf = meetings[int(number_of_meetings/2)]
+        meetingAtHalf = meetings[int(number_of_meetings / 2)]
         self.closeMeeting(meetingAtHalf)
         self._computeItemNumbersForMeeting(meeting)
         # now close meeting at 90% of created meetings that is the most obvious usecase

@@ -200,6 +200,7 @@ class PMHeldPosition(HeldPosition):
             res = u'{0}{1}'.format(res, value)
         return res
 
+
 class PMHeldPositionSchemaPolicy(DexteritySchemaPolicy):
     """ """
 

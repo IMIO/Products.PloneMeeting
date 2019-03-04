@@ -1352,5 +1352,6 @@ class PMBaseOverviewControlPanel(UsersGroupsControlPanelView):
 class PMUsersOverviewControlPanel(PMBaseOverviewControlPanel, UsersOverviewControlPanel):
     """See PMBaseOverviewControlPanel docstring."""
 
+
 class PMGroupsOverviewControlPanel(PMBaseOverviewControlPanel, GroupsOverviewControlPanel):
     """See PMBaseOverviewControlPanel docstring."""

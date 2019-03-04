@@ -1494,6 +1494,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         _updateDefaultCollectionFor(searches_items, searches_items.searchmyitems.UID())
         self.assertNotEqual(original_cfg_modified, cfg.modified())
 
+
 def test_suite():
     from unittest import TestSuite, makeSuite
     suite = TestSuite()

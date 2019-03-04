@@ -6065,7 +6065,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             backTransitionIds = [tr for tr in itemWF.transitions if tr.startswith('back')]
             transitionIds = [tr for tr in itemWF.transitions if not tr.startswith('back')]
             # get the last event that is a real workflow transition event
-            lastEvent = getLastWFAction(self, transition=backTransitionIds+transitionIds)
+            lastEvent = getLastWFAction(self, transition=backTransitionIds + transitionIds)
             if lastEvent and lastEvent['action']:
                 if lastEvent['action'].startswith('back'):
                     res = "down"

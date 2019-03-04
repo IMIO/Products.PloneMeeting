@@ -1035,7 +1035,7 @@ def companionField(name, type='simple', label=None, searchable=False,
         widget.condition = condition
     # Create the type definition
     required = name == 'title'
-    res = fieldType(name=name+'2', widget=widget, required=required)
+    res = fieldType(name=name + '2', widget=widget, required=required)
     res.searchable = searchable
     if type == 'rich':
         res.default_content_type = "text/html"

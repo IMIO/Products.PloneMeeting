@@ -1015,6 +1015,7 @@ class testSearches(PloneMeetingTestCase):
             collection = brain.getObject()
             self.assertTrue(collection.restrictedTraverse('edit')())
 
+
 def test_suite():
     from unittest import TestSuite, makeSuite
     suite = TestSuite()

@@ -159,6 +159,7 @@ class testMeetingCategory(PloneMeetingTestCase):
         categories_modified_delete = cfg.categories.modified()
         self.assertNotEqual(categories_modified_transition, categories_modified_delete)
 
+
 def test_suite():
     from unittest import TestSuite, makeSuite
     suite = TestSuite()

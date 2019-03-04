@@ -447,6 +447,7 @@ class IMeetingDocumentation:
            Meeting items insert order caching.  If one of these fields value changed
            the cache would be invalidated.'''
 
+
 class IMeetingWorkflowConditions(Interface):
     '''Conditions that may be defined in the workflow associated with a meeting
        are defined as methods in this interface.'''
