@@ -6,8 +6,7 @@ version = '4.1b17.dev0'
 setup(name='Products.PloneMeeting',
       version=version,
       description="Official meetings management",
-      long_description=open("README.txt").read() + "\n" +
-           open(os.path.join("docs", "HISTORY.txt")).read(),
+      long_description=open("README.rst").read() + "\n" + open("CHANGES.rst").read(),
       # Get more strings from https://pypi.python.org/pypi?%3Aaction=list_classifiers
       classifiers=[
           "Development Status :: 6 - Mature",
