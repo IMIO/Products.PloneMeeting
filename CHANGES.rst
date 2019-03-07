@@ -45,7 +45,8 @@ Older versions than 3.0 can be found at http://svn.communesplone.org/svn/commune
   same action on portal_plonemeeting that will update items and meetings of every MeetingConfigs
 - Added WFAdaptation 'decide_item_when_back_to_meeting_from_returned_to_proposing_group' that will automatically decide (depending on constant
   ITEM_TRANSITION_WHEN_RETURNED_FROM_PROPOSING_GROUP_AFTER_CORRECTION) an item that is back from returned_to_proposing_group
-- Make TALCondition behavior have 'cfg' and 'tool' variables available, this fix problem with messagesviewlet where it was not available
+- Make TALCondition behavior have 'cfg' and 'tool' variables available everywhere it is used,
+  this fixes problem with collective.messagesviewlet message.tal_condition field where it was not available
 
 4.1b16 (2019-01-31)
 -------------------
