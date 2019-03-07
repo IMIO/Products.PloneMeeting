@@ -468,7 +468,8 @@ class BaseActionsPanelView(ActionsPanelView):
         super(BaseActionsPanelView, self).__init__(context, request)
         self.IGNORABLE_ACTIONS = ('copy', 'cut', 'paste', 'rename',
                                   'faceted.disable', 'faceted.enable',
-                                  'faceted.search.disable', 'faceted.search.enable')
+                                  'faceted.search.disable', 'faceted.search.enable',
+                                  'faceted.sync')
         self.tool = api.portal.get_tool('portal_plonemeeting')
 
     @memoize_contextless

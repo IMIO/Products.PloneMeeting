@@ -72,6 +72,22 @@
     </property>
     <property name="visible">True</property>
    </object>
+   <object name="faceted.sync" meta_type="CMF Action">
+    <property name="permissions">
+     <element value="Manage portal"/>
+    </property>
+    <property name="visible">False</property>
+   </object>
+   <object name="update_categorized_elements" meta_type="CMF Action">
+    <property name="permissions">
+     <element value="Manage portal"/>
+    </property>
+   </object>
+   <object name="update_and_sort_categorized_elements" meta_type="CMF Action">
+    <property name="permissions">
+     <element value="Manage portal"/>
+    </property>
+   </object>
   </object>
 
   <!-- Manage object actions. -->
@@ -104,6 +120,7 @@
    </object>
    <object name="faceted.search.enable" meta_type="CMF Action" remove="true">
    </object>
+
    <!-- Remove some object actions -->
    <object name="iconifiedcategory" meta_type="CMF Action" remove="true">
    </object>

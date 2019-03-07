@@ -1,15 +1,9 @@
-Products.PloneMeeting Changelog
-===============================
+Changelog
+=========
 
-Older versions than 3.0 can be found at http://svn.communesplone.org/svn/communesplone/PloneMeeting/tags/
-- Versions 1.x are for Plone2.5
-- Versions 2.x are for Plone3.x
-- Versions 3.0.x are for Plone < 4.3
-- Versions 3.1.+ are for Plone 4.3+
 
 4.1b17 (unreleased)
 -------------------
-
 - Moved held_position fields 'label', 'position_type', 'start_date', 'end_date', 'usages', 'defaults', 'signature_number'
   to a 'app_parameters' fieldset so it is displayed on the view by the 'additional-fields' macro
 - Added caching on annexes categorized childs view (the icon with count of annexes initializing the tooltipster) and adapted

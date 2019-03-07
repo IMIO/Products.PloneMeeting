@@ -7,7 +7,7 @@
 # GNU General Public License (GPL)
 #
 
-from collective.messagesviewlet.utils import get_all_messages
+from collective.messagesviewlet.utils import get_messages_to_show
 from plone import api
 from plone.app.caching.interfaces import IETagValue
 from plone.app.caching.operations.utils import getContext
@@ -124,5 +124,5 @@ class MessagesViewlet(object):
 
     def __call__(self):
         context = getContext(self.published)
-        messages = get_all_messages(context)
+        messages = get_messages_to_show(context)
         return 'msgviewlet_' + '_'.join([str(int(msg.modified())) for msg in messages])
