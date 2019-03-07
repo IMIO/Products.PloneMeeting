@@ -123,5 +123,6 @@ class MessagesViewlet(object):
         self.request = request
 
     def __call__(self):
-        messages = get_all_messages(self.published)
+        context = getContext(self.published)
+        messages = get_all_messages(context)
         return 'msgviewlet_' + '_'.join([str(int(msg.modified())) for msg in messages])
