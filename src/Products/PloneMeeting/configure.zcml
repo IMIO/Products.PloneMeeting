@@ -2,6 +2,7 @@
            xmlns:browser="http://namespaces.zope.org/browser"
            xmlns:five="http://namespaces.zope.org/five"
            xmlns:i18n="http://namespaces.zope.org/i18n"
+           xmlns:plone="http://namespaces.plone.org/plone"
            xmlns:zcml="http://namespaces.zope.org/zcml"
            i18n_domain="PloneMeeting">
 
@@ -324,5 +325,28 @@
            name="configmodified" />
   <adapter factory=".etags.ToolModified"
            name="toolmodified" />
+  <adapter factory=".etags.MessagesViewlet"
+           name="messagesviewlet" />
+
+  <include package="z3c.unconfigure" file="meta.zcml"/>
+
+  <!-- TAL condition behavior, unconfigure and re-configure for every content to add our extra expr context -->
+  <unconfigure package="collective.behavior.talcondition">
+    <plone:behavior
+        title="TALCondition"
+        description="Add a TAL condition field useable to check if content should be available."
+        provides=".behavior.ITALCondition"
+        for="plone.dexterity.interfaces.IDexterityContent"
+        factory=".behavior.TALCondition"
+        marker=".interfaces.ITALConditionable"
+        />
+  </unconfigure>
+  <plone:behavior
+      title="TALCondition"
+      description="Add a TAL condition field useable to check if content should be available."
+      provides="collective.behavior.talcondition.behavior.ITALCondition"
+      for="plone.dexterity.interfaces.IDexterityContent"
+      factory="Products.PloneMeeting.behaviors.overrides.PMTALCondition"
+      marker="collective.behavior.talcondition.interfaces.ITALConditionable" />
 
 </configure>
