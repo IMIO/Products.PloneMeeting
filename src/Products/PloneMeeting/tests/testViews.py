@@ -951,6 +951,44 @@ class testViews(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(View, meeting))
         self.assertFalse(form.available())
 
+    def test_pm_UpdateLocaRolesBatchActionForm(self):
+        """This will call updateLocalRoles on selected elements."""
+        cfg = self.meetingConfig
+        cfg.setItemPowerObserversStates(())
+        powerobservers = '{0}_powerobservers'.format(cfg.getId())
+
+        # create some items
+        self.changeUser('pmManager')
+        item1 = self.create('MeetingItem')
+        item2 = self.create('MeetingItem')
+        item3 = self.create('MeetingItem')
+        self.request.form['form.widgets.uids'] = ','.join([item1.UID(), item3.UID()])
+        dashboardFolder = self.getMeetingFolder().searches_items
+        # not available as not Manager
+        self.assertRaises(Unauthorized, dashboardFolder.restrictedTraverse, '@@update-local-roles-batch-action')
+
+        # as Manager
+        self.changeUser('siteadmin')
+        self.assertFalse(powerobservers in item1.__ac_local_roles__)
+        self.assertFalse(powerobservers in item2.__ac_local_roles__)
+        self.assertFalse(powerobservers in item3.__ac_local_roles__)
+        cfg.setItemPowerObserversStates((self._stateMappingFor('itemcreated'), ))
+        dashboardFolder = self.getMeetingFolder().searches_items
+        form = dashboardFolder.restrictedTraverse('@@update-local-roles-batch-action')
+        self.assertTrue(form.available())
+        form.update()
+        form.handleApply(form, None)
+        self.assertTrue(powerobservers in item1.__ac_local_roles__)
+        self.assertFalse(powerobservers in item2.__ac_local_roles__)
+        self.assertTrue(powerobservers in item3.__ac_local_roles__)
+
+        # not available on meeting
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2019/03/08'))
+        self.changeUser('siteadmin')
+        form = meeting.restrictedTraverse('@@update-local-roles-batch-action')
+        self.assertFalse(form.available())
+
     def test_pm_ftw_labels_viewlet_available(self):
         """Only available on items if enabled in MeetingConfig."""
         cfg = self.meetingConfig
@@ -1190,9 +1228,9 @@ class testViews(PloneMeetingTestCase):
               'delay_label': ''}, ])
         cfg.setPowerAdvisersGroups((self.vendors_uid,))
         cfg.setItemPowerObserversStates(('itemcreated',))
-        cfg.setItemAdviceStates(('itemcreated',))
-        cfg.setItemAdviceEditStates(('itemcreated',))
-        cfg.setItemAdviceViewStates(('itemcreated',))
+        cfg.setItemAdviceStates((self._stateMappingFor('itemcreated'),))
+        cfg.setItemAdviceEditStates((self._stateMappingFor('itemcreated'),))
+        cfg.setItemAdviceViewStates((self._stateMappingFor('itemcreated'),))
         cfg.at_post_edit_script()
 
         item = self.create('MeetingItem')

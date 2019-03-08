@@ -27,6 +27,7 @@ from collective.documentgenerator.helper.archetypes import ATDocumentGenerationH
 from collective.documentgenerator.helper.dexterity import DXDocumentGenerationHelperView
 from collective.eeafaceted.batchactions import _ as _CEBA
 from collective.eeafaceted.batchactions.browser.views import BaseBatchActionForm
+from collective.eeafaceted.batchactions.utils import listify_uids
 from eea.facetednavigation.browser.app.view import FacetedContainerView
 from eea.facetednavigation.interfaces import ICriteria
 from ftw.labels.interfaces import ILabeling
@@ -1470,7 +1471,33 @@ class MeetingStoreItemsPodTemplateAsAnnexBatchActionForm(BaseBatchActionForm):
                         domain="PloneMeeting",
                         mapping={'number_of_annexes': num_of_generated_templates},
                         context=self.request,
-                        default="Stored ${number_of_annexes} annexes")
+                        default="Stored ${number_of_annexes} annexes.")
+        api.portal.show_message(msg, request=self.request)
+
+
+class UpdateLocalRolesBatchActionForm(BaseBatchActionForm):
+
+    label = _CEBA("Update accesses for selected elements")
+    button_with_icon = False
+
+    def __init__(self, context, request):
+        super(UpdateLocalRolesBatchActionForm, self).__init__(context, request)
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.cfg = self.tool.getMeetingConfig(context)
+
+    def available(self):
+        """Hide it on meetings as it uses IMeetingBatchActionsMarker."""
+        return not IMeeting.providedBy(self.context)
+
+    def _apply(self, **data):
+        """ """
+        uids = listify_uids(data['uids'])
+        self.tool.updateAllLocalRoles(**{'UID': uids})
+        msg = translate('update_selected_elements',
+                        domain="PloneMeeting",
+                        mapping={'number_of_elements': len(uids)},
+                        context=self.request,
+                        default="Updated accesses for ${number_of_elements} element(s).")
         api.portal.show_message(msg, request=self.request)
 
 

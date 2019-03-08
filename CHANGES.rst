@@ -41,6 +41,8 @@ Changelog
   ITEM_TRANSITION_WHEN_RETURNED_FROM_PROPOSING_GROUP_AFTER_CORRECTION) an item that is back from returned_to_proposing_group
 - Make TALCondition behavior have 'cfg' and 'tool' variables available everywhere it is used,
   this fixes problem with collective.messagesviewlet message.tal_condition field where it was not available
+- Added batch action 'Update' available in dashboards listing items and meetings that will updateLocalRoles of selected elements, this is useful
+  when needed to update only some elements because of MeetingConfig changes
 
 4.1b16 (2019-01-31)
 -------------------

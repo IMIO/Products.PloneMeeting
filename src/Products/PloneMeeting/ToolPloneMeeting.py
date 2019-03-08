@@ -1463,7 +1463,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declareProtected(ModifyPortalContent, 'updateAllLocalRoles')
 
-    def updateAllLocalRoles(self, meta_type=('Meeting', 'MeetingItem'), portal_type=()):
+    def updateAllLocalRoles(self, meta_type=('Meeting', 'MeetingItem'), portal_type=(), **kw):
         '''Update local_roles on Meeting and MeetingItem,
            this is used to reflect configuration changes regarding access.'''
         startTime = time.time()
@@ -1473,6 +1473,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             query['meta_type'] = meta_type
         if portal_type:
             query['portal_type'] = portal_type
+        query.update(kw)
         brains = catalog(**query)
         numberOfBrains = len(brains)
         i = 1
