@@ -1375,7 +1375,7 @@ class testViews(PloneMeetingTestCase):
         self.assertTrue(tool_modified in browser.headers['etag'])
         self.assertTrue(context_modified in browser.headers['etag'])
         self.assertEqual(LinkedMeetingModified(item, self.request)(), 'lm_0')
-        self.assertTrue(browser.headers['etag'].endswith('|lm_0"'))
+        self.assertTrue('msgviewlet_' in browser.headers['etag'])
         # item in meeting
         self.request['PUBLISHED'] = presented_item
         context_modified = ContextModified(presented_item, self.request)()
