@@ -491,29 +491,6 @@
       <tal:itemNavigation replace="structure context/@@item-navigation-widget" />
     </tal:itemNavigation>
 
-    <tal:comment replace="nothing">Fields that appear only if the item is defined in a configuration</tal:comment>
-    <tal:itemInConfig condition="context/isDefinedInTool">
-
-      <tal:templateUsingGroups condition="python: 'itemtemplates' in context_url">
-        <div class="discreet">
-         <span class="item_attribute_label" i18n:translate="PloneMeeting_label_templateUsingGroups">Template using groups</span>:&nbsp;&nbsp;
-         <span metal:use-macro="python: here.widget('templateUsingGroups', mode='view')" />
-        </div>
-        <p>&nbsp;</p>
-        <a tal:attributes="href string:${meetingConfig/absolute_url}?pageName=data#itemTemplates" i18n:translate="back"></a><br /><br />
-      </tal:templateUsingGroups>
-
-      <tal:transitionsForRecurring condition="python: context.getParentNode().getId() == 'recurringitems'">
-        <div class="discreet">
-         <span class="item_attribute_label" i18n:translate="PloneMeeting_label_meetingTransitionInsertingMe">Meeting transition inserting me</span>:&nbsp;&nbsp;
-         <span metal:use-macro="python: here.widget('meetingTransitionInsertingMe', mode='view')" />
-        </div>
-        <p>&nbsp;</p>
-        <a tal:attributes="href string:${meetingConfig/absolute_url}?pageName=data#recurringitems" i18n:translate="back"></a><br /><br />
-      </tal:transitionsForRecurring>
-
-    </tal:itemInConfig>
-
        </metal:body_macro>
     </metal:fill>
   </body>

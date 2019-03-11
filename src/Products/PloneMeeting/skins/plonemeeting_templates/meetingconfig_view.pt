@@ -612,7 +612,7 @@
       </fieldset>
 
       <!-- Item templates -->
-      <a name="itemTemplates"></a>
+      <a name="itemtemplates"></a>
       <fieldset>
         <legend>
          <span i18n:translate="Item templates"></span>

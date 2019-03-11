@@ -313,6 +313,12 @@
   <class class="collective.documentgenerator.content.pod_template.ConfigurablePODTemplate">
     <implements interface="Products.PloneMeeting.interfaces.IConfigElement" />
   </class>
+  <class class="collective.documentgenerator.content.style_template.StyleTemplate">
+    <implements interface="Products.PloneMeeting.interfaces.IConfigElement" />
+  </class>
+  <class class="plone.app.contenttypes.content.Collection">
+    <implements interface="Products.PloneMeeting.interfaces.IConfigElement" />
+  </class>
 
   <!-- ETag components -->
   <adapter factory=".etags.UserGroups"

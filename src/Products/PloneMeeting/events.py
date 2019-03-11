@@ -41,6 +41,7 @@ from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import ROOT_FOLDER
 from Products.PloneMeeting.config import TOOL_FOLDER_SEARCHES
+from Products.PloneMeeting.interfaces import IConfigElement
 from Products.PloneMeeting.utils import _addManagedPermissions
 from Products.PloneMeeting.utils import addRecurringItemsIfRelevant
 from Products.PloneMeeting.utils import AdviceAfterAddEvent
@@ -55,6 +56,8 @@ from zExceptions import Redirect
 from zope.event import notify
 from zope.globalrequest import getRequest
 from zope.i18n import translate
+from zope.interface import alsoProvides
+from zope.interface import noLongerProvides
 from zope.lifecycleevent import IObjectRemovedEvent
 
 import logging
@@ -547,6 +550,11 @@ def onItemAdded(item, event):
     item.takenOverByInfos = PersistentMapping()
     # An item has ben modified
     invalidate_cachekey_volatile_for('Products.PloneMeeting.MeetingItem.modified')
+    # if element is in a MeetingConfig, we mark it with IConfigElement interface
+    if item.isDefinedInTool():
+        alsoProvides(item, IConfigElement)
+    else:
+        noLongerProvides(item, IConfigElement)
 
 
 def onItemModified(item, event):

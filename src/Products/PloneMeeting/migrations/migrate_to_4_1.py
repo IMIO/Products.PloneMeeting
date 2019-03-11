@@ -21,6 +21,7 @@ from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 from Products.PloneMeeting.config import TOOL_FOLDER_POD_TEMPLATES
 from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
 from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
+from Products.PloneMeeting.interfaces import IConfigElement
 from Products.PloneMeeting.migrations import Migrator
 from Products.PloneMeeting.utils import get_public_url
 from Products.PloneMeeting.utils import updateCollectionCriterion
@@ -857,6 +858,19 @@ class Migrate_To_4_1(Migrator):
                 searchitemstoprevalidate.query = list(searches_infos['searchitemstoprevalidate']['query'])
         logger.info('Done.')
 
+    def _migrateItemsInConfig(self):
+        """Migrate every items stored in MeetingConfig so provides IConfigElement."""
+        logger.info('Migrating every items stored in MeetingConfig to provide IConfigElement...')
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            brains = api.content.find(context=cfg, meta_type='MeetingItem')
+            for brain in brains:
+                item = brain.getObject()
+                if IConfigElement.providedBy(item):
+                    # already migrated
+                    break
+                alsoProvides(item, IConfigElement)
+        logger.info('Done.')
+
     def run(self, step=None):
         logger.info('Migrating to PloneMeeting 4.1...')
 
@@ -925,6 +939,7 @@ class Migrate_To_4_1(Migrator):
         self._disableVotes()
         self.removeUnusedPortalTypes(portal_types=['MeetingUser', 'MeetingFile', 'MeetingFileType', 'MeetingGroup'])
         self._migrate_searchitemstoprevalidate_query()
+        self._migrateItemsInConfig()
         # too many indexes to update, rebuild the portal_catalog
         self.refreshDatabase()
 
@@ -961,7 +976,8 @@ def migrate(context):
        26) Migrate contact person klass to use PMPerson for users of beta versions...;
        27) Disable votes functionnality;
        28) Removed no more used portal_types;
-       29) Migrate 'searchitemstoprevalidate' query.
+       29) Migrate 'searchitemstoprevalidate' query;
+       30) Migrate items in MeetingConfig so it provides IConfigElement.
     '''
     migrator = Migrate_To_4_1(context)
     migrator.run()

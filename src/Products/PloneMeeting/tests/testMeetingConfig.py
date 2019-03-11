@@ -25,9 +25,9 @@
 from AccessControl import Unauthorized
 from collections import OrderedDict
 from collective.contact.plonegroup.utils import get_organization
-from collective.eeafaceted.collectionwidget.utils import getCollectionLinkCriterion
 from collective.eeafaceted.collectionwidget.utils import _get_criterion
 from collective.eeafaceted.collectionwidget.utils import _updateDefaultCollectionFor
+from collective.eeafaceted.collectionwidget.utils import getCollectionLinkCriterion
 from collective.iconifiedcategory.utils import get_category_object
 from DateTime import DateTime
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
@@ -51,10 +51,13 @@ from Products.PloneMeeting.config import RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import TOOL_FOLDER_SEARCHES
 from Products.PloneMeeting.config import WriteHarmlessConfig
 from Products.PloneMeeting.events import _itemAnnexTypes
+from Products.PloneMeeting.interfaces import IConfigElement
 from Products.PloneMeeting.MeetingConfig import DUPLICATE_SHORT_NAME
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
+from zope.event import notify
 from zope.i18n import translate
+from zope.lifecycleevent import ObjectModifiedEvent
 
 
 MC_GROUP_SUFFIXES = (
@@ -1493,6 +1496,83 @@ class testMeetingConfig(PloneMeetingTestCase):
         original_cfg_modified = cfg.modified()
         _updateDefaultCollectionFor(searches_items, searches_items.searchmyitems.UID())
         self.assertNotEqual(original_cfg_modified, cfg.modified())
+
+    def test_pm_ItemInConfigProvidesIConfigElementNotOtherItems(self):
+        """Item created in MeetingConfig (recurring, itemtemplate) will provide IConfigElement,
+           but not items created in the application."""
+        cfg = self.meetingConfig
+        self.changeUser('siteadmin')
+        # recurring item
+        recurring_item = cfg.recurringitems.objectValues()[0]
+        self.assertTrue(IConfigElement.providedBy(recurring_item))
+        # item template
+        item_template = cfg.itemtemplates.objectValues()[0]
+        self.assertTrue(IConfigElement.providedBy(item_template))
+
+        # fresh item
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        self.assertFalse(IConfigElement.providedBy(item))
+        # item from item template
+        pmFolder = self.getMeetingFolder()
+        view = pmFolder.restrictedTraverse('@@createitemfromtemplate')
+        itemFromTemplate = view.createItemFromTemplate(item_template.UID())
+        self.assertFalse(IConfigElement.providedBy(itemFromTemplate))
+        # recurring item
+        meeting = self.create('Meeting', date=DateTime('2019/03/11'))
+        recurring_item = meeting.getItems()[0]
+        self.assertFalse(IConfigElement.providedBy(recurring_item))
+
+    def test_pm_ConfigModifiedWhenConfigElementModified(self):
+        """When any element contained in a MeetingConfig is modified,
+           MeetingConfig.modified is updated so caching is invalidated."""
+        cfg = self.meetingConfig
+        self.changeUser('siteadmin')
+        original_cfg_modified = cfg.modified()
+
+        # edit a POD template
+        pod_template = [pod_template for pod_template in cfg.podtemplates.objectValues()
+                        if pod_template.portal_type == 'ConfigurablePODTemplate'][0]
+        notify(ObjectModifiedEvent(pod_template))
+        pod_template_cfg_modified = cfg.modified()
+        self.assertNotEqual(original_cfg_modified, pod_template_cfg_modified)
+
+        # edit a POD style template
+        style_template = [style_template for style_template in cfg.podtemplates.objectValues()
+                          if style_template.portal_type == 'StyleTemplate'][0]
+        notify(ObjectModifiedEvent(style_template))
+        style_template_cfg_modified = cfg.modified()
+        self.assertNotEqual(pod_template_cfg_modified, style_template_cfg_modified)
+
+        # edit a ContentCategory
+        content_category = cfg.annexes_types.item_annexes.objectValues()[0]
+        notify(ObjectModifiedEvent(content_category))
+        content_category_cfg_modified = cfg.modified()
+        self.assertNotEqual(style_template_cfg_modified, content_category_cfg_modified)
+
+        # edit a MeetingCategory
+        category = cfg.categories.objectValues()[0]
+        notify(ObjectModifiedEvent(category))
+        category_cfg_modified = cfg.modified()
+        self.assertNotEqual(content_category_cfg_modified, category_cfg_modified)
+
+        # edit a Collection
+        collection = cfg.searches.searches_items.objectValues()[0]
+        notify(ObjectModifiedEvent(collection))
+        collection_cfg_modified = cfg.modified()
+        self.assertNotEqual(category_cfg_modified, collection_cfg_modified)
+
+        # recurring item
+        recurring_item = cfg.recurringitems.objectValues()[0]
+        notify(ObjectModifiedEvent(recurring_item))
+        recurring_item_cfg_modified = cfg.modified()
+        self.assertNotEqual(collection_cfg_modified, recurring_item_cfg_modified)
+
+        # item template
+        item_template = cfg.itemtemplates.objectValues()[0]
+        notify(ObjectModifiedEvent(item_template))
+        item_template_cfg_modified = cfg.modified()
+        self.assertNotEqual(recurring_item_cfg_modified, item_template_cfg_modified)
 
 
 def test_suite():

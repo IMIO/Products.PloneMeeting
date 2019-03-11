@@ -2241,13 +2241,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            - '*', we return True for any item defined in the tool;
            - 'recurring', we return True if it is a recurring item defined in the tool;
            - 'itemtemplate', we return True if it is an item template defined in the tool.'''
+        is_in_tool = 'portal_plonemeeting' in self.absolute_url()
         if item_type == '*':
-            return self.portal_type.startswith('MeetingItemRecurring') or \
-                self.portal_type.startswith('MeetingItemTemplate')
+            return is_in_tool
         elif item_type == 'recurring':
-            return self.portal_type.startswith('MeetingItemRecurring')
+            return is_in_tool and self.portal_type.startswith('MeetingItemRecurring')
         elif item_type == 'itemtemplate':
-            return self.portal_type.startswith('MeetingItemTemplate')
+            return is_in_tool and self.portal_type.startswith('MeetingItemTemplate')
 
     security.declarePublic('showClonableToOtherMeetingConfigs')
 

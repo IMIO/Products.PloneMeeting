@@ -192,7 +192,9 @@ class PMConfigActionsPanelViewlet(ActionsPanelViewlet):
 
     backPages = {'categories': 'data',
                  'classifiers': 'data',
-                 'podtemplates': 'doc', }
+                 'itemtemplates': 'data',
+                 'podtemplates': 'doc',
+                 'recurringitems': 'data', }
 
     def renderViewlet(self):
         """ """
