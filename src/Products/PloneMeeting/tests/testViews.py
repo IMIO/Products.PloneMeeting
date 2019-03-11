@@ -951,7 +951,7 @@ class testViews(PloneMeetingTestCase):
         self.assertTrue(self.hasPermission(View, meeting))
         self.assertFalse(form.available())
 
-    def test_pm_UpdateLocaRolesBatchActionForm(self):
+    def test_pm_UpdateLocalRolesBatchActionForm(self):
         """This will call updateLocalRoles on selected elements."""
         cfg = self.meetingConfig
         cfg.setItemPowerObserversStates(())

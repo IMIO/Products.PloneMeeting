@@ -847,6 +847,16 @@ class Migrate_To_4_1(Migrator):
             cfg.setUseVotes(False)
         logger.info('Done.')
 
+    def _migrate_searchitemstoprevalidate_query(self):
+        """Migrate query of the 'searchitemstoprevalidate' collection."""
+        logger.info('Migrating query for collection searchitemstoprevalidate for every MeetingConfigs...')
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            searchitemstoprevalidate = cfg.searches.searches_items.get('searchitemstoprevalidate')
+            if searchitemstoprevalidate:
+                searches_infos = cfg._searchesInfo()
+                searchitemstoprevalidate.query = list(searches_infos['searchitemstoprevalidate']['query'])
+        logger.info('Done.')
+
     def run(self, step=None):
         logger.info('Migrating to PloneMeeting 4.1...')
 
@@ -914,6 +924,7 @@ class Migrate_To_4_1(Migrator):
         self._migrateContactPersonsKlass()
         self._disableVotes()
         self.removeUnusedPortalTypes(portal_types=['MeetingUser', 'MeetingFile', 'MeetingFileType', 'MeetingGroup'])
+        self._migrate_searchitemstoprevalidate_query()
         # too many indexes to update, rebuild the portal_catalog
         self.refreshDatabase()
 
@@ -949,7 +960,8 @@ def migrate(context):
        25) Adapt link to images to be sure to use resolveuid;
        26) Migrate contact person klass to use PMPerson for users of beta versions...;
        27) Disable votes functionnality;
-       28) Removed no more used portal_types.
+       28) Removed no more used portal_types;
+       29) Migrate 'searchitemstoprevalidate' query.
     '''
     migrator = Migrate_To_4_1(context)
     migrator.run()

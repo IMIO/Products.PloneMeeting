@@ -2505,12 +2505,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'active': True,
                     'query':
                     [
-                        {'i': 'portal_type',
-                         'o': 'plone.app.querystring.operation.selection.is',
-                         'v': [itemType, ]},
-                        {'i': 'review_state',
-                         'o': 'plone.app.querystring.operation.selection.is',
-                         'v': ['proposed']}
+                        {'i': u'CompoundCriterion',
+                         'o': u'plone.app.querystring.operation.compound.is',
+                         'v': u'items-to-validate-of-my-reviewer-groups'},
+                        {'i': u'review_state',
+                         'o': u'plone.app.querystring.operation.selection.is',
+                         'v': [u'proposed']},
                     ],
                     'sort_on': u'modified',
                     'sort_reversed': True,
