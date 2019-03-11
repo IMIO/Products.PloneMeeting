@@ -241,7 +241,8 @@ class IMeetingItemDocumentation:
            with this method that will returns a list of extra field ids to copy to
            the cloned item.  The parameter p_cloned_to_same_mc is True if current item
            will be cloned to the same meeting config, and is False if item is
-           actually sent to another meeting config.'''
+           actually sent to another meeting config.  The parameter p_cloned_from_item_template
+           is True if we are actually creating an item from an item template.'''
     def getCertifiedSignatures(forceUseCertifiedSignaturesOnMeetingConfig=False):
         '''Gets the certified signatures for this item.
            Either use signatures defined on the proposing MeetingGroup if exists,

@@ -874,7 +874,7 @@ class Migrate_To_4_1(Migrator):
     def run(self, step=None):
         logger.info('Migrating to PloneMeeting 4.1...')
 
-        # recook CSS as we moved to Plone 4.3.15 and portal_css.concatenatedresources
+        # recook CSS as we moved to Plone 4.3.18 and portal_css.concatenatedresources
         # could not exist, it is necessary for collective.js.tooltispter upgrade step
         try:
             self.portal.portal_css.concatenatedresources
