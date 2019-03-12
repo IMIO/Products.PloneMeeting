@@ -31,7 +31,6 @@ from plone.memoize import ram
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
 from Products.Five import BrowserView
-from Products.PloneMeeting.interfaces import IMeetingItem
 from zope.event import notify
 from zope.lifecycleevent import ObjectModifiedEvent
 

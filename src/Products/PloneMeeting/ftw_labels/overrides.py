@@ -37,16 +37,20 @@ class PMFTWLabelsRenderer(ftw_labels_renderer):
 
 class PMFTWLabelsLabelingViewlet(LabelingViewlet):
     """ """
+
+    def __init__(self, context, request, view, manager=None):
+        super(PMFTWLabelsLabelingViewlet, self).__init__(context, request, view, manager=None)
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+
     @property
     def available(self):
         """ """
         available = super(PMFTWLabelsLabelingViewlet, self).available
         if available:
-            tool = api.portal.get_tool('portal_plonemeeting')
-            cfg = tool.getMeetingConfig(self.context)
+            cfg = self.tool.getMeetingConfig(self.context)
             available = cfg.getEnableLabels()
         return available
 
     @property
     def can_edit(self):
-        return _checkPermission(ModifyPortalContent, self.context)
+        return _checkPermission(ModifyPortalContent, self.context) or self.tool.isManager(self.context)

@@ -1,4 +1,4 @@
-<configure
+    <configure
     xmlns="http://namespaces.zope.org/zope"
     xmlns:browser="http://namespaces.zope.org/browser"
     xmlns:plone="http://namespaces.plone.org/plone">
@@ -20,7 +20,7 @@
             for="Products.PloneMeeting.interfaces.IMeetingItem"
             name="labeling"
             class=".labeling.Labeling"
-            permission="cmf.ModifyPortalContent"
+            permission="zope2.View"
             allowed_attributes="update"
             />
     </configure>

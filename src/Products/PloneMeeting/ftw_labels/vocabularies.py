@@ -28,13 +28,21 @@ class FTWLabelsVocabulary(object):
     def __call__(self, context):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        res = []
+        member_id = api.user.get_current().getId()
 
+        res = []
         labels = ILabelJar(cfg).list()
         for label in labels:
-            res.append(
-                SimpleTerm(label['label_id'], label['label_id'], label['title']))
-
+            if label['by_user']:
+                res.append(SimpleTerm(
+                    '{0}:{1}'.format(member_id, label['label_id']),
+                    '{0}:{1}'.format(member_id, label['label_id']),
+                    '{0} (*)'.format(label['title'])))
+            else:
+                res.append(SimpleTerm(
+                    label['label_id'],
+                    label['label_id'],
+                    label['title']))
         return SimpleVocabulary(res)
 
 FTWLabelsVocabularyFactory = FTWLabelsVocabulary()

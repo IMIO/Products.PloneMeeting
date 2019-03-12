@@ -12,7 +12,6 @@ from collective.eeafaceted.dashboard.vocabulary import DashboardCollectionsVocab
 from collective.iconifiedcategory.vocabularies import CategoryTitleVocabulary
 from collective.iconifiedcategory.vocabularies import CategoryVocabulary
 from eea.facetednavigation.interfaces import IFacetedNavigable
-from ftw.labels.interfaces import ILabelJar
 from imio.annex.content.annex import IAnnex
 from imio.helpers.cache import get_cachekey_volatile
 from natsort import realsorted
@@ -1108,33 +1107,6 @@ class PMCategoryVocabulary(CategoryVocabulary):
 
 class PMCategoryTitleVocabulary(CategoryTitleVocabulary, PMCategoryVocabulary):
     """Override to use same _get_categories as PMCategoryVocabulary."""
-
-
-class FTWLabelsVocabulary(object):
-    """
-    Vocabulary that lists available ftw.labels labels for the current MeetingConfig.
-    """
-    implements(IVocabularyFactory)
-
-    def __call__(self, context):
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(context)
-        res = []
-        # do not fail when displaying the schema in the dexterity types control panel
-        if not cfg:
-            return SimpleVocabulary(res)
-
-        labels = ILabelJar(cfg)
-
-        for label in labels:
-            res.append(SimpleTerm(
-                label['label_id'],
-                label['label_id'],
-                label['title']))
-        return SimpleVocabulary(res)
-
-
-FTWLabelsVocabularyFactory = FTWLabelsVocabulary()
 
 
 class HeldPositionUsagesVocabulary(object):

@@ -460,7 +460,7 @@
    <property name="hidezerocount">False</property>
    <property name="index">labels</property>
    <property name="operator">or</property>
-   <property name="operator_visible">False</property>
+   <property name="operator_visible">True</property>
    <property
       name="vocabulary">Products.PloneMeeting.vocabularies.ftwlabelsvocabulary</property>
    <property name="catalog"></property>
