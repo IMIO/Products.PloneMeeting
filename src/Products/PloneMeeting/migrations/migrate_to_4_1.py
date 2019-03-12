@@ -942,7 +942,7 @@ class Migrate_To_4_1(Migrator):
         self._migrateItemsInConfig()
         self.addNewSearches()
         # too many indexes to update, rebuild the portal_catalog
-        #self.refreshDatabase()
+        self.refreshDatabase()
 
 
 # The migration function -------------------------------------------------------
