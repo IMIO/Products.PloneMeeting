@@ -613,15 +613,6 @@ legend .pmLanguage {top: -0.3em; right: 5px;}
 div[id^="pm_menu_item_listType"].pmDropdown {
     right: 10px;
 }
-/* listType displayed on meeting_view */
-td[class^="meeting_item_listType_"] div[id^="pm_menu_item_listType"].pmDropdown {
-    right: inherit;
-}
-
-div[id^="pm_menu_advice_change_delay"].pmDropdown {
-    right: 0px;
-    font-weight: normal;
-}
 
 /* CSS for data changes in object histories. */
 .dataChanges { border: 0; }

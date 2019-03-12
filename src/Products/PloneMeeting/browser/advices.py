@@ -133,16 +133,6 @@ class AdvicesIcons(BrowserView):
                 res.append(advice_portal_type)
         return res
 
-    def get_tooltipster_base_class(self):
-        """Return a different CSS class if context is a dashboard or not
-           so we may initialize the tooltipster differently (regarding 'position' especially)."""
-        published = self.request.get('PUBLISHED', None)
-        published = published and published.aq_parent or self.context
-        base_class = 'tooltipster-dashboard-advices-infos'
-        if IMeetingItem.providedBy(published):
-            base_class = 'tooltipster-advices-infos'
-        return base_class
-
 
 class AdvicesIconsInfos(BrowserView):
     """ """
