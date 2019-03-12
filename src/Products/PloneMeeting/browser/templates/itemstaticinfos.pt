@@ -3,7 +3,12 @@
   <tal:labels condition="python: field_name == 'labels'">
     <div id="labeling-viewlet" tal:define="active_labels view/active_labels" tal:condition="active_labels">
       <ul class="activeLabels">
-        <li tal:repeat="label view/active_labels">
+        <li tal:repeat="personal_label python: active_labels[0]">
+          <span tal:attributes="class string:labelItem labelColor labelcolor-${personal_label/color}"
+                tal:content="personal_label/title" />
+        </li>
+        <li id="label-type-separator" tal:condition="python:active_labels[0]"><span class="labelItem"></span></li>
+        <li tal:repeat="label python: active_labels[1]">
           <span tal:attributes="class string:labelItem labelColor labelcolor-${label/color}"
                 tal:content="label/title" />
         </li>

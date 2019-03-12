@@ -40,5 +40,10 @@
                 acquire="False">
       <role name="Manager"/>
     </permission>
+    <permission name="ftw.labels: Change Personal Labels"
+                acquire="False">
+      <role name="Manager"/>
+      <role name="Member"/>
+    </permission>
   </permissions>
 </rolemap>
