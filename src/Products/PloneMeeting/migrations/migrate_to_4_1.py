@@ -940,8 +940,9 @@ class Migrate_To_4_1(Migrator):
         self.removeUnusedPortalTypes(portal_types=['MeetingUser', 'MeetingFile', 'MeetingFileType', 'MeetingGroup'])
         self._migrate_searchitemstoprevalidate_query()
         self._migrateItemsInConfig()
+        self.addNewSearches()
         # too many indexes to update, rebuild the portal_catalog
-        self.refreshDatabase()
+        #self.refreshDatabase()
 
 
 # The migration function -------------------------------------------------------

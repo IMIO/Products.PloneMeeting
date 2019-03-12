@@ -27,7 +27,7 @@ from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
 from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
 from Products.PloneMeeting.interfaces import IMeetingConfig
-from zope.component.hooks import getSite
+from Products.PloneMeeting.utils import get_context_with_request
 from zope.globalrequest import getRequest
 from zope.i18n import translate
 from zope.interface import implements
@@ -503,28 +503,7 @@ class AskedAdvicesVocabulary(object):
     def __call__(self, context):
         """ """
         res = []
-        # in case we have no REQUEST, it means that we are editing a DashboardCollection
-        # for which when this vocabulary is used for the 'indexAdvisers' queryField used
-        # on a DashboardCollection (when editing the DashboardCollection), the context
-        # is portal_registry without a REQUEST...
-        if not hasattr(context, 'REQUEST'):
-            # sometimes, the DashboardCollection is the first parent in the REQUEST.PARENTS...
-            portal = getSite()
-            published = portal.REQUEST.get('PUBLISHED', None)
-            context = hasattr(published, 'context') and published.context or None
-            if not context:
-                # if not first parent, try to get it from HTTP_REFERER
-                referer = portal.REQUEST['HTTP_REFERER'].replace(portal.absolute_url() + '/', '')
-                referer = referer.replace('/edit', '')
-                referer = referer.replace('?pageName=gui', '')
-                referer = referer.split('?_authenticator=')[0]
-                try:
-                    context = portal.unrestrictedTraverse(referer)
-                except KeyError:
-                    return SimpleVocabulary(res)
-                if not hasattr(context, 'portal_type') or \
-                        not (context.portal_type == 'DashboardCollection' or context.portal_type.startswith('Meeting')):
-                    return SimpleVocabulary(res)
+        context = get_context_with_request(context)
 
         self.tool = api.portal.get_tool('portal_plonemeeting')
         try:

@@ -4,6 +4,7 @@ from ftw.labels.interfaces import ILabelJar
 from imio.helpers.cache import get_cachekey_volatile
 from plone import api
 from plone.memoize import ram
+from Products.PloneMeeting.utils import get_context_with_request
 from zope.interface import implements
 from zope.schema.interfaces import IVocabularyFactory
 from zope.schema.vocabulary import SimpleTerm
@@ -14,18 +15,45 @@ class FTWLabelsVocabulary(object):
     """
         Vocabulary that lists available ftw.labels
         labels for the current MeetingConfig.
+        Used for DashboardCollection query.
+    """
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        context = get_context_with_request(context)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(context)
+
+        res = []
+        labels = ILabelJar(cfg).list()
+        for label in labels:
+            res.append(SimpleTerm(
+                label['label_id'],
+                label['label_id'],
+                label['title']))
+        return SimpleVocabulary(res)
+
+FTWLabelsVocabularyFactory = FTWLabelsVocabulary()
+
+
+class FTWLabelsForFacetedFilterVocabulary(object):
+    """
+        Vocabulary that lists available ftw.labels
+        labels for the current MeetingConfig.
+        Use in faceted navigation, is current user aware.
     """
     implements(IVocabularyFactory)
 
     def __call___cachekey(method, self, context, classifiers=False):
         '''cachekey method for self.__call__.'''
-        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.ftwlabelsvocabulary')
+        date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.ftwlabelsforfacetedfiltervocabulary')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         return date, cfg, classifiers
 
     @ram.cache(__call___cachekey)
     def __call__(self, context):
+        context = get_context_with_request(context)
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
         member_id = api.user.get_current().getId()
@@ -45,4 +73,4 @@ class FTWLabelsVocabulary(object):
                     label['title']))
         return SimpleVocabulary(res)
 
-FTWLabelsVocabularyFactory = FTWLabelsVocabulary()
+FTWLabelsForFacetedFilterVocabularyFactory = FTWLabelsForFacetedFilterVocabulary()

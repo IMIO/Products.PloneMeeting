@@ -1040,7 +1040,7 @@ class testViews(PloneMeetingTestCase):
     def test_pm_ftw_labels_labeling_update_protected(self):
         """Make sure the @@labeling/update method is correctly protected.
            Indeed, a scenario where an item is labelled then ModifyPortalContent is lost
-           because state changed, make sure if a browser screen was not update, labeling
+           because state changed, make sure if a browser screen was not updated, labeling
            update raises Unauthorized."""
         self._enable_ftw_labels()
         self.changeUser('pmCreator1')

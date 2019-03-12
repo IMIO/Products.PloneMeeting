@@ -2333,11 +2333,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                   ()
                                   ),
         TOOL_FOLDER_SEARCHES: (('Searches', 'Folder'),
-                               ('Folder', 'DashboardCollection', ),
+                               ('Folder', ),
                                # 'items' is a reserved word
-                               (('searches_items', 'Meeting items', 'Folder', ()),
-                                ('searches_meetings', 'Meetings', 'Folder', ()),
-                                ('searches_decisions', 'Decisions', 'Folder', ()))
+                               (('searches_items', 'Meeting items', 'Folder', ('DashboardCollection', )),
+                                ('searches_meetings', 'Meetings', 'Folder', ('DashboardCollection', )),
+                                ('searches_decisions', 'Decisions', 'Folder', ('DashboardCollection', )))
                                ),
         TOOL_FOLDER_RECURRING_ITEMS: (('RecurringItems', 'Folder'),
                                       ('itemTypeRecurring', ),
@@ -2497,6 +2497,28 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_reversed': True,
                     'showNumberOfItems': False,
                     'tal_condition': "cfg/getUseCopies",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Unread items in copy
+                ('searchunreaditemsincopy', {
+                    'subFolderId': 'searches_items',
+                    'active': True,
+                    'query':
+                    [
+                        {u'i': u'CompoundCriterion',
+                         u'o': u'plone.app.querystring.operation.compound.is',
+                         u'v': [u'items-in-copy']},
+                        {u'i': u'labels',
+                         u'o': u'plone.app.querystring.operation.selection.is',
+                         u'v': [u'lu']},
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'items-with-negative-personal-labels'},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': False,
+                    'tal_condition': "python: cfg.getEnableLabels() and cfg.getUseCopies()",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items to prevalidate
@@ -2706,6 +2728,25 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                      "in cfg.getWorkflowAdaptations())",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
+                # Unread items
+                ('searchunreaditems', {
+                    'subFolderId': 'searches_items',
+                    'active': True,
+                    'query':
+                    [
+                        {u'i': u'labels',
+                         u'o': u'plone.app.querystring.operation.selection.is',
+                         u'v': [u'lu']},
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'items-with-negative-personal-labels'},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': False,
+                    'tal_condition': "python: cfg.getEnableLabels()",
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
                 # Corrected items
                 ('searchcorrecteditems', {
                     'subFolderId': 'searches_items',
@@ -2743,6 +2784,28 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_reversed': True,
                     'showNumberOfItems': False,
                     'tal_condition': '',
+                    'roles_bypassing_talcondition': ['Manager', ]
+                }),
+                # Unread decided items
+                ('searchunreaddecideditems', {
+                    'subFolderId': 'searches_items',
+                    'active': True,
+                    'query':
+                    [
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'decided-items'},
+                        {u'i': u'labels',
+                         u'o': u'plone.app.querystring.operation.selection.is',
+                         u'v': [u'lu']},
+                        {'i': 'CompoundCriterion',
+                         'o': 'plone.app.querystring.operation.compound.is',
+                         'v': 'items-with-negative-personal-labels'},
+                    ],
+                    'sort_on': u'modified',
+                    'sort_reversed': True,
+                    'showNumberOfItems': False,
+                    'tal_condition': "python: cfg.getEnableLabels()",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # All not-yet-decided meetings

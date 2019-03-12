@@ -26,6 +26,7 @@ from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_group
 from collective.iconifiedcategory import CAT_SEPARATOR
 from copy import deepcopy
+from ftw.labels.interfaces import ILabelJar
 from imio.helpers.content import validate_fields
 from imio.helpers.security import generate_password
 from imio.helpers.security import is_develop_environment
@@ -263,6 +264,11 @@ class ToolInitializer:
                 except KeyError:
                     logger.warning('While computing orderedContacts, could not get contact at {0}'.format(hp_path))
             cfg.setOrderedContacts(hp_uids)
+
+        # set default labels
+        if data.defaultLabels:
+            jar_storage = ILabelJar(cfg)
+            jar_storage.update(deepcopy(data.defaultLabels))
 
         # disable relevant dashboard collections
         for collection_path in data.disabled_collections:

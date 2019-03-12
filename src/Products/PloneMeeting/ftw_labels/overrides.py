@@ -7,6 +7,8 @@
 # GNU General Public License (GPL)
 #
 
+from AccessControl import Unauthorized
+from ftw.labels.browser.labeling import Labeling
 from ftw.labels.portlets.labeljar import Renderer as ftw_labels_renderer
 from ftw.labels.viewlets.labeling import LabelingViewlet
 from imio.helpers.cache import cleanRamCacheFor
@@ -35,6 +37,31 @@ class PMFTWLabelsRenderer(ftw_labels_renderer):
         return super(PMFTWLabelsRenderer, self).labels
 
 
+class PMLabeling(Labeling):
+    """ """
+
+    def update(self):
+        """ """
+        if not self.can_edit:
+            raise Unauthorized
+        return super(PMLabeling, self).update()
+
+    def pers_update(self):
+        """ """
+        if not self.can_personal_edit:
+            raise Unauthorized
+        return super(PMLabeling, self).pers_update()
+
+    @property
+    def can_edit(self):
+        tool = api.portal.get_tool('portal_plonemeeting')
+        return _checkPermission(ModifyPortalContent, self.context) or tool.isManager(self.context)
+
+    @property
+    def can_personal_edit(self):
+        return 1
+
+
 class PMFTWLabelsLabelingViewlet(LabelingViewlet):
     """ """
 
@@ -53,4 +80,8 @@ class PMFTWLabelsLabelingViewlet(LabelingViewlet):
 
     @property
     def can_edit(self):
-        return _checkPermission(ModifyPortalContent, self.context) or self.tool.isManager(self.context)
+        return self.context.restrictedTraverse('@@labeling').can_edit
+
+    @property
+    def can_pers_edit(self):
+        return self.context.restrictedTraverse('@@pers-labeling').can_pers_edit

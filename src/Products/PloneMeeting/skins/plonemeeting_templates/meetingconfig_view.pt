@@ -789,7 +789,7 @@
                            style="cursor:pointer"
                            class="imageInput"
                            tal:attributes="
-                              onClick python: 'href: window.location=\'%s/createObject?type_name=DashboardCollection\'' % cFolderUrl;
+                              onClick python: 'href: window.location=\'%s/++add++DashboardCollection\'' % cFolderUrl;
                               src string: $portal_url/new.png"
                  title="add_object" i18n:attributes="title"
                  tal:condition="isRealManager"/>
@@ -818,7 +818,7 @@
                     <label class="formQuestion">
                       <span i18n:translate="" i18n:domain="plone">Sort the collection on this index</span>
                     </label> :
-                    <span tal:content="obj/sort_on" i18n:domain="plone" i18n:translate="">Sort on</span>
+                    <span tal:content="obj/sort_on|nothing" i18n:domain="plone" i18n:translate="">Sort on</span>
                   </div>
                   <div>
                     <label class="formQuestion">

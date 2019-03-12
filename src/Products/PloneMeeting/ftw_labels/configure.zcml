@@ -19,14 +19,23 @@
         <browser:page
             for="Products.PloneMeeting.interfaces.IMeetingItem"
             name="labeling"
-            class=".labeling.Labeling"
+            class="Products.PloneMeeting.ftw_labels.overrides.PMLabeling"
             permission="zope2.View"
             allowed_attributes="update"
             />
+        <browser:page
+            for="Products.PloneMeeting.interfaces.IMeetingItem"
+            name="pers-labeling"
+            class="Products.PloneMeeting.ftw_labels.overrides.PMLabeling"
+            permission="zope2.View"
+            allowed_attributes="pers_update"
+            />
     </configure>
 
-    <!-- Vocabulary used for the faceted filter -->
+    <!-- Vocabularies -->
     <utility component=".vocabularies.FTWLabelsVocabularyFactory"
              name="Products.PloneMeeting.vocabularies.ftwlabelsvocabulary" />
+    <utility component=".vocabularies.FTWLabelsForFacetedFilterVocabularyFactory"
+             name="Products.PloneMeeting.vocabularies.ftwlabelsforfacetedfiltervocabulary" />
 
 </configure>

@@ -155,6 +155,10 @@
            factory="Products.PloneMeeting.adapters.DecidedItemsAdapter"
            provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
            name="decided-items" />
+  <adapter for="*"
+           factory="Products.PloneMeeting.adapters.NegativePersonalLabelsAdapter"
+           provides="collective.compoundcriterion.interfaces.ICompoundCriterionFilter"
+           name="items-with-negative-personal-labels" />
 
   <adapter factory=".validators.DXCertifiedSignaturesValidator" />
 
