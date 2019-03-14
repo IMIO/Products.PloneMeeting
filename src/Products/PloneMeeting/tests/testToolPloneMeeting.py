@@ -155,7 +155,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # same group) can be pasted too. item1 is viewable by pmCreator1 too.
         self.changeUser('pmCreator1')
         clonedItem = item1.clone()
-        # The item is cloned in the pmCreator1 personnal folder.
+        # The item is cloned in the pmCreator1 personal folder.
         self.assertEquals(
             set([clonedItem]), set(clonedItem.getParentNode().objectValues('MeetingItem')))
         # during the cloning process, the 'Manager' role is given on the new item

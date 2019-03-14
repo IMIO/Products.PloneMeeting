@@ -2,7 +2,7 @@
 #
 # File: MeetingConfig.py
 #
-# Copyright (c) 2017 by Imio.beget
+# Copyright (c) 2019 by Imio.be
 # Generator: ArchGenXML Version 2.7
 #            http://plone.org/products/archgenxml
 #
@@ -26,7 +26,9 @@ from copy import deepcopy
 from DateTime import DateTime
 from eea.facetednavigation.interfaces import ICriteria
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
+from ftw.labels.interfaces import ILabeling
 from imio.helpers.cache import cleanRamCache
+from persistent.list import PersistentList
 from plone import api
 from plone.app.portlets.portlets import navigation
 from plone.memoize import ram
@@ -119,6 +121,7 @@ from zope.i18n import translate
 from zope.interface import alsoProvides
 from zope.interface import implements
 from zope.schema.interfaces import IVocabularyFactory
+from zope.schema.vocabulary import SimpleVocabulary
 
 import logging
 import os
@@ -4486,11 +4489,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         for iColumn in DEFAULT_ITEM_COLUMNS:
             itemColumns.insert(iColumn['position'], iColumn['name'])
 
+        vocab_factory = getUtility(IVocabularyFactory, "plone.app.contenttypes.metadatafields")
         for collection in self.searches.searches_items.objectValues():
             # bypass old collections, necessary for migration from old DashboardCollection to new ones
             if IDashboardCollection.providedBy(collection):
                 # available customViewFieldIds, as done in an adapter, we compute it for each collection
-                vocab_factory = getUtility(IVocabularyFactory, "plone.app.contenttypes.metadatafields")
                 vocab = vocab_factory(collection)
                 customViewFieldIds = vocab.by_token.keys()
                 # set elements existing in both lists, we do not use set() because it is not ordered
@@ -4504,7 +4507,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                            self.searches.searches_decisions.objectValues()):
             # bypass old collections, necessary for migration from old DashboardCollection to new ones
             if IDashboardCollection.providedBy(collection):
-                vocab_factory = getUtility(IVocabularyFactory, "plone.app.contenttypes.metadatafields")
                 vocab = vocab_factory(collection)
                 customViewFieldIds = vocab.by_token.keys()
                 # set elements existing in both lists, we do not use set() because it is not ordered
@@ -4658,8 +4660,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePrivate('createSearches')
 
     def createSearches(self, searchesInfo):
-        '''Adds a bunch of collections in the 'searches' sub-folder.'''
+        '''Adds a bunch of collections in the 'searches' sub-folder.
+           Returns True is collections were added, False otherwise.'''
         default_language = api.portal.get_tool('portal_languages').getDefaultLanguage()
+        added_collections = False
         for collectionId, collectionData in searchesInfo.items():
             container = getattr(self, TOOL_FOLDER_SEARCHES)
             subFolderId = collectionData['subFolderId']
@@ -4668,6 +4672,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if collectionId in container.objectIds():
                 logger.info("Trying to add an already existing collection with id '%s', skipping..." % collectionId)
                 continue
+            added_collections = True
             container.invokeFactory('DashboardCollection', collectionId, **collectionData)
             collection = getattr(container, collectionId)
             collection.processForm(values={'dummy': None})
@@ -4683,6 +4688,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if not collectionData['active']:
                 collection.enabled = False
             collection.reindexObject()
+        return added_collections
 
     def _getCloneToOtherMCActionId(self, destMeetingConfigId, meetingConfigId, emergency=False):
         '''Returns the name of the action used for the cloneToOtherMC functionnality.'''
@@ -5603,6 +5609,76 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             _update(brains)
         logger.info('Done.')
 
+    security.declarePublic('updatePersonalLabels')
+
+    def updatePersonalLabels(self, personal_labels=[], modified_since_days=30):
+        '''Update the given p_personal_labels on items of this MeetingConfig
+           for which modified is older than given p_modified_since_days number of days.'''
+
+        if not self.isManager(self, realManagers=True):
+            raise Unauthorized
+        # remove empty strings from personal_labels
+        personal_labels = [label for label in personal_labels if label]
+        if not personal_labels:
+            api.portal.show_message(_('Select at least one personal label!'),
+                                    request=self.REQUEST,
+                                    type='error')
+        else:
+            updated_items_len = self._updatePersonalLabels(personal_labels, modified_since_days)
+            api.portal.show_message(_('${number_of_items} item(s) updated!',
+                                      mapping={'number_of_items': updated_items_len}),
+                                    request=self.REQUEST)
+        return self.REQUEST.RESPONSE.redirect(self.REQUEST['HTTP_REFERER'])
+
+    def _updatePersonalLabels(self, personal_labels=[], modified_since_days=30, reindex=True):
+        """Private method used by self.updatePersonalLabels."""
+
+        catalog = api.portal.get_tool('portal_catalog')
+        brains = catalog(portal_type=self.getItemTypeName(),
+                         modified={'range': 'max',
+                                   'query': DateTime() - modified_since_days})
+        numberOfBrains = len(brains)
+        i = 1
+        membershipTool = api.portal.get_tool('portal_membership')
+        all_user_ids = membershipTool.listMemberIds()
+        # MeetingManagers are not in item local roles but defined
+        # in the item container local roles...
+        # get every meetingManagers and give role if 'MeetingManager' role as 'View' on item
+        meeting_managers_group_id = "{0}_{1}".format(self.getId(), MEETINGMANAGERS_GROUP_SUFFIX)
+        meeting_manager_user_ids = api.group.get(meeting_managers_group_id).getMemberIds()
+        for brain in brains:
+            item = brain.getObject()
+            logger.info(
+                '%d/%d Initializing personal labels of item at %s' %
+                (i,
+                 numberOfBrains,
+                 '/'.join(item.getPhysicalPath())))
+            i = i + 1
+
+            item_labeling = ILabeling(item)
+            # determinate users able to see the item, every users in local_roles
+            item_user_ids = []
+            for local_role_principal in item.__ac_local_roles__:
+                # it is a user
+                if local_role_principal in all_user_ids:
+                    item_user_ids.append(local_role_principal)
+                # it is a group
+                else:
+                    local_role_group = api.group.get(local_role_principal)
+                    if local_role_group:
+                        item_user_ids.extend(local_role_group.getMemberIds())
+            # meetingmanagers
+            if 'MeetingManager' in item._View_Permission:
+                item_user_ids.extend(meeting_manager_user_ids)
+            # remove duplicates
+            item_user_ids = list(set(item_user_ids))
+            for label_id in personal_labels:
+                item_labeling.storage[label_id] = PersistentList(item_user_ids)
+            if reindex:
+                item.reindexObject(idxs=['labels'])
+        logger.info('Done.')
+        return numberOfBrains
+
     security.declarePublic('updateAdviceConfidentiality')
 
     def updateAdviceConfidentiality(self):
@@ -5725,6 +5801,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             cfg.getField(field_name).set(cfg, value)
             if reload:
                 cfg.at_post_edit_script()
+
+    def get_labels_vocab(self, only_personal=True):
+        """ """
+        vocab_factory = getUtility(
+            IVocabularyFactory, "Products.PloneMeeting.vocabularies.ftwlabelsvocabulary")
+        vocab = vocab_factory(self)
+        if only_personal:
+            terms = [term for term in vocab._terms if '(*)' in term.title]
+            vocab = SimpleVocabulary(terms)
+        return vocab
 
 
 registerType(MeetingConfig, PROJECTNAME)

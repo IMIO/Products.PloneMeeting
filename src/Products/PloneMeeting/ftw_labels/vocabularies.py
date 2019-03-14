@@ -20,17 +20,22 @@ class FTWLabelsVocabulary(object):
     implements(IVocabularyFactory)
 
     def __call__(self, context):
-        context = get_context_with_request(context)
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(context)
-
         res = []
-        labels = ILabelJar(cfg).list()
-        for label in labels:
-            res.append(SimpleTerm(
-                label['label_id'],
-                label['label_id'],
-                label['title']))
+        context = get_context_with_request(context)
+        if context:
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(context)
+
+            labels = ILabelJar(cfg).list()
+            for label in labels:
+                if label['by_user']:
+                    title = '{0} (*)'.format(label['title'])
+                else:
+                    title = label['title']
+                res.append(SimpleTerm(
+                    label['label_id'],
+                    label['label_id'],
+                    title))
         return SimpleVocabulary(res)
 
 FTWLabelsVocabularyFactory = FTWLabelsVocabulary()

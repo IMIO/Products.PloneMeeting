@@ -329,6 +329,11 @@ meetingPma.onMeetingTransitionItemTransitionToTrigger = ({'meeting_transition': 
 
 meetingPma.insertingMethodsOnAddItem = ({'insertingMethod': 'on_proposing_groups', 'reverse': '0'}, )
 meetingPma.useGroupsAsCategories = True
+meetingPma.defaultLabels = {
+    'label': {'color': 'blue', 'label_id': 'label', 'by_user': False, 'title': 'Label'},
+    'personal-label': {'color': 'yellow', 'label_id': 'personal-label', 'by_user': True, 'title': 'Personal label'},
+    'lu': {'color': 'green', 'label_id': 'lu', 'by_user': True, 'title': 'Read'},
+}
 meetingPma.useAdvices = True
 meetingPma.selectableAdvisers = ['developers', 'vendors']
 meetingPma.itemAdviceStates = ['proposed', ]

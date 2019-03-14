@@ -275,6 +275,9 @@ class Migrate_To_4_1(Migrator):
             field = cfg.getField('maxShownMeetingItems')
             value = field.get(cfg)
             field.set(cfg, int(value))
+            # remove old topics folder and thus contained Topics
+            if 'topics' in cfg.objectIds():
+                api.content.delete(obj=cfg.topics)
         # old forget, set global_allow to False on Topic
         topic = self.portal.portal_types.get('Topic')
         if topic:
@@ -907,6 +910,7 @@ class Migrate_To_4_1(Migrator):
         self.upgradeDependencies()
         self.cleanRegistries()
         self.updateHolidays()
+        self.addNewSearches()
 
         # migration steps
         self._updateFacetedFilters()
@@ -940,9 +944,8 @@ class Migrate_To_4_1(Migrator):
         self.removeUnusedPortalTypes(portal_types=['MeetingUser', 'MeetingFile', 'MeetingFileType', 'MeetingGroup'])
         self._migrate_searchitemstoprevalidate_query()
         self._migrateItemsInConfig()
-        self.addNewSearches()
         # too many indexes to update, rebuild the portal_catalog
-        self.refreshDatabase()
+        #self.refreshDatabase()
 
 
 # The migration function -------------------------------------------------------

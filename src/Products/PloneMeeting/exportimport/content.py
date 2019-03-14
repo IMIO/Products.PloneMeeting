@@ -267,7 +267,7 @@ class ToolInitializer:
 
         # set default labels
         if data.defaultLabels:
-            jar_storage = ILabelJar(cfg)
+            jar_storage = ILabelJar(cfg).storage
             jar_storage.update(deepcopy(data.defaultLabels))
 
         # disable relevant dashboard collections

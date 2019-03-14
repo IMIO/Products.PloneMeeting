@@ -125,6 +125,14 @@ class testViews(PloneMeetingTestCase):
         itemTemplate = itemTemplates[0].getObject()
         self.assertEqual(itemTemplate.portal_type, cfg.getItemTypeName(configType='MeetingItemTemplate'))
         itemTemplateUID = itemTemplate.UID()
+        # add a ftw label as it is kept when item created from item template
+        self.changeUser('siteadmin')
+        labelingview = itemTemplate.restrictedTraverse('@@labeling')
+        self.request.form['activate_labels'] = ['label']
+        labelingview.update()
+        item_labeling = ILabeling(itemTemplate)
+        self.assertEqual(item_labeling.storage, {'label': []})
+        self.changeUser('pmCreator1')
         # for now, no items in the user folder
         self.assertFalse(folder.objectIds('MeetingItem'))
         newItem = itemTemplateView.createItemFromTemplate(itemTemplateUID)
@@ -135,6 +143,9 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(newItem.getDecision(), itemTemplate.getDecision())
         # and it has been created in the user folder
         self.assertTrue(newItem.getId() in folder.objectIds())
+        # labels are kept
+        newItem_labeling = ILabeling(newItem)
+        self.assertEqual(item_labeling.storage, newItem_labeling.storage)
         # now check that the user can use a 'secret' item template if no proposing group is selected on it
         self.changeUser('admin')
         itemTemplate.setPrivacy('secret')
@@ -1393,6 +1404,59 @@ class testViews(PloneMeetingTestCase):
         self.assertTrue(config_modified in browser.headers['etag'])
         self.assertTrue(tool_modified in browser.headers['etag'])
         self.assertTrue(context_modified in browser.headers['etag'])
+
+    def test_pm_FTWLabels(self):
+        """By default, labels are editable if item editable, except for MeetingManagers
+           that may edit labels forever.
+           Personal labels are editable by anybody able to see the item."""
+        cfg = self.meetingConfig
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.setDecision(self.decisionText)
+        # labels
+        # able to edit item, able to edit labels
+        labelingview = item.restrictedTraverse('@@labeling')
+        self.request.form['activate_labels'] = ['label']
+        labelingview.update()
+        item_labeling = ILabeling(item)
+        self.assertEqual(item_labeling.storage, {'label': []})
+        self.proposeItem(item)
+        self.assertFalse(self.hasPermission(ModifyPortalContent, item))
+        self.assertRaises(Unauthorized, labelingview.update)
+        # MeetingManager
+        self.changeUser('pmManager')
+        self.request.form['activate_labels'] = []
+        labelingview.update()
+        self.assertEqual(item_labeling.storage, {})
+        # decide item so it is no more editable by MeetingManager
+        meeting = self.create('Meeting', date=DateTime('2019/03/14'))
+        self.presentItem(item)
+        self.closeMeeting(meeting)
+        self.assertFalse(self.hasPermission(ModifyPortalContent, item))
+        # labels still editable
+        self.request.form['activate_labels'] = ['label']
+        labelingview.update()
+        self.assertEqual(item_labeling.storage, {'label': []})
+
+        # personal labels
+        # anybody able to see the item may change personal label
+        self.changeUser('pmCreator1')
+        self.assertFalse(self.hasPermission(ModifyPortalContent, item))
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertRaises(Unauthorized, labelingview.update)
+        self.request.form['label_id'] = 'personal-label'
+        self.request.form['active'] = 'False'
+        labelingview.pers_update()
+        self.assertEqual(item_labeling.storage, {'label': [], 'personal-label': ['pmCreator1']})
+        # powerobserver
+        self.changeUser('siteadmin')
+        cfg.setItemPowerObserversStates((item.queryState(),))
+        item._update_after_edit()
+        self.changeUser('powerobserver1')
+        self.assertTrue(self.hasPermission(View, item))
+        self.assertRaises(Unauthorized, labelingview.update)
+        labelingview.pers_update()
+        self.assertEqual(item_labeling.storage, {'label': [], 'personal-label': ['pmCreator1', 'powerobserver1']})
 
 
 def test_suite():

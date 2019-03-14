@@ -1104,8 +1104,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         newItem._removeEveryContainedAdvices()
 
         # manage ftw.labels
-        if not keep_ftw_labels and FTW_LABELS_ANNOTATION_KEY in IAnnotations(newItem):
-            IAnnotations(newItem)[FTW_LABELS_ANNOTATION_KEY] = []
+        annotations = IAnnotations(newItem)
+        if not keep_ftw_labels and FTW_LABELS_ANNOTATION_KEY in annotations:
+            del annotations[FTW_LABELS_ANNOTATION_KEY]
 
         # Set fields not in the copyFields list to their default value
         # 'id' and  'proposingGroup' will be kept in anyway
@@ -1182,7 +1183,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         newItem.workflow_history[wfName] = (firstEvent, )
 
         # The copy/paste has transferred annotations, we do not need them.
-        annotations = IAnnotations(newItem)
         for ann in annotations:
             if ann.startswith(SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY):
                 del annotations[ann]
