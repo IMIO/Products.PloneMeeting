@@ -741,7 +741,8 @@ function update_search_term(tag){
     dataType: 'html',
     data: {collection_uid: tag.dataset.collection_uid},
     cache: false,
-    async: true,
+    // async: true provokes ConflictErrors when freezing a meeting
+    async: false,
     success: function(data) {
       $(tag).replaceWith(data);
       $(tag).find("script").each(function(i) {
