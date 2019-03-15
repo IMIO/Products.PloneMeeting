@@ -8,6 +8,7 @@
 #
 
 from AccessControl import Unauthorized
+from ftw.labels.jar import LabelJar
 from ftw.labels.browser.labeling import Labeling
 from ftw.labels.portlets.labeljar import Renderer as ftw_labels_renderer
 from ftw.labels.viewlets.labeling import LabelingViewlet
@@ -15,6 +16,7 @@ from imio.helpers.cache import cleanRamCacheFor
 from plone import api
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
+from Products.PloneMeeting.config import PMMessageFactory as _
 
 
 class PMFTWLabelsRenderer(ftw_labels_renderer):
@@ -35,6 +37,22 @@ class PMFTWLabelsRenderer(ftw_labels_renderer):
            in the configuration and maybe we just added/removed/edited a label."""
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.ftwlabelsvocabulary')
         return super(PMFTWLabelsRenderer, self).labels
+
+
+class PMLabelJar(LabelJar):
+
+    def remove(self, label_id):
+        """Protect against removal of used labels."""
+        cfg = self.context
+        brains = api.content.find(portal_type=cfg.getItemTypeName(), labels=label_id)
+        if brains:
+            api.portal.show_message(
+                _('This label can not be removed as it is used by some items, for example ${item_url}',
+                  mapping={'item_url': brains[0].getURL()}),
+                type='error',
+                request=self.context.REQUEST)
+            return self.context.REQUEST.RESPONSE.redirect(self.context.REQUEST['HTTP_REFERER'])
+        return super(PMLabelJar, self).remove(label_id)
 
 
 class PMLabeling(Labeling):

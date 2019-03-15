@@ -7,6 +7,10 @@
              factory=".adapters.ftw_labels_jar_discovery"
              provides="ftw.labels.interfaces.ILabelJar" />
 
+    <configure package="ftw.labels">
+        <adapter for="Products.PloneMeeting.interfaces.IMeetingConfig"
+                 factory="Products.PloneMeeting.ftw_labels.overrides.PMLabelJar" />
+    </configure>
     <configure package="ftw.labels.viewlets">
         <browser:viewlet
             for="Products.PloneMeeting.interfaces.IMeetingItem"

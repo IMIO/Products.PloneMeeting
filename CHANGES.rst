@@ -49,7 +49,8 @@ Changelog
   - When items are duplicated (locally, to other MC, ...) labels are not kept except if item created from item template;
   - By default, manage a personal label 'lu' (read) and associated searches with it (searchunreaditems, searchunreaditemsincopy, searchunreaddecideditems);
   - Added action on MeetingConfig to be able to initialize existing items when managing a new personal label: it is possible to activate the personal label
-    on items older than a given number of days for every users having 'View' access to these items.
+    on items older than a given number of days for every users having 'View' access to these items;
+  - Labels used on items are not removable in the configuration.
 
 4.1b16 (2019-01-31)
 -------------------

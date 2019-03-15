@@ -32,6 +32,7 @@ from collective.iconifiedcategory.utils import get_category_object
 from DateTime import DateTime
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
 from ftw.labels.interfaces import ILabeling
+from ftw.labels.interfaces import ILabelJar
 from OFS.ObjectManager import BeforeDeleteException
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFPlone import PloneMessageFactory
@@ -1619,6 +1620,29 @@ class testMeetingConfig(PloneMeetingTestCase):
         notify(ObjectModifiedEvent(item_template))
         item_template_cfg_modified = cfg.modified()
         self.assertNotEqual(recurring_item_cfg_modified, item_template_cfg_modified)
+
+    def test_pm_UsedLabelCanNotBeRemoved(self):
+        """A ftw.labels label that is used on an item can not be removed."""
+        cfg = self.meetingConfig
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        # add a label
+        labelingview = item.restrictedTraverse('@@labeling')
+        self.request.form['activate_labels'] = ['label']
+        labelingview.update()
+        item_labeling = ILabeling(item)
+        self.assertEqual(item_labeling.storage, {'label': []})
+        jar = ILabelJar(cfg)
+        self.assertTrue('label' in jar.storage)
+        # trying to remove a used label will redirect and show a message
+        # but the label is not removed
+        jar.remove(label_id='label')
+        self.assertTrue('label' in jar.storage)
+        self.request.form['activate_labels'] = []
+        labelingview.update()
+        self.assertEqual(item_labeling.storage, {})
+        self.assertTrue(jar.remove(label_id='label'))
+        self.assertFalse('label' in jar.storage)
 
 
 def test_suite():
