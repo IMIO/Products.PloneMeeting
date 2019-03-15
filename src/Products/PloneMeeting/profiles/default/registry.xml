@@ -54,6 +54,19 @@
     </records>
 
     <records interface="plone.app.querystring.interfaces.IQueryField"
+             prefix="plone.app.querystring.field.labels">
+        <value key="title" i18n:domain="eea" i18n:translate="">Labels</value>
+        <value key="description" i18n:translate=""></value>
+        <value key="enabled">True</value>
+        <value key="sortable">True</value>
+        <value key="operations">
+            <element>plone.app.querystring.operation.selection.is</element>
+        </value>
+        <value key="vocabulary">Products.PloneMeeting.vocabularies.ftwlabelsvocabulary</value>
+       <value key="group" i18n:domain="plone" i18n:translate="">Metadata</value>
+    </records>
+
+    <records interface="plone.app.querystring.interfaces.IQueryField"
              prefix="plone.app.querystring.field.indexAdvisers">
         <value key="title" i18n:translate="">Advisers index</value>
         <value key="description" i18n:translate="">Informations about advices on an item or an advice</value>

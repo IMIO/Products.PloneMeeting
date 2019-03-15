@@ -14,6 +14,7 @@ from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.iconifiedcategory.adapter import CategorizedObjectAdapter
 from collective.iconifiedcategory.adapter import CategorizedObjectInfoAdapter
 from collective.iconifiedcategory.utils import get_categories
+from datetime import datetime
 from eea.facetednavigation.criteria.handler import Criteria as eeaCriteria
 from eea.facetednavigation.interfaces import IFacetedNavigable
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
@@ -58,8 +59,13 @@ import logging
 
 logger = logging.getLogger('PloneMeeting')
 
+
 # this catalog query will find nothing, used in CompoundCriterion adapters when necessary
-FIND_NOTHING_QUERY = {'review_state': {'query': ['unknown_review_state', ]}, }
+def _find_nothing_query(portal_type):
+    """ """
+    query = {'review_state': {'query': ['unknown_review_state', ]},
+             'portal_type': {'query': [portal_type, ]}, }
+    return query
 
 
 class AnnexContentDeletableAdapter(APContentDeletableAdapter):
@@ -801,18 +807,15 @@ def query_request_cachekey(method, self):
 def query_user_groups_cachekey(method, self):
     '''cachekey method for caching as long as global users/groups
        associations did not change.'''
-    return self.context.modified(), api.user.get_current().getId(), self.tool._users_groups_value()
+    # always check cfg.modified() as queries are portal_type aware
+    cfg_modified = self.cfg and self.cfg.modified() or datetime.now()
+    return self.context.modified(), api.user.get_current().getId(), self.tool._users_groups_value(), cfg_modified
 
 
 def query_meeting_config_modified_cachekey(method, self):
     '''cachekey method for caching as long as MeetingConfig not modified.'''
-    return self.context.modified(), self.cfg and self.cfg.modified() or None
-
-
-def query_user_groups_or_config_modified_cachekey(method, self):
-    '''cachekey method for caching as long as global users/groups
-       associations did not change and config did not changed.'''
-    return self.context.modified(), api.user.get_current().getId(), self.tool._users_groups_value(), self.cfg.modified()
+    cfg_modified = self.cfg and self.cfg.modified() or datetime.now()
+    return self.context.modified(), cfg_modified
 
 
 class ItemsOfMyGroupsAdapter(CompoundCriterionBaseAdapter):
@@ -880,7 +883,7 @@ class BaseItemsToValidateOfHighestHierarchicLevelAdapter(CompoundCriterionBaseAd
         if not highestReviewerLevel:
             # in this case, we do not want to display a result
             # we return an unknown review_state
-            return FIND_NOTHING_QUERY
+            return _find_nothing_query(self.cfg.getItemTypeName())
         reviewers = reviewersFor(self.cfg.getItemWorkflow())
         review_states = reviewers[highestReviewerLevel]
         # specific management for workflows using the 'pre_validation' wfAdaptation
@@ -976,7 +979,7 @@ class BaseItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(CompoundCrit
         if not reviewProcessInfos:
             # in this case, we do not want to display a result
             # we return an unknown review_state
-            return FIND_NOTHING_QUERY
+            return _find_nothing_query(self.cfg.getItemTypeName())
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 'reviewProcessInfo': {'query': reviewProcessInfos}, }
 
@@ -1037,7 +1040,7 @@ class BaseItemsToValidateOfMyReviewerGroupsAdapter(CompoundCriterionBaseAdapter)
         if not reviewProcessInfos:
             # in this case, we do not want to display a result
             # we return an unknown review_state
-            return FIND_NOTHING_QUERY
+            return _find_nothing_query(self.cfg.getItemTypeName())
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 'reviewProcessInfo': {'query': reviewProcessInfos}, }
 
@@ -1084,7 +1087,7 @@ class BaseItemsToCorrectAdapter(CompoundCriterionBaseAdapter):
                     for userOrgId in userOrgIds:
                         reviewProcessInfos.append('%s__reviewprocess__%s' % (userOrgId, review_state))
         if not reviewProcessInfos:
-            return FIND_NOTHING_QUERY
+            return _find_nothing_query(self.cfg.getItemTypeName())
         # Create query parameters
         return {'portal_type': {'query': self.cfg.getItemTypeName()},
                 'reviewProcessInfo': {'query': reviewProcessInfos}, }
@@ -1280,6 +1283,28 @@ class DecidedItemsAdapter(CompoundCriterionBaseAdapter):
 
     # we may not ram.cache methods in same file with same name...
     query = query_decideditems
+
+
+class NegativePersonalLabelsAdapter(CompoundCriterionBaseAdapter):
+
+    @property
+    @ram.cache(query_user_groups_cachekey)
+    def query_negative_personal_labels(self):
+        '''Special query that will get personal labels defined in DashboardCollection
+           query and turn personal labels to negative personal values.'''
+        if not self.cfg:
+            return {}
+        # get personal labels to make current user aware and to negativate
+        labels = [value for value in self.context.query if value[u'i'] == u'labels']
+        if labels:
+            member_id = api.user.get_current().getId()
+            labels = labels[0][u'v']
+            personal_labels = ['{0}:{1}'.format(member_id, label) for label in labels]
+        return {'portal_type': {'query': self.cfg.getItemTypeName()},
+                'labels': {'not': personal_labels}, }
+
+    # we may not ram.cache methods in same file with same name...
+    query = query_negative_personal_labels
 
 
 class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):

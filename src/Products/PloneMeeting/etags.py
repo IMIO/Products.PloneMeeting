@@ -16,6 +16,13 @@ from zope.interface import implements
 from zope.interface import Interface
 
 
+def _modified(obj):
+    """Returns max value between obj.modified() and obj._p_mtime,
+       in case an annotation is changed on obj, obj._p_mtime is changed,
+       not obj.modified()."""
+    return str(max(int(obj.modified()), obj._p_mtime))
+
+
 class UserGroups(object):
     """The ``usergroups`` etag component, returning the current user's groups
     """
@@ -46,7 +53,7 @@ class ContextModified(object):
 
     def __call__(self):
         context = getContext(self.published)
-        return 'cm_' + str(max(int(context.modified()), context._p_mtime))
+        return 'cm_' + _modified(context)
 
 
 class LinkedMeetingModified(object):
@@ -67,7 +74,7 @@ class LinkedMeetingModified(object):
         if context.meta_type == 'MeetingItem':
             meeting = context.getMeeting()
             if meeting:
-                res = 'lm_' + str(int(meeting.modified()))
+                res = 'lm_' + _modified(meeting)
         return res
 
 
@@ -89,7 +96,7 @@ class ConfigModified(object):
         cfg = tool.getMeetingConfig(context)
         res = 'cfgm_0'
         if cfg:
-            res = 'cfgm_' + str(int(cfg.modified()))
+            res = 'cfgm_' + _modified(cfg)
         return res
 
 
@@ -107,7 +114,7 @@ class ToolModified(object):
 
     def __call__(self):
         tool = api.portal.get_tool('portal_plonemeeting')
-        return 'toolm_' + str(int(tool.modified()))
+        return 'toolm_' + _modified(tool)
 
 
 class MessagesViewlet(object):
@@ -125,4 +132,4 @@ class MessagesViewlet(object):
     def __call__(self):
         context = getContext(self.published)
         messages = get_messages_to_show(context)
-        return 'msgviewlet_' + '_'.join([str(int(msg.modified())) for msg in messages])
+        return 'msgviewlet_' + '_'.join([_modified(msg) for msg in messages])

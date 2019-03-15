@@ -71,6 +71,7 @@ from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import DEFAULT_COPIED_FIELDS
 from Products.PloneMeeting.config import DUPLICATE_AND_KEEP_LINK_EVENT_ACTION
 from Products.PloneMeeting.config import DUPLICATE_EVENT_ACTION
+from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_FROM_ITEM_TEMPLATE
 from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_SAME_MC
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import HIDE_DECISION_UNDER_WRITING_MSG
@@ -2474,7 +2475,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getExtraFieldsToCopyWhenCloning')
 
-    def getExtraFieldsToCopyWhenCloning(self, cloned_to_same_mc):
+    def getExtraFieldsToCopyWhenCloning(self, cloned_to_same_mc, cloned_from_item_template):
         '''Check doc in interfaces.py.'''
         return []
 
@@ -5488,7 +5489,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     def clone(self, copyAnnexes=True, copyDecisionAnnexes=False, newOwnerId=None,
               cloneEventAction=None, destFolder=None, copyFields=DEFAULT_COPIED_FIELDS,
               newPortalType=None, keepProposingGroup=False, setCurrentAsPredecessor=False,
-              manualLinkToPredecessor=False, inheritAdvices=False, inheritedAdviceUids=[]):
+              manualLinkToPredecessor=False, inheritAdvices=False, inheritedAdviceUids=[],
+              keep_ftw_labels=False):
         '''Clones me in the PloneMeetingFolder of the current user, or
            p_newOwnerId if given (this guy will also become owner of this
            item). If there is a p_cloneEventAction, an event will be included
@@ -5534,15 +5536,20 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cloned_to_same_mc = newPortalType in same_mc_types
         if cloned_to_same_mc:
             copyFields = copyFields + EXTRA_COPIED_FIELDS_SAME_MC
+        cloned_from_item_template = self.portal_type == cfg.getItemTypeName('MeetingItemTemplate')
+        if cloned_from_item_template:
+            copyFields = copyFields + EXTRA_COPIED_FIELDS_FROM_ITEM_TEMPLATE
         # Check if an external plugin want to add some copyFields
-        copyFields = copyFields + self.adapted().getExtraFieldsToCopyWhenCloning(cloned_to_same_mc)
+        copyFields = copyFields + self.adapted().getExtraFieldsToCopyWhenCloning(
+            cloned_to_same_mc, cloned_from_item_template)
 
         # clone
         newItem = tool.pasteItem(destFolder, copiedData, copyAnnexes=copyAnnexes,
                                  copyDecisionAnnexes=copyDecisionAnnexes,
                                  newOwnerId=newOwnerId, copyFields=copyFields,
                                  newPortalType=newPortalType,
-                                 keepProposingGroup=keepProposingGroup)
+                                 keepProposingGroup=keepProposingGroup,
+                                 keep_ftw_labels=keep_ftw_labels)
 
         # special handling for some fields kept when cloned_to_same_mc
         # we check that used values on original item are still useable for cloned item

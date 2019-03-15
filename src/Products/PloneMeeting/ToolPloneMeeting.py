@@ -30,6 +30,7 @@ from collective.iconifiedcategory.utils import get_config_root
 from collective.iconifiedcategory.utils import update_all_categorized_elements
 from DateTime import DateTime
 from datetime import datetime
+from ftw.labels.labeling import ANNOTATION_KEY as FTW_LABELS_ANNOTATION_KEY
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.cache import cleanRamCache
 from imio.helpers.cache import get_cachekey_volatile
@@ -1033,7 +1034,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     def pasteItem(self, destFolder, copiedData,
                   copyAnnexes=False, copyDecisionAnnexes=False,
                   newOwnerId=None, copyFields=DEFAULT_COPIED_FIELDS,
-                  newPortalType=None, keepProposingGroup=False):
+                  newPortalType=None, keepProposingGroup=False, keep_ftw_labels=False):
         '''Paste objects (previously copied) in destFolder. If p_newOwnerId
            is specified, it will become the new owner of the item.
            This method does NOT manage after creation calls like at_post_create_script.'''
@@ -1101,6 +1102,11 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
         # remove contained meetingadvices
         newItem._removeEveryContainedAdvices()
+
+        # manage ftw.labels
+        annotations = IAnnotations(newItem)
+        if not keep_ftw_labels and FTW_LABELS_ANNOTATION_KEY in annotations:
+            del annotations[FTW_LABELS_ANNOTATION_KEY]
 
         # Set fields not in the copyFields list to their default value
         # 'id' and  'proposingGroup' will be kept in anyway
@@ -1177,7 +1183,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         newItem.workflow_history[wfName] = (firstEvent, )
 
         # The copy/paste has transferred annotations, we do not need them.
-        annotations = IAnnotations(newItem)
         for ann in annotations:
             if ann.startswith(SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY):
                 del annotations[ann]

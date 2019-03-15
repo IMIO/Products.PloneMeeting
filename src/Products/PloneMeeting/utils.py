@@ -82,6 +82,7 @@ from Products.PloneMeeting.interfaces import IToolPloneMeetingCustom
 from zope.annotation import IAnnotations
 from zope.component import getAdapter
 from zope.component import queryUtility
+from zope.component.hooks import getSite
 from zope.component.interfaces import ObjectEvent
 from zope.event import notify
 from zope.globalrequest import getRequest
@@ -1187,7 +1188,32 @@ def _storedItemNumber_to_itemNumber(number, forceShowDecimal=True):
         return '{0}.{1}'.format(firstPart, secondPart)
     else:
         return str(firstPart)
-# ------------------------------------------------------------------------------
+
+
+def get_context_with_request(context):
+    # in case we have no REQUEST, it means that we are editing a DashboardCollection
+    # for which when this vocabulary is used for the 'indexAdvisers' queryField used
+    # on a DashboardCollection (when editing the DashboardCollection), the context
+    # is portal_registry without a REQUEST...
+    if not hasattr(context, 'REQUEST'):
+        # sometimes, the DashboardCollection is the first parent in the REQUEST.PARENTS...
+        portal = getSite()
+        published = portal.REQUEST.get('PUBLISHED', None)
+        context = hasattr(published, 'context') and published.context or None
+        if not context or context == portal:
+            # if not first parent, try to get it from HTTP_REFERER
+            referer = portal.REQUEST['HTTP_REFERER'].replace(portal.absolute_url() + '/', '')
+            referer = referer.replace('/edit', '')
+            referer = referer.replace('?pageName=gui', '')
+            referer = referer.split('?_authenticator=')[0]
+            try:
+                context = portal.unrestrictedTraverse(referer)
+            except KeyError:
+                return None
+            if not hasattr(context, 'portal_type') or \
+                    not (context.portal_type == 'DashboardCollection' or context.portal_type.startswith('Meeting')):
+                return None
+    return context
 
 
 def isModifiedSinceLastVersion(obj):

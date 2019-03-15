@@ -248,11 +248,11 @@ function adviceChangeDelay() {
 
 function advicesInfos() {
     tooltipster_helper(
-      selector='.tooltipster-advices-infos',
+      selector='div#faceted-form a.tooltipster-advices-infos',
       view_name='@@advices-icons-infos',
       data_parameters=['adviceType'],
       options={zIndex: 1,
-               position: 'bottom',
+               position: 'left',
                trigger: 'custom',
                triggerOpen: {
                   mouseenter: true,
@@ -263,11 +263,11 @@ function advicesInfos() {
                functionReady_callback: initializeAdvicePopup,
                close_other_tips: true});
     tooltipster_helper(
-      selector='.tooltipster-dashboard-advices-infos',
+      selector='a.tooltipster-advices-infos',
       view_name='@@advices-icons-infos',
       data_parameters=['adviceType'],
       options={zIndex: 1,
-               position: 'left',
+               position: 'bottom',
                trigger: 'custom',
                triggerOpen: {
                   mouseenter: true,

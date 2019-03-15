@@ -43,6 +43,14 @@ Changelog
   this fixes problem with collective.messagesviewlet message.tal_condition field where it was not available
 - Added batch action 'Update' available in dashboards listing items and meetings that will updateLocalRoles of selected elements, this is useful
   when needed to update only some elements because of MeetingConfig changes
+- Integrated new version of ftw.labels that supports personal labels :
+  - Labels are editable by users able to edit item except MeetingManagers able to edit labels forever;
+  - Personal labels are editable by every users able to view the item;
+  - When items are duplicated (locally, to other MC, ...) labels are not kept except if item created from item template;
+  - By default, manage a personal label 'lu' (read) and associated searches with it (searchunreaditems, searchunreaditemsincopy, searchunreaddecideditems);
+  - Added action on MeetingConfig to be able to initialize existing items when managing a new personal label: it is possible to activate the personal label
+    on items older than a given number of days for every users having 'View' access to these items;
+  - Labels used on items are not removable in the configuration.
 
 4.1b16 (2019-01-31)
 -------------------

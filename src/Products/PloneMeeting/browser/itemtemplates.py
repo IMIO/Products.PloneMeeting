@@ -51,7 +51,8 @@ class ItemTemplateView(BrowserView):
         newItem = templateItem.clone(newOwnerId=member.id,
                                      cloneEventAction='create_meeting_item_from_template',
                                      destFolder=self.context,
-                                     newPortalType=self.cfg.getItemTypeName())
+                                     newPortalType=self.cfg.getItemTypeName(),
+                                     keep_ftw_labels=True)
         # set _at_creation_flag to True so if user cancel first edit, it will be removed
         newItem._at_creation_flag = True
         return newItem

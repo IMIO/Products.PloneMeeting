@@ -31,6 +31,8 @@ from collective.eeafaceted.collectionwidget.utils import getCollectionLinkCriter
 from collective.iconifiedcategory.utils import get_category_object
 from DateTime import DateTime
 from eea.facetednavigation.widgets.resultsperpage.widget import Widget as ResultsPerPageWidget
+from ftw.labels.interfaces import ILabeling
+from ftw.labels.interfaces import ILabelJar
 from OFS.ObjectManager import BeforeDeleteException
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFPlone import PloneMessageFactory
@@ -1313,6 +1315,51 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.meetingConfig.updateAnnexConfidentiality()
         self.assertTrue(annex.confidential)
 
+    def test_pm_UpdatePersonalLabels(self):
+        """Test the 'updatePersonalLabels' method that will activate a personal label
+           on every existing items that were not modified for a given number of days."""
+        cfg = self.meetingConfig
+        self.changeUser('pmManager')
+        item1 = self.create('MeetingItem')
+        item2 = self.create('MeetingItem')
+        # only for Managers
+        self.assertRaises(Unauthorized, cfg.updatePersonalLabels)
+        self.changeUser('siteadmin')
+        # by default it only updates items not modified for 30 days
+        # so calling it will change nothing
+        cfg.updatePersonalLabels(personal_labels=['personal-label'])
+        item1_labeling = ILabeling(item1)
+        item2_labeling = ILabeling(item2)
+        self.assertEqual(item1_labeling.storage, {})
+        self.assertEqual(item2_labeling.storage, {})
+        cfg.updatePersonalLabels(personal_labels=['personal-label'], modified_since_days=0)
+        self.assertEqual(
+            sorted(item1_labeling.storage['personal-label']),
+            ['budgetimpacteditor', 'pmCreator1', 'pmCreator1b', 'pmManager', 'powerobserver1'])
+        self.assertEqual(
+            sorted(item2_labeling.storage['personal-label']),
+            ['budgetimpacteditor', 'pmCreator1', 'pmCreator1b', 'pmManager', 'powerobserver1'])
+        # method takes into account users able to see the items
+        # when item is proposed, powerobserver1 may not see it...
+        self.proposeItem(item1)
+        cfg.updatePersonalLabels(personal_labels=['personal-label'], modified_since_days=0)
+        self.assertEqual(
+            sorted(item1_labeling.storage['personal-label']),
+            ['pmCreator1', 'pmCreator1b', 'pmManager', 'pmObserver1', 'pmReviewer1', 'pmReviewerLevel2'])
+        self.assertEqual(
+            sorted(item2_labeling.storage['personal-label']),
+            ['budgetimpacteditor', 'pmCreator1', 'pmCreator1b', 'pmManager', 'powerobserver1'])
+
+        # test test that only items older than given days are updated
+        self.proposeItem(item2)
+        item2.setModificationDate(DateTime() - 50)
+        item2.reindexObject()
+        cfg.updatePersonalLabels(personal_labels=['personal-label'], modified_since_days=30)
+        # still olf value for item2
+        self.assertEqual(
+            sorted(item2_labeling.storage['personal-label']),
+            ['budgetimpacteditor', 'pmCreator1', 'pmCreator1b', 'pmManager', 'powerobserver1'])
+
     def test_pm_ItemInConfigIsNotPastableToAnotherMC(self):
         """ """
         self.changeUser('siteadmin')
@@ -1573,6 +1620,29 @@ class testMeetingConfig(PloneMeetingTestCase):
         notify(ObjectModifiedEvent(item_template))
         item_template_cfg_modified = cfg.modified()
         self.assertNotEqual(recurring_item_cfg_modified, item_template_cfg_modified)
+
+    def test_pm_UsedLabelCanNotBeRemoved(self):
+        """A ftw.labels label that is used on an item can not be removed."""
+        cfg = self.meetingConfig
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        # add a label
+        labelingview = item.restrictedTraverse('@@labeling')
+        self.request.form['activate_labels'] = ['label']
+        labelingview.update()
+        item_labeling = ILabeling(item)
+        self.assertEqual(item_labeling.storage, {'label': []})
+        jar = ILabelJar(cfg)
+        self.assertTrue('label' in jar.storage)
+        # trying to remove a used label will redirect and show a message
+        # but the label is not removed
+        jar.remove(label_id='label')
+        self.assertTrue('label' in jar.storage)
+        self.request.form['activate_labels'] = []
+        labelingview.update()
+        self.assertEqual(item_labeling.storage, {})
+        self.assertTrue(jar.remove(label_id='label'))
+        self.assertFalse('label' in jar.storage)
 
 
 def test_suite():

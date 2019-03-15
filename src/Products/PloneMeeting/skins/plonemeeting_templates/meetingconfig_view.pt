@@ -121,7 +121,7 @@
       </p>
       <table class="configActions">
         <tr valign="top">
-          <td width=25%>
+          <td width=20%>
             <form name="updateAnnexConfidentialityForm" action="updateAnnexConfidentiality">
             <input class="context"
                    type="submit" name="updateAnnexConfidentiality"
@@ -133,7 +133,7 @@
                 Warning: the action 'Initialize existing annexes confidentiality' will initialize every existing annex confidentiality to what is defined as default value in this meeting configuration (check the 'Advices and access' tab).
             </p>
           </td>
-          <td width=25%>
+          <td width=20%>
             <form name="updateAdviceConfidentialityForm" action="updateAdviceConfidentiality">
             <input class="context"
                    type="submit"
@@ -146,7 +146,35 @@
                 Warning: the action 'Initialize existing advices confidentiality' will initialize every existing advice confidentiality to what is defined as default value in this meeting configuration (check the 'Advices and access' tab).
             </p>
           </td>
-          <td width=25%>
+          <td width=20%>
+            <form name="updatePersonalLabelsForm" action="updatePersonalLabels">
+            <select name="personal_labels:list">
+              <option value="" i18n:translate="">Select a label</option>
+              <option tal:repeat="term context/get_labels_vocab"
+                      tal:attributes="value term/value"
+                      tal:content="term/title">Label title</option>
+            </select>
+            <br />
+            <select name="modified_since_days:int">
+              <option value="30" i18n:translate="">Modified since (in days, default to 30 days)</option>
+              <option tal:repeat="value python: range(0, 100, 5)"
+                      tal:attributes="value value"
+                      tal:content="value">0</option>
+            </select>
+            <br />
+            <input class="context"
+                   type="submit"
+                   name="updatePersonalLabels"
+                   value="pm_update_personal_labels"
+                   onclick="event.preventDefault(); if (confirm(window.eval('are_you_sure'))) {document.forms.updatePersonalLabelsForm.submit();}"
+                   i18n:attributes="value"/>&nbsp;&nbsp;
+            </form>
+            <p class="discreet" style="color: red;" i18n:translate="pm_update_personal_labels_warning">
+                Warning: the action 'Initialize personal labels' will activate selected labels on every existing items that were last modified before given number of days for every users able to see these items.
+            </p>
+          </td>
+
+          <td width=20%>
             <form name="checkPodTemplatesForm" action="checkPodTemplates">
             <input class="context"
                    type="submit" name="checkPodTemplates"
@@ -158,7 +186,7 @@
                 Warning: the action 'Check Pod templates' will check that every Pod templates defined in the configuration are working correctly.
             </p>
           </td>
-          <td width=25%>
+          <td width=20%>
             <form name="updateAllLocalRolesForm" action="updateAllLocalRoles"
                   tal:attributes="action string:${context/portal_plonemeeting/absolute_url}/updateAllLocalRoles">
             <input type="hidden" tal:attributes="value context/getMeetingTypeName" name="portal_type:list" />
@@ -789,7 +817,7 @@
                            style="cursor:pointer"
                            class="imageInput"
                            tal:attributes="
-                              onClick python: 'href: window.location=\'%s/createObject?type_name=DashboardCollection\'' % cFolderUrl;
+                              onClick python: 'href: window.location=\'%s/++add++DashboardCollection\'' % cFolderUrl;
                               src string: $portal_url/new.png"
                  title="add_object" i18n:attributes="title"
                  tal:condition="isRealManager"/>
@@ -818,7 +846,7 @@
                     <label class="formQuestion">
                       <span i18n:translate="" i18n:domain="plone">Sort the collection on this index</span>
                     </label> :
-                    <span tal:content="obj/sort_on" i18n:domain="plone" i18n:translate="">Sort on</span>
+                    <span tal:content="obj/sort_on|nothing" i18n:domain="plone" i18n:translate="">Sort on</span>
                   </div>
                   <div>
                     <label class="formQuestion">

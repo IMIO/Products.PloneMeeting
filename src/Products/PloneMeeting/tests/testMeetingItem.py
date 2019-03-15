@@ -34,6 +34,7 @@ from collective.iconifiedcategory.utils import get_category_object
 from collective.iconifiedcategory.utils import get_config_root
 from collective.iconifiedcategory.utils import get_group
 from DateTime import DateTime
+from ftw.labels.interfaces import ILabeling
 from imio.actionspanel.interfaces import IContentDeletable
 from imio.helpers.cache import cleanRamCacheFor
 from imio.history.interfaces import IImioHistory
@@ -169,7 +170,7 @@ class testMeetingItem(PloneMeetingTestCase):
         vendors_creators = get_plone_group_id(self.vendors_uid, 'creators')
         vcGroup = self.portal.portal_groups.getGroupById(vendors_creators)
         vcGroup.addMember('pmReviewer1')
-        # create his personnal zone because he is a creator now
+        # create his personal area because he is a creator now
         _createHomeFolder(self.portal, 'pmReviewer1')
         self.changeUser('pmReviewer1')
         item = self.create('MeetingItem')
@@ -1553,6 +1554,37 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(clonedItem.adviceIsInherited(org1_uid))
         self.assertTrue(clonedItem.adviceIsInherited(org2_uid))
         self.assertTrue(clonedItem.adviceIsInherited(org3_uid))
+
+    def test_pm_CloneItemWithFTWLabels(self):
+        '''When an item is cloned with option keep_ftw_label=True,
+           ftw.labels labels are kept, False by default.'''
+        cfg = self.meetingConfig
+        cfg.setEnableLabels(True)
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.setDecision('<p>Decision</p>')
+        item._update_after_edit()
+        labelingview = item.restrictedTraverse('@@labeling')
+        self.request.form['activate_labels'] = ['label']
+        labelingview.update()
+        item_labeling = ILabeling(item)
+        self.assertEqual(item_labeling.storage, {'label': []})
+
+        # labels are not kept by default
+        clonedItem = item.clone()
+        clonedItem_labeling = ILabeling(clonedItem)
+        self.assertEqual(clonedItem_labeling.storage, {})
+
+        # keep labels
+        clonedItemWithLabels = item.clone(keep_ftw_labels=True)
+        clonedItemWithLabels_labeling = ILabeling(clonedItemWithLabels)
+        self.assertEqual(clonedItemWithLabels_labeling.storage, item_labeling.storage)
+
+        # changing label on item does not change on clonedItemWithLabels
+        self.request.form['activate_labels'] = []
+        labelingview.update()
+        self.assertEqual(item_labeling.storage, {})
+        self.assertEqual(clonedItemWithLabels_labeling.storage, {'label': []})
 
     def test_pm_DuplicatedItemDoesNotKeepDecisionAnnexes(self):
         """When an item is duplicated using the 'duplicate and keep link',

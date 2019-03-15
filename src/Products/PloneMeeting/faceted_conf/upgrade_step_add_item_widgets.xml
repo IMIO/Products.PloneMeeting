@@ -34,9 +34,9 @@
    <property name="hidezerocount">False</property>
    <property name="index">labels</property>
    <property name="operator">or</property>
-   <property name="operator_visible">False</property>
+   <property name="operator_visible">True</property>
    <property
-      name="vocabulary">Products.PloneMeeting.vocabularies.ftwlabelsvocabulary</property>
+      name="vocabulary">Products.PloneMeeting.vocabularies.ftwlabelsforfacetedfiltervocabulary</property>
    <property name="catalog"></property>
    <property name="maxitems">0</property>
    <property name="sortreversed">False</property>

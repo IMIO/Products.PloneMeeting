@@ -126,6 +126,14 @@ class Migrator(BaseMigrator):
         self.tool.setHolidays(storedHolidays)
         logger.info('Done.')
 
+    def addNewSearches(self):
+        """Add new searches by createSearches."""
+        logger.info('Adding new searches...')
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            cfg._createSubFolders()
+            cfg.createSearches(cfg._searchesInfo())
+        logger.info('Done.')
+
     def run(self):
         '''Must be overridden. This method does the migration job.'''
         raise 'You should have overridden me darling.'''

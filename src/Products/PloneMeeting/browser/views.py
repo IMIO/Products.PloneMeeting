@@ -152,7 +152,10 @@ class ItemStaticInfosView(BaseStaticInfosView):
     """
     @property
     def active_labels(self):
-        return ILabeling(self.context).active_labels()
+        available_labels = ILabeling(self.context).available_labels()
+        active_personal_labels = [label for label in available_labels[0] if label['active']]
+        active_labels = [label for label in available_labels[1] if label['active']]
+        return active_personal_labels, active_labels
 
 
 class MeetingStaticInfosView(BaseStaticInfosView):

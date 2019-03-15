@@ -1,4 +1,4 @@
-<configure
+    <configure
     xmlns="http://namespaces.zope.org/zope"
     xmlns:browser="http://namespaces.zope.org/browser"
     xmlns:plone="http://namespaces.plone.org/plone">
@@ -7,6 +7,10 @@
              factory=".adapters.ftw_labels_jar_discovery"
              provides="ftw.labels.interfaces.ILabelJar" />
 
+    <configure package="ftw.labels">
+        <adapter for="Products.PloneMeeting.interfaces.IMeetingConfig"
+                 factory="Products.PloneMeeting.ftw_labels.overrides.PMLabelJar" />
+    </configure>
     <configure package="ftw.labels.viewlets">
         <browser:viewlet
             for="Products.PloneMeeting.interfaces.IMeetingItem"
@@ -19,14 +23,23 @@
         <browser:page
             for="Products.PloneMeeting.interfaces.IMeetingItem"
             name="labeling"
-            class=".labeling.Labeling"
-            permission="cmf.ModifyPortalContent"
+            class="Products.PloneMeeting.ftw_labels.overrides.PMLabeling"
+            permission="zope2.View"
             allowed_attributes="update"
+            />
+        <browser:page
+            for="Products.PloneMeeting.interfaces.IMeetingItem"
+            name="pers-labeling"
+            class="Products.PloneMeeting.ftw_labels.overrides.PMLabeling"
+            permission="zope2.View"
+            allowed_attributes="pers_update"
             />
     </configure>
 
-    <!-- Vocabulary used for the faceted filter -->
+    <!-- Vocabularies -->
     <utility component=".vocabularies.FTWLabelsVocabularyFactory"
              name="Products.PloneMeeting.vocabularies.ftwlabelsvocabulary" />
+    <utility component=".vocabularies.FTWLabelsForFacetedFilterVocabularyFactory"
+             name="Products.PloneMeeting.vocabularies.ftwlabelsforfacetedfiltervocabulary" />
 
 </configure>
