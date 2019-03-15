@@ -5658,7 +5658,11 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             item_labeling = ILabeling(item)
             # determinate users able to see the item, every users in local_roles
             item_user_ids = []
-            for local_role_principal in item.__ac_local_roles__:
+            for local_role_principal, local_roles in item.__ac_local_roles__.items():
+                # check that one of local_roles defined for principal has current View permission on item
+                has_view = [local_role for local_role in local_roles if local_role in item._View_Permission]
+                if not has_view:
+                    continue
                 # it is a user
                 if local_role_principal in all_user_ids:
                     item_user_ids.append(local_role_principal)

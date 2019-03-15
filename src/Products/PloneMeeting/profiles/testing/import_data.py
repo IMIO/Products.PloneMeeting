@@ -232,10 +232,10 @@ vendors.advisers.append(pmReviewer2)
 vendors.advisers.append(pmManager)
 
 # Do voters able to see items to vote for
-developers.observers.append(voter1)
-developers.observers.append(voter2)
-vendors.observers.append(voter1)
-vendors.observers.append(voter2)
+# developers.observers.append(voter1)
+# developers.observers.append(voter2)
+# vendors.observers.append(voter1)
+# vendors.observers.append(voter2)
 
 # Add a vintage group
 endUsers = OrgDescriptor('endUsers', 'End users', u'EndUsers', active=False)
