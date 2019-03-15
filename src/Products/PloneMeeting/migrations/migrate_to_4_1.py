@@ -899,6 +899,9 @@ class Migrate_To_4_1(Migrator):
                     jar_storage = ILabelJar(cfg).storage
                     if 'lu' in jar_storage.list():
                         cfg._updatePersonalLabels(personal_labels=['lu'], reindex=False)
+            else:
+                logger.info("No personal labels to activate...")
+
         logger.info('Done.')
 
     def run(self, step=None):
