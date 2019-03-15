@@ -1,4 +1,6 @@
-# -*- coding: utf-8 -*-from DateTime import DateTime
+# -*- coding: utf-8 -*-
+
+from ast import literal_eval
 from collections import OrderedDict
 from collective.contact.plonegroup.config import FUNCTIONS_REGISTRY
 from collective.contact.plonegroup.config import ORGANIZATIONS_REGISTRY
@@ -885,20 +887,27 @@ class Migrate_To_4_1(Migrator):
         defaultFTWLabels = self._defaultFTWLabels()
         if defaultFTWLabels:
             logger.info("Setting default ftw.labels...")
+            defined_new_labels = False
             for cfg in self.tool.objectValues('MeetingConfig'):
                 jar_storage = ILabelJar(cfg).storage
                 if not jar_storage:
+                    defined_new_labels = True
                     jar_storage.update(defaultFTWLabels)
             logger.info('Done.')
 
             # if some ftw_labels must be activated, we get in in env variable
             personal_labels = os.getenv('FTW_LABELS_PERSONAL_LABELS', [])
-            if personal_labels:
+            if personal_labels and defined_new_labels:
+                # personal_labels is a list as a string, so something like "['label']"
+                personal_labels = literal_eval(personal_labels)
                 logger.info("Initializing '${0}' personal labels...".format(', '.join(personal_labels)))
                 for cfg in self.tool.objectValues('MeetingConfig'):
-                    jar_storage = ILabelJar(cfg).storage
-                    if 'lu' in jar_storage.list():
-                        cfg._updatePersonalLabels(personal_labels=['lu'], reindex=False)
+                    # if we activate some labels, then we enableLabels
+                    cfg.setEnableLabels(True)
+                    jar_storage = ILabelJar(cfg)
+                    kept_personal_labels = [pl for pl in personal_labels if pl in jar_storage.storage]
+                    if kept_personal_labels:
+                        cfg._updatePersonalLabels(personal_labels=kept_personal_labels, reindex=False)
             else:
                 logger.info("No personal labels to activate...")
 
