@@ -11,6 +11,7 @@ from copy import deepcopy
 from DateTime import DateTime
 from datetime import date
 from eea.facetednavigation.interfaces import ICriteria
+from ftw.labels.interfaces import ILabelJar
 from persistent.mapping import PersistentMapping
 from plone import api
 from plone.app.contenttypes.migration.dxmigration import migrate_base_class_to_new_class
@@ -874,6 +875,32 @@ class Migrate_To_4_1(Migrator):
                 alsoProvides(item, IConfigElement)
         logger.info('Done.')
 
+    def _defaultFTWLabels(self):
+        """To be overrided."""
+        return {}
+
+    def _initFTWLabels(self):
+        """Initialize ftw labels and activate ones provided in env variable."""
+        logger.info("Initializing ftw.labels...")
+        defaultFTWLabels = self._defaultFTWLabels()
+        if defaultFTWLabels:
+            logger.info("Setting default ftw.labels...")
+            for cfg in self.tool.objectValues('MeetingConfig'):
+                jar_storage = ILabelJar(cfg).storage
+                if not jar_storage:
+                    jar_storage.update(defaultFTWLabels)
+            logger.info('Done.')
+
+            # if some ftw_labels must be activated, we get in in env variable
+            personal_labels = os.getenv('FTW_LABELS_PERSONAL_LABELS', [])
+            if personal_labels:
+                logger.info("Initializing '${0}' personal labels...".format(', '.join(personal_labels)))
+                for cfg in self.tool.objectValues('MeetingConfig'):
+                    jar_storage = ILabelJar(cfg).storage
+                    if 'lu' in jar_storage.list():
+                        cfg._updatePersonalLabels(personal_labels=['lu'], reindex=False)
+        logger.info('Done.')
+
     def run(self, step=None):
         logger.info('Migrating to PloneMeeting 4.1...')
 
@@ -944,8 +971,9 @@ class Migrate_To_4_1(Migrator):
         self.removeUnusedPortalTypes(portal_types=['MeetingUser', 'MeetingFile', 'MeetingFileType', 'MeetingGroup'])
         self._migrate_searchitemstoprevalidate_query()
         self._migrateItemsInConfig()
+        self._initFTWLabels()
         # too many indexes to update, rebuild the portal_catalog
-        #self.refreshDatabase()
+        self.refreshDatabase()
 
 
 # The migration function -------------------------------------------------------
@@ -981,7 +1009,8 @@ def migrate(context):
        27) Disable votes functionnality;
        28) Removed no more used portal_types;
        29) Migrate 'searchitemstoprevalidate' query;
-       30) Migrate items in MeetingConfig so it provides IConfigElement.
+       30) Migrate items in MeetingConfig so it provides IConfigElement;
+       31) Initialize personal labels if found in FTW_LABELS_PERSONAL_LABELS env variable.
     '''
     migrator = Migrate_To_4_1(context)
     migrator.run()
