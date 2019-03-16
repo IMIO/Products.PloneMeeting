@@ -1319,6 +1319,9 @@ class testMeetingConfig(PloneMeetingTestCase):
         """Test the 'updatePersonalLabels' method that will activate a personal label
            on every existing items that were not modified for a given number of days."""
         cfg = self.meetingConfig
+        # do not consider observers group as it changes too often from one WF to another...
+        self._removePrincipalFromGroup('pmReviewer1', self.developers_observers)
+        self._removePrincipalFromGroup('pmObserver1', self.developers_observers)
         self.changeUser('pmManager')
         item1 = self.create('MeetingItem')
         item2 = self.create('MeetingItem')
@@ -1345,7 +1348,7 @@ class testMeetingConfig(PloneMeetingTestCase):
         cfg.updatePersonalLabels(personal_labels=['personal-label'], modified_since_days=0)
         self.assertEqual(
             sorted(item1_labeling.storage['personal-label']),
-            ['pmCreator1', 'pmCreator1b', 'pmManager', 'pmObserver1', 'pmReviewer1', 'pmReviewerLevel2'])
+            ['pmCreator1', 'pmCreator1b', 'pmManager', 'pmReviewer1', 'pmReviewerLevel2'])
         self.assertEqual(
             sorted(item2_labeling.storage['personal-label']),
             ['budgetimpacteditor', 'pmCreator1', 'pmCreator1b', 'pmManager', 'powerobserver1'])
