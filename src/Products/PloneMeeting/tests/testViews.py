@@ -1010,15 +1010,17 @@ class testViews(PloneMeetingTestCase):
             context=item, manager_name='plone.belowcontenttitle', viewlet_name='ftw.labels.labeling')
         self.assertFalse(viewlet.available)
 
+        # get the labeljar, that is actually the MeetingConfig
+        labeljar = getAdapter(item, ILabelJar)
+        self.assertEqual(labeljar.context, cfg)
+        # remove default labels
+        labeljar.storage.clear()
+        self.assertEqual(labeljar.list(), [])
         # enableLabels
         cfg.setEnableLabels(True)
         # still not available as no labels defined
         self.assertFalse(viewlet.available)
-        # get the labeljar, that is actually the MeetingConfig
-        labeljar = getAdapter(item, ILabelJar)
-        self.assertEqual(labeljar.context, cfg)
-        self.assertEqual(labeljar.list(), [])
-        labeljar.add('Label', 'green')
+        labeljar.add('Label', 'green', False)
         self.assertTrue(viewlet.available)
 
     def _enable_ftw_labels(self):
@@ -1026,8 +1028,8 @@ class testViews(PloneMeetingTestCase):
         cfg.setEnableLabels(True)
         self.changeUser('pmCreator1')
         labeljar = getAdapter(cfg, ILabelJar)
-        labeljar.add('Label1', 'green')
-        labeljar.add('Label2', 'red')
+        labeljar.add('Label1', 'green', False)
+        labeljar.add('Label2', 'red', False)
         return labeljar
 
     def test_pm_ftw_labels_viewlet_can_edit(self):
@@ -1058,16 +1060,15 @@ class testViews(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         view = item.restrictedTraverse('@@labeling')
         labeling = ILabeling(item)
-        self.assertEqual(labeling.active_labels(), [])
+        self.assertEqual(labeling.storage, {})
         self.request.form['activate_labels'] = ['label1']
         view.update()
-        self.assertEqual(
-            labeling.active_labels(),
-            [{'color': 'green', 'label_id': 'label1', 'title': 'Label1'}])
+        self.assertTrue('label1' in labeling.storage)
 
         # propose item, view is not more available
         self.proposeItem(item)
-        self.assertRaises(Unauthorized, item.restrictedTraverse, '@@labeling')
+        import ipdb; ipdb.set_trace()
+        self.assertRaises(Unauthorized, item.restrictedTraverse('@@labeling').update)
 
     def test_pm_TopLevelTabs(self):
         """The CatalogNavigationTabs.topLevelTabs is overrided to manage groupConfigs."""

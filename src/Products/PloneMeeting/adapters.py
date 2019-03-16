@@ -943,6 +943,8 @@ class BaseItemsToValidateOfEveryReviewerLevelsAndLowerLevelsAdapter(CompoundCrit
            - reviewer3 may validate items in reviewer1, reviewer2 and reviewer3.
            So get highest hierarchic level of each group of the user and
            take into account lowest levels too.'''
+        if not self.cfg:
+            return {}
         # search every highest reviewer level for each group of the user
         userOrgs = self.tool.get_orgs_for_user()
         userPloneGroups = self.tool.get_plone_groups_for_user()

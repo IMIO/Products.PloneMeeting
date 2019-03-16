@@ -39,6 +39,7 @@ from plone.testing.z2 import Browser
 from Products.CMFCore.permissions import ManagePortal
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
+from Products.PloneMeeting.etags import _modified
 from Products.PloneMeeting.tests.PloneMeetingTestCase import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
@@ -1019,11 +1020,11 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         browser.addHeader('Authorization', 'Basic %s:%s' % ('siteadmin', DEFAULT_USER_PASSWORD,))
         browser.open(self.portal.absolute_url())
         browser.open(pmFolder.absolute_url() + '/searches_items')
-        tool_original_modified = self.tool.modified()
+        tool_original_modified = _modified(self.tool)
         self.assertTrue(str(int(tool_original_modified)) in browser.headers['etag'])
         self.tool.invalidateAllCache()
         transaction.commit()
-        tool_new_modified = self.tool.modified()
+        tool_new_modified = _modified(self.tool)
         self.assertNotEqual(tool_original_modified, tool_new_modified)
         browser.open(pmFolder.absolute_url() + '/searches_items')
         self.assertTrue(str(int(tool_new_modified)) in browser.headers['etag'])

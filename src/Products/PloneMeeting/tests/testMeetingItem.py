@@ -4154,11 +4154,14 @@ class testMeetingItem(PloneMeetingTestCase):
         NEUTRAL_FIELDS += self._extraNeutralFields()
         # neutral + default + extra + getExtraFieldsToCopyWhenCloning(True) +
         # getExtraFieldsToCopyWhenCloning(False) should equal itemFields
-        copiedFields = set(NEUTRAL_FIELDS +
-                           DEFAULT_COPIED_FIELDS +
-                           EXTRA_COPIED_FIELDS_SAME_MC +
-                           item.adapted().getExtraFieldsToCopyWhenCloning(cloned_to_same_mc=True) +
-                           item.adapted().getExtraFieldsToCopyWhenCloning(cloned_to_same_mc=False))
+        copiedFields = set(
+            NEUTRAL_FIELDS +
+            DEFAULT_COPIED_FIELDS +
+            EXTRA_COPIED_FIELDS_SAME_MC +
+            item.adapted().getExtraFieldsToCopyWhenCloning(
+                cloned_to_same_mc=True, cloned_from_item_template=False) +
+            item.adapted().getExtraFieldsToCopyWhenCloning(
+                cloned_to_same_mc=False, cloned_from_item_template=False))
         self.assertEquals(copiedFields, set(itemFields))
 
         newItem = item.clone()

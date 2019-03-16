@@ -30,6 +30,7 @@ from plone import api
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 from Products.CMFCore.permissions import ModifyPortalContent
+from Products.PloneMeeting.adapters import _find_nothing_query
 from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
@@ -498,8 +499,7 @@ class testSearches(PloneMeetingTestCase):
                              name='items-to-validate-of-highest-hierarchic-level')
         # if user si not a reviewer, we want the search to return
         # nothing so the query uses an unknown review_state
-        self.assertEquals(adapter.query,
-                          {'review_state': {'query': ['unknown_review_state']}})
+        self.assertEquals(adapter.query, _find_nothing_query(itemTypeName))
         # for a reviewer, query is correct
         self.changeUser('pmManager')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstovalidateofhighesthierarchiclevel')
@@ -592,8 +592,7 @@ class testSearches(PloneMeetingTestCase):
                              name='items-to-validate-of-my-reviewer-groups')
         # if user si not a reviewer, we want the search to return
         # nothing so the query uses an unknown review_state
-        self.assertEquals(adapter.query,
-                          {'review_state': {'query': ['unknown_review_state']}})
+        self.assertEquals(adapter.query, _find_nothing_query(itemTypeName))
         # for a reviewer, query is correct
         self.changeUser('pmManager')
         # keep relevant reviewer states
@@ -698,8 +697,7 @@ class testSearches(PloneMeetingTestCase):
                              ICompoundCriterionFilter,
                              name='items-to-validate-of-every-reviewer-levels-and-lower-levels')
         self.changeUser('pmObserver1')
-        self.assertEquals(adapter.query,
-                          {'review_state': {'query': ['unknown_review_state']}})
+        self.assertEquals(adapter.query, _find_nothing_query(itemTypeName))
         # now do the query
         # this adapter is not used by default, but is intended to be used with
         # the "searchitemstovalidate" collection so use it with it
@@ -749,8 +747,7 @@ class testSearches(PloneMeetingTestCase):
                              ICompoundCriterionFilter,
                              name='items-to-correct')
         # wfAdaptation 'return_to_proposing_group' is not enabled
-        self.assertEquals(adapter.query,
-                          {'review_state': {'query': ['unknown_review_state']}})
+        self.assertEquals(adapter.query, _find_nothing_query(itemTypeName))
         wfAdaptations = list(cfg.getWorkflowAdaptations())
         if 'return_to_proposing_group' not in wfAdaptations:
             wfAdaptations.append('return_to_proposing_group')
@@ -760,8 +757,7 @@ class testSearches(PloneMeetingTestCase):
         # normally this search is not available to users that are not able to correct items
         # nevertheless, if a user is in not able to edit items to correct, the special
         # query 'return nothing' is returned
-        self.assertEquals(adapter.query,
-                          {'review_state': {'query': ['unknown_review_state']}})
+        self.assertEquals(adapter.query, _find_nothing_query(itemTypeName))
         self.changeUser('pmManager')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstocorrect')
 
@@ -822,8 +818,7 @@ class testSearches(PloneMeetingTestCase):
                              ICompoundCriterionFilter,
                              name='items-to-correct-to-validate-of-highest-hierarchic-level')
         # wfAdaptation 'return_to_proposing_group_with_last_validation' is not enabled
-        self.assertEquals(adapter.query,
-                          {'review_state': {'query': ['unknown_review_state']}})
+        self.assertEquals(adapter.query, _find_nothing_query(itemTypeName))
         wfAdaptations = list(cfg.getWorkflowAdaptations())
         if 'return_to_proposing_group_with_last_validation' not in wfAdaptations:
             wfAdaptations.append('return_to_proposing_group_with_last_validation')
@@ -836,8 +831,7 @@ class testSearches(PloneMeetingTestCase):
         # normally this search is not available to users that are not able to review items
         # nevertheless, if a user is in not able to edit items to correct in proposed, the special
         # query 'return nothing' is returned
-        self.assertEquals(adapter.query,
-                          {'review_state': {'query': ['unknown_review_state']}})
+        self.assertEquals(adapter.query, _find_nothing_query(itemTypeName))
         self.changeUser('pmManager')
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstocorrecttovalidateofhighesthierarchiclevel')
         self.assertEquals(adapter.query, {
@@ -913,8 +907,7 @@ class testSearches(PloneMeetingTestCase):
                              ICompoundCriterionFilter,
                              name='items-to-correct-to-validate-of-every-reviewer-groups')
         # wfAdaptation 'return_to_proposing_group_with_last_validation' is not enabled
-        self.assertEquals(adapter.query,
-                          {'review_state': {'query': ['unknown_review_state']}})
+        self.assertEquals(adapter.query, _find_nothing_query(itemTypeName))
         wfAdaptations = list(cfg.getWorkflowAdaptations())
         if 'pre_validation' not in wfAdaptations:
             wfAdaptations.append('pre_validation')
@@ -929,8 +922,7 @@ class testSearches(PloneMeetingTestCase):
         # normally this search is not available to users that are not able to review items
         # nevertheless, if a user is in not able to edit items to correct in proposed, the special
         # query 'return nothing' is returned
-        self.assertEquals(adapter.query,
-                          {'review_state': {'query': ['unknown_review_state']}})
+        self.assertEquals(adapter.query, _find_nothing_query(itemTypeName))
         self.changeUser('pmManager')
         cleanRamCacheFor(
             'Products.PloneMeeting.adapters.query_itemstocorrecttovalidateofeveryreviewerlevelsandlowerlevels')
