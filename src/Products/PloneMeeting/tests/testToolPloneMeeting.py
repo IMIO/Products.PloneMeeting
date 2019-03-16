@@ -1021,13 +1021,13 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         browser.open(self.portal.absolute_url())
         browser.open(pmFolder.absolute_url() + '/searches_items')
         tool_original_modified = _modified(self.tool)
-        self.assertTrue(str(int(tool_original_modified)) in browser.headers['etag'])
+        self.assertTrue(tool_original_modified in browser.headers['etag'])
         self.tool.invalidateAllCache()
         transaction.commit()
         tool_new_modified = _modified(self.tool)
         self.assertNotEqual(tool_original_modified, tool_new_modified)
         browser.open(pmFolder.absolute_url() + '/searches_items')
-        self.assertTrue(str(int(tool_new_modified)) in browser.headers['etag'])
+        self.assertTrue(tool_new_modified in browser.headers['etag'])
 
 
 def test_suite():

@@ -1067,7 +1067,6 @@ class testViews(PloneMeetingTestCase):
 
         # propose item, view is not more available
         self.proposeItem(item)
-        import ipdb; ipdb.set_trace()
         self.assertRaises(Unauthorized, item.restrictedTraverse('@@labeling').update)
 
     def test_pm_TopLevelTabs(self):
