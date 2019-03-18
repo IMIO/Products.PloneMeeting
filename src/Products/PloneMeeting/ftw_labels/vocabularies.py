@@ -22,21 +22,25 @@ class FTWLabelsVocabulary(object):
     def __call__(self, context):
         res = []
         context = get_context_with_request(context)
-        context_portal_type = getattr(context, 'portal_type', None)
-        if context and context_portal_type in ('MeetingItem', 'Meeting'):
-            tool = api.portal.get_tool('portal_plonemeeting')
-            cfg = tool.getMeetingConfig(context)
 
-            labels = ILabelJar(cfg).list()
-            for label in labels:
-                if label['by_user']:
-                    title = '{0} (*)'.format(label['title'])
-                else:
-                    title = label['title']
-                res.append(SimpleTerm(
-                    label['label_id'],
-                    label['label_id'],
-                    title))
+        tool = api.portal.get_tool('portal_plonemeeting')
+        try:
+            # in some case, like Plone Site creation, context is the Zope app...
+            cfg = tool.getMeetingConfig(context)
+        except:
+            return SimpleVocabulary(res)
+
+        labels = ILabelJar(cfg).list()
+        for label in labels:
+            if label['by_user']:
+                title = '{0} (*)'.format(label['title'])
+            else:
+                title = label['title']
+            res.append(SimpleTerm(
+                label['label_id'],
+                label['label_id'],
+                title))
+
         return SimpleVocabulary(res)
 
 FTWLabelsVocabularyFactory = FTWLabelsVocabulary()
