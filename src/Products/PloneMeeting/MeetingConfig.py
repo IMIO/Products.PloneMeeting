@@ -2499,7 +2499,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "cfg/getUseCopies",
+                    'tal_condition': "python: cfg.getUseCopies() and tool.userIsAmong(['observers', 'reviewers'])",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Unread items in copy
@@ -2521,7 +2521,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                     'sort_on': u'modified',
                     'sort_reversed': True,
                     'showNumberOfItems': False,
-                    'tal_condition': "python: cfg.getEnableLabels() and cfg.getUseCopies()",
+                    'tal_condition': "python: cfg.getEnableLabels() and cfg.getUseCopies() "
+                        "and tool.userIsAmong(['observers', 'reviewers']) ",
                     'roles_bypassing_talcondition': ['Manager', ]
                 }),
                 # Items to prevalidate

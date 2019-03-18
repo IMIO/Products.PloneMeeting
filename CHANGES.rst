@@ -51,6 +51,7 @@ Changelog
   - Added action on MeetingConfig to be able to initialize existing items when managing a new personal label: it is possible to activate the personal label
     on items older than a given number of days for every users having 'View' access to these items;
   - Labels used on items are not removable in the configuration.
+- By default, hide the 'copy items' related searches if current user is not among 'observers' or 'reviewers'
 
 4.1b16 (2019-01-31)
 -------------------
