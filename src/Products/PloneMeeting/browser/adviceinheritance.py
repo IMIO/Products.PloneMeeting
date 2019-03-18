@@ -27,7 +27,7 @@ def advice_uid_default():
       form : form?advice_uid=advice_uid.
     """
     request = getSite().REQUEST
-    return request.get('advice_uid', u'')
+    return request.get('advice_id', u'')
 
 
 class IAdviceRemoveInheritance(model.Schema):
@@ -43,8 +43,8 @@ class IAdviceRemoveInheritance(model.Schema):
         title=_(u"Inherited advice action"),
         description=_(u""),
         vocabulary=SimpleVocabulary(
-            [SimpleTerm('remove', 'remove', _(u"Remove inherited advice")),
-             SimpleTerm('ask_locally', 'ask_locally', _(u"Remove inherited advice and ask advice locally"))]),
+            [SimpleTerm('ask_locally', 'ask_locally', _(u"Remove inherited advice and ask advice locally")),
+             SimpleTerm('remove', 'remove', _(u"Remove inherited advice"))]),
         required=True)
 
 
