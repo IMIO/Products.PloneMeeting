@@ -22,7 +22,8 @@ class FTWLabelsVocabulary(object):
     def __call__(self, context):
         res = []
         context = get_context_with_request(context)
-        if context:
+        context_portal_type = getattr(context, 'portal_type', None)
+        if context and context_portal_type in ('MeetingItem', 'Meeting'):
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(context)
 

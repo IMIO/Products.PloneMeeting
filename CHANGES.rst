@@ -134,7 +134,7 @@ Changelog
   with listify=False, a dict is returned (key is signature number and value is data) including the held position object
   so it is possible to use other data from the held position (like scanned signature for example)
 - Added possibility to manage excused by item like it is the case for absents by item
-- Fixed Chrome only CSS by using .selector:not(*:root) instead @media screen and (-webkit-min-device-pixel-ratio:0),
+- Fixed Chrome only CSS by using `.selector:not(*:root)` instead @media screen and (-webkit-min-device-pixel-ratio:0),
   this is used to render the listType color column with 100% height on the meeting view
 - Added Meeting.itemGuests field making it possible to define guests for a specific item.  It is also possible to define
   guests for several items using the assembly management popup.  Adapted meeting and item views so it is possible to use
