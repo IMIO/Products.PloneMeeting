@@ -1434,10 +1434,9 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         self._invalidate_insert_order_cache_for(item)
 
         # make sure item assembly/signatures related fields are emptied
-        item.setItemAssembly('')
-        item.setItemAssemblyAbsents('')
-        item.setItemAssemblyExcused('')
-        item.setItemSignatures('')
+        for field in item.Schema().filterFields(isMetadata=False):
+            if field.getName().startswith('itemAssembly') or field.getName() == 'itemSignatures':
+                field.set(item, '')
 
         self.setItems(items)
         # Update item numbers

@@ -3713,12 +3713,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
             # Check that the TAL expression on the group returns True
             eRes = False
+            org = get_organization(customAdviser['org'])
             eRes = _evaluateExpression(
                 self,
                 expression=customAdviser['gives_auto_advice_on'],
                 roles_bypassing_expression=[],
                 extra_expr_ctx={
                     'item': self,
+                    'org': org,
+                    'org_uid': customAdviser['org'],
                     'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
                     'tool': tool,
                     'cfg': cfg},
@@ -3727,7 +3730,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
             if eRes:
                 res.append({'org_uid': customAdviser['org'],
-                            'org_title': get_organization(customAdviser['org']).get_full_title(),
+                            'org_title': org.get_full_title(),
                             'row_id': customAdviser['row_id'],
                             'gives_auto_advice_on_help_message': customAdviser['gives_auto_advice_on_help_message'],
                             'delay': customAdviser['delay'],

@@ -2604,15 +2604,18 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # if an item is removed from meeting, itemAssembly and itemSignatures
         # fields are emptied
-        item5.setItemAssemblyAbsents('<p>Item assembly absents</p>')
-        item5.setItemAssemblyExcused('<p>Item assembly excused</p>')
-        self.assertTrue(item5.getItemAssembly(real=True))
+        for field in item5.Schema().filterFields(isMetadata=False):
+            if field.getName().startswith('itemAssembly') or field.getName() == 'itemSignatures':
+                field.set(item5, '<p>Redefined value</p>')
+        for field in item5.Schema().filterFields(isMetadata=False):
+            if field.getName().startswith('itemAssembly') or field.getName() == 'itemSignatures':
+                self.assertTrue(field.get(item5, real=True))
         self.assertTrue(item5.redefinedItemAssemblies())
-        self.assertTrue(item5.getItemSignatures(real=True))
         self.backToState(item5, 'validated')
-        self.assertFalse(item5.getItemAssembly(real=True))
+        for field in item5.Schema().filterFields(isMetadata=False):
+            if field.getName().startswith('itemAssembly') or field.getName() == 'itemSignatures':
+                self.assertFalse(field.get(item5, real=True))
         self.assertFalse(item5.redefinedItemAssemblies())
-        self.assertFalse(item5.getItemSignatures(real=True))
 
         # if the linked meeting is considered as closed, the items are not editable anymore
         self.closeMeeting(meeting)

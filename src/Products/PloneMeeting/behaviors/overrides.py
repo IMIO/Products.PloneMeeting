@@ -10,6 +10,7 @@
 
 from collective.behavior.talcondition.behavior import TALCondition
 from plone import api
+from Products.PageTemplates.Expressions import SecureModuleImporter
 
 
 class PMTALCondition(TALCondition):
@@ -22,5 +23,6 @@ class PMTALCondition(TALCondition):
         context = extra_context.get('context', self.context)
         cfg = tool.getMeetingConfig(context)
         extra_context.update({'tool': tool,
+                              'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
                               'cfg': cfg})
         return extra_context

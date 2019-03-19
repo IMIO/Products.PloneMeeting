@@ -30,16 +30,17 @@ class FTWLabelsVocabulary(object):
         except:
             return SimpleVocabulary(res)
 
-        labels = ILabelJar(cfg).list()
-        for label in labels:
-            if label['by_user']:
-                title = '{0} (*)'.format(label['title'])
-            else:
-                title = label['title']
-            res.append(SimpleTerm(
-                label['label_id'],
-                label['label_id'],
-                title))
+        if cfg:
+            labels = ILabelJar(cfg).list()
+            for label in labels:
+                if label['by_user']:
+                    title = '{0} (*)'.format(label['title'])
+                else:
+                    title = label['title']
+                res.append(SimpleTerm(
+                    label['label_id'],
+                    label['label_id'],
+                    title))
 
         return SimpleVocabulary(res)
 

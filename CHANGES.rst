@@ -52,6 +52,9 @@ Changelog
     on items older than a given number of days for every users having 'View' access to these items;
   - Labels used on items are not removable in the configuration.
 - By default, hide the 'copy items' related searches if current user is not among 'observers' or 'reviewers'
+- Make variables 'org' and 'org_uid' available when evaluating the TAL expression of MeetingConfig.customAdvisers atuto asked advices.
+  Moreover 'pm_utils' variable is now always available when evaluating TAL expression when using the collective.behavior.talcondition behavior
+- Make sure every fields MeetingItem.itemAssembly* are emptied when item removed from meeting
 
 4.1b16 (2019-01-31)
 -------------------
