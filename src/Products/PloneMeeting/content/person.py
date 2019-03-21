@@ -16,6 +16,9 @@ class IPMPerson(IPerson):
     form.write_permission(userid='PloneMeeting.write_userid_field')
     userid = schema.Choice(
         title=_(u'Plone user'),
+        description=_(u'If you need to use this person data in the '
+                      u'application like for example scanned signature or '
+                      u'telephone number, select it here.'),
         required=False,
         vocabulary=u'plone.app.vocabularies.Users',
     )
