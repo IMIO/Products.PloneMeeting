@@ -198,11 +198,11 @@ class PMOrganization(Organization):
     """ """
 
     def get_acronym(self):
-        """Accessor so it can called in a TAL expression."""
+        """Accessor so it can be called in a TAL expression."""
         return self.acronym
 
     def get_groups_in_charge(self):
-        """Accessor so it can called in a TAL expression."""
+        """Accessor so it can be called in a TAL expression."""
         return self.groups_in_charge
 
     def get_full_title(self, separator=u' / ', first_index=0):

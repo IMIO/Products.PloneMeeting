@@ -452,6 +452,8 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             for plone_group in plone_groups:
                 for member_id in plone_group.getMemberIds():
                     self.portal.portal_groups.removePrincipalFromGroup(member_id, plone_group.id)
+            # empty groups_in_charge
+            org.groups_in_charge = []
         # unselect every organizations from plonegroup
         api.portal.set_registry_record(ORGANIZATIONS_REGISTRY, [])
         ids_to_remove = self.own_org.objectIds()
