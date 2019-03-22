@@ -77,16 +77,20 @@
               handler=".events.onOrgRemoved" />
 
   <subscriber for=".interfaces.IConfigElement
+                   zope.lifecycleevent.interfaces.IObjectAddedEvent"
+              handler=".events.onConfigElementAdded" />
+
+  <subscriber for=".interfaces.IConfigElement
                    zope.lifecycleevent.IObjectModifiedEvent"
-              handler=".events.onConfigContentModified" />
+              handler=".events.onConfigElementModified" />
 
   <subscriber for=".interfaces.IConfigElement
                    Products.DCWorkflow.interfaces.IAfterTransitionEvent"
-              handler=".events.onConfigContentTransition" />
+              handler=".events.onConfigElementTransition" />
 
   <subscriber for=".interfaces.IConfigElement
                    zope.container.interfaces.IObjectRemovedEvent"
-              handler=".events.onConfigContentRemoved" />
+              handler=".events.onConfigElementRemoved" />
 
   <subscriber for="Products.ATContentTypes.interfaces.IATBTreeFolder
                    Products.CMFPlone.interfaces.IReorderedEvent"

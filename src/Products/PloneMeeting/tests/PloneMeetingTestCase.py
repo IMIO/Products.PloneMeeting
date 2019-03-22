@@ -243,6 +243,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         shortName = cfg.getShortName()
         # Some special behaviour occurs if the item to create is
         # a recurring item or an item template
+        contentType = objectType
         if objectType == 'MeetingItemRecurring':
             contentType = '%s%s' % (objectType, shortName)
             folder = cfg.recurringitems
@@ -250,10 +251,8 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             contentType = '%s%s' % (objectType, shortName)
             folder = folder or cfg.itemtemplates
         elif objectType == 'MeetingConfig':
-            contentType = objectType
             folder = self.tool
         elif objectType == 'organization':
-            contentType = objectType
             folder = self.own_org
             if 'groups_in_charge' not in attrs:
                 attrs['groups_in_charge'] = []
@@ -266,11 +265,12 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             if 'certified_signatures' not in attrs:
                 attrs['certified_signatures'] = []
         elif objectType == 'MeetingCategory':
-            contentType = objectType
             if isClassifier:
                 folder = cfg.classifiers
             else:
                 folder = cfg.categories
+        elif objectType == 'ConfigurablePODTemplate':
+            folder = cfg.podtemplates
         else:
             contentType = '%s%s' % (objectType, shortName)
             folder = self.getMeetingFolder(cfg)

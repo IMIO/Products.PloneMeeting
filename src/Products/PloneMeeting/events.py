@@ -923,42 +923,53 @@ def _notifyMeetingConfigModified(child):
         container = container.aq_parent
 
 
-def onConfigContentModified(config_content, event):
-    '''Called whenever an element in the MeetingConfig was added or modified.'''
+def onConfigElementAdded(config_element, event):
+    '''Called whenever an element in the MeetingConfig was added.'''
 
     # invalidate cache of relevant vocabularies
-    if hasattr(config_content, '_invalidateCachedVocabularies'):
-        config_content._invalidateCachedVocabularies()
+    if hasattr(config_element, '_invalidateCachedVocabularies'):
+        config_element._invalidateCachedVocabularies()
 
     # set modification date on every containers
-    _notifyMeetingConfigModified(config_content)
+    _notifyMeetingConfigModified(config_element)
 
 
-def onConfigContentTransition(config_content, event):
+def onConfigElementModified(config_element, event):
+    '''Called whenever an element in the MeetingConfig was modified.'''
+
+    # invalidate cache of relevant vocabularies
+    if hasattr(config_element, '_invalidateCachedVocabularies'):
+        config_element._invalidateCachedVocabularies()
+
+    # set modification date on every containers
+    _notifyMeetingConfigModified(config_element)
+
+
+def onConfigElementTransition(config_element, event):
     '''Called whenever a transition has been fired on an element of the MeetingConfig.'''
-    if not event.transition or (config_content != event.object):
+    if not event.transition or (config_element != event.object):
         return
 
     # invalidate cache of relevant vocabularies
-    if hasattr(config_content, '_invalidateCachedVocabularies'):
-        config_content._invalidateCachedVocabularies()
+    if hasattr(config_element, '_invalidateCachedVocabularies'):
+        config_element._invalidateCachedVocabularies()
 
     # set modification date on every containers
-    _notifyMeetingConfigModified(config_content)
+    _notifyMeetingConfigModified(config_element)
 
 
-def onConfigContentRemoved(config_content, event):
+def onConfigElementRemoved(config_element, event):
     '''Called when an element of the MeetingConfig is removed.'''
     # bypass this if we are actually removing the 'Plone Site'
     if event.object.meta_type == 'Plone Site':
         return
 
     # invalidate cache of relevant vocabularies
-    if hasattr(config_content, '_invalidateCachedVocabularies'):
-        config_content._invalidateCachedVocabularies()
+    if hasattr(config_element, '_invalidateCachedVocabularies'):
+        config_element._invalidateCachedVocabularies()
 
     # set modification date on every containers
-    _notifyMeetingConfigModified(config_content)
+    _notifyMeetingConfigModified(config_element)
 
 
 def onConfigFolderReordered(folder, event):

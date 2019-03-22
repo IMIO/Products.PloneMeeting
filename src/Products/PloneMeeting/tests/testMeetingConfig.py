@@ -1573,8 +1573,8 @@ class testMeetingConfig(PloneMeetingTestCase):
         recurring_item = meeting.getItems()[0]
         self.assertFalse(IConfigElement.providedBy(recurring_item))
 
-    def test_pm_ConfigModifiedWhenConfigElementModified(self):
-        """When any element contained in a MeetingConfig is modified,
+    def test_pm_ConfigModifiedWhenConfigElementAddedModifiedRemoved(self):
+        """When any element contained in a MeetingConfig is added/modified/removed,
            MeetingConfig.modified is updated so caching is invalidated."""
         cfg = self.meetingConfig
         self.changeUser('siteadmin')
@@ -1623,6 +1623,16 @@ class testMeetingConfig(PloneMeetingTestCase):
         notify(ObjectModifiedEvent(item_template))
         item_template_cfg_modified = cfg.modified()
         self.assertNotEqual(recurring_item_cfg_modified, item_template_cfg_modified)
+
+        # test add and remove a POD template
+        # add
+        new_pod_template = self.create('ConfigurablePODTemplate', odt_file=self._annex_file_content())
+        new_pod_template_cfg_modified = cfg.modified()
+        self.assertNotEqual(item_template_cfg_modified, new_pod_template_cfg_modified)
+        # remove
+        self.deleteAsManager(new_pod_template.UID())
+        new_pod_template_removed_cfg_modified = cfg.modified()
+        self.assertNotEqual(new_pod_template_cfg_modified, new_pod_template_removed_cfg_modified)
 
     def test_pm_UsedLabelCanNotBeRemoved(self):
         """A ftw.labels label that is used on an item can not be removed."""

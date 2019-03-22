@@ -959,7 +959,7 @@ def transformAllRichTextFields(obj, onlyField=None):
         if not member.has_permission(writePermission, obj):
             continue
         # make sure we do not loose resolveuid to images, use getRaw
-        raw_value = field.getRaw(obj)
+        raw_value = field.getRaw(obj).strip()
         # Apply mandatory transforms
         fieldContent = storeImagesLocally(obj, raw_value)
         # Apply standard transformations as defined in the config
