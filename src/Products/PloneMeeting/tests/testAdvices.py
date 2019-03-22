@@ -898,6 +898,37 @@ class testAdvices(PloneMeetingTestCase):
                                     'advice_type': u'positive',
                                     'advice_comment': RichTextValue(u'My comment')})
 
+    def test_pm_AdviceAskedAutomaticallyWithGroupsInCharge(self):
+        '''Advice asked when organization in charge of proposingGroup,
+           this also test the org/org_uid variables available in the TAL expression.'''
+        cfg = self.meetingConfig
+        self.changeUser('siteadmin')
+        self.developers.groups_in_charge = [self.vendors_uid]
+        # when using org_uid
+        cfg.setCustomAdvisers([
+            {'row_id': 'unique_id_123',
+             'org': self.vendors_uid,
+             'gives_auto_advice_on':
+                'python: item.adapted().getGroupInCharge(theObject=False, fromOrgIfEmpty=True) == org_uid',
+             'for_item_created_from': '2012/01/01',
+             'delay': '10'}, ])
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        # advice was asked
+        self.assertTrue(self.vendors_uid in item.adviceIndex)
+
+        # when using org
+        cfg.setCustomAdvisers([
+            {'row_id': 'unique_id_123',
+             'org': self.vendors_uid,
+             'gives_auto_advice_on':
+                'python: item.adapted().getGroupInCharge(theObject=True, fromOrgIfEmpty=True) == org',
+             'for_item_created_from': '2012/01/01',
+             'delay': '10'}, ])
+        item2 = self.create('MeetingItem')
+        # advice was asked
+        self.assertTrue(self.vendors_uid in item2.adviceIndex)
+
     def test_pm_GivenDelayAwareAutomaticAdviceLeftEvenIfItemConditionChanged(self):
         '''This test that if an automatic advice is asked because a condition
            on the item is True, the automatic advice is given then the condition
