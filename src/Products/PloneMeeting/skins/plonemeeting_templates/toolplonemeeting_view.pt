@@ -188,7 +188,8 @@
             <td tal:define="field python:here.getField('configGroups')">
               <span metal:use-macro="here/widgets/field/macros/view" />
             </td>
-            <td>
+            <td tal:define="field python:here.getField('enableScanDocs')">
+              <span metal:use-macro="here/widgets/field/macros/view" />
             </td>
             <td>
             </td>

@@ -1008,7 +1008,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
                     userIdsOrEmailAddresses += list(evaluatedExpr)
                 else:
                     userIdsOrEmailAddresses.append(value)
-            # now we have userIds or email addresse, we want email addresses
+            # now we have userIds or email address, we want email addresses
             for userIdOrEmailAddress in userIdsOrEmailAddresses:
                 recipient = tool.getMailRecipient(userIdOrEmailAddress.strip()) or \
                     ('@' in userIdOrEmailAddress and userIdOrEmailAddress)

@@ -303,7 +303,17 @@ schema = Schema((
         columns=('row_id', 'label', 'full_label'),
         allow_empty_rows=False,
     ),
-
+    BooleanField(
+        name='enableScanDocs',
+        default=defValues.enableScanDocs,
+        widget=BooleanField._properties['widget'](
+            description="EnableScanDocs",
+            description_msgid="enable_scan_docs_descr",
+            label='Enablescandocs',
+            label_msgid='PloneMeeting_label_enableScanDocs',
+            i18n_domain='PloneMeeting',
+        ),
+    ),
 ),
 )
 

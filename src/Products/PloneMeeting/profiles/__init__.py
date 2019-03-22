@@ -777,6 +777,7 @@ class PloneMeetingConfiguration(Descriptor):
         self.defaultOcrLanguage = 'eng'
         self.modelAdaptations = []
         self.enableUserPreferences = False
+        self.enableScanDocs = False
         self.workingDays = ('mon', 'tue', 'wed', 'thu', 'fri')
         self.holidays = [{'date': '2018/01/01', },  # 2018
                          {'date': '2018/04/02', },

@@ -56,6 +56,8 @@ Changelog
 - Make variables 'org' and 'org_uid' available when evaluating the TAL expression of MeetingConfig.customAdvisers auto asked advices.
   Moreover 'pm_utils' variable is now always available when evaluating TAL expression when using the collective.behavior.talcondition behavior
 - Make sure every fields MeetingItem.itemAssembly* are emptied when item removed from meeting
+- Added parameter ToolPloneMeeting.enableScanDocs, False by default, to be able to enable/disable functionnality related to the documents scanning when
+  imio.zamqp.pm is present
 
 4.1b16 (2019-01-31)
 -------------------
