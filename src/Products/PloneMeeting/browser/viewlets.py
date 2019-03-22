@@ -94,7 +94,7 @@ class HeldPositionBackRefs(ViewletBase):
                 res.append(cfg)
         return res
 
-    def using_meetings(self):
+    def using_meetings(self, limit=10):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
         catalog = api.portal.get_tool('portal_catalog')
@@ -109,6 +109,8 @@ class HeldPositionBackRefs(ViewletBase):
                     if cfg not in res:
                         res[cfg] = []
                     res[cfg].append(meeting)
+                    if len(res[cfg]) >= limit:
+                        break
         return res
 
     index = ViewPageTemplateFile("templates/viewlet_held_position_back_refs.pt")

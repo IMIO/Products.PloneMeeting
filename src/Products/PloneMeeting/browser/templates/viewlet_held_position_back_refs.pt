@@ -7,8 +7,9 @@
   <h5><span i18n:translate="">Used in the assembly for meetings</span> :</h5>
   <ul tal:repeat="infos python: view.using_meetings().items()">
     <li><h5 tal:content="python: infos[0].Title(include_config_group=True)">Meeting config title</h5></li>
-    <ul tal:repeat="meeting python: infos[1]">
-     <li><a tal:attributes="href meeting/absolute_url;" tal:content="meeting/Title">Meeting title</a></li>
+    <ul>
+     <li tal:repeat="meeting python: infos[1]"><a tal:attributes="href meeting/absolute_url;" tal:content="meeting/Title">Meeting title</a></li>
+     <li>...</li>
     </ul>
   </ul>
 </div>
