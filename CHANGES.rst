@@ -25,7 +25,8 @@ Changelog
 - Migrate MeetingItem.itemInitiator to contacts
 - Added possibility to link a Plone user to a contacts person (using field person.userid).
   Added method get_contact_infos to the document generation helper view so for example when an advice creator is linked to a person,
-  we may use a particular held_position to render signatory infos
+  we may use a particular held_position to render signatory infos.  If no position_type is provided, the first is returned, we may also
+  provide several position_types so we take into account various persons with different position_types
 - Use _evaluateExpression from collective.behavior.talcondition everywhere to evaluate TAL expressions
 - Disabled the 'Votes' functionnality and relative tab on the MeetingConfig.  'Poll type' related MeetingConfigs fields
   (usedPollTypes, defaultPollType) are moved at the bottom of the 'Data' tab

@@ -695,10 +695,11 @@ class BaseDGHV(object):
         historyViewRendered = lxml.html.fromstring(historyView)
         return lxml.html.tostring(historyViewRendered.get_element_by_id('content-core'), method='xml')
 
-    def get_contact_infos(self, position_type, userid=None):
+    def get_contact_infos(self, position_types=[], userid=None):
         """Return informations for given userid, if not given, we take current element creator,
            this is useful to manage signature on advice.
-           Given position_type will be used to get correct held_position related to signature."""
+           Given position_types will be used to get correct held_position related to signature.
+           We can receive several position_types and we return the first we get."""
         infos = {'person': None,
                  'person_title': None,
                  'person_fullname': None,
@@ -711,7 +712,13 @@ class BaseDGHV(object):
             infos['person'] = person
             infos['person_title'] = person.get_title()
             infos['person_fullname'] = person.get_title(include_person_title=False)
-            hp = person.get_held_position_by_type(position_type)
+            if not position_types:
+                hp = person.get_held_position_by_type(position_type=None)
+            else:
+                for position_type in position_types:
+                    hp = person.get_held_position_by_type(position_type)
+                    if hp:
+                        break
             if hp:
                 infos['held_position'] = hp
                 infos['held_position_label'] = hp.get_label()

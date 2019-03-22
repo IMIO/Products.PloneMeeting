@@ -23,6 +23,7 @@
 #
 
 from AccessControl import Unauthorized
+from collective.contact.plonegroup.utils import get_own_organization
 from DateTime import DateTime
 from datetime import datetime
 from ftw.labels.interfaces import ILabeling
@@ -48,9 +49,12 @@ from Products.PloneMeeting.tests.PloneMeetingTestCase import DEFAULT_USER_PASSWO
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.utils import get_annexes
 from Products.statusmessages.interfaces import IStatusMessage
+from z3c.relationfield.relation import RelationValue
 from zope.component import getAdapter
 from zope.component import getMultiAdapter
+from zope.component import getUtility
 from zope.i18n import translate
+from zope.intid.interfaces import IIntIds
 
 import transaction
 
@@ -1457,6 +1461,63 @@ class testViews(PloneMeetingTestCase):
         self.assertRaises(Unauthorized, labelingview.update)
         labelingview.pers_update()
         self.assertEqual(item_labeling.storage, {'label': [], 'personal-label': ['pmCreator1', 'powerobserver1']})
+
+    def test_pm_Get_contact_infos(self):
+        """Method that returns contact infos for a given Plone userid,
+           this rely on fact that a person may be linked to a Plone user using the person.userid field."""
+        self.changeUser('siteadmin')
+        self.portal.contacts.position_types = [
+            {'token': 'default', 'name': u'DefaultA|DefaultB|DefaultC|DefaultD'},
+            {'token': 'default2', 'name': u'Default2A|Default2B|Default2C|Default2D'}, ]
+        person = self.portal.contacts.get('person1')
+        intids = getUtility(IIntIds)
+        org = get_own_organization()
+        newhp = api.content.create(
+            container=person, type='held_position', label=u'New held position',
+            title='New held position', position=RelationValue(intids.getId(org)),
+            usages=['assemblyMember'], position_type='default2')
+        person.userid = 'pmManager'
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        view = item.restrictedTraverse('document-generation')
+        helper = view.get_generation_context_helper()
+        # called with empty position_types, first is returned
+        # use held_position.label if provided
+        self.assertEqual(person.held_pos1.label, u'Assembly member 1')
+        self.assertEqual(
+            helper.get_contact_infos([], 'pmManager'),
+            {'held_position': person.held_pos1,
+             'held_position_label': u'Assembly member 1',
+             'held_position_prefixed_label': u'Assembly member 1',
+             'person': person,
+             'person_fullname': u'Person1FirstName Person1LastName',
+             'person_title': u'Monsieur Person1FirstName Person1LastName'})
+        self.assertEqual(
+            helper.get_contact_infos(['default'], 'pmManager'),
+            {'held_position': person.held_pos1,
+             'held_position_label': u'Assembly member 1',
+             'held_position_prefixed_label': u'Assembly member 1',
+             'person': person,
+             'person_fullname': u'Person1FirstName Person1LastName',
+             'person_title': u'Monsieur Person1FirstName Person1LastName'})
+        self.assertEqual(
+            helper.get_contact_infos(['default2'], 'pmManager'),
+            {'held_position': newhp,
+             'held_position_label': u'New held position',
+             'held_position_prefixed_label': u'New held position',
+             'person': person,
+             'person_fullname': u'Person1FirstName Person1LastName',
+             'person_title': u'Monsieur Person1FirstName Person1LastName'})
+        # held_position_prefixed_label works only if using position_type and not label
+        newhp.label = u''
+        self.assertEqual(
+            helper.get_contact_infos(['default2'], 'pmManager'),
+            {'held_position': newhp,
+             'held_position_label': u'Default2A',
+             'held_position_prefixed_label': u'Le Default2A',
+             'person': person,
+             'person_fullname': u'Person1FirstName Person1LastName',
+             'person_title': u'Monsieur Person1FirstName Person1LastName'})
 
 
 def test_suite():

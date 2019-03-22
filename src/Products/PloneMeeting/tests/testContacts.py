@@ -24,6 +24,7 @@
 
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
+from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.contact.plonegroup.utils import get_plone_groups
 from DateTime import DateTime
@@ -40,7 +41,6 @@ from zExceptions import Redirect
 from zope.component import getUtility
 from zope.i18n import translate
 from zope.intid.interfaces import IIntIds
-from collective.contact.plonegroup.utils import get_own_organization
 
 import os
 import Products.PloneMeeting

@@ -31,11 +31,12 @@ class IPMPerson(IPerson):
 class PMPerson(Person):
     """ """
 
-    def get_held_position_by_type(self, position_type):
-        """ """
+    def get_held_position_by_type(self, position_type=None):
+        """Get held_position by type.
+           If p_position_type is None, returns first found held_position."""
         held_positions = self.get_held_positions()
         for held_position in held_positions:
-            if held_position.position_type == position_type:
+            if not position_type or held_position.position_type == position_type:
                 return held_position
 
 
