@@ -87,10 +87,8 @@ from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.config import NOT_ENCODED_VOTE_VALUE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import PloneMeetingError
-from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import READER_USECASES
-from Products.PloneMeeting.config import RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
 from Products.PloneMeeting.config import WriteMarginalNotes
 from Products.PloneMeeting.interfaces import IMeetingItem
@@ -4058,8 +4056,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _adviceIsViewableForCurrentUser(self,
                                         cfg,
-                                        isPowerObserver,
-                                        isRestrictedPowerObserver,
+                                        user_power_observer_types,
                                         adviceInfo):
         '''
           Returns True if current user may view the advice.
@@ -4067,8 +4064,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # if confidentiality is used and advice is marked as confidential,
         # advices could be hidden to power observers and/or restricted power observers
         if cfg.getEnableAdviceConfidentiality() and adviceInfo['isConfidential'] and \
-           ((isPowerObserver and 'power_observers' in cfg.getAdviceConfidentialFor()) or
-                (isRestrictedPowerObserver and 'restricted_power_observers' in cfg.getAdviceConfidentialFor())):
+           set(user_power_observer_types).intersection(set(cfg.getAdviceConfidentialFor())):
             return False
         return True
 
@@ -4094,8 +4090,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = {}
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
-        isPowerObserver = tool.isPowerObserverForCfg(cfg)
-        isRestrictedPowerObserver = tool.isPowerObserverForCfg(cfg, isRestricted=True)
+        user_power_observer_types = [po_infos['row_id'] for po_infos in cfg.getPowerObservers()
+                                     if tool.isPowerObserverForCfg(cfg, power_observer_type=po_infos['row_id'])]
         for groupId, adviceInfo in self.adviceIndex.iteritems():
             # make sure we do not modify original data
             adviceInfo = deepcopy(adviceInfo)
@@ -4107,10 +4103,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 adviceInfo['inherited'] = True
             # Create the entry for this type of advice if not yet created.
             # first check if current user may access advice, aka advice is not confidential to him
-            if not self._adviceIsViewableForCurrentUser(cfg,
-                                                        isPowerObserver,
-                                                        isRestrictedPowerObserver,
-                                                        adviceInfo):
+            if not self._adviceIsViewableForCurrentUser(cfg, user_power_observer_types, adviceInfo):
                 continue
 
             adviceType = self._shownAdviceTypeFor(adviceInfo)
@@ -5215,9 +5208,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self._updateAdvices(invalidate=invalidate,
                             triggered_by_transition=triggered_by_transition,
                             inheritedAdviserUids=inheritedAdviserUids)
-        # Update '(restricted) power observers' local roles given to the
+        # Update every 'power observers' local roles given to the
         # corresponding MeetingConfig powerobsevers group in case the 'initial_wf_state'
-        # is selected in MeetingConfig.item(Restricted)PowerObserversStates
+        # is selected in MeetingConfig.powerObservers item_states/meeting_states
         # we do this each time the element is edited because of the MeetingItem._isViewableByPowerObservers
         # method that could change access of power observers depending on a particular value
         self._updatePowerObserversLocalRoles()
@@ -5266,20 +5259,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 self.manage_addLocalRoles(copyGroupId, (READER_USECASES['copy_groups'],))
 
     def _updatePowerObserversLocalRoles(self):
-        '''Configure local role for use case 'power_observers' and 'restricted_power_observers'
-           to the corresponding MeetingConfig 'powerobservers/restrictedpowerobservers' group.'''
+        '''Give local roles to the groups defined in MeetingConfig.powerObservers.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
+        cfg_id = cfg.getId()
         itemState = self.queryState()
-        if itemState in cfg.getItemPowerObserversStates() and self.adapted()._isViewableByPowerObservers():
-            powerObserversGroupId = "%s_%s" % (cfg.getId(), POWEROBSERVERS_GROUP_SUFFIX)
-            self.manage_addLocalRoles(powerObserversGroupId, (READER_USECASES['powerobservers'],))
-        if itemState in cfg.getItemRestrictedPowerObserversStates() and \
-           self.adapted()._isViewableByPowerObservers(restrictedPowerObservers=True):
-            restrictedPowerObserversGroupId = "%s_%s" % (cfg.getId(), RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX)
-            self.manage_addLocalRoles(restrictedPowerObserversGroupId, (READER_USECASES['restrictedpowerobservers'],))
+        for po_infos in cfg.getPowerObservers():
+            if itemState in po_infos['item_states'] and \
+               self.adapted()._isViewableByPowerObservers(po_infos['row_id']):
+                powerObserversGroupId = "%s_%s" % (cfg_id, po_infos['row_id'])
+                self.manage_addLocalRoles(powerObserversGroupId, (READER_USECASES['powerobservers'],))
 
-    def _isViewableByPowerObservers(self, restrictedPowerObservers=False):
+    def _isViewableByPowerObservers(self, suffix):
         '''See doc in interfaces.py.'''
         return True
 
@@ -6007,14 +5998,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         hideNotViewableLinkedItemsTo = cfg.getHideNotViewableLinkedItemsTo()
-        needCheckIsPowerObserver = needCheckIsRestrictedPowerObserver = False
-        needCheckIsPowerObserver = 'power_observers' in hideNotViewableLinkedItemsTo and \
-            tool.isPowerObserverForCfg(cfg)
-        needCheckIsRestrictedPowerObserver = 'restricted_power_observers' in hideNotViewableLinkedItemsTo and \
-            tool.isPowerObserverForCfg(cfg, isRestricted=True)
-        if (not needCheckIsPowerObserver and not needCheckIsRestrictedPowerObserver) or \
-           ((needCheckIsPowerObserver or needCheckIsRestrictedPowerObserver) and _checkPermission(View, item)):
-            return True
+        for power_observer_type in hideNotViewableLinkedItemsTo:
+            if tool.isPowerObserverForCfg(cfg, power_observer_type=power_observer_type):
+                return True
         return False
 
     security.declarePublic('getPredecessors')

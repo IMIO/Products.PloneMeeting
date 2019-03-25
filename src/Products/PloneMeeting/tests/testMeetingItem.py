@@ -64,7 +64,6 @@ from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_SAME_MC
 from Products.PloneMeeting.config import HISTORY_COMMENT_NOT_VIEWABLE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
-from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import WriteBudgetInfos
 from Products.PloneMeeting.indexes import previous_review_state
@@ -1506,7 +1505,7 @@ class testMeetingItem(PloneMeetingTestCase):
               'delay': '5',
               'delay_label': ''}, ])
         cfg.setPowerAdvisersGroups((org3_uid, ))
-        cfg.setItemPowerObserversStates(('itemcreated', ))
+        self._setPowerObserverStates(states=('itemcreated', ))
         cfg.setItemAdviceStates(('itemcreated', ))
         cfg.setItemAdviceEditStates(('itemcreated', ))
         cfg.setItemAdviceViewStates(('itemcreated', ))
@@ -1874,10 +1873,11 @@ class testMeetingItem(PloneMeetingTestCase):
         i1.setCopyGroups(())
         i1.processForm()
         # only the _powerobservers group have the corresponding local role, no other groups
-        self.failUnless(i1.__ac_local_roles__['%s_powerobservers' % self.meetingConfig.getId()] ==
-                        [READER_USECASES['powerobservers']])
+        suffix = 'powerobservers'
+        self.failUnless(i1.__ac_local_roles__['%s_%s' % (cfg.getId(), suffix)] ==
+                        [READER_USECASES[suffix]])
         for principalId, localRoles in i1.get_local_roles():
-            if not principalId.endswith(POWEROBSERVERS_GROUP_SUFFIX):
+            if not principalId.endswith(suffix):
                 self.failIf((READER_USECASES['advices'],) == localRoles)
                 self.failIf((READER_USECASES['copy_groups'],) == localRoles)
 
@@ -1986,7 +1986,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # MeetingItem.updateLocalRoles does not break the functionnality...
         self.changeUser('pmManager')
         # check that the relevant powerobservers group is or not in the local_roles of the item
-        powerObserversGroupId = "%s_%s" % (self.meetingConfig.getId(), POWEROBSERVERS_GROUP_SUFFIX)
+        powerObserversGroupId = "%s_%s" % (self.meetingConfig.getId(), 'powerobservers')
         self.failUnless(powerObserversGroupId in presentedItem.__ac_local_roles__)
         self.failIf(powerObserversGroupId in validatedItem.__ac_local_roles__)
         validatedItem.updateLocalRoles()
@@ -2017,8 +2017,8 @@ class testMeetingItem(PloneMeetingTestCase):
         if 'refused' in cfg.listWorkflowAdaptations():
             cfg.setWorkflowAdaptations(('refused', ))
             performWorkflowAdaptations(cfg, logger=pm_logger)
-        cfg.setItemPowerObserversStates(('itemcreated', 'validated', 'presented',
-                                         'itemfrozen', 'accepted', 'delayed'))
+        self._setPowerObserverStates(states=(
+            'itemcreated', 'validated', 'presented', 'itemfrozen', 'accepted', 'delayed'))
         cfg.setMeetingPowerObserversStates(('created', 'frozen', 'decided', 'closed'))
         cfg.setItemRestrictedPowerObserversStates(('itemfrozen', 'accepted', 'refused'))
         cfg.setMeetingRestrictedPowerObserversStates(('frozen', 'decided', 'closed'))
@@ -2085,7 +2085,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.setItemBudgetInfosStates(('validated', ))
         # budget impact editors gets view on an item thru another role
         # here 'budgetimpacteditor' is a powerobserver
-        cfg.setItemPowerObserversStates(('validated', ))
+        self._setPowerObserverStates(states=('validated', ))
         # first make sure the permission associated with MeetingItem.budgetInfos.write_permission is the right one
         self.assertTrue(MeetingItem.schema['budgetInfos'].write_permission == WriteBudgetInfos)
         # now create an item for 'developers', let vendors access it setting them as copyGroups
@@ -2215,8 +2215,7 @@ class testMeetingItem(PloneMeetingTestCase):
         cfg.setRestrictAccessToSecretItems(True)
         cfg.setItemCopyGroupsStates(('validated', ))
         # make powerobserver1 a PowerObserver
-        self._addPrincipalToGroup('powerobserver1',
-                                  '%s_%s' % (cfg.getId(), POWEROBSERVERS_GROUP_SUFFIX))
+        self._addPrincipalToGroup('powerobserver1', '%s_powerobservers' % cfg.getId())
 
         # create a 'public' and a 'secret' item
         self.changeUser('pmManager')
@@ -5539,7 +5538,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('siteadmin')
         cfg = self.meetingConfig
         cfg.setHideCssClassesTo(('power_observers', ))
-        cfg.setItemPowerObserversStates(('itemcreated', ))
+        self._setPowerObserverStates(states=('itemcreated', ))
         cfg.setItemRestrictedPowerObserversStates(('itemcreated', ))
         self.assertTrue('highlight' in cfg.getCssClassesToHide().split('\n'))
         self.changeUser('pmCreator1')
@@ -5580,7 +5579,7 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('siteadmin')
         cfg = self.meetingConfig
         cfg.setHideNotViewableLinkedItemsTo(('power_observers', ))
-        cfg.setItemPowerObserversStates(('itemcreated', ))
+        self._setPowerObserverStates(states=('itemcreated', ))
         cfg.setItemRestrictedPowerObserversStates(('itemcreated', ))
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')

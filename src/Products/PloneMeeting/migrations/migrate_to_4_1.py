@@ -26,6 +26,7 @@ from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
 from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
 from Products.PloneMeeting.interfaces import IConfigElement
 from Products.PloneMeeting.migrations import Migrator
+from Products.PloneMeeting.profiles import MeetingConfigDescriptor
 from Products.PloneMeeting.utils import get_public_url
 from Products.PloneMeeting.utils import updateCollectionCriterion
 from z3c.relationfield.relation import RelationValue
@@ -121,6 +122,27 @@ class Migrate_To_4_1(Migrator):
                         logger.info('Done.')
                         return
                     alsoProvides(search_folder, IBatchActionsMarker)
+        logger.info('Done.')
+
+    def _migratePowerObservers(self):
+        """Power observers are now defined in MeetingConfig.powerObservers."""
+        logger.info("Migrating power observers to MeetingConfig.powerObservers...")
+        default_mc_descr = MeetingConfigDescriptor(None, None, None)
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            if hasattr(cfg, 'itemPowerObserversStates'):
+                power_observers = deepcopy(default_mc_descr.powerObservers)
+                for po_infos in power_observers:
+                    if po_infos['row_id'] == 'powerobservers':
+                        po_infos['item_states'] = cfg.itemPowerObserversStates
+                        po_infos['meeting_states'] = cfg.meetingPowerObserversStates
+                    elif po_infos['row_id'] == 'restrictedpowerobservers':
+                        po_infos['item_states'] = cfg.itemRestrictedPowerObserversStates
+                        po_infos['meeting_states'] = cfg.meetingRestrictedPowerObserversStates
+                cfg.setPowerObservers(power_observers)
+                delattr(cfg, 'itemPowerObserversStates')
+                delattr(cfg, 'meetingPowerObserversStates')
+                delattr(cfg, 'itemRestrictedPowerObserversStates')
+                delattr(cfg, 'meetingRestrictedPowerObserversStates')
         logger.info('Done.')
 
     def _enableRefusedWFAdaptation(self):
@@ -936,6 +958,8 @@ class Migrate_To_4_1(Migrator):
                        ignore_dependencies=False,
                        dependency_strategy=DEPENDENCY_STRATEGY_NEW)
 
+        # power observers are now defined in MeetingConfig.powerObservers
+        self._migratePowerObservers()
         # enable 'refused' WFAdadaption before reinstalling if relevant
         self._enableRefusedWFAdaptation()
         if self.profile_name != 'profile-Products.PloneMeeting:default':
@@ -995,34 +1019,35 @@ def migrate(context):
        1) Upgrade imio.dashboard;
        2) Upgrade all others packages;
        3) Reinstall PloneMeeting and upgrade dependencies;
-       4) Enable 'refused' WF adaptation;
-       5) Reinstall plugin if not PloneMeeting;
-       6) Run common upgrades (dependencies, clean registries, holidays, reindexes);
-       7) Add new faceted filters;
-       8) Add '_itemtemplatesmanagers' groups;
-       9) Update collections columns as column 'check_box_item' was renamed to 'select_row';
-       10) Synch searches to mark searches sub folders with the IBatchActionsMarker;
-       11) Remove MeetingConfig tabs from portal_actions portal_tabs;
-       12) Migrate MeetingConfig.keepAdvicesOnSentToOtherMC to MeetingConfig.contentsKeptOnSentToOtherMC;
-       13) Fix annex mimetype in case there was a problem with old annexes using uncomplete mimetypes_registry;
-       14) Fix POD template mimetype because we need it to be correct for the styles template;
-       15) Make sure workflow_history stored on items is a PersistentMapping;
-       16) Migrate MeetingConfig.toDoListSearches as it is no more a ReferenceField;
-       17) Adapt application for Contacts;
-       18) Update MeetingConfig.usedItemAttributes, select 'description' and unselect 'itemAssembly';
-       19) Migrate MeetingConfig.groupsShownInDashboardFilter to MeetingConfig.groupsHiddenInDashboardFilter;
-       20) Configure MeetingConfig podtemplates folder to accept style templates;
-       21) Clean MeetingConfigs from removed attributes;
-       22) Fix meeting related DashboardCollections query;
-       23) Remove global roles for every users, roles are only given thru groups;
-       24) Update keys stored in MeetingConfig related to static infos displayed in dashboards;
-       25) Adapt link to images to be sure to use resolveuid;
-       26) Migrate contact person klass to use PMPerson for users of beta versions...;
-       27) Disable votes functionnality;
-       28) Removed no more used portal_types;
-       29) Migrate 'searchitemstoprevalidate' query;
-       30) Migrate items in MeetingConfig so it provides IConfigElement;
-       31) Initialize personal labels if found in FTW_LABELS_PERSONAL_LABELS env variable.
+       4) Migrate powerobservers;
+       5) Enable 'refused' WF adaptation;
+       6) Reinstall plugin if not PloneMeeting;
+       7) Run common upgrades (dependencies, clean registries, holidays, reindexes);
+       8) Add new faceted filters;
+       9) Add '_itemtemplatesmanagers' groups;
+       10) Update collections columns as column 'check_box_item' was renamed to 'select_row';
+       11) Synch searches to mark searches sub folders with the IBatchActionsMarker;
+       12) Remove MeetingConfig tabs from portal_actions portal_tabs;
+       13) Migrate MeetingConfig.keepAdvicesOnSentToOtherMC to MeetingConfig.contentsKeptOnSentToOtherMC;
+       14) Fix annex mimetype in case there was a problem with old annexes using uncomplete mimetypes_registry;
+       15) Fix POD template mimetype because we need it to be correct for the styles template;
+       16) Make sure workflow_history stored on items is a PersistentMapping;
+       17) Migrate MeetingConfig.toDoListSearches as it is no more a ReferenceField;
+       18) Adapt application for Contacts;
+       19) Update MeetingConfig.usedItemAttributes, select 'description' and unselect 'itemAssembly';
+       20) Migrate MeetingConfig.groupsShownInDashboardFilter to MeetingConfig.groupsHiddenInDashboardFilter;
+       21) Configure MeetingConfig podtemplates folder to accept style templates;
+       22) Clean MeetingConfigs from removed attributes;
+       23) Fix meeting related DashboardCollections query;
+       24) Remove global roles for every users, roles are only given thru groups;
+       25) Update keys stored in MeetingConfig related to static infos displayed in dashboards;
+       26) Adapt link to images to be sure to use resolveuid;
+       27) Migrate contact person klass to use PMPerson for users of beta versions...;
+       28) Disable votes functionnality;
+       29) Removed no more used portal_types;
+       30) Migrate 'searchitemstoprevalidate' query;
+       31) Migrate items in MeetingConfig so it provides IConfigElement;
+       32) Initialize personal labels if found in FTW_LABELS_PERSONAL_LABELS env variable.
     '''
     migrator = Migrate_To_4_1(context)
     migrator.run()

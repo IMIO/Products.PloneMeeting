@@ -68,10 +68,8 @@ from Products.PloneMeeting.config import DEFAULT_COPIED_FIELDS
 from Products.PloneMeeting.config import MEETING_CONFIG
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import PloneMeetingError
-from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import PY_DATETIME_WEEKDAYS
-from Products.PloneMeeting.config import RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import ROOT_FOLDER
 from Products.PloneMeeting.config import SENT_TO_OTHER_MC_ANNOTATION_BASE_KEY
 from Products.PloneMeeting.model.adaptations import performModelAdaptations
@@ -467,10 +465,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         for cfg in self.objectValues('MeetingConfig'):
             isManager = self.isManager(cfg)
             isPowerObserver = self.isPowerObserverForCfg(cfg)
-            isRestrictedPowerObserver = self.isPowerObserverForCfg(cfg, isRestricted=True)
             if api.content.get_state(cfg) == 'active' and \
                self.checkMayView(cfg) and \
-               (isManager or isPowerObserver or isRestrictedPowerObserver or
+               (isManager or isPowerObserver or
                     (check_using_groups and self.get_orgs_for_user(using_groups=cfg.getUsingGroups()))):
                 res.append(cfg)
         return res
@@ -780,30 +777,27 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             'Site Administrator' in userRoles or \
             (not realManagers and 'MeetingManager' in userRoles)
 
-    def isPowerObserverForCfg_cachekey(method, self, cfg, isRestricted=False):
+    def isPowerObserverForCfg_cachekey(method, self, cfg, power_observer_type='powerobservers'):
         '''cachekey method for self.isPowerObserverForCfg.'''
         return (self._users_groups_value(),
                 api.user.get_current(),
-                cfg, isRestricted)
+                cfg,
+                power_observer_type)
 
     security.declarePublic('isPowerObserverForCfg')
 
     @ram.cache(isPowerObserverForCfg_cachekey)
-    def isPowerObserverForCfg(self, cfg, isRestricted=False):
+    def isPowerObserverForCfg(self, cfg, power_observer_type='powerobservers'):
         """
-          Returns True if the current user is a power observer
-          for the given p_itemOrMeeting.
-          It is a power observer if in the corresponding _powerobservers
-          suffixed group.
-          If p_iRestricted is True, it will check if current user is a
-          restricted power observer.
+          Returns True if the current user is a power observer for the given p_itemOrMeeting.
+          It is a power observer if member of the corresponding p_power_observer_type suffixed group.
+          If no p_power_observer_type we check every existing power_observers groups.
         """
-        if not isRestricted:
-            groupId = "%s_%s" % (cfg.getId(), POWEROBSERVERS_GROUP_SUFFIX)
-        else:
-            groupId = "%s_%s" % (cfg.getId(), RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX)
-        if groupId in self.get_plone_groups_for_user():
-            return True
+        for po_infos in cfg.getPowerObservers():
+            if not power_observer_type or po_infos['row_id'] == power_observer_type:
+                groupId = "{0}_{1}".format(cfg.getId(), power_observer_type)
+                if groupId in self.get_plone_groups_for_user():
+                    return True
         return False
 
     security.declarePublic('isInPloneMeeting')

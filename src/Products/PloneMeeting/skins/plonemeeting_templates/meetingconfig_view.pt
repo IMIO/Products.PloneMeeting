@@ -1045,22 +1045,9 @@
           <td></td>
         </tr>
         <tr valign="top">
-          <td tal:define="field python:here.getField('itemPowerObserversStates')">
+          <td colspan="3" tal:define="field python:here.getField('powerObservers')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td tal:define="field python:here.getField('meetingPowerObserversStates')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
-          <td></td>
-        </tr>
-        <tr valign="top">
-          <td tal:define="field python:here.getField('itemRestrictedPowerObserversStates')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
-          <td tal:define="field python:here.getField('meetingRestrictedPowerObserversStates')">
-            <span metal:use-macro="here/widgets/field/macros/view" />
-          </td>
-          <td></td>
         </tr>
         <tr valign="top">
           <td tal:define="field python:here.getField('itemBudgetInfosStates')">

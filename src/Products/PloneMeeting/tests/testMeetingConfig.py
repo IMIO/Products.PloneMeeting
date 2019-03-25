@@ -47,9 +47,7 @@ from Products.PloneMeeting.config import ITEM_ICON_COLORS
 from Products.PloneMeeting.config import ITEMTEMPLATESMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
-from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import READER_USECASES
-from Products.PloneMeeting.config import RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import TOOL_FOLDER_SEARCHES
 from Products.PloneMeeting.config import WriteHarmlessConfig
 from Products.PloneMeeting.events import _itemAnnexTypes
@@ -64,8 +62,8 @@ from zope.lifecycleevent import ObjectModifiedEvent
 
 MC_GROUP_SUFFIXES = (
     BUDGETIMPACTEDITORS_GROUP_SUFFIX,
-    POWEROBSERVERS_GROUP_SUFFIX,
-    RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX,
+    'powerobservers',
+    'restrictedpowerobservers',
     MEETINGMANAGERS_GROUP_SUFFIX,
     ITEMTEMPLATESMANAGERS_GROUP_SUFFIX)
 
@@ -1022,8 +1020,8 @@ class testMeetingConfig(PloneMeetingTestCase):
             groupId = '{0}_{1}'.format(cfgId, suffix)
             self.assertTrue(groupId in existingGroupIds)
             # for (restricted)powerobservers, it gets a Reader localrole on tool and MeetingConfig
-            if suffix in (POWEROBSERVERS_GROUP_SUFFIX,
-                          RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX,
+            if suffix in ('powerobservers',
+                          'restrictedpowerobservers',
                           ITEMTEMPLATESMANAGERS_GROUP_SUFFIX):
                 self.assertTrue(self.tool.__ac_local_roles__[groupId] == [READER_USECASES[suffix], ])
                 self.assertTrue(cfg.__ac_local_roles__[groupId] == [READER_USECASES[suffix], ])

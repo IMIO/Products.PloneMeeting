@@ -27,6 +27,7 @@ from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_groups
 from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.utils import get_config_root
+from copy import deepcopy
 from imio.helpers.cache import cleanRamCacheFor
 from imio.helpers.testing import testing_logger
 from plone import api
@@ -529,3 +530,17 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         self.portal.portal_groups.removePrincipalFromGroup(principal_id, group_id)
         self.changeUser(self.member.getId())
         cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
+
+    def _setPowerObserverStates(self,
+                                cfg=None,
+                                observer_type='powerobservers',
+                                field_name='item_states',
+                                states=[]):
+        """Change power observers states for item or meeting."""
+        if not cfg:
+            cfg = self.meetingConfig
+        power_observers = deepcopy(cfg.getPowerObservers())
+        for po_infos in power_observers:
+            if po_infos['row_id'] == observer_type:
+                po_infos[field_name] = states
+        cfg.setPowerObservers(power_observers)

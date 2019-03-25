@@ -182,7 +182,7 @@ class testColumns(PloneMeetingTestCase):
     def test_pm_ItemLinkedMeetingColumnWhenMeetingNotViewable(self):
         """Test when link to meeting displayed in the items dashboard."""
         cfg = self.meetingConfig
-        cfg.setItemPowerObserversStates(('presented', ))
+        self._setPowerObserverStates(states=('presented', ))
         cfg.setMeetingPowerObserversStates(())
 
         self.changeUser('pmManager')

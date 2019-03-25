@@ -37,8 +37,6 @@ from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import ITEMTEMPLATESMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
-from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
-from Products.PloneMeeting.config import RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import ROOT_FOLDER
 from Products.PloneMeeting.config import TOOL_FOLDER_SEARCHES
 from Products.PloneMeeting.interfaces import IConfigElement
@@ -486,9 +484,11 @@ def onConfigWillBeRemoved(config, event):
             portal_types.manage_delObjects([pt])
     # Remove groups added by the MeetingConfig (budgetimpacteditors, powerobservers, ...)
     portal_groups = api.portal.get_tool('portal_groups')
+    group_suffixes = [MEETINGMANAGERS_GROUP_SUFFIX,
+                      BUDGETIMPACTEDITORS_GROUP_SUFFIX,
+                      ITEMTEMPLATESMANAGERS_GROUP_SUFFIX]
+    group_suffixes += [po_infos['row_id'] for po_infos in config.getPowerObservers()]
     for suffix in (MEETINGMANAGERS_GROUP_SUFFIX,
-                   POWEROBSERVERS_GROUP_SUFFIX,
-                   RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX,
                    BUDGETIMPACTEDITORS_GROUP_SUFFIX,
                    ITEMTEMPLATESMANAGERS_GROUP_SUFFIX):
         portal_groups.removeGroup("%s_%s" % (config.getId(), suffix))

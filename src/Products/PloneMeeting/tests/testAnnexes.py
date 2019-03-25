@@ -138,7 +138,7 @@ class testAnnexes(PloneMeetingTestCase):
         item_initial_state, item, annexes_table, categorized_child, \
             annexNotConfidential, annexConfidential = self._setupConfidentialityOnItemAnnexes()
 
-        cfg.setItemPowerObserversStates((item_initial_state, ))
+        self._setPowerObserverStates(states=(item_initial_state, ))
         cfg.setItemAnnexConfidentialVisibleFor(('configgroup_powerobservers', ))
         item.updateLocalRoles()
 
@@ -439,7 +439,7 @@ class testAnnexes(PloneMeetingTestCase):
         item_initial_state, item, advice, annexes_table, categorized_child, \
             annexNotConfidential, annexConfidential = self._setupConfidentialityOnAdviceAnnexes()
 
-        cfg.setItemPowerObserversStates((item_initial_state, ))
+        self._setPowerObserverStates(states=(item_initial_state, ))
         cfg.setAdviceAnnexConfidentialVisibleFor(('configgroup_powerobservers', ))
         item.updateLocalRoles()
 
@@ -586,7 +586,7 @@ class testAnnexes(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfgItemWF = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
         item_initial_state = self.wfTool[cfgItemWF.getId()].initial_state
-        cfg.setItemPowerObserversStates((item_initial_state, ))
+        self._setPowerObserverStates(states=(item_initial_state, ))
         # confidential annexes are visible by proposing group creators
         cfg.setItemAnnexConfidentialVisibleFor(('suffix_proposing_group_creators', ))
 
@@ -1015,7 +1015,7 @@ class testAnnexes(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfgId = cfg.getId()
         cfg.setItemAnnexConfidentialVisibleFor(('configgroup_restrictedpowerobservers', ))
-        cfg.setItemPowerObserversStates(('itemcreated', ))
+        self._setPowerObserverStates(states=('itemcreated', ))
 
         # only available to 'Managers'
         self.changeUser('pmCreator1')

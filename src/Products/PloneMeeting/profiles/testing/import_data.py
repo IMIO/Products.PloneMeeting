@@ -344,9 +344,15 @@ meetingPma.allItemTags = '\n'.join(('Strategic decision', 'Genericity mechanism'
 meetingPma.sortAllItemTags = True
 meetingPma.recurringItems = (recItem1, recItem2, )
 meetingPma.itemTemplates = (template1, template2, )
-# use same values as meetingPga for powerObserversStates
-meetingPma.itemPowerObserversStates = ('itemcreated', 'presented', 'accepted', 'delayed')
-meetingPma.meetingPowerObserversStates = ('frozen', 'published', 'decided', 'closed')
+meetingPma.powerObservers = (
+    {'row_id': 'powerobservers',
+     'label': 'Power observers',
+     'item_states': ('itemcreated', 'presented', 'accepted', 'delayed'),
+     'meeting_states': ('frozen', 'published', 'decided', 'closed')},
+    {'row_id': 'restrictedpowerobservers',
+     'label': 'Restricted power observers',
+     'item_states': [],
+     'meeting_states': []})
 meetingPma.useVotes = True
 meetingPma.styleTemplates = [stylesTemplate1, stylesTemplate2]
 meetingPma.podTemplates = [agendaTemplate, decisionsTemplate, itemTemplate, dashboardTemplate, allItemTemplate]
@@ -414,8 +420,16 @@ meetingPga.useGroupsAsCategories = False
 meetingPga.itemTemplates = (template1, template2, )
 meetingPga.useAdvices = False
 meetingPga.selectableAdvisers = []
-meetingPga.itemPowerObserversStates = ('itemcreated', 'presented', 'accepted', 'delayed')
-meetingPga.meetingPowerObserversStates = ('frozen', 'published', 'decided', 'closed')
+# use same values as meetingPma for powerObserversStates
+meetingPga.powerObservers = (
+    {'row_id': 'powerobservers',
+     'label': 'Power observers',
+     'item_states': ('itemcreated', 'presented', 'accepted', 'delayed'),
+     'meeting_states': ('frozen', 'published', 'decided', 'closed')},
+    {'row_id': 'restrictedpowerobservers',
+     'label': 'Restricted power observers',
+     'item_states': [],
+     'meeting_states': []})
 meetingPga.itemDecidedStates = ('accepted', 'delayed', 'confirmed', 'itemarchived')
 meetingPga.workflowAdaptations = []
 meetingPga.itemPositiveDecidedStates = ['accepted', 'confirmed']

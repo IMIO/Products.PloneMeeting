@@ -16,6 +16,7 @@ from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_plone_groups
+from collective.datagridcolumns.MultiSelectColumn import MultiSelectColumn
 from collective.eeafaceted.batchactions.interfaces import IBatchActionsMarker
 from collective.eeafaceted.collectionwidget.interfaces import IDashboardCollection
 from collective.eeafaceted.collectionwidget.utils import _get_criterion
@@ -75,10 +76,8 @@ from Products.PloneMeeting.config import MEETING_STATES_ACCEPTING_ITEMS
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETINGROLES
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
-from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import READER_USECASES
-from Products.PloneMeeting.config import RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import TOOL_FOLDER_ANNEX_TYPES
 from Products.PloneMeeting.config import TOOL_FOLDER_CATEGORIES
 from Products.PloneMeeting.config import TOOL_FOLDER_CLASSIFIERS
@@ -1868,73 +1867,28 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
-    LinesField(
-        name='itemPowerObserversStates',
-        widget=MultiSelectionWidget(
-            description="ItemPowerObserversStates",
-            description_msgid="item_powerobservers_states_descr",
-            format="checkbox",
-            label='Itempowerobserversstates',
-            label_msgid='PloneMeeting_label_itemPowerObserversStates',
+    DataGridField(
+        name='powerObservers',
+        widget=DataGridField._properties['widget'](
+            description="PowerObservers",
+            description_msgid="power_observers_descr",
+            columns={'row_id': Column("Power observer row id", visible=False),
+                     'label': Column("Power observer label", required=True),
+                     'item_states': MultiSelectColumn("Power observer item viewable states",
+                                                      vocabulary="listItemStates"),
+                     'meeting_states': MultiSelectColumn("Power observer meeting viewable states",
+                                                         vocabulary="listMeetingStates"),
+                     },
+            label='Powerobservers',
+            label_msgid='MeetingLiege_label_powerObservers',
             i18n_domain='PloneMeeting',
         ),
         schemata="advices",
-        multiValued=1,
-        vocabulary='listItemStates',
-        default=defValues.itemPowerObserversStates,
-        enforceVocabulary=True,
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    LinesField(
-        name='meetingPowerObserversStates',
-        widget=MultiSelectionWidget(
-            description="meetingPowerObserversStates",
-            description_msgid="meeting_powerobservers_states_descr",
-            format="checkbox",
-            label='Meetingpowerobserversstates',
-            label_msgid='PloneMeeting_label_meetingPowerObserversStates',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="advices",
-        multiValued=1,
-        vocabulary='listMeetingStates',
-        default=defValues.meetingPowerObserversStates,
-        enforceVocabulary=True,
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    LinesField(
-        name='itemRestrictedPowerObserversStates',
-        widget=MultiSelectionWidget(
-            description="ItemRestrictedPowerObserversStates",
-            description_msgid="item_restricted_powerobservers_states_descr",
-            format="checkbox",
-            label='Itemrestrictedpowerobserversstates',
-            label_msgid='PloneMeeting_label_itemRestrictedPowerObserversStates',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="advices",
-        multiValued=1,
-        vocabulary='listItemStates',
-        default=defValues.itemRestrictedPowerObserversStates,
-        enforceVocabulary=True,
-        write_permission="PloneMeeting: Write risky config",
-    ),
-    LinesField(
-        name='meetingRestrictedPowerObserversStates',
-        widget=MultiSelectionWidget(
-            description="meetingRestrictedPowerObserversStates",
-            description_msgid="meeting_restricted_powerobservers_states_descr",
-            format="checkbox",
-            label='Meetingrestrictedpowerobserversstates',
-            label_msgid='PloneMeeting_label_meetingRestrictedPowerObserversStates',
-            i18n_domain='PloneMeeting',
-        ),
-        schemata="advices",
-        multiValued=1,
-        vocabulary='listMeetingStates',
-        default=defValues.meetingRestrictedPowerObserversStates,
-        enforceVocabulary=True,
-        write_permission="PloneMeeting: Write risky config",
+        allow_oddeven=True,
+        default=defValues.powerObservers,
+        columns=('row_id', 'label', 'item_states', 'meeting_states'),
+        allow_empty_rows=False,
+        write_permission=WriteRiskyConfig,
     ),
     LinesField(
         name='itemBudgetInfosStates',
@@ -2924,6 +2878,22 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if not v.get('row_id', None):
                 v.row_id = self.generateUniqueId()
         self.getField('customAdvisers').set(self, value, **kwargs)
+
+    security.declareProtected(WriteRiskyConfig, 'setPowerObservers')
+
+    def setPowerObservers(self, value, **kwargs):
+        '''Overrides the field 'powerObservers' mutator to manage
+           the 'row_id' column manually.  If empty, we need to add a
+           unique id into it.'''
+        # value contains a list of 'ZPublisher.HTTPRequest', to be compatible
+        # if we receive a 'dict' instead, we use v.get()
+        for v in value:
+            # don't process hidden template row as input data
+            if v.get('orderindex_', None) == "template_row_marker":
+                continue
+            if not v.get('row_id', None):
+                v['row_id'] = 'powerobservers_{0}'.format(self.generateUniqueId())
+        self.getField('powerObservers').set(self, value, **kwargs)
 
     security.declareProtected(WriteRiskyConfig, 'setMaxShownListings')
 
@@ -4328,8 +4298,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         reader_usecases = [usecase for usecase in READER_USECASES.keys()
                            if usecase not in ['confidentialannex', 'itemtemplatesmanagers']]
         for suffix in reader_usecases:
-            if suffix in (POWEROBSERVERS_GROUP_SUFFIX, RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX):
-                confidential_profiles.append('{0}{1}'.format(CONFIGGROUPPREFIX, suffix))
+            if suffix == 'powerobservers':
+                for po_infos in self.getPowerObservers():
+                    confidential_profiles.append('{0}{1}'.format(CONFIGGROUPPREFIX, po_infos['row_id']))
             else:
                 confidential_profiles.append('{0}{1}'.format(READERPREFIX, suffix))
         for suffix in get_all_suffixes():
@@ -4340,6 +4311,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             confidential_profiles.append('{0}{1}'.format(PROPOSINGGROUPPREFIX, suffix))
 
         res = []
+        po_row_ids = [po_infos['row_id'] for po_infos in self.getPowerObservers()]
         for profile in confidential_profiles:
             if profile.startswith(PROPOSINGGROUPPREFIX):
                 res.append(
@@ -4349,6 +4321,19 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                         translate(profile.replace(PROPOSINGGROUPPREFIX, ''),
                                                   domain="PloneMeeting",
                                                   context=self.REQUEST)},
+                               domain="PloneMeeting",
+                               context=self.REQUEST)))
+            elif profile.startswith(CONFIGGROUPPREFIX):
+                config_group_suffix = profile.replace(CONFIGGROUPPREFIX, '')
+                is_power_observer = config_group_suffix in po_row_ids
+                res.append(
+                    (profile,
+                     translate('visible_for_{0}'.format(CONFIGGROUPPREFIX),
+                               mapping={'reader_usecase': is_power_observer and
+                                        safe_unicode(
+                                            [po_infos['label'] for po_infos in self.getPowerObservers()
+                                             if po_infos['row_id'] == config_group_suffix][0]) or
+                               translate(config_group_suffix, domain='PloneMeeting', context=self.REQUEST)},
                                domain="PloneMeeting",
                                context=self.REQUEST)))
             else:
@@ -4371,9 +4356,9 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         reader_usecases = [usecase for usecase in READER_USECASES.keys()
                            if usecase not in ['confidentialannex', 'itemtemplatesmanagers']]
         for suffix in reader_usecases:
-            if suffix in (POWEROBSERVERS_GROUP_SUFFIX, RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX):
-                confidential_profiles.append('{0}{1}'.format(CONFIGGROUPPREFIX,
-                                                             suffix))
+            if suffix == 'powerobservers':
+                for po_infos in self.getPowerObservers():
+                    confidential_profiles.append('{0}{1}'.format(CONFIGGROUPPREFIX, po_infos['row_id']))
             else:
                 confidential_profiles.append('{0}{1}'.format(READERPREFIX, suffix))
         for suffix in get_all_suffixes():
@@ -4383,6 +4368,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             confidential_profiles.append('{0}{1}'.format(PROPOSINGGROUPPREFIX, suffix))
 
         res = []
+        po_row_ids = [po_infos['row_id'] for po_infos in self.getPowerObservers()]
         for profile in confidential_profiles:
             if profile.startswith(PROPOSINGGROUPPREFIX):
                 res.append(
@@ -4394,11 +4380,25 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                                   context=self.REQUEST)},
                                domain="PloneMeeting",
                                context=self.REQUEST)))
+            elif profile.startswith(CONFIGGROUPPREFIX):
+                config_group_suffix = profile.replace(CONFIGGROUPPREFIX, '')
+                is_power_observer = config_group_suffix in po_row_ids
+                res.append(
+                    (profile,
+                     translate('visible_for_{0}'.format(CONFIGGROUPPREFIX),
+                               mapping={'reader_usecase': is_power_observer and
+                                        safe_unicode(
+                                            [po_infos['label'] for po_infos in self.getPowerObservers()
+                                             if po_infos['row_id'] == config_group_suffix][0]) or
+                               translate(config_group_suffix, domain='PloneMeeting', context=self.REQUEST)},
+                               domain="PloneMeeting",
+                               context=self.REQUEST)))
             else:
                 res.append(
-                    (profile, translate('visible_for_{0}'.format(profile),
-                                        domain="PloneMeeting",
-                                        context=self.REQUEST)))
+                    (profile,
+                     translate('visible_for_{0}'.format(profile),
+                               domain="PloneMeeting",
+                               context=self.REQUEST)))
         return DisplayList(res).sortedByValue()
 
     security.declarePrivate('listMeetingAnnexConfidentialVisibleFor')
@@ -4407,8 +4407,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''
           Vocabulary for the 'meetingAnnexConfidentialVisibleFor' field.
         '''
-        confidential_profiles = ['{0}{1}'.format(CONFIGGROUPPREFIX, 'powerobservers'),
-                                 '{0}{1}'.format(CONFIGGROUPPREFIX, 'restrictedpowerobservers')]
+        confidential_profiles = ['{0}{1}'.format(CONFIGGROUPPREFIX, po_infos['row_id'])
+                                 for po_infos in self.getPowerObservers()]
         for suffix in get_all_suffixes():
             # bypass suffixes that do not give a role, like it is the case for groupSuffix 'advisers'
             if not MEETINGROLES.get(suffix):
@@ -4427,6 +4427,17 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                                   context=self.REQUEST)},
                                domain="PloneMeeting",
                                context=self.REQUEST)))
+            elif profile.startswith(CONFIGGROUPPREFIX):
+                config_group_suffix = profile.replace(CONFIGGROUPPREFIX, '')
+                res.append(
+                    (profile,
+                     translate('visible_for_{0}'.format(CONFIGGROUPPREFIX),
+                               mapping={'reader_usecase':
+                                        safe_unicode(
+                                            [po_infos['label'] for po_infos in self.getPowerObservers()
+                                             if po_infos['row_id'] == config_group_suffix][0])},
+                               domain="PloneMeeting",
+                               context=self.REQUEST)))
             else:
                 res.append(
                     (profile, translate('visible_for_{0}'.format(profile),
@@ -4441,15 +4452,10 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''
           Vocabulary displaying power observers types.
         '''
-        res = DisplayList((
-            ('power_observers', translate('confidential_for_power_observers',
-                                          domain="PloneMeeting",
-                                          context=self.REQUEST)),
-            ('restricted_power_observers', translate('confidential_for_restricted_power_observers',
-                                                     domain="PloneMeeting",
-                                                     context=self.REQUEST)),
-        ))
-        return res
+        res = []
+        for po_infos in self.getPowerObservers():
+            res.append((po_infos['row_id'], po_infos['label']))
+        return DisplayList(res)
 
     security.declarePrivate('isVotable')
 
@@ -4761,29 +4767,31 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                 context=self.REQUEST)
                 self.plone_utils.addPortalMessage(msg)
 
-    def _createOrUpdatePloneGroup(self, groupSuffix):
+    def _createOrUpdatePloneGroup(self, groupSuffix, groupTitleSuffix=None):
         '''Create a group for this MeetingConfig using given p_groupSuffix to manage group id and group title.
            This will return groupId and True if group was added, False otherwise.'''
         groupId = "{0}_{1}".format(self.getId(), groupSuffix)
         groupTitle = self.Title(include_config_group=True)
+        if groupTitleSuffix:
+            groupSuffix = safe_unicode(groupTitleSuffix)
         wasCreated = createOrUpdatePloneGroup(groupId=groupId, groupTitle=groupTitle, groupSuffix=groupSuffix)
         return groupId, wasCreated
 
-    security.declarePrivate('createPowerObserversGroup')
+    security.declarePrivate('createPowerObserversGroups')
 
-    def createPowerObserversGroup(self):
-        '''Creates Plone groups to manage (restricted) power observers.'''
+    def createPowerObserversGroups(self):
+        '''Creates Plone groups to manage power observers.'''
         tool = api.portal.get_tool('portal_plonemeeting')
-        for groupSuffix in (RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX,
-                            POWEROBSERVERS_GROUP_SUFFIX, ):
-            groupId, wasCreated = self._createOrUpdatePloneGroup(groupSuffix)
+        for po_infos in self.getPowerObservers():
+            groupSuffix = po_infos['row_id']
+            groupId, wasCreated = self._createOrUpdatePloneGroup(groupSuffix, groupTitleSuffix=po_infos['label'])
             if wasCreated:
                 # now define local_roles on the tool so it is accessible by this group
-                tool.manage_addLocalRoles(groupId, (READER_USECASES[groupSuffix],))
+                tool.manage_addLocalRoles(groupId, (READER_USECASES['powerobservers'],))
                 # but we do not want this group to access every MeetingConfigs so
                 # remove inheritance on self and define these local_roles for self too
                 self.__ac_local_roles_block__ = True
-                self.manage_addLocalRoles(groupId, (READER_USECASES[groupSuffix],))
+                self.manage_addLocalRoles(groupId, (READER_USECASES['powerobservers'],))
 
     security.declarePrivate('createBudgetImpactEditorsGroup')
 
@@ -4824,7 +4832,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def _createOrUpdateAllPloneGroups(self):
         """Create or update every linked Plone groups."""
         # Create the corresponding group that will contain MeetingPowerObservers
-        self.createPowerObserversGroup()
+        self.createPowerObserversGroups()
         # Create the corresponding group that will contain MeetingBudgetImpactEditors
         self.createBudgetImpactEditorsGroup()
         # Create the corresponding group that will contain MeetingManagers

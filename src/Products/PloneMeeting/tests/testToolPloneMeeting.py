@@ -746,7 +746,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         """Test the updateAllLocalRoles method that update every items when configuration changed.
            First set (restricted) power observers may view in state 'itemcreated' then change to 'proposed'."""
         cfg = self.meetingConfig
-        cfg.setItemPowerObserversStates(('itemcreated', ))
+        self._setPowerObserverStates(states=('itemcreated', ))
         cfg.setMeetingPowerObserversStates(('created', ))
         cfg.setItemRestrictedPowerObserversStates((self._stateMappingFor('proposed'), ))
         cfg.setMeetingRestrictedPowerObserversStates(('closed', ))
@@ -768,7 +768,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
 
         # change configuration, updateAllLocalRoles then check again
         self.changeUser('siteadmin')
-        cfg.setItemPowerObserversStates((self._stateMappingFor('proposed'), ))
+        self._setPowerObserverStates(states=(self._stateMappingFor('proposed'), ))
         cfg.setMeetingPowerObserversStates(('closed', ))
         cfg.setItemRestrictedPowerObserversStates(('itemcreated', ))
         cfg.setMeetingRestrictedPowerObserversStates(('created', ))
@@ -1029,6 +1029,9 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         browser.open(pmFolder.absolute_url() + '/searches_items')
         self.assertTrue(tool_new_modified in browser.headers['etag'])
 
+    def test_pm_IsPowerObserverForCfg(self):
+        """ """
+        import ipdb; ipdb.set_trace()
 
 def test_suite():
     from unittest import TestSuite, makeSuite

@@ -44,7 +44,6 @@ from Products.PloneMeeting.config import ADVICE_STATES_ENDED
 from Products.PloneMeeting.config import CONSIDERED_NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.config import HIDDEN_DURING_REDACTION_ADVICE_VALUE
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
-from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.indexes import indexAdvisers
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.utils import isModifiedSinceLastVersion
@@ -1363,7 +1362,7 @@ class testAdvices(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfg.setItemAdviceStates((self._stateMappingFor('proposed'), ))
         cfg.setPowerAdvisersGroups((self.developers_uid, ))
-        cfg.setItemPowerObserversStates((self._stateMappingFor('proposed'), ))
+        self._setPowerObserverStates(states=(self._stateMappingFor('proposed'), ))
 
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
@@ -1373,8 +1372,7 @@ class testAdvices(PloneMeetingTestCase):
         # for now, it is not the case, the 'View' is not given automatically to power advisers
         self.changeUser('pmAdviser1')
         # pmAdviser1 is not power adviser
-        self.assertFalse(self.tool.isPowerObserverForCfg(cfg, isRestricted=False))
-        self.assertFalse(self.tool.isPowerObserverForCfg(cfg, isRestricted=True))
+        self.assertFalse(self.tool.isPowerObserverForCfg(cfg))
         self.assertTrue(self.developers_uid not in item.adviceIndex)
         # he may not see item
         self.failIf(self.hasPermission(View, item))
@@ -1384,8 +1382,7 @@ class testAdvices(PloneMeetingTestCase):
         # right, give 'View' access, now pmAdviser1 will be able to see the item
         # add pmAdviser1 to power observers
         self.changeUser('siteadmin')
-        self._addPrincipalToGroup('pmAdviser1',
-                                  '%s_%s' % (cfg.getId(), POWEROBSERVERS_GROUP_SUFFIX))
+        self._addPrincipalToGroup('pmAdviser1', '%s_powerobservers' % cfg.getId())
         item.updateLocalRoles()
         self.changeUser('pmAdviser1')
         # pmAdviser1 can give advice for developers even if
@@ -1566,7 +1563,7 @@ class testAdvices(PloneMeetingTestCase):
         cfg.setItemAdviceEditStates((self._stateMappingFor('proposed'), ))
         cfg.setItemAdviceViewStates((self._stateMappingFor('proposed'),
                                      self._stateMappingFor('validated')))
-        cfg.setItemPowerObserversStates((self._stateMappingFor('proposed'), ))
+        self._setPowerObserverStates(states=(self._stateMappingFor('proposed'), ))
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         # no other linked delay
@@ -1897,7 +1894,7 @@ class testAdvices(PloneMeetingTestCase):
         cfg.setAdviceConfidentialityDefault(True)
         cfg.setAdviceConfidentialFor(('power_observers', ))
         # make power observers able to see proposed items
-        cfg.setItemPowerObserversStates((self._stateMappingFor('proposed'), ))
+        self._setPowerObserverStates(states=(self._stateMappingFor('proposed'), ))
         # first check default confidentiality value
         # create an item and ask advice of 'developers'
         self.changeUser('pmCreator1')
@@ -3115,7 +3112,7 @@ class testAdvices(PloneMeetingTestCase):
         item1, item2, vendors_advice, developers_advice = self._setupInheritedAdvice()
         cfg = self.meetingConfig
         cfg.setHideNotViewableLinkedItemsTo(('power_observers', ))
-        cfg.setItemPowerObserversStates(('itemcreated', ))
+        self._setPowerObserverStates(states=('itemcreated', ))
         cfg.setItemRestrictedPowerObserversStates(('itemcreated', ))
 
         self.changeUser('powerobserver1')

@@ -436,8 +436,7 @@ class MeetingConfigDescriptor(Descriptor):
                          'usedAdviceTypes', 'selectableAdvisers', 'itemAdviceStates',
                          'itemDecidedStates', 'itemPositiveDecidedStates',
                          'itemAdviceEditStates', 'itemAdviceViewStates', 'itemBudgetInfosStates',
-                         'powerAdvisersGroups', 'itemPowerObserversStates', 'meetingPowerObserversStates',
-                         'itemRestrictedPowerObserversStates', 'meetingRestrictedPowerObserversStates',
+                         'powerAdvisersGroups', 'powerObservers',
                          'meetingConfigsToCloneTo', 'itemAdviceInvalidateStates', 'transitionsReinitializingDelays',
                          'customAdvisers', 'selectableCopyGroups', 'itemCopyGroupsStates', 'votesEncoder',
                          'meetingTopicStates', 'decisionTopicStates', 'itemFieldsToKeepConfigSortingFor',
@@ -702,10 +701,15 @@ class MeetingConfigDescriptor(Descriptor):
         self.powerAdvisersGroups = []
         # List of item and meeting states the users in the MeetingConfig
         # corresponding powerObservers group will see the item/meeting
-        self.itemPowerObserversStates = ['itemfrozen', 'accepted', 'delayed']
-        self.meetingPowerObserversStates = ['closed']
-        self.itemRestrictedPowerObserversStates = []
-        self.meetingRestrictedPowerObserversStates = []
+        self.powerObservers = (
+            {'row_id': 'powerobservers',
+             'label': 'Super observateurs',
+             'item_states': ['accepted'],
+             'meeting_states': ['closed']},
+            {'row_id': 'restrictedpowerobservers',
+             'label': 'Super observateurs restreints',
+             'item_states': [],
+             'meeting_states': []})
         self.usedAdviceTypes = ('positive', 'positive_with_remarks', 'negative', 'nil')
         self.defaultAdviceType = 'positive'
         self.selectableAdvisers = []

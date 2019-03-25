@@ -1223,9 +1223,10 @@ class PMContentHistoryView(IHContentHistoryView):
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self.context)
             hideHistoryTo = cfg.getHideHistoryTo()
-            if ('power_observers' in hideHistoryTo and tool.isPowerObserverForCfg(cfg)) or \
-               ('restricted_power_observers' in hideHistoryTo and tool.isPowerObserverForCfg(cfg, isRestricted=True)):
-                res = False
+            for power_observer_type in hideHistoryTo:
+                if tool.isPowerObserverForCfg(cfg, power_observer_type=power_observer_type):
+                    res = False
+                    break
         return res
 
 
