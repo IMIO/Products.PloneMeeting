@@ -58,6 +58,7 @@ Changelog
 - Make sure every fields MeetingItem.itemAssembly* are emptied when item removed from meeting
 - Added parameter ToolPloneMeeting.enableScanDocs, False by default, to be able to enable/disable functionnality related to the documents scanning when
   imio.zamqp.pm is present
+- Format log message when an item was cloned using collective.fingerpointing
 
 4.1b16 (2019-01-31)
 -------------------

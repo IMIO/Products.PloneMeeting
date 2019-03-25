@@ -306,7 +306,7 @@ class ChangeItemOrderView(BrowserView):
 
         # add logging message to fingerpointing log
         user, ip = get_request_information()
-        action = 'item order changed'
+        action = 'change_item_order'
         extras = 'item={0} meeting={1} original_position={2} new_position={3}'.format(
             '/'.join(self.context.getPhysicalPath()),
             '/'.join(meeting.getPhysicalPath()),

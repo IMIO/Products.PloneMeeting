@@ -119,7 +119,7 @@ class AdviceRemoveInheritanceForm(AutoExtensibleForm, form.EditForm):
 
         # add logging message to fingerpointing log
         user, ip = get_request_information()
-        action = 'advice inheritance removed'
+        action = 'remove_advice_inheritance'
         extras = 'item={0} advice_uid={1}'.format(
             '/'.join(self.context.getPhysicalPath()), data['advice_uid'])
         log_info(AUDIT_MESSAGE.format(user, ip, action, extras))

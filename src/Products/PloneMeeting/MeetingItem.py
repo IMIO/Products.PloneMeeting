@@ -23,6 +23,9 @@ from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_plone_group_id
+from collective.fingerpointing.config import AUDIT_MESSAGE
+from collective.fingerpointing.logger import log_info
+from collective.fingerpointing.utils import get_request_information
 from copy import deepcopy
 from DateTime import DateTime
 from datetime import datetime
@@ -5608,11 +5611,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # notify that item has been duplicated so subproducts may interact if necessary
         notify(ItemDuplicatedEvent(self, newItem))
 
-        logger.info('Item at %s cloned (%s) by "%s" from %s.' %
-                    (newItem.absolute_url_path(),
-                     cloneEventAction,
-                     userId,
-                     self.absolute_url_path()))
+        # add logging message to fingerpointing log
+        user, ip = get_request_information()
+        action = 'clone_item'
+        extras = 'item={0} clone_event={1}'.format(
+            newItem.absolute_url_path(), cloneEventAction)
+        log_info(AUDIT_MESSAGE.format(user, ip, action, extras))
         return newItem
 
     security.declarePublic('doCloneToOtherMeetingConfig')
