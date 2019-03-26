@@ -619,6 +619,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.hideItemHistoryCommentsToUsersOutsideProposingGroup = False
         self.hideHistoryTo = ()
         self.restrictAccessToSecretItems = False
+        self.restrictAccessToSecretItemsTo = ['restrictedpowerobservers']
         self.itemWithGivenAdviceIsNotDeletable = False
         self.ownerMayDeleteAnnexDecision = False
 
@@ -705,11 +706,15 @@ class MeetingConfigDescriptor(Descriptor):
             {'row_id': 'powerobservers',
              'label': 'Super observateurs',
              'item_states': ['accepted'],
-             'meeting_states': ['closed']},
+             'item_access_on': '',
+             'meeting_states': ['closed'],
+             'meeting_access_on': ''},
             {'row_id': 'restrictedpowerobservers',
              'label': 'Super observateurs restreints',
              'item_states': [],
-             'meeting_states': []})
+             'item_access_on': '',
+             'meeting_states': [],
+             'meeting_access_on': ''}, )
         self.usedAdviceTypes = ('positive', 'positive_with_remarks', 'negative', 'nil')
         self.defaultAdviceType = 'positive'
         self.selectableAdvisers = []

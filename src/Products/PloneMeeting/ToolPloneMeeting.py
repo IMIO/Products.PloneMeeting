@@ -777,7 +777,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
             'Site Administrator' in userRoles or \
             (not realManagers and 'MeetingManager' in userRoles)
 
-    def isPowerObserverForCfg_cachekey(method, self, cfg, power_observer_type='powerobservers'):
+    def isPowerObserverForCfg_cachekey(method, self, cfg, power_observer_type=None):
         '''cachekey method for self.isPowerObserverForCfg.'''
         return (self._users_groups_value(),
                 api.user.get_current(),
@@ -787,7 +787,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('isPowerObserverForCfg')
 
     @ram.cache(isPowerObserverForCfg_cachekey)
-    def isPowerObserverForCfg(self, cfg, power_observer_type='powerobservers'):
+    def isPowerObserverForCfg(self, cfg, power_observer_type=None):
         """
           Returns True if the current user is a power observer for the given p_itemOrMeeting.
           It is a power observer if member of the corresponding p_power_observer_type suffixed group.
@@ -795,7 +795,7 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         """
         for po_infos in cfg.getPowerObservers():
             if not power_observer_type or po_infos['row_id'] == power_observer_type:
-                groupId = "{0}_{1}".format(cfg.getId(), power_observer_type)
+                groupId = "{0}_{1}".format(cfg.getId(), po_infos['row_id'])
                 if groupId in self.get_plone_groups_for_user():
                     return True
         return False

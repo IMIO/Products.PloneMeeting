@@ -944,17 +944,15 @@ class testViews(PloneMeetingTestCase):
     def test_pm_PMTransitionBatchActionFormOnlyForMeetingManagersOnMeeting(self):
         """The PMTransitionBatchActionForm is only available to MeetingManagers on
            dashoboards of the meeting_view."""
-        cfg = self.meetingConfig
-
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=DateTime('2018/03/14'))
         self.freezeMeeting(meeting)
         # freeze the meeting so it is viewable in most workflows to various groups
         form = getMultiAdapter((meeting, self.request), name=u'transition-batch-action')
         self.assertTrue(form.available())
-
         # not available to others
-        cfg.setMeetingPowerObserversStates((self._stateMappingFor('frozen', meta_type='Meeting'),))
+        self._setPowerObserverStates(field_name='meeting_states',
+                                     states=(self._stateMappingFor('frozen', meta_type='Meeting'),))
         meeting.updateLocalRoles()
         self.changeUser('powerobserver1')
         self.assertTrue(self.hasPermission(View, meeting))
@@ -1297,7 +1295,7 @@ class testViews(PloneMeetingTestCase):
         # remove recurring items in self.meetingConfig
         self._removeConfigObjectsFor(cfg)
         cfg.setRestrictAccessToSecretItems(True)
-        cfg.setItemRestrictedPowerObserversStates(('presented', ))
+        self._setPowerObserverStates(states=('presented', ))
         cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'at_the_end',
                                            'reverse': '0'}, ))
         # create 2 'public' items and 1 'secret' item

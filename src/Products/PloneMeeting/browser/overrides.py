@@ -1072,7 +1072,8 @@ class CategorizedAnnexesView(CategorizedTabView):
         """ """
         portal_types = api.portal.get_tool('portal_types')
         annexTypeInfo = portal_types['annex']
-        return annexTypeInfo in self.context.allowedContentTypes()
+        return annexTypeInfo in self.context.allowedContentTypes() and \
+            collective_iconifiedcategory_utils.get_categories(self.context)
 
     def showAddAnnexDecision(self):
         """ """

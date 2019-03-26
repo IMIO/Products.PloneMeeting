@@ -136,10 +136,6 @@ class IMeetingItemDocumentation:
     def mustShowItemReference():
         '''When must I show the item reference ? In the default implementation,
            item references are shown as soon as a meeting is published.'''
-    def _isViewableByPowerObservers(restrictedPowerObservers=False):
-        '''Method that makes it possible to refine (restricted) power observers
-           access to an item in addition to check on
-           MeetingConfig.item(Restricted)PowerObserversStates.'''
     def getPredecessors():
         '''Return a list of dict containing informations we want to show about
            the predecessors.  The dict will contains the 'title' to display,

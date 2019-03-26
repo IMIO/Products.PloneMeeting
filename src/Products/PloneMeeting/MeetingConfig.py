@@ -698,7 +698,7 @@ schema = Schema((
                         Column("List type label",
                                col_description="Enter a short label that will be displayed in the application.  "
                                "This will be translated by the application if possible.  If you want to "
-                               "colorrize this new list type on the meeting view, you will need to do this using "
+                               "colorize this new list type on the meeting view, you will need to do this using "
                                "CSS like it is the case for 'late' items."),
                      'used_in_inserting_method':
                         CheckboxColumn("List type used_in_inserting_method",
@@ -1872,13 +1872,27 @@ schema = Schema((
         widget=DataGridField._properties['widget'](
             description="PowerObservers",
             description_msgid="power_observers_descr",
-            columns={'row_id': Column("Power observer row id", visible=False),
-                     'label': Column("Power observer label", required=True),
-                     'item_states': MultiSelectColumn("Power observer item viewable states",
-                                                      vocabulary="listItemStates"),
-                     'meeting_states': MultiSelectColumn("Power observer meeting viewable states",
-                                                         vocabulary="listMeetingStates"),
-                     },
+            columns={
+                'row_id': Column("Power observer row id",
+                                 visible=False),
+                'label': Column("Power observer label",
+                                col_description="power_observers_label_col_description",
+                                required=True),
+                'item_states': MultiSelectColumn(
+                    "Power observer item viewable states",
+                    col_description="power_observers_item_states_col_description",
+                    vocabulary="listItemStates"),
+                'item_access_on': Column(
+                    "Power observer item access TAL expression",
+                    col_description="power_observers_item_access_on_col_description"),
+                'meeting_states': MultiSelectColumn(
+                    "Power observer meeting viewable states",
+                    col_description="power_observers_meeting_states_col_description",
+                    vocabulary="listMeetingStates"),
+                'meeting_access_on': Column(
+                    "Power observer meeting access TAL expression",
+                    col_description="power_observers_meeting_access_on_col_description"),
+            },
             label='Powerobservers',
             label_msgid='MeetingLiege_label_powerObservers',
             i18n_domain='PloneMeeting',
@@ -1886,7 +1900,7 @@ schema = Schema((
         schemata="advices",
         allow_oddeven=True,
         default=defValues.powerObservers,
-        columns=('row_id', 'label', 'item_states', 'meeting_states'),
+        columns=('row_id', 'label', 'item_states', 'item_access_on', 'meeting_states', 'meeting_access_on'),
         allow_empty_rows=False,
         write_permission=WriteRiskyConfig,
     ),
@@ -2029,6 +2043,23 @@ schema = Schema((
             i18n_domain='PloneMeeting',
         ),
         schemata="advices",
+        write_permission="PloneMeeting: Write risky config",
+    ),
+    LinesField(
+        name='restrictAccessToSecretItemsTo',
+        widget=MultiSelectionWidget(
+            description="RestrictAccessToSecretItemsTo",
+            description_msgid="restrict_access_to_secret_items_to_descr",
+            format="checkbox",
+            label='Restrictaccesstosecretitems',
+            label_msgid='PloneMeeting_label_restrictAccessToSecretItemsTo',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="advices",
+        multiValued=1,
+        vocabulary='listPowerObserversTypes',
+        default=defValues.restrictAccessToSecretItemsTo,
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     BooleanField(

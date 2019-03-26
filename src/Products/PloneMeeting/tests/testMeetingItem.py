@@ -2019,9 +2019,14 @@ class testMeetingItem(PloneMeetingTestCase):
             performWorkflowAdaptations(cfg, logger=pm_logger)
         self._setPowerObserverStates(states=(
             'itemcreated', 'validated', 'presented', 'itemfrozen', 'accepted', 'delayed'))
-        cfg.setMeetingPowerObserversStates(('created', 'frozen', 'decided', 'closed'))
-        cfg.setItemRestrictedPowerObserversStates(('itemfrozen', 'accepted', 'refused'))
-        cfg.setMeetingRestrictedPowerObserversStates(('frozen', 'decided', 'closed'))
+        self._setPowerObserverStates(field_name='meeting_states',
+                                     states=('created', 'frozen', 'decided', 'closed'))
+        self._setPowerObserverStates(observer_type='restrictedpowerobservers',
+                                     states=('itemfrozen', 'accepted', 'refused'))
+
+        self._setPowerObserverStates(field_name='meeting_states',
+                                     observer_type='restrictedpowerobservers',
+                                     states=('frozen', 'decided', 'closed'))
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         item.setDecision("<p>Decision</p>")
@@ -2072,6 +2077,45 @@ class testMeetingItem(PloneMeetingTestCase):
         self.changeUser('powerobserver1')
         self.assertFalse(self.hasPermission(View, item))
         self.assertTrue(self.hasPermission(View, meeting))
+
+    def test_pm_PowerObserversAccessOn(self):
+        '''Power observers access is given depending on 'item_access_on' TAL expression.'''
+        self._setPowerObserverStates(states=('itemcreated', ))
+        self._setPowerObserverStates(field_name='meeting_states', states=('created', ))
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        meeting = self.create('Meeting', date=DateTime('2019/03/26'))
+        power_observer_group_id = '{0}_{1}'.format(self.meetingConfig.getId(), 'powerobservers')
+        self.assertTrue(power_observer_group_id in item.__ac_local_roles__)
+        self.assertTrue(power_observer_group_id in meeting.__ac_local_roles__)
+        # change TAL expression so it is False
+        self._setPowerObserverStates(states=('itemcreated', ), access_on='python:False')
+        self._setPowerObserverStates(field_name='meeting_states',
+                                     states=('created', ),
+                                     access_on='python:False')
+        item._update_after_edit()
+        meeting._update_after_edit()
+        self.assertFalse(power_observer_group_id in item.__ac_local_roles__)
+        self.assertFalse(power_observer_group_id in meeting.__ac_local_roles__)
+        # wrong TAL expression is considered False
+        self._setPowerObserverStates(states=('itemcreated', ), access_on='python:unknown')
+        self._setPowerObserverStates(field_name='meeting_states',
+                                     states=('created', ),
+                                     access_on='python:unknown')
+        item._update_after_edit()
+        meeting._update_after_edit()
+        self.assertFalse(power_observer_group_id in item.__ac_local_roles__)
+        self.assertFalse(power_observer_group_id in meeting.__ac_local_roles__)
+        # if the TAL expression is True, then the role is given
+        self._setPowerObserverStates(states=('itemcreated', ),
+                                     access_on='python:item.meta_type == "MeetingItem" and cfg and tool')
+        self._setPowerObserverStates(field_name='meeting_states',
+                                     states=('created', ),
+                                     access_on='python:meeting.meta_type == "Meeting" and cfg and tool')
+        item._update_after_edit()
+        meeting._update_after_edit()
+        self.assertTrue(power_observer_group_id in item.__ac_local_roles__)
+        self.assertTrue(power_observer_group_id in meeting.__ac_local_roles__)
 
     def test_pm_BudgetImpactEditorsGroups(self):
         '''Test the management of MeetingConfig linked 'budgetimpacteditors' Plone group.'''
@@ -2205,7 +2249,7 @@ class testMeetingItem(PloneMeetingTestCase):
           - advisers.
           This is usefull in workflows where there is a 'publication' step where items are accessible
           by everyone but we want to control access to secret items nevertheless.
-          Restricted power_observers do not have access to secret items neither.
+          Restricted power observers do not have access to secret items neither.
         '''
         self.setMeetingConfig(self.meetingConfig2.getId())
         cfg = self.meetingConfig
@@ -5537,9 +5581,10 @@ class testMeetingItem(PloneMeetingTestCase):
         """ """
         self.changeUser('siteadmin')
         cfg = self.meetingConfig
-        cfg.setHideCssClassesTo(('power_observers', ))
+        cfg.setHideCssClassesTo(('powerobservers', ))
         self._setPowerObserverStates(states=('itemcreated', ))
-        cfg.setItemRestrictedPowerObserversStates(('itemcreated', ))
+        self._setPowerObserverStates(observer_type='restrictedpowerobservers',
+                                     states=('itemcreated', ))
         self.assertTrue('highlight' in cfg.getCssClassesToHide().split('\n'))
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -5578,9 +5623,10 @@ class testMeetingItem(PloneMeetingTestCase):
            to (restricted) power observers if defined in the MeetingConfig."""
         self.changeUser('siteadmin')
         cfg = self.meetingConfig
-        cfg.setHideNotViewableLinkedItemsTo(('power_observers', ))
+        cfg.setHideNotViewableLinkedItemsTo(('powerobservers', ))
         self._setPowerObserverStates(states=('itemcreated', ))
-        cfg.setItemRestrictedPowerObserversStates(('itemcreated', ))
+        self._setPowerObserverStates(observer_type='restrictedpowerobservers',
+                                     states=('itemcreated', ))
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         itemLinkedManually = self.create('MeetingItem')

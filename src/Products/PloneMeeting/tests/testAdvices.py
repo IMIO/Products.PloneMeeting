@@ -1892,7 +1892,7 @@ class testAdvices(PloneMeetingTestCase):
         # hide confidential advices to power observers
         cfg.setEnableAdviceConfidentiality(True)
         cfg.setAdviceConfidentialityDefault(True)
-        cfg.setAdviceConfidentialFor(('power_observers', ))
+        cfg.setAdviceConfidentialFor(('powerobservers', ))
         # make power observers able to see proposed items
         self._setPowerObserverStates(states=(self._stateMappingFor('proposed'), ))
         # first check default confidentiality value
@@ -3111,10 +3111,10 @@ class testAdvices(PloneMeetingTestCase):
         '''Access to inherited item is taking into account MeetingConfig.hideNotViewableLinkedItemsTo.'''
         item1, item2, vendors_advice, developers_advice = self._setupInheritedAdvice()
         cfg = self.meetingConfig
-        cfg.setHideNotViewableLinkedItemsTo(('power_observers', ))
-        self._setPowerObserverStates(states=('itemcreated', ))
-        cfg.setItemRestrictedPowerObserversStates(('itemcreated', ))
-
+        cfg.setHideNotViewableLinkedItemsTo(('powerobservers', ))
+        self._setPowerObserverStates(states=(self._stateMappingFor('itemcreated'), ))
+        self._setPowerObserverStates(observer_type='restrictedpowerobservers',
+                                     states=(self._stateMappingFor('itemcreated'), ))
         self.changeUser('powerobserver1')
         advicesIconsInfosViewItem1 = item1.restrictedTraverse('advices-icons-infos')
         advicesIconsInfosViewItem2 = item2.restrictedTraverse('advices-icons-infos')

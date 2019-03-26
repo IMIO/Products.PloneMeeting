@@ -81,9 +81,6 @@
          <legend><span i18n:translate="meeting_organizations">Organizations</span>
            <span class="fa fa-question-circle help-doc" onClick="toggleDoc('groupDoc', toggle_parent_active=false);"></span>
          </legend>
-         <div id="groupDoc" style="display:none">
-             <p class="discreet" i18n:translate="meeting_groups_descr"></p>
-         </div>
          <h4>
            <img style="vertical-align: baseline;"
                 tal:attributes="src string:${portal_url}/manage.png;" />

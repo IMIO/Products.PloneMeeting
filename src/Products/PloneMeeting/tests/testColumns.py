@@ -44,7 +44,8 @@ class testColumns(PloneMeetingTestCase):
            - more infos are not displayed."""
         cfg = self.meetingConfig
         cfg.setRestrictAccessToSecretItems(True)
-        cfg.setItemRestrictedPowerObserversStates((self._stateMappingFor('itemcreated'), ))
+        self._setPowerObserverStates(observer_type='restrictedpowerobservers',
+                                     states=(self._stateMappingFor('itemcreated'), ))
         self.request.cookies['pmShowDescriptions'] = 'true'
 
         self.changeUser('pmCreator1')
@@ -181,10 +182,8 @@ class testColumns(PloneMeetingTestCase):
 
     def test_pm_ItemLinkedMeetingColumnWhenMeetingNotViewable(self):
         """Test when link to meeting displayed in the items dashboard."""
-        cfg = self.meetingConfig
         self._setPowerObserverStates(states=('presented', ))
-        cfg.setMeetingPowerObserversStates(())
-
+        self._setPowerObserverStates(field_name='meeting_states', states=())
         self.changeUser('pmManager')
         item = self.create('MeetingItem')
         self.create('Meeting', date=DateTime('2018/03/21'))

@@ -14,6 +14,7 @@ from App.class_init import InitializeClass
 from appy.gen import No
 from archetypes.referencebrowserwidget.widget import ReferenceBrowserWidget
 from collections import OrderedDict
+from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.config import get_registry_organizations
 from collective.eeafaceted.dashboard.utils import enableFacetedDashboardFor
 from copy import deepcopy
@@ -46,6 +47,7 @@ from Products.CMFCore.permissions import ReviewPortalContent
 from Products.CMFCore.utils import _checkPermission
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from Products.CMFPlone.utils import base_hasattr
+from Products.PageTemplates.Expressions import SecureModuleImporter
 from Products.PloneMeeting.browser.itemchangeorder import _compute_value_to_add
 from Products.PloneMeeting.browser.itemchangeorder import _is_integer
 from Products.PloneMeeting.browser.itemchangeorder import _to_integer
@@ -1732,6 +1734,8 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         forceHTMLContentTypeForEmptyRichFields(self)
         # update every items itemReference if needed
         self.updateItemReferences(check_needed=True)
+        # update local roles as power observers local roles may vary depending on meeting_access_on
+        self.updateLocalRoles()
         # Call sub-product-specific behaviour
         self.adapted().onEdit(isCreated=False)
         # clean cache for "Products.PloneMeeting.vocabularies.meetingdatesvocabulary"
@@ -1746,7 +1750,9 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         self.__ac_local_roles__.clear()
         # add 'Owner' local role
         self.manage_addLocalRoles(self.owner_info()['id'], ('Owner',))
-        # add powerObservers local roles
+        # Update every 'power observers' local roles given to the
+        # corresponding MeetingConfig.powerObsevers
+        # it is done on every edit because of 'meeting_access_on' TAL expression
         self._updatePowerObserversLocalRoles()
         # update annexes categorized_elements to store 'visible_for_groups'
         updateAnnexesAccess(self)
@@ -1763,7 +1769,13 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         itemState = self.queryState()
         for po_infos in cfg.getPowerObservers():
             if itemState in po_infos['meeting_states'] and \
-               self.adapted()._isViewableByPowerObservers(po_infos['row_id']):
+               _evaluateExpression(self,
+                                   expression=po_infos['meeting_access_on'],
+                                   extra_expr_ctx={
+                                       'meeting': self,
+                                       'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
+                                       'tool': tool,
+                                       'cfg': cfg}):
                 powerObserversGroupId = "%s_%s" % (cfg.getId(), po_infos['row_id'])
                 self.manage_addLocalRoles(powerObserversGroupId, (READER_USECASES['powerobservers'],))
 

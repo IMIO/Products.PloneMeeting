@@ -1082,10 +1082,12 @@
           <td tal:define="field python:here.getField('restrictAccessToSecretItems')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
+          <td tal:define="field python:here.getField('restrictAccessToSecretItemsTo')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
           <td tal:define="field python:here.getField('hideNotViewableLinkedItemsTo')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td></td>
         </tr>
         <tr valign="top">
           <td tal:define="field python:here.getField('ownerMayDeleteAnnexDecision')">

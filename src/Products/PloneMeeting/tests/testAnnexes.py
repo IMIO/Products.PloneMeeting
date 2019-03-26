@@ -152,7 +152,8 @@ class testAnnexes(PloneMeetingTestCase):
         item_initial_state, item, annexes_table, categorized_child, \
             annexNotConfidential, annexConfidential = self._setupConfidentialityOnItemAnnexes()
 
-        cfg.setItemRestrictedPowerObserversStates((item_initial_state, ))
+        self._setPowerObserverStates(observer_type='restrictedpowerobservers',
+                                     states=(item_initial_state, ))
         cfg.setItemAnnexConfidentialVisibleFor(('configgroup_restrictedpowerobservers', ))
         item.updateLocalRoles()
 
@@ -453,7 +454,8 @@ class testAnnexes(PloneMeetingTestCase):
         item_initial_state, item, advice, annexes_table, categorized_child, \
             annexNotConfidential, annexConfidential = self._setupConfidentialityOnAdviceAnnexes()
 
-        cfg.setItemRestrictedPowerObserversStates((item_initial_state, ))
+        self._setPowerObserverStates(observer_type='restrictedpowerobservers',
+                                     states=(item_initial_state, ))
         cfg.setAdviceAnnexConfidentialVisibleFor(('configgroup_restrictedpowerobservers', ))
         item.updateLocalRoles()
 
@@ -523,7 +525,8 @@ class testAnnexes(PloneMeetingTestCase):
         meeting_initial_state, meeting, annexes_table, categorized_child, \
             annexNotConfidential, annexConfidential = self._setupConfidentialityOnMeetingAnnexes()
 
-        cfg.setMeetingPowerObserversStates((meeting_initial_state, ))
+        self._setPowerObserverStates(field_name='meeting_states',
+                                     states=(meeting_initial_state, ))
         cfg.setMeetingAnnexConfidentialVisibleFor(('configgroup_powerobservers', ))
         meeting.updateLocalRoles()
 
@@ -537,7 +540,9 @@ class testAnnexes(PloneMeetingTestCase):
         meeting_initial_state, meeting, annexes_table, categorized_child, \
             annexNotConfidential, annexConfidential = self._setupConfidentialityOnMeetingAnnexes()
 
-        cfg.setMeetingRestrictedPowerObserversStates((meeting_initial_state, ))
+        self._setPowerObserverStates(observer_type='restrictedpowerobservers',
+                                     field_name='meeting_states',
+                                     states=(meeting_initial_state, ))
         cfg.setMeetingAnnexConfidentialVisibleFor(('configgroup_restrictedpowerobservers', ))
         meeting.updateLocalRoles()
 

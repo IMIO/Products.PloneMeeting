@@ -2427,9 +2427,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(item)
         if not cfg.getRestrictAccessToSecretItems():
             return True
-        # Bypass privacy check for super users
-        if tool.isPowerObserverForCfg(cfg) or tool.isManager(item):
+        # Bypass privacy check for (Meeting)Manager
+        if tool.isManager(item):
             return True
+        # check if current user is a power observer in MeetingConfig.restrictAccessToSecretItemsTo
+        for power_observer_type in cfg.getRestrictAccessToSecretItemsTo():
+            if tool.isPowerObserverForCfg(cfg, power_observer_type=power_observer_type):
+                return False
         # Check that the user belongs to the proposing group.
         proposingGroup = item.getProposingGroup()
         userInProposingGroup = tool.get_plone_groups_for_user(org_uid=proposingGroup)
@@ -2444,8 +2448,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # check if in item.adviceIndex
         userAdviserGroups = [userGroup for userGroup in userGroups if userGroup.endswith('_advisers')]
         for userAdviserGroup in userAdviserGroups:
-            org = get_organization(userAdviserGroup)
-            org_uid = org.UID()
+            org_uid = userAdviserGroup.replace('_advisers', '')
             if org_uid in item.adviceIndex and \
                item.adviceIndex[org_uid]['item_viewable_by_advisers']:
                 return True
@@ -5209,10 +5212,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                             triggered_by_transition=triggered_by_transition,
                             inheritedAdviserUids=inheritedAdviserUids)
         # Update every 'power observers' local roles given to the
-        # corresponding MeetingConfig powerobsevers group in case the 'initial_wf_state'
-        # is selected in MeetingConfig.powerObservers item_states/meeting_states
-        # we do this each time the element is edited because of the MeetingItem._isViewableByPowerObservers
-        # method that could change access of power observers depending on a particular value
+        # corresponding MeetingConfig.powerObsevers
+        # it is done on every edit because of 'item_access_on' TAL expression
         self._updatePowerObserversLocalRoles()
         # update budget impact editors local roles
         # actually it could be enough to do in in the onItemTransition but as it is
@@ -5266,13 +5267,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         itemState = self.queryState()
         for po_infos in cfg.getPowerObservers():
             if itemState in po_infos['item_states'] and \
-               self.adapted()._isViewableByPowerObservers(po_infos['row_id']):
+               _evaluateExpression(self,
+                                   expression=po_infos['item_access_on'],
+                                   extra_expr_ctx={
+                                       'item': self,
+                                       'pm_utils': SecureModuleImporter['Products.PloneMeeting.utils'],
+                                       'tool': tool,
+                                       'cfg': cfg}):
                 powerObserversGroupId = "%s_%s" % (cfg_id, po_infos['row_id'])
                 self.manage_addLocalRoles(powerObserversGroupId, (READER_USECASES['powerobservers'],))
-
-    def _isViewableByPowerObservers(self, suffix):
-        '''See doc in interfaces.py.'''
-        return True
 
     def _updateBudgetImpactEditorsLocalRoles(self):
         '''Configure local role for use case 'budget_impact_reviewers' to the corresponding

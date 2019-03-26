@@ -143,6 +143,40 @@ class Migrate_To_4_1(Migrator):
                 delattr(cfg, 'meetingPowerObserversStates')
                 delattr(cfg, 'itemRestrictedPowerObserversStates')
                 delattr(cfg, 'meetingRestrictedPowerObserversStates')
+                # migrate attributes using powerobservers values
+                # hideCssClassesTo
+                hideCssClassesTo = cfg.getHideCssClassesTo()
+                adapted_hideCssClassesTo = []
+                if 'power_observers' in hideCssClassesTo:
+                    adapted_hideCssClassesTo.append('powerobservers')
+                if 'restricted_power_observers' in hideCssClassesTo:
+                    adapted_hideCssClassesTo.append('restrictedpowerobservers')
+                cfg.setHideCssClassesTo(adapted_hideCssClassesTo)
+                # hideHistoryTo
+                hideHistoryTo = cfg.getHideHistoryTo()
+                adapted_hideHistoryTo = []
+                if 'power_observers' in hideHistoryTo:
+                    adapted_hideHistoryTo.append('powerobservers')
+                if 'restricted_power_observers' in hideHistoryTo:
+                    adapted_hideHistoryTo.append('restrictedpowerobservers')
+                cfg.setHideHistoryTo(adapted_hideHistoryTo)
+                # hideNotViewableLinkedItemsTo
+                hideNotViewableLinkedItemsTo = cfg.getHideNotViewableLinkedItemsTo()
+                adapted_hideNotViewableLinkedItemsTo = []
+                if 'power_observers' in hideNotViewableLinkedItemsTo:
+                    adapted_hideNotViewableLinkedItemsTo.append('powerobservers')
+                if 'restricted_power_observers' in hideNotViewableLinkedItemsTo:
+                    adapted_hideNotViewableLinkedItemsTo.append('restrictedpowerobservers')
+                cfg.setHideNotViewableLinkedItemsTo(adapted_hideNotViewableLinkedItemsTo)
+                # adviceConfidentialFor
+                adviceConfidentialFor = cfg.getAdviceConfidentialFor()
+                adapted_adviceConfidentialFor = []
+                if 'power_observers' in adviceConfidentialFor:
+                    adapted_adviceConfidentialFor.append('powerobservers')
+                if 'restricted_power_observers' in adviceConfidentialFor:
+                    adapted_adviceConfidentialFor.append('restrictedpowerobservers')
+                cfg.setAdviceConfidentialFor(adapted_adviceConfidentialFor)
+
         logger.info('Done.')
 
     def _enableRefusedWFAdaptation(self):

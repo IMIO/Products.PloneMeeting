@@ -59,6 +59,12 @@ Changelog
 - Added parameter ToolPloneMeeting.enableScanDocs, False by default, to be able to enable/disable functionnality related to the documents scanning when
   imio.zamqp.pm is present
 - Format log message when an item was cloned using collective.fingerpointing
+- Make power observers management generic using MeetingConfig.powerObservers datagridfield and define :
+  - item states in which power observer has access;
+  - meeting states in which power observer has access;
+  - item TAL expression conditioning access;
+  - meeting TAL expression conditioning access.
+  Definable TAL expressions make adaptable method MeetingItem._isViewableByPowerObservers obsolete, it is removed.
 
 4.1b16 (2019-01-31)
 -------------------
