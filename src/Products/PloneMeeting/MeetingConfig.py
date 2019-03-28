@@ -3246,6 +3246,56 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         if not currentState.id == 'presented':
             return _('last_transition_must_result_in_presented_state')
 
+    security.declarePrivate('validate_powerObservers')
+
+    def validate_powerObservers(self, value):
+        '''We check that :
+           - we do not have same value for 'label';
+           - if we remove a line :
+             - the power observer is not used in any other MeetingConfig fields;
+             - the linked Plone groups is empty.
+        '''
+        # check that each label is different
+        labels = [v['label'].strip() for v in value
+                  if v['orderindex_'] != 'template_row_marker']
+        if len(set(labels)) != len(labels):
+            return translate('power_observer_same_label_error',
+                             domain='PloneMeeting',
+                             context=self.REQUEST)
+
+        # check removed power observers
+        storedPowerObservers = self.getPowerObservers()
+        storedRowIds = [v['row_id'].strip() for v in storedPowerObservers]
+        rowIds = [v['row_id'].strip() for v in value
+                  if v['orderindex_'] != 'template_row_marker']
+        removedRowIds = [storedRowId for storedRowId in storedRowIds
+                         if storedRowId not in rowIds]
+
+        for removedRowId in removedRowIds:
+            # check if used in another MeetingConfig field
+            fields_using_power_observers = self.Schema().filterFields(vocabulary='listPowerObserversTypes')
+            for field in fields_using_power_observers:
+                if removedRowId in field.get(self):
+                    return translate('power_observer_removed_used_in_fields',
+                                     domain='PloneMeeting',
+                                     context=self.REQUEST)
+            # also in additional fields
+            configgroup_value = '{0}_{1}'.format(CONFIGGROUPPREFIX, removedRowId)
+            additional_stored_values = self.getItemAnnexConfidentialVisibleFor() + \
+                self.getAdviceAnnexConfidentialVisibleFor() + self.getMeetingAnnexConfidentialVisibleFor()
+            if configgroup_value in additional_stored_values:
+                return translate('power_observer_removed_used_in_fields',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+
+            # check if linked Plone group is empty
+            plone_group_id = '{0}_{1}'.format(self.getId(), removedRowId)
+            groupMembers = api.group.get(plone_group_id).getGroupMembers()
+            if groupMembers:
+                return translate('power_observer_removed_plone_group_not_empty',
+                                 domain='PloneMeeting',
+                                 context=self.REQUEST)
+
     security.declarePrivate('validate_customAdvisers')
 
     def validate_customAdvisers(self, value):
