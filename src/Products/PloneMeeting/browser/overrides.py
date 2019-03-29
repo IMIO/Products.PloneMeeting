@@ -1072,7 +1072,8 @@ class CategorizedAnnexesView(CategorizedTabView):
         """ """
         portal_types = api.portal.get_tool('portal_types')
         annexTypeInfo = portal_types['annex']
-        return annexTypeInfo in self.context.allowedContentTypes()
+        return annexTypeInfo in self.context.allowedContentTypes() and \
+            collective_iconifiedcategory_utils.get_categories(self.context)
 
     def showAddAnnexDecision(self):
         """ """
@@ -1223,9 +1224,10 @@ class PMContentHistoryView(IHContentHistoryView):
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self.context)
             hideHistoryTo = cfg.getHideHistoryTo()
-            if ('power_observers' in hideHistoryTo and tool.isPowerObserverForCfg(cfg)) or \
-               ('restricted_power_observers' in hideHistoryTo and tool.isPowerObserverForCfg(cfg, isRestricted=True)):
-                res = False
+            for power_observer_type in hideHistoryTo:
+                if tool.isPowerObserverForCfg(cfg, power_observer_type=power_observer_type):
+                    res = False
+                    break
         return res
 
 

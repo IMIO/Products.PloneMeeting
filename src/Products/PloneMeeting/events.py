@@ -37,8 +37,6 @@ from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import ITEMTEMPLATESMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
-from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
-from Products.PloneMeeting.config import RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import ROOT_FOLDER
 from Products.PloneMeeting.config import TOOL_FOLDER_SEARCHES
 from Products.PloneMeeting.interfaces import IConfigElement
@@ -265,18 +263,12 @@ def onOrgWillBeRemoved(current_org, event):
                                                       context=request))
 
     # Then check that every linked Plone group is empty because we are going to delete them.
-    portal = api.portal.get()
     for suffix in get_all_suffixes(current_org_uid):
         plone_group_id = get_plone_group_id(current_org_uid, suffix)
-        # using acl_users.source_groups.listAssignedPrincipals will
-        # show us 'not found' members
-        groupMembers = portal.acl_users.source_groups.listAssignedPrincipals(plone_group_id)
-        # groupMembers is something like :
-        # [('a_removed_user', '<a_removed_user: not found>'), ('pmCreator1', 'pmCreator1'), ]
-        groupsMembersWithoutNotFound = [member for member, info in groupMembers if 'not found' not in info]
-        if groupsMembersWithoutNotFound:
+        groupMembers = api.group.get(plone_group_id).getGroupMembers()
+        if groupMembers:
             raise BeforeDeleteException(translate("can_not_delete_organization_plonegroup",
-                                                  mapping={'plone_group_id': groupsMembersWithoutNotFound[0]},
+                                                  mapping={'plone_group_id': groupMembers[0]},
                                                   domain="plone",
                                                   context=request))
     # And finally, check that organization is not linked to an existing item.
@@ -486,9 +478,11 @@ def onConfigWillBeRemoved(config, event):
             portal_types.manage_delObjects([pt])
     # Remove groups added by the MeetingConfig (budgetimpacteditors, powerobservers, ...)
     portal_groups = api.portal.get_tool('portal_groups')
+    group_suffixes = [MEETINGMANAGERS_GROUP_SUFFIX,
+                      BUDGETIMPACTEDITORS_GROUP_SUFFIX,
+                      ITEMTEMPLATESMANAGERS_GROUP_SUFFIX]
+    group_suffixes += [po_infos['row_id'] for po_infos in config.getPowerObservers()]
     for suffix in (MEETINGMANAGERS_GROUP_SUFFIX,
-                   POWEROBSERVERS_GROUP_SUFFIX,
-                   RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX,
                    BUDGETIMPACTEDITORS_GROUP_SUFFIX,
                    ITEMTEMPLATESMANAGERS_GROUP_SUFFIX):
         portal_groups.removeGroup("%s_%s" % (config.getId(), suffix))

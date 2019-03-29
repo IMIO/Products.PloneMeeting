@@ -944,17 +944,15 @@ class testViews(PloneMeetingTestCase):
     def test_pm_PMTransitionBatchActionFormOnlyForMeetingManagersOnMeeting(self):
         """The PMTransitionBatchActionForm is only available to MeetingManagers on
            dashoboards of the meeting_view."""
-        cfg = self.meetingConfig
-
         self.changeUser('pmManager')
         meeting = self.create('Meeting', date=DateTime('2018/03/14'))
         self.freezeMeeting(meeting)
         # freeze the meeting so it is viewable in most workflows to various groups
         form = getMultiAdapter((meeting, self.request), name=u'transition-batch-action')
         self.assertTrue(form.available())
-
         # not available to others
-        cfg.setMeetingPowerObserversStates((self._stateMappingFor('frozen', meta_type='Meeting'),))
+        self._setPowerObserverStates(field_name='meeting_states',
+                                     states=(self._stateMappingFor('frozen', meta_type='Meeting'),))
         meeting.updateLocalRoles()
         self.changeUser('powerobserver1')
         self.assertTrue(self.hasPermission(View, meeting))
@@ -969,7 +967,7 @@ class testViews(PloneMeetingTestCase):
     def test_pm_UpdateLocalRolesBatchActionForm(self):
         """This will call updateLocalRoles on selected elements."""
         cfg = self.meetingConfig
-        cfg.setItemPowerObserversStates(())
+        self._setPowerObserverStates(states=())
         powerobservers = '{0}_powerobservers'.format(cfg.getId())
 
         # create some items
@@ -987,7 +985,7 @@ class testViews(PloneMeetingTestCase):
         self.assertFalse(powerobservers in item1.__ac_local_roles__)
         self.assertFalse(powerobservers in item2.__ac_local_roles__)
         self.assertFalse(powerobservers in item3.__ac_local_roles__)
-        cfg.setItemPowerObserversStates((self._stateMappingFor('itemcreated'), ))
+        self._setPowerObserverStates(states=(self._stateMappingFor('itemcreated'), ))
         dashboardFolder = self.getMeetingFolder().searches_items
         form = dashboardFolder.restrictedTraverse('@@update-local-roles-batch-action')
         self.assertTrue(form.available())
@@ -1242,7 +1240,7 @@ class testViews(PloneMeetingTestCase):
               'delay': '5',
               'delay_label': ''}, ])
         cfg.setPowerAdvisersGroups((self.vendors_uid,))
-        cfg.setItemPowerObserversStates(('itemcreated',))
+        self._setPowerObserverStates(states=('itemcreated',))
         cfg.setItemAdviceStates((self._stateMappingFor('itemcreated'),))
         cfg.setItemAdviceEditStates((self._stateMappingFor('itemcreated'),))
         cfg.setItemAdviceViewStates((self._stateMappingFor('itemcreated'),))
@@ -1297,7 +1295,7 @@ class testViews(PloneMeetingTestCase):
         # remove recurring items in self.meetingConfig
         self._removeConfigObjectsFor(cfg)
         cfg.setRestrictAccessToSecretItems(True)
-        cfg.setItemRestrictedPowerObserversStates(('presented', ))
+        self._setPowerObserverStates(states=('presented', ))
         cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'at_the_end',
                                            'reverse': '0'}, ))
         # create 2 'public' items and 1 'secret' item
@@ -1413,7 +1411,6 @@ class testViews(PloneMeetingTestCase):
         """By default, labels are editable if item editable, except for MeetingManagers
            that may edit labels forever.
            Personal labels are editable by anybody able to see the item."""
-        cfg = self.meetingConfig
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
         item.setDecision(self.decisionText)
@@ -1454,7 +1451,7 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(item_labeling.storage, {'label': [], 'personal-label': ['pmCreator1']})
         # powerobserver
         self.changeUser('siteadmin')
-        cfg.setItemPowerObserversStates((item.queryState(),))
+        self._setPowerObserverStates(states=(item.queryState(),))
         item._update_after_edit()
         self.changeUser('powerobserver1')
         self.assertTrue(self.hasPermission(View, item))

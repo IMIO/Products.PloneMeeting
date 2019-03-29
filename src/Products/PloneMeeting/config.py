@@ -133,14 +133,6 @@ MEETINGREVIEWERS = {'*': OrderedDict([('reviewers', ['proposed']),
                                       ('prereviewers', ['proposed']), ]), }
 
 # This is the group created for each MeetingConfig where we store
-# users that will be able to see the meetings and items in states
-# corresponding to MeetingConfig.itemPowerObserverStates and meetingPowerObserverStates
-POWEROBSERVERS_GROUP_SUFFIX = 'powerobservers'
-# This is the group created for each MeetingConfig where we store
-# users that will be able to see the meetings and items in states
-# corresponding to MeetingConfig.itemRestrictedPowerObserverStates and meetingRestrictedPowerObserverStates
-RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX = 'restrictedpowerobservers'
-# This is the group created for each MeetingConfig where we store
 # users that will be able to edit the budgetInfos field for items in state
 # corresponding to MeetingConfig.itemBudgetInfosStates
 BUDGETIMPACTEDITORS_GROUP_SUFFIX = 'budgetimpacteditors'
@@ -159,7 +151,6 @@ READER_USECASES = {
     'copy_groups': 'Reader',
     'advices': 'Reader',
     'powerobservers': 'Reader',
-    'restrictedpowerobservers': 'Reader',
     'itemtemplatesmanagers': 'Reader',
     'groupincharge': 'Reader',
     'confidentialannex': 'AnnexReader',

@@ -746,10 +746,14 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         """Test the updateAllLocalRoles method that update every items when configuration changed.
            First set (restricted) power observers may view in state 'itemcreated' then change to 'proposed'."""
         cfg = self.meetingConfig
-        cfg.setItemPowerObserversStates(('itemcreated', ))
-        cfg.setMeetingPowerObserversStates(('created', ))
-        cfg.setItemRestrictedPowerObserversStates((self._stateMappingFor('proposed'), ))
-        cfg.setMeetingRestrictedPowerObserversStates(('closed', ))
+        self._setPowerObserverStates(states=('itemcreated', ))
+        self._setPowerObserverStates(field_name='meeting_states',
+                                     states=('created', ))
+        self._setPowerObserverStates(observer_type='restrictedpowerobservers',
+                                     states=(self._stateMappingFor('proposed'), ))
+        self._setPowerObserverStates(field_name='meeting_states',
+                                     observer_type='restrictedpowerobservers',
+                                     states=('closed', ))
         # only available to 'Managers'
         self.changeUser('pmManager')
         self.assertRaises(Unauthorized, self.tool.restrictedTraverse, 'updateAllLocalRoles')
@@ -768,10 +772,14 @@ class testToolPloneMeeting(PloneMeetingTestCase):
 
         # change configuration, updateAllLocalRoles then check again
         self.changeUser('siteadmin')
-        cfg.setItemPowerObserversStates((self._stateMappingFor('proposed'), ))
-        cfg.setMeetingPowerObserversStates(('closed', ))
-        cfg.setItemRestrictedPowerObserversStates(('itemcreated', ))
-        cfg.setMeetingRestrictedPowerObserversStates(('created', ))
+        self._setPowerObserverStates(states=(self._stateMappingFor('proposed'), ))
+        self._setPowerObserverStates(field_name='meeting_states',
+                                     states=('closed', ))
+        self._setPowerObserverStates(observer_type='restrictedpowerobservers',
+                                     states=('itemcreated', ))
+        self._setPowerObserverStates(field_name='meeting_states',
+                                     observer_type='restrictedpowerobservers',
+                                     states=('created', ))
         self.tool.updateAllLocalRoles()
         # local roles and catalog are updated
         catalog = self.portal.portal_catalog
@@ -1028,6 +1036,25 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertNotEqual(tool_original_modified, tool_new_modified)
         browser.open(pmFolder.absolute_url() + '/searches_items')
         self.assertTrue(tool_new_modified in browser.headers['etag'])
+
+    def test_pm_IsPowerObserverForCfg(self):
+        """ """
+        cfg = self.meetingConfig
+        self.changeUser('pmManager')
+        self.assertFalse(self.tool.isPowerObserverForCfg(cfg))
+        self.assertFalse(self.tool.isPowerObserverForCfg(cfg, power_observer_type='powerobservers'))
+        self.assertFalse(self.tool.isPowerObserverForCfg(cfg, power_observer_type='restrictedpowerobservers'))
+        self.assertFalse(self.tool.isPowerObserverForCfg(cfg, power_observer_type='unknown'))
+        self.changeUser('powerobserver1')
+        self.assertTrue(self.tool.isPowerObserverForCfg(cfg))
+        self.assertTrue(self.tool.isPowerObserverForCfg(cfg, power_observer_type='powerobservers'))
+        self.assertFalse(self.tool.isPowerObserverForCfg(cfg, power_observer_type='restrictedpowerobservers'))
+        self.assertFalse(self.tool.isPowerObserverForCfg(cfg, power_observer_type='unknown'))
+        self.changeUser('restrictedpowerobserver1')
+        self.assertTrue(self.tool.isPowerObserverForCfg(cfg))
+        self.assertFalse(self.tool.isPowerObserverForCfg(cfg, power_observer_type='powerobservers'))
+        self.assertTrue(self.tool.isPowerObserverForCfg(cfg, power_observer_type='restrictedpowerobservers'))
+        self.assertFalse(self.tool.isPowerObserverForCfg(cfg, power_observer_type='unknown'))
 
 
 def test_suite():

@@ -34,6 +34,7 @@ from eea.facetednavigation.widgets.resultsperpage.widget import Widget as Result
 from ftw.labels.interfaces import ILabeling
 from ftw.labels.interfaces import ILabelJar
 from OFS.ObjectManager import BeforeDeleteException
+from plone import api
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFPlone import PloneMessageFactory
 from Products.CMFPlone.CatalogTool import getIcon
@@ -47,9 +48,7 @@ from Products.PloneMeeting.config import ITEM_ICON_COLORS
 from Products.PloneMeeting.config import ITEMTEMPLATESMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
-from Products.PloneMeeting.config import POWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import READER_USECASES
-from Products.PloneMeeting.config import RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import TOOL_FOLDER_SEARCHES
 from Products.PloneMeeting.config import WriteHarmlessConfig
 from Products.PloneMeeting.events import _itemAnnexTypes
@@ -64,8 +63,8 @@ from zope.lifecycleevent import ObjectModifiedEvent
 
 MC_GROUP_SUFFIXES = (
     BUDGETIMPACTEDITORS_GROUP_SUFFIX,
-    POWEROBSERVERS_GROUP_SUFFIX,
-    RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX,
+    'powerobservers',
+    'restrictedpowerobservers',
     MEETINGMANAGERS_GROUP_SUFFIX,
     ITEMTEMPLATESMANAGERS_GROUP_SUFFIX)
 
@@ -1022,8 +1021,8 @@ class testMeetingConfig(PloneMeetingTestCase):
             groupId = '{0}_{1}'.format(cfgId, suffix)
             self.assertTrue(groupId in existingGroupIds)
             # for (restricted)powerobservers, it gets a Reader localrole on tool and MeetingConfig
-            if suffix in (POWEROBSERVERS_GROUP_SUFFIX,
-                          RESTRICTEDPOWEROBSERVERS_GROUP_SUFFIX,
+            if suffix in ('powerobservers',
+                          'restrictedpowerobservers',
                           ITEMTEMPLATESMANAGERS_GROUP_SUFFIX):
                 self.assertTrue(self.tool.__ac_local_roles__[groupId] == [READER_USECASES[suffix], ])
                 self.assertTrue(cfg.__ac_local_roles__[groupId] == [READER_USECASES[suffix], ])
@@ -1656,6 +1655,99 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertEqual(item_labeling.storage, {})
         self.assertTrue(jar.remove(label_id='label'))
         self.assertFalse('label' in jar.storage)
+
+    def test_pm_Validate_powerObservers(self):
+        '''Test the MeetingConfig.powerObservers validation.
+           We check that :
+           - we do not have same value for 'label';
+           - if we remove a line :
+             - the power observer is not used in any other MeetingConfig fields;
+             - the linked Plone groups is empty.'''
+        cfg = self.meetingConfig
+        values = [
+            {'item_access_on': '',
+             'item_states': ['accepted'],
+             'label': 'Power observers \xc3\xa9',
+             'meeting_access_on': '',
+             'meeting_states': ['closed'],
+             'orderindex_': '1',
+             'row_id': 'powerobservers'},
+            {'item_access_on': '',
+             'item_states': ['accepted'],
+             'label': 'Restricted power observers \xc3\xa9',
+             'meeting_access_on': '',
+             'meeting_states': ['closed'],
+             'orderindex_': '2',
+             'row_id': 'restrictedpowerobservers'},
+            {'item_access_on': '',
+             'item_states': [],
+             'label': '',
+             'meeting_access_on': '',
+             'meeting_states': [],
+             'orderindex_': 'template_row_marker',
+             'row_id': ''}]
+
+        self.assertFalse(cfg.validate_powerObservers(values))
+
+        # twice same label
+        values = [
+            {'item_access_on': '',
+             'item_states': ['accepted'],
+             'label': 'Label',
+             'meeting_access_on': '',
+             'meeting_states': ['closed'],
+             'orderindex_': '1',
+             'row_id': 'powerobservers'},
+            {'item_access_on': '',
+             'item_states': ['accepted'],
+             'label': 'Label',
+             'meeting_access_on': '',
+             'meeting_states': ['closed'],
+             'orderindex_': '2',
+             'row_id': 'restrictedpowerobservers'}]
+
+        same_label_error_msg = translate(
+            'power_observer_same_label_error',
+            domain='PloneMeeting',
+            context=self.portal.REQUEST)
+        self.assertEqual(cfg.validate_powerObservers(values), same_label_error_msg)
+
+        # remove a used powerObserver
+        # used in MeetingConfig fields
+        self.assertTrue('restrictedpowerobservers' in cfg.getRestrictAccessToSecretItemsTo())
+        values = [
+            {'item_access_on': '',
+             'item_states': ['accepted'],
+             'label': 'Power observers \xc3\xa9',
+             'meeting_access_on': '',
+             'meeting_states': ['closed'],
+             'row_id': 'powerobservers'}]
+        used_in_fields_error_msg = translate(
+            'power_observer_removed_used_in_fields',
+            domain='PloneMeeting',
+            context=self.portal.REQUEST)
+        self.assertEqual(cfg.validate_powerObservers(values), used_in_fields_error_msg)
+        cfg.setRestrictAccessToSecretItemsTo(())
+        # also chech configgroup_ prefixed fields
+        cfg.setItemAnnexConfidentialVisibleFor(('configgroup_restrictedpowerobservers', ))
+        self.assertEqual(cfg.validate_powerObservers(values), used_in_fields_error_msg)
+        cfg.setItemAnnexConfidentialVisibleFor(())
+
+        # linked Plone group is not empty
+        plone_group_id = '{0}_{1}'.format(cfg.getId(), 'restrictedpowerobservers')
+        plone_group = api.group.get(plone_group_id)
+        self.assertEqual(plone_group.getMemberIds(), ['restrictedpowerobserver1'])
+        plone_group_not_empty_error_msg = translate(
+            'power_observer_removed_plone_group_not_empty',
+            domain='PloneMeeting',
+            context=self.portal.REQUEST)
+        self.assertEqual(cfg.validate_powerObservers(values), plone_group_not_empty_error_msg)
+        self._removePrincipalFromGroup('restrictedpowerobserver1', plone_group_id)
+        # validates with removed power observer
+        self.assertFalse(cfg.validate_powerObservers(values))
+        cfg.setPowerObservers(values)
+        # the linked Plone group was removed
+        self.assertFalse(api.group.get(plone_group_id))
 
 
 def test_suite():

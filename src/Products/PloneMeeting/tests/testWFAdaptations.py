@@ -2346,7 +2346,7 @@ class testWFAdaptations(PloneMeetingTestCase):
               'delay': '5',
               'delay_label': ''}, ])
         cfg.setPowerAdvisersGroups((org3_uid, ))
-        cfg.setItemPowerObserversStates(('itemcreated', ))
+        self._setPowerObserverStates(states=('itemcreated', ))
         cfg.setItemAdviceStates(('itemcreated', ))
         cfg.setItemAdviceEditStates(('itemcreated', ))
         cfg.setItemAdviceViewStates(('itemcreated', ))
