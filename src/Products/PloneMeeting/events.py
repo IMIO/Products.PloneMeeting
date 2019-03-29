@@ -262,7 +262,7 @@ def onOrgWillBeRemoved(current_org, event):
                                                       domain="plone",
                                                       context=request))
 
-    # Then check that every linked Plone group is empty because we are going to delete them.
+    # Then check that every linked Plone group is empty because we are going to delete it.
     for suffix in get_all_suffixes(current_org_uid):
         plone_group_id = get_plone_group_id(current_org_uid, suffix)
         groupMembers = api.group.get(plone_group_id).getGroupMembers()
@@ -482,10 +482,8 @@ def onConfigWillBeRemoved(config, event):
                       BUDGETIMPACTEDITORS_GROUP_SUFFIX,
                       ITEMTEMPLATESMANAGERS_GROUP_SUFFIX]
     group_suffixes += [po_infos['row_id'] for po_infos in config.getPowerObservers()]
-    for suffix in (MEETINGMANAGERS_GROUP_SUFFIX,
-                   BUDGETIMPACTEDITORS_GROUP_SUFFIX,
-                   ITEMTEMPLATESMANAGERS_GROUP_SUFFIX):
-        portal_groups.removeGroup("%s_%s" % (config.getId(), suffix))
+    for suffix in group_suffixes:
+        portal_groups.removeGroup("{0}_{1}".format(config.getId(), suffix))
 
 
 def _check_item_pasted_in_cfg(item):

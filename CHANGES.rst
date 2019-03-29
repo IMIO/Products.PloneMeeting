@@ -65,6 +65,7 @@ Changelog
   - item TAL expression conditioning access;
   - meeting TAL expression conditioning access.
   Definable TAL expressions make adaptable method MeetingItem._isViewableByPowerObservers obsolete, it is removed.
+- Removed unused fields on ToolPloneMeeting : 'extractTextFromFiles', 'availableOcrLanguages', 'defaultOcrLanguage' and 'enableUserPreferences'
 
 4.1b16 (2019-01-31)
 -------------------

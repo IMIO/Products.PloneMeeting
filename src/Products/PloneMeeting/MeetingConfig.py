@@ -2051,7 +2051,7 @@ schema = Schema((
             description="RestrictAccessToSecretItemsTo",
             description_msgid="restrict_access_to_secret_items_to_descr",
             format="checkbox",
-            label='Restrictaccesstosecretitems',
+            label='Restrictaccesstosecretitemsto',
             label_msgid='PloneMeeting_label_restrictAccessToSecretItemsTo',
             i18n_domain='PloneMeeting',
         ),

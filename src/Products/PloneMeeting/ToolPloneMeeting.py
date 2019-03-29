@@ -48,7 +48,6 @@ from Products.Archetypes.atapi import OrderedBaseFolder
 from Products.Archetypes.atapi import OrderedBaseFolderSchema
 from Products.Archetypes.atapi import registerType
 from Products.Archetypes.atapi import Schema
-from Products.Archetypes.atapi import SelectionWidget
 from Products.Archetypes.atapi import StringField
 from Products.Archetypes.atapi import TextAreaWidget
 from Products.Archetypes.atapi import TextField
@@ -168,43 +167,6 @@ schema = Schema((
         ),
         default_content_type='text/plain',
     ),
-    BooleanField(
-        name='extractTextFromFiles',
-        default=defValues.extractTextFromFiles,
-        widget=BooleanField._properties['widget'](
-            description="ExtractTextFromFiles",
-            description_msgid="extract_text_from_files_descr",
-            label='Extracttextfromfiles',
-            label_msgid='PloneMeeting_label_extractTextFromFiles',
-            i18n_domain='PloneMeeting',
-        ),
-    ),
-    LinesField(
-        name='availableOcrLanguages',
-        default=defValues.availableOcrLanguages,
-        widget=MultiSelectionWidget(
-            description="AvailableOcrLanguages",
-            description_msgid="available_ocr_languages_descr",
-            format="checkbox",
-            label='Availableocrlanguages',
-            label_msgid='PloneMeeting_label_availableOcrLanguages',
-            i18n_domain='PloneMeeting',
-        ),
-        multiValued=1,
-        vocabulary='listOcrLanguages',
-    ),
-    StringField(
-        name='defaultOcrLanguage',
-        default=defValues.defaultOcrLanguage,
-        widget=SelectionWidget(
-            description="DefaultOcrLanguage",
-            description_msgid="default_ocr_language_descr",
-            label='Defaultocrlanguage',
-            label_msgid='PloneMeeting_label_defaultOcrLanguage',
-            i18n_domain='PloneMeeting',
-        ),
-        vocabulary='listOcrLanguages',
-    ),
     LinesField(
         name='modelAdaptations',
         default=defValues.modelAdaptations,
@@ -218,17 +180,6 @@ schema = Schema((
         ),
         multiValued=1,
         vocabulary='listModelAdaptations',
-    ),
-    BooleanField(
-        name='enableUserPreferences',
-        default=defValues.enableUserPreferences,
-        widget=BooleanField._properties['widget'](
-            description="EnableUserPreferences",
-            description_msgid="enable_user_preferences_descr",
-            label='Enableuserpreferences',
-            label_msgid='PloneMeeting_label_enableUserPreferences',
-            i18n_domain='PloneMeeting',
-        ),
     ),
     LinesField(
         name='workingDays',
@@ -915,15 +866,6 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
 
         adapted.__init__(obj, **params)
         return adapted.getLink()
-
-    security.declarePublic('listOcrLanguages')
-
-    def listOcrLanguages(self):
-        '''Return the list of OCR languages supported by Tesseract.'''
-        res = []
-        for lang in self.ocrLanguages:
-            res.append((lang, translate('language_%s' % lang, domain='PloneMeeting', context=self.REQUEST)))
-        return DisplayList(tuple(res))
 
     security.declarePublic('listModelAdaptations')
 

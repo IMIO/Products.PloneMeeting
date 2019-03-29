@@ -809,14 +809,6 @@ class Migrate_To_4_1(Migrator):
                 folder.reindexObject()
         logger.info('Done.')
 
-    def _cleanMeetingConfigs(self):
-        """Clean MeetingConfigs, remove attribute 'defaultMeetingItemMotivation'."""
-        logger.info('Cleaning MeetingConfigs...')
-        for cfg in self.tool.objectValues('MeetingConfig'):
-            if hasattr(cfg, 'defaultMeetingItemMotivation'):
-                delattr(cfg, 'defaultMeetingItemMotivation')
-        logger.info('Done.')
-
     def _fixMeetingCollectionsQuery(self):
         """The review_state value must be a list, not a tuple."""
         logger.info('Fixing meetings related collections query...')
@@ -1030,12 +1022,13 @@ class Migrate_To_4_1(Migrator):
                                  new_word="power_observer_type='restrictedpowerobservers'")
         self.updateTALConditions(old_word='isRestricted=False',
                                  new_word="power_observer_type='powerobservers'")
-
         self._updateUsedAttributes()
         self._updateHistorizedAttributes()
         self._migrateGroupsShownInDashboardFilter()
         self._enableStyleTemplates()
-        self._cleanMeetingConfigs()
+        self.cleanMeetingConfigs(field_names=['defaultMeetingItemMotivation'])
+        self.cleanTool(field_names=['extractTextFromFiles', 'availableOcrLanguages',
+                                    'defaultOcrLanguage', 'enableUserPreferences'])
         self._fixMeetingCollectionsQuery()
         self._removeUsersGlobalRoles()
         self._updateItemColumnsKeys()

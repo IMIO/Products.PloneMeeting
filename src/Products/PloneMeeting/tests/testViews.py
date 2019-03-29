@@ -822,7 +822,7 @@ class testViews(PloneMeetingTestCase):
         self.assertEqual(
             view.group_users(),
             'M. PMCreator One<br />M. PMCreator One bee<br />M. PMManager')
-        # add a 'not foudn' user, will not be displayed
+        # add a 'not found' user, will not be displayed
         self._make_not_found_user()
         self.assertEqual(
             view.group_users(),

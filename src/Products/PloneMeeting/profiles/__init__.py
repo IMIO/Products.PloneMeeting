@@ -774,8 +774,7 @@ class PloneMeetingConfiguration(Descriptor):
         return klass.instance
     get = classmethod(get)
 
-    multiSelectFields = ('availableOcrLanguages', 'modelAdaptations',
-                         'workingDays', 'configGroups')
+    multiSelectFields = ('modelAdaptations', 'workingDays', 'configGroups')
 
     def __init__(self, meetingFolderTitle, meetingConfigs, orgs):
         self.meetingFolderTitle = meetingFolderTitle
@@ -783,11 +782,7 @@ class PloneMeetingConfiguration(Descriptor):
         self.functionalAdminName = ''
         self.restrictUsers = False
         self.unrestrictedUsers = ''
-        self.extractTextFromFiles = False
-        self.availableOcrLanguages = ('eng',)
-        self.defaultOcrLanguage = 'eng'
         self.modelAdaptations = []
-        self.enableUserPreferences = False
         self.enableScanDocs = False
         self.workingDays = ('mon', 'tue', 'wed', 'thu', 'fri')
         self.holidays = [{'date': '2018/01/01', },  # 2018

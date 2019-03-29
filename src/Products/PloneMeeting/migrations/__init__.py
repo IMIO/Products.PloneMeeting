@@ -18,8 +18,8 @@
 from DateTime import DateTime
 from imio.migrator.migrator import Migrator as BaseMigrator
 from plone import api
+from Products.CMFPlone.utils import base_hasattr
 
-# ------------------------------------------------------------------------------
 import logging
 
 
@@ -29,7 +29,7 @@ logger = logging.getLogger('PloneMeeting')
 class Migrator(BaseMigrator):
     '''Abstract class for creating a migrator.'''
     def __init__(self, context):
-        BaseMigrator.__init__(self, context)
+        BaseMigrator.__init__(self, context, disable_linkintegrity_checks=True)
         self.tool = api.portal.get_tool('portal_plonemeeting')
         # disable email notifications for every MeetingConfigs and save
         # current state to set it back after migration in self.finish
@@ -37,11 +37,6 @@ class Migrator(BaseMigrator):
         for cfg in self.tool.objectValues('MeetingConfig'):
             self.cfgsMailMode[cfg.getId()] = cfg.getMailMode()
             cfg.setMailMode('deactivated')
-        # disable enable_link_integrity_checks
-        self.enable_link_integrity_checks = \
-            bool(self.portal.portal_properties.site_properties.enable_link_integrity_checks)
-        self.portal.portal_properties.site_properties.manage_changeProperties(
-            enable_link_integrity_checks=False)
         # disable advices invalidation for every MeetingConfigs and save
         # current state to set it back after migration in self.finish
         self.cfgsAdvicesInvalidation = {}
@@ -134,6 +129,23 @@ class Migrator(BaseMigrator):
             cfg.createSearches(cfg._searchesInfo())
         logger.info('Done.')
 
+    def cleanMeetingConfigs(self, field_names=[]):
+        """Remove given p_field_names from every MeetingConfigs."""
+        logger.info('Cleaning MeetingConfigs...')
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            for field_name in field_names:
+                if base_hasattr(cfg, field_name):
+                    delattr(cfg, field_name)
+        logger.info('Done.')
+
+    def cleanTool(self, field_names=[]):
+        """Remove given p_field_names from ToolPloneMeeting."""
+        logger.info('Cleaning ToolPloneMeeting...')
+        for field_name in field_names:
+            if base_hasattr(self.tool, field_name):
+                delattr(self.tool, field_name)
+        logger.info('Done.')
+
     def run(self):
         '''Must be overridden. This method does the migration job.'''
         raise 'You should have overridden me darling.'''
@@ -145,9 +157,6 @@ class Migrator(BaseMigrator):
         for cfgId in self.cfgsMailMode:
             cfg = getattr(self.tool, cfgId)
             cfg.setMailMode(self.cfgsMailMode[cfgId])
-        # set enable_link_integrity_checks back to original value
-        self.portal.portal_properties.site_properties.manage_changeProperties(
-            enable_link_integrity_checks=self.enable_link_integrity_checks)
         # set adviceInvalidation for every MeetingConfigs back to the right value
         for cfgId in self.cfgsAdvicesInvalidation:
             cfg = getattr(self.tool, cfgId)

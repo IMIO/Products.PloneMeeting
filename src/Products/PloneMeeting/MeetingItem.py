@@ -2431,9 +2431,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if tool.isManager(item):
             return True
         # check if current user is a power observer in MeetingConfig.restrictAccessToSecretItemsTo
+        isAPowerObserver = tool.isPowerObserverForCfg(cfg)
         for power_observer_type in cfg.getRestrictAccessToSecretItemsTo():
             if tool.isPowerObserverForCfg(cfg, power_observer_type=power_observer_type):
                 return False
+        # a power observer not in restrictAccessToSecretItemsTo?
+        if isAPowerObserver:
+            return True
         # Check that the user belongs to the proposing group.
         proposingGroup = item.getProposingGroup()
         userInProposingGroup = tool.get_plone_groups_for_user(org_uid=proposingGroup)
@@ -5996,15 +6000,15 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return ''
 
     def _appendLinkedItem(self, item, only_viewable):
-        if not only_viewable:
+        if not only_viewable or _checkPermission(View, item):
             return True
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         hideNotViewableLinkedItemsTo = cfg.getHideNotViewableLinkedItemsTo()
         for power_observer_type in hideNotViewableLinkedItemsTo:
             if tool.isPowerObserverForCfg(cfg, power_observer_type=power_observer_type):
-                return True
-        return False
+                return False
+        return True
 
     security.declarePublic('getPredecessors')
 

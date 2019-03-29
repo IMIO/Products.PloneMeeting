@@ -332,8 +332,7 @@ class PloneMeetingTestingHelpers:
         self.assertTrue((user_id, '<{0}: not found>'.format(user_id)) in
                         self.portal.acl_users.source_groups.listAssignedPrincipals(group_id))
         # groupData.getGroupMembers/groupData.getGroupMemberIds ignore not found
-        self.assertFalse(api.group.get(group_id).getGroupMembers())
-        self.assertFalse(api.group.get(group_id).getGroupMemberIds())
+        self.assertFalse(user_id in api.group.get(group_id).getGroupMemberIds())
         self.changeUser(currentUser)
 
     def _check_access(self, obj, userIds=[], read=True, write=True):

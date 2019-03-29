@@ -1024,6 +1024,9 @@ class testMeetingConfig(PloneMeetingTestCase):
             if suffix in ('powerobservers',
                           'restrictedpowerobservers',
                           ITEMTEMPLATESMANAGERS_GROUP_SUFFIX):
+                # we have same reader usecase for every powerobservers
+                if suffix == 'restrictedpowerobservers':
+                    suffix = 'powerobservers'
                 self.assertTrue(self.tool.__ac_local_roles__[groupId] == [READER_USECASES[suffix], ])
                 self.assertTrue(cfg.__ac_local_roles__[groupId] == [READER_USECASES[suffix], ])
             # for meetingmanagers, it gets MeetingManager localrole on MeetingConfig
