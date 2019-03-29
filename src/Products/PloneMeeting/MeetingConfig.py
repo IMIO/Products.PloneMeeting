@@ -2924,6 +2924,16 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 continue
             if not v.get('row_id', None):
                 v['row_id'] = 'powerobservers_{0}'.format(self.generateUniqueId())
+        # get removed row_ids and remove linked Plone group
+        storedRowIds = [v['row_id'].strip() for v in self.getPowerObservers()]
+        rowIds = [v['row_id'].strip() for v in value
+                  if v.get('orderindex_', None) != 'template_row_marker']
+        removedRowIds = [storedRowId for storedRowId in storedRowIds
+                         if storedRowId not in rowIds]
+        for removedRowId in removedRowIds:
+            plone_group_id = '{0}_{1}'.format(self.getId(), removedRowId)
+            api.group.delete(plone_group_id)
+
         self.getField('powerObservers').set(self, value, **kwargs)
 
     security.declareProtected(WriteRiskyConfig, 'setMaxShownListings')
@@ -3186,7 +3196,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
         for listType in value:
             # bypass 'template_row_marker'
-            if 'orderindex_' in listType and listType['orderindex_'] == 'template_row_marker':
+            if listType.get('orderindex_', None) == 'template_row_marker':
                 continue
             identifier = listType['identifier']
             # same identifier defined several times?
@@ -3257,7 +3267,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         '''
         # check that each label is different
         labels = [v['label'].strip() for v in value
-                  if v['orderindex_'] != 'template_row_marker']
+                  if v.get('orderindex_', None) != 'template_row_marker']
         if len(set(labels)) != len(labels):
             return translate('power_observer_same_label_error',
                              domain='PloneMeeting',
@@ -3267,7 +3277,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         storedPowerObservers = self.getPowerObservers()
         storedRowIds = [v['row_id'].strip() for v in storedPowerObservers]
         rowIds = [v['row_id'].strip() for v in value
-                  if v['orderindex_'] != 'template_row_marker']
+                  if v.get('orderindex_', None) != 'template_row_marker']
         removedRowIds = [storedRowId for storedRowId in storedRowIds
                          if storedRowId not in rowIds]
 
@@ -3280,7 +3290,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                      domain='PloneMeeting',
                                      context=self.REQUEST)
             # also in additional fields
-            configgroup_value = '{0}_{1}'.format(CONFIGGROUPPREFIX, removedRowId)
+            configgroup_value = '{0}{1}'.format(CONFIGGROUPPREFIX, removedRowId)
             additional_stored_values = self.getItemAnnexConfidentialVisibleFor() + \
                 self.getAdviceAnnexConfidentialVisibleFor() + self.getMeetingAnnexConfidentialVisibleFor()
             if configgroup_value in additional_stored_values:
@@ -3870,7 +3880,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         res = []
         for value in values:
             # pass 'template_row_marker'
-            if 'orderindex_' in value and value['orderindex_'] == 'template_row_marker':
+            if value.get('orderindex_', None) == 'template_row_marker':
                 continue
             res.append(value['insertingMethod'])
         # now that we have a list in res, we can check

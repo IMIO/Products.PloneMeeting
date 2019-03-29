@@ -708,13 +708,15 @@ class MeetingConfigDescriptor(Descriptor):
              'item_states': ['accepted'],
              'item_access_on': '',
              'meeting_states': ['closed'],
-             'meeting_access_on': ''},
+             'meeting_access_on': '',
+             'orderindex_': '1'},
             {'row_id': 'restrictedpowerobservers',
              'label': 'Super observateurs restreints',
              'item_states': [],
              'item_access_on': '',
              'meeting_states': [],
-             'meeting_access_on': ''}, )
+             'meeting_access_on': '',
+             'orderindex_': '2'})
         self.usedAdviceTypes = ('positive', 'positive_with_remarks', 'negative', 'nil')
         self.defaultAdviceType = 'positive'
         self.selectableAdvisers = []
