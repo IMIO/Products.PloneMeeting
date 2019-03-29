@@ -1026,6 +1026,10 @@ class Migrate_To_4_1(Migrator):
         self.updateTALConditions(old_word='getPloneGroupsForUser', new_word='get_plone_groups_for_user')
         self.updateTALConditions(old_word='getGroupsForUser', new_word='get_orgs_for_user')
         self.updateTALConditions(old_word='omittedSuffixes', new_word='omitted_suffixes')
+        self.updateTALConditions(old_word='isRestricted=True',
+                                 new_word="power_observer_type='restrictedpowerobservers'")
+        self.updateTALConditions(old_word='isRestricted=False',
+                                 new_word="power_observer_type='powerobservers'")
 
         self._updateUsedAttributes()
         self._updateHistorizedAttributes()
