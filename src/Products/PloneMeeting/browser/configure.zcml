@@ -310,14 +310,6 @@
       permission="zope2.View"
       />
 
-    <!-- a view that will make some utils available -->
-    <browser:page
-        for="*"
-        name="pm_utils"
-        class=".utils.Utils"
-        permission="zope2.View"
-        />
-
     <!-- Custom view for meetingadvice -->
     <browser:page
         for="Products.PloneMeeting.content.advice.IMeetingAdvice"
@@ -326,6 +318,17 @@
         template="templates/meetingadvice.pt"
         permission="zope2.View"
         />
+    <!-- Override content-core view for advice to use itemcontencore.pt instead containercontentcore.pt
+         or it breaks when viewing a version preview of a versionned advice -->
+    <configure package="plone.dexterity">
+        <browser:page
+            for="Products.PloneMeeting.content.advice.IMeetingAdvice"
+            name="content-core"
+            class=".browser.view.DefaultView"
+            template="browser/itemcontentcore.pt"
+            permission="zope2.View"
+            />
+    </configure>
 
     <!-- Overlays views -->
     <browser:page

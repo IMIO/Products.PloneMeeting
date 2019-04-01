@@ -11,7 +11,6 @@
   <tal:defines define="cfg python: view.cfg;
                        displayedAddIcon python: False;
                        adviceStyle python: cfg.getAdviceStyle();
-                       pm_utils context/@@pm_utils;
                        displayAdviceConfidentiality python: cfg.getEnableAdviceConfidentiality() and view.tool.isManager(context);
                        isRealManager python: view.tool.isManager(context, realManagers=True);
                        item_review_state context/queryState;">
@@ -209,7 +208,9 @@
               <tr tal:condition="python: adviceType != 'not_given'">
                 <td colspan="6"
                     tal:define="comment python: obj.advice_comment and obj.advice_comment.output;
-                                observations python: obj.advice_observations and obj.advice_observations.output;">
+                                needToCropComment python: comment and len(comment) > 400;
+                                observations python: obj.advice_observations and obj.advice_observations.output;
+                                needToCropObservations python: observations and len(observations) > 400;">
                     <img tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_${advice/type}.png;
                                          title string:${advice/type};"
                          i18n:attributes="title" title=""/>
@@ -226,12 +227,18 @@
 
                     <fieldset class="advice_comment">
                          <legend i18n:translate="">Advice official comment</legend>
-                         <tal:comment tal:replace="structure comment" />
+                         <tal:comment tal:replace="structure python: needToCropComment and view.pm_utils.cropHTML(comment) or comment" />
+                         <p class="discreet"
+                           tal:condition="python: needToCropComment and adviceHolderIsViewable"
+                           i18n:translate="">This is an extract of the comment, access full comment if necessary...</p>
                     </fieldset>
 
                     <fieldset class="advice_observations">
                          <legend i18n:translate="">Advice observations</legend>
-                         <tal:observations tal:replace="structure observations" />
+                         <tal:observations tal:replace="structure python: needToCropObservations and view.pm_utils.cropHTML(observations) or observations" />
+                         <p class="discreet"
+                           tal:condition="python: needToCropObservations and adviceHolderIsViewable"
+                           i18n:translate="">This is an extract of the comment, access full comment if necessary...</p>
                     </fieldset>
                     <br />
 

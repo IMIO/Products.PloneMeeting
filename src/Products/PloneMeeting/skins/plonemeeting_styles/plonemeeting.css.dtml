@@ -200,20 +200,21 @@ dl.portlet .ploneMeetingSelectDropdownIcon {
     border: 1px dotted darkgrey;
 }
 /* table for which attribute "border" is not given will be rendered with borders by appy.pod */
+/* make sure table borders in pmMoreInfo (when using the "more infos" icon) are displayed */
+/* make sure nested tables under a table using no-style-table displays border */
 #content div[id^='hook_'] table:not([border]):not([style*="border"]) tr th,
 #content div[id^='hook_'] table:not([border]):not([style*="border"]) tr td,
 #content div.pmMoreInfo table:not([border]):not([style*="border"])  tr th,
 #content div.pmMoreInfo table:not([border]):not([style*="border"])  tr td,
 body.cke_editable table:not([border='0']):not([style*="border"])  tr td,
-body.cke_editable table.cke_show_border:not([border='0']):not([style*="border"])  tr td {
+body.cke_editable table.cke_show_border:not([border='0']):not([style*="border"])  tr td,
+#content table.no-style-table table tr td,
+#content div.pmMoreInfo table[border='1'] tr th,
+#content div.pmMoreInfo table[border='1'] tr td {
+
     border: 1px solid black;
 }
 
-/* make sure table borders in pmMoreInfo (when using the "more infos" icon) are displayed */
-#content div.pmMoreInfo table[border='1'] tr th,
-#content div.pmMoreInfo table[border='1'] tr td {
-    border: 1px solid black;
-}
 #content div.pmMoreInfo,
 #content div.pmMoreInfo table td {
     padding-top: 0.5em;
@@ -426,12 +427,6 @@ td.td_cell_advices div.categorized-elements {
 /* collective.documentviewer : hide some elements... */
 .close-fullscreen, .DV-navigation {
     display: none;
-}
-
-div#content.advice_infos_tooltipster,
-div#content.meeting_item_not_present_tooltipster,
-div#content.inherited_advice_item_tooltipster {
-    width: 700px;
 }
 
 div#content.advice_infos_tooltipster legend acronym {
@@ -1476,7 +1471,8 @@ body.cke_editable table:not([cellpadding='0']) tr th,
 div[id^='hook_'] table:not([cellpadding='0']) tr td,
 div[id^='hook_'] table:not([cellpadding='0']) tr th,
 div.pmMoreInfo table:not([cellpadding='0']) tr td,
-div.pmMoreInfo table:not([cellpadding='0']) tr th {
+div.pmMoreInfo table:not([cellpadding='0']) tr th,
+table.no-style-table table tr td {
     padding: 0.3em;
 }
 /* force no padding when cellpadding="0" */
@@ -1492,6 +1488,14 @@ div.pmMoreInfo table[cellpadding='0'] tr th {
 /* increase height of CKeditor styles combobox */
 div.cke.cke_combopanel {
     height: 300px;
+}
+
+div.cke_dialog_background_cover {
+   z-index: 14000 !important;
+}
+
+table.cke_dialog {
+   z-index: 15000 !important;
 }
 
 /* this avoid losing toolbar when maximizing a CKeditor with very long content */

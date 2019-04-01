@@ -31,6 +31,8 @@ from plone.memoize import ram
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
 from Products.Five import BrowserView
+from Products.PageTemplates.Expressions import SecureModuleImporter
+from Products.PloneMeeting import utils
 from zope.event import notify
 from zope.lifecycleevent import ObjectModifiedEvent
 
@@ -78,6 +80,7 @@ class AdvicesIcons(BrowserView):
         self.portal_url = self.portal.absolute_url()
         self.advisableGroups = self.context.getAdvicesGroupsInfosForUser()
         self.advicesByType = self.context.getAdvicesByType()
+        self.pm_utils = SecureModuleImporter['Products.PloneMeeting.utils']
 
         if not self.context.adapted().isPrivacyViewable():
             return '<div style="display: inline">&nbsp;-&nbsp;&nbsp;&nbsp;</div>'
@@ -138,6 +141,7 @@ class AdvicesIconsInfos(BrowserView):
 
     def __call__(self, adviceType):
         """ """
+        self.pm_utils = SecureModuleImporter['Products.PloneMeeting.utils']
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
         self.portal = api.portal.get()

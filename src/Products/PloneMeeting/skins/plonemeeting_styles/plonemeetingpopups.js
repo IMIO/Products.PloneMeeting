@@ -261,6 +261,8 @@ function advicesInfos() {
                   click: true,
                   },
                functionReady_callback: initializeAdvicePopup,
+               minWidth: 700,
+               maxWidth: 700,
                close_other_tips: true});
     tooltipster_helper(
       selector='a.tooltipster-advices-infos',
@@ -276,6 +278,8 @@ function advicesInfos() {
                   click: true,
                   },
                functionReady_callback: initializeAdvicePopup,
+               minWidth: 700,
+               maxWidth: 700,
                close_other_tips: true});
 }
 

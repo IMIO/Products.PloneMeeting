@@ -30,8 +30,8 @@ Changelog
 - Use _evaluateExpression from collective.behavior.talcondition everywhere to evaluate TAL expressions
 - Disabled the 'Votes' functionnality and relative tab on the MeetingConfig.  'Poll type' related MeetingConfigs fields
   (usedPollTypes, defaultPollType) are moved at the bottom of the 'Data' tab
-- Display the entire advice content in the tooltipster, now that advice content is loaded asynchronously (on hover), so we have
-  access to entire Comment/Observations fields content, this avoids missing informations and problems while cropping advice content
+- Display the advice comment and observations in the tooltipster, so member knows if something is encoded in both fields.
+  Still need to crop content because too long advices are not displayed correctly in the tooltipster.  Increased cropping threshold from 400 to 1000 characters
 - When mailing lists are wrongly defined on a POD template, do not crash the POD templates viewlet, display a clear message in the mailing list dropdown
 - When creating a MeetingConfig TTW, define 'searchmyitems' as default faceted collection so it is directly useable
 - Added possibility to easily reinitialize an advice delay if user is able to edit the item.  The 'Reinitialize delay' action is located on the advice

@@ -22,6 +22,7 @@
 
 from AccessControl.Permission import Permission
 from appy.shared.diff import HtmlDiff
+from bs4 import BeautifulSoup
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_group_id
@@ -298,6 +299,12 @@ def fieldIsEmpty(name, obj, useParamValue=False, value=None):
         return value is None
     else:
         return not value
+
+
+def cropHTML(html, length=400, ellipsis='...'):
+    '''Crop given HTML and return valid HTML.'''
+    cropped_content = BeautifulSoup(html[:length], 'html.parser').renderContents()
+    return cropped_content
 
 
 # Mail sending machinery -------------------------------------------------------
