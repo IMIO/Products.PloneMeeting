@@ -1295,7 +1295,8 @@ class testViews(PloneMeetingTestCase):
         # remove recurring items in self.meetingConfig
         self._removeConfigObjectsFor(cfg)
         cfg.setRestrictAccessToSecretItems(True)
-        self._setPowerObserverStates(states=('presented', ))
+        self._setPowerObserverStates(observer_type='restrictedpowerobservers',
+                                     states=('presented', ))
         cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'at_the_end',
                                            'reverse': '0'}, ))
         # create 2 'public' items and 1 'secret' item
