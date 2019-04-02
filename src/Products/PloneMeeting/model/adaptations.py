@@ -9,9 +9,11 @@ from Products.Archetypes.atapi import StringField
 from Products.Archetypes.atapi import StringWidget
 from Products.Archetypes.atapi import TextAreaWidget
 from Products.Archetypes.atapi import TextField
+from Products.CMFCore.permissions import AccessContentsInformation
 from Products.CMFCore.permissions import DeleteObjects
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import ReviewPortalContent
+from Products.CMFCore.permissions import View
 from Products.PloneMeeting import logger
 from Products.PloneMeeting.config import ReadDecision
 from Products.PloneMeeting.config import WriteDecision
@@ -74,7 +76,7 @@ RETURN_TO_PROPOSING_GROUP_MAPPINGS = {'backTo_presented_from_returned_to_proposi
                                       }
 RETURN_TO_PROPOSING_GROUP_VALIDATION_STATES = ('proposed', )
 
-viewPermissions = ('View', 'Access contents information')
+viewPermissions = (View, AccessContentsInformation)
 WF_APPLIED = 'Workflow adaptation "%s" applied for meetingConfig "%s".'
 WF_DOES_NOT_EXIST_WARNING = "Could not apply workflow adaptations because the workflow '%s' does not exist."
 
@@ -184,7 +186,7 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
         # The previous update on state 'prevalidated' was a bit too restrictive:
         # it prevents the PreReviewer from consulting the item once it has been
         # prevalidated. So here we grant him back this right.
-        for viewPerm in ('View', 'Access contents information'):
+        for viewPerm in viewPermissions:
             grantPermission(prevalidated, viewPerm, 'MeetingPreReviewer')
         # Update permission->role mappings for every other state, taking into
         # account new role 'MeetingPreReviewer'. The idea is: later in the
