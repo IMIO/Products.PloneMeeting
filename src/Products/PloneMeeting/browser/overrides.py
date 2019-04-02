@@ -782,6 +782,8 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
     """Redefine the DocumentGenerationView to extend context available in the template
        and to handle POD templates sent to mailing lists."""
 
+    MAILINGLIST_NO_RECIPIENTS = 'No recipients defined for this mailing list!'
+
     def get_base_generation_context(self):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
@@ -976,13 +978,48 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
             empty_expr_is_true=False)
         return evaluatedExpr or pod_template.Title()
 
+    def _extractRecipients(self, values):
+        """ """
+        # compile userIds in case we have a TAL expression
+        tool = api.portal.get_tool('portal_plonemeeting')
+        recipients = []
+        userIdsOrEmailAddresses = []
+        for value in values.strip().split(','):
+            # value may be a TAL expression returning a list of userIds or email addresses
+            # or a group (of users)
+            # or a userId
+            # or an e-mail address
+            if value.startswith('python:') or '/' in value:
+                evaluatedExpr = _evaluateExpression(
+                    self.context,
+                    expression=value.strip(),
+                    extra_expr_ctx={'obj': self.context,
+                                    'member': api.user.get_current(),
+                                    'tool': tool,
+                                    'cfg': tool.getMeetingConfig(self.context)},)
+                userIdsOrEmailAddresses += list(evaluatedExpr)
+            elif value.startswith('group:'):
+                group = api.group.get(value[6:])
+                userIdsOrEmailAddresses += list(group.getMemberIds())
+            else:
+                userIdsOrEmailAddresses.append(value)
+        # now we have userIds or email address, we want email addresses
+        for userIdOrEmailAddress in userIdsOrEmailAddresses:
+            recipient = '@' in userIdOrEmailAddress and userIdOrEmailAddress or \
+                tool.getMailRecipient(userIdOrEmailAddress.strip())
+            if not recipient:
+                continue
+            if recipient not in recipients:
+                recipients.append(recipient)
+        return recipients
+
     def _sendPodTemplate(self, rendered_template):
         '''Sends, by email, a p_rendered_template.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         # Preamble: ensure that the mailingList is really active.
         mailinglist_name = safe_unicode(self.request.get('mailinglist_name'))
-        if mailinglist_name not in tool.getAvailableMailingLists(self.context,
-                                                                 template_uid=self.request.get('template_uid')):
+        if mailinglist_name not in tool.getAvailableMailingLists(
+                self.context, template_uid=self.request.get('template_uid')):
             raise Unauthorized
         # Retrieve mailing list recipients
         recipients = []
@@ -992,31 +1029,9 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
             name, condition, values = line.split(';')
             if name != mailinglist_name:
                 continue
-            # compile userIds in case we have a TAL expression
-            userIdsOrEmailAddresses = []
-            for value in values.strip().split(','):
-                # value may either be a userId
-                # or an email address directly
-                # or a TAL expression returning a list of userIds or email addresses
-                if value.startswith('python:') or '/' in value:
-                    evaluatedExpr = _evaluateExpression(self.context,
-                                                        expression=value.strip(),
-                                                        extra_expr_ctx={'obj': self.context,
-                                                                        'member': api.user.get_current(),
-                                                                        'tool': tool,
-                                                                        'cfg': tool.getMeetingConfig(self.context)},)
-                    userIdsOrEmailAddresses += list(evaluatedExpr)
-                else:
-                    userIdsOrEmailAddresses.append(value)
-            # now we have userIds or email address, we want email addresses
-            for userIdOrEmailAddress in userIdsOrEmailAddresses:
-                recipient = tool.getMailRecipient(userIdOrEmailAddress.strip()) or \
-                    ('@' in userIdOrEmailAddress and userIdOrEmailAddress)
-                if not recipient:
-                    continue
-                recipients.append(recipient)
+            recipients = self._extractRecipients(values)
         if not recipients:
-            raise Exception(self.BAD_MAILINGLIST)
+            raise Exception(self.MAILINGLIST_NO_RECIPIENTS)
         self._sendToRecipients(recipients, pod_template, rendered_template)
 
     def _sendToRecipients(self, recipients, pod_template, rendered_template):

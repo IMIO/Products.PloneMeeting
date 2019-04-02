@@ -66,6 +66,7 @@ Changelog
   - meeting TAL expression conditioning access.
   Definable TAL expressions make adaptable method MeetingItem._isViewableByPowerObservers obsolete, it is removed.
 - Removed unused fields on ToolPloneMeeting : 'extractTextFromFiles', 'availableOcrLanguages', 'defaultOcrLanguage' and 'enableUserPreferences'
+- Added possibility to define a Plone group in the recipient on a mailing_list defined on a POD template using 'group:' + Plone group id
 
 4.1b16 (2019-01-31)
 -------------------

@@ -466,9 +466,18 @@ class testViews(PloneMeetingTestCase):
         self.failIf(self.tool.getAvailableMailingLists(item, template.UID()))
 
         # define mailing_lists
+        # False condition
+        template.mailing_lists = "list1;python:False;user1@test.be\nlist2;python:False;user1@test.be"
+        self.assertEquals(self.tool.getAvailableMailingLists(item, template.UID()), [])
+        # wrong TAL condition, the list is there with error
+        template.mailing_lists = "list1;python:wrong_expression;user1@test.be\nlist2;python:False;user1@test.be"
+        error_msg = translate('Mailing lists are not correctly defined, original error is \"${error}\"',
+                              mapping={'error': u'name \'wrong_expression\' is not defined', },
+                              context=self.request)
+        self.assertEquals(self.tool.getAvailableMailingLists(item, template.UID()), [error_msg])
+        # correct and True condition
         template.mailing_lists = "list1;python:True;user1@test.be\nlist2;python:False;user1@test.be"
-        self.assertEquals(self.tool.getAvailableMailingLists(item, template.UID()),
-                          ['list1'])
+        self.assertEquals(self.tool.getAvailableMailingLists(item, template.UID()), ['list1'])
 
         # call the document-generation view
         self.request.set('template_uid', template.UID())
@@ -478,14 +487,61 @@ class testViews(PloneMeetingTestCase):
         # raises Unauthorized if mailing list no available
         self.assertRaises(Unauthorized, view)
 
-        # use correct mailing list, works as expected
+        # use correct mailing list
         self.request.set('mailinglist_name', 'list1')
+        # but without defined recipients
+        template.mailing_lists = "list1;python:True;"
+        with self.assertRaises(Exception) as cm:
+            view()
+        self.assertEqual(cm.exception.message, view.MAILINGLIST_NO_RECIPIENTS)
+        self.assertRaises(Exception, view)
+
+        # now when working as expected
+        template.mailing_lists = "list1;python:True;user1@test.be\nlist2;python:False;user1@test.be"
         messages = IStatusMessage(self.request).show()
         msg = translate('pt_mailing_sent', domain='PloneMeeting', context=self.request)
         self.assertNotEquals(messages[-1].message, msg)
         view()
         messages = IStatusMessage(self.request).show()
         self.assertEquals(messages[-1].message, msg)
+
+    def test_pm_SendPodTemplateToMailingListRecipient(self):
+        """Recipients may be defined using several ways :
+           - python script;
+           - userid;
+           - email;
+           - Plone group."""
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        template = self.meetingConfig.podtemplates.itemTemplate
+        self.request.set('template_uid', template.UID())
+        self.request.set('output_format', 'odt')
+        view = item.restrictedTraverse('@@document-generation')
+
+        # script
+        self.assertEqual(view._extractRecipients("python:['pmCreator1']"),
+                         [u'M. PMCreator One <pmcreator1@plonemeeting.org>'])
+        # userid
+        self.assertEqual(view._extractRecipients("pmCreator1"),
+                         [u'M. PMCreator One <pmcreator1@plonemeeting.org>'])
+        # email
+        self.assertEqual(view._extractRecipients("pmcreator1@plonemeeting.org"),
+                         ['pmcreator1@plonemeeting.org'])
+        # group
+        group_dev_creators = "group:{0}".format(self.developers_creators)
+        self.assertEqual(sorted(view._extractRecipients(group_dev_creators)),
+                         [u'M. PMCreator One <pmcreator1@plonemeeting.org>',
+                          u'M. PMCreator One bee <pmcreator1b@plonemeeting.org>',
+                          u'M. PMManager <pmmanager@plonemeeting.org>'])
+
+        # mixed
+        self.assertEqual(sorted(view._extractRecipients(
+            "python:['pmCreator1'],pmCreator1,pmCreator2,{0},new@example.com".format(group_dev_creators))),
+            [u'M. PMCreator One <pmcreator1@plonemeeting.org>',
+             u'M. PMCreator One bee <pmcreator1b@plonemeeting.org>',
+             u'M. PMCreator Two <pmcreator2@plonemeeting.org>',
+             u'M. PMManager <pmmanager@plonemeeting.org>',
+             'new@example.com'])
 
     def test_pm_StorePodTemplateAsAnnex(self):
         """Store a Pod template as an annex."""
