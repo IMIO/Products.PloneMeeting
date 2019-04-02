@@ -224,11 +224,11 @@ class testAdvices(PloneMeetingTestCase):
         self.failUnless(self.hasPermission(View, item1))
         self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([], [(self.vendors_uid, 'Vendors')]))
         given_advice = getattr(item1, item1.adviceIndex[self.vendors_uid]['advice_id'])
-        self.failUnless(self.hasPermission('Modify portal content', given_advice))
+        self.failUnless(self.hasPermission(ModifyPortalContent, given_advice))
         # another member of the same _advisers group may also edit the given advice
         self.changeUser('pmManager')
         self.assertEquals(item1.getAdvicesGroupsInfosForUser(), ([], [(self.vendors_uid, 'Vendors')]))
-        self.failUnless(self.hasPermission('Modify portal content', given_advice))
+        self.failUnless(self.hasPermission(ModifyPortalContent, given_advice))
         # if a user that can not remove the advice tries he gets Unauthorized
         self.changeUser('pmReviewer1')
         self.assertRaises(Unauthorized, item1.restrictedTraverse('@@delete_givenuid'), item1.meetingadvice.UID())
@@ -318,14 +318,14 @@ class testAdvices(PloneMeetingTestCase):
                                                         'advice_comment': RichTextValue(u'My comment')})
         # can view/edit/delete is own advice
         self.assertTrue(self.hasPermission(View, developers_advice))
-        self.assertTrue(self.hasPermission('Modify portal content', developers_advice))
-        self.assertTrue(self.hasPermission('Delete objects', developers_advice))
+        self.assertTrue(self.hasPermission(ModifyPortalContent, developers_advice))
+        self.assertTrue(self.hasPermission(DeleteObjects, developers_advice))
         self.changeUser('pmReviewer2')
         # can view
         self.assertTrue(self.hasPermission(View, developers_advice))
         # can not edit/delete
-        self.assertFalse(self.hasPermission('Modify portal content', developers_advice))
-        self.assertFalse(self.hasPermission('Delete objects', developers_advice))
+        self.assertFalse(self.hasPermission(ModifyPortalContent, developers_advice))
+        self.assertFalse(self.hasPermission(DeleteObjects, developers_advice))
         vendors_advice = createContentInContainer(item,
                                                   'meetingadvice',
                                                   **{'advice_group': self.vendors_uid,
@@ -335,8 +335,8 @@ class testAdvices(PloneMeetingTestCase):
         # can view
         self.assertTrue(self.hasPermission(View, vendors_advice))
         # can not edit/delete
-        self.assertFalse(self.hasPermission('Modify portal content', vendors_advice))
-        self.assertFalse(self.hasPermission('Delete objects', vendors_advice))
+        self.assertFalse(self.hasPermission(ModifyPortalContent, vendors_advice))
+        self.assertFalse(self.hasPermission(DeleteObjects, vendors_advice))
 
     def test_pm_CanNotGiveAdviceIfNotAsked(self):
         '''
@@ -410,7 +410,7 @@ class testAdvices(PloneMeetingTestCase):
                                     'advice_comment': RichTextValue(u'My comment')})
         # login as an user that can actually edit the item because not 'validated'
         self.changeUser('pmReviewer1')
-        self.failUnless(self.hasPermission('Modify portal content', item))
+        self.failUnless(self.hasPermission(ModifyPortalContent, item))
         # modifying the item will not invalidate the advices because not 'validated'
         self.failIf(item.willInvalidateAdvices())
         item.setDecision(item.getDecision() + '<p>New line</p>')
@@ -3232,7 +3232,7 @@ class testAdvices(PloneMeetingTestCase):
         form.handleSaveRemoveAdviceInheritance(form, None)
         self.assertFalse(self.vendors_uid in item2.adviceIndex)
         # in this case, as adviser removed inherited advice, he does not have access anymore to item...
-        self.assertFalse(self.hasPermission('View', item2))
+        self.assertFalse(self.hasPermission(View, item2))
 
     def test_pm_IndexAdvisersInheritedAdvice(self):
         '''Test the indexAdvisers of an inherited advice.  Values have to be same as original advice.'''

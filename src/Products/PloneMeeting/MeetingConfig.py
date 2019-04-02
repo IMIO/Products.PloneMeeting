@@ -52,6 +52,8 @@ from Products.Archetypes.atapi import TextAreaWidget
 from Products.Archetypes.atapi import TextField
 from Products.Archetypes.utils import IntDisplayList
 from Products.CMFCore.Expression import Expression
+from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFCore.permissions import View
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from Products.CMFPlone import PloneMessageFactory
 from Products.CMFPlone.interfaces.constrains import IConstrainTypes
@@ -4829,7 +4831,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                        action=urlExpr,
                                        icon_expr='string:${portal_url}/clone_to_other_mc.png',
                                        condition=availExpr,
-                                       permission=('View',),
+                                       permission=(View,),
                                        visible=True)
 
     security.declarePrivate('updateIsDefaultFields')
@@ -5537,7 +5539,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     def adapted(self):
         return getCustomAdapter(self)
 
-    security.declareProtected('Modify portal content', 'onEdit')
+    security.declareProtected(ModifyPortalContent, 'onEdit')
 
     def onEdit(self, isCreated):
         '''See doc in interfaces.py.'''

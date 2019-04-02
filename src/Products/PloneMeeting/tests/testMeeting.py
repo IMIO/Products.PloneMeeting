@@ -2035,7 +2035,7 @@ class testMeeting(PloneMeetingTestCase):
                               action='',
                               icon_expr='',
                               condition="python: context.getDate().strftime('%Y/%d/%m') == '2010/10/10'",
-                              permission=('View',),
+                              permission=(View,),
                               visible=True,
                               category='object_buttons')
         # add an action that only shows up when no item in the meeting
@@ -2044,7 +2044,7 @@ class testMeeting(PloneMeetingTestCase):
                               action='',
                               icon_expr='',
                               condition="python: not context.getItems(theObjects=False)",
-                              permission=('View',),
+                              permission=(View,),
                               visible=True,
                               category='object_buttons')
         # not available for now
@@ -2092,7 +2092,7 @@ class testMeeting(PloneMeetingTestCase):
                               action='',
                               icon_expr='',
                               condition="python: context.meta_type == 'Meeting'",
-                              permission=('View',),
+                              permission=(View,),
                               visible=True,
                               category='object_buttons')
         # it is returned for meeting

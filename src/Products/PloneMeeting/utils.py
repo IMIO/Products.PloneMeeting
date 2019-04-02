@@ -960,7 +960,7 @@ def transformAllRichTextFields(obj, onlyField=None):
         if onlyField and (field.getName() != onlyField):
             continue
         # What is the "write" permission for this field ?
-        writePermission = 'Modify portal content'
+        writePermission = ModifyPortalContent
         if hasattr(field, 'write_permission'):
             writePermission = field.write_permission
         if not member.has_permission(writePermission, obj):

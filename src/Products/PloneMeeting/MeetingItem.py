@@ -2219,7 +2219,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             self.REQUEST.set('need_Meeting_updateItemReferences', True)
         self.getField('otherMeetingConfigsClonableTo').set(self, value, **kwargs)
 
-    security.declareProtected('View', 'getManuallyLinkedItems')
+    security.declareProtected(View, 'getManuallyLinkedItems')
 
     def getManuallyLinkedItems(self, only_viewable=False, **kwargs):
         '''Overrides the field 'manuallyLinkedItems' accessor to be able

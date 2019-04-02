@@ -30,7 +30,9 @@ from plone import api
 from plone.api.exc import InvalidParameterError
 from plone.memoize import ram
 from plone.memoize.instance import memoize
+from Products.CMFCore.permissions import AccessContentsInformation
 from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFCore.permissions import View
 from Products.CMFCore.utils import _checkPermission
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import AddAnnexDecision
@@ -1334,19 +1336,19 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
             # reinitialize permissions in case no more confidential
             # or confidentiality configuration changed
             self.context.__ac_local_roles_block__ = False
-            self.context.manage_permission("View", (), acquire=True)
-            self.context.manage_permission("Access contents information", (), acquire=True)
+            self.context.manage_permission(View, (), acquire=True)
+            self.context.manage_permission(AccessContentsInformation, (), acquire=True)
             grp_reader_localroles = [
                 grp_id for grp_id in self.context.__ac_local_roles__
                 if READER_USECASES['confidentialannex'] in self.context.__ac_local_roles__[grp_id]]
             self.context.manage_delLocalRoles(grp_reader_localroles)
             if self.context.confidential:
                 self.context.manage_permission(
-                    "View",
+                    View,
                     (READER_USECASES['confidentialannex'], 'Manager', 'MeetingManager'),
                     acquire=False)
                 self.context.manage_permission(
-                    "Access contents information",
+                    AccessContentsInformation,
                     (READER_USECASES['confidentialannex'], 'Manager', 'MeetingManager'),
                     acquire=False)
                 for grp_id in group_ids:

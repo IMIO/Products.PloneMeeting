@@ -30,6 +30,7 @@ from plone import api
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFCore.permissions import View
 from Products.PloneMeeting.adapters import _find_nothing_query
 from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
@@ -556,7 +557,7 @@ class testSearches(PloneMeetingTestCase):
         item._update_after_edit()
         self.changeUser('pmReviewer2')
         # the user can see the item
-        self.failUnless(self.hasPermission('View', item))
+        self.failUnless(self.hasPermission(View, item))
         # but the search will not return it
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstovalidateofhighesthierarchiclevel')
         self.failIf(collection.results())

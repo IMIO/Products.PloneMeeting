@@ -1301,7 +1301,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
             self._insert_order_cache['items'][item.UID()] = insert_order
         return insert_order
 
-    security.declareProtected("Modify portal content", 'insertItem')
+    security.declareProtected(ModifyPortalContent, 'insertItem')
 
     def insertItem(self, item, forceNormal=False):
         '''Inserts p_item into my list of "normal" items or my list of "late"
@@ -1401,7 +1401,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         # items with a higher itemNumber
         self.updateItemReferences(startNumber=lowest_item_number)
 
-    security.declareProtected("Modify portal content", 'removeItem')
+    security.declareProtected(ModifyPortalContent, 'removeItem')
 
     def removeItem(self, item):
         '''Removes p_item from me.'''
@@ -1779,13 +1779,13 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
                 powerObserversGroupId = "%s_%s" % (cfg.getId(), po_infos['row_id'])
                 self.manage_addLocalRoles(powerObserversGroupId, (READER_USECASES['powerobservers'],))
 
-    security.declareProtected('Modify portal content', 'transformRichTextField')
+    security.declareProtected(ModifyPortalContent, 'transformRichTextField')
 
     def transformRichTextField(self, fieldName, richContent):
         '''See doc in interfaces.py.'''
         return richContent
 
-    security.declareProtected('Modify portal content', 'onEdit')
+    security.declareProtected(ModifyPortalContent, 'onEdit')
 
     def onEdit(self, isCreated):
         '''See doc in interfaces.py.'''

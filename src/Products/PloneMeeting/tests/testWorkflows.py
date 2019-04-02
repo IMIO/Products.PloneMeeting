@@ -27,6 +27,7 @@ from DateTime import DateTime
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.cache import cleanRamCacheFor
 from OFS.ObjectManager import BeforeDeleteException
+from Products.CMFCore.permissions import AccessContentsInformation
 from Products.CMFCore.permissions import AddPortalContent
 from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
@@ -64,8 +65,8 @@ class testWorkflows(PloneMeetingTestCase):
         self.failUnless(self.tool.userIsAmong(['creators']))
         item = self.create('MeetingItem')
         # May the creator see his item ?
-        self.failUnless(self.hasPermission('View', item))
-        self.failUnless(self.hasPermission('Access contents information', item))
+        self.failUnless(self.hasPermission(View, item))
+        self.failUnless(self.hasPermission(AccessContentsInformation, item))
         pmFolder = self.tool.getPloneMeetingFolder(cfg.getId())
         myItems = cfg.searches.searches_items.searchmyitems.results()
         self.assertEquals(len(myItems), 1)
@@ -224,12 +225,12 @@ class testWorkflows(PloneMeetingTestCase):
         self.assertRaises(Unauthorized, self.addAnnex, item1, relatedTo='item_decision')
         # pmCreator2 cannot view the annex created by pmCreator1
         self.changeUser('pmCreator2')
-        self.failIf(self.hasPermission('View', someAnnex))
+        self.failIf(self.hasPermission(View, someAnnex))
         self.changeUser('pmManager')
         self.do(meeting, 'publish')
         # pmCreator2 can now view the annex.
         self.changeUser('pmCreator2')
-        self.failUnless(self.hasPermission('View', someAnnex))
+        self.failUnless(self.hasPermission(View, someAnnex))
         # pmReviewer2 validates item2
         self.changeUser('pmReviewer2')
         self.do(item2, 'validate')
@@ -252,7 +253,7 @@ class testWorkflows(PloneMeetingTestCase):
         self.do(meeting, 'freeze')
         # Now reviewers can't add annexes anymore
         self.changeUser('pmReviewer2')
-        self.failIf(self.hasPermission('PloneMeeting: Add annex', item2))
+        self.failIf(self.hasPermission(AddAnnex, item2))
         self.assertRaises(Unauthorized, self.addAnnex, item2, relatedTo='item_decision')
         self.changeUser('pmReviewer1')
         self.assertRaises(Unauthorized, self.addAnnex, item2)
@@ -297,21 +298,21 @@ class testWorkflows(PloneMeetingTestCase):
         annexItem2 = self.addAnnex(item2)
         for userId in ('pmCreator1', 'pmCreator1b'):
             self.changeUser(userId)
-            self.failUnless(self.hasPermission('View', (item1, annex1)))
+            self.failUnless(self.hasPermission(View, (item1, annex1)))
         for userId in ('pmReviewer1', 'pmCreator2', 'pmReviewer2'):
             self.changeUser(userId)
-            self.failIf(self.hasPermission('View', (item1, annex1)))
+            self.failIf(self.hasPermission(View, (item1, annex1)))
         # pmCreator1 proposes the item
         self.changeUser('pmCreator1')
         self.do(item1, 'propose')
-        self.failIf(self.hasPermission('Modify portal content', (item1, annex1)))
+        self.failIf(self.hasPermission(ModifyPortalContent, (item1, annex1)))
         self.changeUser('pmReviewer1')
-        self.failUnless(self.hasPermission('Modify portal content', item1))
+        self.failUnless(self.hasPermission(ModifyPortalContent, item1))
         self.changeUser('pmReviewer2')
-        self.failIf(self.hasPermission('View', item1))
+        self.failIf(self.hasPermission(View, item1))
         for userId in ('pmCreator1b', 'pmReviewer1'):
             self.changeUser(userId)
-            self.failUnless(self.hasPermission('View', item1))
+            self.failUnless(self.hasPermission(View, item1))
         # pmCreator1 goes from group "developers" to group "vendors" (still as
         # creator)
         self.changeUser('admin')
@@ -359,7 +360,7 @@ class testWorkflows(PloneMeetingTestCase):
         item3 = self.create('MeetingItem', title='A given item')
         annexItem3 = self.addAnnex(item3)
         self.changeUser('pmCreator1')
-        self.failIf(self.hasPermission('View', (item3, annexItem3)))
+        self.failIf(self.hasPermission(View, (item3, annexItem3)))
         # pmCreator2 proposes item3
         self.changeUser('pmCreator2')
         self.do(item3, 'propose')
