@@ -523,7 +523,7 @@ class Migrate_To_4_1(Migrator):
         # transfer users to new Plone groups
         portal_groups = api.portal.get_tool('portal_groups')
         for mGroup in self.tool.objectValues('MeetingGroup'):
-            org = get_own_organization().get(mGroup.getId())
+            org = own_org.get(mGroup.getId())
             org_uid = org.UID()
             for suffix in get_all_suffixes(org_uid):
                 ori_plone_group_id = mGroup.getPloneGroupId(suffix)
@@ -537,8 +537,6 @@ class Migrate_To_4_1(Migrator):
                         api.group.add_user(group=new_plone_group, username=member_id)
                 # remove original Plone group
                 portal_groups.removeGroup(ori_plone_group_id)
-
-        own_org = get_own_organization()
 
         # now that every groups are migrated, we may migrate groups_in_charge
         # we have old MeetingGroup ids stored, we want organization UIDs
@@ -654,6 +652,9 @@ class Migrate_To_4_1(Migrator):
         brains = api.content.find(meta_type='MeetingItem')
         len_brains = len(brains)
         logger.info('Migrating {0} MeetingItems...'.format(len_brains))
+        portal_repository = api.portal.get_tool('portal_repository')
+        portal_historiesstorage = api.portal.get_tool('portal_historiesstorage')
+        histories_repo = portal_historiesstorage._getZVCRepo()
         i = 1
         for brain in api.content.find(meta_type='MeetingItem'):
             item = brain.getObject()
@@ -714,6 +715,25 @@ class Migrate_To_4_1(Migrator):
             for advice in item.getAdvices():
                 org = own_org.get(advice.advice_group)
                 advice.advice_group = org.UID()
+                # migrate versionned advices...
+                # we need to get the stored data because using CMFEditions
+                # api will always return wrapped data or copy
+                history_metadata = portal_repository.getHistoryMetadata(advice)
+                if history_metadata:
+                    for version_info in history_metadata._full.values():
+                        vc_info = version_info['vc_info']
+                        version_advice = histories_repo._histories[vc_info.history_id]._versions[
+                            vc_info.version_id]._data._object.object
+                        if version_advice:
+                            org = own_org.get(version_advice.advice_group)
+                            if org:
+                                version_advice.advice_group = org.UID()
+                            else:
+                                logger.info('Could not find advice_group {0} for advice version of {1}!'.format(
+                                    version_advice.advice_group, advice.absolute_url_path()))
+                        else:
+                            logger.info('Could not find version_id {0} for advice version of {1}!'.format(
+                                vc_info.version_id, advice.absolute_url_path()))
 
         # update every items local roles when every items have been updated because
         # linked items (predecessor) may be updated during this process and we have

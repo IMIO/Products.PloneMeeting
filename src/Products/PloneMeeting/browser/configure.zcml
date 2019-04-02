@@ -424,7 +424,6 @@
         template="templates/item_linked_items.pt"
         permission="zope2.View" />
 
-    <!-- the plonemeeting_redirect_to_app_view.pt that redirect the connected user to the default meetingConfig just after connection -->
     <browser:page
         for="Products.CMFPlone.interfaces.siteroot.IPloneSiteRoot"
         name="plonemeeting_redirect_to_app_view"
