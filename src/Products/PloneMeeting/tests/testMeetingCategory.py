@@ -49,6 +49,8 @@ class testMeetingCategory(PloneMeetingTestCase):
         cat2Id = cat2.getId()
         cat3 = self.create('MeetingCategory', id="cat3", title="Category 3")
         cat3Id = cat3.getId()
+        catWithMappingCfg = self.create('MeetingCategory', id="catWithMappingCfg", title="CatWithMappingCfg")
+        catWithMappingCfgId = catWithMappingCfg.getId()
 
         # create a recurring item in cfg2 using also category with id 'cat1'
         # this will check for MeetingConfig isolation
@@ -56,6 +58,8 @@ class testMeetingCategory(PloneMeetingTestCase):
         cat1cfg2 = self.create('MeetingCategory', id=cat1Id, title="Category 1")
         cat1Cfg2Id = cat1cfg2.getId()
         recItemCfg2 = self.create('MeetingItemRecurring', category=cat1Cfg2Id)
+        catWithMappingCfg2 = self.create('MeetingCategory', id="catWithMappingCfg2", title="CatWithMappingCfg2")
+        catWithMappingCfg2Id = catWithMappingCfg2.getId()
 
         # back to cfg1
         self.setMeetingConfig(cfg.getId())
@@ -85,6 +89,24 @@ class testMeetingCategory(PloneMeetingTestCase):
         self.assertRaises(BeforeDeleteException,
                           cfg.categories.manage_delObjects,
                           [cat3Id])
+
+        # categoryMappingsWhenCloningToOtherMC
+        # if a category is used in categoryMappingsWhenCloningToOtherMC of another cfg
+        # category is not deletable
+        catWithMappingCfg.setCategoryMappingsWhenCloningToOtherMC(
+            ('{0}.{1}'.format(cfg2.getId(), catWithMappingCfg2Id), ))
+        self.assertRaises(BeforeDeleteException,
+                          cfg2.categories.manage_delObjects,
+                          [catWithMappingCfg2Id])
+        # same if cat using cat2 is disabled
+        self.do(catWithMappingCfg, 'deactivate')
+        self.assertRaises(BeforeDeleteException,
+                          cfg2.categories.manage_delObjects,
+                          [catWithMappingCfg2Id])
+        # category using another category in mapping may be deleted
+        cfg.categories.manage_delObjects([catWithMappingCfgId])
+        # when no more used in mapping, category may be deleted
+        cfg2.categories.manage_delObjects([catWithMappingCfg2Id])
 
         # now delete the recurring item and the category should be removable
         recItemCfg1.aq_inner.aq_parent.manage_delObjects([recItemCfg1.getId(), ])

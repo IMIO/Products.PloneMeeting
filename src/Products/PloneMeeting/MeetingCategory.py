@@ -22,6 +22,7 @@ from Products.Archetypes.atapi import MultiSelectionWidget
 from Products.Archetypes.atapi import registerType
 from Products.Archetypes.atapi import Schema
 from Products.Archetypes.atapi import StringField
+from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFDynamicViewFTI.browserdefault import BrowserDefaultMixin
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import WriteRiskyConfig
@@ -155,7 +156,9 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
     def manage_beforeDelete(self, item, container):
         '''Checks if the current MeetingCategory can be deleted:
           - it can not be linked to an existing meetingItem (normal item,
-            recurring item or item template).'''
+            recurring item or item template);
+          - it can not be used in field 'categoryMappingsWhenCloningToOtherMC'
+            of another MeetingCategory.'''
         # If we are trying to remove the whole Plone Site, bypass this hook.
         # bypass also if we are in the creation process
         if not item.meta_type == "Plone Site" and not item._at_creation_flag:
@@ -176,6 +179,19 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
                     mapping={'url': brains[0].getURL()},
                     context=self.REQUEST)
                 raise BeforeDeleteException(msg)
+            # check field categoryMappingsWhenCloningToOtherMC of other MC categories
+            cat_mapping_id = '{0}.{1}'.format(cfg.getId(), self.getId())
+            for other_cfg in tool.objectValues('MeetingConfig'):
+                if other_cfg == cfg:
+                    continue
+                for other_cat in other_cfg.getCategories(onlySelectable=False, caching=False):
+                    if cat_mapping_id in other_cat.getCategoryMappingsWhenCloningToOtherMC():
+                        msg = translate(
+                            "can_not_delete_meetingcategory_other_category_mapping",
+                            domain="plone",
+                            mapping={'url': other_cat.absolute_url()},
+                            context=self.REQUEST)
+                        raise BeforeDeleteException(msg)
         BaseContent.manage_beforeDelete(self, item, container)
 
     security.declarePublic('getSelf')
@@ -190,7 +206,7 @@ class MeetingCategory(BaseContent, BrowserDefaultMixin):
     def adapted(self):
         return getCustomAdapter(self)
 
-    security.declareProtected('Modify portal content', 'onEdit')
+    security.declareProtected(ModifyPortalContent, 'onEdit')
 
     def onEdit(self, isCreated):
         '''See doc in interfaces.py.'''
