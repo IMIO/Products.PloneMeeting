@@ -71,6 +71,8 @@ Changelog
 - Use tooltipster everywhere instead of pmDropDown (MeetingItem.emergency, MeetingItem.completeness, mailing_lists on a generable POD template)
   except to manage list of meetings displayed in the plonemeeting portlet.  Moreover, do not use blue_arrow.gif image anymore to avoid wrong tooltipster size
   on first display, use a fontawesome icon
+- Show Managers reserved fields Meeting.meetingNumber, Meeting.firstItemNumber and Meeting.meetingConfigVersion to MeetingManagers on the meeting view,
+  but these fields remain only editable by Managers
 
 4.1b16 (2019-01-31)
 -------------------
