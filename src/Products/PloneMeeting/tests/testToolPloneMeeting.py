@@ -99,6 +99,17 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # a subproduct can ignore some PloneMeeting test files in self.subproductIgnoredTestFiles
         self.failIf(set(pm_testfiles).difference(set(subproduct_testfiles + self.subproductIgnoredTestFiles)))
 
+    def test_pm_ToolView(self):
+        '''Access the tool view and just check that it does not fail displaying.'''
+        # XXX fix me, should raise Unauthorized to anonymous
+        # self.assertRaises(self.tool.restrictedTraverse('view'))
+        self.changeUser('pmCreator1')
+        self.assertTrue(self.tool.restrictedTraverse('toolplonemeeting_view')())
+        self.changeUser('pmManager')
+        self.assertTrue(self.tool.restrictedTraverse('toolplonemeeting_view')())
+        self.changeUser('siteadmin')
+        self.assertTrue(self.tool.restrictedTraverse('toolplonemeeting_view')())
+
     def test_pm_GetMeetingConfig(self):
         '''Test the ToolPloneMeeting.getMeetingConfig method :
            - returns relevant meetingConfig when called on an item/meeting/...;

@@ -150,21 +150,9 @@
             <td tal:define="field python:here.getField('unrestrictedUsers')">
                 <span metal:use-macro="here/widgets/field/macros/view" />
             </td>
-            <td>
-            </td>
+            <td></td>
           </tr>
           <tr valign="top">
-            <td tal:define="field python:here.getField('extractTextFromFiles')">
-                <span metal:use-macro="here/widgets/field/macros/view" /></td>
-            <td tal:define="field python:here.getField('availableOcrLanguages')">
-                <span metal:use-macro="here/widgets/field/macros/view" /></td>
-            <td tal:define="field python:here.getField('defaultOcrLanguage')">
-              <span metal:use-macro="here/widgets/field/macros/view" /></td>
-          </tr>
-          <tr valign="top">
-            <td tal:define="field python:here.getField('enableUserPreferences')">
-              <span metal:use-macro="here/widgets/field/macros/view" />
-            </td>
             <td tal:define="field python:here.getField('modelAdaptations')">
               <span metal:use-macro="here/widgets/field/macros/view" /></td>
             <td></td>
@@ -188,8 +176,7 @@
             <td tal:define="field python:here.getField('enableScanDocs')">
               <span metal:use-macro="here/widgets/field/macros/view" />
             </td>
-            <td>
-            </td>
+            <td></td>
           </tr>
         </table>
       </fieldset>
