@@ -251,16 +251,33 @@
                <metal:itemIsSigned use-macro="here/@@pm-macros/takenOverBy" />
               </tal:defines>
             </div>
+
             <tal:comment replace="nothing">Item emergency</tal:comment>
             <div class="discreet" tal:condition="python: 'emergency' in usedAttrs">
                 <span class="item_attribute_label"
                       i18n:translate="PloneMeeting_label_emergency"></span>:&nbsp;&nbsp;
-                <tal:itemEmergency replace="structure here/@@item-emergency/index" />
+                <span data-base_url="#"
+                   style="display: inline;"
+                   tal:define="edit_css_classes python: context.mayQuickEdit('emergency') and 'tooltipster-item-emergency-change item_emergency Editable pmAction' or ''"
+                   tal:attributes="data-base_url string:${context_url};
+                                   class string:${edit_css_classes} item_${context/getEmergency}">
+                    <span metal:use-macro="python: here.widget('emergency', mode='view')" />
+                </span>
+                <span class="discreet"> — <a href="item-emergency-history" class="link-overlay-pm" i18n:translate="" i18n:domain="plone">History</a></span>
             </div>
+
+            <tal:comment replace="nothing">Item completeness</tal:comment>
             <div class="discreet" tal:condition="python: 'completeness' in usedAttrs">
                 <span class="item_attribute_label"
                       i18n:translate="PloneMeeting_label_completeness"></span>:&nbsp;&nbsp;
-                <tal:itemCompleteness replace="structure here/@@item-completeness/index" />
+                <span data-base_url="#"
+                   style="display: inline;"
+                   tal:define="edit_css_classes python: context.mayQuickEdit('completeness') and 'tooltipster-item-completeness-change item_completeness Editable pmAction' or ''"
+                   tal:attributes="data-base_url string:${context_url};
+                                   class string:${edit_css_classes} item_${context/getCompleteness}">
+                    <span metal:use-macro="python: here.widget('completeness', mode='view')" />
+                </span>
+                <span class="discreet"> — <a href="item-completeness-history" class="link-overlay-pm" i18n:translate="" i18n:domain="plone">History</a></span>
             </div>
         </td>
         <td width="50%" align="right">

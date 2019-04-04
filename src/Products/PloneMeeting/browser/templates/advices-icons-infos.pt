@@ -250,8 +250,8 @@
                        class="link-overlay-pm-preview-advice"
                        tal:condition="adviceHolderIsViewable"
                        tal:attributes="href string:${obj_absolute_url}/view">
-                        <img src="blue_arrow.gif"
-                             tal:attributes="src string:${view/portal_url}/blue_arrow.gif"/>&nbsp;<span i18n:translate="">Preview detailled advice</span>
+                         <span class="fa fa-angle-double-right" />
+                         <span i18n:translate="">Preview detailled advice</span>
                     </a>
                 </td>
                 <td colspan="5"

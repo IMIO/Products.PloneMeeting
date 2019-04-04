@@ -68,6 +68,9 @@ Changelog
 - Removed unused fields on ToolPloneMeeting : 'extractTextFromFiles', 'availableOcrLanguages', 'defaultOcrLanguage' and 'enableUserPreferences'
 - Added possibility to define a Plone group in the recipient on a mailing_list defined on a POD template using 'group:' + Plone group id
 - Make sure a MeetingCategory can not be deleted if used in field 'categoryMappingsWhenCloningToOtherMC' of another MeetingCategory in another MeetingConfig
+- Use tooltipster everywhere instead of pmDropDown (MeetingItem.emergency, MeetingItem.completeness, mailing_lists on a generable POD template)
+  except to manage list of meetings displayed in the plonemeeting portlet.  Moreover, do not use blue_arrow.gif image anymore to avoid wrong tooltipster size
+  on first display, use a fontawesome icon
 
 4.1b16 (2019-01-31)
 -------------------

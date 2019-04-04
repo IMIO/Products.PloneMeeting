@@ -398,11 +398,6 @@ table td div.field {
 #portal-footer {margin: 1em 0 0.5em 0; padding: 0; }
 #portal-advanced-search {display: none; }
 
-/* Styles used for the annexes dropdown menus, derived from Plone styles
-   "contentAction" and "actionMenu" */
-.onTop { z-index: 20 !important; }
-.onBottom { z-index: 0 }
-
 /* the number displayed in the table of annexes */
 .td_cell_number-column {
     font-size: 80%;
@@ -442,28 +437,7 @@ div.tooltipster-content div#content {
     padding-left: 0.5em;
     padding-right: 0.5em;
     padding-top: 0.5em;
-}
-
-/* annexes displayed in the annexes_form (table of annexes) */
-td.pmLinks a {
-    display: inline;
-}
-/* annexes displayed as dropdown list */
-li.pmLinks div.annexTitle {
-    padding-right: 30px;
-    display: block;
-}
-/* annexes displayed in the annexes_form */
-td.pmLinks div.annexTitle {
-    display: inline;
-}
-.annexTitleNotPrintable {
-    cursor: help;
-    white-space: nowrap;
-}
-/* annexes displayed as dropdown list */
-li.pmLinks div.annexTitleNotPrintable {
-    padding-left: 0.5em;
+    margin-bottom: 0.5em;
 }
 
 /* place an icon before the annex title if there was an error during conversion */
@@ -596,17 +570,6 @@ legend .pmLanguage {top: -0.3em; right: 5px;}
 
 .pmDropdown.podTemplateSendmail > div {
     padding-right: 50px;
-}
-
-#pm_menu_item_completeness.pmDropdown {
-    left: 92px;
-}
-#pm_menu_item_emergency.pmDropdown {
-    left: 70px;
-}
-/* listType displayed on meetingitem_view */
-div[id^="pm_menu_item_listType"].pmDropdown {
-    right: 10px;
 }
 
 /* CSS for data changes in object histories. */
@@ -818,6 +781,10 @@ TD acronym {
 acronym a {
     cursor: help;
     padding: 0;
+}
+
+acronym img {
+   cursor: pointer;
 }
 
 /* TH of the table listing items are stylable th by th */
@@ -1093,15 +1060,15 @@ table.listing tr[class][class] td.meeting_item_listType_late {
 }
 
 .item_completeness_incomplete,
-#content a.item_completeness_incomplete:link,
-#content a.item_completeness_incomplete:visited {
+a.item_completeness_incomplete:link,
+a.item_completeness_incomplete:visited {
     vertical-align: middle;
     display: inline;
     color: red;
 }
 .item_completeness_evaluation_not_required,
-#content a.item_completeness_evaluation_not_required:link,
-#content a.item_completeness_evaluation_not_required:visited {
+a.item_completeness_evaluation_not_required:link,
+a.item_completeness_evaluation_not_required:visited {
     vertical-align: middle;
     display: inline;
     color: black;
@@ -1111,8 +1078,8 @@ table.listing tr[class][class] td.meeting_item_listType_late {
     color: red;
 }
 .item_completeness_complete,
-#content a.item_completeness_complete:link,
-#content a.item_completeness_complete:visited {
+a.item_completeness_complete:link,
+a.item_completeness_complete:visited {
     vertical-align: middle;
     display: inline;
     color: green;
@@ -1121,8 +1088,8 @@ table.listing tr[class][class] td.meeting_item_listType_late {
     color: green;
 }
 .item_completeness_not_yet_evaluated,
-#content a.item_completeness_not_yet_evaluated:link,
-#content a.item_completeness_not_yet_evaluated:visited {
+a.item_completeness_not_yet_evaluated:link,
+a.item_completeness_not_yet_evaluated:visited {
     vertical-align: middle;
     display: inline;
     color: &dtml-discreetColor;;
@@ -1131,8 +1098,8 @@ table.listing tr[class][class] td.meeting_item_listType_late {
     color: &dtml-discreetColor;;
 }
 .item_completeness_evaluation_asked_again,
-#content a.item_completeness_evaluation_asked_again:link,
-#content a.item_completeness_evaluation_asked_again:visited {
+a.item_completeness_evaluation_asked_again:link,
+a.item_completeness_evaluation_asked_again:visited {
     vertical-align: middle;
     display: inline;
     color: DarkOrange;
@@ -1142,37 +1109,32 @@ table.listing tr[class][class] td.meeting_item_listType_late {
 }
 a[class^="link-overlay-pm item_completeness_"],
 a.item_no_emergency,
-a[class^="link-overlay-pm item_emergency_"],
-a.template_send_mailing_list {
+a[class^="link-overlay-pm item_emergency_"] {
     padding-right: 50px;
-    float: left;
     font-weight: normal;
     font-style: normal;
 }
-a.template_send_mailing_list {
-    line-height: 1em;
-}
 
 .item_no_emergency,
-#content a:link.item_no_emergency {
+a:link.item_no_emergency {
     vertical-align: middle;
     display: inline;
     color: &dtml-discreetColor;;
 }
 .item_emergency_asked,
-#content a:link.item_emergency_asked {
+a:link.item_emergency_asked {
     vertical-align: middle;
     display: inline;
     color: DarkOrange;
 }
 .item_emergency_accepted,
-#content a:link.item_emergency_accepted {
+a:link.item_emergency_accepted {
     vertical-align: middle;
     display: inline;
     color: green;
 }
 .item_emergency_refused,
-#content a:link.item_emergency_refused {
+a:link.item_emergency_refused {
     vertical-align: middle;
     display: inline;
     color: red;
@@ -1756,6 +1718,10 @@ ul.change_delay_actions {
 }
 ul.change_delay_actions li a span {
    display: inline-block;
+}
+
+.fa-angle-double-right {
+   color: &dtml-linkColor;;
 }
 /* </dtml-with> */
 

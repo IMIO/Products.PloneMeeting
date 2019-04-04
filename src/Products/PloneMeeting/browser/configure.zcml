@@ -643,6 +643,15 @@
         layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
         permission="zope2.View" />
 
+    <!-- the view that display list of available mailing_lists on a POD template -->
+    <browser:page
+        for="*"
+        name="available-mailing-lists"
+        class=".views.PODTemplateMailingLists"
+        template="templates/pod_template_mailing_lists.pt"
+        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        permission="zope2.View" />
+
     <!-- this view will contains some methods doing unrestricted things.  It replaces Manager Proxy roled python Scripts -->
     <browser:page
         for="*"

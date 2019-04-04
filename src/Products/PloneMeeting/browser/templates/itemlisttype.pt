@@ -1,7 +1,6 @@
 <tal:defines define="selectableListTypes view/selectableListTypes;">
     <tal:loop repeat="listType selectableListTypes">
-        <img width="16px" src="blue_arrow.gif"
-             tal:attributes="src string:${view/portal_url}/blue_arrow.gif"/>
+        <span class="fa fa-angle-double-right" />
         <a href="#"
            onclick="#"
            tal:attributes="onclick string:event.preventDefault();;

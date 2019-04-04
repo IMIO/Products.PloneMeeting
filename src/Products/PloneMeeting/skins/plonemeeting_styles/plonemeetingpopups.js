@@ -127,7 +127,10 @@ jQuery(document).ready(function($) {
     advicesInfos();
     adviceAddEdit();
     listTypeChange();
-    
+    emergencyChange();
+    completenessChange();
+    availableMailingLists();
+
     // inserting methods infos on meeting_view
     tooltipster_helper(selector='.tooltipster-inserting-methods-helper-msg',
                        view_name='@@display-inserting-methods-helper-msg',
@@ -225,6 +228,32 @@ function listTypeChange() {
                        view_name='@@item-listtype',
                        data_parameters=[],
                        options={trigger: 'click', position: 'right'});
+}
+
+function emergencyChange() {
+    // emergency change on meeting_view
+    tooltipster_helper(selector='.tooltipster-item-emergency-change',
+                       view_name='@@item-emergency',
+                       data_parameters=[],
+                       options={trigger: 'click', position: 'bottom',
+                                functionReady_callback: pmCommonOverlays});
+}
+
+function completenessChange() {
+    // emergency change on meeting_view
+    tooltipster_helper(selector='.tooltipster-item-completeness-change',
+                       view_name='@@item-completeness',
+                       data_parameters=[],
+                       options={trigger: 'click', position: 'bottom',
+                                functionReady_callback: pmCommonOverlays});
+}
+
+function availableMailingLists() {
+    // mailing lists displayed on a POD template in the generation links viewlet
+    tooltipster_helper(selector='.tooltipster-available-mailing-lists',
+                       view_name='@@available-mailing-lists',
+                       data_parameters=['template_uid', 'output_format'],
+                       options={trigger: 'click', position: 'bottom'});
 }
 
 function inheritedItemInfos() {

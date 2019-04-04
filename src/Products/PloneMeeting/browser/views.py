@@ -1591,3 +1591,22 @@ class DisplayMeetingItemSignatories(BrowserView):
         brains = catalog(UID=item_uids, sort_on='getItemNumber')
         objs = [brain.getObject() for brain in brains]
         return objs
+
+
+class PODTemplateMailingLists(BrowserView):
+    """ """
+    def __init__(self, context, request):
+        self.context = context
+        self.request = request
+        self.portal_url = api.portal.get().absolute_url()
+
+    def __call__(self, template_uid, output_format):
+        """ """
+        self.template_uid = template_uid
+        self.output_format = output_format
+        return self.index()
+
+    def getAvailableMailingLists(self):
+        '''Gets the names of the (currently active) mailing lists defined for template_uid.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        return tool.getAvailableMailingLists(self.context, self.template_uid)
