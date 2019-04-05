@@ -981,6 +981,16 @@ class Migrate_To_4_1(Migrator):
 
         logger.info('Done.')
 
+    def _adaptShowHolidaysMessage(self):
+        '''Show holidays_warning message to users having role Manager/MeetingManager,
+           to avoid error message in log as now, tool/portal_plonemeeting is no more
+           accessible to Anonymous.'''
+        logger.info("Adapting required_roles for message 'Holidays warning'...")
+        message = self.portal.get('messages-config').get('holidays_warning')
+        if not message.required_roles:
+            message.required_roles = ['Manager', 'MeetingManager']
+        logger.info('Done.')
+
     def run(self, step=None):
         logger.info('Migrating to PloneMeeting 4.1...')
 
@@ -1042,6 +1052,12 @@ class Migrate_To_4_1(Migrator):
                                  new_word="power_observer_type='restrictedpowerobservers'")
         self.updateTALConditions(old_word='isRestricted=False',
                                  new_word="power_observer_type='powerobservers'")
+        self.updateTALConditions(old_word='context.portal_plonemeeting',
+                                 new_word='tool')
+        self.updateTALConditions(old_word='context.portal_plonemeeting.getMeetingConfig(context)',
+                                 new_word='cfg')
+        self.updateTALConditions(old_word='tool.getMeetingConfig(context)',
+                                 new_word='cfg')
         self._updateUsedAttributes()
         self._updateHistorizedAttributes()
         self._migrateGroupsShownInDashboardFilter()
@@ -1059,6 +1075,7 @@ class Migrate_To_4_1(Migrator):
         self._migrate_searchitemstoprevalidate_query()
         self._migrateItemsInConfig()
         self._initFTWLabels()
+        self._adaptShowHolidaysMessage()
         # too many indexes to update, rebuild the portal_catalog
         self.refreshDatabase()
 

@@ -296,7 +296,8 @@ def postInstall(context):
                                    domain='PloneMeeting',
                                    context=site.REQUEST),
                     msg_type='significant',
-                    tal_condition='python: context.portal_plonemeeting.showHolidaysWarning(context)',
+                    req_roles=['Manager', 'MeetingManager'],
+                    tal_condition='python: tool.showHolidaysWarning(context)',
                     activate=True)
     # if collective.messagesviewlet "browser-warning-ff-chrome" is found, make sure it is enabled
     if messages_config:
