@@ -88,6 +88,7 @@ class testMeetingConfig(PloneMeetingTestCase):
            This validates that enough columns are filled, either the 'delay' or the
            'gives_auto_advice_on' column must be filled.'''
         cfg = self.meetingConfig
+        self.changeUser('siteadmin')
         # the validate method returns a translated message if the validation failed
         # wrong date format, should be YYYY/MM/DD
         customAdvisers = [{'row_id': 'unique_id_123',
@@ -149,6 +150,7 @@ class testMeetingConfig(PloneMeetingTestCase):
            This validates dates of the 'for_item_created_from' and ''for_item_created_until' columns :
            dates are strings that need to respect following format 'YYYY/MM/DD'.'''
         cfg = self.meetingConfig
+        self.changeUser('siteadmin')
         # the validate method returns a translated message if the validation failed
         # wrong date format, should be YYYY/MM/DD
         customAdvisers = [{'row_id': 'unique_id_123',
@@ -212,6 +214,7 @@ class testMeetingConfig(PloneMeetingTestCase):
            is higher or equals the value in 'delay_left_alert' and if a value is defined in 'delay_left_alert',
            then a value in the 'delay' column is required.'''
         cfg = self.meetingConfig
+        self.changeUser('siteadmin')
         # the validate method returns a translated message if the validation failed
         # wrong format, should be empty or a digit
         customAdvisers = [{'row_id': 'unique_id_123',
@@ -384,6 +387,7 @@ class testMeetingConfig(PloneMeetingTestCase):
            This validates that available_on can only be used if nothing is defined
            in the 'gives_auto_advice_on' column.'''
         cfg = self.meetingConfig
+        self.changeUser('siteadmin')
         # the validate method returns a translated message if the validation failed
         # wrong date format, should be YYYY/MM/DD
         customAdvisers = [{'row_id': 'unique_id_123',
@@ -427,6 +431,7 @@ class testMeetingConfig(PloneMeetingTestCase):
            - can not be set if linked row is for another group;
            - can be changed if row is not in use.'''
         cfg = self.meetingConfig
+        self.changeUser('siteadmin')
         # the validate method returns a translated message if the validation failed
         customAdvisers = [{'row_id': 'unique_id_123',
                            'org': self.vendors_uid,
