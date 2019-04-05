@@ -74,7 +74,6 @@ from Products.PloneMeeting.config import ITEM_ICON_COLORS
 from Products.PloneMeeting.config import ITEM_INSERT_METHODS
 from Products.PloneMeeting.config import ITEMTEMPLATESMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETING_CONFIG
-from Products.PloneMeeting.config import MEETING_STATES_ACCEPTING_ITEMS
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import MEETINGROLES
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
@@ -5612,7 +5611,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         return res
 
     def _itemTemplatesQuery(self, onlyActive=True, filtered=False):
-        """Returns the catalog query to get item templates."""
+        '''Returns the catalog query to get item templates.'''
         query = {'portal_type': self.getItemTypeName(configType='MeetingItemTemplate')}
         if onlyActive:
             query['review_state'] = 'active'
@@ -5869,20 +5868,24 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 alsoProvides(subFolderObj, IBatchActionsMarker)
                 subFolderObj.reindexObject()
 
+    def getMeetingStatesAcceptingItems(self):
+        '''See doc in interfaces.py.'''
+        return ('created', 'frozen', 'published', 'decided', 'decisions_published')
+
     def getMeetingsAcceptingItems_cachekey(method, self, review_states=('created', 'frozen'), inTheFuture=False):
         '''cachekey method for self.getMeetingsAcceptingItems.'''
         return (self, str(self.REQUEST._debug), review_states, inTheFuture)
 
     @ram.cache(getMeetingsAcceptingItems_cachekey)
     def getMeetingsAcceptingItems(self, review_states=('created', 'frozen'), inTheFuture=False):
-        '''See doc in interfaces.py.'''
+        '''Returns meetings accepting items.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         catalog = api.portal.get_tool('portal_catalog')
         # If the current user is a meetingManager (or a Manager),
         # he is able to add a meetingitem to a 'decided' meeting.
         # except if we specifically restricted given p_review_states.
         if review_states == ('created', 'frozen') and tool.isManager(self):
-            review_states += tuple(MEETING_STATES_ACCEPTING_ITEMS)
+            review_states += self.adapted().getMeetingStatesAcceptingItems()
 
         query = {'portal_type': self.getMeetingTypeName(),
                  'review_state': review_states,

@@ -54,7 +54,6 @@ from Products.PloneMeeting.browser.itemchangeorder import _to_integer
 from Products.PloneMeeting.browser.itemchangeorder import _use_same_integer
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
-from Products.PloneMeeting.config import MEETING_STATES_ACCEPTING_ITEMS
 from Products.PloneMeeting.config import PROJECTNAME
 from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.interfaces import IMeetingWorkflowActions
@@ -133,9 +132,11 @@ class MeetingWorkflowConditions(object):
     security.declarePublic('mayAcceptItems')
 
     def mayAcceptItems(self):
-        if _checkPermission(ReviewPortalContent, self.context) and \
-           (self.context.queryState() in MEETING_STATES_ACCEPTING_ITEMS):
-            return True
+        if _checkPermission(ReviewPortalContent, self.context):
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(self.context)
+            if self.context.queryState() in cfg.adapted().getMeetingStatesAcceptingItems():
+                return True
 
     security.declarePublic('mayPublish')
 
@@ -799,13 +800,13 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
     def _availableItemsQuery(self):
         '''Check docstring in IMeeting.'''
         meeting = self.getSelf()
-        if meeting.queryState() not in MEETING_STATES_ACCEPTING_ITEMS:
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(meeting)
+        if meeting.queryState() not in cfg.adapted().getMeetingStatesAcceptingItems():
             # make sure the query returns nothing, add a dummy parameter
             return [{'i': 'getPreferredMeeting',
                      'o': 'plone.app.querystring.operation.selection.is',
                      'v': 'dummy_unexisting_uid'}]
-        tool = api.portal.get_tool('portal_plonemeeting')
-        cfg = tool.getMeetingConfig(meeting)
         res = [{'i': 'portal_type',
                 'o': 'plone.app.querystring.operation.selection.is',
                 'v': cfg.getItemTypeName()},

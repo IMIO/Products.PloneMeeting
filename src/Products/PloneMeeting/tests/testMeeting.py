@@ -42,7 +42,6 @@ from Products.CMFCore.permissions import View
 from Products.Five import zcml
 from Products.PloneMeeting.config import DEFAULT_LIST_TYPES
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
-from Products.PloneMeeting.config import MEETING_STATES_ACCEPTING_ITEMS
 from Products.PloneMeeting.config import MEETINGMANAGERS_GROUP_SUFFIX
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
 from Products.PloneMeeting.MeetingItem import MeetingItem
@@ -1298,6 +1297,7 @@ class testMeeting(PloneMeetingTestCase):
     def _checkAvailableItems(self):
         """Helper method for test_pm_AvailableItems."""
         catalog = self.portal.portal_catalog
+        cfg = self.meetingConfig
         # create 3 meetings
         # we can do every steps as a MeetingManager
         self.changeUser('pmManager')
@@ -1323,7 +1323,7 @@ class testMeeting(PloneMeetingTestCase):
         i3.setTitle('i3')
         i3.setDecision('<p>Decision item 3</p>')
         # set a category if the meetingConfig use it
-        if not self.meetingConfig.getUseGroupsAsCategories():
+        if not cfg.getUseGroupsAsCategories():
             i1.setCategory('development')
             i2.setCategory('research')
             i3.setCategory('events')
@@ -1383,10 +1383,9 @@ class testMeeting(PloneMeetingTestCase):
             m1_query = queryparser.parseFormquery(m1, m1.adapted()._availableItemsQuery())
             self.assertTrue([brain.UID for brain in catalog(m1_query)] == [i2.UID()])
 
-        # if a meeting is not in a MEETING_STATES_ACCEPTING_ITEMS state,
-        # it does not accept items anymore
+        # if a meeting is not in a state accepting items, it does not accept items anymore
         self.closeMeeting(m1)
-        self.assertTrue(not m1.queryState() in MEETING_STATES_ACCEPTING_ITEMS)
+        self.assertTrue(m1.queryState() not in cfg.adapted().getMeetingStatesAcceptingItems())
         m1_query = queryparser.parseFormquery(m1, m1.adapted()._availableItemsQuery())
         self.assertTrue(not catalog(m1_query))
 
