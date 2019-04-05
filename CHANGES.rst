@@ -95,6 +95,7 @@ Changelog
 - On held_position, display where it is used (MeetingConfig.orderedContacts, Meeting.orderedContacts) to ease management of duplicates.
 - Make held_position.label optional if correct held_position.position_type is selected
 - Manage prefix of held_position label/position_type depending on gender, number and first letter (Administrateur --> L'Administrateur, Directrice --> La Directrice)
+- Added JenkinsFile
 
 4.1b15 (2019-01-14)
 -------------------
