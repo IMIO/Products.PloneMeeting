@@ -11,7 +11,8 @@
                                                                                                                          delay[0],
                                                                                                                          view.advice['row_id']);
                                class python: 'link-overlay-pm advice_delay_change_value'">
-                <img src="advice_with_delay_big.png"
+                <img width="16" height="16"
+                     src="advice_with_delay_big.png"
                      tal:attributes="src string:${view/portal_url}/advice_with_delay_big.png">
                 <span class="advice_delay" tal:content="python: delay[1]">Delay</span>
                 <span tal:content="python: delay[2]">Delay label</span>
@@ -21,7 +22,8 @@
           <a href="#"
              tal:attributes="onClick string:javascript:event.preventDefault();;confirmReinitializeDelay(base_url='${context/absolute_url}', advice='${view/advice/id}', this);;"
              style="cursor:pointer;">
-            <img src="advice_reinit_delay.gif"
+            <img width="16" height="16"
+                 src="advice_reinit_delay.gif"
                  tal:attributes="src string:${portal_url}/advice_reinit_delay.png"/>&nbsp;<span i18n:translate="">Reinitiatlize delay</span>
           </a><br />
         </li>

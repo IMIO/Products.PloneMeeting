@@ -1723,6 +1723,11 @@ ul.change_delay_actions li a span {
 .fa-angle-double-right {
    color: &dtml-linkColor;;
 }
+
+fieldset.section_annex, fieldset.section_annexDecision, fieldset.section_advices {
+   height: 50px;
+}
+
 /* </dtml-with> */
 
 /* DOCUMENTATION ON PRE-DEFINED PROPERTIES FROM PLONE */

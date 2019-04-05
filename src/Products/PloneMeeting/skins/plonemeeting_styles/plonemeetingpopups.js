@@ -227,7 +227,7 @@ function listTypeChange() {
     tooltipster_helper(selector='.tooltipster-item-listtype-change',
                        view_name='@@item-listtype',
                        data_parameters=[],
-                       options={trigger: 'click', position: 'right'});
+                       options={position: 'right'});
 }
 
 function emergencyChange() {
@@ -235,7 +235,7 @@ function emergencyChange() {
     tooltipster_helper(selector='.tooltipster-item-emergency-change',
                        view_name='@@item-emergency',
                        data_parameters=[],
-                       options={trigger: 'click', position: 'bottom',
+                       options={position: 'bottom',
                                 functionReady_callback: pmCommonOverlays});
 }
 
@@ -244,7 +244,7 @@ function completenessChange() {
     tooltipster_helper(selector='.tooltipster-item-completeness-change',
                        view_name='@@item-completeness',
                        data_parameters=[],
-                       options={trigger: 'click', position: 'bottom',
+                       options={position: 'bottom',
                                 functionReady_callback: pmCommonOverlays});
 }
 
