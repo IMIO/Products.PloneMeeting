@@ -75,7 +75,8 @@ Changelog
   but these fields remain only editable by Managers
 - Removed 'View' access to role Anonymous in the 'plonemeeting_onestate_workflow' so it is not possible for anonymous to access anything from the configuration.
   Warning, this constrains to not use 'tool' in TAL condition of messages displayed to anonymous and to protect messages using 'tool' by selecting some values
-  in field required_roles of the message
+  in field required_roles of the message.
+  Moreover, needed to give power observers Reader role on portal_plonemeeting and contacts directory that are using this workflow
 - Removed constant config.MEETING_STATES_ACCEPTING_ITEMS and replaced it with MeetingConfig.getMeetingStatesAcceptingItems adaptable method,
   this avoids monkeypatching problems
 

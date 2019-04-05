@@ -2078,6 +2078,34 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(self.hasPermission(View, item))
         self.assertTrue(self.hasPermission(View, meeting))
 
+    def test_pm_PowerObserversConfigLocalRoles(self):
+        '''Check that powerobservers local roles are set correctly on configuration.
+           As power observers are not MeetingObserverGlobal, access is given
+           specifically to contacts directory, portal_plonemeeting and relevant MeetingConfig.'''
+        cfg = self.meetingConfig
+        cfg_id = cfg.getId()
+        cfg2 = self.meetingConfig2
+        cfg2_id = cfg2.getId()
+
+        # localroles are given to power observers on portal_plonemeeting and contacts directory
+        po_group_id = '{0}_powerobservers'.format(cfg_id)
+        rpo_group_id = '{0}_restrictedpowerobservers'.format(cfg_id)
+        self.assertTrue(po_group_id in self.tool.__ac_local_roles__)
+        self.assertTrue(rpo_group_id in self.tool.__ac_local_roles__)
+        self.assertTrue(po_group_id in self.portal.contacts.__ac_local_roles__)
+        self.assertTrue(rpo_group_id in self.portal.contacts.__ac_local_roles__)
+        # on correct MeetingConfig
+        self.assertTrue(po_group_id in cfg.__ac_local_roles__)
+        self.assertTrue(rpo_group_id in cfg.__ac_local_roles__)
+        self.assertFalse(po_group_id in cfg2.__ac_local_roles__)
+        self.assertFalse(rpo_group_id in cfg2.__ac_local_roles__)
+        po2_group_id = '{0}_powerobservers'.format(cfg2_id)
+        rpo2_group_id = '{0}_restrictedpowerobservers'.format(cfg2_id)
+        self.assertFalse(po2_group_id in cfg.__ac_local_roles__)
+        self.assertFalse(rpo2_group_id in cfg.__ac_local_roles__)
+        self.assertTrue(po2_group_id in cfg2.__ac_local_roles__)
+        self.assertTrue(rpo2_group_id in cfg2.__ac_local_roles__)
+
     def test_pm_PowerObserversAccessOn(self):
         '''Power observers access is given depending on 'item_access_on' TAL expression.'''
         self._setPowerObserverStates(states=('itemcreated', ))
