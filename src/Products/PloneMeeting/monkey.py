@@ -28,6 +28,15 @@ def userAndGroupsAwarePortalTransformsCacheKey():
     """
 
     def _genCacheKey(self, identifier, *args):
+        # XXX begin changes by PM, do the cache key user and groups aware
+        from plone import api
+        from plone.api.exc import InvalidParameterError
+        try:
+            # while creating a new Plone Site, portal_plonemeeting is not available
+            tool = api.portal.get_tool('portal_plonemeeting')
+        except InvalidParameterError:
+            return Cache.__pm_old_genCacheKey(self, identifier, *args)
+        # XXX end of changes by PM
         key = identifier
         for arg in args:
             key = '%s_%s' % (key, arg)
@@ -36,7 +45,6 @@ def userAndGroupsAwarePortalTransformsCacheKey():
         key = key.replace('-', '_')
         key = key.replace(' ', '_')
         # XXX begin changes by PM, do the cache key user and groups aware
-        from plone import api
         user = api.user.get_current()
         user_id = user.getId()
         tool = api.portal.get_tool('portal_plonemeeting')
