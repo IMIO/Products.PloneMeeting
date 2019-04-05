@@ -34,7 +34,8 @@
                i18n:attributes="title"
                href="@@advice-delay-changes-history"
                tal:attributes="href string:${view/context/absolute_url}/@@advice-delay-changes-history?advice=${view/advice/id}">
-                <img src="++resource++imio.actionspanel/history.gif"
+                <img width="16" height="16"
+                     src="++resource++imio.actionspanel/history.gif"
                      tal:attributes="src string:${portal_url}/++resource++imio.actionspanel/history.gif"/>&nbsp;<span i18n:translate="">History of delay changes</span>
             </a><br />
         </li>

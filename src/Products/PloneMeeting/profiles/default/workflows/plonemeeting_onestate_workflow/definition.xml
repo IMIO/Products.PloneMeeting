@@ -17,7 +17,6 @@
   <permission-map name="Access contents information"
                   acquired="False">
    <permission-role>Owner</permission-role>
-   <permission-role>Anonymous</permission-role>
    <permission-role>Manager</permission-role>
    <permission-role>MeetingManager</permission-role>
    <permission-role>MeetingObserverGlobal</permission-role>
@@ -29,7 +28,6 @@
   <permission-map name="List folder contents"
                   acquired="False">
    <permission-role>Owner</permission-role>
-   <permission-role>Anonymous</permission-role>
    <permission-role>Manager</permission-role>
    <permission-role>MeetingManager</permission-role>
    <permission-role>MeetingObserverGlobal</permission-role>
@@ -45,7 +43,6 @@
   <permission-map name="View"
                   acquired="False">
    <permission-role>Owner</permission-role>
-   <permission-role>Anonymous</permission-role>
    <permission-role>Manager</permission-role>
    <permission-role>MeetingManager</permission-role>
    <permission-role>MeetingObserverGlobal</permission-role>
