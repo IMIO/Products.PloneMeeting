@@ -1585,6 +1585,44 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertEqual(item_labeling.storage, {})
         self.assertEqual(clonedItemWithLabels_labeling.storage, {'label': []})
 
+    def test_pm_CloneItemDisabledCategory(self):
+        '''When an item is cloned with a disabled category,
+           the new item does not have a category and user must select it.'''
+        cfg = self.meetingConfig
+        cfg.setUseGroupsAsCategories(False)
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.setCategory('research')
+        category = item.getCategory(theObject=True)
+        self.assertTrue(category in cfg.getCategories(onlySelectable=True))
+        # cloning an item with active category will keep the category
+        new_item_with_category = item.clone()
+        self.assertEqual(new_item_with_category.getCategory(theObject=True), category)
+
+        # disable category
+        self.changeUser('siteadmin')
+        self.do(category, 'deactivate')
+        self.assertFalse(category in cfg.getCategories(onlySelectable=True))
+        self.changeUser('pmCreator1')
+        new_item_without_category = item.clone()
+        self.assertFalse(new_item_without_category.getCategory())
+
+    def test_pm_ItemCreatedWithoutCategoryCanNotChangeReviewState(self):
+        '''When using categories, if created item does not have a category,
+           it is the case when duplicating an item without category of having a
+           disabled category or when sending an item to another MC, an item without
+           category can not change of WF review_state.'''
+        cfg = self.meetingConfig
+        cfg.setUseGroupsAsCategories(False)
+        self.changeUser('pmCreator1')
+        item = self.create('MeetingItem')
+        item.setCategory('research')
+        item._update_after_edit()
+        self.assertTrue(self.transitions(item))
+        item.setCategory('')
+        item._update_after_edit()
+        self.assertFalse(self.transitions(item))
+
     def test_pm_DuplicatedItemDoesNotKeepDecisionAnnexes(self):
         """When an item is duplicated using the 'duplicate and keep link',
            decision annexes are not kept."""

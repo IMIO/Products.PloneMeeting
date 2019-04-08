@@ -2828,7 +2828,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getCategory')
 
-    def getCategory(self, theObject=False, **kwargs):
+    def getCategory(self, theObject=False, real=False, **kwargs):
         '''Returns the category of this item. When used by Archetypes,
            this method returns the category Id; when used elsewhere in
            the PloneMeeting code (with p_theObject=True), it returns
@@ -2838,7 +2838,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(self)
         try:
             res = ''
-            if cfg.getUseGroupsAsCategories():
+            if not real and cfg.getUseGroupsAsCategories():
                 res = self.getProposingGroup(theObject=theObject)
             else:
                 cat_id = self.getField('category').get(self, **kwargs)

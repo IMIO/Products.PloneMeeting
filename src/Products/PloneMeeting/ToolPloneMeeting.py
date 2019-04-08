@@ -35,6 +35,8 @@ from imio.actionspanel.utils import unrestrictedRemoveGivenObject
 from imio.helpers.cache import cleanRamCache
 from imio.helpers.cache import get_cachekey_volatile
 from imio.helpers.cache import invalidate_cachekey_volatile_for
+from imio.helpers.content import disable_link_integrity_checks
+from imio.helpers.content import restore_link_integrity_checks
 from imio.prettylink.interfaces import IPrettyLink
 from OFS import CopySupport
 from persistent.mapping import PersistentMapping
@@ -1057,8 +1059,18 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
         # Set fields not in the copyFields list to their default value
         # 'id' and  'proposingGroup' will be kept in anyway
         fieldsToKeep = ['id', 'proposingGroup', ] + copyFields
+        # remove 'category/classifier' from fieldsToKeep if it is disabled
+        if 'category' in fieldsToKeep:
+            category = copiedItem.getCategory(real=True, theObject=True)
+            if category and not category.isSelectable(userId=loggedUserId):
+                fieldsToKeep.remove('category')
+        if 'classifier' in fieldsToKeep:
+            category = copiedItem.getClassifier()
+            if category and not category.isSelectable(userId=loggedUserId):
+                fieldsToKeep.remove('classifier')
+
         for field in newItem.Schema().filterFields(isMetadata=False):
-            if not field.getName() in fieldsToKeep:
+            if field.getName() not in fieldsToKeep:
                 # Set the field to its default value
                 field.set(newItem, field.getDefault(newItem))
 
@@ -1071,8 +1083,12 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                 newItem, copiedItem.getClassifier())
 
         # remove every contained images as it will be added again by storeImagesLocally
-        for image in [img for img in newItem.objectValues() if img.portal_type == 'Image']:
+        # disable linkintegrity if enabled
+        original_link_integrity = disable_link_integrity_checks()
+        images = [img for img in newItem.objectValues() if img.portal_type == 'Image']
+        for image in images:
             unrestrictedRemoveGivenObject(image)
+        restore_link_integrity_checks(original_link_integrity)
 
         # Manage annexes.
         # remove relevant annexes then manage kept ones, we remove kept annexes

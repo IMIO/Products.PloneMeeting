@@ -80,6 +80,9 @@ Changelog
   these objects as power observers may be created when contents already added to it
 - Removed constant config.MEETING_STATES_ACCEPTING_ITEMS and replaced it with MeetingConfig.getMeetingStatesAcceptingItems adaptable method,
   this avoids monkeypatching problems
+- When duplicating an item with a category/classifier that is inactive, the resulting item will not have any category, selecting a category will be necessary
+  first to continue the work (first item WF transition will not be doable).  Added parameter 'real=False' to MeetingItem.getCategory to get the stored category,
+  ignoring magic with category/proposingGroup depending on MeetingConfig.useGroupsAsCategories
 
 4.1b16 (2019-01-31)
 -------------------
