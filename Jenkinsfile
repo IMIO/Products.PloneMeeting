@@ -4,6 +4,7 @@ pipeline {
     options {
         skipDefaultCheckout()
         disableConcurrentBuilds()
+        parallelsAlwaysFailFast()
     }
 
     environment{
@@ -14,7 +15,6 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                deleteDir()
                 git url: 'https://github.com/IMIO/buildout.pm.git', branch: 'master'
             }
         }
@@ -57,14 +57,14 @@ pipeline {
     }
 
     post{
-        failure{
+        aborted{
             mail to: 'pm-interne@imio.be',
-                 subject: "Failed Pipeline: ${currentBuild.fullDisplayName}",
-                 body: "The pipeline${env.JOB_NAME} ${env.BUILD_NUMBER} failed (${env.BUILD_URL})"
+                 subject: "Aborted Pipeline: ${currentBuild.fullDisplayName}",
+                 body: "The pipeline ${env.JOB_NAME} ${env.BUILD_NUMBER} was aborted (${env.BUILD_URL})"
 
             slackSend channel: "#jenkins",
-                      color: "#ff0000",
-                      message: "Failed ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
+                      color: "#C0C0C0",
+                      message: "Aborted ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
         }
         regression{
             mail to: 'pm-interne@imio.be',
@@ -83,6 +83,15 @@ pipeline {
             slackSend channel: "#jenkins",
                       color: "#00cc44",
                       message: "Fixed ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
+        }
+        failure{
+            mail to: 'pm-interne@imio.be',
+                 subject: "Failed Pipeline: ${currentBuild.fullDisplayName}",
+                 body: "The pipeline${env.JOB_NAME} ${env.BUILD_NUMBER} failed (${env.BUILD_URL})"
+
+            slackSend channel: "#jenkins",
+                      color: "#ff0000",
+                      message: "Failed ${env.JOB_NAME} ${env.BUILD_NUMBER} (<${env.BUILD_URL}|Open>)"
         }
         cleanup{
             deleteDir()
