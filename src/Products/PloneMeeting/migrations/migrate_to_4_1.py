@@ -21,6 +21,7 @@ from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_NEW
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
+from Products.PloneMeeting.config import READER_USECASES
 from Products.PloneMeeting.config import TOOL_FOLDER_POD_TEMPLATES
 from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
 from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
@@ -354,6 +355,10 @@ class Migrate_To_4_1(Migrator):
         intids = getUtility(IIntIds)
         for cfg in self.tool.objectValues('MeetingConfig'):
             logger.info('Migrating config {0}...'.format(cfg.getId()))
+            # give local_role to power observers
+            for po in cfg.getPowerObservers():
+                group_id = '{0}_{1}'.format(cfg.getId(), po['row_id'])
+                contacts.manage_addLocalRoles(group_id, (READER_USECASES['powerobservers'],))
             if not hasattr(cfg, 'useUserReplacements'):
                 # already migrated
                 break
@@ -1077,7 +1082,7 @@ class Migrate_To_4_1(Migrator):
         self._initFTWLabels()
         self._adaptShowHolidaysMessage()
         # too many indexes to update, rebuild the portal_catalog
-        self.refreshDatabase()
+        self.refreshDatabase(workflows=True, workflowsToUpdate=['plonemeeting_onestate_workflow'])
 
 
 # The migration function -------------------------------------------------------

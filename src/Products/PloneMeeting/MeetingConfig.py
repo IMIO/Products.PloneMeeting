@@ -4873,6 +4873,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def createPowerObserversGroups(self):
         '''Creates Plone groups to manage power observers.'''
+        portal = api.portal.get()
         tool = api.portal.get_tool('portal_plonemeeting')
         for po_infos in self.getPowerObservers():
             groupSuffix = po_infos['row_id']
@@ -4880,10 +4881,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             if wasCreated:
                 # now define local_roles on the tool so it is accessible by this group
                 tool.manage_addLocalRoles(groupId, (READER_USECASES['powerobservers'],))
+                # now define local_roles on the contacts directory so it is accessible by this group
+                portal.contacts.manage_addLocalRoles(groupId, (READER_USECASES['powerobservers'],))
+                portal.contacts.reindexObjectSecurity()
                 # but we do not want this group to access every MeetingConfigs so
                 # remove inheritance on self and define these local_roles for self too
                 self.__ac_local_roles_block__ = True
                 self.manage_addLocalRoles(groupId, (READER_USECASES['powerobservers'],))
+                self.reindexObjectSecurity()
 
     security.declarePrivate('createBudgetImpactEditorsGroup')
 
