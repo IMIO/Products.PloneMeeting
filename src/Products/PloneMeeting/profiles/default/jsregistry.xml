@@ -260,7 +260,9 @@
 
 <javascript id="++resource++plone.formwidget.masterselect/masterselect.js" insert-after="++resource++collective.eeafaceted.dashboard/collective.eeafaceted.dashboard.js" />
 
-<javascript id="++resource++collective.contact.core/forms.js" insert-after="++resource++plone.formwidget.masterselect/masterselect.js" />
+<javascript id="++resource++plonetheme.imioapps/skin.js" insert-after="++resource++plone.formwidget.masterselect/masterselect.js" />
+
+<javascript id="++resource++collective.contact.core/forms.js" insert-after="++resource++plonetheme.imioapps/skin.js" />
 
 <javascript id="++resource++collective.js.tablednd/jquery.tablednd.js" insert-after="++resource++collective.contact.core/forms.js" />
 
@@ -268,23 +270,23 @@
 
 <javascript id="++resource++imio.dashboard/imio.dashboard.js" insert-after="++resource++collective.contact.plonegroup/plonegroup.js" />
 
- <javascript cacheable="True"
-             compression="safe"
-             cookable="False"
-             enabled="True"
-             expression=""
-             inline="False"
-             id="plonemeeting.js"
-             insert-after="++resource++imio.dashboard/imio.dashboard.js" />
+<javascript cacheable="True"
+            compression="safe"
+            cookable="False"
+            enabled="True"
+            expression=""
+            inline="False"
+            id="plonemeeting.js"
+            insert-after="++resource++imio.dashboard/imio.dashboard.js" />
 
- <javascript cacheable="True"
-             compression="safe"
-             cookable="True"
-             enabled="True"
-             expression=""
-             id="plonemeetingpopups.js"
-             inline="False"
-             insert-after="plonemeeting.js"/>
+<javascript cacheable="True"
+            compression="safe"
+            cookable="True"
+            enabled="True"
+            expression=""
+            id="plonemeetingpopups.js"
+            inline="False"
+            insert-after="plonemeeting.js"/>
 
 <javascript id="plonemeeting_javascript_variables.js" insert-after="plonemeetingpopups.js" />
 
