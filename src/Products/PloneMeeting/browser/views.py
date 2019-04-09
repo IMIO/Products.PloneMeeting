@@ -1362,6 +1362,8 @@ class DisplayGroupUsersView(BrowserView):
     def __init__(self, context, request):
         self.context = context
         self.request = request
+        self.tool = api.portal.get_tool('portal_plonemeeting')
+        self.portal_url = api.portal.get().absolute_url()
 
     def __call__(self, group_id):
         """ """

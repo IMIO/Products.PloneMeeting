@@ -1,7 +1,13 @@
-<div id="content" class="group_members_tooltipster" i18n:domain="plone">
-    <h3 i18n:translate="heading_group_members_of">Members of group <span style="font-style: italic;"
+<div id="content" class="group_members_tooltipster" i18n:domain="PloneMeeting">
+    <h3><span i18n:domain="plone" i18n:translate="heading_group_members_of">Members of group <span style="font-style: italic;"
                                                                          i18n:name="groupname"
-                                                                         tal:content="view/group_title">group title</span></h3>
+                                                                         tal:content="view/group_title">group title</span></span>
+    <acronym tal:condition="python: view.tool.isManager(context, realManagers=True)">
+        <a tal:attributes="href string:${view/portal_url}/@@usergroup-groupprefs?searchstring=${view/group_title}">
+            <img width="16" height="16" tal:attributes="src string:${view/portal_url}/group.png" title="View linked Plone groups" i18n:attributes="title" />
+        </a>
+    </acronym>
+    </h3>
     <tal:users define="users view/group_users">
         <span  tal:condition="users"
                tal:content="structure view/group_users"></span>

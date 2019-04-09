@@ -83,6 +83,8 @@ Changelog
 - When duplicating an item with a category/classifier that is inactive, the resulting item will not have any category, selecting a category will be necessary
   first to continue the work (first item WF transition will not be doable).  Added parameter 'real=False' to MeetingItem.getCategory to get the stored category,
   ignoring magic with category/proposingGroup depending on MeetingConfig.useGroupsAsCategories
+- When displaying the 'users of group' tooltipster (when hovering the 'user' black icon), display a link to the Plone group in the 'Users and Groups'
+  configuration to the Managers
 
 4.1b16 (2019-01-31)
 -------------------
