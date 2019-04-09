@@ -94,6 +94,25 @@ class Migrator(BaseMigrator):
             self.portal.portal_catalog.reindexIndex(name=idx, REQUEST=None)
         logger.info('Done.')
 
+    def getWorkflows(self, meta_types=['Meeting',
+                                       'MeetingItem',
+                                       'MeetingItemTemplate',
+                                       'MeetingItemRecurring']):
+        """Returns every workflows used for every portal_types based on given p_meta_type."""
+        portal_types = []
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            for meta_type in meta_types:
+                if meta_type == 'Meeting':
+                    portal_types.append(cfg.getMeetingTypeName())
+                elif meta_type == 'MeetingItem':
+                    portal_types.append(cfg.getItemTypeName())
+                else:
+                    # MeetingItemXXX type
+                    portal_types.append(cfg.getItemTypeName(configType=meta_type))
+        wf_ids = [self.wfTool.getWorkflowsFor(portal_type)[0].getId()
+                  for portal_type in portal_types]
+        return wf_ids
+
     def updateTALConditions(self, old_word, new_word):
         """Update every elements having a tal_condition, replace given old_word by new_word."""
         for brain in api.content.find(

@@ -85,6 +85,9 @@ Changelog
   ignoring magic with category/proposingGroup depending on MeetingConfig.useGroupsAsCategories
 - When displaying the 'users of group' tooltipster (when hovering the 'user' black icon), display a link to the Plone group in the 'Users and Groups'
   configuration to the Managers
+- Added parameter MeetingConfig.meetingPresentItemWhenNoCurrentMeetingStates, False by default, if enabled, MeetingManagers will be able to correct a closed meeting.
+  Moreover, if this parameter is left False, now when a meeting is closed, an untriggerable transition is displayed to the MeetingManagers explaining why it is not
+  triggerable.  This is done to avoid meetings never being closed and to avoid MeetingManager users using the application as Manager
 
 4.1b16 (2019-01-31)
 -------------------

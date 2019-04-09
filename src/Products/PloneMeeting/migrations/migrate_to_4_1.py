@@ -185,9 +185,8 @@ class Migrate_To_4_1(Migrator):
            Check for each MeetingConfig item workflow if it contains a 'refused'
            WF state, if it is the case, enable 'refused' WFAdaptation if available."""
         logger.info("Enabling new WFAdaptation 'refused' if relevant...")
-        wfTool = api.portal.get_tool('portal_workflow')
         for cfg in self.tool.objectValues('MeetingConfig'):
-            item_wf = wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
+            item_wf = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
             if 'refused' in item_wf.states and 'refused' in cfg.listWorkflowAdaptations():
                 wf_adaptations = list(cfg.getWorkflowAdaptations())
                 if 'refused' in wf_adaptations:
@@ -1082,7 +1081,9 @@ class Migrate_To_4_1(Migrator):
         self._initFTWLabels()
         self._adaptShowHolidaysMessage()
         # too many indexes to update, rebuild the portal_catalog
-        self.refreshDatabase(workflows=True, workflowsToUpdate=['plonemeeting_onestate_workflow'])
+        meeting_wf_ids = self.getWorkflows(meta_types=['Meeting'])
+        self.refreshDatabase(workflows=True,
+                             workflowsToUpdate=['plonemeeting_onestate_workflow'] + meeting_wf_ids)
 
 
 # The migration function -------------------------------------------------------
@@ -1120,7 +1121,12 @@ def migrate(context):
        29) Removed no more used portal_types;
        30) Migrate 'searchitemstoprevalidate' query;
        31) Migrate items in MeetingConfig so it provides IConfigElement;
-       32) Initialize personal labels if found in FTW_LABELS_PERSONAL_LABELS env variable.
+       32) Initialize personal labels if found in FTW_LABELS_PERSONAL_LABELS env variable;
+       33) Adapt 'Show holidays warning' condition to not evaluate it if user is
+           Anonymous because access to tool is no more granted to Anonymous;
+       34) Refresh catalog and types using workflows of plonemeeting_onestate_workflow
+          (no more access to Anonymous) and Meeting workflows (MeetingManager have 'Review portal content'
+          in state 'closed').
     '''
     migrator = Migrate_To_4_1(context)
     migrator.run()

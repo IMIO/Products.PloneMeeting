@@ -123,12 +123,6 @@ class MeetingWorkflowConditions(object):
                 return False
         return True
 
-    def _decisionsWereConfirmed(self):
-        '''Returns True if at least one decision was taken on an item'''
-        for item in self.context.getItems():
-            if item.queryState() == 'confirmed':
-                return True
-
     security.declarePublic('mayAcceptItems')
 
     def mayAcceptItems(self):
@@ -187,15 +181,18 @@ class MeetingWorkflowConditions(object):
         '''See doc in interfaces.py.'''
         if not _checkPermission(ReviewPortalContent, self.context):
             return
-        if self.context.queryState() == 'decided':
-            # Going back from "decided" to previous state is not a true "undo".
-            # Indeed, when a meeting is "decided", all items for which no
-            # decision was taken are set in "accepted". Going back to
-            # "published" does not set them back in their previous state.
-            if not self._decisionsWereConfirmed():
+
+        meeting_state = self.context.queryState()
+        if meeting_state == 'closed':
+            tool = api.portal.get_tool('portal_plonemeeting')
+            cfg = tool.getMeetingConfig(self.context)
+            if tool.isManager(self.context, realManagers=True) or \
+               cfg.getMeetingManagerMayCorrectClosedMeeting():
                 return True
-        else:
-            return True
+            else:
+                return No(_('closed_meeting_not_correctable_by_config'))
+
+        return True
 
     security.declarePublic('mayClose')
 

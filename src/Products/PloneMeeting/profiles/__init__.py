@@ -609,6 +609,7 @@ class MeetingConfigDescriptor(Descriptor):
         self.onTransitionFieldTransforms = []
         self.onMeetingTransitionItemTransitionToTrigger = []
         self.meetingPresentItemWhenNoCurrentMeetingStates = []
+        self.meetingManagerMayCorrectClosedMeeting = False
         self.itemAutoSentToOtherMCStates = ['accepted', ]
         self.itemManualSentToOtherMCStates = []
         self.contentsKeptOnSentToOtherMC = ['annexes', 'decision_annexes']

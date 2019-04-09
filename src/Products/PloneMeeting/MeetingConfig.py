@@ -1238,6 +1238,19 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
+    BooleanField(
+        name='meetingManagerMayCorrectClosedMeeting',
+        default=defValues.meetingManagerMayCorrectClosedMeeting,
+        widget=BooleanField._properties['widget'](
+            description="MeetingManagerMayCorrectClosedMeeting",
+            description_msgid="meeting_manager_may_correct_closed_meeting_descr",
+            label='meetingmanagermaycorrectclosedmeeting',
+            label_msgid='PloneMeeting_label_meetingManagerMayCorrectClosedMeeting',
+            i18n_domain='PloneMeeting',
+        ),
+        schemata="workflow",
+        write_permission="PloneMeeting: Write risky config",
+    ),
     LinesField(
         name='itemColumns',
         widget=MultiSelectionWidget(

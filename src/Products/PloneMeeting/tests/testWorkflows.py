@@ -672,6 +672,32 @@ class testWorkflows(PloneMeetingTestCase):
                 for state in states:
                     self.assertTrue(state in wf.states)
 
+    def test_pm_CorrectClosedMeeting(self):
+        """A closed meeting may be corrected by MeetingManagers
+           if MeetingConfig.meetingManagerMayCorrectClosedMeeting is True."""
+        cfg = self.meetingConfig
+        self.assertFalse(cfg.getMeetingManagerMayCorrectClosedMeeting())
+        self.changeUser('pmManager')
+        meeting = self.create('Meeting', date=DateTime('2019/04/09'))
+        self.closeMeeting(meeting)
+        self.assertEqual(meeting.queryState(), 'closed')
+        closed_meeting_msg = translate(u'closed_meeting_not_correctable_by_config',
+                                       domain='PloneMeeting',
+                                       context=self.request)
+        # No instance
+        may_correct = meeting.wfConditions().mayCorrect()
+        self.assertFalse(may_correct)
+        self.assertEqual(may_correct.msg, closed_meeting_msg)
+        # OK for Managers
+        self.changeUser('siteadmin')
+        self.assertTrue(meeting.wfConditions().mayCorrect())
+        # enable for MeetingManagers
+        cfg.setMeetingManagerMayCorrectClosedMeeting(True)
+        self.changeUser('pmManager')
+        self.assertTrue(meeting.wfConditions().mayCorrect())
+        self.changeUser('siteadmin')
+        self.assertTrue(meeting.wfConditions().mayCorrect())
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite
