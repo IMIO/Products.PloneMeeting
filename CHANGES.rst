@@ -85,7 +85,7 @@ Changelog
   ignoring magic with category/proposingGroup depending on MeetingConfig.useGroupsAsCategories
 - When displaying the 'users of group' tooltipster (when hovering the 'user' black icon), display a link to the Plone group in the 'Users and Groups'
   configuration to the Managers
-- Added parameter MeetingConfig.meetingPresentItemWhenNoCurrentMeetingStates, False by default, if enabled, MeetingManagers will be able to correct a closed meeting.
+- Added parameter MeetingConfig.meetingManagerMayCorrectClosedMeeting, False by default, if enabled, MeetingManagers will be able to correct a closed meeting.
   Moreover, if this parameter is left False, now when a meeting is closed, an untriggerable transition is displayed to the MeetingManagers explaining why it is not
   triggerable.  This is done to avoid meetings never being closed and to avoid MeetingManager users using the application as Manager
 - Set MeetingItem.preferredMeeting enforceVocabulary to True so it is not possible to save an item if meanwhile, the meeting selected as preferred was deleted
@@ -128,7 +128,7 @@ Changelog
   or relevant values of the MeetingConfig have changed)
 - Extended informations displayed in the @@display-inserting-methods-helper-msg to display every relevant informations
   depending on selected inserting methods including ordered groups and ordered categories
-- Moved utils.getLastEvent to imio.history.utils.getLastWFACtion
+- Moved utils.getLastEvent to imio.history.utils.getLastWFAction
 - Added helper MeetingConfig.update_cfgs to be able to easily propagate a parameter defined on a MeetingConfig to
   several other MeetingConfigs.  This is useful when configuring a lot of MeetingConfigs using same parameters values
 
