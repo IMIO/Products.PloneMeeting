@@ -926,6 +926,7 @@ schema = Schema((
             label_msgid='PloneMeeting_label_preferredMeeting',
             i18n_domain='PloneMeeting',
         ),
+        enforceVocabulary=True,
         vocabulary='listMeetingsAcceptingItems',
     ),
     LinesField(

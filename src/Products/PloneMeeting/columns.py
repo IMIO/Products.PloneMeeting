@@ -1,4 +1,8 @@
-# encoding: utf-8
+# -*- coding: utf-8 -*-
+#
+# File: columns.py
+#
+
 from collective.contact.plonegroup.browser.tables import OrgaPrettyLinkWithAdditionalInfosColumn
 from collective.eeafaceted.z3ctable.columns import AbbrColumn
 from collective.eeafaceted.z3ctable.columns import ActionsColumn

@@ -88,6 +88,7 @@ Changelog
 - Added parameter MeetingConfig.meetingPresentItemWhenNoCurrentMeetingStates, False by default, if enabled, MeetingManagers will be able to correct a closed meeting.
   Moreover, if this parameter is left False, now when a meeting is closed, an untriggerable transition is displayed to the MeetingManagers explaining why it is not
   triggerable.  This is done to avoid meetings never being closed and to avoid MeetingManager users using the application as Manager
+- Set MeetingItem.preferredMeeting enforceVocabulary to True so it is not possible to save an item if meanwhile, the meeting selected as preferred was deleted
 
 4.1b16 (2019-01-31)
 -------------------
