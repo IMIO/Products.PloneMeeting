@@ -4285,10 +4285,11 @@ class testMeetingItem(PloneMeetingTestCase):
     def test_pm_CopiedFieldsWhenDuplicatedAsItemTemplate(self):
         '''Test that relevant fields are kept when an item is created from an itemTemplate.
            DEFAULT_COPIED_FIELDS and EXTRA_COPIED_FIELDS_SAME_MC are kept.'''
+        cfg = self.meetingConfig
         # configure the itemTemplate
         self.changeUser('siteadmin')
-        self.meetingConfig.setUseCopies(True)
-        itemTemplate = self.meetingConfig.getItemTemplates(as_brains=False)[0]
+        cfg.setUseCopies(True)
+        itemTemplate = cfg.getItemTemplates(as_brains=False)[0]
         # check that 'title' and 'copyGroups' field are kept
         # title is in DEFAULT_COPIED_FIELDS and copyGroups in EXTRA_COPIED_FIELDS_SAME_MC
         self.assertTrue('title' in DEFAULT_COPIED_FIELDS)
