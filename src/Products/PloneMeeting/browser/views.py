@@ -843,17 +843,19 @@ class BaseDGHV(object):
             meeting = self.context
             attendees = meeting.getAttendees()
             item_absents = []
+            item_excused = []
         else:
             # MeetingItem
             meeting = self.context.getMeeting()
             attendees = self.context.getAttendees()
             item_absents = self.context.getItemAbsents()
+            item_excused = self.context.getItemExcused()
         # generate content then group by sub organization if necessary
         contacts = meeting.getAllUsedHeldPositions()
         excused = meeting.getExcused()
         absents = meeting.getAbsents()
         replaced = meeting.getReplacements()
-        return meeting, attendees, item_absents, contacts, excused, absents, replaced
+        return meeting, attendees, item_absents, item_excused, contacts, excused, absents, replaced
 
     def print_attendees(self,
                         by_attendee_type=False,
@@ -890,12 +892,13 @@ class BaseDGHV(object):
                                 'excused': {'M': u'excusé', 'F': u'excusée'},
                                 'absent': {'M': u'absent', 'F': u'absente'},
                                 'replaced': {'M': u'remplacé', 'F': u'remplacée'},
-                                'late_attendee': {'M': u'présent en retard', 'F': u'présente en retard'},
-                                'item_absent': {'M': u'absent pour ce point', 'F': u'absente pour ce point'}}
+                                'item_absent': {'M': u'absent pour ce point', 'F': u'absente pour ce point'},
+                                'item_excused': {'M': u'excusé pour ce point', 'F': u'excusée pour ce point'},
+                                }
         attendee_type_values.update(custom_attendee_type_values)
 
         # initial values
-        meeting, attendees, item_absents, contacts, excused, absents, replaced = self._get_attendees()
+        meeting, attendees, item_absents, item_excused, contacts, excused, absents, replaced = self._get_attendees()
 
         res = OrderedDict()
         for contact in contacts:
@@ -936,6 +939,10 @@ class BaseDGHV(object):
                     res[org][contact] = attendee_value_format.format(
                         res[org][contact],
                         attendee_type_format.format(attendee_type_values['item_absent'][contact_gender]))
+                elif contact_uid in item_excused:
+                    res[org][contact] = attendee_value_format.format(
+                        res[org][contact],
+                        attendee_type_format.format(attendee_type_values['item_excused'][contact_gender]))
                 elif contact_uid in replaced:
                     if show_replaced_by:
                         res[org][contact] = attendee_value_format.format(
@@ -968,7 +975,7 @@ class BaseDGHV(object):
                                 ignored_pos_type_ids=['default'],
                                 include_person_title=True,
                                 included_attendee_types=['attendee', 'excused', 'absent',
-                                                         'replaced', 'late_attendee', 'item_absent'],
+                                                         'replaced', 'item_excused', 'item_absent'],
                                 striked_attendee_types=[],
                                 striked_attendee_pattern=u'<strike>{0}</strike>'):
 
@@ -1020,48 +1027,49 @@ class BaseDGHV(object):
                     res.extend(sub_res)
             return u'<br />'.join(res)
 
-        grouped_attendee_type_patterns = {
-            'attendee': {'MS': u'<strong><u>Présent&nbsp;:</u></strong>',
-                         'MP': u'<strong><u>Présents&nbsp;:</u></strong>',
-                         'FS': u'<strong><u>Présente&nbsp;:</u></strong>',
-                         'FP': u'<strong><u>Présentes&nbsp;:</u></strong>',
-                         '*': u'<strong><u>Présents&nbsp;:</u></strong>'},
-            'excused': {'MS': u'<strong><u>Excusé&nbsp;:</u></strong>',
-                        'MP': u'<strong><u>Excusés&nbsp;:</u></strong>',
-                        'FS': u'<strong><u>Excusée&nbsp;:</u></strong>',
-                        'FP': u'<strong><u>Excusées&nbsp;:</u></strong>',
-                        '*': u'<strong><u>Excusés&nbsp;:</u></strong>'},
-            'absent': {'MS': u'<strong><u>Absent&nbsp;:</u></strong>',
-                       'MP': u'<strong><u>Absents&nbsp;:</u></strong>',
-                       'FS': u'<strong><u>Absente&nbsp;:</u></strong>',
-                       'FP': u'<strong><u>Absentes&nbsp;:</u></strong>',
-                       '*': u'<strong><u>Absents&nbsp;:</u></strong>'},
-            'replaced': {'MS': u'<strong><u>Remplacé&nbsp;:</u></strong>',
-                         'MP': u'<strong><u>Remplacés&nbsp;:</u></strong>',
-                         'FS': u'<strong><u>Remplacée&nbsp;:</u></strong>',
-                         'FP': u'<strong><u>Remplacées&nbsp;:</u></strong>',
-                         '*': u'<strong><u>Remplacés&nbsp;:</u></strong>'},
-            'late_attendee': {'MS': u'<strong><u>Présent en retard&nbsp;:</u></strong>',
-                              'MP': u'<strong><u>Présents en retard&nbsp;:</u></strong>',
-                              'FS': u'<strong><u>Présente en retard&nbsp;:</u></strong>',
-                              'FP': u'<strong><u>Présentes en retard&nbsp;:</u></strong>',
-                              '*': u'<strong><u>Présents en retard&nbsp;:</u></strong>'},
-            'item_absent': {'MS': u'<strong><u>Absent pour ce point&nbsp;:</u></strong>',
-                            'MP': u'<strong><u>Absents pour ce point&nbsp;:</u></strong>',
-                            'FS': u'<strong><u>Absente pour ce point&nbsp;:</u></strong>',
-                            'FP': u'<strong><u>Absentes pour ce point&nbsp;:</u></strong>',
-                            '*': u'<strong><u>Absents pour ce point&nbsp;:</u></strong>'},
-        }
+        grouped_attendee_type_patterns = OrderedDict([
+            ('attendee', {'MS': u'<strong><u>Présent&nbsp;:</u></strong>',
+                          'MP': u'<strong><u>Présents&nbsp;:</u></strong>',
+                          'FS': u'<strong><u>Présente&nbsp;:</u></strong>',
+                          'FP': u'<strong><u>Présentes&nbsp;:</u></strong>',
+                          '*': u'<strong><u>Présents&nbsp;:</u></strong>'}),
+            ('excused', {'MS': u'<strong><u>Excusé&nbsp;:</u></strong>',
+                         'MP': u'<strong><u>Excusés&nbsp;:</u></strong>',
+                         'FS': u'<strong><u>Excusée&nbsp;:</u></strong>',
+                         'FP': u'<strong><u>Excusées&nbsp;:</u></strong>',
+                         '*': u'<strong><u>Excusés&nbsp;:</u></strong>'}),
+            ('absent', {'MS': u'<strong><u>Absent&nbsp;:</u></strong>',
+                        'MP': u'<strong><u>Absents&nbsp;:</u></strong>',
+                        'FS': u'<strong><u>Absente&nbsp;:</u></strong>',
+                        'FP': u'<strong><u>Absentes&nbsp;:</u></strong>',
+                        '*': u'<strong><u>Absents&nbsp;:</u></strong>'}),
+            ('replaced', {'MS': u'<strong><u>Remplacé&nbsp;:</u></strong>',
+                          'MP': u'<strong><u>Remplacés&nbsp;:</u></strong>',
+                          'FS': u'<strong><u>Remplacée&nbsp;:</u></strong>',
+                          'FP': u'<strong><u>Remplacées&nbsp;:</u></strong>',
+                          '*': u'<strong><u>Remplacés&nbsp;:</u></strong>'}),
+            ('item_excused', {'MS': u'<strong><u>Excusé pour ce point&nbsp;:</u></strong>',
+                              'MP': u'<strong><u>Excusés pour ce point&nbsp;:</u></strong>',
+                              'FS': u'<strong><u>Excusée pour ce point&nbsp;:</u></strong>',
+                              'FP': u'<strong><u>Excusées pour ce point&nbsp;:</u></strong>',
+                              '*': u'<strong><u>Excusés pour ce point&nbsp;:</u></strong>'}),
+            ('item_absent', {'MS': u'<strong><u>Absent pour ce point&nbsp;:</u></strong>',
+                             'MP': u'<strong><u>Absents pour ce point&nbsp;:</u></strong>',
+                             'FS': u'<strong><u>Absente pour ce point&nbsp;:</u></strong>',
+                             'FP': u'<strong><u>Absentes pour ce point&nbsp;:</u></strong>',
+                             '*': u'<strong><u>Absents pour ce point&nbsp;:</u></strong>'}),
+        ])
         grouped_attendee_type_patterns.update(custom_grouped_attendee_type_patterns)
 
         # initial values
-        meeting, attendees, item_absents, contacts, excused, absents, replaced = self._get_attendees()
+        meeting, attendees, item_absents, item_excused, contacts, excused, absents, replaced = self._get_attendees()
 
-        res = OrderedDict({key: [] for key in grouped_attendee_type_patterns.keys()})
+        res = OrderedDict([(key, []) for key in grouped_attendee_type_patterns.keys()])
         striked_contact_uids = []
         for contact in contacts:
             contact_uid = contact.UID()
             contact_attendee_type = contact_uid in item_absents and 'item_absent' or \
+                contact_uid in item_excused and 'item_excused' or \
                 contact_uid in attendees and 'attendee' or \
                 contact_uid in excused and 'excused' or \
                 contact_uid in absents and 'absent' or \
@@ -1094,7 +1102,7 @@ class BaseDGHV(object):
                     by_pos_type_res = OrderedDict()
                     for contact in contacts:
                         used_contact_position_type = contact.position_type
-                        if contact.position_type in ignored_pos_type_ids:
+                        if not contact.position_type or contact.position_type in ignored_pos_type_ids:
                             # in this case, we use the special value prefixed by __no_position_type__
                             # so contacts are still ordered
                             used_contact_position_type = '__no_position_type__{0}'.format(contact.UID())
