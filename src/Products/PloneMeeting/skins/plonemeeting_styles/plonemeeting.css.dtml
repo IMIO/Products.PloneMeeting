@@ -436,8 +436,6 @@ div#content.meeting_item_absents_tooltipster div.pretty_link {
 div.tooltipster-content div#content {
     padding-left: 0.5em;
     padding-right: 0.5em;
-    padding-top: 0.5em;
-    margin-bottom: 0.5em;
 }
 
 /* place an icon before the annex title if there was an error during conversion */
