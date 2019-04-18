@@ -1209,6 +1209,92 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
                     res.append({'itemView': self.getDGHV(item), 'advice': None})
         return res
 
+    def _add_attendances_for_context(self, attendances, context, presents, excused, absents):
+        """
+        Populates the statistics for a Meeting or a MeetingItem by held position in the assembly.
+
+        :param attendances: A list of dict representing the attendance on a context (Meeting or MeetingItem)
+                            by held position in the assembly.
+        :param context: A Meeting or a MeetingItem
+        :param presents: the list of presence
+        :param excused: the list of excused
+        :param absents: the list of absents
+        """
+        def _add_attendance(attendances, item, assembly, counter):
+            for held_position in assembly:
+                if held_position.UID() not in attendances:
+                    attendances[held_position.UID()] = {'name': held_position.get_person_title(),
+                                                        'function': held_position.get_label(),
+                                                        'present': 0,
+                                                        'absent': 0,
+                                                        'excused': 0,
+                                                        'contexts': set()}
+
+                attendances[held_position.UID()][counter] += 1
+                attendances[held_position.UID()]['contexts'].add(item)
+
+        _add_attendance(attendances, context.Title(), presents, 'present')
+        _add_attendance(attendances, context.Title(), excused, 'excused')
+        _add_attendance(attendances, context.Title(), absents, 'absent')
+
+    def _compute_attendances_proportion(self, attendances_list):
+        """
+        Computes The percentage of attendance for each contact in attendances_list as a float (ex 75.0 is 75%).
+
+        :param attendances_list: A list of dict representing the attendance on a context (Meeting or MeetingItem)
+               by held position in the assembly.
+        """
+        for attendance in attendances_list:
+            attendance['proportion'] = (float(attendance['present']) / float(len(attendance['contexts']))) * 100
+
+    def get_meeting_assembly_stats(self, brains):
+        """
+        :param brains: a list of brain of Meeting Objects
+        :return: A list of dict representing the attendance on a bunch of Meetings
+                 organized by held position.
+        """
+        attendances = {}
+
+        for brain in brains:
+            meeting = brain.getObject()
+            presents = meeting.getAttendees(True)
+            excused = meeting.getExcused(True)
+            absents = meeting.getAbsents(True)
+            self._add_attendances_for_context(attendances, meeting, presents, excused, absents)
+
+        res = attendances.values()
+
+        self._compute_attendances_proportion(res)
+
+        return res
+
+    def get_meeting_assembly_stats_by_meeting(self, brains):
+        """
+        :param brains: a list of brain of Meeting Objects
+        :return: A list of list of dict representing the attendance on a bunch of Meetings
+                 organized by Meeting and by held position on every MeetingItems in each of the given Meetings.
+        """
+        res = []
+        for brain in brains:
+            meeting = brain.getObject()
+            meetingData = {'title': meeting.Title()}
+
+            attendances = {}
+
+            for item in meeting.getItems(ordered=True):
+                presents = item.getAttendees(True)
+                excused = item.getItemExcused(True)
+                absents = item.getItemAbsents(True)
+                self._add_attendances_for_context(attendances, item, presents, excused, absents)
+
+            meetingData['attendances'] = attendances.values()
+
+            self._compute_attendances_proportion(meetingData['attendances'])
+
+            res.append(meetingData)
+
+        return res
+
 
 class MeetingDocumentGenerationHelperView(FolderDocumentGenerationHelperView):
     """ """
