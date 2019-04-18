@@ -784,7 +784,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
 
     MAILINGLIST_NO_RECIPIENTS = 'No recipients defined for this mailing list!'
 
-    def get_base_generation_context(self):
+    def get_base_generation_context(self, helper_view, pod_template):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
@@ -796,7 +796,7 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
             'meetingConfig': cfg,
             'itemUids': {},
             'user': currentUser,
-            'podTemplate': self.pod_template,
+            'podTemplate': pod_template,
             # give ability to access annexes related methods
             'collective_iconifiedcategory_utils': collective_iconifiedcategory_utils,
             # imio.annex utils

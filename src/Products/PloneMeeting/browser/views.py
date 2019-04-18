@@ -967,6 +967,8 @@ class BaseDGHV(object):
                                 single_pos_attendee_ender=';',
                                 render_as_html=True,
                                 position_type_format=u", {0};",
+                                show_grouped_attendee_type=True,
+                                show_item_grouped_attendee_type=True,
                                 custom_grouped_attendee_type_patterns={},
                                 show_replaced_by=True,
                                 replaced_by_format={'M': u'<strong>remplacé par {0}</strong>',
@@ -974,10 +976,24 @@ class BaseDGHV(object):
                                 include_replace_by_held_position_label=True,
                                 ignored_pos_type_ids=['default'],
                                 include_person_title=True,
+                                abbreviate_firstname=False,
                                 included_attendee_types=['attendee', 'excused', 'absent',
                                                          'replaced', 'item_excused', 'item_absent'],
                                 striked_attendee_types=[],
                                 striked_attendee_pattern=u'<strike>{0}</strike>'):
+
+        def _buildContactsValue(contacts):
+            """ """
+            grouped_contacts_value = []
+            for contact in contacts:
+                contact_value = contact.get_person_short_title(
+                    include_person_title=include_person_title,
+                    abbreviate_firstname=abbreviate_firstname,
+                    include_held_position_label=not group_position_type)
+                if contact.UID() in striked_contact_uids:
+                    contact_value = striked_attendee_pattern.format(contact_value)
+                grouped_contacts_value.append(contact_value)
+            return grouped_contacts_value
 
         def _render_as_html(tree, by_parent_org=False, group_position_type=False):
             """ """
@@ -995,16 +1011,7 @@ class BaseDGHV(object):
                             if not position_type.startswith('__no_position_type__'):
                                 gn = get_gender_and_number(contacts)
                                 position_type_value = contacts[0].gender_and_number_from_position_type()[gn]
-                            grouped_contacts_value = []
-                            for contact in contacts:
-                                if position_type_value:
-                                    contact_value = contact.get_person_short_title(
-                                        include_person_title=include_person_title)
-                                else:
-                                    contact_value = contact.get_short_title(include_sub_organizations=False)
-                                if contact.UID() in striked_contact_uids:
-                                    contact_value = striked_attendee_pattern.format(contact_value)
-                                grouped_contacts_value.append(contact_value)
+                            grouped_contacts_value = _buildContactsValue(contacts)
                             grouped_contacts_value = pos_attendee_separator.join(grouped_contacts_value)
                             if position_type_value:
                                 grouped_contacts_value = grouped_contacts_value + position_type_format.format(
@@ -1013,9 +1020,9 @@ class BaseDGHV(object):
                                 grouped_contacts_value = grouped_contacts_value + single_pos_attendee_ender
                             sub_res.append(grouped_contacts_value)
                     else:
-                        grouped_contacts_value = pos_attendee_separator.join(
-                            [contact.get_short_title(include_sub_organizations=False)
-                             for contact in contact_infos]) + single_pos_attendee_ender
+                        grouped_contacts_value = _buildContactsValue(contact_infos)
+                        grouped_contacts_value = pos_attendee_separator.join(grouped_contacts_value) + \
+                            single_pos_attendee_ender
                         every_contacts.extend(contact_infos)
                         sub_res.append(grouped_contacts_value)
                 if every_contacts:
@@ -1059,6 +1066,16 @@ class BaseDGHV(object):
                              'FP': u'<strong><u>Absentes pour ce point&nbsp;:</u></strong>',
                              '*': u'<strong><u>Absents pour ce point&nbsp;:</u></strong>'}),
         ])
+        if not show_grouped_attendee_type:
+            grouped_attendee_type_patterns.update(OrderedDict([
+                ('attendee', {'*': u''}),
+                ('excused', {'*': u''}),
+                ('absent', {'*': u''}),
+                ('replaced', {'*': u''})]))
+        if not show_item_grouped_attendee_type:
+            grouped_attendee_type_patterns.update(OrderedDict([
+                ('item_absent', {'*': u''}),
+                ('item_excused', {'*': u''})]))
         grouped_attendee_type_patterns.update(custom_grouped_attendee_type_patterns)
 
         # initial values

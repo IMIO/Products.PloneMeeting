@@ -145,7 +145,10 @@ class PMHeldPosition(HeldPosition):
         """Shortcut to get usages defined on linked position."""
         return self.get_position().usages
 
-    def get_person_short_title(self, include_person_title=False, abbreviate_firstname=True):
+    def get_person_short_title(self,
+                               include_person_title=False,
+                               abbreviate_firstname=True,
+                               include_held_position_label=False):
         """ """
         person = self.get_person()
         firstname = person.firstname
@@ -154,7 +157,11 @@ class PMHeldPosition(HeldPosition):
         person_title = u''
         if include_person_title:
             person_title = u'{0} '.format(person.person_title)
-        return u'{0}{1} {2}'.format(person_title, firstname, person.lastname)
+        person_held_position_label = u''
+        if include_held_position_label:
+            held_position_label = self.get_label() or u''
+            person_held_position_label = u", {0}".format(held_position_label)
+        return u'{0}{1} {2}{3}'.format(person_title, firstname, person.lastname, person_held_position_label)
 
     def gender_and_number_from_position_type(self):
         """Split the position_type and generates a dict with gender and number possibilities."""
