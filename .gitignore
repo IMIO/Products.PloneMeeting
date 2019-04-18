@@ -22,7 +22,6 @@ lib/
 parts/
 dist/
 var/
-src/*
 !src/Products
 pip-selfcheck.json
 
