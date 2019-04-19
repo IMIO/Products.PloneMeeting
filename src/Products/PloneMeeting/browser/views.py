@@ -973,8 +973,8 @@ class BaseDGHV(object):
                                 show_item_grouped_attendee_type=True,
                                 custom_grouped_attendee_type_patterns={},
                                 show_replaced_by=True,
-                                replaced_by_format={'M': u'<strong>remplacé par {0}</strong>',
-                                                    'F': u'<strong>remplacée par {0}</strong>'},
+                                replaced_by_format={'M': u'{0}, <strong>remplacé par {1}</strong>',
+                                                    'F': u'{0}, <strong>remplacée par {1}</strong>'},
                                 include_replace_by_held_position_label=True,
                                 ignored_pos_type_ids=['default'],
                                 include_person_title=True,
@@ -984,7 +984,7 @@ class BaseDGHV(object):
                                 striked_attendee_types=[],
                                 striked_attendee_pattern=u'<strike>{0}</strike>'):
 
-        def _buildContactsValue(contacts):
+        def _buildContactsValue(meeting, contacts):
             """ """
             grouped_contacts_value = []
             for contact in contacts:
@@ -992,8 +992,16 @@ class BaseDGHV(object):
                     include_person_title=include_person_title,
                     abbreviate_firstname=abbreviate_firstname,
                     include_held_position_label=not group_position_type)
-                if contact.UID() in striked_contact_uids:
+                contact_uid = contact.UID()
+                if contact_uid in striked_contact_uids:
                     contact_value = striked_attendee_pattern.format(contact_value)
+                if contact_uid in replaced and show_replaced_by:
+                    contact_value = replaced_by_format[contact.gender].format(
+                        contact_value,
+                        meeting.displayUserReplacement(
+                            replaced[contact_uid],
+                            include_held_position_label=include_replace_by_held_position_label,
+                            include_sub_organizations=False))
                 grouped_contacts_value.append(contact_value)
             return grouped_contacts_value
 
@@ -1013,7 +1021,7 @@ class BaseDGHV(object):
                             if not position_type.startswith('__no_position_type__'):
                                 gn = get_gender_and_number(contacts)
                                 position_type_value = contacts[0].gender_and_number_from_position_type()[gn]
-                            grouped_contacts_value = _buildContactsValue(contacts)
+                            grouped_contacts_value = _buildContactsValue(meeting, contacts)
                             grouped_contacts_value = pos_attendee_separator.join(grouped_contacts_value)
                             if position_type_value:
                                 grouped_contacts_value = grouped_contacts_value + position_type_format.format(
@@ -1022,7 +1030,7 @@ class BaseDGHV(object):
                                 grouped_contacts_value = grouped_contacts_value + single_pos_attendee_ender
                             sub_res.append(grouped_contacts_value)
                     else:
-                        grouped_contacts_value = _buildContactsValue(contact_infos)
+                        grouped_contacts_value = _buildContactsValue(meeting, contact_infos)
                         grouped_contacts_value = pos_attendee_separator.join(grouped_contacts_value) + \
                             single_pos_attendee_ender
                         every_contacts.extend(contact_infos)
