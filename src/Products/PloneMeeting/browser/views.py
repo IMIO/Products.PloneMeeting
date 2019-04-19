@@ -1242,7 +1242,7 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
         Computes The percentage of attendance for each contact in attendances_list as a float (ex 75.0 is 75%).
 
         :param attendances_list: A list of dict representing the attendance on a context (Meeting or MeetingItem)
-               by held position in the assembly.
+               by held position in the assembly.absents = meeting.getAbsents(True)
         """
         for attendance in attendances_list:
             attendance['proportion'] = (float(attendance['present']) / float(len(attendance['contexts']))) * 100
@@ -1263,9 +1263,7 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
             self._add_attendances_for_context(attendances, meeting, presents, excused, absents)
 
         res = attendances.values()
-
         self._compute_attendances_proportion(res)
-
         return res
 
     def get_meeting_assembly_stats_by_meeting(self, brains):
@@ -1275,10 +1273,10 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
                  organized by Meeting and by held position on every MeetingItems in each of the given Meetings.
         """
         res = []
+
         for brain in brains:
             meeting = brain.getObject()
             meetingData = {'title': meeting.Title()}
-
             attendances = {}
 
             for item in meeting.getItems(ordered=True):
@@ -1288,9 +1286,7 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
                 self._add_attendances_for_context(attendances, item, presents, excused, absents)
 
             meetingData['attendances'] = attendances.values()
-
             self._compute_attendances_proportion(meetingData['attendances'])
-
             res.append(meetingData)
 
         return res
