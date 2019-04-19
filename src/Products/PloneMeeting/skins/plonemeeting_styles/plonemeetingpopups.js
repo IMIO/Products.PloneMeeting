@@ -280,7 +280,7 @@ function advicesInfos() {
       selector='div#faceted-form a.tooltipster-advices-infos',
       view_name='@@advices-icons-infos',
       data_parameters=['adviceType'],
-      options={zIndex: 1,
+      options={zIndex: 5000,
                position: 'left',
                trigger: 'custom',
                triggerOpen: {
