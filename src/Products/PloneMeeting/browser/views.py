@@ -1236,34 +1236,6 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
                     res.append({'itemView': self.getDGHV(item), 'advice': None})
         return res
 
-    def _add_attendances_for_context(self, attendances, context, presents, excused, absents):
-        """
-        Populates the statistics for a Meeting or a MeetingItem by held position in the assembly.
-
-        :param attendances: A list of dict representing the attendance on a context (Meeting or MeetingItem)
-                            by held position in the assembly.
-        :param context: A Meeting or a MeetingItem
-        :param presents: the list of presence
-        :param excused: the list of excused
-        :param absents: the list of absents
-        """
-        def _add_attendance(attendances, item, assembly, counter):
-            for held_position in assembly:
-                if held_position.UID() not in attendances or not attendances[held_position.UID()]:
-                    attendances[held_position.UID()] = {'name': held_position.get_person_title(),
-                                                        'function': held_position.get_label(),
-                                                        'present': 0,
-                                                        'absent': 0,
-                                                        'excused': 0,
-                                                        'contexts': set()}
-
-                attendances[held_position.UID()][counter] += 1
-                attendances[held_position.UID()]['contexts'].add(item)
-
-        _add_attendance(attendances, context.Title(), presents, 'present')
-        _add_attendance(attendances, context.Title(), excused, 'excused')
-        _add_attendance(attendances, context.Title(), absents, 'absent')
-
     def _compute_attendances_proportion(self, attendances_list):
         """
         Computes The percentage of attendance for each contact in attendances_list as a float (ex 75.0 is 75%).
@@ -1272,17 +1244,48 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
                by held position in the assembly.
         """
         for attendance in attendances_list:
-            attendance['proportion'] = (float(attendance['present']) / float(len(attendance['contexts']))) * 100
+            value = (float(attendance['present']) / float(len(attendance['contexts']))) * 100
+            attendance['proportion'] = round(value, 2)
 
     def get_meeting_assembly_stats(self, brains):
         """
         :param brains: a list of brain of Meeting Objects
         :return: A list of dict representing the attendance on a bunch of Meetings organized by held position.
         """
+
+        def _add_attendances_for_meeting(attendances, meeting, presents, excused, absents):
+            """
+            Populates the statistics for a Meeting or a MeetingItem by held position in the assembly.
+
+            :param attendances: A list of dict representing the attendance on a context (Meeting or MeetingItem)
+                                by held position in the assembly.
+            :param context: A Meeting or a MeetingItem
+            :param presents: the list of presence
+            :param excused: the list of excused
+            :param absents: the list of absents
+            """
+
+            def _add_attendance(attendances, meeting, assembly, counter):
+                for held_position in assembly:
+                    if held_position.UID() not in attendances or not attendances[held_position.UID()]:
+                        attendances[held_position.UID()] = {'name': held_position.get_person_title(),
+                                                            'function': held_position.get_label(),
+                                                            'present': 0,
+                                                            'absent': 0,
+                                                            'excused': 0,
+                                                            'contexts': set()}
+
+                    attendances[held_position.UID()][counter] += 1
+                    attendances[held_position.UID()]['contexts'].add(meeting)
+
+            _add_attendance(attendances, meeting, presents, 'present')
+            _add_attendance(attendances, meeting, excused, 'excused')
+            _add_attendance(attendances, meeting, absents, 'absent')
+
         attendances = OrderedDict({})
         cfg = self.appy_renderer.originalContext['meetingConfig']
 
-        for contact in  cfg.getOrderedContacts():
+        for contact in cfg.getOrderedContacts():
             attendances[contact] = {}
 
         for brain in brains:
@@ -1290,7 +1293,7 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
             presents = meeting.getAttendees(True)
             excused = meeting.getExcused(True)
             absents = meeting.getAbsents(True)
-            self._add_attendances_for_context(attendances, meeting, presents, excused, absents)
+            _add_attendances_for_meeting(attendances, meeting, presents, excused, absents)
 
         res = attendances.values()
         self._compute_attendances_proportion(res)
@@ -1302,18 +1305,62 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
         :return: A list of list of dict representing the attendance on a bunch of Meetings
                  organized by Meeting and by held position on every MeetingItems in each of the given Meetings.
         """
+        def _add_attendances_for_items(attendances, meetingItems, presents, excused, itemExcused, absents, itemAbsents):
+            """
+            Populates the statistics for a Meeting or a MeetingItem by held position in the assembly.
+
+            :param attendances: A list of dict representing the attendance on a context (Meeting or MeetingItem)
+                                by held position in the assembly.
+            :param context: A Meeting or a MeetingItem
+            :param presents: the list of presence
+            :param excused: the list of excused
+            :param absents: the list of absents
+            """
+
+            def _add_attendance(attendances, meetingItems, assembly, counter):
+                for held_position in assembly:
+                    if held_position.UID() not in attendances or not attendances[held_position.UID()]:
+                        attendances[held_position.UID()] = {'name': held_position.get_person_title(),
+                                                            'function': held_position.get_label(),
+                                                            'present': 0,
+                                                            'absent': 0,
+                                                            'excused': 0,
+                                                            'contexts': set(meetingItems)}
+                    if held_position in assembly:
+                        attendances[held_position.UID()][counter] = len(meetingItems)
+
+            def _remove_attendances(attendance, counter):
+                attendances[attendance]['present'] -= 1
+                attendances[attendance][counter] += 1
+
+            _add_attendance(attendances, meetingItems, presents, 'present')
+            _add_attendance(attendances, meetingItems, excused, 'excused')
+            _add_attendance(attendances, meetingItems, absents, 'absent')
+
+            for attendance in attendances:
+                if attendance in itemExcused:
+                    _remove_attendances(attendance, 'excused')
+                if attendance in itemAbsents:
+                    _remove_attendances(attendance, 'absent')
+
         res = []
 
         for brain in brains:
             meeting = brain.getObject()
+            presents = list(meeting.getAttendees(True))
+            excused = list(meeting.getExcused(True))
+            absents = list(meeting.getAbsents(True))
+            itemExcused = meeting.getItemExcused(True)
+            itemAbsents = meeting.getItemAbsents(True)
             meetingData = {'title': meeting.Title()}
             attendances = OrderedDict({})
-
-            for item in meeting.getItems(ordered=True):
-                presents = item.getAttendees(True)
-                excused = item.getItemExcused(True)
-                absents = item.getItemAbsents(True)
-                self._add_attendances_for_context(attendances, item, presents, excused, absents)
+            _add_attendances_for_items(attendances,
+                                       meeting.getItems(ordered=True),
+                                       presents,
+                                       excused,
+                                       itemExcused,
+                                       absents,
+                                       itemAbsents)
 
             meetingData['attendances'] = attendances.values()
             self._compute_attendances_proportion(meetingData['attendances'])
