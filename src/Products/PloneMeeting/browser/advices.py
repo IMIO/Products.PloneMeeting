@@ -165,10 +165,10 @@ class AdvicesIconsInfos(BrowserView):
             if self.tool.isManager(self.context) and self.context.mayQuickEdit('optionalAdvisers'):
                 res = True
             else:
-                org = get_organization(advice_uid)
                 if self.cfg.getInheritedAdviceRemoveableByAdviser() and \
                    advice_uid in self.userAdviserOrgUids and \
-                   self.context.queryState() in org.get_item_advice_edit_states(cfg=self.cfg):
+                   self.context.queryState() in get_organization(
+                        advice_uid).get_item_advice_edit_states(cfg=self.cfg):
                     return True
         return res
 
