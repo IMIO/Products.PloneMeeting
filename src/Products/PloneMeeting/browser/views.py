@@ -1249,7 +1249,7 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
         """
         def _add_attendance(attendances, item, assembly, counter):
             for held_position in assembly:
-                if held_position.UID() not in attendances:
+                if held_position.UID() not in attendances or not attendances[held_position.UID()]:
                     attendances[held_position.UID()] = {'name': held_position.get_person_title(),
                                                         'function': held_position.get_label(),
                                                         'present': 0,
@@ -1279,7 +1279,11 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
         :param brains: a list of brain of Meeting Objects
         :return: A list of dict representing the attendance on a bunch of Meetings organized by held position.
         """
-        attendances = {}
+        attendances = OrderedDict({})
+        cfg = self.appy_renderer.originalContext['meetingConfig']
+
+        for contact in  cfg.getOrderedContacts():
+            attendances[contact] = {}
 
         for brain in brains:
             meeting = brain.getObject()
@@ -1303,7 +1307,7 @@ class FolderDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGH
         for brain in brains:
             meeting = brain.getObject()
             meetingData = {'title': meeting.Title()}
-            attendances = {}
+            attendances = OrderedDict({})
 
             for item in meeting.getItems(ordered=True):
                 presents = item.getAttendees(True)
