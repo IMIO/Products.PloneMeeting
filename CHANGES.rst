@@ -43,7 +43,7 @@ Changelog
 - Make TALCondition behavior have 'cfg' and 'tool' variables available everywhere it is used,
   this fixes problem with collective.messagesviewlet message.tal_condition field where it was not available
 - Added batch action 'Update' available in dashboards listing items and meetings that will updateLocalRoles of selected elements, this is useful
-  when needed to update only some elements because of MeetingConfig changes
+  when needed to update only some elements because of MeetingConfig changes, it is only available to Managers
 - Integrated new version of ftw.labels that supports personal labels :
   - Labels are editable by users able to edit item except MeetingManagers able to edit labels forever;
   - Personal labels are editable by every users able to view the item;

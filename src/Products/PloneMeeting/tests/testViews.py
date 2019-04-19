@@ -1035,6 +1035,8 @@ class testViews(PloneMeetingTestCase):
         dashboardFolder = self.getMeetingFolder().searches_items
         # not available as not Manager
         self.assertRaises(Unauthorized, dashboardFolder.restrictedTraverse, '@@update-local-roles-batch-action')
+        self.assertFalse(dashboardFolder.unrestrictedTraverse(
+            '@@update-local-roles-batch-action').available())
 
         # as Manager
         self.changeUser('siteadmin')

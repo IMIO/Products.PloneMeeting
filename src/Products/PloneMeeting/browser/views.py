@@ -39,17 +39,19 @@ from plone import api
 from plone.app.caching.operations.utils import getContext
 from plone.memoize.view import memoize
 from plone.memoize.view import memoize_contextless
+from Products.CMFCore.permissions import ManagePortal
 from Products.CMFCore.permissions import ModifyPortalContent
+from Products.CMFCore.utils import _checkPermission
 from Products.Five import BrowserView
 from Products.PloneMeeting import logger
 from Products.PloneMeeting.browser.itemchangeorder import _is_integer
 from Products.PloneMeeting.config import PMMessageFactory as _
 from Products.PloneMeeting.config import ADVICE_STATES_ALIVE
+from Products.PloneMeeting.config import ITEM_INSERT_METHODS
 from Products.PloneMeeting.config import ITEM_SCAN_ID_NAME
 from Products.PloneMeeting.config import NOT_GIVEN_ADVICE_VALUE
 from Products.PloneMeeting.indexes import _to_coded_adviser_index
 from Products.PloneMeeting.interfaces import IMeeting
-from Products.PloneMeeting.config import ITEM_INSERT_METHODS
 from Products.PloneMeeting.utils import _itemNumber_to_storedItemNumber
 from Products.PloneMeeting.utils import _storedItemNumber_to_itemNumber
 from Products.PloneMeeting.utils import get_annexes
@@ -1524,7 +1526,7 @@ class UpdateLocalRolesBatchActionForm(BaseBatchActionForm):
 
     def available(self):
         """Hide it on meetings as it uses IMeetingBatchActionsMarker."""
-        return not IMeeting.providedBy(self.context)
+        return _checkPermission(ManagePortal, self.context) and not IMeeting.providedBy(self.context)
 
     def _apply(self, **data):
         """ """
