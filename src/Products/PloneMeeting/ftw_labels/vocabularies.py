@@ -60,7 +60,9 @@ class FTWLabelsForFacetedFilterVocabulary(object):
         date = get_cachekey_volatile('Products.PloneMeeting.vocabularies.ftwlabelsforfacetedfiltervocabulary')
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(context)
-        return date, cfg, classifiers
+        # personal labels include current user id
+        member_id = api.user.get_current().getId()
+        return date, cfg.getId(), member_id, classifiers
 
     @ram.cache(__call___cachekey)
     def __call__(self, context):
