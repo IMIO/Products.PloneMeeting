@@ -717,8 +717,15 @@ class Migrate_To_4_1(Migrator):
 
             # adapt contained advices
             for advice in item.getAdvices():
-                org = own_org.get(advice.advice_group)
-                advice.advice_group = org.UID()
+                old_advice_group = advice.advice_group
+                advice_org = own_org.get(old_advice_group)
+                advice_org_uid = advice_org.UID()
+                advice.advice_group = advice_org_uid
+                # remove old local_role given to 'Editor' MeetingGroup id
+                advice.manage_delLocalRoles(['{0}_advisers'.format(old_advice_group)])
+                # add local_role to 'Editor' organization uid
+                advice.manage_addLocalRoles('{0}_advisers'.format(advice_org_uid), ('Editor', ))
+
                 # migrate versionned advices...
                 # we need to get the stored data because using CMFEditions
                 # api will always return wrapped data or copy
