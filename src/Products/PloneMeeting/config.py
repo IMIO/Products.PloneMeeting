@@ -207,7 +207,7 @@ EXTRA_COPIED_FIELDS_SAME_MC = ['associatedGroups', 'copyGroups', 'classifier', '
                                'otherMeetingConfigsClonableToPrivacy', 'oralQuestion',
                                'toDiscuss', 'privacy', 'pollType', 'textCheckList']
 
-EXTRA_COPIED_FIELDS_FROM_ITEM_TEMPLATE = ['observations']
+EXTRA_COPIED_FIELDS_FROM_ITEM_TEMPLATE = ['observations', 'inAndOutMoves', 'notes', 'internalNotes']
 
 # to differenciate items of different meeting configs,
 # use a different icon color (MeetingConfig.itemIconColor)

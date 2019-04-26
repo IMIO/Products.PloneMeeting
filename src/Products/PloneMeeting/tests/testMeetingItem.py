@@ -60,6 +60,7 @@ from Products.PloneMeeting.config import ADD_SUBCONTENT_PERMISSIONS
 from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import DEFAULT_COPIED_FIELDS
 from Products.PloneMeeting.config import DUPLICATE_AND_KEEP_LINK_EVENT_ACTION
+from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_FROM_ITEM_TEMPLATE
 from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_SAME_MC
 from Products.PloneMeeting.config import HISTORY_COMMENT_NOT_VIEWABLE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
@@ -4296,6 +4297,10 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue('copyGroups' in EXTRA_COPIED_FIELDS_SAME_MC)
         developers_reviewers = get_plone_group_id(self.developers_uid, 'reviewers')
         itemTemplate.setCopyGroups((developers_reviewers,))
+        itemTemplate.setObservations('<p>obs</p>')
+        itemTemplate.setInAndOutMoves('<p>in-out</p>')
+        itemTemplate.setNotes('<p>notes</p>')
+        itemTemplate.setInternalNotes('<p>internal-notes</p>')
 
         # create an item from an item template
         self.changeUser('pmCreator1')
@@ -4306,6 +4311,20 @@ class testMeetingItem(PloneMeetingTestCase):
                           itemFromTemplate.Title())
         self.assertEquals(itemTemplate.getCopyGroups(),
                           itemFromTemplate.getCopyGroups())
+        # testing EXTRA_COPIED_FIELDS_FROM_ITEM_TEMPLATE
+        self.assertTrue('observations' in EXTRA_COPIED_FIELDS_FROM_ITEM_TEMPLATE)
+        self.assertTrue('inAndOutMoves' in EXTRA_COPIED_FIELDS_FROM_ITEM_TEMPLATE)
+        self.assertTrue('notes' in EXTRA_COPIED_FIELDS_FROM_ITEM_TEMPLATE)
+        self.assertTrue('internalNotes' in EXTRA_COPIED_FIELDS_FROM_ITEM_TEMPLATE)
+
+        self.assertEquals(itemTemplate.getObservations(),
+                          itemFromTemplate.getObservations())
+        self.assertEquals(itemTemplate.getInAndOutMoves(),
+                          itemFromTemplate.getInAndOutMoves())
+        self.assertEquals(itemTemplate.getNotes(),
+                          itemFromTemplate.getNotes())
+        self.assertEquals(itemTemplate.getInternalNotes(),
+                          itemFromTemplate.getInternalNotes())
 
     def test_pm_CopiedFieldsWhenDuplicatedAsRecurringItem(self):
         '''Test that relevant fields are kept when an item is created as a recurring item.
