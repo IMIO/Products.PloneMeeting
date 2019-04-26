@@ -11,13 +11,12 @@ Changelog
 - Removed arrows to sort items on meeting so actions_panel is the same as displayed in dashboards of items and the cache
   can be shared.  Arrows to sort items on meeting are replaced by drag and drop feature
 - Enable plone.app.caching :
-  - to be able to cache annex content_category icon, adapted code so it works with full page caching;
-  - get some informations asynchronously (portlet_todo, elements in collection portlet that may change (searchallmeetings term, counters);
-  - linked items are loaded when collapsed section is opened;
-  - use tooltipster for MeetingItem.listType;
-  - cache is invalidated when context/cfg/linkedmeeting changed.  Adapted code so every changes (add/modify/remove) in external elements of
-    the MeetingConfig (faceted settings, subfolders, recurring items, collections, ...) notifyModified MeetingConfig;
-  - added action 'Invalidate all cache' on portal_plonemeeting to invalidate all cache.
+    - to be able to cache annex content_category icon, adapted code so it works with full page caching;
+    - get some informations asynchronously (portlet_todo, elements in collection portlet that may change (searchallmeetings term, counters);
+    - linked items are loaded when collapsed section is opened;
+    - use tooltipster for MeetingItem.listType;
+    - cache is invalidated when context/cfg/linkedmeeting changed.  Adapted code so every changes (add/modify/remove) in external elements of the MeetingConfig (faceted settings, subfolders, recurring items, collections, ...) notifyModified MeetingConfig;
+    - added action 'Invalidate all cache' on portal_plonemeeting to invalidate all cache.
 - Removed management of lateAttendees, if we have late attendees, we have to select user as present for meeting then set him
   as absent or excused from first item to item he joigned the meeting
 - Fixed bug in manage_item_signatures_form if field 'assembly' was not used.  Free text field 'signatures' may be used together
@@ -45,13 +44,12 @@ Changelog
 - Added batch action 'Update' available in dashboards listing items and meetings that will updateLocalRoles of selected elements, this is useful
   when needed to update only some elements because of MeetingConfig changes, it is only available to Managers
 - Integrated new version of ftw.labels that supports personal labels :
-  - Labels are editable by users able to edit item except MeetingManagers able to edit labels forever;
-  - Personal labels are editable by every users able to view the item;
-  - When items are duplicated (locally, to other MC, ...) labels are not kept except if item created from item template;
-  - By default, manage a personal label 'lu' (read) and associated searches with it (searchunreaditems, searchunreaditemsincopy, searchunreaddecideditems);
-  - Added action on MeetingConfig to be able to initialize existing items when managing a new personal label: it is possible to activate the personal label
-    on items older than a given number of days for every users having 'View' access to these items;
-  - Labels used on items are not removable in the configuration.
+    - Labels are editable by users able to edit item except MeetingManagers able to edit labels forever;
+    - Personal labels are editable by every users able to view the item;
+    - When items are duplicated (locally, to other MC, ...) labels are not kept except if item created from item template;
+    - By default, manage a personal label 'lu' (read) and associated searches with it (searchunreaditems, searchunreaditemsincopy, searchunreaddecideditems);
+    - Added action on MeetingConfig to be able to initialize existing items when managing a new personal label: it is possible to activate the personal label on items older than a given number of days for every users having 'View' access to these items;
+    - Labels used on items are not removable in the configuration.
 - By default, hide the 'copy items' related searches if current user is not among 'observers' or 'reviewers'
 - Make variables 'org' and 'org_uid' available when evaluating the TAL expression of MeetingConfig.customAdvisers auto asked advices.
   Moreover 'pm_utils' variable is now always available when evaluating TAL expression when using the collective.behavior.talcondition behavior
@@ -107,7 +105,7 @@ Changelog
   the @@reorder-items view
 - Use collective.quickupload to be able to upload several annexes at the same time
 - MeetingConfig.custom_validate_workflowAdaptations now receives values, added and removed as parameters
-- Annexes are now sorted alphabetically using natural sorting 
+- Annexes are now sorted alphabetically using natural sorting
 - On held_position, display where it is used (MeetingConfig.orderedContacts, Meeting.orderedContacts) to ease management of duplicates.
 - Make held_position.label optional if correct held_position.position_type is selected
 - Manage prefix of held_position label/position_type depending on gender, number and first letter (Administrateur --> L'Administrateur, Directrice --> La Directrice)
@@ -161,14 +159,14 @@ Changelog
 4.1b12 (2018-12-04)
 -------------------
 - Replaced MeetingGroup (stored in portal_plonemeeting) by collective.contact.core organizations
- (stored in plonegroup-organization)
+    (stored in plonegroup-organization)
 - Added parameter 'ordered' to MeetingItem.getAdviceDataFor that will return an OrderedDict instead a dict to ensure
   data is returned respecting organizations order defined in the configuration
 - Make testing import_data reusable by subplugins
 - Make RichText fields fieldsets and available/presented items sections hideable by user
 - Added possibility to use collective.documentgenerator's styleTemplate
-- Added possibility to use collective.documentgenerator's merge_templates so it is possible to print for example
- 'Every deliberations' using a pod_template that rely on same pod_template than the one used to print single 'Deliberation'
+- Added possibility to use collective.documentgenerator's merge_templates so it is possible to print for example :
+    'Every deliberations' using a pod_template that rely on same pod_template than the one used to print single 'Deliberation'
 - It is now possible to select a held position when defining certified signatures (on MeetingConfig or organization).
   This way 'Name' and 'Function' are taken from the contact.  Moreover, when calling MeetingItem.getCertifiedSignatures
   with listify=False, a dict is returned (key is signature number and value is data) including the held position object
