@@ -60,8 +60,8 @@ from Products.PloneMeeting.config import ADD_SUBCONTENT_PERMISSIONS
 from Products.PloneMeeting.config import AddAnnex
 from Products.PloneMeeting.config import DEFAULT_COPIED_FIELDS
 from Products.PloneMeeting.config import DUPLICATE_AND_KEEP_LINK_EVENT_ACTION
-from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_SAME_MC
 from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_FROM_ITEM_TEMPLATE
+from Products.PloneMeeting.config import EXTRA_COPIED_FIELDS_SAME_MC
 from Products.PloneMeeting.config import HISTORY_COMMENT_NOT_VIEWABLE
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
 from Products.PloneMeeting.config import NO_TRIGGER_WF_TRANSITION_UNTIL
