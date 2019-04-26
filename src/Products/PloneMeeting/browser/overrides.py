@@ -436,8 +436,12 @@ class PMRenderCategoryView(IDRenderCategoryView):
       faceted collection widget so we can manage some usecases where icons
       are displayed to add items or meetings.
     '''
-    # do not display "add contacts" icons on dashboard displayed in contacts
     manage_add_contact_actions = True
+
+    def contact_infos(self):
+        contact_infos = super(PMRenderCategoryView, self).contact_infos().copy()
+        contact_infos.pop('hps-searches')
+        return contact_infos
 
     def _get_category_template(self):
         category_template = super(PMRenderCategoryView, self)._get_category_template()
