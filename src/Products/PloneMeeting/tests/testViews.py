@@ -452,9 +452,14 @@ class testViews(PloneMeetingTestCase):
         self.changeUser('siteadmin')
         cfg.setItemAdviceStates((self._stateMappingFor('proposed'), ))
         cfg.setItemAdviceEditStates((self._stateMappingFor('proposed'), ))
+        # check that item modified is not changed when advice updated
+        item1_original_modified = item1.modified()
+        item2_original_modified = item2.modified()
         self.portal.restrictedTraverse('@@update-delay-aware-advices')._updateAllAdvices()
         self.assertFalse(self.developers_advisers in item1.__ac_local_roles__)
         self.assertTrue(self.developers_advisers in item2.__ac_local_roles__)
+        self.assertEqual(item1.modified(), item1_original_modified)
+        self.assertEqual(item2.modified(), item2_original_modified)
 
     def test_pm_SendPodTemplateToMailingList(self):
         """Send a Pod template to a mailing list."""
