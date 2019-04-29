@@ -1,5 +1,4 @@
 from setuptools import setup, find_packages
-import os
 
 version = '4.1b17.dev0'
 
@@ -34,15 +33,11 @@ setup(name='Products.PloneMeeting',
       namespace_packages=['Products'],
       include_package_data=True,
       zip_safe=False,
-      extras_require=dict(test=['profilehooks',
-                                'ipdb',
-                                'zope.testing',
-                                'plone.testing',
+      extras_require=dict(test=['ipdb',
                                 'plone.app.testing',
+                                'profilehooks',
                                 'plone.app.robotframework',
-                                'Products.CMFPlacefulWorkflow',
-                                'zope.testing',
-                                'Products.PloneTestCase'],
+                                'Products.CMFPlacefulWorkflow'],
                           templates=['Genshi', ],
                           amqp=['imio.zamqp.pm']),
       install_requires=[
@@ -52,8 +47,6 @@ setup(name='Products.PloneMeeting',
           'setuptools',
           'Plone',
           'Pillow',
-          # require unittest2 to avoid warning message in plone.app.testing 4.2.x
-          'unittest2',
           'collective.ckeditor',
           'collective.contact.plonegroup',
           'collective.datagridcolumns',

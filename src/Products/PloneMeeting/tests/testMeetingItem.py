@@ -44,6 +44,7 @@ from os import path
 from persistent.mapping import PersistentMapping
 from plone import api
 from plone.app.testing import logout
+from plone.app.testing.bbb import _createMemberarea
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
 from plone.memoize.instance import Memojito
@@ -81,7 +82,6 @@ from Products.PloneMeeting.utils import getFieldVersion
 from Products.PloneMeeting.utils import getTransitionToReachState
 from Products.PloneMeeting.utils import ON_TRANSITION_TRANSFORM_TAL_EXPR_ERROR
 from Products.PloneMeeting.utils import setFieldFromAjax
-from Products.PloneTestCase.setup import _createHomeFolder
 from Products.PluginIndexes.common.UnIndex import _marker
 from Products.statusmessages.interfaces import IStatusMessage
 from zope.annotation.interfaces import IAnnotations
@@ -171,7 +171,7 @@ class testMeetingItem(PloneMeetingTestCase):
         vcGroup = self.portal.portal_groups.getGroupById(vendors_creators)
         vcGroup.addMember('pmReviewer1')
         # create his personal area because he is a creator now
-        _createHomeFolder(self.portal, 'pmReviewer1')
+        _createMemberarea(self.portal, 'pmReviewer1')
         self.changeUser('pmReviewer1')
         item = self.create('MeetingItem')
         self.assertTrue(item.listProposingGroups().keys() == [self.vendors_uid, ])
