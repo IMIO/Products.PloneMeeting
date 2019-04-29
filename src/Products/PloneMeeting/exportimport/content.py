@@ -144,11 +144,22 @@ class ToolInitializer:
                     copied_suffix['fct_title'] = translate(suffix['fct_title'],
                                                            domain='PloneMeeting',
                                                            context=self.request)
-                    copied_suffix['fct_orgs'] = [
-                        own_org.restrictedTraverse(org_path).UID() for org_path in suffix['fct_orgs']]
+                    # if org_path not found, do not fail but log, it is often the case in tests
+                    # in which we do not add additional organizations because it breaks some tests
+                    copied_suffix['fct_orgs'] = []
+                    for org_path in suffix['fct_orgs']:
+                        try:
+                            fct_org = own_org.restrictedTraverse(org_path)
+                        except KeyError:
+                            logger.warning(
+                                "Could not find an organization with path {0} "
+                                "while setting 'fct_orgs' for {1}".format(
+                                    org_path, suffix['fct_id']))
+                            continue
+                        copied_suffix['fct_orgs'].append(fct_org.UID())
                     functions.append(copied_suffix)
             api.portal.set_registry_record(FUNCTIONS_REGISTRY, functions)
-            # 3) manage organizations, set every organizations so every Plone groups are crated
+            # 3) manage organizations, set every organizations so every Plone groups are created
             # then disable orgs that are not active
             org_uids = [org.UID() for org in orgs]
             api.portal.set_registry_record(ORGANIZATIONS_REGISTRY, org_uids)
@@ -688,7 +699,8 @@ class ToolInitializer:
             for suffix in get_all_suffixes(org_uid):
                 plone_group = get_plone_group(org_uid, suffix)
                 group_members = plone_group.getMemberIds()
-                for userDescr in getattr(org_descr, suffix):
+                # protect in case we have suffixes only for some groups
+                for userDescr in getattr(org_descr, suffix, []):
                     if userDescr.id not in group_members:
                         api.group.add_user(group=plone_group, username=userDescr.id)
 
