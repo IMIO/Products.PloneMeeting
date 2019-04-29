@@ -404,14 +404,14 @@ class OrgDescriptor(Descriptor):
             setattr(self, suffix['fct_id'], [])
         # add extra suffixes if relevant
         for extra_suffix in EXTRA_GROUP_SUFFIXES:
-            if id in extra_suffix['fct_orgs']:
+            if id in extra_suffix['fct_orgs'] or not extra_suffix['fct_orgs']:
                 setattr(self, extra_suffix['fct_id'], [])
         self.active = active
 
     def getUsers(self):
         res = []
-        for suffix in MEETING_GROUP_SUFFIXES:
-            for user in getattr(self, suffix['fct_id']):
+        for suffix in MEETING_GROUP_SUFFIXES + EXTRA_GROUP_SUFFIXES:
+            for user in getattr(self, suffix['fct_id'], []):
                 if user not in res:
                     res.append(user)
         return res

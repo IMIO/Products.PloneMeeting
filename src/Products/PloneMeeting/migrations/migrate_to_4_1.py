@@ -454,6 +454,15 @@ class Migrate_To_4_1(Migrator):
         """Hook for plugins that need to migrate extra data from MeetingGroup to organization."""
         pass
 
+    def _hook_before_mgroups_to_orgs(self):
+        """Hook for plugins that need to do things just before MeetingGroup to organization migration."""
+        pass
+
+    def _hook_after_mgroups_to_orgs(self):
+        """Hook for plugins that need to do things just after MeetingGroup to organization migration,
+           when MeetingGroups and organizations still coexist."""
+        pass
+
     def _adaptForPlonegroup(self):
         """Migrate MeetingGroups to contacts and configure plonegroup.
            Migrate also every relations to the organization as we used the id and we use now the uid."""
@@ -500,6 +509,7 @@ class Migrate_To_4_1(Migrator):
             if mGroup.queryState() == 'active':
                 enabled_orgs.append(new_org_uid)
             every_orgs.append(new_org_uid)
+            self._custom_migrate_meeting_group_to_org(mGroup, new_org)
 
         # configure Plonegroup
         functions = deepcopy(MEETING_GROUP_SUFFIXES)
@@ -752,6 +762,8 @@ class Migrate_To_4_1(Migrator):
         # + update local roles will also fix 'delay_when_stopped' on advice with delay
         self.tool.updateAllLocalRoles(meta_type=('MeetingItem', ))
 
+        # MeetingGroups and organizations coexist, call hook
+        self._hook_after_mgroups_to_orgs()
         # remove MeetingGroup objects and portal_type
         m_group_ids = [mGroup.getId() for mGroup in self.tool.objectValues('MeetingGroup')]
         self.tool.manage_delObjects(ids=m_group_ids)
