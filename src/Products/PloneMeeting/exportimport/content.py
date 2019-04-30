@@ -625,7 +625,7 @@ class ToolInitializer:
         for userDescr in usersOutsideGroups:
             self.addUser(userDescr)
 
-    def addOrgs(self, org_descriptors):
+    def addOrgs(self, org_descriptors, defer_data=True):
         '''Creates organizations (a list of OrgaDescriptor instances) in the contact own organization.'''
         own_org = get_own_organization()
         orgs = []
@@ -644,21 +644,23 @@ class ToolInitializer:
 
             # save some informations that will be reinjected at the end
             data = org_descr.getData()
-            # org is not created and we needs its uid...
-            savedOrgsData['dummy'] = {'item_advice_states': data['item_advice_states'],
-                                      'item_advice_edit_states': data['item_advice_edit_states'],
-                                      'item_advice_view_states': data['item_advice_view_states'],
-                                      'groups_in_charge': data['groups_in_charge']}
-            data['item_advice_states'] = []
-            data['item_advice_edit_states'] = []
-            data['item_advice_view_states'] = []
-            data['groups_in_charge'] = []
+            if defer_data:
+                # org is not created and we needs its uid...
+                savedOrgsData['dummy'] = {'item_advice_states': data['item_advice_states'],
+                                          'item_advice_edit_states': data['item_advice_edit_states'],
+                                          'item_advice_view_states': data['item_advice_view_states'],
+                                          'groups_in_charge': data['groups_in_charge']}
+                data['item_advice_states'] = []
+                data['item_advice_edit_states'] = []
+                data['item_advice_view_states'] = []
+                data['groups_in_charge'] = []
 
             org = api.content.create(container=container, type='organization', **data)
 
-            # finalize savedOrgsData, store org uid instead 'dummy'
-            savedOrgsData[org.UID()] = savedOrgsData['dummy'].copy()
-            del savedOrgsData['dummy']
+            if defer_data:
+                # finalize savedOrgsData, store org uid instead 'dummy'
+                savedOrgsData[org.UID()] = savedOrgsData['dummy'].copy()
+                del savedOrgsData['dummy']
             validate_fields(org, raise_on_errors=True)
             orgs.append(org)
             if org_descr.active:
