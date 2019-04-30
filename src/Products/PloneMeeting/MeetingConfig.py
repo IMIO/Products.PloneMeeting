@@ -4428,7 +4428,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                                   context=self.REQUEST)},
                                domain="PloneMeeting",
                                context=self.REQUEST,
-                               default="Visible for {0}".format(profile))))
+                               default=u"Visible for {0}".format(profile))))
             elif profile.startswith(CONFIGGROUPPREFIX):
                 config_group_suffix = profile.replace(CONFIGGROUPPREFIX, '')
                 is_power_observer = config_group_suffix in po_row_ids
@@ -4442,13 +4442,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                mapping={'reader_usecase': reader_usecase},
                                domain="PloneMeeting",
                                context=self.REQUEST,
-                               default="Visible for {0}".format(reader_usecase))))
+                               default=u"Visible for {0}".format(reader_usecase))))
             else:
                 res.append(
                     (profile, translate('visible_for_{0}'.format(profile),
                                         domain="PloneMeeting",
                                         context=self.REQUEST,
-                                        default="Visible for {0}".format(profile))))
+                                        default=u"Visible for {0}".format(profile))))
         return DisplayList(res).sortedByValue()
 
     security.declarePrivate('listAdviceAnnexConfidentialVisibleFor')
@@ -4488,7 +4488,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                                   context=self.REQUEST)},
                                domain="PloneMeeting",
                                context=self.REQUEST,
-                               default="Visible for {0}".format(profile))))
+                               default=u"Visible for {0}".format(profile))))
             elif profile.startswith(CONFIGGROUPPREFIX):
                 config_group_suffix = profile.replace(CONFIGGROUPPREFIX, '')
                 is_power_observer = config_group_suffix in po_row_ids
@@ -4502,14 +4502,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                mapping={'reader_usecase': reader_usecase},
                                domain="PloneMeeting",
                                context=self.REQUEST,
-                               default="Visible for {0}".format(reader_usecase))))
+                               default=u"Visible for {0}".format(reader_usecase))))
             else:
                 res.append(
                     (profile,
                      translate('visible_for_{0}'.format(profile),
                                domain="PloneMeeting",
                                context=self.REQUEST,
-                               default="Visible for {0}".format(profile))))
+                               default=u"Visible for {0}".format(profile))))
         return DisplayList(res).sortedByValue()
 
     security.declarePrivate('listMeetingAnnexConfidentialVisibleFor')
@@ -4538,7 +4538,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                                   context=self.REQUEST)},
                                domain="PloneMeeting",
                                context=self.REQUEST,
-                               default="Visible for {0}".format(profile))))
+                               default=u"Visible for {0}".format(profile))))
             elif profile.startswith(CONFIGGROUPPREFIX):
                 config_group_suffix = profile.replace(CONFIGGROUPPREFIX, '')
                 reader_usecase = safe_unicode(
@@ -4550,13 +4550,13 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                mapping={'reader_usecase': reader_usecase},
                                domain="PloneMeeting",
                                context=self.REQUEST,
-                               default="Visible for {0}".format(reader_usecase))))
+                               default=u"Visible for {0}".format(reader_usecase))))
             else:
                 res.append(
                     (profile, translate('visible_for_{0}'.format(profile),
                                         domain="PloneMeeting",
                                         context=self.REQUEST,
-                                        default="Visible for {0}".format(profile)))
+                                        default=u"Visible for {0}".format(profile)))
                 )
         return DisplayList(res).sortedByValue()
 
