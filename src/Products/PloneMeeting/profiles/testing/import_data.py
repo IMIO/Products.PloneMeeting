@@ -41,16 +41,17 @@ from Products.PloneMeeting.profiles import UserDescriptor
 # First meeting type: a fictitious PloneGov assembly ---------------------------
 
 # Categories
-deployment = CategoryDescriptor('deployment', 'Deployment topics')
-maintenance = CategoryDescriptor('maintenance', 'Maintenance topics')
-development = CategoryDescriptor('development', 'Development topics')
-events = CategoryDescriptor('events', 'Events')
-research = CategoryDescriptor('research', 'Research topics')
-projects = CategoryDescriptor('projects', 'Projects')
+deployment = CategoryDescriptor('deployment', 'Deployment topics', categoryId='deployment')
+maintenance = CategoryDescriptor('maintenance', 'Maintenance topics', categoryId='maintenance')
+development = CategoryDescriptor('development', 'Development topics', categoryId='development')
+events = CategoryDescriptor('events', 'Events', categoryId='events')
+research = CategoryDescriptor('research', 'Research topics', categoryId='research')
+projects = CategoryDescriptor('projects', 'Projects', categoryId='projects')
 # A vintage category
-marketing = CategoryDescriptor('marketing', 'Marketing', active=False)
+marketing = CategoryDescriptor('marketing', 'Marketing', categoryId='marketing', active=False)
 # usingGroups category
-subproducts = CategoryDescriptor('subproducts', 'Subproducts wishes', usingGroups=('vendors',))
+subproducts = CategoryDescriptor('subproducts', 'Subproducts wishes',
+                                 categoryId='subproducts', usingGroups=('vendors',))
 
 # Classifiers
 classifier1 = CategoryDescriptor('classifier1', 'Classifier 1')

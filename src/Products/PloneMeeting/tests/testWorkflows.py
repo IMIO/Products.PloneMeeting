@@ -687,7 +687,8 @@ class testWorkflows(PloneMeetingTestCase):
         # No instance
         may_correct = meeting.wfConditions().mayCorrect()
         self.assertFalse(may_correct)
-        self.assertEqual(may_correct.msg, closed_meeting_msg)
+        self.assertEqual(translate(may_correct.msg, domain='PloneMeeting', context=self.request),
+                         closed_meeting_msg)
         # OK for Managers
         self.changeUser('siteadmin')
         self.assertTrue(meeting.wfConditions().mayCorrect())

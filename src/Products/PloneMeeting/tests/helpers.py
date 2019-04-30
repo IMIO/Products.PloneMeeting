@@ -20,7 +20,6 @@
 # 02110-1301, USA.
 #
 
-from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.contact.plonegroup.utils import select_organization
 from DateTime import DateTime
 from plone import api
@@ -319,20 +318,19 @@ class PloneMeetingTestingHelpers:
     def _make_not_found_user(self, user_id='new_test_user'):
         """Add a p_user_id member to the p_group_id group then delete it."""
         currentUser = self.member.getId()
-        group_id = get_plone_group_id(self.developers_uid, 'creators')
         self.changeUser('admin')
         membershipTool = api.portal.get_tool('portal_membership')
         membershipTool.addMember(id=user_id,
                                  password='12345',
                                  roles=('Member', ),
                                  domains=())
-        self._addPrincipalToGroup(user_id, group_id)
+        self._addPrincipalToGroup(user_id, self.developers_creators)
         membershipTool.deleteMembers((user_id, ))
         # now we have a 'not found' user in developers_creators
         self.assertTrue((user_id, '<{0}: not found>'.format(user_id)) in
-                        self.portal.acl_users.source_groups.listAssignedPrincipals(group_id))
+                        self.portal.acl_users.source_groups.listAssignedPrincipals(self.developers_creators))
         # groupData.getGroupMembers/groupData.getGroupMemberIds ignore not found
-        self.assertFalse(user_id in api.group.get(group_id).getGroupMemberIds())
+        self.assertFalse(user_id in api.group.get(self.developers_creators).getGroupMemberIds())
         self.changeUser(currentUser)
 
     def _check_access(self, obj, userIds=[], read=True, write=True):

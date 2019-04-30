@@ -24,7 +24,6 @@
 
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_plone_group
-from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.documentviewer.config import CONVERTABLE_TYPES
 from collective.documentviewer.settings import GlobalSettings
 from collective.iconifiedcategory.event import IconifiedPrintChangedEvent
@@ -186,7 +185,7 @@ class testAnnexes(PloneMeetingTestCase):
         cfg.setUseCopies(True)
         cfg.setItemCopyGroupsStates((item_initial_state, ))
         cfg.setItemAnnexConfidentialVisibleFor(('reader_copy_groups', ))
-        item.setCopyGroups((get_plone_group_id(self.vendors_uid, 'reviewers'), ))
+        item.setCopyGroups((self.vendors_reviewers, ))
         item.updateLocalRoles()
 
         self.changeUser('pmReviewer2')
@@ -407,7 +406,7 @@ class testAnnexes(PloneMeetingTestCase):
         cfg.setUseCopies(True)
         cfg.setItemCopyGroupsStates((item_initial_state, ))
         cfg.setAdviceAnnexConfidentialVisibleFor(('reader_copy_groups', ))
-        item.setCopyGroups((get_plone_group_id(self.vendors_uid, 'reviewers'), ))
+        item.setCopyGroups((self.vendors_reviewers, ))
         item.updateLocalRoles()
 
         self.changeUser('pmReviewer2')
@@ -606,7 +605,7 @@ class testAnnexes(PloneMeetingTestCase):
         self.assertFalse(annexConfidential.UID() in get_categorized_elements(item))
         self.assertEqual(annexConfidential.__ac_local_roles__,
                          {'pmCreator1': ['Owner'],
-                          get_plone_group_id(self.developers_uid, 'creators'): ['AnnexReader']})
+                          self.developers_creators: ['AnnexReader']})
         # remove confidentiality, only MeetingManagers may change confidentiality
         self.changeUser('pmManager')
         self.request.set('confidential', False)
@@ -625,7 +624,7 @@ class testAnnexes(PloneMeetingTestCase):
                          [elt['UID'] for elt in get_categorized_elements(item)])
         self.assertEqual(annexConfidential.__ac_local_roles__,
                          {'pmCreator1': ['Owner'],
-                          get_plone_group_id(self.developers_uid, 'creators'): ['AnnexReader']})
+                          self.developers_creators: ['AnnexReader']})
 
     def test_pm_AnnexesTitleFoundInItemSearchableText(self):
         '''Annexes title is indexed in the item SearchableText.'''
@@ -826,11 +825,9 @@ class testAnnexes(PloneMeetingTestCase):
         item.folder_position_typeaware(position='down', id=annex1.getId())
         self.assertEqual(item.objectValues(), [annex2, annex1, annex3])
         # member of the same group are able to change annexes position
-        self.assertTrue(get_plone_group_id(self.developers_uid, 'creators')
-                        in self.member.getGroups())
+        self.assertTrue(self.developers_creators in self.member.getGroups())
         self.changeUser('pmCreator1b')
-        self.assertTrue(get_plone_group_id(self.developers_uid, 'creators')
-                        in self.member.getGroups())
+        self.assertTrue(self.developers_creators in self.member.getGroups())
         item.folder_position_typeaware(position='down', id=annex1.getId())
         self.assertEqual(item.objectValues(), [annex2, annex3, annex1])
         # only members able to add annexes are able to change position

@@ -24,7 +24,6 @@
 
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.config import set_registry_organizations
-from collective.contact.plonegroup.utils import get_plone_group_id
 from copy import deepcopy
 from DateTime import DateTime
 from DateTime.DateTime import _findLocalTimeZoneName
@@ -1981,8 +1980,7 @@ class testMeeting(PloneMeetingTestCase):
         self.changeUser('admin')
         self._removeConfigObjectsFor(self.meetingConfig)
         # make sure 'pmManager' may not see items of 'vendors'
-        self._removePrincipalFromGroup(
-            'pmManager', get_plone_group_id(self.vendors_uid, 'advisers'))
+        self._removePrincipalFromGroup('pmManager', self.vendors_advisers)
 
         # create a meeting and an item, set the meeting as preferredMeeting for the item
         # then when the meeting is removed, the item preferredMeeting is back to 'whatever'

@@ -24,6 +24,7 @@
 
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_plone_groups
+from collective.contact.plonegroup.utils import get_organization
 from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.utils import get_categories
 from collective.iconifiedcategory.utils import get_categorized_elements
@@ -675,8 +676,12 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertEqual(set(self.member.getGroups()),
                          set(pmManagerGroups))
         self.assertEqual(
-            [org.UID() for org in self.tool.get_orgs_for_user()],
+            self.tool.get_orgs_for_user(the_objects=False),
             [self.developers_uid, self.vendors_uid])
+        self.assertEqual(
+            self.tool.get_orgs_for_user(),
+            [get_organization(self.developers_uid), get_organization(self.vendors_uid)])
+
         # check the 'suffix' parameter, it will check that user is in a Plone group of that suffix
         # here, 'pmManager' is only in the '_creators' or 'developers'
         self.assertEqual(

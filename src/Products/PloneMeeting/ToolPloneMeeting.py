@@ -464,18 +464,25 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
                                    only_selected=True,
                                    suffixes=[],
                                    omitted_suffixes=[],
-                                   using_groups=[]):
+                                   using_groups=[],
+                                   the_objects=True):
         '''cachekey method for self.get_orgs_for_user.'''
         date = get_cachekey_volatile('Products.PloneMeeting.ToolPloneMeeting.get_orgs_for_user')
         return (date,
                 self._users_groups_value(),
                 (user_id or api.user.get_current()),
-                only_selected, suffixes, omitted_suffixes, using_groups)
+                only_selected, suffixes, omitted_suffixes, using_groups, the_objects)
 
     security.declarePublic('get_orgs_for_user')
 
     @ram.cache(get_orgs_for_user_cachekey)
-    def get_orgs_for_user(self, user_id=None, only_selected=True, suffixes=[], omitted_suffixes=[], using_groups=[]):
+    def get_orgs_for_user(self,
+                          user_id=None,
+                          only_selected=True,
+                          suffixes=[],
+                          omitted_suffixes=[],
+                          using_groups=[],
+                          the_objects=True):
         '''Gets the organizations p_user_id belongs to. If p_user_id is None, we use the
            authenticated user. If p_only_selected is True, we consider only selected
            organizations. If p_suffixes is not empty, we select only orgs having
@@ -483,9 +490,9 @@ class ToolPloneMeeting(UniqueObject, OrderedBaseFolder, BrowserDefaultMixin):
            orgs the user is in using those suffixes.'''
         res = []
         user_plone_group_ids = self.get_plone_groups_for_user(user_id)
-        orgs = get_organizations(only_selected=only_selected, kept_org_uids=using_groups)
+        orgs = get_organizations(only_selected=only_selected, kept_org_uids=using_groups, the_objects=the_objects)
         for org in orgs:
-            org_uid = org.UID()
+            org_uid = the_objects and org.UID() or org
             for suffix in get_all_suffixes(org_uid):
                 if suffixes and (suffix not in suffixes):
                     continue

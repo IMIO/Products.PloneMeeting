@@ -88,6 +88,7 @@ Changelog
   triggerable.  This is done to avoid meetings never being closed and to avoid MeetingManager users using the application as Manager
 - Set MeetingItem.preferredMeeting enforceVocabulary to True so it is not possible to save an item if meanwhile, the meeting selected as preferred was deleted
 - Keep fields ('inAndOutMoves', 'notes', 'internalNotes') when creating item from a template
+- Added parameter 'the_objects=True' to ToolPloneMeeting.get_orgs_for_user to be able to get organization objects or uids
 
 4.1b16 (2019-01-31)
 -------------------

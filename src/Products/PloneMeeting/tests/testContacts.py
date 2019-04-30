@@ -25,7 +25,6 @@
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.contact.plonegroup.utils import get_own_organization
-from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.contact.plonegroup.utils import get_plone_groups
 from DateTime import DateTime
 from datetime import date
@@ -509,8 +508,7 @@ class testContacts(PloneMeetingTestCase):
         self.failIf(cfg.getCustomAdvisers())
         self.failIf(cfg.getPowerAdvisersGroups())
         self.failIf(cfg.getSelectableAdvisers())
-        self.failUnless(get_plone_group_id(self.developers_uid, 'reviewers')
-                        in cfg.getSelectableCopyGroups())
+        self.failUnless(self.developers_reviewers in cfg.getSelectableCopyGroups())
         can_not_delete_organization_meetingconfig = \
             translate('can_not_delete_organization_meetingconfig',
                       domain="plone",
@@ -616,8 +614,7 @@ class testContacts(PloneMeetingTestCase):
         # for item, make sure other conditions are False
         item.setAssociatedGroups(())
         item.setOptionalAdvisers(())
-        self.assertTrue(get_plone_group_id(self.developers_uid, 'advisers')
-                        not in item.adviceIndex)
+        self.assertTrue(self.developers_advisers not in item.adviceIndex)
         item.setCopyGroups(())
         item._update_after_edit()
         transaction.commit()
@@ -631,8 +628,7 @@ class testContacts(PloneMeetingTestCase):
         item.setProposingGroup(self.vendors_uid)
         item.setAssociatedGroups((self.developers_uid, ))
         item.setOptionalAdvisers(())
-        self.assertTrue(get_plone_group_id(self.developers_uid, 'advisers')
-                        not in item.adviceIndex)
+        self.assertTrue(self.developers_advisers not in item.adviceIndex)
         item.setCopyGroups(())
         item._update_after_edit()
         transaction.commit()
@@ -645,8 +641,7 @@ class testContacts(PloneMeetingTestCase):
         item.setProposingGroup(self.vendors_uid)
         item.setAssociatedGroups(())
         item.setOptionalAdvisers((self.developers_uid, ))
-        self.assertTrue(get_plone_group_id(self.developers_uid, 'advisers')
-                        not in item.adviceIndex)
+        self.assertTrue(self.developers_advisers not in item.adviceIndex)
         item.setCopyGroups(())
         item._update_after_edit()
         transaction.commit()
@@ -659,8 +654,7 @@ class testContacts(PloneMeetingTestCase):
         item.setProposingGroup(self.vendors_uid)
         item.setAssociatedGroups(())
         item.setOptionalAdvisers(())
-        self.assertTrue(get_plone_group_id(self.developers_uid, 'advisers')
-                        not in item.adviceIndex)
+        self.assertTrue(self.developers_advisers not in item.adviceIndex)
         self._setUpGroupInCharge(item, group=self.developers_uid)
         transaction.commit()
         with self.assertRaises(BeforeDeleteException) as cm:
@@ -671,7 +665,7 @@ class testContacts(PloneMeetingTestCase):
         # check with item having copyGroups
         self._tearDownGroupInCharge(item)
         cfg.setUseCopies(True)
-        item.setCopyGroups((get_plone_group_id(self.developers_uid, 'reviewers'), ))
+        item.setCopyGroups((self.developers_reviewers, ))
         item._update_after_edit()
         transaction.commit()
         with self.assertRaises(BeforeDeleteException) as cm:
@@ -776,10 +770,9 @@ class testContacts(PloneMeetingTestCase):
         cfg.itemtemplates.manage_delObjects(['template2', ])
         # and remove 'vendors_reviewers' from every MeetingConfig.selectableCopyGroups
         # and 'vendors' from every MeetingConfig.selectableAdvisers
-        dev_reviewers = get_plone_group_id(self.developers_uid, 'reviewers')
-        cfg.setSelectableCopyGroups((dev_reviewers, ))
+        cfg.setSelectableCopyGroups((self.developers_reviewers, ))
         cfg2.setSelectableAdvisers((self.developers_uid, ))
-        cfg2.setSelectableCopyGroups((dev_reviewers, ))
+        cfg2.setSelectableCopyGroups((self.developers_reviewers, ))
         cfg2.setSelectableAdvisers((self.developers_uid, ))
         # and remove users from vendors Plone groups
         for ploneGroup in get_plone_groups(self.vendors_uid):
@@ -797,7 +790,7 @@ class testContacts(PloneMeetingTestCase):
         item = self.create('MeetingItem')
         self.assertTrue(self.developers_uid in item.listAssociatedGroups())
         self.assertTrue(self.developers_uid in item.listProposingGroups())
-        self.assertTrue(dev_reviewers in item.listCopyGroups())
+        self.assertTrue(self.developers_reviewers in item.listCopyGroups())
         self.assertTrue(self.developers_uid in item.listOptionalAdvisers())
         self.assertTrue(self.tool.userIsAmong(['creators']))
         # after deactivation, the group is no more useable...
@@ -808,7 +801,7 @@ class testContacts(PloneMeetingTestCase):
         # remove proposingGroup or it will appear in the vocabulary as 'developers' is currently used...
         item.setProposingGroup('')
         self.assertFalse(self.developers_uid in item.listProposingGroups())
-        self.assertFalse(dev_reviewers in item.listCopyGroups())
+        self.assertFalse(self.developers_reviewers in item.listCopyGroups())
         self.assertFalse(self.developers_uid in item.listOptionalAdvisers())
         self.assertFalse(self.tool.userIsAmong(['creators']))
 
