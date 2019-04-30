@@ -4051,7 +4051,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 toAdd.append((org_uid, org.get_full_title()))
         return (toAdd, toEdit)
 
-    def _advicePortalTypeForAdviser(self, groupId):
+    def _advicePortalTypeForAdviser(self, org_uid):
         '''See doc in interfaces.py.'''
         return 'meetingadvice'
 
@@ -5172,10 +5172,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         return [item.getProposingGroup(True)]
 
     def _assign_roles_to_group_suffixes(self,
-                                        organization):
+                                        organization,
+                                        ignored_suffixes=[]):
         """Method that do the work of assigning roles to every suffixed group of an organization."""
         org_uid = organization.UID()
         for suffix in get_all_suffixes(org_uid):
+            if suffix in ignored_suffixes:
+                continue
             # if we have a Plone group related to this suffix, apply a local role for it
             plone_group_id = get_plone_group_id(org_uid, suffix)
             role = MEETINGROLES.get(suffix)

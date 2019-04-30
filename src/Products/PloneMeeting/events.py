@@ -268,7 +268,7 @@ def onOrgWillBeRemoved(current_org, event):
         plone_group = get_plone_group(current_org_uid, suffix)
         if plone_group and plone_group.getGroupMembers():
             raise BeforeDeleteException(translate("can_not_delete_organization_plonegroup",
-                                                  mapping={'plone_group_id': plone_group.id},
+                                                  mapping={'member_id': plone_group.getGroupMembers()[0]},
                                                   domain="plone",
                                                   context=request))
     # And finally, check that organization is not linked to an existing item.

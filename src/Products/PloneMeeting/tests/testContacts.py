@@ -575,7 +575,7 @@ class testContacts(PloneMeetingTestCase):
                 self.developers_uid, catch_before_delete_exception=False)
         can_not_delete_organization_plonegroup = \
             translate('can_not_delete_organization_plonegroup',
-                      mapping={'plone_group_id': 'pmAdviser1'},
+                      mapping={'member_id': 'pmAdviser1'},
                       domain="plone",
                       context=self.request)
         self.assertEquals(cm.exception.message, can_not_delete_organization_plonegroup)
@@ -714,7 +714,7 @@ class testContacts(PloneMeetingTestCase):
 
         can_not_delete_organization_plonegroup = \
             translate('can_not_delete_organization_plonegroup',
-                      mapping={'plone_group_id': 'pmManager'},
+                      mapping={'member_id': 'pmManager'},
                       domain="plone",
                       context=self.request)
         self.assertEquals(cm.exception.message, can_not_delete_organization_plonegroup)
