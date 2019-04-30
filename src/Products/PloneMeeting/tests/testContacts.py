@@ -1090,6 +1090,17 @@ class testContacts(PloneMeetingTestCase):
         person.gender = u'F'
         self.assertEqual(hp.get_prefix_for_gender_and_number(), u"La ")
 
+    def test_pm_RemoveNotSelectedOrganization(self):
+        """Check that removing a not selected organization works correctly."""
+        self.changeUser('siteadmin')
+        own_org = get_own_organization()
+
+        # create a new organization
+        new_org = self.create('organization', id='new_org', title=u'New org', acronym='NO1')
+        new_org_id = new_org.getId()
+        # remove it
+        own_org.manage_delObjects([new_org_id])
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

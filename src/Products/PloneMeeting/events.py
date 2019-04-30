@@ -13,6 +13,7 @@ from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_organizations
 from collective.contact.plonegroup.utils import get_own_organization
+from collective.contact.plonegroup.utils import get_plone_group
 from collective.contact.plonegroup.utils import get_plone_group_id
 from collective.contact.plonegroup.utils import get_plone_groups
 from collective.documentviewer.async import queueJob
@@ -264,11 +265,10 @@ def onOrgWillBeRemoved(current_org, event):
 
     # Then check that every linked Plone group is empty because we are going to delete it.
     for suffix in get_all_suffixes(current_org_uid):
-        plone_group_id = get_plone_group_id(current_org_uid, suffix)
-        groupMembers = api.group.get(plone_group_id).getGroupMembers()
-        if groupMembers:
+        plone_group = get_plone_group(current_org_uid, suffix)
+        if plone_group and plone_group.getGroupMembers():
             raise BeforeDeleteException(translate("can_not_delete_organization_plonegroup",
-                                                  mapping={'plone_group_id': groupMembers[0]},
+                                                  mapping={'plone_group_id': plone_group.id},
                                                   domain="plone",
                                                   context=request))
     # And finally, check that organization is not linked to an existing item.
@@ -316,10 +316,9 @@ def onOrgRemoved(current_org, event):
     current_org_uid = current_org.UID()
     portal_groups = api.portal.get_tool('portal_groups')
     for suffix in get_all_suffixes(current_org_uid):
-        plone_group_id = get_plone_group_id(current_org_uid, suffix)
-        pGroup = portal_groups.getGroupById(plone_group_id)
-        if pGroup:
-            portal_groups.removeGroup(plone_group_id)
+        plone_group = get_plone_group(current_org_uid, suffix)
+        if plone_group:
+            portal_groups.removeGroup(plone_group.id)
 
     # clean cache for organization related vocabularies
     invalidate_cachekey_volatile_for("Products.PloneMeeting.vocabularies.proposinggroupsvocabulary")
