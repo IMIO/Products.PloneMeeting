@@ -350,12 +350,16 @@ meetingPma.powerObservers = (
     {'row_id': 'powerobservers',
      'label': 'Power observers',
      'item_states': ('itemcreated', 'presented', 'accepted', 'delayed'),
+     'item_access_on': u'',
      'meeting_states': ('frozen', 'published', 'decided', 'closed'),
+     'meeting_access_on': u'',
      'orderindex_': '1'},
     {'row_id': 'restrictedpowerobservers',
      'label': 'Restricted power observers',
      'item_states': [],
+     'item_access_on':u'',
      'meeting_states': [],
+     'meeting_access_on': u'',
      'orderindex_': '2'})
 meetingPma.useVotes = True
 meetingPma.styleTemplates = [stylesTemplate1, stylesTemplate2]

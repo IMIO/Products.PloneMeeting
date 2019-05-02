@@ -5173,15 +5173,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _assign_roles_to_group_suffixes(self,
                                         organization,
-                                        ignored_suffixes=[]):
+                                        roles=MEETINGROLES):
         """Method that do the work of assigning roles to every suffixed group of an organization."""
         org_uid = organization.UID()
         for suffix in get_all_suffixes(org_uid):
-            if suffix in ignored_suffixes:
+            # like it is the case by default for suffix 'advisers'
+            if not roles.get(suffix, None):
                 continue
             # if we have a Plone group related to this suffix, apply a local role for it
             plone_group_id = get_plone_group_id(org_uid, suffix)
-            role = MEETINGROLES.get(suffix)
+            role = roles.get(suffix)
             if role:
                 self.manage_addLocalRoles(plone_group_id, (role, ))
 

@@ -4893,17 +4893,17 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePrivate('createPowerObserversGroups')
 
-    def createPowerObserversGroups(self):
+    def createPowerObserversGroups(self, force_update_access=False):
         '''Creates Plone groups to manage power observers.'''
-        portal = api.portal.get()
         tool = api.portal.get_tool('portal_plonemeeting')
         for po_infos in self.getPowerObservers():
             groupSuffix = po_infos['row_id']
             groupId, wasCreated = self._createOrUpdatePloneGroup(groupSuffix, groupTitleSuffix=po_infos['label'])
-            if wasCreated:
+            if wasCreated or force_update_access:
                 # now define local_roles on the tool so it is accessible by this group
                 tool.manage_addLocalRoles(groupId, (READER_USECASES['powerobservers'],))
                 # now define local_roles on the contacts directory so it is accessible by this group
+                portal = api.portal.get()
                 portal.contacts.manage_addLocalRoles(groupId, (READER_USECASES['powerobservers'],))
                 portal.contacts.reindexObjectSecurity()
                 # but we do not want this group to access every MeetingConfigs so
@@ -4921,14 +4921,18 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePrivate('createMeetingManagersGroup')
 
-    def createMeetingManagersGroup(self):
+    def createMeetingManagersGroup(self, force_update_access=False):
         '''Creates a Plone group that will be used to apply the 'MeetingManager'
            local role on every plonemeeting folders of this MeetingConfig and on this MeetingConfig.'''
         groupId, wasCreated = self._createOrUpdatePloneGroup(groupSuffix=MEETINGMANAGERS_GROUP_SUFFIX)
-        if wasCreated:
+        if wasCreated or force_update_access:
             # now define local_roles on the tool so it is accessible by this group
             tool = api.portal.get_tool('portal_plonemeeting')
             tool.manage_addLocalRoles(groupId, ('MeetingManager',))
+            # now define local_roles on the contacts directory so it is accessible by this group
+            portal = api.portal.get()
+            portal.contacts.manage_addLocalRoles(groupId, ('MeetingManager',))
+            portal.contacts.reindexObjectSecurity()
             # but we do not want this group to get MeetingManager role on every MeetingConfigs so
             # remove inheritance on self and define these local_roles for self too
             self.__ac_local_roles_block__ = True
@@ -4937,27 +4941,32 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePrivate('createItemTemplateManagersGroup')
 
-    def createItemTemplateManagersGroup(self):
+    def createItemTemplateManagersGroup(self, force_update_access=False):
         '''Creates a Plone group that will be used to store users able to manage item templates.'''
         groupId, wasCreated = self._createOrUpdatePloneGroup(groupSuffix=ITEMTEMPLATESMANAGERS_GROUP_SUFFIX)
-        if wasCreated:
+        if wasCreated or force_update_access:
             # now define local_roles on the tool so it is accessible by this group
             tool = api.portal.get_tool('portal_plonemeeting')
             tool.manage_addLocalRoles(groupId, (READER_USECASES[ITEMTEMPLATESMANAGERS_GROUP_SUFFIX],))
             self.manage_addLocalRoles(groupId, (READER_USECASES[ITEMTEMPLATESMANAGERS_GROUP_SUFFIX],))
+            # now define local_roles on the contacts directory so it is accessible by this group
+            portal = api.portal.get()
+            portal.contacts.manage_addLocalRoles(
+                groupId, (READER_USECASES[ITEMTEMPLATESMANAGERS_GROUP_SUFFIX],))
+            portal.contacts.reindexObjectSecurity()
             # give 'Manager' local role to group in the itemtemplates folder
             self.itemtemplates.manage_addLocalRoles(groupId, ('Manager', ))
 
-    def _createOrUpdateAllPloneGroups(self):
+    def _createOrUpdateAllPloneGroups(self, force_update_access=False):
         """Create or update every linked Plone groups."""
         # Create the corresponding group that will contain MeetingPowerObservers
-        self.createPowerObserversGroups()
+        self.createPowerObserversGroups(force_update_access=force_update_access)
         # Create the corresponding group that will contain MeetingBudgetImpactEditors
         self.createBudgetImpactEditorsGroup()
         # Create the corresponding group that will contain MeetingManagers
-        self.createMeetingManagersGroup()
+        self.createMeetingManagersGroup(force_update_access=force_update_access)
         # Create the corresponding group that will contain item templates Managers
-        self.createItemTemplateManagersGroup()
+        self.createItemTemplateManagersGroup(force_update_access=force_update_access)
 
     def _set_default_faceted_search(self, collection_id='searchmyitems'):
         """ """
