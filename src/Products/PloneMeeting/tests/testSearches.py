@@ -595,23 +595,23 @@ class testSearches(PloneMeetingTestCase):
         # nothing so the query uses an unknown review_state
         self.assertEquals(adapter.query, _find_nothing_query(itemTypeName))
         # for a reviewer, query is correct
-        self.changeUser('pmManager')
+        self.changeUser('pmReviewer1')
         # keep relevant reviewer states
-        res = []
+        states = []
         for grp in self.member.getGroups():
             for reviewer_suffix, reviewer_states in reviewers.items():
                 if grp.endswith('_' + reviewer_suffix):
                     if reviewer_suffix == 'reviewers' and \
                        'pre_validation' in cfg.listWorkflowAdaptations():
-                        res.extend(['prevalidated'])
+                        states.extend(['prevalidated'])
                     else:
-                        res.extend(reviewer_states)
+                        states.extend(reviewer_states)
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstovalidateofmyreviewergroups')
         self.assertEquals(adapter.query,
                           {'portal_type': {'query': itemTypeName},
                            'reviewProcessInfo': {
                            'query': ['{0}__reviewprocess__{1}'.format(self.developers_uid, st)
-                                     for st in res]}})
+                                     for st in states]}})
 
         # now do the query
         # this adapter is not used by default, but is intended to be used with

@@ -379,13 +379,15 @@ class testPerformances(PloneMeetingTestCase):
 
     def test_pm_GetAuthenticatedMember(self):
         '''Test performance between portal_membership.getAuthenticatedMember and
-           plone_portal_state.member().'''
+           plone_portal_state.member() and api.user.get_current.'''
         # create an item
         self.changeUser('pmManager')
         # call getAuthenticatedMember 2000 times
         self._portalMembershipGetAuthenticatedMember(2000)
         # call plone_portal_state.member() 2000 times
         self._plonePortalStateMember(2000)
+        # call api.user.get_current() 2000 times
+        self._apiUserGetCurrent(2000)
 
     @timecall
     def _portalMembershipGetAuthenticatedMember(self, times=1):
@@ -398,6 +400,12 @@ class testPerformances(PloneMeetingTestCase):
         ''' '''
         for time in range(times):
             self.portal.restrictedTraverse('@@plone_portal_state').member()
+
+    @timecall
+    def _apiUserGetCurrent(self, times=1):
+        ''' '''
+        for time in range(times):
+            api.user.get_current()
 
     def _setupForMeetingCategories(self, number_of_categories, withUsingGroups=False):
         self.changeUser('admin')

@@ -1527,19 +1527,26 @@ class testMeetingConfig(PloneMeetingTestCase):
         cfg_item_type_name = cfg.getItemTypeName()
         cfg2_item_type_name = cfg2.getItemTypeName()
         cfg3_item_type_name = cfg3.getItemTypeName()
-        self.assertFalse('marked_not_applicable' in self.wfTool.getWorkflowsFor(cfg_item_type_name)[0].states)
-        self.assertFalse('marked_not_applicable' in self.wfTool.getWorkflowsFor(cfg2_item_type_name)[0].states)
-        self.assertFalse('marked_not_applicable' in self.wfTool.getWorkflowsFor(cfg3_item_type_name)[0].states)
-        cfg3.setWorkflowAdaptations(('mark_not_applicable', ))
-        cfg3.at_post_edit_script()
-        cfg3.update_cfgs(field_name='workflowAdaptations', reload=False)
-        self.assertFalse('marked_not_applicable' in self.wfTool.getWorkflowsFor(cfg_item_type_name)[0].states)
-        self.assertFalse('marked_not_applicable' in self.wfTool.getWorkflowsFor(cfg2_item_type_name)[0].states)
-        self.assertTrue('marked_not_applicable' in self.wfTool.getWorkflowsFor(cfg3_item_type_name)[0].states)
-        cfg3.update_cfgs(field_name='workflowAdaptations', reload=True)
-        self.assertTrue('marked_not_applicable' in self.wfTool.getWorkflowsFor(cfg_item_type_name)[0].states)
-        self.assertTrue('marked_not_applicable' in self.wfTool.getWorkflowsFor(cfg2_item_type_name)[0].states)
-        self.assertTrue('marked_not_applicable' in self.wfTool.getWorkflowsFor(cfg3_item_type_name)[0].states)
+        if 'return_to_proposing_group' in cfg.listWorkflowAdaptations() and \
+           'return_to_proposing_group' in cfg2.listWorkflowAdaptations() and \
+           'return_to_proposing_group' in cfg3.listWorkflowAdaptations():
+            wfFor = self.wfTool.getWorkflowsFor
+            self.assertFalse('returned_to_proposing_group' in wfFor(cfg_item_type_name)[0].states)
+            self.assertFalse('returned_to_proposing_group' in wfFor(cfg2_item_type_name)[0].states)
+            self.assertFalse('returned_to_proposing_group' in wfFor(cfg3_item_type_name)[0].states)
+            cfg3.setWorkflowAdaptations(('return_to_proposing_group', ))
+            cfg3.at_post_edit_script()
+            cfg3.update_cfgs(field_name='workflowAdaptations', reload=False)
+            self.assertFalse('returned_to_proposing_group' in wfFor(cfg_item_type_name)[0].states)
+            self.assertFalse('returned_to_proposing_group' in wfFor(cfg2_item_type_name)[0].states)
+            self.assertTrue('returned_to_proposing_group' in wfFor(cfg3_item_type_name)[0].states)
+            cfg3.update_cfgs(field_name='workflowAdaptations', reload=True)
+            self.assertTrue('returned_to_proposing_group' in wfFor(cfg_item_type_name)[0].states)
+            self.assertTrue('returned_to_proposing_group' in wfFor(cfg2_item_type_name)[0].states)
+            self.assertTrue('returned_to_proposing_group' in wfFor(cfg3_item_type_name)[0].states)
+        else:
+            pm_logger.info("Could not test reload in test_pm_update_cfgs because wfAdaptation "
+                           "'return_to_proposing_group' is not available")
 
     def test_pm_ConfigModifiedWhenFacetedChanged(self):
         """When faceted settings are changed (changed default collection in collectionwidget),

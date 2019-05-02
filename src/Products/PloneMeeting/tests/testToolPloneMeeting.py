@@ -693,7 +693,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
             [org.UID() for org in self.tool.get_orgs_for_user(omitted_suffixes=('advisers', ))],
             [self.developers_uid])
         # we can get organization for another user
-        pmCreator1 = self.portal.portal_membership.getMemberById('pmCreator1')
+        pmCreator1 = api.user.get('pmCreator1')
         self.assertEqual(sorted(pmCreator1.getGroups()),
                          sorted(['AuthenticatedUsers', self.developers_creators]))
         self.assertEqual([org.UID() for org in self.tool.get_orgs_for_user(user_id='pmCreator1')],

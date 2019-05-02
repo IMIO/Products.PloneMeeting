@@ -23,7 +23,6 @@
 #
 
 from plone import api
-from plone.app.testing import login
 from Products.GenericSetup.context import DirectoryImportContext
 from Products.PloneMeeting.tests.PloneMeetingTestCase import PloneMeetingTestCase
 from Products.PloneMeeting.tests.PloneMeetingTestCase import pm_logger
@@ -80,8 +79,7 @@ class testSetup(PloneMeetingTestCase):
         """This is made for subpackages to test that defined profiles
            containing an import_data works as expected."""
         ToolInitializer.getProfileData = getProfileData
-
-        login(self.app, 'admin')
+        self.changeUser('admin')
 
         api.portal.set_registry_record(
             'collective.documentgenerator.browser.controlpanel.'
@@ -118,8 +116,10 @@ class testSetup(PloneMeetingTestCase):
                 # especially regarding the searches displayed in the collection portlet
                 # make sure extra searches are added
                 cfg.createSearches(cfg._searchesInfo())
-                self.assertFalse('There was an error while rendering the portlet.'
-                                 in cfg.searches.searches_items())
+                self.changeUser('pmCreator1')
+                searches_items = self.getMeetingFolder(cfg).searches_items
+                self.assertFalse('There was an error while rendering the portlet.' in searches_items())
+                self.changeUser('admin')
             # clean memoize between each site because the same REQUEST especially
             # is used for every sites and this can lead to problems...
             cleanMemoize(self.portal)
