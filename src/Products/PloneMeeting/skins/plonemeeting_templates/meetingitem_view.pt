@@ -464,7 +464,7 @@
         </tr>
     </table>
 
-    <tal:textCheckList condition="python: 'textCheckList' in usedAttrs">
+    <tal:textCheckList condition="python: 'textCheckList' in usedAttrs and context.getTextCheckList()">
       <div id="textCheckList" class="collapsible discreet" onclick="toggleDoc('collapsible-text-checklist');">
         <span class="item_attribute_label" i18n:translate="PloneMeeting_label_textCheckList">
             Text check list
