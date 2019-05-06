@@ -89,6 +89,7 @@ Changelog
 - Set MeetingItem.preferredMeeting enforceVocabulary to True so it is not possible to save an item if meanwhile, the meeting selected as preferred was deleted
 - Keep fields ('inAndOutMoves', 'notes', 'internalNotes') when creating item from a template
 - Added parameter 'the_objects=True' to ToolPloneMeeting.get_orgs_for_user to be able to get organization objects or uids
+- Adapted icons 'new item/advice/annex/...' to use grey colors so it fits for every themes
 
 4.1b16 (2019-01-31)
 -------------------
