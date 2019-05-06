@@ -816,6 +816,7 @@ class PloneMeetingConfiguration(Descriptor):
         self.configGroups = ()
         self.meetingConfigs = meetingConfigs  # ~[MeetingConfigDescriptor]~
         self.orgs = orgs  # ~[OrgDescriptor]~
+        self.forceAddUsersAndGroups = False
         self.persons = []  # ~[PersonDescriptor]~
         self.usersOutsideGroups = []  # ~[UserDescriptor]~
         self.directory_position_types = []

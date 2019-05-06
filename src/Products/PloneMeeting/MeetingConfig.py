@@ -4904,7 +4904,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 tool.manage_addLocalRoles(groupId, (READER_USECASES['powerobservers'],))
                 # now define local_roles on the contacts directory so it is accessible by this group
                 portal = api.portal.get()
-                portal.contacts.manage_addLocalRoles(groupId, (READER_USECASES['powerobservers'],))
+                portal.contacts.manage_addLocalRoles(groupId, ('Reader', ))
                 portal.contacts.reindexObjectSecurity()
                 # but we do not want this group to access every MeetingConfigs so
                 # remove inheritance on self and define these local_roles for self too
@@ -4931,7 +4931,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             tool.manage_addLocalRoles(groupId, ('MeetingManager',))
             # now define local_roles on the contacts directory so it is accessible by this group
             portal = api.portal.get()
-            portal.contacts.manage_addLocalRoles(groupId, ('MeetingManager',))
+            portal.contacts.manage_addLocalRoles(groupId, ('Reader',))
             portal.contacts.reindexObjectSecurity()
             # but we do not want this group to get MeetingManager role on every MeetingConfigs so
             # remove inheritance on self and define these local_roles for self too
@@ -4951,8 +4951,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             self.manage_addLocalRoles(groupId, (READER_USECASES[ITEMTEMPLATESMANAGERS_GROUP_SUFFIX],))
             # now define local_roles on the contacts directory so it is accessible by this group
             portal = api.portal.get()
-            portal.contacts.manage_addLocalRoles(
-                groupId, (READER_USECASES[ITEMTEMPLATESMANAGERS_GROUP_SUFFIX],))
+            portal.contacts.manage_addLocalRoles(groupId, ('Reader', ))
             portal.contacts.reindexObjectSecurity()
             # give 'Manager' local role to group in the itemtemplates folder
             self.itemtemplates.manage_addLocalRoles(groupId, ('Manager', ))

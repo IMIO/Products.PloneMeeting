@@ -19,8 +19,10 @@
 # 02110-1301, USA.
 #
 
-from collective.contact.plonegroup.config import FUNCTIONS_REGISTRY
-from collective.contact.plonegroup.config import ORGANIZATIONS_REGISTRY
+from collective.contact.plonegroup.config import get_registry_functions
+from collective.contact.plonegroup.config import get_registry_organizations
+from collective.contact.plonegroup.config import set_registry_functions
+from collective.contact.plonegroup.config import set_registry_organizations
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.contact.plonegroup.utils import get_own_organization
 from collective.contact.plonegroup.utils import get_plone_group
@@ -129,11 +131,11 @@ class ToolInitializer:
         alreadyHaveGroups = bool(own_org.objectValues())
         savedMeetingConfigsToCloneTo = {}
         savedOrgsData = {}
-        if not alreadyHaveGroups:
+        if not alreadyHaveGroups or self.data.forceAddUsersAndGroups:
             # 1) create organizations so we have org UIDS to initialize 'fct_orgs'
             orgs, active_orgs, savedOrgsData = self.addOrgs(self.data.orgs)
             # 2) create plonegroup functions (suffixes) to create Plone groups
-            functions = deepcopy(api.portal.get_registry_record(FUNCTIONS_REGISTRY))
+            functions = get_registry_functions()
             function_ids = [function['fct_id'] for function in functions]
             # append new functions
             suffixes = MEETING_GROUP_SUFFIXES + EXTRA_GROUP_SUFFIXES
@@ -158,13 +160,14 @@ class ToolInitializer:
                             continue
                         copied_suffix['fct_orgs'].append(fct_org.UID())
                     functions.append(copied_suffix)
-            api.portal.set_registry_record(FUNCTIONS_REGISTRY, functions)
+            set_registry_functions(functions)
             # 3) manage organizations, set every organizations so every Plone groups are created
             # then disable orgs that are not active
+            already_active_orgs = get_registry_organizations()
             org_uids = [org.UID() for org in orgs]
-            api.portal.set_registry_record(ORGANIZATIONS_REGISTRY, org_uids)
+            set_registry_organizations(org_uids)
             active_org_uids = [org.UID() for org in active_orgs]
-            api.portal.set_registry_record(ORGANIZATIONS_REGISTRY, active_org_uids)
+            set_registry_organizations(already_active_orgs + active_org_uids)
             # 4) add users to Plone groups
             self.addUsers(self.data.orgs)
             # 5) now that organizations are created, we add persons and held_positions
