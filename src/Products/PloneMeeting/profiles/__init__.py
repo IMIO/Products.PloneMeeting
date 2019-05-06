@@ -767,7 +767,7 @@ class PloneMeetingConfiguration(Descriptor):
     # through a profile.
     instance = None
 
-    excludedFields = ['directory_position_types']
+    excludedFields = ['directory_position_types', 'forceAddUsersAndGroups']
 
     def get(klass):
         if not klass.instance:
