@@ -296,7 +296,7 @@ class PloneGroupDescriptor(Descriptor):
 
 class UserDescriptor(Descriptor):
     '''Plone user descriptor, useful to create Plone users in tests.'''
-    def __init__(self, id, globalRoles, email='user AT plonemeeting.org',
+    def __init__(self, id, globalRoles=[], email='user AT plonemeeting.org',
                  password=DEFAULT_USER_PASSWORD, fullname=None):
         self.id = id
         self.globalRoles = globalRoles

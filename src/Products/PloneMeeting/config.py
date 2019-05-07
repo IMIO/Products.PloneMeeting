@@ -103,7 +103,8 @@ MEETINGROLES = {'creators': 'MeetingMember',
                 'reviewers': 'MeetingReviewer',
                 'observers': 'MeetingObserverLocal',
                 'advisers': None}
-# base suffixes, this is not intended to be overrided or monkeypatched, use EXTRA_GROUP_SUFFIXES
+# base suffixes, THIS IS NOT INTENDED TO BE OVERRIDED or monkeypatched,
+# if necessary, use EXTRA_GROUP_SUFFIXES to extend it
 MEETING_GROUP_SUFFIXES = [
     {'fct_title': u'advisers', 'fct_id': u'advisers', 'fct_orgs': []},
     {'fct_title': u'creators', 'fct_id': u'creators', 'fct_orgs': []},
