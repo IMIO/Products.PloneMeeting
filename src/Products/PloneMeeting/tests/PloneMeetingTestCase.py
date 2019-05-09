@@ -36,7 +36,6 @@ from plone.app.testing import login
 from plone.app.testing import logout
 from plone.app.testing.helpers import setRoles
 from plone.dexterity.utils import createContentInContainer
-from Products.CMFPlone.utils import safe_unicode
 from Products.Five.browser import BrowserView
 from Products.PloneMeeting.config import DEFAULT_USER_PASSWORD
 from Products.PloneMeeting.config import TOOL_FOLDER_ANNEX_TYPES
@@ -102,6 +101,9 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
 
     layer = PM_TESTING_PROFILE_FUNCTIONAL
 
+    cfg1_id = 'plonemeeting-assembly'
+    cfg2_id = 'plonegov-assembly'
+
     def setUp(self):
         # Define some useful attributes
         self.app = self.layer['app']
@@ -122,7 +124,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         # as well as every plone groups : self.vendors_creators, self.developers_reviewers, ...
         for org in self.own_org.objectValues():
             setattr(self, org.getId(), org)
-            setattr(self, '{0}_uid'.format(org.getId()), safe_unicode(org.UID()))
+            setattr(self, '{0}_uid'.format(org.getId()), org.UID())
             for plone_group_id in get_plone_groups(org.UID(), ids_only=True):
                 org_uid, suffix = plone_group_id.split('_')
                 setattr(self,
@@ -136,9 +138,10 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
             cfg.setMailItemEvents([])
             cfg.setMailMeetingEvents([])
         logout()
+
         # Set the default meeting config
-        self.meetingConfig = getattr(self.tool, 'plonemeeting-assembly', None)
-        self.meetingConfig2 = getattr(self.tool, 'plonegov-assembly', None)
+        self.meetingConfig = getattr(self.tool, self.cfg1_id, None)
+        self.meetingConfig2 = getattr(self.tool, self.cfg2_id, None)
         # Set the default file and file type for adding annexes
         self.annexFile = u'FILE.txt'
         self.annexFileType = 'financial-analysis'

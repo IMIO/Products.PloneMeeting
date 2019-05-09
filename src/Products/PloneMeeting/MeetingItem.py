@@ -2671,7 +2671,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 key = '{0}__groupincharge__{1}'.format(k, gic_org_uid)
                 # only take active groups in charge
                 if gic_org_uid in active_org_uids:
-                    res.append((key, '{0} ({1})'.format(v, groupInCharge.get_full_title())))
+                    res.append((key, u'{0} ({1})'.format(v, groupInCharge.get_full_title())))
         res = DisplayList(tuple(res))
 
         # make sure current value is still in the vocabulary

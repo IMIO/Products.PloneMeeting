@@ -171,7 +171,6 @@ function initializePersonsCookie() {
   }
 }
 
-
 // Function that toggles the persons visibility
 function togglePersonsCookie() {
   show = readCookie('showPersons');

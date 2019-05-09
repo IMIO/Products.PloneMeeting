@@ -5440,10 +5440,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('listMeetingEvents')
 
     def listMeetingEvents(self):
-        '''Lists the events related to meetings that will trigger a mail being
-           sent.'''
-        # Those events correspond to transitions of the workflow that governs
-        # meetings.
+        '''Lists the events related to meetings that will trigger a mail being sent.'''
+        # Those events correspond to transitions of the workflow that governs meetings.
         # we just preprend a 'meeting_state_changed_'
         meeting_transitions = self.listTransitions('Meeting')
         res = []
