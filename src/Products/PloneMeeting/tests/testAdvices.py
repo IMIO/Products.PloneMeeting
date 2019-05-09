@@ -3169,7 +3169,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(item2.adviceIndex[self.vendors_uid]['inherited'])
         # 1) test removing inheritance, make sure 'vendors' not in optionalAdvisers
         item2.setOptionalAdvisers(())
-        self.request['form.widgets.advice_uid'] = self.vendors_uid
+        self.request['form.widgets.advice_uid'] = unicode(self.vendors_uid, 'utf-8')
         self.request['form.widgets.inherited_advice_action'] = 'remove'
         form = item2.restrictedTraverse('@@advice-remove-inheritance').form_instance
         form.update()
@@ -3218,7 +3218,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(item2.adviceIndex[self.vendors_uid]['inherited'])
         # 1) check 'remove', for now, not removeable because item not in relevant state
         item2.setOptionalAdvisers(())
-        self.request['form.widgets.advice_uid'] = self.vendors_uid
+        self.request['form.widgets.advice_uid'] = unicode(self.vendors_uid, 'utf-8')
         self.request['form.widgets.inherited_advice_action'] = 'remove'
         form = item2.restrictedTraverse('@@advice-remove-inheritance').form_instance
         form.update()
