@@ -711,8 +711,14 @@ class Migrate_To_4_1(Migrator):
             # proposingGroup
             proposingGroup = item.getProposingGroup()
             if proposingGroup:
-                org = own_org.get(proposingGroup)
-                item.setProposingGroup(org.UID())
+                proposing_group_org_uid = own_org.get(proposingGroup).UID()
+                item.setProposingGroup(proposing_group_org_uid)
+            # associatedGroups
+            associatedGroups = item.getAssociatedGroups()
+            if associatedGroups:
+                associated_group_org_uids = [own_org.get(associatedGroup).UID()
+                                             for associatedGroup in associatedGroups]
+                item.setAssociatedGroups(associated_group_org_uids)
             # templateUsingGroups
             templateUsingGroups = item.getTemplateUsingGroups()
             if templateUsingGroups:
