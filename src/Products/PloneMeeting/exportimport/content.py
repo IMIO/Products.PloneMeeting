@@ -458,6 +458,10 @@ class ToolInitializer:
             item.setProposingGroup(org_id_to_uid(item.proposingGroup))
         if item.groupInCharge:
             item.setGroupInCharge(org_id_to_uid(item.groupInCharge))
+        if item.proposingGroupWithGroupInCharge:
+            proposingGroupId, groupInChargeId = item.proposingGroupWithGroupInCharge.split('__groupincharge__')
+            item.proposingGroupWithGroupInCharge = '{0}__groupincharge__{1}'.format(
+                org_id_to_uid(proposingGroupId), org_id_to_uid(groupInChargeId))
         if item.associatedGroups:
             item.setAssociatedGroups(
                 [org_id_to_uid(associated_group)

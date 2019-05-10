@@ -2636,9 +2636,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertFalse(self.hasPermission('ATContentTypes: Add Image', vendors_advice))
         self.assertRaises(Unauthorized, item.invokeFactory, 'Image', id='img', title='Image1', file=data.read())
         # back to 'itemcreated', add image permission is set back correctly
-        self.changeUser('pmCreator1')
         self.backToState(item, 'itemcreated')
-        self.changeUser('pmReviewer2')
         self.assertTrue(self.hasPermission(AddPortalContent, vendors_advice))
         self.assertTrue(self.hasPermission('ATContentTypes: Add Image', vendors_advice))
 
