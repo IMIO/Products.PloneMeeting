@@ -633,7 +633,7 @@ def onAdviceAdded(advice, event):
     item.reindexObject()
 
     # Send mail if relevant
-    item.sendMailIfRelevant('adviceEdited', 'Owner', isRole=True)
+    item.sendMailIfRelevant('adviceEdited', 'MeetingMember', isRole=True)
 
 
 def onAdviceModified(advice, event):
