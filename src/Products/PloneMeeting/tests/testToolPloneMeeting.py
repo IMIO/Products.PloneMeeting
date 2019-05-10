@@ -23,7 +23,6 @@
 #
 
 from AccessControl import Unauthorized
-from collective.contact.plonegroup.utils import get_plone_groups
 from collective.contact.plonegroup.utils import get_organization
 from collective.iconifiedcategory.utils import calculate_category_id
 from collective.iconifiedcategory.utils import get_categories
@@ -663,18 +662,16 @@ class testToolPloneMeeting(PloneMeetingTestCase):
     def test_pm_get_orgs_for_user(self):
         '''get_orgs_for_user check in with Plone subgroups a user is and
            returns corresponding organizations.'''
-        self.changeUser('pmManager')
-        # pmManager is in every 'developers' Plone groups except 'prereviewers'
-        # and in the 'vendors_advisers' Plone group and in the _meetingmanagers groups
-        dev = self.own_org.developers
-        dev_uid = dev.UID()
-        globalGroups = ['AuthenticatedUsers']
-        for cfg in self.tool.objectValues('MeetingConfig'):
-            globalGroups.append('%s_meetingmanagers' % cfg.getId())
-        pmManagerGroups = get_plone_groups(dev_uid, ids_only=True) + [self.vendors_advisers, ] + globalGroups
-        pmManagerGroups.remove(self.developers_prereviewers)
-        self.assertEqual(set(self.member.getGroups()),
-                         set(pmManagerGroups))
+        cfg = self.meetingConfig
+        self.changeUser('siteadmin')
+        # configure a new user add it as creator and adviser for 'developers/vendors'
+        # and in the _meetingmanagers
+        self.createUser('user')
+        self._addPrincipalToGroup('user', self.developers_creators)
+        self._addPrincipalToGroup('user', self.developers_reviewers)
+        self._addPrincipalToGroup('user', self.vendors_advisers)
+        self._addPrincipalToGroup('user', '{0}_meetingmanagers'.format(cfg.getId()))
+        self.changeUser('user')
         self.assertEqual(
             self.tool.get_orgs_for_user(the_objects=False),
             [self.developers_uid, self.vendors_uid])
@@ -687,11 +684,13 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         self.assertEqual(
             [org.UID() for org in self.tool.get_orgs_for_user(suffixes=['reviewers'])],
             [self.developers_uid])
+
         # check the 'omitted_suffixes' parameter, it will not consider Plone group having that suffix
         # here, if we omit the 'advisers' suffix, the 'vendors' organization will not be returned
         self.assertEqual(
-            [org.UID() for org in self.tool.get_orgs_for_user(omitted_suffixes=('advisers', ))],
+            [org.UID() for org in self.tool.get_orgs_for_user(omitted_suffixes=['advisers'])],
             [self.developers_uid])
+
         # we can get organization for another user
         pmCreator1 = api.user.get('pmCreator1')
         self.assertEqual(sorted(pmCreator1.getGroups()),
@@ -703,7 +702,7 @@ class testToolPloneMeeting(PloneMeetingTestCase):
         # so deactivate organization 'vendors' and check
         self.changeUser('admin')
         self._select_organization(self.vendors_uid, remove=True)
-        self.changeUser('pmManager')
+        self.changeUser('user')
         self.assertEqual([org.UID() for org in self.tool.get_orgs_for_user(only_selected=True)],
                          [self.developers_uid, ])
         self.assertEqual([org.UID() for org in self.tool.get_orgs_for_user(only_selected=False)],
@@ -885,27 +884,25 @@ class testToolPloneMeeting(PloneMeetingTestCase):
     def test_pm_UserIsAmong(self):
         """This method will check if a user has a group that ends with a list of given suffixes.
            This will return True if at least one suffixed group corresponds."""
-        self.changeUser('pmCreator1')
-        self.assertEqual(sorted(self.member.getGroups()),
-                         sorted(['AuthenticatedUsers', self.developers_creators]))
+        cfg = self.meetingConfig
+        self.createUser('user')
+        self._addPrincipalToGroup('user', self.developers_creators)
+        self._addPrincipalToGroup('user', self.developers_reviewers)
+        self._addPrincipalToGroup('user', self.vendors_creators)
+        self._addPrincipalToGroup('user', self.vendors_advisers)
+        self._addPrincipalToGroup('user', '{0}_meetingmanagers'.format(cfg.getId()))
+        self.changeUser('user')
         # suffixes parameter must be a list of suffixes
         self.assertFalse(self.tool.userIsAmong('creators'))
         self.assertTrue(self.tool.userIsAmong(['creators']))
         self.assertTrue(self.tool.userIsAmong(['creators', 'reviewers']))
         self.assertTrue(self.tool.userIsAmong(['creators', 'powerobservers']))
         self.assertTrue(self.tool.userIsAmong(['creators', 'unknown_suffix']))
-        self.changeUser('pmReviewer1')
-        self.assertEqual(
-            sorted(self.member.getGroups()),
-            sorted(['AuthenticatedUsers', self.developers_reviewers, self.developers_observers]))
-        self.assertFalse(self.tool.userIsAmong(['creators']))
         self.assertTrue(self.tool.userIsAmong(['reviewers']))
-        self.assertTrue(self.tool.userIsAmong(['observers']))
+        self.assertTrue(self.tool.userIsAmong(['advisers']))
         self.assertTrue(self.tool.userIsAmong(['reviewers', 'observers']))
+        # special suffixes
         self.changeUser('powerobserver1')
-        self.assertEqual(
-            sorted(self.member.getGroups()),
-            sorted(['AuthenticatedUsers', '{0}_powerobservers'.format(self.meetingConfig.getId())]))
         self.assertFalse(self.tool.userIsAmong(['creators']))
         self.assertFalse(self.tool.userIsAmong(['reviewers']))
         self.assertFalse(self.tool.userIsAmong(['creators', 'reviewers']))
