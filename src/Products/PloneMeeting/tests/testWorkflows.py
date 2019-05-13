@@ -659,18 +659,20 @@ class testWorkflows(PloneMeetingTestCase):
         from Products.PloneMeeting.config import MEETINGREVIEWERS
         from Products.PloneMeeting.config import MEETINGROLES
         for wf_id, values in MEETINGREVIEWERS.items():
-            if wf_id == '*':
-                wf = getattr(self.wfTool, self.meetingConfig.getItemWorkflow())
-            else:
-                self.assertTrue(wf_id in self.wfTool.objectIds())
-                wf = getattr(self.wfTool, wf_id)
-            for meeting_role, states in values.items():
-                self.assertTrue(meeting_role in MEETINGROLES)
-                # only test with '*' if self.meetingConfig itemWF is not defined in MEETINGREVIEWERS
-                if wf_id == '*' and wf.getId() in MEETINGREVIEWERS:
+            for cfg in self.tool.objectValues('MeetingConfig'):
+                item_base_wf_name = cfg.getItemWorkflow()
+                if wf_id != '*' and wf_id != item_base_wf_name:
                     continue
-                for state in states:
-                    self.assertTrue(state in wf.states)
+                wf = self.wfTool.getWorkflowsFor(cfg.getItemTypeName())[0]
+                for meeting_role, states in values.items():
+                    self.assertTrue(meeting_role in MEETINGROLES)
+                    # only test with '*' if self.meetingConfig itemWF is not defined in MEETINGREVIEWERS
+                    if wf_id == '*' and item_base_wf_name in MEETINGREVIEWERS:
+                        continue
+                    for state in states:
+                        pm_logger.info('test_pm_MeetingReviewersValuesAreCorrect: '
+                                       'state {0} not found in wf {1}'.format(state, wf.getId()))
+                        self.assertTrue(state in wf.states)
 
     def test_pm_CorrectClosedMeeting(self):
         """A closed meeting may be corrected by MeetingManagers
