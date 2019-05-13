@@ -22,6 +22,7 @@
 
 from collective.contact.plonegroup.utils import select_organization
 from DateTime import DateTime
+from imio.helpers.cache import cleanRamCacheFor
 from plone import api
 from plone.app.textfield.value import RichTextValue
 from plone.dexterity.utils import createContentInContainer
@@ -309,6 +310,16 @@ class PloneMeetingTestingHelpers:
         for member in members:
             group.addMember(member)
         setRoles(self.portal, currentMember.getId(), currentMemberRoles)
+
+    def _removeUsersFromEveryGroups(self, user_ids):
+        """Remove extra users from their groups to not break test,
+           useful for profiles having extra users or roles."""
+        for extra_user_id in user_ids:
+            user = api.user.get(extra_user_id)
+            # remove from every groups, bypass Plone groups (including virtual)
+            for group_id in [user_group_id for user_group_id in user.getGroups() if '_' in user_group_id]:
+                    api.group.remove_user(groupname=group_id, username=extra_user_id)
+        cleanRamCacheFor('Products.PloneMeeting.ToolPloneMeeting._users_groups_value')
 
     def _initial_state(self, obj):
         """Return the workflow initial_state of given p_obj."""

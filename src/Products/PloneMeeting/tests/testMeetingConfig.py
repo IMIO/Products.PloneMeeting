@@ -1322,10 +1322,16 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.meetingConfig.updateAnnexConfidentiality()
         self.assertTrue(annex.confidential)
 
+    def _usersToRemoveFromGroupsForUpdatePersonalLabels(self):
+        """ """
+        return []
+
     def test_pm_UpdatePersonalLabels(self):
         """Test the 'updatePersonalLabels' method that will activate a personal label
            on every existing items that were not modified for a given number of days."""
         cfg = self.meetingConfig
+        # custom cleanup for profiles having extra roles
+        self._removeUsersFromEveryGroups(self._usersToRemoveFromGroupsForUpdatePersonalLabels())
         # do not consider observers group as it changes too often from one WF to another...
         self._removePrincipalFromGroup('pmReviewer1', self.developers_observers)
         self._removePrincipalFromGroup('pmObserver1', self.developers_observers)

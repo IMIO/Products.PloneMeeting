@@ -607,11 +607,13 @@ class testSearches(PloneMeetingTestCase):
                     else:
                         states.extend(reviewer_states)
         cleanRamCacheFor('Products.PloneMeeting.adapters.query_itemstovalidateofmyreviewergroups')
+        query = adapter.query
+        query['reviewProcessInfo']['query'].sort()
         self.assertEquals(adapter.query,
                           {'portal_type': {'query': itemTypeName},
                            'reviewProcessInfo': {
-                           'query': ['{0}__reviewprocess__{1}'.format(self.developers_uid, st)
-                                     for st in states]}})
+                           'query': sorted(['{0}__reviewprocess__{1}'.format(self.developers_uid, state)
+                                            for state in states])}})
 
         # now do the query
         # this adapter is not used by default, but is intended to be used with
