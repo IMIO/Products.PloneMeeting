@@ -74,7 +74,7 @@ function toggleDoc(id, toggle_parent_active=true, parent_elem=null, load_view=nu
   inner_content_tag = $('div.collapsible-inner-content', elem)[0];
   if (load_view && !inner_content_tag.dataset.loaded) {
     // load content in the collapsible-inner-content div
-    var url = $("link[rel='canonical']").attr('href') + '/' + load_view;
+    var url = $("base").attr('href') + load_view;
     $.ajax({
       url: url,
       dataType: 'html',
