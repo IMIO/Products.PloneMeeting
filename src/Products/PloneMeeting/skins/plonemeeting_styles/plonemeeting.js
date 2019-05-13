@@ -74,7 +74,7 @@ function toggleDoc(id, toggle_parent_active=true, parent_elem=null, load_view=nu
   inner_content_tag = $('div.collapsible-inner-content', elem)[0];
   if (load_view && !inner_content_tag.dataset.loaded) {
     // load content in the collapsible-inner-content div
-    var url = $("base").attr('href') + load_view;
+    var url = $("link[rel='canonical']").attr('href') + '/' + load_view;
     $.ajax({
       url: url,
       dataType: 'html',
@@ -705,7 +705,7 @@ $(document).ready(function () {
 
 
 function updatePortletTodo() {
-  var url = $('base').attr('href') + '@@portlet-todo-update';
+  var url = $("link[rel='canonical']").attr('href') + '/@@portlet-todo-update';
   var tag = $('dl.portlet.portletTodo');
   if (tag.length) {
     $.get(url, async=false, function (data) {
@@ -741,7 +741,7 @@ $(document).ready(function () {
 
 
 function update_search_term(tag){
-  var url = $("base").attr('href') + '@@async_render_search_term';
+  var url = $("link[rel='canonical']").attr('href') + '/@@async_render_search_term';
   $.ajax({
     url: url,
     dataType: 'html',
