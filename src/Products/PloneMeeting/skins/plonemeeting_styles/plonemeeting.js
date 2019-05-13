@@ -705,7 +705,7 @@ $(document).ready(function () {
 
 
 function updatePortletTodo() {
-  var url = $('base').attr('href') + '/@@portlet-todo-update';
+  var url = $('base').attr('href') + '@@portlet-todo-update';
   var tag = $('dl.portlet.portletTodo');
   if (tag.length) {
     $.get(url, async=false, function (data) {
@@ -741,7 +741,7 @@ $(document).ready(function () {
 
 
 function update_search_term(tag){
-  var url = $("link[rel='canonical']").attr('href') + '/@@async_render_search_term';
+  var url = $("base").attr('href') + '@@async_render_search_term';
   $.ajax({
     url: url,
     dataType: 'html',
