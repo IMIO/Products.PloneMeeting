@@ -90,7 +90,8 @@ Changelog
 - Keep fields ('inAndOutMoves', 'notes', 'internalNotes') when creating item from a template
 - Added parameter 'the_objects=True' to ToolPloneMeeting.get_orgs_for_user to be able to get organization objects or uids
 - Adapted icons 'new item/advice/annex/...' to use grey colors so it fits for every themes
-- Adapted user who recive mail when item is delayed or an advice was given.
+- Adapted mail notifications to send it to a group of users when it was only sent to one user : notifications sent to item author are now sent
+  to entire proposing group creators and notifications sent to advice author are now sent to the entire advisers group
 
 4.1b16 (2019-01-31)
 -------------------
