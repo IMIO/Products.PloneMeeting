@@ -912,15 +912,34 @@ class testMeetingConfig(PloneMeetingTestCase):
                    'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},
                   {'meeting_config': '%s' % cfg2Id,
                    'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL})
-        two_rows_error_msg = _('can_not_define_two_rows_for_same_meeting_config')
-        self.assertTrue(cfg.validate_meetingConfigsToCloneTo(values) == two_rows_error_msg)
+        two_rows_error_msg = translate(
+            msgid='can_not_define_two_rows_for_same_meeting_config',
+            domain='PloneMeeting',
+            context=self.request)
+        self.assertEqual(cfg.validate_meetingConfigsToCloneTo(values),
+                         two_rows_error_msg)
 
         # check that value selected in 'trigger_workflow_transitions_until' correspond
         # to a value of the wf used for the corresponding selected 'meeting_config'
         values = ({'meeting_config': '%s' % cfg2Id,
                    'trigger_workflow_transitions_until': 'wrong-config-id.a_wf_transition'},)
-        wrong_wf_transition_error_msg = _('transition_not_from_selected_meeting_config')
-        self.assertTrue(cfg.validate_meetingConfigsToCloneTo(values) == wrong_wf_transition_error_msg)
+        wrong_wf_transition_error_msg = translate(
+            msgid='transition_not_from_selected_meeting_config',
+            domain='PloneMeeting',
+            context=self.request)
+        self.assertEqual(cfg.validate_meetingConfigsToCloneTo(values),
+                         wrong_wf_transition_error_msg)
+
+        # unknown meetingConfig id, this is possible when creating MeetingConfig from a import_data
+        values = ({'meeting_config': 'unknown',
+                   'trigger_workflow_transitions_until': NO_TRIGGER_WF_TRANSITION_UNTIL},)
+        unknown_error_msg = translate(
+            msgid='unknown_meeting_config_id',
+            mapping={'meeting_config_id': 'unknown'},
+            domain='PloneMeeting',
+            context=self.request)
+        self.assertEqual(cfg.validate_meetingConfigsToCloneTo(values),
+                         unknown_error_msg)
 
         # if a key 'orderindex_' with value 'template_row_marker' is found, the row is ignored
         values = ({'meeting_config': '%s' % cfg2Id,
