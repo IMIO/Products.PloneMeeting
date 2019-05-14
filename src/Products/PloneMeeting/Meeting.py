@@ -221,6 +221,7 @@ class MeetingWorkflowConditions(object):
             res = False
         return res
 
+
 InitializeClass(MeetingWorkflowConditions)
 
 
@@ -345,6 +346,7 @@ class MeetingWorkflowActions(object):
             previousState = itemHistory[-2]['review_state']
             previousState = previousState[0].upper() + previousState[1:]
             wfTool.doActionFor(item, 'backTo' + previousState)
+
 
 InitializeClass(MeetingWorkflowActions)
 
