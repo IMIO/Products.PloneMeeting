@@ -46,8 +46,6 @@ def getProfileData(self):
         mc_id = list(mc.id)
         random.shuffle(mc_id)
         mc.id = ''.join(mc_id)
-        # remove parameters using former MC id
-        mc.meetingConfigsToCloneTo = []
     return data
 
 

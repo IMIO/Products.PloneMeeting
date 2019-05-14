@@ -3638,8 +3638,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             # while importing data, defined meeting_config could not exist...
             if meetingConfig not in tool.objectIds('MeetingConfig'):
                 return translate('unknown_meeting_config_id',
-                                 mapping={'meeting_config_id': meetingConfig},
                                  domain='PloneMeeting',
+                                 mapping={'meeting_config_id': meetingConfig},
                                  context=self.REQUEST)
 
         for mctct in values:
