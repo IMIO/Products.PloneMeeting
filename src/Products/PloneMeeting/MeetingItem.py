@@ -519,7 +519,7 @@ class MeetingItemWorkflowActions(object):
         # insert the item into the meeting
         self._insertItem(meeting)
         # We may have to send a mail.
-        self.context.sendMailIfRelevant('itemPresented', 'Owner', isRole=True)
+        self.context.sendMailIfRelevant('itemPresented', 'MeetingMember', isRole=True)
 
     def _insertItem(self, meeting):
         """ """
@@ -648,7 +648,7 @@ class MeetingItemWorkflowActions(object):
                                         keepProposingGroup=True,
                                         setCurrentAsPredecessor=True)
         # Send, if configured, a mail to the person who created the item
-        clonedItem.sendMailIfRelevant('itemDelayed', 'Owner', isRole=True)
+        clonedItem.sendMailIfRelevant('itemDelayed', 'MeetingMember', isRole=True)
 
     security.declarePrivate('doCorrect')
 
@@ -661,7 +661,7 @@ class MeetingItemWorkflowActions(object):
         # Remove item from meeting if necessary when going to a state where item is not linked to a meeting
         if stateChange.new_state.id in ITEM_STATES_NOT_LINKED_TO_MEETING and self.context.hasMeeting():
             # We may have to send a mail
-            self.context.sendMailIfRelevant('itemUnpresented', 'Owner', isRole=True)
+            self.context.sendMailIfRelevant('itemUnpresented', 'MeetingMember', isRole=True)
             # remove the item from the meeting
             self.context.getMeeting().removeItem(self.context)
         # if an item was returned to proposing group for corrections and that
@@ -4555,14 +4555,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if invalidate:
             # Invalidate all advices. Send notification mail(s) if configured.
             userId = api.user.get_current().getId()
-            for advice in self.adviceIndex.itervalues():
-                advice_obj = self.getAdviceObj(advice['id'])
-                if advice_obj and (advice_obj.Creator() != userId):
-                    # Send a mail to the guy that gave the advice.
+            for org_uid, adviceInfo in self.adviceIndex.iteritems():
+                advice_obj = self.getAdviceObj(adviceInfo['id'])
+                if advice_obj:
+                    # Send a mail to the group that can give the advice.
                     if 'adviceInvalidated' in cfg.getMailItemEvents():
-                        recipient = tool.getMailRecipient(advice_obj.Creator())
-                        if recipient:
-                            sendMail([recipient], self, 'adviceInvalidated')
+                        plone_group_id = get_plone_group_id(org_uid, 'advisers')
+                        self._sendMailToGroupMembers(plone_group_id=plone_group_id,
+                                                     event_id='adviceInvalidated')
             plone_utils.addPortalMessage(translate('advices_invalidated',
                                                    domain="PloneMeeting",
                                                    context=self.REQUEST),
