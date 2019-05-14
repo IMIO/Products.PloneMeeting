@@ -16,6 +16,7 @@ def _patched_equal(context, row):
         row_values = []
     return {row.index: {'query': row_values, }}
 
+
 queryparser.__pm_old_equal = queryparser._equal
 queryparser._equal = _patched_equal
 logger.info("Monkey patching plone.app.querystring.queryparser (_equal)")
@@ -58,6 +59,7 @@ def userAndGroupsAwarePortalTransformsCacheKey():
     Cache.__pm_old_genCacheKey = Cache._genCacheKey
     Cache._genCacheKey = _genCacheKey
     logger.info("Monkey patching Products.PortalTransforms.cache (_genCacheKey)")
+
 
 userAndGroupsAwarePortalTransformsCacheKey()
 

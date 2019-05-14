@@ -188,6 +188,7 @@ class IPMOrganization(IOrganization):
                             "is currently selected in plonegroup control panel.  Please unselect this organization "
                             "from plonegroup control panel if you want to change this field value."))
 
+
 validator.WidgetValidatorDiscriminators(
     DXCertifiedSignaturesValidator,
     field=IPMOrganization['certified_signatures']

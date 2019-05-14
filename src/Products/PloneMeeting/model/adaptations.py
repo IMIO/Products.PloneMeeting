@@ -1052,6 +1052,7 @@ def companionField(name, type='simple', label=None, searchable=False,
         res.write_permission = writePermission
     return res
 
+
 # ------------------------------------------------------------------------------
 # Schema additions for model adaptations "secondLanguage" and
 # "secondLanguageCfg", which allows to manage content in a second language.

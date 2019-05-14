@@ -747,16 +747,16 @@ class BaseDGHV(object):
                 # if we have a delay and delay_label, we display it
                 delayAwareMsg = u''
                 if withDelay and advice['delay']:
-                        delayAwareMsg = u"%s" % (translate('delay_of_x_days',
-                                                 domain='PloneMeeting',
-                                                 mapping={'delay': advice['delay']},
-                                                 context=self.request))
+                    delayAwareMsg = u"%s" % (translate('delay_of_x_days',
+                                             domain='PloneMeeting',
+                                             mapping={'delay': advice['delay']},
+                                             context=self.request))
                 if withDelayLabel and advice['delay'] and advice['delay_label']:
-                        if delayAwareMsg:
-                            delayAwareMsg = "%s - %s" % (delayAwareMsg,
-                                                         unicode(advice['delay_label'], 'utf-8'))
-                        else:
-                            delayAwareMsg = "%s" % unicode(advice['delay_label'], 'utf-8')
+                    if delayAwareMsg:
+                        delayAwareMsg = "%s - %s" % (delayAwareMsg,
+                                                     unicode(advice['delay_label'], 'utf-8'))
+                    else:
+                        delayAwareMsg = "%s" % unicode(advice['delay_label'], 'utf-8')
                 if delayAwareMsg:
                     delayAwareMsg = u" <i>(%s)</i>" % cgi.escape(delayAwareMsg)
                     res = res + u"<u>%s %s:</u>" % (cgi.escape(advice['name']),

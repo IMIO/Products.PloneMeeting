@@ -87,7 +87,7 @@ class AnnexContentDeletableAdapter(APContentDeletableAdapter):
             parent = self.context.getParentNode()
             # able to delete an annex/annexDecision if able to edit the parent
             if _checkPermission(ModifyPortalContent, parent):
-                    return True
+                return True
 
             # a 'Owner' may still remove an 'annexDecision' if enabled
             # in the cfg and if still able to add 'annexDecision'

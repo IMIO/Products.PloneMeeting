@@ -3675,7 +3675,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
              'presented_item_back_to_itemcreated' in values or
              'presented_item_back_to_prevalidated' in values or
              'presented_item_back_to_proposed' in values):
-                return msg
+            return msg
         if ('archiving' in values) and (len(values) > 1):
             # Archiving is incompatible with any other workflow adaptation
             return msg

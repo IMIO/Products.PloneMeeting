@@ -1021,6 +1021,7 @@ class PMStyleTemplatesVocabulary(StyleTemplatesVocabularyFactory):
         cfg = tool.getMeetingConfig(obj)
         return '{0} ({1})'.format(brain.Title, cfg.Title())
 
+
 PMStyleTemplatesVocabularyFactory = PMStyleTemplatesVocabulary()
 
 
@@ -1133,6 +1134,7 @@ class ItemNotPresentTypeVocabulary(object):
             res.append(SimpleTerm('excused', 'excused', _(u"item_not_present_type_excused")))
         return SimpleVocabulary(res)
 
+
 ItemNotPresentTypeVocabularyFactory = ItemNotPresentTypeVocabulary()
 
 
@@ -1172,6 +1174,7 @@ class ItemAllStatesVocabulary(object):
 
         return SimpleVocabulary(res)
 
+
 ItemAllStatesVocabularyFactory = ItemAllStatesVocabulary()
 
 
@@ -1198,6 +1201,7 @@ class KeepAccessToItemWhenAdviceIsGivenVocabulary(object):
                 context=context.REQUEST)))
         return SimpleVocabulary(res)
 
+
 KeepAccessToItemWhenAdviceIsGivenVocabularyFactory = KeepAccessToItemWhenAdviceIsGivenVocabulary()
 
 
@@ -1220,6 +1224,7 @@ class PMMergeTemplatesVocabulary(MergeTemplatesVocabularyFactory):
                 mapping={'element_title': term_title},
                 context=obj.REQUEST)
         return term_title
+
 
 PMMergeTemplatesVocabularyFactory = PMMergeTemplatesVocabulary()
 
@@ -1265,6 +1270,7 @@ class SelectableHeldPositionsVocabulary(BaseHeldPositionsVocabulary):
         res = super(SelectableHeldPositionsVocabulary, self).__call__(context, usage=None)
         return res
 
+
 SelectableHeldPositionsVocabularyFactory = SelectableHeldPositionsVocabulary()
 
 
@@ -1273,6 +1279,7 @@ class SelectableAssemblyMembersVocabulary(BaseHeldPositionsVocabulary):
     def __call__(self, context, usage=None, uids=[]):
         res = super(SelectableAssemblyMembersVocabulary, self).__call__(context, usage='assemblyMember')
         return res
+
 
 SelectableAssemblyMembersVocabularyFactory = SelectableAssemblyMembersVocabulary()
 
@@ -1296,5 +1303,6 @@ class SelectableItemInitiatorsVocabulary(BaseHeldPositionsVocabulary):
                 context, usage=None, uids=missing_term_uids, highlight_missing=True)
             res += missing_terms._terms
         return SimpleVocabulary(res)
+
 
 SelectableItemInitiatorsVocabularyFactory = SelectableItemInitiatorsVocabulary()

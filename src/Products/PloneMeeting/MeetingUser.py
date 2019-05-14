@@ -9,10 +9,6 @@
 # GNU General Public License (GPL)
 #
 
-__author__ = """Gaetan DELANNAY <gaetan.delannay@geezteem.com>, Gauthier BASTIEN
-<g.bastien@imio.be>, Stephan GEULETTE <s.geulette@imio.be>"""
-__docformat__ = 'plaintext'
-
 from AccessControl import ClassSecurityInfo
 from plone import api
 from Products.Archetypes.atapi import AttributeStorage
@@ -474,25 +470,25 @@ class MeetingUser(BaseContent, BrowserDefaultMixin):
            possible user replacements.'''
         if not hasattr(meeting.aq_base, 'userReplacements'):
             return self
-        cfg = meeting.portal_plonemeeting.getMeetingConfig(meeting)
+        # cfg = meeting.portal_plonemeeting.getMeetingConfig(meeting)
         # Is this user replaced by another user ?
         if self.getId() in meeting.userReplacements:
             # Yes it is. Find the replacement.
-            repl = getattr(cfg.meetingusers,
-                           meeting.userReplacements[self.getId()])
+            # repl = getattr(cfg.meetingusers,
+            #                meeting.userReplacements[self.getId()])
             # Return the replacement user instead of this user, with adapted
             # characteristics, in the form of a FakeMeetingUser instance.
-            return FakeMeetingUser(repl.getId(), repl, self)
+            return None
         # Is this user a replacement for another user ?
         for baseUser, replUser in meeting.userReplacements.iteritems():
             if self.getId() != replUser:
                 continue
             # Yes it is. Find the replaced person.
-            repl = getattr(cfg.meetingusers, baseUser)
+            # repl = getattr(cfg.meetingusers, baseUser)
             # Return this user (self), but with adapted characteristics
             # (because he replaces someone else), in the form of a
             # FakeMeetingUser instance.
-            return FakeMeetingUser(self.getId(), self, repl)
+            return None
         return self
 
     security.declarePublic('isPresent')

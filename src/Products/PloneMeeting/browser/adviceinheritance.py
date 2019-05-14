@@ -136,4 +136,5 @@ class AdviceRemoveInheritanceForm(AutoExtensibleForm, form.EditForm):
         # after calling parent's update, self.actions are available
         self.actions.get('cancel').addClass('standalone')
 
+
 AdviceRemoveInheritanceFormWrapper = wrap_form(AdviceRemoveInheritanceForm)

@@ -154,4 +154,5 @@ class ItemEmergencyChangeForm(form.Form):
             u"${new_emergency_value}</span>, please enter a comment.")
         super(ItemEmergencyChangeForm, self).updateWidgets()
 
+
 ItemEmergencyChangeFormWrapper = wrap_form(ItemEmergencyChangeForm)

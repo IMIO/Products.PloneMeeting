@@ -2443,7 +2443,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         proposingGroup = item.getProposingGroup()
         userInProposingGroup = tool.get_plone_groups_for_user(org_uid=proposingGroup)
         if userInProposingGroup:
-                return True
+            return True
         # Check if the user is in the copyGroups
         userGroups = tool.get_plone_groups_for_user()
         if set(item.getAllCopyGroups(auto_real_plone_group_ids=True)).intersection(userGroups):
@@ -4554,7 +4554,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         # Invalidate advices if needed
         if invalidate:
             # Invalidate all advices. Send notification mail(s) if configured.
-            userId = api.user.get_current().getId()
             for org_uid, adviceInfo in self.adviceIndex.iteritems():
                 advice_obj = self.getAdviceObj(adviceInfo['id'])
                 if advice_obj:

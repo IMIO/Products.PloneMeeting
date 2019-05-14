@@ -44,6 +44,7 @@ class FTWLabelsVocabulary(object):
 
         return SimpleVocabulary(res)
 
+
 FTWLabelsVocabularyFactory = FTWLabelsVocabulary()
 
 
@@ -85,5 +86,6 @@ class FTWLabelsForFacetedFilterVocabulary(object):
                     label['label_id'],
                     label['title']))
         return SimpleVocabulary(res)
+
 
 FTWLabelsForFacetedFilterVocabularyFactory = FTWLabelsForFacetedFilterVocabulary()

@@ -305,13 +305,13 @@ class ItemCheckBoxColumn(CheckBoxColumn):
         head = super(ItemCheckBoxColumn, self).renderHeadCell()
         if self.context.meta_type == 'Meeting':
             if displaying_available_items(self.context):
-                    present_msg = translate('present_several_items',
-                                            domain='PloneMeeting',
-                                            context=self.request)
-                    head = u'''<table class="actionspanel-no-style-table nosort">
-    <tr><td>{0}</td><td><button onclick="presentSelectedItems('{1}')" title="{2}" class="present_several" type="button">
-    <img src="{3}/presentSeveral.png">
-    </button></td></tr></table>'''.format(head, self.context.absolute_url(), present_msg, self.table.portal_url)
+                present_msg = translate('present_several_items',
+                                        domain='PloneMeeting',
+                                        context=self.request)
+                head = u'''<table class="actionspanel-no-style-table nosort">
+<tr><td>{0}</td><td><button onclick="presentSelectedItems('{1}')" title="{2}" class="present_several" type="button">
+<img src="{3}/presentSeveral.png">
+</button></td></tr></table>'''.format(head, self.context.absolute_url(), present_msg, self.table.portal_url)
             else:
                 if self.context.adapted().showRemoveSelectedItemsAction():
                     unpresent_msg = translate('remove_several_items',

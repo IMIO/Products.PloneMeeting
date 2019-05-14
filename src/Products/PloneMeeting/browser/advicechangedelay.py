@@ -264,6 +264,7 @@ class AdviceChangeDelayForm(form.EditForm):
             default=u"You are about to change advice delay for this item to <span style='font-weight: bold;'>"
             u"${new_delay_value}</span> days, please enter a comment.")
 
+
 AdviceChangeDelayFormWrapper = wrap_form(AdviceChangeDelayForm)
 
 

@@ -184,6 +184,7 @@ def getCustomAdapter(obj):
         pass
     return res
 
+
 methodTypes = ('FSPythonScript', 'FSControllerPythonScript', 'instancemethod')
 
 
@@ -310,6 +311,8 @@ def cropHTML(html, length=400, ellipsis='...'):
 # Mail sending machinery -------------------------------------------------------
 class EmailError(Exception):
     pass
+
+
 SENDMAIL_ERROR = 'Error while sending mail: %s.'
 ENCODING_ERROR = 'Encoding error while sending mail: %s.'
 MAILHOST_ERROR = 'Error with the MailServer while sending mail: %s.'
