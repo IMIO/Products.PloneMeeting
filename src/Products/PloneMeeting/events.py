@@ -152,10 +152,8 @@ def onMeetingTransition(meeting, event):
     # update items references if meeting is going from beforeFrozen state
     # to frozen state or the other way round
     beforeFrozenStates = meeting.getStatesBefore('frozen')
-    if (event.old_state.id in beforeFrozenStates
-        and event.new_state.id not in beforeFrozenStates) or \
-       (event.old_state.id not in beforeFrozenStates
-        and event.new_state.id in beforeFrozenStates):
+    if (event.old_state.id in beforeFrozenStates and event.new_state.id not in beforeFrozenStates) or \
+       (event.old_state.id not in beforeFrozenStates and event.new_state.id in beforeFrozenStates):
         meeting.updateItemReferences()
 
     # invalidate last meeting modified
@@ -274,8 +272,8 @@ def onOrgWillBeRemoved(current_org, event):
     # And finally, check that organization is not linked to an existing item.
     # In the configuration
     for cfg in tool.objectValues('MeetingConfig'):
-        for item in (cfg.recurringitems.objectValues('MeetingItem')
-                     + cfg.itemtemplates.objectValues('MeetingItem')):
+        for item in (cfg.recurringitems.objectValues('MeetingItem') +
+                     cfg.itemtemplates.objectValues('MeetingItem')):
             if item.getProposingGroup() == current_org_uid or \
                current_org_uid in item.getAssociatedGroups():
                 raise BeforeDeleteException(
