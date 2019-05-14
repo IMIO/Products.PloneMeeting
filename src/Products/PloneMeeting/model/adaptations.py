@@ -549,6 +549,7 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
             raise Exception('ToolPloneMeeting.performCustomWFAdaptations must return a boolean value!')
         # if performCustomWFAdaptations managed wfAdaptation, continue with next one
         if applied:
+            logger.info(WF_APPLIED % (wfAdaptation, meetingConfig.getId()))
             continue
         # "no_publication" removes state 'published' in the meeting workflow and
         # corresponding state 'itempublished' in the item workflow. The standard
