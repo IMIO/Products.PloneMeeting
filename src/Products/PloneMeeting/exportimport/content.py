@@ -210,9 +210,10 @@ class ToolInitializer:
             cfg._updateCloneToOtherMCActions()
         for org_uid, values in savedOrgsData.items():
             org = uuidToObject(org_uid)
-            org.item_advice_states = values['item_advice_states']
-            org.item_advice_edit_states = values['item_advice_edit_states']
-            org.item_advice_view_states = values['item_advice_view_states']
+            # turn cfg1__state__itemcreated into meeting-config-id__state__itemcreated
+            org.item_advice_states = self._correct_advice_states(values['item_advice_states'])
+            org.item_advice_edit_states = self._correct_advice_states(values['item_advice_edit_states'])
+            org.item_advice_view_states = self._correct_advice_states(values['item_advice_view_states'])
             org.groups_in_charge = [org_id_to_uid(group_id) for group_id in values['groups_in_charge']]
 
         # finally, create the current user (admin) member area
@@ -226,6 +227,12 @@ class ToolInitializer:
         # commit before continuing so elements like scales on annex types are correctly saved
         transaction.commit()
         return self.successMessage
+
+    def _correct_advice_states(self, advice_states):
+        """ """
+        return ['{0}__state__{1}'.format(
+                self.cfg_num_to_id(v.split('__state__')[0]),
+                v.split('__state__')[1]) for v in advice_states]
 
     def _finishConfigFor(self, cfg, data):
         """When the MeetingConfig has been created, some parameters still need to be applied
