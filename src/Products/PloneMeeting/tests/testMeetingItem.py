@@ -3927,7 +3927,6 @@ class testMeetingItem(PloneMeetingTestCase):
         # defined for signature number 1, one passed, one valid, one always valid
         # for signature number 2, 2 passed and one always valid
         # compute valid date_from and date_to depending on now
-        now = DateTime()
         certified = [
             {'signatureNumber': '1',
              'name': 'Name1passed',
@@ -3940,8 +3939,8 @@ class testMeetingItem(PloneMeetingTestCase):
              'name': 'Name1valid',
              'function': 'Function1valid',
              'held_position': '_none_',
-             'date_from': (now - 10).strftime('%Y/%m/%d'),
-             'date_to': (now + 10).strftime('%Y/%m/%d'),
+             'date_from': (DateTime() - 10).strftime('%Y/%m/%d'),
+             'date_to': (DateTime() + 10).strftime('%Y/%m/%d'),
              },
             {'signatureNumber': '1',
              'name': 'Name1AlwaysValid',
@@ -3989,15 +3988,15 @@ class testMeetingItem(PloneMeetingTestCase):
              'name': 'Name1past',
              'function': 'Function1past',
              'held_position': '_none_',
-             'date_from': (now - 5).strftime('%Y/%m/%d'),
-             'date_to': (now - 5).strftime('%Y/%m/%d'),
+             'date_from': (DateTime() - 5).strftime('%Y/%m/%d'),
+             'date_to': (DateTime() - 5).strftime('%Y/%m/%d'),
              },
             {'signatureNumber': '1',
              'name': 'Name1valid',
              'function': 'Function1valid',
              'held_position': '_none_',
-             'date_from': now.strftime('%Y/%m/%d'),
-             'date_to': now.strftime('%Y/%m/%d'),
+             'date_from': DateTime().strftime('%Y/%m/%d'),
+             'date_to': DateTime().strftime('%Y/%m/%d'),
              },
             {'signatureNumber': '1',
              'name': 'Name1AlwaysValid',
