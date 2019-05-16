@@ -20,6 +20,7 @@ from plone.app.contenttypes.migration.dxmigration import migrate_base_class_to_n
 from Products.CMFPlone.utils import base_hasattr
 from Products.CMFPlone.utils import safe_unicode
 from Products.GenericSetup.tool import DEPENDENCY_STRATEGY_NEW
+from Products.PloneMeeting.content.person import PMPerson
 from Products.PloneMeeting.config import MEETING_GROUP_SUFFIXES
 from Products.PloneMeeting.config import TOOL_FOLDER_POD_TEMPLATES
 from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
@@ -934,12 +935,16 @@ class Migrate_To_4_1(Migrator):
     def _migrateContactPersonsKlass(self):
         """klass used by 'person' portal_type changed, this is only relevant for
            users using beta versions..."""
+        logger.info('Migrating klass of collective.contact Person to PMPerson...')
         for brain in self.catalog(portal_type='person'):
             person = brain.getObject()
-            migrate_base_class_to_new_class(
-                person,
-                old_class_name='collective.contact.core.content.person.Person',
-                new_class_name='Products.PloneMeeting.content.person.PMPerson')
+            if not isinstance(person, PMPerson):
+                logger.info('Migrating person at {0}'.format('/'.join(person.getPhysicalPath())))
+                migrate_base_class_to_new_class(
+                    person,
+                    old_class_name='collective.contact.core.content.person.Person',
+                    new_class_name='Products.PloneMeeting.content.person.PMPerson')
+        logger.info('Done.')
 
     def _disableVotes(self):
         """Disable the votes functionnality that is broken since we use contacts."""
