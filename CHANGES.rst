@@ -2,6 +2,12 @@ Changelog
 =========
 
 
+4.1b18 (unreleased)
+-------------------
+
+- Nothing changed yet.
+
+
 4.1b17 (2019-05-16)
 -------------------
 - Moved held_position fields 'label', 'position_type', 'start_date', 'end_date', 'usages', 'defaults', 'signature_number'
