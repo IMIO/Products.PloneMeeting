@@ -305,7 +305,7 @@ Changelog
 - Refactored meetingitem_view to use @@display-annexes to display annexes and decision annexes.  Only display
   the 'More infos' link when relevant, so when no annexes are defined because the 'More infos' link already
   appear in the existing annexes popup
-- Make sure special "non_selectable_value_" values are not selectable in MeetingItem.optionalAdvisers.  Use
+- Make sure special `non_selectable_value_` values are not selectable in MeetingItem.optionalAdvisers.  Use
   JS to override the onClick event of these input values
 - Bugfix in MeetingConfig.updateAnnexConfidentiality that applied default confidentiality to every advices of
   the application and not only to the currently updated MeetingConfig related advices
@@ -733,14 +733,13 @@ Changelog
   MeetingConfig [Default] tab and is especially made for Managers during migrations
 - Added method 'printXhtml' available in Pod templates on view.printXhtml to be able to print a xhtmlContent with some
   options :
-    - parameter 'xhtmlContents' may be a single xhtml chunk or a list of xhtml chunks (MeetingItem.motivation + Meeting.decision
-      for example), and may contain arbitrary xhtml chunks ('<p>DECIDE :</p>').  It may also contain a special word 'space' that will insert
-      a space like defined in parameter 'separatorValue' that defaults to '<p>&nbsp;</p>';
-    - parameter 'image_src_to_paths' will turn <img> src to an absolute path to the .blob on the filesystem;
-    - parameters 'keepWithNext' and 'keepWithNextNumberOfChars' that manage possibility to stick to next paragraph when
-      Pod template is generated;
-    - parameter 'checkNeedSeparator' that defaults to True will only add separator if needed;
-    - parameter 'addCSSClass', is made to add a CSS class to every 'paragraph' like tags of the 'xhtmlContents'.
+  - parameter 'xhtmlContents' may be a single xhtml chunk or a list of xhtml chunks (MeetingItem.motivation + Meeting.decision
+  for example), and may contain arbitrary xhtml chunks ('<p>DECIDE :</p>').  It may also contain a special word 'space' that will insert
+  a space like defined in parameter 'separatorValue' that defaults to '<p>&nbsp;</p>';
+  - parameter 'image_src_to_paths' will turn <img> src to an absolute path to the .blob on the filesystem;
+  - parameters 'keepWithNext' and 'keepWithNextNumberOfChars' that manage possibility to stick to next paragraph when Pod template is generated;
+  - parameter 'checkNeedSeparator' that defaults to True will only add separator if needed;
+  - parameter 'addCSSClass', is made to add a CSS class to every 'paragraph' like tags of the 'xhtmlContents'.
   And thus, removed method Meeting.getDeliberation that was used to contatenate 'motivation' and 'decision'.
 - Added CKeditor custom style 'indent-firstline' to be able to apply a text-index: 40px; on a paragraph
 - Added hooks _before_reinstall and _after_reinstall made to do things before and after reinstalling the profile in a migration.
@@ -1279,3 +1278,4 @@ Changelog
 ------------------
 - Do the meetingfolder_view work again in Plone3
 - Some CSS/Translations/JS fixes
+
