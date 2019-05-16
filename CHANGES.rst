@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.1b17 (unreleased)
+4.1b17 (2019-05-16)
 -------------------
 - Moved held_position fields 'label', 'position_type', 'start_date', 'end_date', 'usages', 'defaults', 'signature_number'
   to a 'app_parameters' fieldset so it is displayed on the view by the 'additional-fields' macro
