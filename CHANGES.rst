@@ -92,6 +92,7 @@ Changelog
 - Adapted icons 'new item/advice/annex/...' to use grey colors so it fits for every themes
 - Adapted mail notifications to send it to a group of users when it was only sent to one user : notifications sent to item author are now sent
   to entire proposing group creators and notifications sent to advice author are now sent to the entire advisers group
+- Added portal tab 'Contacts' displayed to (Meeting)Managers only
 
 4.1b16 (2019-01-31)
 -------------------

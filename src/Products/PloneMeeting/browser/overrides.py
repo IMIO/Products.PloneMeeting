@@ -1282,6 +1282,14 @@ class PMCatalogNavigationTabs(CatalogNavigationTabs):
                     'data-config_group': config_group[0],
                     'data-config_full_label': config_group[2]}
                 mc_tabs.append(data)
+        # insert a tab for contacts directory for (Meeting)Managers
+        if tool.isManager(self.context, realManagers=True) or tool.userIsAmong(['meetingmanagers']):
+            data = {
+                'name': 'Contacts',
+                'id': 'contacts',
+                'url': portal_url + '/contacts',
+                'description': ''}
+            mc_tabs.append(data)
         # insert MC related tabs after first tab (index_html) but before other extra tabs
         tabs = [tabs[0]] + mc_tabs + tabs[1:]
         return tabs
