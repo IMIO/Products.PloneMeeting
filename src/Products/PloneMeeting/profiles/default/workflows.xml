@@ -72,5 +72,8 @@
   <type type_id="annexDecision">
      <bound-workflow workflow_id="" />
   </type>
+  <type type_id="Image">
+     <bound-workflow workflow_id="" />
+  </type>
  </bindings>
 </object>

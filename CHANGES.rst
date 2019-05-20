@@ -6,7 +6,7 @@ Changelog
 -------------------
 
 - Display the 'Contacts' portal tab only to Managers, hide it for MeetingManagers
-
+- Make sure the 'Image' portal_type does not have an associated workflow
 
 4.1b17 (2019-05-16)
 -------------------
