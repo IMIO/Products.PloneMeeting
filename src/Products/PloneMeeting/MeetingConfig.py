@@ -103,6 +103,7 @@ from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
 from Products.PloneMeeting.profiles import MeetingConfigDescriptor
 from Products.PloneMeeting.utils import computeCertifiedSignatures
 from Products.PloneMeeting.utils import createOrUpdatePloneGroup
+from Products.PloneMeeting.utils import duplicate_workflow
 from Products.PloneMeeting.utils import forceHTMLContentTypeForEmptyRichFields
 from Products.PloneMeeting.utils import get_annexes
 from Products.PloneMeeting.utils import getCustomAdapter
@@ -4633,28 +4634,6 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 # set elements existing in both lists, we do not use set() because it is not ordered
                 collection.customViewFields = tuple([mCol for mCol in meetingColumns if mCol in customViewFieldIds])
 
-    def _setDuplicatedWorkflowFor(self, portalTypeName, workflowName):
-        """Set the correct workflow for given p_portalTypeName.
-           To be able to use same workflow for several MeetingConfigs, we will
-           duplicate the selected workflow and use it."""
-
-        # now duplicate the workflow and use the copy for portalTypeName
-        # do that as a Manager because MeetingManager may edit the MeetingConfig
-        # but does not have the right to copy/paste workflows
-        with api.env.adopt_roles(['Manager', ]):
-            wfTool = api.portal.get_tool('portal_workflow')
-            copyInfos = wfTool.manage_copyObjects(workflowName)
-            newWFId = wfTool.manage_pasteObjects(copyInfos)[0]['new_id']
-            duplicatedWFId = '{0}__{1}'.format(self.getId(), workflowName)
-            # if already exists, delete it, so we are on a clean copy
-            # before applying workflow_adaptations
-            if duplicatedWFId in wfTool:
-                wfTool.manage_delObjects(ids=[duplicatedWFId])
-            wfTool.manage_renameObject(newWFId, duplicatedWFId)
-            duplicatedWF = wfTool.get(duplicatedWFId)
-            duplicatedWF.title = duplicatedWFId
-            wfTool.setChainForPortalTypes([portalTypeName], duplicatedWFId)
-
     security.declarePrivate('registerPortalTypes')
 
     def registerPortalTypes(self):
@@ -4724,7 +4703,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             workflowName = getattr(self, workflowName)()
             # set a duplicated WF for Meeting and MeetingItem
             if metaTypeName in ('Meeting', 'MeetingItem'):
-                self._setDuplicatedWorkflowFor(portalTypeName, workflowName)
+                duplicatedWFId = '{0}__{1}'.format(self.getId(), workflowName)
+                duplicate_workflow(workflowName, duplicatedWFId, [portalTypeName])
             else:
                 wfTool.setChainForPortalTypes([portalTypeName], workflowName)
 

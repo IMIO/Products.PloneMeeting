@@ -1578,6 +1578,24 @@ def plain_render(obj, fieldname):
     return exportable.render_value(obj)
 
 
+def duplicate_workflow(workflowName, duplicatedWFId, portalTypeNames=[]):
+    """Duplicate p_workflowName and use p_duplicatedWFId for new workflow.
+       If p_portalTypeName is given, associate new workflow to given portalTypeNames."""
+    # do that as a Manager because it is needed to copy/paste workflows
+    with api.env.adopt_roles(['Manager', ]):
+        wfTool = api.portal.get_tool('portal_workflow')
+        copyInfos = wfTool.manage_copyObjects(workflowName)
+        newWFId = wfTool.manage_pasteObjects(copyInfos)[0]['new_id']
+        # if already exists, delete it, so we are on a clean copy
+        # before applying workflow_adaptations
+        if duplicatedWFId in wfTool:
+            wfTool.manage_delObjects(ids=[duplicatedWFId])
+        wfTool.manage_renameObject(newWFId, duplicatedWFId)
+        duplicatedWF = wfTool.get(duplicatedWFId)
+        duplicatedWF.title = duplicatedWFId
+        wfTool.setChainForPortalTypes(portalTypeNames, duplicatedWFId)
+
+
 def org_id_to_uid(org_info, raise_on_error=True):
     """Returns the corresponding org based value for given org_info based value.
        'developers', will return 'orguid'.

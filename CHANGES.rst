@@ -7,6 +7,7 @@ Changelog
 
 - Display the 'Contacts' portal tab only to Managers, hide it for MeetingManagers
 - Make sure the 'Image' portal_type does not have an associated workflow
+- Moved MeetingConfig._setDuplicatedWorkflowFor to utils.duplicate_workflow so it is possible to duplicate any existing workflow
 
 4.1b17 (2019-05-16)
 -------------------
