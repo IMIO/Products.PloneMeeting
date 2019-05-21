@@ -1594,6 +1594,23 @@ def duplicate_workflow(workflowName, duplicatedWFId, portalTypeNames=[]):
         duplicatedWF = wfTool.get(duplicatedWFId)
         duplicatedWF.title = duplicatedWFId
         wfTool.setChainForPortalTypes(portalTypeNames, duplicatedWFId)
+        return duplicatedWF
+
+
+def duplicate_portal_type(portalTypeName, duplicatedPortalTypeId):
+    """Duplicate p_portalTypeName and use duplicatedPortalTypeId for new portal_type."""
+    portal_types = api.portal.get_tool('portal_types')
+    copyInfos = portal_types.manage_copyObjects(portalTypeName)
+    newPortalTypeId = portal_types.manage_pasteObjects(copyInfos)[0]['new_id']
+    # if already exists, delete it, so we are up to date with original portal_type
+    if duplicatedPortalTypeId in portal_types:
+        portal_types.manage_delObjects(ids=[duplicatedPortalTypeId])
+    portal_types.manage_renameObject(newPortalTypeId, duplicatedPortalTypeId)
+    duplicatedPortalType = portal_types.get(duplicatedPortalTypeId)
+    duplicatedPortalType.title = duplicatedPortalTypeId
+    duplicatedPortalType.add_view_expr = duplicatedPortalType.add_view_expr.replace(
+        portalTypeName, duplicatedPortalTypeId)
+    return duplicatedPortalType
 
 
 def org_id_to_uid(org_info, raise_on_error=True):

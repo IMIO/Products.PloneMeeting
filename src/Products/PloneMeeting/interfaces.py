@@ -558,6 +558,8 @@ class IMeetingConfigDocumentation:
     def getMeetingStatesAcceptingItems(self):
         '''In those states, the meeting accept items, normal or late.
            Must return a tuple of meeting review_states.'''
+    def updateExtraPortalTypes(self):
+        '''After common portal_types have been updated, manage custom updates.'''
 
 
 class IMeetingConfigCustom(IMeetingConfig):

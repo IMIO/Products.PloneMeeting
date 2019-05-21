@@ -4757,6 +4757,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             portalType._actions = tuple(basePortalType._cloneActions())
         # Update the cloneToOtherMeetingConfig actions visibility
         self._updateCloneToOtherMCActions()
+        # Call custom method to update other parts if necessary
+        self.adapted().updateExtraPortalTypes()
+
+    def updateExtraPortalTypes(self):
+        '''See doc in interfaces.py.'''
+        return
 
     security.declarePrivate('createSearches')
 
