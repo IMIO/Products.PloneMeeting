@@ -415,6 +415,11 @@ td.td_cell_advices div.categorized-elements {
     width: 100%;
 }
 
+div.add_advice_icon {
+   display: inline-block;
+   padding-bottom: 0.25em;
+}
+
 #content td.advice_annexes {
     padding-top: 0.3em;
 }

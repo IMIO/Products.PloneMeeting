@@ -39,6 +39,13 @@ from zope.schema.vocabulary import SimpleVocabulary
 class PMConditionAwareCollectionVocabulary(CachedCollectionVocabulary):
     implements(IVocabularyFactory)
 
+    def _cache_invalidation_key(self, context):
+        """Take also into account current user groups."""
+        original_checks = super(PMConditionAwareCollectionVocabulary, self)._cache_invalidation_key(context)
+        tool = api.portal.get_tool('portal_plonemeeting')
+        user_plone_groups = tool.get_plone_groups_for_user()
+        return original_checks + (user_plone_groups, )
+
     def _brains(self, context):
         """We override the method because Meetings also provides the ICollection interface..."""
         root = context

@@ -10,6 +10,8 @@ Changelog
 - Moved MeetingConfig._setDuplicatedWorkflowFor to utils.duplicate_workflow so it is possible to duplicate any existing workflow
 - Added method utils.duplicate_portal_type to ease duplication of a portal_type, useable for example to manage several meetingadvice portal_types
 - Added adaptable method MeetingConfig.updateExtraPortalTypes called at the end of MeetingConfig._updatePortalTypes to handle custom portal_types adaptations
+- Override cache invalidation key for Invalidate cache of CachedCollectionVocabulary.__call__ (the vocabulary that displays collection in the searches portlet)
+  to take into account current user groups so it is invalidated when user groups changed
 
 4.1b17 (2019-05-16)
 -------------------
