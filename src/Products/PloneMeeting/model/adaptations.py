@@ -110,6 +110,47 @@ def grantPermission(state, perm, role):
         state.setPermission(perm, 0, roles)
 
 
+def change_transition_new_state_id(wf_id, transition_id, new_state_id):
+    '''Change given p_new_state_id for p_transition_id.'''
+    wfTool = api.portal.get_tool('portal_workflow')
+    wf = wfTool.getWorkflowById(wf_id)
+    # transition does not exist?
+    if transition_id not in wf.states:
+        logger.error('Transition {0} does not exist in WF {1}!'.format(transition_id, wf_id))
+    # new_state_id does not exist?
+    if new_state_id not in wf.states:
+        logger.error('New state {0} does not exist in WF {1}!'.format(new_state_id, wf_id))
+
+    wf.transitions[transition_id].new_state_id = new_state_id
+
+
+def removeState(wf_id, state_id, remove_leading_transitions=True, new_initial_state=None):
+    '''Remove given p_state, if p_remove_arriving_transitions=True (default),
+       we remove every transitions leading to p_state.'''
+    wfTool = api.portal.get_tool('portal_workflow')
+    wf = wfTool.getWorkflowById(wf_id)
+    # state does not exist?
+    if state_id not in wf.states:
+        logger.error('State {0} does not exist in WF {1}!'.format(state_id, wf_id))
+    # state is initial_state and no new_initial_state provided?
+    if wf.initial_state == state_id and (not new_initial_state or new_initial_state not in wf.states):
+        logger.error('State {0} is the initial state of WF {1}, '
+                     'please provide a correct new_initial_state!'.format(state_id, wf_id))
+
+    if remove_leading_transitions:
+        leading_transitions = [tr.id for tr in wf.transitions.values()
+                               if tr.new_state_id == state_id]
+        wf.transitions.deleteTransitions(leading_transitions)
+    if wf.initial_state == state_id:
+        wf.initial_state = new_initial_state
+    wf.states.deleteStates([state_id])
+    if remove_leading_transitions:
+        logger.info('State {0} and leading transitions ({1}) were removed from WF {2}'.format(
+            state_id, ', '.join(leading_transitions), wf_id))
+    else:
+        logger.info('Transitions {0} was removed from WF {1}'.format(state_id, wf_id))
+
+
 def performWorkflowAdaptations(meetingConfig, logger=logger):
     '''This function applies workflow adaptations as specified by the p_meetingConfig.'''
 

@@ -12,6 +12,9 @@ Changelog
 - Added adaptable method MeetingConfig.updateExtraPortalTypes called at the end of MeetingConfig._updatePortalTypes to handle custom portal_types adaptations
 - Override cache invalidation key for Invalidate cache of CachedCollectionVocabulary.__call__ (the vocabulary that displays collection in the searches portlet)
   to take into account current user groups so it is invalidated when user groups changed
+- Added helper methods to manipulate WF to ease applcation of workflow adaptations :
+    - model.adaptations.change_transition_new_state_id to change the new_state_id of a given transition_id
+    - model.adaptations.removeState that removes a state and removes transitions leading to this state and manage new initial state if necessary
 
 4.1b17 (2019-05-16)
 -------------------
