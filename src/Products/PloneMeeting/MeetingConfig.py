@@ -1909,7 +1909,7 @@ schema = Schema((
                     col_description="power_observers_meeting_access_on_col_description"),
             },
             label='Powerobservers',
-            label_msgid='MeetingLiege_label_powerObservers',
+            label_msgid='PloneMeeting_label_powerObservers',
             i18n_domain='PloneMeeting',
         ),
         schemata="advices",
