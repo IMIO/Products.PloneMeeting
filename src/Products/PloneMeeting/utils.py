@@ -166,7 +166,7 @@ def getWorkflowAdapter(obj, conditions):
         interfaceMethod += 'Conditions'
     else:
         interfaceMethod += 'Actions'
-    interfaceLongName = getattr(cfg, '%sInterface' % interfaceMethod)()
+    interfaceLongName = getattr(cfg, '%sInterface' % interfaceMethod)(**{'obj': obj})
     adapter = getInterface(interfaceLongName)(obj)
     # set some attributes so it is reusable in the adapter
     adapter.tool = tool

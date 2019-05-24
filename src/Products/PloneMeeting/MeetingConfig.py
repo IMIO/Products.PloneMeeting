@@ -3962,13 +3962,21 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
 
-    def getAdviceConditionsInterface(self):
+    def _adviceConditionsInterfaceFor(self, obj):
         ''' '''
         return IMeetingAdviceWorkflowConditions.__identifier__
 
-    def getAdviceActionsInterface(self):
+    def _adviceActionsInterfaceFor(self, obj):
         ''' '''
         return IMeetingAdviceWorkflowActions.__identifier__
+
+    def getAdviceConditionsInterface(self, **kwargs):
+        ''' '''
+        return self.adapted()._adviceConditionsInterfaceFor(kwargs['obj'])
+
+    def getAdviceActionsInterface(self, **kwargs):
+        ''' '''
+        return self.adapted()._adviceActionsInterfaceFor(kwargs['obj'])
 
     def _dataForCustomAdviserRowId(self, row_id):
         '''Returns the data for the given p_row_id from the field 'customAdvisers'.'''
