@@ -128,6 +128,33 @@ def change_transition_new_state_id(wf_id, transition_id, new_state_id):
         transition_id, new_state_id, wf_id))
 
 
+def addState(wf_id, state_id, lead_transition_id, back_transition_id):
+    """ """
+    wfTool = api.portal.get_tool('portal_workflow')
+    wf = wfTool.getWorkflowById(wf_id)
+    if state_id in wf.states:
+        return
+
+    wf.states.addState(state_id)
+    for tr in (lead_transition_id, back_transition_id):
+        if tr not in wf.transitions:
+            wf.transitions.addTransition(tr)
+    transition = wf.transitions[lead_transition_id]
+    transition.setProperties(
+        title=lead_transition_id,
+        new_state_id=state_id, trigger_type=1, script_name='',
+        actbox_name=lead_transition_id, actbox_url='',
+        actbox_icon='%(portal_url)s/{0}.png'.format(lead_transition_id), actbox_category='workflow',
+        props={'guard_expr': 'python:here.wfConditions().may{0}()'.format(lead_transition_id.capitalize())})
+    transition = wf.transitions[back_transition_id]
+    transition.setProperties(
+        title=back_transition_id,
+        new_state_id=state_id, trigger_type=1, script_name='',
+        actbox_name=back_transition_id, actbox_url='',
+        actbox_icon='%(portal_url)s/{0}.png'.format(back_transition_id), actbox_category='workflow',
+        props={'guard_expr': 'python:here.wfConditions().mayCorrect("{0}")'.format(state_id)})
+
+
 def removeState(wf_id, state_id, remove_leading_transitions=True, new_initial_state=None):
     '''Remove given p_state, if p_remove_arriving_transitions=True (default),
        we remove every transitions leading to p_state.'''

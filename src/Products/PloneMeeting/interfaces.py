@@ -516,6 +516,16 @@ class IMeetingCustom(IMeeting):
        you must define an adapter that adapts IMeeting to IMeetingCustom.'''
 
 
+# Interfaces used for customizing the behaviour of meeting advice ----------
+class IMeetingAdviceWorkflowConditions(Interface):
+    '''Conditions that may be defined in the workflow associated with an advice
+       are defined as methods in this interface.'''
+
+
+class IMeetingAdviceWorkflowActions(Interface):
+    '''Actions that may be triggered while the workflow linked to an advice executes.'''
+
+
 # Interfaces used for customizing the behaviour of meeting categories ----------
 class IMeetingCategoryDocumentation:
     '''Normally, the methods described here should be part of IMeetingCategory.

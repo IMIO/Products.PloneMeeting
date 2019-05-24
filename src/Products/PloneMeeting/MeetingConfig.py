@@ -92,6 +92,8 @@ from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
 from Products.PloneMeeting.interfaces import IMeeting
 from Products.PloneMeeting.interfaces import IMeetingConfig
 from Products.PloneMeeting.interfaces import IMeetingItem
+from Products.PloneMeeting.interfaces import IMeetingAdviceWorkflowActions
+from Products.PloneMeeting.interfaces import IMeetingAdviceWorkflowConditions
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowConditions
 from Products.PloneMeeting.interfaces import IMeetingWorkflowActions
@@ -3959,6 +3961,14 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 return translate('inserting_methods_on_privacy_reverse_error',
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
+
+    def getAdviceConditionsInterface(self):
+        ''' '''
+        return IMeetingAdviceWorkflowConditions.__identifier__
+
+    def getAdviceActionsInterface(self):
+        ''' '''
+        return IMeetingAdviceWorkflowActions.__identifier__
 
     def _dataForCustomAdviserRowId(self, row_id):
         '''Returns the data for the given p_row_id from the field 'customAdvisers'.'''

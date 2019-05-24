@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
+from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
+from App.class_init import InitializeClass
 from collective.contact.plonegroup.utils import get_organization
 from imio.history.utils import getLastWFAction
 from imio.prettylink.interfaces import IPrettyLink
@@ -11,8 +13,11 @@ from plone.dexterity.content import Container
 from plone.dexterity.schema import DexteritySchemaPolicy
 from plone.directives import form
 from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.interfaces import IMeetingAdviceWorkflowActions
+from Products.PloneMeeting.interfaces import IMeetingAdviceWorkflowConditions
 from Products.PloneMeeting.interfaces import IMeetingContent
 from Products.PloneMeeting.utils import findMeetingAdvicePortalType
+from Products.PloneMeeting.utils import getWorkflowAdapter
 from Products.PloneMeeting.utils import isModifiedSinceLastVersion
 from Products.PloneMeeting.utils import main_item_data
 from Products.PloneMeeting.utils import version_object
@@ -99,10 +104,59 @@ def advice_hide_during_redactionDefaultValue(data):
     return cfg and cfg.getDefaultAdviceHiddenDuringRedaction() or False
 
 
+class MeetingAdviceWorkflowConditions(object):
+    '''Adapts a MeetingAdvice to interface IMeetingAdviceWorkflowConditions.'''
+    implements(IMeetingAdviceWorkflowConditions)
+    security = ClassSecurityInfo()
+
+    def __init__(self, advice):
+        self.context = advice
+        self.request = advice.REQUEST
+
+    def _get_workflow(self):
+        ''' '''
+        wfTool = api.portal.get_tool('portal_workflow')
+        return wfTool.getWorkflowsFor(self.context)[0]
+
+    security.declarePublic('mayGiveAdvice')
+
+    def mayGiveAdvice(self):
+        ''' '''
+        return self.request.get('mayGiveAdvice', False)
+
+    security.declarePublic('mayCorrect')
+
+    def mayCorrect(self, destinationState=None):
+        '''See doc in interfaces.py.'''
+        res = False
+
+        wf = self._get_workflow()
+        if destinationState == wf.initial_state:
+            res = self.request.get('mayBackToAdviceInitialState', False)
+        return res
+
+
+InitializeClass(MeetingAdviceWorkflowConditions)
+
+
+class MeetingAdviceWorkflowActions(object):
+    '''Adapts a MeetingAdvice to interface IMeetingAdviceWorkflowActions.'''
+    implements(IMeetingAdviceWorkflowActions)
+    security = ClassSecurityInfo()
+
+    def __init__(self, advice):
+        self.context = advice
+        self.request = advice.REQUEST
+
+
+InitializeClass(MeetingAdviceWorkflowConditions)
+
+
 class MeetingAdvice(Container):
     """ """
 
     implements(IMeetingAdvice)
+    security = ClassSecurityInfo()
 
     def getPrettyLink(self, **kwargs):
         """Return the IPrettyLink version of the title."""
@@ -145,6 +199,22 @@ class MeetingAdvice(Container):
         '''In what state am I ?'''
         wfTool = api.portal.get_tool('portal_workflow')
         return wfTool.getInfoFor(self, 'review_state')
+
+    security.declarePublic('wfConditions')
+
+    def wfConditions(self):
+        '''Returns the adapter that implements the interface that proposes
+           methods for use as conditions in the workflow associated with this
+           item.'''
+        return getWorkflowAdapter(self, conditions=True)
+
+    security.declarePublic('wfActions')
+
+    def wfActions(self):
+        '''Returns the adapter that implements the interface that proposes
+           methods for use as actions in the workflow associated with this
+           item.'''
+        return getWorkflowAdapter(self, conditions=False)
 
     def _updateAdviceRowId(self):
         '''Make sure advice_row_id is correct.'''
