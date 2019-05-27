@@ -732,7 +732,7 @@ class MeetingConfigDescriptor(Descriptor):
         # Items where advice invalidation should be enabled.
         self.itemAdviceInvalidateStates = []
         self.adviceStyle = 'standard'
-        self.defaultAdviceHiddenDuringRedaction = False
+        self.defaultAdviceHiddenDuringRedaction = []
         self.transitionsReinitializingDelays = []
         self.historizeItemDataWhenAdviceIsGiven = True
         self.keepAccessToItemWhenAdviceIsGiven = False

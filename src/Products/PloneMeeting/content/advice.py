@@ -172,7 +172,7 @@ class MeetingAdviceWorkflowActions(object):
         # historize
         self.context.versionate_if_relevant(ADVICE_GIVEN_HISTORIZED_COMMENT)
         # manage 'advice_given_on' dates
-        parent = self.context.getParentNode()
+        parent = self.context.aq_parent
         advice_given_on = self.context.get_advice_given_on()
         toLocalizedTime = parent.restrictedTraverse('@@plone').toLocalizedTime
         parent.adviceIndex[self.context.advice_group]['advice_given_on'] = advice_given_on

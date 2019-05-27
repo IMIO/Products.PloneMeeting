@@ -221,7 +221,8 @@ class ChangeAdviceAskedAgainView(BrowserView):
             # value defined in the MeetingConfig
             tool = api.portal.get_tool('portal_plonemeeting')
             cfg = tool.getMeetingConfig(self.context)
-            self.context.advice_hide_during_redaction = cfg.getDefaultAdviceHiddenDuringRedaction()
+            self.context.advice_hide_during_redaction = \
+                bool(self.context.portal_type in cfg.getDefaultAdviceHiddenDuringRedaction())
         else:
             pr = api.portal.get_tool('portal_repository')
             # we are about to set the advice back to original value

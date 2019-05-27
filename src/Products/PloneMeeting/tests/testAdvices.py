@@ -2032,7 +2032,7 @@ class testAdvices(PloneMeetingTestCase):
         cfg.setItemAdviceEditStates([self._stateMappingFor('proposed'), ])
         cfg.setItemAdviceViewStates([self._stateMappingFor('proposed'), ])
         # set that default value of field 'advice_hide_during_redaction' will be True
-        cfg.setDefaultAdviceHiddenDuringRedaction(True)
+        cfg.setDefaultAdviceHiddenDuringRedaction(['meetingadvice'])
         self.changeUser('pmCreator1')
         # create an item and ask the advice of group 'vendors'
         data = {
@@ -2096,7 +2096,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(item.adapted().mayBackToPreviousAdvice(advice))
         # when an advice is 'asked_again', the field hidden_during_redaction
         # is set to the default defined in the MeetingConfig
-        self.assertTrue(cfg.getDefaultAdviceHiddenDuringRedaction())
+        self.assertTrue('meetingadvice' in cfg.getDefaultAdviceHiddenDuringRedaction())
         self.assertTrue(advice.advice_hide_during_redaction)
         changeView()
         # when going back to previous version, a new version is done
@@ -2215,7 +2215,7 @@ class testAdvices(PloneMeetingTestCase):
         cfg.setItemAdviceEditStates([self._stateMappingFor('proposed'), ])
         cfg.setItemAdviceViewStates([self._stateMappingFor('proposed'), ])
         # set that default value of field 'advice_hide_during_redaction' will be True
-        cfg.setDefaultAdviceHiddenDuringRedaction(True)
+        cfg.setDefaultAdviceHiddenDuringRedaction(['meetingadvice'])
         self.changeUser('pmCreator1')
         # create an item and ask the advice of group 'vendors'
         data = {

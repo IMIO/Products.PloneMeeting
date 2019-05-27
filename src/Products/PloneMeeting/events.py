@@ -87,6 +87,8 @@ def do(action, event):
         sendMailIfRelevant(event.object, "item_state_changed_%s" % event.transition.id, 'View')
         # apply on transition field transform if any
         applyOnTransitionFieldTransform(event.object, event.transition.id)
+        # update modification date upon state change
+        event.object.notifyModified()
     elif objectType == 'Meeting':
         # update every local roles
         event.object.updateLocalRoles()
@@ -97,11 +99,10 @@ def do(action, event):
         # trigger some transitions on contained items depending on
         # MeetingConfig.onMeetingTransitionItemTransitionToTrigger
         meetingTriggerTransitionOnLinkedItems(event.object, event.transition.id)
+        # update modification date upon state change
+        event.object.notifyModified()
     elif objectType == 'MeetingAdvice':
         _addManagedPermissions(event.object)
-
-    # update modification date upon state change
-    event.object.notifyModified()
 
 
 def onItemTransition(item, event):
