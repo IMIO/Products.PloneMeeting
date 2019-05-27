@@ -172,6 +172,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEquals(item1.hasAdvices(), False)
         # fields 'advice_type' and 'advice_group' are mandatory
         form = item1.restrictedTraverse('++add++meetingadvice').form_instance
+        form.ti = self.portal.portal_types['meetingadvice']
         self.request['PUBLISHED'] = form
         form.update()
         errors = form.extractData()[1]
