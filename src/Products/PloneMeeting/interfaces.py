@@ -576,8 +576,9 @@ class IMeetingConfigDocumentation:
            Must return a tuple of meeting review_states.'''
     def _updateMeetingAdvicePortalTypes(self):
         '''After Meeting/MeetingItem portal_types have been updated,
-           update MeetingAdvice portal_tyes if necessary.  This is the place to apply
-           workflow adaptations on custom MeetingAdvice portal_types for example.'''
+           update MeetingAdvice portal_types if necessary.
+           This is the place to duplicate advice workflows
+           to apply workflow adaptations on.'''
     def _adviceConditionsInterfaceFor(self, advice_obj):
         '''Return the interface name to use to get the advice WF conditions adapter.'''
     def _adviceActionsInterfaceFor(self, advice_obj):
