@@ -78,7 +78,7 @@
              i18n:attributes="title">
   <action url="" icon="" category="workflow" i18n:translate="">backToAdviceInitialState</action>
   <guard>
-    <guard-expression>python:here.wfConditions().mayCorrect('advice_under_edit')</guard-expression>
+    <guard-expression>python:here.wfConditions().mayBackToAdviceInitialState()</guard-expression>
   </guard>
  </transition>
  <transition transition_id="giveAdvice"

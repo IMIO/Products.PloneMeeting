@@ -1022,6 +1022,19 @@ class Migrate_To_4_1(Migrator):
             message.required_roles = ['Manager', 'MeetingManager']
         logger.info('Done.')
 
+    def _migrateMeetingConfigDefaultAdviceHiddenDuringRedaction(self):
+        """MeetingConfig.defaultAdviceHiddenDuringRedaction was a boolean, now it is a list."""
+        logger.info('Migrating value for MeetingConfig.defaultAdviceHiddenDuringRedaction for every configs...')
+        advice_portal_types = self.tool.getAdvicePortalTypes(as_ids=True)
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            defaultAdviceHiddenDuringRedaction = cfg.defaultAdviceHiddenDuringRedaction
+            if isinstance(defaultAdviceHiddenDuringRedaction, bool):
+                if not defaultAdviceHiddenDuringRedaction:
+                    cfg.setDefaultAdviceHiddenDuringRedaction([])
+                else:
+                    cfg.setDefaultAdviceHiddenDuringRedaction(advice_portal_types)
+        logger.info('Done.')
+
     def run(self, step=None):
         logger.info('Migrating to PloneMeeting 4.1...')
 
@@ -1102,11 +1115,13 @@ class Migrate_To_4_1(Migrator):
         self._adaptInternalImagesLinkToUseResolveUID()
         self._migrateContactPersonsKlass()
         self._disableVotes()
-        self.removeUnusedPortalTypes(portal_types=['MeetingUser', 'MeetingFile', 'MeetingFileType', 'MeetingGroup'])
+        self.removeUnusedPortalTypes(portal_types=['MeetingUser', 'MeetingFile',
+                                                   'MeetingFileType', 'MeetingGroup'])
         self._migrate_searchitemstoprevalidate_query()
         self._migrateItemsInConfig()
         self._initFTWLabels()
         self._adaptShowHolidaysMessage()
+        self._migrateMeetingConfigDefaultAdviceHiddenDuringRedaction()
         self.tool.invalidateAllCache()
         # too many indexes to update, rebuild the portal_catalog
         meeting_wf_ids = self.getWorkflows(meta_types=['Meeting'])

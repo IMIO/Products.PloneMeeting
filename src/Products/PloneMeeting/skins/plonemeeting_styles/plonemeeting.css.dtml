@@ -281,6 +281,7 @@ div.pm_search_no_result_info {
 .state-deactivated {
     color: red !important;
 }
+.state-advicecreated, .label-state-advicecreated,
 .state-created, .label-state-created,
 .state-itemcreated, .label-state-itemcreated,
 .state-itemcreated_waiting_advices, .label-state-itemcreated_waiting_advices,

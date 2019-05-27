@@ -520,6 +520,12 @@ class IMeetingCustom(IMeeting):
 class IMeetingAdviceWorkflowConditions(Interface):
     '''Conditions that may be defined in the workflow associated with an advice
        are defined as methods in this interface.'''
+    def mayGiveAdvice(self):
+        '''Guard that protects the technical "giveAdvice" transition.'''
+    def mayBackToAdviceInitialState(self):
+        '''Guard that protects the technical "backToAdviceInitialState" transition.'''
+    def mayCorrect(self, destinationState=None):
+        '''Not used by default, a way to formalize use of mayCorrect to manage "back transitions".'''
 
 
 class IMeetingAdviceWorkflowActions(Interface):
@@ -568,8 +574,14 @@ class IMeetingConfigDocumentation:
     def getMeetingStatesAcceptingItems(self):
         '''In those states, the meeting accept items, normal or late.
            Must return a tuple of meeting review_states.'''
-    def updateExtraPortalTypes(self):
-        '''After common portal_types have been updated, manage custom updates.'''
+    def _updateMeetingAdvicePortalTypes(self):
+        '''After Meeting/MeetingItem portal_types have been updated,
+           update MeetingAdvice portal_tyes if necessary.  This is the place to apply
+           workflow adaptations on custom MeetingAdvice portal_types for example.'''
+    def _adviceConditionsInterfaceFor(self, advice_obj):
+        '''Return the interface name to use to get the advice WF conditions adapter.'''
+    def _adviceActionsInterfaceFor(self, advice_obj):
+        '''Return the interface name to use to get the advice WF actions adapter.'''
 
 
 class IMeetingConfigCustom(IMeetingConfig):

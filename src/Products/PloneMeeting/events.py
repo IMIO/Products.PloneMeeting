@@ -31,7 +31,6 @@ from plone.registry.interfaces import IRecordModifiedEvent
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.CMFPlone.utils import safe_unicode
 from Products.PloneMeeting.config import PMMessageFactory as _
-from Products.PloneMeeting.config import ADVICE_GIVEN_HISTORIZED_COMMENT
 from Products.PloneMeeting.config import BARCODE_INSERTED_ATTR_ID
 from Products.PloneMeeting.config import BUDGETIMPACTEDITORS_GROUP_SUFFIX
 from Products.PloneMeeting.config import ITEM_NO_PREFERRED_MEETING_VALUE
@@ -74,7 +73,7 @@ podTransitionPrefixes = {'MeetingItem': 'pod_item', 'Meeting': 'pod_meeting'}
 # Code executed after a workflow transition has been triggered
 def do(action, event):
     '''What must I do when a transition is triggered on a meeting or item?'''
-    objectType = event.object.meta_type
+    objectType = event.object.__class__.__name__
     actionsAdapter = event.object.wfActions()
     # Execute some actions defined in the corresponding adapter
     actionMethod = getattr(actionsAdapter, action)
@@ -98,6 +97,8 @@ def do(action, event):
         # trigger some transitions on contained items depending on
         # MeetingConfig.onMeetingTransitionItemTransitionToTrigger
         meetingTriggerTransitionOnLinkedItems(event.object, event.transition.id)
+    elif objectType == 'MeetingAdvice':
+        _addManagedPermissions(event.object)
 
     # update modification date upon state change
     event.object.notifyModified()
@@ -698,20 +699,14 @@ def onAdviceTransition(advice, event):
     if not event.transition or (advice != event.object):
         return
 
-    # in transition 'giveAdvice', historize the advice
-    # and save item's relevant data if MeetingConfig.historizeItemDataWhenAdviceIsGiven
-    # make sure also the 'advice_given_on' data is correct in item's adviceIndex
-    if event.transition.id == 'giveAdvice':
-        # historize
-        advice.versionate_if_relevant(ADVICE_GIVEN_HISTORIZED_COMMENT)
-        # manage 'advice_given_on' dates
-        parent = advice.getParentNode()
-        advice_given_on = advice.get_advice_given_on()
-        toLocalizedTime = parent.restrictedTraverse('@@plone').toLocalizedTime
-        parent.adviceIndex[advice.advice_group]['advice_given_on'] = advice_given_on
-        parent.adviceIndex[advice.advice_group]['advice_given_on_localized'] = toLocalizedTime(advice_given_on)
-
-    _addManagedPermissions(advice)
+    transitionId = event.transition.id
+    if transitionId.startswith('backTo'):
+        action = 'doCorrect'
+    elif transitionId.startswith('advice'):
+        action = 'doItem%s%s' % (transitionId[6].upper(), transitionId[7:])
+    else:
+        action = 'do%s%s' % (transitionId[0].upper(), transitionId[1:])
+    do(action, event)
 
 
 def onAnnexAdded(annex, event):
