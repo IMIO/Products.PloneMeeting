@@ -16,8 +16,8 @@ Changelog
     - model.adaptations.change_transition_new_state_id to change the new_state_id of a given transition_id
     - model.adaptations.removeState that removes a state and removes transitions leading to this state and manage new initial state if necessary
 - Added workflow actions/conditions adapters for MeetingAdvice as it is already the case for Meeting/MeetingItem
-- Adapted MeetingConfig.defaultAdviceHiddenDuringRedaction from a boolean value to a list of existing advice portal_types so it is possible
-  to enable defaultAdviceHiddenDuringRedaction on a per advice portal_type basis
+- Adapted MeetingConfig.defaultAdviceHiddenDuringRedaction from a boolean value to a list of existing advice portal_types
+  so it is possible to enable defaultAdviceHiddenDuringRedaction on a per advice portal_type basis
 
 4.1b17 (2019-05-16)
 -------------------
