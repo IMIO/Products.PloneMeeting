@@ -123,6 +123,7 @@ adaptables = {
     'Meeting': {'method': 'getMeeting', 'interface': IMeetingCustom},
     # No (condition or action) workflow-related adapters are defined for the
     # following content types; only a Custom adapter.
+    'MeetingAdvice': {'method': 'getAdvice', 'interface': None},
     'MeetingCategory': {'method': None, 'interface': IMeetingCategoryCustom},
     'MeetingConfig': {'method': None, 'interface': IMeetingConfigCustom},
     'MeetingGroup': {'method': None, 'interface': IMeetingGroupCustom},
@@ -160,12 +161,12 @@ def getWorkflowAdapter(obj, conditions):
        (if p_condition is False).'''
     tool = api.portal.get_tool(TOOL_ID)
     cfg = tool.getMeetingConfig(obj)
-    interfaceMethod = adaptables[obj.meta_type]['method']
+    interfaceMethod = adaptables[obj.__class__.__name__]['method']
     if conditions:
         interfaceMethod += 'Conditions'
     else:
         interfaceMethod += 'Actions'
-    interfaceLongName = getattr(cfg, '%sInterface' % interfaceMethod)()
+    interfaceLongName = getattr(cfg, '%sInterface' % interfaceMethod)(**{'obj': obj})
     adapter = getInterface(interfaceLongName)(obj)
     # set some attributes so it is reusable in the adapter
     adapter.tool = tool

@@ -61,6 +61,12 @@
   <permission id="PloneMeeting.write_userid_field"
               title="PloneMeeting: Write userid field"/>
 
+  <adapter for=".content.advice.IMeetingAdvice"
+           factory=".content.advice.MeetingAdviceWorkflowConditions"
+           provides=".interfaces.IMeetingAdviceWorkflowConditions" />
+  <adapter for=".content.advice.IMeetingAdvice"
+           factory=".content.advice.MeetingAdviceWorkflowActions"
+           provides=".interfaces.IMeetingAdviceWorkflowActions" />
   <adapter for=".interfaces.IMeetingItem"
            factory=".MeetingItem.MeetingItemWorkflowConditions"
            provides=".interfaces.IMeetingItemWorkflowConditions" />

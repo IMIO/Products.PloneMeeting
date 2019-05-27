@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
+from AccessControl import ClassSecurityInfo
 from AccessControl import Unauthorized
+from App.class_init import InitializeClass
 from collective.contact.plonegroup.utils import get_organization
 from imio.history.utils import getLastWFAction
 from imio.prettylink.interfaces import IPrettyLink
@@ -10,9 +12,15 @@ from plone.app.textfield import RichText
 from plone.dexterity.content import Container
 from plone.dexterity.schema import DexteritySchemaPolicy
 from plone.directives import form
+from Products.CMFCore.permissions import ReviewPortalContent
+from Products.CMFCore.utils import _checkPermission
 from Products.PloneMeeting.config import PMMessageFactory as _
+from Products.PloneMeeting.config import ADVICE_GIVEN_HISTORIZED_COMMENT
+from Products.PloneMeeting.interfaces import IMeetingAdviceWorkflowActions
+from Products.PloneMeeting.interfaces import IMeetingAdviceWorkflowConditions
 from Products.PloneMeeting.interfaces import IMeetingContent
 from Products.PloneMeeting.utils import findMeetingAdvicePortalType
+from Products.PloneMeeting.utils import getWorkflowAdapter
 from Products.PloneMeeting.utils import isModifiedSinceLastVersion
 from Products.PloneMeeting.utils import main_item_data
 from Products.PloneMeeting.utils import version_object
@@ -96,13 +104,86 @@ def advice_hide_during_redactionDefaultValue(data):
     tool = api.portal.get_tool('portal_plonemeeting')
     cfg = tool.getMeetingConfig(data.context)
     # manage when portal_type accessed from the Dexterity types configuration
-    return cfg and cfg.getDefaultAdviceHiddenDuringRedaction() or False
+    return cfg and published.ti.id in cfg.getDefaultAdviceHiddenDuringRedaction() or False
+
+
+class MeetingAdviceWorkflowConditions(object):
+    '''Adapts a MeetingAdvice to interface IMeetingAdviceWorkflowConditions.'''
+    implements(IMeetingAdviceWorkflowConditions)
+    security = ClassSecurityInfo()
+
+    def __init__(self, advice):
+        self.context = advice
+        self.request = advice.REQUEST
+
+    def _get_workflow(self):
+        '''Return the workflow object used by self.context.'''
+        wfTool = api.portal.get_tool('portal_workflow')
+        return wfTool.getWorkflowsFor(self.context)[0]
+
+    security.declarePublic('mayGiveAdvice')
+
+    def mayGiveAdvice(self):
+        '''See doc in interfaces.py.'''
+        return self.request.get('mayGiveAdvice', False)
+
+    security.declarePublic('mayBackToAdviceInitialState')
+
+    def mayBackToAdviceInitialState(self):
+        '''See doc in interfaces.py.'''
+        return self.request.get('mayBackToAdviceInitialState', False)
+
+    security.declarePublic('mayCorrect')
+
+    def mayCorrect(self, destinationState=None):
+        '''See doc in interfaces.py.'''
+
+        res = False
+        if _checkPermission(ReviewPortalContent, self.context):
+            res = True
+        return res
+
+
+class MeetingAdviceWorkflowActions(object):
+    '''Adapts a MeetingAdvice to interface IMeetingAdviceWorkflowActions.'''
+    implements(IMeetingAdviceWorkflowActions)
+    security = ClassSecurityInfo()
+
+    def __init__(self, advice):
+        self.context = advice
+        self.request = advice.REQUEST
+
+    security.declarePrivate('doCorrect')
+
+    def doCorrect(self, stateChange):
+        """
+          This is an unique wf action called for every transitions beginning with 'backTo'.
+          Most of times we do nothing, but in some case, we check the old/new state and
+          do some specific treatment.
+        """
+        pass
+
+    security.declarePrivate('doGiveAdvice')
+
+    def doGiveAdvice(self, stateChange):
+        """Historize the advice and save item's relevant data
+           if MeetingConfig.historizeItemDataWhenAdviceIsGiven.
+           Make sure also the 'advice_given_on' data is correct in item's adviceIndex."""
+        # historize
+        self.context.versionate_if_relevant(ADVICE_GIVEN_HISTORIZED_COMMENT)
+        # manage 'advice_given_on' dates
+        parent = self.context.getParentNode()
+        advice_given_on = self.context.get_advice_given_on()
+        toLocalizedTime = parent.restrictedTraverse('@@plone').toLocalizedTime
+        parent.adviceIndex[self.context.advice_group]['advice_given_on'] = advice_given_on
+        parent.adviceIndex[self.context.advice_group]['advice_given_on_localized'] = toLocalizedTime(advice_given_on)
 
 
 class MeetingAdvice(Container):
     """ """
 
     implements(IMeetingAdvice)
+    security = ClassSecurityInfo()
 
     def getPrettyLink(self, **kwargs):
         """Return the IPrettyLink version of the title."""
@@ -145,6 +226,22 @@ class MeetingAdvice(Container):
         '''In what state am I ?'''
         wfTool = api.portal.get_tool('portal_workflow')
         return wfTool.getInfoFor(self, 'review_state')
+
+    security.declarePublic('wfConditions')
+
+    def wfConditions(self):
+        '''Returns the adapter that implements the interface that proposes
+           methods for use as conditions in the workflow associated with this
+           item.'''
+        return getWorkflowAdapter(self, conditions=True)
+
+    security.declarePublic('wfActions')
+
+    def wfActions(self):
+        '''Returns the adapter that implements the interface that proposes
+           methods for use as actions in the workflow associated with this
+           item.'''
+        return getWorkflowAdapter(self, conditions=False)
 
     def _updateAdviceRowId(self):
         '''Make sure advice_row_id is correct.'''
@@ -275,3 +372,6 @@ class AdviceTypeVocabulary(object):
                     terms.append(SimpleTerm(advice_id, advice_id, advice_title))
 
         return SimpleVocabulary(terms)
+
+InitializeClass(MeetingAdviceWorkflowActions)
+InitializeClass(MeetingAdviceWorkflowConditions)

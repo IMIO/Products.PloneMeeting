@@ -92,6 +92,8 @@ from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
 from Products.PloneMeeting.interfaces import IMeeting
 from Products.PloneMeeting.interfaces import IMeetingConfig
 from Products.PloneMeeting.interfaces import IMeetingItem
+from Products.PloneMeeting.interfaces import IMeetingAdviceWorkflowActions
+from Products.PloneMeeting.interfaces import IMeetingAdviceWorkflowConditions
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowActions
 from Products.PloneMeeting.interfaces import IMeetingItemWorkflowConditions
 from Products.PloneMeeting.interfaces import IMeetingWorkflowActions
@@ -1715,17 +1717,20 @@ schema = Schema((
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
-    BooleanField(
+    LinesField(
         name='defaultAdviceHiddenDuringRedaction',
         default=defValues.defaultAdviceHiddenDuringRedaction,
-        widget=BooleanField._properties['widget'](
+        widget=MultiSelectionWidget(
             description="DefaultAdviceHiddenDuringRedaction",
             description_msgid="default_advice_hidden_during_redaction_descr",
+            format="checkbox",
             label='Defaultadvicehiddenduringredaction',
             label_msgid='PloneMeeting_label_defaultAdviceHiddenDuringRedaction',
             i18n_domain='PloneMeeting',
         ),
         schemata="advices",
+        vocabulary='listAdvicePortalTypes',
+        enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
@@ -3040,6 +3045,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                 (search.UID(), search.Title()))
         return DisplayList(res)
 
+    security.declarePrivate('listAdvicePortalTypes')
+
+    def listAdvicePortalTypes(self):
+        """ """
+        tool = api.portal.get_tool('portal_plonemeeting')
+        advice_portal_types = tool.getAdvicePortalTypes()
+        res = [(portal_type.id, portal_type.title) for portal_type in advice_portal_types]
+        return DisplayList(res)
+
     security.declarePrivate('listSelectableContacts')
 
     def listSelectableContacts(self):
@@ -3960,6 +3974,24 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                  domain='PloneMeeting',
                                  context=self.REQUEST)
 
+    def _adviceConditionsInterfaceFor(self, advice_obj):
+        '''See doc in interfaces.py.'''
+        return IMeetingAdviceWorkflowConditions.__identifier__
+
+    def _adviceActionsInterfaceFor(self, advice_obj):
+        '''See doc in interfaces.py.'''
+        return IMeetingAdviceWorkflowActions.__identifier__
+
+    def getAdviceConditionsInterface(self, **kwargs):
+        '''Return the interface to use to adapt a meetingadvice
+           regarding the WF conditions.'''
+        return self.adapted()._adviceConditionsInterfaceFor(kwargs['obj'])
+
+    def getAdviceActionsInterface(self, **kwargs):
+        '''Return the interface to use to adapt a meetingadvice
+           regarding the WF actions.'''
+        return self.adapted()._adviceActionsInterfaceFor(kwargs['obj'])
+
     def _dataForCustomAdviserRowId(self, row_id):
         '''Returns the data for the given p_row_id from the field 'customAdvisers'.'''
         for adviser in self.getCustomAdvisers():
@@ -4755,12 +4787,12 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
             portalType.view_methods = basePortalType.view_methods
             portalType._aliases = basePortalType._aliases
             portalType._actions = tuple(basePortalType._cloneActions())
+        # Update MeetingAdvice portal_types if necessary
+        self.adapted()._updateMeetingAdvicePortalTypes()
         # Update the cloneToOtherMeetingConfig actions visibility
         self._updateCloneToOtherMCActions()
-        # Call custom method to update other parts if necessary
-        self.adapted().updateExtraPortalTypes()
 
-    def updateExtraPortalTypes(self):
+    def _updateMeetingAdvicePortalTypes(self):
         '''See doc in interfaces.py.'''
         return
 
