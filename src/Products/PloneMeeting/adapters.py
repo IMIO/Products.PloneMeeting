@@ -811,7 +811,8 @@ def query_user_groups_cachekey(method, self):
        associations did not change.'''
     # always check cfg.modified() as queries are portal_type aware
     cfg_modified = self.cfg and self.cfg.modified() or datetime.now()
-    return self.context.modified(), api.user.get_current().getId(), self.tool._users_groups_value(), cfg_modified
+    return self.context.modified(), api.user.get_current().getId(), \
+        self.tool._users_groups_value(), cfg_modified
 
 
 def query_meeting_config_modified_cachekey(method, self):
