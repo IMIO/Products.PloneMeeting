@@ -1020,7 +1020,7 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                             title=from_transition_id,
                             new_state_id=new_state_id, trigger_type=1, script_name='',
                             actbox_name=from_transition_id, actbox_url='',
-                            actbox_icon='{0}.png'.format(from_transition_id),
+                            actbox_icon='%(portal_url)s/{0}.png'.format(from_transition_id),
                             actbox_category='workflow',
                             props={'guard_expr': 'python:here.wfConditions().may{0}()'.format(
                                 string.capwords(from_transition_id))})
@@ -1033,7 +1033,7 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                             title=back_transition_id,
                             new_state_id=back_state_id, trigger_type=1, script_name='',
                             actbox_name=back_transition_id, actbox_url='',
-                            actbox_icon='{0}.png'.format(back_transition_id),
+                            actbox_icon='%(portal_url)s/{0}.png'.format(back_transition_id),
                             actbox_category='workflow',
                             props={'guard_expr': 'python:here.wfConditions().mayCorrect("%s")' % back_state_id})
 
