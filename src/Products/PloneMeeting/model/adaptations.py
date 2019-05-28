@@ -146,6 +146,8 @@ def addState(wf_id,
 
     # ADD NEW STATE
     wf.states.addState(new_state_id)
+    new_state = wf.states[new_state_id]
+    new_state.setProperties(title=new_state_id, description='')
     # clone permissions
     clone_permissions(wf_id, permissions_cloned_state_id, new_state_id)
     # initial_state
@@ -190,7 +192,6 @@ def addState(wf_id,
 
     # CONNECT STATES AND TRANSITIONS
     # new_state_id
-    new_state = wf.states[new_state_id]
     new_state.transitions = tuple([transition_id for transition_id in
                                   [leaving_transition_id] + existing_leaving_transition_ids
                                   if transition_id])
