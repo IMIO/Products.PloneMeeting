@@ -77,7 +77,7 @@ class AdvicesIcons(BrowserView):
         self.cfg = self.tool.getMeetingConfig(self.context)
         self.portal = api.portal.get()
         self.portal_url = self.portal.absolute_url()
-        self.advisableGroups = self.context.getAdvicesGroupsInfosForUser()
+        self.advisableGroups = self.context.getAdvicesGroupsInfosForUser(compute_to_edit=False)
         self.advicesByType = self.context.getAdvicesByType()
         self.pm_utils = SecureModuleImporter['Products.PloneMeeting.utils']
 
@@ -145,7 +145,7 @@ class AdvicesIconsInfos(BrowserView):
         self.cfg = self.tool.getMeetingConfig(self.context)
         self.portal = api.portal.get()
         self.portal_url = self.portal.absolute_url()
-        self.advisableGroups = self.context.getAdvicesGroupsInfosForUser()
+        self.advisableGroups = self.context.getAdvicesGroupsInfosForUser(compute_to_add=False)
         self.advicesByType = self.context.getAdvicesByType()
         self.adviceType = adviceType
         self.userAdviserOrgUids = [org.UID() for org in

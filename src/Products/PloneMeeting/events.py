@@ -611,8 +611,6 @@ def onAdviceAdded(advice, event):
 
     item = advice.getParentNode()
     item.updateLocalRoles()
-    # make the entire _advisers group able to edit the meetingadvice
-    advice.manage_addLocalRoles('%s_advisers' % advice.advice_group, ('Editor', ))
 
     _addManagedPermissions(advice)
 

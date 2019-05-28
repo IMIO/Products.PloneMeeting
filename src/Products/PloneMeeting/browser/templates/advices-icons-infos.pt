@@ -5,7 +5,6 @@
                  adviceType view/adviceType;
                  advicesByType view/advicesByType;
                  advisableGroups view/advisableGroups;
-                 advicesToAdd python: [info[0] for info in advisableGroups[0]];
                  advicesToEdit python: [info[0] for info in advisableGroups[1]];
                  userAdviserOrgUids view/userAdviserOrgUids;">
   <tal:defines define="cfg python: view.cfg;
