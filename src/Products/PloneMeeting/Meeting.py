@@ -1940,7 +1940,7 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         '''Display attendee related fields in view/edit?'''
         return (self.attributeIsUsed('attendees') or self.getAttendees()) and not self.getAssembly()
 
-    security.declarePublic('showAssemblyField')
+    security.declarePublic('showAssemblyFields')
 
     def showAssemblyFields(self):
         '''Display assembly related fields in view/edit?'''

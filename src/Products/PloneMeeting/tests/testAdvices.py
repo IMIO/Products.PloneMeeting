@@ -2019,7 +2019,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertTrue(item.adviceIndex[self.vendors_uid]['hidden_during_redaction'])
         # when advice is hidden, trying to access the view will raise Unauthorized
         self.changeUser('pmCreator1')
-        self.assertRaises(Unauthorized, advice.restrictedTraverse, 'view')
+        self.assertRaises(Unauthorized, advice.restrictedTraverse('view'))
         # back to not hidden
         self.changeUser('pmReviewer2')
         changeView()
