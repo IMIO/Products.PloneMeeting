@@ -420,7 +420,7 @@ schema = Schema((
         name='assembly',
         allowable_content_types="text/plain",
         widget=TextAreaWidget(
-            condition="here/showAssemblyFields",
+            condition="python: 'assembly' in here.shownAssemblyFields()",
             label_msgid="meeting_assembly",
             description="MeetingAssembly",
             description_msgid="assembly_meeting_descr",
@@ -438,7 +438,7 @@ schema = Schema((
         allowable_content_types="text/plain",
         optional=True,
         widget=TextAreaWidget(
-            condition="here/showAssemblyFields",
+            condition="python: 'assemblyExcused' in here.shownAssemblyFields()",
             description="MeetingAssemblyExcused",
             description_msgid="assembly_excused_meeting_descr",
             label='Assemblyexcused',
@@ -453,7 +453,7 @@ schema = Schema((
         allowable_content_types="text/plain",
         optional=True,
         widget=TextAreaWidget(
-            condition="here/showAssemblyFields",
+            condition="python: 'assemblyAbsents' in here.shownAssemblyFields()",
             description="MeetingAssemblyAbsents",
             description_msgid="assembly_absents_meeting_descr",
             label='Assemblyabsents',
@@ -468,7 +468,7 @@ schema = Schema((
         allowable_content_types="text/plain",
         optional=True,
         widget=TextAreaWidget(
-            condition="python: here.attributeIsUsed('assemblyGuests') or here.getAssemblyGuests()",
+            condition="python: 'assemblyGuests' in here.shownAssemblyFields()",
             label='Assemblyguests',
             label_msgid='meeting_assemblyGuests',
             i18n_domain='PloneMeeting',
@@ -481,7 +481,7 @@ schema = Schema((
         allowable_content_types="text/plain",
         optional=True,
         widget=TextAreaWidget(
-            condition="python: here.attributeIsUsed('assemblyProxies') or here.getAssemblyProxies()",
+            condition="python: 'assemblyProxies' in here.shownAssemblyFields()",
             label='Assemblyproxies',
             label_msgid='meeting_assemblyProxies',
             i18n_domain='PloneMeeting',
@@ -494,7 +494,7 @@ schema = Schema((
         allowable_content_types="text/plain",
         optional=True,
         widget=TextAreaWidget(
-            condition="python: here.attributeIsUsed('assemblyStaves') or here.getAssemblyStaves()",
+            condition="python: 'assemblyStaves' in here.shownAssemblyFields()",
             label='Assemblystaves',
             label_msgid='meeting_assemblyStaves',
             i18n_domain='PloneMeeting',
@@ -508,7 +508,7 @@ schema = Schema((
         allowable_content_types=('text/plain',),
         optional=True,
         widget=TextAreaWidget(
-            condition="python: here.attributeIsUsed('signatures') or here.getSignatures()",
+            condition="here/showSignatures",
             label_msgid="meeting_signatures",
             label='Signatures',
             i18n_domain='PloneMeeting',
@@ -1940,11 +1940,33 @@ class Meeting(OrderedBaseFolder, BrowserDefaultMixin):
         '''Display attendee related fields in view/edit?'''
         return (self.attributeIsUsed('attendees') or self.getAttendees()) and not self.getAssembly()
 
-    security.declarePublic('showAssemblyFields')
+    def shownAssemblyFields_cachekey(method, self):
+        '''cachekey method for self.shownAssemblyFields.'''
+        # do only re-compute if cfg changed or self.changed
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        return (cfg.getId(), cfg._p_mtime, self.modified())
 
-    def showAssemblyFields(self):
-        '''Display assembly related fields in view/edit?'''
-        return (self.attributeIsUsed('assembly') or self.getAssembly()) and not self.getAttendees()
+    security.declarePublic('shownAssemblyFields')
+
+    @ram.cache(shownAssemblyFields_cachekey)
+    def shownAssemblyFields(self):
+        '''Return the list of shown assembly field :
+           - used assembly fields;
+           - not empty assembly fields.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        usedAttrs = cfg.getUsedMeetingAttributes()
+        # get fields beginning with 'assembly'
+        fields = [field for field in self.Schema().fields()
+                  if field.getName().startswith('assembly')]
+        return [field.getName() for field in fields if field.getName() in usedAttrs or field.get(self)]
+
+    security.declarePublic('showSignatures')
+
+    def showSignatures(self):
+        '''Show the 'signatures' field?'''
+        return self.attributeIsUsed('signatures') or self.getSignatures()
 
     security.declarePublic('showVotes')
 

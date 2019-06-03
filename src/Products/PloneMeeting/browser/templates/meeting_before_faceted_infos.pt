@@ -147,52 +147,44 @@
 
      <tal:comment replace="nothing">Assembly and signatures.  Backward compatibility for people that used the 'assembly' or 'signatures'
 field before and the 'attendees' now, if the field is not empty, we display it</tal:comment>
-     <tal:assembly condition="context/showAssemblyFields">
-       <tal:defines define="showAssemblyFields python: ((context.getAssembly() or 'assembly' in usedAttrs) and 'assembly',
-                                                        (context.getAssemblyExcused() or 'assemblyExcused' in usedAttrs) and 'assemblyExcused',
-                                                        (context.getAssemblyAbsents() or 'assemblyAbsents' in usedAttrs) and 'assemblyAbsents');">
-        <tal:assembly condition="python: 'assembly' in showAssemblyFields">
-          <span class="item_attribute_label"
-                tal:content="context/getLabelAssembly"></span>:&nbsp;&nbsp;
-          <span tal:replace="structure python: context.getRawAssembly() and context.displayStrikedAssembly() or '<p>-</p>'"/>
-        </tal:assembly>
-        <tal:assembly condition="python: 'assemblyExcused' in showAssemblyFields">
+     <tal:assembly_fields define="shownAssemblyFields context/shownAssemblyFields;">
+      <tal:assembly condition="python: 'assembly' in shownAssemblyFields">
+        <span class="item_attribute_label"
+              tal:content="context/getLabelAssembly"></span>:&nbsp;&nbsp;
+        <span tal:replace="structure python: context.getRawAssembly() and context.displayStrikedAssembly() or '<p>-</p>'"/>
+        <tal:assembly condition="python: 'assemblyExcused' in shownAssemblyFields">
           <span class="item_attribute_label"
                 i18n:translate="meeting_assemblyExcused">Excused</span>:&nbsp;&nbsp;
           <span tal:replace="structure python: context.getAssemblyExcused() or '<p>-</p>'"/>
         </tal:assembly>
-        <tal:assembly condition="python: 'assemblyAbsents' in showAssemblyFields">
+        <tal:assembly condition="python: 'assemblyAbsents' in shownAssemblyFields">
           <span class="item_attribute_label"
                 i18n:translate="meeting_assemblyAbsents">Excused</span>:&nbsp;&nbsp;
           <span tal:replace="structure python: context.getAssemblyAbsents() or '<p>-</p>'"/>
-        </tal:assembly>
-       </tal:defines>
-     </tal:assembly>
+      </tal:assembly>
 
-     <tal:comment replace="nothing">Free text fields available when using 'assembly' or 'attenddes'</tal:comment>
-     <tal:assembly_common_fields>
-       <tal:defines define="showAssemblyFields python: ((context.getAssemblyGuests() or 'assemblyGuests' in usedAttrs) and 'assemblyGuests',
-                                                        (context.getAssemblyProxies() or 'assemblyProxies' in usedAttrs) and 'assemblyProxies',
-                                                        (context.getAssemblyStaves() or 'assemblyStaves' in usedAttrs) and 'assemblyStaves',
-                                                        (context.getSignatures() or 'signatures' in usedAttrs) and 'signatures',);">
-        <fieldset tal:condition="python: 'assemblyGuests' in showAssemblyFields">
-            <legend i18n:translate="meeting_assemblyGuests">Guests</legend>
-            <span tal:replace="structure python: context.getAssemblyGuests() or '<p>-</p>'"/>
-        </fieldset>
-        <fieldset tal:condition="python: 'assemblyProxies' in showAssemblyFields">
-            <legend i18n:translate="meeting_assemblyProxies">Proxies</legend>
-            <span tal:replace="structure python: context.getAssemblyProxies() or '<p>-</p>'"/>
-        </fieldset>
-        <fieldset tal:condition="python: 'assemblyStaves' in showAssemblyFields">
-            <legend i18n:translate="meeting_assemblyStaves">Staves</legend>
-            <span tal:replace="structure python: context.getAssemblyStaves() or '<p>-</p>'"/>
-        </fieldset>
-        <fieldset tal:condition="python: 'signatures' in showAssemblyFields">
-            <legend i18n:translate="meeting_signatures">Signatures</legend>
-            <span tal:replace="structure python: context.getSignatures(mimetype='text/x-html-safe') or '<p>-</p>'"/>
-        </fieldset>
-      </tal:defines>
-     </tal:assembly_common_fields>
+      <tal:comment replace="nothing">Free text fields available when using 'assembly' or 'attenddes'</tal:comment>
+      <tal:assembly_common_fields>
+        <tal:defines define="showSignatures context/showSignatures;">
+         <fieldset tal:condition="python: 'assemblyGuests' in shownAssemblyFields">
+             <legend i18n:translate="meeting_assemblyGuests">Guests</legend>
+             <span tal:replace="structure python: context.getAssemblyGuests() or '<p>-</p>'"/>
+         </fieldset>
+         <fieldset tal:condition="python: 'assemblyProxies' in shownAssemblyFields">
+             <legend i18n:translate="meeting_assemblyProxies">Proxies</legend>
+             <span tal:replace="structure python: context.getAssemblyProxies() or '<p>-</p>'"/>
+         </fieldset>
+         <fieldset tal:condition="python: 'assemblyStaves' in shownAssemblyFields">
+             <legend i18n:translate="meeting_assemblyStaves">Staves</legend>
+             <span tal:replace="structure python: context.getAssemblyStaves() or '<p>-</p>'"/>
+         </fieldset>
+         <fieldset tal:condition="showSignatures">
+             <legend i18n:translate="meeting_signatures">Signatures</legend>
+             <span tal:replace="structure python: context.getSignatures(mimetype='text/x-html-safe') or '<p>-</p>'"/>
+         </fieldset>
+       </tal:defines>
+      </tal:assembly_common_fields>
+     </tal:assembly_fields>
     </div>
    </div>
    <script>
