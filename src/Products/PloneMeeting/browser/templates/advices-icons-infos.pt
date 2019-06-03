@@ -59,7 +59,7 @@
                           <img src="advice_inherited.png" tal:attributes="src string:${view/portal_url}/advice_inherited.png"/>
                          </a>
                       </acronym>
-                      <acronym tal:condition="python: view.mayRemoveInheritedAdvice(adviceIsInherited, advice['id'])">
+                      <acronym tal:condition="python: view.mayRemoveInheritedAdvice(advice['id'])">
                          <a title="Remove advice inheritance"
                             class="link-overlay-pm"
                             i18n:domain="PloneMeeting"
