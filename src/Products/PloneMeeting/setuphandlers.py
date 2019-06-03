@@ -11,6 +11,7 @@
 
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.messagesviewlet.utils import add_message
+from dexterity.localroles.utils import add_fti_configuration
 from eea.facetednavigation.interfaces import ICriteria
 from imio.dashboard.setuphandlers import add_orgs_searches
 from imio.helpers.catalog import addOrUpdateColumns
@@ -363,6 +364,9 @@ def postInstall(context):
     # enable plone.app.caching
     api.portal.set_registry_record('plone.caching.interfaces.ICacheSettings.enabled', True)
 
+    # configure dexterity localrolesfield
+    _configureDexterityLocalRolesField()
+
     # reorder css
     _reorderCSS(site)
 
@@ -523,6 +527,21 @@ def _configure_zamqp(site):
         site.portal_setup.runAllImportStepsFromProfile(
             'imio.zamqp.pm:default',
             dependency_strategy=DEPENDENCY_STRATEGY_REAPPLY)
+
+
+def _configureDexterityLocalRolesField():
+    """Configure field meetingadvice.advice_group."""
+    # meetingadvice
+    roles_config = {'advice_group': {
+        'advice_given': {u'advisers': {'rel': '', 'roles': []}},
+        'advice_under_edit': {u'advisers': {'rel': '', 'roles': [u'Editor']}}}
+    }
+    msg = add_fti_configuration(portal_type='meetingadvice',
+                                configuration=roles_config['advice_group'],
+                                keyname='advice_group',
+                                force=True)
+    if msg:
+        logger.warn(msg)
 
 
 def _reorderCSS(site):

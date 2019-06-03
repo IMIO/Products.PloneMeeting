@@ -261,7 +261,8 @@ class IMeetingItemDocumentation:
     def _adviceIsEditableByCurrentUser(org_uid):
         """Even if adviceInfo['advice_editable'], is current user really able to edit the advice?
            This is useful when using custom workflows and made to ease override of
-           MeetingItem.getAdvicesGroupsInfosForUser."""
+           MeetingItem.getAdvicesGroupsInfosForUser
+           By default it checks if current user has ModifyPortalContent on advice object."""
     def _sendAdviceToGiveToGroup(org_uid):
         """Send the 'your advice is asked on this item' mail notification to given p_org_uid?"""
     def _advicePortalTypeForAdviser(org_uid):

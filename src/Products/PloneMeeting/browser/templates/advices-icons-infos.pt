@@ -5,7 +5,6 @@
                  adviceType view/adviceType;
                  advicesByType view/advicesByType;
                  advisableGroups view/advisableGroups;
-                 advicesToAdd python: [info[0] for info in advisableGroups[0]];
                  advicesToEdit python: [info[0] for info in advisableGroups[1]];
                  userAdviserOrgUids view/userAdviserOrgUids;">
   <tal:defines define="cfg python: view.cfg;
@@ -145,64 +144,65 @@
             <tal:notHiddenUnderRedactionOrManagable condition="python: memberIsAdviserForGroup or mayEdit or not adviceType in ('hidden_during_redaction', 'considered_not_given_hidden_during_redaction')">
 
             <table class="no-style-table advices" cellpadding="2" cellspacing="2" width="100%">
-              <tr tal:condition="mayEdit">
-                <td class="noPadding" width="auto">
-                </td>
-                <tal:editableOrLocked define="adviceIsLocked python: obj and obj.wl_isLocked() or False;">
+              <tr>
+                <td class="noPadding" width="auto"></td>
+                <tal:mayEdit tal:condition="mayEdit">
+                  <tal:editableOrLocked define="adviceIsLocked python: obj and obj.wl_isLocked() or False;">
+                  <td align="right" width="20px" class="noPadding">
+                    <a href="edit"
+                       tal:condition="not: adviceIsLocked"
+                       class="link-overlay-pm-advice"
+                       tal:attributes="href string:${obj_absolute_url}/edit">
+                      <img i18n:attributes="title" title="advice_edit"
+                           tal:attributes="src string:${view/portal_url}/edit.png;" />
+                    </a>
+                    <a href="view"
+                       tal:condition="adviceIsLocked"
+                       tal:attributes="href string:${obj_absolute_url}/view">
+                      <img i18n:attributes="title" title="Locked"
+                           i18n:domain="plone"
+                           tal:attributes="src string:${view/portal_url}/lock_icon.png;" />
+                    </a>
+                  </td>
+                  <td align="right" width="20px" class="noPadding" condition="not: adviceIsLocked">
+                    <img tal:condition="advice/hidden_during_redaction"
+                         class="adviceHiddenDuringRedactionEditable"
+                         i18n:attributes="title" title="to_not_hidden_during_redaction"
+                         tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_enable_hidden_during_redaction.png;
+                                         onClick string:javascript:callViewAndReload(base_url='${obj_absolute_url}', view_name='@@change-advice-hidden-during-redaction', this);;"/>
+                    <img tal:condition="not: advice/hidden_during_redaction"
+                         class="adviceHiddenDuringRedactionEditable"
+                         i18n:attributes="title" title="to_hidden_during_redaction"
+                         tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_disable_hidden_during_redaction.png;
+                                         onClick string:javascript:callViewAndReload(base_url='${obj_absolute_url}', view_name='@@change-advice-hidden-during-redaction', this);;"/>
+                  </td>
+                  </tal:editableOrLocked>
+                  <td tal:condition="python: view.tool.showAnnexesTab(obj)" align="right" width="20px" class="noPadding">
+                    <a href="#"
+                       tal:attributes="href string:${obj_absolute_url}/@@categorized-annexes">
+                      <img src="manage_annexes.gif"
+                           i18n:attributes="title" title="Manage advice annexes"
+                           tal:attributes="src string:${view/portal_url}/manage_annexes.gif"/>
+                    </a>
+                  </td>
+                  <td align="right" width="20px" class="noPadding">
+                      <img tal:condition="python: view.mayDelete(obj)"
+                           i18n:attributes="title" title="Delete advice"
+                           tal:attributes="src string: ${view/portal_url}/delete_icon.png;
+                                           onClick string:javascript:confirmDeleteObject(base_url='${context/absolute_url}', object_uid='${advice/advice_uid}', this);;"
+                           onClick="confirmDeleteObject(this);" style="cursor:pointer"/>
+                      <img tal:condition="python: not view.mayDelete(obj)"
+                           i18n:attributes="title" title="Advice not deletable"
+                           tal:attributes="src string: ${view/portal_url}/delete_grey_icon.png;"
+                           style="cursor:help"/>
+                  </td>
+                </tal:mayEdit>
                 <td align="right" width="20px" class="noPadding">
-                  <a href="edit"
-                     tal:condition="not: adviceIsLocked"
-                     class="link-overlay-pm-advice"
-                     tal:attributes="href string:${obj_absolute_url}/edit">
-                    <img i18n:attributes="title" title="advice_edit"
-                         tal:attributes="src string:${view/portal_url}/edit.png;" />
-                  </a>
                   <a href="view"
-                     tal:condition="adviceIsLocked"
                      tal:attributes="href string:${obj_absolute_url}/view">
-                    <img i18n:attributes="title" title="Locked"
-                         i18n:domain="plone"
-                         tal:attributes="src string:${view/portal_url}/lock_icon.png;" />
+                    <img i18n:attributes="title" title="Advice advanced management screen"
+                         tal:attributes="src string:${view/portal_url}/advice_manage.png;" />
                   </a>
-                </td>
-                <td align="right" width="20px" class="noPadding" condition="not: adviceIsLocked">
-                  <img tal:condition="advice/hidden_during_redaction"
-                       class="adviceHiddenDuringRedactionEditable"
-                       i18n:attributes="title" title="to_not_hidden_during_redaction"
-                       tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_enable_hidden_during_redaction.png;
-                                       onClick string:javascript:callViewAndReload(base_url='${obj_absolute_url}', view_name='@@change-advice-hidden-during-redaction', this);;"/>
-                  <img tal:condition="not: advice/hidden_during_redaction"
-                       class="adviceHiddenDuringRedactionEditable"
-                       i18n:attributes="title" title="to_hidden_during_redaction"
-                       tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_disable_hidden_during_redaction.png;
-                                       onClick string:javascript:callViewAndReload(base_url='${obj_absolute_url}', view_name='@@change-advice-hidden-during-redaction', this);;"/>
-                </td>
-                </tal:editableOrLocked>
-                <td align="right" width="20px" class="noPadding">
-                <a href="view"
-                   tal:attributes="href string:${obj_absolute_url}/view">
-                  <img i18n:attributes="title" title="Advice advanced management screen"
-                       tal:attributes="src string:${view/portal_url}/advice_manage.png;" />
-                </a>
-                </td>
-                <td tal:condition="python: view.tool.showAnnexesTab(obj)" align="right" width="20px" class="noPadding">
-                  <a href="#"
-                     tal:attributes="href string:${obj_absolute_url}/@@categorized-annexes">
-                    <img src="manage_annexes.gif"
-                         i18n:attributes="title" title="Manage advice annexes"
-                         tal:attributes="src string:${view/portal_url}/manage_annexes.gif"/>
-                  </a>
-                </td>
-                <td align="right" width="20px" class="noPadding">
-                    <img tal:condition="python: view.mayDelete(obj)"
-                         i18n:attributes="title" title="Delete advice"
-                         tal:attributes="src string: ${view/portal_url}/delete_icon.png;
-                                         onClick string:javascript:confirmDeleteObject(base_url='${context/absolute_url}', object_uid='${advice/advice_uid}', this);;"
-                         onClick="confirmDeleteObject(this);" style="cursor:pointer"/>
-                    <img tal:condition="python: not view.mayDelete(obj)"
-                         i18n:attributes="title" title="Advice not deletable"
-                         tal:attributes="src string: ${view/portal_url}/delete_grey_icon.png;"
-                         style="cursor:help"/>
                 </td>
               </tr>
               <tr tal:condition="python: adviceType != 'not_given'">

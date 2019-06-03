@@ -18,6 +18,8 @@ Changelog
 - Added workflow actions/conditions adapters for MeetingAdvice as it is already the case for Meeting/MeetingItem
 - Adapted MeetingConfig.defaultAdviceHiddenDuringRedaction from a boolean value to a list of existing advice portal_types
   so it is possible to enable defaultAdviceHiddenDuringRedaction on a per advice portal_type basis
+- Rely on dexterity.localrolesfield to manage meetingadvice workflows
+- Optimized MeetingItem.getAdvicesGroupsInfosForUser to be able to compute the to_add/to_edit only when necessary
 
 4.1b17 (2019-05-16)
 -------------------

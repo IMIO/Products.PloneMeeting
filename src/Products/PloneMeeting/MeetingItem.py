@@ -4007,11 +4007,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getAdvicesGroupsInfosForUser')
 
-    def getAdvicesGroupsInfosForUser(self):
+    def getAdvicesGroupsInfosForUser(self, compute_to_add=True, compute_to_edit=True):
         '''This method returns 2 lists of groups in the name of which the
            currently logged user may, on this item:
            - add an advice;
-           - edit or delete an advice.'''
+           - edit or delete an advice.
+           Depending on p_compute_to_add and p_compute_to_edit,
+           returned list are computed or left empty.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         # Advices must be enabled
@@ -4032,18 +4034,20 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             org_uid = org.UID()
             if org_uid in self.adviceIndex:
                 advice = self.adviceIndex[org_uid]
-                if advice['type'] == NOT_GIVEN_ADVICE_VALUE and \
+                if compute_to_add and advice['type'] == NOT_GIVEN_ADVICE_VALUE and \
                    advice['advice_addable'] and \
                    self.adapted()._adviceIsAddableByCurrentUser(org_uid):
                     toAdd.append((org_uid, org.get_full_title()))
-                if advice['type'] != NOT_GIVEN_ADVICE_VALUE and \
+                if compute_to_edit and advice['type'] != NOT_GIVEN_ADVICE_VALUE and \
                    advice['advice_editable'] and \
                    self.adapted()._adviceIsEditableByCurrentUser(org_uid):
                     toEdit.append((org_uid, org.get_full_title()))
             # if not in self.adviceIndex, aka not already given
             # check if group is a power adviser and if he is allowed
             # to add an advice in current item state
-            elif org_uid in powerAdvisers and itemState in org.get_item_advice_states(cfg):
+            elif compute_to_add and \
+                    org_uid in powerAdvisers and \
+                    itemState in org.get_item_advice_states(cfg):
                 toAdd.append((org_uid, org.get_full_title()))
         return (toAdd, toEdit)
 
@@ -4908,7 +4912,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _adviceIsEditableByCurrentUser(self, org_uid):
         '''See doc in interfaces.py.'''
-        return True
+        item = self.getSelf()
+        adviceObj = item.getAdviceObj(org_uid)
+        return _checkPermission(ModifyPortalContent, adviceObj)
 
     security.declarePublic('getDelayInfosForAdvice')
 
