@@ -27,22 +27,15 @@ from plone.app.layout.viewlets import ViewletBase
 from Products.Five.browser.pagetemplatefile import ViewPageTemplateFile
 from Products.PloneMeeting.events import _is_held_pos_uid_used_by
 from Products.PloneMeeting.utils import displaying_available_items
+from Products.PloneMeeting.utils import get_state_infos
 from zope.component import getMultiAdapter
 
 
 class WorkflowState(ViewletBase):
     '''This viewlet displays the workflow state.'''
 
-    def update(self):
-        self.context_state = getMultiAdapter((self.context, self.request),
-                                             name=u'plone_context_state')
-
     def state_infos(self):
-        wfTool = api.portal.get_tool('portal_workflow')
-        review_state = wfTool.getInfoFor(self.context, 'review_state')
-        wf = wfTool.getWorkflowsFor(self.context)[0]
-        return {'state_name': review_state,
-                'state_title': wf.states.get(review_state).title}
+        return get_state_infos(self.context)
 
     index = ViewPageTemplateFile("templates/viewlet_workflowstate.pt")
 

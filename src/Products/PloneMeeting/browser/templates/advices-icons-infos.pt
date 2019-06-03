@@ -206,7 +206,7 @@
                 </td>
               </tr>
               <tr tal:condition="python: adviceType != 'not_given'">
-                <td colspan="6"
+                <td colspan="6" class="table_widget_value"
                     tal:define="comment python: obj.advice_comment and obj.advice_comment.output;
                                 needToCropComment python: comment and len(comment) > 400;
                                 observations python: obj.advice_observations and obj.advice_observations.output;
@@ -224,6 +224,13 @@
                          <span tal:content="string:${previous/advice_type}" i18n:translate="">Previous advice type</span>)
                       </tal:defines>
                     </tal:previousAdviceType>
+
+                    <div class="pm_workflowstate" i18n:domain="plone" tal:condition="obj">
+                      <span i18n:translate="label_state"></span>&nbsp;
+                      <span tal:define="state_infos python: view.state_infos(obj)"
+                            tal:content="state_infos/state_title"
+                            tal:attributes="class string:state-${state_infos/state_name}"></span>
+                    </div>
 
                     <fieldset class="advice_comment">
                          <legend i18n:translate="">Advice official comment</legend>
@@ -245,7 +252,7 @@
                 </td>
               </tr>
               <tr tal:condition="python: adviceType != 'not_given'">
-                <td>
+                <td class="table_widget_value">
                     <a href="#"
                        class="link-overlay-pm-preview-advice"
                        tal:condition="adviceHolderIsViewable"
@@ -256,7 +263,7 @@
                 </td>
                 <td colspan="5"
                     align="right"
-                    class="advice_annexes">
+                    class="advice_annexes table_widget_value">
                     <tal:defines condition="adviceHolderIsViewable">
                         <tal:annexes replace="structure python: obj.restrictedTraverse('categorized-childs')()" />
                     </tal:defines>

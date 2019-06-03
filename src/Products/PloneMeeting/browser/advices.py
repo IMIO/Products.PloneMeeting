@@ -32,6 +32,7 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.utils import _checkPermission
 from Products.Five import BrowserView
 from Products.PageTemplates.Expressions import SecureModuleImporter
+from Products.PloneMeeting.utils import get_state_infos
 from zope.event import notify
 from zope.lifecycleevent import ObjectModifiedEvent
 
@@ -183,6 +184,9 @@ class AdvicesIconsInfos(BrowserView):
     def authorname(self, advice):
         author = api.user.get(advice.Creator())
         return author and author.getProperty('fullname') or advice.Creator()
+
+    def state_infos(self, advice):
+        return get_state_infos(advice)
 
 
 class ChangeAdviceHiddenDuringRedactionView(BrowserView):
