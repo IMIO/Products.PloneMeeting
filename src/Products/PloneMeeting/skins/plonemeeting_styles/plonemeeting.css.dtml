@@ -442,6 +442,11 @@ div.add_advice_icon {
     display: none;
 }
 
+/* manage very large advice label */
+div#content.advice_infos_tooltipster legend {
+   height: auto;
+}
+
 div#content.advice_infos_tooltipster legend acronym {
    margin-right: 0.25em;
 }
