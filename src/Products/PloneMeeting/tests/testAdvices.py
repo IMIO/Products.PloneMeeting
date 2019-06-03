@@ -3122,9 +3122,13 @@ class testAdvices(PloneMeetingTestCase):
                                      states=(self._stateMappingFor('itemcreated'), ))
         self.changeUser('powerobserver1')
         advicesIconsInfosViewItem1 = item1.restrictedTraverse('advices-icons-infos')
+        # call view so it initialize every attributes on self
+        advicesIconsInfosViewItem1(adviceType='positive')
         advicesIconsInfosViewItem2 = item2.restrictedTraverse('advices-icons-infos')
+        # call view so it initialize every attributes on self
+        advicesIconsInfosViewItem2(adviceType='positive')
         # shown on the advices-icons
-        self.assertTrue(advicesIconsInfosViewItem2.showLinkToInherited(True, item1))
+        self.assertTrue(advicesIconsInfosViewItem2.showLinkToInherited(item1))
         self.assertTrue('data-advice_id' in advicesIconsInfosViewItem2(adviceType='positive'))
         # not for adviceHolder
         self.assertFalse('data-advice_id' in advicesIconsInfosViewItem1(adviceType='positive'))
@@ -3133,7 +3137,7 @@ class testAdvices(PloneMeetingTestCase):
         self.proposeItem(item1)
         self.assertFalse(self.hasPermission(View, item1))
         # not more shown on the advices-icons
-        self.assertFalse(advicesIconsInfosViewItem2.showLinkToInherited(True, item1))
+        self.assertFalse(advicesIconsInfosViewItem2.showLinkToInherited(item1))
         self.assertFalse('data-advice_id' in advicesIconsInfosViewItem2(adviceType='positive'))
 
     def test_pm_AdviceAuthorDisplayedInAdviceInfos(self):

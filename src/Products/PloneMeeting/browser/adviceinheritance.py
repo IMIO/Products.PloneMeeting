@@ -77,9 +77,8 @@ class AdviceRemoveInheritanceForm(AutoExtensibleForm, form.EditForm):
         advice_infos = self.context.restrictedTraverse('@@advices-icons-infos')
         # initialize advice_infos
         advice_data = self.context.getAdviceDataFor(self.context, data['advice_uid'])
-        advice_infos(advice_data['type'])
-        advice_is_inherited = self.context.adviceIsInherited(data['advice_uid'])
-        if not advice_infos.mayRemoveInheritedAdvice(advice_is_inherited, data['advice_uid']):
+        advice_infos(self.context._shownAdviceTypeFor(advice_data))
+        if not advice_infos.mayRemoveInheritedAdvice(data['advice_uid']):
             raise Unauthorized
 
         # if 'ask_localy', check if advice_id may be asked locally, if it is not the case
