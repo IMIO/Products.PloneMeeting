@@ -24,6 +24,7 @@
 
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.utils import get_organization
+from plone.dexterity.browser.view import DefaultView
 from imio.actionspanel.interfaces import IContentDeletable
 from imio.history.browser.views import IHVersionPreviewView
 from plone import api
@@ -37,8 +38,9 @@ from zope.event import notify
 from zope.lifecycleevent import ObjectModifiedEvent
 
 
-def delay_icon(memberIsAdviserForGroup, adviceInfo):
-    """In case this is a delay aware advie, return a delay_icon is advie is not_given/hidden_during_redaction."""
+def _delay_icon(memberIsAdviserForGroup, adviceInfo):
+    """In case this is a delay aware advice, return a delay_icon
+       if advice is not_given/hidden_during_redaction."""
     if not memberIsAdviserForGroup:
         return 'advice_with_delay_disabled_big.png'
     else:
@@ -109,12 +111,12 @@ class AdvicesIcons(BrowserView):
                    adviceInfo['delay_infos']['left_delay'] < smaller_delay:
                     if org_uid in userAdviserOrgUids:
                         # determinate delay_icon to use
-                        advicesToWarn[adviceType] = adviceInfo, delay_icon(True, adviceInfo)
+                        advicesToWarn[adviceType] = adviceInfo, _delay_icon(True, adviceInfo)
                     # check if we already have a adviceToWarn, if user was adviser
                     # for this group, it is prioritary
                     elif not advicesToWarn.get(adviceType) or \
                             (advicesToWarn.get(adviceType) and not advicesToWarn[adviceType][1] == 0):
-                        advicesToWarn[adviceType] = adviceInfo, delay_icon(False, adviceInfo)
+                        advicesToWarn[adviceType] = adviceInfo, _delay_icon(False, adviceInfo)
                     else:
                         continue
                     smaller_delay = adviceInfo['delay_infos']['left_delay']
@@ -141,35 +143,49 @@ class AdvicesIconsInfos(BrowserView):
 
     def __call__(self, adviceType):
         """ """
+        self._initAdvicesInfos(adviceType)
+        return self.index()
+
+    def _initAdvicesInfos(self, adviceType):
+        """ """
         self.pm_utils = SecureModuleImporter['Products.PloneMeeting.utils']
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
         self.portal = api.portal.get()
         self.portal_url = self.portal.absolute_url()
         self.advisableGroups = self.context.getAdvicesGroupsInfosForUser(compute_to_add=False)
+        self.advicesToEdit = [info[0] for info in self.advisableGroups[1]]
         self.advicesByType = self.context.getAdvicesByType()
         self.adviceType = adviceType
         self.userAdviserOrgUids = [org.UID() for org in
                                    self.tool.get_orgs_for_user(suffixes=['advisers'])]
-        return self.index()
 
-    def showLinkToInherited(self, adviceIsInherited, adviceHolder):
+    def _initAdviceInfos(self, advice_id):
         """ """
-        return bool(adviceIsInherited and self.context._appendLinkedItem(adviceHolder, only_viewable=True))
+        self.memberIsAdviserForGroup = advice_id in self.userAdviserOrgUids
+        self.adviceIsInherited = self.context.adviceIsInherited(advice_id)
+        isRealManager = self.tool.isManager(self.context, realManagers=True)
+        self.mayEdit = not self.adviceIsInherited and \
+            ((self.advicesToEdit and advice_id in self.advicesToEdit) or
+             (isRealManager and not self.adviceType == 'not_given'))
 
-    def mayRemoveInheritedAdvice(self, adviceIsInherited, advice_uid):
+    def showLinkToInherited(self, adviceHolder):
+        """ """
+        return bool(self.adviceIsInherited and self.context._appendLinkedItem(adviceHolder, only_viewable=True))
+
+    def mayRemoveInheritedAdvice(self, advice_id):
         """To remove an inherited advice, must be :
            - MeetingManager;
            - or adviser for p_advice_id group and current item in a itemAdviceEditStates review_state."""
         res = False
-        if adviceIsInherited:
+        if self.adviceIsInherited:
             if self.tool.isManager(self.context) and self.context.mayQuickEdit('optionalAdvisers'):
                 res = True
             else:
                 if self.cfg.getInheritedAdviceRemoveableByAdviser() and \
-                   advice_uid in self.userAdviserOrgUids and \
+                   advice_id in self.userAdviserOrgUids and \
                    self.context.queryState() in get_organization(
-                        advice_uid).get_item_advice_edit_states(cfg=self.cfg):
+                        advice_id).get_item_advice_edit_states(cfg=self.cfg):
                     return True
         return res
 
@@ -177,9 +193,15 @@ class AdvicesIconsInfos(BrowserView):
         """ """
         return IContentDeletable(advice).mayDelete(advisableGroups=self.advisableGroups)
 
-    def delay_icon(self, memberIsAdviserForGroup, adviceInfo):
+    def mayView(self):
+        """ """
+        return self.memberIsAdviserForGroup or \
+            self.mayEdit or \
+            self.adviceType not in ('hidden_during_redaction', 'considered_not_given_hidden_during_redaction')
+
+    def delay_icon(self, adviceInfo):
         """Makes it callable in the template."""
-        return delay_icon(memberIsAdviserForGroup, adviceInfo)
+        return _delay_icon(self.memberIsAdviserForGroup, adviceInfo)
 
     def authorname(self, advice):
         author = api.user.get(advice.Creator())
@@ -262,3 +284,19 @@ class AdviceVersionPreviewView(IHVersionPreviewView):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
         self.adviceStyle = cfg.getAdviceStyle()
+
+
+class AdviceView(DefaultView):
+    """ """
+
+    def __call__(self):
+        """Check if viewable by current user in case smart guy call the right url."""
+        advice_uid = self.context.UID()
+        parent = self.context.aq_inner.aq_parent
+        advice_icons_infos = parent.restrictedTraverse('@@advices-icons-infos')
+        advice_type = parent._shownAdviceTypeFor(parent.adviceIndex[self.context.advice_group])
+        advice_icons_infos._initAdvicesInfos(advice_type)
+        advice_icons_infos._initAdviceInfos(advice_uid)
+        if not advice_icons_infos.mayView():
+            raise Unauthorized
+        return super(AdviceView, self).__call__()

@@ -21,6 +21,7 @@ Changelog
 - Rely on dexterity.localrolesfield to manage meetingadvice workflows
 - Optimized MeetingItem.getAdvicesGroupsInfosForUser to be able to compute the to_add/to_edit only when necessary
 - Display the advice review_state in the advice infos tooltipster popup
+- Override meetingadvice 'view' class to raise Unauthorized if current user tries to access it and advice is not viewable
 
 4.1b17 (2019-05-16)
 -------------------

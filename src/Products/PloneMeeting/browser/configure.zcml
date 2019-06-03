@@ -314,7 +314,7 @@
     <browser:page
         for="Products.PloneMeeting.content.advice.IMeetingAdvice"
         name="view"
-        class="plone.dexterity.browser.view.DefaultView"
+        class="Products.PloneMeeting.browser.advices.AdviceView"
         template="templates/meetingadvice.pt"
         permission="zope2.View"
         />

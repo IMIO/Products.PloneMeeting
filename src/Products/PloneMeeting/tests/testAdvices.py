@@ -2011,20 +2011,26 @@ class testAdvices(PloneMeetingTestCase):
                                              'advice_hide_during_redaction': False,
                                              'advice_comment': RichTextValue(u'My comment')})
         # 'pmReviewer2', as adviser, is able to toggle advice_hide_during_redaction
-        self.assertTrue(advice.advice_hide_during_redaction is False)
-        self.assertTrue(item.adviceIndex[self.vendors_uid]['hidden_during_redaction'] is False)
+        self.assertFalse(advice.advice_hide_during_redaction)
+        self.assertFalse(item.adviceIndex[self.vendors_uid]['hidden_during_redaction'])
         changeView = advice.restrictedTraverse('@@change-advice-hidden-during-redaction')
         changeView()
-        self.assertTrue(advice.advice_hide_during_redaction is True)
-        self.assertTrue(item.adviceIndex[self.vendors_uid]['hidden_during_redaction'] is True)
+        self.assertTrue(advice.advice_hide_during_redaction)
+        self.assertTrue(item.adviceIndex[self.vendors_uid]['hidden_during_redaction'])
+        # when advice is hidden, trying to access the view will raise Unauthorized
+        self.changeUser('pmCreator1')
+        self.assertRaises(Unauthorized, advice.restrictedTraverse, 'view')
+        # back to not hidden
+        self.changeUser('pmReviewer2')
         changeView()
-        self.assertTrue(advice.advice_hide_during_redaction is False)
-        self.assertTrue(item.adviceIndex[self.vendors_uid]['hidden_during_redaction'] is False)
-        # user must be able to edit the advice, here, it is not the case for 'pmCreator1'
+        self.assertFalse(advice.advice_hide_during_redaction)
+        self.assertFalse(item.adviceIndex[self.vendors_uid]['hidden_during_redaction'])
+        # to use the change view, user must be able to edit the advice,
+        # here, it is not the case for 'pmCreator1'
         self.changeUser('pmCreator1')
         self.assertRaises(Unauthorized, changeView)
-        self.assertTrue(advice.advice_hide_during_redaction is False)
-        self.assertTrue(item.adviceIndex[self.vendors_uid]['hidden_during_redaction'] is False)
+        # but the view is accessible
+        self.assertTrue(advice.restrictedTraverse('view')())
 
     def test_pm_ChangeAdviceAskedAgainView(self):
         """Test the view that will change from advice asked_again/back to previous advice."""

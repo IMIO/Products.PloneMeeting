@@ -4,25 +4,21 @@
      tal:define="item_url context/absolute_url;
                  adviceType view/adviceType;
                  advicesByType view/advicesByType;
-                 advisableGroups view/advisableGroups;
-                 advicesToEdit python: [info[0] for info in advisableGroups[1]];
+                 advicesToEdit view/advicesToEdit;
                  userAdviserOrgUids view/userAdviserOrgUids;">
   <tal:defines define="cfg python: view.cfg;
                        displayedAddIcon python: False;
                        adviceStyle python: cfg.getAdviceStyle();
                        displayAdviceConfidentiality python: cfg.getEnableAdviceConfidentiality() and view.tool.isManager(context);
-                       isRealManager python: view.tool.isManager(context, realManagers=True);
                        item_review_state context/queryState;">
 
           <tal:comment replace="nothing">List of group names</tal:comment>
           <tal:loop repeat="advice python:advicesByType[adviceType]">
-            <fieldset tal:define="memberIsAdviserForGroup python:  advice['id'] in userAdviserOrgUids;
+            <fieldset tal:define="dummy python: view._initAdviceInfos(advice['id']);
                                   adviceHolder python: advice.get('adviceHolder', None) or view.context;
                                   adviceHolderIsViewable adviceHolder/isViewable;
                                   obj python: advice.get('advice_id', None) and adviceHolder.get(advice['advice_id'], None);
                                   obj_absolute_url python: obj and obj.absolute_url() or '';
-                                  adviceIsInherited python: context.adviceIsInherited(advice['id']);
-                                  mayEdit python: not adviceIsInherited and ((advicesToEdit and advice['id'] in advicesToEdit) or (isRealManager and not adviceType == 'not_given'));
                                   customMessageInfos python: context.adapted().getCustomAdviceMessageFor(advice);
                                   displayDefaultComplementaryMessage customMessageInfos/displayDefaultComplementaryMessage;
                                   customAdviceMessage customMessageInfos/customAdviceMessage;">
@@ -35,7 +31,7 @@
                   <span tal:condition="advice/delay">
                      <tal:defines define="class_if_not_given string:advice_delay advice_delay_${advice/delay_infos/delay_status};">
                        <img src="advice_with_delay_big.png"
-                            tal:define="delay_icon python: view.delay_icon(memberIsAdviserForGroup, advice)"
+                            tal:define="delay_icon python: view.delay_icon(advice)"
                             tal:attributes="src string:${view/portal_url}/${delay_icon};"/>
                        <span class="advice_delay"
                              tal:content="advice/delay_infos/left_delay"
@@ -49,7 +45,7 @@
                            i18n:attributes="title"
                            tal:attributes="src string:${view/portal_url}/advice_not_asked.png"/>
                   </tal:not_asked_advice_icon>
-                  <tal:inherited_advice condition="python: view.showLinkToInherited(adviceIsInherited, adviceHolder)">
+                  <tal:inherited_advice condition="python: view.showLinkToInherited(adviceHolder)">
                       <acronym>
                          <a class="tooltipster-inherited-advice deactivated"
                             title="Advice inherited from another item"
@@ -141,12 +137,12 @@
                 </legend>
                 <div tal:attributes="id string:comment_content_${advice/id}">
 
-            <tal:notHiddenUnderRedactionOrManagable condition="python: memberIsAdviserForGroup or mayEdit or not adviceType in ('hidden_during_redaction', 'considered_not_given_hidden_during_redaction')">
+            <tal:notHiddenUnderRedactionOrManagable condition="python: view.mayView()">
 
             <table class="no-style-table advices" cellpadding="2" cellspacing="2" width="100%">
               <tr>
                 <td class="noPadding" width="auto"></td>
-                <tal:mayEdit tal:condition="mayEdit">
+                <tal:mayEdit tal:condition="view/mayEdit">
                   <tal:editableOrLocked define="adviceIsLocked python: obj and obj.wl_isLocked() or False;">
                   <td align="right" width="20px" class="noPadding">
                     <a href="edit"
@@ -197,7 +193,7 @@
                            style="cursor:help"/>
                   </td>
                 </tal:mayEdit>
-                <td align="right" width="20px" class="noPadding">
+                <td align="right" width="20px" class="noPadding" tal:condition="nocall:obj">
                   <a href="view"
                      tal:attributes="href string:${obj_absolute_url}/view">
                     <img i18n:attributes="title" title="Advice advanced management screen"
@@ -225,7 +221,7 @@
                       </tal:defines>
                     </tal:previousAdviceType>
 
-                    <div class="pm_workflowstate" i18n:domain="plone" tal:condition="obj">
+                    <div class="pm_workflowstate" i18n:domain="plone" tal:condition="nocall:obj">
                       <span i18n:translate="label_state"></span>&nbsp;
                       <span tal:define="state_infos python: view.state_infos(obj)"
                             tal:content="state_infos/state_title"
@@ -252,7 +248,7 @@
                 </td>
               </tr>
               <tr tal:condition="python: adviceType != 'not_given'">
-                <td class="table_widget_value">
+                <td class="table_widget_value preview_advice_container">
                     <a href="#"
                        class="link-overlay-pm-preview-advice"
                        tal:condition="adviceHolderIsViewable"

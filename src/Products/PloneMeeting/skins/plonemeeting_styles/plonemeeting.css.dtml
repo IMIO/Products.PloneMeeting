@@ -432,6 +432,11 @@ div.add_advice_icon {
     padding-top: 0.3em;
 }
 
+/* make sure enough space for annexes icons on the right under Chrome */
+#content td.table_widget_value.preview_advice_container {
+   width: 80%;
+}
+
 /* collective.documentviewer : hide some elements... */
 .close-fullscreen, .DV-navigation {
     display: none;

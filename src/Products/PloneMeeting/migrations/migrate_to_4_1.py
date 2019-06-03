@@ -736,9 +736,8 @@ class Migrate_To_4_1(Migrator):
                 advice_org_uid = advice_org.UID()
                 advice.advice_group = advice_org_uid
                 # remove old local_role given to 'Editor' MeetingGroup id
+                # we do not add it back as it is managed by dexterity.localrolesfield now
                 advice.manage_delLocalRoles(['{0}_advisers'.format(old_advice_group)])
-                # add local_role to 'Editor' organization uid
-                advice.manage_addLocalRoles('{0}_advisers'.format(advice_org_uid), ('Editor', ))
 
                 # migrate versionned advices...
                 # we need to get the stored data because using CMFEditions
@@ -1050,7 +1049,8 @@ class Migrate_To_4_1(Migrator):
         self._upgradeImioDashboard()
         # omit Products.PloneMeeting for now or it creates infinite loop as we are
         # in a Products.PloneMeeting upgrade step...
-        self.upgradeAll(omit=['Products.PloneMeeting:default'])
+        self.upgradeAll(omit=['Products.PloneMeeting:default',
+                              self.profile_name.replace('profile-', '')])
 
         # reinstall so versions are correctly shown in portal_quickinstaller
         # plone.app.versioningbehavior is installed
