@@ -5169,8 +5169,12 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def _getAllGroupsManagingItem(self):
         '''See doc in interfaces.py.'''
+        res = []
         item = self.getSelf()
-        return [item.getProposingGroup(True)]
+        proposingGroup = item.getProposingGroup(True)
+        if proposingGroup:
+            res.append(proposingGroup)
+        return res
 
     def _assign_roles_to_group_suffixes(self,
                                         organization,
