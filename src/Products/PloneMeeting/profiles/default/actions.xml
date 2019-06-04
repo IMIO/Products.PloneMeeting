@@ -4,16 +4,12 @@
   <action-provider name="portal_actions"/>
   <object name="document_actions" meta_type="CMF Action Category">
 
-    <!-- Hide some Plone actions -->
-    <object name="sendto" meta_type="CMF Action">
-      <property name="visible">False</property>
-    </object>
+    <!-- Hide/remove some actions -->
     <object name="print" meta_type="CMF Action">
       <property name="visible">False</property>
     </object>
-   <object name="togglePersons" meta_type="CMF Action" remove="true">
-   </object>
-
+    <object name="sendto" meta_type="CMF Action" remove="true" />
+    <object name="togglePersons" meta_type="CMF Action" remove="true" />
   </object>
 
   <!-- Hide Plone actions "site map" and "accessibility" -->
