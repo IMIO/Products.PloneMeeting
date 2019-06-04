@@ -78,6 +78,7 @@ class AdviceRemoveInheritanceForm(AutoExtensibleForm, form.EditForm):
         # initialize advice_infos
         advice_data = self.context.getAdviceDataFor(self.context, data['advice_uid'])
         advice_infos(self.context._shownAdviceTypeFor(advice_data))
+        advice_infos._initAdviceInfos(data['advice_uid'])
         if not advice_infos.mayRemoveInheritedAdvice():
             raise Unauthorized
 
