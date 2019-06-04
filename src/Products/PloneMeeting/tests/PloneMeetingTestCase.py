@@ -148,6 +148,7 @@ class PloneMeetingTestCase(unittest.TestCase, PloneMeetingTestingHelpers):
         self.annexFileTypeDecision = 'decision-annex'
         self.annexFileTypeAdvice = 'advice-annex'
         self.annexFileTypeMeeting = 'meeting-annex'
+        # log current test name
         pm_logger.info('Executing {0}'.format(self._testMethodName))
 
     def tearDown(self):
