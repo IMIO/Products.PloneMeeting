@@ -162,6 +162,7 @@ class AdvicesIconsInfos(BrowserView):
 
     def _initAdviceInfos(self, advice_id):
         """ """
+        self.advice_id = advice_id
         self.memberIsAdviserForGroup = advice_id in self.userAdviserOrgUids
         self.adviceIsInherited = self.context.adviceIsInherited(advice_id)
         isRealManager = self.tool.isManager(self.context, realManagers=True)
@@ -173,7 +174,7 @@ class AdvicesIconsInfos(BrowserView):
         """ """
         return bool(self.adviceIsInherited and self.context._appendLinkedItem(adviceHolder, only_viewable=True))
 
-    def mayRemoveInheritedAdvice(self, advice_id):
+    def mayRemoveInheritedAdvice(self):
         """To remove an inherited advice, must be :
            - MeetingManager;
            - or adviser for p_advice_id group and current item in a itemAdviceEditStates review_state."""
@@ -183,9 +184,9 @@ class AdvicesIconsInfos(BrowserView):
                 res = True
             else:
                 if self.cfg.getInheritedAdviceRemoveableByAdviser() and \
-                   advice_id in self.userAdviserOrgUids and \
+                   self.advice_id in self.userAdviserOrgUids and \
                    self.context.queryState() in get_organization(
-                        advice_id).get_item_advice_edit_states(cfg=self.cfg):
+                        self.advice_id).get_item_advice_edit_states(cfg=self.cfg):
                     return True
         return res
 
@@ -291,12 +292,11 @@ class AdviceView(DefaultView):
 
     def __call__(self):
         """Check if viewable by current user in case smart guy call the right url."""
-        advice_uid = self.context.UID()
         parent = self.context.aq_inner.aq_parent
         advice_icons_infos = parent.restrictedTraverse('@@advices-icons-infos')
         advice_type = parent._shownAdviceTypeFor(parent.adviceIndex[self.context.advice_group])
         advice_icons_infos._initAdvicesInfos(advice_type)
-        advice_icons_infos._initAdviceInfos(advice_uid)
+        advice_icons_infos._initAdviceInfos(self.context.advice_group)
         if not advice_icons_infos.mayView():
             raise Unauthorized
         return super(AdviceView, self).__call__()
