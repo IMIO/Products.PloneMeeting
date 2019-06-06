@@ -1,9 +1,7 @@
 <tal:defines i18n:domain="PloneMeeting"
-     define="selectableDelays python: view.advice['delay'] and view.listSelectableDelays(view.advice['row_id']) or [];
-                 menuId string:advice_change_delay_row_id_${view/advice/row_id}_${view/context/UID};
-                 portal_url context/@@plone_portal_state/portal_url;
-                 mayAccessDelayChangesHistory view/_mayAccessDelayChangesHistory;
-                 mayReinitializeDelay view/_mayReinitializeDelay;">
+     define="selectableDelays view/listSelectableDelays;
+             mayAccessDelayChangesHistory view/_mayAccessDelayChangesHistory;
+             mayReinitializeDelay view/_mayReinitializeDelay;">
     <ul class="change_delay_actions">
         <li tal:condition="selectableDelays" tal:repeat="delay selectableDelays">
             <a href="#"
@@ -24,7 +22,7 @@
              style="cursor:pointer;">
             <img width="16" height="16"
                  src="advice_reinit_delay.gif"
-                 tal:attributes="src string:${portal_url}/advice_reinit_delay.png"/>&nbsp;<span i18n:translate="">Reinitiatlize delay</span>
+                 tal:attributes="src string:${view/portal_url}/advice_reinit_delay.png"/>&nbsp;<span i18n:translate="">Reinitiatlize delay</span>
           </a><br />
         </li>
         <li tal:condition="mayAccessDelayChangesHistory">
@@ -36,7 +34,7 @@
                tal:attributes="href string:${view/context/absolute_url}/@@advice-delay-changes-history?advice=${view/advice/id}">
                 <img width="16" height="16"
                      src="++resource++imio.actionspanel/history.gif"
-                     tal:attributes="src string:${portal_url}/++resource++imio.actionspanel/history.gif"/>&nbsp;<span i18n:translate="">History of delay changes</span>
+                     tal:attributes="src string:${view/portal_url}/++resource++imio.actionspanel/history.gif"/>&nbsp;<span i18n:translate="">History of delay changes</span>
             </a><br />
         </li>
     </ul>

@@ -26,22 +26,27 @@ class AdviceDelaysView(BrowserView):
         super(BrowserView, self).__init__(context, request)
         self.context = context
         self.request = request
+        self._initAttributes(self.request.get('advice', None))
+
+    def _initAttributes(self, advice_uid):
+        ''' '''
         self.portal = api.portal.get()
         self.portal_url = self.portal.absolute_url()
         self.advice = None
-        advice_uid = self.request.get('advice', None)
+        self.row_id = None
         if advice_uid:
             self.advice = self.context.adviceIndex[advice_uid]
+            self.row_id = self.advice['row_id']
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
 
-    def listSelectableDelays(self, row_id):
+    def listSelectableDelays(self):
         '''Returns a list of delays the current user can change the given p_row_id advice delay to.'''
         # find linked rows in the MeetingConfig.customAdvisers
-        isAutomatic, linkedRows = self.cfg._findLinkedRowsFor(row_id)
+        isAutomatic, linkedRows = self.cfg._findLinkedRowsFor(self.row_id)
         # check if current user may change delays for advice
         mayEdit = not self.context.adviceIsInherited(self.advice['id']) and self._mayEditDelays(isAutomatic)
-        return self._availableDelays(linkedRows, row_id, mayEdit)
+        return self._availableDelays(linkedRows, mayEdit)
 
     def _mayEditDelays(self, isAutomatic):
         '''Check if current user may edit delays for advice.  Given p_isAutomatic
@@ -61,7 +66,7 @@ class AdviceDelaysView(BrowserView):
 
         return True
 
-    def _availableDelays(self, linkedRows, row_id, mayEdit):
+    def _availableDelays(self, linkedRows, mayEdit):
         '''Returns available delays.
            p_mayEdit is passed so it can be used in the expression,
            indeed, we have 2 usecases here :
@@ -89,14 +94,15 @@ class AdviceDelaysView(BrowserView):
             return res
 
         for linkedRow in availableLinkedRows:
-            if linkedRow['row_id'] == row_id:
+            if linkedRow['row_id'] == self.row_id:
                 continue
             res.append((linkedRow['row_id'], linkedRow['delay'], unicode(linkedRow['delay_label'], 'utf-8')))
         return res
 
     def _mayAccessDelayChangesHistory(self):
         '''May current user access delay changes history?
-           By default it is shown to MeetingManagers, advisers of p_advice_uid and members of the proposingGroup.'''
+           By default it is shown to MeetingManagers, advisers of p_advice_uid
+           and members of the proposingGroup.'''
         advice_uid = self.advice['id']
         # MeetingManagers and advisers of the group
         # can access the delay changes history

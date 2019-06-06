@@ -59,7 +59,7 @@
                           <img src="advice_inherited.png" tal:attributes="src string:${view/portal_url}/advice_inherited.png"/>
                          </a>
                       </acronym>
-                      <acronym tal:condition="python: view.mayRemoveInheritedAdvice(advice['id'])">
+                      <acronym tal:condition="python: view.mayRemoveInheritedAdvice()">
                          <a title="Remove advice inheritance"
                             class="link-overlay-pm"
                             i18n:domain="PloneMeeting"
@@ -108,7 +108,7 @@
                               title="to_previous_given_advice"
                               tal:attributes="src string:${view/portal_url}/advice_${adviceStyle}_asked_again_back_to_previous.png;
                                               onClick string:javascript:callViewAndReload(base_url='${obj_absolute_url}', view_name='@@change-advice-asked-again', this);;"/></acronym>
-                     <tal:advice-change-delay-condition condition="python: advice['delay'] and not advice['inherited']">
+                     <tal:advice-change-delay-condition condition="view/mayChangeDelay">
                       <acronym title="Change delay"
                             i18n:domain="PloneMeeting"
                             i18n:attributes="title">
