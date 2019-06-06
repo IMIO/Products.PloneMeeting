@@ -23,6 +23,7 @@ Changelog
 - Display the advice review_state in the advice infos tooltipster popup
 - Override meetingadvice 'view' class to raise Unauthorized if current user tries to access it and advice is not viewable
 - Added adaptable method MeetingItem._adviceDelayMayBeStarted to be able to add a condition to really start an advice delay (set the 'advice_started_on' date)
+- Fixed bug when changing item position on a meeting from subnumber to subnumber (same integer or not)
 
 4.1b17 (2019-05-16)
 -------------------

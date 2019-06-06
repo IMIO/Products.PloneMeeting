@@ -228,13 +228,25 @@ class ChangeItemOrderView(BrowserView):
                                 elif not oldIndexHasSubnumbers and itemNumber > oldIndex:
                                     item.setItemNumber(itemNumber - 100)
                             elif (not oldIndexIsInteger and not moveNumberIsInteger):
-                                # moving 3.1 to 2.2
-                                # decrease oldIndex subnumbers of 0.1 (3.2 to 3.1, 3.3 to 3.2)
-                                if _use_same_integer(itemNumber, oldIndex) and itemNumber > oldIndex:
-                                    item.setItemNumber(itemNumber - 1)
-                                # increase moveNumber subnumber of 0.1 (2.2 to 2.3, 2.3 to 2.4)
-                                elif _use_same_integer(itemNumber, moveNumber) and itemNumber > moveNumber:
-                                    item.setItemNumber(itemNumber + 1)
+                                # manage when moving 3.1 to 2.2 or 3.4 to 3.2
+                                # moving to another integer (3.1 to 2.2)
+                                if not _use_same_integer(moveNumber, oldIndex):
+                                    # decrease 3.2 to 3.1
+                                    if _use_same_integer(itemNumber, oldIndex):
+                                        if itemNumber > oldIndex:
+                                            item.setItemNumber(itemNumber - 1)
+                                    # increase 2.3 to 2.4
+                                    elif _use_same_integer(itemNumber, moveNumber) and \
+                                            itemNumber > moveNumber:
+                                        item.setItemNumber(itemNumber + 1)
+                                else:
+                                    # moving to same integer (3.4 to 3.2)
+                                    # increase itemNumber in between but itemNumber after
+                                    # oldIndex does not change
+                                    if _use_same_integer(itemNumber, moveNumber) and \
+                                       itemNumber > moveNumber and \
+                                       itemNumber < oldIndex:
+                                        item.setItemNumber(itemNumber + 1)
                 else:
                     # We moved the item down
                     for item in items:
@@ -266,8 +278,12 @@ class ChangeItemOrderView(BrowserView):
                                 item.setItemNumber(itemNumber - 100 + _compute_value_to_add(itemNumber))
                             elif (not oldIndexIsInteger and not moveNumberIsInteger):
                                 # moving 2.1 to 3.2
-                                # (not oldIndexIsInteger and not moveNumberIsInteger)
-                                item.setItemNumber(itemNumber + _compute_value_to_add(itemNumber))
+                                # increase 3.2 to 3.3
+                                if not _use_same_integer(moveNumber, oldIndex):
+                                    item.setItemNumber(itemNumber + 1)
+                                else:
+                                    # moving 2.1 to 2.4, decrease 2.4 to 2.3
+                                    item.setItemNumber(itemNumber - 1)
                         else:
                             # moving 2 to 4
                             if (oldIndexIsInteger and moveNumberIsInteger) and \
@@ -291,14 +307,24 @@ class ChangeItemOrderView(BrowserView):
                                 elif not oldIndexHasSubnumbers:
                                     item.setItemNumber(itemNumber - 100)
                             elif (not oldIndexIsInteger and not moveNumberIsInteger):
-                                # moving 2.1 to 3.2
-                                # (not oldIndexIsInteger and not moveNumberIsInteger)
-                                # decrease subnumbers of oldIndex integer that were >
-                                if (_use_same_integer(itemNumber, oldIndex)) and itemNumber > oldIndex:
-                                    item.setItemNumber(itemNumber - _compute_value_to_add(itemNumber))
-                                # increase subnumbers of moveIndex integer that are >
-                                if (_use_same_integer(itemNumber, moveNumber)) and itemNumber > moveNumber:
-                                    item.setItemNumber(itemNumber + _compute_value_to_add(itemNumber))
+                                # manage when moving 2.1 to 3.2 or 3.2 to 3.4
+                                # moving to another integer (2.1 to 3.2)
+                                if not _use_same_integer(moveNumber, oldIndex):
+                                    # decrease 2.2 to 2.1
+                                    if _use_same_integer(itemNumber, oldIndex) and itemNumber > oldIndex:
+                                        item.setItemNumber(itemNumber - 1)
+                                    # increase 3.2 to 3.3
+                                    elif _use_same_integer(itemNumber, moveNumber) and \
+                                            itemNumber > moveNumber:
+                                        item.setItemNumber(itemNumber + 1)
+                                else:
+                                    # moving to same integer (3.2 to 3.4)
+                                    # increase itemNumber in between but itemNumber after
+                                    # oldIndex does not change
+                                    if _use_same_integer(itemNumber, moveNumber) and \
+                                       itemNumber < moveNumber and \
+                                       itemNumber > oldIndex:
+                                        item.setItemNumber(itemNumber - 1)
 
         # when items order on meeting changed, it is considered modified,
         # do this before updateItemReferences
