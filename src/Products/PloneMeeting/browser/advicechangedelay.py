@@ -195,13 +195,11 @@ class AdviceChangeDelayForm(form.EditForm):
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
         newAdviceData = self.getDataForRowId(data['new_delay_row_id'])
-        listAvailableDelaysView = self.context.restrictedTraverse('@@advice-available-delays')
-        listAvailableDelaysView.cfg = cfg
-        # find right advice in MeetingItem.adviceIndex
         currentAdviceData = self.getDataForRowId(data['current_delay_row_id'])
-        listAvailableDelaysView.advice = self.context.adviceIndex[currentAdviceData['org']]
+        listAvailableDelaysView = self.context.restrictedTraverse('@@advice-available-delays')
+        listAvailableDelaysView._initAttributes(currentAdviceData['org'])
         isAutomatic, linkedRows = cfg._findLinkedRowsFor(data['current_delay_row_id'])
-        selectableDelays = listAvailableDelaysView.listSelectableDelays(data['current_delay_row_id'])
+        selectableDelays = listAvailableDelaysView.listSelectableDelays()
         # selectableDelays is a list of tuple containing 3 elements, the first is the row_id
         selectableDelays = [selectableDelay[0] for selectableDelay in selectableDelays]
         if not data['new_delay_row_id'] in selectableDelays:
