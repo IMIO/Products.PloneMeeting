@@ -4657,7 +4657,9 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 d['row_id'] = adviceInfo['row_id']
                 d['hidden_during_redaction'] = False
                 # manage the 'delay_started_on' data that was saved prior
-                if adviceInfo['delay'] and org_uid in saved_stored_data:
+                if adviceInfo['delay'] and \
+                   org_uid in saved_stored_data and \
+                   self.adapted()._adviceDelayMayBeStarted(org_uid):
                     d['delay_started_on'] = saved_stored_data[org_uid]['delay_started_on']
                 else:
                     d['delay_started_on'] = None
@@ -4702,11 +4704,14 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 if not adviceInfo['row_id']:
                     # this is a given advice that was not asked (given by a PowerAdviser)
                     adviceInfo['not_asked'] = True
-                if adviceInfo['delay'] and org_uid in saved_stored_data:
+                if adviceInfo['delay'] and \
+                   org_uid in saved_stored_data and \
+                   self.adapted()._adviceDelayMayBeStarted(org_uid):
                     # an automatic advice was given but because something changed on the item
                     # for example switched from budgetRelated to not budgetRelated, the automatic
                     # advice should not be asked, but as already given, we keep it
                     adviceInfo['delay_started_on'] = saved_stored_data[org_uid]['delay_started_on']
+                if org_uid in saved_stored_data:
                     adviceInfo['delay_stopped_on'] = saved_stored_data[org_uid]['delay_stopped_on']
                 if org_uid in saved_stored_data:
                     adviceInfo['delay_for_automatic_adviser_changed_manually'] = \
@@ -4792,7 +4797,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 # manage delay-aware advice, we start the delay if not already started
                 if itemState in itemAdviceStates and \
                    self.adviceIndex[org_uid]['delay'] and not \
-                   self.adviceIndex[org_uid]['delay_started_on']:
+                   self.adviceIndex[org_uid]['delay_started_on'] and \
+                   self.adapted()._adviceDelayMayBeStarted(org_uid):
                     self.adviceIndex[org_uid]['delay_started_on'] = datetime.now()
 
                 # check if user must be able to add an advice, if not already given
@@ -4915,6 +4921,10 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         item = self.getSelf()
         adviceObj = item.getAdviceObj(org_uid)
         return _checkPermission(ModifyPortalContent, adviceObj)
+
+    def _adviceDelayMayBeStarted(self, org_uid):
+        '''See doc in interfaces.py.'''
+        return True
 
     security.declarePublic('getDelayInfosForAdvice')
 

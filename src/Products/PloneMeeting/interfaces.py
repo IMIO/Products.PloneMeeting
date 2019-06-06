@@ -263,6 +263,8 @@ class IMeetingItemDocumentation:
            This is useful when using custom workflows and made to ease override of
            MeetingItem.getAdvicesGroupsInfosForUser
            By default it checks if current user has ModifyPortalContent on advice object."""
+    def _adviceDelayMayBeStarted(org_uid):
+        """May the advice delay be started for p_org_uid, so may the 'delay_started_on' information be set?"""
     def _sendAdviceToGiveToGroup(org_uid):
         """Send the 'your advice is asked on this item' mail notification to given p_org_uid?"""
     def _advicePortalTypeForAdviser(org_uid):
