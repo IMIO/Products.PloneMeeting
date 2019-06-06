@@ -693,11 +693,18 @@ class Migrate_To_4_1(Migrator):
                 new_value = get_plone_group_id(org.UID(), suffix)
                 adapted_copyGroups.append(new_value)
             item.setCopyGroups(adapted_copyGroups)
+            # proposingGroup
+            proposingGroup = item.getProposingGroup()
+            if proposingGroup:
+                proposing_group_org_uid = own_org.get(proposingGroup).UID()
+                item.setProposingGroup(proposing_group_org_uid)
             # groupInCharge
             groupInCharge = item.getGroupInCharge()
             if groupInCharge:
-                org = own_org.get(groupInCharge)
-                item.setGroupInCharge(org.UID())
+                group_in_charge = own_org.get(groupInCharge)
+                item.setProposingGroupWithGroupInCharge(
+                    '{0}__groupincharge__{1}'.format(
+                        proposing_group_org_uid, group_in_charge.UID()))
             else:
                 item.setProposingGroupWithGroupInCharge(u'')
             # optionalAdvisers
@@ -709,11 +716,6 @@ class Migrate_To_4_1(Migrator):
                 new_value = mGroupId.replace(realGroupId, org.UID())
                 adapted_optionalAdvisers.append(new_value)
             item.setOptionalAdvisers(adapted_optionalAdvisers)
-            # proposingGroup
-            proposingGroup = item.getProposingGroup()
-            if proposingGroup:
-                proposing_group_org_uid = own_org.get(proposingGroup).UID()
-                item.setProposingGroup(proposing_group_org_uid)
             # associatedGroups
             associatedGroups = item.getAssociatedGroups()
             if associatedGroups:

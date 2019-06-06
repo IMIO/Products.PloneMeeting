@@ -246,15 +246,10 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         meeting, item1, item2, item3, item4, item5, item6, item7 = self._setupOrderedItems()
         # prepare item numbers
         item3.setItemNumber(201)
-        item3.reindexObject(idxs=['getItemNumber'])
         item4.setItemNumber(300)
-        item4.reindexObject(idxs=['getItemNumber'])
         item5.setItemNumber(400)
-        item5.reindexObject(idxs=['getItemNumber'])
         item6.setItemNumber(401)
-        item6.reindexObject(idxs=['getItemNumber'])
         item7.setItemNumber(500)
-        item7.reindexObject(idxs=['getItemNumber'])
         self.assertEquals(item1.getItemNumber(), 100)
         self.assertEquals(item2.getItemNumber(), 200)
         self.assertEquals(item3.getItemNumber(), 201)
@@ -293,8 +288,6 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         item5.setItemNumber(400)
         item6.setItemNumber(500)
         item7.setItemNumber(501)
-        for item in meeting.getItems():
-            item.reindexObject(idxs=['getItemNumber'])
         self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
                           [100, 200, 201, 300, 400, 500, 501])
         view = item3.restrictedTraverse('@@change-item-order')
@@ -357,7 +350,6 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         # now we will move 601 to 700
         self.assertEqual(item6.getItemNumber(), 700)
         item6.setItemNumber(601)
-        item6.reindexObject()
         self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
                           [100, 200, 300, 400, 500, 600, 601])
         view = item6.restrictedTraverse('@@change-item-order')
@@ -372,15 +364,10 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         meeting, item1, item2, item3, item4, item5, item6, item7 = self._setupOrderedItems()
         # prepare item numbers
         item3.setItemNumber(201)
-        item3.reindexObject(idxs=['getItemNumber'])
         item4.setItemNumber(300)
-        item4.reindexObject(idxs=['getItemNumber'])
         item5.setItemNumber(400)
-        item5.reindexObject(idxs=['getItemNumber'])
         item6.setItemNumber(401)
-        item6.reindexObject(idxs=['getItemNumber'])
         item7.setItemNumber(500)
-        item7.reindexObject(idxs=['getItemNumber'])
         self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
                           [100, 200, 201, 300, 400, 401, 500])
         # move down
@@ -398,7 +385,6 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         # move up
         # prepare, change '500' to '201'
         item7.setItemNumber(201)
-        item7.reindexObject(idxs=['getItemNumber'])
         meeting.notifyModified()
         self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
                           [100, 200, 201, 300, 400, 401, 402])
@@ -434,15 +420,10 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         meeting, item1, item2, item3, item4, item5, item6, item7 = self._setupOrderedItems()
         # prepare item numbers
         item3.setItemNumber(201)
-        item3.reindexObject(idxs=['getItemNumber'])
         item4.setItemNumber(202)
-        item4.reindexObject(idxs=['getItemNumber'])
         item5.setItemNumber(203)
-        item5.reindexObject(idxs=['getItemNumber'])
         item6.setItemNumber(204)
-        item6.reindexObject(idxs=['getItemNumber'])
         item7.setItemNumber(300)
-        item7.reindexObject(idxs=['getItemNumber'])
         self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
                           [100, 200, 201, 202, 203, 204, 300])
         # move down 203 to 300
@@ -480,14 +461,45 @@ class testChangeItemOrderView(PloneMeetingTestCase):
         item5.setItemNumber(300)
         item6.setItemNumber(400)
         item7.setItemNumber(500)
-        for item in meeting.getItems():
-            item.reindexObject(idxs=['getItemNumber'])
         self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
                           [100, 101, 102, 200, 300, 400, 500])
         view = item5.restrictedTraverse('@@change-item-order')
         view('number', '1')
         self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
                           [100, 200, 201, 202, 300, 400, 500])
+
+    def test_pm_ReorderItemsWithSubnumbers(self):
+        '''When many subnumbers (1.1 to 1.6), move 1.2 to 1.4 and 1.5 to 1.2.'''
+        self.changeUser('pmManager')
+        meeting, item1, item2, item3, item4, item5, item6, item7 = self._setupOrderedItems()
+        item1.setItemNumber(100)
+        item2.setItemNumber(101)
+        item3.setItemNumber(102)
+        item4.setItemNumber(103)
+        item5.setItemNumber(104)
+        item6.setItemNumber(105)
+        item7.setItemNumber(106)
+        self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
+                          [100, 101, 102, 103, 104, 105, 106])
+        # move down 1.2 to 1.4
+        view = item3.restrictedTraverse('@@change-item-order')
+        view('number', '1.4')
+        # values still correct
+        self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
+                          [100, 101, 102, 103, 104, 105, 106])
+        self.assertEqual(item3.getItemNumber(), 104)
+        self.assertEqual(item4.getItemNumber(), 102)
+        self.assertEqual(item5.getItemNumber(), 103)
+
+        # move up 1.4 to 1.2
+        view = item3.restrictedTraverse('@@change-item-order')
+        view('number', '1.2')
+        # values still correct
+        self.assertEquals([item.getItemNumber() for item in meeting.getItems(ordered=True)],
+                          [100, 101, 102, 103, 104, 105, 106])
+        self.assertEqual(item3.getItemNumber(), 102)
+        self.assertEqual(item4.getItemNumber(), 103)
+        self.assertEqual(item5.getItemNumber(), 104)
 
     def test_pm_ChangeItemOrderMoveAtGivenNumber(self):
         '''Test the ChangeItemOrderView :

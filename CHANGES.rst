@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.1b18 (unreleased)
+4.1rc1 (unreleased)
 -------------------
 
 - Display the 'Contacts' portal tab only to Managers, hide it for MeetingManagers
@@ -22,6 +22,8 @@ Changelog
 - Optimized MeetingItem.getAdvicesGroupsInfosForUser to be able to compute the to_add/to_edit only when necessary
 - Display the advice review_state in the advice infos tooltipster popup
 - Override meetingadvice 'view' class to raise Unauthorized if current user tries to access it and advice is not viewable
+- Added adaptable method MeetingItem._adviceDelayMayBeStarted to be able to add a condition to really start an advice delay (set the 'advice_started_on' date)
+- Fixed bug when changing item position on a meeting from subnumber to subnumber (same integer or not)
 - Do not display an empty tooltipster 'change advice delay' if nothing to display, hide the 'change advice delay' action
 
 4.1b17 (2019-05-16)

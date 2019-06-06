@@ -1319,7 +1319,7 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
         super(PMCategorizedObjectInfoAdapter, self).__init__(context)
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(context)
-        self.parent = self.context.getParentNode()
+        self.parent = self.context.aq_inner.aq_parent
 
     def get_infos(self, category, limited=False):
         """A the 'visible_for_groups' info."""
@@ -1419,7 +1419,7 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
     def _suffix_proposinggroup(self, visible_fors):
         """ """
         res = []
-        groups_managing_item = self.context.adapted()._getAllGroupsManagingItem()
+        groups_managing_item = self.parent.adapted()._getAllGroupsManagingItem()
         for visible_for in visible_fors:
             if visible_for.startswith(PROPOSINGGROUPPREFIX):
                 suffix = visible_for.replace(PROPOSINGGROUPPREFIX, '')
