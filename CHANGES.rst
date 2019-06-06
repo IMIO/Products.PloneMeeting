@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.1b18 (unreleased)
+4.1rc1 (unreleased)
 -------------------
 
 - Display the 'Contacts' portal tab only to Managers, hide it for MeetingManagers
