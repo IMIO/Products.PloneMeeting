@@ -11,7 +11,7 @@
            style="display: inline;"
            tal:condition="not: cfg/getItemCreatedOnlyUsingTemplate"
            tal:attributes="href string:${meetingFolder/absolute_url}/createObject?type_name=MeetingItem${cfg/getShortName};">
-            <img tal:attributes="src string: $portal_url/new.png"
+            <img tal:attributes="src string:$portal_url/new.png"
               title="create_meeting_item" i18n:attributes="title" />
         </a>
         <tal:comment replace="nothing">Create a new item from a template</tal:comment>
@@ -19,7 +19,7 @@
            href="@@createitemfromtemplate" tal:attributes="href string:${meetingFolder/absolute_url}/@@createitemfromtemplate"
            tal:condition="templateItems">
         <img style="cursor:pointer"
-             tal:attributes="src string: $portal_url/new_from.png"
+             tal:attributes="src string:$portal_url/new_from.png"
              title="create_meeting_item_from_template"
              i18n:domain="plone"
              i18n:attributes="title"/>

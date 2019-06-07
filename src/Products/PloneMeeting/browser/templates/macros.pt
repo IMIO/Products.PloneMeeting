@@ -310,7 +310,7 @@ document.location.reload(true);
          title="budget_related_no_img_title_edit"
          name="budgetRelatedYes"
          i18n:attributes="title"
-         tal:attributes="src string: $portal_url/budgetRelatedNo.png;
+         tal:attributes="src string:$portal_url/budgetRelatedNo.png;
                          onClick python: 'asyncToggleIcon(\''+UID+'\', baseUrl=\'' + baseUrl + '\', viewName=\'@@toggle_budget_related\', baseSelector=\'#marker_toggle_budgetrelated_\')'"/>
     <span tal:condition="not: budgetRelated"
           class="discreet notBudgetRelated"
@@ -319,13 +319,13 @@ document.location.reload(true);
 
   <tal:notMayEdit condition="not: mayEdit">
     <tal:budgetRelated condition="budgetRelated">
-      <img tal:attributes="src string: $portal_url/budgetRelatedYes.png"/>
+      <img tal:attributes="src string:$portal_url/budgetRelatedYes.png"/>
       <span class="discreet budgetRelated"
             i18n:translate="budget_related_yes_view">This item is budget related, check 'Budgetary informations' here under.</span>
     </tal:budgetRelated>
     <tal:notBudgetRelated condition="not: budgetRelated">
       <img tal:condition="not: budgetRelated"
-           tal:attributes="src string: $portal_url/budgetRelatedNo.png"/>
+           tal:attributes="src string:$portal_url/budgetRelatedNo.png"/>
       <span class="discreet notBudgetRelated"
             i18n:translate="budget_related_no_view">This item is not budget related.</span>
     </tal:notBudgetRelated>
@@ -586,11 +586,11 @@ document.location.reload(true);
       <tal:comment replace="nothing">Switch mode (secret / not secret)</tal:comment>
       <img style="cursor:pointer;" title="switch_votes" i18n:attributes="title" align="right"
            tal:condition="python: isManager and maySwitchVotes"
-           tal:attributes="src string: $portal_url/switch.gif;
+           tal:attributes="src string:$portal_url/switch.gif;
                            onClick python:'switchVotes(\'%s\', \'%s\')' % (context.absolute_url(), secret)"/>
       <img style="cursor:help;" title="switch_votes_why_cannot" i18n:attributes="title" align="right"
            tal:condition="python: isManager and not maySwitchVotes"
-           tal:attributes="src string: $portal_url/switch_not_allowed.gif;"/>
+           tal:attributes="src string:$portal_url/switch_not_allowed.gif;"/>
       <tal:comment replace="nothing">Set 'yes' for everybody</tal:comment>
       <img style="cursor:pointer;" title="update_votes_yes" i18n:attributes="title"
            tal:condition="python: showSave" align="right"

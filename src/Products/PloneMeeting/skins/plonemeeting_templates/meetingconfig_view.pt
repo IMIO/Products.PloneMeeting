@@ -19,7 +19,10 @@
 
   <metal:fill fill-slot="content-core">
     <metal:main_macro define-macro="body"
-                      tal:define="isRealManager python: context.portal_plonemeeting.isManager(context, True);
+                      tal:define="tool python: context.aq_inner.aq_parent;
+                                  context_url context/absolute_url;
+                                  isManager python: tool.isManager(context, False);
+                                  isRealManager python: tool.isManager(context, True);
                                   mode python:'view';
                                   pageName request/pageName|string:default;
                                   member context/@@plone_portal_state/member;
@@ -27,7 +30,7 @@
                                   fieldsets python:[key for key in schematas.keys() if (key not in ('metadata', 'votes'))];
                                   displayable_fieldsets python: list(fieldsets);">
 
-    <tal:hideToNonManagers condition="python: isRealManager or context.portal_plonemeeting.isManager(context)">
+    <tal:hideToNonManagers condition="nocall:isManager">
 
     <span tal:repeat="fieldset displayable_fieldsets">
       [
@@ -39,10 +42,11 @@
         tal:content="fieldset" i18n:translate=""></span></b>
       </tal:currentFieldset>
       <tal:edit condition="python: fieldset in fieldsets and schematas[fieldset].editableFields(here, visible_only=True)">
-      <input type="image" title="Edit" i18n:attributes="title"
-             style="cursor:pointer" class="imageInput"
-             tal:attributes="src string: $portal_url/edit.png;
-                             onClick python: 'href: window.location=\'%s/base_edit?fieldset=%s\'' % (context.absolute_url(), fieldset)"/>
+      <a title="Edit"
+         i18n:attributes="title"
+         tal:attributes="href string:${context_url}/base_edit?fieldset=${fieldset}">
+        <img tal:attributes="src string:$portal_url/edit.png;" />
+      </a>
     </tal:edit>]
     </span><br/><br/>
 
@@ -188,7 +192,7 @@
           </td>
           <td width=20%>
             <form name="updateAllLocalRolesForm" action="updateAllLocalRoles"
-                  tal:attributes="action string:${context/portal_plonemeeting/absolute_url}/updateAllLocalRoles">
+                  tal:attributes="action string:${tool/absolute_url}/updateAllLocalRoles">
             <input type="hidden" tal:attributes="value context/getMeetingTypeName" name="portal_type:list" />
             <input type="hidden" tal:attributes="value context/getItemTypeName" name="portal_type:list" />
             <input class="context" type="submit" name="updateAllLocalRoles"
@@ -447,13 +451,13 @@
                        i18n:attributes="title"
                        tal:define="addable_content_category_type python: cat_group.allowedContentTypes()[0].id"
                        tal:attributes="href string:${cat_group_url}/++add++${addable_content_category_type}">
-                      <img src="#" tal:attributes="src string: $portal_url/new.png" />
+                      <img src="#" tal:attributes="src string:$portal_url/new.png" />
                     </a>
                     <a href="#"
                        title="Edit attributes of this group of categories"
                        i18n:attributes="title"
                        tal:attributes="href string:${cat_group_url}/edit">
-                      <img src="#" tal:attributes="src string: $portal_url/edit.png" />
+                      <img src="#" tal:attributes="src string:$portal_url/edit.png" />
                     </a>
                   </tal:forRealManagers>
 
@@ -502,7 +506,7 @@
                                tal:define="cat_url cat/absolute_url;
                                            addable_content_category_type python: cat.allowedContentTypes()[0].id"
                                tal:attributes="href string:${cat_url}/++add++${addable_content_category_type}">
-                              <img src="#" tal:attributes="src string: $portal_url/new.png" />
+                              <img src="#" tal:attributes="src string:$portal_url/new.png" />
                             </a>
                           </tal:forRealManagers>
                         </th>
@@ -568,8 +572,8 @@
              title="add_object"
              i18n:attributes="title"
              tal:condition="isRealManager"
-             tal:attributes="href string:${context/absolute_url}/categories/createObject?type_name=MeetingCategory">
-            <img src="#" tal:attributes="src string: $portal_url/new.png" />
+             tal:attributes="href string:${context_url}/categories/createObject?type_name=MeetingCategory">
+            <img src="#" tal:attributes="src string:$portal_url/new.png" />
           </a>
         </legend>
         <p class="discreet" i18n:translate="categories_descr"></p><br />
@@ -587,8 +591,8 @@
              title="add_object"
              i18n:attributes="title"
              tal:condition="isRealManager"
-             tal:attributes="href string:${context/absolute_url}/classifiers/createObject?type_name=MeetingCategory">
-            <img src="#" tal:attributes="src string: $portal_url/new.png" />
+             tal:attributes="href string:${context_url}/classifiers/createObject?type_name=MeetingCategory">
+            <img src="#" tal:attributes="src string:$portal_url/new.png" />
           </a>
         </legend>
         <p class="discreet" i18n:translate="classifiers_descr"></p><br />
@@ -607,8 +611,8 @@
              i18n:attributes="title"
              tal:condition="isRealManager"
              tal:define="itemType python: context.getItemTypeName(configType='MeetingItemRecurring')"
-             tal:attributes="href string:${context/absolute_url}/recurringitems/createObject?type_name=${itemType}">
-            <img src="#" tal:attributes="src string: $portal_url/new.png" />
+             tal:attributes="href string:${context_url}/recurringitems/createObject?type_name=${itemType}">
+            <img src="#" tal:attributes="src string:$portal_url/new.png" />
           </a>
         </legend>
         <p class="discreet" i18n:translate="recurring_items_descr"></p><br />
@@ -820,7 +824,7 @@
                            class="imageInput"
                            tal:attributes="
                               onClick python: 'href: window.location=\'%s/++add++DashboardCollection\'' % cFolderUrl;
-                              src string: $portal_url/new.png"
+                              src string:$portal_url/new.png"
                  title="add_object" i18n:attributes="title"
                  tal:condition="isRealManager"/>
                 </th>
@@ -1180,7 +1184,7 @@
             class="link-overlay-pm"
             tal:condition="isRealManager"
             tal:attributes="href string:${context/podtemplates/absolute_url}/folder_factories">
-          <img src="#" tal:attributes="src string: $portal_url/new.png;" />
+          <img src="#" tal:attributes="src string:$portal_url/new.png;" />
          </a>
         </legend>
         <p class="discreet" i18n:translate="pod_templates_descr"></p><br />
@@ -1204,7 +1208,7 @@
              valign="top">
             <td align="center">
                 <img title="Format"
-                     tal:attributes="src string: $portal_url/++resource++collective.documentgenerator/style.png"/></td>
+                     tal:attributes="src string:$portal_url/++resource++collective.documentgenerator/style.png"/></td>
             <td>
                 <h5>
                   <a tal:attributes="href obj/absolute_url;">
@@ -1247,7 +1251,7 @@
                 <img tal:repeat="fmt obj/pod_formats"
                      title="Format"
                      tal:attributes="title fmt;
-                                     src string: $portal_url/++resource++collective.documentgenerator/$fmt.png"/></td>
+                                     src string:$portal_url/++resource++collective.documentgenerator/$fmt.png"/></td>
             <td>
                 <h5>
                   <a tal:attributes="href obj/absolute_url;">

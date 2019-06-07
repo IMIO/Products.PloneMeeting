@@ -16,16 +16,16 @@
     <img class="itemIsSignedEditable" tal:condition="not: itemIsSigned" name="itemIsSignedYes"
          height="16" width="16"
          title="item_is_signed_no_edit" i18n:attributes="title"
-         tal:attributes="src string: $portal_url/itemIsSignedNo.png;
+         tal:attributes="src string:$portal_url/itemIsSignedNo.png;
                          onClick python: 'asyncToggleIcon(\''+UID+'\', baseUrl=\'' + baseUrl + '\', viewName=\'@@toggle_item_is_signed\', baseSelector=\'#marker_toggle_itemissigned_\')'"/>
   </span>
   <tal:showItemIsSigned condition="python: not showItemIsSigned">-</tal:showItemIsSigned>
   <tal:forTheOthers condition="python: showItemIsSigned and not mayEdit">
     <img tal:condition="itemIsSigned" title="item_is_signed_yes" i18n:attributes="title"
          height="16" width="16"
-         tal:attributes="src string: $portal_url/itemIsSignedYes.png"/>
+         tal:attributes="src string:$portal_url/itemIsSignedYes.png"/>
     <img tal:condition="not: itemIsSigned" title="item_is_signed_no" i18n:attributes="title"
          height="16" width="16"
-         tal:attributes="src string: $portal_url/itemIsSignedNo.png"/>
+         tal:attributes="src string:$portal_url/itemIsSignedNo.png"/>
   </tal:forTheOthers>
 </tal:defines>

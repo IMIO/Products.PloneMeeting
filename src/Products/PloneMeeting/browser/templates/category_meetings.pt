@@ -9,7 +9,7 @@
            style="display: inline;"
            tal:condition="python: member.has_permission('PloneMeeting: Add Meeting', meetingFolder)"
            tal:attributes="href string:${meetingFolder/absolute_url}/createObject?type_name=Meeting${cfg/getShortName};">
-            <img tal:attributes="src string: $portal_url/new.png"
+            <img tal:attributes="src string:$portal_url/new.png"
               title="create_meeting" i18n:attributes="title" />
         </a>
     </div>
