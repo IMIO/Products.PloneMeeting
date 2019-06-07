@@ -2870,6 +2870,7 @@ class testAdvices(PloneMeetingTestCase):
         self.assertEqual(advice_data['comment'], 'My comment')
 
         # hide advice
+        self.changeUser('pmReviewer2')
         changeView = advice.restrictedTraverse('@@change-advice-hidden-during-redaction')
         changeView()
         self.assertTrue(advice.advice_hide_during_redaction is True)
