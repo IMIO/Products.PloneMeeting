@@ -32,7 +32,7 @@
   </hidden>
   <order manager="plone.belowcontenttitle" skinname="*">
     <viewlet name="imio.history.documentbyline" />
-    <viewlet name="ftw.labels.labeling" />
     <viewlet name="plone.belowcontenttitle.workflowstate" />
+    <viewlet name="ftw.labels.labeling" />
   </order>
 </object>

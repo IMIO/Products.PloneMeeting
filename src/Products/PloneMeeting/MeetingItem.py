@@ -4399,7 +4399,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
            We receive p_item as the current item to be sure that this public
            method can not be called thru the web (impossible to pass an object as parameter),
            but it is still callable using a Script (Python) or useable in a TAL expression...
-           If sorted=True, return an OrderedDict sorted by adviser name.'''
+           If ordered=True, return an OrderedDict sorted by adviser name.'''
         if not isinstance(item, MeetingItem) or not item.UID() == self.UID():
             raise Unauthorized
 
@@ -4414,6 +4414,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             data[advId] = adviceInfo.copy()
             # hide advice data if relevant
             if hide_advices_under_redaction and \
+                data[advId][HIDDEN_DURING_REDACTION_ADVICE_VALUE] and \
                 (not show_hidden_advice_data_to_group_advisers or
                     (show_hidden_advice_data_to_group_advisers and
                      advId not in adviser_org_uids)):

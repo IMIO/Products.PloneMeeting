@@ -358,6 +358,7 @@ class Migrate_To_4_1(Migrator):
             cfg._createOrUpdateAllPloneGroups(force_update_access=True)
             if not hasattr(cfg, 'useUserReplacements'):
                 # already migrated
+                logger.info('Already migrated ...')
                 break
             delattr(cfg, 'useUserReplacements')
             # first migrate MeetingUsers
@@ -385,6 +386,7 @@ class Migrate_To_4_1(Migrator):
                 meeting = brain.getObject()
                 if hasattr(meeting, 'orderedContacts'):
                     # already migrated
+                    logger.info('Already migrated ...')
                     break
                 meeting.orderedContacts = OrderedDict()
                 meeting.itemAbsents = PersistentMapping()
@@ -428,6 +430,7 @@ class Migrate_To_4_1(Migrator):
                 item = brain.getObject()
                 if not hasattr(item, 'itemAbsents'):
                     # already migrated
+                    logger.info('Already migrated ...')
                     break
                 # migrate MeetingUsers related fields
                 itemInitiators = item.getItemInitiator()
@@ -468,6 +471,7 @@ class Migrate_To_4_1(Migrator):
         own_org = get_own_organization()
         if own_org.objectValues():
             # already migrated
+            logger.info('Already migrated ...')
             logger.info('Done.')
             return
 
@@ -838,6 +842,7 @@ class Migrate_To_4_1(Migrator):
         for cfg in self.tool.objectValues('MeetingConfig'):
             if not hasattr(cfg, 'groupsShownInDashboardFilter'):
                 # already migrated
+                logger.info('Already migrated ...')
                 break
             group_ids = cfg.getField('groupsHiddenInDashboardFilter').Vocabulary(cfg).keys()
             new_values = [group_id for group_id in group_ids if group_id not in cfg.groupsShownInDashboardFilter]
@@ -973,6 +978,7 @@ class Migrate_To_4_1(Migrator):
                 item = brain.getObject()
                 if IConfigElement.providedBy(item):
                     # already migrated
+                    logger.info('Already migrated ...')
                     break
                 alsoProvides(item, IConfigElement)
         logger.info('Done.')

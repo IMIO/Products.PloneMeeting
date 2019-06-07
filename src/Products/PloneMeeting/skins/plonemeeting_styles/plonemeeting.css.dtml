@@ -1394,6 +1394,10 @@ div#doc-generation-view ul.pod-template li {
     display: inline-block;
 }
 
+div#doc-generation-view {
+   float: right;
+}
+
 /* remove margin for fields itemWorkflow and meetingWorkflow on the meetingconfig_view
  * so really used workflow is displayed just under selected workflow */
 body.template-base_view.portaltype-meetingconfig div[id^="archetypes-fieldname-itemWorkflow"],
@@ -1509,6 +1513,7 @@ body.template-documentviewer.portaltype-styletemplate dl.portalMessage {
 /* labels displayed on the item view */
 #content div#viewlet-below-content-title div#labeling-viewlet {
    float: left;
+   clear: left;
 }
 #content div#labeling-viewlet li {
    display: inline;

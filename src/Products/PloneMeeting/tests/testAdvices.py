@@ -2857,6 +2857,19 @@ class testAdvices(PloneMeetingTestCase):
                                              'advice_type': u'positive',
                                              'advice_hide_during_redaction': False,
                                              'advice_comment': RichTextValue(u'My comment')})
+
+        # if advice is not hidden, advisers as well as any other user may access advice comment
+        advice_data = item.getAdviceDataFor(item, adviser_uid=self.vendors_uid)
+        self.assertEqual(advice_data['type'], 'positive')
+        self.assertEqual(advice_data['type_translated'], u'Positive')
+        self.assertEqual(advice_data['comment'], 'My comment')
+        self.changeUser('pmCreator1')
+        advice_data = item.getAdviceDataFor(item, adviser_uid=self.vendors_uid)
+        self.assertEqual(advice_data['type'], 'positive')
+        self.assertEqual(advice_data['type_translated'], u'Positive')
+        self.assertEqual(advice_data['comment'], 'My comment')
+
+        # hide advice
         changeView = advice.restrictedTraverse('@@change-advice-hidden-during-redaction')
         changeView()
         self.assertTrue(advice.advice_hide_during_redaction is True)
