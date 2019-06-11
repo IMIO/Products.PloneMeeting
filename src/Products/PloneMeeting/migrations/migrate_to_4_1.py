@@ -844,14 +844,16 @@ class Migrate_To_4_1(Migrator):
                 # already migrated
                 logger.info('Already migrated ...')
                 break
-            own_org = get_own_organization()
+            # if groupsShownInDashboardFilter was empty, it meants, we show every groups
             groupsShownInDashboardFilter = cfg.groupsShownInDashboardFilter
-            adapted_groupsShownInDashboardFilter = [own_org.get(group_id).UID() for group_id
-                                                    in groupsShownInDashboardFilter]
-            org_uids = cfg.getField('groupsHiddenInDashboardFilter').Vocabulary(cfg).keys()
-            new_values = [org_uid for org_uid in org_uids
-                          if org_uid not in adapted_groupsShownInDashboardFilter]
-            cfg.setGroupsHiddenInDashboardFilter(new_values)
+            if not groupsShownInDashboardFilter:
+                own_org = get_own_organization()
+                adapted_groupsShownInDashboardFilter = [own_org.get(group_id).UID() for group_id
+                                                        in groupsShownInDashboardFilter]
+                org_uids = cfg.getField('groupsHiddenInDashboardFilter').Vocabulary(cfg).keys()
+                new_values = [org_uid for org_uid in org_uids
+                              if org_uid not in adapted_groupsShownInDashboardFilter]
+                cfg.setGroupsHiddenInDashboardFilter(new_values)
             delattr(cfg, 'groupsShownInDashboardFilter')
         logger.info('Done.')
 
