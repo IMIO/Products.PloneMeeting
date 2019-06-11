@@ -173,17 +173,15 @@ def onMeetingTransition(meeting, event):
 
 def onAdviceTransition(advice, event):
     '''Called whenever a transition has been fired on an advice.'''
-    if not event.transition or (advice != event.object):
-        return
-
-    transitionId = event.transition.id
-    if transitionId.startswith('backTo'):
-        action = 'doCorrect'
-    elif transitionId.startswith('advice'):
-        action = 'doItem%s%s' % (transitionId[6].upper(), transitionId[7:])
-    else:
-        action = 'do%s%s' % (transitionId[0].upper(), transitionId[1:])
-    do(action, event)
+    if event.transition and advice == event.object:
+        transitionId = event.transition.id
+        if transitionId.startswith('backTo'):
+            action = 'doCorrect'
+        elif transitionId.startswith('advice'):
+            action = 'doItem%s%s' % (transitionId[6].upper(), transitionId[7:])
+        else:
+            action = 'do%s%s' % (transitionId[0].upper(), transitionId[1:])
+        do(action, event)
 
     # notify an AdviceAfterTransitionEvent for subplugins so we are sure
     # that it is called after PloneMeeting advice transition
