@@ -7,6 +7,7 @@ Changelog
 
 - Added an AdviceAfterTransitionEvent like it is already the case for Item/Meeting. This event makes sure handlers
   registered for it in subplugins are called after the main AfterTransitionEvent managed in PloneMeeting
+- Fixed migration of MeetingConfig.groupsShownInDashboardFilter to MeetingConfig.groupsHiddenInDashboardFilter
 
 4.1rc1 (2019-06-11)
 -------------------
