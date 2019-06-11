@@ -844,8 +844,13 @@ class Migrate_To_4_1(Migrator):
                 # already migrated
                 logger.info('Already migrated ...')
                 break
-            group_ids = cfg.getField('groupsHiddenInDashboardFilter').Vocabulary(cfg).keys()
-            new_values = [group_id for group_id in group_ids if group_id not in cfg.groupsShownInDashboardFilter]
+            own_org = get_own_organization()
+            groupsShownInDashboardFilter = cfg.groupsShownInDashboardFilter
+            adapted_groupsShownInDashboardFilter = [own_org.get(group_id).UID() for group_id
+                                                    in groupsShownInDashboardFilter]
+            org_uids = cfg.getField('groupsHiddenInDashboardFilter').Vocabulary(cfg).keys()
+            new_values = [org_uid for org_uid in org_uids
+                          if org_uid not in adapted_groupsShownInDashboardFilter]
             cfg.setGroupsHiddenInDashboardFilter(new_values)
             delattr(cfg, 'groupsShownInDashboardFilter')
         logger.info('Done.')
