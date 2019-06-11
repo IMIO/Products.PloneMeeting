@@ -45,6 +45,7 @@ from Products.PloneMeeting.utils import addRecurringItemsIfRelevant
 from Products.PloneMeeting.utils import AdviceAfterAddEvent
 from Products.PloneMeeting.utils import AdviceAfterModifyEvent
 from Products.PloneMeeting.utils import applyOnTransitionFieldTransform
+from Products.PloneMeeting.utils import AdviceAfterTransitionEvent
 from Products.PloneMeeting.utils import ItemAfterTransitionEvent
 from Products.PloneMeeting.utils import MeetingAfterTransitionEvent
 from Products.PloneMeeting.utils import meetingTriggerTransitionOnLinkedItems
@@ -168,6 +169,27 @@ def onMeetingTransition(meeting, event):
         event.transition, event.status, event.kwargs))
     # just reindex the entire object
     event.object.reindexObject()
+
+
+def onAdviceTransition(advice, event):
+    '''Called whenever a transition has been fired on an advice.'''
+    if not event.transition or (advice != event.object):
+        return
+
+    transitionId = event.transition.id
+    if transitionId.startswith('backTo'):
+        action = 'doCorrect'
+    elif transitionId.startswith('advice'):
+        action = 'doItem%s%s' % (transitionId[6].upper(), transitionId[7:])
+    else:
+        action = 'do%s%s' % (transitionId[0].upper(), transitionId[1:])
+    do(action, event)
+
+    # notify an AdviceAfterTransitionEvent for subplugins so we are sure
+    # that it is called after PloneMeeting advice transition
+    notify(AdviceAfterTransitionEvent(
+        event.object, event.workflow, event.old_state, event.new_state,
+        event.transition, event.status, event.kwargs))
 
 
 def onItemBeforeTransition(item, event):
@@ -691,21 +713,6 @@ def onAdviceRemoved(advice, event):
     # reindexObject in case for example we have custom indexes
     # depending on the advice value
     item.reindexObject()
-
-
-def onAdviceTransition(advice, event):
-    '''Called whenever a transition has been fired on an advice.'''
-    if not event.transition or (advice != event.object):
-        return
-
-    transitionId = event.transition.id
-    if transitionId.startswith('backTo'):
-        action = 'doCorrect'
-    elif transitionId.startswith('advice'):
-        action = 'doItem%s%s' % (transitionId[6].upper(), transitionId[7:])
-    else:
-        action = 'do%s%s' % (transitionId[0].upper(), transitionId[1:])
-    do(action, event)
 
 
 def onAnnexAdded(annex, event):

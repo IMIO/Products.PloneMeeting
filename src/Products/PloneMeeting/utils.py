@@ -66,6 +66,7 @@ from Products.PloneMeeting.config import TOOL_ID
 from Products.PloneMeeting.interfaces import IAdviceAfterAddEvent
 from Products.PloneMeeting.interfaces import IAdviceAfterModifyEvent
 from Products.PloneMeeting.interfaces import IAdvicesUpdatedEvent
+from Products.PloneMeeting.interfaces import IAdviceAfterTransitionEvent
 from Products.PloneMeeting.interfaces import IItemAfterTransitionEvent
 from Products.PloneMeeting.interfaces import IItemDuplicatedEvent
 from Products.PloneMeeting.interfaces import IItemDuplicatedFromConfigEvent
@@ -1691,6 +1692,15 @@ class ItemAfterTransitionEvent(TransitionEvent):
       will be called after.
     '''
     implements(IItemAfterTransitionEvent)
+
+
+class AdviceAfterTransitionEvent(TransitionEvent):
+    '''
+      Event triggered at the end of the onAdviceTransition,
+      so we are sure that subplugins registering to this event
+      will be called after.
+    '''
+    implements(IAdviceAfterTransitionEvent)
 
 
 class ItemDuplicatedEvent(ObjectEvent):

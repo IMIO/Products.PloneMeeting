@@ -62,6 +62,11 @@ class IAdviceAfterModifyEvent(IObjectEvent):
     """
 
 
+class IAdviceAfterTransitionEvent(IObjectEvent):
+    """
+    """
+
+
 class IRedirect(Interface):
     """
     """
