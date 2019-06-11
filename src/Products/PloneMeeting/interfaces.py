@@ -286,8 +286,9 @@ class IMeetingItemDocumentation:
         """Method for defining extra meeting events, needs to return a list of
            ids that will be used for id and translated for title."""
     def extraInsertingMethods(self):
-        """Method for defining extra inserting methods, needs to return a list of
-           ids that will be used for id and translated for title."""
+        """Method for defining extra inserting methods, needs to return an OrderedDict
+           where key is the inserting_method id and value, a config.ITEM_INSERT_METHODS compliant
+           value that is used in the @@display-inserting-methods-helper-msg view."""
     def showAdvices(self):
         """This controls if advices need to be shown on the item view."""
     def showObservations(self):

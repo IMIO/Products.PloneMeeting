@@ -5563,7 +5563,7 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def extraInsertingMethods(self):
         '''See doc in interfaces.py.'''
-        return []
+        return OrderedDict(())
 
     security.declarePublic('listSelectableCopyGroups')
 

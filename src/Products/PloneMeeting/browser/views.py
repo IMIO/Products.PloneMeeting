@@ -357,13 +357,8 @@ class MeetingInsertingMethodsHelpMsgView(BrowserView):
         self.tool = api.portal.get_tool('portal_plonemeeting')
         self.cfg = self.tool.getMeetingConfig(self.context)
         self.inserting_methods_fields_mapping = ITEM_INSERT_METHODS.copy()
-        self.inserting_methods_fields_mapping.update(self.extra_inserting_methods_fields_mapping)
-
-    @property
-    def extra_inserting_methods_fields_mapping(self):
-        """Provides extra mappings between inserting method and
-           relevant MeetingConfig field name."""
-        return {}
+        self.inserting_methods_fields_mapping.update(
+            self.cfg.adapted().extraInsertingMethods().copy())
 
     def fieldsToDisplay(self):
         """Depending on used inserting methods, display relevant fields."""
@@ -375,18 +370,21 @@ class MeetingInsertingMethodsHelpMsgView(BrowserView):
         return res
 
     def orderedOrgs(self):
+        """Display organizations if one of the selected inserting methods relies on organizations."""
         orgs = []
         orgs_inserting_methods = [
-            inserting_method for inserting_method in self.inserting_methods_fields_mapping
-            if self.inserting_methods_fields_mapping[inserting_method] == 'organization']
+            method['insertingMethod'] for method in self.cfg.getInsertingMethodsOnAddItem()
+            if self.inserting_methods_fields_mapping[method['insertingMethod']] == 'organization']
         if orgs_inserting_methods:
             orgs = get_organizations(only_selected=True)
         return orgs
 
     def orderedCategories(self):
+        """Display categories if one of the selected inserting methods relies on categories."""
+        categories = []
         categories_inserting_methods = [
-            inserting_method for inserting_method in self.inserting_methods_fields_mapping
-            if self.inserting_methods_fields_mapping[inserting_method] == 'category']
+            method['insertingMethod'] for method in self.cfg.getInsertingMethodsOnAddItem()
+            if self.inserting_methods_fields_mapping[method['insertingMethod']] == 'category']
         if categories_inserting_methods:
             categories = self.cfg.getCategories()
         return categories

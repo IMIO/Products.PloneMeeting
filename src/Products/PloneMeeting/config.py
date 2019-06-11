@@ -269,8 +269,7 @@ DEFAULT_MEETING_COLUMNS = ({'position': 0, 'name': 'pretty_link'},
 # default listTypes
 DEFAULT_LIST_TYPES = [
     {'identifier': 'normal', 'label': 'normal', 'used_in_inserting_method': '1'},
-    {'identifier': 'late', 'label': 'late', 'used_in_inserting_method': '1'}
-]
+    {'identifier': 'late', 'label': 'late', 'used_in_inserting_method': '1'}, ]
 
 NO_TRIGGER_WF_TRANSITION_UNTIL = '__nothing__'
 

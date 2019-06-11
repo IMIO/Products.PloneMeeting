@@ -139,7 +139,6 @@ class MeetingAdviceWorkflowConditions(object):
 
     def mayCorrect(self, destinationState=None):
         '''See doc in interfaces.py.'''
-
         res = False
         if _checkPermission(ReviewPortalContent, self.context):
             res = True
