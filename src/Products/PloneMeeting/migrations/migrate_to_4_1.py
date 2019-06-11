@@ -75,6 +75,10 @@ class Migrate_To_4_1(Migrator):
             # update vocabulary for relevant filters
             criteria = ICriteria(obj)
             criteria.edit(
+                'c4', **{
+                    'vocabulary':
+                        'Products.PloneMeeting.vocabularies.proposinggroupsforfacetedfiltervocabulary'})
+            criteria.edit(
                 'c11', **{
                     'vocabulary':
                         'Products.PloneMeeting.vocabularies.creatorsforfacetedfiltervocabulary'})
