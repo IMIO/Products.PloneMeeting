@@ -846,7 +846,7 @@ class Migrate_To_4_1(Migrator):
                 break
             # if groupsShownInDashboardFilter was empty, it meants, we show every groups
             groupsShownInDashboardFilter = cfg.groupsShownInDashboardFilter
-            if not groupsShownInDashboardFilter:
+            if groupsShownInDashboardFilter:
                 own_org = get_own_organization()
                 adapted_groupsShownInDashboardFilter = [own_org.get(group_id).UID() for group_id
                                                         in groupsShownInDashboardFilter]
