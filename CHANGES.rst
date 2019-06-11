@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.1rc2 (unreleased)
+4.1rc2 (2019-06-11)
 -------------------
 
 - Added an AdviceAfterTransitionEvent like it is already the case for Item/Meeting. This event makes sure handlers
