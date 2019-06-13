@@ -2660,11 +2660,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             groupsInCharge = org.groups_in_charge
             if not groupsInCharge:
                 # append a value that will let use a simple proposingGroup without groupInCharge
-                key = '{0}__groupincharge__{1}'.format(k, '')
-                res.append((key, '{0} ()'.format(v)))
+                key = u'{0}__groupincharge__{1}'.format(k, '')
+                res.append((key, u'{0} ()'.format(v)))
             for gic_org_uid in org.groups_in_charge:
                 groupInCharge = get_organization(gic_org_uid)
-                key = '{0}__groupincharge__{1}'.format(k, gic_org_uid)
+                key = u'{0}__groupincharge__{1}'.format(k, gic_org_uid)
                 # only take active groups in charge
                 if gic_org_uid in active_org_uids:
                     res.append((key, u'{0} ({1})'.format(v, groupInCharge.get_full_title())))

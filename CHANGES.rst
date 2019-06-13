@@ -9,6 +9,7 @@ Changelog
   contact_core_utils and contact_plonegroup_utils, useful to access get_gender_and_number or get_organization for example
 - In the item view, check mayQuickEdit 'completeness' field with bypassWritePermissionCheck=True so it only relies on the field condition only and
   it can be overrided by subplugins
+- Fixed MeetingItem.listProposingGroupsWithGroupsInCharge, make sure it does not fail if proposingGroup/groupInCharge title use special characters
 
 4.1rc2 (2019-06-11)
 -------------------
