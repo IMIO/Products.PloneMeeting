@@ -2675,8 +2675,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         if current_value and current_value not in res.keys():
             current_proposingGroupUid, current_groupInChargeUid = current_value.split('__groupincharge__')
             res.add(current_value,
-                    '{0} ({1})'.format(get_organization(current_proposingGroupUid).get_full_title(),
-                                       get_organization(current_groupInChargeUid).get_full_title()))
+                    u'{0} ({1})'.format(get_organization(current_proposingGroupUid).get_full_title(),
+                                        get_organization(current_groupInChargeUid).get_full_title()))
         return res.sortedByValue()
 
     security.declarePublic('listAssociatedGroups')
