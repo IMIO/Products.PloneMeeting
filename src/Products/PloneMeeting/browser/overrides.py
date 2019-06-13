@@ -235,8 +235,7 @@ class PMConfigActionsPanelViewlet(ActionsPanelViewlet):
                                           'ItemAnnexContentSubcategory',
                                           ):
             url = '{0}?pageName=data#annexes_types'.format(cfg_url, )
-        elif self.context.portal_type in ('person', 'held_position') or \
-                (self.context.portal_type == 'organization' and self.context.getId() != PLONEGROUP_ORG):
+        elif self.context.portal_type in ('person', 'held_position', 'organization'):
             url = parent.absolute_url()
         else:
             # We are in a subobject from the tool or on the PLONEGROUP_ORG
@@ -435,7 +434,10 @@ class PMRenderCategoryView(IDRenderCategoryView):
 
     def contact_infos(self):
         contact_infos = super(PMRenderCategoryView, self).contact_infos().copy()
+        # remove link to add held_position
         contact_infos.pop('hps-searches')
+        # by default, add organization to plonegroup-organization
+        contact_infos['orgs-searches']['add'] = '/plonegroup-organization/++add++organization'
         return contact_infos
 
     def _get_category_template(self):

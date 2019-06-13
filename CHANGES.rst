@@ -10,6 +10,8 @@ Changelog
 - In the item view, check mayQuickEdit 'completeness' field with bypassWritePermissionCheck=True so it only relies on the field condition only and
   it can be overrided by subplugins
 - Fixed MeetingItem.listProposingGroupsWithGroupsInCharge, make sure it does not fail if proposingGroup/groupInCharge title use special characters
+- By default, when adding an new organization using the 'Add organization' in the contacts portlet, add it the plonegroup-organization
+- The 'return' action displayed in actions_panel of the plonegroup-organziation send user back to the 'contacts' directory, no more to the portal_plonemeeting
 
 4.1rc2 (2019-06-11)
 -------------------
