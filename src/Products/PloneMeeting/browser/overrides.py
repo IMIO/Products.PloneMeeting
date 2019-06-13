@@ -5,6 +5,8 @@ from Acquisition import aq_base
 from archetypes.referencebrowserwidget.browser.view import ReferenceBrowserPopup
 from collective.behavior.talcondition.utils import _evaluateExpression
 from collective.ckeditor.browser.ckeditorfinder import CKFinder
+from collective.contact.core import utils as contact_core_utils
+from collective.contact.plonegroup import utils as contact_plonegroup_utils
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.contact.plonegroup.utils import get_all_suffixes
 from collective.documentgenerator.content.pod_template import IPODTemplate
@@ -787,17 +789,20 @@ class PMDocumentGenerationView(DashboardDocumentGenerationView):
         """ """
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self.context)
-        currentUser = api.user.get_current()
         specific_context = {
             'self': self.context,
             'adap': hasattr(self.context, 'adapted') and self.context.adapted() or None,
             'tool': tool,
             'meetingConfig': cfg,
             'itemUids': {},
-            'user': currentUser,
+            'user': api.user.get_current(),
             'podTemplate': pod_template,
             # give ability to access annexes related methods
             'collective_iconifiedcategory_utils': collective_iconifiedcategory_utils,
+            # collective.contact.core.utils
+            'contact_core_utils': contact_core_utils,
+            # collective.contact.plonegroup.utils
+            'contact_plonegroup_utils': contact_plonegroup_utils,
             # imio.annex utils
             'imio_annex_utils': imio_annex_utils,
             # imio.history utils

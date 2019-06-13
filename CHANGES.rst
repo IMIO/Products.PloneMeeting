@@ -5,8 +5,8 @@ Changelog
 4.1rc3 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Make collective.contact.core.utils and collective.contact.plonegroup.utils available in POD templates under name
+  contact_core_utils and contact_plonegroup_utils, useful to access get_gender_and_number or get_organization for example
 
 4.1rc2 (2019-06-11)
 -------------------
