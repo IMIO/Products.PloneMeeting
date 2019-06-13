@@ -272,7 +272,7 @@
                       i18n:translate="PloneMeeting_label_completeness"></span>:&nbsp;&nbsp;
                 <span data-base_url="#"
                    style="display: inline;"
-                   tal:define="edit_css_classes python: context.mayQuickEdit('completeness') and 'tooltipster-item-completeness-change item_completeness Editable pmAction' or ''"
+                   tal:define="edit_css_classes python: context.mayQuickEdit('completeness', bypassWritePermissionCheck=True) and 'tooltipster-item-completeness-change item_completeness Editable pmAction' or ''"
                    tal:attributes="data-base_url string:${context_url};
                                    class string:${edit_css_classes} item_${context/getCompleteness}">
                     <span metal:use-macro="python: here.widget('completeness', mode='view')" />
