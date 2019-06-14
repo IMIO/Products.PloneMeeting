@@ -13,6 +13,7 @@ Changelog
 - By default, when adding an new organization using the 'Add organization' in the contacts portlet, add it the plonegroup-organization
 - The 'return' action displayed in actions_panel of the plonegroup-organziation send user back to the 'contacts' directory, no more to the portal_plonemeeting
 - Added possibility to pass extra_omitted parameter to Migrate_To_4_1.run to omit when calling upgradeAll
+- Added ItemDocumentGenerationHelperView.print_copy_groups to print an item's copy groups
 
 4.1rc2 (2019-06-11)
 -------------------

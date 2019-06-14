@@ -23,6 +23,7 @@ from collections import OrderedDict
 from collective.contact.core.utils import get_gender_and_number
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.contact.plonegroup.utils import get_organizations
+from collective.contact.plonegroup.utils import get_organization
 from collective.documentgenerator.helper.archetypes import ATDocumentGenerationHelperView
 from collective.documentgenerator.helper.dexterity import DXDocumentGenerationHelperView
 from collective.eeafaceted.batchactions import _ as _CEBA
@@ -1423,6 +1424,25 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
             res = html_res
         else:
             res = person_res.copy()
+        return res
+
+    def print_copy_groups(self, suffixes=[], separator=', ', render_as_html=True, html_pattern=u'<p>{0}</p>'):
+        """
+        Print the item's copy groups.
+        suffixes is a list of suffixes of plone groups that we want to print: e.g. ['reviewers', 'oberservers']
+        separator is used when render_as_html == True to specify how to separate the groups.
+        render_as_html when False, return the list of Organization objects, otherwise return a html representation.
+        html_pattern is used to add a html pattern around the list of groups.
+        """
+        res = []
+        copy_groups = self.context.getCopyGroups()
+        for copy_group in copy_groups:
+            if copy_group.endswith(tuple(suffixes)):
+                group = get_organization(copy_group)
+                res.append(group)
+        if render_as_html:
+            res = separator.join(group.Title() for group in res)
+            return html_pattern.format(res)
         return res
 
 
