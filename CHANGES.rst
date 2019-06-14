@@ -2,7 +2,7 @@ Changelog
 =========
 
 
-4.1rc3 (unreleased)
+4.1rc3 (2019-06-14)
 -------------------
 
 - Make collective.contact.core.utils and collective.contact.plonegroup.utils available in POD templates under name
