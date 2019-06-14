@@ -12,6 +12,7 @@ Changelog
 - Fixed MeetingItem.listProposingGroupsWithGroupsInCharge, make sure it does not fail if proposingGroup/groupInCharge title use special characters
 - By default, when adding an new organization using the 'Add organization' in the contacts portlet, add it the plonegroup-organization
 - The 'return' action displayed in actions_panel of the plonegroup-organziation send user back to the 'contacts' directory, no more to the portal_plonemeeting
+- New method print_copy_groups to print an item's copy groups in ItemDocumentGenerationHelperView
 
 4.1rc2 (2019-06-11)
 -------------------

@@ -1428,12 +1428,11 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
 
     def print_copy_groups(self, suffixes=[], separator=', ', render_as_html=True, html_pattern=u'<p>{0}</p>'):
         """
-        TODO docstring
-        :param suffixes:
-        :param separator:
-        :param render_as_html:
-        :param html_pattern:
-        :return:
+        Print the item's copy groups.
+        suffixes is a list of suffixes of plone groups that we want to print: e.g. ['reviewers', 'oberservers']
+        separator is used when render_as_html == True to specify how to separate the groups.
+        render_as_html when False, return the list of Organization objects, otherwise return a html representation.
+        html_pattern is used to add a html pattern around the list of groups.
         """
         res = []
         copy_groups = self.context.getCopyGroups()
