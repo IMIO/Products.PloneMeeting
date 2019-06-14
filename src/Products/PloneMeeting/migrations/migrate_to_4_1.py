@@ -1053,7 +1053,7 @@ class Migrate_To_4_1(Migrator):
                     cfg.setDefaultAdviceHiddenDuringRedaction(advice_portal_types)
         logger.info('Done.')
 
-    def run(self, step=None):
+    def run(self, extra_omitted=[]):
         logger.info('Migrating to PloneMeeting 4.1...')
 
         # recook CSS as we moved to Plone 4.3.18 and portal_css.concatenatedresources
@@ -1069,7 +1069,7 @@ class Migrate_To_4_1(Migrator):
         # omit Products.PloneMeeting for now or it creates infinite loop as we are
         # in a Products.PloneMeeting upgrade step...
         self.upgradeAll(omit=['Products.PloneMeeting:default',
-                              self.profile_name.replace('profile-', '')])
+                              self.profile_name.replace('profile-', '')] + extra_omitted)
 
         # reinstall so versions are correctly shown in portal_quickinstaller
         # plone.app.versioningbehavior is installed
