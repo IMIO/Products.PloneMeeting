@@ -23,6 +23,7 @@ from collections import OrderedDict
 from collective.contact.core.utils import get_gender_and_number
 from collective.contact.plonegroup.config import PLONEGROUP_ORG
 from collective.contact.plonegroup.utils import get_organizations
+from collective.contact.plonegroup.utils import get_organization
 from collective.documentgenerator.helper.archetypes import ATDocumentGenerationHelperView
 from collective.documentgenerator.helper.dexterity import DXDocumentGenerationHelperView
 from collective.eeafaceted.batchactions import _ as _CEBA
@@ -1423,6 +1424,26 @@ class ItemDocumentGenerationHelperView(ATDocumentGenerationHelperView, BaseDGHV)
             res = html_res
         else:
             res = person_res.copy()
+        return res
+
+    def print_copy_groups(self, suffixes=[], separator=', ', render_as_html=True, html_pattern=u'<p>{0}</p>'):
+        """
+        TODO docstring
+        :param suffixes:
+        :param separator:
+        :param render_as_html:
+        :param html_pattern:
+        :return:
+        """
+        res = []
+        copy_groups = self.context.getCopyGroups()
+        for copy_group in copy_groups:
+            if copy_group.endswith(tuple(suffixes)):
+                group = get_organization(copy_group)
+                res.append(group)
+        if render_as_html:
+            res = separator.join(group.Title() for group in res)
+            return html_pattern.format(res)
         return res
 
 
