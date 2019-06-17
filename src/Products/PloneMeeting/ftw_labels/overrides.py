@@ -101,5 +101,5 @@ class PMFTWLabelsLabelingViewlet(LabelingViewlet):
         return self.context.restrictedTraverse('@@labeling').can_edit
 
     @property
-    def can_pers_edit(self):
-        return self.context.restrictedTraverse('@@pers-labeling').can_pers_edit
+    def can_personal_edit(self):
+        return self.context.restrictedTraverse('@@pers-labeling').can_personal_edit

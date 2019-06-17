@@ -5,8 +5,8 @@ Changelog
 4.1rc4 (unreleased)
 -------------------
 
-- Nothing changed yet.
-
+- Display items navigation widget correctly, fixed CSS
+- Fixed bug where it was not possible to edit personal labels if not authorized to edit global labels
 
 4.1rc3 (2019-06-14)
 -------------------

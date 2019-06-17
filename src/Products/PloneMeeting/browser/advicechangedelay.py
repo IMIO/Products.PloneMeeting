@@ -274,6 +274,7 @@ AdviceChangeDelayFormWrapper = wrap_form(AdviceChangeDelayForm)
 
 class AdviceChangeDelayHistoryView(BrowserView):
     '''Display history of advice delay value changes.'''
+
     def __init__(self, context, request):
         super(BrowserView, self).__init__(context, request)
         self.context = context
@@ -292,14 +293,14 @@ class AdviceChangeDelayHistoryView(BrowserView):
 
 class AdviceReinitializeDelayView(BrowserView):
     '''Reinitialize delay of given advice_uid.'''
+
     def __init__(self, context, request):
         super(BrowserView, self).__init__(context, request)
         self.context = context
         self.request = request
 
     def __call__(self):
-        '''
-        '''
+        ''' '''
         delayChangesView = self.context.restrictedTraverse('@@advice-available-delays')
         advice_uid = self.request.get('advice')
         if not delayChangesView._mayReinitializeDelay(advice_uid):

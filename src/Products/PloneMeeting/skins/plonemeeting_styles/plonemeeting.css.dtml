@@ -262,6 +262,8 @@ div.pm_search_no_result_info {
 
 .navigateItem {
     text-align: center;
+    clear: both;
+    margin-top: 0.5em;
 }
 
 .navigateItem img {
@@ -1753,6 +1755,10 @@ ul.change_delay_actions li a span {
 
 fieldset.section_annex, fieldset.section_annexDecision, fieldset.section_advices {
    height: 50px;
+}
+
+div#held_position_back_refs {
+   padding-bottom: 0.5em;
 }
 
 /* </dtml-with> */
