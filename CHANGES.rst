@@ -7,6 +7,10 @@ Changelog
 
 - Display items navigation widget correctly, fixed CSS
 - Fixed bug where it was not possible to edit personal labels if not authorized to edit global labels
+- Fixed bug where a DashboardPODTemplate defined in a MeetingConfig for which no dashboard_collections was defined was shown in every MeetingConfigs
+- When adding a new held_position, make default position being the 'My organization' organization.  To do so, needed to change the add_view_expr attribute
+  of held_position portal_type to pass default position in the URL (++add++held_position?form.widgets.position=...) as it does not seem possible to
+  define a default value using default, defaultFactory or other @form.default_value
 
 4.1rc3 (2019-06-14)
 -------------------

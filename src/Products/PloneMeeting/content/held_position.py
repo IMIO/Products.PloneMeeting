@@ -28,6 +28,8 @@ class IPMHeldPosition(IHeldPosition):
     # override position to use a select list restricted to orgs out of PLONEGROUP_ORG
     position = ContactChoice(
         title=_ccc("Organization/Position"),
+        description=_("Select an organization, most of time, there is one single organization, "
+                      "search for \"My organization\"."),
         source=PMContactSourceBinder(),
         required=True,
     )

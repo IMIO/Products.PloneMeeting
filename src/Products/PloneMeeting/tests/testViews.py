@@ -1580,6 +1580,24 @@ class testViews(PloneMeetingTestCase):
              'person_fullname': u'Person1FirstName Person1LastName',
              'person_title': u'Monsieur Person1FirstName Person1LastName'})
 
+    def test_pm_dashboard_document_generation_link_viewlet(self):
+        """Dashboard POD templates are available on a per MeetingConfig basis."""
+        self.changeUser('pmCreator1')
+        # some DashboardPODTemplates are defined in cfg1
+        pmFolder = self.getMeetingFolder()
+        viewlet = self._get_viewlet(
+            context=pmFolder,
+            manager_name='collective.eeafaceted.z3ctable.topabovenav',
+            viewlet_name='dashboard-document-generation-link')
+        self.assertTrue(viewlet.get_all_pod_templates())
+        # NO DashboardPODTemplates are defined in cfg2
+        pmFolder2 = self.getMeetingFolder(self.meetingConfig2)
+        viewlet2 = self._get_viewlet(
+            context=pmFolder2,
+            manager_name='collective.eeafaceted.z3ctable.topabovenav',
+            viewlet_name='dashboard-document-generation-link')
+        self.assertFalse(viewlet2.get_all_pod_templates())
+
 
 def test_suite():
     from unittest import TestSuite, makeSuite

@@ -437,7 +437,7 @@ class PMRenderCategoryView(IDRenderCategoryView):
         # remove link to add held_position
         contact_infos.pop('hps-searches')
         # by default, add organization to plonegroup-organization
-        contact_infos['orgs-searches']['add'] = '/plonegroup-organization/++add++organization'
+        contact_infos['orgs-searches']['add'] = 'plonegroup-organization/++add++organization'
         return contact_infos
 
     def _get_category_template(self):

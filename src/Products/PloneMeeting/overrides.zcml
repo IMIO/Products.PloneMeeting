@@ -47,7 +47,7 @@
         name="dashboard-document-generation-link"
         manager="collective.eeafaceted.z3ctable.interfaces.ITopAboveNavManager"
         class="Products.PloneMeeting.browser.overrides.PMDashboardDocumentGeneratorLinksViewlet"
-        layer="Products.PloneMeeting.interfaces.IPloneMeetingLayer"
+        layer="collective.eeafaceted.dashboard.interfaces.IFacetedDashboardLayer"
         permission="zope2.View"
         />
 
