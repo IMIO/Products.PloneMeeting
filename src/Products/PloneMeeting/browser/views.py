@@ -1019,7 +1019,12 @@ class BaseDGHV(object):
                             position_type_value = u''
                             if not position_type.startswith('__no_position_type__'):
                                 gn = get_gender_and_number(contacts)
-                                position_type_value = contacts[0].gender_and_number_from_position_type()[gn]
+                                hp = contacts[0]
+                                # manage when we have no position_type but a label
+                                if hp.position_type == u'default' and u'default' not in ignored_pos_type_ids:
+                                    position_type_value = hp.get_label()
+                                else:
+                                    position_type_value = contacts[0].gender_and_number_from_position_type()[gn]
                             grouped_contacts_value = _buildContactsValue(meeting, contacts)
                             grouped_contacts_value = pos_attendee_separator.join(grouped_contacts_value)
                             if position_type_value:
@@ -1133,7 +1138,11 @@ class BaseDGHV(object):
                             # so contacts are still ordered
                             used_contact_position_type = '__no_position_type__{0}'.format(contact.UID())
                             by_pos_type_res[used_contact_position_type] = []
-                        elif contact.position_type not in by_pos_type_res:
+                        # if u'default' not in ignored_pos_type_ids, use the label
+                        if used_contact_position_type == u'default':
+                            used_contact_position_type = contact.get_label()
+                        # create entry on result if not already existing
+                        if contact.position_type not in by_pos_type_res:
                             by_pos_type_res[used_contact_position_type] = []
                         by_pos_type_res[used_contact_position_type].append(contact)
                     res[attendee_type][org] = by_pos_type_res
