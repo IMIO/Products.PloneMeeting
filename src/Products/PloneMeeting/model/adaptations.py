@@ -159,12 +159,13 @@ def addState(wf_id,
     if leading_transition_id:
         wf.transitions.addTransition(leading_transition_id)
         transition = wf.transitions.get(leading_transition_id)
+        guard_name = 'may{0}{1}'.format(leading_transition_id[0].upper(), leading_transition_id[1:])
         transition.setProperties(
             title=leading_transition_id,
             new_state_id=new_state_id, trigger_type=1, script_name='',
             actbox_name=leading_transition_id, actbox_url='',
             actbox_icon='%(portal_url)s/{0}.png'.format(leading_transition_id), actbox_category='workflow',
-            props={'guard_expr': 'python:here.wfConditions().may{0}()'.format(leading_transition_id.capitalize())})
+            props={'guard_expr': 'python:here.wfConditions().{0}()'.format(guard_name)})
     # back_transition_id
     for back_transition_id, back_from_state_id in back_transitions.items():
         wf.transitions.addTransition(back_transition_id)
@@ -183,12 +184,13 @@ def addState(wf_id,
     if leaving_transition_id:
         wf.transitions.addTransition(leaving_transition_id)
         transition = wf.transitions.get(leaving_transition_id)
+        guard_name = 'may{0}{1}'.format(leaving_transition_id[0].upper(), leaving_transition_id[1:])
         transition.setProperties(
             title=leaving_transition_id,
             new_state_id=leaving_to_state_id, trigger_type=1, script_name='',
             actbox_name=leaving_transition_id, actbox_url='',
             actbox_icon='%(portal_url)s/{0}.png'.format(leaving_transition_id), actbox_category='workflow',
-            props={'guard_expr': 'python:here.wfConditions().mayCorrect("{0}")'.format(leaving_to_state_id)})
+            props={'guard_expr': 'python:here.wfConditions().{0}()'.format(guard_name)})
 
     # CONNECT STATES AND TRANSITIONS
     # new_state_id
