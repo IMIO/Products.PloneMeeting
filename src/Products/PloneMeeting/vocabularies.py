@@ -1,5 +1,6 @@
 # encoding: utf-8
 
+from collective.contact.plonegroup.config import get_registry_organizations
 from collective.contact.plonegroup.utils import get_organization
 from collective.contact.plonegroup.utils import get_organizations
 from collective.documentgenerator.content.vocabulary import ExistingPODTemplateFactory
@@ -28,6 +29,7 @@ from Products.PloneMeeting.indexes import DELAYAWARE_ROW_ID_PATTERN
 from Products.PloneMeeting.indexes import REAL_ORG_UID_PATTERN
 from Products.PloneMeeting.interfaces import IMeetingConfig
 from Products.PloneMeeting.utils import get_context_with_request
+from zope.component import queryUtility
 from zope.globalrequest import getRequest
 from zope.i18n import translate
 from zope.interface import implements
@@ -1106,6 +1108,8 @@ class HeldPositionUsagesVocabulary(object):
             SimpleTerm('assemblyMember', 'assemblyMember', _('assemblyMember')))
         res.append(
             SimpleTerm('asker', 'asker', _('asker')))
+        res.append(
+            SimpleTerm('associated', 'associated', _('associated')))
         return SimpleVocabulary(res)
 
 
@@ -1240,7 +1244,14 @@ class BaseHeldPositionsVocabulary(object):
     """ """
     implements(IVocabularyFactory)
 
-    def __call__(self, context, usage=None, uids=[], highlight_missing=False):
+    def __call__(self,
+                 context,
+                 usage=None,
+                 uids=[],
+                 highlight_missing=False,
+                 include_usages=True,
+                 include_defaults=True,
+                 include_signature_number=True):
         catalog = api.portal.get_tool('portal_catalog')
         query = {'portal_type': 'held_position',
                  'sort_on': 'sortable_title'}
@@ -1264,9 +1275,9 @@ class BaseHeldPositionsVocabulary(object):
                         brain.UID,
                         pattern.format(
                             held_position.get_short_title(
-                                include_usages=True,
-                                include_defaults=True,
-                                include_signature_number=True,
+                                include_usages=include_usages,
+                                include_defaults=include_defaults,
+                                include_signature_number=include_signature_number,
                                 highlight=highlight))))
         return SimpleVocabulary(res)
 
@@ -1293,8 +1304,6 @@ SelectableAssemblyMembersVocabularyFactory = SelectableAssemblyMembersVocabulary
 
 class SelectableItemInitiatorsVocabulary(BaseHeldPositionsVocabulary):
     """ """
-    implements(IVocabularyFactory)
-
     def __call__(self, context):
         res = super(SelectableItemInitiatorsVocabulary, self).__call__(context, usage='asker')
         if IMeetingConfig.providedBy(context):
@@ -1313,3 +1322,28 @@ class SelectableItemInitiatorsVocabulary(BaseHeldPositionsVocabulary):
 
 
 SelectableItemInitiatorsVocabularyFactory = SelectableItemInitiatorsVocabulary()
+
+
+class SelectableAssociatedGroupsVocabulary(BaseHeldPositionsVocabulary):
+    """Use u'collective.contact.plonegroup.organization_services' and adapt title
+       of the terms to show organizations that are in plonegroup and others that are not.
+       Include also held_positions with usage 'associated'."""
+    implements(IVocabularyFactory)
+
+    def __call__(self, context):
+        """ """
+        # held_positions with usage 'associated'
+        held_position_terms = super(SelectableAssociatedGroupsVocabulary, self).__call__(
+            context, usage='associated', include_usages=False,
+            include_defaults=False, include_signature_number=False)
+        # organizations
+        vocab = queryUtility(IVocabularyFactory, u'collective.contact.plonegroup.organization_services')
+        org_terms = vocab(None)
+        selected_orgs = get_registry_organizations()
+        for term in org_terms:
+            if term.value not in selected_orgs:
+                term.title = term.title + u' (Not selected in plonegroup)'
+        return SimpleVocabulary(held_position_terms._terms + org_terms._terms)
+
+
+SelectableAssociatedGroupsVocabularyFactory = SelectableAssociatedGroupsVocabulary()

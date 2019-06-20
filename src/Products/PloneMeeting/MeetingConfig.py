@@ -535,6 +535,24 @@ schema = Schema((
         schemata="data",
         write_permission="PloneMeeting: Write risky config",
     ),
+    LinesField(
+        name='orderedAssociatedGroups',
+        widget=InAndOutWidget(
+            description="OrderedAssociatedGroups",
+            description_msgid="ordered_associated_groups_descr",
+            label='Orderedassociatedgroups',
+            label_msgid='PloneMeeting_label_orderedAssociatedGroups',
+            i18n_domain='PloneMeeting',
+            size='20',
+        ),
+        schemata="data",
+        multiValued=1,
+        vocabulary_factory='Products.PloneMeeting.vocabularies.selectableassociatedgroupsvocabulary',
+        default=defValues.orderedAssociatedGroups,
+        enforceVocabulary=True,
+        write_permission="PloneMeeting: Write risky config",
+    ),
+
     BooleanField(
         name='toDiscussSetOnItemInsert',
         default=defValues.toDiscussSetOnItemInsert,
