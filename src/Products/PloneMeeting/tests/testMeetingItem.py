@@ -3691,6 +3691,7 @@ class testMeetingItem(PloneMeetingTestCase):
         actions_panel._transitions = None
         validatedItemForManager_rendered_actions_panel = actions_panel()
         self.changeUser('pmReviewer1')
+        actions_panel._transitions = None
         validatedItemForReviewer_rendered_actions_panel = actions_panel()
         self.assertNotEqual(validatedItemForReviewer_rendered_actions_panel,
                             validatedItemForManager_rendered_actions_panel)
