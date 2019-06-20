@@ -3598,16 +3598,16 @@ class testMeetingItem(PloneMeetingTestCase):
         originalCategory = item.getCategory()
         item.setCategory('')
         item._update_after_edit()
-        self.assertTrue(not self.transitions(item))
+        self.assertFalse(self.transitions(item))
+        actions_panel._transitions = None
         no_category_rendered_actions_panel = actions_panel()
-        self.assertTrue(not no_category_rendered_actions_panel ==
-                        rendered_actions_panel)
+        self.assertNotEqual(no_category_rendered_actions_panel, rendered_actions_panel)
         item.setCategory(originalCategory)
         item._update_after_edit()
         # changed again
+        actions_panel._transitions = None
         rendered_actions_panel = actions_panel()
-        self.assertTrue(not no_category_rendered_actions_panel ==
-                        rendered_actions_panel)
+        self.assertNotEqual(no_category_rendered_actions_panel, rendered_actions_panel)
 
     def test_pm_ItemActionsPanelCachingInvalidatedWhenItemStateChanged(self):
         """Actions panel cache is invalidated when an item state changed."""
@@ -3624,15 +3624,18 @@ class testMeetingItem(PloneMeetingTestCase):
         # invalidated when user changed
         # 'pmReviewer1' may validate the item, the rendered panel will not be the same
         self.proposeItem(item)
+        actions_panel._transitions = None
         proposedItemForCreator_rendered_actions_panel = actions_panel()
         self.changeUser('pmReviewer1')
+        actions_panel._transitions = None
         proposedItemForReviewer_rendered_actions_panel = actions_panel()
-        self.assertTrue(not proposedItemForCreator_rendered_actions_panel ==
-                        proposedItemForReviewer_rendered_actions_panel)
+        self.assertNotEqual(proposedItemForCreator_rendered_actions_panel,
+                            proposedItemForReviewer_rendered_actions_panel)
         self.validateItem(item)
+        actions_panel._transitions = None
         validatedItemForReviewer_rendered_actions_panel = actions_panel()
-        self.assertTrue(not proposedItemForReviewer_rendered_actions_panel ==
-                        validatedItemForReviewer_rendered_actions_panel)
+        self.assertNotEqual(proposedItemForReviewer_rendered_actions_panel,
+                            validatedItemForReviewer_rendered_actions_panel)
 
     def test_pm_ItemActionsPanelCachingInvalidatedWhenItemTurnsToPresentable(self):
         """Actions panel cache is invalidated when the item turns to presentable."""
@@ -3640,6 +3643,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # invalidated when item turns to 'presentable'
         # so create a meeting, item will be presentable and panel is invalidated
         self.validateItem(item)
+        actions_panel._transitions = None
         validatedItem_rendered_actions_panel = actions_panel()
         self.changeUser('pmManager')
         self._createMeetingWithItems(meetingDate=DateTime() + 2)
@@ -3648,9 +3652,10 @@ class testMeetingItem(PloneMeetingTestCase):
         # here item is presentable
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject')
         self.assertTrue(item.wfConditions().mayPresent())
+        actions_panel._transitions = None
         validatedItemCreatedMeeting_rendered_actions_panel = actions_panel()
-        self.assertTrue(not validatedItem_rendered_actions_panel ==
-                        validatedItemCreatedMeeting_rendered_actions_panel)
+        self.assertNotEqual(validatedItem_rendered_actions_panel,
+                            validatedItemCreatedMeeting_rendered_actions_panel)
 
     def test_pm_ItemActionsPanelCachingInvalidatedWhenItemTurnsToNoMorePresentable(self):
         """Actions panel cache is invalidated when the item turns to no more presentable.
@@ -3663,11 +3668,13 @@ class testMeetingItem(PloneMeetingTestCase):
         meeting = self._createMeetingWithItems(meetingDate=DateTime() + 2)
         self.request['PUBLISHED'] = item
         self.validateItem(item)
+        actions_panel._transitions = None
         validatedItemCreatedMeeting_rendered_actions_panel = actions_panel()
         self.freezeMeeting(meeting)
         # here item is no more presentable
         cleanRamCacheFor('Products.PloneMeeting.MeetingItem.getMeetingToInsertIntoWhenNoCurrentMeetingObject')
         self.assertFalse(item.wfConditions().mayPresent())
+        actions_panel._transitions = None
         validatedItemFrozenMeeting_rendered_actions_panel = actions_panel()
         self.assertTrue('present' in validatedItemCreatedMeeting_rendered_actions_panel)
         self.assertFalse('present' in validatedItemFrozenMeeting_rendered_actions_panel)
@@ -3681,11 +3688,12 @@ class testMeetingItem(PloneMeetingTestCase):
 
         # invalidated when linked meeting is edited
         # MeetingManager is another user with other actions, double check...
+        actions_panel._transitions = None
         validatedItemForManager_rendered_actions_panel = actions_panel()
         self.changeUser('pmReviewer1')
         validatedItemForReviewer_rendered_actions_panel = actions_panel()
-        self.assertTrue(not validatedItemForReviewer_rendered_actions_panel ==
-                        validatedItemForManager_rendered_actions_panel)
+        self.assertNotEqual(validatedItemForReviewer_rendered_actions_panel,
+                            validatedItemForManager_rendered_actions_panel)
 
         # present the item as normal item
         self.changeUser('pmManager')
@@ -3709,6 +3717,7 @@ class testMeetingItem(PloneMeetingTestCase):
         object_buttons = [k['id'] for k in pa.listFilteredActionsFor(item)['object_buttons']]
         # for now action is not available on the item
         self.assertTrue('dummy' not in object_buttons)
+        actions_panel._transitions = None
         beforeMeetingEdit_rendered_actions_panel = actions_panel()
         meeting.setDate(DateTime('2010/10/10'))
         meeting._update_after_edit()
@@ -3716,7 +3725,7 @@ class testMeetingItem(PloneMeetingTestCase):
         object_buttons = [k['id'] for k in pa.listFilteredActionsFor(item)['object_buttons']]
         self.assertTrue('dummy' in object_buttons)
         # and actions panel has been invalidated
-        self.assertTrue(not beforeMeetingEdit_rendered_actions_panel == actions_panel())
+        self.assertNotEqual(beforeMeetingEdit_rendered_actions_panel, actions_panel())
 
     def test_pm_ItemActionsPanelCachingInvalidatedWhenMeetingConfigEdited(self):
         """Actions panel cache is invalidated when the MeetingConfig is edited."""
@@ -3728,12 +3737,13 @@ class testMeetingItem(PloneMeetingTestCase):
         firstTrToConfirm = 'MeetingItem.%s' % firstTransition
         self.assertTrue(firstTrToConfirm not in cfg.getTransitionsToConfirm())
         cfg.setTransitionsToConfirm((firstTrToConfirm, ))
+        actions_panel._transitions = None
         beforeMCEdit_rendered_actions_panel = actions_panel()
         cfg.at_post_edit_script()
         # browser/overrides.py:BaseActionsPanelView._transitionsToConfirm is memoized
         self.cleanMemoize()
         afterMCEdit_rendered_actions_panel = actions_panel()
-        self.assertNotEquals(beforeMCEdit_rendered_actions_panel, afterMCEdit_rendered_actions_panel)
+        self.assertNotEqual(beforeMCEdit_rendered_actions_panel, afterMCEdit_rendered_actions_panel)
 
     def test_pm_HistoryCommentViewability(self):
         '''Test the MeetingConfig.hideItemHistoryCommentsToUsersOutsideProposingGroup parameter
