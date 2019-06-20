@@ -13,6 +13,7 @@ Changelog
   define a default value using default, defaultFactory or other @form.default_value
 - In print_attendees_by_type, when group_position_type=True, display label for held_positions for which position_type is u'default' when u'default'
   is not in ignored_pos_type_ids
+- Fixed MeetingConfig.validate_customAdvisers to check if there are no same row_ids used, this could happen when creating MeetingConfig from import_data
 
 4.1rc3 (2019-06-14)
 -------------------

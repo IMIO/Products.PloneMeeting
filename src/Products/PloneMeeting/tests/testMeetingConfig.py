@@ -83,6 +83,79 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertFalse(cfg.validate_shortName('other-short-name'))
         self.assertTrue(cfg.validate_shortName(cfg2Name) == DUPLICATE_SHORT_NAME % cfg2Name)
 
+    def test_pm_Validate_customAdvisersSameRowIdForDifferentRows(self):
+        '''This validates that there can not be several rows having same 'row_id'.
+           This could happen when creating MeetingConfig from an import_data.'''
+        cfg = self.meetingConfig
+        self.changeUser('siteadmin')
+        # the validate method returns a translated message if the validation failed
+        # wrong date format, should be YYYY/MM/DD
+        customAdvisers = [
+            {'row_id': 'unique_id_001',
+             'org': self.vendors_uid,
+             'gives_auto_advice_on': 'python:True',
+             'for_item_created_from': '2012/01/01',
+             'for_item_created_until': '',
+             'gives_auto_advice_on_help_message': '',
+             'delay': '',
+             'delay_left_alert': '',
+             'delay_label': '',
+             'available_on': '',
+             'is_linked_to_previous_row': '0', },
+            {'row_id': 'unique_id_001',
+             'org': self.vendors_uid,
+             'gives_auto_advice_on': 'python:True',
+             'for_item_created_from': '2012/01/01',
+             'for_item_created_until': '',
+             'gives_auto_advice_on_help_message': '',
+             'delay': '',
+             'delay_left_alert': '',
+             'delay_label': '',
+             'available_on': '',
+             'is_linked_to_previous_row': '0', },
+        ]
+        same_row_ids_msg = translate('custom_adviser_can_not_use_same_row_id_for_different_rows',
+                                     domain='PloneMeeting',
+                                     context=self.portal.REQUEST)
+        self.assertEqual(cfg.validate_customAdvisers(customAdvisers), same_row_ids_msg)
+        # same if we have 3 times the same roid
+        customAdvisers = [
+            {'row_id': 'unique_id_001',
+             'org': self.vendors_uid,
+             'gives_auto_advice_on': 'python:True',
+             'for_item_created_from': '2012/01/01',
+             'for_item_created_until': '',
+             'gives_auto_advice_on_help_message': '',
+             'delay': '',
+             'delay_left_alert': '',
+             'delay_label': '',
+             'available_on': '',
+             'is_linked_to_previous_row': '0', },
+            {'row_id': 'unique_id_001',
+             'org': self.vendors_uid,
+             'gives_auto_advice_on': 'python:True',
+             'for_item_created_from': '2012/01/01',
+             'for_item_created_until': '',
+             'gives_auto_advice_on_help_message': '',
+             'delay': '',
+             'delay_left_alert': '',
+             'delay_label': '',
+             'available_on': '',
+             'is_linked_to_previous_row': '0', },
+            {'row_id': 'unique_id_001',
+             'org': self.vendors_uid,
+             'gives_auto_advice_on': 'python:True',
+             'for_item_created_from': '2012/01/01',
+             'for_item_created_until': '',
+             'gives_auto_advice_on_help_message': '',
+             'delay': '',
+             'delay_left_alert': '',
+             'delay_label': '',
+             'available_on': '',
+             'is_linked_to_previous_row': '0', }
+        ]
+        self.assertEqual(cfg.validate_customAdvisers(customAdvisers), same_row_ids_msg)
+
     def test_pm_Validate_customAdvisersEnoughData(self):
         '''Test the MeetingConfig.customAdvisers validate method.
            This validates that enough columns are filled, either the 'delay' or the

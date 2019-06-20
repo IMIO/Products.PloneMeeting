@@ -3339,6 +3339,8 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
 
     def validate_customAdvisers(self, value):
         '''We have several things to check, do lighter checks first :
+           - check that every row_ids are unique, this can be the case
+             when creating MeetingConfig from import profile;
            - check column contents respect required format :
                * columns 'for_item_created_from' and 'for_item_created_until',
                  we use a common string column to store a date, check that the given date
@@ -3506,7 +3508,15 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                         previousCustomAdviserRowId = customAdviser['row_id']
 
         # check also that if we removed some row_id, it was not in use neither
-        row_ids_to_save = set([v['row_id'] for v in value if v['row_id']])
+        row_ids = [v['row_id'] for v in value if v['row_id']]
+        row_ids_to_save = set(row_ids)
+        # check that we have no same row_ids, this can happen when filling field from wrong import_data
+        if len(row_ids) != len(row_ids_to_save):
+            return translate(
+                'custom_adviser_can_not_use_same_row_id_for_different_rows',
+                domain='PloneMeeting',
+                context=self.REQUEST)
+
         stored_row_ids = set([v['row_id'] for v in self.getCustomAdvisers() if v['row_id']])
 
         removed_row_ids = stored_row_ids.difference(row_ids_to_save)
