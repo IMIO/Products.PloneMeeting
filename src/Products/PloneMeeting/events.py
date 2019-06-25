@@ -251,7 +251,7 @@ def onOrgWillBeRemoved(current_org, event):
 
     for org in get_organizations(only_selected=False):
         if current_org_uid in org.groups_in_charge:
-            raise BeforeDeleteException(translate("can_not_delete_organization_groupincharge",
+            raise BeforeDeleteException(translate("can_not_delete_organization_groupsincharge",
                                                   mapping={'org_url': org.absolute_url()},
                                                   domain="plone",
                                                   context=request))

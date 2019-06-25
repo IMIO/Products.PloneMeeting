@@ -408,7 +408,7 @@ class PloneMeetingTestingHelpers:
 
     def _tearDownGroupsInCharge(self, item):
         """If group in charge is overrided, it may be setup differently."""
-        item.setGroupInCharge('')
+        item.setGroupsInCharge([])
 
     def _select_organization(self, org_uid, remove=False):
         """Select organization in ORGANIZATIONS_REGISTRY."""

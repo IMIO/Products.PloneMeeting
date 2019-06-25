@@ -2205,11 +2205,11 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(self.hasPermission(ModifyPortalContent, item))
         self.assertTrue(self.hasPermission(WriteBudgetInfos, item))
 
-    def test_pm_GroupInChargeLocalRoles(self):
-        '''Group in charge will have access of groups they have in charge in states
-           defined in MeetingConfig.itemGroupInChargeStates.'''
+    def test_pm_GroupsInChargeLocalRoles(self):
+        '''Groups in charge will have access of groups they have in charge in states
+           defined in MeetingConfig.itemGroupsInChargeStates.'''
         cfg = self.meetingConfig
-        cfg.setItemGroupInChargeStates(self._stateMappingFor('itemcreated'),)
+        cfg.setItemGroupsInChargeStates([self._stateMappingFor('itemcreated')])
 
         # first test : no group in charge
         self.changeUser('pmCreator1')
@@ -2225,13 +2225,13 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertTrue(READER_USECASES['groupsincharge'] in item.__ac_local_roles__[self.vendors_observers])
 
         # not right state in the configuration
-        cfg.setItemGroupInChargeStates(self._stateMappingFor('proposed'),)
+        cfg.setItemGroupsInChargeStates([self._stateMappingFor('proposed')])
         item.updateLocalRoles()
         self.assertFalse(self.vendors_observers in item.__ac_local_roles__)
 
         # right, back to correct configuration
         # check that changing item's state works, back to correct configuration
-        cfg.setItemGroupInChargeStates(self._stateMappingFor('itemcreated'),)
+        cfg.setItemGroupsInChargeStates([self._stateMappingFor('itemcreated')])
         item.updateLocalRoles()
         self.assertTrue(READER_USECASES['groupsincharge'] in item.__ac_local_roles__[self.vendors_observers])
         self.proposeItem(item)

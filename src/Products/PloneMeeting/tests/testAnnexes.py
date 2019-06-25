@@ -199,7 +199,7 @@ class testAnnexes(PloneMeetingTestCase):
             annexNotConfidential, annexConfidential = self._setupConfidentialityOnItemAnnexes()
 
         proposingGroup = item.getProposingGroup(theObject=True)
-        cfg.setItemGroupInChargeStates(item_initial_state)
+        cfg.setItemGroupsInChargeStates([item_initial_state])
 
         # does not fail in no group in charge
         self.assertFalse(proposingGroup.groups_in_charge)
@@ -420,7 +420,7 @@ class testAnnexes(PloneMeetingTestCase):
             annexNotConfidential, annexConfidential = self._setupConfidentialityOnAdviceAnnexes()
 
         proposingGroup = item.getProposingGroup(theObject=True)
-        cfg.setItemGroupInChargeStates(item_initial_state)
+        cfg.setItemGroupsInChargeStates([item_initial_state])
 
         # does not fail in no group in charge
         self.assertFalse(proposingGroup.groups_in_charge)

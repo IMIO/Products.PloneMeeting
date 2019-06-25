@@ -3519,7 +3519,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             proposingGroup = self.getProposingGroup(True)
             groupInCharge = self.getGroupsInCharge(True)
             if not groupInCharge:
-                raise Exception("No valid groupInCharge defined for {0}".format(proposingGroup.getId()))
+                raise Exception("No valid groupsInCharge defined for {0}".format(proposingGroup.getId()))
             res = self._computeOrderOnGroupsInCharge(cfg)
             return res
         elif insertMethod == 'on_all_associated_groups':
