@@ -536,19 +536,19 @@ schema = Schema((
         write_permission="PloneMeeting: Write risky config",
     ),
     LinesField(
-        name='orderedAssociatedGroups',
+        name='orderedAssociatedOrganizations',
         widget=InAndOutWidget(
-            description="OrderedAssociatedGroups",
-            description_msgid="ordered_associated_groups_descr",
-            label='Orderedassociatedgroups',
-            label_msgid='PloneMeeting_label_orderedAssociatedGroups',
+            description="OrderedAssociatedOrganizations",
+            description_msgid="ordered_associated_organizations_descr",
+            label='Orderedassociatedorganizations',
+            label_msgid='PloneMeeting_label_orderedAssociatedOrganizations',
             i18n_domain='PloneMeeting',
             size='20',
         ),
         schemata="data",
         multiValued=1,
-        vocabulary_factory='Products.PloneMeeting.vocabularies.selectableassociatedgroupsvocabulary',
-        default=defValues.orderedAssociatedGroups,
+        vocabulary_factory='Products.PloneMeeting.vocabularies.selectableassociatedorganizationsvocabulary',
+        default=defValues.orderedAssociatedOrganizations,
         enforceVocabulary=True,
         write_permission="PloneMeeting: Write risky config",
     ),
@@ -3008,6 +3008,23 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
         res = self.getField('orderedItemInitiators').get(self, **kwargs)
         if theObjects:
             # query held_positions
+            catalog = api.portal.get_tool('portal_catalog')
+            brains = catalog(UID=res)
+
+            # make sure we have correct order because query was not sorted
+            # we need to sort found brains according to uids
+            def getKey(item):
+                return res.index(item.UID)
+            brains = sorted(brains, key=getKey)
+            res = [brain.getObject() for brain in brains]
+        return res
+
+    security.declarePublic('getOrderedAssociatedContacts')
+
+    def getOrderedAssociatedOrganizations(self, theObjects=False, **kwargs):
+        '''Overrides the field 'getOrderedAssociatedOrganizations' acessor to manage theObjects.'''
+        res = self.getField('orderedAssociatedOrganizations').get(self, **kwargs)
+        if theObjects:
             catalog = api.portal.get_tool('portal_catalog')
             brains = catalog(UID=res)
 

@@ -518,7 +518,7 @@ class MeetingConfigDescriptor(Descriptor):
         # Do you want to use Organizations as categories ? In this case, you
         # do not need to define categories anymore.
         self.useGroupsAsCategories = True
-        self.orderedAssociatedGroups = []
+        self.orderedAssociatedOrganizations = []
         # Must the "toDiscuss" value be set when inserting an item into a
         # meeting ? If no, the user having permission to write the item will be
         # able to set this value, as soon as on item creation.

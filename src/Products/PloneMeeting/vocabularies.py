@@ -1251,7 +1251,8 @@ class BaseHeldPositionsVocabulary(object):
                  highlight_missing=False,
                  include_usages=True,
                  include_defaults=True,
-                 include_signature_number=True):
+                 include_signature_number=True,
+                 pattern=u"{0}"):
         catalog = api.portal.get_tool('portal_catalog')
         query = {'portal_type': 'held_position',
                  'sort_on': 'sortable_title'}
@@ -1260,12 +1261,11 @@ class BaseHeldPositionsVocabulary(object):
         brains = catalog(**query)
         res = []
         highlight = False
-        pattern = u"{0}"
         # highlight person_label in title when displayed in the MeetingConfig view
         if IMeetingConfig.providedBy(context) and 'base_edit' not in context.REQUEST.getURL():
             highlight = True
             if highlight_missing:
-                pattern = u"<span class='highlight-red'>{0}</span>"
+                pattern = u"<span class='highlight-red'>{0}</span>".format(pattern)
         for brain in brains:
             held_position = brain.getObject()
             if held_position.usages and (not usage or usage in held_position.usages):
@@ -1324,26 +1324,20 @@ class SelectableItemInitiatorsVocabulary(BaseHeldPositionsVocabulary):
 SelectableItemInitiatorsVocabularyFactory = SelectableItemInitiatorsVocabulary()
 
 
-class SelectableAssociatedGroupsVocabulary(BaseHeldPositionsVocabulary):
+class SelectableAssociatedOrganizationsVocabulary(object):
     """Use u'collective.contact.plonegroup.organization_services' and adapt title
-       of the terms to show organizations that are in plonegroup and others that are not.
-       Include also held_positions with usage 'associated'."""
+       of the terms to show organizations that are in plonegroup and others that are not."""
     implements(IVocabularyFactory)
 
     def __call__(self, context):
         """ """
-        # held_positions with usage 'associated'
-        held_position_terms = super(SelectableAssociatedGroupsVocabulary, self).__call__(
-            context, usage='associated', include_usages=False,
-            include_defaults=False, include_signature_number=False)
-        # organizations
         vocab = queryUtility(IVocabularyFactory, u'collective.contact.plonegroup.organization_services')
-        org_terms = vocab(None)
+        terms = vocab(None)
         selected_orgs = get_registry_organizations()
-        for term in org_terms:
+        for term in terms:
             if term.value not in selected_orgs:
-                term.title = term.title + u' (Not selected in plonegroup)'
-        return SimpleVocabulary(held_position_terms._terms + org_terms._terms)
+                term.title = u'{0} (Not selected in plonegroup)'.format(term.title)
+        return SimpleVocabulary(terms)
 
 
-SelectableAssociatedGroupsVocabularyFactory = SelectableAssociatedGroupsVocabulary()
+SelectableAssociatedOrganizationsVocabularyFactory = SelectableAssociatedOrganizationsVocabulary()

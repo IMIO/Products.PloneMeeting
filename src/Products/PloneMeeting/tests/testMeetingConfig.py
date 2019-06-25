@@ -1280,8 +1280,8 @@ class testMeetingConfig(PloneMeetingTestCase):
         self.assertEqual([pt for pt in all_portal_type_ids if pt.endswith(cfg2.getShortName())], [])
         # groups, cfg id is suffixed with different values
         all_group_ids = self.portal.portal_groups.listGroupIds()
-        self.assertEqual([gr for gr in all_group_ids if gr.startswith(cfgId)], [])
-        self.assertEqual([gr for gr in all_group_ids if gr.startswith(cfg2Id)], [])
+        self.assertEqual([gr for gr in all_group_ids if gr.startswith('{0}_'.format(cfgId))], [])
+        self.assertEqual([gr for gr in all_group_ids if gr.startswith('{0}_'.format(cfg2Id))], [])
         # meetingFolders
         for member_folder in self.portal.Members.objectValues():
             mymeetings = member_folder.get('mymeetings', None)

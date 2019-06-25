@@ -30,6 +30,7 @@ from copy import deepcopy
 from DateTime import DateTime
 from datetime import datetime
 from imio.actionspanel.utils import unrestrictedRemoveGivenObject
+from imio.helpers.content import uuidsToObjects
 from imio.history.utils import getLastWFAction
 from imio.prettylink.interfaces import IPrettyLink
 from natsort import realsorted
@@ -2682,27 +2683,26 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
     security.declarePublic('listAssociatedGroups')
 
     def listAssociatedGroups(self):
-        '''Lists the groups that are associated to the proposing group(s) to
-           propose this item. Return groups that have at least one creator,
-           excepted if we are on an archive site.'''
+        '''Lists the organizations that are associated with this item.
+           If organizations are selected in MeetingConfig.orderedAssociatedOrganizations,
+           we only display these ones, else, we display every organizations selected in plonegroup.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        orderedAssociatedOrganizations = cfg.getOrderedAssociatedOrganizations()
+        if orderedAssociatedOrganizations:
+            # missing terms, selected on item but removed from orderedAssociatedOrganizations
+            stored_terms = self.getItemInitiator()
+            missing_term_uids = [uid for uid in stored_terms
+                                 if uid not in orderedAssociatedOrganizations]
+            missing_terms = uuidsToObjects(missing_term_uids, ordered=False)
+            orgs = list(cfg.getOrderedAssociatedOrganizations(theObjects=True)) + missing_terms
+        else:
+            orgs = get_organizations()
+
         res = []
-        for org in get_organizations(not_empty_suffix='creators'):
+        for org in orgs:
             res.append((org.UID(), org.get_full_title()))
-
-        # make sure associatedGroups actually stored have their corresponding
-        # term in the vocabulary, if not, add it
-        associatedGroups = self.getAssociatedGroups()
-        if associatedGroups:
-            associatedGroupsInVocab = [group[0] for group in res]
-            for org_uid in associatedGroups:
-                if org_uid not in associatedGroupsInVocab:
-                    org = uuidToObject(org_uid)
-                    if org:
-                        res.append((org_uid, org.get_full_title()))
-                    else:
-                        res.append((org_uid, org_uid))
-
-        return DisplayList(tuple(res)).sortedByValue()
+        return DisplayList(res).sortedByValue()
 
     security.declarePublic('listItemTags')
 
