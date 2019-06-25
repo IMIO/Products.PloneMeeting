@@ -234,13 +234,17 @@ class RemoveSeveralItemsView(BrowserView):
             # execute every 'back' transitions until item is in state 'validated'
             changedState = True
             while not obj.queryState() == 'validated':
-                availableTransitions = wfTool.getTransitionsFor(obj)
+                availableTransitions = [tr['id'] for tr in wfTool.getTransitionsFor(obj)]
                 if not availableTransitions or not changedState:
                     break
                 changedState = False
+                # if several back transitions (like when WFAdaptation 'presented_item_back_to_xxx'
+                # is selected), are available, give the priority to 'backToValidated'
+                if 'backToValidated' in availableTransitions:
+                    availableTransitions = ['backToValidated']
                 for tr in availableTransitions:
-                    if tr['id'].startswith('back'):
-                        wfTool.doActionFor(obj, tr['id'])
+                    if tr.startswith('back'):
+                        wfTool.doActionFor(obj, tr)
                         changedState = True
                         break
 

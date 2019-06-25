@@ -1053,6 +1053,17 @@ class Migrate_To_4_1(Migrator):
                     cfg.setDefaultAdviceHiddenDuringRedaction(advice_portal_types)
         logger.info('Done.')
 
+    def _updateCatalogsByTypes(self):
+        '''Before some types where blacklisted from portal_catalog, make sure it is no more.
+           This was alredy done in migration to 4.0 but seems to be necessary again...'''
+        logger.info('Make MeetingConfigs catalogued in portal_catalog...')
+        at_tool = api.portal.get_tool('archetype_tool')
+        at_tool.setCatalogsByType('MeetingConfig', ['portal_catalog'])
+        # reindex every MeetingConfigs
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            cfg.reindexObject()
+        logger.info('Done.')
+
     def run(self, extra_omitted=[]):
         logger.info('Migrating to PloneMeeting 4.1...')
 
@@ -1066,6 +1077,8 @@ class Migrate_To_4_1(Migrator):
         # upgrade imio.dashboard first as it takes care of migrating certain
         # profiles in particular order
         self._upgradeImioDashboard()
+        self._updateCatalogsByTypes()
+
         # omit Products.PloneMeeting for now or it creates infinite loop as we are
         # in a Products.PloneMeeting upgrade step...
         self.upgradeAll(omit=['Products.PloneMeeting:default',

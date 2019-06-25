@@ -2613,6 +2613,27 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.do(item, 'backToItemCreated')
         self.assertEqual(item.queryState(), 'itemcreated')
 
+    def test_pm_WFA_presented_item_back_to_transitions_do_not_affect_remove_several_items(self):
+        '''This makes sure the 'remove-several-items' view is not affected by
+           additional back transitions leaving the 'presented' state.'''
+        # ease override by subproducts
+        cfg = self.meetingConfig
+        if 'presented_item_back_to_itemcreated' not in cfg.listWorkflowAdaptations():
+            return
+        self.changeUser('pmManager')
+        cfg.setWorkflowAdaptations(('presented_item_back_to_itemcreated', ))
+        performWorkflowAdaptations(cfg, logger=pm_logger)
+        # create meeting with item then remove it from meeting
+        self.changeUser('pmManager')
+        item = self.create('MeetingItem')
+        meeting = self.create('Meeting', date=DateTime('2018/03/15'))
+        self.presentItem(item)
+        self.assertEqual(self.transitions(item), ['backToItemCreated', 'backToValidated'])
+        removeView = meeting.restrictedTraverse('@@remove-several-items')
+        # the view can receive a single uid (as a string) or several as a list of uids
+        removeView(item.UID())
+        self.assertEqual(item.queryState(), 'validated')
+
     def test_pm_WFA_presented_item_back_to_prevalidated(self):
         '''Test the workflowAdaptation 'presented_item_back_to_prevalidated'.'''
         # ease override by subproducts

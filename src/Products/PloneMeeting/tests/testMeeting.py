@@ -2154,8 +2154,9 @@ class testMeeting(PloneMeetingTestCase):
         object_buttons = [k['id'] for k in pa.listFilteredActionsFor(meeting)['object_buttons']]
         self.assertTrue('dummy' in object_buttons)
         # actions panel was invalidated
+        actions_panel._transitions = None
         afterEdit_rendered_actions_panel = actions_panel()
-        self.assertTrue(not beforeEdit_rendered_actions_panel == afterEdit_rendered_actions_panel)
+        self.assertNotEqual(beforeEdit_rendered_actions_panel, afterEdit_rendered_actions_panel)
 
         # invalidated when getRawItems changed
         # for now, no item in the meeting, the 'no_items' action is shown
@@ -2165,8 +2166,9 @@ class testMeeting(PloneMeetingTestCase):
         self.presentItem(item)
         object_buttons = [k['id'] for k in pa.listFilteredActionsFor(meeting)['object_buttons']]
         self.assertFalse('no_items' in object_buttons)
+        actions_panel._transitions = None
         presentedItem_rendered_actions_panel = actions_panel()
-        self.assertTrue(not afterEdit_rendered_actions_panel == presentedItem_rendered_actions_panel)
+        self.assertNotEqual(afterEdit_rendered_actions_panel, presentedItem_rendered_actions_panel)
 
         # invalidated when review state changed
         # just make sure the contained item is not changed
@@ -2174,10 +2176,11 @@ class testMeeting(PloneMeetingTestCase):
         itemModified = item.modified()
         itemWFHistory = deepcopy(item.workflow_history)
         self.freezeMeeting(meeting)
-        self.assertTrue(item.modified() == itemModified)
-        self.assertTrue(item.workflow_history == itemWFHistory)
+        self.assertEqual(item.modified(), itemModified)
+        self.assertEqual(item.workflow_history, itemWFHistory)
+        actions_panel._transitions = None
         frozenMeeting_rendered_actions_panel = actions_panel()
-        self.assertTrue(not presentedItem_rendered_actions_panel == frozenMeeting_rendered_actions_panel)
+        self.assertNotEqual(presentedItem_rendered_actions_panel, frozenMeeting_rendered_actions_panel)
 
         # invalidated when a linked item is modified
         # add an action that is only returned for meetings
@@ -2194,29 +2197,34 @@ class testMeeting(PloneMeetingTestCase):
         object_buttons = [k['id'] for k in pa.listFilteredActionsFor(meeting)['object_buttons']]
         self.assertTrue('dummyitemedited' in object_buttons)
         # for now, the actions panel is still the same
+        actions_panel._transitions = None
         dummyItemAction_rendered_actions_panel = actions_panel()
-        self.assertTrue(frozenMeeting_rendered_actions_panel == dummyItemAction_rendered_actions_panel)
+        self.assertEqual(frozenMeeting_rendered_actions_panel, dummyItemAction_rendered_actions_panel)
         item._update_after_edit()
         # the actions panel has been invalidated
+        actions_panel._transitions = None
         dummyItemAction_rendered_actions_panel = actions_panel()
-        self.assertTrue(not frozenMeeting_rendered_actions_panel == dummyItemAction_rendered_actions_panel)
+        self.assertNotEqual(frozenMeeting_rendered_actions_panel, dummyItemAction_rendered_actions_panel)
 
         # invalidated when user changed
         self.changeUser('pmReviewer1')
-        self.assertTrue(not dummyItemAction_rendered_actions_panel == actions_panel())
+        actions_panel._transitions = None
+        self.assertNotEqual(dummyItemAction_rendered_actions_panel, actions_panel())
 
         # invalidated when user roles changed
         # remove MeetingManager role to 'pmManager'
         self.changeUser('pmManager')
+        actions_panel._transitions = None
         meetingManager_rendered_actions_panel = actions_panel()
         # we will remove 'pmManager' from the cfg _meetingmanagers group
         self._removePrincipalFromGroup('pmManager',
                                        '{0}_{1}'.format(cfg.getId(), MEETINGMANAGERS_GROUP_SUFFIX))
         # we need to reconnect for groups changes to take effect
         self.changeUser('pmManager')
-        self.assertTrue('MeetingManager' not in self.member.getRolesInContext(meeting))
+        self.assertFalse('MeetingManager' in self.member.getRolesInContext(meeting))
         self.assertFalse(self.hasPermission(ReviewPortalContent, meeting))
-        self.assertTrue(not meetingManager_rendered_actions_panel == actions_panel())
+        actions_panel._transitions = None
+        self.assertNotEqual(meetingManager_rendered_actions_panel, actions_panel())
 
     def test_pm_GetNextMeeting(self):
         """Test the getNextMeeting method that will return the next meeting
