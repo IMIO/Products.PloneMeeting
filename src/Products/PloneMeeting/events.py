@@ -315,7 +315,7 @@ def onOrgWillBeRemoved(current_org, event):
         item = brain.getObject()
         if (item.getProposingGroup() == current_org_uid) or \
            (current_org_uid in item.getAssociatedGroups()) or \
-           (item.adapted().getGroupInCharge() == current_org_uid) or \
+           (current_org_uid in item.getGroupsInCharge()) or \
            (current_org_uid in item.adviceIndex) or \
            set(item.getCopyGroups()).intersection(suffixedGroups):
             # The organization is linked to an existing item, we can not delete it.

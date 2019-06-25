@@ -399,15 +399,15 @@ class PloneMeetingTestingHelpers:
                'advice_comment': RichTextValue(u'My comment')})
         return item, advice
 
-    def _setUpGroupInCharge(self, item, group=None):
+    def _setUpGroupsInCharge(self, item, groups=[]):
         """As group in charge is an adaptable method, it may be setup differently."""
-        if not group:
-            group = self.vendors_uid
-        item.setGroupInCharge(group)
+        if not groups:
+            groups = [self.vendors_uid]
+        item.setGroupsInCharge(groups)
         item.updateLocalRoles()
 
-    def _tearDownGroupInCharge(self, item):
-        """As group in charge is an adaptable method, it may be setup differently."""
+    def _tearDownGroupsInCharge(self, item):
+        """If group in charge is overrided, it may be setup differently."""
         item.setGroupInCharge('')
 
     def _select_organization(self, org_uid, remove=False):

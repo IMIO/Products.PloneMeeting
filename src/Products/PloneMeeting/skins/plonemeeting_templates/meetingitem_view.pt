@@ -57,6 +57,17 @@
                 <span tal:condition="not: context/getProposingGroup">-</span>
             </div>
 
+            <tal:comment replace="nothing">Groups in charge</tal:comment>
+            <div class="discreet" tal:condition="python: 'groupsInCharge' in usedAttrs"
+                                  tal:define="associatedGroups context/getGroupsInCharge;">
+                <span class="item_attribute_label"
+                      i18n:translate="PloneMeeting_label_groupsInCharge"></span>:&nbsp;&nbsp;
+                <tal:displayGroupsInCharge condition="groupsInCharge">
+                    <span metal:use-macro="python: here.widget('groupsInCharge', mode='view')" />
+                </tal:displayGroupsInCharge>
+                <span tal:condition="not: groupsInCharge">-</span>
+            </div>
+
             <tal:comment replace="nothing">Associated groups</tal:comment>
             <div class="discreet" tal:condition="python: 'associatedGroups' in usedAttrs"
                                   tal:define="associatedGroups context/getAssociatedGroups;">

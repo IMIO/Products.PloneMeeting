@@ -312,12 +312,21 @@
           <td tal:define="field python:here.getField('useGroupsAsCategories')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
+          <td tal:define="field python:here.getField('orderedAssociatedOrganizations')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+          <td tal:define="field python:here.getField('orderedGroupsInCharge')">
+            <span metal:use-macro="here/widgets/field/macros/view" />
+          </td>
+        </tr>
+        <tr valign="top">
           <td tal:define="field python:here.getField('itemReferenceFormat')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <td tal:define="field python:here.getField('enableLabels')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
+          <td></td>
         </tr>
         <tr valign="top">
           <td tal:define="field python:here.getField('toDiscussSetOnItemInsert')">
@@ -1059,7 +1068,7 @@
           <td tal:define="field python:here.getField('itemBudgetInfosStates')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
-          <td tal:define="field python:here.getField('itemGroupInChargeStates')">
+          <td tal:define="field python:here.getField('itemGroupsInChargeStates')">
             <span metal:use-macro="here/widgets/field/macros/view" />
           </td>
           <td></td>

@@ -26,18 +26,18 @@
      for="zope.interface.Interface
           zope.publisher.interfaces.browser.IBrowserRequest
           collective.eeafaceted.z3ctable.interfaces.IFacetedTable"
-     factory=".columns.ItemGroupInChargeColumn"
+     factory=".columns.ItemGroupsInChargeColumn"
      provides="collective.eeafaceted.z3ctable.interfaces.IFacetedColumn"
-     name="getGroupInCharge"
+     name="getGroupsInCharge"
   />
 
   <adapter
      for="zope.interface.Interface
           zope.publisher.interfaces.browser.IBrowserRequest
           collective.eeafaceted.z3ctable.interfaces.IFacetedTable"
-     factory=".columns.ItemGroupInChargeAcronymColumn"
+     factory=".columns.ItemGroupsInChargeAcronymColumn"
      provides="collective.eeafaceted.z3ctable.interfaces.IFacetedColumn"
-     name="group_in_charge_acronym"
+     name="groups_in_charge_acronym"
   />
 
   <adapter

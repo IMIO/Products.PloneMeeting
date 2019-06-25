@@ -2221,8 +2221,8 @@ class testMeetingItem(PloneMeetingTestCase):
         self.assertFalse(self.vendors_observers in item.__ac_local_roles__)
 
         # define a group in charge
-        self._setUpGroupInCharge(item)
-        self.assertTrue(READER_USECASES['groupincharge'] in item.__ac_local_roles__[self.vendors_observers])
+        self._setUpGroupsInCharge(item)
+        self.assertTrue(READER_USECASES['groupsincharge'] in item.__ac_local_roles__[self.vendors_observers])
 
         # not right state in the configuration
         cfg.setItemGroupInChargeStates(self._stateMappingFor('proposed'),)
@@ -2233,7 +2233,7 @@ class testMeetingItem(PloneMeetingTestCase):
         # check that changing item's state works, back to correct configuration
         cfg.setItemGroupInChargeStates(self._stateMappingFor('itemcreated'),)
         item.updateLocalRoles()
-        self.assertTrue(READER_USECASES['groupincharge'] in item.__ac_local_roles__[self.vendors_observers])
+        self.assertTrue(READER_USECASES['groupsincharge'] in item.__ac_local_roles__[self.vendors_observers])
         self.proposeItem(item)
         self.assertFalse(self.vendors_observers in item.__ac_local_roles__)
 

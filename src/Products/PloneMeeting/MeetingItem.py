@@ -859,14 +859,21 @@ schema = Schema((
         optional=True,
         vocabulary='listProposingGroupsWithGroupsInCharge',
     ),
-    StringField(
-        name='groupInCharge',
-        widget=StringWidget(
-            visible=False,
-            label='Groupincharge',
-            label_msgid='PloneMeeting_label_groupInCharge',
+    LinesField(
+        name='groupsInCharge',
+        widget=MultiSelectionWidget(
+            condition="python: here.attributeIsUsed('groupsInCharge')",
+            size=10,
+            description="Groupsincharge",
+            description_msgid="groups_in_charge_descr",
+            format="checkbox",
+            label='Groupsincharge',
+            label_msgid='PloneMeeting_label_groupsInCharge',
             i18n_domain='PloneMeeting',
         ),
+        optional=True,
+        multiValued=1,
+        vocabulary='listGroupsInCharge',
     ),
     LinesField(
         name='associatedGroups',
@@ -2189,11 +2196,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     def setProposingGroupWithGroupInCharge(self, value, **kwargs):
         '''Overrides the field 'proposingGroupWithGroupInCharge' mutator to be able to
-           set a correct 'proposingGroup' and 'goupInCharge' from received value.'''
+           set a correct 'proposingGroup' and 'groupsInCharge' from received value.'''
         if value:
             proposingGroup, groupInCharge = value.split('__groupincharge__')
             self.setProposingGroup(proposingGroup)
-            self.setGroupInCharge(groupInCharge)
+            self.setGroupsInCharge([groupInCharge])
         self.getField('proposingGroupWithGroupInCharge').set(self, value, **kwargs)
 
     def _adaptLinesValueToBeCompared(self, value):
@@ -2615,7 +2622,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     res.append((meetingConfigId, translated_msg))
         return DisplayList(tuple(res))
 
-    security.declarePublic('listProposingGroups')
+    security.declarePrivate('listProposingGroups')
 
     def listProposingGroups(self):
         '''This is used as vocabulary for field 'proposingGroup'.
@@ -2646,7 +2653,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res = res.sortedByValue()
         return res
 
-    security.declarePublic('listProposingGroupsWithGroupsInCharge')
+    security.declarePrivate('listProposingGroupsWithGroupsInCharge')
 
     def listProposingGroupsWithGroupsInCharge(self):
         '''Like self.listProposingGroups but appends the various possible groups in charge.'''
@@ -2680,7 +2687,40 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                                         get_organization(current_groupInChargeUid).get_full_title()))
         return res.sortedByValue()
 
-    security.declarePublic('listAssociatedGroups')
+    security.declarePrivate('listGroupsInCharge')
+
+    def listGroupsInCharge(self):
+        '''Lists the organizations that are in charge of this item.
+           If organizations are selected in MeetingConfig.orderedGroupsInCharge,
+           we only display these ones, else, we display every organizations selected in plonegroup.'''
+        tool = api.portal.get_tool('portal_plonemeeting')
+        cfg = tool.getMeetingConfig(self)
+        orderedGroupsInCharge = cfg.getOrderedGroupsInCharge()
+        if orderedGroupsInCharge:
+            # missing terms, selected on item but removed from orderedGroupsInCharge
+            stored_terms = self.getGroupsInCharge()
+            missing_term_uids = [uid for uid in stored_terms
+                                 if uid not in orderedGroupsInCharge]
+            missing_terms = uuidsToObjects(missing_term_uids, ordered=False)
+            orgs = list(cfg.getOrderedGroupsInCharge(theObjects=True)) + missing_terms
+        else:
+            orgs = get_organizations()
+
+        res = []
+        for org in orgs:
+            res.append((org.UID(), org.get_full_title()))
+        res = DisplayList(res)
+
+        # if groupsInCharge is not used as item inserting method, we display it alphabetically
+        groups_in_charge_inserting_methods = [
+            method for method in cfg.getInsertingMethodsOnAddItem()
+            if method['insertingMethod'] in ('on_groups_in_charge', )]
+        if not groups_in_charge_inserting_methods:
+            res = res.sortedByValue()
+
+        return res
+
+    security.declarePrivate('listAssociatedGroups')
 
     def listAssociatedGroups(self):
         '''Lists the organizations that are associated with this item.
@@ -2691,7 +2731,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         orderedAssociatedOrganizations = cfg.getOrderedAssociatedOrganizations()
         if orderedAssociatedOrganizations:
             # missing terms, selected on item but removed from orderedAssociatedOrganizations
-            stored_terms = self.getItemInitiator()
+            stored_terms = self.getAssociatedGroups()
             missing_term_uids = [uid for uid in stored_terms
                                  if uid not in orderedAssociatedOrganizations]
             missing_terms = uuidsToObjects(missing_term_uids, ordered=False)
@@ -2868,19 +2908,23 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res = uuidToObject(res)
         return res
 
-    security.declarePublic('getGroupInCharge')
+    security.declarePublic('getGroupsInCharge')
 
-    def getGroupInCharge(self, theObject=False, fromOrgIfEmpty=False, **kwargs):
-        '''See docstring in interfaces.py.'''
+    def getGroupsInCharge(self, theObjects=False, fromOrgIfEmpty=False, single=False, **kwargs):
+        '''Redefine field MeetingItem.groupsInCharge accessor to be able to return
+           groupsInCharge id or the real orgs if p_theObjects is True.
+           Default behaviour is to get the orgs stored in the groupsInCharge field.'''
         item = self.getSelf()
-        res = item.getField('groupInCharge').get(item, **kwargs)  # = org_uid
+        res = item.getField('groupsInCharge').get(item, **kwargs)  # = org_uid
         if not res and fromOrgIfEmpty:
             proposingGroup = item.getProposingGroup(theObject=True)
             groups_in_charge = proposingGroup.get_groups_in_charge()
             if groups_in_charge:
-                res = groups_in_charge[0]
-        if res and theObject:
-            res = get_organization(res)
+                res = groups_in_charge
+        if res and theObjects:
+            res = [get_organization(org_uid) for org_uid in res]
+        if res and single:
+            res = res[0]
         return res
 
     security.declarePublic('fieldIsEmpty')
@@ -3473,10 +3517,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res = org.get_order(associated_org_uids=self.getAssociatedGroups(), cfg=cfg)
         elif insertMethod == 'on_groups_in_charge':
             proposingGroup = self.getProposingGroup(True)
-            groupInCharge = self.adapted().getGroupInCharge(True)
+            groupInCharge = self.getGroupsInCharge(True)
             if not groupInCharge:
                 raise Exception("No valid groupInCharge defined for {0}".format(proposingGroup.getId()))
-            return groupInCharge.get_order()
+            res = self._computeOrderOnGroupsInCharge(cfg)
+            return res
         elif insertMethod == 'on_all_associated_groups':
             res = self._computeOrderOnAllAssociatedGroups(cfg)
             return res
@@ -3512,12 +3557,13 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Helper method to compute inserting index when using insert method 'on_all_associated_groups'.'''
         associatedGroups = self.getAssociatedGroups()
         # computing will generate following order :
-        # items having group in charge 1 only
-        # items having group in charge 1 and group in charge 2
-        # items having group in charge 1 and group in charge 2 and group in charge 3
-        # items having group in charge 1 and group in charge 2 and group in charge 3 and group in charge 4
-        # items having group in charge 1 and group in charge 3
-        # items having group in charge 1 and group in charge 3 and group in charge 4
+        # items having no associated groups
+        # items having associated group 1 only
+        # items having associated group 1 and associated group 2
+        # items having associated group 1 and associated group 2 and associated group 3
+        # items having associated group 1 and associated group 2 and associated group 3 and associated group 4
+        # items having associated group 1 and associated group 3
+        # items having associated group 1 and associated group 3 and associated group 4
         # for order, rely on order defined in MeetingConfig if defined, else use organization order
         orderedAssociatedOrgs = cfg.getOrderedAssociatedOrganizations()
         # if order changed in config, we keep it, do not rely on order defined on item
@@ -3531,6 +3577,41 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     pre_orders.append(0)
             else:
                 org = get_organization(associatedGroup)
+                pre_orders.append(org.get_order())
+        # now sort pre_orders and compute final index
+        pre_orders.sort()
+        res = float(0)
+        divisor = 1
+        for pre_order in pre_orders:
+            res += (float(pre_order) / divisor)
+            # we may manage up to 1000 different associated groups
+            divisor *= 1000
+        return res
+
+    def _computeOrderOnGroupsInCharge(self, cfg):
+        '''Helper method to compute inserting index when using insert method 'on_groups_in_charge'.'''
+        groups_in_charge = self.getGroupsInCharge()
+        # computing will generate following order :
+        # items having no groups in charge
+        # items having group in charge 1 only
+        # items having group in charge 1 and group in charge 2
+        # items having group in charge 1 and group in charge 2 and group in charge 3
+        # items having group in charge 1 and group in charge 2 and group in charge 3 and group in charge 4
+        # items having group in charge 1 and group in charge 3
+        # items having group in charge 1 and group in charge 3 and group in charge 4
+        # for order, rely on order defined in MeetingConfig if defined, else use organization order
+        orderedGroupsInCharge = cfg.getOrderedGroupsInCharge()
+        # if order changed in config, we keep it, do not rely on order defined on item
+        pre_orders = []
+        for group_in_charge in groups_in_charge:
+            if orderedGroupsInCharge:
+                try:
+                    index = orderedGroupsInCharge.index(group_in_charge)
+                    pre_orders.append(index + 1)
+                except ValueError:
+                    pre_orders.append(0)
+            else:
+                org = get_organization(group_in_charge)
                 pre_orders.append(org.get_order())
         # now sort pre_orders and compute final index
         pre_orders.sort()
@@ -5363,17 +5444,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         self.manage_addLocalRoles(budgetImpactEditorsGroupId, ('MeetingBudgetImpactEditor',))
 
     def _updateGroupInChargeLocalRoles(self):
-        '''Get the current groupInCharge and give View access to the _observers Plone group.'''
+        '''Get the current groupsInCharge and give View access to the _observers Plone group.'''
         tool = api.portal.get_tool('portal_plonemeeting')
         cfg = tool.getMeetingConfig(self)
         itemState = self.queryState()
-        if itemState not in cfg.getItemGroupInChargeStates():
+        if itemState not in cfg.getItemGroupsInChargeStates():
             return
-        groupInCharge = self.adapted().getGroupInCharge(True)
-        if not groupInCharge:
-            return
-        observersPloneGroupId = get_plone_group_id(groupInCharge.UID(), 'observers')
-        self.manage_addLocalRoles(observersPloneGroupId, (READER_USECASES['groupincharge'],))
+        groupsInCharge = self.getGroupsInCharge(True)
+        for groupInCharge in groupsInCharge:
+            observersPloneGroupId = get_plone_group_id(groupInCharge.UID(), 'observers')
+            self.manage_addLocalRoles(observersPloneGroupId, (READER_USECASES['groupsincharge'],))
 
     def _versionateAdvicesOnItemEdit(self):
         """When item is edited, versionate advices if necessary, it is the case if advice was

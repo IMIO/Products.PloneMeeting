@@ -463,8 +463,8 @@ class ToolInitializer:
         # adapt org related values as we have org id on descriptor and we need to set org UID
         if item.proposingGroup:
             item.setProposingGroup(org_id_to_uid(item.proposingGroup))
-        if item.groupInCharge:
-            item.setGroupInCharge(org_id_to_uid(item.groupInCharge))
+        if item.groupsInCharge:
+            item.setGroupsInCharge([org_id_to_uid(grp_in_charge) for grp_in_charge in item.groupsInCharge])
         if item.proposingGroupWithGroupInCharge:
             proposingGroupId, groupInChargeId = item.proposingGroupWithGroupInCharge.split('__groupincharge__')
             item.proposingGroupWithGroupInCharge = '{0}__groupincharge__{1}'.format(

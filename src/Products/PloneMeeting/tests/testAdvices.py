@@ -909,7 +909,7 @@ class testAdvices(PloneMeetingTestCase):
             {'row_id': 'unique_id_123',
              'org': self.vendors_uid,
              'gives_auto_advice_on':
-                'python: item.adapted().getGroupInCharge(theObject=False, fromOrgIfEmpty=True) == org_uid',
+                'python: item.getGroupsInCharge(theObjects=False, fromOrgIfEmpty=True, single=True) == org_uid',
              'for_item_created_from': '2012/01/01',
              'delay': '10'}, ])
         self.changeUser('pmCreator1')
@@ -922,7 +922,7 @@ class testAdvices(PloneMeetingTestCase):
             {'row_id': 'unique_id_123',
              'org': self.vendors_uid,
              'gives_auto_advice_on':
-                'python: item.adapted().getGroupInCharge(theObject=True, fromOrgIfEmpty=True) == org',
+                'python: item.getGroupsInCharge(theObjects=True, fromOrgIfEmpty=True, single=True) == org',
              'for_item_created_from': '2012/01/01',
              'delay': '10'}, ])
         item2 = self.create('MeetingItem')

@@ -54,15 +54,15 @@ class ItemProposingGroupAcronymColumn(AbbrColumn):
     full_vocabulary = u'Products.PloneMeeting.vocabularies.proposinggroupsvocabulary'
 
 
-class ItemGroupInChargeColumn(VocabularyColumn):
-    """A column that display the groupInCharge."""
-    attrName = 'getGroupInCharge'
+class ItemGroupsInChargeColumn(VocabularyColumn):
+    """A column that display the groupsInCharge."""
+    attrName = 'getGroupsInCharge'
     vocabulary = u'Products.PloneMeeting.vocabularies.groupsinchargevocabulary'
 
 
-class ItemGroupInChargeAcronymColumn(AbbrColumn):
-    """A column that display the groupInCharge acronym."""
-    attrName = 'getGroupInCharge'
+class ItemGroupsInChargeAcronymColumn(AbbrColumn):
+    """A column that display the groupsInCharge acronym."""
+    attrName = 'getGroupsInCharge'
     vocabulary = u'Products.PloneMeeting.vocabularies.proposinggroupacronymsvocabulary'
     full_vocabulary = u'Products.PloneMeeting.vocabularies.proposinggroupsvocabulary'
 

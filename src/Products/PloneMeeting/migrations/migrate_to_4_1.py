@@ -56,7 +56,9 @@ class Migrate_To_4_1(Migrator):
            - 'Date'.
            Update vocabulary used for :
            - Creator;
-           - Taken over by."""
+           - Taken over by.
+           Update index used for :
+           - Group in charge."""
         logger.info("Updating faceted filters for every MeetingConfigs...")
 
         xmlpath_items = os.path.join(
@@ -86,6 +88,12 @@ class Migrate_To_4_1(Migrator):
                 'c12', **{
                     'vocabulary':
                         'Products.PloneMeeting.vocabularies.creatorsforfacetedfiltervocabulary'})
+            criteria.edit(
+                'c23', **{
+                    'title': 'Groups in charge',
+                    'index': 'getGroupsInCharge',
+                    'operator_visible': True})
+
             obj = cfg.searches.searches_meetings
             obj = cfg.searches.searches_decisions
             # add new faceted filters for searches_meetings/searches_items
@@ -105,6 +113,16 @@ class Migrate_To_4_1(Migrator):
         logger.info("Updating collections columns for every MeetingConfigs...")
         for cfg in self.tool.objectValues('MeetingConfig'):
             cfg.updateCollectionColumns()
+        logger.info('Done.')
+
+    def _renameItemGroupsInChargeStates(self):
+        '''Field MeetingConfig.itemGroupInChargeStates was renamed to MeetingConfig.itemGroupsInChargeStates.'''
+        logger.info("Updating renamed MeetingConfig fields...")
+        for cfg in self.tool.objectValues('MeetingConfig'):
+            if hasattr(cfg, 'itemGroupInChargeStates'):
+                itemGroupInChargeStates = cfg.itemGroupInChargeStates
+                cfg.setItemGroupsInChargeStates(itemGroupInChargeStates)
+                delattr(cfg, 'itemGroupInChargeStates')
         logger.info('Done.')
 
     def _markSearchesFoldersWithIBatchActionsMarker(self):
@@ -706,8 +724,8 @@ class Migrate_To_4_1(Migrator):
             if proposingGroup:
                 proposing_group_org_uid = own_org.get(proposingGroup).UID()
                 item.setProposingGroup(proposing_group_org_uid)
-            # groupInCharge
-            groupInCharge = item.getGroupInCharge()
+            # groupInCharge is moved to groupsInCharge
+            groupInCharge = item.groupInCharge
             if groupInCharge:
                 group_in_charge = own_org.get(groupInCharge)
                 item.setProposingGroupWithGroupInCharge(
@@ -901,7 +919,7 @@ class Migrate_To_4_1(Migrator):
         logger.info('Done.')
 
     def _updateItemColumnsKeys(self):
-        """Some keys changed for static infos related fields in MeetingConfig.itemColumns,
+        """Some keys changed for static infos and groupsInCharge related fields in MeetingConfig.itemColumns,
            MeetingConfig.availableItemsListVisibleColumns and MeetingConfig.itemsListVisibleColumns."""
         logger.info('Updating MeetingConfig.itemColumns, MeetingConfig.availableItemsListVisibleColumns '
                     'and MeetingConfig.itemsListVisibleColumns...')
@@ -913,6 +931,10 @@ class Migrate_To_4_1(Migrator):
                 for k in keys:
                     if k in ['labels', 'item_reference', 'budget_infos']:
                         k = 'static_{0}'.format(k)
+                    elif k == 'getGroupInCharge':
+                        k = 'getGroupsInCharge'
+                    elif k == 'group_in_charge_acronym':
+                        k = 'groups_in_charge_acronym'
                     adapted_keys.append(k)
                 field.set(cfg, adapted_keys)
         logger.info('Done.')
@@ -1077,7 +1099,9 @@ class Migrate_To_4_1(Migrator):
         # upgrade imio.dashboard first as it takes care of migrating certain
         # profiles in particular order
         self._upgradeImioDashboard()
+
         self._updateCatalogsByTypes()
+        self._renameItemGroupsInChargeStates()
 
         # omit Products.PloneMeeting for now or it creates infinite loop as we are
         # in a Products.PloneMeeting upgrade step...
@@ -1099,8 +1123,8 @@ class Migrate_To_4_1(Migrator):
                            ignore_dependencies=False,
                            dependency_strategy=DEPENDENCY_STRATEGY_NEW)
 
-        self.removeUnusedIndexes(indexes=['getTitle2', 'indexUsages'])
-        self.removeUnusedColumns(columns=['getTitle2', 'getRemoteUrl'])
+        self.removeUnusedIndexes(indexes=['getTitle2', 'indexUsages', 'getGroupInCharge'])
+        self.removeUnusedColumns(columns=['getTitle2', 'getRemoteUrl' 'getGroupInCharge'])
         # install collective.js.tablednd
         self.upgradeDependencies()
         self.cleanRegistries()

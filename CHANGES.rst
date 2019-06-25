@@ -22,6 +22,9 @@ Changelog
 - Added inserting_method 'on_all_associated_groups', this will insert items in a meeting following order of every selected associatedGroups of an item,
   not only the highest index.  Associated groups order may be either taken from organizations selected in plonegroup or redefined in
   MeetingConfig.orderedAssociatedOrganizations, in this case, organizations not selected in plonegroup may also be used
+- Moved MeetingItem.groupInCharge to MeetingItem.groupsInCharge : make the field editable on item and rely on selected organizations in plonegroup or
+  on organizations selected in the MeetingConfig.orderedGroupsInCharge field.  Adapted inserting method 'on_groups_in_charge' to take into account every
+  groups in charge and not only the first ordered group in charge
 
 4.1rc3 (2019-06-14)
 -------------------

@@ -1447,8 +1447,8 @@ class PMCategorizedObjectInfoAdapter(CategorizedObjectInfoAdapter):
             elif visible_for == '{0}copy_groups'.format(READERPREFIX):
                 res = res + list(self.parent.getAllCopyGroups(auto_real_plone_group_ids=True))
             elif visible_for == '{0}groupincharge'.format(READERPREFIX):
-                groupInCharge = self.parent.adapted().getGroupInCharge(theObject=False)
-                if groupInCharge:
+                groupsInCharge = self.parent.getGroupsInCharge(theObjects=False)
+                for groupInCharge in groupsInCharge:
                     plone_group_id = get_plone_group_id(groupInCharge, 'observers')
                     res.append(plone_group_id)
         return res

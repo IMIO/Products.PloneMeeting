@@ -50,7 +50,7 @@ indexInfos = {
     'getItemNumber': ('FieldIndex', {}),
     'getRawClassifier': ('FieldIndex', {}),
     'getProposingGroup': ('FieldIndex', {}),
-    'getGroupInCharge': ('FieldIndex', {}),
+    'getGroupsInCharge': ('KeywordIndex', {}),
     'getAssociatedGroups': ('KeywordIndex', {}),
     'getPreferredMeeting': ('FieldIndex', {}),
     'getPreferredMeetingDate': ('DateIndex', {}),
@@ -77,7 +77,7 @@ indexInfos = {
     # Indexes used by every portal_types
     'getConfigId': ('FieldIndex', {}), }
 # Metadata to create in portal_catalog
-columnInfos = ('getDate', 'getProposingGroup', 'getGroupInCharge',
+columnInfos = ('getDate', 'getProposingGroup', 'getGroupsInCharge',
                'getPreferredMeeting', 'getPreferredMeetingDate',
                'linkedMeetingDate', 'linkedMeetingUID',
                'getItemIsSigned', 'title_or_id', 'toDiscuss',

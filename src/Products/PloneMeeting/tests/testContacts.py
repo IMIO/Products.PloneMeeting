@@ -605,7 +605,7 @@ class testContacts(PloneMeetingTestCase):
         # checks on the item are made around :
         # item.getProposingGroup
         # item.getAssociatedGroups
-        # item.getGroupInCharge
+        # item.getGroupsInCharge
         # item.adviceIndex
         # item.getCopyGroups
         # so check the 5 possible "states"
@@ -650,12 +650,12 @@ class testContacts(PloneMeetingTestCase):
                 self.developers_uid, catch_before_delete_exception=False)
         self.assertEquals(cm.exception.message, can_not_delete_organization_meetingitem)
 
-        # check with groupInCharge
+        # check with groupsInCharge
         item.setProposingGroup(self.vendors_uid)
         item.setAssociatedGroups(())
         item.setOptionalAdvisers(())
         self.assertTrue(self.developers_advisers not in item.adviceIndex)
-        self._setUpGroupInCharge(item, group=self.developers_uid)
+        self._setUpGroupsInCharge(item, groups=[self.developers_uid])
         transaction.commit()
         with self.assertRaises(BeforeDeleteException) as cm:
             self.portal.restrictedTraverse('@@delete_givenuid')(
@@ -663,7 +663,7 @@ class testContacts(PloneMeetingTestCase):
         self.assertEquals(cm.exception.message, can_not_delete_organization_meetingitem)
 
         # check with item having copyGroups
-        self._tearDownGroupInCharge(item)
+        self._tearDownGroupsInCharge(item)
         cfg.setUseCopies(True)
         item.setCopyGroups((self.developers_reviewers, ))
         item._update_after_edit()
@@ -738,9 +738,9 @@ class testContacts(PloneMeetingTestCase):
         # the group is actually removed
         self.failIf(self.vendors in self.own_org)
 
-    def test_pm_CanNotRemoveOrganizationUsedAsGroupInCharge(self):
+    def test_pm_CanNotRemoveOrganizationUsedAsGroupsInCharge(self):
         '''While removing an organization, it should raise if
-           it is used as groupInCharge of another organization.'''
+           it is used as groups_in_charge of another organization.'''
         self.changeUser('siteadmin')
         org1 = self.create('organization', id='org1', title='Org 1', acronym='O1')
         org2 = self.create('organization', id='org2', title='Org 2', acronym='O2')
@@ -750,7 +750,7 @@ class testContacts(PloneMeetingTestCase):
             self.portal.restrictedTraverse('@@delete_givenuid')(
                 org2_uid, catch_before_delete_exception=False)
         self.assertEquals(cm.exception.message,
-                          translate('can_not_delete_organization_groupincharge',
+                          translate('can_not_delete_organization_groupsincharge',
                                     domain='plone',
                                     mapping={'org_url': org1.absolute_url()},
                                     context=self.portal.REQUEST))

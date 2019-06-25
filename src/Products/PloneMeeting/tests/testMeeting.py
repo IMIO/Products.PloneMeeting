@@ -474,10 +474,10 @@ class testMeeting(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_groups_in_charge',
                                            'reverse': '0'}, ))
-        # groupInCharge must be defined for every proposingGroup or it fails
+        # groupsInCharge must be defined for every proposingGroup or it fails
         with self.assertRaises(Exception) as cm:
             self._createMeetingWithItems()
-        self.assertEquals(cm.exception.message, "No valid groupInCharge defined for developers")
+        self.assertEquals(cm.exception.message, "No valid groupsInCharge defined for developers")
 
         # configure groups to define groups in charge
         gic1 = self.create(
@@ -504,15 +504,15 @@ class testMeeting(PloneMeetingTestCase):
 
         # no reverse
         meeting = self._createMeetingWithItems()
-        self.assertEquals([(item.getProposingGroup(), item.getGroupInCharge())
+        self.assertEquals([(item.getProposingGroup(), item.getGroupsInCharge())
                            for item in meeting.getItems(ordered=True)],
-                          [(self.vendors_uid, gic1_uid),
-                           (self.vendors_uid, gic1_uid),
-                           (self.vendors_uid, gic1_uid),
-                           (self.developers_uid, gic2_uid),
-                           (self.developers_uid, gic2_uid),
-                           (self.developers_uid, gic2_uid),
-                           (self.developers_uid, gic2_uid)])
+                          [(self.vendors_uid, (gic1_uid, )),
+                           (self.vendors_uid, (gic1_uid, )),
+                           (self.vendors_uid, (gic1_uid, )),
+                           (self.developers_uid, (gic2_uid, )),
+                           (self.developers_uid, (gic2_uid, )),
+                           (self.developers_uid, (gic2_uid, )),
+                           (self.developers_uid, (gic2_uid, ))])
         self.vendors.groups_in_charge = (gic2_uid,)
         self.developers.groups_in_charge = (gic1_uid,)
         # make sure recurring items are correctly configured
@@ -521,32 +521,32 @@ class testMeeting(PloneMeetingTestCase):
                 '{0}__groupincharge__{1}'.format(self.developers_uid, gic1_uid))
         meeting2 = self._createMeetingWithItems()
         self.assertEquals([(item.getProposingGroup(),
-                           item.getGroupInCharge())
+                           item.getGroupsInCharge())
                            for item in meeting2.getItems(ordered=True)],
-                          [(self.developers_uid, gic1_uid),
-                           (self.developers_uid, gic1_uid),
-                           (self.developers_uid, gic1_uid),
-                           (self.developers_uid, gic1_uid),
-                           (self.vendors_uid, gic2_uid),
-                           (self.vendors_uid, gic2_uid),
-                           (self.vendors_uid, gic2_uid)])
+                          [(self.developers_uid, (gic1_uid, )),
+                           (self.developers_uid, (gic1_uid, )),
+                           (self.developers_uid, (gic1_uid, )),
+                           (self.developers_uid, (gic1_uid, )),
+                           (self.vendors_uid, (gic2_uid, )),
+                           (self.vendors_uid, (gic2_uid, )),
+                           (self.vendors_uid, (gic2_uid, ))])
 
         # reverse
         cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_groups_in_charge',
                                            'reverse': '1'}, ))
         meeting3 = self._createMeetingWithItems()
         self.assertEquals([(item.getProposingGroup(),
-                           item.getGroupInCharge())
+                           item.getGroupsInCharge())
                            for item in meeting3.getItems(ordered=True)],
-                          [(self.vendors_uid, gic2_uid),
-                           (self.vendors_uid, gic2_uid),
-                           (self.vendors_uid, gic2_uid),
-                           (self.developers_uid, gic1_uid),
-                           (self.developers_uid, gic1_uid),
-                           (self.developers_uid, gic1_uid),
-                           (self.developers_uid, gic1_uid)])
+                          [(self.vendors_uid, (gic2_uid, )),
+                           (self.vendors_uid, (gic2_uid, )),
+                           (self.vendors_uid, (gic2_uid, )),
+                           (self.developers_uid, (gic1_uid, )),
+                           (self.developers_uid, (gic1_uid, )),
+                           (self.developers_uid, (gic1_uid, )),
+                           (self.developers_uid, (gic1_uid, ))])
 
-        # it follows groupInCharge order in the configuration, change it and test again
+        # it follows groupsInCharge order in the configuration, change it and test again
         # invert position of gic1 and gic2
         self._select_organization(gic1_uid, remove=True)
         self._select_organization(gic2_uid, remove=True)
@@ -557,31 +557,31 @@ class testMeeting(PloneMeetingTestCase):
                                            'reverse': '0'}, ))
         meeting4 = self._createMeetingWithItems()
         self.assertEquals([(item.getProposingGroup(),
-                           item.getGroupInCharge())
+                           item.getGroupsInCharge())
                            for item in meeting4.getItems(ordered=True)],
-                          [(self.vendors_uid, gic2_uid),
-                           (self.vendors_uid, gic2_uid),
-                           (self.vendors_uid, gic2_uid),
-                           (self.developers_uid, gic1_uid),
-                           (self.developers_uid, gic1_uid),
-                           (self.developers_uid, gic1_uid),
-                           (self.developers_uid, gic1_uid)])
+                          [(self.vendors_uid, (gic2_uid, )),
+                           (self.vendors_uid, (gic2_uid, )),
+                           (self.vendors_uid, (gic2_uid, )),
+                           (self.developers_uid, (gic1_uid, )),
+                           (self.developers_uid, (gic1_uid, )),
+                           (self.developers_uid, (gic1_uid, )),
+                           (self.developers_uid, (gic1_uid, ))])
 
         # if a group is not selected, it does not break but the index is 0
         # so it is inserted at the beginning
         self._select_organization(gic1_uid, remove=True)
         meeting5 = self._createMeetingWithItems()
         self.assertEquals([(item.getProposingGroup(),
-                           item.getGroupInCharge(),
+                           item.getGroupsInCharge(),
                            item.getItemNumber())
                            for item in meeting5.getItems(ordered=True)],
-                          [(self.developers_uid, gic1_uid, 100),
-                           (self.developers_uid, gic1_uid, 200),
-                           (self.developers_uid, gic1_uid, 300),
-                           (self.developers_uid, gic1_uid, 400),
-                           (self.vendors_uid, gic2_uid, 500),
-                           (self.vendors_uid, gic2_uid, 600),
-                           (self.vendors_uid, gic2_uid, 700)])
+                          [(self.developers_uid, (gic1_uid, ), 100),
+                           (self.developers_uid, (gic1_uid, ), 200),
+                           (self.developers_uid, (gic1_uid, ), 300),
+                           (self.developers_uid, (gic1_uid, ), 400),
+                           (self.vendors_uid, (gic2_uid, ), 500),
+                           (self.vendors_uid, (gic2_uid, ), 600),
+                           (self.vendors_uid, (gic2_uid, ), 700)])
 
     def test_pm_InsertItemOnAllAssociatedGroups(self):
         '''Sort method tested here is "on_all_associated_groups".

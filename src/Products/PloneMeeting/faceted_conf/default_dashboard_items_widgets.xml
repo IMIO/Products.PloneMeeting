@@ -394,16 +394,16 @@
 
   <criterion name="c23" i18n:attributes="title">
    <property name="widget">checkbox</property>
-   <property name="title">Group in charge</property>
+   <property name="title">Groups in charge</property>
    <property name="position">top</property>
    <property name="section">advanced</property>
    <property name="hidden">False</property>
    <property name="count">False</property>
    <property name="sortcountable">False</property>
    <property name="hidezerocount">False</property>
-   <property name="index">getGroupInCharge</property>
+   <property name="index">getGroupsInCharge</property>
    <property name="operator">or</property>
-   <property name="operator_visible">False</property>
+   <property name="operator_visible">True</property>
    <property
       name="vocabulary">Products.PloneMeeting.vocabularies.groupsinchargevocabulary</property>
    <property name="catalog"></property>
