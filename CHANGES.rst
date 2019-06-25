@@ -15,6 +15,8 @@ Changelog
   is not in ignored_pos_type_ids
 - Fixed MeetingConfig.validate_customAdvisers to check if there are no same row_ids used, this could happen when creating MeetingConfig from import_data
 - Fix guard_expr generated method name while using adaptations.addState
+- Make sure the '@@remove-several-items' view will set item back to 'validated' when others back transitions are available on a 'presented' item, it is
+  the case when the 'presented_item_back_to_itemcreated' WFAdaptation is enabled for example
 
 4.1rc3 (2019-06-14)
 -------------------
