@@ -1065,8 +1065,9 @@ def performWorkflowAdaptations(meetingConfig, logger=logger):
                             perm_cloned_state = wf.states[perm_cloned_state_id]
                     for permission, roles in perm_cloned_state.permission_roles.iteritems():
                         if infos['remove_modify_access'] and permission in edit_permissions:
-                            # remove every roles but 'Manager' and 'MeetingManager'
-                            edit_roles = set(roles).intersection(set(('Manager', 'MeetingManager')))
+                            # remove every roles but 'Manager', 'MeetingManager' and 'MeetingBudgetImpactEditor'
+                            edit_roles = set(roles).intersection(
+                                set(('Manager', 'MeetingManager', 'MeetingBudgetImpactEditor')))
                             new_state.setPermission(permission, 0, edit_roles)
                         elif permission == ReviewPortalContent:
                             new_state.setPermission(permission, 0, review_portal_content_roles)
