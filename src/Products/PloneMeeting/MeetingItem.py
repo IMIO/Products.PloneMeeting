@@ -3525,7 +3525,8 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         for associatedGroup in associatedGroups:
             if orderedAssociatedOrgs:
                 try:
-                    pre_orders.append(orderedAssociatedOrgs.index(associatedGroup))
+                    index = orderedAssociatedOrgs.index(associatedGroup)
+                    pre_orders.append(index + 1)
                 except ValueError:
                     pre_orders.append(0)
             else:
@@ -3539,7 +3540,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res += (float(pre_order) / divisor)
             # we may manage up to 1000 different associated groups
             divisor *= 1000
-        logger.info(res)
         return res
 
     def _findCustomOrderFor(self, insertMethod):

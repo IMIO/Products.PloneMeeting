@@ -1336,7 +1336,10 @@ class SelectableAssociatedOrganizationsVocabulary(object):
         selected_orgs = get_registry_organizations()
         for term in terms:
             if term.value not in selected_orgs:
-                term.title = u'{0} (Not selected in plonegroup)'.format(term.title)
+                term.title = translate(msgid=u'${term_title} (Not selected in plonegroup)',
+                                       domain='PloneMeeting',
+                                       mapping={'term_title': term.title, },
+                                       context=context.REQUEST)
         return SimpleVocabulary(terms)
 
 

@@ -863,7 +863,7 @@
                   </div>
                   <div>
                     <label class="formQuestion">
-                      <span i18n:translate="" i18n:domain="collective.eeafaceted.dashboard">Show number of items in filter</span>
+                      <span i18n:translate="" i18n:domain="collective.eeafaceted.collectionwidget">Show number of items in filter</span>
                     </label> :
                     <span tal:content="python: obj.showNumberOfItems and 'boolean_value_true' or 'boolean_value_false'"
                           i18n:translate="">Show number of items in filter</span>
