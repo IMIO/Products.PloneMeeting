@@ -17,6 +17,8 @@ Changelog
 - Fix guard_expr generated method name while using adaptations.addState
 - Make sure the '@@remove-several-items' view will set item back to 'validated' when others back transitions are available on a 'presented' item, it is
   the case when the 'presented_item_back_to_itemcreated' WFAdaptation is enabled for example
+- In the 'waiting_advices' WFAdaptation, make sure budget impact editors have right to edit budget infos even when 'remove_modify_access' is True,
+  or even when state is selected in MeetingConfig.itemGroupInChargeStates, budget infos are not editable
 
 4.1rc3 (2019-06-14)
 -------------------

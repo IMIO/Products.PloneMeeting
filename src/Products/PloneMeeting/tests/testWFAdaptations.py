@@ -31,6 +31,7 @@ from Products.CMFCore.permissions import ModifyPortalContent
 from Products.CMFCore.permissions import View
 from Products.CMFCore.WorkflowCore import WorkflowException
 from Products.PloneMeeting.config import HIDE_DECISION_UNDER_WRITING_MSG
+from Products.PloneMeeting.config import WriteBudgetInfos
 from Products.PloneMeeting.config import WriteDecision
 from Products.PloneMeeting.config import WriteItemMeetingManagerFields
 from Products.PloneMeeting.model.adaptations import performWorkflowAdaptations
@@ -2002,6 +2003,9 @@ class testWFAdaptations(PloneMeetingTestCase):
         waiting_transition_name = 'wait_advices_from_{0}'.format(self._stateMappingFor('proposed_first_level'))
         self.assertTrue(waiting_state_name in itemWF.states)
 
+        # the budget impact editors functionnality still works even if 'remove_modify_access': True
+        cfg.setItemBudgetInfosStates((waiting_state_name, ))
+
         # right, create an item and set it to 'waiting_advices'
         self.changeUser('pmCreator1')
         item = self.create('MeetingItem')
@@ -2040,6 +2044,10 @@ class testWFAdaptations(PloneMeetingTestCase):
         self.assertFalse(self.hasPermission(ModifyPortalContent, item))
         self.assertFalse(self.hasPermission(DeleteObjects, item))
         self.assertFalse(self.transitions(item))
+
+        # budget impact editors access are correct even when 'remove_modify_access': True
+        self.changeUser('budgetimpacteditor')
+        self.assertTrue(self.hasPermission(WriteBudgetInfos, item))
 
         # right come back to 'proposed'
         self.changeUser('pmReviewer1')
