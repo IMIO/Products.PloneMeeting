@@ -123,7 +123,7 @@ class PloneMeetingTestingHelpers:
             pattern = 'WF_MEETING_TRANSITION_NAME_MAPPINGS_%d'
         return getattr(self, (pattern % meetingConfigNumber)).get(transition_name, transition_name)
 
-    def _createMeetingWithItems(self, withItems=True, meetingDate=DateTime()):
+    def _createMeetingWithItems(self, meetingDate=DateTime()):
         '''Create a meeting with a bunch of items.'''
         def _set_proposing_group(item, org):
             """Take into account fact that configuration uses groupsInCharge."""
@@ -137,36 +137,35 @@ class PloneMeetingTestingHelpers:
         meeting = self.create('Meeting', date=meetingDate)
         # a meeting could be created with items if it has
         # recurring items...  But we can also add some more...
-        if withItems:
-            item1 = self.create('MeetingItem')  # id=o2
-            _set_proposing_group(item1, self.vendors)
-            item1.setAssociatedGroups((self.developers_uid,))
-            item1.setPrivacy('public')
-            item1.setPollType('secret_separated')
-            item1.setCategory('research')
-            item2 = self.create('MeetingItem')  # id=o3
-            _set_proposing_group(item2, self.developers)
-            item2.setPrivacy('public')
-            item2.setPollType('no_vote')
-            item2.setCategory('development')
-            item3 = self.create('MeetingItem')  # id=o4
-            _set_proposing_group(item3, self.vendors)
-            item3.setPrivacy('secret')
-            item3.setPollType('freehand')
-            item3.setCategory('development')
-            item4 = self.create('MeetingItem')  # id=o5
-            _set_proposing_group(item4, self.developers)
-            item4.setPrivacy('secret')
-            item4.setPollType('freehand')
-            item4.setCategory('events')
-            item5 = self.create('MeetingItem')  # id=o6
-            _set_proposing_group(item5, self.vendors)
-            item5.setPrivacy('public')
-            item5.setPollType('secret')
-            item5.setCategory('events')
-            for item in (item1, item2, item3, item4, item5):
-                item.setDecision('<p>A decision</p>')
-                self.presentItem(item)
+        item1 = self.create('MeetingItem')  # id=o2
+        _set_proposing_group(item1, self.vendors)
+        item1.setAssociatedGroups((self.developers_uid,))
+        item1.setPrivacy('public')
+        item1.setPollType('secret_separated')
+        item1.setCategory('research')
+        item2 = self.create('MeetingItem')  # id=o3
+        _set_proposing_group(item2, self.developers)
+        item2.setPrivacy('public')
+        item2.setPollType('no_vote')
+        item2.setCategory('development')
+        item3 = self.create('MeetingItem')  # id=o4
+        _set_proposing_group(item3, self.vendors)
+        item3.setPrivacy('secret')
+        item3.setPollType('freehand')
+        item3.setCategory('development')
+        item4 = self.create('MeetingItem')  # id=o5
+        _set_proposing_group(item4, self.developers)
+        item4.setPrivacy('secret')
+        item4.setPollType('freehand')
+        item4.setCategory('events')
+        item5 = self.create('MeetingItem')  # id=o6
+        _set_proposing_group(item5, self.vendors)
+        item5.setPrivacy('public')
+        item5.setPollType('secret')
+        item5.setCategory('events')
+        for item in (item1, item2, item3, item4, item5):
+            item.setDecision('<p>A decision</p>')
+            self.presentItem(item)
         return meeting
 
     def _getTransitionsToCloseAMeeting(self):

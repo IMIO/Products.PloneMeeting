@@ -298,15 +298,16 @@ class PMOrganization(Organization):
                 group_signatures = computedSignatures
         return group_signatures
 
-    def get_order(self, associated_org_uids=[]):
+    def get_order(self, associated_org_uids=[], cfg=None):
         '''Returns organization position among every selected organizations.
            If p_associated_org_uids is given, returns the order of the lowest org position.
-           Only consider selecte orgs as it how order is defined.'''
+           In this case, p_cfg must be given.'''
         def _get_index(orgs, org):
             """Return position of org among orgs, return 0 if org not found (not selected),
                it it like if it was using the first organization."""
             try:
-                index = orgs.index(org)
+                # +1 to index as index 0 is for no more selected organizations
+                index = orgs.index(org) + 1
             except ValueError:
                 index = 0
             return index
@@ -315,8 +316,10 @@ class PMOrganization(Organization):
         # if we received associated_org_uids we must consider associated group
         # that has the lowest position
         if associated_org_uids:
+            # if we have MeetingConfig.orderedAssociatedOrganizations, we use it
+            # either we use organizations selected in plonegroup
+            org_uids = cfg.getOrderedAssociatedOrganizations() or [org.UID() for org in orgs]
             # orgs are sorted so, the first we find, we return it
-            org_uids = [org.UID() for org in orgs]
             for org_uid in org_uids:
                 if org_uid in associated_org_uids:
                     # we found the associated org with lowest position, now check

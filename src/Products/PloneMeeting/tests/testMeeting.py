@@ -24,6 +24,7 @@
 
 from AccessControl import Unauthorized
 from collective.contact.plonegroup.config import set_registry_organizations
+from collective.contact.plonegroup.utils import get_organizations
 from copy import deepcopy
 from DateTime import DateTime
 from DateTime.DateTime import _findLocalTimeZoneName
@@ -74,7 +75,7 @@ class testMeeting(PloneMeetingTestCase):
             if meetingConfig == self.meetingConfig.getId():
                 # There are 2 recurring items in self.meetingConfig
                 expected = ['recItem1', 'recItem2', 'o3', 'o5', 'o2', 'o4', 'o6']
-                expectedInsertOrderIndexes = [0, 0, 0, 0, 400, 400, 400]
+                expectedInsertOrderIndexes = [400, 400, 400, 400, 800, 800, 800]
             else:
                 expected = ['o3', 'o4', 'o5', 'o6', 'o2']
                 expectedInsertOrderIndexes = [1800, 1800, 2700, 2700, 3600]
@@ -359,13 +360,14 @@ class testMeeting(PloneMeetingTestCase):
         newItem.setProposingGroup(self.vendors_uid)
         newItem.setDecision('<p>Default decision</p>')
         self.presentItem(newItem)
+        self.assertEqual(newItem.getId(), 'o7')
         # first of all, it works, and the item is inserted in the meeting,
-        # here at the end because index is 0 for every items
+        # here at the beginning as index is 0 for disabled orgs
         self.assertEquals([item.getId() for item in meeting.getItems(ordered=True)],
-                          ['recItem1', 'recItem2', 'o3', 'o5', 'o2', 'o4', 'o6', newItem.getId()])
+                          ['o7', 'recItem1', 'recItem2', 'o3', 'o5', 'o2', 'o4', 'o6'])
         self.assertEquals([item.getProposingGroup(True).id for item in meeting.getItems(ordered=True)],
-                          ['developers', 'developers', 'developers', 'developers',
-                           'vendors', 'vendors', 'vendors', 'vendors'])
+                          ['vendors', 'developers', 'developers', 'developers', 'developers',
+                           'vendors', 'vendors', 'vendors'])
 
     def test_pm_InsertItemCategories(self):
         '''Sort method tested here is "on_categories".'''
@@ -458,10 +460,10 @@ class testMeeting(PloneMeetingTestCase):
         secondItem.setAssociatedGroups((self.vendors_uid, ))
         secondItemId = secondItem.getId()
         self.presentItem(secondItem)
-        # it will be inserted at the beginning as a disabled organization gets -1 as index
+        # it will be inserted at the beginning as a disabled organization gets 0 as index
         self.assertEqual(
             [item.getId() for item in meeting.getItems(ordered=True)],
-            ['recItem1', 'recItem2', 'o2', 'o3', 'o5', secondItemId, 'o4', 'o6', newItemId])
+            [secondItemId, 'recItem1', 'recItem2', 'o2', 'o3', 'o5', 'o4', 'o6', newItemId])
 
     def test_pm_InsertItemOnGroupsInCharge(self):
         '''Sort method tested here is "on_groups_in_charge".
@@ -581,6 +583,100 @@ class testMeeting(PloneMeetingTestCase):
                            (self.vendors_uid, gic2_uid, 600),
                            (self.vendors_uid, gic2_uid, 700)])
 
+    def test_pm_InsertItemOnAllAssociatedGroups(self):
+        '''Sort method tested here is "on_all_associated_groups".
+           It takes into account every selected associated groups and will insert
+           in following order depending on selected associated groups:
+           - Items with no selected associated groups;
+           - Group1;
+           - Group1, Group2;
+           - Group1, Group2, Group3;
+           - Group1, Group2, Group4;
+           - Group1, Group3;
+           - Group2, Group3;
+           - Group2, Group3, Group4;
+           - Group3;
+           - Group3, Group4;
+           - Group4.'''
+        cfg = self.meetingConfig
+        # reactivate endUsers organization
+        self.changeUser('siteadmin')
+        self._select_organization(self.endUsers_uid)
+        self.changeUser('pmManager')
+        cfg.setInsertingMethodsOnAddItem(
+            ({'insertingMethod': 'on_all_associated_groups', 'reverse': '0'}, ))
+        meeting = self.create('Meeting', date=DateTime('2019/06/25'))
+        data = ({'proposingGroup': self.developers_uid,
+                 'associatedGroups': (self.developers_uid, )},
+                {'proposingGroup': self.vendors_uid,
+                 'associatedGroups': (self.developers_uid, self.vendors_uid)},
+                {'proposingGroup': self.developers_uid,
+                 'associatedGroups': (self.developers_uid, self.vendors_uid)},
+                {'proposingGroup': self.vendors_uid,
+                 'associatedGroups': (self.vendors_uid, )},
+                {'proposingGroup': self.developers_uid,
+                 'associatedGroups': (self.vendors_uid, self.endUsers_uid)},
+                {'proposingGroup': self.developers_uid,
+                 'associatedGroups': (self.developers_uid, self.vendors_uid, self.endUsers_uid)},
+                {'proposingGroup': self.developers_uid,
+                 'associatedGroups': ()},
+                {'proposingGroup': self.vendors_uid,
+                 'associatedGroups': (self.developers_uid, self.endUsers_uid)},
+                {'proposingGroup': self.vendors_uid,
+                 'associatedGroups': (self.endUsers_uid, )},
+                )
+
+        # when nothing defined in MeetingConfig.orderedAssociatedOrganizations
+        # then order of organizations selected in plonegroup is used
+        self.assertFalse(cfg.getOrderedAssociatedOrganizations())
+        self.assertEqual(get_organizations(), [self.developers, self.vendors, self.endUsers])
+        for itemData in data:
+            new_item = self.create('MeetingItem', **itemData)
+            self.presentItem(new_item)
+
+        orderedItems = meeting.getItems(ordered=True)
+        self.assertEqual(
+            [item.getAssociatedGroups() for item in orderedItems],
+            [(),
+             (),
+             (),
+             (self.developers_uid,),
+             (self.developers_uid, self.vendors_uid),
+             (self.developers_uid, self.vendors_uid),
+             (self.developers_uid, self.vendors_uid, self.endUsers_uid),
+             (self.developers_uid, self.endUsers_uid),
+             (self.vendors_uid,),
+             (self.vendors_uid, self.endUsers_uid),
+             (self.endUsers_uid,), ]
+        )
+
+        # order may be defined in MeetingConfig.orderedAssociatedOrganizations
+        # even if values were stored in a different order, final order is always taken from configuration
+        # so here for example, we do not change data dict
+        cfg.setOrderedAssociatedOrganizations((self.endUsers_uid,
+                                               self.developers_uid,
+                                               self.vendors_uid))
+        meeting = self.create('Meeting', date=DateTime('2019/06/25'))
+        for itemData in data:
+            new_item = self.create('MeetingItem', **itemData)
+            self.presentItem(new_item)
+
+        orderedItems = meeting.getItems(ordered=True)
+        self.assertEqual(
+            [item.getAssociatedGroups() for item in orderedItems],
+            [(),
+             (),
+             (),
+             (self.endUsers_uid,),
+             (self.developers_uid, self.endUsers_uid),
+             (self.developers_uid, self.vendors_uid, self.endUsers_uid),
+             (self.vendors_uid, self.endUsers_uid),
+             (self.developers_uid,),
+             (self.developers_uid, self.vendors_uid),
+             (self.developers_uid, self.vendors_uid),
+             (self.vendors_uid,), ]
+        )
+
     def test_pm_InsertItemOnPrivacyThenProposingGroups(self):
         '''Sort method tested here is "on_privacy" then "on_proposing_groups".'''
         cfg = self.meetingConfig
@@ -674,11 +770,13 @@ class testMeeting(PloneMeetingTestCase):
         newItem.setProposingGroup(self.vendors_uid)
         newItem.setDecision('<p>Default decision</p>')
         self.presentItem(newItem)
+        self.assertEqual(newItem.getId(), 'o7')
+        self.assertEqual(newItem.getPrivacy(), 'public')
         # the item is inserted but at the beginning of the meeting
         self.assertEqual([item.getId() for item in meeting.getItems(ordered=True)],
-                         ['recItem1', 'recItem2', 'o3', 'o2', 'o6', 'o7', 'o5', 'o4'])
+                         ['o7', 'recItem1', 'recItem2', 'o3', 'o2', 'o6', 'o5', 'o4'])
         self.assertEqual([item.getProposingGroup(True).id for item in meeting.getItems(ordered=True)],
-                         ['developers', 'developers', 'developers', 'vendors', 'vendors', 'vendors',
+                         ['vendors', 'developers', 'developers', 'developers', 'vendors', 'vendors',
                           'developers', 'vendors'])
         self.assertEqual([item.getPrivacy() for item in meeting.getItems(ordered=True)],
                          ['public', 'public', 'public', 'public', 'public', 'public',

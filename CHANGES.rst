@@ -15,6 +15,9 @@ Changelog
   is not in ignored_pos_type_ids
 - Fixed MeetingConfig.validate_customAdvisers to check if there are no same row_ids used, this could happen when creating MeetingConfig from import_data
 - Fix guard_expr generated method name while using adaptations.addState
+- Added inserting_method 'on_all_associated_groups', this will insert items in a meeting following order of every selected associatedGroups of an item,
+  not only the highest index.  Associated groups order may be either taken from organizations selected in plonegroup or redefined in
+  MeetingConfig.orderedAssociatedOrganizations, in this case, organizations not selected in plonegroup may also be used
 
 4.1rc3 (2019-06-14)
 -------------------

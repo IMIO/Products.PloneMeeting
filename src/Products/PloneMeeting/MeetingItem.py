@@ -2702,7 +2702,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res = []
         for org in orgs:
             res.append((org.UID(), org.get_full_title()))
-        return DisplayList(res).sortedByValue()
+        res = DisplayList(res)
+
+        # if associatedGroups is not used as item inserting method, we display it alphabetically
+        associated_groups_inserting_methods = [
+            method for method in cfg.getInsertingMethodsOnAddItem()
+            if method['insertingMethod'] in ('on_all_groups', 'on_all_associated_groups')]
+        if not associated_groups_inserting_methods:
+            res = res.sortedByValue()
+
+        return res
 
     security.declarePublic('listItemTags')
 
@@ -3402,8 +3411,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             return len([listType for listType in listTypes if listType['used_in_inserting_method'] == '1'])
         elif insertMethod == 'on_categories':
             return len(cfg.getCategories(onlySelectable=False))
-        elif insertMethod in ('on_proposing_groups', 'on_all_groups', 'on_groups_in_charge'):
-            # for 'on_groups_in_charge', for efficiency, we return len of every organizations
+        elif insertMethod in ('on_proposing_groups',
+                              'on_all_groups',
+                              'on_groups_in_charge',
+                              'on_all_associated_groups'):
+            # for any insertion method regarding orgs, for efficiency, we return len of every organizations
             return len(get_organizations(only_selected=False))
         elif insertMethod == 'on_privacy':
             return len(cfg.getSelectablePrivacies())
@@ -3458,7 +3470,16 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res = org.get_order()
         elif insertMethod == 'on_all_groups':
             org = self.getProposingGroup(True)
-            res = org.get_order(associated_org_uids=self.getAssociatedGroups())
+            res = org.get_order(associated_org_uids=self.getAssociatedGroups(), cfg=cfg)
+        elif insertMethod == 'on_groups_in_charge':
+            proposingGroup = self.getProposingGroup(True)
+            groupInCharge = self.adapted().getGroupInCharge(True)
+            if not groupInCharge:
+                raise Exception("No valid groupInCharge defined for {0}".format(proposingGroup.getId()))
+            return groupInCharge.get_order()
+        elif insertMethod == 'on_all_associated_groups':
+            res = self._computeOrderOnAllAssociatedGroups(cfg)
+            return res
         elif insertMethod == 'on_privacy':
             privacy = self.getPrivacy()
             privacies = cfg.getSelectablePrivacies()
@@ -3476,12 +3497,6 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 return len(values) + 1
             else:
                 return values.index(toCloneTo[0])
-        elif insertMethod == 'on_groups_in_charge':
-            proposingGroup = self.getProposingGroup(True)
-            groupInCharge = self.adapted().getGroupInCharge(True)
-            if not groupInCharge:
-                raise Exception("No valid groupInCharge defined for {0}".format(proposingGroup.getId()))
-            return groupInCharge.get_order()
         elif insertMethod == 'on_poll_type':
             pollType = self.getPollType()
             factory = queryUtility(IVocabularyFactory,
@@ -3491,6 +3506,40 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res = pollTypes.index(pollType)
         else:
             res = self.adapted()._findCustomOrderFor(insertMethod)
+        return res
+
+    def _computeOrderOnAllAssociatedGroups(self, cfg):
+        '''Helper method to compute inserting index when using insert method 'on_all_associated_groups'.'''
+        associatedGroups = self.getAssociatedGroups()
+        # computing will generate following order :
+        # items having group in charge 1 only
+        # items having group in charge 1 and group in charge 2
+        # items having group in charge 1 and group in charge 2 and group in charge 3
+        # items having group in charge 1 and group in charge 2 and group in charge 3 and group in charge 4
+        # items having group in charge 1 and group in charge 3
+        # items having group in charge 1 and group in charge 3 and group in charge 4
+        # for order, rely on order defined in MeetingConfig if defined, else use organization order
+        orderedAssociatedOrgs = cfg.getOrderedAssociatedOrganizations()
+        # if order changed in config, we keep it, do not rely on order defined on item
+        pre_orders = []
+        for associatedGroup in associatedGroups:
+            if orderedAssociatedOrgs:
+                try:
+                    pre_orders.append(orderedAssociatedOrgs.index(associatedGroup))
+                except ValueError:
+                    pre_orders.append(0)
+            else:
+                org = get_organization(associatedGroup)
+                pre_orders.append(org.get_order())
+        # now sort pre_orders and compute final index
+        pre_orders.sort()
+        res = float(0)
+        divisor = 1
+        for pre_order in pre_orders:
+            res += (float(pre_order) / divisor)
+            # we may manage up to 1000 different associated groups
+            divisor *= 1000
+        logger.info(res)
         return res
 
     def _findCustomOrderFor(self, insertMethod):

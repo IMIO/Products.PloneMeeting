@@ -300,6 +300,16 @@ ITEM_INSERT_METHODS = OrderedDict((
     ('on_all_groups', 'organization'),
     # according to the groupInCharge of the proposingGroup used for the item
     ('on_groups_in_charge', 'organization'),
+    # according to the associatedGroups selected on the item
+    # taking into account every selected associatedGroups
+    # computing will generate following order :
+    # items having associated group 1 only
+    # items having associated group 1 and associated group 2
+    # items having associated group 1 and associated group 2 and associated group 3
+    # items having associated group 1 and associated group 2 and associated group 3 and associated group 4
+    # items having associated group 1 and associated group 3
+    # items having associated group 1 and associated group 3 and associated group 4
+    ('on_all_associated_groups', 'organization'),
     # according to the item privacy;
     ('on_privacy', 'field_selectablePrivacies'),
     # according to the item toDiscuss;
