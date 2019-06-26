@@ -865,7 +865,7 @@ schema = Schema((
             condition="python: here.attributeIsUsed('groupsInCharge')",
             size=10,
             description="Groupsincharge",
-            description_msgid="groups_in_charge_descr",
+            description_msgid="item_groups_in_charge_descr",
             format="checkbox",
             label='Groupsincharge',
             label_msgid='PloneMeeting_label_groupsInCharge',
@@ -2492,7 +2492,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         '''Check doc in interfaces.py.'''
         return []
 
-    security.declarePublic('listTemplateUsingGroups')
+    security.declarePrivate('listTemplateUsingGroups')
 
     def listTemplateUsingGroups(self):
         '''Returns a list of orgs that will restrict the use of this item
@@ -2503,7 +2503,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res.append((org.UID(), org.get_full_title()))
         return DisplayList(tuple(res))
 
-    security.declarePublic('listMeetingsAcceptingItems')
+    security.declarePrivate('listMeetingsAcceptingItems')
 
     def listMeetingsAcceptingItems(self):
         '''Returns the (Display)list of meetings returned by
@@ -2542,7 +2542,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         res.insert(0, (ITEM_NO_PREFERRED_MEETING_VALUE, 'Any meeting'))
         return DisplayList(tuple(res))
 
-    security.declarePublic('listMeetingTransitions')
+    security.declarePrivate('listMeetingTransitions')
 
     def listMeetingTransitions(self):
         '''Lists the possible transitions for meetings of the same meeting
@@ -2559,7 +2559,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res.append((transition.id, name))
         return DisplayList(tuple(res))
 
-    security.declarePublic('listOtherMeetingConfigsClonableTo')
+    security.declarePrivate('listOtherMeetingConfigsClonableTo')
 
     def listOtherMeetingConfigsClonableTo(self):
         '''Lists the possible other meetingConfigs the item can be cloned to.'''
@@ -2578,7 +2578,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     res.append((meetingConfigId, getattr(tool, meetingConfigId).Title()))
         return DisplayList(tuple(res))
 
-    security.declarePublic('listOtherMeetingConfigsClonableToEmergency')
+    security.declarePrivate('listOtherMeetingConfigsClonableToEmergency')
 
     def listOtherMeetingConfigsClonableToEmergency(self):
         '''Lists the possible other meetingConfigs the item can be cloned to.'''
@@ -2600,7 +2600,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                     res.append((meetingConfigId, translated_msg))
         return DisplayList(tuple(res))
 
-    security.declarePublic('listOtherMeetingConfigsClonableToPrivacy')
+    security.declarePrivate('listOtherMeetingConfigsClonableToPrivacy')
 
     def listOtherMeetingConfigsClonableToPrivacy(self):
         '''Lists the possible other meetingConfigs the item can be cloned to.'''
@@ -2697,14 +2697,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(self)
         orderedGroupsInCharge = cfg.getOrderedGroupsInCharge()
         if orderedGroupsInCharge:
-            # missing terms, selected on item but removed from orderedGroupsInCharge
-            stored_terms = self.getGroupsInCharge()
-            missing_term_uids = [uid for uid in stored_terms
-                                 if uid not in orderedGroupsInCharge]
-            missing_terms = uuidsToObjects(missing_term_uids, ordered=False)
-            orgs = list(cfg.getOrderedGroupsInCharge(theObjects=True)) + missing_terms
+            orgs = list(cfg.getOrderedGroupsInCharge(theObjects=True))
         else:
             orgs = get_organizations()
+
+        # missing terms, selected on item but removed from orderedGroupsInCharge
+        stored_terms = self.getGroupsInCharge()
+        org_uids = [org.UID() for org in orgs]
+        missing_term_uids = [uid for uid in stored_terms
+                             if uid not in org_uids]
+        if missing_term_uids:
+            missing_terms = uuidsToObjects(missing_term_uids, ordered=False)
+            orgs += missing_terms
 
         res = []
         for org in orgs:
@@ -2730,14 +2734,18 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(self)
         orderedAssociatedOrganizations = cfg.getOrderedAssociatedOrganizations()
         if orderedAssociatedOrganizations:
-            # missing terms, selected on item but removed from orderedAssociatedOrganizations
-            stored_terms = self.getAssociatedGroups()
-            missing_term_uids = [uid for uid in stored_terms
-                                 if uid not in orderedAssociatedOrganizations]
-            missing_terms = uuidsToObjects(missing_term_uids, ordered=False)
-            orgs = list(cfg.getOrderedAssociatedOrganizations(theObjects=True)) + missing_terms
+            orgs = list(cfg.getOrderedAssociatedOrganizations(theObjects=True))
         else:
             orgs = get_organizations()
+
+        # missing terms, selected on item but removed from orderedAssociatedOrganizations or from plonegroup
+        stored_terms = self.getAssociatedGroups()
+        org_uids = [org.UID() for org in orgs]
+        missing_term_uids = [uid for uid in stored_terms
+                             if uid not in org_uids]
+        if missing_term_uids:
+            missing_terms = uuidsToObjects(missing_term_uids, ordered=False)
+            orgs += missing_terms
 
         res = []
         for org in orgs:
@@ -2753,7 +2761,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
         return res
 
-    security.declarePublic('listItemTags')
+    security.declarePrivate('listItemTags')
 
     def listItemTags(self):
         '''Lists the available tags from the meeting config.'''
@@ -2764,7 +2772,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             res.append((tag, tag))
         return DisplayList(tuple(res))
 
-    security.declarePublic('listEmergencies')
+    security.declarePrivate('listEmergencies')
 
     def listEmergencies(self):
         '''Vocabulary for the 'emergency' field.'''
@@ -2785,7 +2793,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         ))
         return res
 
-    security.declarePublic('listCompleteness')
+    security.declarePrivate('listCompleteness')
 
     def listCompleteness(self):
         '''Vocabulary for the 'completeness' field.'''
@@ -2842,7 +2850,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         cfg = tool.getMeetingConfig(self)
         return not cfg.getUseGroupsAsCategories()
 
-    security.declarePublic('listCategories')
+    security.declarePrivate('listCategories')
 
     def listCategories(self):
         '''Returns a DisplayList containing all available active categories in
@@ -3997,7 +4005,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                         'row_id': customAdviserConfig['row_id']})
         return res
 
-    security.declarePublic('listOptionalAdvisers')
+    security.declarePrivate('listOptionalAdvisers')
 
     def listOptionalAdvisers(self, include_selected=True):
         '''Optional advisers for this item are organizations that are not among
@@ -4102,7 +4110,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
         infos = delayAwareId.split('__rowid__')
         return infos[0], infos[1]
 
-    security.declarePublic('listItemInitiators')
+    security.declarePrivate('listItemInitiators')
 
     def listItemInitiators(self):
         ''' '''
@@ -5554,7 +5562,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             sibling = sibling.getItemNumber
         return sibling
 
-    security.declarePublic('listCopyGroups')
+    security.declarePrivate('listCopyGroups')
 
     def listCopyGroups(self, include_auto=False):
         '''Lists the groups that will be selectable to be in copy for this
