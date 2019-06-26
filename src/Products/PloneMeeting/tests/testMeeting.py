@@ -678,7 +678,7 @@ class testMeeting(PloneMeetingTestCase):
             [(),
              (),
              (),
-             (gic3_uid,)
+             (gic3_uid,),
              (gic1_uid, gic3_uid),
              (gic1_uid, gic2_uid, gic3_uid),
              (gic2_uid, gic3_uid),
