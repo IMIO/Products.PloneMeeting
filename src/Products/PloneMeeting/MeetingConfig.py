@@ -3665,6 +3665,18 @@ class MeetingConfig(OrderedBaseFolder, BrowserDefaultMixin):
                                                          'column_old_data': v, },
                                                 context=self.REQUEST)
 
+    security.declarePrivate('validate_usedItemAttributes')
+
+    def validate_usedItemAttributes(self, newValue):
+        '''Some attributes on an item are mutually exclusive. This validator
+           ensures that wrong combinations aren't used.'''
+        pm = 'PloneMeeting'
+        # Prevent combined use of "proposingGroupWithGroupInCharge" and "groupsInCharge"
+        if ('proposingGroupWithGroupInCharge' in newValue) and ('groupsInCharge' in newValue):
+            return translate('no_proposingGroupWithGroupInCharge_and_groupsInCharge',
+                             domain=pm,
+                             context=self.REQUEST)
+
     security.declarePrivate('validate_usedMeetingAttributes')
 
     def validate_usedMeetingAttributes(self, newValue):

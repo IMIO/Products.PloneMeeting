@@ -474,10 +474,17 @@ class testMeeting(PloneMeetingTestCase):
         cfg = self.meetingConfig
         cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_groups_in_charge',
                                            'reverse': '0'}, ))
-        # groupsInCharge must be defined for every proposingGroup or it fails
-        with self.assertRaises(Exception) as cm:
-            self._createMeetingWithItems()
-        self.assertEquals(cm.exception.message, "No valid groupsInCharge defined for developers")
+        # when groupsInCharge are not defined for some proposingGroups, items are inserted at the beginning
+        meeting = self._createMeetingWithItems()
+        self.assertEquals([(item.getProposingGroup(), item.getGroupsInCharge())
+                           for item in meeting.getItems(ordered=True)],
+                          [(self.developers_uid, ()),
+                           (self.developers_uid, ()),
+                           (self.vendors_uid, ()),
+                           (self.developers_uid, ()),
+                           (self.vendors_uid, ()),
+                           (self.developers_uid, ()),
+                           (self.vendors_uid, ())])
 
         # configure groups to define groups in charge
         gic1 = self.create(
@@ -582,6 +589,104 @@ class testMeeting(PloneMeetingTestCase):
                            (self.vendors_uid, (gic2_uid, ), 500),
                            (self.vendors_uid, (gic2_uid, ), 600),
                            (self.vendors_uid, (gic2_uid, ), 700)])
+
+    def test_pm_InsertItemOnSeveralGroupsInCharge(self):
+        '''Here we test when several groupsInCharge selected, so when the MeetingItem.groupsInCharge
+           field is enabled, the items are inserted following every groups in charge.'''
+
+        self.changeUser('siteadmin')
+        cfg = self.meetingConfig
+        cfg.setInsertingMethodsOnAddItem(({'insertingMethod': 'on_groups_in_charge',
+                                           'reverse': '0'}, ))
+        # create some groups in charge
+        gic1 = self.create(
+            'organization',
+            id='groupincharge1',
+            Title='Group in charge 1',
+            acronym='GIC1')
+        gic1_uid = gic1.UID()
+        gic2 = self.create(
+            'organization',
+            id='groupincharge2',
+            Title='Group in charge 2',
+            acronym='GIC2')
+        gic2_uid = gic2.UID()
+        gic3 = self.create(
+            'organization',
+            id='groupincharge3',
+            Title='Group in charge 3',
+            acronym='GIC3')
+        gic3_uid = gic3.UID()
+        self._select_organization(gic1_uid)
+        self._select_organization(gic2_uid)
+        self._select_organization(gic3_uid)
+
+        # by default, order of plonegroup is used
+        self.assertFalse(cfg.getOrderedGroupsInCharge())
+        meeting = self.create('Meeting', date=DateTime('2019/06/26'))
+        data = ({'proposingGroup': self.developers_uid,
+                 'groupsInCharge': (gic1_uid, )},
+                {'proposingGroup': self.vendors_uid,
+                 'groupsInCharge': (gic3_uid, )},
+                {'proposingGroup': self.vendors_uid,
+                 'groupsInCharge': (gic1_uid, gic2_uid)},
+                {'proposingGroup': self.developers_uid,
+                 'groupsInCharge': ()},
+                {'proposingGroup': self.developers_uid,
+                 'groupsInCharge': (gic1_uid, gic2_uid)},
+                {'proposingGroup': self.vendors_uid,
+                 'groupsInCharge': (gic2_uid, )},
+                {'proposingGroup': self.developers_uid,
+                 'groupsInCharge': (gic2_uid, gic3_uid)},
+                {'proposingGroup': self.developers_uid,
+                 'groupsInCharge': (gic1_uid, gic2_uid, gic3_uid)},
+                {'proposingGroup': self.vendors_uid,
+                 'groupsInCharge': (gic1_uid, gic3_uid)},
+                )
+        for itemData in data:
+            new_item = self.create('MeetingItem', **itemData)
+            self.presentItem(new_item)
+
+        orderedItems = meeting.getItems(ordered=True)
+        self.assertEqual(
+            [item.getGroupsInCharge() for item in orderedItems],
+            [(),
+             (),
+             (),
+             (gic1_uid,),
+             (gic1_uid, gic2_uid),
+             (gic1_uid, gic2_uid),
+             (gic1_uid, gic2_uid, gic3_uid),
+             (gic1_uid, gic3_uid),
+             (gic2_uid,),
+             (gic2_uid, gic3_uid),
+             (gic3_uid,)]
+        )
+
+        # order may be defined in MeetingConfig.orderedGroupsInCharge
+        # even if values were stored in a different order, final order is always taken from configuration
+        # so here for example, we do not change data dict
+        cfg.setOrderedGroupsInCharge((gic3_uid, gic1_uid, gic2_uid))
+        meeting = self.create('Meeting', date=DateTime('2019/06/26'))
+        for itemData in data:
+            new_item = self.create('MeetingItem', **itemData)
+            self.presentItem(new_item)
+
+        orderedItems = meeting.getItems(ordered=True)
+        self.assertEqual(
+            [item.getGroupsInCharge() for item in orderedItems],
+            [(),
+             (),
+             (),
+             (gic3_uid,)
+             (gic1_uid, gic3_uid),
+             (gic1_uid, gic2_uid, gic3_uid),
+             (gic2_uid, gic3_uid),
+             (gic1_uid,),
+             (gic1_uid, gic2_uid),
+             (gic1_uid, gic2_uid),
+             (gic2_uid,)]
+        )
 
     def test_pm_InsertItemOnAllAssociatedGroups(self):
         '''Sort method tested here is "on_all_associated_groups".

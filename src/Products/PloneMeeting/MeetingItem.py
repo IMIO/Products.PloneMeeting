@@ -2918,10 +2918,11 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
 
     security.declarePublic('getGroupsInCharge')
 
-    def getGroupsInCharge(self, theObjects=False, fromOrgIfEmpty=False, single=False, **kwargs):
+    def getGroupsInCharge(self, theObjects=False, fromOrgIfEmpty=False, first=False, **kwargs):
         '''Redefine field MeetingItem.groupsInCharge accessor to be able to return
            groupsInCharge id or the real orgs if p_theObjects is True.
-           Default behaviour is to get the orgs stored in the groupsInCharge field.'''
+           Default behaviour is to get the orgs stored in the groupsInCharge field.
+           If p_first is True, we only return first group in charge.'''
         item = self.getSelf()
         res = item.getField('groupsInCharge').get(item, **kwargs)  # = org_uid
         if not res and fromOrgIfEmpty:
@@ -2931,7 +2932,7 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
                 res = groups_in_charge
         if res and theObjects:
             res = [get_organization(org_uid) for org_uid in res]
-        if res and single:
+        if res and first:
             res = res[0]
         return res
 
@@ -3524,11 +3525,19 @@ class MeetingItem(OrderedBaseFolder, BrowserDefaultMixin):
             org = self.getProposingGroup(True)
             res = org.get_order(associated_org_uids=self.getAssociatedGroups(), cfg=cfg)
         elif insertMethod == 'on_groups_in_charge':
-            proposingGroup = self.getProposingGroup(True)
             groupInCharge = self.getGroupsInCharge(True)
             if not groupInCharge:
-                raise Exception("No valid groupsInCharge defined for {0}".format(proposingGroup.getId()))
-            res = self._computeOrderOnGroupsInCharge(cfg)
+                res = 0
+                api.portal.show_message(
+                    _("No valid groupsInCharge defined for item at ${item_url}, "
+                      "item was inserted at the beginning.",
+                      mapping={'item_url': self.absolute_url()},),
+                    request=self.REQUEST,
+                    type='warning')
+            else:
+                res = self._computeOrderOnGroupsInCharge(cfg)
+            logger.info(self.Title())
+            logger.info(res)
             return res
         elif insertMethod == 'on_all_associated_groups':
             res = self._computeOrderOnAllAssociatedGroups(cfg)
